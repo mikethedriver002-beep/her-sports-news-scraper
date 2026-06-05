@@ -19,6 +19,7 @@ import datetime as dt
 import html
 import re
 import urllib.request
+import urllib.parse
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from typing import Dict, Iterable, List, Tuple
@@ -27,21 +28,66 @@ from typing import Dict, Iterable, List, Tuple
 OUTPUT_FILE = "womens_sports_articles.csv"
 
 
+def google_news(query: str) -> str:
+    return (
+        "https://news.google.com/rss/search?q="
+        + urllib.parse.quote_plus(query)
+        + "&hl=en-US&gl=US&ceid=US:en"
+    )
+
+
 FEED_URLS = [
+    # Direct RSS feeds, usually cleaner
     "https://justwomenssports.com/feed/",
     "https://womeninsport.org/feed/",
     "https://www.womenssportsfoundation.org/feed/",
+    "https://winsidr.com/feed",
+    "https://herhoopstats.substack.com/feed",
+    "https://equalizersoccer.com/feed/",
+    "https://shekicks.net/feed/",
+    "https://girlssoccernetwork.com/feed/",
+    "https://sports.yahoo.com/wnba/rss",
 
-    # Google News RSS searches. These aggregate multiple outlets.
-    "https://news.google.com/rss/search?q=women%27s+sports+WNBA+OR+NWSL+OR+PWHL+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=WNBA+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=NWSL+women%27s+soccer+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=PWHL+women%27s+hockey+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=women%27s+college+basketball+NCAA+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=women%27s+softball+college+world+series+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=women%27s+volleyball+NCAA+professional+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=USWNT+women%27s+soccer+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=LPGA+women%27s+golf+when:3d&hl=en-US&gl=US&ceid=US:en",
+    # Mainstream sources through Google News RSS
+    google_news("site:apnews.com women's sports OR WNBA OR NWSL OR PWHL when:3d"),
+    google_news("site:espn.com WNBA OR women's college basketball OR NWSL when:3d"),
+    google_news("site:sports.yahoo.com women's sports OR WNBA OR NWSL OR PWHL when:3d"),
+    google_news("site:cbssports.com WNBA OR women's college basketball OR NWSL when:3d"),
+    google_news("site:foxsports.com WNBA OR women's college basketball OR women's soccer when:3d"),
+    google_news("site:reuters.com women's sports OR WNBA OR NWSL OR PWHL when:7d"),
+    google_news("site:usatoday.com women's sports OR WNBA OR NWSL OR NCAA women when:7d"),
+    google_news("site:si.com WNBA OR women's sports OR NWSL when:7d"),
+
+    # Official league and governing body sources
+    google_news("site:wnba.com/news WNBA when:3d"),
+    google_news("site:nwslsoccer.com/news NWSL when:3d"),
+    google_news("site:thepwhl.com/en/news PWHL when:3d"),
+    google_news("site:ussoccer.com USWNT women's soccer when:7d"),
+    google_news("site:ncaa.com women's basketball OR softball OR volleyball OR gymnastics when:7d"),
+    google_news("site:lpga.com LPGA women's golf when:7d"),
+    google_news("site:wtatennis.com WTA tennis women when:7d"),
+
+    # Specialty and niche women’s sports outlets
+    google_news("site:swishappeal.com WNBA OR women's basketball when:7d"),
+    google_news("site:thenexthoops.com WNBA OR women's basketball when:7d"),
+    google_news("site:theixsports.com women's sports OR WNBA OR NWSL OR PWHL when:7d"),
+    google_news("site:theicegarden.com women's hockey OR PWHL when:7d"),
+    google_news("site:equalizersoccer.com NWSL OR USWNT OR women's soccer when:7d"),
+    google_news("site:thegistsports.com women's sports OR WNBA OR NWSL OR PWHL when:7d"),
+    google_news("site:togethxr.com women's sports OR WNBA OR NWSL OR athlete when:14d"),
+    google_news("site:hoopfeed.com WNBA OR women's basketball when:14d"),
+
+    # Business and growth stories
+    google_news("site:sportsbusinessjournal.com women's sports OR WNBA OR NWSL OR PWHL when:14d"),
+    google_news("site:frontofficesports.com women's sports OR WNBA OR NWSL OR PWHL when:14d"),
+    google_news("site:sportspro.com women's sports OR WNBA OR NWSL OR PWHL when:14d"),
+    google_news("site:axios.com women's sports OR WNBA OR NWSL OR PWHL when:14d"),
+
+    # Broader topic searches to catch stories we missed
+    google_news("women's sports record attendance viewership investment when:7d"),
+    google_news("women's sports expansion new league media rights sponsorship when:14d"),
+    google_news("WNBA NWSL PWHL women's sports when:3d"),
+    google_news("women's college basketball softball volleyball gymnastics when:7d"),
 ]
 
 
