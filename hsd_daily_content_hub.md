@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Content Hub
 
-Generated: 2026-06-05T21:47:31.600986+00:00
+Generated: 2026-06-05T22:52:38.491167+00:00
 
 ## What this package includes
 
@@ -36,17 +36,7 @@ Generated: 2026-06-05T21:47:31.600986+00:00
 
 ## Maybe Post
 
-### Rank 3: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
-
-- Sport: WNBA
-- Story type: Record / Milestone
-- Content family: Context Carousel
-- Recommended asset: 3 to 4-slide milestone graphic
-- Hook: This is the kind of milestone that shows where the game is headed.
-- Caption starter: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award What should we cover next?
-- Visual brief: Use a milestone carousel with the record, context, and why it matters.
-
-### Rank 4: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
+### Rank 3: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
 
 - Sport: WNBA
 - Story type: Game Recap / Result
@@ -56,7 +46,7 @@ Generated: 2026-06-05T21:47:31.600986+00:00
 - Caption starter: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 5: Saint Leo wins 2026 NCAA DII softball championship
+### Rank 4: Saint Leo wins 2026 NCAA DII softball championship
 
 - Sport: Softball
 - Story type: Game Recap / Result
@@ -66,17 +56,17 @@ Generated: 2026-06-05T21:47:31.600986+00:00
 - Caption starter: Saint Leo wins 2026 NCAA DII softball championship Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+### Rank 5: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
 
-- Sport: NCAA Women's Basketball
-- Story type: Recruiting / Roster News
-- Content family: Story + Feed Combo
-- Recommended asset: single graphic + Story follow-up
-- Hook: The next wave of talent is already changing the future.
-- Caption starter: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards How big is this move for the program?
-- Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
+- Sport: WNBA
+- Story type: Record / Milestone
+- Content family: Context Carousel
+- Recommended asset: 3 to 4-slide milestone graphic
+- Hook: This is the kind of milestone that shows where the game is headed.
+- Caption starter: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers What should we cover next?
+- Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 7: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+### Rank 6: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
 
 - Sport: PWHL / Women's Hockey
 - Story type: Recruiting / Roster News
@@ -87,6 +77,16 @@ Generated: 2026-06-05T21:47:31.600986+00:00
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
 ## Save for Weekend
+
+### Rank 7: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+
+- Sport: NCAA Women's Basketball
+- Story type: Recruiting / Roster News
+- Content family: Story + Feed Combo
+- Recommended asset: single graphic + Story follow-up
+- Hook: The next wave of talent is already changing the future.
+- Caption starter: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards How big is this move for the program?
+- Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
 ### Rank 8: Queen's Club 411: Dates, who's playing, prize money and more
 

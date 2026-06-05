@@ -1,6 +1,6 @@
 # Her Sports Daily Today Graphics Queue
 
-Generated: 2026-06-05T21:47:31.734781+00:00
+Generated: 2026-06-05T22:52:38.628200+00:00
 
 Use this file as the bridge between the automated news system and the graphics chat.
 Copy one full GRAPHIC packet and paste it into the graphics/design chat.
@@ -10,10 +10,10 @@ Copy one full GRAPHIC packet and paste it into the graphics/design chat.
 1. **Make and post first** - A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
 2. **Make and post second** - Texas wins the 2026 NCAA DI softball championship
 3. **Make and post third** - Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
-4. **Make if time today** - A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
+4. **Make if time today** - Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
 5. **Make if time today** - Saint Leo wins 2026 NCAA DII softball championship
-6. **Make if time today** - Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
-7. **Make if time today** - PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+6. **Make if time today** - PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+7. **Save for weekend** - Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
 8. **Save for weekend** - Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour
 
 ## GRAPHIC 1: A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
@@ -127,7 +127,7 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: To
 
 ---
 
-## GRAPHIC 4: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
+## GRAPHIC 4: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
 
 **Action:** Make if time today
 **Decision:** Maybe Post
@@ -144,7 +144,7 @@ A milestone worth putting into context.
 
 ### Slide copy
 
-**Slide 1 - Hook:** A’ja Wilson Earns Record 14th Career WNBA Western
+**Slide 1 - Hook:** Lynx's Miles breaks Clark's WNBA rookie record with 8
 The story you need to know.
 
 **Slide 2 - Context:** The milestone
@@ -157,10 +157,10 @@ A milestone worth putting into context.
 Follow Her Sports Daily for more.
 
 ### Caption
-A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award This is the kind of milestone that shows where the game is headed. Why it matters: Records and milestones are proof points for the rise of women's sports. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #WNBA #WomensBasketball
+Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers This is the kind of milestone that shows where the game is headed. Why it matters: Records and milestones are proof points for the rise of women's sports. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #WNBA #WomensBasketball
 
 ### Image prompt
-Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: Tonight in the W. Sport: WNBA. Content family: Tonight in the W. Use a bold editorial women's sports aesthetic with strong hierarchy. Slide 1 headline: 'A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award'. Slide 2 title: 'Why it matters' with body: 'Records and milestones are proof points for the rise of women's sports.'. Slide 3 title: 'The angle' with body: 'A milestone worth putting into context.'. Slide 4 title: 'Your take?' with a short CTA to comment and follow Her Sports Daily. Use energetic sports graphic styling, matchup emphasis, strong hierarchy, top-left watermark safe zone, and clear CTA.
+Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: Tonight in the W. Sport: WNBA. Content family: Tonight in the W. Use a bold editorial women's sports aesthetic with strong hierarchy. Slide 1 headline: 'Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers'. Slide 2 title: 'Why it matters' with body: 'Records and milestones are proof points for the rise of women's sports.'. Slide 3 title: 'The angle' with body: 'A milestone worth putting into context.'. Slide 4 title: 'Your take?' with a short CTA to comment and follow Her Sports Daily. Use energetic sports graphic styling, matchup emphasis, strong hierarchy, top-left watermark safe zone, and clear CTA.
 
 ---
 
@@ -201,44 +201,7 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: Po
 
 ---
 
-## GRAPHIC 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
-
-**Action:** Make if time today
-**Decision:** Maybe Post
-**Content family:** Roster News
-**Template:** Roster Update Card
-**Asset shape:** single 4:5 feed card
-**Timing:** Post during daytime engagement window
-
-### Design direction
-Use a roster/recruiting graphic with the player, school/team, and why it matters.
-
-### Caption direction
-A future-star angle with a clear roster-building hook.
-
-### Slide copy
-
-**Slide 1 - Hook:** Dawn Staley and South Carolina Land Star Recruit
-The story you need to know.
-
-**Slide 2 - Context:** Why it matters
-Recruiting and roster stories show where the next wave of stars is coming from.
-
-**Slide 3 - Angle:** The angle
-A future-star angle with a clear roster-building hook.
-
-**Slide 4 - CTA:** Your take on this NCAA Women's Basketball story?
-Follow Her Sports Daily for more.
-
-### Caption
-Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards The next wave of talent is already changing the future. Why it matters: Recruiting and roster stories show where the next wave of stars is coming from. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #NCAAWBB #WomensBasketball
-
-### Image prompt
-Create a single 4:5 Instagram feed graphic for Her Sports Daily. Template style: Roster Update Card. Sport: NCAA Women's Basketball. Content family: Roster News. Main headline: 'Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards'. Supporting line: 'Recruiting and roster stories show where the next wave of stars is coming from.'. Include a short footer CTA such as 'More women's sports daily'. Use a clean modern sports editorial look. Use athlete/program focus, breaking-update feel, and one concise why-it-matters line.
-
----
-
-## GRAPHIC 7: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+## GRAPHIC 6: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
 
 **Action:** Make if time today
 **Decision:** Maybe Post
@@ -272,6 +235,43 @@ PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING The next wave of tal
 
 ### Image prompt
 Create a single 4:5 Instagram feed graphic for Her Sports Daily. Template style: Roster Update Card. Sport: PWHL / Women's Hockey. Content family: Roster News. Main headline: 'PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING'. Supporting line: 'Recruiting and roster stories show where the next wave of stars is coming from.'. Include a short footer CTA such as 'More women's sports daily'. Use a clean modern sports editorial look. Use athlete/program focus, breaking-update feel, and one concise why-it-matters line.
+
+---
+
+## GRAPHIC 7: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+
+**Action:** Save for weekend
+**Decision:** Save for Weekend
+**Content family:** Roster News
+**Template:** Roster Update Card
+**Asset shape:** single 4:5 feed card
+**Timing:** Post during daytime engagement window
+
+### Design direction
+Use a roster/recruiting graphic with the player, school/team, and why it matters.
+
+### Caption direction
+A future-star angle with a clear roster-building hook.
+
+### Slide copy
+
+**Slide 1 - Hook:** Dawn Staley and South Carolina Land Star Recruit
+The story you need to know.
+
+**Slide 2 - Context:** Why it matters
+Recruiting and roster stories show where the next wave of stars is coming from.
+
+**Slide 3 - Angle:** The angle
+A future-star angle with a clear roster-building hook.
+
+**Slide 4 - CTA:** Your take on this NCAA Women's Basketball story?
+Follow Her Sports Daily for more.
+
+### Caption
+Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards The next wave of talent is already changing the future. Why it matters: Recruiting and roster stories show where the next wave of stars is coming from. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #NCAAWBB #WomensBasketball
+
+### Image prompt
+Create a single 4:5 Instagram feed graphic for Her Sports Daily. Template style: Roster Update Card. Sport: NCAA Women's Basketball. Content family: Roster News. Main headline: 'Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards'. Supporting line: 'Recruiting and roster stories show where the next wave of stars is coming from.'. Include a short footer CTA such as 'More women's sports daily'. Use a clean modern sports editorial look. Use athlete/program focus, breaking-update feel, and one concise why-it-matters line.
 
 ---
 

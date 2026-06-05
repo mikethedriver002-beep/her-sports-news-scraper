@@ -1,6 +1,6 @@
 # Her Sports Daily Reel Script Package
 
-Generated: 2026-06-05T21:47:31.600119+00:00
+Generated: 2026-06-05T22:52:38.490288+00:00
 
 ## Rank 1: Texas wins the 2026 NCAA DI softball championship
 
@@ -48,30 +48,7 @@ Follow Her Sports Daily for daily women's sports coverage.
 3. What comes next?
 
 
-## Rank 3: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
-
-**Priority:** Maybe Post  
-**Sport:** WNBA  
-**Recommended format:** 20 to 30 second talking-head or voiceover Reel
-
-**Voiceover**
-This is the kind of milestone that shows where the game is headed.
-
-Here is the quick context: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
-
-A milestone worth putting into context.
-
-Why it matters: Records and milestones are proof points for the rise of women's sports.
-
-Follow Her Sports Daily for daily women's sports coverage.
-
-**On-screen text**
-1. A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
-2. Why it matters
-3. What comes next?
-
-
-## Rank 4: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
+## Rank 3: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
 
 **Priority:** Maybe Post  
 **Sport:** WNBA  
@@ -94,7 +71,7 @@ Follow Her Sports Daily for daily women's sports coverage.
 3. What comes next?
 
 
-## Rank 5: Saint Leo wins 2026 NCAA DII softball championship
+## Rank 4: Saint Leo wins 2026 NCAA DII softball championship
 
 **Priority:** Maybe Post  
 **Sport:** Softball  
@@ -117,30 +94,30 @@ Follow Her Sports Daily for daily women's sports coverage.
 3. What comes next?
 
 
-## Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+## Rank 5: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
 
 **Priority:** Maybe Post  
-**Sport:** NCAA Women's Basketball  
+**Sport:** WNBA  
 **Recommended format:** 20 to 30 second talking-head or voiceover Reel
 
 **Voiceover**
-The next wave of talent is already changing the future.
+This is the kind of milestone that shows where the game is headed.
 
-Here is the quick context: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+Here is the quick context: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
 
-A future-star angle with a clear roster-building hook.
+A milestone worth putting into context.
 
-Why it matters: Recruiting and roster stories show where the next wave of stars is coming from.
+Why it matters: Records and milestones are proof points for the rise of women's sports.
 
 Follow Her Sports Daily for daily women's sports coverage.
 
 **On-screen text**
-1. Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+1. Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
 2. Why it matters
 3. What comes next?
 
 
-## Rank 7: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+## Rank 6: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
 
 **Priority:** Maybe Post  
 **Sport:** PWHL / Women's Hockey  
