@@ -1,4 +1,4 @@
-name: Women's Sports News + HSD Complete System
+name: Women's Sports News + HSD Dashboard
 
 on:
   push:
@@ -42,6 +42,9 @@ jobs:
       - name: Generate enriched today graphics queue
         run: python generate_today_graphics_queue_v2.py
 
+      - name: Generate HSD dashboard
+        run: python generate_hsd_dashboard.py
+
       - name: Commit updated content files
         run: |
           git config user.name "github-actions"
@@ -70,5 +73,6 @@ jobs:
           git add today_graphics_queue.md
           git add today_graphics_queue.csv
           git add top_3_graphic_packets.md
-          git commit -m "Update HSD clean context graphics queue" || echo "No changes to commit"
+          git add dashboard/index.html
+          git commit -m "Update HSD dashboard" || echo "No changes to commit"
           git push
