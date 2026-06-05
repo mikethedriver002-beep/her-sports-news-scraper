@@ -1,0 +1,64 @@
+name: Women's Sports News + HSD Complete System
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 11 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 21 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run scraper
+        run: python womens_sports_scraper.py
+
+      - name: Generate HSD studio package
+        run: python generate_hsd_studio_package.py
+
+      - name: Generate HSD publish system
+        run: python generate_hsd_publish_system.py
+
+      - name: Generate HSD graphics system
+        run: python generate_hsd_graphics_system.py
+
+      - name: Commit updated content files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add womens_sports_articles.csv
+          git add daily_content_brief.csv
+          git add daily_content_command_center.csv
+          git add tonight_in_the_w_package.csv
+          git add must_post_carousels.csv
+          git add story_poll_package.csv
+          git add caption_bank_v2.csv
+          git add reel_script_package.md
+          git add graphics_copy_package.md
+          git add hsd_daily_content_hub.md
+          git add tonight_in_the_w_graphic_templates.csv
+          git add post_template_mapper.csv
+          git add master_posting_dashboard.csv
+          git add ready_to_post_graphic_copy.csv
+          git add hsd_publish_system_hub.md
+          git add tonight_in_the_w_visual_specs.csv
+          git add graphic_copy_rules.csv
+          git add daily_command_file.csv
+          git add image_generation_prompts.csv
+          git add hsd_graphics_system_hub.md
+          git commit -m "Update HSD complete system" || echo "No changes to commit"
+          git push
