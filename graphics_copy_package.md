@@ -1,6 +1,6 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-05T21:22:29.164239+00:00
+Generated: 2026-06-05T21:27:41.639485+00:00
 
 ## Daily Content Command Center
 
@@ -94,13 +94,13 @@ Generated: 2026-06-05T21:22:29.164239+00:00
 - Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 10: Women’s sports are booming for the Texas Longhorns — investment is the reason why
+### Rank 10: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
-- First slide / main text: The business of women's sports keeps growing: Women’s sports are booming for the Texas Longhorns — investment is the reason why
+- First slide / main text: The business of women's sports keeps growing: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
 - Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
 

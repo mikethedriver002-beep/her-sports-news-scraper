@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Content Hub
 
-Generated: 2026-06-05T21:22:29.164885+00:00
+Generated: 2026-06-05T21:27:41.640120+00:00
 
 ## What this package includes
 
@@ -108,12 +108,12 @@ Generated: 2026-06-05T21:22:29.164885+00:00
 - Caption starter: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour How big is this move for the program?
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 10: Women’s sports are booming for the Texas Longhorns — investment is the reason why
+### Rank 10: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
 
-- Sport: Women's Sports
+- Sport: Golf / LPGA
 - Story type: Business / Growth
 - Content family: Context Carousel
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
-- Caption starter: Women’s sports are booming for the Texas Longhorns — investment is the reason why The growth of women's sports keeps getting harder to ignore.
+- Caption starter: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million The growth of women's sports keeps getting harder to ignore.
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
