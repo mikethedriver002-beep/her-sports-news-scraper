@@ -1,10 +1,16 @@
 name: Women's Sports News Scraper
 
 on:
+  push:
   workflow_dispatch:
   schedule:
+    # 7 AM ET
     - cron: "0 11 * * *"
+
+    # 12 PM ET
     - cron: "0 16 * * *"
+
+    # 5 PM ET
     - cron: "0 21 * * *"
 
 permissions:
@@ -26,10 +32,10 @@ jobs:
       - name: Run scraper
         run: python womens_sports_scraper.py
 
-      - name: Commit updated CSV
+      - name: Commit updated CSV files
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add womens_sports_articles.csv
-          git commit -m "Update women's sports news scrape" || echo "No changes to commit"
+          git add womens_sports_articles.csv daily_content_brief.csv
+          git commit -m "Update women's sports content files" || echo "No changes to commit"
           git push
