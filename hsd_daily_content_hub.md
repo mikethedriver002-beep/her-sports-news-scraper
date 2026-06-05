@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Content Hub
 
-Generated: 2026-06-05T21:28:50.844675+00:00
+Generated: 2026-06-05T21:45:44.292775+00:00
 
 ## What this package includes
 
@@ -36,17 +36,7 @@ Generated: 2026-06-05T21:28:50.844675+00:00
 
 ## Maybe Post
 
-### Rank 3: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
-
-- Sport: WNBA
-- Story type: Record / Milestone
-- Content family: Context Carousel
-- Recommended asset: 3 to 4-slide milestone graphic
-- Hook: This is the kind of milestone that shows where the game is headed.
-- Caption starter: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award What should we cover next?
-- Visual brief: Use a milestone carousel with the record, context, and why it matters.
-
-### Rank 4: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
+### Rank 3: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
 
 - Sport: WNBA
 - Story type: Game Recap / Result
@@ -56,7 +46,7 @@ Generated: 2026-06-05T21:28:50.844675+00:00
 - Caption starter: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 5: Saint Leo wins 2026 NCAA DII softball championship
+### Rank 4: Saint Leo wins 2026 NCAA DII softball championship
 
 - Sport: Softball
 - Story type: Game Recap / Result
@@ -65,6 +55,16 @@ Generated: 2026-06-05T21:28:50.844675+00:00
 - Hook: Here is the quick version of what happened and why it matters.
 - Caption starter: Saint Leo wins 2026 NCAA DII softball championship Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
+
+### Rank 5: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
+
+- Sport: WNBA
+- Story type: Record / Milestone
+- Content family: Context Carousel
+- Recommended asset: 3 to 4-slide milestone graphic
+- Hook: This is the kind of milestone that shows where the game is headed.
+- Caption starter: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers What should we cover next?
+- Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
 ### Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
 
