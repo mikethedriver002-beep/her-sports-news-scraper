@@ -301,10 +301,11 @@ def write_queue_csv(rows, caption_rows, prompt_rows, ctx_by_key) -> None:
         "template_name", "asset_shape", "timing", "context_source_status",
         "context_confidence", "manual_review_flag", "story_summary", "key_fact_1",
         "key_fact_2", "key_fact_3", "final_score", "key_number", "main_takeaway",
+        "supplemental_source_count", "supplemental_sources",
         "caption", "image_generation_prompt",
     ]
     with open(QUEUE_CSV_FILE, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         for row in rows:
             headline = clean(row.get("headline", ""))
