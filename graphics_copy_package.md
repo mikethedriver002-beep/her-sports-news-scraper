@@ -1,6 +1,6 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-05T20:52:33.932377+00:00
+Generated: 2026-06-05T21:22:29.164239+00:00
 
 ## Daily Content Command Center
 
@@ -54,23 +54,23 @@ Generated: 2026-06-05T20:52:33.932377+00:00
 - Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 6: For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible
-
-- Decision: Maybe Post
-- Content family: Context Carousel
-- Recommended asset: single feed card
-- Hook: Another market is betting big on women's sports.
-- First slide / main text: Expansion watch: For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible
-- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
-- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
-
-### Rank 7: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+### Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
 
 - Decision: Maybe Post
 - Content family: Story + Feed Combo
 - Recommended asset: single graphic + Story follow-up
 - Hook: The next wave of talent is already changing the future.
 - First slide / main text: Roster watch: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+- Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
+- Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
+
+### Rank 7: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+
+- Decision: Maybe Post
+- Content family: Story + Feed Combo
+- Recommended asset: single graphic + Story follow-up
+- Hook: The next wave of talent is already changing the future.
+- First slide / main text: Roster watch: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
 - Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
@@ -94,13 +94,13 @@ Generated: 2026-06-05T20:52:33.932377+00:00
 - Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 10: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
+### Rank 10: Women’s sports are booming for the Texas Longhorns — investment is the reason why
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
-- First slide / main text: The business of women's sports keeps growing: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
+- First slide / main text: The business of women's sports keeps growing: Women’s sports are booming for the Texas Longhorns — investment is the reason why
 - Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
 

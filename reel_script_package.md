@@ -1,6 +1,6 @@
 # Her Sports Daily Reel Script Package
 
-Generated: 2026-06-05T20:52:33.932147+00:00
+Generated: 2026-06-05T21:22:29.163989+00:00
 
 ## Rank 1: Texas wins the 2026 NCAA DI softball championship
 
@@ -117,30 +117,7 @@ Follow Her Sports Daily for daily women's sports coverage.
 3. What comes next?
 
 
-## Rank 6: For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible
-
-**Priority:** Maybe Post  
-**Sport:** PWHL / Women's Hockey  
-**Recommended format:** 20 to 30 second talking-head or voiceover Reel
-
-**Voiceover**
-Another market is betting big on women's sports.
-
-Here is the quick context: For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible
-
-Another sign that women's sports demand is outgrowing the old model.
-
-Why it matters: Expansion stories show where fan demand and investor confidence are rising.
-
-Follow Her Sports Daily for daily women's sports coverage.
-
-**On-screen text**
-1. For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible
-2. Why it matters
-3. What comes next?
-
-
-## Rank 7: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+## Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
 
 **Priority:** Maybe Post  
 **Sport:** NCAA Women's Basketball  
@@ -159,6 +136,29 @@ Follow Her Sports Daily for daily women's sports coverage.
 
 **On-screen text**
 1. Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+2. Why it matters
+3. What comes next?
+
+
+## Rank 7: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+
+**Priority:** Maybe Post  
+**Sport:** PWHL / Women's Hockey  
+**Recommended format:** 20 to 30 second talking-head or voiceover Reel
+
+**Voiceover**
+The next wave of talent is already changing the future.
+
+Here is the quick context: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+
+A future-star angle with a clear roster-building hook.
+
+Why it matters: Recruiting and roster stories show where the next wave of stars is coming from.
+
+Follow Her Sports Daily for daily women's sports coverage.
+
+**On-screen text**
+1. PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
 2. Why it matters
 3. What comes next?
 

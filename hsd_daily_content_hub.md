@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Content Hub
 
-Generated: 2026-06-05T20:52:33.933028+00:00
+Generated: 2026-06-05T21:22:29.164885+00:00
 
 ## What this package includes
 
@@ -66,17 +66,7 @@ Generated: 2026-06-05T20:52:33.933028+00:00
 - Caption starter: Saint Leo wins 2026 NCAA DII softball championship Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 6: For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible
-
-- Sport: PWHL / Women's Hockey
-- Story type: League Expansion
-- Content family: Context Carousel
-- Recommended asset: single feed card
-- Hook: Another market is betting big on women's sports.
-- Caption starter: For Goldeneyes GM Cara Gardner Morey, The Priority Through PWHL Expansion Has Been To Keep As Many Players As Possible More teams, more investment, more proof that the demand is real.
-- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
-
-### Rank 7: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
+### Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
 
 - Sport: NCAA Women's Basketball
 - Story type: Recruiting / Roster News
@@ -84,6 +74,16 @@ Generated: 2026-06-05T20:52:33.933028+00:00
 - Recommended asset: single graphic + Story follow-up
 - Hook: The next wave of talent is already changing the future.
 - Caption starter: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards How big is this move for the program?
+- Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
+
+### Rank 7: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+
+- Sport: PWHL / Women's Hockey
+- Story type: Recruiting / Roster News
+- Content family: Story + Feed Combo
+- Recommended asset: single graphic + Story follow-up
+- Hook: The next wave of talent is already changing the future.
+- Caption starter: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING How big is this move for the program?
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
 ## Save for Weekend
@@ -108,12 +108,12 @@ Generated: 2026-06-05T20:52:33.933028+00:00
 - Caption starter: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour How big is this move for the program?
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 10: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
+### Rank 10: Women’s sports are booming for the Texas Longhorns — investment is the reason why
 
-- Sport: Golf / LPGA
+- Sport: Women's Sports
 - Story type: Business / Growth
 - Content family: Context Carousel
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
-- Caption starter: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million The growth of women's sports keeps getting harder to ignore.
+- Caption starter: Women’s sports are booming for the Texas Longhorns — investment is the reason why The growth of women's sports keeps getting harder to ignore.
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
