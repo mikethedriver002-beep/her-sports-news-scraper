@@ -1,6 +1,6 @@
 # Her Sports Daily Today Graphics Queue
 
-Generated: 2026-06-05T23:03:02.939742+00:00
+Generated: 2026-06-05T23:03:46.695853+00:00
 
 Use this file as the bridge between the automated news system and the graphics chat.
 Copy one full GRAPHIC packet and paste it into the graphics/design chat.
@@ -27,13 +27,16 @@ Copy one full GRAPHIC packet and paste it into the graphics/design chat.
 
 ### Verified story context
 - Summary: Indiana Fever Revokes Reporter's Credentials Over Caitlin Clark Injury Coverage Lynx Edges Valkyries 87-84, Extends Unbeaten WNBA Commissioner's Cup Run Caitlin Clark Leads Fever Over Dream to Open WNBA Commissioner's Cup Defense Aryna Sabalenka Suffers Shocking French Open 2026 Quarterfinal Collapse Chennedy Carter Calls Out Critics, Azzi Fudd After Aces Fall to Wings Records and milestones are proof points for the rise of women's sports.
-- Key fact: Through the first month, Minnesota rookie Olivia Miles leads all rookies in points, assists, and steals.
-- Key fact: Fever superstar Caitlin Clark averaged 8.5 assists per game over the course of her career — that's 1.8 more than anyone in WNBA history.
-- Score: 87-84
-- Key number: 87
+- Verified detail: Through the first month, Minnesota rookie Olivia Miles leads all rookies in points, assists, and steals.
+- Verified detail: Fever superstar Caitlin Clark averaged 8.5 assists per game over the course of her career — that's 1.8 more than anyone in WNBA history.
 - Context confidence: High
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a milestone carousel with the record, context, and why it matters.
@@ -44,7 +47,7 @@ A milestone worth putting into context.
 ### Slide copy
 
 **Slide 1 - Hook:** A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
-The story you need to know.
+A milestone worth putting into context.
 
 **Slide 2 - The milestone:** The milestone
 87
@@ -52,8 +55,8 @@ The story you need to know.
 **Slide 3 - Context:** Why it matters
 Through the first month, Minnesota rookie Olivia Miles leads all rookies in points, assists, and steals.
 
-**Slide 4 - CTA:** Your take?
-Follow Her Sports Daily for more women's sports coverage.
+**Slide 4 - CTA:** How big is this?
+Follow Her Sports Daily for more.
 
 ### Caption
 A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026 This is the kind of milestone that shows where the game is headed. Why it matters: Records and milestones are proof points for the rise of women's sports. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #WNBA #WomensBasketball
@@ -74,10 +77,15 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: To
 
 ### Verified story context
 - Summary: Texas wins the 2026 NCAA DI softball championship Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
-- Key fact: Texas wins the 2026 NCAA DI softball championship NCAA.com This is timely Softball coverage with a result fans may want explained quickly.
+- Verified detail: Texas wins the 2026 NCAA DI softball championship NCAA.com This is timely Softball coverage with a result fans may want explained quickly.
 - Context confidence: Medium
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a quick recap carousel with final result, top performer, and next game.
@@ -88,7 +96,7 @@ What happened, who stood out, and why it matters for Softball fans.
 ### Slide copy
 
 **Slide 1 - Hook:** Texas wins the 2026 NCAA DI softball championship
-The story you need to know.
+The result you need to know.
 
 **Slide 2 - What happened:** What happened
 Texas wins the 2026 NCAA DI softball championship Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
@@ -118,11 +126,15 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: Po
 
 ### Verified story context
 - Summary: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
-- Key fact: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream FOX Sports This is timely WNBA coverage with a result fans may want explained quickly.
-- Score: 83-71
+- Verified detail: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream CBS Sports This is timely WNBA coverage with a result fans may want explained quickly.
 - Context confidence: Medium
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a quick recap carousel with final result, top performer, and next game.
@@ -133,13 +145,13 @@ What happened, who stood out, and why it matters for WNBA fans.
 ### Slide copy
 
 **Slide 1 - Hook:** Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
-The story you need to know.
+The result you need to know.
 
 **Slide 2 - What happened:** What happened
 Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
 
 **Slide 3 - Why it matters:** Why it matters
-Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream FOX Sports This is timely WNBA coverage with a result fans may want explained quickly.
+Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream CBS Sports This is timely WNBA coverage with a result fans may want explained quickly.
 
 **Slide 4 - CTA:** Your take?
 Follow Her Sports Daily for more women's sports coverage.
@@ -163,11 +175,15 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: To
 
 ### Verified story context
 - Summary: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers ESPN Records and milestones are proof points for the rise of women's sports.
-- Key fact: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
-- Key number: 8
+- Verified detail: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
 - Context confidence: Medium
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a milestone carousel with the record, context, and why it matters.
@@ -178,7 +194,7 @@ A milestone worth putting into context.
 ### Slide copy
 
 **Slide 1 - Hook:** Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
-The story you need to know.
+A milestone worth putting into context.
 
 **Slide 2 - The milestone:** The milestone
 8
@@ -186,8 +202,8 @@ The story you need to know.
 **Slide 3 - Context:** Why it matters
 Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
 
-**Slide 4 - CTA:** Your take?
-Follow Her Sports Daily for more women's sports coverage.
+**Slide 4 - CTA:** How big is this?
+Follow Her Sports Daily for more.
 
 ### Caption
 Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers This is the kind of milestone that shows where the game is headed. Why it matters: Records and milestones are proof points for the rise of women's sports. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #WNBA #WomensBasketball
@@ -208,10 +224,15 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: To
 
 ### Verified story context
 - Summary: Saint Leo wins 2026 NCAA DII softball championship Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
-- Key fact: Saint Leo wins 2026 NCAA DII softball championship NCAA.com This is timely Softball coverage with a result fans may want explained quickly.
+- Verified detail: Saint Leo wins 2026 NCAA DII softball championship NCAA.com This is timely Softball coverage with a result fans may want explained quickly.
 - Context confidence: Medium
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a quick recap carousel with final result, top performer, and next game.
@@ -222,7 +243,7 @@ What happened, who stood out, and why it matters for Softball fans.
 ### Slide copy
 
 **Slide 1 - Hook:** Saint Leo wins 2026 NCAA DII softball championship
-The story you need to know.
+The result you need to know.
 
 **Slide 2 - What happened:** What happened
 Saint Leo wins 2026 NCAA DII softball championship Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
@@ -256,6 +277,11 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: Po
 - Manual review flag: Yes
 - Verification notes: Fetched article text and filtered for meaningful article sentences. Do not add exact stats, scores, records, jersey numbers, or player details unless manually verified from the source. No reliable article facts were extracted. Packet should be treated as a research prompt, not final copy.
 
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
+
 ### Design direction
 Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
@@ -265,16 +291,16 @@ A future-star angle with a clear roster-building hook.
 ### Slide copy
 
 **Slide 1 - Hook:** PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
-The story you need to know.
+The story is worth tracking, but exact stats need verification before publishing.
 
-**Slide 2 - Context:** The context
+**Slide 2 - Research needed:** Verify before designing
 Reported PWHL / Women's Hockey story: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
 
-**Slide 3 - Angle:** The angle
-Reported PWHL / Women's Hockey story: PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING
+**Slide 3 - Do not invent:** Accuracy check
+Do not add scores, stat lines, records, jersey numbers, or player details unless verified.
 
 **Slide 4 - CTA:** Your take?
-Follow Her Sports Daily for more women's sports coverage.
+Follow Her Sports Daily for verified women's sports coverage.
 
 ### Caption
 PWHL HAMILTON ADDS BRIANNE JENNER IN HISTORIC FIRST SIGNING The next wave of talent is already changing the future. Why it matters: Recruiting and roster stories show where the next wave of stars is coming from. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #PWHL #WomensHockey
@@ -295,11 +321,16 @@ Create a single 4:5 Instagram feed graphic for Her Sports Daily. Template style:
 
 ### Verified story context
 - Summary: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards South Carolina women's basketball coach Dawn Staley revealed how the Gamecocks landed Oliviyah Edwards after her release from Tennessee.
-- Key fact: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards How South Carolina Basketball Coach Dawn Staley Landed 5-Star Recruit Oliviyah Edwards South Carolina women's basketball coach Dawn Staley revealed how the Gamecocks landed Oliviyah Edwards after her release from Tennessee.
-- Key fact: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards Dawn Staley and South Carolina just pulled off one of the biggest wins of the NCAA women's basketball offseason , successfully recruiting five-star forward Oliviyah Edwards — the Class of 2026's No.
+- Verified detail: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards How South Carolina Basketball Coach Dawn Staley Landed 5-Star Recruit Oliviyah Edwards South Carolina women's basketball coach Dawn Staley revealed how the Gamecocks landed Oliviyah Edwards after her release from Tennessee.
+- Verified detail: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards Dawn Staley and South Carolina just pulled off one of the biggest wins of the NCAA women's basketball offseason , successfully recruiting five-star forward Oliviyah Edwards — the Class of 2026's No.
 - Context confidence: High
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a roster/recruiting graphic with the player, school/team, and why it matters.
@@ -319,7 +350,7 @@ Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards Dawn Staley an
 Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards How South Carolina Basketball Coach Dawn Staley Landed 5-Star Recruit Oliviyah Edwards South Carolina women's basketball coach Dawn Staley revealed how the Gamecocks landed Oliviyah Edwards after her release from Tennessee.
 
 **Slide 4 - CTA:** Your take?
-Follow Her Sports Daily for more women's sports coverage.
+Follow Her Sports Daily for more.
 
 ### Caption
 Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards The next wave of talent is already changing the future. Why it matters: Recruiting and roster stories show where the next wave of stars is coming from. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #NCAAWBB #WomensBasketball
@@ -340,11 +371,16 @@ Create a single 4:5 Instagram feed graphic for Her Sports Daily. Template style:
 
 ### Verified story context
 - Summary: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour Tennis legend Serena Williams has signed on to play doubles at the 2026 Berlin Open after teaming up with Victoria Mboko at Queen's Club.
-- Key fact: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour Tennis Icon Serena Williams Adds 2026 Berlin Open to WTA Comeback Tour Tennis legend Serena Williams has signed on to play doubles at the 2026 Berlin Open after teaming up with Victoria Mboko at Queen's Club.
-- Key fact: Serena Williams last played the Berlin Open in 2008, snapping a 17-match winning streak off a tight three-set loss to Dinara Safina. (Andreas Rentz/Bongarts/Getty Images) Serena Williams will continue her tennis comeback at the 2026 Berlin Tennis Open , adding the German WTA 500 event to her doubles schedule.
+- Verified detail: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour Tennis Icon Serena Williams Adds 2026 Berlin Open to WTA Comeback Tour Tennis legend Serena Williams has signed on to play doubles at the 2026 Berlin Open after teaming up with Victoria Mboko at Queen's Club.
+- Verified detail: Serena Williams last played the Berlin Open in 2008, snapping a 17-match winning streak off a tight three-set loss to Dinara Safina. (Andreas Rentz/Bongarts/Getty Images) Serena Williams will continue her tennis comeback at the 2026 Berlin Tennis Open , adding the German WTA 500 event to her doubles schedule.
 - Context confidence: High
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a roster/recruiting graphic with the player, school/team, and why it matters.
@@ -364,7 +400,7 @@ Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour Serena William
 Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour Tennis Icon Serena Williams Adds 2026 Berlin Open to WTA Comeback Tour Tennis legend Serena Williams has signed on to play doubles at the 2026 Berlin Open after teaming up with Victoria Mboko at Queen's Club.
 
 **Slide 4 - CTA:** Your take?
-Follow Her Sports Daily for more women's sports coverage.
+Follow Her Sports Daily for more.
 
 ### Caption
 Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour The next wave of talent is already changing the future. Why it matters: Recruiting and roster stories show where the next wave of stars is coming from. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #WTA #Tennis

@@ -1,6 +1,6 @@
 # Top 3 Graphic Packets
 
-Generated: 2026-06-05T23:03:02.948065+00:00
+Generated: 2026-06-05T23:03:46.700324+00:00
 
 These are the first three graphics to make today.
 
@@ -15,13 +15,16 @@ These are the first three graphics to make today.
 
 ### Verified story context
 - Summary: Indiana Fever Revokes Reporter's Credentials Over Caitlin Clark Injury Coverage Lynx Edges Valkyries 87-84, Extends Unbeaten WNBA Commissioner's Cup Run Caitlin Clark Leads Fever Over Dream to Open WNBA Commissioner's Cup Defense Aryna Sabalenka Suffers Shocking French Open 2026 Quarterfinal Collapse Chennedy Carter Calls Out Critics, Azzi Fudd After Aces Fall to Wings Records and milestones are proof points for the rise of women's sports.
-- Key fact: Through the first month, Minnesota rookie Olivia Miles leads all rookies in points, assists, and steals.
-- Key fact: Fever superstar Caitlin Clark averaged 8.5 assists per game over the course of her career — that's 1.8 more than anyone in WNBA history.
-- Score: 87-84
-- Key number: 87
+- Verified detail: Through the first month, Minnesota rookie Olivia Miles leads all rookies in points, assists, and steals.
+- Verified detail: Fever superstar Caitlin Clark averaged 8.5 assists per game over the course of her career — that's 1.8 more than anyone in WNBA history.
 - Context confidence: High
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a milestone carousel with the record, context, and why it matters.
@@ -32,7 +35,7 @@ A milestone worth putting into context.
 ### Slide copy
 
 **Slide 1 - Hook:** A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
-The story you need to know.
+A milestone worth putting into context.
 
 **Slide 2 - The milestone:** The milestone
 87
@@ -40,8 +43,8 @@ The story you need to know.
 **Slide 3 - Context:** Why it matters
 Through the first month, Minnesota rookie Olivia Miles leads all rookies in points, assists, and steals.
 
-**Slide 4 - CTA:** Your take?
-Follow Her Sports Daily for more women's sports coverage.
+**Slide 4 - CTA:** How big is this?
+Follow Her Sports Daily for more.
 
 ### Caption
 A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026 This is the kind of milestone that shows where the game is headed. Why it matters: Records and milestones are proof points for the rise of women's sports. Swipe through for the quick breakdown. #WomensSports #HerSportsDaily #SportsNews #WNBA #WomensBasketball
@@ -62,10 +65,15 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: To
 
 ### Verified story context
 - Summary: Texas wins the 2026 NCAA DI softball championship Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
-- Key fact: Texas wins the 2026 NCAA DI softball championship NCAA.com This is timely Softball coverage with a result fans may want explained quickly.
+- Verified detail: Texas wins the 2026 NCAA DI softball championship NCAA.com This is timely Softball coverage with a result fans may want explained quickly.
 - Context confidence: Medium
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a quick recap carousel with final result, top performer, and next game.
@@ -76,7 +84,7 @@ What happened, who stood out, and why it matters for Softball fans.
 ### Slide copy
 
 **Slide 1 - Hook:** Texas wins the 2026 NCAA DI softball championship
-The story you need to know.
+The result you need to know.
 
 **Slide 2 - What happened:** What happened
 Texas wins the 2026 NCAA DI softball championship Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
@@ -106,11 +114,15 @@ Create a 4-slide 4:5 Instagram carousel for Her Sports Daily. Template style: Po
 
 ### Verified story context
 - Summary: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
-- Key fact: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream FOX Sports This is timely WNBA coverage with a result fans may want explained quickly.
-- Score: 83-71
+- Verified detail: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream CBS Sports This is timely WNBA coverage with a result fans may want explained quickly.
 - Context confidence: Medium
 - Manual review flag: No
 - Verification notes: Fetched article text and filtered for meaningful article sentences.
+
+### Production accuracy rules
+- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.
+- If context confidence is Low or manual review is Yes, verify the source before final design.
+- If a player jersey number cannot be verified from reliable sources, do not show the number.
 
 ### Design direction
 Use a quick recap carousel with final result, top performer, and next game.
@@ -121,13 +133,13 @@ What happened, who stood out, and why it matters for WNBA fans.
 ### Slide copy
 
 **Slide 1 - Hook:** Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
-The story you need to know.
+The result you need to know.
 
 **Slide 2 - What happened:** What happened
 Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Comprehensive up-to-date news coverage, aggregated from sources all over the world by Google News.
 
 **Slide 3 - Why it matters:** Why it matters
-Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream FOX Sports This is timely WNBA coverage with a result fans may want explained quickly.
+Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream CBS Sports This is timely WNBA coverage with a result fans may want explained quickly.
 
 **Slide 4 - CTA:** Your take?
 Follow Her Sports Daily for more women's sports coverage.
