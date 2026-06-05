@@ -1,31 +1,34 @@
 """
-Her Sports Daily Women's Sports News Scraper
---------------------------------------------
+Her Sports Daily Women's Sports News Scraper v3
+-----------------------------------------------
 
 This scraper pulls women's sports headlines from RSS feeds and turns them into
-a content planning CSV with editorial fields for Instagram, TikTok, Reels, and
-daily news coverage.
+two CSVs:
+
+1. womens_sports_articles.csv
+   Full article database with priority, sport, story type, post angle, caption, etc.
+
+2. daily_content_brief.csv
+   A smaller, cleaner shortlist of the best stories to consider posting today.
 
 It uses only Python's standard library, so it works cleanly in GitHub Actions.
-
-Output:
-    womens_sports_articles.csv
 """
 
 from __future__ import annotations
 
 import csv
-import datetime as dt
 import html
 import re
-import urllib.request
 import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from typing import Dict, Iterable, List, Tuple
 
 
 OUTPUT_FILE = "womens_sports_articles.csv"
+DAILY_BRIEF_FILE = "daily_content_brief.csv"
+MAX_DAILY_BRIEF_ITEMS = 25
 
 
 def google_news(query: str) -> str:
@@ -37,7 +40,7 @@ def google_news(query: str) -> str:
 
 
 FEED_URLS = [
-    # Direct RSS feeds, usually cleaner
+    # Direct RSS feeds
     "https://justwomenssports.com/feed/",
     "https://womeninsport.org/feed/",
     "https://www.womenssportsfoundation.org/feed/",
@@ -96,8 +99,8 @@ SPORT_RULES: List[Tuple[str, List[str]]] = [
     ("NCAA Women's Basketball", ["women's basketball", "ncaa basketball", "march madness", "final four", "uconn", "south carolina", "usc", "lsu", "notre dame", "iowa"]),
     ("NWSL / Women's Soccer", ["nwsl", "uswnt", "women's soccer", "women's football", "gotham", "thorns", "angel city", "spirit", "wave", "royals", "legacy fc", "summit fc", "lionesses"]),
     ("PWHL / Women's Hockey", ["pwhl", "women's hockey", "fleet", "frost", "sirens", "charge", "victoire", "sceptres", "torrent", "goldeneyes"]),
-    ("Tennis", ["tennis", "wta", "wimbledon", "us open", "french open", "australian open", "coco gauff", "naomi osaka", "swiatek", "sabalenka"]),
-    ("Golf / LPGA", ["lpga", "women's open", "golf", "nelly korda", "lexi thompson", "rose zhang"]),
+    ("Tennis", ["tennis", "wta", "wimbledon", "us open", "french open", "australian open", "coco gauff", "naomi osaka", "swiatek", "sabalenka", "serena", "venus"]),
+    ("Golf / LPGA", ["lpga", "women's open", "golf", "nelly korda", "lexi thompson", "rose zhang", "kupcho"]),
     ("Softball", ["softball", "college world series", "wcws"]),
     ("Volleyball", ["volleyball", "lovb", "major league volleyball", "mlv", "pro volleyball", "nebraska volleyball"]),
     ("Gymnastics", ["gymnastics", "simone biles", "suni lee", "olympic gymnastics"]),
@@ -144,6 +147,14 @@ NEGATIVE_OR_SENSITIVE_KEYWORDS = [
 ]
 
 
+STOPWORDS = {
+    "the", "and", "for", "with", "from", "this", "that", "into", "over", "after", "before",
+    "about", "what", "why", "how", "when", "where", "women", "womens", "woman", "sports",
+    "sport", "news", "new", "latest", "watch", "live", "highlights", "full", "today",
+    "game", "games", "season", "team", "teams", "player", "players"
+}
+
+
 def clean_text(value: str) -> str:
     value = html.unescape(value or "")
     value = re.sub(r"<[^>]+>", " ", value)
@@ -173,6 +184,14 @@ def parse_date(raw_date: str) -> str:
         return raw_date
 
 
+def tidy_google_title(title: str, source: str) -> str:
+    title = clean_text(title)
+    source = clean_text(source)
+    if source and title.endswith(f" - {source}"):
+        return title[: -(len(source) + 3)].strip()
+    return title
+
+
 def parse_feed(url: str) -> List[Dict[str, str]]:
     articles: List[Dict[str, str]] = []
 
@@ -190,14 +209,19 @@ def parse_feed(url: str) -> List[Dict[str, str]]:
         source_title = clean_text(channel.findtext("title", default=url))
 
         for item in channel.findall("item"):
-            title = clean_text(item.findtext("title", default=""))
+            item_source = source_title
+            source_node = item.find("source")
+            if source_node is not None and source_node.text:
+                item_source = clean_text(source_node.text)
+
+            title = tidy_google_title(item.findtext("title", default=""), item_source)
             link = clean_text(item.findtext("link", default=""))
             published = parse_date(item.findtext("pubDate", default=""))
             categories = ", ".join(clean_text(c.text or "") for c in item.findall("category") if c.text)
             summary = clean_text(item.findtext("description", default=""))
 
             articles.append({
-                "source": source_title,
+                "source": item_source,
                 "title": title,
                 "link": link,
                 "published": published,
@@ -421,6 +445,129 @@ def dedupe_articles(articles: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
     return deduped
 
 
+def topic_key(title: str) -> str:
+    words = re.findall(r"[a-zA-Z0-9']+", title.lower())
+    important = [w for w in words if len(w) > 2 and w not in STOPWORDS]
+    return " ".join(important[:8])
+
+
+def is_sensitive(article: Dict[str, str]) -> bool:
+    text = combined_text(article)
+    return any(keyword in text for keyword in NEGATIVE_OR_SENSITIVE_KEYWORDS)
+
+
+def coverage_slot(priority: int, rank: int, sensitive: bool) -> str:
+    if sensitive:
+        return "Review Before Posting"
+    if rank <= 3 and priority >= 8:
+        return "Lead Story"
+    if priority >= 8:
+        return "Strong Candidate"
+    if priority >= 6:
+        return "Story Filler"
+    return "Watchlist"
+
+
+def visual_brief(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+    sport = article.get("sport", "")
+
+    if story_type == "Business / Growth":
+        return "Use a clean data carousel: headline stat, why it matters, trend context, what comes next."
+    if story_type == "League Expansion":
+        return "Use a map or team/logo style carousel showing the new market and why the expansion matters."
+    if story_type == "Game Preview":
+        return "Use a Tonight graphic: matchup, time/network if available, one key player, one prediction angle."
+    if story_type == "Game Recap":
+        return "Use a quick recap carousel: final result, top performer, turning point, next game."
+    if story_type == "Player Profile":
+        return "Use a reel or carousel focused on the athlete, their background, and why fans should care."
+    if story_type == "Breaking News":
+        return "Use a breaking graphic with a short headline, source tag, and one context slide."
+    return f"Use a simple {sport} news card with headline, context, and one engagement question."
+
+
+def hook(article: Dict[str, str]) -> str:
+    title = article.get("title", "")
+    story_type = article.get("story_type", "")
+
+    if story_type == "Business / Growth":
+        return "Women's sports are becoming impossible for the business world to ignore."
+    if story_type == "League Expansion":
+        return "Another market is betting big on women's sports."
+    if story_type == "Game Preview":
+        return "Here is why this matchup is worth your time tonight."
+    if story_type == "Game Recap":
+        return "Here is the quick version of what happened and why it matters."
+    if story_type == "Breaking News":
+        return "This is developing, but it is already worth tracking."
+    return title
+
+
+def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = MAX_DAILY_BRIEF_ITEMS) -> List[Dict[str, str]]:
+    selected: List[Dict[str, str]] = []
+    seen_topics = set()
+    sport_counts: Dict[str, int] = {}
+    bucket_counts: Dict[str, int] = {}
+
+    candidates = sorted(
+        articles,
+        key=lambda x: (int(x.get("priority_score", "0")), x.get("published", "")),
+        reverse=True,
+    )
+
+    for article in candidates:
+        priority = int(article.get("priority_score", "0") or 0)
+        title = article.get("title", "").strip()
+        sport = article.get("sport", "Women's Sports")
+        bucket = article.get("content_bucket", "Daily News")
+        key = topic_key(title)
+
+        if not title or priority < 5:
+            continue
+        if key in seen_topics:
+            continue
+        if sport_counts.get(sport, 0) >= 6:
+            continue
+        if bucket_counts.get(bucket, 0) >= 7:
+            continue
+
+        rank = len(selected) + 1
+        sensitive = is_sensitive(article)
+        status = "Manual review" if sensitive else ("Post candidate" if priority >= 8 else "Maybe")
+
+        selected.append({
+            "rank": str(rank),
+            "coverage_slot": coverage_slot(priority, rank, sensitive),
+            "priority_score": str(priority),
+            "status": status,
+            "content_bucket": bucket,
+            "sport": sport,
+            "story_type": article.get("story_type", ""),
+            "source": article.get("source", ""),
+            "headline": title,
+            "link": article.get("link", ""),
+            "post_format": article.get("post_format", ""),
+            "hook": hook(article),
+            "instagram_angle": article.get("instagram_angle", ""),
+            "why_it_matters": article.get("why_it_matters", ""),
+            "caption_starter": article.get("suggested_caption", ""),
+            "visual_brief": visual_brief(article),
+            "hashtags": article.get("hashtags", ""),
+            "published": article.get("published", ""),
+            "notes": "",
+        })
+
+        seen_topics.add(key)
+        sport_counts[sport] = sport_counts.get(sport, 0) + 1
+        bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
+
+        if len(selected) >= max_items:
+            break
+
+    return selected
+
+
 def scrape_feeds() -> List[Dict[str, str]]:
     all_articles: List[Dict[str, str]] = []
 
@@ -435,7 +582,7 @@ def scrape_feeds() -> List[Dict[str, str]]:
     return enriched
 
 
-def save_to_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FILE) -> None:
+def save_articles_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FILE) -> None:
     fieldnames = [
         "priority_score",
         "content_bucket",
@@ -463,11 +610,45 @@ def save_to_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FILE) -> 
     print(f"Saved {len(articles)} articles to {filename}")
 
 
+def save_daily_brief_csv(brief_rows: List[Dict[str, str]], filename: str = DAILY_BRIEF_FILE) -> None:
+    fieldnames = [
+        "rank",
+        "coverage_slot",
+        "priority_score",
+        "status",
+        "content_bucket",
+        "sport",
+        "story_type",
+        "source",
+        "headline",
+        "link",
+        "post_format",
+        "hook",
+        "instagram_angle",
+        "why_it_matters",
+        "caption_starter",
+        "visual_brief",
+        "hashtags",
+        "published",
+        "notes",
+    ]
+
+    with open(filename, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in brief_rows:
+            writer.writerow({field: row.get(field, "") for field in fieldnames})
+
+    print(f"Saved {len(brief_rows)} brief rows to {filename}")
+
+
 def main() -> None:
     articles = scrape_feeds()
-    save_to_csv(articles)
+    brief_rows = build_daily_content_brief(articles)
+
+    save_articles_csv(articles)
+    save_daily_brief_csv(brief_rows)
 
 
 if __name__ == "__main__":
     main()
-        
