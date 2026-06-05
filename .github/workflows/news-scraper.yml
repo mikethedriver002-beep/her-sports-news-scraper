@@ -27,6 +27,9 @@ jobs:
       - name: Run scraper
         run: python womens_sports_scraper.py
 
+      - name: Enrich story context and stats
+        run: python generate_story_context.py
+
       - name: Generate HSD studio package
         run: python generate_hsd_studio_package.py
 
@@ -36,8 +39,8 @@ jobs:
       - name: Generate HSD graphics system
         run: python generate_hsd_graphics_system.py
 
-      - name: Generate today graphics queue
-        run: python generate_today_graphics_queue.py
+      - name: Generate enriched today graphics queue
+        run: python generate_today_graphics_queue_v2.py
 
       - name: Commit updated content files
         run: |
@@ -45,6 +48,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git add womens_sports_articles.csv
           git add daily_content_brief.csv
+          git add story_context_enriched.csv
           git add daily_content_command_center.csv
           git add tonight_in_the_w_package.csv
           git add must_post_carousels.csv
@@ -66,5 +70,5 @@ jobs:
           git add today_graphics_queue.md
           git add today_graphics_queue.csv
           git add top_3_graphic_packets.md
-          git commit -m "Update HSD complete system" || echo "No changes to commit"
+          git commit -m "Update HSD enriched graphics queue" || echo "No changes to commit"
           git push
