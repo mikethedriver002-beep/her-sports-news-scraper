@@ -1,44 +1,59 @@
 """
-Her Sports Daily Women's Sports News Scraper v6
+Her Sports Daily Women's Sports News Scraper v7
 -----------------------------------------------
 
-Creates two CSV files:
+This version rebuilds the decision logic from the ground up.
 
+Output files:
 1. womens_sports_articles.csv
-   Full scraped article database.
+   Full scrape with scores, classifications, duplicate info, and decision reasons.
 
 2. daily_content_brief.csv
-   A filtered, ranked posting brief with duplicate topic control, source quality
-   scoring, story clustering, and max story limits per athlete/topic.
+   A small, stricter editorial shortlist for what Her Sports Daily should consider posting.
 
-This version makes the brief less aggressive by:
-- capping Must Post items
-- excluding likely men's sports stories
-- using stricter source quality scoring
-- allowing only one daily brief item per repeated topic/entity
-- demoting rumors and low-verification stories
+Core idea:
+- Scoring is 0 to 100, not everything gets a 10.
+- "Must Post" is rare and capped.
+- Ranking/opinion/rumor stories cannot become Must Post.
+- Duplicate topics are removed from the daily brief.
+- The brief prioritizes strong, fresh, women’s-sports-relevant stories from trusted sources.
 """
 
 from __future__ import annotations
 
 import csv
 import html
+import math
 import re
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 
 OUTPUT_FILE = "womens_sports_articles.csv"
 DAILY_BRIEF_FILE = "daily_content_brief.csv"
-MAX_DAILY_BRIEF_ITEMS = 15
-MAX_MUST_POST_ITEMS = 5
+
+MAX_DAILY_BRIEF_ITEMS = 12
+MAX_MUST_POST_ITEMS = 3
 MAX_PER_CLUSTER = 1
 MAX_PER_PRIMARY_ENTITY = 1
-MAX_PER_SPORT = 4
 MAX_PER_SOURCE = 3
+
+# Sport maxes are intentionally tighter so the brief does not become all WNBA or all softball.
+SPORT_MAXES = {
+    "WNBA": 4,
+    "NWSL / Women's Soccer": 3,
+    "PWHL / Women's Hockey": 3,
+    "NCAA Women's Basketball": 3,
+    "Softball": 2,
+    "Tennis": 2,
+    "Golf / LPGA": 2,
+    "Volleyball": 2,
+    "Women's Sports": 2,
+}
 
 
 def google_news(query: str) -> str:
@@ -109,8 +124,8 @@ SPORT_RULES: List[Tuple[str, List[str]]] = [
     ("NCAA Women's Basketball", ["women's basketball", "ncaa basketball", "march madness", "final four", "uconn", "south carolina", "usc", "lsu", "notre dame", "iowa"]),
     ("NWSL / Women's Soccer", ["nwsl", "uswnt", "women's soccer", "women's football", "gotham", "thorns", "angel city", "spirit", "wave", "royals", "legacy fc", "summit fc", "lionesses"]),
     ("PWHL / Women's Hockey", ["pwhl", "women's hockey", "fleet", "frost", "sirens", "charge", "victoire", "sceptres", "torrent", "goldeneyes"]),
-    ("Tennis", ["tennis", "wta", "wimbledon", "us open", "french open", "australian open", "coco gauff", "naomi osaka", "swiatek", "sabalenka", "serena", "venus"]),
-    ("Golf / LPGA", ["lpga", "women's open", "u.s. women's open", "us women's open", "golf", "nelly korda", "lexi thompson", "rose zhang", "kupcho", "lydia ko", "hannah green", "minjee lee", "jennifer kupcho"]),
+    ("Tennis", ["tennis", "wta", "wimbledon", "us open", "french open", "australian open", "roland garros", "coco gauff", "naomi osaka", "swiatek", "sabalenka", "serena", "venus"]),
+    ("Golf / LPGA", ["lpga", "women's open", "golf", "nelly korda", "lexi thompson", "rose zhang", "kupcho"]),
     ("Softball", ["softball", "college world series", "wcws"]),
     ("Volleyball", ["volleyball", "lovb", "major league volleyball", "mlv", "pro volleyball", "nebraska volleyball"]),
     ("Gymnastics", ["gymnastics", "simone biles", "suni lee", "olympic gymnastics"]),
@@ -121,26 +136,13 @@ SPORT_RULES: List[Tuple[str, List[str]]] = [
 ]
 
 
-STORY_TYPE_RULES: List[Tuple[str, List[str]]] = [
-    ("Breaking News", ["breaking", "announces", "announced", "reportedly", "signs", "signed", "traded", "trade", "draft", "hires", "fired"]),
-    ("Game Recap", ["defeats", "beats", "tops", "leads", "wins", "loss", "score", "opener", "final", "semifinal", "championship"]),
-    ("Game Preview", ["preview", "faces", "matchup", "schedule", "where to watch", "odds", "tonight", "tomorrow"]),
-    ("Business / Growth", ["revenue", "media rights", "sponsorship", "valuation", "investment", "ratings", "viewership", "attendance", "ticket", "expansion"]),
-    ("League Expansion", ["expansion", "new team", "franchise", "launch", "debut", "inaugural"]),
-    ("Player Profile", ["profile", "story", "journey", "feature", "legacy", "returns", "comeback"]),
-    ("Awards / Rankings", ["award", "honor", "ranking", "ranked", "player of the week", "mvp", "all-star"]),
-    ("Injury / Availability", ["injury", "injured", "questionable", "out", "return", "availability"]),
-    ("Culture / Advocacy", ["equal pay", "gender", "barrier", "trailblazer", "activism", "charity", "foundation", "women in sport"]),
-]
-
-
-BIG_ENGAGEMENT_NAMES = [
+BIG_NAMES = [
     "caitlin clark", "angel reese", "paige bueckers", "juju watkins", "aja wilson", "a'ja wilson",
     "sabrina ionescu", "breanna stewart", "napheesa collier", "diana taurasi", "kelsey plum",
     "cameron brink", "aliyah boston", "rhyne howard", "trinity rodman", "sophia smith",
     "alex morgan", "coco gauff", "naomi osaka", "serena williams", "venus williams",
     "simone biles", "suni lee", "nelly korda", "rose zhang", "sha'carri richardson",
-    "sydney mclaughlin", "katie ledecky", "ilona maher",
+    "sydney mclaughlin", "katie ledecky", "ilona maher", "reese atwood",
 ]
 
 
@@ -149,34 +151,62 @@ TEAM_AND_TOPIC_ENTITIES = [
     "indiana fever", "chicago sky", "las vegas aces", "new york liberty", "minnesota lynx",
     "seattle storm", "phoenix mercury", "atlanta dream", "washington mystics", "los angeles sparks",
     "dallas wings", "connecticut sun", "golden state valkyries", "portland fire", "toronto tempo",
-    # NWSL
+    # Soccer
     "gotham fc", "angel city", "portland thorns", "washington spirit", "san diego wave",
     "kansas city current", "orlando pride", "north carolina courage", "houston dash",
-    "boston legacy", "denver summit", "utah royals", "seattle reign", "bay fc",
+    "boston legacy", "denver summit", "utah royals", "seattle reign", "bay fc", "uswnt",
+    # Softball and college
+    "texas softball", "texas", "saint leo", "oklahoma", "college world series", "women's college world series", "wcws",
     # Other leagues and topics
     "pwhl", "unrivaled", "project b", "major league volleyball", "women's pro baseball league",
-    "wpbl", "uswnt", "world cup", "college world series", "wimbledon", "french open",
+    "wpbl", "world cup", "wimbledon", "french open", "roland garros", "us women's open",
 ]
 
 
-HIGH_INTENT_KEYWORDS = [
-    "record", "historic", "first", "breaks", "milestone", "championship", "title",
-    "wins", "upset", "rivalry", "sold out", "attendance", "viewership", "media rights",
-    "expansion", "launch", "new league", "contract", "salary", "injury", "returns",
+SOURCE_KEYWORDS: List[Tuple[str, int, List[str]]] = [
+    ("Official League / Governing Body", 10, ["wnba", "nwsl", "pwhl", "ncaa.com", "ussoccer", "lpga", "wta tennis", "fifa", "team usa"]),
+    ("Wire / Mainstream", 9, ["associated press", "ap news", "apnews", "reuters", "espn", "cbs sports", "yahoo sports", "usa today", "sports illustrated", "fox sports", "nbc sports", "the athletic"]),
+    ("Business", 8, ["sports business journal", "front office sports", "sportspro", "axios", "sportico", "forbes"]),
+    ("Specialty Women's Sports", 8, ["just women's sports", "just womens sports", "the gist", "the ix", "swish appeal", "the next", "winsidr", "her hoop stats", "equalizer", "the ice garden", "hoopfeed", "togethxr"]),
+    ("Advocacy / Foundation", 7, ["women in sport", "women's sports foundation"]),
 ]
 
 
-NEGATIVE_OR_SENSITIVE_KEYWORDS = [
+WOMENS_CONTEXT_TERMS = [
+    "women", "women's", "womens", "female", "girls", "wnba", "nwsl", "pwhl", "wta",
+    "lpga", "uswnt", "softball", "volleyball", "gymnastics", "wcws", "ncaaw",
+]
+
+
+MALE_OR_UNRELATED_TERMS = [
+    "nba", "nfl", "nhl", "mlb", "men's", "mens", "premier league", "la liga",
+    "ufc", "boxing", "wwe", "nascar", "formula 1",
+]
+
+
+SENSITIVE_TERMS = [
     "abuse", "assault", "harassment", "lawsuit", "investigation", "arrest", "death",
-    "died", "killed", "violence", "scandal",
+    "died", "killed", "violence", "scandal", "allegation", "allegations",
 ]
 
 
-RUMOR_WORDS = ["rumor", "rumors", "reportedly", "sources", "could", "might", "trade speculation", "linked to"]
+RUMOR_OR_SPECULATION_TERMS = [
+    "rumor", "rumors", "reportedly", "sources", "could", "might", "linked to",
+    "trade speculation", "likely to be targeted", "expected to", "potential",
+]
 
-LIKELY_MENS_STORY_KEYWORDS = [
-    "men's", "mens ", "men’s", "men's golf", "men’s golf", "men's basketball", "men’s basketball",
-    "men's soccer", "men’s soccer", "men's tennis", "men’s tennis", "boys "
+
+OPINION_OR_LOW_URGENCY_TERMS = [
+    "power rankings", "rankings", "way-too-early", "mock draft", "predictions",
+    "odds", "takeaways", "winners and losers", "domino effects", "watch list",
+    "awards", "mvp favorite", "best", "top 10", "top five",
+]
+
+
+HIGH_VALUE_TERMS = [
+    "championship", "title", "wins", "defeats", "beats", "record", "historic",
+    "first", "shatter", "expansion", "media rights", "investment", "sponsorship",
+    "viewership", "attendance", "sold out", "launch", "new league",
 ]
 
 
@@ -186,17 +216,9 @@ STOPWORDS = {
     "sport", "news", "new", "latest", "watch", "live", "highlights", "full", "today",
     "game", "games", "season", "team", "teams", "player", "players", "says", "said",
     "more", "than", "will", "would", "could", "their", "they", "them", "have", "has",
-    "been", "best", "top", "after", "before", "during", "around", "against", "again"
+    "been", "best", "top", "after", "before", "during", "around", "against", "again",
+    "first", "second", "third",
 }
-
-
-SOURCE_TIERS = [
-    ("Official", 10, ["wnba.com", "nwslsoccer", "thepwhl", "ncaa.com", "us soccer", "ussoccer", "lpga", "wta tennis", "wtatennis", "fifa"]),
-    ("Wire / Mainstream", 9, ["associated press", "ap news", "apnews", "reuters", "espn", "cbs sports", "yahoo sports", "usa today", "sports illustrated", "fox sports", "nbc"]),
-    ("Business", 8, ["sports business journal", "front office sports", "sportspro", "axios", "sportico", "forbes"]),
-    ("Specialty Women's Sports", 8, ["just women", "the gist", "the ix", "swish appeal", "the next", "winsidr", "her hoop stats", "equalizer", "the ice garden", "hoopfeed", "togethxr"]),
-    ("Advocacy / Foundation", 7, ["women in sport", "women's sports foundation"]),
-]
 
 
 def clean_text(value: str) -> str:
@@ -218,14 +240,25 @@ def fetch_url(url: str) -> bytes:
         return response.read()
 
 
-def parse_date(raw_date: str) -> str:
+def parse_date(raw_date: str) -> Tuple[str, Optional[datetime]]:
     raw_date = clean_text(raw_date)
     if not raw_date:
-        return ""
+        return "", None
+
     try:
-        return parsedate_to_datetime(raw_date).isoformat()
+        parsed = parsedate_to_datetime(raw_date)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.isoformat(), parsed
     except Exception:
-        return raw_date
+        return raw_date, None
+
+
+def age_hours(published_dt: Optional[datetime]) -> Optional[float]:
+    if not published_dt:
+        return None
+    now = datetime.now(timezone.utc)
+    return max(0.0, (now - published_dt).total_seconds() / 3600)
 
 
 def tidy_google_title(title: str, source: str) -> str:
@@ -258,9 +291,9 @@ def parse_feed(url: str) -> List[Dict[str, str]]:
             if source_node is not None and source_node.text:
                 item_source = clean_text(source_node.text)
 
+            published_iso, published_dt = parse_date(item.findtext("pubDate", default=""))
             title = tidy_google_title(item.findtext("title", default=""), item_source)
             link = clean_text(item.findtext("link", default=""))
-            published = parse_date(item.findtext("pubDate", default=""))
             categories = ", ".join(clean_text(c.text or "") for c in item.findall("category") if c.text)
             summary = clean_text(item.findtext("description", default=""))
 
@@ -268,7 +301,9 @@ def parse_feed(url: str) -> List[Dict[str, str]]:
                 "source": item_source,
                 "title": title,
                 "link": link,
-                "published": published,
+                "published": published_iso,
+                "published_timestamp": published_dt.isoformat() if published_dt else "",
+                "age_hours": "" if age_hours(published_dt) is None else f"{age_hours(published_dt):.1f}",
                 "categories": categories,
                 "summary": summary,
             })
@@ -281,11 +316,12 @@ def parse_feed(url: str) -> List[Dict[str, str]]:
     source_title = clean_text(root.findtext("atom:title", default=url, namespaces=ns))
 
     for entry in entries:
-        title = clean_text(entry.findtext("atom:title", default="", namespaces=ns))
-        published = parse_date(
+        date_raw = (
             entry.findtext("atom:published", default="", namespaces=ns)
             or entry.findtext("atom:updated", default="", namespaces=ns)
         )
+        published_iso, published_dt = parse_date(date_raw)
+        title = clean_text(entry.findtext("atom:title", default="", namespaces=ns))
         summary = clean_text(entry.findtext("atom:summary", default="", namespaces=ns))
         link = ""
 
@@ -297,7 +333,9 @@ def parse_feed(url: str) -> List[Dict[str, str]]:
             "source": source_title,
             "title": title,
             "link": link,
-            "published": published,
+            "published": published_iso,
+            "published_timestamp": published_dt.isoformat() if published_dt else "",
+            "age_hours": "" if age_hours(published_dt) is None else f"{age_hours(published_dt):.1f}",
             "categories": "",
             "summary": summary,
         })
@@ -314,114 +352,57 @@ def combined_text(article: Dict[str, str]) -> str:
     ]).lower()
 
 
-def keyword_present(text: str, keyword: str) -> bool:
-    pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
-    return re.search(pattern, text.lower()) is not None
+def has_any(text: str, terms: Iterable[str]) -> bool:
+    return any(term in text for term in terms)
+
+
+def count_any(text: str, terms: Iterable[str]) -> int:
+    return sum(1 for term in terms if term in text)
 
 
 def classify_sport(text: str) -> str:
-    # Score-based sport detection is safer than first-match detection.
-    # It prevents broad terms like "sun" or "dream" from incorrectly turning
-    # golf, tennis, or soccer stories into WNBA stories.
-    scores: Dict[str, int] = {}
-
     for sport, keywords in SPORT_RULES:
-        score = 0
-        for keyword in keywords:
-            if keyword_present(text, keyword):
-                # Specific phrases and athlete names are stronger than short team names.
-                if len(keyword) <= 4:
-                    score += 1
-                elif " " in keyword:
-                    score += 3
-                else:
-                    score += 2
-        if score:
-            scores[sport] = score
+        if any(keyword in text for keyword in keywords):
+            return sport
+    return "Women's Sports"
 
-    if not scores:
-        return "Women's Sports"
-
-    return max(scores.items(), key=lambda item: item[1])[0]
 
 def classify_story_type(text: str) -> str:
-    for story_type, keywords in STORY_TYPE_RULES:
-        if any(keyword in text for keyword in keywords):
-            return story_type
+    if has_any(text, RUMOR_OR_SPECULATION_TERMS):
+        return "Rumor / Needs Verification"
+    if has_any(text, OPINION_OR_LOW_URGENCY_TERMS):
+        return "Opinion / Rankings"
+    if any(term in text for term in ["preview", "faces", "matchup", "schedule", "where to watch", "tonight", "tomorrow"]):
+        return "Game Preview"
+    if any(term in text for term in ["defeats", "beats", "tops", "leads", "wins", "loss", "score", "final", "championship", "title"]):
+        return "Game Recap / Result"
+    if any(term in text for term in ["announces", "announced", "signs", "signed", "traded", "trade", "draft", "hires", "fired"]):
+        return "Breaking / Transaction"
+    if any(term in text for term in ["revenue", "media rights", "sponsorship", "valuation", "investment", "ratings", "viewership", "attendance"]):
+        return "Business / Growth"
+    if any(term in text for term in ["expansion", "new team", "franchise", "launch", "debut", "inaugural"]):
+        return "League Expansion"
+    if any(term in text for term in ["profile", "story", "journey", "feature", "legacy", "comeback"]):
+        return "Player Feature"
+    if any(term in text for term in ["equal pay", "gender", "barrier", "trailblazer", "activism", "charity", "foundation", "women in sport"]):
+        return "Culture / Advocacy"
+    if any(term in text for term in ["injury", "injured", "questionable", "out", "return", "availability"]):
+        return "Injury / Availability"
     return "General News"
 
 
-def get_content_bucket(sport: str, story_type: str, text: str) -> str:
-    if story_type in {"Business / Growth", "League Expansion"}:
-        return "Growth of the Game"
-    if story_type in {"Game Recap", "Game Preview"}:
-        return "Tonight / Game Coverage"
-    if any(name in text for name in BIG_ENGAGEMENT_NAMES):
-        return "Star Watch"
-    if story_type in {"Culture / Advocacy", "Player Profile"}:
-        return "Culture & Impact"
-    if sport in {"NCAA Women's Basketball", "Softball", "Volleyball"}:
-        return "College Spotlight"
-    return "Daily News"
-
-
-def source_tier_and_quality(source: str, link: str = "") -> Tuple[str, int]:
-    # Score source quality from the source name first. Do not use the full link
-    # for keyword matching, because Google News links can contain topic words
-    # like WNBA and accidentally make non-official sources look official.
-    source_text = clean_text(source).lower()
-    host_text = ""
-    try:
-        host_text = urllib.parse.urlparse(link).netloc.lower()
-    except Exception:
-        host_text = ""
-
-    combined = f"{source_text} {host_text}".strip()
-
-    for tier, quality, keywords in SOURCE_TIERS:
-        if any(keyword in combined for keyword in keywords):
+def source_tier_and_quality(source: str) -> Tuple[str, int]:
+    source_text = source.lower()
+    for tier, quality, keywords in SOURCE_KEYWORDS:
+        if any(keyword in source_text for keyword in keywords):
             return tier, quality
-
-    if "news.google.com" in host_text:
-        return "Aggregator", 5
-
+    if "google news" in source_text:
+        return "Aggregator", 4
     return "Other", 6
-
-def calculate_priority(text: str, sport: str, story_type: str, source_quality: int) -> int:
-    score = 3
-
-    if any(name in text for name in BIG_ENGAGEMENT_NAMES):
-        score += 3
-
-    if sport in {"WNBA", "NWSL / Women's Soccer", "NCAA Women's Basketball", "PWHL / Women's Hockey"}:
-        score += 2
-    elif sport in {"Tennis", "Softball", "Volleyball", "Golf / LPGA"}:
-        score += 1
-
-    if story_type in {"Breaking News", "Game Recap", "Business / Growth", "League Expansion"}:
-        score += 2
-    elif story_type in {"Game Preview", "Awards / Rankings"}:
-        score += 1
-
-    matched_high_intent = sum(1 for keyword in HIGH_INTENT_KEYWORDS if keyword in text)
-    score += min(matched_high_intent, 2)
-
-    if source_quality >= 9:
-        score += 1
-    elif source_quality <= 5:
-        score -= 1
-
-    if any(keyword in text for keyword in NEGATIVE_OR_SENSITIVE_KEYWORDS):
-        score -= 2
-
-    if any(keyword in text for keyword in RUMOR_WORDS):
-        score -= 1
-
-    return max(1, min(score, 10))
 
 
 def extract_primary_entity(text: str) -> str:
-    for name in BIG_ENGAGEMENT_NAMES:
+    for name in BIG_NAMES:
         if name in text:
             return name.title()
 
@@ -432,18 +413,279 @@ def extract_primary_entity(text: str) -> str:
     return ""
 
 
-def topic_key_from_text(text: str, sport: str) -> str:
-    primary = extract_primary_entity(text)
-    if primary:
-        return f"{sport.lower()}::{primary.lower()}"
+def topic_signature(text: str, sport: str, primary_entity: str) -> str:
+    # Force known recurring stories into one cluster.
+    if "texas" in text and ("softball" in text or "college world series" in text or "wcws" in text):
+        return "softball::texas_wcws_title"
+    if "saint leo" in text and "softball" in text:
+        return "softball::saint_leo_softball_title"
+    if "serena" in text and "mboko" in text:
+        return "tennis::serena_mboko_hsbc"
+    if "caitlin clark" in text and ("record" in text or "records" in text):
+        return "wnba::caitlin_clark_records"
+    if "a'ja wilson" in text or "aja wilson" in text:
+        return "wnba::aja_wilson"
+    if "pwhl" in text and "expansion" in text:
+        return "pwhl::expansion_targets"
+
+    if primary_entity:
+        return f"{sport.lower()}::{primary_entity.lower()}"
 
     words = re.findall(r"[a-zA-Z0-9']+", text.lower())
     important = [w for w in words if len(w) > 2 and w not in STOPWORDS]
     return f"{sport.lower()}::" + "_".join(important[:8])
 
 
-def choose_post_format(story_type: str, priority: int) -> str:
-    if priority >= 8 and story_type in {"Breaking News", "Game Recap"}:
+def is_wrong_or_low_fit(text: str, sport: str) -> bool:
+    # Keep stories that clearly include women's sport context.
+    has_women_context = has_any(text, WOMENS_CONTEXT_TERMS) or sport != "Women's Sports"
+
+    if has_women_context:
+        return False
+
+    # If a broad feed pulls men's sports or unrelated sports, filter it.
+    if has_any(text, MALE_OR_UNRELATED_TERMS):
+        return True
+
+    return False
+
+
+def freshness_score(article: Dict[str, str], story_type: str) -> Tuple[int, str]:
+    raw = article.get("age_hours", "")
+    if not raw:
+        return 6, "No parsed date"
+
+    try:
+        hours = float(raw)
+    except ValueError:
+        return 6, "No parsed date"
+
+    # Hard expiration rules. Game/previews get stale quickly. Business/features can live longer.
+    if story_type in {"Game Recap / Result", "Game Preview", "Breaking / Transaction", "Injury / Availability", "Rumor / Needs Verification"}:
+        if hours <= 12:
+            return 18, "Fresh under 12 hours"
+        if hours <= 24:
+            return 15, "Fresh under 24 hours"
+        if hours <= 48:
+            return 10, "Recent under 48 hours"
+        if hours <= 72:
+            return 5, "Aging under 72 hours"
+        return -25, "Expired for daily coverage"
+
+    # Evergreen or business stories decay slower.
+    if hours <= 24:
+        return 15, "Fresh under 24 hours"
+    if hours <= 72:
+        return 12, "Recent under 72 hours"
+    if hours <= 168:
+        return 8, "Still usable this week"
+    if hours <= 336:
+        return 2, "Evergreen but old"
+    return -15, "Too old"
+
+
+def story_value_score(text: str, story_type: str, sport: str) -> Tuple[int, str]:
+    # This is intentionally conservative.
+    if "championship" in text or "title" in text or "final out" in text:
+        return 38, "Championship/result story"
+    if any(term in text for term in ["record", "historic", "first", "shatter", "breaks"]):
+        return 34, "Record or historic milestone"
+    if story_type == "Business / Growth":
+        return 30, "Business/growth story"
+    if story_type == "League Expansion":
+        return 30, "Expansion story"
+    if story_type == "Breaking / Transaction":
+        return 28, "Confirmed breaking/transaction story"
+    if story_type == "Game Recap / Result":
+        return 25, "Game result story"
+    if story_type == "Game Preview":
+        return 18, "Preview story"
+    if story_type == "Player Feature":
+        return 16, "Feature story"
+    if story_type == "Culture / Advocacy":
+        return 16, "Culture/impact story"
+    if story_type == "Injury / Availability":
+        return 15, "Availability story"
+    if story_type == "Opinion / Rankings":
+        return 8, "Opinion/ranking story"
+    if story_type == "Rumor / Needs Verification":
+        return 6, "Rumor/speculation story"
+    return 12, "General update"
+
+
+def brand_fit_score(text: str, sport: str) -> Tuple[int, str]:
+    if sport in {"WNBA", "NWSL / Women's Soccer", "PWHL / Women's Hockey", "NCAA Women's Basketball"}:
+        return 15, f"Core brand sport: {sport}"
+    if sport in {"Softball", "Volleyball", "Tennis", "Golf / LPGA", "Gymnastics", "Track & Field"}:
+        return 11, f"Strong secondary sport: {sport}"
+    if sport in {"Rugby", "Cricket", "Baseball"}:
+        return 8, f"Niche growth sport: {sport}"
+    return 5, "General women's sports fit"
+
+
+def engagement_score(text: str) -> Tuple[int, str]:
+    score = 0
+    reasons = []
+
+    if has_any(text, BIG_NAMES):
+        score += 8
+        reasons.append("major athlete")
+    high_value_matches = count_any(text, HIGH_VALUE_TERMS)
+    if high_value_matches:
+        score += min(6, high_value_matches * 2)
+        reasons.append("high-interest keyword")
+
+    return min(score, 12), ", ".join(reasons) if reasons else "normal interest"
+
+
+def penalty_score(text: str, source_quality: int, story_type: str, freshness_reason: str) -> Tuple[int, List[str]]:
+    penalty = 0
+    reasons = []
+
+    if has_any(text, RUMOR_OR_SPECULATION_TERMS):
+        penalty -= 18
+        reasons.append("rumor/speculation penalty")
+    if story_type == "Opinion / Rankings":
+        penalty -= 12
+        reasons.append("opinion/ranking penalty")
+    if has_any(text, SENSITIVE_TERMS):
+        penalty -= 25
+        reasons.append("sensitive topic penalty")
+    if source_quality <= 5:
+        penalty -= 8
+        reasons.append("low source quality penalty")
+    if "Expired" in freshness_reason or "Too old" in freshness_reason:
+        penalty -= 20
+        reasons.append("staleness penalty")
+    if len(text) < 80:
+        penalty -= 4
+        reasons.append("thin headline/context penalty")
+
+    return penalty, reasons
+
+
+def calculate_editorial_score(article: Dict[str, str], sport: str, story_type: str, source_quality: int) -> Tuple[int, str, Dict[str, int]]:
+    text = combined_text(article)
+
+    fresh, freshness_reason = freshness_score(article, story_type)
+    story_value, story_reason = story_value_score(text, story_type, sport)
+    brand_fit, brand_reason = brand_fit_score(text, sport)
+    engagement, engagement_reason = engagement_score(text)
+    source_component = int(round(source_quality * 1.4))  # max 14
+
+    penalty, penalty_reasons = penalty_score(text, source_quality, story_type, freshness_reason)
+
+    total = fresh + story_value + brand_fit + engagement + source_component + penalty
+    total = max(0, min(100, total))
+
+    parts = {
+        "freshness_component": fresh,
+        "story_value_component": story_value,
+        "brand_fit_component": brand_fit,
+        "engagement_component": engagement,
+        "source_component": source_component,
+        "penalty_component": penalty,
+    }
+
+    reason = (
+        f"{story_reason}; {freshness_reason}; {brand_reason}; "
+        f"source quality {source_quality}/10; engagement: {engagement_reason}"
+    )
+    if penalty_reasons:
+        reason += "; penalties: " + ", ".join(penalty_reasons)
+
+    return total, reason, parts
+
+
+def verification_needed(text: str, source_quality: int) -> bool:
+    return source_quality < 8 or has_any(text, RUMOR_OR_SPECULATION_TERMS)
+
+
+def sensitive_flag(text: str) -> bool:
+    return has_any(text, SENSITIVE_TERMS)
+
+
+def time_sensitive(story_type: str) -> str:
+    if story_type in {"Breaking / Transaction", "Game Preview", "Game Recap / Result", "Injury / Availability", "Rumor / Needs Verification"}:
+        return "Yes"
+    return "No"
+
+
+def content_bucket(story_type: str, sport: str, text: str) -> str:
+    if story_type in {"Business / Growth", "League Expansion"}:
+        return "Growth of the Game"
+    if story_type in {"Game Recap / Result", "Game Preview"}:
+        return "Tonight / Game Coverage"
+    if has_any(text, BIG_NAMES):
+        return "Star Watch"
+    if story_type in {"Culture / Advocacy", "Player Feature"}:
+        return "Culture & Impact"
+    if sport in {"NCAA Women's Basketball", "Softball", "Volleyball"}:
+        return "College Spotlight"
+    return "Daily News"
+
+
+def content_lane(story_type: str, sport: str, text: str) -> str:
+    if has_any(text, BIG_NAMES):
+        return "Star-driven engagement"
+    if story_type in {"Business / Growth", "League Expansion"}:
+        return "Growth of the game"
+    if story_type in {"Game Preview", "Game Recap / Result"}:
+        return "Game coverage"
+    if sport in {"NCAA Women's Basketball", "Softball", "Volleyball"}:
+        return "College spotlight"
+    return "Daily news"
+
+
+def base_decision(article: Dict[str, str]) -> Tuple[str, str]:
+    score = int(article.get("editorial_score", "0") or 0)
+    source_quality = int(article.get("source_quality", "0") or 0)
+    story_type = article.get("story_type", "")
+    text = combined_text(article)
+
+    if article.get("wrong_or_low_fit") == "Yes":
+        return "Skip", "Likely wrong-sport or low-fit story."
+    if article.get("sensitive") == "Yes":
+        return "Review Before Posting", "Sensitive topic requires manual review."
+    if article.get("verification_needed") == "Yes" and score >= 50:
+        return "Verify First", "Needs verification before posting because it is speculative or not from a strong enough source."
+    if article.get("verification_needed") == "Yes":
+        return "Skip", "Too speculative or weakly sourced."
+    if story_type == "Opinion / Rankings" and score < 75:
+        return "Save for Weekend", "Opinion/ranking stories are lower urgency."
+    if story_type == "Opinion / Rankings":
+        return "Maybe Post", "Strong ranking/opinion story, but not urgent."
+    if "Expired" in article.get("score_reason", "") or "Too old" in article.get("score_reason", ""):
+        return "Skip", "Too stale for daily coverage."
+    if score >= 88 and source_quality >= 8 and story_type not in {"Opinion / Rankings", "Rumor / Needs Verification"}:
+        return "Must Post", "High score, strong source, timely, and not speculative."
+    if score >= 72:
+        return "Maybe Post", "Strong candidate, but not mandatory."
+    if score >= 58:
+        return "Save for Weekend", "Useful but not urgent."
+    return "Skip", "Below posting threshold."
+
+
+def recommended_timing(decision: str, story_type: str) -> str:
+    if decision == "Verify First":
+        return "Verify first"
+    if decision == "Review Before Posting":
+        return "Manual review first"
+    if decision == "Must Post":
+        return "Post ASAP"
+    if story_type == "Game Preview":
+        return "Post before tipoff/kickoff"
+    if story_type == "Game Recap / Result":
+        return "Post within 2 hours if still fresh"
+    if story_type in {"Business / Growth", "League Expansion", "Player Feature"}:
+        return "Post during daytime engagement window"
+    if decision == "Save for Weekend":
+        return "Save for weekend or filler slot"
+    return "Use when convenient"
+
+
+def post_format(story_type: str, score: int) -> str:
+    if story_type in {"Breaking / Transaction", "Game Recap / Result"} and score >= 80:
         return "Breaking graphic + carousel"
     if story_type == "Business / Growth":
         return "Data carousel"
@@ -451,59 +693,137 @@ def choose_post_format(story_type: str, priority: int) -> str:
         return "Map/expansion carousel"
     if story_type == "Game Preview":
         return "Tonight graphic"
-    if story_type == "Player Profile":
+    if story_type == "Player Feature":
         return "Reel or story feature"
-    if story_type == "Awards / Rankings":
-        return "Single graphic"
+    if story_type == "Opinion / Rankings":
+        return "Debate carousel"
     return "Story post"
 
 
-def why_it_matters(article: Dict[str, str], sport: str, story_type: str, priority: int) -> str:
+def hook(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+    if story_type == "Business / Growth":
+        return "Women's sports are becoming impossible for the business world to ignore."
+    if story_type == "League Expansion":
+        return "Another market is betting big on women's sports."
+    if story_type == "Game Preview":
+        return "Here is why this matchup is worth your time tonight."
+    if story_type == "Game Recap / Result":
+        return "Here is the quick version of what happened and why it matters."
+    if story_type == "Breaking / Transaction":
+        return "This is developing, but it is already worth tracking."
+    if story_type == "Opinion / Rankings":
+        return "Agree or disagree with this one?"
+    return article.get("title", "")
+
+
+def first_slide(article: Dict[str, str]) -> str:
     title = article.get("title", "")
+    story_type = article.get("story_type", "")
+    if story_type == "Business / Growth":
+        return f"The business of women's sports keeps growing: {title}"
+    if story_type == "League Expansion":
+        return f"Expansion watch: {title}"
+    if story_type == "Game Preview":
+        return f"Tonight's watchlist: {title}"
+    if story_type == "Game Recap / Result":
+        return f"Quick recap: {title}"
+    if story_type == "Breaking / Transaction":
+        return f"Breaking: {title}"
+    if story_type == "Opinion / Rankings":
+        return f"Debate this: {title}"
+    return title
+
+
+def carousel_outline(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+    if story_type == "Business / Growth":
+        return "Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next"
+    if story_type == "League Expansion":
+        return "Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question"
+    if story_type == "Game Preview":
+        return "Slide 1: matchup | Slide 2: player to watch | Slide 3: key matchup | Slide 4: prediction or question"
+    if story_type == "Game Recap / Result":
+        return "Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next"
+    if story_type == "Breaking / Transaction":
+        return "Slide 1: news | Slide 2: confirmed details | Slide 3: context | Slide 4: what to watch next"
+    if story_type == "Opinion / Rankings":
+        return "Slide 1: claim/ranking | Slide 2: why it matters | Slide 3: counterpoint | Slide 4: ask followers"
+    return "Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question"
+
+
+def visual_brief(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+    sport = article.get("sport", "")
+    if story_type == "Business / Growth":
+        return "Use a clean data carousel with bold numbers and simple context."
+    if story_type == "League Expansion":
+        return "Use a map, team/logo style graphic, or market comparison carousel."
+    if story_type == "Game Preview":
+        return "Use a Tonight graphic with matchup, time/network if available, and one key player."
+    if story_type == "Game Recap / Result":
+        return "Use a quick recap carousel with final result, top performer, and next game."
+    if story_type == "Player Feature":
+        return "Use an athlete-first reel or carousel with one personal angle."
+    if story_type == "Breaking / Transaction":
+        return "Use a breaking graphic with source credit and one context slide."
+    if story_type == "Opinion / Rankings":
+        return "Use a debate-style carousel and ask followers to agree or disagree."
+    return f"Use a simple {sport} news card with headline, context, and one engagement question."
+
+
+def why_it_matters(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+    sport = article.get("sport", "")
 
     if story_type == "Business / Growth":
-        return "This is a growth-of-the-game story that helps show why women's sports are becoming a major media and business opportunity."
+        return "This helps show the business momentum behind women's sports."
     if story_type == "League Expansion":
-        return "Expansion stories show where fan demand is rising and help followers understand how quickly the women's sports landscape is changing."
-    if story_type == "Game Recap":
+        return "Expansion stories show where fan demand and investor confidence are rising."
+    if story_type == "Game Recap / Result":
         return f"This is timely {sport} coverage with a result fans may want explained quickly."
     if story_type == "Game Preview":
-        return f"This gives followers a reason to watch {sport} and can feed your pregame graphics."
-    if priority >= 8:
-        return "This has high engagement potential because it includes a major athlete, record, milestone, or highly searchable topic."
-    if "record" in title.lower() or "historic" in title.lower():
-        return "Records and historic moments are strong proof points for the rise of women's sports."
-    return "This is a useful daily update that can help keep the audience informed and consistent with the brand."
+        return f"This gives followers a reason to watch {sport}."
+    if story_type == "Opinion / Rankings":
+        return "This can create debate, but it is not urgent news."
+    if article.get("editorial_score", "0").isdigit() and int(article.get("editorial_score", "0")) >= 80:
+        return "This has strong engagement potential due to timeliness, source strength, or major athlete relevance."
+    return "This is a useful update, but it should be weighed against stronger stories."
 
 
-def instagram_angle(article: Dict[str, str], sport: str, story_type: str, priority: int) -> str:
+def instagram_angle(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+    sport = article.get("sport", "")
     title = article.get("title", "")
 
     if story_type == "Business / Growth":
         return "The business of women's sports is not emerging anymore. It is becoming big business."
     if story_type == "League Expansion":
         return "Another sign that women's sports demand is outgrowing the old model."
-    if story_type == "Game Recap":
+    if story_type == "Game Recap / Result":
         return f"What happened, who stood out, and why it matters for {sport} fans."
     if story_type == "Game Preview":
         return f"What to watch tonight in {sport}, with one key player and one key matchup."
-    if story_type == "Player Profile":
-        return "The athlete story behind the headline."
-    if priority >= 8:
-        return "This is the kind of story casual fans will stop scrolling for."
+    if story_type == "Opinion / Rankings":
+        return "Use this as a debate starter, not a hard-news post."
     return f"Quick hit: {title}"
 
 
-def suggested_caption(article: Dict[str, str], sport: str, story_type: str) -> str:
-    title = article.get("title", "").strip()
+def caption_starter(article: Dict[str, str]) -> str:
+    title = article.get("title", "")
+    story_type = article.get("story_type", "")
+    sport = article.get("sport", "")
+
     if story_type == "Game Preview":
         return f"{sport} watchlist: {title} What are you watching for?"
-    if story_type == "Game Recap":
+    if story_type == "Game Recap / Result":
         return f"{title} Here is the quick breakdown and why it matters."
     if story_type == "Business / Growth":
         return f"{title} The growth of women's sports keeps getting harder to ignore."
     if story_type == "League Expansion":
         return f"{title} More teams, more investment, more proof that the demand is real."
+    if story_type == "Opinion / Rankings":
+        return f"{title} Agree or disagree?"
     return f"{title} What should we cover next?"
 
 
@@ -527,188 +847,60 @@ def hashtags(sport: str) -> str:
     return " ".join(base + sport_tags.get(sport, []))
 
 
-def is_sensitive_text(text: str) -> bool:
-    return any(keyword in text for keyword in NEGATIVE_OR_SENSITIVE_KEYWORDS)
-
-
-def needs_verification_text(text: str, source_quality: int) -> bool:
-    return source_quality < 8 or any(keyword in text for keyword in RUMOR_WORDS) or is_sensitive_text(text)
-
-
-def editorial_decision(
-    priority: int,
-    source_quality: int,
-    sensitive: bool,
-    verification_needed: bool,
-    duplicate_rank: int,
-    story_type: str,
-    content_lane_value: str,
-    headline: str,
-    excluded: bool,
-) -> str:
-    if excluded:
-        return "Skip"
-    if sensitive:
-        return "Review Before Posting"
-    if duplicate_rank > 1:
-        return "Skip Duplicate"
-    if verification_needed:
-        if priority >= 9 and source_quality >= 8:
-            return "Maybe Post"
-        return "Verify First"
-
-    must_post_story = (
-        story_type in {"Breaking News", "Business / Growth", "League Expansion"}
-        or content_lane_value == "Star-driven engagement"
-        or any(word in headline.lower() for word in ["championship", "title", "record", "historic", "first"])
-    )
-
-    if priority >= 10 and source_quality >= 8 and must_post_story:
-        return "Must Post"
-    if priority >= 8 and source_quality >= 7:
-        return "Maybe Post"
-    if priority >= 6:
-        return "Save for Weekend"
-    return "Skip"
-
-def recommended_timing(priority: int, story_type: str, verification_needed: bool) -> str:
-    if verification_needed:
-        return "Verify first"
-    if priority >= 9 or story_type == "Breaking News":
-        return "Post ASAP"
-    if story_type == "Game Preview":
-        return "Post before tipoff/kickoff"
-    if story_type == "Game Recap":
-        return "Post within 2 hours"
-    if story_type in {"Business / Growth", "League Expansion", "Player Profile"}:
-        return "Post during daytime engagement window"
-    return "Use as filler"
-
-
-def time_sensitive(story_type: str) -> str:
-    if story_type in {"Breaking News", "Game Preview", "Game Recap", "Injury / Availability"}:
-        return "Yes"
-    return "No"
-
-
-def content_lane(story_type: str, sport: str, text: str) -> str:
-    if any(name in text for name in BIG_ENGAGEMENT_NAMES):
-        return "Star-driven engagement"
-    if story_type in {"Business / Growth", "League Expansion"}:
-        return "Growth of the game"
-    if story_type in {"Game Preview", "Game Recap"}:
-        return "Game coverage"
-    if sport in {"NCAA Women's Basketball", "Softball", "Volleyball"}:
-        return "College spotlight"
-    return "Daily news"
-
-
-def hook(article: Dict[str, str]) -> str:
-    story_type = article.get("story_type", "")
-    if story_type == "Business / Growth":
-        return "Women's sports are becoming impossible for the business world to ignore."
-    if story_type == "League Expansion":
-        return "Another market is betting big on women's sports."
-    if story_type == "Game Preview":
-        return "Here is why this matchup is worth your time tonight."
-    if story_type == "Game Recap":
-        return "Here is the quick version of what happened and why it matters."
-    if story_type == "Breaking News":
-        return "This is developing, but it is already worth tracking."
-    return article.get("title", "")
-
-
-def first_slide(article: Dict[str, str]) -> str:
-    title = article.get("title", "")
-    story_type = article.get("story_type", "")
-    if story_type == "Business / Growth":
-        return f"The business of women's sports keeps growing: {title}"
-    if story_type == "League Expansion":
-        return f"Expansion watch: {title}"
-    if story_type == "Game Preview":
-        return f"Tonight's watchlist: {title}"
-    if story_type == "Game Recap":
-        return f"Quick recap: {title}"
-    if story_type == "Breaking News":
-        return f"Breaking: {title}"
-    return title
-
-
-def carousel_outline(article: Dict[str, str]) -> str:
-    story_type = article.get("story_type", "")
-    if story_type == "Business / Growth":
-        return "Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next"
-    if story_type == "League Expansion":
-        return "Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question"
-    if story_type == "Game Preview":
-        return "Slide 1: matchup | Slide 2: player to watch | Slide 3: key matchup | Slide 4: prediction or question"
-    if story_type == "Game Recap":
-        return "Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next"
-    if story_type == "Breaking News":
-        return "Slide 1: news | Slide 2: confirmed details | Slide 3: context | Slide 4: what to watch next"
-    return "Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question"
-
-
-def visual_brief(article: Dict[str, str]) -> str:
-    story_type = article.get("story_type", "")
-    sport = article.get("sport", "")
-    if story_type == "Business / Growth":
-        return "Use a clean data carousel with bold numbers and simple context."
-    if story_type == "League Expansion":
-        return "Use a map, team/logo style graphic, or market comparison carousel."
-    if story_type == "Game Preview":
-        return "Use a Tonight graphic with matchup, time/network if available, and one key player."
-    if story_type == "Game Recap":
-        return "Use a quick recap carousel with final result, top performer, and next game."
-    if story_type == "Player Profile":
-        return "Use an athlete-first reel or carousel with one personal angle."
-    if story_type == "Breaking News":
-        return "Use a breaking graphic with source credit and one context slide."
-    return f"Use a simple {sport} news card with headline, context, and one engagement question."
-
-
-def is_likely_mens_story_text(text: str) -> bool:
-    # Skip obvious men's sports stories that come through broad NCAA or golf feeds.
-    # Keep stories that explicitly mention women's/girls content.
-    if any(term in text for term in ["women", "women's", "women’s", "girls", "wnba", "nwsl", "pwhl", "lpga", "wta", "uswnt"]):
-        return False
-    return any(keyword in text for keyword in LIKELY_MENS_STORY_KEYWORDS)
-
-
 def enrich_article(article: Dict[str, str]) -> Dict[str, str]:
     text = combined_text(article)
     sport = classify_sport(text)
     story_type = classify_story_type(text)
-    source_tier, source_quality = source_tier_and_quality(article.get("source", ""), article.get("link", ""))
-    priority = calculate_priority(text, sport, story_type, source_quality)
-    bucket = get_content_bucket(sport, story_type, text)
+    source_tier, source_quality = source_tier_and_quality(article.get("source", ""))
     primary_entity = extract_primary_entity(text)
-    cluster_id = topic_key_from_text(text, sport)
-    sensitive = is_sensitive_text(text)
-    verification_needed = needs_verification_text(text, source_quality)
-    excluded = is_likely_mens_story_text(text)
+    cluster_id = topic_signature(text, sport, primary_entity)
+    wrong_or_low_fit = is_wrong_or_low_fit(text, sport)
+    sensitive = sensitive_flag(text)
+    verify = verification_needed(text, source_quality)
+
+    score, score_reason, score_parts = calculate_editorial_score(article, sport, story_type, source_quality)
+    if wrong_or_low_fit:
+        score = max(0, score - 40)
+        score_reason += "; penalties: wrong-sport/low-fit filter"
 
     article.update({
         "sport": sport,
         "story_type": story_type,
-        "priority_score": str(priority),
         "source_tier": source_tier,
         "source_quality": str(source_quality),
-        "content_bucket": bucket,
+        "editorial_score": str(score),
+        "priority_score": str(max(1, min(10, math.ceil(score / 10)))),
+        "score_reason": score_reason,
+        "freshness_component": str(score_parts["freshness_component"]),
+        "story_value_component": str(score_parts["story_value_component"]),
+        "brand_fit_component": str(score_parts["brand_fit_component"]),
+        "engagement_component": str(score_parts["engagement_component"]),
+        "source_component": str(score_parts["source_component"]),
+        "penalty_component": str(score_parts["penalty_component"]),
         "primary_entity": primary_entity,
         "cluster_id": cluster_id,
+        "wrong_or_low_fit": "Yes" if wrong_or_low_fit else "No",
+        "verification_needed": "Yes" if verify else "No",
         "sensitive": "Yes" if sensitive else "No",
-        "verification_needed": "Yes" if verification_needed else "No",
-        "why_it_matters": why_it_matters(article, sport, story_type, priority),
-        "instagram_angle": instagram_angle(article, sport, story_type, priority),
-        "post_format": choose_post_format(story_type, priority),
-        "suggested_caption": suggested_caption(article, sport, story_type),
-        "hashtags": hashtags(sport),
         "time_sensitive": time_sensitive(story_type),
+        "content_bucket": content_bucket(story_type, sport, text),
         "content_lane": content_lane(story_type, sport, text),
-        "excluded": "Yes" if excluded else "No",
-        "exclude_reason": "Likely men's sports story" if excluded else "",
     })
+
+    decision, decision_reason = base_decision(article)
+    article["editorial_decision"] = decision
+    article["decision_reason"] = decision_reason
+    article["recommended_timing"] = recommended_timing(decision, story_type)
+    article["post_format"] = post_format(story_type, score)
+    article["hook"] = hook(article)
+    article["first_slide"] = first_slide(article)
+    article["carousel_outline"] = carousel_outline(article)
+    article["instagram_angle"] = instagram_angle(article)
+    article["why_it_matters"] = why_it_matters(article)
+    article["caption_starter"] = caption_starter(article)
+    article["hashtags"] = hashtags(sport)
+    article["visual_brief"] = visual_brief(article)
+
     return article
 
 
@@ -729,125 +921,98 @@ def dedupe_articles(articles: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
 
 
 def assign_cluster_metadata(articles: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    cluster_counts: Dict[str, int] = {}
-
+    cluster_totals: Dict[str, int] = {}
     for article in articles:
         cluster_id = article.get("cluster_id", "")
-        cluster_counts[cluster_id] = cluster_counts.get(cluster_id, 0) + 1
+        cluster_totals[cluster_id] = cluster_totals.get(cluster_id, 0) + 1
 
     sorted_articles = sorted(
         articles,
         key=lambda x: (
             x.get("cluster_id", ""),
-            int(x.get("priority_score", "0")),
+            int(x.get("editorial_score", "0")),
             int(x.get("source_quality", "0")),
             x.get("published", ""),
         ),
         reverse=True,
     )
 
-    rank_by_cluster: Dict[str, int] = {}
+    cluster_ranks: Dict[str, int] = {}
     for article in sorted_articles:
         cluster_id = article.get("cluster_id", "")
-        rank_by_cluster[cluster_id] = rank_by_cluster.get(cluster_id, 0) + 1
-        article["cluster_rank"] = str(rank_by_cluster[cluster_id])
-        article["related_story_count"] = str(cluster_counts.get(cluster_id, 1))
-        article["duplicate_status"] = "Primary" if rank_by_cluster[cluster_id] == 1 else "Related / duplicate angle"
+        cluster_ranks[cluster_id] = cluster_ranks.get(cluster_id, 0) + 1
+        rank = cluster_ranks[cluster_id]
+
+        article["cluster_rank"] = str(rank)
+        article["related_story_count"] = str(cluster_totals.get(cluster_id, 1))
+        article["duplicate_status"] = "Primary" if rank == 1 else "Duplicate / alternate angle"
+
+        # Duplicate stories should not survive the brief unless manually reviewed later.
+        if rank > 1 and article.get("editorial_decision") != "Review Before Posting":
+            article["editorial_decision"] = "Skip Duplicate"
+            article["decision_reason"] = "Another stronger version of this topic already exists."
 
     return articles
 
 
-def duplicate_limit_reason(article: Dict[str, str], cluster_count: int, entity_count: int, sport_count: int, source_count: int) -> str:
-    if cluster_count >= MAX_PER_CLUSTER:
-        return f"Skipped because this topic already has {MAX_PER_CLUSTER} stories in the brief."
-    if article.get("primary_entity") and entity_count >= MAX_PER_PRIMARY_ENTITY:
-        return f"Skipped because {article.get('primary_entity')} already has {MAX_PER_PRIMARY_ENTITY} stories in the brief."
-    if sport_count >= MAX_PER_SPORT:
-        return f"Skipped because {article.get('sport')} already has {MAX_PER_SPORT} stories in the brief."
-    if source_count >= MAX_PER_SOURCE:
-        return f"Skipped because {article.get('source')} already has {MAX_PER_SOURCE} stories in the brief."
-    return ""
-
-
-def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = MAX_DAILY_BRIEF_ITEMS) -> List[Dict[str, str]]:
-    selected: List[Dict[str, str]] = []
-    cluster_counts: Dict[str, int] = {}
-    entity_counts: Dict[str, int] = {}
-    sport_counts: Dict[str, int] = {}
-    source_counts: Dict[str, int] = {}
-    must_post_count = 0
-
-    candidates = sorted(
+def sort_articles(articles: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    return sorted(
         articles,
         key=lambda x: (
-            int(x.get("priority_score", "0")),
+            int(x.get("editorial_score", "0")),
             int(x.get("source_quality", "0")),
             x.get("published", ""),
         ),
         reverse=True,
     )
 
+
+def build_daily_content_brief(articles: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    selected: List[Dict[str, str]] = []
+    selected_clusters: set[str] = set()
+    selected_entities: set[str] = set()
+    source_counts: Dict[str, int] = {}
+    sport_counts: Dict[str, int] = {}
+    must_post_count = 0
+
+    candidates = sort_articles(articles)
+
     for article in candidates:
-        priority = int(article.get("priority_score", "0") or 0)
-        source_quality = int(article.get("source_quality", "0") or 0)
-        title = article.get("title", "").strip()
-        cluster_id = article.get("cluster_id", "")
-        primary_entity = article.get("primary_entity", "")
-        sport = article.get("sport", "Women's Sports")
-        source = article.get("source", "")
-        sensitive = article.get("sensitive") == "Yes"
-        verification_needed = article.get("verification_needed") == "Yes"
-        cluster_rank = int(article.get("cluster_rank", "1") or 1)
-        excluded = article.get("excluded") == "Yes"
-
-        if not title or priority < 6 or excluded:
-            continue
-
-        # Daily brief gets only the primary version of a topic.
-        # Duplicates still exist in the full CSV for research, but not here.
-        if cluster_rank > 1:
-            continue
-
-        cluster_count = cluster_counts.get(cluster_id, 0)
-        entity_count = entity_counts.get(primary_entity, 0) if primary_entity else 0
-        sport_count = sport_counts.get(sport, 0)
-        source_count = source_counts.get(source, 0)
-
-        limit_reason = duplicate_limit_reason(article, cluster_count, entity_count, sport_count, source_count)
-        if limit_reason:
-            continue
-
-        decision = editorial_decision(
-            priority=priority,
-            source_quality=source_quality,
-            sensitive=sensitive,
-            verification_needed=verification_needed,
-            duplicate_rank=cluster_rank,
-            story_type=article.get("story_type", ""),
-            content_lane_value=article.get("content_lane", ""),
-            headline=title,
-            excluded=excluded,
-        )
-
-        # Keep the daily brief actionable. Skip means do not include it.
+        decision = article.get("editorial_decision", "")
         if decision in {"Skip", "Skip Duplicate"}:
             continue
 
-        # Cap Must Post so the brief feels selective.
-        if decision == "Must Post":
+        score = int(article.get("editorial_score", "0") or 0)
+        cluster_id = article.get("cluster_id", "")
+        primary_entity = article.get("primary_entity", "")
+        source = article.get("source", "")
+        sport = article.get("sport", "Women's Sports")
+
+        if cluster_id in selected_clusters:
+            continue
+        if primary_entity and primary_entity in selected_entities:
+            continue
+        if source_counts.get(source, 0) >= MAX_PER_SOURCE:
+            continue
+        if sport_counts.get(sport, 0) >= SPORT_MAXES.get(sport, 2):
+            continue
+
+        # Cap Must Post. If the story is still good, downgrade it instead of skipping.
+        final_decision = decision
+        if final_decision == "Must Post":
             if must_post_count >= MAX_MUST_POST_ITEMS:
-                decision = "Maybe Post"
+                final_decision = "Maybe Post"
             else:
                 must_post_count += 1
 
         rank = len(selected) + 1
-
         selected.append({
             "rank": str(rank),
-            "editorial_decision": decision,
-            "recommended_timing": recommended_timing(priority, article.get("story_type", ""), verification_needed),
-            "priority_score": str(priority),
-            "source_quality": str(source_quality),
+            "editorial_decision": final_decision,
+            "recommended_timing": recommended_timing(final_decision, article.get("story_type", "")),
+            "editorial_score": article.get("editorial_score", ""),
+            "priority_score": article.get("priority_score", ""),
+            "source_quality": article.get("source_quality", ""),
             "source_tier": article.get("source_tier", ""),
             "time_sensitive": article.get("time_sensitive", ""),
             "verification_needed": article.get("verification_needed", ""),
@@ -862,31 +1027,35 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
             "sport": sport,
             "story_type": article.get("story_type", ""),
             "source": source,
-            "headline": title,
+            "headline": article.get("title", ""),
             "link": article.get("link", ""),
             "post_format": article.get("post_format", ""),
-            "hook": hook(article),
-            "first_slide": first_slide(article),
-            "carousel_outline": carousel_outline(article),
+            "hook": article.get("hook", ""),
+            "first_slide": article.get("first_slide", ""),
+            "carousel_outline": article.get("carousel_outline", ""),
             "instagram_angle": article.get("instagram_angle", ""),
             "why_it_matters": article.get("why_it_matters", ""),
-            "caption_starter": article.get("suggested_caption", ""),
-            "visual_brief": visual_brief(article),
+            "caption_starter": article.get("caption_starter", ""),
+            "visual_brief": article.get("visual_brief", ""),
             "hashtags": article.get("hashtags", ""),
             "published": article.get("published", ""),
+            "age_hours": article.get("age_hours", ""),
+            "decision_reason": article.get("decision_reason", ""),
+            "score_reason": article.get("score_reason", ""),
             "notes": "",
         })
 
-        cluster_counts[cluster_id] = cluster_counts.get(cluster_id, 0) + 1
+        selected_clusters.add(cluster_id)
         if primary_entity:
-            entity_counts[primary_entity] = entity_counts.get(primary_entity, 0) + 1
-        sport_counts[sport] = sport_counts.get(sport, 0) + 1
+            selected_entities.add(primary_entity)
         source_counts[source] = source_counts.get(source, 0) + 1
+        sport_counts[sport] = sport_counts.get(sport, 0) + 1
 
-        if len(selected) >= max_items:
+        if len(selected) >= MAX_DAILY_BRIEF_ITEMS:
             break
 
     return selected
+
 
 def scrape_feeds() -> List[Dict[str, str]]:
     all_articles: List[Dict[str, str]] = []
@@ -899,22 +1068,25 @@ def scrape_feeds() -> List[Dict[str, str]]:
 
     enriched = [enrich_article(article) for article in dedupe_articles(all_articles)]
     enriched = assign_cluster_metadata(enriched)
-    enriched.sort(
-        key=lambda x: (
-            int(x.get("priority_score", "0")),
-            int(x.get("source_quality", "0")),
-            x.get("published", ""),
-        ),
-        reverse=True,
-    )
-    return enriched
+    return sort_articles(enriched)
 
 
 def save_articles_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FILE) -> None:
     fieldnames = [
+        "editorial_decision",
+        "editorial_score",
         "priority_score",
         "source_quality",
         "source_tier",
+        "recommended_timing",
+        "decision_reason",
+        "score_reason",
+        "freshness_component",
+        "story_value_component",
+        "brand_fit_component",
+        "engagement_component",
+        "source_component",
+        "penalty_component",
         "content_bucket",
         "content_lane",
         "sport",
@@ -922,11 +1094,16 @@ def save_articles_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FIL
         "source",
         "title",
         "published",
+        "age_hours",
         "link",
         "post_format",
+        "hook",
+        "first_slide",
+        "carousel_outline",
         "instagram_angle",
         "why_it_matters",
-        "suggested_caption",
+        "caption_starter",
+        "visual_brief",
         "hashtags",
         "primary_entity",
         "cluster_id",
@@ -935,9 +1112,8 @@ def save_articles_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FIL
         "duplicate_status",
         "verification_needed",
         "sensitive",
+        "wrong_or_low_fit",
         "time_sensitive",
-        "excluded",
-        "exclude_reason",
         "categories",
         "summary",
     ]
@@ -956,6 +1132,7 @@ def save_daily_brief_csv(brief_rows: List[Dict[str, str]], filename: str = DAILY
         "rank",
         "editorial_decision",
         "recommended_timing",
+        "editorial_score",
         "priority_score",
         "source_quality",
         "source_tier",
@@ -984,6 +1161,9 @@ def save_daily_brief_csv(brief_rows: List[Dict[str, str]], filename: str = DAILY
         "visual_brief",
         "hashtags",
         "published",
+        "age_hours",
+        "decision_reason",
+        "score_reason",
         "notes",
     ]
 
