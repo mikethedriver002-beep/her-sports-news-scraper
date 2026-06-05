@@ -1,8 +1,8 @@
 """
-Her Sports Daily Women's Sports News Scraper v7
+Her Sports Daily Women's Sports News Scraper v8
 -----------------------------------------------
 
-This version rebuilds the decision logic from the ground up.
+This version tightens the editorial logic after reviewing real daily brief outputs.
 
 Output files:
 1. womens_sports_articles.csv
@@ -36,8 +36,8 @@ from typing import Dict, Iterable, List, Optional, Tuple
 OUTPUT_FILE = "womens_sports_articles.csv"
 DAILY_BRIEF_FILE = "daily_content_brief.csv"
 
-MAX_DAILY_BRIEF_ITEMS = 12
-MAX_MUST_POST_ITEMS = 3
+MAX_DAILY_BRIEF_ITEMS = 10
+MAX_MUST_POST_ITEMS = 2
 MAX_PER_CLUSTER = 1
 MAX_PER_PRIMARY_ENTITY = 1
 MAX_PER_SOURCE = 3
@@ -141,8 +141,66 @@ BIG_NAMES = [
     "sabrina ionescu", "breanna stewart", "napheesa collier", "diana taurasi", "kelsey plum",
     "cameron brink", "aliyah boston", "rhyne howard", "trinity rodman", "sophia smith",
     "alex morgan", "coco gauff", "naomi osaka", "serena williams", "venus williams",
-    "simone biles", "suni lee", "nelly korda", "rose zhang", "sha'carri richardson",
-    "sydney mclaughlin", "katie ledecky", "ilona maher", "reese atwood",
+    "simone biles", "suni lee", "nelly korda", "rose zhang", "jennifer kupcho",
+    "sha'carri richardson", "sydney mclaughlin", "katie ledecky", "ilona maher",
+    "reese atwood", "kelsey mitchell", "raven johnson",
+]
+
+
+FEMALE_ATHLETE_SPORT_HINTS = {
+    "caitlin clark": "WNBA",
+    "angel reese": "WNBA",
+    "paige bueckers": "WNBA",
+    "juju watkins": "NCAA Women's Basketball",
+    "aja wilson": "WNBA",
+    "a'ja wilson": "WNBA",
+    "sabrina ionescu": "WNBA",
+    "breanna stewart": "WNBA",
+    "napheesa collier": "WNBA",
+    "diana taurasi": "WNBA",
+    "kelsey plum": "WNBA",
+    "cameron brink": "WNBA",
+    "aliyah boston": "WNBA",
+    "rhyne howard": "WNBA",
+    "kelsey mitchell": "WNBA",
+    "raven johnson": "NCAA Women's Basketball",
+    "trinity rodman": "NWSL / Women's Soccer",
+    "sophia smith": "NWSL / Women's Soccer",
+    "alex morgan": "NWSL / Women's Soccer",
+    "coco gauff": "Tennis",
+    "naomi osaka": "Tennis",
+    "serena williams": "Tennis",
+    "venus williams": "Tennis",
+    "simone biles": "Gymnastics",
+    "suni lee": "Gymnastics",
+    "nelly korda": "Golf / LPGA",
+    "rose zhang": "Golf / LPGA",
+    "jennifer kupcho": "Golf / LPGA",
+    "sha'carri richardson": "Track & Field",
+    "sydney mclaughlin": "Track & Field",
+    "katie ledecky": "Women's Sports",
+    "ilona maher": "Rugby",
+}
+
+
+MALE_ATHLETE_OR_EVENT_TERMS = [
+    "matteo arnaldi", "atp", "men's singles", "mens singles", "men’s singles",
+    "men's semifinal", "men’s semifinal", "nba", "nfl", "nhl", "mlb", "men's basketball",
+    "men’s basketball", "men's baseball", "men’s baseball", "diii baseball championship",
+    "di baseball championship", "dii baseball championship",
+]
+
+
+LOW_VALUE_SOFT_STORY_TERMS = [
+    "heartwarming moment", "shares moment", "share heartwarming", "reacts to", "reaction to",
+    "trolls", "fans react", "social media reacts", "outfit", "fashion", "boyfriend",
+    "girlfriend", "dating", "viral moment",
+]
+
+
+GUIDE_OR_EXPLAINER_TERMS = [
+    "everything you need to know", "how to watch", "preview", "prediction",
+    "talking points", "takeaways", "what to know",
 ]
 
 
@@ -361,33 +419,61 @@ def count_any(text: str, terms: Iterable[str]) -> int:
 
 
 def classify_sport(text: str) -> str:
-    for sport, keywords in SPORT_RULES:
-        if any(keyword in text for keyword in keywords):
+    # Use athlete hints first because broad Google summaries can include unrelated league terms.
+    for athlete, sport in FEMALE_ATHLETE_SPORT_HINTS.items():
+        if athlete in text:
             return sport
+
+    # Then use specific sport keyword rules.
+    sport_scores: Dict[str, int] = {}
+    for sport, keywords in SPORT_RULES:
+        sport_scores[sport] = sum(1 for keyword in keywords if keyword in text)
+
+    if sport_scores:
+        best_sport, best_score = max(sport_scores.items(), key=lambda item: item[1])
+        if best_score > 0:
+            return best_sport
+
     return "Women's Sports"
 
 
 def classify_story_type(text: str) -> str:
     if has_any(text, RUMOR_OR_SPECULATION_TERMS):
         return "Rumor / Needs Verification"
-    if has_any(text, OPINION_OR_LOW_URGENCY_TERMS):
+
+    if has_any(text, OPINION_OR_LOW_URGENCY_TERMS) or has_any(text, GUIDE_OR_EXPLAINER_TERMS):
         return "Opinion / Rankings"
-    if any(term in text for term in ["preview", "faces", "matchup", "schedule", "where to watch", "tonight", "tomorrow"]):
-        return "Game Preview"
-    if any(term in text for term in ["defeats", "beats", "tops", "leads", "wins", "loss", "score", "final", "championship", "title"]):
+
+    # True results require explicit result verbs. Do not treat "Championship" alone as a result.
+    result_phrases = [
+        "wins", "won", "defeats", "defeated", "beats", "beat", "tops", "topped",
+        "takes down", "claims title", "wins title", "wins championship",
+        "captures title", "secures championship", "final score"
+    ]
+    if any(term in text for term in result_phrases):
         return "Game Recap / Result"
+
     if any(term in text for term in ["announces", "announced", "signs", "signed", "traded", "trade", "draft", "hires", "fired"]):
         return "Breaking / Transaction"
-    if any(term in text for term in ["revenue", "media rights", "sponsorship", "valuation", "investment", "ratings", "viewership", "attendance"]):
+
+    if any(term in text for term in ["revenue", "media rights", "sponsorship", "valuation", "investment", "ratings", "viewership", "attendance", "sold out"]):
         return "Business / Growth"
+
     if any(term in text for term in ["expansion", "new team", "franchise", "launch", "debut", "inaugural"]):
         return "League Expansion"
+
+    if any(term in text for term in ["preview", "faces", "matchup", "schedule", "where to watch", "tonight", "tomorrow"]):
+        return "Game Preview"
+
     if any(term in text for term in ["profile", "story", "journey", "feature", "legacy", "comeback"]):
         return "Player Feature"
+
     if any(term in text for term in ["equal pay", "gender", "barrier", "trailblazer", "activism", "charity", "foundation", "women in sport"]):
         return "Culture / Advocacy"
+
     if any(term in text for term in ["injury", "injured", "questionable", "out", "return", "availability"]):
         return "Injury / Availability"
+
     return "General News"
 
 
@@ -437,13 +523,27 @@ def topic_signature(text: str, sport: str, primary_entity: str) -> str:
 
 
 def is_wrong_or_low_fit(text: str, sport: str) -> bool:
-    # Keep stories that clearly include women's sport context.
-    has_women_context = has_any(text, WOMENS_CONTEXT_TERMS) or sport != "Women's Sports"
+    # Hard blocks for clearly men's or unrelated stories that broad feeds sometimes pull.
+    if has_any(text, MALE_ATHLETE_OR_EVENT_TERMS):
+        return True
 
+    # Tennis and golf are mixed-gender news environments. Require an explicit women's signal
+    # or a known female athlete for those sports.
+    if sport in {"Tennis", "Golf / LPGA"}:
+        has_female_athlete = any(name in text for name in FEMALE_ATHLETE_SPORT_HINTS)
+        has_women_signal = has_any(text, ["women", "women's", "womens", "wta", "lpga", "us women's open", "ladies"])
+        if not has_female_athlete and not has_women_signal:
+            return True
+
+    # Generic NCAA baseball is not women's sports unless explicitly WPBL/women's baseball.
+    if "baseball championship" in text and not has_any(text, ["women's baseball", "womens baseball", "wpbl", "women's pro baseball"]):
+        return True
+
+    # Keep stories that clearly include women's sport context.
+    has_women_context = has_any(text, WOMENS_CONTEXT_TERMS) or sport not in {"Women's Sports"}
     if has_women_context:
         return False
 
-    # If a broad feed pulls men's sports or unrelated sports, filter it.
     if has_any(text, MALE_OR_UNRELATED_TERMS):
         return True
 
@@ -485,32 +585,38 @@ def freshness_score(article: Dict[str, str], story_type: str) -> Tuple[int, str]
 
 
 def story_value_score(text: str, story_type: str, sport: str) -> Tuple[int, str]:
-    # This is intentionally conservative.
-    if "championship" in text or "title" in text or "final out" in text:
-        return 38, "Championship/result story"
-    if any(term in text for term in ["record", "historic", "first", "shatter", "breaks"]):
-        return 34, "Record or historic milestone"
+    # This is intentionally conservative. "Championship" as an event name is not enough.
+    true_title_result = any(term in text for term in [
+        "wins championship", "won championship", "wins the championship", "claims title",
+        "wins title", "captures title", "defeats", "defeated", "beats", "beat", "wins 2026",
+        "wins the 2026", "final score"
+    ])
+
+    if true_title_result:
+        return 36, "Confirmed result/title story"
+    if any(term in text for term in ["record", "historic", "first", "shatter", "shatters", "breaks record"]):
+        return 32, "Record or historic milestone"
     if story_type == "Business / Growth":
         return 30, "Business/growth story"
     if story_type == "League Expansion":
         return 30, "Expansion story"
     if story_type == "Breaking / Transaction":
-        return 28, "Confirmed breaking/transaction story"
+        return 26, "Confirmed breaking/transaction story"
     if story_type == "Game Recap / Result":
-        return 25, "Game result story"
+        return 24, "Game result story"
     if story_type == "Game Preview":
-        return 18, "Preview story"
+        return 16, "Preview story"
     if story_type == "Player Feature":
-        return 16, "Feature story"
+        return 14, "Feature story"
     if story_type == "Culture / Advocacy":
-        return 16, "Culture/impact story"
+        return 14, "Culture/impact story"
     if story_type == "Injury / Availability":
-        return 15, "Availability story"
+        return 13, "Availability story"
     if story_type == "Opinion / Rankings":
-        return 8, "Opinion/ranking story"
+        return 6, "Opinion/ranking/explainer story"
     if story_type == "Rumor / Needs Verification":
-        return 6, "Rumor/speculation story"
-    return 12, "General update"
+        return 4, "Rumor/speculation story"
+    return 10, "General update"
 
 
 def brand_fit_score(text: str, sport: str) -> Tuple[int, str]:
@@ -543,16 +649,22 @@ def penalty_score(text: str, source_quality: int, story_type: str, freshness_rea
     reasons = []
 
     if has_any(text, RUMOR_OR_SPECULATION_TERMS):
-        penalty -= 18
+        penalty -= 22
         reasons.append("rumor/speculation penalty")
     if story_type == "Opinion / Rankings":
-        penalty -= 12
-        reasons.append("opinion/ranking penalty")
+        penalty -= 18
+        reasons.append("opinion/ranking/explainer penalty")
+    if has_any(text, LOW_VALUE_SOFT_STORY_TERMS):
+        penalty -= 24
+        reasons.append("soft/viral story penalty")
     if has_any(text, SENSITIVE_TERMS):
         penalty -= 25
         reasons.append("sensitive topic penalty")
+    if has_any(text, MALE_ATHLETE_OR_EVENT_TERMS):
+        penalty -= 40
+        reasons.append("men's/unrelated story penalty")
     if source_quality <= 5:
-        penalty -= 8
+        penalty -= 10
         reasons.append("low source quality penalty")
     if "Expired" in freshness_reason or "Too old" in freshness_reason:
         penalty -= 20
@@ -641,27 +753,26 @@ def base_decision(article: Dict[str, str]) -> Tuple[str, str]:
     score = int(article.get("editorial_score", "0") or 0)
     source_quality = int(article.get("source_quality", "0") or 0)
     story_type = article.get("story_type", "")
-    text = combined_text(article)
 
     if article.get("wrong_or_low_fit") == "Yes":
         return "Skip", "Likely wrong-sport or low-fit story."
     if article.get("sensitive") == "Yes":
         return "Review Before Posting", "Sensitive topic requires manual review."
-    if article.get("verification_needed") == "Yes" and score >= 50:
+    if article.get("verification_needed") == "Yes" and score >= 62:
         return "Verify First", "Needs verification before posting because it is speculative or not from a strong enough source."
     if article.get("verification_needed") == "Yes":
         return "Skip", "Too speculative or weakly sourced."
-    if story_type == "Opinion / Rankings" and score < 75:
-        return "Save for Weekend", "Opinion/ranking stories are lower urgency."
+    if story_type == "Opinion / Rankings" and score < 78:
+        return "Save for Weekend", "Opinion/ranking/explainer stories are lower urgency."
     if story_type == "Opinion / Rankings":
-        return "Maybe Post", "Strong ranking/opinion story, but not urgent."
+        return "Maybe Post", "Strong ranking/explainer story, but not urgent."
     if "Expired" in article.get("score_reason", "") or "Too old" in article.get("score_reason", ""):
         return "Skip", "Too stale for daily coverage."
-    if score >= 88 and source_quality >= 8 and story_type not in {"Opinion / Rankings", "Rumor / Needs Verification"}:
+    if score >= 92 and source_quality >= 8 and story_type not in {"Opinion / Rankings", "Rumor / Needs Verification"}:
         return "Must Post", "High score, strong source, timely, and not speculative."
-    if score >= 72:
+    if score >= 78:
         return "Maybe Post", "Strong candidate, but not mandatory."
-    if score >= 58:
+    if score >= 64:
         return "Save for Weekend", "Useful but not urgent."
     return "Skip", "Below posting threshold."
 
@@ -860,7 +971,7 @@ def enrich_article(article: Dict[str, str]) -> Dict[str, str]:
 
     score, score_reason, score_parts = calculate_editorial_score(article, sport, story_type, source_quality)
     if wrong_or_low_fit:
-        score = max(0, score - 40)
+        score = max(0, score - 60)
         score_reason += "; penalties: wrong-sport/low-fit filter"
 
     article.update({
