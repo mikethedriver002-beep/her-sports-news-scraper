@@ -1,19 +1,15 @@
 """
-Her Sports Daily Today Graphics Queue Generator v2 - CLEAN CONTEXT VERSION
--------------------------------------------------------------------------
+Her Sports Daily Today Graphics Queue Generator v2.1
+---------------------------------------------------
 
-Replaces the older generate_today_graphics_queue_v2.py.
+Same interface as generate_today_graphics_queue_v2.py.
 
-Reads:
-    story_context_enriched.csv plus the existing HSD output files
-
-Creates:
+Reads story_context_enriched.csv and creates:
     today_graphics_queue.md
     today_graphics_queue.csv
     top_3_graphic_packets.md
 
-Core rule:
-    If context is weak, say so clearly. Do not turn weak context into generic fake slide copy.
+This version makes context confidence obvious in every packet.
 """
 
 from __future__ import annotations
@@ -24,10 +20,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
-
 MASTER_DASHBOARD_FILE = "master_posting_dashboard.csv"
 DAILY_COMMAND_FILE = "daily_command_file.csv"
-GRAPHIC_COPY_FILE = "ready_to_post_graphic_copy.csv"
 CAPTION_BANK_FILE = "caption_bank_v2.csv"
 IMAGE_PROMPTS_FILE = "image_generation_prompts.csv"
 DAILY_BRIEF_FILE = "daily_content_brief.csv"
@@ -40,8 +34,7 @@ TOP_3_PACKETS_FILE = "top_3_graphic_packets.md"
 
 def clean(value: str) -> str:
     value = value or ""
-    value = re.sub(r"\s+", " ", str(value)).strip()
-    return value
+    return re.sub(r"\s+", " ", str(value)).strip()
 
 
 def key(value: str) -> str:
@@ -109,23 +102,20 @@ def get_primary_rows() -> List[Dict[str, str]]:
             "reason": r.get("why_this_is_priority", ""),
         } for r in dashboard_rows]
 
-    if brief_rows:
-        brief_rows.sort(key=lambda r: safe_int(r.get("rank", "999")))
-        return [{
-            "post_sequence": str(i),
-            "headline": r.get("headline", ""),
-            "editorial_decision": r.get("editorial_decision", ""),
-            "content_family": r.get("content_bucket", ""),
-            "template_name": r.get("post_format", ""),
-            "asset_shape": r.get("post_format", ""),
-            "action": r.get("recommended_timing", ""),
-            "timing": r.get("recommended_timing", ""),
-            "caption_direction": r.get("instagram_angle", ""),
-            "graphic_direction": r.get("visual_brief", ""),
-            "reason": r.get("decision_reason", ""),
-        } for i, r in enumerate(brief_rows, start=1)]
-
-    return []
+    brief_rows.sort(key=lambda r: safe_int(r.get("rank", "999")))
+    return [{
+        "post_sequence": str(i),
+        "headline": r.get("headline", ""),
+        "editorial_decision": r.get("editorial_decision", ""),
+        "content_family": r.get("content_bucket", ""),
+        "template_name": r.get("post_format", ""),
+        "asset_shape": r.get("post_format", ""),
+        "action": r.get("recommended_timing", ""),
+        "timing": r.get("recommended_timing", ""),
+        "caption_direction": r.get("instagram_angle", ""),
+        "graphic_direction": r.get("visual_brief", ""),
+        "reason": r.get("decision_reason", ""),
+    } for i, r in enumerate(brief_rows, start=1)]
 
 
 def context_bullets(ctx: Dict[str, str]) -> List[str]:
@@ -133,17 +123,22 @@ def context_bullets(ctx: Dict[str, str]) -> List[str]:
         return ["- Context status: No enriched context available. Verify source before using stats."]
 
     bullets: List[str] = []
-    confidence = clean(ctx.get("context_confidence", ""))
-    manual = clean(ctx.get("manual_review_flag", ""))
+    confidence = clean(ctx.get("context_confidence", "")) or "Unknown"
+    manual = clean(ctx.get("manual_review_flag", "")) or "Yes"
+    source_status = clean(ctx.get("context_source_status", "")) or "Unknown"
+
+    bullets.append(f"- Context source: {source_status}")
+    bullets.append(f"- Context confidence: {confidence}")
+    bullets.append(f"- Manual review flag: {manual}")
 
     summary = clean(ctx.get("story_summary", ""))
     if summary:
-        bullets.append(f"- Summary: {summary}")
+        bullets.append(f"- Safe summary: {summary}")
 
     for field in ["key_fact_1", "key_fact_2", "key_fact_3"]:
         value = clean(ctx.get(field, ""))
-        if value and value != summary:
-            bullets.append(f"- Verified detail: {value}")
+        if value and value != summary and value not in " ".join(bullets):
+            bullets.append(f"- Safe detail: {value}")
 
     for label, field in [
         ("Final score", "final_score"),
@@ -154,11 +149,18 @@ def context_bullets(ctx: Dict[str, str]) -> List[str]:
         if value and value not in " ".join(bullets):
             bullets.append(f"- {label}: {value}")
 
-    bullets.append(f"- Context confidence: {confidence or 'Unknown'}")
-    bullets.append(f"- Manual review flag: {manual or 'Yes'}")
+    source_count = clean(ctx.get("supplemental_source_count", ""))
+    sources = clean(ctx.get("supplemental_sources", ""))
+    queries = clean(ctx.get("supplemental_search_queries", ""))
+    if source_count:
+        bullets.append(f"- Supplemental source count: {source_count}")
+    if sources:
+        bullets.append(f"- Supplemental sources: {sources}")
+    if queries:
+        bullets.append(f"- Supplemental search queries: {queries}")
     notes = clean(ctx.get("verified_context_notes", ""))
     if notes:
-        bullets.append(f"- Verification notes: {notes}")
+        bullets.append(f"- Notes: {notes}")
 
     return bullets
 
@@ -166,56 +168,47 @@ def context_bullets(ctx: Dict[str, str]) -> List[str]:
 def build_slides(row: Dict[str, str], ctx: Dict[str, str]) -> List[Dict[str, str]]:
     headline = clean(row.get("headline", ""))
     content_family = clean(row.get("content_family", ""))
-    confidence = clean(ctx.get("context_confidence", ""))
-    manual_review = clean(ctx.get("manual_review_flag", "Yes"))
+    confidence = clean(ctx.get("context_confidence", "Low"))
+    manual = clean(ctx.get("manual_review_flag", "Yes"))
 
-    summary = clean(ctx.get("story_summary", ""))
-    fact1 = clean(ctx.get("key_fact_1", ""))
+    summary = clean(ctx.get("story_summary", "")) or headline
+    fact1 = clean(ctx.get("key_fact_1", "")) or summary
     fact2 = clean(ctx.get("key_fact_2", ""))
-    fact3 = clean(ctx.get("key_fact_3", ""))
-    final_score = clean(ctx.get("final_score", ""))
     key_number = clean(ctx.get("key_number", ""))
+    final_score = clean(ctx.get("final_score", ""))
     takeaway = clean(ctx.get("main_takeaway", ""))
 
-    if not ctx or confidence == "Low":
+    if confidence == "Low":
         return [
-            {"num": "1", "role": "Hook", "title": headline, "body": "The story is worth tracking, but exact stats need verification before publishing."},
-            {"num": "2", "role": "Research needed", "title": "Verify before designing", "body": summary or "Open the source and confirm the specific details before creating the final graphic."},
-            {"num": "3", "role": "Do not invent", "title": "Accuracy check", "body": "Do not add scores, stat lines, records, jersey numbers, or player details unless verified."},
+            {"num": "1", "role": "Hook", "title": headline, "body": "Story is worth tracking, but details need verification."},
+            {"num": "2", "role": "Verify", "title": "Verify before designing", "body": summary},
+            {"num": "3", "role": "Accuracy", "title": "Do not invent details", "body": "Do not add stats, scores, records, jersey numbers, or player details unless verified."},
             {"num": "4", "role": "CTA", "title": "Your take?", "body": "Follow Her Sports Daily for verified women's sports coverage."},
         ]
 
-    if "Postgame" in content_family or "Recap" in content_family or clean(ctx.get("story_type", "")) == "Game Recap / Result":
-        slide2_body = fact1 or summary
-        if final_score and final_score not in slide2_body:
-            slide2_body = f"{slide2_body} Final score: {final_score}."
+    if "Recap" in content_family or "Postgame" in content_family:
+        body2 = fact1
+        if final_score and final_score not in body2:
+            body2 = f"{body2} Final score: {final_score}."
         return [
             {"num": "1", "role": "Hook", "title": headline, "body": "The result you need to know."},
-            {"num": "2", "role": "What happened", "title": "What happened", "body": slide2_body},
-            {"num": "3", "role": "Why it matters", "title": "Why it matters", "body": takeaway or fact2 or fact3},
+            {"num": "2", "role": "What happened", "title": "What happened", "body": body2},
+            {"num": "3", "role": "Why it matters", "title": "Why it matters", "body": takeaway or fact2 or "Verify top performers before adding stat lines."},
             {"num": "4", "role": "CTA", "title": "Your take?", "body": "Follow Her Sports Daily for more women's sports coverage."},
         ]
 
-    if "Growth" in content_family or clean(ctx.get("story_type", "")) in {"Business / Growth", "League Expansion"}:
-        return [
-            {"num": "1", "role": "Hook", "title": headline, "body": "The growth story to know."},
-            {"num": "2", "role": "The number", "title": "The number to know", "body": key_number or fact1 or summary},
-            {"num": "3", "role": "Impact", "title": "Why it matters", "body": takeaway or fact2},
-            {"num": "4", "role": "CTA", "title": "More growth stories?", "body": "Follow Her Sports Daily for the business of women's sports."},
-        ]
-
-    if "Milestone" in content_family or clean(ctx.get("story_type", "")) == "Record / Milestone":
+    if "Milestone" in content_family or "Tonight in the W" in content_family:
         return [
             {"num": "1", "role": "Hook", "title": headline, "body": "A milestone worth putting into context."},
-            {"num": "2", "role": "The milestone", "title": "The milestone", "body": key_number or fact1 or summary},
-            {"num": "3", "role": "Context", "title": "Why it matters", "body": takeaway or fact2},
+            {"num": "2", "role": "The milestone", "title": "The milestone", "body": key_number or fact1},
+            {"num": "3", "role": "Context", "title": "Why it matters", "body": takeaway or fact2 or "Verify exact record details before adding supporting stats."},
             {"num": "4", "role": "CTA", "title": "How big is this?", "body": "Follow Her Sports Daily for more."},
         ]
 
     return [
         {"num": "1", "role": "Hook", "title": headline, "body": "The story you need to know."},
-        {"num": "2", "role": "Context", "title": "The context", "body": fact1 or summary},
-        {"num": "3", "role": "Angle", "title": "The angle", "body": takeaway or fact2 or fact3},
+        {"num": "2", "role": "Context", "title": "The context", "body": fact1},
+        {"num": "3", "role": "Angle", "title": "The angle", "body": takeaway or fact2},
         {"num": "4", "role": "CTA", "title": "Your take?", "body": "Follow Her Sports Daily for more."},
     ]
 
@@ -237,16 +230,15 @@ def packet_for_row(row: Dict[str, str], caption_rows: List[Dict[str, str]], prom
         f"**Asset shape:** {clean(row.get('asset_shape', ''))}",
         f"**Timing:** {clean(row.get('timing', ''))}",
         "",
-        "### Verified story context",
+        "### Safe story context",
     ]
 
     lines.extend(context_bullets(ctx))
-
     lines.extend([
         "",
         "### Production accuracy rules",
         "- Do not invent stats, scores, records, jersey numbers, player teams, or uniform details.",
-        "- If context confidence is Low or manual review is Yes, verify the source before final design.",
+        "- If manual review is Yes, verify the source before final design.",
         "- If a player jersey number cannot be verified from reliable sources, do not show the number.",
         "",
         "### Design direction",
@@ -260,18 +252,14 @@ def packet_for_row(row: Dict[str, str], caption_rows: List[Dict[str, str]], prom
     ])
 
     for slide in slides:
-        lines.extend([
-            f"**Slide {slide['num']} - {slide['role']}:** {slide['title']}",
-            slide["body"],
-            "",
-        ])
+        lines.extend([f"**Slide {slide['num']} - {slide['role']}:** {slide['title']}", slide["body"], ""])
 
     lines.extend([
         "### Caption",
         caption or "Use the caption bank for this story, or write a direct caption from the verified context above.",
         "",
         "### Image prompt",
-        prompt or "Use the template, verified story context, slide copy, and design direction above to create the graphic.",
+        prompt or "Use the template, safe story context, slide copy, and design direction above to create the graphic.",
         "",
         "---",
         "",
@@ -292,41 +280,29 @@ def write_queue_md(rows, caption_rows, prompt_rows, ctx_by_key) -> None:
         "## Quick order",
         "",
     ]
-
     for row in rows:
         lines.append(f"{clean(row.get('post_sequence', ''))}. **{clean(row.get('action', ''))}** - {clean(row.get('headline', ''))}")
     lines.append("")
-
     for row in rows:
         lines.append(packet_for_row(row, caption_rows, prompt_rows, ctx_by_key))
-
     Path(QUEUE_MD_FILE).write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_top_3(rows, caption_rows, prompt_rows, ctx_by_key) -> None:
-    lines = [
-        "# Top 3 Graphic Packets",
-        "",
-        f"Generated: {datetime.now(timezone.utc).isoformat()}",
-        "",
-        "These are the first three graphics to make today.",
-        "",
-    ]
-
+    lines = ["# Top 3 Graphic Packets", "", f"Generated: {datetime.now(timezone.utc).isoformat()}", "", "These are the first three graphics to make today.", ""]
     for row in rows[:3]:
         lines.append(packet_for_row(row, caption_rows, prompt_rows, ctx_by_key))
-
     Path(TOP_3_PACKETS_FILE).write_text("\n".join(lines), encoding="utf-8")
 
 
 def write_queue_csv(rows, caption_rows, prompt_rows, ctx_by_key) -> None:
     fieldnames = [
         "post_sequence", "headline", "action", "editorial_decision", "content_family",
-        "template_name", "asset_shape", "timing", "context_confidence", "manual_review_flag",
-        "story_summary", "key_fact_1", "key_fact_2", "key_fact_3", "final_score",
-        "key_number", "main_takeaway", "caption", "image_generation_prompt",
+        "template_name", "asset_shape", "timing", "context_source_status",
+        "context_confidence", "manual_review_flag", "story_summary", "key_fact_1",
+        "key_fact_2", "key_fact_3", "final_score", "key_number", "main_takeaway",
+        "caption", "image_generation_prompt",
     ]
-
     with open(QUEUE_CSV_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -342,6 +318,7 @@ def write_queue_csv(rows, caption_rows, prompt_rows, ctx_by_key) -> None:
                 "template_name": clean(row.get("template_name", "")),
                 "asset_shape": clean(row.get("asset_shape", "")),
                 "timing": clean(row.get("timing", "")),
+                "context_source_status": clean(ctx.get("context_source_status", "")),
                 "context_confidence": clean(ctx.get("context_confidence", "")),
                 "manual_review_flag": clean(ctx.get("manual_review_flag", "")),
                 "story_summary": clean(ctx.get("story_summary", "")),
@@ -351,6 +328,8 @@ def write_queue_csv(rows, caption_rows, prompt_rows, ctx_by_key) -> None:
                 "final_score": clean(ctx.get("final_score", "")),
                 "key_number": clean(ctx.get("key_number", "")),
                 "main_takeaway": clean(ctx.get("main_takeaway", "")),
+                "supplemental_source_count": clean(ctx.get("supplemental_source_count", "")),
+                "supplemental_sources": clean(ctx.get("supplemental_sources", "")),
                 "caption": choose_caption(caption_rows, headline),
                 "image_generation_prompt": choose_prompt(prompt_rows, headline),
             })
@@ -361,11 +340,9 @@ def main() -> None:
     caption_rows = load_csv(CAPTION_BANK_FILE)
     prompt_rows = load_csv(IMAGE_PROMPTS_FILE)
     ctx_by_key = context_index(load_csv(STORY_CONTEXT_FILE))
-
     write_queue_md(rows, caption_rows, prompt_rows, ctx_by_key)
     write_top_3(rows, caption_rows, prompt_rows, ctx_by_key)
     write_queue_csv(rows, caption_rows, prompt_rows, ctx_by_key)
-
     print(f"Created {QUEUE_MD_FILE}")
     print(f"Created {TOP_3_PACKETS_FILE}")
     print(f"Created {QUEUE_CSV_FILE}")
