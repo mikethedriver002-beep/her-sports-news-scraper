@@ -1,5 +1,5 @@
 """
-Her Sports Daily Women's Sports News Scraper v3
+Her Sports Daily Women's Sports News Scraper v4
 -----------------------------------------------
 
 This scraper pulls women's sports headlines from RSS feeds and turns them into
@@ -9,7 +9,7 @@ two CSVs:
    Full article database with priority, sport, story type, post angle, caption, etc.
 
 2. daily_content_brief.csv
-   A smaller, cleaner shortlist of the best stories to consider posting today.
+   A smaller editorial board with Must Post, Maybe Post, Save for Weekend, Review Before Posting, and Skip decisions.
 
 It uses only Python's standard library, so it works cleanly in GitHub Actions.
 """
@@ -487,6 +487,139 @@ def visual_brief(article: Dict[str, str]) -> str:
     return f"Use a simple {sport} news card with headline, context, and one engagement question."
 
 
+
+def is_time_sensitive(article: Dict[str, str]) -> bool:
+    text = combined_text(article)
+    story_type = article.get("story_type", "")
+
+    if story_type in {"Breaking News", "Game Recap", "Game Preview", "Injury / Availability"}:
+        return True
+
+    urgent_words = [
+        "today", "tonight", "tomorrow", "this weekend", "final", "semifinal",
+        "wins", "beats", "defeats", "injury", "injured", "signs", "trade", "draft"
+    ]
+    return any(word in text for word in urgent_words)
+
+
+def recommended_timing(article: Dict[str, str], decision: str) -> str:
+    story_type = article.get("story_type", "")
+    text = combined_text(article)
+
+    if decision == "Review Before Posting":
+        return "Review before posting"
+    if decision == "Skip":
+        return "Do not post unless the story develops"
+    if story_type in {"Breaking News", "Injury / Availability"}:
+        return "Post ASAP after verifying"
+    if story_type == "Game Preview":
+        return "Post before tipoff or kickoff"
+    if story_type == "Game Recap":
+        return "Post within 1 to 3 hours"
+    if "tonight" in text or "today" in text:
+        return "Post today"
+    if decision == "Save for Weekend":
+        return "Save for weekend or slower news window"
+    return "Post today if it fits the feed mix"
+
+
+def content_lane(article: Dict[str, str]) -> str:
+    bucket = article.get("content_bucket", "")
+    story_type = article.get("story_type", "")
+    sport = article.get("sport", "")
+
+    if bucket == "Star Watch":
+        return "Star-driven engagement"
+    if bucket == "Growth of the Game":
+        return "Business and growth"
+    if bucket == "Tonight / Game Coverage":
+        return "Daily game coverage"
+    if bucket == "College Spotlight":
+        return "College sports"
+    if story_type == "Culture / Advocacy":
+        return "Culture and impact"
+    if sport == "Women's Sports":
+        return "General women's sports"
+    return sport
+
+
+def editorial_decision(article: Dict[str, str], rank: int) -> str:
+    priority = int(article.get("priority_score", "0") or 0)
+    story_type = article.get("story_type", "")
+    bucket = article.get("content_bucket", "")
+    text = combined_text(article)
+
+    if is_sensitive(article):
+        return "Review Before Posting"
+
+    if priority >= 9:
+        return "Must Post"
+
+    if priority == 8:
+        return "Maybe Post"
+
+    evergreen_story = story_type in {
+        "Business / Growth", "League Expansion", "Player Profile",
+        "Culture / Advocacy", "Awards / Rankings", "General News"
+    }
+
+    if priority >= 6 and evergreen_story and not is_time_sensitive(article):
+        return "Save for Weekend"
+
+    if priority >= 6 and bucket in {"Growth of the Game", "Culture & Impact", "College Spotlight"}:
+        return "Save for Weekend"
+
+    return "Skip"
+
+
+def first_slide(article: Dict[str, str]) -> str:
+    title = article.get("title", "").strip()
+    sport = article.get("sport", "")
+    story_type = article.get("story_type", "")
+
+    if story_type == "Business / Growth":
+        return "Women's sports are big business now"
+    if story_type == "League Expansion":
+        return "Another women's sports market is growing"
+    if story_type == "Game Preview":
+        return f"{sport}: what to watch tonight"
+    if story_type == "Game Recap":
+        return f"{sport}: the quick recap"
+    if story_type == "Breaking News":
+        return "Breaking in women's sports"
+    if story_type == "Player Profile":
+        return "Know this athlete"
+    return title[:90]
+
+
+def carousel_outline(article: Dict[str, str]) -> str:
+    story_type = article.get("story_type", "")
+
+    if story_type == "Business / Growth":
+        return "Slide 1: headline stat | Slide 2: what happened | Slide 3: why it matters | Slide 4: what comes next"
+    if story_type == "League Expansion":
+        return "Slide 1: new team or league | Slide 2: market context | Slide 3: why fans should care | Slide 4: follow for updates"
+    if story_type == "Game Preview":
+        return "Slide 1: matchup | Slide 2: key player | Slide 3: matchup edge | Slide 4: prediction or question"
+    if story_type == "Game Recap":
+        return "Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next"
+    if story_type == "Player Profile":
+        return "Slide 1: athlete hook | Slide 2: background | Slide 3: recent moment | Slide 4: why they matter"
+    if story_type == "Breaking News":
+        return "Slide 1: breaking headline | Slide 2: confirmed facts | Slide 3: context | Slide 4: what to watch next"
+    return "Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question"
+
+
+def brief_category_limits() -> Dict[str, int]:
+    return {
+        "Must Post": 10,
+        "Maybe Post": 10,
+        "Save for Weekend": 8,
+        "Review Before Posting": 5,
+        "Skip": 5,
+    }
+
+
 def hook(article: Dict[str, str]) -> str:
     title = article.get("title", "")
     story_type = article.get("story_type", "")
@@ -505,10 +638,19 @@ def hook(article: Dict[str, str]) -> str:
 
 
 def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = MAX_DAILY_BRIEF_ITEMS) -> List[Dict[str, str]]:
+    """
+    Build an editorial shortlist with useful categories:
+
+    Must Post: High-priority stories worth covering quickly.
+    Maybe Post: Strong candidates that need a human pick.
+    Save for Weekend: Evergreen or slower-burn stories.
+    Review Before Posting: Sensitive stories that need extra care.
+    Skip: Lower-priority items included only as a small watchlist.
+    """
     selected: List[Dict[str, str]] = []
     seen_topics = set()
     sport_counts: Dict[str, int] = {}
-    bucket_counts: Dict[str, int] = {}
+    decision_counts: Dict[str, int] = {key: 0 for key in brief_category_limits()}
 
     candidates = sorted(
         articles,
@@ -516,32 +658,43 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
         reverse=True,
     )
 
+    # First pass: label each candidate with an editorial decision.
+    labeled_candidates = []
     for article in candidates:
+        title = article.get("title", "").strip()
+        if not title:
+            continue
+        temp_rank = len(labeled_candidates) + 1
+        decision = editorial_decision(article, temp_rank)
+        labeled_candidates.append((article, decision))
+
+    # Preserve an editorial balance. We want strong stories, not 25 near-duplicates.
+    for article, decision in labeled_candidates:
         priority = int(article.get("priority_score", "0") or 0)
         title = article.get("title", "").strip()
         sport = article.get("sport", "Women's Sports")
-        bucket = article.get("content_bucket", "Daily News")
         key = topic_key(title)
 
-        if not title or priority < 5:
-            continue
         if key in seen_topics:
             continue
-        if sport_counts.get(sport, 0) >= 6:
+        if sport_counts.get(sport, 0) >= 7:
             continue
-        if bucket_counts.get(bucket, 0) >= 7:
+        if decision_counts.get(decision, 0) >= brief_category_limits().get(decision, 5):
+            continue
+
+        # Keep the brief useful. Do not allow low-priority skip rows to dominate.
+        if decision == "Skip" and priority > 5:
             continue
 
         rank = len(selected) + 1
-        sensitive = is_sensitive(article)
-        status = "Manual review" if sensitive else ("Post candidate" if priority >= 8 else "Maybe")
-
         selected.append({
             "rank": str(rank),
-            "coverage_slot": coverage_slot(priority, rank, sensitive),
+            "editorial_decision": decision,
+            "recommended_timing": recommended_timing(article, decision),
+            "time_sensitive": "Yes" if is_time_sensitive(article) else "No",
             "priority_score": str(priority),
-            "status": status,
-            "content_bucket": bucket,
+            "content_lane": content_lane(article),
+            "content_bucket": article.get("content_bucket", ""),
             "sport": sport,
             "story_type": article.get("story_type", ""),
             "source": article.get("source", ""),
@@ -549,6 +702,8 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
             "link": article.get("link", ""),
             "post_format": article.get("post_format", ""),
             "hook": hook(article),
+            "first_slide": first_slide(article),
+            "carousel_outline": carousel_outline(article),
             "instagram_angle": article.get("instagram_angle", ""),
             "why_it_matters": article.get("why_it_matters", ""),
             "caption_starter": article.get("suggested_caption", ""),
@@ -560,7 +715,7 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
 
         seen_topics.add(key)
         sport_counts[sport] = sport_counts.get(sport, 0) + 1
-        bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
+        decision_counts[decision] = decision_counts.get(decision, 0) + 1
 
         if len(selected) >= max_items:
             break
@@ -613,9 +768,11 @@ def save_articles_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FIL
 def save_daily_brief_csv(brief_rows: List[Dict[str, str]], filename: str = DAILY_BRIEF_FILE) -> None:
     fieldnames = [
         "rank",
-        "coverage_slot",
+        "editorial_decision",
+        "recommended_timing",
+        "time_sensitive",
         "priority_score",
-        "status",
+        "content_lane",
         "content_bucket",
         "sport",
         "story_type",
@@ -624,6 +781,8 @@ def save_daily_brief_csv(brief_rows: List[Dict[str, str]], filename: str = DAILY
         "link",
         "post_format",
         "hook",
+        "first_slide",
+        "carousel_outline",
         "instagram_angle",
         "why_it_matters",
         "caption_starter",
