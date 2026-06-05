@@ -45,6 +45,9 @@ jobs:
       - name: Generate HSD dashboard
         run: python generate_hsd_dashboard.py
 
+      - name: Archive this run
+        run: python archive_run_outputs.py
+
       - name: Commit updated content files
         run: |
           git config user.name "github-actions"
@@ -74,5 +77,7 @@ jobs:
           git add today_graphics_queue.csv
           git add top_3_graphic_packets.md
           git add dashboard/index.html
-          git commit -m "Update HSD dashboard" || echo "No changes to commit"
+          git add latest_run_summary.md
+          git add run_history/
+          git commit -m "Update HSD dashboard and archive run" || echo "No changes to commit"
           git push
