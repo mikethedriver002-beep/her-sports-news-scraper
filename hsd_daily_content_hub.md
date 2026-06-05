@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Content Hub
 
-Generated: 2026-06-05T21:45:44.292775+00:00
+Generated: 2026-06-05T21:46:34.235942+00:00
 
 ## What this package includes
 
@@ -36,7 +36,17 @@ Generated: 2026-06-05T21:45:44.292775+00:00
 
 ## Maybe Post
 
-### Rank 3: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
+### Rank 3: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award
+
+- Sport: WNBA
+- Story type: Record / Milestone
+- Content family: Context Carousel
+- Recommended asset: 3 to 4-slide milestone graphic
+- Hook: This is the kind of milestone that shows where the game is headed.
+- Caption starter: A’ja Wilson Earns Record 14th Career WNBA Western Conference Player of the Month Award What should we cover next?
+- Visual brief: Use a milestone carousel with the record, context, and why it matters.
+
+### Rank 4: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream
 
 - Sport: WNBA
 - Story type: Game Recap / Result
@@ -46,7 +56,7 @@ Generated: 2026-06-05T21:45:44.292775+00:00
 - Caption starter: Kelsey Mitchell scores 25 as Fever begin Commissioner's Cup title defense with 83-71 win over Dream Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 4: Saint Leo wins 2026 NCAA DII softball championship
+### Rank 5: Saint Leo wins 2026 NCAA DII softball championship
 
 - Sport: Softball
 - Story type: Game Recap / Result
@@ -55,16 +65,6 @@ Generated: 2026-06-05T21:45:44.292775+00:00
 - Hook: Here is the quick version of what happened and why it matters.
 - Caption starter: Saint Leo wins 2026 NCAA DII softball championship Here is the quick breakdown and why it matters.
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
-
-### Rank 5: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers
-
-- Sport: WNBA
-- Story type: Record / Milestone
-- Content family: Context Carousel
-- Recommended asset: 3 to 4-slide milestone graphic
-- Hook: This is the kind of milestone that shows where the game is headed.
-- Caption starter: Lynx's Miles breaks Clark's WNBA rookie record with 8 3-pointers What should we cover next?
-- Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
 ### Rank 6: Dawn Staley and South Carolina Land Star Recruit Oliviyah Edwards
 
@@ -88,17 +88,7 @@ Generated: 2026-06-05T21:45:44.292775+00:00
 
 ## Save for Weekend
 
-### Rank 8: Queen's Club 411: Dates, who's playing, prize money and more
-
-- Sport: Tennis
-- Story type: Business / Growth
-- Content family: Context Carousel
-- Recommended asset: 4-slide data carousel
-- Hook: Women's sports are becoming impossible for the business world to ignore.
-- Caption starter: Queen's Club 411: Dates, who's playing, prize money and more The growth of women's sports keeps getting harder to ignore.
-- Visual brief: Use a clean data carousel with bold numbers and simple context.
-
-### Rank 9: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour
+### Rank 8: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour
 
 - Sport: Tennis
 - Story type: Recruiting / Roster News
@@ -108,7 +98,7 @@ Generated: 2026-06-05T21:45:44.292775+00:00
 - Caption starter: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour How big is this move for the program?
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 10: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
+### Rank 9: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
 
 - Sport: Golf / LPGA
 - Story type: Business / Growth
@@ -116,4 +106,14 @@ Generated: 2026-06-05T21:45:44.292775+00:00
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
 - Caption starter: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million The growth of women's sports keeps getting harder to ignore.
+- Visual brief: Use a clean data carousel with bold numbers and simple context.
+
+### Rank 10: Women’s sports are booming for the Texas Longhorns — investment is the reason why
+
+- Sport: Women's Sports
+- Story type: Business / Growth
+- Content family: Context Carousel
+- Recommended asset: 4-slide data carousel
+- Hook: Women's sports are becoming impossible for the business world to ignore.
+- Caption starter: Women’s sports are booming for the Texas Longhorns — investment is the reason why The growth of women's sports keeps getting harder to ignore.
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
