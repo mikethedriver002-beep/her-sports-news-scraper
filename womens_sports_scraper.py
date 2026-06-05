@@ -1,5 +1,5 @@
 """
-Her Sports Daily Women's Sports News Scraper v5
+Her Sports Daily Women's Sports News Scraper v6
 -----------------------------------------------
 
 Creates two CSV files:
@@ -11,8 +11,12 @@ Creates two CSV files:
    A filtered, ranked posting brief with duplicate topic control, source quality
    scoring, story clustering, and max story limits per athlete/topic.
 
-This version is designed to stop the daily brief from getting overloaded with
-five versions of the same viral story.
+This version makes the brief less aggressive by:
+- capping Must Post items
+- excluding likely men's sports stories
+- using stricter source quality scoring
+- allowing only one daily brief item per repeated topic/entity
+- demoting rumors and low-verification stories
 """
 
 from __future__ import annotations
@@ -29,11 +33,12 @@ from typing import Dict, Iterable, List, Tuple
 
 OUTPUT_FILE = "womens_sports_articles.csv"
 DAILY_BRIEF_FILE = "daily_content_brief.csv"
-MAX_DAILY_BRIEF_ITEMS = 25
-MAX_PER_CLUSTER = 2
-MAX_PER_PRIMARY_ENTITY = 2
-MAX_PER_SPORT = 5
-MAX_PER_SOURCE = 4
+MAX_DAILY_BRIEF_ITEMS = 15
+MAX_MUST_POST_ITEMS = 5
+MAX_PER_CLUSTER = 1
+MAX_PER_PRIMARY_ENTITY = 1
+MAX_PER_SPORT = 4
+MAX_PER_SOURCE = 3
 
 
 def google_news(query: str) -> str:
@@ -105,7 +110,7 @@ SPORT_RULES: List[Tuple[str, List[str]]] = [
     ("NWSL / Women's Soccer", ["nwsl", "uswnt", "women's soccer", "women's football", "gotham", "thorns", "angel city", "spirit", "wave", "royals", "legacy fc", "summit fc", "lionesses"]),
     ("PWHL / Women's Hockey", ["pwhl", "women's hockey", "fleet", "frost", "sirens", "charge", "victoire", "sceptres", "torrent", "goldeneyes"]),
     ("Tennis", ["tennis", "wta", "wimbledon", "us open", "french open", "australian open", "coco gauff", "naomi osaka", "swiatek", "sabalenka", "serena", "venus"]),
-    ("Golf / LPGA", ["lpga", "women's open", "golf", "nelly korda", "lexi thompson", "rose zhang", "kupcho"]),
+    ("Golf / LPGA", ["lpga", "women's open", "u.s. women's open", "us women's open", "golf", "nelly korda", "lexi thompson", "rose zhang", "kupcho", "lydia ko", "hannah green", "minjee lee", "jennifer kupcho"]),
     ("Softball", ["softball", "college world series", "wcws"]),
     ("Volleyball", ["volleyball", "lovb", "major league volleyball", "mlv", "pro volleyball", "nebraska volleyball"]),
     ("Gymnastics", ["gymnastics", "simone biles", "suni lee", "olympic gymnastics"]),
@@ -169,6 +174,11 @@ NEGATIVE_OR_SENSITIVE_KEYWORDS = [
 
 RUMOR_WORDS = ["rumor", "rumors", "reportedly", "sources", "could", "might", "trade speculation", "linked to"]
 
+LIKELY_MENS_STORY_KEYWORDS = [
+    "men's", "mens ", "men’s", "men's golf", "men’s golf", "men's basketball", "men’s basketball",
+    "men's soccer", "men’s soccer", "men's tennis", "men’s tennis", "boys "
+]
+
 
 STOPWORDS = {
     "the", "and", "for", "with", "from", "this", "that", "into", "over", "after", "before",
@@ -181,7 +191,7 @@ STOPWORDS = {
 
 
 SOURCE_TIERS = [
-    ("Official", 10, ["wnba", "nwsl", "pwhl", "ncaa", "ussoccer", "lpga", "wta", "fifa"]),
+    ("Official", 10, ["wnba.com", "nwslsoccer", "thepwhl", "ncaa.com", "us soccer", "ussoccer", "lpga", "wta tennis", "wtatennis", "fifa"]),
     ("Wire / Mainstream", 9, ["associated press", "ap news", "apnews", "reuters", "espn", "cbs sports", "yahoo sports", "usa today", "sports illustrated", "fox sports", "nbc"]),
     ("Business", 8, ["sports business journal", "front office sports", "sportspro", "axios", "sportico", "forbes"]),
     ("Specialty Women's Sports", 8, ["just women", "the gist", "the ix", "swish appeal", "the next", "winsidr", "her hoop stats", "equalizer", "the ice garden", "hoopfeed", "togethxr"]),
@@ -304,12 +314,35 @@ def combined_text(article: Dict[str, str]) -> str:
     ]).lower()
 
 
-def classify_sport(text: str) -> str:
-    for sport, keywords in SPORT_RULES:
-        if any(keyword in text for keyword in keywords):
-            return sport
-    return "Women's Sports"
+def keyword_present(text: str, keyword: str) -> bool:
+    pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
+    return re.search(pattern, text.lower()) is not None
 
+
+def classify_sport(text: str) -> str:
+    # Score-based sport detection is safer than first-match detection.
+    # It prevents broad terms like "sun" or "dream" from incorrectly turning
+    # golf, tennis, or soccer stories into WNBA stories.
+    scores: Dict[str, int] = {}
+
+    for sport, keywords in SPORT_RULES:
+        score = 0
+        for keyword in keywords:
+            if keyword_present(text, keyword):
+                # Specific phrases and athlete names are stronger than short team names.
+                if len(keyword) <= 4:
+                    score += 1
+                elif " " in keyword:
+                    score += 3
+                else:
+                    score += 2
+        if score:
+            scores[sport] = score
+
+    if not scores:
+        return "Women's Sports"
+
+    return max(scores.items(), key=lambda item: item[1])[0]
 
 def classify_story_type(text: str) -> str:
     for story_type, keywords in STORY_TYPE_RULES:
@@ -333,17 +366,26 @@ def get_content_bucket(sport: str, story_type: str, text: str) -> str:
 
 
 def source_tier_and_quality(source: str, link: str = "") -> Tuple[str, int]:
-    source_text = f"{source} {link}".lower()
+    # Score source quality from the source name first. Do not use the full link
+    # for keyword matching, because Google News links can contain topic words
+    # like WNBA and accidentally make non-official sources look official.
+    source_text = clean_text(source).lower()
+    host_text = ""
+    try:
+        host_text = urllib.parse.urlparse(link).netloc.lower()
+    except Exception:
+        host_text = ""
+
+    combined = f"{source_text} {host_text}".strip()
 
     for tier, quality, keywords in SOURCE_TIERS:
-        if any(keyword in source_text for keyword in keywords):
+        if any(keyword in combined for keyword in keywords):
             return tier, quality
 
-    if "news.google.com" in source_text:
+    if "news.google.com" in host_text:
         return "Aggregator", 5
 
     return "Other", 6
-
 
 def calculate_priority(text: str, sport: str, story_type: str, source_quality: int) -> int:
     score = 3
@@ -493,19 +535,41 @@ def needs_verification_text(text: str, source_quality: int) -> bool:
     return source_quality < 8 or any(keyword in text for keyword in RUMOR_WORDS) or is_sensitive_text(text)
 
 
-def editorial_decision(priority: int, source_quality: int, sensitive: bool, verification_needed: bool, duplicate_rank: int) -> str:
+def editorial_decision(
+    priority: int,
+    source_quality: int,
+    sensitive: bool,
+    verification_needed: bool,
+    duplicate_rank: int,
+    story_type: str,
+    content_lane_value: str,
+    headline: str,
+    excluded: bool,
+) -> str:
+    if excluded:
+        return "Skip"
     if sensitive:
         return "Review Before Posting"
     if duplicate_rank > 1:
         return "Skip Duplicate"
-    if priority >= 9 and source_quality >= 8 and not verification_needed:
+    if verification_needed:
+        if priority >= 9 and source_quality >= 8:
+            return "Maybe Post"
+        return "Verify First"
+
+    must_post_story = (
+        story_type in {"Breaking News", "Business / Growth", "League Expansion"}
+        or content_lane_value == "Star-driven engagement"
+        or any(word in headline.lower() for word in ["championship", "title", "record", "historic", "first"])
+    )
+
+    if priority >= 10 and source_quality >= 8 and must_post_story:
         return "Must Post"
     if priority >= 8 and source_quality >= 7:
         return "Maybe Post"
     if priority >= 6:
         return "Save for Weekend"
     return "Skip"
-
 
 def recommended_timing(priority: int, story_type: str, verification_needed: bool) -> str:
     if verification_needed:
@@ -603,6 +667,14 @@ def visual_brief(article: Dict[str, str]) -> str:
     return f"Use a simple {sport} news card with headline, context, and one engagement question."
 
 
+def is_likely_mens_story_text(text: str) -> bool:
+    # Skip obvious men's sports stories that come through broad NCAA or golf feeds.
+    # Keep stories that explicitly mention women's/girls content.
+    if any(term in text for term in ["women", "women's", "women’s", "girls", "wnba", "nwsl", "pwhl", "lpga", "wta", "uswnt"]):
+        return False
+    return any(keyword in text for keyword in LIKELY_MENS_STORY_KEYWORDS)
+
+
 def enrich_article(article: Dict[str, str]) -> Dict[str, str]:
     text = combined_text(article)
     sport = classify_sport(text)
@@ -614,6 +686,7 @@ def enrich_article(article: Dict[str, str]) -> Dict[str, str]:
     cluster_id = topic_key_from_text(text, sport)
     sensitive = is_sensitive_text(text)
     verification_needed = needs_verification_text(text, source_quality)
+    excluded = is_likely_mens_story_text(text)
 
     article.update({
         "sport": sport,
@@ -633,6 +706,8 @@ def enrich_article(article: Dict[str, str]) -> Dict[str, str]:
         "hashtags": hashtags(sport),
         "time_sensitive": time_sensitive(story_type),
         "content_lane": content_lane(story_type, sport, text),
+        "excluded": "Yes" if excluded else "No",
+        "exclude_reason": "Likely men's sports story" if excluded else "",
     })
     return article
 
@@ -700,6 +775,7 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
     entity_counts: Dict[str, int] = {}
     sport_counts: Dict[str, int] = {}
     source_counts: Dict[str, int] = {}
+    must_post_count = 0
 
     candidates = sorted(
         articles,
@@ -722,8 +798,14 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
         sensitive = article.get("sensitive") == "Yes"
         verification_needed = article.get("verification_needed") == "Yes"
         cluster_rank = int(article.get("cluster_rank", "1") or 1)
+        excluded = article.get("excluded") == "Yes"
 
-        if not title or priority < 5:
+        if not title or priority < 6 or excluded:
+            continue
+
+        # Daily brief gets only the primary version of a topic.
+        # Duplicates still exist in the full CSV for research, but not here.
+        if cluster_rank > 1:
             continue
 
         cluster_count = cluster_counts.get(cluster_id, 0)
@@ -735,12 +817,30 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
         if limit_reason:
             continue
 
-        rank = len(selected) + 1
-        decision = editorial_decision(priority, source_quality, sensitive, verification_needed, cluster_rank)
+        decision = editorial_decision(
+            priority=priority,
+            source_quality=source_quality,
+            sensitive=sensitive,
+            verification_needed=verification_needed,
+            duplicate_rank=cluster_rank,
+            story_type=article.get("story_type", ""),
+            content_lane_value=article.get("content_lane", ""),
+            headline=title,
+            excluded=excluded,
+        )
 
-        # Keep the brief useful. Skip low-quality duplicate stories unless they are high priority and from strong sources.
-        if decision == "Skip Duplicate" and not (priority >= 9 and source_quality >= 9):
+        # Keep the daily brief actionable. Skip means do not include it.
+        if decision in {"Skip", "Skip Duplicate"}:
             continue
+
+        # Cap Must Post so the brief feels selective.
+        if decision == "Must Post":
+            if must_post_count >= MAX_MUST_POST_ITEMS:
+                decision = "Maybe Post"
+            else:
+                must_post_count += 1
+
+        rank = len(selected) + 1
 
         selected.append({
             "rank": str(rank),
@@ -787,7 +887,6 @@ def build_daily_content_brief(articles: List[Dict[str, str]], max_items: int = M
             break
 
     return selected
-
 
 def scrape_feeds() -> List[Dict[str, str]]:
     all_articles: List[Dict[str, str]] = []
@@ -837,6 +936,8 @@ def save_articles_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FIL
         "verification_needed",
         "sensitive",
         "time_sensitive",
+        "excluded",
+        "exclude_reason",
         "categories",
         "summary",
     ]
