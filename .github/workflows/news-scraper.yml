@@ -70,5 +70,5 @@ jobs:
           git add today_graphics_queue.md
           git add today_graphics_queue.csv
           git add top_3_graphic_packets.md
-          git commit -m "Update HSD enriched graphics queue" || echo "No changes to commit"
+          git commit -m "Update HSD clean context graphics queue" || echo "No changes to commit"
           git push
