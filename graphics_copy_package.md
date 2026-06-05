@@ -1,6 +1,6 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-05T21:46:34.235289+00:00
+Generated: 2026-06-05T21:47:31.600387+00:00
 
 ## Daily Content Command Center
 
@@ -74,7 +74,17 @@ Generated: 2026-06-05T21:46:34.235289+00:00
 - Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 8: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour
+### Rank 8: Queen's Club 411: Dates, who's playing, prize money and more
+
+- Decision: Save for Weekend
+- Content family: Context Carousel
+- Recommended asset: 4-slide data carousel
+- Hook: Women's sports are becoming impossible for the business world to ignore.
+- First slide / main text: The business of women's sports keeps growing: Queen's Club 411: Dates, who's playing, prize money and more
+- Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
+- Visual brief: Use a clean data carousel with bold numbers and simple context.
+
+### Rank 9: Serena Williams Adds 2026 Berlin Tennis Open to WTA Comeback Tour
 
 - Decision: Save for Weekend
 - Content family: Story + Feed Combo
@@ -84,23 +94,13 @@ Generated: 2026-06-05T21:46:34.235289+00:00
 - Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
 
-### Rank 9: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
+### Rank 10: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
 - First slide / main text: The business of women's sports keeps growing: U.S. Women's Open 2026: USGA announces purse increase to record-breaking $12.5 million
-- Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
-- Visual brief: Use a clean data carousel with bold numbers and simple context.
-
-### Rank 10: Women’s sports are booming for the Texas Longhorns — investment is the reason why
-
-- Decision: Save for Weekend
-- Content family: Context Carousel
-- Recommended asset: 4-slide data carousel
-- Hook: Women's sports are becoming impossible for the business world to ignore.
-- First slide / main text: The business of women's sports keeps growing: Women’s sports are booming for the Texas Longhorns — investment is the reason why
 - Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
 
