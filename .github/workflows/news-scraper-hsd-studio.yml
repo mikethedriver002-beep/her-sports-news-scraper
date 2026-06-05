@@ -1,0 +1,39 @@
+name: Women's Sports News + HSD Studio Package
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 11 * * *"
+    - cron: "0 16 * * *"
+    - cron: "0 21 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run scraper
+        run: python womens_sports_scraper.py
+
+      - name: Generate Her Sports Daily studio package
+        run: python generate_hsd_studio_package.py
+
+      - name: Commit updated content files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add womens_sports_articles.csv daily_content_brief.csv daily_content_command_center.csv tonight_in_the_w_package.csv must_post_carousels.csv story_poll_package.csv caption_bank_v2.csv reel_script_package.md graphics_copy_package.md hsd_daily_content_hub.md
+          git commit -m "Update HSD studio package" || echo "No changes to commit"
+          git push
