@@ -1,168 +1,427 @@
 """
-women_sports_scraper.py
-~~~~~~~~~~~~~~~~~~~~~~~~
+Her Sports Daily Women's Sports News Scraper
+--------------------------------------------
 
-This script demonstrates how to automate news scraping for women's sports
-using RSS feeds. It leverages the `feedparser` library to parse RSS feeds
-from a variety of reputable sources and writes the results to a CSV file
-for further analysis.
+This scraper pulls women's sports headlines from RSS feeds and turns them into
+a content planning CSV with editorial fields for Instagram, TikTok, Reels, and
+daily news coverage.
 
-Usage:
+It uses only Python's standard library, so it works cleanly in GitHub Actions.
 
-    python womens_sports_scraper.py
-
-The script will fetch articles from each defined feed URL, collect
-information such as the article title, publication date, categories,
-summary and link, and then save the aggregated results into
-`womens_sports_articles.csv` in the current directory.
-
-Note: This script is intended to be run as a one-off example. To build a
-production-ready scraper, you may wish to handle exceptions more
-robustly, respect websites' robots.txt policies, and schedule periodic
-execution via tools like cron or Airflow.
+Output:
+    womens_sports_articles.csv
 """
 
-import csv
-import datetime
-from typing import List, Dict
+from __future__ import annotations
 
+import csv
+import datetime as dt
+import html
+import re
 import urllib.request
 import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+from typing import Dict, Iterable, List, Tuple
+
+
+OUTPUT_FILE = "womens_sports_articles.csv"
+
+
+FEED_URLS = [
+    "https://justwomenssports.com/feed/",
+    "https://womeninsport.org/feed/",
+    "https://www.womenssportsfoundation.org/feed/",
+
+    # Google News RSS searches. These aggregate multiple outlets.
+    "https://news.google.com/rss/search?q=women%27s+sports+WNBA+OR+NWSL+OR+PWHL+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=WNBA+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=NWSL+women%27s+soccer+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=PWHL+women%27s+hockey+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=women%27s+college+basketball+NCAA+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=women%27s+softball+college+world+series+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=women%27s+volleyball+NCAA+professional+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=USWNT+women%27s+soccer+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=LPGA+women%27s+golf+when:3d&hl=en-US&gl=US&ceid=US:en",
+]
+
+
+SPORT_RULES: List[Tuple[str, List[str]]] = [
+    ("WNBA", ["wnba", "fever", "sky", "aces", "liberty", "lynx", "storm", "mercury", "dream", "mystics", "sparks", "wings", "sun", "valkyries", "fire", "tempo"]),
+    ("NCAA Women's Basketball", ["women's basketball", "ncaa basketball", "march madness", "final four", "uconn", "south carolina", "usc", "lsu", "notre dame", "iowa"]),
+    ("NWSL / Women's Soccer", ["nwsl", "uswnt", "women's soccer", "women's football", "gotham", "thorns", "angel city", "spirit", "wave", "royals", "legacy fc", "summit fc", "lionesses"]),
+    ("PWHL / Women's Hockey", ["pwhl", "women's hockey", "fleet", "frost", "sirens", "charge", "victoire", "sceptres", "torrent", "goldeneyes"]),
+    ("Tennis", ["tennis", "wta", "wimbledon", "us open", "french open", "australian open", "coco gauff", "naomi osaka", "swiatek", "sabalenka"]),
+    ("Golf / LPGA", ["lpga", "women's open", "golf", "nelly korda", "lexi thompson", "rose zhang"]),
+    ("Softball", ["softball", "college world series", "wcws"]),
+    ("Volleyball", ["volleyball", "lovb", "major league volleyball", "mlv", "pro volleyball", "nebraska volleyball"]),
+    ("Gymnastics", ["gymnastics", "simone biles", "suni lee", "olympic gymnastics"]),
+    ("Track & Field", ["track", "athletics", "sprint", "sha'carri", "sydney mclaughlin", "gabby thomas"]),
+    ("Rugby", ["rugby", "women's rugby"]),
+    ("Cricket", ["cricket", "t20", "women's world cup"]),
+    ("Baseball", ["women's baseball", "women's pro baseball", "wpbl"]),
+]
+
+
+STORY_TYPE_RULES: List[Tuple[str, List[str]]] = [
+    ("Breaking News", ["breaking", "announces", "announced", "reportedly", "signs", "signed", "traded", "trade", "draft", "hires", "fired"]),
+    ("Game Recap", ["defeats", "beats", "tops", "leads", "wins", "loss", "score", "opener", "final", "semifinal", "championship"]),
+    ("Game Preview", ["preview", "faces", "matchup", "schedule", "where to watch", "odds", "tonight", "tomorrow"]),
+    ("Business / Growth", ["revenue", "media rights", "sponsorship", "valuation", "investment", "ratings", "viewership", "attendance", "ticket", "expansion"]),
+    ("League Expansion", ["expansion", "new team", "franchise", "launch", "debut", "inaugural"]),
+    ("Player Profile", ["profile", "story", "journey", "feature", "legacy", "returns", "comeback"]),
+    ("Awards / Rankings", ["award", "honor", "ranking", "ranked", "player of the week", "mvp", "all-star"]),
+    ("Injury / Availability", ["injury", "injured", "questionable", "out", "return", "availability"]),
+    ("Culture / Advocacy", ["equal pay", "gender", "barrier", "trailblazer", "activism", "charity", "foundation", "women in sport"]),
+]
+
+
+BIG_ENGAGEMENT_NAMES = [
+    "caitlin clark", "angel reese", "paige bueckers", "juju watkins", "aja wilson", "a'ja wilson",
+    "sabrina ionescu", "breanna stewart", "napheesa collier", "diana taurasi", "kelsey plum",
+    "cameron brink", "aliyah boston", "rhyne howard", "trinity rodman", "sophia smith",
+    "alex morgan", "coco gauff", "naomi osaka", "serena williams", "venus williams",
+    "simone biles", "suni lee", "nelly korda", "rose zhang", "sha'carri richardson",
+    "sydney mclaughlin", "katie ledecky", "ilona maher",
+]
+
+
+HIGH_INTENT_KEYWORDS = [
+    "record", "historic", "first", "breaks", "milestone", "championship", "title",
+    "wins", "upset", "rivalry", "sold out", "attendance", "viewership", "media rights",
+    "expansion", "launch", "new league", "contract", "salary", "injury", "returns",
+]
+
+
+NEGATIVE_OR_SENSITIVE_KEYWORDS = [
+    "abuse", "assault", "harassment", "lawsuit", "investigation", "arrest", "death",
+    "died", "killed", "violence", "scandal",
+]
+
+
+def clean_text(value: str) -> str:
+    value = html.unescape(value or "")
+    value = re.sub(r"<[^>]+>", " ", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    return value
+
+
+def fetch_url(url: str) -> bytes:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; HerSportsDailyBot/1.0; +https://github.com/)",
+            "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return response.read()
+
+
+def parse_date(raw_date: str) -> str:
+    raw_date = clean_text(raw_date)
+    if not raw_date:
+        return ""
+    try:
+        return parsedate_to_datetime(raw_date).isoformat()
+    except Exception:
+        return raw_date
 
 
 def parse_feed(url: str) -> List[Dict[str, str]]:
-    """Parse a single RSS feed using built-in XML parsing and return articles.
-
-    This function avoids third-party dependencies by fetching the RSS XML
-    directly and parsing it with Python's standard library. It extracts
-    common RSS elements like title, link, publication date, category and
-    description/summary.
-
-    Args:
-        url: The URL to the RSS feed.
-
-    Returns:
-        A list of dictionaries, each representing an article with keys
-        ``source``, ``title``, ``link``, ``published``, ``categories``, and
-        ``summary``.
-    """
     articles: List[Dict[str, str]] = []
-    try:
-        # Some websites may block requests without a User-Agent header.
-        req = urllib.request.Request(
-            url,
-            headers={
-                "User-Agent": "Mozilla/5.0 (compatible; NewsScraper/1.0; +https://example.com)"
-            },
-        )
-        with urllib.request.urlopen(req) as response:
-            xml_data = response.read()
-    except Exception as exc:
-        print(f"Failed to fetch feed {url}: {exc}")
-        return articles
 
     try:
+        xml_data = fetch_url(url)
         root = ET.fromstring(xml_data)
-    except ET.ParseError as exc:
-        print(f"Failed to parse XML for {url}: {exc}")
+    except Exception as exc:
+        print(f"Feed failed: {url} | {exc}")
         return articles
 
-    # Determine namespace (if any) and set prefix accordingly
-    # Many RSS feeds do not use namespaces; handle generic case
-    channel = root.find('channel') if root.tag == 'rss' else root
+    channel = root.find("channel")
     source_title = url
+
     if channel is not None:
-        title_elem = channel.find('title')
-        if title_elem is not None and title_elem.text:
-            source_title = title_elem.text.strip()
+        source_title = clean_text(channel.findtext("title", default=url))
 
-        for item in channel.findall('item'):
-            title = item.findtext('title', default='').strip()
-            link = item.findtext('link', default='').strip()
-            pub_date = item.findtext('pubDate', default='').strip()
-            # Try to parse pubDate; if fail, keep raw
-            try:
-                # Example format: 'Wed, 05 Jun 2026 16:31:52 +0000'
-                published_dt = datetime.datetime.strptime(pub_date, '%a, %d %b %Y %H:%M:%S %z')
-                published_iso = published_dt.isoformat()
-            except Exception:
-                published_iso = pub_date
-
-            # Categories can have multiple <category> tags
-            categories_list = [cat.text.strip() for cat in item.findall('category') if cat.text]
-            categories = ', '.join(categories_list)
-
-            # Summary or description
-            summary = item.findtext('description', default='').strip()
+        for item in channel.findall("item"):
+            title = clean_text(item.findtext("title", default=""))
+            link = clean_text(item.findtext("link", default=""))
+            published = parse_date(item.findtext("pubDate", default=""))
+            categories = ", ".join(clean_text(c.text or "") for c in item.findall("category") if c.text)
+            summary = clean_text(item.findtext("description", default=""))
 
             articles.append({
                 "source": source_title,
                 "title": title,
                 "link": link,
-                "published": published_iso,
+                "published": published,
                 "categories": categories,
-                "summary": summary
+                "summary": summary,
             })
+
+        return articles
+
+    # Basic Atom support
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    entries = root.findall("atom:entry", ns)
+    source_title = clean_text(root.findtext("atom:title", default=url, namespaces=ns))
+
+    for entry in entries:
+        title = clean_text(entry.findtext("atom:title", default="", namespaces=ns))
+        published = parse_date(
+            entry.findtext("atom:published", default="", namespaces=ns)
+            or entry.findtext("atom:updated", default="", namespaces=ns)
+        )
+        summary = clean_text(entry.findtext("atom:summary", default="", namespaces=ns))
+        link = ""
+
+        link_elem = entry.find("atom:link", ns)
+        if link_elem is not None:
+            link = link_elem.attrib.get("href", "")
+
+        articles.append({
+            "source": source_title,
+            "title": title,
+            "link": link,
+            "published": published,
+            "categories": "",
+            "summary": summary,
+        })
 
     return articles
 
 
-def scrape_feeds(feed_urls: List[str]) -> List[Dict[str, str]]:
-    """Collect articles from multiple RSS feeds.
+def combined_text(article: Dict[str, str]) -> str:
+    return " ".join([
+        article.get("title", ""),
+        article.get("summary", ""),
+        article.get("categories", ""),
+        article.get("source", ""),
+    ]).lower()
 
-    Args:
-        feed_urls: A list of feed URLs to scrape.
 
-    Returns:
-        A consolidated list of article dictionaries from all feeds.
-    """
-    all_articles = []
-    for url in feed_urls:
+def classify_sport(text: str) -> str:
+    for sport, keywords in SPORT_RULES:
+        if any(keyword in text for keyword in keywords):
+            return sport
+    return "Women's Sports"
+
+
+def classify_story_type(text: str) -> str:
+    for story_type, keywords in STORY_TYPE_RULES:
+        if any(keyword in text for keyword in keywords):
+            return story_type
+    return "General News"
+
+
+def get_content_bucket(sport: str, story_type: str, text: str) -> str:
+    if story_type in {"Business / Growth", "League Expansion"}:
+        return "Growth of the Game"
+    if story_type in {"Game Recap", "Game Preview"}:
+        return "Tonight / Game Coverage"
+    if any(name in text for name in BIG_ENGAGEMENT_NAMES):
+        return "Star Watch"
+    if story_type in {"Culture / Advocacy", "Player Profile"}:
+        return "Culture & Impact"
+    if sport in {"NCAA Women's Basketball", "Softball", "Volleyball"}:
+        return "College Spotlight"
+    return "Daily News"
+
+
+def calculate_priority(text: str, sport: str, story_type: str) -> int:
+    score = 3
+
+    if any(name in text for name in BIG_ENGAGEMENT_NAMES):
+        score += 3
+
+    if sport in {"WNBA", "NWSL / Women's Soccer", "NCAA Women's Basketball", "PWHL / Women's Hockey"}:
+        score += 2
+    elif sport in {"Tennis", "Softball", "Volleyball", "Golf / LPGA"}:
+        score += 1
+
+    if story_type in {"Breaking News", "Game Recap", "Business / Growth", "League Expansion"}:
+        score += 2
+    elif story_type in {"Game Preview", "Awards / Rankings"}:
+        score += 1
+
+    matched_high_intent = sum(1 for keyword in HIGH_INTENT_KEYWORDS if keyword in text)
+    score += min(matched_high_intent, 2)
+
+    if any(keyword in text for keyword in NEGATIVE_OR_SENSITIVE_KEYWORDS):
+        score -= 2
+
+    return max(1, min(score, 10))
+
+
+def choose_post_format(story_type: str, priority: int) -> str:
+    if priority >= 8 and story_type in {"Breaking News", "Game Recap"}:
+        return "Breaking graphic + carousel"
+    if story_type == "Business / Growth":
+        return "Data carousel"
+    if story_type == "League Expansion":
+        return "Map/expansion carousel"
+    if story_type == "Game Preview":
+        return "Tonight graphic"
+    if story_type == "Player Profile":
+        return "Reel or story feature"
+    if story_type == "Awards / Rankings":
+        return "Single graphic"
+    return "Story post"
+
+
+def why_it_matters(article: Dict[str, str], sport: str, story_type: str, priority: int) -> str:
+    title = article.get("title", "")
+
+    if story_type == "Business / Growth":
+        return "This is a growth-of-the-game story that helps show why women's sports are becoming a major media and business opportunity."
+    if story_type == "League Expansion":
+        return "Expansion stories show where fan demand is rising and help followers understand how quickly the women's sports landscape is changing."
+    if story_type == "Game Recap":
+        return f"This is timely {sport} coverage with a result fans may want explained quickly."
+    if story_type == "Game Preview":
+        return f"This gives followers a reason to watch {sport} and can feed your pregame graphics."
+    if priority >= 8:
+        return "This has high engagement potential because it includes a major athlete, record, milestone, or highly searchable topic."
+    if "record" in title.lower() or "historic" in title.lower():
+        return "Records and historic moments are strong proof points for the rise of women's sports."
+    return "This is a useful daily update that can help keep the audience informed and consistent with the brand."
+
+
+def instagram_angle(article: Dict[str, str], sport: str, story_type: str, priority: int) -> str:
+    title = article.get("title", "")
+
+    if story_type == "Business / Growth":
+        return "The business of women's sports is not emerging anymore. It is becoming big business."
+    if story_type == "League Expansion":
+        return "Another sign that women's sports demand is outgrowing the old model."
+    if story_type == "Game Recap":
+        return f"What happened, who stood out, and why it matters for {sport} fans."
+    if story_type == "Game Preview":
+        return f"What to watch tonight in {sport}, with one key player and one key matchup."
+    if story_type == "Player Profile":
+        return "The athlete story behind the headline."
+    if priority >= 8:
+        return "This is the kind of story casual fans will stop scrolling for."
+    return f"Quick hit: {title}"
+
+
+def suggested_caption(article: Dict[str, str], sport: str, story_type: str) -> str:
+    title = article.get("title", "").strip()
+    if story_type == "Game Preview":
+        return f"{sport} watchlist: {title} What are you watching for?"
+    if story_type == "Game Recap":
+        return f"{title} Here is the quick breakdown and why it matters."
+    if story_type == "Business / Growth":
+        return f"{title} The growth of women's sports keeps getting harder to ignore."
+    if story_type == "League Expansion":
+        return f"{title} More teams, more investment, more proof that the demand is real."
+    return f"{title} What should we cover next?"
+
+
+def hashtags(sport: str) -> str:
+    base = ["#WomensSports", "#HerSportsDaily", "#SportsNews"]
+    sport_tags = {
+        "WNBA": ["#WNBA", "#WomensBasketball"],
+        "NCAA Women's Basketball": ["#NCAAWBB", "#WomensBasketball"],
+        "NWSL / Women's Soccer": ["#NWSL", "#USWNT", "#WomensSoccer"],
+        "PWHL / Women's Hockey": ["#PWHL", "#WomensHockey"],
+        "Tennis": ["#WTA", "#Tennis"],
+        "Golf / LPGA": ["#LPGA", "#Golf"],
+        "Softball": ["#Softball", "#WCWS"],
+        "Volleyball": ["#Volleyball", "#NCAAVB"],
+        "Gymnastics": ["#Gymnastics"],
+        "Track & Field": ["#TrackAndField"],
+        "Rugby": ["#Rugby"],
+        "Cricket": ["#Cricket"],
+        "Baseball": ["#Baseball", "#WomensBaseball"],
+    }
+    return " ".join(base + sport_tags.get(sport, []))
+
+
+def enrich_article(article: Dict[str, str]) -> Dict[str, str]:
+    text = combined_text(article)
+    sport = classify_sport(text)
+    story_type = classify_story_type(text)
+    priority = calculate_priority(text, sport, story_type)
+    bucket = get_content_bucket(sport, story_type, text)
+
+    article.update({
+        "sport": sport,
+        "story_type": story_type,
+        "priority_score": str(priority),
+        "content_bucket": bucket,
+        "why_it_matters": why_it_matters(article, sport, story_type, priority),
+        "instagram_angle": instagram_angle(article, sport, story_type, priority),
+        "post_format": choose_post_format(story_type, priority),
+        "suggested_caption": suggested_caption(article, sport, story_type),
+        "hashtags": hashtags(sport),
+    })
+    return article
+
+
+def dedupe_articles(articles: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
+    seen = set()
+    deduped = []
+
+    for article in articles:
+        title = article.get("title", "").lower()
+        link = article.get("link", "").lower()
+        key = re.sub(r"[^a-z0-9]+", "", title)[:120] or link
+
+        if key and key not in seen:
+            seen.add(key)
+            deduped.append(article)
+
+    return deduped
+
+
+def scrape_feeds() -> List[Dict[str, str]]:
+    all_articles: List[Dict[str, str]] = []
+
+    for url in FEED_URLS:
         print(f"Fetching feed: {url}")
-        try:
-            articles = parse_feed(url)
-            print(f"  Retrieved {len(articles)} articles from {url}")
-            all_articles.extend(articles)
-        except Exception as exc:
-            print(f"  Error processing {url}: {exc}")
-    return all_articles
+        articles = parse_feed(url)
+        print(f"  Retrieved {len(articles)} articles")
+        all_articles.extend(articles)
+
+    enriched = [enrich_article(article) for article in dedupe_articles(all_articles)]
+    enriched.sort(key=lambda x: (int(x.get("priority_score", "0")), x.get("published", "")), reverse=True)
+    return enriched
 
 
-def save_to_csv(articles: List[Dict[str, str]], filename: str) -> None:
-    """Save the list of articles to a CSV file.
+def save_to_csv(articles: List[Dict[str, str]], filename: str = OUTPUT_FILE) -> None:
+    fieldnames = [
+        "priority_score",
+        "content_bucket",
+        "sport",
+        "story_type",
+        "source",
+        "title",
+        "published",
+        "link",
+        "post_format",
+        "instagram_angle",
+        "why_it_matters",
+        "suggested_caption",
+        "hashtags",
+        "categories",
+        "summary",
+    ]
 
-    Args:
-        articles: A list of article dictionaries.
-        filename: The filename for the CSV file.
-    """
-    fieldnames = ["source", "title", "link", "published", "categories", "summary"]
-    with open(filename, mode="w", newline="", encoding="utf-8") as csvfile:
+    with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for article in articles:
-            writer.writerow(article)
+            writer.writerow({field: article.get(field, "") for field in fieldnames})
+
     print(f"Saved {len(articles)} articles to {filename}")
 
 
 def main() -> None:
-    """Main entry point for the script."""
-    # Define the RSS feeds to scrape. Feel free to add or remove feeds.
-    feed_urls = [
-        "https://justwomenssports.com/feed/",
-        "https://womeninsport.org/feed/",
-        "https://www.thegistsports.com/feed/",
-        "https://www.womenssportsfoundation.org/feed/",  # general women's sports news
-        "https://www.insidehighered.com/taxonomy/term/11204/feed",  # includes NCAA women's sports
-        # Additional feeds can be added here
-    ]
-
-    # Collect articles from the feeds
-    articles = scrape_feeds(feed_urls)
-
-    # Save the results to a CSV file
-    csv_filename = "womens_sports_articles.csv"
-    save_to_csv(articles, csv_filename)
+    articles = scrape_feeds()
+    save_to_csv(articles)
 
 
 if __name__ == "__main__":
     main()
+        
