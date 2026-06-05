@@ -36,6 +36,9 @@ jobs:
       - name: Generate HSD graphics system
         run: python generate_hsd_graphics_system.py
 
+      - name: Generate today graphics queue
+        run: python generate_today_graphics_queue.py
+
       - name: Commit updated content files
         run: |
           git config user.name "github-actions"
@@ -60,5 +63,8 @@ jobs:
           git add daily_command_file.csv
           git add image_generation_prompts.csv
           git add hsd_graphics_system_hub.md
+          git add today_graphics_queue.md
+          git add today_graphics_queue.csv
+          git add top_3_graphic_packets.md
           git commit -m "Update HSD complete system" || echo "No changes to commit"
           git push
