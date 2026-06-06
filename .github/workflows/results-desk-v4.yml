@@ -1,4 +1,4 @@
-name: Women's Sports Results Desk v4
+name: Women's Sports Results Desk v4.1
 
 on:
   push:
@@ -12,28 +12,27 @@ permissions:
   contents: write
 
 concurrency:
-  group: results-desk-v4-${{ github.ref }}
+  group: results-desk-v4-1-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   core-results:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-v4-${{ hashFiles('requirements.txt') }}
-      - name: Install core dependencies
+
+      - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Run Results Desk v4 core sources
+
+      - name: Run Results Desk v4.1
         env:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
           HSD_TIMEZONE: America/New_York
@@ -41,55 +40,38 @@ jobs:
           HSD_LOOKBACK_DAYS: "1"
           HSD_LOOKAHEAD_DAYS: "1"
         run: python generate_hsd_results_desk_v4.py
+
       - name: Generate dashboard
         run: python generate_results_dashboard_v4.py
+
       - name: Archive this run
         run: python archive_results_runs_v4.py
+
       - name: Upload run artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: results-desk-v4-core
+          name: results-desk-v4-1
           path: results_run_history/latest/
+
       - name: Commit updated results files
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add source_observations.csv reconciled_events.csv today_results_board.csv today_womens_results.csv today_final_results.csv top_womens_results.csv manual_review_queue.csv source_health_report.csv results_graphics_queue.md results_system_hub.md run_manifest.json results_dashboard/index.html latest_results_run_summary.md results_run_history/
-          git commit -m "Update HSD Results Desk v4" || echo "No changes to commit"
+          git add source_observations.csv
+          git add reconciled_events.csv
+          git add today_results_board.csv
+          git add today_womens_results.csv
+          git add today_final_results.csv
+          git add top_womens_results.csv
+          git add manual_review_queue.csv
+          git add source_health_report.csv
+          git add results_graphics_queue.md
+          git add daily_results_recommendations.md
+          git add results_system_hub.md
+          git add run_manifest.json
+          git add results_dashboard/index.html
+          git add latest_results_run_summary.md
+          git add results_run_history/
+          git commit -m "Update HSD Results Desk v4.1" || echo "No changes to commit"
           git push
-
-  sofa-discovery-test:
-    if: ${{ vars.RUN_SOFA_DISCOVERY == 'true' }}
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    timeout-minutes: 25
-    steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install SofaScore dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-sofa.txt
-          python -m playwright install --with-deps chromium
-      - name: Run SofaScore discovery only
-        env:
-          HSD_TIMEZONE: America/New_York
-          HSD_RESULTS_SOURCES: sofascore
-          HSD_LOOKBACK_DAYS: "0"
-          HSD_LOOKAHEAD_DAYS: "1"
-        run: python generate_hsd_results_desk_v4.py
-      - name: Upload SofaScore discovery artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: results-desk-v4-sofascore-discovery
-          path: |
-            source_observations.csv
-            source_health_report.csv
-            run_manifest.json
-            results_system_hub.md
