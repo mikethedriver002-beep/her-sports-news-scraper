@@ -1,4 +1,4 @@
-name: Women's Sports Results Desk v4.2
+name: Women's Sports Results Desk v4.3
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: results-desk-v4-2-${{ github.ref }}
+  group: results-desk-v4-3-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: results-desk-v4-2
+          name: results-desk-v4-3
           path: results_run_history/latest/
 
       - name: Commit updated results files
@@ -68,10 +68,12 @@ jobs:
           git add source_health_report.csv
           git add results_graphics_queue.md
           git add daily_results_recommendations.md
+          git add wnba_box_score_audit.csv
+          git add wnba_box_score_summary.md
           git add results_system_hub.md
           git add run_manifest.json
           git add results_dashboard/index.html
           git add latest_results_run_summary.md
           git add results_run_history/
-          git commit -m "Update HSD Results Desk v4.2" || echo "No changes to commit"
+          git commit -m "Update HSD Results Desk v4.3" || echo "No changes to commit"
           git push
