@@ -1,0 +1,42 @@
+name: Women's Sports Results Source Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 10 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  audit-results-sources:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Run results source audit
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+          THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
+        run: python generate_hsd_results_source_audit.py
+
+      - name: Commit source audit outputs
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add source_coverage_report.csv
+          git add source_event_samples.csv
+          git add source_audit_summary.md
+          git add source_audit_raw.json
+          git commit -m "Update HSD results source audit" || echo "No changes to commit"
+          git push
