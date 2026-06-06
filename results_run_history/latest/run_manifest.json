@@ -1,0 +1,32 @@
+{
+  "run_timestamp_utc": "2026-06-06 22:05:02 UTC",
+  "archive_folder": "results_run_history/2026-06-06/2205_UTC",
+  "latest_folder": "results_run_history/latest",
+  "copied_files": [
+    "source_observations.csv",
+    "reconciled_events.csv",
+    "today_results_board.csv",
+    "today_womens_results.csv",
+    "today_final_results.csv",
+    "top_womens_results.csv",
+    "manual_review_queue.csv",
+    "source_health_report.csv",
+    "results_graphics_queue.md",
+    "results_system_hub.md",
+    "run_manifest.json",
+    "results_dashboard/index.html"
+  ],
+  "missing_files": [],
+  "row_counts": {
+    "source_observations.csv": 1821,
+    "reconciled_events.csv": 1809,
+    "today_results_board.csv": 1809,
+    "today_womens_results.csv": 224,
+    "today_final_results.csv": 139,
+    "top_womens_results.csv": 50,
+    "manual_review_queue.csv": 12,
+    "source_health_report.csv": 24
+  },
+  "github_run_id": "27075145347",
+  "github_sha": "49c6194bc8c883dea937686aebb9cfb80524f326"
+}
