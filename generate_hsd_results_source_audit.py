@@ -1,32 +1,22 @@
 
 """
-Her Sports Daily Results Source Audit
--------------------------------------
+Her Sports Daily Results Source Audit v2
+----------------------------------------
 
-Purpose:
-Test which score/result sources are actually useful for women's sports before
-rebuilding the Results Desk v3.
+This is a better source audit for rebuilding Results Desk v3.
 
-This is NOT the final results scraper.
-This is a source discovery / coverage tester.
+Fixes from v1:
+- SofaScore: tests both api.sofascore.com and www.sofascore.com API paths with browser-like headers.
+- TheSportsDB: fixes blank secret issue by falling back to public test key if THESPORTSDB_KEY is unset or empty.
+- NCAA API: detects stale/default championship data and counts only date-matched events as usable.
+- ESPN: keeps date-specific testing because it performed best for WNBA.
+- Optional API-Sports remains available if APISPORTS_KEY is set.
 
-It creates:
+Outputs:
 - source_coverage_report.csv
 - source_event_samples.csv
 - source_audit_summary.md
 - source_audit_raw.json
-
-Sources tested:
-- SofaScore public HTTP endpoints, unofficial, wide coverage
-- ESPN public scoreboard endpoints, structured but narrow
-- NCAA API / NCAA.com-derived endpoints, college-focused
-- TheSportsDB public API, broad metadata/discovery
-- API-Sports optional tests, only if APISPORTS_KEY is set
-
-Accuracy philosophy:
-- A source audit is allowed to discover possible games.
-- A final result graphic still requires official or structured verification.
-- This script records source role recommendations, not final publishing decisions.
 """
 
 from __future__ import annotations
@@ -58,27 +48,31 @@ LOOKBACK_DAYS = 1
 LOOKAHEAD_DAYS = 2
 REQUEST_SLEEP_SECONDS = 0.35
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; HerSportsDailySourceAudit/1.0; +https://github.com/)"
+BASIC_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; HerSportsDailySourceAudit/2.0; +https://github.com/)",
 }
 
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Origin": "https://www.sofascore.com",
+    "Referer": "https://www.sofascore.com/",
+}
 
 WOMENS_TERMS = [
     "women", "women's", "womens", "female", "girls", "wnba", "nwsl", "pwhl",
-    "lpga", "wta", "uswnt", "ncaa women", "ncaa women's", "feminine",
+    "lpga", "wta", "uswnt", "ncaa women", "ncaa women's", "softball",
 ]
 
 TARGET_TERMS = [
     "wnba", "ncaa", "women", "women's", "womens", "softball", "nwsl", "pwhl",
     "lpga", "wta", "volleyball", "soccer", "basketball", "hockey", "tennis",
 ]
-
-TIER_NOTES = {
-    "Discovery": "Good for finding games/events, but needs verification before graphic use.",
-    "Verification": "Can be used to verify score/status when structured and current.",
-    "Box Score": "May provide player/team stats for graphic packets.",
-    "Metadata": "Useful for league/team IDs, names, schedules, or logos.",
-}
 
 
 def clean(value: Any) -> str:
@@ -105,6 +99,7 @@ def date_strings() -> List[Dict[str, str]]:
         out.append({
             "iso": d.strftime("%Y-%m-%d"),
             "compact": d.strftime("%Y%m%d"),
+            "slash": d.strftime("%m/%d/%Y"),
             "sofa": d.strftime("%Y-%m-%d"),
         })
     return out
@@ -112,16 +107,22 @@ def date_strings() -> List[Dict[str, str]]:
 
 def request_json(url: str, params: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None) -> Tuple[Optional[Any], int, str]:
     try:
-        response = requests.get(url, params=params or {}, headers=headers or HEADERS, timeout=25)
+        response = requests.get(url, params=params or {}, headers=headers or BASIC_HEADERS, timeout=25)
         status = response.status_code
-        text = response.text[:300]
         response.raise_for_status()
         return response.json(), status, ""
     except Exception as exc:
-        return None, 0 if "response" not in locals() else response.status_code, str(exc)
+        status = 0
+        try:
+            status = response.status_code
+        except Exception:
+            pass
+        return None, status, str(exc)
 
 
-def relevance_score(text: str) -> int:
+def relevance_score(text: str, forced_womens: bool = False) -> int:
+    if forced_womens:
+        return 99
     s = low(text)
     score = 0
     score += 5 * sum(1 for term in WOMENS_TERMS if term in s)
@@ -129,8 +130,37 @@ def relevance_score(text: str) -> int:
     return score
 
 
-def is_likely_womens_event(text: str) -> bool:
-    return relevance_score(text) >= 5
+def is_likely_womens_event(text: str, forced_womens: bool = False) -> bool:
+    return relevance_score(text, forced_womens=forced_womens) >= 5
+
+
+def normalize_mmddyyyy(value: str) -> str:
+    value = clean(value)
+    if not value:
+        return ""
+    for fmt in ["%m/%d/%Y", "%Y-%m-%d", "%Y%m%d"]:
+        try:
+            return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+    return ""
+
+
+def ncaa_event_date(event: Dict[str, Any]) -> str:
+    for key in ["startDate", "date", "gameDate", "contestDate"]:
+        val = event.get(key)
+        norm = normalize_mmddyyyy(clean(val))
+        if norm:
+            return norm
+    return ""
+
+
+def ncaa_event_matches_date(event: Dict[str, Any], date_iso: str) -> bool:
+    event_date = ncaa_event_date(event)
+    if not event_date:
+        # If no date is provided, treat as unknown rather than fresh.
+        return False
+    return event_date == date_iso
 
 
 def sample_join(samples: List[str], limit: int = 4) -> str:
@@ -147,19 +177,23 @@ def sample_join(samples: List[str], limit: int = 4) -> str:
     return " || ".join(cleaned)
 
 
-def classify_recommendation(events_found: int, relevant_events: int, has_box: bool, source_name: str) -> str:
+def recommendation(source_name: str, events_found: int, likely_women: int, fresh_events: int = 0, status_code: int = 0) -> str:
     if events_found == 0:
+        if status_code == 403 and "SofaScore" in source_name:
+            return "Blocked in GitHub Actions"
         return "Do not use yet"
-    if "SofaScore" in source_name and relevant_events > 0:
-        return "Strong discovery candidate"
-    if "NCAA" in source_name and events_found > 0:
-        return "College verification candidate"
-    if "ESPN" in source_name and events_found > 0:
+    if "SofaScore" in source_name:
+        return "Discovery candidate only"
+    if "ESPN" in source_name:
         return "Structured verification candidate"
-    if "TheSportsDB" in source_name and events_found > 0:
+    if "NCAA" in source_name:
+        if fresh_events > 0:
+            return "College verification candidate"
+        return "Stale data risk, do not use yet"
+    if "TheSportsDB" in source_name:
         return "Metadata/discovery candidate"
-    if has_box:
-        return "Box score candidate"
+    if "API-Sports" in source_name:
+        return "Paid/API-key candidate"
     return "Needs review"
 
 
@@ -171,11 +205,14 @@ def make_report_row(
     status_code: int,
     ok: bool,
     events_found: int,
-    relevant_events: int,
+    likely_womens_events: int,
     sample_events: List[str],
     capabilities: str,
     recommended_role: str,
     notes: str,
+    raw_events_found: int = 0,
+    stale_events_found: int = 0,
+    date_matched_events: int = 0,
 ) -> Dict[str, str]:
     return {
         "source_name": source_name,
@@ -185,7 +222,10 @@ def make_report_row(
         "http_status": str(status_code),
         "ok": "Yes" if ok else "No",
         "events_found": str(events_found),
-        "likely_womens_events": str(relevant_events),
+        "raw_events_found": str(raw_events_found if raw_events_found else events_found),
+        "date_matched_events": str(date_matched_events if date_matched_events else events_found),
+        "stale_events_found": str(stale_events_found),
+        "likely_womens_events": str(likely_womens_events),
         "women_relevance_score": str(sum(relevance_score(x) for x in sample_events)),
         "sample_events": sample_join(sample_events),
         "capabilities": capabilities,
@@ -204,35 +244,34 @@ def event_sample_row(
     tournament: str = "",
     event_id: str = "",
     source_url: str = "",
+    likely_womens: bool = False,
+    date_match: str = "",
     raw_note: str = "",
 ) -> Dict[str, str]:
     return {
         "source_name": source_name,
         "sport_or_league": sport_or_league,
         "date": date_label,
-        "event_id": event_id,
+        "event_id": clean(event_id),
         "event_name": clean(event_name),
         "status": clean(status),
         "score": clean(score),
         "tournament": clean(tournament),
         "source_url": clean(source_url),
-        "likely_womens": "Yes" if is_likely_womens_event(" ".join([event_name, tournament])) else "No",
+        "likely_womens": "Yes" if likely_womens else "No",
+        "date_match": date_match,
         "raw_note": clean(raw_note),
     }
 
 
 def audit_sofascore() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[str, Any]]:
-    """
-    SofaScore public HTTP endpoints are unofficial for our purposes.
-    This tests the broad scheduled-events endpoint by sport/date.
-
-    Common pattern:
-    https://api.sofascore.com/api/v1/sport/{sport}/scheduled-events/{YYYY-MM-DD}
-    """
     source_name = "SofaScore public endpoints"
-    sports = [
-        "basketball", "football", "tennis", "volleyball", "ice-hockey",
-        "handball", "cricket", "rugby", "baseball",
+    sports = ["basketball", "football", "tennis", "volleyball", "ice-hockey", "handball", "baseball"]
+
+    # v2 tests both common host patterns.
+    endpoint_templates = [
+        "https://api.sofascore.com/api/v1/sport/{sport}/scheduled-events/{date}",
+        "https://www.sofascore.com/api/v1/sport/{sport}/scheduled-events/{date}",
     ]
 
     report_rows = []
@@ -241,62 +280,58 @@ def audit_sofascore() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[
 
     for sport in sports:
         for d in date_strings():
-            endpoint = f"https://api.sofascore.com/api/v1/sport/{sport}/scheduled-events/{d['sofa']}"
-            data, status, error = request_json(endpoint)
-            time.sleep(REQUEST_SLEEP_SECONDS)
+            for template in endpoint_templates:
+                endpoint = template.format(sport=sport, date=d["sofa"])
+                data, status, error = request_json(endpoint, headers=BROWSER_HEADERS)
+                time.sleep(REQUEST_SLEEP_SECONDS)
 
-            events = []
-            if isinstance(data, dict):
-                events = data.get("events") or []
-            raw_key = f"sofascore::{sport}::{d['iso']}"
-            raw[raw_key] = {
-                "status": status,
-                "error": error,
-                "event_count": len(events),
-                "first_event_keys": list(events[0].keys()) if events else [],
-            }
+                events = []
+                if isinstance(data, dict):
+                    events = data.get("events") or []
 
-            samples = []
-            relevant_count = 0
-            for event in events:
-                home = clean(((event.get("homeTeam") or {}).get("name")))
-                away = clean(((event.get("awayTeam") or {}).get("name")))
-                tournament = clean(((event.get("tournament") or {}).get("name")))
-                category = clean((((event.get("tournament") or {}).get("category") or {}).get("name")))
-                status_text = clean(((event.get("status") or {}).get("description") or (event.get("status") or {}).get("type")))
-                home_score = clean(((event.get("homeScore") or {}).get("current")))
-                away_score = clean(((event.get("awayScore") or {}).get("current")))
-                event_id = clean(event.get("id"))
-                name = f"{away} vs {home}" if away or home else clean(event.get("slug"))
-                full_text = " ".join([name, tournament, category, sport])
-                if is_likely_womens_event(full_text):
-                    relevant_count += 1
-                if len(samples) < 10:
-                    samples.append(f"{name} | {tournament} | {category} | {status_text}")
-                if len(sample_rows) < 1000:
+                samples = []
+                relevant = 0
+                for event in events[:50]:
+                    home = clean(((event.get("homeTeam") or {}).get("name")))
+                    away = clean(((event.get("awayTeam") or {}).get("name")))
+                    tournament = clean(((event.get("tournament") or {}).get("name")))
+                    category = clean((((event.get("tournament") or {}).get("category") or {}).get("name")))
+                    status_text = clean(((event.get("status") or {}).get("description") or (event.get("status") or {}).get("type")))
+                    home_score = clean(((event.get("homeScore") or {}).get("current")))
+                    away_score = clean(((event.get("awayScore") or {}).get("current")))
+                    event_id = clean(event.get("id"))
+                    name = f"{away} vs {home}" if away or home else clean(event.get("slug"))
+                    full_text = " ".join([name, tournament, category, sport])
+                    likely = is_likely_womens_event(full_text)
+                    if likely:
+                        relevant += 1
                     score = f"{away_score}-{home_score}" if away_score or home_score else ""
+                    samples.append(f"{name} | {tournament} | {category} | {status_text} | {score}")
                     sample_rows.append(event_sample_row(
                         source_name, sport, d["iso"], name, status_text, score,
                         " | ".join([tournament, category]), event_id,
                         f"https://www.sofascore.com/event/{event_id}" if event_id else "",
-                        "Unofficial endpoint. Use as discovery unless verified elsewhere.",
+                        likely_womens=likely,
+                        date_match="Unknown",
+                        raw_note="Unofficial endpoint. Discovery only unless verified elsewhere.",
                     ))
 
-            has_box = False
-            report_rows.append(make_report_row(
-                source_name=source_name,
-                sport_or_league=sport,
-                date_label=d["iso"],
-                endpoint=endpoint,
-                status_code=status,
-                ok=status == 200 and isinstance(data, dict),
-                events_found=len(events),
-                relevant_events=relevant_count,
-                sample_events=samples,
-                capabilities="Wide event discovery, live/final status, basic score. Box stats may require event-specific endpoints.",
-                recommended_role=classify_recommendation(len(events), relevant_count, has_box, source_name),
-                notes=error or "Tested scheduled-events endpoint. Treat as unofficial and rate-limit carefully.",
-            ))
+                raw[f"sofascore::{sport}::{d['iso']}::{endpoint}"] = {
+                    "status": status,
+                    "error": error,
+                    "event_count": len(events),
+                    "host_pattern": endpoint.split("/api/")[0],
+                }
+
+                report_rows.append(make_report_row(
+                    source_name, sport, d["iso"], endpoint, status,
+                    status == 200 and isinstance(data, dict), len(events), relevant, samples,
+                    "Wide event discovery, live/final status, basic scores if accessible.",
+                    recommendation(source_name, len(events), relevant, status_code=status),
+                    error or "Tested scheduled-events endpoint with browser-like headers.",
+                    raw_events_found=len(events),
+                    date_matched_events=len(events),
+                ))
 
     return report_rows, sample_rows, raw
 
@@ -304,39 +339,29 @@ def audit_sofascore() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[
 def audit_espn() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[str, Any]]:
     source_name = "ESPN public scoreboard"
     leagues = [
-        ("WNBA", "basketball", "wnba"),
-        ("NCAA Women's Basketball", "basketball", "womens-college-basketball"),
-        ("NCAA Softball", "softball", "college-softball"),
-        ("NWSL", "soccer", "usa.nwsl"),
-        ("NCAA Women's Volleyball", "volleyball", "womens-college-volleyball"),
-        ("NCAA Women's Soccer", "soccer", "womens-college-soccer"),
+        ("WNBA", "basketball", "wnba", True),
+        ("NCAA Women's Basketball", "basketball", "womens-college-basketball", True),
+        ("NCAA Softball", "softball", "college-softball", True),
+        ("NWSL", "soccer", "usa.nwsl", True),
+        ("NCAA Women's Volleyball", "volleyball", "womens-college-volleyball", True),
+        ("NCAA Women's Soccer", "soccer", "womens-college-soccer", True),
     ]
 
     report_rows = []
     sample_rows = []
     raw = {}
 
-    for label, sport, league in leagues:
+    for label, sport, league, forced_womens in leagues:
         for d in date_strings():
             endpoint = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
             params = {"dates": d["compact"]}
             data, status, error = request_json(endpoint, params=params)
             time.sleep(REQUEST_SLEEP_SECONDS)
 
-            events = []
-            if isinstance(data, dict):
-                events = data.get("events") or []
-
-            raw_key = f"espn::{label}::{d['iso']}"
-            raw[raw_key] = {
-                "status": status,
-                "error": error,
-                "event_count": len(events),
-                "keys": list(data.keys()) if isinstance(data, dict) else [],
-            }
-
+            events = data.get("events") if isinstance(data, dict) else []
+            events = events or []
             samples = []
-            relevant_count = 0
+            relevant = 0
             for event in events:
                 name = clean(event.get("name") or event.get("shortName"))
                 status_text = clean((((event.get("status") or {}).get("type") or {}).get("detail")))
@@ -347,172 +372,196 @@ def audit_espn() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[str, 
                     teams = comps[0].get("competitors") or []
                     parts = []
                     for team in teams:
-                        t = clean(((team.get("team") or {}).get("shortDisplayName") or (team.get("team") or {}).get("displayName")))
-                        s = clean(team.get("score"))
-                        if t or s:
-                            parts.append(f"{t} {s}".strip())
+                        team_name = clean(((team.get("team") or {}).get("shortDisplayName") or (team.get("team") or {}).get("displayName")))
+                        team_score = clean(team.get("score"))
+                        if team_name or team_score:
+                            parts.append(f"{team_name} {team_score}".strip())
                     score = " - ".join(parts)
                 full_text = " ".join([label, name, sport, league])
-                if is_likely_womens_event(full_text):
-                    relevant_count += 1
-                if len(samples) < 10:
-                    samples.append(f"{name} | {status_text} | {score}")
+                likely = is_likely_womens_event(full_text, forced_womens=forced_womens)
+                if likely:
+                    relevant += 1
+                samples.append(f"{name} | {status_text} | {score}")
                 sample_rows.append(event_sample_row(
                     source_name, label, d["iso"], name, status_text, score,
                     label, event_id,
                     f"https://www.espn.com/{sport}/game/_/gameId/{event_id}" if event_id else "",
-                    "Structured ESPN scoreboard response.",
+                    likely_womens=likely,
+                    date_match="Yes",
+                    raw_note="Date-specific ESPN scoreboard response.",
                 ))
 
+            raw[f"espn::{label}::{d['iso']}"] = {
+                "status": status,
+                "error": error,
+                "event_count": len(events),
+                "keys": list(data.keys()) if isinstance(data, dict) else [],
+            }
+
             report_rows.append(make_report_row(
-                source_name=source_name,
-                sport_or_league=label,
-                date_label=d["iso"],
-                endpoint=f"{endpoint}?dates={d['compact']}",
-                status_code=status,
-                ok=status == 200 and isinstance(data, dict),
-                events_found=len(events),
-                relevant_events=relevant_count,
-                sample_events=samples,
-                capabilities="Structured scoreboard, status, scores, some summary/box score endpoints.",
-                recommended_role=classify_recommendation(len(events), relevant_count, True, source_name),
-                notes=error or "Date-specific scoreboard test.",
+                source_name, label, d["iso"], f"{endpoint}?dates={d['compact']}", status,
+                status == 200 and isinstance(data, dict), len(events), relevant, samples,
+                "Structured scoreboard, date-specific status, scores, and some summary/box score endpoints.",
+                recommendation(source_name, len(events), relevant, status_code=status),
+                error or "Date-specific scoreboard test.",
+                raw_events_found=len(events),
+                date_matched_events=len(events),
             ))
 
     return report_rows, sample_rows, raw
 
 
+def extract_ncaa_events(data: Any) -> List[Dict[str, Any]]:
+    if isinstance(data, list):
+        return [x for x in data if isinstance(x, dict)]
+    if not isinstance(data, dict):
+        return []
+
+    # Many NCAA API responses store games under one of these paths.
+    candidates = []
+    for key in ["games", "events", "scoreboard", "data"]:
+        val = data.get(key)
+        if isinstance(val, list):
+            candidates.extend([x for x in val if isinstance(x, dict)])
+        elif isinstance(val, dict):
+            for subkey in ["games", "events"]:
+                subval = val.get(subkey)
+                if isinstance(subval, list):
+                    candidates.extend([x for x in subval if isinstance(x, dict)])
+
+    # Sometimes the dict itself looks like a game.
+    if not candidates and any(k in data for k in ["gameID", "gameId", "title", "away", "home"]):
+        candidates.append(data)
+
+    return candidates
+
+
 def audit_ncaa_api() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[str, Any]]:
-    """
-    NCAA API is a community/open-source API returning consumable ncaa.com data.
-    Its exact sport/division endpoint shape can evolve, so this audit tries
-    multiple candidate endpoint patterns.
-    """
     source_name = "NCAA API / ncaa.com-derived"
     base = "https://ncaa-api.henrygd.me"
-    candidates = []
+
     sports = [
-        ("DI Softball", "softball", "d1"),
-        ("DII Softball", "softball", "d2"),
-        ("DIII Softball", "softball", "d3"),
-        ("DI Women's Basketball", "basketball-women", "d1"),
-        ("DI Women's Volleyball", "volleyball-women", "d1"),
-        ("DI Women's Soccer", "soccer-women", "d1"),
+        ("DI Softball", "softball", "d1", True),
+        ("DII Softball", "softball", "d2", True),
+        ("DIII Softball", "softball", "d3", True),
+        ("DI Women's Basketball", "basketball-women", "d1", True),
+        ("DI Women's Volleyball", "volleyball-women", "d1", True),
+        ("DI Women's Soccer", "soccer-women", "d1", True),
     ]
 
-    for label, sport, division in sports:
-        for d in date_strings():
-            candidates.extend([
-                (label, d["iso"], f"{base}/scoreboard/{sport}/{division}/{d['iso']}"),
-                (label, d["iso"], f"{base}/scoreboard/{sport}/{division}/{d['compact']}"),
-                (label, d["iso"], f"{base}/scoreboard/{division}/{sport}/{d['iso']}"),
-                (label, d["iso"], f"{base}/game/scoreboard/{sport}/{division}/{d['iso']}"),
-            ])
+    endpoint_patterns = [
+        "{base}/scoreboard/{sport}/{division}/{date_iso}",
+        "{base}/scoreboard/{sport}/{division}/{date_compact}",
+        "{base}/scoreboard/{division}/{sport}/{date_iso}",
+        "{base}/game/scoreboard/{sport}/{division}/{date_iso}",
+    ]
 
     report_rows = []
     sample_rows = []
     raw = {}
 
-    for label, date_label, endpoint in candidates:
-        data, status, error = request_json(endpoint)
-        time.sleep(REQUEST_SLEEP_SECONDS)
+    for label, sport, division, forced_womens in sports:
+        for d in date_strings():
+            for pattern in endpoint_patterns:
+                endpoint = pattern.format(base=base, sport=sport, division=division, date_iso=d["iso"], date_compact=d["compact"])
+                data, status, error = request_json(endpoint)
+                time.sleep(REQUEST_SLEEP_SECONDS)
 
-        # Extract events flexibly.
-        events = []
-        if isinstance(data, dict):
-            for key in ["games", "events", "scoreboard", "data"]:
-                val = data.get(key)
-                if isinstance(val, list):
-                    events = val
-                    break
-                if isinstance(val, dict):
-                    for subkey in ["games", "events"]:
-                        if isinstance(val.get(subkey), list):
-                            events = val.get(subkey)
-                            break
-                if events:
-                    break
-        elif isinstance(data, list):
-            events = data
+                raw_events = extract_ncaa_events(data)
+                fresh_events = []
+                stale_events = []
 
-        raw_key = f"ncaa::{label}::{date_label}::{endpoint}"
-        raw[raw_key] = {
-            "status": status,
-            "error": error,
-            "event_count": len(events),
-            "data_type": type(data).__name__,
-            "top_keys": list(data.keys()) if isinstance(data, dict) else [],
-        }
+                for event in raw_events:
+                    if ncaa_event_matches_date(event, d["iso"]):
+                        fresh_events.append(event)
+                    else:
+                        stale_events.append(event)
 
-        samples = []
-        relevant_count = 0
-        for event in events[:20]:
-            if isinstance(event, dict):
-                name = clean(event.get("title") or event.get("game") or event.get("name") or event.get("contestName") or json.dumps(event)[:120])
-                status_text = clean(event.get("gameState") or event.get("status") or event.get("gameStatus"))
-                score = clean(event.get("score") or event.get("gameScore"))
-                event_id = clean(event.get("gameID") or event.get("gameId") or event.get("id"))
-            else:
-                name = clean(event)
-                status_text = ""
-                score = ""
-                event_id = ""
+                samples = []
+                relevant = 0
+                for event in fresh_events[:30]:
+                    away = event.get("away") or {}
+                    home = event.get("home") or {}
+                    away_name = clean(((away.get("names") or {}).get("short") or (away.get("names") or {}).get("full")))
+                    home_name = clean(((home.get("names") or {}).get("short") or (home.get("names") or {}).get("full")))
+                    away_score = clean(away.get("score"))
+                    home_score = clean(home.get("score"))
+                    title = clean(event.get("title") or f"{away_name} at {home_name}")
+                    status_text = clean(event.get("gameState") or event.get("finalMessage") or event.get("currentPeriod"))
+                    score = f"{away_name} {away_score} - {home_name} {home_score}".strip()
+                    event_id = clean(event.get("gameID") or event.get("gameId") or event.get("id"))
+                    full_text = " ".join([label, title, sport])
+                    likely = is_likely_womens_event(full_text, forced_womens=forced_womens)
+                    if likely:
+                        relevant += 1
+                    samples.append(f"{title} | {status_text} | {score}")
+                    sample_rows.append(event_sample_row(
+                        source_name, label, d["iso"], title, status_text, score,
+                        label, event_id, endpoint,
+                        likely_womens=likely,
+                        date_match="Yes",
+                        raw_note="Fresh date-matched NCAA API event.",
+                    ))
 
-            full_text = " ".join([label, name])
-            if is_likely_womens_event(full_text):
-                relevant_count += 1
-            samples.append(f"{name} | {status_text} | {score}")
-            sample_rows.append(event_sample_row(
-                source_name, label, date_label, name, status_text, score,
-                label, event_id, endpoint,
-                "Candidate NCAA API endpoint.",
-            ))
+                # Add one stale example so we know what was rejected.
+                for event in stale_events[:2]:
+                    title = clean(event.get("title") or json.dumps(event)[:100])
+                    event_date = ncaa_event_date(event)
+                    sample_rows.append(event_sample_row(
+                        source_name, label, d["iso"], title,
+                        clean(event.get("gameState") or event.get("finalMessage")),
+                        "",
+                        label,
+                        clean(event.get("gameID") or event.get("gameId") or event.get("id")),
+                        endpoint,
+                        likely_womens=is_likely_womens_event(" ".join([label, title]), forced_womens=forced_womens),
+                        date_match=f"No, event date {event_date or 'unknown'}",
+                        raw_note="Rejected as stale/default NCAA API data.",
+                    ))
 
-        report_rows.append(make_report_row(
-            source_name=source_name,
-            sport_or_league=label,
-            date_label=date_label,
-            endpoint=endpoint,
-            status_code=status,
-            ok=status == 200 and data is not None,
-            events_found=len(events),
-            relevant_events=relevant_count,
-            sample_events=samples,
-            capabilities="College scoreboard/game details if endpoint works. Good verification candidate for NCAA sports.",
-            recommended_role=classify_recommendation(len(events), relevant_count, True, source_name),
-            notes=error or "Candidate endpoint tested.",
-        ))
+                raw[f"ncaa::{label}::{d['iso']}::{endpoint}"] = {
+                    "status": status,
+                    "error": error,
+                    "raw_event_count": len(raw_events),
+                    "fresh_event_count": len(fresh_events),
+                    "stale_event_count": len(stale_events),
+                    "data_type": type(data).__name__,
+                    "top_keys": list(data.keys()) if isinstance(data, dict) else [],
+                }
+
+                report_rows.append(make_report_row(
+                    source_name, label, d["iso"], endpoint, status,
+                    status == 200 and data is not None, len(fresh_events), relevant, samples,
+                    "College scoreboard/game details if endpoint works and dates match. Strong NCAA candidate only when fresh.",
+                    recommendation(source_name, len(fresh_events), relevant, fresh_events=len(fresh_events), status_code=status),
+                    error or f"Raw events: {len(raw_events)}. Fresh/date-matched: {len(fresh_events)}. Stale rejected: {len(stale_events)}.",
+                    raw_events_found=len(raw_events),
+                    date_matched_events=len(fresh_events),
+                    stale_events_found=len(stale_events),
+                ))
 
     return report_rows, sample_rows, raw
 
 
 def audit_thesportsdb() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[str, Any]]:
     source_name = "TheSportsDB public API"
-    api_key = os.environ.get("THESPORTSDB_KEY", "3")  # 3 is the public test key historically used by docs/examples.
+    api_key = os.environ.get("THESPORTSDB_KEY") or "3"
+
     report_rows = []
     sample_rows = []
     raw = {}
 
     for d in date_strings():
         endpoint = f"https://www.thesportsdb.com/api/v1/json/{api_key}/eventsday.php"
-        params = {"d": d["iso"]}
-        data, status, error = request_json(endpoint, params=params)
+        data, status, error = request_json(endpoint, params={"d": d["iso"]})
         time.sleep(REQUEST_SLEEP_SECONDS)
 
-        events = []
-        if isinstance(data, dict):
-            events = data.get("events") or []
-        raw_key = f"thesportsdb::{d['iso']}"
-        raw[raw_key] = {
-            "status": status,
-            "error": error,
-            "event_count": len(events),
-            "keys": list(data.keys()) if isinstance(data, dict) else [],
-        }
-
+        events = data.get("events") if isinstance(data, dict) else []
+        events = events or []
         samples = []
-        relevant_count = 0
-        for event in events[:50]:
+        relevant = 0
+
+        for event in events[:75]:
             name = clean(event.get("strEvent") or event.get("strFilename"))
             league = clean(event.get("strLeague"))
             sport = clean(event.get("strSport"))
@@ -522,29 +571,35 @@ def audit_thesportsdb() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dic
             score = f"{away_score}-{home_score}" if away_score or home_score else ""
             event_id = clean(event.get("idEvent"))
             full_text = " ".join([name, league, sport])
-            if is_likely_womens_event(full_text):
-                relevant_count += 1
+            likely = is_likely_womens_event(full_text)
+            if likely:
+                relevant += 1
             samples.append(f"{name} | {league} | {sport} | {score}")
             sample_rows.append(event_sample_row(
                 source_name, sport or "All sports", d["iso"], name, status_text, score,
                 league, event_id,
                 f"https://www.thesportsdb.com/event/{event_id}" if event_id else "",
-                "Broad public API eventday endpoint.",
+                likely_womens=likely,
+                date_match="Unknown",
+                raw_note="Broad public API eventday endpoint.",
             ))
 
+        raw[f"thesportsdb::{d['iso']}"] = {
+            "status": status,
+            "error": error,
+            "event_count": len(events),
+            "api_key_used": "secret_or_public",
+            "keys": list(data.keys()) if isinstance(data, dict) else [],
+        }
+
         report_rows.append(make_report_row(
-            source_name=source_name,
-            sport_or_league="All sports",
-            date_label=d["iso"],
-            endpoint=f"{endpoint}?d={d['iso']}",
-            status_code=status,
-            ok=status == 200 and isinstance(data, dict),
-            events_found=len(events),
-            relevant_events=relevant_count,
-            sample_events=samples,
-            capabilities="Broad event discovery, team/league metadata, scores when available.",
-            recommended_role=classify_recommendation(len(events), relevant_count, False, source_name),
-            notes=error or "Uses THESPORTSDB_KEY env var if set, otherwise public key 3.",
+            source_name, "All sports", d["iso"], f"{endpoint}?d={d['iso']}", status,
+            status == 200 and isinstance(data, dict), len(events), relevant, samples,
+            "Broad event discovery, team/league metadata, scores when available.",
+            recommendation(source_name, len(events), relevant, status_code=status),
+            error or "Uses THESPORTSDB_KEY if set, otherwise public test key 3.",
+            raw_events_found=len(events),
+            date_matched_events=len(events),
         ))
 
     return report_rows, sample_rows, raw
@@ -555,48 +610,29 @@ def audit_api_sports_optional() -> Tuple[List[Dict[str, str]], List[Dict[str, st
     key = os.environ.get("APISPORTS_KEY", "")
     if not key:
         row = make_report_row(
-            source_name=source_name,
-            sport_or_league="Optional paid/free-key APIs",
-            date_label="n/a",
-            endpoint="APISPORTS_KEY not set",
-            status_code=0,
-            ok=False,
-            events_found=0,
-            relevant_events=0,
-            sample_events=[],
-            capabilities="Potential broad structured coverage if API key is available.",
-            recommended_role="Evaluate later with key",
-            notes="Set APISPORTS_KEY in GitHub Secrets to test this source.",
+            source_name, "Optional paid/free-key APIs", "n/a", "APISPORTS_KEY not set",
+            0, False, 0, 0, [], "Potential broad structured coverage if API key is available.",
+            "Evaluate later with key", "Set APISPORTS_KEY in GitHub Secrets to test this source.",
         )
-        return [row], [], {"api_sports": {"enabled": False, "reason": "APISPORTS_KEY not set"}}
+        return [row], [], {"enabled": False, "reason": "APISPORTS_KEY not set"}
 
     report_rows = []
     sample_rows = []
     raw = {}
-
-    # Basketball endpoint example from API-Basketball.
     headers = {"x-apisports-key": key}
+
+    # Test basketball first. Add more API-Sports products later if key proves useful.
     for d in date_strings():
         endpoint = "https://v1.basketball.api-sports.io/games"
-        params = {"date": d["iso"]}
-        data, status, error = request_json(endpoint, params=params, headers=headers)
+        data, status, error = request_json(endpoint, params={"date": d["iso"]}, headers=headers)
         time.sleep(REQUEST_SLEEP_SECONDS)
 
-        events = []
-        if isinstance(data, dict):
-            events = data.get("response") or []
-
-        raw_key = f"apisports_basketball::{d['iso']}"
-        raw[raw_key] = {
-            "status": status,
-            "error": error,
-            "event_count": len(events),
-            "keys": list(data.keys()) if isinstance(data, dict) else [],
-        }
-
+        events = data.get("response") if isinstance(data, dict) else []
+        events = events or []
         samples = []
-        relevant_count = 0
-        for event in events[:50]:
+        relevant = 0
+
+        for event in events[:75]:
             league = clean(((event.get("league") or {}).get("name")))
             country = clean(((event.get("country") or {}).get("name")))
             teams = event.get("teams") or {}
@@ -610,28 +646,30 @@ def audit_api_sports_optional() -> Tuple[List[Dict[str, str]], List[Dict[str, st
             name = f"{away} vs {home}"
             score = f"{away_score}-{home_score}" if away_score or home_score else ""
             full_text = " ".join([name, league, country, "basketball"])
-            if is_likely_womens_event(full_text):
-                relevant_count += 1
+            likely = is_likely_womens_event(full_text)
+            if likely:
+                relevant += 1
             samples.append(f"{name} | {league} | {country} | {score}")
             sample_rows.append(event_sample_row(
                 source_name, "Basketball", d["iso"], name, status_text, score,
                 " | ".join([league, country]), event_id, endpoint,
-                "API-Sports Basketball test.",
+                likely_womens=likely,
+                date_match="Unknown",
+                raw_note="API-Sports Basketball endpoint.",
             ))
 
+        raw[f"apisports_basketball::{d['iso']}"] = {
+            "status": status,
+            "error": error,
+            "event_count": len(events),
+        }
+
         report_rows.append(make_report_row(
-            source_name=source_name,
-            sport_or_league="Basketball",
-            date_label=d["iso"],
-            endpoint=f"{endpoint}?date={d['iso']}",
-            status_code=status,
-            ok=status == 200 and isinstance(data, dict),
-            events_found=len(events),
-            relevant_events=relevant_count,
-            sample_events=samples,
-            capabilities="Structured live scores/schedules with API key.",
-            recommended_role=classify_recommendation(len(events), relevant_count, True, source_name),
-            notes=error or "APISPORTS_KEY was set and basketball endpoint was tested.",
+            source_name, "Basketball", d["iso"], f"{endpoint}?date={d['iso']}", status,
+            status == 200 and isinstance(data, dict), len(events), relevant, samples,
+            "Structured live scores/schedules with API key.",
+            recommendation(source_name, len(events), relevant, status_code=status),
+            error or "APISPORTS_KEY was set and basketball endpoint was tested.",
         ))
 
     return report_rows, sample_rows, raw
@@ -645,27 +683,30 @@ def write_csv(path: str, rows: List[Dict[str, str]], fieldnames: List[str]) -> N
             writer.writerow(row)
 
 
-def summarize(report_rows: List[Dict[str, str]], sample_rows: List[Dict[str, str]]) -> str:
+def summarize(report_rows: List[Dict[str, str]]) -> str:
     generated = datetime.now(timezone.utc).isoformat()
-
     by_source: Dict[str, Dict[str, int]] = {}
+
     for row in report_rows:
         source = row["source_name"]
-        by_source.setdefault(source, {"tests": 0, "ok": 0, "events": 0, "women": 0})
+        by_source.setdefault(source, {"tests": 0, "ok": 0, "events": 0, "raw": 0, "fresh": 0, "stale": 0, "women": 0})
         by_source[source]["tests"] += 1
         by_source[source]["ok"] += 1 if row["ok"] == "Yes" else 0
         by_source[source]["events"] += int(row["events_found"] or 0)
+        by_source[source]["raw"] += int(row["raw_events_found"] or 0)
+        by_source[source]["fresh"] += int(row["date_matched_events"] or 0)
+        by_source[source]["stale"] += int(row["stale_events_found"] or 0)
         by_source[source]["women"] += int(row["likely_womens_events"] or 0)
 
     lines = [
-        "# Her Sports Daily Results Source Audit",
+        "# Her Sports Daily Results Source Audit v2",
         "",
         f"Generated: `{generated}`",
         "",
         "## Purpose",
         "",
-        "This audit tests which sources are worth using for the next Results Desk rebuild.",
-        "It does not decide what to post. It measures source coverage, event access, women's-sports relevance, and possible role.",
+        "This audit tests which sources are worth using for Results Desk v3.",
+        "v2 specifically checks for blocked sources, stale/default college data, and blank API-key mistakes.",
         "",
         "## Date window tested",
         "",
@@ -673,25 +714,25 @@ def summarize(report_rows: List[Dict[str, str]], sample_rows: List[Dict[str, str
         "",
         "## Source summary",
         "",
-        "| Source | Tests | Successful Tests | Events Found | Likely Women's Events |",
-        "|---|---:|---:|---:|---:|",
+        "| Source | Tests | Successful Tests | Usable Events | Raw Events | Date-Matched Events | Stale Events Rejected | Likely Women's Events |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
 
     for source, stats in sorted(by_source.items()):
-        lines.append(f"| {source} | {stats['tests']} | {stats['ok']} | {stats['events']} | {stats['women']} |")
+        lines.append(
+            f"| {source} | {stats['tests']} | {stats['ok']} | {stats['events']} | "
+            f"{stats['raw']} | {stats['fresh']} | {stats['stale']} | {stats['women']} |"
+        )
 
     lines.extend([
         "",
-        "## How to read this",
+        "## Key interpretation rules",
         "",
-        "- **Events Found** means the endpoint returned events. It does not mean the source is ready for final graphics.",
-        "- **Likely Women's Events** is a keyword-based signal, not a final truth label.",
-        "- **Recommended Role** in the CSV tells us whether a source looks better for discovery, verification, box scores, or metadata.",
-        "",
-        "## Next build decision",
-        "",
-        "Use the highest-coverage discovery source to find events, then verify final scores with official or structured sources.",
-        "For result graphics, do not use one unofficial source alone unless it is clearly structured and later verified.",
+        "- **Usable Events** is the count we should care about for Results Desk v3.",
+        "- **Raw Events** may include stale/default events.",
+        "- **Stale Events Rejected** is critical for NCAA sources because some endpoints return championship results regardless of query date.",
+        "- SofaScore returning 403 means GitHub Actions cannot currently use that public endpoint directly.",
+        "- API-Sports will only test if `APISPORTS_KEY` is set in GitHub Secrets.",
         "",
         "## Files created",
         "",
@@ -699,12 +740,9 @@ def summarize(report_rows: List[Dict[str, str]], sample_rows: List[Dict[str, str
         f"- `{OUTPUT_SAMPLES}`",
         f"- `{OUTPUT_RAW}`",
         "",
-        "## Early recommendation",
+        "## Next build decision",
         "",
-        "If SofaScore returns broad event coverage in this audit, use it as a discovery layer.",
-        "If NCAA API returns college sport events, use it as the NCAA verification layer.",
-        "Keep ESPN as a secondary structured source, not the whole Results Desk.",
-        "Use API-Sports only if an API key is available and coverage is clearly better.",
+        "Use sources only if they return usable/date-matched events. Discovery sources can suggest games, but final result graphics still need structured or official verification.",
         "",
     ])
 
@@ -733,18 +771,8 @@ def main() -> None:
             report_rows, sample_rows, raw = audit_func()
         except Exception as exc:
             report_rows = [make_report_row(
-                source_name=audit_name,
-                sport_or_league="audit_failed",
-                date_label="n/a",
-                endpoint="n/a",
-                status_code=0,
-                ok=False,
-                events_found=0,
-                relevant_events=0,
-                sample_events=[],
-                capabilities="n/a",
-                recommended_role="Do not use yet",
-                notes=f"Audit failed: {exc}",
+                audit_name, "audit_failed", "n/a", "n/a", 0, False, 0, 0, [],
+                "n/a", "Do not use yet", f"Audit failed: {exc}",
             )]
             sample_rows = []
             raw = {"error": str(exc)}
@@ -755,18 +783,20 @@ def main() -> None:
 
     report_fields = [
         "source_name", "sport_or_league", "date", "endpoint", "http_status", "ok",
-        "events_found", "likely_womens_events", "women_relevance_score",
-        "sample_events", "capabilities", "recommended_role", "notes",
+        "events_found", "raw_events_found", "date_matched_events", "stale_events_found",
+        "likely_womens_events", "women_relevance_score", "sample_events",
+        "capabilities", "recommended_role", "notes",
     ]
     sample_fields = [
         "source_name", "sport_or_league", "date", "event_id", "event_name",
-        "status", "score", "tournament", "source_url", "likely_womens", "raw_note",
+        "status", "score", "tournament", "source_url", "likely_womens",
+        "date_match", "raw_note",
     ]
 
     write_csv(OUTPUT_REPORT, all_report_rows, report_fields)
     write_csv(OUTPUT_SAMPLES, all_sample_rows, sample_fields)
     Path(OUTPUT_RAW).write_text(json.dumps(all_raw, indent=2, ensure_ascii=False), encoding="utf-8")
-    Path(OUTPUT_SUMMARY).write_text(summarize(all_report_rows, all_sample_rows), encoding="utf-8")
+    Path(OUTPUT_SUMMARY).write_text(summarize(all_report_rows), encoding="utf-8")
 
     print(f"Created {OUTPUT_REPORT}")
     print(f"Created {OUTPUT_SAMPLES}")
