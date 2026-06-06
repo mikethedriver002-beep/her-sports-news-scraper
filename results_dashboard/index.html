@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Her Sports Daily Results Dashboard</title>
+<style>
+:root {
+  --bg:#0f1020; --panel:#181a2f; --panel2:#242845; --text:#f7f3ff; --muted:#beb6d4;
+  --accent:#ff4fd8; --accent2:#7cf7ff; --border:rgba(255,255,255,.14);
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family:Inter,system-ui,sans-serif; color:var(--text);
+  background:radial-gradient(circle at 20% 0%, rgba(255,79,216,.18), transparent 30%),
+             radial-gradient(circle at 80% 0%, rgba(124,247,255,.12), transparent 30%),
+             var(--bg);
+}
+header {
+  position:sticky; top:0; z-index:5; background:rgba(15,16,32,.92);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--border); padding:22px;
+}
+.wrap { max-width:1280px; margin:0 auto; }
+.brand { display:flex; gap:14px; align-items:center; }
+.bug {
+  width:54px; height:54px; border-radius:14px; border:2px solid var(--accent);
+  display:grid; place-items:center; font-weight:900; font-size:10px; line-height:.92;
+  background:linear-gradient(135deg, rgba(255,79,216,.25), rgba(124,247,255,.12));
+}
+h1 { margin:0; font-size:clamp(26px,4vw,42px); }
+.sub { color:var(--muted); font-size:13px; margin-top:4px; }
+main { max-width:1280px; margin:0 auto; padding:22px; }
+section { margin-bottom:28px; }
+section h2 { margin-bottom:12px; }
+.grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+@media(max-width:960px) { .grid { grid-template-columns:1fr; } }
+.card {
+  background:rgba(24,26,47,.96); border:1px solid var(--border); border-radius:18px;
+  padding:16px; box-shadow:0 12px 32px rgba(0,0,0,.24);
+}
+.small { color:var(--muted); font-size:13px; line-height:1.45; margin-bottom:6px; }
+pre {
+  white-space:pre-wrap; word-wrap:break-word; line-height:1.45; font-size:13px;
+  background:rgba(0,0,0,.28); border:1px solid var(--border); padding:14px; border-radius:14px;
+}
+.empty {
+  padding:16px; border:1px dashed var(--border); border-radius:14px; color:var(--muted);
+}
+.stack > .card { margin-bottom:14px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="bug">HER<br>SPORTS<br>DAILY</div>
+      <div>
+        <h1>Results Dashboard</h1>
+        <div class="sub">Generated 2026-06-06T01:01:15.298466+00:00. Use this for accurate results, box scores, and postgame packets.</div>
+      </div>
+    </div>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>Guide</h2>
+    <div class="card">
+      <div class="small">1. Open this dashboard after each run.</div>
+      <div class="small">2. Use Results Board to review final, live, and upcoming games.</div>
+      <div class="small">3. Use Graphic Packets for postgame graphics only when the game is final.</div>
+      <div class="small">4. Never change a verified final score or invent a stat line.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Results Board</h2>
+    <div class='grid'><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Game State:</b> Final</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Final Score:</b> South Carolina Gamecocks 51 - UCLA Bruins 79</div><div class='small'><b>Headline:</b> UCLA Bruins defeat South Carolina Gamecocks</div><div class='small'><b>Top Performer 1:</b> Gabriela Jaquez</div><div class='small'><b>Top Performer 1 Statline:</b> PTS 21, REB 10, AST 5, STL 1, FG 8-14</div><div class='small'><b>Confidence:</b> High</div><div class='small'><b>Result Graphic Ready:</b> Yes</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Game State:</b> Upcoming</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Final Score:</b> Connecticut Sun 52 - Chicago Sky 57</div><div class='small'><b>Headline:</b> Connecticut Sun vs. Chicago Sky</div><div class='small'><b>Top Performer 1:</b> Skylar Diggins</div><div class='small'><b>Top Performer 1 Statline:</b> PTS 20, REB 3, AST 4, STL 1, FG 5-11</div><div class='small'><b>Confidence:</b> Medium</div><div class='small'><b>Result Graphic Ready:</b> No</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Game State:</b> Upcoming</div><div class='small'><b>Matchup:</b> Dallas Wings at Los Angeles Sparks</div><div class='small'><b>Final Score:</b> Dallas Wings 0 - Los Angeles Sparks 0</div><div class='small'><b>Headline:</b> Dallas Wings vs. Los Angeles Sparks</div><div class='small'><b>Confidence:</b> Medium</div><div class='small'><b>Result Graphic Ready:</b> No</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Game State:</b> Upcoming</div><div class='small'><b>Matchup:</b> Phoenix Mercury at Portland Fire</div><div class='small'><b>Final Score:</b> Phoenix Mercury 0 - Portland Fire 0</div><div class='small'><b>Headline:</b> Phoenix Mercury vs. Portland Fire</div><div class='small'><b>Confidence:</b> Medium</div><div class='small'><b>Result Graphic Ready:</b> No</div></div></div>
+  </section>
+
+  <section>
+    <h2>Box Scores</h2>
+    <div class='grid'><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Final Score:</b> South Carolina Gamecocks 51 - UCLA Bruins 79</div><div class='small'><b>Top Performer 1:</b> Gabriela Jaquez</div><div class='small'><b>Top Performer 1 Statline:</b> PTS 21, REB 10, AST 5, STL 1, FG 8-14</div><div class='small'><b>Top Performer 2:</b> Lauren Betts</div><div class='small'><b>Top Performer 2 Statline:</b> PTS 14, REB 11, AST 2, BLK 2, FG 6-10</div><div class='small'><b>Period Summary:</b> UCLA: 21 | 15 | 25 | 18 || SC: 10 | 13 | 9 | 19</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Final Score:</b> Connecticut Sun 52 - Chicago Sky 57</div><div class='small'><b>Top Performer 1:</b> Skylar Diggins</div><div class='small'><b>Top Performer 1 Statline:</b> PTS 20, REB 3, AST 4, STL 1, FG 5-11</div><div class='small'><b>Top Performer 2:</b> Brittney Griner</div><div class='small'><b>Top Performer 2 Statline:</b> PTS 9, REB 6, AST 4, BLK 3, FG 3-5</div><div class='small'><b>Period Summary:</b> CHI: 11 | 32 | 14 || CON: 25 | 20 | 7</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Matchup:</b> Dallas Wings at Los Angeles Sparks</div><div class='small'><b>Final Score:</b> Dallas Wings 0 - Los Angeles Sparks 0</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Matchup:</b> Phoenix Mercury at Portland Fire</div><div class='small'><b>Final Score:</b> Phoenix Mercury 0 - Portland Fire 0</div></div></div>
+  </section>
+
+  <section>
+    <h2>Top Performers</h2>
+    <div class='grid'><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Performer Rank:</b> 1</div><div class='small'><b>Player Name:</b> Gabriela Jaquez</div><div class='small'><b>Team:</b> UCLA Bruins</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Statline:</b> PTS 21, REB 10, AST 5, STL 1, FG 8-14</div></div><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Performer Rank:</b> 2</div><div class='small'><b>Player Name:</b> Lauren Betts</div><div class='small'><b>Team:</b> UCLA Bruins</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Statline:</b> PTS 14, REB 11, AST 2, BLK 2, FG 6-10</div></div><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Performer Rank:</b> 3</div><div class='small'><b>Player Name:</b> Kiki Rice</div><div class='small'><b>Team:</b> UCLA Bruins</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Statline:</b> PTS 10, REB 6, AST 5, STL 3, FG 3-7</div></div><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Performer Rank:</b> 4</div><div class='small'><b>Player Name:</b> Joyce Edwards</div><div class='small'><b>Team:</b> South Carolina Gamecocks</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Statline:</b> PTS 8, REB 11, AST 3, STL 1, FG 3-10</div></div><div class='card'><div class='small'><b>League Label:</b> NCAA Women&#x27;s Basketball</div><div class='small'><b>Performer Rank:</b> 5</div><div class='small'><b>Player Name:</b> Gianna Kneepkens</div><div class='small'><b>Team:</b> UCLA Bruins</div><div class='small'><b>Matchup:</b> South Carolina Gamecocks at UCLA Bruins</div><div class='small'><b>Statline:</b> PTS 15, REB 1, AST 4, STL 1, BLK 1</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Performer Rank:</b> 1</div><div class='small'><b>Player Name:</b> Skylar Diggins</div><div class='small'><b>Team:</b> Chicago Sky</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Statline:</b> PTS 20, REB 3, AST 4, STL 1, FG 5-11</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Performer Rank:</b> 2</div><div class='small'><b>Player Name:</b> Brittney Griner</div><div class='small'><b>Team:</b> Connecticut Sun</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Statline:</b> PTS 9, REB 6, AST 4, BLK 3, FG 3-5</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Performer Rank:</b> 3</div><div class='small'><b>Player Name:</b> Aneesah Morrow</div><div class='small'><b>Team:</b> Connecticut Sun</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Statline:</b> PTS 6, REB 11, AST 2, STL 1, BLK 1</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Performer Rank:</b> 4</div><div class='small'><b>Player Name:</b> Diamond Miller</div><div class='small'><b>Team:</b> Connecticut Sun</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Statline:</b> PTS 16, REB 3, AST 2, FG 6-14, 3PT 1-4</div></div><div class='card'><div class='small'><b>League Label:</b> WNBA</div><div class='small'><b>Performer Rank:</b> 5</div><div class='small'><b>Player Name:</b> Azura Stevens</div><div class='small'><b>Team:</b> Chicago Sky</div><div class='small'><b>Matchup:</b> Connecticut Sun at Chicago Sky</div><div class='small'><b>Statline:</b> PTS 10, REB 5, AST 1, STL 1, FG 4-9</div></div></div>
+  </section>
+
+  <section>
+    <h2>Graphic Packets</h2>
+    <div class='stack'><div class='card'><h3>UCLA Bruins defeat South Carolina Gamecocks</h3><pre>## RESULT GRAPHIC 1: UCLA Bruins defeat South Carolina Gamecocks **League:** NCAA Women&#x27;s Basketball **Action:** Make if fresh and relevant **Decision:** Maybe Post **Template:** Postgame Result Card **Timing:** Within 1 to 2 hours of final if still fresh **Source type:** structured scoreboard **Confidence:** High **Manual review flag:** No ### Verified result context - Matchup: South Carolina Gamecocks at UCLA Bruins - Winner: UCLA Bruins - Loser: South Carolina Gamecocks - Final score: South Carolina Gamecocks 51 - UCLA Bruins 79 - Game status: Final - Venue: Mortgage Matchup Center - Top performer 1: Gabriela Jaquez | PTS 21, REB 10, AST 5, STL 1, FG 8-14 - Top performer 2: Lauren Betts | PTS 14, REB 11, AST 2, BLK 2, FG 6-10 - Period/inning summary: UCLA: 21 | 15 | 25 | 18 || SC: 10 | 13 | 9 | 19 - Source URL: https://www.espn.com/basketball/game/_/gameId/401856590 ### Production accuracy rules - Do not change the final score. - Do not invent additional player stat lines. - If a top performer field is blank, do not fill it from memory. - Use one consistent Her Sports Daily watermark/logo bug in the top-left safe area. ### Design direction Use the established Her Sports Daily editorial sports style, brand colors, font hierarchy, and top-left watermark treatment. ### Slide copy **Slide 1 - Hook:** UCLA Bruins beat South Carolina Gamecocks Final: South Carolina Gamecocks 51 - UCLA Bruins 79. **Slide 2 - Top performer:** Who led the way Gabriela Jaquez starred with PTS 21, REB 10, AST 5, STL 1, FG 8-14. **Slide 3 - Secondary angle:** What stood out Gabriela Jaquez led the way with PTS 21, REB 10, AST 5, STL 1, FG 8-14. **Slide 4 - CTA:** Your take? Follow Her Sports Daily for more verified results and box scores. ---</pre></div></div>
+  </section>
+
+  <section>
+    <h2>System Hub</h2>
+    <div class="card"><pre># Her Sports Daily Results Desk Hub Generated: 2026-06-06T01:01:15.240659+00:00 ## What this system does - Pulls structured women&#x27;s sports results from scoreboard-style endpoints. - Separates results and box scores from the broader news pipeline. - Produces result-ready postgame graphic packets only for final games. ## Phase 1 coverage - WNBA - NCAA Women&#x27;s Basketball - NCAA Softball ## Output files - `today_results_board.csv` - `today_box_scores.csv` - `top_performers.csv` - `results_graphics_queue.md` - `results_dashboard_seed.csv` ## Current run snapshot - Games found: 4 - Final games: 1 - Result graphics ready: 1 ## Accuracy rules - Never infer a final score. - Never invent a top performer stat line. - If a game is not final, do not create a postgame result graphic. - If confidence is not High, keep manual review enabled.</pre></div>
+  </section>
+</main>
+</body>
+</html>

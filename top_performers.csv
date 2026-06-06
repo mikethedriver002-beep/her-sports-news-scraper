@@ -1,0 +1,11 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856590,NCAA Women's Basketball,South Carolina Gamecocks at UCLA Bruins,Final,UCLA Bruins,South Carolina Gamecocks 51 - UCLA Bruins 79,1,Gabriela Jaquez,UCLA Bruins,"PTS 21, REB 10, AST 5, STL 1, FG 8-14",NCAA Women's Basketball
+401856590,NCAA Women's Basketball,South Carolina Gamecocks at UCLA Bruins,Final,UCLA Bruins,South Carolina Gamecocks 51 - UCLA Bruins 79,2,Lauren Betts,UCLA Bruins,"PTS 14, REB 11, AST 2, BLK 2, FG 6-10",NCAA Women's Basketball
+401856590,NCAA Women's Basketball,South Carolina Gamecocks at UCLA Bruins,Final,UCLA Bruins,South Carolina Gamecocks 51 - UCLA Bruins 79,3,Kiki Rice,UCLA Bruins,"PTS 10, REB 6, AST 5, STL 3, FG 3-7",NCAA Women's Basketball
+401856590,NCAA Women's Basketball,South Carolina Gamecocks at UCLA Bruins,Final,UCLA Bruins,South Carolina Gamecocks 51 - UCLA Bruins 79,4,Joyce Edwards,South Carolina Gamecocks,"PTS 8, REB 11, AST 3, STL 1, FG 3-10",NCAA Women's Basketball
+401856590,NCAA Women's Basketball,South Carolina Gamecocks at UCLA Bruins,Final,UCLA Bruins,South Carolina Gamecocks 51 - UCLA Bruins 79,5,Gianna Kneepkens,UCLA Bruins,"PTS 15, REB 1, AST 4, STL 1, BLK 1",NCAA Women's Basketball
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 52 - Chicago Sky 57,1,Skylar Diggins,Chicago Sky,"PTS 20, REB 3, AST 4, STL 1, FG 5-11",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 52 - Chicago Sky 57,2,Brittney Griner,Connecticut Sun,"PTS 9, REB 6, AST 4, BLK 3, FG 3-5",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 52 - Chicago Sky 57,3,Aneesah Morrow,Connecticut Sun,"PTS 6, REB 11, AST 2, STL 1, BLK 1",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 52 - Chicago Sky 57,4,Diamond Miller,Connecticut Sun,"PTS 16, REB 3, AST 2, FG 6-14, 3PT 1-4",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 52 - Chicago Sky 57,5,Azura Stevens,Chicago Sky,"PTS 10, REB 5, AST 1, STL 1, FG 4-9",WNBA
