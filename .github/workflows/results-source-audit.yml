@@ -38,5 +38,5 @@ jobs:
           git add source_event_samples.csv
           git add source_audit_summary.md
           git add source_audit_raw.json
-          git commit -m "Update HSD results source audit" || echo "No changes to commit"
+          git commit -m "Update HSD results source audit v2" || echo "No changes to commit"
           git push
