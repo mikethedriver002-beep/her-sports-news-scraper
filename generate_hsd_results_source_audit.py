@@ -1,16 +1,15 @@
 
 """
-Her Sports Daily Results Source Audit v2
+Her Sports Daily Results Source Audit v3
 ----------------------------------------
 
 This is a better source audit for rebuilding Results Desk v3.
 
-Fixes from v1:
-- SofaScore: tests both api.sofascore.com and www.sofascore.com API paths with browser-like headers.
-- TheSportsDB: fixes blank secret issue by falling back to public test key if THESPORTSDB_KEY is unset or empty.
-- NCAA API: detects stale/default championship data and counts only date-matched events as usable.
-- ESPN: keeps date-specific testing because it performed best for WNBA.
-- Optional API-Sports remains available if APISPORTS_KEY is set.
+v3 focus:
+- Expands API-Sports testing across multiple products when APISPORTS_KEY is set.
+- Tests basketball, football/soccer, hockey, volleyball, handball, rugby, and baseball endpoints.
+- Keeps ESPN, NCAA, SofaScore, and TheSportsDB tests from v2.
+- Adds stronger women's-sports keyword detection for API-Sports league names.
 
 Outputs:
 - source_coverage_report.csv
@@ -49,7 +48,7 @@ LOOKAHEAD_DAYS = 2
 REQUEST_SLEEP_SECONDS = 0.35
 
 BASIC_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; HerSportsDailySourceAudit/2.0; +https://github.com/)",
+    "User-Agent": "Mozilla/5.0 (compatible; HerSportsDailySourceAudit/3.0; +https://github.com/)",
 }
 
 BROWSER_HEADERS = {
@@ -67,6 +66,9 @@ BROWSER_HEADERS = {
 WOMENS_TERMS = [
     "women", "women's", "womens", "female", "girls", "wnba", "nwsl", "pwhl",
     "lpga", "wta", "uswnt", "ncaa women", "ncaa women's", "softball",
+    "feminine", "femenina", "femenino", "frauen", "damen", "w-league",
+    "a-league women", "women super league", "ws league", "liga mx femenil",
+    "champions league women", "uefa women's", "uwcl", "national women's soccer league",
 ]
 
 TARGET_TERMS = [
@@ -605,75 +607,208 @@ def audit_thesportsdb() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dic
     return report_rows, sample_rows, raw
 
 
+
+def api_sports_event_text(product: str, event: Dict[str, Any]) -> Tuple[str, str, str, str, str, str, str]:
+    """
+    Returns:
+    name, league, country, status, score, event_id, source_url
+    """
+    if product == "football":
+        league = clean(((event.get("league") or {}).get("name")))
+        country = clean(((event.get("league") or {}).get("country")))
+        teams = event.get("teams") or {}
+        home = clean(((teams.get("home") or {}).get("name")))
+        away = clean(((teams.get("away") or {}).get("name")))
+        goals = event.get("goals") or {}
+        home_score = clean(goals.get("home"))
+        away_score = clean(goals.get("away"))
+        fixture = event.get("fixture") or {}
+        status = clean(((fixture.get("status") or {}).get("long") or (fixture.get("status") or {}).get("short")))
+        event_id = clean(fixture.get("id"))
+        score = f"{away_score}-{home_score}" if away_score or home_score else ""
+        return f"{away} vs {home}", league, country, status, score, event_id, "https://v3.football.api-sports.io/fixtures"
+
+    if product in {"basketball", "hockey", "volleyball", "handball", "rugby", "baseball"}:
+        league = clean(((event.get("league") or {}).get("name")))
+        country = clean(((event.get("country") or {}).get("name")))
+        teams = event.get("teams") or {}
+        home = clean(((teams.get("home") or {}).get("name")))
+        away = clean(((teams.get("away") or {}).get("name")))
+
+        status_obj = event.get("status") or {}
+        status = clean(status_obj.get("long") or status_obj.get("short"))
+
+        event_id = clean(event.get("id"))
+
+        score = ""
+        scores = event.get("scores") or {}
+        if isinstance(scores, dict):
+            home_score = ""
+            away_score = ""
+            if isinstance(scores.get("home"), dict):
+                home_score = clean((scores.get("home") or {}).get("total"))
+            else:
+                home_score = clean(scores.get("home"))
+            if isinstance(scores.get("away"), dict):
+                away_score = clean((scores.get("away") or {}).get("total"))
+            else:
+                away_score = clean(scores.get("away"))
+
+            # Hockey/rugby/volleyball can have slightly different score objects.
+            if not home_score and isinstance(scores.get("home"), dict):
+                home_score = clean((scores.get("home") or {}).get("current"))
+            if not away_score and isinstance(scores.get("away"), dict):
+                away_score = clean((scores.get("away") or {}).get("current"))
+
+            score = f"{away_score}-{home_score}" if away_score or home_score else ""
+
+        return f"{away} vs {home}", league, country, status, score, event_id, f"https://v1.{product}.api-sports.io/games"
+
+    return "", "", "", "", "", "", ""
+
+
 def audit_api_sports_optional() -> Tuple[List[Dict[str, str]], List[Dict[str, str]], Dict[str, Any]]:
-    source_name = "API-Sports optional"
+    """
+    v3 expanded API-Sports probe.
+
+    Requires GitHub Secret:
+        APISPORTS_KEY
+
+    Tested products:
+    - basketball: https://v1.basketball.api-sports.io/games?date=YYYY-MM-DD
+    - football/soccer: https://v3.football.api-sports.io/fixtures?date=YYYY-MM-DD
+    - hockey: https://v1.hockey.api-sports.io/games?date=YYYY-MM-DD
+    - volleyball: https://v1.volleyball.api-sports.io/games?date=YYYY-MM-DD
+    - handball: https://v1.handball.api-sports.io/games?date=YYYY-MM-DD
+    - rugby: https://v1.rugby.api-sports.io/games?date=YYYY-MM-DD
+    - baseball: https://v1.baseball.api-sports.io/games?date=YYYY-MM-DD
+    """
+    source_name = "API-Sports expanded optional"
     key = os.environ.get("APISPORTS_KEY", "")
     if not key:
         row = make_report_row(
-            source_name, "Optional paid/free-key APIs", "n/a", "APISPORTS_KEY not set",
+            source_name, "Optional API-key source", "n/a", "APISPORTS_KEY not set",
             0, False, 0, 0, [], "Potential broad structured coverage if API key is available.",
-            "Evaluate later with key", "Set APISPORTS_KEY in GitHub Secrets to test this source.",
+            "Set key and rerun", "Set APISPORTS_KEY in GitHub Secrets to test API-Sports.",
         )
         return [row], [], {"enabled": False, "reason": "APISPORTS_KEY not set"}
 
-    report_rows = []
-    sample_rows = []
-    raw = {}
+    products = [
+        {
+            "product": "basketball",
+            "label": "Basketball",
+            "endpoint": "https://v1.basketball.api-sports.io/games",
+            "params": lambda d: {"date": d["iso"]},
+        },
+        {
+            "product": "football",
+            "label": "Football/Soccer",
+            "endpoint": "https://v3.football.api-sports.io/fixtures",
+            "params": lambda d: {"date": d["iso"]},
+        },
+        {
+            "product": "hockey",
+            "label": "Hockey",
+            "endpoint": "https://v1.hockey.api-sports.io/games",
+            "params": lambda d: {"date": d["iso"]},
+        },
+        {
+            "product": "volleyball",
+            "label": "Volleyball",
+            "endpoint": "https://v1.volleyball.api-sports.io/games",
+            "params": lambda d: {"date": d["iso"]},
+        },
+        {
+            "product": "handball",
+            "label": "Handball",
+            "endpoint": "https://v1.handball.api-sports.io/games",
+            "params": lambda d: {"date": d["iso"]},
+        },
+        {
+            "product": "rugby",
+            "label": "Rugby",
+            "endpoint": "https://v1.rugby.api-sports.io/games",
+            "params": lambda d: {"date": d["iso"]},
+        },
+        {
+            "product": "baseball",
+            "label": "Baseball",
+            "endpoint": "https://v1.baseball.api-sports.io/games",
+            "params": lambda d: {"date": d["iso"]},
+        },
+    ]
+
     headers = {"x-apisports-key": key}
+    report_rows: List[Dict[str, str]] = []
+    sample_rows: List[Dict[str, str]] = []
+    raw: Dict[str, Any] = {"enabled": True, "products_tested": [p["product"] for p in products]}
 
-    # Test basketball first. Add more API-Sports products later if key proves useful.
-    for d in date_strings():
-        endpoint = "https://v1.basketball.api-sports.io/games"
-        data, status, error = request_json(endpoint, params={"date": d["iso"]}, headers=headers)
-        time.sleep(REQUEST_SLEEP_SECONDS)
+    for product_config in products:
+        product = product_config["product"]
+        label = product_config["label"]
+        endpoint = product_config["endpoint"]
 
-        events = data.get("response") if isinstance(data, dict) else []
-        events = events or []
-        samples = []
-        relevant = 0
+        for d in date_strings():
+            params = product_config["params"](d)
+            data, status, error = request_json(endpoint, params=params, headers=headers)
+            time.sleep(REQUEST_SLEEP_SECONDS)
 
-        for event in events[:75]:
-            league = clean(((event.get("league") or {}).get("name")))
-            country = clean(((event.get("country") or {}).get("name")))
-            teams = event.get("teams") or {}
-            home = clean(((teams.get("home") or {}).get("name")))
-            away = clean(((teams.get("away") or {}).get("name")))
-            scores = event.get("scores") or {}
-            home_score = clean(((scores.get("home") or {}).get("total")))
-            away_score = clean(((scores.get("away") or {}).get("total")))
-            status_text = clean(((event.get("status") or {}).get("long") or (event.get("status") or {}).get("short")))
-            event_id = clean(event.get("id"))
-            name = f"{away} vs {home}"
-            score = f"{away_score}-{home_score}" if away_score or home_score else ""
-            full_text = " ".join([name, league, country, "basketball"])
-            likely = is_likely_womens_event(full_text)
-            if likely:
-                relevant += 1
-            samples.append(f"{name} | {league} | {country} | {score}")
-            sample_rows.append(event_sample_row(
-                source_name, "Basketball", d["iso"], name, status_text, score,
-                " | ".join([league, country]), event_id, endpoint,
-                likely_womens=likely,
-                date_match="Unknown",
-                raw_note="API-Sports Basketball endpoint.",
+            events: List[Dict[str, Any]] = []
+            if isinstance(data, dict):
+                events = data.get("response") or []
+
+            samples = []
+            relevant = 0
+            for event in events[:100]:
+                name, league, country, status_text, score, event_id, source_url = api_sports_event_text(product, event)
+                full_text = " ".join([name, league, country, label])
+                likely = is_likely_womens_event(full_text)
+                if likely:
+                    relevant += 1
+
+                samples.append(f"{name} | {league} | {country} | {status_text} | {score}")
+
+                sample_rows.append(event_sample_row(
+                    source_name, label, d["iso"], name, status_text, score,
+                    " | ".join([league, country]), event_id, source_url,
+                    likely_womens=likely,
+                    date_match="Yes",
+                    raw_note=f"API-Sports {label} endpoint.",
+                ))
+
+            raw[f"apisports::{product}::{d['iso']}"] = {
+                "status": status,
+                "error": error,
+                "event_count": len(events),
+                "likely_womens_events": relevant,
+                "top_level_keys": list(data.keys()) if isinstance(data, dict) else [],
+                "errors": data.get("errors") if isinstance(data, dict) else None,
+            }
+
+            role = "Paid/API-key candidate"
+            if len(events) > 0 and relevant > 0:
+                role = "Strong paid/API-key candidate"
+            elif len(events) > 0:
+                role = "General coverage candidate, women's filter needed"
+
+            report_rows.append(make_report_row(
+                source_name=source_name,
+                sport_or_league=label,
+                date_label=d["iso"],
+                endpoint=f"{endpoint}?date={d['iso']}" if product != "football" else f"{endpoint}?date={d['iso']}",
+                status_code=status,
+                ok=status == 200 and isinstance(data, dict),
+                events_found=len(events),
+                likely_womens_events=relevant,
+                sample_events=samples,
+                capabilities="Structured schedules/results by product. Use as broad paid/API-key source if women's coverage is found.",
+                recommended_role=role,
+                notes=error or "APISPORTS_KEY was set and endpoint was tested.",
+                raw_events_found=len(events),
+                date_matched_events=len(events),
             ))
 
-        raw[f"apisports_basketball::{d['iso']}"] = {
-            "status": status,
-            "error": error,
-            "event_count": len(events),
-        }
-
-        report_rows.append(make_report_row(
-            source_name, "Basketball", d["iso"], f"{endpoint}?date={d['iso']}", status,
-            status == 200 and isinstance(data, dict), len(events), relevant, samples,
-            "Structured live scores/schedules with API key.",
-            recommendation(source_name, len(events), relevant, status_code=status),
-            error or "APISPORTS_KEY was set and basketball endpoint was tested.",
-        ))
-
     return report_rows, sample_rows, raw
-
 
 def write_csv(path: str, rows: List[Dict[str, str]], fieldnames: List[str]) -> None:
     with open(path, "w", newline="", encoding="utf-8") as f:
@@ -699,14 +834,14 @@ def summarize(report_rows: List[Dict[str, str]]) -> str:
         by_source[source]["women"] += int(row["likely_womens_events"] or 0)
 
     lines = [
-        "# Her Sports Daily Results Source Audit v2",
+        "# Her Sports Daily Results Source Audit v3",
         "",
         f"Generated: `{generated}`",
         "",
         "## Purpose",
         "",
         "This audit tests which sources are worth using for Results Desk v3.",
-        "v2 specifically checks for blocked sources, stale/default college data, and blank API-key mistakes.",
+        "v3 expands API-Sports testing across basketball, soccer, hockey, volleyball, handball, rugby, and baseball while keeping the v2 stale-data and blocked-source checks.",
         "",
         "## Date window tested",
         "",
@@ -732,7 +867,7 @@ def summarize(report_rows: List[Dict[str, str]]) -> str:
         "- **Raw Events** may include stale/default events.",
         "- **Stale Events Rejected** is critical for NCAA sources because some endpoints return championship results regardless of query date.",
         "- SofaScore returning 403 means GitHub Actions cannot currently use that public endpoint directly.",
-        "- API-Sports will only test if `APISPORTS_KEY` is set in GitHub Secrets.",
+        "- API-Sports expanded tests will only run if `APISPORTS_KEY` is set in GitHub Secrets.",
         "",
         "## Files created",
         "",
