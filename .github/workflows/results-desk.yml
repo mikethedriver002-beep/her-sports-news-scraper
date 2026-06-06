@@ -1,0 +1,53 @@
+name: Women's Sports Results Desk
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 11 * * *"
+    - cron: "15 16 * * *"
+    - cron: "15 21 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build-results-desk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Generate results desk outputs
+        run: python generate_hsd_results_desk.py
+
+      - name: Generate results dashboard
+        run: python generate_results_dashboard.py
+
+      - name: Archive this run
+        run: python archive_results_runs.py
+
+      - name: Commit updated results files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add today_results_board.csv
+          git add today_box_scores.csv
+          git add top_performers.csv
+          git add results_graphics_queue.md
+          git add results_dashboard_seed.csv
+          git add results_system_hub.md
+          git add results_dashboard/index.html
+          git add latest_results_run_summary.md
+          git add results_run_history/
+          git commit -m "Update HSD results desk" || echo "No changes to commit"
+          git push
