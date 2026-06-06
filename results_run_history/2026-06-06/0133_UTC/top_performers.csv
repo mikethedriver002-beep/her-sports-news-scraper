@@ -1,0 +1,16 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856961,WNBA,Atlanta Dream at Indiana Fever,Final,Indiana Fever,Atlanta Dream 71 - Indiana Fever 83,1,Aliyah Boston,Indiana Fever,"PTS 19, REB 7, AST 2, BLK 3, FG 6-12",WNBA
+401856962,WNBA,Golden State Valkyries at Minnesota Lynx,Final,Minnesota Lynx,Golden State Valkyries 84 - Minnesota Lynx 87,1,Olivia Miles,Minnesota Lynx,"PTS 28, REB 4, AST 7, BLK 3, FG 9-16",WNBA
+401856961,WNBA,Atlanta Dream at Indiana Fever,Final,Indiana Fever,Atlanta Dream 71 - Indiana Fever 83,2,Caitlin Clark,Indiana Fever,"PTS 17, REB 7, AST 8, BLK 1, FG 6-17",WNBA
+401856962,WNBA,Golden State Valkyries at Minnesota Lynx,Final,Minnesota Lynx,Golden State Valkyries 84 - Minnesota Lynx 87,2,Courtney Williams,Minnesota Lynx,"PTS 17, REB 7, AST 3, STL 1, FG 8-18",WNBA
+401856961,WNBA,Atlanta Dream at Indiana Fever,Final,Indiana Fever,Atlanta Dream 71 - Indiana Fever 83,3,Kelsey Mitchell,Indiana Fever,"PTS 25, AST 2, STL 2, FG 11-15, 3PT 3-4",WNBA
+401856962,WNBA,Golden State Valkyries at Minnesota Lynx,Final,Minnesota Lynx,Golden State Valkyries 84 - Minnesota Lynx 87,3,Kayla McBride,Minnesota Lynx,"PTS 14, REB 8, AST 2, STL 2, FG 4-13",WNBA
+401856961,WNBA,Atlanta Dream at Indiana Fever,Final,Indiana Fever,Atlanta Dream 71 - Indiana Fever 83,4,Angel Reese,Atlanta Dream,"PTS 11, REB 10, AST 3, BLK 2, FG 4-9",WNBA
+401856962,WNBA,Golden State Valkyries at Minnesota Lynx,Final,Minnesota Lynx,Golden State Valkyries 84 - Minnesota Lynx 87,4,Janelle Salaun,Golden State Valkyries,"PTS 17, REB 5, AST 3, BLK 1, FG 6-11",WNBA
+401856961,WNBA,Atlanta Dream at Indiana Fever,Final,Indiana Fever,Atlanta Dream 71 - Indiana Fever 83,5,Jordin Canada,Atlanta Dream,"PTS 13, REB 3, AST 7, STL 2, FG 4-12",WNBA
+401856962,WNBA,Golden State Valkyries at Minnesota Lynx,Final,Minnesota Lynx,Golden State Valkyries 84 - Minnesota Lynx 87,5,Cecilia Zandalasini,Golden State Valkyries,"PTS 18, REB 3, AST 3, STL 1, FG 5-14",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 76 - Chicago Sky 77,1,Brittney Griner,Connecticut Sun,"PTS 16, REB 8, AST 5, BLK 3, FG 6-8",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 76 - Chicago Sky 77,2,Aneesah Morrow,Connecticut Sun,"PTS 8, REB 17, AST 3, STL 1, BLK 1",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 76 - Chicago Sky 77,3,Skylar Diggins,Chicago Sky,"PTS 20, REB 3, AST 4, STL 1, FG 5-15",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 76 - Chicago Sky 77,4,Azura Stevens,Chicago Sky,"PTS 13, REB 10, AST 1, STL 1, FG 5-13",WNBA
+401856963,WNBA,Connecticut Sun at Chicago Sky,Upcoming,Chicago Sky,Connecticut Sun 76 - Chicago Sky 77,5,Kamilla Cardoso,Chicago Sky,"PTS 10, REB 8, AST 3, BLK 2, FG 5-10",WNBA
