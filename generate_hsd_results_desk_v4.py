@@ -18,7 +18,7 @@ except Exception:
     ZoneInfo = None
 
 
-VERSION = "v4.1"
+VERSION = "v4.2"
 
 RESULTS_TIMEZONE = os.environ.get("HSD_TIMEZONE", "America/New_York")
 LOOKBACK_DAYS = int(os.environ.get("HSD_LOOKBACK_DAYS", "1"))
@@ -62,17 +62,34 @@ TIER_2_TERMS = [
 ]
 
 EDITORIAL_TERMS = {
-    "wnba": 100,
-    "nwsl": 92,
-    "uswnt": 92,
+    "wnba": 200,
+    "nba w": 200,
+    "nwsl": 120,
+    "uswnt": 125,
     "world cup": 86,
-    "volleyball nations league": 82,
-    "ncaa": 80,
+    "volleyball nations league": 88,
+    "ncaa": 90,
     "basketball": 78,
     "soccer": 76,
     "volleyball": 70,
     "rugby": 54,
     "handball": 50,
+}
+
+WNBA_LEAGUE_ALIASES = {
+    "wnba", "nba w", "nba women", "women nba", "womens nba",
+    "women's national basketball association", "womens national basketball association",
+}
+
+WNBA_TEAM_ROOTS = {
+    "atlanta dream", "chicago sky", "connecticut sun", "dallas wings", "golden state valkyries",
+    "indiana fever", "las vegas aces", "los angeles sparks", "minnesota lynx", "new york liberty",
+    "phoenix mercury", "portland fire", "seattle storm", "washington mystics",
+}
+
+LOW_PRIORITY_LEAGUE_TERMS = {
+    "nbl1", "lbf w", "seven's world series", "sevens world series", "state league",
+    "regional", "u18", "u19", "u20 club", "u21 club",
 }
 
 PRODUCTS = [
@@ -98,9 +115,11 @@ OBS_FIELDS = [
 EVENT_FIELDS = [
     "run_id", "event_uid", "canonical_key", "selected_source", "source_count",
     "all_sources_json", "sport_norm", "league_norm", "gender_scope", "scheduled_start_utc",
-    "scheduled_date_local", "home_team_norm", "away_team_norm", "game_state",
-    "status_norm", "home_score", "away_score", "winner", "loser", "outcome_type",
-    "editorial_tier", "editorial_bucket", "content_action", "score_by_period_json",
+    "scheduled_date_local", "home_team_norm", "away_team_norm", "home_team_display",
+    "away_team_display", "final_score_display", "game_state", "status_norm",
+    "home_score", "away_score", "winner", "loser", "outcome_type",
+    "editorial_tier", "editorial_bucket", "content_action", "content_family",
+    "posting_priority", "caption_seed", "score_by_period_json",
     "team_stats_json", "player_stats_json", "top_performers_json", "confidence",
     "confidence_reason_json", "score_conflict", "manual_review", "include_in_dashboard",
     "include_in_graphics", "editorial_rank", "graphics_headline", "graphics_subhead",
@@ -139,6 +158,38 @@ def normalize_team(value: Any) -> str:
     for src, dst in replacements.items():
         s = re.sub(rf"\b{re.escape(src)}\b", dst, s)
     return re.sub(r"\s+", " ", s).strip()
+
+
+def is_wnba_league(league: Any, sport: Any = "") -> bool:
+    s = slug(league)
+    return clean(sport).lower() == "basketball" and s in {slug(x) for x in WNBA_LEAGUE_ALIASES}
+
+
+def is_wnba_team_name(team: Any) -> bool:
+    s = normalize_team(team)
+    s_no_w = re.sub(r"\bw$", "", s).strip()
+    return s_no_w in WNBA_TEAM_ROOTS
+
+
+def normalize_league_name(league: Any, sport: Any = "") -> str:
+    raw = clean(league)
+    if is_wnba_league(raw, sport):
+        return "WNBA"
+    return raw or "Unknown League"
+
+
+def normalize_team_for_context(team: Any, league: Any = "", sport: Any = "") -> str:
+    s = normalize_team(team)
+    if normalize_league_name(league, sport) == "WNBA" or is_wnba_team_name(team):
+        s = re.sub(r"\bw$", "", s).strip()
+    return s
+
+
+def display_team_for_context(team: Any, league: Any = "", sport: Any = "") -> str:
+    value = clean(team)
+    if normalize_league_name(league, sport) == "WNBA" or is_wnba_team_name(value):
+        value = re.sub(r"\s+W$", "", value).strip()
+    return value
 
 
 def iso_now() -> str:
@@ -236,8 +287,11 @@ def women_scope_and_method(*parts: Any) -> Tuple[str, str]:
     return "unknown", "none"
 
 
-def canonical_key(sport: str, date_local: str, home: str, away: str) -> str:
-    pair = sorted([normalize_team(home), normalize_team(away)])
+def canonical_key(sport: str, date_local: str, home: str, away: str, league: str = "") -> str:
+    pair = sorted([
+        normalize_team_for_context(home, league, sport),
+        normalize_team_for_context(away, league, sport),
+    ])
     return "|".join([clean(sport), clean(date_local), pair[0], pair[1]])
 
 
@@ -299,24 +353,29 @@ def parse_api_sports_event(run_id: str, product: Dict[str, str], event: Dict[str
         source_url = product["endpoint"]
 
     date_local = local_date_from_iso(start_utc) or requested_date
-    gender_scope, method = women_scope_and_method(product["label"], league_name, country, home, away)
+    league_norm = normalize_league_name(league_name, sport)
+    home_display = display_team_for_context(home, league_norm, sport)
+    away_display = display_team_for_context(away, league_norm, sport)
+    gender_scope, method = women_scope_and_method(product["label"], league_norm, country, home, away)
+    if league_norm == "WNBA":
+        gender_scope, method = "women", "league_alias"
 
     return {
         "run_id": run_id,
         "source_name": "api_sports",
         "source_priority": "100",
         "source_event_id": source_event_id,
-        "canonical_key": canonical_key(sport, date_local, home, away),
+        "canonical_key": canonical_key(sport, date_local, home_display, away_display, league_norm),
         "sport_norm": sport,
-        "league_norm": league_name or "Unknown League",
+        "league_norm": league_norm,
         "competition_id": country,
         "gender_scope": gender_scope,
         "scheduled_start_utc": start_utc,
         "scheduled_date_local": date_local,
-        "home_team_raw": home,
-        "away_team_raw": away,
-        "home_team_norm": normalize_team(home),
-        "away_team_norm": normalize_team(away),
+        "home_team_raw": home_display,
+        "away_team_raw": away_display,
+        "home_team_norm": normalize_team_for_context(home_display, league_norm, sport),
+        "away_team_norm": normalize_team_for_context(away_display, league_norm, sport),
         "status_raw": status_raw,
         "status_norm": normalize_status(status_raw),
         "home_score": home_score,
@@ -463,7 +522,7 @@ def fetch_espn_wnba(run_id: str, compact_dates: List[str]) -> Tuple[List[Dict[st
                     "source_name": "espn_wnba",
                     "source_priority": "70",
                     "source_event_id": event_id,
-                    "canonical_key": canonical_key("basketball", date_local, home, away),
+                    "canonical_key": canonical_key("basketball", date_local, home, away, "WNBA"),
                     "sport_norm": "basketball",
                     "league_norm": "WNBA",
                     "competition_id": "USA",
@@ -472,8 +531,8 @@ def fetch_espn_wnba(run_id: str, compact_dates: List[str]) -> Tuple[List[Dict[st
                     "scheduled_date_local": date_local,
                     "home_team_raw": home,
                     "away_team_raw": away,
-                    "home_team_norm": normalize_team(home),
-                    "away_team_norm": normalize_team(away),
+                    "home_team_norm": normalize_team_for_context(home, "WNBA", "basketball"),
+                    "away_team_norm": normalize_team_for_context(away, "WNBA", "basketball"),
                     "status_raw": status_raw,
                     "status_norm": normalize_status(status_raw),
                     "home_score": home_score,
@@ -523,6 +582,16 @@ def complete_final(obs: Dict[str, str]) -> bool:
     return obs.get("status_norm") == "final" and score_present(obs.get("home_score"), obs.get("away_score"))
 
 
+def score_signature(obs: Dict[str, str]) -> Tuple[Tuple[str, str], Tuple[str, str]] | Tuple[()]:
+    if not score_present(obs.get("home_score"), obs.get("away_score")):
+        return tuple()
+    pairs = sorted([
+        (clean(obs.get("home_team_norm")), clean(obs.get("home_score"))),
+        (clean(obs.get("away_team_norm")), clean(obs.get("away_score"))),
+    ])
+    return tuple(pairs)  # type: ignore[return-value]
+
+
 def draw_allowed(obs: Dict[str, str]) -> bool:
     return obs.get("sport_norm") in DRAW_ALLOWED_SPORTS
 
@@ -561,16 +630,20 @@ def base_confidence(chosen: Dict[str, str], group: List[Dict[str, str]], conflic
         score += 0.05
         reasons["adjustments"].append(["period_data_present", 0.05])
 
-    chosen_score = (clean(chosen.get("home_score")), clean(chosen.get("away_score")))
+    chosen_score = score_signature(chosen)
     agreeing = {
         obs.get("source_name") for obs in group
         if obs.get("status_norm") == "final"
-        and (clean(obs.get("home_score")), clean(obs.get("away_score"))) == chosen_score
+        and score_signature(obs) == chosen_score
         and score_present(obs.get("home_score"), obs.get("away_score"))
     }
     if len(agreeing) >= 2:
         score += 0.10
         reasons["adjustments"].append(["second_source_agrees", 0.10])
+
+    if chosen.get("league_norm") == "WNBA" and any(obs.get("source_name") == "espn_wnba" for obs in group):
+        score += 0.08
+        reasons["adjustments"].append(["wnba_espn_backup_present", 0.08])
 
     if chosen.get("source_name") in {"sofascore", "thesportsdb"} and len(group) == 1 and chosen.get("status_norm") == "final":
         score -= 0.15
@@ -596,6 +669,10 @@ def editorial_tier(obs: Dict[str, str]) -> str:
         obs.get("home_team_raw", ""), obs.get("away_team_raw", ""), obs.get("notes", ""),
     ]).lower()
 
+    if obs.get("league_norm") == "WNBA":
+        return "Tier 1"
+    if any(term in blob for term in LOW_PRIORITY_LEAGUE_TERMS):
+        return "Tier 3"
     if any(term in blob for term in TIER_1_TERMS):
         return "Tier 1"
     if obs.get("sport_norm") in {"basketball", "soccer", "volleyball"} and any(term in blob for term in TIER_2_TERMS):
@@ -616,6 +693,14 @@ def editorial_rank(event: Dict[str, Any]) -> float:
     for term, points in EDITORIAL_TERMS.items():
         if term in blob:
             rank += points / 3
+
+    if event.get("league_norm") == "WNBA":
+        rank += 70
+    if event.get("editorial_tier") == "Tier 1":
+        rank += 15
+    elif event.get("editorial_tier") == "Tier 3":
+        rank -= 8
+
     if event.get("manual_review"):
         rank -= 25
     if event.get("gender_scope") != "women":
@@ -639,6 +724,53 @@ def content_action(tier: str, rank: float, include_graphics: bool, manual_review
     return "Archive", "Archive Only"
 
 
+def content_family_for(event: Dict[str, Any]) -> str:
+    if event.get("league_norm") == "WNBA":
+        return "Tonight in the W"
+    if event.get("sport_norm") == "soccer" and "world cup" in low(event.get("league_norm")):
+        return "Global Game Watch"
+    if event.get("sport_norm") == "volleyball":
+        return "Around Women’s Sports"
+    if event.get("sport_norm") == "rugby":
+        return "Around Women’s Sports"
+    return "Results Desk"
+
+
+def caption_seed_for(event: Dict[str, Any]) -> str:
+    if event.get("outcome_type") == "draw":
+        return f"{event.get('away_team_display')} and {event.get('home_team_display')} finished level, {event.get('away_score')}-{event.get('home_score')}."
+    if event.get("winner") and event.get("loser"):
+        return f"{event.get('winner')} defeated {event.get('loser')}, {event.get('final_score_display')}."
+    return event.get("graphics_subhead", "")
+
+
+def apply_global_editorial_buckets(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    for event in events:
+        event["content_family"] = content_family_for(event)
+        event["caption_seed"] = caption_seed_for(event)
+        event["posting_priority"] = "Archive Only"
+        if event.get("manual_review"):
+            event["content_action"] = "Manual Review"
+            event["editorial_bucket"] = "Review Queue"
+        else:
+            event["content_action"] = "Archive"
+            event["editorial_bucket"] = "Archive Only"
+
+    ready = [e for e in events if e.get("include_in_graphics") and not e.get("manual_review")]
+    ready.sort(key=lambda e: (-float(e.get("editorial_rank") or 0), e.get("scheduled_date_local", ""), e.get("sport_norm", "")))
+    sections = [
+        ("Must Post", "Make First", "P1", ready[:5]),
+        ("Strong Maybe", "Strong Maybe", "P2", ready[5:15]),
+        ("Watchlist", "Watch", "P3", ready[15:30]),
+    ]
+    for bucket, action, priority, items in sections:
+        for event in items:
+            event["editorial_bucket"] = bucket
+            event["content_action"] = action
+            event["posting_priority"] = priority
+    return events
+
+
 def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     groups: Dict[str, List[Dict[str, str]]] = {}
     for obs in observations:
@@ -658,7 +790,7 @@ def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str,
                 break
 
         final_scores = {
-            (clean(obs.get("home_score")), clean(obs.get("away_score")))
+            score_signature(obs)
             for obs in valid
             if obs.get("status_norm") == "final" and score_present(obs.get("home_score"), obs.get("away_score"))
         }
@@ -681,15 +813,19 @@ def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str,
         include_graphics = chosen.get("gender_scope") == "women" and chosen.get("status_norm") == "final" and conf >= 0.85 and not manual
         tier = editorial_tier(chosen)
 
+        home_display = display_team_for_context(chosen.get("home_team_raw"), chosen.get("league_norm"), chosen.get("sport_norm"))
+        away_display = display_team_for_context(chosen.get("away_team_raw"), chosen.get("league_norm"), chosen.get("sport_norm"))
+        final_score_display = f"{away_display} {chosen.get('away_score')} - {home_display} {chosen.get('home_score')}"
+
         if outcome == "win" and winner and loser:
             headline = f"{winner} beat {loser}"
-            subhead = f"Final: {chosen.get('away_team_raw')} {chosen.get('away_score')} - {chosen.get('home_team_raw')} {chosen.get('home_score')}"
+            subhead = f"Final: {final_score_display}"
         elif outcome == "draw":
             scoreline = f"{chosen.get('away_score')}-{chosen.get('home_score')}"
-            headline = f"{chosen.get('away_team_raw')} and {chosen.get('home_team_raw')} draw {scoreline}"
-            subhead = f"Final: {chosen.get('away_team_raw')} {chosen.get('away_score')} - {chosen.get('home_team_raw')} {chosen.get('home_score')}"
+            headline = f"{away_display} and {home_display} draw {scoreline}"
+            subhead = f"Final: {final_score_display}"
         else:
-            headline = f"{chosen.get('away_team_raw')} vs {chosen.get('home_team_raw')}".strip(" vs ")
+            headline = f"{away_display} vs {home_display}".strip(" vs ")
             subhead = f"Status: {chosen.get('status_raw')}"
 
         event = {
@@ -706,6 +842,9 @@ def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str,
             "scheduled_date_local": chosen.get("scheduled_date_local", ""),
             "home_team_norm": chosen.get("home_team_norm", ""),
             "away_team_norm": chosen.get("away_team_norm", ""),
+            "home_team_display": home_display,
+            "away_team_display": away_display,
+            "final_score_display": final_score_display,
             "game_state": chosen.get("status_norm", ""),
             "status_norm": chosen.get("status_norm", ""),
             "home_score": chosen.get("home_score", ""),
@@ -716,6 +855,9 @@ def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str,
             "editorial_tier": tier,
             "editorial_bucket": "",
             "content_action": "",
+            "content_family": "",
+            "posting_priority": "",
+            "caption_seed": "",
             "score_by_period_json": chosen.get("score_by_period_json", ""),
             "team_stats_json": chosen.get("team_stats_json", ""),
             "player_stats_json": chosen.get("player_stats_json", ""),
@@ -739,7 +881,7 @@ def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str,
         events.append(event)
 
     events.sort(key=lambda e: (e.get("gender_scope") != "women", e.get("status_norm") != "final", -float(e.get("editorial_rank", 0)), e.get("scheduled_date_local", "")))
-    return events
+    return apply_global_editorial_buckets(events)
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fieldnames: List[str]) -> None:
@@ -761,14 +903,14 @@ def write_csv(path: str, rows: List[Dict[str, Any]], fieldnames: List[str]) -> N
 
 
 def event_score_text(e: Dict[str, Any]) -> str:
-    return f"{e.get('away_team_norm')} {e.get('away_score')} - {e.get('home_team_norm')} {e.get('home_score')}"
+    return e.get("final_score_display") or f"{e.get('away_team_display', e.get('away_team_norm'))} {e.get('away_score')} - {e.get('home_team_display', e.get('home_team_norm'))} {e.get('home_score')}"
 
 
 def packet_block(idx: int, e: Dict[str, Any], section_name: str) -> List[str]:
     if e.get("outcome_type") == "draw":
-        result_sentence = f"{e.get('away_team_norm')} and {e.get('home_team_norm')} finished level at {e.get('away_score')}-{e.get('home_score')}."
+        result_sentence = f"{e.get('away_team_display')} and {e.get('home_team_display')} finished level at {e.get('away_score')}-{e.get('home_score')}."
     else:
-        result_sentence = f"{e.get('away_team_norm')} vs {e.get('home_team_norm')} finished {e.get('away_score')}-{e.get('home_score')}."
+        result_sentence = f"{e.get('away_team_display')} vs {e.get('home_team_display')} finished {e.get('away_score')}-{e.get('home_score')}."
 
     return [
         f"## RESULT GRAPHIC {idx}: {e.get('graphics_headline')}",
@@ -779,6 +921,8 @@ def packet_block(idx: int, e: Dict[str, Any], section_name: str) -> List[str]:
         f"**Editorial tier:** {e.get('editorial_tier')}",
         f"**Editorial bucket:** {e.get('editorial_bucket')}",
         f"**Content action:** {e.get('content_action')}",
+        f"**Content family:** {e.get('content_family')}",
+        f"**Posting priority:** {e.get('posting_priority')}",
         f"**Template:** Postgame Result Card",
         f"**Selected source:** {e.get('selected_source')}",
         f"**All sources:** {e.get('all_sources_json')}",
@@ -788,7 +932,7 @@ def packet_block(idx: int, e: Dict[str, Any], section_name: str) -> List[str]:
         f"**Outcome type:** {e.get('outcome_type')}",
         "",
         "### Verified result context",
-        f"- Matchup: {e.get('away_team_norm')} vs {e.get('home_team_norm')}",
+        f"- Matchup: {e.get('away_team_display')} vs {e.get('home_team_display')}",
         f"- Final score: {event_score_text(e)}",
         f"- Winner: {e.get('winner')}",
         f"- Loser: {e.get('loser')}",
@@ -833,11 +977,11 @@ def graphics_queue(events: List[Dict[str, Any]]) -> str:
     archive_only_count = len([e for e in ready if e.get("editorial_bucket") == "Archive Only"])
 
     lines = [
-        "# Her Sports Daily Results Graphics Queue v4.1",
+        "# Her Sports Daily Results Graphics Queue v4.2",
         "",
         f"Generated: {iso_now()}",
         "",
-        "This queue is intentionally capped. It is not every valid result.",
+        "This queue is intentionally capped and ranked for Her Sports Daily priorities.",
         "",
         "## Queue rules",
         "",
@@ -876,7 +1020,7 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
     review = [e for e in events if e.get("manual_review") and e.get("gender_scope") == "women"][:20]
 
     lines = [
-        "# Her Sports Daily Daily Results Recommendations v4.1",
+        "# Her Sports Daily Daily Results Recommendations v4.2",
         "",
         "This file is the human-friendly editorial command center for results content.",
         "",
@@ -889,8 +1033,9 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
     else:
         for idx, e in enumerate(must, 1):
             lines.append(f"{idx}. **{e.get('graphics_headline')}**")
-            lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | {e.get('content_family')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
             lines.append(f"   - {e.get('graphics_subhead')}")
+            lines.append(f"   - Caption seed: {e.get('caption_seed')}")
             lines.append("")
 
     lines.extend(["", "## Strong Maybe", ""])
@@ -899,7 +1044,8 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
     else:
         for idx, e in enumerate(maybe, 1):
             lines.append(f"{idx}. **{e.get('graphics_headline')}**")
-            lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | {e.get('content_family')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - Caption seed: {e.get('caption_seed')}")
             lines.append("")
 
     lines.extend(["", "## Watchlist", ""])
@@ -908,7 +1054,8 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
     else:
         for idx, e in enumerate(watch, 1):
             lines.append(f"{idx}. **{e.get('graphics_headline')}**")
-            lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | {e.get('content_family')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - Caption seed: {e.get('caption_seed')}")
             lines.append("")
 
     lines.extend(["", "## Manual Review", ""])
@@ -944,7 +1091,7 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         by_sport[e.get("sport_norm", "")] = by_sport.get(e.get("sport_norm", ""), 0) + 1
 
     lines = [
-        "# Her Sports Daily Results Desk v4.1 Hub",
+        "# Her Sports Daily Results Desk v4.2 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{iso_now()}`",
@@ -954,7 +1101,7 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         "",
         "- API-Sports is the scoring backbone.",
         "- ESPN WNBA is backup/verification.",
-        "- v4.1 adds draw handling and editorial queue caps.",
+        "- v4.2 adds WNBA reconciliation, WNBA-first ranking, league aliasing, and global queue buckets.",
         "",
         "## Run summary",
         "",
@@ -981,8 +1128,8 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         "## Graphics gate",
         "",
         "- `include_in_graphics` requires women-only, final, confidence >= 0.85, and manual_review = No.",
-        "- v4.1 treats tied soccer/rugby/handball/hockey finals as draws, not errors.",
-        "- The graphics queue is capped: 5 Must Post, 10 Strong Maybe, 15 Watchlist.",
+        "- v4.2 treats tied soccer/rugby/handball/hockey finals as draws, not errors.",
+        "- The graphics queue is globally capped: 5 Must Post, 10 Strong Maybe, 15 Watchlist.",
         "- Player stats are never invented. If no box-score data exists, packet is a team-result graphic.",
     ])
     return "\n".join(lines) + "\n"
@@ -1048,7 +1195,7 @@ def main() -> None:
     }
     Path(MANIFEST_FILE).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    print("Created Results Desk v4.1 outputs")
+    print("Created Results Desk v4.2 outputs")
     print(json.dumps(manifest["counts"], indent=2))
 
 

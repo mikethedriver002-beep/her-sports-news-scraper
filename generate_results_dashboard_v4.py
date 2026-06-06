@@ -52,8 +52,10 @@ def card_grid(rows: List[Dict[str, str]], empty: str = "Nothing to show.") -> st
           </div>
           <h3>{esc(r.get('graphics_headline'))}</h3>
           <div class="small"><b>League:</b> {esc(r.get('league_norm'))}</div>
-          <div class="small"><b>Score:</b> {esc(r.get('away_team_norm'))} {esc(r.get('away_score'))} - {esc(r.get('home_team_norm'))} {esc(r.get('home_score'))}</div>
+          <div class="small"><b>Score:</b> {esc(r.get('final_score_display'))}</div>
           <div class="small"><b>Outcome:</b> {esc(r.get('outcome_type'))}</div>
+          <div class="small"><b>Content family:</b> {esc(r.get('content_family'))}</div>
+          <div class="small"><b>Sources:</b> {esc(r.get('all_sources_json'))}</div>
           <div class="small"><b>Tier:</b> {esc(r.get('editorial_tier'))}</div>
           <div class="small"><b>Action:</b> {esc(r.get('content_action'))}</div>
           <div class="small"><b>Confidence:</b> {esc(r.get('confidence'))}</div>
@@ -97,7 +99,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Her Sports Daily Results Desk v4.1</title>
+<title>Her Sports Daily Results Desk v4.2</title>
 <style>
 :root {{
   --bg:#0f1020; --panel:#181a2f; --panel2:#242845; --text:#f7f3ff; --muted:#beb6d4;
@@ -133,7 +135,7 @@ th {{ color:var(--text); }}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Results Desk v4.1</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. Draw fix + editorial queue gate.</div></div></div></header>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Results Desk v4.2</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. WNBA reconciliation + editorial priority fix.</div></div></div></header>
 <main>
 <section><h2>System Hub</h2><div class="card"><pre>{esc(hub)}</pre></div></section>
 <section><h2>Graphics Ready</h2>{card_grid(graphics, "No high-confidence graphics-ready finals.")}</section>
