@@ -18,7 +18,7 @@ except Exception:
     ZoneInfo = None
 
 
-VERSION = "v4.2"
+VERSION = "v4.3"
 
 RESULTS_TIMEZONE = os.environ.get("HSD_TIMEZONE", "America/New_York")
 LOOKBACK_DAYS = int(os.environ.get("HSD_LOOKBACK_DAYS", "1"))
@@ -33,6 +33,8 @@ FINAL_RESULTS_FILE = "today_final_results.csv"
 TOP_RESULTS_FILE = "top_womens_results.csv"
 MANUAL_REVIEW_FILE = "manual_review_queue.csv"
 SOURCE_HEALTH_FILE = "source_health_report.csv"
+BOX_SCORE_AUDIT_FILE = "wnba_box_score_audit.csv"
+BOX_SCORE_SUMMARY_FILE = "wnba_box_score_summary.md"
 GRAPHICS_QUEUE_FILE = "results_graphics_queue.md"
 RECOMMENDATIONS_FILE = "daily_results_recommendations.md"
 HUB_FILE = "results_system_hub.md"
@@ -90,6 +92,18 @@ WNBA_TEAM_ROOTS = {
 LOW_PRIORITY_LEAGUE_TERMS = {
     "nbl1", "lbf w", "seven's world series", "sevens world series", "state league",
     "regional", "u18", "u19", "u20 club", "u21 club",
+}
+
+MAJOR_SOCCER_NATIONS = {
+    "usa", "united states", "england", "spain", "france", "germany", "netherlands",
+    "sweden", "japan", "canada", "australia", "brazil", "norway", "denmark",
+    "italy", "belgium", "switzerland", "republic of ireland", "ireland", "scotland",
+    "portugal", "austria", "iceland", "new zealand", "china", "south korea",
+}
+
+ELITE_SOCCER_NATIONS = {
+    "usa", "england", "spain", "france", "germany", "netherlands", "sweden",
+    "japan", "canada", "australia", "brazil", "norway",
 }
 
 PRODUCTS = [
@@ -190,6 +204,62 @@ def display_team_for_context(team: Any, league: Any = "", sport: Any = "") -> st
     if normalize_league_name(league, sport) == "WNBA" or is_wnba_team_name(value):
         value = re.sub(r"\s+W$", "", value).strip()
     return value
+
+
+def soccer_root(team: Any) -> str:
+    s = normalize_team(team)
+    s = re.sub(r"\bw$", "", s).strip()
+    s = re.sub(r"\bu\d{2}$", "", s).strip()
+    return s
+
+
+def major_soccer_count(event: Dict[str, Any]) -> int:
+    if event.get("sport_norm") != "soccer":
+        return 0
+    roots = {
+        soccer_root(event.get("home_team_display") or event.get("home_team_norm")),
+        soccer_root(event.get("away_team_display") or event.get("away_team_norm")),
+    }
+    return sum(1 for root in roots if root in MAJOR_SOCCER_NATIONS)
+
+
+def elite_soccer_count(event: Dict[str, Any]) -> int:
+    if event.get("sport_norm") != "soccer":
+        return 0
+    roots = {
+        soccer_root(event.get("home_team_display") or event.get("home_team_norm")),
+        soccer_root(event.get("away_team_display") or event.get("away_team_norm")),
+    }
+    return sum(1 for root in roots if root in ELITE_SOCCER_NATIONS)
+
+
+def date_window_status(local_date: str, iso_dates: List[str]) -> Tuple[str, str]:
+    local_date = clean(local_date)
+    if not local_date:
+        return "unknown_date", "Yes"
+    if local_date in set(iso_dates):
+        return "in_window", "No"
+    if iso_dates and local_date < min(iso_dates):
+        return "carryover_previous_day", "Yes"
+    if iso_dates and local_date > max(iso_dates):
+        return "outside_future_window", "Yes"
+    return "outside_window", "Yes"
+
+
+def numeric_margin(event: Dict[str, Any]) -> int | None:
+    h = safe_int(event.get("home_score"))
+    a = safe_int(event.get("away_score"))
+    if h is None or a is None:
+        return None
+    return abs(h - a)
+
+
+def score_total(event: Dict[str, Any]) -> int | None:
+    h = safe_int(event.get("home_score"))
+    a = safe_int(event.get("away_score"))
+    if h is None or a is None:
+        return None
+    return h + a
 
 
 def iso_now() -> str:
@@ -696,10 +766,26 @@ def editorial_rank(event: Dict[str, Any]) -> float:
 
     if event.get("league_norm") == "WNBA":
         rank += 70
+
+    if event.get("sport_norm") == "soccer" and "world cup" in low(event.get("league_norm")):
+        major_count = major_soccer_count(event)
+        elite_count = elite_soccer_count(event)
+        if major_count >= 2:
+            rank += 75
+        elif major_count == 1:
+            rank += 38
+        if elite_count >= 2:
+            rank += 15
+        elif elite_count == 1:
+            rank += 8
+
     if event.get("editorial_tier") == "Tier 1":
         rank += 15
     elif event.get("editorial_tier") == "Tier 3":
         rank -= 8
+
+    if event.get("date_window_status") not in {"", "in_window"}:
+        rank -= 100
 
     if event.get("manual_review"):
         rank -= 25
@@ -724,6 +810,74 @@ def content_action(tier: str, rank: float, include_graphics: bool, manual_review
     return "Archive", "Archive Only"
 
 
+
+def angle_tag_for(event: Dict[str, Any]) -> str:
+    margin = numeric_margin(event)
+    total = score_total(event)
+    sport = event.get("sport_norm")
+    league = event.get("league_norm")
+    outcome = event.get("outcome_type")
+
+    if event.get("date_window_status") not in {"", "in_window"}:
+        return "carryover result"
+
+    if league == "WNBA":
+        if margin is not None and margin <= 5:
+            return "close WNBA finish"
+        if margin is not None and margin >= 15:
+            return "statement WNBA win"
+        if total is not None and total >= 190:
+            return "high-scoring WNBA result"
+        return "WNBA final"
+
+    if sport == "soccer":
+        major_count = major_soccer_count(event)
+        if outcome == "draw" and major_count >= 1:
+            return "major national-team draw"
+        if major_count >= 2:
+            return "major national-team result"
+        if margin is not None and margin >= 3:
+            return "statement qualifier result"
+        if margin is not None and margin == 1:
+            return "close qualifier result"
+        if outcome == "draw":
+            return "qualifier draw"
+        if "world cup" in low(league):
+            return "World Cup qualifying result"
+        return "global soccer result"
+
+    if sport == "volleyball":
+        return "volleyball results watch"
+    if sport == "rugby":
+        return "rugby results watch"
+    if sport == "handball":
+        return "handball results watch"
+    return "results desk item"
+
+
+def slide_3_context_for(event: Dict[str, Any]) -> str:
+    angle = event.get("angle_tag") or angle_tag_for(event)
+    if event.get("box_score_top_performers"):
+        return f"The result is backed by verified score data, with box-score context available: {event.get('box_score_top_performers')}."
+    if angle == "close WNBA finish":
+        return "A close WNBA finish belongs in the Tonight in the W lane because the final margin is the story." 
+    if angle == "statement WNBA win":
+        return "A double-digit WNBA result gives this a clean statement-win angle for a quick postgame card."
+    if angle == "high-scoring WNBA result":
+        return "A high-scoring WNBA final gives this result more pop than a standard score post."
+    if angle == "major national-team result":
+        return "A matchup between major national teams is stronger than a routine qualifier score and fits the Global Game Watch lane."
+    if angle == "major national-team draw":
+        return "A draw involving a major national team is still a valid result angle, especially in qualifying context."
+    if angle == "statement qualifier result":
+        return "A multi-goal qualifier result gives this more context than a routine final score."
+    if angle == "close qualifier result":
+        return "A one-goal qualifier result gives this a tighter final-score angle for the daily results mix."
+    if angle == "carryover result":
+        return "This result falls outside the strict local date window, so keep it archived unless there is a specific follow-up angle."
+    return "This result fits today’s broader women’s sports results slate."
+
+
 def content_family_for(event: Dict[str, Any]) -> str:
     if event.get("league_norm") == "WNBA":
         return "Tonight in the W"
@@ -744,8 +898,23 @@ def caption_seed_for(event: Dict[str, Any]) -> str:
     return event.get("graphics_subhead", "")
 
 
+
+def apply_strict_date_window_gate(events: List[Dict[str, Any]], iso_dates: List[str]) -> List[Dict[str, Any]]:
+    for event in events:
+        status, carryover = date_window_status(event.get("scheduled_date_local", ""), iso_dates)
+        event["date_window_status"] = status
+        event["is_carryover"] = carryover
+        if status != "in_window":
+            event["include_in_graphics"] = False
+            event["angle_tag"] = "carryover result"
+            event["slide_3_context"] = slide_3_context_for(event)
+    return events
+
+
 def apply_global_editorial_buckets(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     for event in events:
+        event["angle_tag"] = angle_tag_for(event)
+        event["slide_3_context"] = slide_3_context_for(event)
         event["content_family"] = content_family_for(event)
         event["caption_seed"] = caption_seed_for(event)
         event["posting_priority"] = "Archive Only"
@@ -852,12 +1021,19 @@ def reconcile(run_id: str, observations: List[Dict[str, str]]) -> List[Dict[str,
             "winner": winner,
             "loser": loser,
             "outcome_type": outcome,
+            "date_window_status": "",
+            "is_carryover": "No",
+            "angle_tag": "",
+            "slide_3_context": "",
             "editorial_tier": tier,
             "editorial_bucket": "",
             "content_action": "",
             "content_family": "",
             "posting_priority": "",
             "caption_seed": "",
+            "espn_event_id": next((o.get("source_event_id", "") for o in valid if o.get("source_name") == "espn_wnba"), ""),
+            "box_score_audit_status": "not_run",
+            "box_score_top_performers": "",
             "score_by_period_json": chosen.get("score_by_period_json", ""),
             "team_stats_json": chosen.get("team_stats_json", ""),
             "player_stats_json": chosen.get("player_stats_json", ""),
@@ -930,6 +1106,10 @@ def packet_block(idx: int, e: Dict[str, Any], section_name: str) -> List[str]:
         f"**Manual review:** {'Yes' if e.get('manual_review') else 'No'}",
         f"**Editorial rank:** {float(e.get('editorial_rank') or 0):.1f}",
         f"**Outcome type:** {e.get('outcome_type')}",
+        f"**Date-window status:** {e.get('date_window_status')}",
+        f"**Angle tag:** {e.get('angle_tag')}",
+        f"**Box-score audit:** {e.get('box_score_audit_status')}",
+        f"**Top performers:** {e.get('box_score_top_performers')}",
         "",
         "### Verified result context",
         f"- Matchup: {e.get('away_team_display')} vs {e.get('home_team_display')}",
@@ -955,7 +1135,7 @@ def packet_block(idx: int, e: Dict[str, Any], section_name: str) -> List[str]:
         result_sentence,
         "",
         "**Slide 3 - Context:** Why it matters",
-        "This is part of today’s broader women’s sports results slate.",
+        e.get("slide_3_context") or "This result fits today’s broader women’s sports results slate.",
         "",
         "**Slide 4 - CTA:** Your take?",
         "Follow Her Sports Daily for more verified women’s sports results.",
@@ -977,7 +1157,7 @@ def graphics_queue(events: List[Dict[str, Any]]) -> str:
     archive_only_count = len([e for e in ready if e.get("editorial_bucket") == "Archive Only"])
 
     lines = [
-        "# Her Sports Daily Results Graphics Queue v4.2",
+        "# Her Sports Daily Results Graphics Queue v4.3",
         "",
         f"Generated: {iso_now()}",
         "",
@@ -1020,7 +1200,7 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
     review = [e for e in events if e.get("manual_review") and e.get("gender_scope") == "women"][:20]
 
     lines = [
-        "# Her Sports Daily Daily Results Recommendations v4.2",
+        "# Her Sports Daily Daily Results Recommendations v4.3",
         "",
         "This file is the human-friendly editorial command center for results content.",
         "",
@@ -1035,6 +1215,7 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
             lines.append(f"{idx}. **{e.get('graphics_headline')}**")
             lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | {e.get('content_family')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
             lines.append(f"   - {e.get('graphics_subhead')}")
+            lines.append(f"   - Angle: {e.get('angle_tag')} | Date status: {e.get('date_window_status')}")
             lines.append(f"   - Caption seed: {e.get('caption_seed')}")
             lines.append("")
 
@@ -1045,6 +1226,7 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
         for idx, e in enumerate(maybe, 1):
             lines.append(f"{idx}. **{e.get('graphics_headline')}**")
             lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | {e.get('content_family')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - Angle: {e.get('angle_tag')} | Date status: {e.get('date_window_status')}")
             lines.append(f"   - Caption seed: {e.get('caption_seed')}")
             lines.append("")
 
@@ -1055,6 +1237,7 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
         for idx, e in enumerate(watch, 1):
             lines.append(f"{idx}. **{e.get('graphics_headline')}**")
             lines.append(f"   - {e.get('sport_norm')} | {e.get('league_norm')} | {e.get('content_family')} | confidence {float(e.get('confidence') or 0):.2f} | rank {float(e.get('editorial_rank') or 0):.1f}")
+            lines.append(f"   - Angle: {e.get('angle_tag')} | Date status: {e.get('date_window_status')}")
             lines.append(f"   - Caption seed: {e.get('caption_seed')}")
             lines.append("")
 
@@ -1078,6 +1261,123 @@ def recommendations_md(events: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+
+def performer_score(stat_map: Dict[str, str]) -> int:
+    score = 0
+    weights = {"PTS": 1, "REB": 1, "AST": 1, "STL": 2, "BLK": 2}
+    for key, mult in weights.items():
+        try:
+            score += int(float(str(stat_map.get(key, "0")).split("-")[0])) * mult
+        except Exception:
+            pass
+    return score
+
+
+def extract_espn_top_performers(summary: Dict[str, Any]) -> List[str]:
+    boxscore = summary.get("boxscore") or {}
+    players = boxscore.get("players") or []
+    candidates: List[Tuple[int, str]] = []
+    for team_block in players:
+        team = clean(((team_block.get("team") or {}).get("displayName")))
+        for stat_group in team_block.get("statistics") or []:
+            labels = [clean(x) for x in (stat_group.get("labels") or [])]
+            for athlete in stat_group.get("athletes") or []:
+                name = clean(((athlete.get("athlete") or {}).get("displayName")))
+                values = athlete.get("stats") or []
+                if not name:
+                    continue
+                stat_map = {labels[i]: clean(values[i]) for i in range(min(len(labels), len(values)))}
+                parts = []
+                for key in ["PTS", "REB", "AST", "STL", "BLK"]:
+                    value = stat_map.get(key)
+                    if value and value not in {"0", "0.0"}:
+                        parts.append(f"{key} {value}")
+                if parts:
+                    candidates.append((performer_score(stat_map), f"{name} ({team}): {', '.join(parts[:4])}"))
+    candidates.sort(reverse=True, key=lambda x: x[0])
+    out = []
+    seen = set()
+    for _, line in candidates:
+        name = line.split(" (")[0]
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append(line)
+        if len(out) >= 3:
+            break
+    return out
+
+
+def audit_wnba_box_scores(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if low(os.environ.get("HSD_WNBA_BOX_AUDIT", "true")) in {"0", "false", "no"}:
+        return []
+    targets = [
+        e for e in events
+        if e.get("league_norm") == "WNBA" and e.get("espn_event_id") and e.get("editorial_bucket") in {"Must Post", "Strong Maybe", "Watchlist"}
+    ][:10]
+    rows: List[Dict[str, Any]] = []
+    for event in targets:
+        event_id = event.get("espn_event_id")
+        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary"
+        try:
+            r = requests.get(url, params={"event": event_id}, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+            status = r.status_code
+            r.raise_for_status()
+            data = r.json()
+            performers = extract_espn_top_performers(data)
+            if performers:
+                event["box_score_audit_status"] = "found"
+                event["box_score_top_performers"] = " | ".join(performers)
+                event["slide_3_context"] = slide_3_context_for(event)
+            else:
+                event["box_score_audit_status"] = "summary_found_no_performers"
+            rows.append({
+                "event_uid": event.get("event_uid"),
+                "espn_event_id": event_id,
+                "graphics_headline": event.get("graphics_headline"),
+                "league_norm": event.get("league_norm"),
+                "http_status": status,
+                "audit_status": event.get("box_score_audit_status"),
+                "top_performers": event.get("box_score_top_performers"),
+                "source_url": f"https://www.espn.com/wnba/game/_/gameId/{event_id}",
+            })
+        except Exception as exc:
+            event["box_score_audit_status"] = "error"
+            rows.append({
+                "event_uid": event.get("event_uid"),
+                "espn_event_id": event_id,
+                "graphics_headline": event.get("graphics_headline"),
+                "league_norm": event.get("league_norm"),
+                "http_status": 0,
+                "audit_status": "error",
+                "top_performers": "",
+                "source_url": f"https://www.espn.com/wnba/game/_/gameId/{event_id}",
+                "notes": str(exc),
+            })
+        time.sleep(0.15)
+    return rows
+
+
+def box_score_summary_md(rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# WNBA Box-Score Enrichment Audit v4.3",
+        "",
+        f"Generated: {iso_now()}",
+        "",
+    ]
+    if not rows:
+        lines.append("No WNBA box-score audit rows were produced.")
+        return "\n".join(lines) + "\n"
+    for idx, row in enumerate(rows, 1):
+        lines.append(f"{idx}. **{row.get('graphics_headline')}**")
+        lines.append(f"   - ESPN event: {row.get('espn_event_id')}")
+        lines.append(f"   - Status: {row.get('audit_status')}")
+        if row.get("top_performers"):
+            lines.append(f"   - Top performers: {row.get('top_performers')}")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[str, str]], health: List[Dict[str, Any]], iso_dates: List[str]) -> str:
     women = [e for e in events if e.get("gender_scope") == "women"]
     finals = [e for e in women if e.get("status_norm") == "final"]
@@ -1091,7 +1391,7 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         by_sport[e.get("sport_norm", "")] = by_sport.get(e.get("sport_norm", ""), 0) + 1
 
     lines = [
-        "# Her Sports Daily Results Desk v4.2 Hub",
+        "# Her Sports Daily Results Desk v4.3 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{iso_now()}`",
@@ -1101,7 +1401,7 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         "",
         "- API-Sports is the scoring backbone.",
         "- ESPN WNBA is backup/verification.",
-        "- v4.2 adds WNBA reconciliation, WNBA-first ranking, league aliasing, and global queue buckets.",
+        "- v4.3 adds strict date-window gating, major soccer nation boosts, angle tags, smarter context, and optional WNBA box-score audit.",
         "",
         "## Run summary",
         "",
@@ -1111,6 +1411,7 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         f"- Women's finals: {len(finals)}",
         f"- Graphics-ready results: {len(graphics)}",
         f"- Manual review items: {len(review)}",
+        f"- Carryover or outside-window events archived: {sum(1 for e in events if e.get('is_carryover') == 'Yes')}",
         f"- Must Post: {sum(1 for e in events if e.get('editorial_bucket') == 'Must Post')}",
         f"- Strong Maybe: {sum(1 for e in events if e.get('editorial_bucket') == 'Strong Maybe')}",
         f"- Watchlist: {sum(1 for e in events if e.get('editorial_bucket') == 'Watchlist')}",
@@ -1128,7 +1429,7 @@ def hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[st
         "## Graphics gate",
         "",
         "- `include_in_graphics` requires women-only, final, confidence >= 0.85, and manual_review = No.",
-        "- v4.2 treats tied soccer/rugby/handball/hockey finals as draws, not errors.",
+        "- v4.3 treats tied soccer/rugby/handball/hockey finals as draws, not errors.",
         "- The graphics queue is globally capped: 5 Must Post, 10 Strong Maybe, 15 Watchlist.",
         "- Player stats are never invented. If no box-score data exists, packet is a team-result graphic.",
     ])
@@ -1154,6 +1455,11 @@ def main() -> None:
         health.extend(h)
 
     events = reconcile(run_id, observations)
+    events = apply_strict_date_window_gate(events, iso_dates)
+    events = apply_global_editorial_buckets(events)
+    box_audit_rows = audit_wnba_box_scores(events)
+    # Recompute angle/context after optional WNBA box-score enrichment.
+    events = apply_global_editorial_buckets(events)
 
     all_events = events
     womens = [e for e in events if e.get("gender_scope") == "women" and e.get("include_in_dashboard")]
@@ -1169,6 +1475,8 @@ def main() -> None:
     write_csv(TOP_RESULTS_FILE, top, EVENT_FIELDS)
     write_csv(MANUAL_REVIEW_FILE, review, EVENT_FIELDS)
     write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"])
+    write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"])
+    Path(BOX_SCORE_SUMMARY_FILE).write_text(box_score_summary_md(box_audit_rows), encoding="utf-8")
 
     Path(GRAPHICS_QUEUE_FILE).write_text(graphics_queue(events), encoding="utf-8")
     Path(RECOMMENDATIONS_FILE).write_text(recommendations_md(events), encoding="utf-8")
@@ -1190,12 +1498,14 @@ def main() -> None:
             "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"),
             "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"),
             "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"),
+            "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"),
+            "wnba_box_audit_rows": len(box_audit_rows),
         },
         "source_health": health,
     }
     Path(MANIFEST_FILE).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    print("Created Results Desk v4.2 outputs")
+    print("Created Results Desk v4.3 outputs")
     print(json.dumps(manifest["counts"], indent=2))
 
 

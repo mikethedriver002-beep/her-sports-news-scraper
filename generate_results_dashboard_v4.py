@@ -99,7 +99,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Her Sports Daily Results Desk v4.2</title>
+<title>Her Sports Daily Results Desk v4.3</title>
 <style>
 :root {{
   --bg:#0f1020; --panel:#181a2f; --panel2:#242845; --text:#f7f3ff; --muted:#beb6d4;
@@ -135,7 +135,7 @@ th {{ color:var(--text); }}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Results Desk v4.2</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. WNBA reconciliation + editorial priority fix.</div></div></div></header>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Results Desk v4.3</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. WNBA reconciliation + editorial priority fix.</div></div></div></header>
 <main>
 <section><h2>System Hub</h2><div class="card"><pre>{esc(hub)}</pre></div></section>
 <section><h2>Graphics Ready</h2>{card_grid(graphics, "No high-confidence graphics-ready finals.")}</section>

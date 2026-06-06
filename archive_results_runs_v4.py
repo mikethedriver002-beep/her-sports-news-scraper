@@ -17,6 +17,8 @@ FILES_TO_ARCHIVE = [
     "top_womens_results.csv",
     "manual_review_queue.csv",
     "source_health_report.csv",
+    "wnba_box_score_audit.csv",
+    "wnba_box_score_summary.md",
     "results_graphics_queue.md",
     "daily_results_recommendations.md",
     "results_system_hub.md",
@@ -73,7 +75,7 @@ def main() -> None:
     }
 
     summary = [
-        "# Her Sports Daily Results Desk v4.2 Run Summary",
+        "# Her Sports Daily Results Desk v4.3 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",
