@@ -1,11 +1,11 @@
-# Her Sports Daily Results Source Audit
+# Her Sports Daily Results Source Audit v2
 
-Generated: `2026-06-06T01:24:14.464390+00:00`
+Generated: `2026-06-06T01:35:20.092166+00:00`
 
 ## Purpose
 
-This audit tests which sources are worth using for the next Results Desk rebuild.
-It does not decide what to post. It measures source coverage, event access, women's-sports relevance, and possible role.
+This audit tests which sources are worth using for Results Desk v3.
+v2 specifically checks for blocked sources, stale/default college data, and blank API-key mistakes.
 
 ## Date window tested
 
@@ -13,24 +13,21 @@ It does not decide what to post. It measures source coverage, event access, wome
 
 ## Source summary
 
-| Source | Tests | Successful Tests | Events Found | Likely Women's Events |
-|---|---:|---:|---:|---:|
-| API-Sports optional | 1 | 0 | 0 | 0 |
-| ESPN public scoreboard | 24 | 16 | 11 | 11 |
-| NCAA API / ncaa.com-derived | 96 | 48 | 48 | 24 |
-| SofaScore public endpoints | 36 | 0 | 0 | 0 |
-| TheSportsDB public API | 4 | 0 | 0 | 0 |
+| Source | Tests | Successful Tests | Usable Events | Raw Events | Date-Matched Events | Stale Events Rejected | Likely Women's Events |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| API-Sports optional | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| ESPN public scoreboard | 24 | 16 | 11 | 11 | 11 | 0 | 11 |
+| NCAA API / ncaa.com-derived | 96 | 48 | 0 | 48 | 0 | 48 | 0 |
+| SofaScore public endpoints | 56 | 0 | 0 | 0 | 0 | 0 | 0 |
+| TheSportsDB public API | 4 | 4 | 12 | 12 | 12 | 0 | 0 |
 
-## How to read this
+## Key interpretation rules
 
-- **Events Found** means the endpoint returned events. It does not mean the source is ready for final graphics.
-- **Likely Women's Events** is a keyword-based signal, not a final truth label.
-- **Recommended Role** in the CSV tells us whether a source looks better for discovery, verification, box scores, or metadata.
-
-## Next build decision
-
-Use the highest-coverage discovery source to find events, then verify final scores with official or structured sources.
-For result graphics, do not use one unofficial source alone unless it is clearly structured and later verified.
+- **Usable Events** is the count we should care about for Results Desk v3.
+- **Raw Events** may include stale/default events.
+- **Stale Events Rejected** is critical for NCAA sources because some endpoints return championship results regardless of query date.
+- SofaScore returning 403 means GitHub Actions cannot currently use that public endpoint directly.
+- API-Sports will only test if `APISPORTS_KEY` is set in GitHub Secrets.
 
 ## Files created
 
@@ -38,9 +35,6 @@ For result graphics, do not use one unofficial source alone unless it is clearly
 - `source_event_samples.csv`
 - `source_audit_raw.json`
 
-## Early recommendation
+## Next build decision
 
-If SofaScore returns broad event coverage in this audit, use it as a discovery layer.
-If NCAA API returns college sport events, use it as the NCAA verification layer.
-Keep ESPN as a secondary structured source, not the whole Results Desk.
-Use API-Sports only if an API key is available and coverage is clearly better.
+Use sources only if they return usable/date-matched events. Discovery sources can suggest games, but final result graphics still need structured or official verification.
