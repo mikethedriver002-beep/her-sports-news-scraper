@@ -1,7 +1,7 @@
 {
-  "version": "v4.1",
-  "run_id": "4bff93dc66058b4d",
-  "generated_at_utc": "2026-06-06T22:19:57.419330+00:00",
+  "version": "v4.2",
+  "run_id": "dc0c3cfee88628b3",
+  "generated_at_utc": "2026-06-06T23:02:34.267673+00:00",
   "sources": [
     "apisports",
     "espn"
@@ -13,14 +13,14 @@
   ],
   "counts": {
     "observations": 1821,
-    "reconciled_events": 1809,
-    "women_events": 224,
-    "final_women_events": 139,
+    "reconciled_events": 1800,
+    "women_events": 215,
+    "final_women_events": 138,
     "manual_review": 0,
-    "graphics_ready": 134,
-    "must_post": 58,
-    "strong_maybe": 47,
-    "watchlist": 57
+    "graphics_ready": 137,
+    "must_post": 5,
+    "strong_maybe": 10,
+    "watchlist": 15
   },
   "source_health": [
     {
