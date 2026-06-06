@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T01:33:33.809111+00:00",
+  "generated_at": "2026-06-06T01:51:05.010204+00:00",
   "date_window": [
     {
       "iso": "2026-06-04",
@@ -1727,7 +1727,431 @@
     }
   },
   "api_sports_optional": {
-    "enabled": false,
-    "reason": "APISPORTS_KEY not set"
+    "enabled": true,
+    "products_tested": [
+      "basketball",
+      "football",
+      "hockey",
+      "volleyball",
+      "handball",
+      "rugby",
+      "baseball"
+    ],
+    "apisports::basketball::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::basketball::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 43,
+      "likely_womens_events": 8,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::basketball::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 64,
+      "likely_womens_events": 9,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::basketball::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 46,
+      "likely_womens_events": 2,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::football::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::football::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 207,
+      "likely_womens_events": 16,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::football::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 562,
+      "likely_womens_events": 3,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::football::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 402,
+      "likely_womens_events": 3,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::hockey::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::hockey::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 3,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::hockey::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 10,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::hockey::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 7,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::volleyball::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::volleyball::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 24,
+      "likely_womens_events": 14,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::volleyball::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 23,
+      "likely_womens_events": 14,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::volleyball::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 27,
+      "likely_womens_events": 18,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::handball::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::handball::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 4,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::handball::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 26,
+      "likely_womens_events": 4,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::handball::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 11,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::rugby::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::rugby::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 27,
+      "likely_womens_events": 12,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::rugby::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 50,
+      "likely_womens_events": 7,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::rugby::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 13,
+      "likely_womens_events": 10,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::baseball::2026-06-04": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-05 to 2026-06-07."
+      }
+    },
+    "apisports::baseball::2026-06-05": {
+      "status": 200,
+      "error": "",
+      "event_count": 65,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::baseball::2026-06-06": {
+      "status": 200,
+      "error": "",
+      "event_count": 104,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    },
+    "apisports::baseball::2026-06-07": {
+      "status": 200,
+      "error": "",
+      "event_count": 79,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "response"
+      ],
+      "errors": []
+    }
   }
 }

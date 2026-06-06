@@ -1,11 +1,11 @@
-# Her Sports Daily Results Source Audit v2
+# Her Sports Daily Results Source Audit v3
 
-Generated: `2026-06-06T01:35:20.092166+00:00`
+Generated: `2026-06-06T01:52:47.830146+00:00`
 
 ## Purpose
 
 This audit tests which sources are worth using for Results Desk v3.
-v2 specifically checks for blocked sources, stale/default college data, and blank API-key mistakes.
+v3 expands API-Sports testing across basketball, soccer, hockey, volleyball, handball, rugby, and baseball while keeping the v2 stale-data and blocked-source checks.
 
 ## Date window tested
 
@@ -15,7 +15,7 @@ v2 specifically checks for blocked sources, stale/default college data, and blan
 
 | Source | Tests | Successful Tests | Usable Events | Raw Events | Date-Matched Events | Stale Events Rejected | Likely Women's Events |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| API-Sports optional | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| API-Sports expanded optional | 28 | 28 | 1797 | 1797 | 1797 | 0 | 120 |
 | ESPN public scoreboard | 24 | 16 | 11 | 11 | 11 | 0 | 11 |
 | NCAA API / ncaa.com-derived | 96 | 48 | 0 | 48 | 0 | 48 | 0 |
 | SofaScore public endpoints | 56 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -27,7 +27,7 @@ v2 specifically checks for blocked sources, stale/default college data, and blan
 - **Raw Events** may include stale/default events.
 - **Stale Events Rejected** is critical for NCAA sources because some endpoints return championship results regardless of query date.
 - SofaScore returning 403 means GitHub Actions cannot currently use that public endpoint directly.
-- API-Sports will only test if `APISPORTS_KEY` is set in GitHub Secrets.
+- API-Sports expanded tests will only run if `APISPORTS_KEY` is set in GitHub Secrets.
 
 ## Files created
 
