@@ -1,32 +1,43 @@
-# Her Sports Daily Results Desk Hub
+# Her Sports Daily Results Desk v4.1 Hub
 
-Generated: 2026-06-06T22:19:01.364893+00:00
+Run ID: `4bff93dc66058b4d`
+Generated: `2026-06-06T22:19:57.418945+00:00`
+Date window: `2026-06-05, 2026-06-06, 2026-06-07`
 
-## What this system does
-- Pulls structured women's sports results from scoreboard-style endpoints.
-- Separates results and box scores from the broader news pipeline.
-- Produces result-ready postgame graphic packets only for final games.
+## Source strategy
 
-## Phase 1 coverage
-- WNBA
-- NCAA Women's Basketball
-- NCAA Softball
+- API-Sports is the scoring backbone.
+- ESPN WNBA is backup/verification.
+- v4.1 adds draw handling and editorial queue caps.
 
-## Output files
-- `today_results_board.csv`
-- `today_box_scores.csv`
-- `top_performers.csv`
-- `results_graphics_queue.md`
-- `results_dashboard_seed.csv`
+## Run summary
 
-## Current run snapshot
-- Date window queried: 20260605, 20260606, 20260607
-- Games found: 9
-- Final games: 5
-- Result graphics ready: 5
+- Raw source observations: 1821
+- Reconciled events: 1809
+- Women's events surfaced: 224
+- Women's finals: 139
+- Graphics-ready results: 134
+- Manual review items: 0
+- Must Post: 58
+- Strong Maybe: 47
+- Watchlist: 57
 
-## Accuracy rules
-- Never infer a final score.
-- Never invent a top performer stat line.
-- If a game is not final, do not create a postgame result graphic.
-- If confidence is not High, keep manual review enabled.
+## Observations by source
+
+- api_sports: 1812
+- espn_wnba: 9
+
+## Women's events by sport
+
+- basketball: 44
+- handball: 4
+- rugby: 29
+- soccer: 101
+- volleyball: 46
+
+## Graphics gate
+
+- `include_in_graphics` requires women-only, final, confidence >= 0.85, and manual_review = No.
+- v4.1 treats tied soccer/rugby/handball/hockey finals as draws, not errors.
+- The graphics queue is capped: 5 Must Post, 10 Strong Maybe, 15 Watchlist.
+- Player stats are never invented. If no box-score data exists, packet is a team-result graphic.

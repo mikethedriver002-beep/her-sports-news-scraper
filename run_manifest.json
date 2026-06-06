@@ -1,6 +1,7 @@
 {
-  "run_id": "62ec951579c45507",
-  "generated_at_utc": "2026-06-06T22:05:02.452831+00:00",
+  "version": "v4.1",
+  "run_id": "4bff93dc66058b4d",
+  "generated_at_utc": "2026-06-06T22:19:57.419330+00:00",
   "sources": [
     "apisports",
     "espn"
@@ -15,8 +16,11 @@
     "reconciled_events": 1809,
     "women_events": 224,
     "final_women_events": 139,
-    "manual_review": 12,
-    "graphics_ready": 122
+    "manual_review": 0,
+    "graphics_ready": 134,
+    "must_post": 58,
+    "strong_maybe": 47,
+    "watchlist": 57
   },
   "source_health": [
     {

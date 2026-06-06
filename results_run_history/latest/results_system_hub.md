@@ -1,15 +1,14 @@
-# Her Sports Daily Results Desk v4 Hub
+# Her Sports Daily Results Desk v4.1 Hub
 
-Run ID: `62ec951579c45507`
-Generated: `2026-06-06T22:05:02.452714+00:00`
+Run ID: `4bff93dc66058b4d`
+Generated: `2026-06-06T22:19:57.418945+00:00`
 Date window: `2026-06-05, 2026-06-06, 2026-06-07`
 
 ## Source strategy
 
 - API-Sports is the scoring backbone.
 - ESPN WNBA is backup/verification.
-- NCAA is optional and stale-filtered.
-- SofaScore wrapper is optional discovery/enrichment only.
+- v4.1 adds draw handling and editorial queue caps.
 
 ## Run summary
 
@@ -17,8 +16,11 @@ Date window: `2026-06-05, 2026-06-06, 2026-06-07`
 - Reconciled events: 1809
 - Women's events surfaced: 224
 - Women's finals: 139
-- Graphics-ready results: 122
-- Manual review items: 12
+- Graphics-ready results: 134
+- Manual review items: 0
+- Must Post: 58
+- Strong Maybe: 47
+- Watchlist: 57
 
 ## Observations by source
 
@@ -35,5 +37,7 @@ Date window: `2026-06-05, 2026-06-06, 2026-06-07`
 
 ## Graphics gate
 
-- include_in_graphics requires women-only, final, confidence >= 0.85, and manual_review = No.
+- `include_in_graphics` requires women-only, final, confidence >= 0.85, and manual_review = No.
+- v4.1 treats tied soccer/rugby/handball/hockey finals as draws, not errors.
+- The graphics queue is capped: 5 Must Post, 10 Strong Maybe, 15 Watchlist.
 - Player stats are never invented. If no box-score data exists, packet is a team-result graphic.

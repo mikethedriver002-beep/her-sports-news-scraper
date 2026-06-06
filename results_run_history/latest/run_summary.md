@@ -1,7 +1,7 @@
-# Her Sports Daily Results Desk v4 Run Summary
+# Her Sports Daily Results Desk v4.1 Run Summary
 
-Run timestamp UTC: `2026-06-06 22:05:02 UTC`
-Archive folder: `results_run_history/2026-06-06/2205_UTC`
+Run timestamp UTC: `2026-06-06 22:19:57 UTC`
+Archive folder: `results_run_history/2026-06-06/2219_UTC`
 
 ## Row counts
 
@@ -11,7 +11,7 @@ Archive folder: `results_run_history/2026-06-06/2205_UTC`
 - `today_womens_results.csv`: 224
 - `today_final_results.csv`: 139
 - `top_womens_results.csv`: 50
-- `manual_review_queue.csv`: 12
+- `manual_review_queue.csv`: 0
 - `source_health_report.csv`: 24
 
 ## Archived files
@@ -25,6 +25,7 @@ Archive folder: `results_run_history/2026-06-06/2205_UTC`
 - `manual_review_queue.csv`
 - `source_health_report.csv`
 - `results_graphics_queue.md`
+- `daily_results_recommendations.md`
 - `results_system_hub.md`
 - `run_manifest.json`
 - `results_dashboard/index.html`
