@@ -1,6 +1,6 @@
 # Her Sports Daily Results Desk Hub
 
-Generated: 2026-06-06T01:11:05.066025+00:00
+Generated: 2026-06-06T01:11:42.699277+00:00
 
 ## What this system does
 - Pulls structured women's sports results from scoreboard-style endpoints.
