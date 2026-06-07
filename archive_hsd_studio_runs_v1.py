@@ -60,7 +60,7 @@ def main() -> None:
 
     counts = {name: row_count(Path(name)) for name in copied if name.endswith(".csv")}
     summary = [
-        "# HSD Studio Bridge Run Summary",
+        "# HSD Studio Bridge v1.2 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",

@@ -108,7 +108,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HSD Studio Bridge Bundle Mode</title>
+<title>HSD Studio Bridge Bundle Mode v1.2</title>
 <style>
 :root {{
   --bg:#0f1020; --panel:#181a2f; --text:#f8f4ff; --muted:#c5bdd9;
@@ -141,7 +141,7 @@ th {{ color:var(--text); }}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Studio Bridge Bundle Mode</h1><div>Generated {esc(datetime.now(timezone.utc).isoformat())}</div></div></div></header>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Studio Bridge Bundle Mode v1.2</h1><div>Generated {esc(datetime.now(timezone.utc).isoformat())}</div></div></div></header>
 <main>
 <section><h2>Bundle Mode</h2>{bundle_cards(bundles)}</section>
 <section><h2>Queued Individual Graphics</h2>{cards(rows)}</section>

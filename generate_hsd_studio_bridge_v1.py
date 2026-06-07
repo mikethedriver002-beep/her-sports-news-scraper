@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
-VERSION = "hsd-studio-bridge-v1.1"
+VERSION = "hsd-studio-bridge-v1.2"
 
 INPUT_NEWS_FACT_PACKETS = os.environ.get("HSD_NEWS_FACT_PACKETS", "news_fact_packets.csv")
 INPUT_NEWS_DAILY_PLAN = os.environ.get("HSD_NEWS_DAILY_PLAN", "news_daily_plan.md")
@@ -807,7 +807,7 @@ def build_bundles(rows: List[Dict[str, Any]], brand: Dict[str, Any]) -> List[Dic
 
 def markdown_bundle_packets(bundles: List[Dict[str, Any]]) -> str:
     lines = [
-        "# Her Sports Daily Bundle Packets v1.1",
+        "# Her Sports Daily Bundle Packets v1.2",
         "",
         f"Generated: {utc_now()}",
         "",
@@ -846,7 +846,7 @@ def markdown_bundle_packets(bundles: List[Dict[str, Any]]) -> str:
 
 def markdown_bundle_prompts(bundles: List[Dict[str, Any]]) -> str:
     lines = [
-        "# Her Sports Daily Bundle Prompts v1.1",
+        "# Her Sports Daily Bundle Prompts v1.2",
         "",
         f"Generated: {utc_now()}",
         "",
@@ -865,7 +865,7 @@ def markdown_bundle_prompts(bundles: List[Dict[str, Any]]) -> str:
 
 def markdown_bundle_caption_bank(bundles: List[Dict[str, Any]]) -> str:
     lines = [
-        "# Her Sports Daily Bundle Caption Bank v1.1",
+        "# Her Sports Daily Bundle Caption Bank v1.2",
         "",
         f"Generated: {utc_now()}",
         "",
@@ -892,7 +892,7 @@ def markdown_command_center(rows: List[Dict[str, Any]], bundles: List[Dict[str, 
     manual = build_manual_rows(rows)
 
     lines = [
-        "# Her Sports Daily Studio Command Center v1",
+        "# Her Sports Daily Studio Command Center v1.2",
         "",
         f"Generated: `{utc_now()}`",
         "",
@@ -1057,25 +1057,59 @@ def markdown_caption_bank(rows: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def markdown_post_schedule(rows: List[Dict[str, Any]]) -> str:
+def markdown_post_schedule(rows: List[Dict[str, Any]], bundles: List[Dict[str, Any]]) -> str:
     lines = [
-        "# Her Sports Daily Studio Post Schedule v1",
+        "# Her Sports Daily Studio Post Schedule v1.2",
         "",
         f"Generated: {utc_now()}",
         "",
-        "Use this as a production order, not a rigid clock. Post timing should still consider game freshness and your actual bandwidth.",
+        "Bundle Mode is the primary production schedule. Individual graphics are backups, alternates, or extra posts.",
+        "",
+        "## Bundle-first schedule",
         "",
     ]
 
+    if bundles:
+        for bundle in bundles:
+            lines.extend([
+                f"### {bundle.get('production_priority')}: {bundle.get('bundle_name')}",
+                "",
+                f"- Asset: {bundle.get('asset_type')} ({bundle.get('asset_shape')})",
+                f"- Slides: {bundle.get('slide_count')}",
+                f"- Source items: {bundle.get('source_items_count')}",
+                f"- Source headlines: {bundle.get('source_headlines')}",
+                f"- Caption seed: {bundle.get('caption_seed')}",
+                "",
+            ])
+    else:
+        lines.extend([
+            "No bundles were created. Use the individual backup schedule below.",
+            "",
+        ])
+
+    lines.extend([
+        "## Recommended daily flow",
+        "",
+        "1. Post the **Main WNBA Result** first.",
+        "2. Post the **Tonight in the W Mini-Roundup** next if the WNBA slate has enough depth.",
+        "3. Use the **Volleyball Results Roundup** in the roundup window.",
+        "4. Use **Women's Soccer Radar** as the diversity slot.",
+        "",
+        "## Individual backup schedule",
+        "",
+        "Use these only if a bundle is too broad, you want an extra post, or a single result deserves its own graphic.",
+        "",
+    ])
+
     schedule = [
-        ("ASAP", [r for r in rows if r["production_bucket"] == "MAKE FIRST"]),
-        ("Next", [r for r in rows if r["production_bucket"] == "MAKE NEXT"]),
-        ("Roundup window", [r for r in rows if r["production_bucket"] == "ROUNDUP BANK"]),
-        ("Diversity / soccer radar", [r for r in rows if r["production_bucket"] == "DIVERSITY WATCH"]),
+        ("ASAP backup", [r for r in rows if r["production_bucket"] == "MAKE FIRST"]),
+        ("Next backups", [r for r in rows if r["production_bucket"] == "MAKE NEXT"]),
+        ("Roundup backups", [r for r in rows if r["production_bucket"] == "ROUNDUP BANK"]),
+        ("Diversity backups", [r for r in rows if r["production_bucket"] == "DIVERSITY WATCH"]),
     ]
 
     for label, group in schedule:
-        lines.append(f"## {label}")
+        lines.append(f"### {label}")
         if not group:
             lines.append("")
             lines.append("No items.")
@@ -1085,7 +1119,15 @@ def markdown_post_schedule(rows: List[Dict[str, Any]]) -> str:
             lines.append(f"- **{r['headline']}** | {r['asset_type']} | {r['template']}")
         lines.append("")
 
+    lines.extend([
+        "## Posting rule",
+        "",
+        "Do not post all individual backups if the bundle already covers the same results. Bundle first, individual only when useful.",
+        "",
+    ])
+
     return "\n".join(lines)
+
 
 
 def main() -> None:
@@ -1125,7 +1167,7 @@ def main() -> None:
     Path(OUT_BUNDLE_PACKETS).write_text(markdown_bundle_packets(bundles), encoding="utf-8")
     Path(OUT_BUNDLE_PROMPTS).write_text(markdown_bundle_prompts(bundles), encoding="utf-8")
     Path(OUT_BUNDLE_CAPTION_BANK).write_text(markdown_bundle_caption_bank(bundles), encoding="utf-8")
-    Path(OUT_POST_SCHEDULE).write_text(markdown_post_schedule(rows), encoding="utf-8")
+    Path(OUT_POST_SCHEDULE).write_text(markdown_post_schedule(rows, bundles), encoding="utf-8")
 
     manifest = {
         "version": VERSION,
