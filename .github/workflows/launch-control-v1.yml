@@ -1,4 +1,4 @@
-name: Her Sports Daily Launch Control v1
+name: Her Sports Daily Launch Control v1.1
 
 on:
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run Launch Control
+      - name: Run Launch Control v1.1
         run: python generate_hsd_launch_control_v1.py
 
       - name: Archive Launch Control run
@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-launch-control-v1
+          name: hsd-launch-control-v1-1
           path: launch_run_history/latest/
 
       - name: Commit and push Launch Control outputs
@@ -68,8 +68,16 @@ jobs:
             "launch_account_setup_checklist.md"
             "launch_7_day_content_calendar.md"
             "launch_operating_sop.md"
+            "launch_daily_operator_checklist.md"
+            "launch_post_publish_tracker.csv"
+            "launch_metrics_manual_input.csv"
+            "launch_7_day_performance_dashboard.md"
+            "launch_what_to_double_down_on.md"
+            "launch_content_pillar_balance.csv"
+            "launch_growth_experiment_log.csv"
             "launch_manifest.json"
             "launch_dashboard/index.html"
+            "launch_analytics_dashboard/index.html"
             "latest_launch_run_summary.md"
             "launch_run_history"
             "launch_setup_error.md"
@@ -88,7 +96,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Update HSD Launch Control v1"
+          git commit -m "Update HSD Launch Control v1.1"
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
