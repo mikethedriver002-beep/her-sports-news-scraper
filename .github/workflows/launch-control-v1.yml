@@ -1,0 +1,105 @@
+name: Her Sports Daily Launch Control v1
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Her Sports Daily Studio Bridge v1.2"
+      - "Her Sports Daily Studio Bridge v1.1"
+    types:
+      - completed
+  schedule:
+    - cron: "15 12 * * *"
+    - cron: "15 18 * * *"
+    - cron: "15 00 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hsd-repo-writer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  launch-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Launch Control
+        run: python generate_hsd_launch_control_v1.py
+
+      - name: Archive Launch Control run
+        run: python archive_hsd_launch_runs_v1.py
+
+      - name: Upload Launch Control artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-launch-control-v1
+          path: launch_run_history/latest/
+
+      - name: Commit and push Launch Control outputs
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          FILES=(
+            "launch_command_center.md"
+            "launch_daily_runbook.md"
+            "launch_graphics_chat_brief.md"
+            "launch_instagram_publish_queue.csv"
+            "launch_caption_drafts.md"
+            "launch_story_plan.md"
+            "launch_quality_gate.csv"
+            "launch_account_setup_checklist.md"
+            "launch_7_day_content_calendar.md"
+            "launch_operating_sop.md"
+            "launch_manifest.json"
+            "launch_dashboard/index.html"
+            "latest_launch_run_summary.md"
+            "launch_run_history"
+            "launch_setup_error.md"
+          )
+
+          for file in "${FILES[@]}"; do
+            if [ -e "$file" ]; then
+              git add "$file"
+            else
+              echo "Optional output not present, skipping: $file"
+            fi
+          done
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update HSD Launch Control v1"
+
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git pull --rebase --autostash origin main
+            if git push origin HEAD:main; then
+              echo "Push succeeded"
+              exit 0
+            fi
+            echo "Push failed, retrying after short wait..."
+            sleep 5
+          done
+
+          echo "Push failed after 3 attempts"
+          exit 1
