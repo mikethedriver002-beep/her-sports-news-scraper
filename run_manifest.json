@@ -1,7 +1,7 @@
 {
-  "version": "v4.2",
-  "run_id": "dc0c3cfee88628b3",
-  "generated_at_utc": "2026-06-06T23:02:34.267673+00:00",
+  "version": "v4.3",
+  "run_id": "cc84c917103a2a20",
+  "generated_at_utc": "2026-06-07T00:09:13.519642+00:00",
   "sources": [
     "apisports",
     "espn"
@@ -12,15 +12,17 @@
     "2026-06-07"
   ],
   "counts": {
-    "observations": 1821,
-    "reconciled_events": 1800,
-    "women_events": 215,
-    "final_women_events": 138,
+    "observations": 1447,
+    "reconciled_events": 1427,
+    "women_events": 138,
+    "final_women_events": 65,
     "manual_review": 0,
-    "graphics_ready": 137,
+    "graphics_ready": 64,
     "must_post": 5,
     "strong_maybe": 10,
-    "watchlist": 15
+    "watchlist": 15,
+    "carryover_archived": 0,
+    "wnba_box_audit_rows": 4
   },
   "source_health": [
     {
@@ -29,8 +31,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 44,
-      "observations_emitted": 44,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -40,8 +42,8 @@
       "date": "2026-06-06",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 63,
-      "observations_emitted": 63,
+      "events_found": 64,
+      "observations_emitted": 64,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -51,8 +53,8 @@
       "date": "2026-06-07",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 48,
-      "observations_emitted": 48,
+      "events_found": 47,
+      "observations_emitted": 47,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -62,8 +64,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 207,
-      "observations_emitted": 207,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -95,8 +97,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 24,
-      "observations_emitted": 24,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -128,8 +130,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 27,
-      "observations_emitted": 27,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -161,8 +163,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 4,
-      "observations_emitted": 4,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -194,8 +196,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 3,
-      "observations_emitted": 3,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -227,8 +229,8 @@
       "date": "2026-06-05",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 65,
-      "observations_emitted": 65,
+      "events_found": 0,
+      "observations_emitted": 0,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -238,8 +240,8 @@
       "date": "2026-06-06",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 106,
-      "observations_emitted": 106,
+      "events_found": 105,
+      "observations_emitted": 105,
       "stale_rejected": 0,
       "notes": "ok"
     },
@@ -249,8 +251,8 @@
       "date": "2026-06-07",
       "http_status": 200,
       "ok": "Yes",
-      "events_found": 79,
-      "observations_emitted": 79,
+      "events_found": 80,
+      "observations_emitted": 80,
       "stale_rejected": 0,
       "notes": "ok"
     },
