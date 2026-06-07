@@ -1,0 +1,112 @@
+name: Her Sports Daily Studio Bridge v1
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Her Sports Daily News Sync v1.8"
+      - "Her Sports Daily News Sync v1.7"
+      - "Her Sports Daily News Sync v1.6.1"
+    types:
+      - completed
+  schedule:
+    - cron: "05 12 * * *"
+    - cron: "05 18 * * *"
+    - cron: "05 00 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hsd-repo-writer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  studio-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Studio Bridge
+        env:
+          HSD_STUDIO_MAX_TOP_PACKETS: "6"
+          HSD_STUDIO_MAX_QUEUE_ITEMS: "14"
+        run: python generate_hsd_studio_bridge_v1.py
+
+      - name: Generate Studio Dashboard
+        run: python generate_hsd_studio_dashboard_v1.py
+
+      - name: Archive Studio Run
+        run: python archive_hsd_studio_runs_v1.py
+
+      - name: Upload Studio artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-studio-bridge-v1
+          path: studio_run_history/latest/
+
+      - name: Commit and push Studio outputs
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          FILES=(
+            "studio_command_center.md"
+            "studio_graphics_queue.csv"
+            "studio_top_graphic_packets.md"
+            "studio_image_prompts.md"
+            "studio_caption_bank.md"
+            "studio_accuracy_checklist.csv"
+            "studio_manual_review_graphics.csv"
+            "studio_post_schedule.md"
+            "studio_brand_config.json"
+            "studio_graphics_sop.json"
+            "studio_manifest.json"
+            "studio_dashboard/index.html"
+            "brand_assets/hsd_watermark_bug.svg"
+            "latest_studio_run_summary.md"
+            "studio_run_history"
+          )
+
+          for file in "${FILES[@]}"; do
+            if [ -e "$file" ]; then
+              git add "$file"
+            else
+              echo "Optional output not present, skipping: $file"
+            fi
+          done
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update HSD Studio Bridge v1"
+
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git pull --rebase --autostash origin main
+            if git push origin HEAD:main; then
+              echo "Push succeeded"
+              exit 0
+            fi
+            echo "Push failed, retrying after short wait..."
+            sleep 5
+          done
+
+          echo "Push failed after 3 attempts"
+          exit 1
