@@ -1,6 +1,6 @@
 # Her Sports Daily News Brief Queue v1
 
-Generated: 2026-06-07T03:44:15.735147+00:00
+Generated: 2026-06-07T03:52:34.437589+00:00
 
 This is the news layer on top of Results Desk. Results Desk remains the score source of truth.
 
@@ -202,8 +202,8 @@ DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Pho
 **Content family:** Around Women's Sports
 **Recommendation:** Publish short brief
 **Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
 USA W beat France W
@@ -212,7 +212,7 @@ USA W beat France W
 USA W defeated France W, USA W 3 - France W 2.
 
 #### Short brief
-USA W beat France W, with the verified final listed as USA W 3 - France W 2. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+USA W beat France W, with the verified final listed as USA W 3 - France W 2. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
 - Hard fact: USA W beat France W. Verified final: USA W 3 - France W 2.
@@ -226,15 +226,22 @@ Verified final: USA W 3 - France W 2
 Angle: volleyball results watch
 
 #### Slide 3 / context
-Official source available: Volleyball World
+Official source available: FIFA Women's Football
 
 #### Sources
+- https://www.fifa.com/en/womens-football
 - https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
 - https://www.cev.eu/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
 
 #### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
 - Volleyball World | ok | Partial | Official source available: Volleyball World
 - CEV | ok | Partial | Official source available: CEV
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
 
 ---
 
@@ -246,8 +253,8 @@ Official source available: Volleyball World
 **Content family:** Around Women's Sports
 **Recommendation:** Publish if useful / use for roundup
 **Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
 Belgium W beat Thailand W
@@ -256,7 +263,7 @@ Belgium W beat Thailand W
 Belgium W defeated Thailand W, Belgium W 3 - Thailand W 2.
 
 #### Short brief
-Belgium W beat Thailand W, with the verified final listed as Belgium W 3 - Thailand W 2. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+Belgium W beat Thailand W, with the verified final listed as Belgium W 3 - Thailand W 2. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
 - Hard fact: Belgium W beat Thailand W. Verified final: Belgium W 3 - Thailand W 2.
@@ -270,15 +277,22 @@ Verified final: Belgium W 3 - Thailand W 2
 Angle: volleyball results watch
 
 #### Slide 3 / context
-Official source available: Volleyball World
+Official source available: FIFA Women's Football
 
 #### Sources
+- https://www.fifa.com/en/womens-football
 - https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
 - https://www.cev.eu/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
 
 #### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
 - Volleyball World | ok | Partial | Official source available: Volleyball World
 - CEV | ok | Partial | Official source available: CEV
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
 
 ---
 
@@ -288,8 +302,8 @@ Official source available: Volleyball World
 **Content family:** Around Women's Sports
 **Recommendation:** Publish if useful / use for roundup
 **Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
 Brazil W beat Bulgaria W
@@ -298,7 +312,7 @@ Brazil W beat Bulgaria W
 Brazil W defeated Bulgaria W, Bulgaria W 0 - Brazil W 3.
 
 #### Short brief
-Brazil W beat Bulgaria W, with the verified final listed as Brazil W 3 - Bulgaria W 0. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+Brazil W beat Bulgaria W, with the verified final listed as Brazil W 3 - Bulgaria W 0. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
 - Hard fact: Brazil W beat Bulgaria W. Verified final: Brazil W 3 - Bulgaria W 0.
@@ -312,15 +326,22 @@ Verified final: Brazil W 3 - Bulgaria W 0
 Angle: volleyball results watch
 
 #### Slide 3 / context
-Official source available: Volleyball World
+Official source available: FIFA Women's Football
 
 #### Sources
+- https://www.fifa.com/en/womens-football
 - https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
 - https://www.cev.eu/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
 
 #### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
 - Volleyball World | ok | Partial | Official source available: Volleyball World
 - CEV | ok | Partial | Official source available: CEV
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
 
 ---
 
@@ -330,8 +351,8 @@ Official source available: Volleyball World
 **Content family:** Around Women's Sports
 **Recommendation:** Publish if useful / use for roundup
 **Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
 Canada W beat France W
@@ -340,7 +361,7 @@ Canada W beat France W
 Canada W defeated France W, France W 1 - Canada W 3.
 
 #### Short brief
-Canada W beat France W, with the verified final listed as Canada W 3 - France W 1. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+Canada W beat France W, with the verified final listed as Canada W 3 - France W 1. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
 - Hard fact: Canada W beat France W. Verified final: Canada W 3 - France W 1.
@@ -354,15 +375,22 @@ Verified final: Canada W 3 - France W 1
 Angle: volleyball results watch
 
 #### Slide 3 / context
-Official source available: Volleyball World
+Official source available: FIFA Women's Football
 
 #### Sources
+- https://www.fifa.com/en/womens-football
 - https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
 - https://www.cev.eu/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
 
 #### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
 - Volleyball World | ok | Partial | Official source available: Volleyball World
 - CEV | ok | Partial | Official source available: CEV
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
 
 ---
 
@@ -372,8 +400,8 @@ Official source available: Volleyball World
 **Content family:** Around Women's Sports
 **Recommendation:** Publish if useful / use for roundup
 **Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
 China W beat Serbia W
@@ -382,7 +410,7 @@ China W beat Serbia W
 China W defeated Serbia W, Serbia W 0 - China W 3.
 
 #### Short brief
-China W beat Serbia W, with the verified final listed as China W 3 - Serbia W 0. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+China W beat Serbia W, with the verified final listed as China W 3 - Serbia W 0. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
 - Hard fact: China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
@@ -396,15 +424,22 @@ Verified final: China W 3 - Serbia W 0
 Angle: volleyball results watch
 
 #### Slide 3 / context
-Official source available: Volleyball World
+Official source available: FIFA Women's Football
 
 #### Sources
+- https://www.fifa.com/en/womens-football
 - https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
 - https://www.cev.eu/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
 
 #### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
 - Volleyball World | ok | Partial | Official source available: Volleyball World
 - CEV | ok | Partial | Official source available: CEV
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
 
 ---
 
@@ -414,8 +449,8 @@ Official source available: Volleyball World
 **Content family:** Around Women's Sports
 **Recommendation:** Publish if useful / use for roundup
 **Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
 Italy W beat Turkey W
@@ -424,7 +459,7 @@ Italy W beat Turkey W
 Italy W defeated Turkey W, Turkey W 1 - Italy W 3.
 
 #### Short brief
-Italy W beat Turkey W, with the verified final listed as Italy W 3 - Turkey W 1. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+Italy W beat Turkey W, with the verified final listed as Italy W 3 - Turkey W 1. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
 - Hard fact: Italy W beat Turkey W. Verified final: Italy W 3 - Turkey W 1.
@@ -438,18 +473,219 @@ Verified final: Italy W 3 - Turkey W 1
 Angle: volleyball results watch
 
 #### Slide 3 / context
-Official source available: Volleyball World
+Official source available: FIFA Women's Football
 
 #### Sources
+- https://www.fifa.com/en/womens-football
 - https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
 - https://www.cev.eu/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
 
 #### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
 - Volleyball World | ok | Partial | Official source available: Volleyball World
 - CEV | ok | Partial | Official source available: CEV
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
 
 ---
 
 ## DIVERSITY WATCH
 
-No items.
+### NEWS PACKET 1: Brazil U20 W beat Korea Republic U20 W
+
+**Urgency:** P2
+**Content family:** Around Women's Sports
+**Recommendation:** Publish if useful / use for roundup
+**Manual review:** No
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
+
+#### Headline
+Brazil U20 W beat Korea Republic U20 W
+
+#### Dek
+Brazil U20 W defeated Korea Republic U20 W, Korea Republic U20 W 0 - Brazil U20 W 3.
+
+#### Short brief
+Brazil U20 W beat Korea Republic U20 W, with the verified final listed as Brazil U20 W 3 - Korea Republic U20 W 0. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+
+#### Caption options
+- Hard fact: Brazil U20 W beat Korea Republic U20 W. Verified final: Brazil U20 W 3 - Korea Republic U20 W 0.
+- Voice: Brazil U20 W beat Korea Republic U20 W. Verified final: Brazil U20 W 3 - Korea Republic U20 W 0.
+
+#### Story text
+Brazil U20 W beat Korea Republic U20 W
+
+Verified final: Brazil U20 W 3 - Korea Republic U20 W 0
+
+Angle: major women's soccer result
+
+#### Slide 3 / context
+Official source available: FIFA Women's Football
+
+#### Sources
+- https://www.fifa.com/en/womens-football
+- https://www.nwslsoccer.com/
+- https://www.uefa.com/womenschampionsleague/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
+
+#### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
+- NWSL official | ok | Partial | Official source available: NWSL official
+- UEFA Women's Football | ok | Partial | Official source available: UEFA Women's Football
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
+
+---
+
+### NEWS PACKET 2: Brazil W beat USA W
+
+**Urgency:** P2
+**Content family:** Around Women's Sports
+**Recommendation:** Publish if useful / use for roundup
+**Manual review:** No
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
+
+#### Headline
+Brazil W beat USA W
+
+#### Dek
+Brazil W defeated USA W, USA W 1 - Brazil W 2.
+
+#### Short brief
+Brazil W beat USA W, with the verified final listed as Brazil W 2 - USA W 1. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+
+#### Caption options
+- Hard fact: Brazil W beat USA W. Verified final: Brazil W 2 - USA W 1.
+- Voice: Brazil W beat USA W. Verified final: Brazil W 2 - USA W 1.
+
+#### Story text
+Brazil W beat USA W
+
+Verified final: Brazil W 2 - USA W 1
+
+Angle: major women's soccer result
+
+#### Slide 3 / context
+Official source available: FIFA Women's Football
+
+#### Sources
+- https://www.fifa.com/en/womens-football
+- https://www.nwslsoccer.com/
+- https://www.uefa.com/womenschampionsleague/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
+
+#### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
+- NWSL official | ok | Partial | Official source available: NWSL official
+- UEFA Women's Football | ok | Partial | Official source available: UEFA Women's Football
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
+
+---
+
+### NEWS PACKET 3: Japan W beat South Africa W
+
+**Urgency:** P2
+**Content family:** Around Women's Sports
+**Recommendation:** Publish if useful / use for roundup
+**Manual review:** No
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
+
+#### Headline
+Japan W beat South Africa W
+
+#### Dek
+Japan W defeated South Africa W, South Africa W 0 - Japan W 5.
+
+#### Short brief
+Japan W beat South Africa W, with the verified final listed as Japan W 5 - South Africa W 0. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+
+#### Caption options
+- Hard fact: Japan W beat South Africa W. Verified final: Japan W 5 - South Africa W 0.
+- Voice: Japan W beat South Africa W. Verified final: Japan W 5 - South Africa W 0.
+
+#### Story text
+Japan W beat South Africa W
+
+Verified final: Japan W 5 - South Africa W 0
+
+Angle: major women's soccer result
+
+#### Slide 3 / context
+Official source available: FIFA Women's Football
+
+#### Sources
+- https://www.fifa.com/en/womens-football
+- https://www.nwslsoccer.com/
+- https://www.uefa.com/womenschampionsleague/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
+
+#### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
+- NWSL official | ok | Partial | Official source available: NWSL official
+- UEFA Women's Football | ok | Partial | Official source available: UEFA Women's Football
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
+
+---
+
+### NEWS PACKET 4: Mexico W beat Australia W
+
+**Urgency:** P2
+**Content family:** Around Women's Sports
+**Recommendation:** Publish if useful / use for roundup
+**Manual review:** No
+**Review flags:** source_fetch_failed
+**Source depth:** 5 usable / 3 primary
+
+#### Headline
+Mexico W beat Australia W
+
+#### Dek
+Mexico W defeated Australia W, Mexico W 1 - Australia W 0.
+
+#### Short brief
+Mexico W beat Australia W, with the verified final listed as Mexico W 1 - Australia W 0. The strongest current context signal is source-backed: Official source available: FIFA Women's Football. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+
+#### Caption options
+- Hard fact: Mexico W beat Australia W. Verified final: Mexico W 1 - Australia W 0.
+- Voice: Mexico W beat Australia W. Verified final: Mexico W 1 - Australia W 0.
+
+#### Story text
+Mexico W beat Australia W
+
+Verified final: Mexico W 1 - Australia W 0
+
+Angle: major women's soccer result
+
+#### Slide 3 / context
+Official source available: FIFA Women's Football
+
+#### Sources
+- https://www.fifa.com/en/womens-football
+- https://www.nwslsoccer.com/
+- https://www.uefa.com/womenschampionsleague/
+- https://www.espn.com/soccer/
+- https://www.bbc.com/sport/football/womens
+
+#### Source observation notes
+- FIFA Women's Football | ok | Partial | Official source available: FIFA Women's Football
+- NWSL official | ok | Partial | Official source available: NWSL official
+- UEFA Women's Football | ok | Partial | Official source available: UEFA Women's Football
+- ESPN Soccer | ok | Partial | Secondary source available: ESPN Soccer
+- The Guardian women's football | http_error | No | HTTP 404
+- BBC women's football | ok | Partial | Secondary source available: BBC women's football
+
+---

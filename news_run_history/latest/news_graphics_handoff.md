@@ -1,6 +1,6 @@
 # Her Sports Daily News-to-Graphics Handoff v1
 
-Generated: 2026-06-07T03:44:15.735405+00:00
+Generated: 2026-06-07T03:52:34.437928+00:00
 
 Use this to upgrade result graphics with news-safe context.
 
@@ -53,7 +53,7 @@ Use as Tonight in the W. Headline: Phoenix Mercury beat Portland Fire. Final sco
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: USA W beat France W. Final score: USA W 3 - France W 2. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: USA W beat France W. Final score: USA W 3 - France W 2. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -64,7 +64,7 @@ Use as Around Women's Sports. Headline: USA W beat France W. Final score: USA W 
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Belgium W beat Thailand W. Final score: Belgium W 3 - Thailand W 2. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Belgium W beat Thailand W. Final score: Belgium W 3 - Thailand W 2. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -75,7 +75,7 @@ Use as Around Women's Sports. Headline: Belgium W beat Thailand W. Final score: 
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Brazil W beat Bulgaria W. Final score: Brazil W 3 - Bulgaria W 0. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Brazil W beat Bulgaria W. Final score: Brazil W 3 - Bulgaria W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -86,7 +86,7 @@ Use as Around Women's Sports. Headline: Brazil W beat Bulgaria W. Final score: B
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Canada W beat France W. Final score: Canada W 3 - France W 1. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Canada W beat France W. Final score: Canada W 3 - France W 1. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -97,7 +97,7 @@ Use as Around Women's Sports. Headline: Canada W beat France W. Final score: Can
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: China W beat Serbia W. Final score: China W 3 - Serbia W 0. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: China W beat Serbia W. Final score: China W 3 - Serbia W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -108,7 +108,7 @@ Use as Around Women's Sports. Headline: China W beat Serbia W. Final score: Chin
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Italy W beat Turkey W. Final score: Italy W 3 - Turkey W 1. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Italy W beat Turkey W. Final score: Italy W 3 - Turkey W 1. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -117,9 +117,9 @@ Use as Around Women's Sports. Headline: Italy W beat Turkey W. Final score: Ital
 ## Brazil U20 W beat Korea Republic U20 W
 
 **Content family:** Around Women's Sports
-**Manual review:** Yes
+**Manual review:** No
 
-Use as Around Women's Sports. Headline: Brazil U20 W beat Korea Republic U20 W. Final score: Brazil U20 W 3 - Korea Republic U20 W 0. Slide 3 context: This is a stronger soccer item because it involves a major team, competition, or women's soccer signal.. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Brazil U20 W beat Korea Republic U20 W. Final score: Brazil U20 W 3 - Korea Republic U20 W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -128,9 +128,9 @@ Use as Around Women's Sports. Headline: Brazil U20 W beat Korea Republic U20 W. 
 ## Brazil W beat USA W
 
 **Content family:** Around Women's Sports
-**Manual review:** Yes
+**Manual review:** No
 
-Use as Around Women's Sports. Headline: Brazil W beat USA W. Final score: Brazil W 2 - USA W 1. Slide 3 context: This is a stronger soccer item because it involves a major team, competition, or women's soccer signal.. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Brazil W beat USA W. Final score: Brazil W 2 - USA W 1. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -139,9 +139,9 @@ Use as Around Women's Sports. Headline: Brazil W beat USA W. Final score: Brazil
 ## Japan W beat South Africa W
 
 **Content family:** Around Women's Sports
-**Manual review:** Yes
+**Manual review:** No
 
-Use as Around Women's Sports. Headline: Japan W beat South Africa W. Final score: Japan W 5 - South Africa W 0. Slide 3 context: This is a stronger soccer item because it involves a major team, competition, or women's soccer signal.. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Japan W beat South Africa W. Final score: Japan W 5 - South Africa W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -150,9 +150,9 @@ Use as Around Women's Sports. Headline: Japan W beat South Africa W. Final score
 ## Mexico W beat Australia W
 
 **Content family:** Around Women's Sports
-**Manual review:** Yes
+**Manual review:** No
 
-Use as Around Women's Sports. Headline: Mexico W beat Australia W. Final score: Mexico W 1 - Australia W 0. Slide 3 context: This is a stronger soccer item because it involves a major team, competition, or women's soccer signal.. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Mexico W beat Australia W. Final score: Mexico W 1 - Australia W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 

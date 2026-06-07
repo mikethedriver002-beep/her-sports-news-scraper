@@ -1,7 +1,7 @@
 {
-  "version": "news-sync-v1.6",
-  "run_id": "e553aa9a2bbae4fc",
-  "generated_at_utc": "2026-06-07T03:44:15.735598+00:00",
+  "version": "news-sync-v1.7",
+  "run_id": "a01df42dde31f8a8",
+  "generated_at_utc": "2026-06-07T03:52:34.438136+00:00",
   "inputs": {
     "results_graphics_queue": "results_graphics_queue.md",
     "daily_results_recommendations": "daily_results_recommendations.md",
@@ -25,11 +25,11 @@
   ],
   "counts": {
     "candidates": 14,
-    "source_observations": 31,
+    "source_observations": 79,
     "fact_packets": 14,
-    "manual_review": 4,
-    "publish_ready": 10,
-    "production_ready": 10
+    "manual_review": 0,
+    "publish_ready": 14,
+    "production_ready": 14
   },
   "settings": {
     "max_must_post": 5,

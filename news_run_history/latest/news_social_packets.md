@@ -1,6 +1,6 @@
 # Her Sports Daily Social Packets v1
 
-Generated: 2026-06-07T03:44:15.735334+00:00
+Generated: 2026-06-07T03:52:34.437851+00:00
 
 ## Dallas Wings beat Los Angeles Sparks
 
@@ -194,7 +194,7 @@ Angle: volleyball results watch
 
 ## Brazil U20 W beat Korea Republic U20 W
 
-**Queue:** WATCHLIST | **Manual review:** Yes
+**Queue:** DIVERSITY WATCH | **Manual review:** No
 
 ### Instagram caption
 Brazil U20 W beat Korea Republic U20 W. Verified final: Brazil U20 W 3 - Korea Republic U20 W 0.
@@ -213,7 +213,7 @@ Angle: major women's soccer result
 
 ## Brazil W beat USA W
 
-**Queue:** WATCHLIST | **Manual review:** Yes
+**Queue:** DIVERSITY WATCH | **Manual review:** No
 
 ### Instagram caption
 Brazil W beat USA W. Verified final: Brazil W 2 - USA W 1.
@@ -232,7 +232,7 @@ Angle: major women's soccer result
 
 ## Japan W beat South Africa W
 
-**Queue:** WATCHLIST | **Manual review:** Yes
+**Queue:** DIVERSITY WATCH | **Manual review:** No
 
 ### Instagram caption
 Japan W beat South Africa W. Verified final: Japan W 5 - South Africa W 0.
@@ -251,7 +251,7 @@ Angle: major women's soccer result
 
 ## Mexico W beat Australia W
 
-**Queue:** WATCHLIST | **Manual review:** Yes
+**Queue:** DIVERSITY WATCH | **Manual review:** No
 
 ### Instagram caption
 Mexico W beat Australia W. Verified final: Mexico W 1 - Australia W 0.
