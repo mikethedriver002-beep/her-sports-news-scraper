@@ -1,0 +1,26 @@
+# HSD Studio Bridge Run Summary
+
+Run timestamp UTC: `2026-06-07 04:27:07 UTC`
+Archive folder: `studio_run_history/2026-06-07/0427_UTC`
+
+## Row counts
+
+- `studio_graphics_queue.csv`: 14
+- `studio_accuracy_checklist.csv`: 98
+- `studio_manual_review_graphics.csv`: 0
+
+## Archived files
+
+- `studio_command_center.md`
+- `studio_graphics_queue.csv`
+- `studio_top_graphic_packets.md`
+- `studio_image_prompts.md`
+- `studio_caption_bank.md`
+- `studio_accuracy_checklist.csv`
+- `studio_manual_review_graphics.csv`
+- `studio_post_schedule.md`
+- `studio_brand_config.json`
+- `studio_graphics_sop.json`
+- `studio_manifest.json`
+- `studio_dashboard/index.html`
+- `brand_assets/hsd_watermark_bug.svg`

@@ -1,0 +1,40 @@
+{
+  "version": "hsd-studio-bridge-v1",
+  "generated_at_utc": "2026-06-07T04:27:07.063462+00:00",
+  "inputs": {
+    "news_fact_packets": "news_fact_packets.csv",
+    "news_daily_plan": "news_daily_plan.md",
+    "news_brief_queue": "news_brief_queue.md",
+    "news_graphics_handoff": "news_graphics_handoff.md",
+    "news_hub": "news_sync_hub.md",
+    "results_graphics_queue": "results_graphics_queue.md",
+    "results_hub": "results_system_hub.md"
+  },
+  "outputs": [
+    "studio_command_center.md",
+    "studio_graphics_queue.csv",
+    "studio_top_graphic_packets.md",
+    "studio_image_prompts.md",
+    "studio_caption_bank.md",
+    "studio_accuracy_checklist.csv",
+    "studio_manual_review_graphics.csv",
+    "studio_post_schedule.md",
+    "studio_brand_config.json",
+    "studio_graphics_sop.json",
+    "brand_assets/hsd_watermark_bug.svg"
+  ],
+  "counts": {
+    "news_packets_read": 14,
+    "studio_graphics_queued": 14,
+    "manual_review_graphics": 0,
+    "checklist_rows": 98
+  },
+  "rules": [
+    "Never fabricate jersey numbers, player teams, uniforms, logos, quotes, injuries, rankings, or milestones.",
+    "Never swap team sides, logos, scores, or winners. Scoreboard rows must be validated against the final_score field.",
+    "Use the locked HSD watermark bug every time. Do not regenerate a different watermark.",
+    "If player identity, team, jersey number, or image rights are not verified, use text-forward graphics, silhouettes, generic court/field textures, or supplied approved reference images.",
+    "Every carousel must include a branded end slide.",
+    "Results Desk remains score source of truth. News Sync remains context source of truth."
+  ]
+}
