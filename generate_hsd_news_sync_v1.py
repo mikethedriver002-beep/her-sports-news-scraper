@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.4"
+VERSION = "news-sync-v1.6"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -32,6 +32,8 @@ ANGLE_RULES_FILE = os.environ.get("HSD_NEWS_ANGLE_RULES", "news_angle_rules.json
 
 MAX_MUST_POST = int(os.environ.get("HSD_NEWS_MAX_MUST_POST", "5"))
 MAX_STRONG_MAYBE = int(os.environ.get("HSD_NEWS_MAX_STRONG_MAYBE", "5"))
+MAX_DIVERSITY_PROMOTIONS = int(os.environ.get("HSD_NEWS_MAX_DIVERSITY_PROMOTIONS", "4"))
+MAX_SOCCER_DIVERSITY = int(os.environ.get("HSD_NEWS_MAX_SOCCER_DIVERSITY", "3"))
 FETCH_TIMEOUT = int(os.environ.get("HSD_NEWS_FETCH_TIMEOUT", "15"))
 REQUEST_SLEEP_SECONDS = float(os.environ.get("HSD_NEWS_REQUEST_SLEEP_SECONDS", "0.35"))
 ENABLE_FETCH = os.environ.get("HSD_NEWS_ENABLE_FETCH", "true").lower() != "false"
@@ -449,77 +451,339 @@ def enrich_candidates_from_result_csvs(candidates: List[Dict[str, Any]], csv_sou
     return enriched
 
 
+
+def result_unique_key_from_record(record: Dict[str, str]) -> str:
+    for key in ["canonical_key", "event_uid", "source_event_id"]:
+        value = clean(record.get(key))
+        if value:
+            return f"{key}:{value.lower()}"
+
+    headline = result_record_headline(record).lower()
+    final_score = result_record_final_score(record).lower()
+    date_value = clean(record.get("scheduled_date_local") or record.get("date")).lower()
+    return "fallback:" + stable_id(headline, final_score, date_value)
+
+
+def record_source_weight(source_name: str) -> int:
+    source_name = clean(source_name).lower()
+    if "top_womens" in source_name:
+        return 300
+    if "reconciled" in source_name:
+        return 200
+    if "today_final" in source_name:
+        return 100
+    return 0
+
+
+def record_rank_value(record: Dict[str, str]) -> float:
+    try:
+        return float(record.get("editorial_rank") or 0)
+    except Exception:
+        return 0.0
+
+
+def dedupe_result_records(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    best_by_key: Dict[str, Dict[str, str]] = {}
+
+    for row in rows:
+        key = result_unique_key_from_record(row)
+        existing = best_by_key.get(key)
+        if not existing:
+            best_by_key[key] = row
+            continue
+
+        row_score = record_source_weight(row.get("_result_record_source", "")) + record_rank_value(row)
+        existing_score = record_source_weight(existing.get("_result_record_source", "")) + record_rank_value(existing)
+
+        row_richness = sum(1 for v in row.values() if clean(v))
+        existing_richness = sum(1 for v in existing.values() if clean(v))
+
+        if row_score > existing_score or (row_score == existing_score and row_richness > existing_richness):
+            best_by_key[key] = row
+
+    return list(best_by_key.values())
+
+
+def candidate_unique_key(candidate: Dict[str, Any]) -> str:
+    raw = clean(candidate.get("raw_block"))
+    try:
+        data = json.loads(raw) if raw.startswith("{") else {}
+        for key in ["canonical_key", "event_uid", "source_event_id"]:
+            if clean(data.get(key)):
+                return f"{key}:{clean(data.get(key)).lower()}"
+    except Exception:
+        pass
+
+    headline = clean(candidate.get("graphics_headline") or candidate.get("headline")).lower()
+    final_score = clean(candidate.get("final_score")).lower()
+    date_value = clean(candidate.get("date")).lower()
+    return "fallback:" + stable_id(headline, final_score, date_value)
+
+
+def dedupe_candidates(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    best_by_key: Dict[str, Dict[str, Any]] = {}
+
+    for candidate in candidates:
+        key = candidate_unique_key(candidate)
+        existing = best_by_key.get(key)
+        if not existing:
+            best_by_key[key] = candidate
+            continue
+
+        def cand_score(c: Dict[str, Any]) -> float:
+            score = 0.0
+            if clean(c.get("queue_section")) == "MUST POST":
+                score += 1000
+            if clean(c.get("final_score")):
+                score += 100
+            if clean(c.get("winner")) and clean(c.get("loser")):
+                score += 50
+            try:
+                score += float(c.get("editorial_rank") or 0)
+            except Exception:
+                pass
+            score += sum(1 for v in c.values() if clean(v)) / 100
+            return score
+
+        if cand_score(candidate) > cand_score(existing):
+            best_by_key[key] = candidate
+
+    deduped = list(best_by_key.values())
+
+    def sort_key(c: Dict[str, Any]):
+        section = clean(c.get("queue_section"))
+        pri = 0 if section == "MUST POST" else 1 if section == "STRONG MAYBE" else 2
+        try:
+            rank = -float(c.get("editorial_rank") or 0)
+        except Exception:
+            rank = 0
+        return (pri, rank, clean(c.get("graphics_headline")))
+
+    deduped.sort(key=sort_key)
+    return deduped
+
+
+
+MAJOR_SOCCER_TERMS = {
+    "usa", "uswnt", "england", "spain", "france", "germany", "netherlands",
+    "sweden", "japan", "canada", "brazil", "australia", "norway", "denmark",
+    "italy", "portugal", "mexico", "colombia", "argentina", "china", "korea",
+    "nwsl", "wsl", "champions league", "uwcl", "world cup", "euro"
+}
+
+
+def row_bucket_text(record: Dict[str, str]) -> str:
+    return clean(" ".join([
+        record.get("editorial_bucket", ""),
+        record.get("content_action", ""),
+        record.get("posting_priority", ""),
+    ])).lower()
+
+
+def row_is_final(record: Dict[str, str]) -> bool:
+    status = clean(record.get("status_norm") or record.get("game_state") or record.get("game_status")).lower()
+    return status in {"", "final"} or "final" in status
+
+
+def row_is_news_safe(record: Dict[str, str]) -> bool:
+    if clean(record.get("gender_scope")).lower() != "women":
+        return False
+    if not row_is_final(record):
+        return False
+    if not result_record_final_score(record):
+        return False
+    if clean(record.get("manual_review")).lower() == "yes":
+        return False
+    return True
+
+
+def row_is_must(record: Dict[str, str]) -> bool:
+    txt = row_bucket_text(record)
+    return "must" in txt or "make first" in txt
+
+
+def row_is_strong(record: Dict[str, str]) -> bool:
+    txt = row_bucket_text(record)
+    return "strong" in txt
+
+
+def row_sport(record: Dict[str, str]) -> str:
+    return clean(record.get("sport_norm") or record.get("sport")).lower()
+
+
+def row_has_major_soccer_signal(record: Dict[str, str]) -> bool:
+    blob = " ".join([
+        result_record_headline(record),
+        record.get("league_norm", ""),
+        record.get("competition_id", ""),
+        record.get("home_team_display", ""),
+        record.get("away_team_display", ""),
+        record.get("winner", ""),
+        record.get("loser", ""),
+    ]).lower()
+    return any(term in blob for term in MAJOR_SOCCER_TERMS)
+
+
+def diversity_rank(record: Dict[str, str]) -> float:
+    rank = record_rank_value(record)
+    sport = row_sport(record)
+    blob = " ".join([
+        result_record_headline(record),
+        record.get("league_norm", ""),
+        record.get("competition_id", ""),
+        record.get("winner", ""),
+        record.get("loser", ""),
+    ]).lower()
+
+    if sport == "soccer":
+        rank += 70
+        if row_has_major_soccer_signal(record):
+            rank += 40
+    elif sport == "volleyball":
+        rank += 20
+    elif sport == "basketball":
+        rank += 10
+    else:
+        rank += 15
+
+    if "world cup" in blob or "nations league" in blob or "champions league" in blob:
+        rank += 25
+
+    return rank
+
+
+def selected_keys_from_rows(rows: List[Dict[str, str]]) -> set[str]:
+    return {result_unique_key_from_record(r) for r in rows}
+
+
+def select_diversity_rows(all_rows: List[Dict[str, str]], selected_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """
+    Adds diversity candidates from safe lower-bucket rows.
+
+    This is the fix for the "no women's soccer" problem. News Sync no longer
+    relies only on Must Post / Strong Maybe. It can promote high-confidence
+    soccer and other non-WNBA results into a P2 diversity lane.
+    """
+    selected = selected_keys_from_rows(selected_rows)
+    pool = [r for r in all_rows if result_unique_key_from_record(r) not in selected and row_is_news_safe(r)]
+    pool.sort(key=diversity_rank, reverse=True)
+
+    diversity: List[Dict[str, str]] = []
+
+    # Soccer-first lane.
+    soccer_rows = [r for r in pool if row_sport(r) == "soccer"]
+    diversity.extend(soccer_rows[:MAX_SOCCER_DIVERSITY])
+
+    selected_extra = selected | selected_keys_from_rows(diversity)
+
+    # Fill remaining diversity slots with non-basketball if possible.
+    for r in pool:
+        if len(diversity) >= MAX_DIVERSITY_PROMOTIONS:
+            break
+        if result_unique_key_from_record(r) in selected_extra:
+            continue
+        if row_sport(r) == "basketball":
+            continue
+        diversity.append(r)
+        selected_extra.add(result_unique_key_from_record(r))
+
+    return diversity[:MAX_DIVERSITY_PROMOTIONS]
+
+
+def candidate_from_record(run_id: str, r: Dict[str, str], queue: str, template: str, forced_action: str = "") -> Dict[str, Any]:
+    headline = result_record_headline(r)
+    candidate = {
+        "run_id": run_id,
+        "candidate_id": stable_id(run_id, headline, queue, result_unique_key_from_record(r)),
+        "queue_section": queue,
+        "content_action": forced_action or clean(r.get("content_action")),
+        "sport": clean(r.get("sport_norm") or r.get("sport")),
+        "league": clean(r.get("league_norm")),
+        "editorial_tier": clean(r.get("editorial_tier")),
+        "editorial_bucket": clean(r.get("editorial_bucket")),
+        "template": template,
+        "selected_source": clean(r.get("selected_source")),
+        "all_sources": clean(r.get("all_sources_json")),
+        "confidence": clean(r.get("confidence")),
+        "manual_review": clean(r.get("manual_review")),
+        "editorial_rank": clean(r.get("editorial_rank")),
+        "outcome_type": clean(r.get("outcome_type")),
+        "matchup": clean(r.get("matchup")),
+        "final_score": result_record_final_score(r),
+        "winner": clean(r.get("winner")),
+        "loser": clean(r.get("loser")),
+        "game_status": clean(r.get("status_norm")),
+        "date": clean(r.get("scheduled_date_local") or r.get("date")),
+        "source_url": clean(r.get("source_url")),
+        "graphics_headline": headline,
+        "graphics_subhead": clean(r.get("caption_seed") or r.get("graphics_subhead")),
+        "slide1_hook": headline,
+        "slide2_result": result_record_final_score(r),
+        "slide3_context": clean(r.get("angle_tag") or r.get("slide3_context") or r.get("caption_seed")),
+        "slide4_cta": "",
+        "raw_block": json.dumps(r, ensure_ascii=False),
+        "result_record_source": clean(r.get("_result_record_source")),
+    }
+    return normalize_candidate_fields(candidate)
+
+
 def candidates_from_result_csvs(run_id: str, csv_sources: List[Tuple[str, List[Dict[str, str]]]]) -> List[Dict[str, Any]]:
     """
-    Last-resort candidate builder directly from Results Desk CSVs.
-    This makes News Sync resilient if markdown formatting changes again.
+    Candidate builder directly from Results Desk CSVs.
+
+    v1.6 adds a diversity lane so high-confidence women's soccer and other
+    non-WNBA results can enter News Sync even when Results Desk ranks WNBA and
+    volleyball above them.
     """
     rows: List[Dict[str, str]] = []
     for source_name, source_rows in csv_sources:
         for r in source_rows:
-            if clean(r.get("gender_scope")).lower() != "women":
+            if not row_is_news_safe(r):
                 continue
-            bucket = clean(r.get("editorial_bucket"))
-            action = clean(r.get("content_action"))
-            if "must" in bucket.lower() or "make first" in action.lower() or "strong" in bucket.lower():
-                rr = dict(r)
-                rr["_result_record_source"] = source_name
-                rows.append(rr)
+            rr = dict(r)
+            rr["_result_record_source"] = source_name
+            rows.append(rr)
 
-    # Sort by bucket then rank.
-    def sort_key(r: Dict[str, str]):
-        bucket = clean(r.get("editorial_bucket")).lower()
-        pri = 0 if "must" in bucket else 1
-        try:
-            rank = -float(r.get("editorial_rank") or 0)
-        except Exception:
-            rank = 0
-        return (pri, rank)
+    rows = dedupe_result_records(rows)
 
-    rows.sort(key=sort_key)
+    must_rows = [r for r in rows if row_is_must(r)]
+    strong_rows = [r for r in rows if row_is_strong(r) and not row_is_must(r)]
+
+    must_rows.sort(key=record_rank_value, reverse=True)
+    strong_rows.sort(key=record_rank_value, reverse=True)
+
+    selected_rows: List[Dict[str, str]] = []
     candidates: List[Dict[str, Any]] = []
 
-    for r in rows:
-        bucket = clean(r.get("editorial_bucket"))
-        queue = "MUST POST" if "must" in bucket.lower() or "make first" in clean(r.get("content_action")).lower() else "STRONG MAYBE"
-        headline = result_record_headline(r)
-        candidate = {
-            "run_id": run_id,
-            "candidate_id": stable_id(run_id, headline, queue),
-            "queue_section": queue,
-            "content_action": clean(r.get("content_action")),
-            "sport": clean(r.get("sport_norm")),
-            "league": clean(r.get("league_norm")),
-            "editorial_tier": clean(r.get("editorial_tier")),
-            "editorial_bucket": bucket,
-            "template": "News Sync CSV fallback",
-            "selected_source": clean(r.get("selected_source")),
-            "all_sources": clean(r.get("all_sources_json")),
-            "confidence": clean(r.get("confidence")),
-            "manual_review": clean(r.get("manual_review")),
-            "editorial_rank": clean(r.get("editorial_rank")),
-            "outcome_type": clean(r.get("outcome_type")),
-            "matchup": clean(r.get("matchup")),
-            "final_score": result_record_final_score(r),
-            "winner": clean(r.get("winner")),
-            "loser": clean(r.get("loser")),
-            "game_status": clean(r.get("status_norm")),
-            "date": clean(r.get("scheduled_date_local")),
-            "source_url": clean(r.get("source_url")),
-            "graphics_headline": headline,
-            "graphics_subhead": clean(r.get("caption_seed") or r.get("graphics_subhead")),
-            "slide1_hook": headline,
-            "slide2_result": result_record_final_score(r),
-            "slide3_context": clean(r.get("angle_tag") or r.get("slide3_context") or r.get("caption_seed")),
-            "slide4_cta": "",
-            "raw_block": json.dumps(r, ensure_ascii=False),
-            "result_record_source": clean(r.get("_result_record_source")),
-        }
-        candidates.append(normalize_candidate_fields(candidate))
+    for r in must_rows[:MAX_MUST_POST]:
+        selected_rows.append(r)
+        candidates.append(candidate_from_record(run_id, r, "MUST POST", "News Sync CSV primary"))
 
-    must = [c for c in candidates if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
-    maybe = [c for c in candidates if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
-    return must + maybe
+    selected = selected_keys_from_rows(selected_rows)
+    strong_selected = []
+    for r in strong_rows:
+        if len(strong_selected) >= MAX_STRONG_MAYBE:
+            break
+        if result_unique_key_from_record(r) in selected:
+            continue
+        strong_selected.append(r)
+        selected_rows.append(r)
+        selected.add(result_unique_key_from_record(r))
+
+    for r in strong_selected:
+        candidates.append(candidate_from_record(run_id, r, "STRONG MAYBE", "News Sync CSV primary"))
+
+    diversity_rows = select_diversity_rows(rows, selected_rows)
+    for r in diversity_rows:
+        candidates.append(candidate_from_record(
+            run_id,
+            r,
+            "DIVERSITY WATCH",
+            "News Sync diversity promotion",
+            forced_action="Diversity Promote",
+        ))
+
+    return dedupe_candidates(candidates)
 
 
 
@@ -923,6 +1187,66 @@ def source_registry_defaults() -> Dict[str, Any]:
                 "notes": "Use for wire-style context, never copied prose."
             },
             {
+                "source_id": "fifa_womens_football",
+                "name": "FIFA Women's Football",
+                "priority": 95,
+                "type": "official_global",
+                "sports": ["soccer"],
+                "leagues_contains": ["World Cup", "FIFA", "Women"],
+                "urls": ["https://www.fifa.com/en/womens-football"],
+                "notes": "Official global women's soccer context source."
+            },
+            {
+                "source_id": "uefa_womens_football",
+                "name": "UEFA Women's Football",
+                "priority": 92,
+                "type": "official_confederation",
+                "sports": ["soccer"],
+                "leagues_contains": ["UEFA", "Euro", "Champions League", "UWCL"],
+                "urls": ["https://www.uefa.com/womenschampionsleague/"],
+                "notes": "Official UEFA women's soccer context source."
+            },
+            {
+                "source_id": "nwsl",
+                "name": "NWSL official",
+                "priority": 95,
+                "type": "official_league",
+                "sports": ["soccer"],
+                "leagues_contains": ["NWSL", "National Women's Soccer League"],
+                "urls": ["https://www.nwslsoccer.com/"],
+                "notes": "Official NWSL source."
+            },
+            {
+                "source_id": "espn_soccer",
+                "name": "ESPN Soccer",
+                "priority": 70,
+                "type": "mainstream_context",
+                "sports": ["soccer"],
+                "leagues_contains": ["Soccer", "Women", "NWSL", "World Cup", "Euro"],
+                "urls": ["https://www.espn.com/soccer/"],
+                "notes": "Mainstream soccer context source."
+            },
+            {
+                "source_id": "guardian_womens_football",
+                "name": "The Guardian women's football",
+                "priority": 65,
+                "type": "mainstream_context",
+                "sports": ["soccer"],
+                "leagues_contains": ["Women", "Women's football", "Soccer"],
+                "urls": ["https://www.theguardian.com/football/women"],
+                "notes": "Mainstream women's football context source."
+            },
+            {
+                "source_id": "bbc_womens_football",
+                "name": "BBC women's football",
+                "priority": 65,
+                "type": "mainstream_context",
+                "sports": ["soccer"],
+                "leagues_contains": ["Women", "Women's football", "Soccer"],
+                "urls": ["https://www.bbc.com/sport/football/womens"],
+                "notes": "Mainstream women's football context source."
+            },
+            {
                 "source_id": "volleyball_world",
                 "name": "Volleyball World",
                 "priority": 95,
@@ -977,6 +1301,10 @@ def angle_rules_defaults() -> Dict[str, Any]:
         },
         "volleyball": {
             "five_set_scores": ["3-2", "2-3"],
+            "default_family": "Around Women's Sports",
+        },
+        "soccer": {
+            "close_scorelines": ["1-0", "2-1", "1-1", "0-0"],
             "default_family": "Around Women's Sports",
         },
         "context_fallbacks": {
@@ -1193,6 +1521,23 @@ def infer_angle(candidate: Dict[str, Any], top_performers: str, angle_rules: Dic
             return family, "player-led WNBA result", "The verified top-performer line gives this result a player-first angle."
         return family, "WNBA result watch", angle_rules.get("context_fallbacks", {}).get("basketball")
 
+    if sport == "soccer":
+        blob = " ".join([
+            candidate.get("graphics_headline", ""),
+            candidate.get("league", ""),
+            candidate.get("matchup", ""),
+            candidate.get("winner", ""),
+            candidate.get("loser", ""),
+        ]).lower()
+        family = "Around Women's Sports"
+        if any(term in blob for term in MAJOR_SOCCER_TERMS):
+            if outcome == "draw":
+                return family, "major women's soccer draw", "This is a stronger soccer item because it involves a major team, competition, or women's soccer signal."
+            return family, "major women's soccer result", "This is a stronger soccer item because it involves a major team, competition, or women's soccer signal."
+        if outcome == "draw":
+            return family, "women's soccer draw", "The result is valid as a soccer draw and works best inside an Around Women's Sports roundup."
+        return family, "women's soccer result", "This belongs in the women's soccer lane and can work as a short roundup item with official source support."
+
     if sport == "volleyball":
         family = angle_rules.get("volleyball", {}).get("default_family", "Around Women's Sports")
         fs = final_score.lower()
@@ -1407,7 +1752,7 @@ def markdown_brief_queue(packets: List[Dict[str, Any]], observations_by_candidat
         "",
     ]
 
-    for section in ["MUST POST", "STRONG MAYBE"]:
+    for section in ["MUST POST", "STRONG MAYBE", "DIVERSITY WATCH"]:
         group = [p for p in packets if p.get("queue_section") == section]
         lines.extend([f"## {section}", ""])
         if not group:
@@ -1533,6 +1878,7 @@ def markdown_daily_plan(packets: List[Dict[str, Any]]) -> str:
     ready = [p for p in packets if p.get("manual_review") != "Yes"]
     p1 = [p for p in ready if p.get("urgency") == "P1"]
     p2 = [p for p in ready if p.get("urgency") == "P2"]
+    diversity = [p for p in ready if p.get("queue_section") == "DIVERSITY WATCH"]
 
     lines = [
         "# Her Sports Daily News Daily Plan v1.3",
@@ -1566,6 +1912,12 @@ def markdown_daily_plan(packets: List[Dict[str, Any]]) -> str:
             lines.append(f"- **{p.get('headline')}** | {p.get('sport')} | {p.get('caption_hard_fact')}")
         lines.append("")
 
+    if diversity:
+        lines.append("### 4. Diversity watch")
+        for p in diversity[:MAX_DIVERSITY_PROMOTIONS]:
+            lines.append(f"- **{p.get('headline')}** | {p.get('sport')} | {p.get('caption_hard_fact')}")
+        lines.append("")
+
     lines.extend([
         "## Do not post without review",
         "",
@@ -1594,13 +1946,14 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
     publish = [p for p in packets if p.get("manual_review") != "Yes"]
     p1 = [p for p in packets if p.get("urgency") == "P1"]
     p2 = [p for p in packets if p.get("urgency") == "P2"]
+    diversity = [p for p in packets if p.get("queue_section") == "DIVERSITY WATCH"]
     production_ready = [p for p in packets if p.get("production_ready") == "Yes"]
 
     usable_sources = [o for o in observations if o.get("usable_context") in {"Yes", "Partial"}]
     source_failures = [o for o in observations if o.get("review_flag")]
 
     lines = [
-        "# Her Sports Daily News Sync v1.4 Hub",
+        "# Her Sports Daily News Sync v1.6 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{utc_now()}`",
@@ -1621,7 +1974,8 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
         f"- Production-ready packets: {len(production_ready)}",
         f"- Manual review packets: {len(manual)}",
         f"- P1 / Must Post packets: {len(p1)}",
-        f"- P2 / Strong Maybe packets: {len(p2)}",
+        f"- P2 / Strong Maybe plus diversity packets: {len(p2)}",
+        f"- Diversity Watch packets: {len(diversity)}",
         f"- Source fetch flags: {len(source_failures)}",
         "",
         "## Manual review rules",
@@ -1692,6 +2046,8 @@ def main() -> None:
                 input_status[1]["notes"] = "Fallback recommendations parser also produced 0 candidates."
                 input_status[4]["notes"] = "CSV candidate builder also produced 0 candidates."
 
+    candidates = dedupe_candidates(candidates)
+
     box_map = parse_box_score_summary(box_text)
 
     all_observations: List[Dict[str, Any]] = []
@@ -1758,6 +2114,8 @@ def main() -> None:
         "settings": {
             "max_must_post": MAX_MUST_POST,
             "max_strong_maybe": MAX_STRONG_MAYBE,
+            "max_diversity_promotions": MAX_DIVERSITY_PROMOTIONS,
+            "max_soccer_diversity": MAX_SOCCER_DIVERSITY,
             "enable_fetch": ENABLE_FETCH,
         }
     }
