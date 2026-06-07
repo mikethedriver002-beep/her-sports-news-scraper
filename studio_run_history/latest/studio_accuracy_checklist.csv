@@ -1,99 +1,99 @@
 packet_id,headline,check_type,status,instruction
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,score_lock,Required,Confirm headline winner and final score match packet exactly.
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,context_lock,Required,Confirm Slide 3/context uses only packet text.
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,end_slide,Required,"For carousel assets, confirm branded end slide is included."
-031076c400c01f9f,Dallas Wings beat Los Angeles Sparks,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,score_lock,Required,Confirm headline winner and final score match packet exactly.
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,context_lock,Required,Confirm Slide 3/context uses only packet text.
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,end_slide,Required,"For carousel assets, confirm branded end slide is included."
-c18539f9c2376bdf,Las Vegas Aces beat Golden State Valkyries,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,score_lock,Required,Confirm headline winner and final score match packet exactly.
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,context_lock,Required,Confirm Slide 3/context uses only packet text.
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,end_slide,Required,"For carousel assets, confirm branded end slide is included."
-5d7b86aeefcdc73f,Minnesota Lynx beat Seattle Storm,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-fb715b276154df79,Phoenix Mercury beat Portland Fire,score_lock,Required,Confirm headline winner and final score match packet exactly.
-fb715b276154df79,Phoenix Mercury beat Portland Fire,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-fb715b276154df79,Phoenix Mercury beat Portland Fire,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-fb715b276154df79,Phoenix Mercury beat Portland Fire,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-fb715b276154df79,Phoenix Mercury beat Portland Fire,context_lock,Required,Confirm Slide 3/context uses only packet text.
-fb715b276154df79,Phoenix Mercury beat Portland Fire,end_slide,Required,"For carousel assets, confirm branded end slide is included."
-fb715b276154df79,Phoenix Mercury beat Portland Fire,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-eee5222a01af4960,USA W beat France W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-eee5222a01af4960,USA W beat France W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-eee5222a01af4960,USA W beat France W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-eee5222a01af4960,USA W beat France W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-eee5222a01af4960,USA W beat France W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-eee5222a01af4960,USA W beat France W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-eee5222a01af4960,USA W beat France W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-713a98e7073576f7,Belgium W beat Thailand W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-713a98e7073576f7,Belgium W beat Thailand W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-713a98e7073576f7,Belgium W beat Thailand W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-713a98e7073576f7,Belgium W beat Thailand W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-713a98e7073576f7,Belgium W beat Thailand W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-713a98e7073576f7,Belgium W beat Thailand W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-713a98e7073576f7,Belgium W beat Thailand W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-6daaf6ac659a57ca,Brazil W beat Bulgaria W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-6542a6830fa645b6,Canada W beat France W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-6542a6830fa645b6,Canada W beat France W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-6542a6830fa645b6,Canada W beat France W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-6542a6830fa645b6,Canada W beat France W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-6542a6830fa645b6,Canada W beat France W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-6542a6830fa645b6,Canada W beat France W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-6542a6830fa645b6,Canada W beat France W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-86a0eba1f6745652,China W beat Serbia W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-86a0eba1f6745652,China W beat Serbia W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-86a0eba1f6745652,China W beat Serbia W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-86a0eba1f6745652,China W beat Serbia W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-86a0eba1f6745652,China W beat Serbia W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-86a0eba1f6745652,China W beat Serbia W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-86a0eba1f6745652,China W beat Serbia W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-095acb2b3813beb7,Italy W beat Turkey W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-095acb2b3813beb7,Italy W beat Turkey W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-095acb2b3813beb7,Italy W beat Turkey W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-095acb2b3813beb7,Italy W beat Turkey W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-095acb2b3813beb7,Italy W beat Turkey W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-095acb2b3813beb7,Italy W beat Turkey W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-095acb2b3813beb7,Italy W beat Turkey W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-f16ddfadfeb75d12,Brazil U20 W beat Korea Republic U20 W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-ffcc60b936000551,Brazil W beat USA W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-ffcc60b936000551,Brazil W beat USA W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-ffcc60b936000551,Brazil W beat USA W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-ffcc60b936000551,Brazil W beat USA W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-ffcc60b936000551,Brazil W beat USA W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-ffcc60b936000551,Brazil W beat USA W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-ffcc60b936000551,Brazil W beat USA W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-954079739df4e522,Japan W beat South Africa W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-954079739df4e522,Japan W beat South Africa W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-954079739df4e522,Japan W beat South Africa W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-954079739df4e522,Japan W beat South Africa W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-954079739df4e522,Japan W beat South Africa W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-954079739df4e522,Japan W beat South Africa W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-954079739df4e522,Japan W beat South Africa W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
-dc5faa6bcfcfc242,Mexico W beat Australia W,score_lock,Required,Confirm headline winner and final score match packet exactly.
-dc5faa6bcfcfc242,Mexico W beat Australia W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
-dc5faa6bcfcfc242,Mexico W beat Australia W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
-dc5faa6bcfcfc242,Mexico W beat Australia W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
-dc5faa6bcfcfc242,Mexico W beat Australia W,context_lock,Required,Confirm Slide 3/context uses only packet text.
-dc5faa6bcfcfc242,Mexico W beat Australia W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
-dc5faa6bcfcfc242,Mexico W beat Australia W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,score_lock,Required,Confirm headline winner and final score match packet exactly.
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,context_lock,Required,Confirm Slide 3/context uses only packet text.
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,end_slide,Required,"For carousel assets, confirm branded end slide is included."
+8f6dab7bc2d01b34,Dallas Wings beat Los Angeles Sparks,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,score_lock,Required,Confirm headline winner and final score match packet exactly.
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,context_lock,Required,Confirm Slide 3/context uses only packet text.
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,end_slide,Required,"For carousel assets, confirm branded end slide is included."
+34825fad349f2655,Las Vegas Aces beat Golden State Valkyries,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,score_lock,Required,Confirm headline winner and final score match packet exactly.
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,context_lock,Required,Confirm Slide 3/context uses only packet text.
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,end_slide,Required,"For carousel assets, confirm branded end slide is included."
+d5aded4985e7c751,Minnesota Lynx beat Seattle Storm,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,score_lock,Required,Confirm headline winner and final score match packet exactly.
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,context_lock,Required,Confirm Slide 3/context uses only packet text.
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,end_slide,Required,"For carousel assets, confirm branded end slide is included."
+8c900b80e4b79068,Phoenix Mercury beat Portland Fire,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+1ab1cec3ba763840,USA W beat France W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+1ab1cec3ba763840,USA W beat France W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+1ab1cec3ba763840,USA W beat France W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+1ab1cec3ba763840,USA W beat France W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+1ab1cec3ba763840,USA W beat France W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+1ab1cec3ba763840,USA W beat France W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+1ab1cec3ba763840,USA W beat France W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+f2c1c6565e4dbd81,Belgium W beat Thailand W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+f2c1c6565e4dbd81,Belgium W beat Thailand W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+f2c1c6565e4dbd81,Belgium W beat Thailand W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+f2c1c6565e4dbd81,Belgium W beat Thailand W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+f2c1c6565e4dbd81,Belgium W beat Thailand W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+f2c1c6565e4dbd81,Belgium W beat Thailand W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+f2c1c6565e4dbd81,Belgium W beat Thailand W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+d07d6827b2010c71,Brazil W beat Bulgaria W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+d07d6827b2010c71,Brazil W beat Bulgaria W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+d07d6827b2010c71,Brazil W beat Bulgaria W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+d07d6827b2010c71,Brazil W beat Bulgaria W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+d07d6827b2010c71,Brazil W beat Bulgaria W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+d07d6827b2010c71,Brazil W beat Bulgaria W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+d07d6827b2010c71,Brazil W beat Bulgaria W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+9afe6916a415c63c,Canada W beat France W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+9afe6916a415c63c,Canada W beat France W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+9afe6916a415c63c,Canada W beat France W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+9afe6916a415c63c,Canada W beat France W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+9afe6916a415c63c,Canada W beat France W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+9afe6916a415c63c,Canada W beat France W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+9afe6916a415c63c,Canada W beat France W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+22b135f6ef3e8a73,China W beat Serbia W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+22b135f6ef3e8a73,China W beat Serbia W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+22b135f6ef3e8a73,China W beat Serbia W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+22b135f6ef3e8a73,China W beat Serbia W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+22b135f6ef3e8a73,China W beat Serbia W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+22b135f6ef3e8a73,China W beat Serbia W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+22b135f6ef3e8a73,China W beat Serbia W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+fe53dc606d6e30ee,Italy W beat Turkey W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+fe53dc606d6e30ee,Italy W beat Turkey W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+fe53dc606d6e30ee,Italy W beat Turkey W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+fe53dc606d6e30ee,Italy W beat Turkey W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+fe53dc606d6e30ee,Italy W beat Turkey W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+fe53dc606d6e30ee,Italy W beat Turkey W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+fe53dc606d6e30ee,Italy W beat Turkey W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+92757bb67f7f332b,Brazil U20 W beat Korea Republic U20 W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+718ffdb19a4f92bf,Brazil W beat USA W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+718ffdb19a4f92bf,Brazil W beat USA W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+718ffdb19a4f92bf,Brazil W beat USA W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+718ffdb19a4f92bf,Brazil W beat USA W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+718ffdb19a4f92bf,Brazil W beat USA W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+718ffdb19a4f92bf,Brazil W beat USA W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+718ffdb19a4f92bf,Brazil W beat USA W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+1ed8eb55ce8ec861,Japan W beat South Africa W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+1ed8eb55ce8ec861,Japan W beat South Africa W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+1ed8eb55ce8ec861,Japan W beat South Africa W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+1ed8eb55ce8ec861,Japan W beat South Africa W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+1ed8eb55ce8ec861,Japan W beat South Africa W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+1ed8eb55ce8ec861,Japan W beat South Africa W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+1ed8eb55ce8ec861,Japan W beat South Africa W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."
+1a39ee04a20db36f,Mexico W beat Australia W,score_lock,Required,Confirm headline winner and final score match packet exactly.
+1a39ee04a20db36f,Mexico W beat Australia W,side_lock,Required,"Confirm no team side, logo side, or score side is swapped."
+1a39ee04a20db36f,Mexico W beat Australia W,watermark,Required,Confirm locked HSD watermark bug is top-left and consistent.
+1a39ee04a20db36f,Mexico W beat Australia W,no_fake_jerseys,Required,"Confirm there are no fabricated jersey numbers, fake uniforms, or invented player details."
+1a39ee04a20db36f,Mexico W beat Australia W,context_lock,Required,Confirm Slide 3/context uses only packet text.
+1a39ee04a20db36f,Mexico W beat Australia W,end_slide,N/A,"For carousel assets, confirm branded end slide is included."
+1a39ee04a20db36f,Mexico W beat Australia W,export_size,Required,"Confirm 1080x1350 feed export, plus 1080x1920 story crop if requested."

@@ -1,6 +1,6 @@
 # Her Sports Daily Studio Command Center v1
 
-Generated: `2026-06-07T04:27:07.062918+00:00`
+Generated: `2026-06-07T04:39:57.592898+00:00`
 
 ## What this file is
 
@@ -15,16 +15,51 @@ Results Desk controls scores. News Sync controls context. Studio Bridge controls
 - Roundup bank: 5
 - Diversity Watch: 4
 - Manual review graphics: 0
+- Bundle Mode posts: 4
 
 ## Open first
 
-1. `studio_top_graphic_packets.md`
-2. `studio_image_prompts.md`
+1. `studio_bundle_packets.md`
+2. `studio_top_graphic_packets.md`
 3. `studio_accuracy_checklist.csv`
-4. `studio_caption_bank.md`
+4. `studio_bundle_caption_bank.md`
 5. `brand_assets/hsd_watermark_bug.svg`
 
-## Production order
+## Bundle Mode recommended posts
+
+### Bundle 1: Main WNBA Result
+
+- Priority: **POST FIRST**
+- Asset: 4-slide carousel (1080x1350)
+- Slides: 4
+- Source items: 1
+- Source headlines: Dallas Wings beat Los Angeles Sparks
+
+### Bundle 2: Tonight in the W Mini-Roundup
+
+- Priority: **POST NEXT**
+- Asset: bundled carousel (1080x1350)
+- Slides: 5
+- Source items: 3
+- Source headlines: Las Vegas Aces beat Golden State Valkyries | Minnesota Lynx beat Seattle Storm | Phoenix Mercury beat Portland Fire
+
+### Bundle 3: Volleyball Results Roundup
+
+- Priority: **ROUNDUP WINDOW**
+- Asset: bundled carousel (1080x1350)
+- Slides: 5
+- Source items: 6
+- Source headlines: USA W beat France W | Belgium W beat Thailand W | Brazil W beat Bulgaria W | Canada W beat France W | China W beat Serbia W | Italy W beat Turkey W
+
+### Bundle 4: Women's Soccer Radar
+
+- Priority: **DIVERSITY SLOT**
+- Asset: bundled carousel (1080x1350)
+- Slides: 5
+- Source items: 4
+- Source headlines: Brazil U20 W beat Korea Republic U20 W | Brazil W beat USA W | Japan W beat South Africa W | Mexico W beat Australia W
+
+## Individual backup production order
 
 ### 1. Dallas Wings beat Los Angeles Sparks
 

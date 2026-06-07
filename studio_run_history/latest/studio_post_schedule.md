@@ -1,6 +1,6 @@
 # Her Sports Daily Studio Post Schedule v1
 
-Generated: 2026-06-07T04:27:07.063388+00:00
+Generated: 2026-06-07T04:39:57.593646+00:00
 
 Use this as a production order, not a rigid clock. Post timing should still consider game freshness and your actual bandwidth.
 
