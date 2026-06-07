@@ -1,6 +1,6 @@
 # Her Sports Daily 7-Day Performance Dashboard v1.1
 
-Generated: 2026-06-07T05:46:07.762051+00:00
+Generated: 2026-06-07T10:11:57.140956+00:00
 
 No performance metrics have been entered yet.
 
@@ -23,8 +23,8 @@ Start by filling `launch_metrics_manual_input.csv` after each post has at least 
 
 | Pillar | Target | Planned | Published | Avg Score | Avg Save Rate | Avg Share Rate | Recommendation |
 |---|---:|---:|---:|---:|---:|---:|---|
-| WNBA Lead | 25% | 1 | 0 | 0.0 | 0.00% | 0.00% | Need data |
-| WNBA Roundup | 25% | 1 | 0 | 0.0 | 0.00% | 0.00% | Need data |
-| Volleyball | 20% | 1 | 0 | 0.0 | 0.00% | 0.00% | Need data |
-| Women's Soccer | 20% | 1 | 0 | 0.0 | 0.00% | 0.00% | Need data |
+| WNBA Lead | 25% | 0 | 0 | 0.0 | 0.00% | 0.00% | Need data |
+| WNBA Roundup | 25% | 0 | 0 | 0.0 | 0.00% | 0.00% | Need data |
+| Volleyball | 20% | 0 | 0 | 0.0 | 0.00% | 0.00% | Need data |
+| Women's Soccer | 20% | 0 | 0 | 0.0 | 0.00% | 0.00% | Need data |
 | Around Women's Sports | 10% | 0 | 0 | 0.0 | 0.00% | 0.00% | Need data |

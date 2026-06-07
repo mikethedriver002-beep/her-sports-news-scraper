@@ -1,6 +1,6 @@
 # Her Sports Daily 7-Day Launch Content Calendar v1
 
-Generated: 2026-06-07T05:46:07.761794+00:00
+Generated: 2026-06-07T10:11:57.140755+00:00
 
 This is the starting cadence. Adjust based on actual results and bandwidth.
 
@@ -35,7 +35,3 @@ This is the starting cadence. Adjust based on actual results and bandwidth.
 
 ## Current bundle candidates
 
-- Main WNBA Result: Make and post
-- Tonight in the W Mini-Roundup: Make if WNBA slate has room
-- Volleyball Results Roundup: Make as roundup
-- Women's Soccer Radar: Make as diversity/soccer radar

@@ -1,6 +1,6 @@
 {
   "version": "hsd-launch-control-v1.1",
-  "generated_at_utc": "2026-06-07T05:46:07.762891+00:00",
+  "generated_at_utc": "2026-06-07T10:11:57.141593+00:00",
   "inputs": {
     "studio_bundle_queue": "studio_bundle_queue.csv",
     "studio_bundle_packets": "studio_bundle_packets.md",
@@ -29,9 +29,9 @@
     "launch_analytics_dashboard/index.html"
   ],
   "counts": {
-    "bundles_read": 4,
-    "publish_queue_rows": 4,
-    "quality_gate_rows": 36,
+    "bundles_read": 0,
+    "publish_queue_rows": 0,
+    "quality_gate_rows": 0,
     "post_tracker_rows": 4,
     "metrics_input_rows": 4,
     "pillar_balance_rows": 5,
