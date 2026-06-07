@@ -1,6 +1,6 @@
-# Her Sports Daily Bundle Caption Bank v1.1
+# Her Sports Daily Bundle Caption Bank v1.2
 
-Generated: 2026-06-07T04:42:16.807500+00:00
+Generated: 2026-06-07T04:51:47.225197+00:00
 
 ## Main WNBA Result
 

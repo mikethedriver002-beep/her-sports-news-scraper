@@ -1,7 +1,7 @@
-# HSD Studio Bridge Run Summary
+# HSD Studio Bridge v1.2 Run Summary
 
-Run timestamp UTC: `2026-06-07 04:42:16 UTC`
-Archive folder: `studio_run_history/2026-06-07/0442_UTC`
+Run timestamp UTC: `2026-06-07 04:51:47 UTC`
+Archive folder: `studio_run_history/2026-06-07/0451_UTC`
 
 ## Row counts
 
