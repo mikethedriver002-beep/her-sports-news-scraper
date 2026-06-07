@@ -1,5 +1,5 @@
 {
-  "run_timestamp_utc": "2026-06-07 00:50:35 UTC",
+  "run_timestamp_utc": "2026-06-07 00:50:55 UTC",
   "archive_folder": "news_run_history/2026-06-07/0050_UTC",
   "latest_folder": "news_run_history/latest",
   "copied_files": [
@@ -21,6 +21,6 @@
     "news_fact_packets.csv": 0,
     "news_manual_review_queue.csv": 0
   },
-  "github_run_id": "27078446913",
-  "github_sha": "6c9ad33bfa11203f2b2ada4a37c91fbf35e74a2f"
+  "github_run_id": "27078453142",
+  "github_sha": "bc9f62e4d7e70c4df9c0b91e4c1bb5d0bd378e3e"
 }
