@@ -1,11 +1,5 @@
-# Her Sports Daily Bundle Prompts v1.1
-
-Generated: 2026-06-07T04:42:16.807348+00:00
-
-## Main WNBA Result
-
-```text
-BUNDLE GRAPHIC: Main WNBA Result
+bundle_rank,bundle_id,bundle_name,bundle_type,production_priority,asset_type,asset_shape,slide_count,content_family,sports_mix,source_items_count,source_headlines,caption_seed,bundle_prompt,accuracy_lock,watermark_rule,source_packet_ids_json
+1,09795bd08f54cafc,Main WNBA Result,main_wnba_lead,POST FIRST,4-slide carousel,1080x1350,4,Tonight in the W,basketball,1,Dallas Wings beat Los Angeles Sparks,"Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.","BUNDLE GRAPHIC: Main WNBA Result
 Asset: 4-slide carousel, 1080x1350
 Bundle type: Main WNBA lead carousel
 
@@ -34,13 +28,8 @@ Accuracy lock:
 BUNDLE LOCKED FACTS: Dallas Wings beat Los Angeles Sparks: Dallas Wings 104, Los Angeles Sparks 96. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.
 
 Watermark:
-Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.
-```
-
-## Tonight in the W Mini-Roundup
-
-```text
-BUNDLE GRAPHIC: Tonight in the W Mini-Roundup
+Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.","BUNDLE LOCKED FACTS: Dallas Wings beat Los Angeles Sparks: Dallas Wings 104, Los Angeles Sparks 96. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.",Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.,"[""8f6dab7bc2d01b34""]"
+2,29ce0046cb2b36d6,Tonight in the W Mini-Roundup,wnba_mini_roundup,POST NEXT,bundled carousel,1080x1350,5,Tonight in the W,basketball,3,Las Vegas Aces beat Golden State Valkyries | Minnesota Lynx beat Seattle Storm | Phoenix Mercury beat Portland Fire,"Tonight in the W roundup: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72","BUNDLE GRAPHIC: Tonight in the W Mini-Roundup
 Asset: 5-slide carousel, 1080x1350
 Bundle type: WNBA mini-roundup
 
@@ -70,13 +59,8 @@ Accuracy lock:
 BUNDLE LOCKED FACTS: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.
 
 Watermark:
-Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.
-```
-
-## Volleyball Results Roundup
-
-```text
-BUNDLE GRAPHIC: Volleyball Results Roundup
+Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.","BUNDLE LOCKED FACTS: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.",Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.,"[""34825fad349f2655"", ""d5aded4985e7c751"", ""8c900b80e4b79068""]"
+3,3bbfaec0687d62b2,Volleyball Results Roundup,volleyball_roundup,ROUNDUP WINDOW,bundled carousel,1080x1350,5,Around Women's Sports,volleyball,6,USA W beat France W | Belgium W beat Thailand W | Brazil W beat Bulgaria W | Canada W beat France W | China W beat Serbia W | Italy W beat Turkey W,Around Women’s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1,"BUNDLE GRAPHIC: Volleyball Results Roundup
 Asset: 5-slide carousel, 1080x1350
 Bundle type: Volleyball results roundup
 
@@ -104,13 +88,8 @@ Accuracy lock:
 BUNDLE LOCKED FACTS: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.
 
 Watermark:
-Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.
-```
-
-## Women's Soccer Radar
-
-```text
-BUNDLE GRAPHIC: Women's Soccer Radar
+Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.","BUNDLE LOCKED FACTS: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.",Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.,"[""1ab1cec3ba763840"", ""f2c1c6565e4dbd81"", ""d07d6827b2010c71"", ""9afe6916a415c63c"", ""22b135f6ef3e8a73"", ""fe53dc606d6e30ee""]"
+4,05111b58860bd8cc,Women's Soccer Radar,soccer_radar,DIVERSITY SLOT,bundled carousel,1080x1350,5,Around Women's Sports,soccer,4,Brazil U20 W beat Korea Republic U20 W | Brazil W beat USA W | Japan W beat South Africa W | Mexico W beat Australia W,Women’s soccer radar: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0,"BUNDLE GRAPHIC: Women's Soccer Radar
 Asset: 5-slide carousel, 1080x1350
 Bundle type: Women's soccer radar
 
@@ -136,5 +115,4 @@ Accuracy lock:
 BUNDLE LOCKED FACTS: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.
 
 Watermark:
-Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.
-```
+Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.","BUNDLE LOCKED FACTS: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.",Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.,"[""92757bb67f7f332b"", ""718ffdb19a4f92bf"", ""1ed8eb55ce8ec861"", ""1a39ee04a20db36f""]"
