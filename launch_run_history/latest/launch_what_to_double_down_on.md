@@ -1,6 +1,6 @@
 # Her Sports Daily What To Double Down On v1.1
 
-Generated: 2026-06-07T16:04:56.583245+00:00
+Generated: 2026-06-07T16:55:05.507831+00:00
 
 No post metrics are available yet, so this report is using the launch plan as the starting hypothesis.
 
