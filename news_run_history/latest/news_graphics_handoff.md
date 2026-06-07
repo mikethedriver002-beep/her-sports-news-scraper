@@ -1,6 +1,6 @@
 # Her Sports Daily News-to-Graphics Handoff v1
 
-Generated: 2026-06-07T04:03:43.540701+00:00
+Generated: 2026-06-07T04:05:01.216480+00:00
 
 Use this to upgrade result graphics with news-safe context.
 
