@@ -1,6 +1,6 @@
 # Her Sports Daily Bundle Packets v1.2
 
-Generated: 2026-06-07T04:51:47.224959+00:00
+Generated: 2026-06-07T04:53:08.188013+00:00
 
 Bundle Mode is the preferred daily production view. It turns the full graphics queue into fewer, stronger posts.
 
