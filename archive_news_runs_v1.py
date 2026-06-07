@@ -68,7 +68,7 @@ def main() -> None:
     }
 
     summary = [
-        "# Her Sports Daily News Sync v1.7 Run Summary",
+        "# Her Sports Daily News Sync v1.8 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",

@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.7"
+VERSION = "news-sync-v1.8"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -1237,7 +1237,7 @@ def source_registry_defaults() -> Dict[str, Any]:
                 "type": "mainstream_context",
                 "sports": ["soccer"],
                 "leagues_contains": ["Women", "Women's football", "Soccer"],
-                "urls": ["https://www.theguardian.com/football/women"],
+                "urls": ["https://www.theguardian.com/football/womens-football"],
                 "notes": "Mainstream women's football context source."
             },
             {
@@ -1365,6 +1365,13 @@ def registry_sources_for_candidate(candidate: Dict[str, Any], registry: Dict[str
     for src in registry.get("sources", []):
         sports = [s.lower() for s in src.get("sports", [])]
         league_terms = [s.lower() for s in src.get("leagues_contains", [])]
+
+        # v1.8: sport-strict matching.
+        # Do not let generic terms like "women" attach soccer sources
+        # to volleyball, basketball, or other sports.
+        if sports and sport and sport not in sports:
+            continue
+
         if sport in sports or any(term and term in league for term in league_terms):
             result.append(src)
 
@@ -1703,6 +1710,11 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
     content_family, angle_tag, angle_context = infer_angle(candidate, top_performers, angle_rules)
     src_count, primary_count, urls, source_context_signal, flags = source_summary(observations)
 
+    # v1.8: source failures are diagnostic, not packet-level review flags
+    # when enough usable/primary context exists.
+    if src_count >= 2 and primary_count >= 1:
+        flags = [f for f in flags if f != "source_fetch_failed"]
+
     context_signal = source_context_signal or angle_context
     headline, dek, brief, cap_hard, cap_voice, story_text, graphics_handoff = make_brief(
         candidate, top_performers, context_signal, angle_tag
@@ -1925,7 +1937,7 @@ def markdown_daily_plan(packets: List[Dict[str, Any]]) -> str:
     diversity = [p for p in ready if p.get("queue_section") == "DIVERSITY WATCH"]
 
     lines = [
-        "# Her Sports Daily News Daily Plan v1.3",
+        "# Her Sports Daily News Daily Plan v1.8",
         "",
         f"Generated: {utc_now()}",
         "",
@@ -1997,7 +2009,7 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
     source_failures = [o for o in observations if o.get("review_flag")]
 
     lines = [
-        "# Her Sports Daily News Sync v1.7 Hub",
+        "# Her Sports Daily News Sync v1.8 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{utc_now()}`",
