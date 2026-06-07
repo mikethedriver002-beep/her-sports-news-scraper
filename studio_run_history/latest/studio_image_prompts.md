@@ -1,6 +1,6 @@
 # Her Sports Daily Image Prompts v1
 
-Generated: 2026-06-07T05:19:55.856449+00:00
+Generated: 2026-06-07T05:44:47.619188+00:00
 
 Use these only after checking the accuracy checklist. Do not remove the no-fabrication language.
 

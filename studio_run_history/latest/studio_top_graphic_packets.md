@@ -1,6 +1,6 @@
 # Her Sports Daily Top Graphic Packets v1
 
-Generated: 2026-06-07T05:19:55.856320+00:00
+Generated: 2026-06-07T05:44:47.619034+00:00
 
 Paste one packet at a time into the graphics chat. The prompt already includes score locks, watermark rules, and no-fabrication rules.
 

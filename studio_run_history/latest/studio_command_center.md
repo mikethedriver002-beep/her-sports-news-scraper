@@ -1,6 +1,6 @@
 # Her Sports Daily Studio Command Center v1.2
 
-Generated: `2026-06-07T05:19:55.856159+00:00`
+Generated: `2026-06-07T05:44:47.618844+00:00`
 
 ## What this file is
 
@@ -126,5 +126,5 @@ Results Desk controls scores. News Sync controls context. Studio Bridge controls
 ## Source health from News Sync
 
 ```text
-# Her Sports Daily News Sync v1.8 Hub Run ID: `2983285186dc8fda` Generated: `2026-06-07T05:03:34.844612+00:00` ## Architecture - Results Desk remains the scorer of record. - News Sync consumes Results Desk outputs and builds source-backed editorial packets. - The two systems are connected, but not merged into one fragile scraper. ## Run summary - News candidates read: 14 - Source observations: 55 - Usable source observations: 51 - Fact packets built: 14 - Publish-ready packets: 14 - Production-ready packets: 14 - Manual review packets: 0 - P1 / Must Post packets: 5 - P2 / Strong Maybe plus diversity packets: 9 - Diversity Watch packets: 4 - Source fetch flags: 4 ## Manual review rules - Hold if Results Desk marked the item for review. - Hold if Must Post has neither top-performer data nor a primary/official source. - Hold if no usable source context was captured. - Never invent player stats, rankings, quotes, injuries, or milestones. - Final score must be present, or packet is held. - Store facts, summaries, and links only. Do not copy full article text.
+# Her Sports Daily News Sync v1.8 Hub Run ID: `96d5ab49e0cc750e` Generated: `2026-06-07T05:43:42.732991+00:00` ## Architecture - Results Desk remains the scorer of record. - News Sync consumes Results Desk outputs and builds source-backed editorial packets. - The two systems are connected, but not merged into one fragile scraper. ## Run summary - News candidates read: 14 - Source observations: 55 - Usable source observations: 51 - Fact packets built: 14 - Publish-ready packets: 14 - Production-ready packets: 14 - Manual review packets: 0 - P1 / Must Post packets: 5 - P2 / Strong Maybe plus diversity packets: 9 - Diversity Watch packets: 4 - Source fetch flags: 4 ## Manual review rules - Hold if Results Desk marked the item for review. - Hold if Must Post has neither top-performer data nor a primary/official source. - Hold if no usable source context was captured. - Never invent player stats, rankings, quotes, injuries, or milestones. - Final score must be present, or packet is held. - Store facts, summaries, and links only. Do not copy full article text.
 ```
