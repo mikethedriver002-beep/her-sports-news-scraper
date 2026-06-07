@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.3"
+VERSION = "news-sync-v1.4"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -522,23 +522,79 @@ def candidates_from_result_csvs(run_id: str, csv_sources: List[Tuple[str, List[D
     return must + maybe
 
 
+
+def extract_team_score(score_text: str, team_name: str) -> str:
+    score_text = clean(score_text)
+    team_name = clean(team_name)
+    if not score_text or not team_name:
+        return ""
+    pattern = re.escape(team_name) + r"\s+(\d+)"
+    m = re.search(pattern, score_text, flags=re.I)
+    if m:
+        return m.group(1)
+    pieces = re.split(r"\s+-\s+|,\s*", score_text)
+    target_tokens = token_set(team_name)
+    best_score = ""
+    best_overlap = 0
+    for piece in pieces:
+        nums = re.findall(r"\b\d+\b", piece)
+        if not nums:
+            continue
+        piece_tokens = token_set(re.sub(r"\b\d+\b", "", piece))
+        overlap = len(target_tokens & piece_tokens)
+        if overlap > best_overlap:
+            best_overlap = overlap
+            best_score = nums[-1]
+    return best_score
+
+
+def copy_score_phrase(candidate: Dict[str, Any]) -> str:
+    final_score = clean(candidate.get("final_score"))
+    winner = clean(candidate.get("winner"))
+    loser = clean(candidate.get("loser"))
+    if final_score and winner and loser:
+        winner_score = extract_team_score(final_score, winner)
+        loser_score = extract_team_score(final_score, loser)
+        if winner_score and loser_score:
+            sport = norm(candidate.get("sport"))
+            if sport == "basketball":
+                return f"{winner} {winner_score}, {loser} {loser_score}"
+            return f"{winner} {winner_score} - {loser} {loser_score}"
+    return final_score
+
+
+def compact_top_performers(value: str, max_players: int = 3) -> str:
+    value = clean_top_performer_text(value)
+    if not value:
+        return ""
+    value = re.sub(r"^\d+\.\s*", "", value)
+    value = re.sub(r"^.*?\bESPN event:\s*\d+\s*-\s*Status:\s*found\s*-\s*", "", value, flags=re.I)
+    value = re.sub(r"^.*?\bTop performers:\s*", "", value, flags=re.I)
+    value = value.replace(" | ", "; ")
+    value = re.sub(r"\s+", " ", value).strip()
+    chunks = [clean(x) for x in value.split(";") if clean(x)]
+    cleaned = []
+    for chunk in chunks:
+        chunk = re.sub(r"^Top performers:\s*", "", chunk, flags=re.I).strip()
+        if chunk and chunk not in cleaned:
+            cleaned.append(chunk)
+    return "; ".join(cleaned[:max_players])
+
+
 def clean_top_performer_text(value: str) -> str:
     value = clean(value)
     if not value:
         return ""
     value = value.replace("**", "")
-    value = re.sub(r"^\\d+\\.\\s*", "", value)
-
-    m = re.search(r"Top performers:\\s*(.*)$", value, flags=re.I)
-    if m:
-        value = clean(m.group(1))
-
-    # Remove accidental event metadata if it survived.
-    value = re.sub(r"^.*?Status:\\s*found\\s*-\\s*", "", value, flags=re.I)
+    value = re.sub(r"^\d+\.\s*", "", value)
+    matches = list(re.finditer(r"Top performers:\s*", value, flags=re.I))
+    if matches:
+        value = value[matches[-1].end():]
+    value = re.sub(r"^.*?ESPN event:\s*\d+\s*-\s*", "", value, flags=re.I)
+    value = re.sub(r"^.*?Status:\s*found\s*-\s*", "", value, flags=re.I)
     value = value.replace(" | ", "; ")
-    value = re.sub(r"\\s+", " ", value).strip()
+    value = re.sub(r"\s+", " ", value).strip()
     return value
-
 
 
 
@@ -1165,18 +1221,14 @@ def make_brief(candidate: Dict[str, Any], top_performers: str, context_signal: s
     winner = clean(candidate.get("winner"))
     loser = clean(candidate.get("loser"))
     final_score = clean(candidate.get("final_score"))
+    score_phrase = copy_score_phrase(candidate) or "score pending parser review"
     headline_base = clean(candidate.get("graphics_headline")) or f"{winner} beat {loser}"
     sport = norm(candidate.get("sport"))
     content_family = "Tonight in the W" if sport == "basketball" else "Around Women's Sports"
 
-    score_phrase = final_score if final_score else "score pending parser review"
+    performer_sentence = compact_top_performers(top_performers)
 
-    if top_performers:
-        performer_sentence = clean_top_performer_text(top_performers)
-        # Keep the first three performer chunks if separated by semicolons.
-        chunks = [clean(x) for x in performer_sentence.split(";") if clean(x)]
-        if chunks:
-            performer_sentence = "; ".join(chunks[:3])
+    if performer_sentence:
         dek = f"{score_phrase}. Top performers: {performer_sentence}"
         context_line = f"Top performers: {performer_sentence}"
     else:
@@ -1184,15 +1236,15 @@ def make_brief(candidate: Dict[str, Any], top_performers: str, context_signal: s
         context_line = context_signal or clean(candidate.get("slide3_context"))
 
     if winner and loser and final_score:
-        lede = f"{winner} beat {loser}, with the verified final listed as {final_score}."
+        lede = f"{winner} beat {loser}, with the verified final listed as {score_phrase}."
     elif winner and loser:
         lede = f"{winner} beat {loser}."
     elif clean(candidate.get("outcome_type")) == "draw" and final_score:
-        lede = f"{headline_base}, with the verified final listed as {final_score}."
+        lede = f"{headline_base}, with the verified final listed as {score_phrase}."
     else:
         lede = f"{headline_base}."
 
-    if top_performers:
+    if performer_sentence:
         second = f"The best production angle is {angle_tag}: {context_line}."
     elif context_signal:
         second = f"The strongest current context signal is source-backed: {context_signal}."
@@ -1207,7 +1259,7 @@ def make_brief(candidate: Dict[str, Any], top_performers: str, context_signal: s
         brief = " ".join(words[:155]).rstrip(",.;") + "."
 
     caption_hard = f"{headline_base}. Verified final: {score_phrase}."
-    if top_performers:
+    if performer_sentence:
         caption_voice = f"{headline_base}. {context_line}."
     elif "five-set" in angle_tag:
         caption_voice = f"{headline_base}. Five sets, one result, and a clean Around Women's Sports angle."
@@ -1261,7 +1313,7 @@ def format_recommendation(packet_context_quality: str, content_family: str, queu
 
 
 def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, Any]], box_map: Dict[str, str], angle_rules: Dict[str, Any], run_id: str) -> Dict[str, Any]:
-    top_performers = find_top_performers(candidate, box_map)
+    top_performers = compact_top_performers(find_top_performers(candidate, box_map))
     content_family, angle_tag, angle_context = infer_angle(candidate, top_performers, angle_rules)
     src_count, primary_count, urls, source_context_signal, flags = source_summary(observations)
 
@@ -1548,7 +1600,7 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
     source_failures = [o for o in observations if o.get("review_flag")]
 
     lines = [
-        "# Her Sports Daily News Sync v1.3 Hub",
+        "# Her Sports Daily News Sync v1.4 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{utc_now()}`",
@@ -1615,21 +1667,26 @@ def main() -> None:
         input_status_row_csv("today_final_results_csv", INPUT_RESULTS_FINALS_CSV, finals_csv_rows, finals_csv_path),
     ]
 
-    candidates = parse_graphics_queue(queue_text, run_id)
+    csv_candidates = candidates_from_result_csvs(run_id, csv_sources)
+    markdown_candidates = parse_graphics_queue(queue_text, run_id)
 
-    if candidates:
-        input_status[0]["notes"] = f"Parsed {len(candidates)} candidates from graphics queue."
-        candidates = enrich_candidates_from_result_csvs(candidates, csv_sources)
-    else:
-        fallback_candidates = parse_recommendations_fallback(recs_text, run_id)
-        if fallback_candidates:
-            candidates = enrich_candidates_from_result_csvs(fallback_candidates, csv_sources)
-            input_status[1]["notes"] = "Used fallback parser because graphics queue produced 0 candidates. v1.3 enriched candidates from Results Desk CSVs when available."
+    if csv_candidates:
+        candidates = csv_candidates
+        input_status[4]["notes"] = f"Used CSV-primary candidate builder with {len(candidates)} candidates. Markdown remains backup."
+        if markdown_candidates:
+            input_status[0]["notes"] = f"Markdown parser also found {len(markdown_candidates)} candidates, but CSV-primary mode was used."
         else:
-            csv_candidates = candidates_from_result_csvs(run_id, csv_sources)
-            if csv_candidates:
-                candidates = csv_candidates
-                input_status[4]["notes"] = "Used CSV-only candidate builder because markdown queues produced 0 candidates."
+            input_status[0]["notes"] = "Markdown queue did not produce candidates. CSV-primary mode avoided failure."
+    else:
+        candidates = markdown_candidates
+        if candidates:
+            input_status[0]["notes"] = f"Parsed {len(candidates)} candidates from graphics queue."
+            candidates = enrich_candidates_from_result_csvs(candidates, csv_sources)
+        else:
+            fallback_candidates = parse_recommendations_fallback(recs_text, run_id)
+            if fallback_candidates:
+                candidates = enrich_candidates_from_result_csvs(fallback_candidates, csv_sources)
+                input_status[1]["notes"] = "Used fallback parser because CSV and graphics queue produced 0 candidates."
             else:
                 input_status[0]["notes"] = "No RESULT GRAPHIC blocks parsed. Check that Results Desk has run and committed results_graphics_queue.md."
                 input_status[1]["notes"] = "Fallback recommendations parser also produced 0 candidates."
