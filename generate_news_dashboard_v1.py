@@ -117,7 +117,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Her Sports Daily News Sync v1.6</title>
+<title>Her Sports Daily News Sync v1.7</title>
 <style>
 :root {{
   --bg:#0f1020; --panel:#181a2f; --text:#f8f4ff; --muted:#c5bdd9;
@@ -155,7 +155,7 @@ a {{ color:var(--accent2); }}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>News Sync v1.6</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. Source-backed news packets on top of Results Desk. v1.6 adds a diversity lane so soccer and other sports are not crowded out.</div></div></div></header>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>News Sync v1.7</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. Source-backed news packets on top of Results Desk. v1.7 fixes soccer source merging and preserves the Diversity Watch lane.</div></div></div></header>
 <main>
 <section><h2>System Hub</h2><div class="card"><pre>{esc(hub)}</pre></div></section>
 <section><h2>Input Status</h2>{input_status_table(input_status)}</section>

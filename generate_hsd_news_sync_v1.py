@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.6"
+VERSION = "news-sync-v1.7"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -195,6 +195,8 @@ def infer_queue_section_from_fields(row: Dict[str, Any]) -> str:
     section = clean(row.get("queue_section"))
     if section:
         upper = section.upper()
+        if "DIVERSITY" in upper:
+            return "DIVERSITY WATCH"
         if "MUST" in upper or "MAKE FIRST" in upper:
             return "MUST POST"
         if "STRONG" in upper:
@@ -205,6 +207,8 @@ def infer_queue_section_from_fields(row: Dict[str, Any]) -> str:
     bucket = clean(row.get("editorial_bucket")).lower()
     action = clean(row.get("content_action")).lower()
 
+    if "diversity" in bucket or "diversity" in action:
+        return "DIVERSITY WATCH"
     if "must" in bucket or "make first" in action:
         return "MUST POST"
     if "strong" in bucket or "strong maybe" in action:
@@ -1291,6 +1295,43 @@ def source_registry_defaults() -> Dict[str, Any]:
     }
 
 
+
+def merge_source_registry(user_registry: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge repo-level news_source_registry.json with built-in defaults.
+
+    This prevents old config files from blocking newly added source coverage.
+    In v1.6, soccer source defaults existed in code, but an older registry JSON
+    in the repo could override them, leaving soccer with 0 source observations.
+    """
+    defaults = source_registry_defaults()
+    if not isinstance(user_registry, dict):
+        return defaults
+
+    merged = {
+        "sources": [],
+        "team_sources": {},
+    }
+
+    seen_source_ids = set()
+    for src in defaults.get("sources", []):
+        sid = clean(src.get("source_id"))
+        if sid and sid not in seen_source_ids:
+            merged["sources"].append(src)
+            seen_source_ids.add(sid)
+
+    for src in user_registry.get("sources", []):
+        sid = clean(src.get("source_id"))
+        if sid and sid not in seen_source_ids:
+            merged["sources"].append(src)
+            seen_source_ids.add(sid)
+
+    merged["team_sources"].update(defaults.get("team_sources", {}))
+    merged["team_sources"].update(user_registry.get("team_sources", {}))
+
+    return merged
+
+
 def angle_rules_defaults() -> Dict[str, Any]:
     return {
         "basketball": {
@@ -1685,7 +1726,10 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
             review_flags.append("no_primary_context_for_must_post")
     elif src_count < 1:
         manual_review = "Yes"
-        review_flags.append("no_usable_context_for_strong_maybe")
+        if candidate.get("queue_section") == "DIVERSITY WATCH":
+            review_flags.append("no_usable_context_for_diversity_watch")
+        else:
+            review_flags.append("no_usable_context_for_strong_maybe")
 
     if "source_fetch_failed" in review_flags and src_count == 0:
         manual_review = "Yes"
@@ -1953,7 +1997,7 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
     source_failures = [o for o in observations if o.get("review_flag")]
 
     lines = [
-        "# Her Sports Daily News Sync v1.6 Hub",
+        "# Her Sports Daily News Sync v1.7 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{utc_now()}`",
@@ -1993,7 +2037,7 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
 def main() -> None:
     run_id = stable_id(VERSION, utc_now())
 
-    registry = load_json(SOURCE_REGISTRY_FILE, source_registry_defaults())
+    registry = merge_source_registry(load_json(SOURCE_REGISTRY_FILE, {}))
     angle_rules = load_json(ANGLE_RULES_FILE, angle_rules_defaults())
 
     queue_path, queue_text = resolve_input(INPUT_RESULTS_QUEUE)
