@@ -1,6 +1,6 @@
 # Her Sports Daily Results Source Audit v3
 
-Generated: `2026-06-06T15:04:40.732975+00:00`
+Generated: `2026-06-07T15:53:02.622886+00:00`
 
 ## Purpose
 
@@ -9,13 +9,13 @@ v3 expands API-Sports testing across basketball, soccer, hockey, volleyball, han
 
 ## Date window tested
 
-2026-06-05, 2026-06-06, 2026-06-07, 2026-06-08
+2026-06-06, 2026-06-07, 2026-06-08, 2026-06-09
 
 ## Source summary
 
 | Source | Tests | Successful Tests | Usable Events | Raw Events | Date-Matched Events | Stale Events Rejected | Likely Women's Events |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| API-Sports expanded optional | 28 | 28 | 1812 | 1812 | 1812 | 0 | 121 |
+| API-Sports expanded optional | 28 | 28 | 0 | 0 | 0 | 0 | 0 |
 | ESPN public scoreboard | 24 | 16 | 12 | 12 | 12 | 0 | 12 |
 | NCAA API / ncaa.com-derived | 96 | 48 | 0 | 48 | 0 | 48 | 0 |
 | SofaScore public endpoints | 56 | 0 | 0 | 0 | 0 | 0 | 0 |
