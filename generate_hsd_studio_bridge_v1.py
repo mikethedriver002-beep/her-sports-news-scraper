@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
-VERSION = "hsd-studio-bridge-v1"
+VERSION = "hsd-studio-bridge-v1.1"
 
 INPUT_NEWS_FACT_PACKETS = os.environ.get("HSD_NEWS_FACT_PACKETS", "news_fact_packets.csv")
 INPUT_NEWS_DAILY_PLAN = os.environ.get("HSD_NEWS_DAILY_PLAN", "news_daily_plan.md")
@@ -36,6 +36,10 @@ OUT_CAPTION_BANK = "studio_caption_bank.md"
 OUT_ACCURACY_CHECKLIST_CSV = "studio_accuracy_checklist.csv"
 OUT_MANUAL_REVIEW_CSV = "studio_manual_review_graphics.csv"
 OUT_POST_SCHEDULE = "studio_post_schedule.md"
+OUT_BUNDLE_QUEUE_CSV = "studio_bundle_queue.csv"
+OUT_BUNDLE_PACKETS = "studio_bundle_packets.md"
+OUT_BUNDLE_PROMPTS = "studio_bundle_prompts.md"
+OUT_BUNDLE_CAPTION_BANK = "studio_bundle_caption_bank.md"
 OUT_BRAND_CONFIG = "studio_brand_config.json"
 OUT_SOP = "studio_graphics_sop.json"
 OUT_MANIFEST = "studio_manifest.json"
@@ -55,6 +59,13 @@ CHECKLIST_FIELDS = [
 ]
 
 MANUAL_FIELDS = QUEUE_FIELDS + ["review_reason"]
+
+BUNDLE_FIELDS = [
+    "bundle_rank", "bundle_id", "bundle_name", "bundle_type", "production_priority",
+    "asset_type", "asset_shape", "slide_count", "content_family", "sports_mix",
+    "source_items_count", "source_headlines", "caption_seed", "bundle_prompt",
+    "accuracy_lock", "watermark_rule", "source_packet_ids_json",
+]
 
 
 def utc_now() -> str:
@@ -496,7 +507,385 @@ def build_manual_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return manual
 
 
-def markdown_command_center(rows: List[Dict[str, Any]], brand: Dict[str, Any], hub_text: str) -> str:
+
+def row_is_wnba(row: Dict[str, Any]) -> bool:
+    return "Tonight in the W" in clean(row.get("content_family")) or "WNBA" in clean(row.get("league"))
+
+
+def row_is_volleyball(row: Dict[str, Any]) -> bool:
+    return norm(row.get("sport")) == "volleyball"
+
+
+def row_is_soccer(row: Dict[str, Any]) -> bool:
+    return norm(row.get("sport")) == "soccer"
+
+
+def compact_result_line(row: Dict[str, Any]) -> str:
+    return f"{clean(row.get('headline'))}: {clean(row.get('final_score'))}"
+
+
+def safe_context_for_row(row: Dict[str, Any]) -> str:
+    caption = clean(row.get("caption_seed"))
+    if "Top performers:" in caption:
+        return caption.split("Top performers:", 1)[1].strip()
+    return clean(row.get("angle")) or "Verified result"
+
+
+def bundle_accuracy_lock(rows: List[Dict[str, Any]]) -> str:
+    facts = [compact_result_line(r) for r in rows]
+    return (
+        "BUNDLE LOCKED FACTS: "
+        + " | ".join(facts)
+        + ". Do not alter winners, losers, scores, stat lines, team order, or source-safe context. "
+        + "Check every result row before posting."
+    )
+
+
+def make_bundle_prompt(bundle_name: str, bundle_type: str, rows: List[Dict[str, Any]], brand: Dict[str, Any]) -> str:
+    result_lines = "\n".join([f"- {compact_result_line(r)}" for r in rows])
+    context_lines = "\n".join([f"- {clean(r.get('headline'))}: {safe_context_for_row(r)}" for r in rows])
+
+    base_rules = (
+        "Create a Her Sports Daily bundled carousel using the locked brand system. "
+        "Use dark-night background, neon pink/electric cyan accents, bold condensed headline type, clean sans body type, "
+        "and the single locked compact stacked HER SPORTS DAILY watermark bug in the top-left. "
+        "Do not create a new watermark. Do not invent jerseys, jersey numbers, logos, player photos, quotes, injuries, rankings, or milestones. "
+        "Use safe text-forward design, sport texture, scoreboard cards, silhouettes, and abstract court/field backgrounds unless approved player references are supplied."
+    )
+
+    if bundle_type == "main_wnba_lead":
+        lead = rows[0]
+        prompt = f"""
+BUNDLE GRAPHIC: {bundle_name}
+Asset: 4-slide carousel, 1080x1350
+Bundle type: Main WNBA lead carousel
+
+{base_rules}
+
+Slide 1:
+Headline: {clean(lead.get('headline'))}
+Subhead: Verified final: {clean(lead.get('final_score'))}
+
+Slide 2:
+Scoreboard:
+{compact_result_line(lead)}
+Use oversized score typography. Keep winner/score pairing exact.
+
+Slide 3:
+Context:
+{safe_context_for_row(lead)}
+Use only this stat/context line. No added stats.
+
+Slide 4:
+CTA / end slide:
+Text: Your take? Follow Her Sports Daily for more women’s sports coverage.
+This is the required branded carousel end slide.
+
+Accuracy lock:
+{bundle_accuracy_lock(rows)}
+
+Watermark:
+{brand["locked_watermark"]["rule"]}
+""".strip()
+        return prompt
+
+    if bundle_type == "wnba_mini_roundup":
+        prompt = f"""
+BUNDLE GRAPHIC: {bundle_name}
+Asset: 5-slide carousel, 1080x1350
+Bundle type: WNBA mini-roundup
+
+{base_rules}
+
+Slide 1:
+Headline: Tonight in the W
+Subhead: The other results you need to know.
+
+Slides 2-4:
+Use one result per slide:
+{result_lines}
+
+Context options:
+{context_lines}
+
+Slide 5:
+CTA / end slide:
+Text: Follow Her Sports Daily for more WNBA coverage.
+This is the required branded carousel end slide.
+
+Accuracy lock:
+{bundle_accuracy_lock(rows)}
+
+Watermark:
+{brand["locked_watermark"]["rule"]}
+""".strip()
+        return prompt
+
+    if bundle_type == "volleyball_roundup":
+        prompt = f"""
+BUNDLE GRAPHIC: {bundle_name}
+Asset: 5-slide carousel, 1080x1350
+Bundle type: Volleyball results roundup
+
+{base_rules}
+
+Slide 1:
+Headline: Around Women's Sports
+Subhead: Volleyball results on the radar.
+
+Slides 2-4:
+Group these verified results into clean scoreboard rows, 1-2 results per slide:
+{result_lines}
+
+Slide 5:
+CTA / end slide:
+Text: More women’s sports results daily from Her Sports Daily.
+This is the required branded carousel end slide.
+
+Accuracy lock:
+{bundle_accuracy_lock(rows)}
+
+Watermark:
+{brand["locked_watermark"]["rule"]}
+""".strip()
+        return prompt
+
+    if bundle_type == "soccer_radar":
+        prompt = f"""
+BUNDLE GRAPHIC: {bundle_name}
+Asset: 5-slide carousel, 1080x1350
+Bundle type: Women's soccer radar
+
+{base_rules}
+
+Slide 1:
+Headline: Women's Soccer Radar
+Subhead: Results worth knowing.
+
+Slides 2-4:
+Use the strongest three to four verified soccer results as scoreboard cards:
+{result_lines}
+
+Slide 5:
+CTA / end slide:
+Text: Follow Her Sports Daily for more women’s soccer and women’s sports coverage.
+This is the required branded carousel end slide.
+
+Accuracy lock:
+{bundle_accuracy_lock(rows)}
+
+Watermark:
+{brand["locked_watermark"]["rule"]}
+""".strip()
+        return prompt
+
+    prompt = f"""
+BUNDLE GRAPHIC: {bundle_name}
+Asset: bundled carousel, 1080x1350
+Bundle type: {bundle_type}
+
+{base_rules}
+
+Verified results:
+{result_lines}
+
+Accuracy lock:
+{bundle_accuracy_lock(rows)}
+
+Watermark:
+{brand["locked_watermark"]["rule"]}
+""".strip()
+    return prompt
+
+
+def bundle_caption(bundle_type: str, rows: List[Dict[str, Any]]) -> str:
+    if bundle_type == "main_wnba_lead":
+        return clean(rows[0].get("caption_seed"))
+    if bundle_type == "wnba_mini_roundup":
+        return "Tonight in the W roundup: " + " | ".join(compact_result_line(r) for r in rows)
+    if bundle_type == "volleyball_roundup":
+        return "Around Women’s Sports volleyball radar: " + " | ".join(compact_result_line(r) for r in rows)
+    if bundle_type == "soccer_radar":
+        return "Women’s soccer radar: " + " | ".join(compact_result_line(r) for r in rows)
+    return " | ".join(compact_result_line(r) for r in rows)
+
+
+def create_bundle(bundle_rank: int, bundle_name: str, bundle_type: str, priority: str, rows: List[Dict[str, Any]], brand: Dict[str, Any]) -> Dict[str, Any]:
+    if not rows:
+        return {}
+
+    if bundle_type == "main_wnba_lead":
+        slide_count = 4
+        asset_type = "4-slide carousel"
+    else:
+        slide_count = 5
+        asset_type = "bundled carousel"
+
+    sports = sorted(set(clean(r.get("sport")) for r in rows if clean(r.get("sport"))))
+    packet_ids = [clean(r.get("packet_id")) for r in rows if clean(r.get("packet_id"))]
+    source_headlines = " | ".join(clean(r.get("headline")) for r in rows)
+
+    return {
+        "bundle_rank": bundle_rank,
+        "bundle_id": stable_id(VERSION, bundle_name, source_headlines),
+        "bundle_name": bundle_name,
+        "bundle_type": bundle_type,
+        "production_priority": priority,
+        "asset_type": asset_type,
+        "asset_shape": "1080x1350",
+        "slide_count": slide_count,
+        "content_family": "Tonight in the W" if "wnba" in bundle_type else "Around Women's Sports",
+        "sports_mix": ", ".join(sports),
+        "source_items_count": len(rows),
+        "source_headlines": source_headlines,
+        "caption_seed": bundle_caption(bundle_type, rows),
+        "bundle_prompt": make_bundle_prompt(bundle_name, bundle_type, rows, brand),
+        "accuracy_lock": bundle_accuracy_lock(rows),
+        "watermark_rule": brand["locked_watermark"]["rule"],
+        "source_packet_ids_json": json.dumps(packet_ids, ensure_ascii=False),
+    }
+
+
+def build_bundles(rows: List[Dict[str, Any]], brand: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Bundle Mode turns a 14-card production queue into a smaller daily slate.
+    Individual prompts still exist, but these are the preferred posts.
+    """
+    wnba_rows = [r for r in rows if row_is_wnba(r)]
+    volleyball_rows = [r for r in rows if row_is_volleyball(r)]
+    soccer_rows = [r for r in rows if row_is_soccer(r)]
+
+    bundles: List[Dict[str, Any]] = []
+    rank = 1
+
+    if wnba_rows:
+        bundles.append(create_bundle(
+            rank,
+            "Main WNBA Result",
+            "main_wnba_lead",
+            "POST FIRST",
+            [wnba_rows[0]],
+            brand,
+        ))
+        rank += 1
+
+    if len(wnba_rows) > 1:
+        bundles.append(create_bundle(
+            rank,
+            "Tonight in the W Mini-Roundup",
+            "wnba_mini_roundup",
+            "POST NEXT",
+            wnba_rows[1:5],
+            brand,
+        ))
+        rank += 1
+
+    if volleyball_rows:
+        bundles.append(create_bundle(
+            rank,
+            "Volleyball Results Roundup",
+            "volleyball_roundup",
+            "ROUNDUP WINDOW",
+            volleyball_rows[:6],
+            brand,
+        ))
+        rank += 1
+
+    if soccer_rows:
+        bundles.append(create_bundle(
+            rank,
+            "Women's Soccer Radar",
+            "soccer_radar",
+            "DIVERSITY SLOT",
+            soccer_rows[:4],
+            brand,
+        ))
+        rank += 1
+
+    return [b for b in bundles if b]
+
+
+def markdown_bundle_packets(bundles: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# Her Sports Daily Bundle Packets v1.1",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        "Bundle Mode is the preferred daily production view. It turns the full graphics queue into fewer, stronger posts.",
+        "",
+    ]
+    for b in bundles:
+        lines.extend([
+            f"## BUNDLE {b['bundle_rank']}: {b['bundle_name']}",
+            "",
+            f"**Priority:** {b['production_priority']}",
+            f"**Asset:** {b['asset_type']}",
+            f"**Shape:** {b['asset_shape']}",
+            f"**Slides:** {b['slide_count']}",
+            f"**Items:** {b['source_items_count']}",
+            "",
+            "### Prompt",
+            "",
+            "```text",
+            b["bundle_prompt"],
+            "```",
+            "",
+            "### Caption seed",
+            "",
+            b["caption_seed"],
+            "",
+            "### Accuracy lock",
+            "",
+            b["accuracy_lock"],
+            "",
+            "---",
+            "",
+        ])
+    return "\n".join(lines)
+
+
+def markdown_bundle_prompts(bundles: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# Her Sports Daily Bundle Prompts v1.1",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+    ]
+    for b in bundles:
+        lines.extend([
+            f"## {b['bundle_name']}",
+            "",
+            "```text",
+            b["bundle_prompt"],
+            "```",
+            "",
+        ])
+    return "\n".join(lines)
+
+
+def markdown_bundle_caption_bank(bundles: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# Her Sports Daily Bundle Caption Bank v1.1",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+    ]
+    for b in bundles:
+        lines.extend([
+            f"## {b['bundle_name']}",
+            "",
+            f"**Priority:** {b['production_priority']}",
+            f"**Caption seed:** {b['caption_seed']}",
+            "",
+            "Accuracy note: Do not add stats, rankings, injuries, quotes, or claims beyond the bundle.",
+            "",
+            "---",
+            "",
+        ])
+    return "\n".join(lines)
+
+
+def markdown_command_center(rows: List[Dict[str, Any]], bundles: List[Dict[str, Any]], brand: Dict[str, Any], hub_text: str) -> str:
     must = [r for r in rows if r["production_bucket"] in {"MAKE FIRST", "MAKE NEXT"}]
     roundup = [r for r in rows if r["production_bucket"] == "ROUNDUP BANK"]
     diversity = [r for r in rows if r["production_bucket"] == "DIVERSITY WATCH"]
@@ -520,18 +909,39 @@ def markdown_command_center(rows: List[Dict[str, Any]], brand: Dict[str, Any], h
         f"- Roundup bank: {len(roundup)}",
         f"- Diversity Watch: {len(diversity)}",
         f"- Manual review graphics: {len(manual)}",
+        f"- Bundle Mode posts: {len(bundles)}",
         "",
         "## Open first",
         "",
-        "1. `studio_top_graphic_packets.md`",
-        "2. `studio_image_prompts.md`",
+        "1. `studio_bundle_packets.md`",
+        "2. `studio_top_graphic_packets.md`",
         "3. `studio_accuracy_checklist.csv`",
-        "4. `studio_caption_bank.md`",
+        "4. `studio_bundle_caption_bank.md`",
         "5. `brand_assets/hsd_watermark_bug.svg`",
         "",
-        "## Production order",
+        "## Bundle Mode recommended posts",
         "",
     ]
+
+    if bundles:
+        for bundle in bundles:
+            lines.extend([
+                f"### Bundle {bundle['bundle_rank']}: {bundle['bundle_name']}",
+                "",
+                f"- Priority: **{bundle['production_priority']}**",
+                f"- Asset: {bundle['asset_type']} ({bundle['asset_shape']})",
+                f"- Slides: {bundle['slide_count']}",
+                f"- Source items: {bundle['source_items_count']}",
+                f"- Source headlines: {bundle['source_headlines']}",
+                "",
+            ])
+    else:
+        lines.extend(["No bundles created.", ""])
+
+    lines.extend([
+        "## Individual backup production order",
+        "",
+    ])
 
     for row in rows[:MAX_TOP_PACKETS]:
         lines.extend([
@@ -699,17 +1109,22 @@ def main() -> None:
     news_hub = load_text(INPUT_NEWS_HUB)
 
     rows = build_queue(packets, brand, sop)
+    bundles = build_bundles(rows, brand)
     checklist = build_checklist(rows)
     manual_rows = build_manual_rows(rows)
 
     write_csv(OUT_GRAPHICS_QUEUE_CSV, rows, QUEUE_FIELDS)
+    write_csv(OUT_BUNDLE_QUEUE_CSV, bundles, BUNDLE_FIELDS)
     write_csv(OUT_ACCURACY_CHECKLIST_CSV, checklist, CHECKLIST_FIELDS)
     write_csv(OUT_MANUAL_REVIEW_CSV, manual_rows, MANUAL_FIELDS)
 
-    Path(OUT_COMMAND_CENTER).write_text(markdown_command_center(rows, brand, news_hub), encoding="utf-8")
+    Path(OUT_COMMAND_CENTER).write_text(markdown_command_center(rows, bundles, brand, news_hub), encoding="utf-8")
     Path(OUT_TOP_PACKETS).write_text(markdown_top_packets(rows), encoding="utf-8")
     Path(OUT_IMAGE_PROMPTS).write_text(markdown_image_prompts(rows), encoding="utf-8")
     Path(OUT_CAPTION_BANK).write_text(markdown_caption_bank(rows), encoding="utf-8")
+    Path(OUT_BUNDLE_PACKETS).write_text(markdown_bundle_packets(bundles), encoding="utf-8")
+    Path(OUT_BUNDLE_PROMPTS).write_text(markdown_bundle_prompts(bundles), encoding="utf-8")
+    Path(OUT_BUNDLE_CAPTION_BANK).write_text(markdown_bundle_caption_bank(bundles), encoding="utf-8")
     Path(OUT_POST_SCHEDULE).write_text(markdown_post_schedule(rows), encoding="utf-8")
 
     manifest = {
@@ -727,6 +1142,10 @@ def main() -> None:
         "outputs": [
             OUT_COMMAND_CENTER,
             OUT_GRAPHICS_QUEUE_CSV,
+            OUT_BUNDLE_QUEUE_CSV,
+            OUT_BUNDLE_PACKETS,
+            OUT_BUNDLE_PROMPTS,
+            OUT_BUNDLE_CAPTION_BANK,
             OUT_TOP_PACKETS,
             OUT_IMAGE_PROMPTS,
             OUT_CAPTION_BANK,
@@ -740,6 +1159,7 @@ def main() -> None:
         "counts": {
             "news_packets_read": len(packets),
             "studio_graphics_queued": len(rows),
+            "studio_bundles_created": len(bundles),
             "manual_review_graphics": len(manual_rows),
             "checklist_rows": len(checklist),
         },

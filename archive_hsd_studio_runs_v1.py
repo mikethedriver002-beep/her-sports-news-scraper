@@ -9,6 +9,10 @@ from pathlib import Path
 FILES = [
     "studio_command_center.md",
     "studio_graphics_queue.csv",
+    "studio_bundle_queue.csv",
+    "studio_bundle_packets.md",
+    "studio_bundle_prompts.md",
+    "studio_bundle_caption_bank.md",
     "studio_top_graphic_packets.md",
     "studio_image_prompts.md",
     "studio_caption_bank.md",

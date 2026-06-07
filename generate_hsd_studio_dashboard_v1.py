@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 QUEUE = "studio_graphics_queue.csv"
+BUNDLES = "studio_bundle_queue.csv"
 CENTER = "studio_command_center.md"
 TOP = "studio_top_graphic_packets.md"
 SCHEDULE = "studio_post_schedule.md"
@@ -35,6 +36,27 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 def read_text(path: str) -> str:
     p = Path(path)
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+
+
+def bundle_cards(rows: List[Dict[str, str]]) -> str:
+    if not rows:
+        return '<div class="empty">No bundle packets created.</div>'
+    out = []
+    for row in rows:
+        out.append(f"""
+        <div class="card">
+          <div class="meta">
+            <span>{esc(row.get('production_priority'))}</span>
+            <span>{esc(row.get('bundle_type'))}</span>
+            <span>{esc(row.get('source_items_count'))} items</span>
+          </div>
+          <h3>Bundle {esc(row.get('bundle_rank'))}: {esc(row.get('bundle_name'))}</h3>
+          <p><b>Source headlines:</b> {esc(row.get('source_headlines'))}</p>
+          <p><b>Caption:</b> {esc(row.get('caption_seed'))}</p>
+          <details><summary>Bundle prompt</summary><pre>{esc(row.get('bundle_prompt'))}</pre></details>
+        </div>
+        """)
+    return '<div class="grid">' + "\n".join(out) + "</div>"
 
 
 def cards(rows: List[Dict[str, str]]) -> str:
@@ -75,6 +97,7 @@ def checklist_table(rows: List[Dict[str, str]]) -> str:
 
 def main() -> None:
     rows = read_csv(QUEUE)
+    bundles = read_csv(BUNDLES)
     center = read_text(CENTER)
     top = read_text(TOP)
     schedule = read_text(SCHEDULE)
@@ -85,7 +108,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HSD Studio Bridge</title>
+<title>HSD Studio Bridge Bundle Mode</title>
 <style>
 :root {{
   --bg:#0f1020; --panel:#181a2f; --text:#f8f4ff; --muted:#c5bdd9;
@@ -118,9 +141,10 @@ th {{ color:var(--text); }}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Studio Bridge</h1><div>Generated {esc(datetime.now(timezone.utc).isoformat())}</div></div></div></header>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>Studio Bridge Bundle Mode</h1><div>Generated {esc(datetime.now(timezone.utc).isoformat())}</div></div></div></header>
 <main>
-<section><h2>Queued Graphics</h2>{cards(rows)}</section>
+<section><h2>Bundle Mode</h2>{bundle_cards(bundles)}</section>
+<section><h2>Queued Individual Graphics</h2>{cards(rows)}</section>
 <section><h2>Post Schedule</h2><div class="card"><pre>{esc(schedule)}</pre></div></section>
 <section><h2>Command Center</h2><div class="card"><pre>{esc(center)}</pre></div></section>
 <section><h2>Accuracy Checklist</h2>{checklist_table(checklist)}</section>
