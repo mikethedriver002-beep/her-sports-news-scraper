@@ -1,0 +1,21 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856966,WNBA,Seattle Storm at Minnesota Lynx,Final,Minnesota Lynx,Seattle Storm 68 - Minnesota Lynx 88,1,Natasha Howard,Minnesota Lynx,"PTS 27, REB 5, AST 1, STL 3, BLK 2",WNBA
+401856967,WNBA,Golden State Valkyries at Las Vegas Aces,Final,Las Vegas Aces,Golden State Valkyries 79 - Las Vegas Aces 84,1,A'ja Wilson,Las Vegas Aces,"PTS 28, REB 14, AST 3, FG 9-17, 3PT 2-4",WNBA
+401856968,WNBA,Washington Mystics at Atlanta Dream,Final,Atlanta Dream,Washington Mystics 77 - Atlanta Dream 109,1,Angel Reese,Atlanta Dream,"PTS 18, REB 17, STL 4, BLK 1, FG 4-9",WNBA
+401856969,WNBA,Indiana Fever at New York Liberty,Final,New York Liberty,Indiana Fever 75 - New York Liberty 83,1,Breanna Stewart,New York Liberty,"PTS 30, REB 8, AST 2, STL 4, FG 6-15",WNBA
+401856966,WNBA,Seattle Storm at Minnesota Lynx,Final,Minnesota Lynx,Seattle Storm 68 - Minnesota Lynx 88,2,Olivia Miles,Minnesota Lynx,"PTS 19, REB 6, AST 6, STL 1, FG 9-14",WNBA
+401856967,WNBA,Golden State Valkyries at Las Vegas Aces,Final,Las Vegas Aces,Golden State Valkyries 79 - Las Vegas Aces 84,2,Gabby Williams,Golden State Valkyries,"PTS 27, REB 6, AST 1, STL 2, FG 10-17",WNBA
+401856968,WNBA,Washington Mystics at Atlanta Dream,Final,Atlanta Dream,Washington Mystics 77 - Atlanta Dream 109,2,Rhyne Howard,Atlanta Dream,"PTS 19, AST 3, STL 6, BLK 1, FG 6-11",WNBA
+401856969,WNBA,Indiana Fever at New York Liberty,Final,New York Liberty,Indiana Fever 75 - New York Liberty 83,2,Aliyah Boston,Indiana Fever,"PTS 13, REB 9, AST 1, STL 1, BLK 3",WNBA
+401856966,WNBA,Seattle Storm at Minnesota Lynx,Final,Minnesota Lynx,Seattle Storm 68 - Minnesota Lynx 88,3,Natisha Hiedeman,Seattle Storm,"PTS 14, REB 4, AST 5, STL 3, FG 4-10",WNBA
+401856967,WNBA,Golden State Valkyries at Las Vegas Aces,Final,Las Vegas Aces,Golden State Valkyries 79 - Las Vegas Aces 84,3,Jackie Young,Las Vegas Aces,"PTS 27, REB 5, AST 5, FG 8-15, 3PT 6-8",WNBA
+401856968,WNBA,Washington Mystics at Atlanta Dream,Final,Atlanta Dream,Washington Mystics 77 - Atlanta Dream 109,3,Kiki Iriafen,Washington Mystics,"PTS 24, REB 3, AST 3, STL 1, BLK 1",WNBA
+401856969,WNBA,Indiana Fever at New York Liberty,Final,New York Liberty,Indiana Fever 75 - New York Liberty 83,3,Kelsey Mitchell,Indiana Fever,"PTS 21, REB 7, AST 2, FG 7-21, 3PT 2-8",WNBA
+401856966,WNBA,Seattle Storm at Minnesota Lynx,Final,Minnesota Lynx,Seattle Storm 68 - Minnesota Lynx 88,4,Nia Coffey,Minnesota Lynx,"PTS 6, REB 8, AST 5, STL 3, BLK 2",WNBA
+401856967,WNBA,Golden State Valkyries at Las Vegas Aces,Final,Las Vegas Aces,Golden State Valkyries 79 - Las Vegas Aces 84,4,Chelsea Gray,Las Vegas Aces,"PTS 12, REB 6, AST 6, STL 2, FG 4-10",WNBA
+401856968,WNBA,Washington Mystics at Atlanta Dream,Final,Atlanta Dream,Washington Mystics 77 - Atlanta Dream 109,4,Sonia Citron,Washington Mystics,"PTS 18, REB 2, AST 6, STL 1, FG 5-10",WNBA
+401856969,WNBA,Indiana Fever at New York Liberty,Final,New York Liberty,Indiana Fever 75 - New York Liberty 83,4,Caitlin Clark,Indiana Fever,"PTS 10, REB 7, AST 9, BLK 1, FG 4-14",WNBA
+401856966,WNBA,Seattle Storm at Minnesota Lynx,Final,Minnesota Lynx,Seattle Storm 68 - Minnesota Lynx 88,5,Courtney Williams,Minnesota Lynx,"PTS 11, REB 5, AST 7, STL 2, FG 5-13",WNBA
+401856967,WNBA,Golden State Valkyries at Las Vegas Aces,Final,Las Vegas Aces,Golden State Valkyries 79 - Las Vegas Aces 84,5,Veronica Burton,Golden State Valkyries,"PTS 15, REB 5, AST 3, FG 5-16, 3PT 1-8",WNBA
+401856968,WNBA,Washington Mystics at Atlanta Dream,Final,Atlanta Dream,Washington Mystics 77 - Atlanta Dream 109,5,Shakira Austin,Washington Mystics,"PTS 7, REB 5, AST 4, BLK 3, FG 3-9",WNBA
+401856969,WNBA,Indiana Fever at New York Liberty,Final,New York Liberty,Indiana Fever 75 - New York Liberty 83,5,Monique Billings,Indiana Fever,"PTS 15, REB 8, AST 1, BLK 1, FG 6-7",WNBA
