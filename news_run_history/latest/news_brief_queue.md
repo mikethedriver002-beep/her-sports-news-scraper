@@ -1,6 +1,6 @@
 # Her Sports Daily News Brief Queue v1
 
-Generated: 2026-06-07T01:22:53.669754+00:00
+Generated: 2026-06-07T02:59:51.190168+00:00
 
 This is the news layer on top of Results Desk. Results Desk remains the score source of truth.
 
@@ -19,24 +19,24 @@ This is the news layer on top of Results Desk. Results Desk remains the score so
 Dallas Wings beat Los Angeles Sparks
 
 #### Dek
-. Dallas Wings beat Los Angeles Sparks** - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2 | Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6 | Paige Bueckers (Dallas Wings): PTS 18, REB 3
+Dallas Wings 104 - Los Angeles Sparks 96. Top performers: 1. Dallas Wings beat Los Angeles Sparks - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1
 
 #### Short brief
-Dallas Wings beat Los Angeles Sparks. The verified final was . The best production angle is player-led WNBA result: Dallas Wings beat Los Angeles Sparks** - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2 | Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6 | Paige Bueckers (Dallas Wings): PTS 18, REB 3 Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Dallas Wings beat Los Angeles Sparks, with the verified final listed as Dallas Wings 104 - Los Angeles Sparks 96. The best production angle is high-scoring WNBA result: Top performers: 1. Dallas Wings beat Los Angeles Sparks - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Dallas Wings beat Los Angeles Sparks. Verified final: .
-- Voice: Dallas Wings beat Los Angeles Sparks. The box-score angle makes this one worth more than a score-only post.
+- Hard fact: Dallas Wings beat Los Angeles Sparks. Verified final: Dallas Wings 104 - Los Angeles Sparks 96.
+- Voice: Dallas Wings beat Los Angeles Sparks. Top performers: 1. Dallas Wings beat Los Angeles Sparks - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.
 
 #### Story text
 Dallas Wings beat Los Angeles Sparks
 
-Verified final: 
+Verified final: Dallas Wings 104 - Los Angeles Sparks 96
 
-Angle: player-led WNBA result
+Angle: high-scoring WNBA result
 
 #### Slide 3 / context
-1. **Dallas Wings beat Los Angeles Sparks** - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2 | Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6 | Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1
+1. Dallas Wings beat Los Angeles Sparks - ESPN event: 401856964 - Status: found - Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1
 
 #### Sources
 - https://www.wnba.com/
@@ -67,24 +67,24 @@ Angle: player-led WNBA result
 Phoenix Mercury beat Portland Fire
 
 #### Dek
-. Phoenix Mercury beat Portland Fire** - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2 | Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1 | Monique Akoa Makani (Phoenix Mercury): 
+Phoenix Mercury 78 - Portland Fire 72. Top performers: 2. Phoenix Mercury beat Portland Fire - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
 
 #### Short brief
-Phoenix Mercury beat Portland Fire. The verified final was . The best production angle is player-led WNBA result: Phoenix Mercury beat Portland Fire** - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2 | Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1 | Monique Akoa Makani (Phoenix Mercury):  Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Phoenix Mercury beat Portland Fire, with the verified final listed as Phoenix Mercury 78 - Portland Fire 72. The best production angle is close WNBA finish: Top performers: 2. Phoenix Mercury beat Portland Fire - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Phoenix Mercury beat Portland Fire. Verified final: .
-- Voice: Phoenix Mercury beat Portland Fire. The box-score angle makes this one worth more than a score-only post.
+- Hard fact: Phoenix Mercury beat Portland Fire. Verified final: Phoenix Mercury 78 - Portland Fire 72.
+- Voice: Phoenix Mercury beat Portland Fire. Top performers: 2. Phoenix Mercury beat Portland Fire - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3.
 
 #### Story text
 Phoenix Mercury beat Portland Fire
 
-Verified final: 
+Verified final: Phoenix Mercury 78 - Portland Fire 72
 
-Angle: player-led WNBA result
+Angle: close WNBA finish
 
 #### Slide 3 / context
-2. **Phoenix Mercury beat Portland Fire** - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2 | Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1 | Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
+2. Phoenix Mercury beat Portland Fire - ESPN event: 401856965 - Status: found - Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
 
 #### Sources
 - https://www.wnba.com/
@@ -113,24 +113,24 @@ Angle: player-led WNBA result
 Minnesota Lynx beat Seattle Storm
 
 #### Dek
-. Minnesota Lynx beat Seattle Storm** - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3 | Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1 | Natisha Hiedeman (Seattle Storm): PTS 14, 
+Seattle Storm 68 - Minnesota Lynx 88. Top performers: 3. Minnesota Lynx beat Seattle Storm - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3; Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1; Natisha Hiedeman (Seattle Storm): PTS 14, REB 4, AST 5, STL 3
 
 #### Short brief
-Minnesota Lynx beat Seattle Storm. The verified final was . The best production angle is player-led WNBA result: Minnesota Lynx beat Seattle Storm** - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3 | Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1 | Natisha Hiedeman (Seattle Storm): PTS 14,  Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Minnesota Lynx beat Seattle Storm, with the verified final listed as Seattle Storm 68 - Minnesota Lynx 88. The best production angle is statement WNBA win: Top performers: 3. Minnesota Lynx beat Seattle Storm - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3; Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1; Natisha Hiedeman (Seattle Storm): PTS 14, REB 4, AST 5, STL 3. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Minnesota Lynx beat Seattle Storm. Verified final: .
-- Voice: Minnesota Lynx beat Seattle Storm. The box-score angle makes this one worth more than a score-only post.
+- Hard fact: Minnesota Lynx beat Seattle Storm. Verified final: Seattle Storm 68 - Minnesota Lynx 88.
+- Voice: Minnesota Lynx beat Seattle Storm. Top performers: 3. Minnesota Lynx beat Seattle Storm - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3; Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1; Natisha Hiedeman (Seattle Storm): PTS 14, REB 4, AST 5, STL 3.
 
 #### Story text
 Minnesota Lynx beat Seattle Storm
 
-Verified final: 
+Verified final: Seattle Storm 68 - Minnesota Lynx 88
 
-Angle: player-led WNBA result
+Angle: statement WNBA win
 
 #### Slide 3 / context
-3. **Minnesota Lynx beat Seattle Storm** - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3 | Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1 | Natisha Hiedeman (Seattle Storm): PTS 14, REB 4, AST 5, STL 3
+3. Minnesota Lynx beat Seattle Storm - ESPN event: 401856966 - Status: found - Top performers: Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3; Olivia Miles (Minnesota Lynx): PTS 19, REB 6, AST 6, STL 1; Natisha Hiedeman (Seattle Storm): PTS 14, REB 4, AST 5, STL 3
 
 #### Sources
 - https://www.wnba.com/
@@ -161,24 +161,24 @@ Angle: player-led WNBA result
 Las Vegas Aces beat Golden State Valkyries
 
 #### Dek
-. Las Vegas Aces beat Golden State Valkyries** - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3 | Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2 | Jackie Young (Las Vegas Aces): P
+Golden State Valkyries 79 - Las Vegas Aces 84. Top performers: 4. Las Vegas Aces beat Golden State Valkyries - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
 
 #### Short brief
-Las Vegas Aces beat Golden State Valkyries. The verified final was . The best production angle is player-led WNBA result: Las Vegas Aces beat Golden State Valkyries** - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3 | Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2 | Jackie Young (Las Vegas Aces): P Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Las Vegas Aces beat Golden State Valkyries, with the verified final listed as Golden State Valkyries 79 - Las Vegas Aces 84. The best production angle is close WNBA finish: Top performers: 4. Las Vegas Aces beat Golden State Valkyries - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Las Vegas Aces beat Golden State Valkyries. Verified final: .
-- Voice: Las Vegas Aces beat Golden State Valkyries. The box-score angle makes this one worth more than a score-only post.
+- Hard fact: Las Vegas Aces beat Golden State Valkyries. Verified final: Golden State Valkyries 79 - Las Vegas Aces 84.
+- Voice: Las Vegas Aces beat Golden State Valkyries. Top performers: 4. Las Vegas Aces beat Golden State Valkyries - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5.
 
 #### Story text
 Las Vegas Aces beat Golden State Valkyries
 
-Verified final: 
+Verified final: Golden State Valkyries 79 - Las Vegas Aces 84
 
-Angle: player-led WNBA result
+Angle: close WNBA finish
 
 #### Slide 3 / context
-4. **Las Vegas Aces beat Golden State Valkyries** - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3 | Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2 | Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
+4. Las Vegas Aces beat Golden State Valkyries - ESPN event: 401856967 - Status: found - Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
 
 #### Sources
 - https://www.wnba.com/
@@ -214,16 +214,16 @@ Belgium W beat Thailand W
 Caption seed: Belgium W defeated Thailand W, Belgium W 3 - Thailand W 2.
 
 #### Short brief
-Belgium W beat Thailand W. The verified final was . The strongest current context signal is source-backed: Official source available: Volleyball World Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Belgium W beat Thailand W, with the verified final listed as Belgium W 3 - Thailand W 2. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Belgium W beat Thailand W. Verified final: .
-- Voice: Belgium W beat Thailand W. A verified result for the HSD radar.
+- Hard fact: Belgium W beat Thailand W. Verified final: Belgium W 3 - Thailand W 2.
+- Voice: Belgium W beat Thailand W. Verified final: Belgium W 3 - Thailand W 2.
 
 #### Story text
 Belgium W beat Thailand W
 
-Verified final: 
+Verified final: Belgium W 3 - Thailand W 2
 
 Angle: volleyball results watch
 
@@ -256,16 +256,16 @@ China W beat Serbia W
 Caption seed: China W defeated Serbia W, Serbia W 0 - China W 3.
 
 #### Short brief
-China W beat Serbia W. The verified final was . The strongest current context signal is source-backed: Official source available: Volleyball World Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+China W beat Serbia W, with the verified final listed as Serbia W 0 - China W 3. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: China W beat Serbia W. Verified final: .
-- Voice: China W beat Serbia W. A verified result for the HSD radar.
+- Hard fact: China W beat Serbia W. Verified final: Serbia W 0 - China W 3.
+- Voice: China W beat Serbia W. Verified final: Serbia W 0 - China W 3.
 
 #### Story text
 China W beat Serbia W
 
-Verified final: 
+Verified final: Serbia W 0 - China W 3
 
 Angle: volleyball results watch
 
@@ -298,16 +298,16 @@ Brazil W beat Bulgaria W
 Caption seed: Brazil W defeated Bulgaria W, Bulgaria W 0 - Brazil W 3.
 
 #### Short brief
-Brazil W beat Bulgaria W. The verified final was . The strongest current context signal is source-backed: Official source available: Volleyball World Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Brazil W beat Bulgaria W, with the verified final listed as Bulgaria W 0 - Brazil W 3. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Brazil W beat Bulgaria W. Verified final: .
-- Voice: Brazil W beat Bulgaria W. A verified result for the HSD radar.
+- Hard fact: Brazil W beat Bulgaria W. Verified final: Bulgaria W 0 - Brazil W 3.
+- Voice: Brazil W beat Bulgaria W. Verified final: Bulgaria W 0 - Brazil W 3.
 
 #### Story text
 Brazil W beat Bulgaria W
 
-Verified final: 
+Verified final: Bulgaria W 0 - Brazil W 3
 
 Angle: volleyball results watch
 
@@ -340,16 +340,16 @@ Italy W beat Turkey W
 Caption seed: Italy W defeated Turkey W, Turkey W 1 - Italy W 3.
 
 #### Short brief
-Italy W beat Turkey W. The verified final was . The strongest current context signal is source-backed: Official source available: Volleyball World Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Italy W beat Turkey W, with the verified final listed as Turkey W 1 - Italy W 3. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Italy W beat Turkey W. Verified final: .
-- Voice: Italy W beat Turkey W. A verified result for the HSD radar.
+- Hard fact: Italy W beat Turkey W. Verified final: Turkey W 1 - Italy W 3.
+- Voice: Italy W beat Turkey W. Verified final: Turkey W 1 - Italy W 3.
 
 #### Story text
 Italy W beat Turkey W
 
-Verified final: 
+Verified final: Turkey W 1 - Italy W 3
 
 Angle: volleyball results watch
 
@@ -382,16 +382,16 @@ Canada W beat France W
 Caption seed: Canada W defeated France W, France W 1 - Canada W 3.
 
 #### Short brief
-Canada W beat France W. The verified final was . The strongest current context signal is source-backed: Official source available: Volleyball World Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields.
+Canada W beat France W, with the verified final listed as France W 1 - Canada W 3. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Canada W beat France W. Verified final: .
-- Voice: Canada W beat France W. A verified result for the HSD radar.
+- Hard fact: Canada W beat France W. Verified final: France W 1 - Canada W 3.
+- Voice: Canada W beat France W. Verified final: France W 1 - Canada W 3.
 
 #### Story text
 Canada W beat France W
 
-Verified final: 
+Verified final: France W 1 - Canada W 3
 
 Angle: volleyball results watch
 

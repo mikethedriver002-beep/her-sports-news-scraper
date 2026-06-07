@@ -1,7 +1,7 @@
-# Her Sports Daily News Sync v1 Hub
+# Her Sports Daily News Sync v1.3 Hub
 
-Run ID: `e4e652c0052f6e36`
-Generated: `2026-06-07T01:22:53.670238+00:00`
+Run ID: `64695d99f4959ebf`
+Generated: `2026-06-07T02:59:51.190849+00:00`
 
 ## Architecture
 
@@ -16,6 +16,7 @@ Generated: `2026-06-07T01:22:53.670238+00:00`
 - Usable source observations: 29
 - Fact packets built: 9
 - Publish-ready packets: 9
+- Production-ready packets: 9
 - Manual review packets: 0
 - P1 / Must Post packets: 4
 - P2 / Strong Maybe packets: 5
@@ -27,4 +28,5 @@ Generated: `2026-06-07T01:22:53.670238+00:00`
 - Hold if Must Post has neither top-performer data nor a primary/official source.
 - Hold if no usable source context was captured.
 - Never invent player stats, rankings, quotes, injuries, or milestones.
+- Final score must be present, or packet is held.
 - Store facts, summaries, and links only. Do not copy full article text.

@@ -1,12 +1,15 @@
 {
-  "version": "news-sync-v1.1",
-  "run_id": "e4e652c0052f6e36",
-  "generated_at_utc": "2026-06-07T01:22:53.670328+00:00",
+  "version": "news-sync-v1.3",
+  "run_id": "64695d99f4959ebf",
+  "generated_at_utc": "2026-06-07T02:59:51.190942+00:00",
   "inputs": {
     "results_graphics_queue": "results_graphics_queue.md",
     "daily_results_recommendations": "daily_results_recommendations.md",
     "wnba_box_score_summary": "wnba_box_score_summary.md",
-    "results_system_hub": "results_system_hub.md"
+    "results_system_hub": "results_system_hub.md",
+    "top_womens_results_csv": "top_womens_results.csv",
+    "reconciled_events_csv": "reconciled_events.csv",
+    "today_final_results_csv": "today_final_results.csv"
   },
   "outputs": [
     "news_input_status_report.csv",
@@ -16,6 +19,7 @@
     "news_brief_queue.md",
     "news_social_packets.md",
     "news_graphics_handoff.md",
+    "news_daily_plan.md",
     "news_manual_review_queue.csv",
     "news_sync_hub.md"
   ],
@@ -24,7 +28,8 @@
     "source_observations": 29,
     "fact_packets": 9,
     "manual_review": 0,
-    "publish_ready": 9
+    "publish_ready": 9,
+    "production_ready": 9
   },
   "settings": {
     "max_must_post": 5,
