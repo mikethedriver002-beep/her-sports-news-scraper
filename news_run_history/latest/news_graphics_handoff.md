@@ -1,6 +1,6 @@
 # Her Sports Daily News-to-Graphics Handoff v1
 
-Generated: 2026-06-07T03:54:48.650054+00:00
+Generated: 2026-06-07T04:03:43.540701+00:00
 
 Use this to upgrade result graphics with news-safe context.
 
@@ -53,7 +53,7 @@ Use as Tonight in the W. Headline: Phoenix Mercury beat Portland Fire. Final sco
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: USA W beat France W. Final score: USA W 3 - France W 2. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: USA W beat France W. Final score: USA W 3 - France W 2. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -64,7 +64,7 @@ Use as Around Women's Sports. Headline: USA W beat France W. Final score: USA W 
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Belgium W beat Thailand W. Final score: Belgium W 3 - Thailand W 2. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Belgium W beat Thailand W. Final score: Belgium W 3 - Thailand W 2. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -75,7 +75,7 @@ Use as Around Women's Sports. Headline: Belgium W beat Thailand W. Final score: 
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Brazil W beat Bulgaria W. Final score: Brazil W 3 - Bulgaria W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Brazil W beat Bulgaria W. Final score: Brazil W 3 - Bulgaria W 0. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -86,7 +86,7 @@ Use as Around Women's Sports. Headline: Brazil W beat Bulgaria W. Final score: B
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Canada W beat France W. Final score: Canada W 3 - France W 1. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Canada W beat France W. Final score: Canada W 3 - France W 1. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -97,7 +97,7 @@ Use as Around Women's Sports. Headline: Canada W beat France W. Final score: Can
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: China W beat Serbia W. Final score: China W 3 - Serbia W 0. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: China W beat Serbia W. Final score: China W 3 - Serbia W 0. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 
@@ -108,7 +108,7 @@ Use as Around Women's Sports. Headline: China W beat Serbia W. Final score: Chin
 **Content family:** Around Women's Sports
 **Manual review:** No
 
-Use as Around Women's Sports. Headline: Italy W beat Turkey W. Final score: Italy W 3 - Turkey W 1. Slide 3 context: Official source available: FIFA Women's Football. Do not invent player stats beyond the packet.
+Use as Around Women's Sports. Headline: Italy W beat Turkey W. Final score: Italy W 3 - Turkey W 1. Slide 3 context: Official source available: Volleyball World. Do not invent player stats beyond the packet.
 
 **Accuracy lock:** Do not change score, winner, loser, or player stats beyond this packet.
 

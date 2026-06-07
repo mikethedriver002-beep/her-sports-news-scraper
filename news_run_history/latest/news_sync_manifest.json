@@ -1,7 +1,7 @@
 {
-  "version": "news-sync-v1.7",
-  "run_id": "64fd6def6a34edd8",
-  "generated_at_utc": "2026-06-07T03:54:48.650404+00:00",
+  "version": "news-sync-v1.8",
+  "run_id": "ec03c1b2dd6f47c7",
+  "generated_at_utc": "2026-06-07T04:03:43.541107+00:00",
   "inputs": {
     "results_graphics_queue": "results_graphics_queue.md",
     "daily_results_recommendations": "daily_results_recommendations.md",
@@ -25,7 +25,7 @@
   ],
   "counts": {
     "candidates": 14,
-    "source_observations": 79,
+    "source_observations": 55,
     "fact_packets": 14,
     "manual_review": 0,
     "publish_ready": 14,

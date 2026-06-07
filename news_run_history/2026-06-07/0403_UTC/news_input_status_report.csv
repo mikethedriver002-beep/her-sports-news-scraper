@@ -1,0 +1,8 @@
+input_name,resolved_path,exists,size_bytes,line_count,has_result_graphic,has_must_post,has_strong_maybe,notes
+results_graphics_queue,results_graphics_queue.md,Yes,12059,335,Yes,No,No,Markdown queue did not produce candidates. CSV-primary mode avoided failure.
+daily_results_recommendations,daily_results_recommendations.md,Yes,8604,177,No,Yes,Yes,
+wnba_box_score_summary,wnba_box_score_summary.md,Yes,1269,24,No,No,No,
+results_system_hub,results_system_hub.md,Yes,896,32,No,No,No,
+top_womens_results_csv,top_womens_results.csv,Yes,49535,51,No,Yes,Yes,Used CSV-primary candidate builder with 14 candidates. Markdown remains backup.
+reconciled_events_csv,reconciled_events.csv,Yes,1382901,1428,No,Yes,Yes,Loaded 1427 CSV rows.
+today_final_results_csv,today_final_results.csv,Yes,63599,66,No,Yes,Yes,Loaded 65 CSV rows.
