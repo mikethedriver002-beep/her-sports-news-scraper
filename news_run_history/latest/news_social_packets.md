@@ -1,6 +1,6 @@
 # Her Sports Daily Social Packets v1
 
-Generated: 2026-06-07T03:15:52.199895+00:00
+Generated: 2026-06-07T03:33:53.830968+00:00
 
 ## Dallas Wings beat Los Angeles Sparks
 
@@ -21,20 +21,20 @@ Angle: high-scoring WNBA result
 
 ---
 
-## Phoenix Mercury beat Portland Fire
+## Las Vegas Aces beat Golden State Valkyries
 
 **Queue:** MUST POST | **Manual review:** No
 
 ### Instagram caption
-Phoenix Mercury beat Portland Fire. Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3.
+Las Vegas Aces beat Golden State Valkyries. Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5.
 
 ### X / Threads / Bluesky
-Phoenix Mercury beat Portland Fire. Verified final: Phoenix Mercury 78, Portland Fire 72.
+Las Vegas Aces beat Golden State Valkyries. Verified final: Las Vegas Aces 84, Golden State Valkyries 79.
 
 ### Story text
-Phoenix Mercury beat Portland Fire
+Las Vegas Aces beat Golden State Valkyries
 
-Verified final: Phoenix Mercury 78, Portland Fire 72
+Verified final: Las Vegas Aces 84, Golden State Valkyries 79
 
 Angle: close WNBA finish
 
@@ -59,41 +59,41 @@ Angle: statement WNBA win
 
 ---
 
-## Las Vegas Aces beat Golden State Valkyries
+## Phoenix Mercury beat Portland Fire
 
 **Queue:** MUST POST | **Manual review:** No
 
 ### Instagram caption
-Las Vegas Aces beat Golden State Valkyries. Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5.
+Phoenix Mercury beat Portland Fire. Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3.
 
 ### X / Threads / Bluesky
-Las Vegas Aces beat Golden State Valkyries. Verified final: Las Vegas Aces 84, Golden State Valkyries 79.
+Phoenix Mercury beat Portland Fire. Verified final: Phoenix Mercury 78, Portland Fire 72.
 
 ### Story text
-Las Vegas Aces beat Golden State Valkyries
+Phoenix Mercury beat Portland Fire
 
-Verified final: Las Vegas Aces 84, Golden State Valkyries 79
+Verified final: Phoenix Mercury 78, Portland Fire 72
 
 Angle: close WNBA finish
 
 ---
 
-## Dallas Wings beat Los Angeles Sparks
+## USA W beat France W
 
 **Queue:** MUST POST | **Manual review:** No
 
 ### Instagram caption
-Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.
+USA W beat France W. Verified final: USA W 3 - France W 2.
 
 ### X / Threads / Bluesky
-Dallas Wings beat Los Angeles Sparks. Verified final: Dallas Wings 104, Los Angeles Sparks 96.
+USA W beat France W. Verified final: USA W 3 - France W 2.
 
 ### Story text
-Dallas Wings beat Los Angeles Sparks
+USA W beat France W
 
-Verified final: Dallas Wings 104, Los Angeles Sparks 96
+Verified final: USA W 3 - France W 2
 
-Angle: high-scoring WNBA result
+Angle: volleyball results watch
 
 ---
 
@@ -111,25 +111,6 @@ Belgium W beat Thailand W. Verified final: Belgium W 3 - Thailand W 2.
 Belgium W beat Thailand W
 
 Verified final: Belgium W 3 - Thailand W 2
-
-Angle: volleyball results watch
-
----
-
-## China W beat Serbia W
-
-**Queue:** STRONG MAYBE | **Manual review:** No
-
-### Instagram caption
-China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
-
-### X / Threads / Bluesky
-China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
-
-### Story text
-China W beat Serbia W
-
-Verified final: China W 3 - Serbia W 0
 
 Angle: volleyball results watch
 
@@ -154,6 +135,44 @@ Angle: volleyball results watch
 
 ---
 
+## Canada W beat France W
+
+**Queue:** STRONG MAYBE | **Manual review:** No
+
+### Instagram caption
+Canada W beat France W. Verified final: Canada W 3 - France W 1.
+
+### X / Threads / Bluesky
+Canada W beat France W. Verified final: Canada W 3 - France W 1.
+
+### Story text
+Canada W beat France W
+
+Verified final: Canada W 3 - France W 1
+
+Angle: volleyball results watch
+
+---
+
+## China W beat Serbia W
+
+**Queue:** STRONG MAYBE | **Manual review:** No
+
+### Instagram caption
+China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
+
+### X / Threads / Bluesky
+China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
+
+### Story text
+China W beat Serbia W
+
+Verified final: China W 3 - Serbia W 0
+
+Angle: volleyball results watch
+
+---
+
 ## Italy W beat Turkey W
 
 **Queue:** STRONG MAYBE | **Manual review:** No
@@ -173,21 +192,78 @@ Angle: volleyball results watch
 
 ---
 
-## Canada W beat France W
+## Brazil U20 W beat Korea Republic U20 W
 
-**Queue:** STRONG MAYBE | **Manual review:** No
+**Queue:** WATCHLIST | **Manual review:** Yes
 
 ### Instagram caption
-Canada W beat France W. Verified final: Canada W 3 - France W 1.
+Brazil U20 W beat Korea Republic U20 W. Verified final: Brazil U20 W 3 - Korea Republic U20 W 0.
 
 ### X / Threads / Bluesky
-Canada W beat France W. Verified final: Canada W 3 - France W 1.
+Brazil U20 W beat Korea Republic U20 W. Verified final: Brazil U20 W 3 - Korea Republic U20 W 0.
 
 ### Story text
-Canada W beat France W
+Brazil U20 W beat Korea Republic U20 W
 
-Verified final: Canada W 3 - France W 1
+Verified final: Brazil U20 W 3 - Korea Republic U20 W 0
 
-Angle: volleyball results watch
+Angle: major women's soccer result
+
+---
+
+## Brazil W beat USA W
+
+**Queue:** WATCHLIST | **Manual review:** Yes
+
+### Instagram caption
+Brazil W beat USA W. Verified final: Brazil W 2 - USA W 1.
+
+### X / Threads / Bluesky
+Brazil W beat USA W. Verified final: Brazil W 2 - USA W 1.
+
+### Story text
+Brazil W beat USA W
+
+Verified final: Brazil W 2 - USA W 1
+
+Angle: major women's soccer result
+
+---
+
+## Japan W beat South Africa W
+
+**Queue:** WATCHLIST | **Manual review:** Yes
+
+### Instagram caption
+Japan W beat South Africa W. Verified final: Japan W 5 - South Africa W 0.
+
+### X / Threads / Bluesky
+Japan W beat South Africa W. Verified final: Japan W 5 - South Africa W 0.
+
+### Story text
+Japan W beat South Africa W
+
+Verified final: Japan W 5 - South Africa W 0
+
+Angle: major women's soccer result
+
+---
+
+## Mexico W beat Australia W
+
+**Queue:** WATCHLIST | **Manual review:** Yes
+
+### Instagram caption
+Mexico W beat Australia W. Verified final: Mexico W 1 - Australia W 0.
+
+### X / Threads / Bluesky
+Mexico W beat Australia W. Verified final: Mexico W 1 - Australia W 0.
+
+### Story text
+Mexico W beat Australia W
+
+Verified final: Mexico W 1 - Australia W 0
+
+Angle: major women's soccer result
 
 ---

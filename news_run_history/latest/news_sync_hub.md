@@ -1,7 +1,7 @@
-# Her Sports Daily News Sync v1.4 Hub
+# Her Sports Daily News Sync v1.6 Hub
 
-Run ID: `31d9e3acc4923def`
-Generated: `2026-06-07T03:15:52.200343+00:00`
+Run ID: `1fd93daeeb129960`
+Generated: `2026-06-07T03:33:53.831401+00:00`
 
 ## Architecture
 
@@ -11,15 +11,16 @@ Generated: `2026-06-07T03:15:52.200343+00:00`
 
 ## Run summary
 
-- News candidates read: 10
-- Source observations: 34
-- Usable source observations: 34
-- Fact packets built: 10
+- News candidates read: 14
+- Source observations: 31
+- Usable source observations: 31
+- Fact packets built: 14
 - Publish-ready packets: 10
 - Production-ready packets: 10
-- Manual review packets: 0
+- Manual review packets: 4
 - P1 / Must Post packets: 5
-- P2 / Strong Maybe packets: 5
+- P2 / Strong Maybe plus diversity packets: 9
+- Diversity Watch packets: 0
 - Source fetch flags: 0
 
 ## Manual review rules

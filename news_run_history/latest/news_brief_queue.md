@@ -1,6 +1,6 @@
 # Her Sports Daily News Brief Queue v1
 
-Generated: 2026-06-07T03:15:52.199618+00:00
+Generated: 2026-06-07T03:33:53.830687+00:00
 
 This is the news layer on top of Results Desk. Results Desk remains the score source of truth.
 
@@ -54,47 +54,49 @@ Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (
 
 ---
 
-### NEWS PACKET 2: Phoenix Mercury beat Portland Fire
+### NEWS PACKET 2: Las Vegas Aces beat Golden State Valkyries
 
 **Urgency:** P1
 **Content family:** Tonight in the W
 **Recommendation:** Publish short brief
 **Manual review:** No
 **Review flags:** None
-**Source depth:** 4 usable / 2 primary
+**Source depth:** 5 usable / 3 primary
 
 #### Headline
-Phoenix Mercury beat Portland Fire
+Las Vegas Aces beat Golden State Valkyries
 
 #### Dek
-Phoenix Mercury 78, Portland Fire 72. Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
+Las Vegas Aces 84, Golden State Valkyries 79. Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
 
 #### Short brief
-Phoenix Mercury beat Portland Fire, with the verified final listed as Phoenix Mercury 78, Portland Fire 72. The best production angle is close WNBA finish: Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+Las Vegas Aces beat Golden State Valkyries, with the verified final listed as Las Vegas Aces 84, Golden State Valkyries 79. The best production angle is close WNBA finish: Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Phoenix Mercury beat Portland Fire. Verified final: Phoenix Mercury 78, Portland Fire 72.
-- Voice: Phoenix Mercury beat Portland Fire. Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3.
+- Hard fact: Las Vegas Aces beat Golden State Valkyries. Verified final: Las Vegas Aces 84, Golden State Valkyries 79.
+- Voice: Las Vegas Aces beat Golden State Valkyries. Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5.
 
 #### Story text
-Phoenix Mercury beat Portland Fire
+Las Vegas Aces beat Golden State Valkyries
 
-Verified final: Phoenix Mercury 78, Portland Fire 72
+Verified final: Las Vegas Aces 84, Golden State Valkyries 79
 
 Angle: close WNBA finish
 
 #### Slide 3 / context
-DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
+A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
 
 #### Sources
 - https://www.wnba.com/
-- https://mercury.wnba.com/
+- https://aces.wnba.com/
+- https://valkyries.wnba.com/
 - https://www.espn.com/wnba/scoreboard
 - https://apnews.com/hub/wnba-basketball
 
 #### Source observation notes
 - WNBA official | ok | Yes | Matched source metadata terms: wnba
-- Phoenix Mercury official | ok | Yes | Matched source metadata terms: phoenix mercury, wnba
+- Las Vegas Aces official | ok | Yes | Matched source metadata terms: las vegas aces, wnba
+- Golden State Valkyries official | ok | Yes | Matched source metadata terms: golden state valkyries, wnba
 - ESPN WNBA | ok | Yes | Matched source metadata terms: wnba
 - AP WNBA hub | ok | Yes | Matched source metadata terms: wnba
 
@@ -148,99 +150,91 @@ Natasha Howard (Minnesota Lynx): PTS 27, REB 5, AST 1, STL 3; Olivia Miles (Minn
 
 ---
 
-### NEWS PACKET 4: Las Vegas Aces beat Golden State Valkyries
+### NEWS PACKET 4: Phoenix Mercury beat Portland Fire
 
 **Urgency:** P1
 **Content family:** Tonight in the W
 **Recommendation:** Publish short brief
 **Manual review:** No
 **Review flags:** None
-**Source depth:** 5 usable / 3 primary
+**Source depth:** 4 usable / 2 primary
 
 #### Headline
-Las Vegas Aces beat Golden State Valkyries
+Phoenix Mercury beat Portland Fire
 
 #### Dek
-Las Vegas Aces 84, Golden State Valkyries 79. Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
+Phoenix Mercury 78, Portland Fire 72. Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
 
 #### Short brief
-Las Vegas Aces beat Golden State Valkyries, with the verified final listed as Las Vegas Aces 84, Golden State Valkyries 79. The best production angle is close WNBA finish: Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+Phoenix Mercury beat Portland Fire, with the verified final listed as Phoenix Mercury 78, Portland Fire 72. The best production angle is close WNBA finish: Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Las Vegas Aces beat Golden State Valkyries. Verified final: Las Vegas Aces 84, Golden State Valkyries 79.
-- Voice: Las Vegas Aces beat Golden State Valkyries. Top performers: A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5.
+- Hard fact: Phoenix Mercury beat Portland Fire. Verified final: Phoenix Mercury 78, Portland Fire 72.
+- Voice: Phoenix Mercury beat Portland Fire. Top performers: DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3.
 
 #### Story text
-Las Vegas Aces beat Golden State Valkyries
+Phoenix Mercury beat Portland Fire
 
-Verified final: Las Vegas Aces 84, Golden State Valkyries 79
+Verified final: Phoenix Mercury 78, Portland Fire 72
 
 Angle: close WNBA finish
 
 #### Slide 3 / context
-A'ja Wilson (Las Vegas Aces): PTS 28, REB 14, AST 3; Gabby Williams (Golden State Valkyries): PTS 27, REB 6, AST 1, STL 2; Jackie Young (Las Vegas Aces): PTS 27, REB 5, AST 5
+DeWanna Bonner (Phoenix Mercury): PTS 19, REB 5, AST 5, STL 2; Natasha Mack (Phoenix Mercury): PTS 16, REB 4, AST 2, STL 1; Monique Akoa Makani (Phoenix Mercury): PTS 11, REB 4, AST 2, STL 3
 
 #### Sources
 - https://www.wnba.com/
-- https://aces.wnba.com/
-- https://valkyries.wnba.com/
+- https://mercury.wnba.com/
 - https://www.espn.com/wnba/scoreboard
 - https://apnews.com/hub/wnba-basketball
 
 #### Source observation notes
 - WNBA official | ok | Yes | Matched source metadata terms: wnba
-- Las Vegas Aces official | ok | Yes | Matched source metadata terms: las vegas aces, wnba
-- Golden State Valkyries official | ok | Yes | Matched source metadata terms: golden state valkyries, wnba
+- Phoenix Mercury official | ok | Yes | Matched source metadata terms: phoenix mercury, wnba
 - ESPN WNBA | ok | Yes | Matched source metadata terms: wnba
 - AP WNBA hub | ok | Yes | Matched source metadata terms: wnba
 
 ---
 
-### NEWS PACKET 5: Dallas Wings beat Los Angeles Sparks
+### NEWS PACKET 5: USA W beat France W
 
 **Urgency:** P1
-**Content family:** Tonight in the W
+**Content family:** Around Women's Sports
 **Recommendation:** Publish short brief
 **Manual review:** No
 **Review flags:** None
-**Source depth:** 5 usable / 3 primary
+**Source depth:** 2 usable / 2 primary
 
 #### Headline
-Dallas Wings beat Los Angeles Sparks
+USA W beat France W
 
 #### Dek
-Dallas Wings 104, Los Angeles Sparks 96. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1
+USA W defeated France W, USA W 3 - France W 2.
 
 #### Short brief
-Dallas Wings beat Los Angeles Sparks, with the verified final listed as Dallas Wings 104, Los Angeles Sparks 96. The best production angle is high-scoring WNBA result: Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+USA W beat France W, with the verified final listed as USA W 3 - France W 2. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
 
 #### Caption options
-- Hard fact: Dallas Wings beat Los Angeles Sparks. Verified final: Dallas Wings 104, Los Angeles Sparks 96.
-- Voice: Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.
+- Hard fact: USA W beat France W. Verified final: USA W 3 - France W 2.
+- Voice: USA W beat France W. Verified final: USA W 3 - France W 2.
 
 #### Story text
-Dallas Wings beat Los Angeles Sparks
+USA W beat France W
 
-Verified final: Dallas Wings 104, Los Angeles Sparks 96
+Verified final: USA W 3 - France W 2
 
-Angle: high-scoring WNBA result
+Angle: volleyball results watch
 
 #### Slide 3 / context
-Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1
+Official source available: Volleyball World
 
 #### Sources
-- https://www.wnba.com/
-- https://wings.wnba.com/
-- https://sparks.wnba.com/
-- https://www.espn.com/wnba/scoreboard
-- https://apnews.com/hub/wnba-basketball
+- https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
+- https://www.cev.eu/
 
 #### Source observation notes
-- WNBA official | ok | Yes | Matched source metadata terms: wnba
-- Dallas Wings official | ok | Yes | Matched source metadata terms: dallas wings, wnba
-- Los Angeles Sparks official | ok | Yes | Matched source metadata terms: los angeles sparks, wnba
-- ESPN WNBA | ok | Yes | Matched source metadata terms: wnba
-- AP WNBA hub | ok | Yes | Matched source metadata terms: wnba
+- Volleyball World | ok | Partial | Official source available: Volleyball World
+- CEV | ok | Partial | Official source available: CEV
 
 ---
 
@@ -288,49 +282,7 @@ Official source available: Volleyball World
 
 ---
 
-### NEWS PACKET 2: China W beat Serbia W
-
-**Urgency:** P2
-**Content family:** Around Women's Sports
-**Recommendation:** Publish if useful / use for roundup
-**Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
-
-#### Headline
-China W beat Serbia W
-
-#### Dek
-China W defeated Serbia W, Serbia W 0 - China W 3.
-
-#### Short brief
-China W beat Serbia W, with the verified final listed as China W 3 - Serbia W 0. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
-
-#### Caption options
-- Hard fact: China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
-- Voice: China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
-
-#### Story text
-China W beat Serbia W
-
-Verified final: China W 3 - Serbia W 0
-
-Angle: volleyball results watch
-
-#### Slide 3 / context
-Official source available: Volleyball World
-
-#### Sources
-- https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
-- https://www.cev.eu/
-
-#### Source observation notes
-- Volleyball World | ok | Partial | Official source available: Volleyball World
-- CEV | ok | Partial | Official source available: CEV
-
----
-
-### NEWS PACKET 3: Brazil W beat Bulgaria W
+### NEWS PACKET 2: Brazil W beat Bulgaria W
 
 **Urgency:** P2
 **Content family:** Around Women's Sports
@@ -372,7 +324,91 @@ Official source available: Volleyball World
 
 ---
 
-### NEWS PACKET 4: Italy W beat Turkey W
+### NEWS PACKET 3: Canada W beat France W
+
+**Urgency:** P2
+**Content family:** Around Women's Sports
+**Recommendation:** Publish if useful / use for roundup
+**Manual review:** No
+**Review flags:** None
+**Source depth:** 2 usable / 2 primary
+
+#### Headline
+Canada W beat France W
+
+#### Dek
+Canada W defeated France W, France W 1 - Canada W 3.
+
+#### Short brief
+Canada W beat France W, with the verified final listed as Canada W 3 - France W 1. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+
+#### Caption options
+- Hard fact: Canada W beat France W. Verified final: Canada W 3 - France W 1.
+- Voice: Canada W beat France W. Verified final: Canada W 3 - France W 1.
+
+#### Story text
+Canada W beat France W
+
+Verified final: Canada W 3 - France W 1
+
+Angle: volleyball results watch
+
+#### Slide 3 / context
+Official source available: Volleyball World
+
+#### Sources
+- https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
+- https://www.cev.eu/
+
+#### Source observation notes
+- Volleyball World | ok | Partial | Official source available: Volleyball World
+- CEV | ok | Partial | Official source available: CEV
+
+---
+
+### NEWS PACKET 4: China W beat Serbia W
+
+**Urgency:** P2
+**Content family:** Around Women's Sports
+**Recommendation:** Publish if useful / use for roundup
+**Manual review:** No
+**Review flags:** None
+**Source depth:** 2 usable / 2 primary
+
+#### Headline
+China W beat Serbia W
+
+#### Dek
+China W defeated Serbia W, Serbia W 0 - China W 3.
+
+#### Short brief
+China W beat Serbia W, with the verified final listed as China W 3 - Serbia W 0. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
+
+#### Caption options
+- Hard fact: China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
+- Voice: China W beat Serbia W. Verified final: China W 3 - Serbia W 0.
+
+#### Story text
+China W beat Serbia W
+
+Verified final: China W 3 - Serbia W 0
+
+Angle: volleyball results watch
+
+#### Slide 3 / context
+Official source available: Volleyball World
+
+#### Sources
+- https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
+- https://www.cev.eu/
+
+#### Source observation notes
+- Volleyball World | ok | Partial | Official source available: Volleyball World
+- CEV | ok | Partial | Official source available: CEV
+
+---
+
+### NEWS PACKET 5: Italy W beat Turkey W
 
 **Urgency:** P2
 **Content family:** Around Women's Sports
@@ -414,44 +450,6 @@ Official source available: Volleyball World
 
 ---
 
-### NEWS PACKET 5: Canada W beat France W
+## DIVERSITY WATCH
 
-**Urgency:** P2
-**Content family:** Around Women's Sports
-**Recommendation:** Publish if useful / use for roundup
-**Manual review:** No
-**Review flags:** None
-**Source depth:** 2 usable / 2 primary
-
-#### Headline
-Canada W beat France W
-
-#### Dek
-Canada W defeated France W, France W 1 - Canada W 3.
-
-#### Short brief
-Canada W beat France W, with the verified final listed as Canada W 3 - France W 1. The strongest current context signal is source-backed: Official source available: Volleyball World. Her Sports Daily will keep player or milestone claims limited to sourced fields.
-
-#### Caption options
-- Hard fact: Canada W beat France W. Verified final: Canada W 3 - France W 1.
-- Voice: Canada W beat France W. Verified final: Canada W 3 - France W 1.
-
-#### Story text
-Canada W beat France W
-
-Verified final: Canada W 3 - France W 1
-
-Angle: volleyball results watch
-
-#### Slide 3 / context
-Official source available: Volleyball World
-
-#### Sources
-- https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/
-- https://www.cev.eu/
-
-#### Source observation notes
-- Volleyball World | ok | Partial | Official source available: Volleyball World
-- CEV | ok | Partial | Official source available: CEV
-
----
+No items.
