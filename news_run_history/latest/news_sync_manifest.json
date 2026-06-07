@@ -1,0 +1,33 @@
+{
+  "version": "news-sync-v1",
+  "run_id": "1947d2617249019a",
+  "generated_at_utc": "2026-06-07T00:50:35.724394+00:00",
+  "inputs": {
+    "results_graphics_queue": "results_graphics_queue.md",
+    "daily_results_recommendations": "daily_results_recommendations.md",
+    "wnba_box_score_summary": "wnba_box_score_summary.md",
+    "results_system_hub": "results_system_hub.md"
+  },
+  "outputs": [
+    "news_candidate_queue.csv",
+    "news_source_observations.csv",
+    "news_fact_packets.csv",
+    "news_brief_queue.md",
+    "news_social_packets.md",
+    "news_graphics_handoff.md",
+    "news_manual_review_queue.csv",
+    "news_sync_hub.md"
+  ],
+  "counts": {
+    "candidates": 0,
+    "source_observations": 0,
+    "fact_packets": 0,
+    "manual_review": 0,
+    "publish_ready": 0
+  },
+  "settings": {
+    "max_must_post": 5,
+    "max_strong_maybe": 5,
+    "enable_fetch": true
+  }
+}

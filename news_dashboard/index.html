@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Her Sports Daily News Sync v1</title>
+<style>
+:root {
+  --bg:#0f1020; --panel:#181a2f; --text:#f8f4ff; --muted:#c5bdd9;
+  --accent:#ff4fd8; --accent2:#7cf7ff; --border:rgba(255,255,255,.14);
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family:Inter,system-ui,sans-serif; color:var(--text);
+  background:radial-gradient(circle at 15% 0%, rgba(255,79,216,.18), transparent 30%),
+             radial-gradient(circle at 85% 0%, rgba(124,247,255,.12), transparent 30%),
+             var(--bg);
+}
+header { position:sticky; top:0; z-index:5; background:rgba(15,16,32,.93); border-bottom:1px solid var(--border); padding:22px; }
+.wrap { max-width:1280px; margin:0 auto; }
+.brand { display:flex; gap:14px; align-items:center; }
+.bug { width:54px; height:54px; border-radius:14px; border:2px solid var(--accent); display:grid; place-items:center; font-weight:900; font-size:10px; line-height:.92; text-align:center; background:linear-gradient(135deg, rgba(255,79,216,.25), rgba(124,247,255,.12)); }
+h1 { margin:0; font-size:clamp(26px,4vw,42px); }
+.sub { color:var(--muted); font-size:13px; }
+main { max-width:1280px; margin:0 auto; padding:22px; }
+section { margin-bottom:28px; }
+.grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+@media(max-width:960px) { .grid { grid-template-columns:1fr; } }
+.card { background:rgba(24,26,47,.96); border:1px solid var(--border); border-radius:18px; padding:16px; box-shadow:0 12px 32px rgba(0,0,0,.24); }
+.card h3 { margin:10px 0; font-size:18px; line-height:1.15; }
+.card p { color:var(--text); line-height:1.5; }
+.meta { display:flex; flex-wrap:wrap; gap:6px; }
+.pill { display:inline-flex; border:1px solid var(--border); color:var(--muted); padding:5px 8px; border-radius:999px; font-size:12px; font-weight:800; }
+.small { color:var(--muted); font-size:13px; line-height:1.45; margin-bottom:6px; }
+pre { white-space:pre-wrap; word-wrap:break-word; line-height:1.45; font-size:13px; background:rgba(0,0,0,.28); border:1px solid var(--border); padding:14px; border-radius:14px; }
+.empty { padding:16px; border:1px dashed var(--border); border-radius:14px; color:var(--muted); }
+table { width:100%; border-collapse:collapse; background:rgba(24,26,47,.96); border-radius:18px; overflow:hidden; }
+td, th { padding:10px; border-bottom:1px solid var(--border); font-size:12px; text-align:left; color:var(--muted); }
+th { color:var(--text); }
+a { color:var(--accent2); }
+</style>
+</head>
+<body>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>News Sync v1</h1><div class="sub">Generated 2026-06-07T00:50:35.781798+00:00. Source-backed news packets on top of Results Desk.</div></div></div></header>
+<main>
+<section><h2>System Hub</h2><div class="card"><pre># Her Sports Daily News Sync v1 Hub Run ID: `1947d2617249019a` Generated: `2026-06-07T00:50:35.724360+00:00` ## Architecture - Results Desk remains the scorer of record. - News Sync consumes Results Desk outputs and builds source-backed editorial packets. - The two systems are connected, but not merged into one fragile scraper. ## Run summary - News candidates read: 0 - Source observations: 0 - Usable source observations: 0 - Fact packets built: 0 - Publish-ready packets: 0 - Manual review packets: 0 - P1 / Must Post packets: 0 - P2 / Strong Maybe packets: 0 - Source fetch flags: 0 ## Manual review rules - Hold if Results Desk marked the item for review. - Hold if Must Post has neither top-performer data nor a primary/official source. - Hold if no usable source context was captured. - Never invent player stats, rankings, quotes, injuries, or milestones. - Store facts, summaries, and links only. Do not copy full article text.</pre></div></section>
+<section><h2>Publish Ready</h2><div class="empty">No publish-ready packets.</div></section>
+<section><h2>Manual Review</h2><div class="empty">No manual review packets.</div></section>
+<section><h2>Source Observations</h2><table><thead><tr><th>Source</th><th>Type</th><th>Fetch</th><th>Usable</th><th>Title</th><th>URL</th></tr></thead><tbody></tbody></table></section>
+<section><h2>Brief Queue</h2><div class="card"><pre># Her Sports Daily News Brief Queue v1 Generated: 2026-06-07T00:50:35.724204+00:00 This is the news layer on top of Results Desk. Results Desk remains the score source of truth. ## MUST POST No items. ## STRONG MAYBE No items.</pre></div></section>
+</main>
+</body>
+</html>
