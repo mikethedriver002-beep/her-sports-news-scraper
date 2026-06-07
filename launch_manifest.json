@@ -1,0 +1,33 @@
+{
+  "version": "hsd-launch-control-v1",
+  "generated_at_utc": "2026-06-07T05:02:21.359474+00:00",
+  "inputs": {
+    "studio_bundle_queue": "studio_bundle_queue.csv",
+    "studio_bundle_packets": "studio_bundle_packets.md",
+    "studio_command": "studio_command_center.md",
+    "studio_manifest": "studio_manifest.json"
+  },
+  "outputs": [
+    "launch_command_center.md",
+    "launch_daily_runbook.md",
+    "launch_graphics_chat_brief.md",
+    "launch_instagram_publish_queue.csv",
+    "launch_caption_drafts.md",
+    "launch_story_plan.md",
+    "launch_quality_gate.csv",
+    "launch_account_setup_checklist.md",
+    "launch_7_day_content_calendar.md",
+    "launch_operating_sop.md",
+    "launch_dashboard/index.html"
+  ],
+  "counts": {
+    "bundles_read": 4,
+    "publish_queue_rows": 4,
+    "quality_gate_rows": 36
+  },
+  "source_versions": {
+    "studio_manifest_version": "hsd-studio-bridge-v1.2",
+    "studio_sop_version": "hsd-studio-bridge-v1",
+    "brand_name": "Her Sports Daily"
+  }
+}

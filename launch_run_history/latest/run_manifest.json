@@ -1,0 +1,26 @@
+{
+  "run_timestamp_utc": "2026-06-07 05:02:21 UTC",
+  "archive_folder": "launch_run_history/2026-06-07/0502_UTC",
+  "latest_folder": "launch_run_history/latest",
+  "copied_files": [
+    "launch_command_center.md",
+    "launch_daily_runbook.md",
+    "launch_graphics_chat_brief.md",
+    "launch_instagram_publish_queue.csv",
+    "launch_caption_drafts.md",
+    "launch_story_plan.md",
+    "launch_quality_gate.csv",
+    "launch_account_setup_checklist.md",
+    "launch_7_day_content_calendar.md",
+    "launch_operating_sop.md",
+    "launch_manifest.json",
+    "launch_dashboard/index.html"
+  ],
+  "missing_files": [
+    "launch_setup_error.md"
+  ],
+  "row_counts": {
+    "launch_instagram_publish_queue.csv": 4,
+    "launch_quality_gate.csv": 36
+  }
+}
