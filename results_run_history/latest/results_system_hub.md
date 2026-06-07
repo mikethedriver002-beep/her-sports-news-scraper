@@ -1,7 +1,7 @@
 # Her Sports Daily Results Desk v4.3 Hub
 
-Run ID: `d44c589d077e16a4`
-Generated: `2026-06-07T10:11:16.730154+00:00`
+Run ID: `841ef8064a50cc21`
+Generated: `2026-06-07T15:57:12.813845+00:00`
 Date window: `2026-06-06, 2026-06-07, 2026-06-08`
 
 ## Source strategy
