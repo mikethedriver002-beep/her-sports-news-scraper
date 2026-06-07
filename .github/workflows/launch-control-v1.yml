@@ -1,4 +1,4 @@
-name: Her Sports Daily Launch Control v1.1
+name: Her Sports Daily Launch Control v1.1.1
 
 on:
   workflow_dispatch:
@@ -23,36 +23,24 @@ concurrency:
 jobs:
   launch-control:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
 
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Run Launch Control v1.1
-        run: python generate_hsd_launch_control_v1.py
-
-      - name: Archive Launch Control run
-        run: python archive_hsd_launch_runs_v1.py
-
-      - name: Upload Launch Control artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: hsd-launch-control-v1-1
-          path: launch_run_history/latest/
-
-      - name: Commit and push Launch Control outputs
+      - name: Generate, archive, commit, and push safely
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -83,31 +71,48 @@ jobs:
             "launch_setup_error.md"
           )
 
-          for file in "${FILES[@]}"; do
-            if [ -e "$file" ]; then
-              git add "$file"
-            else
-              echo "Optional output not present, skipping: $file"
-            fi
-          done
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          git commit -m "Update HSD Launch Control v1.1"
-
           for attempt in 1 2 3; do
-            echo "Push attempt $attempt"
-            git pull --rebase --autostash origin main
+            echo "Safe publish attempt $attempt"
+
+            # Always start from the newest remote main before generating outputs.
+            # This avoids rebase conflicts in generated timestamped files.
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            python generate_hsd_launch_control_v1.py
+            python archive_hsd_launch_runs_v1.py
+
+            for file in "${FILES[@]}"; do
+              if [ -e "$file" ]; then
+                git add "$file"
+              else
+                echo "Optional output not present, skipping: $file"
+              fi
+            done
+
+            if git diff --cached --quiet; then
+              echo "No changes to commit"
+              exit 0
+            fi
+
+            git commit -m "Update HSD Launch Control v1.1"
+
             if git push origin HEAD:main; then
               echo "Push succeeded"
               exit 0
             fi
-            echo "Push failed, retrying after short wait..."
+
+            echo "Push failed, retrying from latest remote main..."
             sleep 5
           done
 
           echo "Push failed after 3 attempts"
           exit 1
+
+      - name: Upload Launch Control artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-launch-control-v1-1
+          path: launch_run_history/latest/
