@@ -1,0 +1,75 @@
+name: Her Sports Daily News Sync v1
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Women's Sports Results Desk v4.1", "Women's Sports Results Desk v4.2", "Women's Sports Results Desk v4.3"]
+    types:
+      - completed
+  schedule:
+    - cron: "45 11 * * *"
+    - cron: "45 17 * * *"
+    - cron: "45 23 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news-sync-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  news-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements-news-sync.txt
+
+      - name: Run News Sync v1
+        env:
+          HSD_NEWS_MAX_MUST_POST: "5"
+          HSD_NEWS_MAX_STRONG_MAYBE: "5"
+          HSD_NEWS_ENABLE_FETCH: "true"
+        run: python generate_hsd_news_sync_v1.py
+
+      - name: Generate news dashboard
+        run: python generate_news_dashboard_v1.py
+
+      - name: Archive news sync run
+        run: python archive_news_runs_v1.py
+
+      - name: Upload news sync artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-news-sync-v1
+          path: news_run_history/latest/
+
+      - name: Commit updated news files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add news_candidate_queue.csv
+          git add news_source_observations.csv
+          git add news_fact_packets.csv
+          git add news_brief_queue.md
+          git add news_social_packets.md
+          git add news_graphics_handoff.md
+          git add news_manual_review_queue.csv
+          git add news_sync_hub.md
+          git add news_sync_manifest.json
+          git add news_dashboard/index.html
+          git add latest_news_sync_run_summary.md
+          git add news_run_history/
+          git commit -m "Update HSD News Sync v1" || echo "No changes to commit"
+          git push
