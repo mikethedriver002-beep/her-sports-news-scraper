@@ -1,6 +1,6 @@
 # Her Sports Daily Launch Graphics Chat Brief v1
 
-Generated: 2026-06-07T05:02:21.358697+00:00
+Generated: 2026-06-07T05:05:05.459193+00:00
 
 # Graphics Chat Starter Prompt
 
@@ -26,7 +26,7 @@ The following content is copied from `studio_bundle_packets.md`.
 
 # Her Sports Daily Bundle Packets v1.2
 
-Generated: 2026-06-07T04:53:08.188013+00:00
+Generated: 2026-06-07T05:04:41.037480+00:00
 
 Bundle Mode is the preferred daily production view. It turns the full graphics queue into fewer, stronger posts.
 
