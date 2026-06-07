@@ -1,0 +1,29 @@
+{
+  "short_brief": {
+    "target_words": "90-140",
+    "required_fields": [
+      "verified_final",
+      "winner_or_outcome",
+      "context_signal",
+      "source_urls"
+    ],
+    "rule": "Generate for every Must Post and source-backed Strong Maybe."
+  },
+  "social_packet": {
+    "outputs": [
+      "instagram_caption",
+      "x_threads_bluesky",
+      "story_text"
+    ],
+    "rule": "Generate only from fact packet fields."
+  },
+  "graphics_handoff": {
+    "required_fields": [
+      "headline",
+      "final_score",
+      "slide3_context",
+      "top_performers_if_available"
+    ],
+    "rule": "Do not invent player stats or milestones."
+  }
+}

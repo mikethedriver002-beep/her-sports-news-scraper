@@ -1,0 +1,136 @@
+{
+  "sources": [
+    {
+      "source_id": "wnba",
+      "name": "WNBA official",
+      "priority": 100,
+      "type": "official_league",
+      "sports": [
+        "basketball"
+      ],
+      "leagues_contains": [
+        "WNBA",
+        "NBA W"
+      ],
+      "urls": [
+        "https://www.wnba.com/"
+      ],
+      "notes": "Official WNBA league source. Use for schedule, stats, news, transactions, injuries."
+    },
+    {
+      "source_id": "espn_wnba",
+      "name": "ESPN WNBA",
+      "priority": 75,
+      "type": "scoreboard_backup",
+      "sports": [
+        "basketball"
+      ],
+      "leagues_contains": [
+        "WNBA",
+        "NBA W"
+      ],
+      "urls": [
+        "https://www.espn.com/wnba/scoreboard"
+      ],
+      "notes": "Backup box score and story-link source."
+    },
+    {
+      "source_id": "ap_wnba",
+      "name": "AP WNBA hub",
+      "priority": 70,
+      "type": "wire_context",
+      "sports": [
+        "basketball"
+      ],
+      "leagues_contains": [
+        "WNBA",
+        "NBA W"
+      ],
+      "urls": [
+        "https://apnews.com/hub/wnba-basketball"
+      ],
+      "notes": "Use for wire-style context, never copied prose."
+    },
+    {
+      "source_id": "volleyball_world",
+      "name": "Volleyball World",
+      "priority": 95,
+      "type": "official_competition",
+      "sports": [
+        "volleyball"
+      ],
+      "leagues_contains": [
+        "VNL",
+        "Nations League",
+        "Volleyball"
+      ],
+      "urls": [
+        "https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/"
+      ],
+      "notes": "Official VNL and global volleyball narrative source."
+    },
+    {
+      "source_id": "cev",
+      "name": "CEV",
+      "priority": 85,
+      "type": "official_confederation",
+      "sports": [
+        "volleyball"
+      ],
+      "leagues_contains": [
+        "CEV",
+        "European"
+      ],
+      "urls": [
+        "https://www.cev.eu/"
+      ],
+      "notes": "Official European volleyball context source."
+    },
+    {
+      "source_id": "ehf",
+      "name": "EHF Champions League Women",
+      "priority": 85,
+      "type": "official_competition",
+      "sports": [
+        "handball"
+      ],
+      "leagues_contains": [
+        "EHF",
+        "Champions League"
+      ],
+      "urls": [
+        "https://ehfcl.eurohandball.com/women/"
+      ],
+      "notes": "Official women's handball competition source."
+    }
+  ],
+  "team_sources": {
+    "dallas wings": [
+      "https://wings.wnba.com/"
+    ],
+    "los angeles sparks": [
+      "https://sparks.wnba.com/"
+    ],
+    "phoenix mercury": [
+      "https://mercury.wnba.com/"
+    ],
+    "minnesota lynx": [
+      "https://lynx.wnba.com/"
+    ],
+    "seattle storm": [
+      "https://storm.wnba.com/"
+    ],
+    "las vegas aces": [
+      "https://aces.wnba.com/"
+    ],
+    "golden state valkyries": [
+      "https://valkyries.wnba.com/"
+    ],
+    "chicago sky": [
+      "https://sky.wnba.com/"
+    ],
+    "connecticut sun": [
+      "https://sun.wnba.com/"
+    ]
+  }
+}

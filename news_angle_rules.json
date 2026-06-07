@@ -1,0 +1,20 @@
+{
+  "basketball": {
+    "close_margin_max": 6,
+    "statement_margin_min": 15,
+    "high_score_min": 95,
+    "default_family": "Tonight in the W"
+  },
+  "volleyball": {
+    "five_set_scores": [
+      "3-2",
+      "2-3"
+    ],
+    "default_family": "Around Women's Sports"
+  },
+  "context_fallbacks": {
+    "basketball": "This result stands out because the verified box score gives it a real player-performance angle.",
+    "volleyball": "This result matters most when paired with tournament context, rankings, or an official competition recap.",
+    "default": "This result belongs in today's wider women's sports conversation, but it needs one more sourced context signal before being treated as a full story."
+  }
+}
