@@ -1,6 +1,6 @@
 {
-  "version": "hsd-launch-control-v1",
-  "generated_at_utc": "2026-06-07T05:05:05.460128+00:00",
+  "version": "hsd-launch-control-v1.1",
+  "generated_at_utc": "2026-06-07T05:21:40.467345+00:00",
   "inputs": {
     "studio_bundle_queue": "studio_bundle_queue.csv",
     "studio_bundle_packets": "studio_bundle_packets.md",
@@ -18,12 +18,25 @@
     "launch_account_setup_checklist.md",
     "launch_7_day_content_calendar.md",
     "launch_operating_sop.md",
-    "launch_dashboard/index.html"
+    "launch_daily_operator_checklist.md",
+    "launch_post_publish_tracker.csv",
+    "launch_metrics_manual_input.csv",
+    "launch_7_day_performance_dashboard.md",
+    "launch_what_to_double_down_on.md",
+    "launch_content_pillar_balance.csv",
+    "launch_growth_experiment_log.csv",
+    "launch_dashboard/index.html",
+    "launch_analytics_dashboard/index.html"
   ],
   "counts": {
     "bundles_read": 4,
     "publish_queue_rows": 4,
-    "quality_gate_rows": 36
+    "quality_gate_rows": 36,
+    "post_tracker_rows": 4,
+    "metrics_input_rows": 4,
+    "pillar_balance_rows": 5,
+    "growth_experiments": 3,
+    "metrics_rows_with_data": 0
   },
   "source_versions": {
     "studio_manifest_version": "hsd-studio-bridge-v1.2",

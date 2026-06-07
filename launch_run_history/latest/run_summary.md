@@ -1,12 +1,16 @@
-# HSD Launch Control Run Summary
+# HSD Launch Control v1.1 Run Summary
 
-Run timestamp UTC: `2026-06-07 05:05:05 UTC`
-Archive folder: `launch_run_history/2026-06-07/0505_UTC`
+Run timestamp UTC: `2026-06-07 05:21:40 UTC`
+Archive folder: `launch_run_history/2026-06-07/0521_UTC`
 
 ## Row counts
 
 - `launch_instagram_publish_queue.csv`: 4
 - `launch_quality_gate.csv`: 36
+- `launch_post_publish_tracker.csv`: 4
+- `launch_metrics_manual_input.csv`: 4
+- `launch_content_pillar_balance.csv`: 5
+- `launch_growth_experiment_log.csv`: 3
 
 ## Archived files
 
@@ -20,8 +24,16 @@ Archive folder: `launch_run_history/2026-06-07/0505_UTC`
 - `launch_account_setup_checklist.md`
 - `launch_7_day_content_calendar.md`
 - `launch_operating_sop.md`
+- `launch_daily_operator_checklist.md`
+- `launch_post_publish_tracker.csv`
+- `launch_metrics_manual_input.csv`
+- `launch_7_day_performance_dashboard.md`
+- `launch_what_to_double_down_on.md`
+- `launch_content_pillar_balance.csv`
+- `launch_growth_experiment_log.csv`
 - `launch_manifest.json`
 - `launch_dashboard/index.html`
+- `launch_analytics_dashboard/index.html`
 
 ## Missing optional files
 
