@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: news-sync-v1-${{ github.ref }}
+  group: hsd-repo-writer-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-news-sync.txt
 
-      - name: Run News Sync v1
+      - name: Run News Sync v1.3
         env:
           HSD_NEWS_MAX_MUST_POST: "5"
           HSD_NEWS_MAX_STRONG_MAYBE: "5"
@@ -52,15 +54,16 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-news-sync-v1
+          name: hsd-news-sync-v1-3
           path: news_run_history/latest/
 
-      - name: Commit updated news files
+      - name: Commit and push updated news files
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
           git add news_input_status_report.csv
-          git add news_setup_error.md
+          git add news_setup_error.md 2>/dev/null || true
           git add news_candidate_queue.csv
           git add news_source_observations.csv
           git add news_fact_packets.csv
@@ -74,5 +77,24 @@ jobs:
           git add news_dashboard/index.html
           git add latest_news_sync_run_summary.md
           git add news_run_history/
-          git commit -m "Update HSD News Sync v1" || echo "No changes to commit"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update HSD News Sync v1.3"
+
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git pull --rebase origin main
+            if git push origin main; then
+              echo "Push succeeded"
+              exit 0
+            fi
+            echo "Push failed, retrying after short wait..."
+            sleep 5
+          done
+
+          echo "Push failed after 3 attempts"
+          exit 1
