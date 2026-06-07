@@ -1,7 +1,7 @@
 {
-  "version": "news-sync-v1",
-  "run_id": "4a5953b621416d7b",
-  "generated_at_utc": "2026-06-07T00:50:55.186893+00:00",
+  "version": "news-sync-v1.1",
+  "run_id": "011baae9cb7e5519",
+  "generated_at_utc": "2026-06-07T01:18:24.783779+00:00",
   "inputs": {
     "results_graphics_queue": "results_graphics_queue.md",
     "daily_results_recommendations": "daily_results_recommendations.md",
@@ -9,6 +9,7 @@
     "results_system_hub": "results_system_hub.md"
   },
   "outputs": [
+    "news_input_status_report.csv",
     "news_candidate_queue.csv",
     "news_source_observations.csv",
     "news_fact_packets.csv",
@@ -19,11 +20,11 @@
     "news_sync_hub.md"
   ],
   "counts": {
-    "candidates": 0,
-    "source_observations": 0,
-    "fact_packets": 0,
+    "candidates": 9,
+    "source_observations": 29,
+    "fact_packets": 9,
     "manual_review": 0,
-    "publish_ready": 0
+    "publish_ready": 9
   },
   "settings": {
     "max_must_post": 5,
