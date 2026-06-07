@@ -1,4 +1,4 @@
-name: Her Sports Daily Studio Bridge v1
+name: Her Sports Daily Studio Bridge v1.1
 
 on:
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run Studio Bridge
+      - name: Run Studio Bridge Bundle Mode
         env:
           HSD_STUDIO_MAX_TOP_PACKETS: "6"
           HSD_STUDIO_MAX_QUEUE_ITEMS: "14"
@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-studio-bridge-v1
+          name: hsd-studio-bridge-v1-1
           path: studio_run_history/latest/
 
       - name: Commit and push Studio outputs
@@ -67,6 +67,10 @@ jobs:
           FILES=(
             "studio_command_center.md"
             "studio_graphics_queue.csv"
+            "studio_bundle_queue.csv"
+            "studio_bundle_packets.md"
+            "studio_bundle_prompts.md"
+            "studio_bundle_caption_bank.md"
             "studio_top_graphic_packets.md"
             "studio_image_prompts.md"
             "studio_caption_bank.md"
@@ -95,7 +99,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Update HSD Studio Bridge v1"
+          git commit -m "Update HSD Studio Bridge v1.1"
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
