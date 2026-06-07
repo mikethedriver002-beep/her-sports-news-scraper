@@ -17,12 +17,15 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.1"
+VERSION = "news-sync-v1.3"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
 INPUT_WNBA_BOX = os.environ.get("HSD_WNBA_BOX_SUMMARY", "wnba_box_score_summary.md")
 INPUT_RESULTS_HUB = os.environ.get("HSD_RESULTS_HUB", "results_system_hub.md")
+INPUT_RESULTS_TOP_CSV = os.environ.get("HSD_RESULTS_TOP_CSV", "top_womens_results.csv")
+INPUT_RESULTS_RECONCILED_CSV = os.environ.get("HSD_RESULTS_RECONCILED_CSV", "reconciled_events.csv")
+INPUT_RESULTS_FINALS_CSV = os.environ.get("HSD_RESULTS_FINALS_CSV", "today_final_results.csv")
 
 SOURCE_REGISTRY_FILE = os.environ.get("HSD_NEWS_SOURCE_REGISTRY", "news_source_registry.json")
 ANGLE_RULES_FILE = os.environ.get("HSD_NEWS_ANGLE_RULES", "news_angle_rules.json")
@@ -39,6 +42,7 @@ NEWS_FACT_PACKETS_CSV = "news_fact_packets.csv"
 NEWS_BRIEF_QUEUE_MD = "news_brief_queue.md"
 NEWS_SOCIAL_PACKETS_MD = "news_social_packets.md"
 NEWS_GRAPHICS_HANDOFF_MD = "news_graphics_handoff.md"
+NEWS_DAILY_PLAN_MD = "news_daily_plan.md"
 NEWS_MANUAL_REVIEW_CSV = "news_manual_review_queue.csv"
 NEWS_SYNC_HUB_MD = "news_sync_hub.md"
 NEWS_MANIFEST_JSON = "news_sync_manifest.json"
@@ -70,6 +74,8 @@ PACKET_FIELDS = [
     "brief_120w", "caption_hard_fact", "caption_voice", "story_text",
     "slide3_context", "graphics_handoff", "source_count", "primary_source_count",
     "source_urls_json", "context_signal", "top_performers", "review_flags",
+    "context_quality", "quality_score", "production_ready",
+    "content_format_recommendation", "result_record_source",
     "manual_review", "score_accuracy_check", "rights_safe_note",
 ]
 
@@ -183,39 +189,404 @@ def parse_key_value_line(line: str) -> Tuple[str, str]:
     return k, v
 
 
+def infer_queue_section_from_fields(row: Dict[str, Any]) -> str:
+    section = clean(row.get("queue_section"))
+    if section:
+        upper = section.upper()
+        if "MUST" in upper or "MAKE FIRST" in upper:
+            return "MUST POST"
+        if "STRONG" in upper:
+            return "STRONG MAYBE"
+        if "WATCH" in upper:
+            return "WATCHLIST"
+
+    bucket = clean(row.get("editorial_bucket")).lower()
+    action = clean(row.get("content_action")).lower()
+
+    if "must" in bucket or "make first" in action:
+        return "MUST POST"
+    if "strong" in bucket or "strong maybe" in action:
+        return "STRONG MAYBE"
+    if "watch" in bucket or "watch" in action:
+        return "WATCHLIST"
+    return ""
+
+
+def extract_final_score_from_text(text_value: str) -> str:
+    text_value = clean(text_value)
+    if not text_value:
+        return ""
+
+    patterns = [
+        r"Final:\s*([^|\\n\\.]+?\\b\\d+\\s*-\\s*[^|\\n\\.]+?\\b\\d+)",
+        r"final listed as\s*([^|\\n\\.]+?\\b\\d+\\s*-\\s*[^|\\n\\.]+?\\b\\d+)",
+        r"Caption seed:.*?,\\s*([^|\\n\\.]+?\\b\\d+\\s*-\\s*[^|\\n\\.]+?\\b\\d+)",
+        r"Verified final:\\s*([^|\\n\\.]+?\\b\\d+\\s*-\\s*[^|\\n\\.]+?\\b\\d+)",
+    ]
+
+    for pattern in patterns:
+        m = re.search(pattern, text_value, flags=re.I)
+        if m:
+            return clean(m.group(1)).rstrip(".")
+    return ""
+
+
+def infer_winner_loser_from_headline(headline: str) -> Tuple[str, str]:
+    m = re.match(r"(.+?)\\s+beat\\s+(.+)$", clean(headline), flags=re.I)
+    if m:
+        return clean(m.group(1)), clean(m.group(2))
+    return "", ""
+
+
+def normalize_candidate_fields(row: Dict[str, Any]) -> Dict[str, Any]:
+    row["queue_section"] = infer_queue_section_from_fields(row)
+
+    if not clean(row.get("final_score")):
+        row["final_score"] = extract_final_score_from_text(" ".join([
+            row.get("graphics_subhead", ""),
+            row.get("slide2_result", ""),
+            row.get("slide3_context", ""),
+            row.get("raw_block", ""),
+        ]))
+
+    if not clean(row.get("winner")) or not clean(row.get("loser")):
+        winner, loser = infer_winner_loser_from_headline(row.get("graphics_headline", ""))
+        row["winner"] = clean(row.get("winner")) or winner
+        row["loser"] = clean(row.get("loser")) or loser
+
+    if not clean(row.get("outcome_type")) and clean(row.get("winner")) and clean(row.get("loser")):
+        row["outcome_type"] = "win"
+
+    if not clean(row.get("matchup")) and clean(row.get("winner")) and clean(row.get("loser")):
+        row["matchup"] = f"{row.get('winner')} vs {row.get('loser')}"
+
+    return row
+
+
+
+def load_csv_rows_from_path(path: Path) -> List[Dict[str, str]]:
+    if not path.exists() or not path.is_file():
+        return []
+    try:
+        with path.open(newline="", encoding="utf-8") as f:
+            return list(csv.DictReader(f))
+    except Exception:
+        return []
+
+
+def resolve_csv_input(path: str) -> Tuple[Path, List[Dict[str, str]]]:
+    for p in candidate_input_paths(path):
+        rows = load_csv_rows_from_path(p)
+        if rows:
+            return p, rows
+    return Path(path), []
+
+
+def input_status_row_csv(input_name: str, path: str, rows: List[Dict[str, str]], resolved_path: Path) -> Dict[str, Any]:
+    exists = resolved_path.exists() and resolved_path.is_file()
+    notes = ""
+    if rows:
+        notes = f"Loaded {len(rows)} CSV rows."
+    elif exists:
+        notes = "CSV exists but loaded 0 rows."
+    else:
+        notes = "CSV not found."
+    return {
+        "input_name": input_name,
+        "resolved_path": resolved_path.as_posix(),
+        "exists": "Yes" if exists else "No",
+        "size_bytes": resolved_path.stat().st_size if exists else 0,
+        "line_count": len(rows) + (1 if rows else 0),
+        "has_result_graphic": "No",
+        "has_must_post": "Yes" if any("must" in clean(r.get("editorial_bucket", "")).lower() or "make first" in clean(r.get("content_action", "")).lower() for r in rows) else "No",
+        "has_strong_maybe": "Yes" if any("strong" in clean(r.get("editorial_bucket", "")).lower() or "strong" in clean(r.get("content_action", "")).lower() for r in rows) else "No",
+        "notes": notes,
+    }
+
+
+def result_record_final_score(record: Dict[str, str]) -> str:
+    for key in ["final_score_display", "final_score", "score_display", "score"]:
+        if clean(record.get(key)):
+            return clean(record.get(key))
+
+    away_team = clean(record.get("away_team_display") or record.get("away_team_raw") or record.get("away_team_norm"))
+    home_team = clean(record.get("home_team_display") or record.get("home_team_raw") or record.get("home_team_norm"))
+    away_score = clean(record.get("away_score"))
+    home_score = clean(record.get("home_score"))
+    if away_team and home_team and away_score and home_score:
+        return f"{away_team} {away_score} - {home_team} {home_score}"
+    if away_score and home_score:
+        return f"{away_score}-{home_score}"
+    return ""
+
+
+def result_record_headline(record: Dict[str, str]) -> str:
+    return clean(
+        record.get("graphics_headline")
+        or record.get("headline")
+        or record.get("caption_seed")
+        or record.get("matchup")
+    )
+
+
+def token_set(value: str) -> set[str]:
+    tokens = re.findall(r"[a-z0-9']+", clean(value).lower())
+    return {t for t in tokens if len(t) >= 3 and t not in {"the", "and", "beat", "draw", "with", "final"}}
+
+
+def result_record_match_score(candidate: Dict[str, Any], record: Dict[str, str]) -> int:
+    cand_blob = " ".join([
+        candidate.get("graphics_headline", ""),
+        candidate.get("matchup", ""),
+        candidate.get("winner", ""),
+        candidate.get("loser", ""),
+        candidate.get("league", ""),
+    ])
+    rec_blob = " ".join([
+        result_record_headline(record),
+        record.get("matchup", ""),
+        record.get("winner", ""),
+        record.get("loser", ""),
+        record.get("home_team_display", ""),
+        record.get("away_team_display", ""),
+        record.get("home_team_norm", ""),
+        record.get("away_team_norm", ""),
+        record.get("league_norm", ""),
+    ])
+
+    c = token_set(cand_blob)
+    r = token_set(rec_blob)
+    if not c or not r:
+        return 0
+
+    overlap = len(c & r)
+    score = overlap * 10
+
+    if clean(candidate.get("graphics_headline")).lower() == result_record_headline(record).lower():
+        score += 100
+    if clean(candidate.get("date")) and clean(record.get("scheduled_date_local")) and clean(candidate.get("date")) == clean(record.get("scheduled_date_local")):
+        score += 15
+    if clean(candidate.get("sport")).lower() and clean(candidate.get("sport")).lower() == clean(record.get("sport_norm")).lower():
+        score += 10
+    if result_record_final_score(record):
+        score += 8
+    return score
+
+
+def best_result_record(candidate: Dict[str, Any], records: List[Dict[str, str]]) -> Tuple[Optional[Dict[str, str]], int]:
+    best = None
+    best_score = 0
+    for record in records:
+        score = result_record_match_score(candidate, record)
+        if score > best_score:
+            best = record
+            best_score = score
+    if best_score >= 25:
+        return best, best_score
+    return None, best_score
+
+
+def enrich_candidate_from_record(candidate: Dict[str, Any], record: Dict[str, str], source_name: str) -> Dict[str, Any]:
+    candidate = dict(candidate)
+
+    final_score = result_record_final_score(record)
+    if final_score:
+        candidate["final_score"] = final_score
+
+    for src_key, dest_key in [
+        ("sport_norm", "sport"),
+        ("league_norm", "league"),
+        ("editorial_bucket", "editorial_bucket"),
+        ("content_action", "content_action"),
+        ("content_family", "content_family"),
+        ("posting_priority", "posting_priority"),
+        ("confidence", "confidence"),
+        ("editorial_rank", "editorial_rank"),
+        ("outcome_type", "outcome_type"),
+        ("winner", "winner"),
+        ("loser", "loser"),
+        ("source_url", "source_url"),
+        ("scheduled_date_local", "date"),
+    ]:
+        if clean(record.get(src_key)) and not clean(candidate.get(dest_key)):
+            candidate[dest_key] = clean(record.get(src_key))
+
+    headline = result_record_headline(record)
+    if headline and not clean(candidate.get("graphics_headline")):
+        candidate["graphics_headline"] = headline
+
+    if not clean(candidate.get("matchup")):
+        away = clean(record.get("away_team_display") or record.get("away_team_norm"))
+        home = clean(record.get("home_team_display") or record.get("home_team_norm"))
+        if away and home:
+            candidate["matchup"] = f"{away} vs {home}"
+
+    if clean(record.get("caption_seed")) and not clean(candidate.get("graphics_subhead")):
+        candidate["graphics_subhead"] = clean(record.get("caption_seed"))
+
+    candidate["result_record_source"] = source_name
+    return normalize_candidate_fields(candidate)
+
+
+def enrich_candidates_from_result_csvs(candidates: List[Dict[str, Any]], csv_sources: List[Tuple[str, List[Dict[str, str]]]]) -> List[Dict[str, Any]]:
+    records: List[Dict[str, str]] = []
+    source_by_id: Dict[int, str] = {}
+    for source_name, rows in csv_sources:
+        for row in rows:
+            records.append(row)
+            source_by_id[id(row)] = source_name
+
+    if not records:
+        return candidates
+
+    enriched = []
+    for candidate in candidates:
+        record, score = best_result_record(candidate, records)
+        if record:
+            enriched.append(enrich_candidate_from_record(candidate, record, source_by_id.get(id(record), "results_csv")))
+        else:
+            enriched.append(normalize_candidate_fields(candidate))
+    return enriched
+
+
+def candidates_from_result_csvs(run_id: str, csv_sources: List[Tuple[str, List[Dict[str, str]]]]) -> List[Dict[str, Any]]:
+    """
+    Last-resort candidate builder directly from Results Desk CSVs.
+    This makes News Sync resilient if markdown formatting changes again.
+    """
+    rows: List[Dict[str, str]] = []
+    for source_name, source_rows in csv_sources:
+        for r in source_rows:
+            if clean(r.get("gender_scope")).lower() != "women":
+                continue
+            bucket = clean(r.get("editorial_bucket"))
+            action = clean(r.get("content_action"))
+            if "must" in bucket.lower() or "make first" in action.lower() or "strong" in bucket.lower():
+                rr = dict(r)
+                rr["_result_record_source"] = source_name
+                rows.append(rr)
+
+    # Sort by bucket then rank.
+    def sort_key(r: Dict[str, str]):
+        bucket = clean(r.get("editorial_bucket")).lower()
+        pri = 0 if "must" in bucket else 1
+        try:
+            rank = -float(r.get("editorial_rank") or 0)
+        except Exception:
+            rank = 0
+        return (pri, rank)
+
+    rows.sort(key=sort_key)
+    candidates: List[Dict[str, Any]] = []
+
+    for r in rows:
+        bucket = clean(r.get("editorial_bucket"))
+        queue = "MUST POST" if "must" in bucket.lower() or "make first" in clean(r.get("content_action")).lower() else "STRONG MAYBE"
+        headline = result_record_headline(r)
+        candidate = {
+            "run_id": run_id,
+            "candidate_id": stable_id(run_id, headline, queue),
+            "queue_section": queue,
+            "content_action": clean(r.get("content_action")),
+            "sport": clean(r.get("sport_norm")),
+            "league": clean(r.get("league_norm")),
+            "editorial_tier": clean(r.get("editorial_tier")),
+            "editorial_bucket": bucket,
+            "template": "News Sync CSV fallback",
+            "selected_source": clean(r.get("selected_source")),
+            "all_sources": clean(r.get("all_sources_json")),
+            "confidence": clean(r.get("confidence")),
+            "manual_review": clean(r.get("manual_review")),
+            "editorial_rank": clean(r.get("editorial_rank")),
+            "outcome_type": clean(r.get("outcome_type")),
+            "matchup": clean(r.get("matchup")),
+            "final_score": result_record_final_score(r),
+            "winner": clean(r.get("winner")),
+            "loser": clean(r.get("loser")),
+            "game_status": clean(r.get("status_norm")),
+            "date": clean(r.get("scheduled_date_local")),
+            "source_url": clean(r.get("source_url")),
+            "graphics_headline": headline,
+            "graphics_subhead": clean(r.get("caption_seed") or r.get("graphics_subhead")),
+            "slide1_hook": headline,
+            "slide2_result": result_record_final_score(r),
+            "slide3_context": clean(r.get("angle_tag") or r.get("slide3_context") or r.get("caption_seed")),
+            "slide4_cta": "",
+            "raw_block": json.dumps(r, ensure_ascii=False),
+            "result_record_source": clean(r.get("_result_record_source")),
+        }
+        candidates.append(normalize_candidate_fields(candidate))
+
+    must = [c for c in candidates if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
+    maybe = [c for c in candidates if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
+    return must + maybe
+
+
+def clean_top_performer_text(value: str) -> str:
+    value = clean(value)
+    if not value:
+        return ""
+    value = value.replace("**", "")
+    value = re.sub(r"^\\d+\\.\\s*", "", value)
+
+    m = re.search(r"Top performers:\\s*(.*)$", value, flags=re.I)
+    if m:
+        value = clean(m.group(1))
+
+    # Remove accidental event metadata if it survived.
+    value = re.sub(r"^.*?Status:\\s*found\\s*-\\s*", "", value, flags=re.I)
+    value = value.replace(" | ", "; ")
+    value = re.sub(r"\\s+", " ", value).strip()
+    return value
+
+
+
+
 def parse_graphics_queue(text: str, run_id: str) -> List[Dict[str, Any]]:
     """
-    Parses Results Desk v4.3 style `results_graphics_queue.md`.
+    Robust Results Desk queue parser.
 
-    It does not try to re-score games. Results Desk remains the scorer of record.
+    v1.2 fixes the v1.1 issue where a valid graphics queue could contain
+    result blocks but still parse 0 candidates because the section heading
+    was not in the same split block or used a slightly different label.
     """
-    blocks = re.split(r"\n---\n", text)
+    if not text.strip() or "## RESULT GRAPHIC" not in text:
+        return []
+
+    starts = [m.start() for m in re.finditer(r"^## RESULT GRAPHIC\s+\d+:", text, flags=re.M)]
+    blocks: List[str] = []
+    for i, start_pos in enumerate(starts):
+        end_pos = starts[i + 1] if i + 1 < len(starts) else len(text)
+        # include some preceding context to catch section headings
+        context_start = max(0, text.rfind("\n#", 0, start_pos))
+        block = text[context_start:end_pos] if context_start >= 0 else text[start_pos:end_pos]
+        blocks.append(block)
+
     candidates: List[Dict[str, Any]] = []
-    current_section = ""
 
     for block in blocks:
-        if "# MUST POST" in block:
-            current_section = "MUST POST"
-        elif "# STRONG MAYBE" in block:
-            current_section = "STRONG MAYBE"
-        elif "# WATCHLIST" in block:
-            current_section = "WATCHLIST"
-
-        if "## RESULT GRAPHIC" not in block:
-            continue
-
         lines = [ln.rstrip() for ln in block.splitlines()]
-        row: Dict[str, Any] = {"run_id": run_id, "queue_section": current_section, "raw_block": block.strip()}
+        row: Dict[str, Any] = {"run_id": run_id, "raw_block": block.strip()}
 
         first = next((ln for ln in lines if ln.startswith("## RESULT GRAPHIC")), "")
         row["graphics_headline"] = clean(re.sub(r"^## RESULT GRAPHIC\s+\d+:\s*", "", first))
-        row["candidate_id"] = stable_id(run_id, row["graphics_headline"], current_section)
+        row["candidate_id"] = stable_id(run_id, row["graphics_headline"], "graphics_queue")
 
         in_verified = False
         in_slide_copy = False
         slide_key = None
 
         for ln in lines:
+            # section hints
+            if ln.strip().startswith("#"):
+                upper = ln.upper()
+                if "MUST POST" in upper or "MAKE FIRST" in upper:
+                    row["queue_section"] = "MUST POST"
+                elif "STRONG MAYBE" in upper:
+                    row["queue_section"] = "STRONG MAYBE"
+                elif "WATCHLIST" in upper:
+                    row["queue_section"] = "WATCHLIST"
+
             k, v = parse_key_value_line(ln)
             if k:
                 mapped = {
@@ -225,6 +596,8 @@ def parse_graphics_queue(text: str, run_id: str) -> List[Dict[str, Any]]:
                     "editorial tier": "editorial_tier",
                     "editorial bucket": "editorial_bucket",
                     "content action": "content_action",
+                    "content family": "content_family",
+                    "posting priority": "posting_priority",
                     "template": "template",
                     "selected source": "selected_source",
                     "all sources": "all_sources",
@@ -282,14 +655,14 @@ def parse_graphics_queue(text: str, run_id: str) -> List[Dict[str, Any]]:
                     existing = row.get(slide_key, "")
                     row[slide_key] = clean((existing + " " + ln.strip()).strip())
 
-        # sanitize and fill
         for f in CANDIDATE_FIELDS:
             row.setdefault(f, "")
+
+        row = normalize_candidate_fields(row)
 
         if row.get("queue_section") in {"MUST POST", "STRONG MAYBE"}:
             candidates.append(row)
 
-    # enforce news-sync scope cap
     must = [c for c in candidates if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
     maybe = [c for c in candidates if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
     return must + maybe
@@ -393,8 +766,10 @@ def parse_recommendations_fallback(text: str, run_id: str) -> List[Dict[str, Any
     if current:
         candidates.append(current)
 
-    must = [c for c in candidates if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
-    maybe = [c for c in candidates if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
+    normalized = [normalize_candidate_fields(c) for c in candidates]
+
+    must = [c for c in normalized if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
+    maybe = [c for c in normalized if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
     return must + maybe
 
 
@@ -454,7 +829,7 @@ def find_top_performers(candidate: Dict[str, Any], box_map: Dict[str, str]) -> s
             best = val
 
     if best_score >= 1:
-        return best
+        return clean_top_performer_text(best)
     return ""
 
 
@@ -794,55 +1169,95 @@ def make_brief(candidate: Dict[str, Any], top_performers: str, context_signal: s
     sport = norm(candidate.get("sport"))
     content_family = "Tonight in the W" if sport == "basketball" else "Around Women's Sports"
 
+    score_phrase = final_score if final_score else "score pending parser review"
+
     if top_performers:
-        # Pull a concise top performer phrase without over-rewriting the source.
-        performer_sentence = clean(top_performers)
-        performer_sentence = re.sub(r"^[-*\d.\s]+", "", performer_sentence)
-        performer_sentence = performer_sentence[:260]
-        dek = f"{final_score}. {performer_sentence}"
-        context_line = performer_sentence
+        performer_sentence = clean_top_performer_text(top_performers)
+        # Keep the first three performer chunks if separated by semicolons.
+        chunks = [clean(x) for x in performer_sentence.split(";") if clean(x)]
+        if chunks:
+            performer_sentence = "; ".join(chunks[:3])
+        dek = f"{score_phrase}. Top performers: {performer_sentence}"
+        context_line = f"Top performers: {performer_sentence}"
     else:
-        dek = clean(candidate.get("graphics_subhead")) or final_score
+        dek = clean(candidate.get("graphics_subhead")) or score_phrase
         context_line = context_signal or clean(candidate.get("slide3_context"))
 
-    if winner and loser:
+    if winner and loser and final_score:
         lede = f"{winner} beat {loser}, with the verified final listed as {final_score}."
-    elif clean(candidate.get("outcome_type")) == "draw":
+    elif winner and loser:
+        lede = f"{winner} beat {loser}."
+    elif clean(candidate.get("outcome_type")) == "draw" and final_score:
         lede = f"{headline_base}, with the verified final listed as {final_score}."
     else:
-        lede = f"{headline_base}. The verified final was {final_score}."
+        lede = f"{headline_base}."
 
     if top_performers:
-        second = f"The best production angle is {angle_tag}: {context_line}"
+        second = f"The best production angle is {angle_tag}: {context_line}."
     elif context_signal:
-        second = f"The strongest current context signal is source-backed: {context_signal}"
+        second = f"The strongest current context signal is source-backed: {context_signal}."
     else:
         second = "The result is verified, but richer narrative context still needs an official recap, stat page, or competition note."
 
-    close = "Her Sports Daily will treat the score as verified and keep player or milestone claims limited to sourced fields."
+    close = "Her Sports Daily will keep player or milestone claims limited to sourced fields."
     brief = f"{lede} {second} {close}"
 
-    # Trim to around 120-160 words if it gets too long
     words = brief.split()
     if len(words) > 155:
         brief = " ".join(words[:155]).rstrip(",.;") + "."
 
-    caption_hard = f"{headline_base}. Verified final: {final_score}."
+    caption_hard = f"{headline_base}. Verified final: {score_phrase}."
     if top_performers:
-        caption_voice = f"{headline_base}. The box-score angle makes this one worth more than a score-only post."
+        caption_voice = f"{headline_base}. {context_line}."
     elif "five-set" in angle_tag:
         caption_voice = f"{headline_base}. Five sets, one result, and a clean Around Women's Sports angle."
     else:
-        caption_voice = f"{headline_base}. A verified result for the HSD radar."
+        caption_voice = f"{headline_base}. Verified final: {score_phrase}."
 
-    story_text = f"{headline_base}\n\nVerified final: {final_score}\n\nAngle: {angle_tag}"
+    story_text = f"{headline_base}\n\nVerified final: {score_phrase}\n\nAngle: {angle_tag}"
     slide3 = context_line if context_line else clean(candidate.get("slide3_context"))
     graphics_handoff = (
         f"Use as {content_family}. Headline: {headline_base}. "
-        f"Final score: {final_score}. Slide 3 context: {slide3}. "
+        f"Final score: {score_phrase}. Slide 3 context: {slide3}. "
         "Do not invent player stats beyond the packet."
     )
     return headline_base, dek, brief, caption_hard, caption_voice, story_text, graphics_handoff
+
+
+
+def context_quality(top_performers: str, src_count: int, primary_count: int, final_score: str) -> str:
+    if final_score and top_performers and primary_count >= 1:
+        return "High"
+    if final_score and primary_count >= 1:
+        return "Medium"
+    if final_score and src_count >= 1:
+        return "Low"
+    return "Unsafe"
+
+
+def quality_score(top_performers: str, src_count: int, primary_count: int, final_score: str, queue_section: str) -> int:
+    score = 0
+    if final_score:
+        score += 35
+    if primary_count >= 1:
+        score += 20
+    if src_count >= 2:
+        score += 10
+    if top_performers:
+        score += 25
+    if queue_section == "MUST POST":
+        score += 10
+    return min(score, 100)
+
+
+def format_recommendation(packet_context_quality: str, content_family: str, queue_section: str, top_performers: str) -> str:
+    if packet_context_quality == "High" and content_family == "Tonight in the W":
+        return "Carousel or short brief"
+    if packet_context_quality in {"High", "Medium"} and queue_section == "MUST POST":
+        return "Short brief plus story"
+    if content_family == "Around Women's Sports":
+        return "Roundup item"
+    return "Hold or use as note only"
 
 
 def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, Any]], box_map: Dict[str, str], angle_rules: Dict[str, Any], run_id: str) -> Dict[str, Any]:
@@ -862,6 +1277,10 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         manual_review = "Yes"
         review_flags.append("results_desk_manual_review")
 
+    if not clean(candidate.get("final_score")):
+        manual_review = "Yes"
+        review_flags.append("final_score_missing")
+
     # Strong rule: P1 needs either top performers or at least one usable/official source.
     if candidate.get("queue_section") == "MUST POST":
         if not top_performers and primary_count < 1:
@@ -877,6 +1296,10 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
     # score lock: news layer never overrides result desk final score
     score_accuracy_check = "locked_to_results_desk"
 
+    packet_context_quality = context_quality(top_performers, src_count, primary_count, clean(candidate.get("final_score")))
+    packet_quality_score = quality_score(top_performers, src_count, primary_count, clean(candidate.get("final_score")), candidate.get("queue_section"))
+    packet_format_reco = format_recommendation(packet_context_quality, content_family, candidate.get("queue_section"), top_performers)
+
     if manual_review == "Yes":
         publish_reco = "Hold for editor"
     elif candidate.get("queue_section") == "MUST POST":
@@ -884,6 +1307,7 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
     else:
         publish_reco = "Publish if useful / use for roundup"
 
+    production_ready = "Yes" if manual_review == "No" and packet_context_quality in {"High", "Medium"} else "No"
     urgency = "P1" if candidate.get("queue_section") == "MUST POST" else "P2"
 
     return {
@@ -910,6 +1334,11 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         "context_signal": context_signal,
         "top_performers": top_performers,
         "review_flags": "; ".join(sorted(set([f for f in review_flags if f]))),
+        "context_quality": packet_context_quality,
+        "quality_score": packet_quality_score,
+        "production_ready": production_ready,
+        "content_format_recommendation": packet_format_reco,
+        "result_record_source": candidate.get("result_record_source", ""),
         "manual_review": manual_review,
         "score_accuracy_check": score_accuracy_check,
         "rights_safe_note": "Facts and links only. Do not copy article body or source prose.",
@@ -1047,17 +1476,79 @@ def markdown_graphics_handoff(packets: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+
+def markdown_daily_plan(packets: List[Dict[str, Any]]) -> str:
+    ready = [p for p in packets if p.get("manual_review") != "Yes"]
+    p1 = [p for p in ready if p.get("urgency") == "P1"]
+    p2 = [p for p in ready if p.get("urgency") == "P2"]
+
+    lines = [
+        "# Her Sports Daily News Daily Plan v1.3",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        "## Recommended production order",
+        "",
+    ]
+
+    if p1:
+        lines.append("### 1. Main post")
+        lead = p1[0]
+        lines.extend([
+            f"- **{lead.get('headline')}**",
+            f"- Format: {lead.get('content_format_recommendation')}",
+            f"- Why: {lead.get('context_quality')} context quality, score {lead.get('quality_score')}/100",
+            f"- Caption seed: {lead.get('caption_voice')}",
+            "",
+        ])
+
+        if len(p1) > 1:
+            lines.append("### 2. WNBA story/roundup candidates")
+            for p in p1[1:5]:
+                lines.append(f"- **{p.get('headline')}** | {p.get('content_format_recommendation')} | {p.get('context_quality')}")
+            lines.append("")
+
+    if p2:
+        lines.append("### 3. Around Women's Sports roundup")
+        for p in p2[:5]:
+            lines.append(f"- **{p.get('headline')}** | {p.get('sport')} | {p.get('caption_hard_fact')}")
+        lines.append("")
+
+    lines.extend([
+        "## Do not post without review",
+        "",
+    ])
+    held = [p for p in packets if p.get("manual_review") == "Yes"]
+    if held:
+        for p in held:
+            lines.append(f"- **{p.get('headline')}** | flags: {p.get('review_flags')}")
+    else:
+        lines.append("- No held packets.")
+
+    lines.extend([
+        "",
+        "## Notes",
+        "",
+        "- Results Desk remains the score source of truth.",
+        "- News Sync adds context and production copy only.",
+        "- Player stats must come from the packet or a verified box-score source.",
+    ])
+
+    return "\\n".join(lines) + "\\n"
+
+
 def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: List[Dict[str, Any]], packets: List[Dict[str, Any]]) -> str:
     manual = [p for p in packets if p.get("manual_review") == "Yes"]
     publish = [p for p in packets if p.get("manual_review") != "Yes"]
     p1 = [p for p in packets if p.get("urgency") == "P1"]
     p2 = [p for p in packets if p.get("urgency") == "P2"]
+    production_ready = [p for p in packets if p.get("production_ready") == "Yes"]
 
     usable_sources = [o for o in observations if o.get("usable_context") in {"Yes", "Partial"}]
     source_failures = [o for o in observations if o.get("review_flag")]
 
     lines = [
-        "# Her Sports Daily News Sync v1 Hub",
+        "# Her Sports Daily News Sync v1.3 Hub",
         "",
         f"Run ID: `{run_id}`",
         f"Generated: `{utc_now()}`",
@@ -1075,6 +1566,7 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
         f"- Usable source observations: {len(usable_sources)}",
         f"- Fact packets built: {len(packets)}",
         f"- Publish-ready packets: {len(publish)}",
+        f"- Production-ready packets: {len(production_ready)}",
         f"- Manual review packets: {len(manual)}",
         f"- P1 / Must Post packets: {len(p1)}",
         f"- P2 / Strong Maybe packets: {len(p2)}",
@@ -1086,6 +1578,7 @@ def markdown_hub(run_id: str, candidates: List[Dict[str, Any]], observations: Li
         "- Hold if Must Post has neither top-performer data nor a primary/official source.",
         "- Hold if no usable source context was captured.",
         "- Never invent player stats, rankings, quotes, injuries, or milestones.",
+        "- Final score must be present, or packet is held.",
         "- Store facts, summaries, and links only. Do not copy full article text.",
     ]
     return "\n".join(lines) + "\n"
@@ -1102,23 +1595,45 @@ def main() -> None:
     box_path, box_text = resolve_input(INPUT_WNBA_BOX)
     hub_path, hub_text = resolve_input(INPUT_RESULTS_HUB)
 
+    top_csv_path, top_csv_rows = resolve_csv_input(INPUT_RESULTS_TOP_CSV)
+    reconciled_csv_path, reconciled_csv_rows = resolve_csv_input(INPUT_RESULTS_RECONCILED_CSV)
+    finals_csv_path, finals_csv_rows = resolve_csv_input(INPUT_RESULTS_FINALS_CSV)
+
+    csv_sources = [
+        ("top_womens_results.csv", top_csv_rows),
+        ("reconciled_events.csv", reconciled_csv_rows),
+        ("today_final_results.csv", finals_csv_rows),
+    ]
+
     input_status = [
         input_status_row("results_graphics_queue", INPUT_RESULTS_QUEUE, queue_text, queue_path),
         input_status_row("daily_results_recommendations", INPUT_RESULTS_RECS, recs_text, recs_path),
         input_status_row("wnba_box_score_summary", INPUT_WNBA_BOX, box_text, box_path),
         input_status_row("results_system_hub", INPUT_RESULTS_HUB, hub_text, hub_path),
+        input_status_row_csv("top_womens_results_csv", INPUT_RESULTS_TOP_CSV, top_csv_rows, top_csv_path),
+        input_status_row_csv("reconciled_events_csv", INPUT_RESULTS_RECONCILED_CSV, reconciled_csv_rows, reconciled_csv_path),
+        input_status_row_csv("today_final_results_csv", INPUT_RESULTS_FINALS_CSV, finals_csv_rows, finals_csv_path),
     ]
 
     candidates = parse_graphics_queue(queue_text, run_id)
 
-    if not candidates:
+    if candidates:
+        input_status[0]["notes"] = f"Parsed {len(candidates)} candidates from graphics queue."
+        candidates = enrich_candidates_from_result_csvs(candidates, csv_sources)
+    else:
         fallback_candidates = parse_recommendations_fallback(recs_text, run_id)
         if fallback_candidates:
-            candidates = fallback_candidates
-            input_status[1]["notes"] = "Used fallback parser because graphics queue produced 0 candidates."
+            candidates = enrich_candidates_from_result_csvs(fallback_candidates, csv_sources)
+            input_status[1]["notes"] = "Used fallback parser because graphics queue produced 0 candidates. v1.3 enriched candidates from Results Desk CSVs when available."
         else:
-            input_status[0]["notes"] = "No RESULT GRAPHIC blocks parsed. Check that Results Desk has run and committed results_graphics_queue.md."
-            input_status[1]["notes"] = "Fallback recommendations parser also produced 0 candidates."
+            csv_candidates = candidates_from_result_csvs(run_id, csv_sources)
+            if csv_candidates:
+                candidates = csv_candidates
+                input_status[4]["notes"] = "Used CSV-only candidate builder because markdown queues produced 0 candidates."
+            else:
+                input_status[0]["notes"] = "No RESULT GRAPHIC blocks parsed. Check that Results Desk has run and committed results_graphics_queue.md."
+                input_status[1]["notes"] = "Fallback recommendations parser also produced 0 candidates."
+                input_status[4]["notes"] = "CSV candidate builder also produced 0 candidates."
 
     box_map = parse_box_score_summary(box_text)
 
@@ -1147,6 +1662,7 @@ def main() -> None:
     Path(NEWS_BRIEF_QUEUE_MD).write_text(markdown_brief_queue(packets, observations_by_candidate), encoding="utf-8")
     Path(NEWS_SOCIAL_PACKETS_MD).write_text(markdown_social_packets(packets), encoding="utf-8")
     Path(NEWS_GRAPHICS_HANDOFF_MD).write_text(markdown_graphics_handoff(packets), encoding="utf-8")
+    Path(NEWS_DAILY_PLAN_MD).write_text(markdown_daily_plan(packets), encoding="utf-8")
     Path(NEWS_SYNC_HUB_MD).write_text(markdown_hub(run_id, candidates, all_observations, packets), encoding="utf-8")
 
     manifest = {
@@ -1158,6 +1674,9 @@ def main() -> None:
             "daily_results_recommendations": INPUT_RESULTS_RECS,
             "wnba_box_score_summary": INPUT_WNBA_BOX,
             "results_system_hub": INPUT_RESULTS_HUB,
+            "top_womens_results_csv": INPUT_RESULTS_TOP_CSV,
+            "reconciled_events_csv": INPUT_RESULTS_RECONCILED_CSV,
+            "today_final_results_csv": INPUT_RESULTS_FINALS_CSV,
         },
         "outputs": [
             NEWS_INPUT_STATUS_CSV,
@@ -1167,6 +1686,7 @@ def main() -> None:
             NEWS_BRIEF_QUEUE_MD,
             NEWS_SOCIAL_PACKETS_MD,
             NEWS_GRAPHICS_HANDOFF_MD,
+            NEWS_DAILY_PLAN_MD,
             NEWS_MANUAL_REVIEW_CSV,
             NEWS_SYNC_HUB_MD,
         ],
@@ -1176,6 +1696,7 @@ def main() -> None:
             "fact_packets": len(packets),
             "manual_review": len(manual_packets),
             "publish_ready": len([p for p in packets if p.get("manual_review") != "Yes"]),
+            "production_ready": len([p for p in packets if p.get("production_ready") == "Yes"]),
         },
         "settings": {
             "max_must_post": MAX_MUST_POST,

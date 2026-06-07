@@ -16,6 +16,7 @@ FILES_TO_ARCHIVE = [
     "news_brief_queue.md",
     "news_social_packets.md",
     "news_graphics_handoff.md",
+    "news_daily_plan.md",
     "news_manual_review_queue.csv",
     "news_sync_hub.md",
     "news_sync_manifest.json",
@@ -67,7 +68,7 @@ def main() -> None:
     }
 
     summary = [
-        "# Her Sports Daily News Sync v1 Run Summary",
+        "# Her Sports Daily News Sync v1.3 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",

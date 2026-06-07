@@ -12,6 +12,7 @@ PACKETS_CSV = "news_fact_packets.csv"
 OBS_CSV = "news_source_observations.csv"
 HUB_MD = "news_sync_hub.md"
 QUEUE_MD = "news_brief_queue.md"
+DAILY_PLAN_MD = "news_daily_plan.md"
 OUTPUT_DIR = Path("news_dashboard")
 OUTPUT_FILE = OUTPUT_DIR / "index.html"
 INPUT_STATUS_CSV = "news_input_status_report.csv"
@@ -54,6 +55,8 @@ def card_grid(rows: List[Dict[str, str]], empty: str = "Nothing to show.") -> st
           <div class="small"><b>Recommendation:</b> {esc(row.get('publish_recommendation'))}</div>
           <div class="small"><b>Sport/League:</b> {esc(row.get('sport'))} | {esc(row.get('league'))}</div>
           <div class="small"><b>Source depth:</b> {esc(row.get('source_count'))} usable / {esc(row.get('primary_source_count'))} primary</div>
+          <div class="small"><b>Quality:</b> {esc(row.get('context_quality'))} | {esc(row.get('quality_score'))}/100 | Ready: {esc(row.get('production_ready'))}</div>
+          <div class="small"><b>Recommended format:</b> {esc(row.get('content_format_recommendation'))}</div>
           <div class="small"><b>Context:</b> {esc(row.get('context_signal'))}</div>
           <p>{esc(row.get('brief_120w'))}</p>
           <div class="small"><b>Caption:</b> {esc(row.get('caption_voice'))}</div>
@@ -104,6 +107,7 @@ def main() -> None:
     input_status = load_csv(INPUT_STATUS_CSV)
     hub = load_text(HUB_MD)
     queue = load_text(QUEUE_MD)
+    daily_plan = load_text(DAILY_PLAN_MD)
 
     publish = [p for p in packets if p.get("manual_review") != "Yes"]
     review = [p for p in packets if p.get("manual_review") == "Yes"]
@@ -113,7 +117,7 @@ def main() -> None:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Her Sports Daily News Sync v1</title>
+<title>Her Sports Daily News Sync v1.3</title>
 <style>
 :root {{
   --bg:#0f1020; --panel:#181a2f; --text:#f8f4ff; --muted:#c5bdd9;
@@ -151,10 +155,11 @@ a {{ color:var(--accent2); }}
 </style>
 </head>
 <body>
-<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>News Sync v1</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. Source-backed news packets on top of Results Desk.</div></div></div></header>
+<header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>News Sync v1.3</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. Source-backed news packets on top of Results Desk. v1.3 adds CSV enrichment, quality scoring, and a daily plan.</div></div></div></header>
 <main>
 <section><h2>System Hub</h2><div class="card"><pre>{esc(hub)}</pre></div></section>
 <section><h2>Input Status</h2>{input_status_table(input_status)}</section>
+<section><h2>Daily Plan</h2><div class="card"><pre>{esc(daily_plan)}</pre></div></section>
 <section><h2>Publish Ready</h2>{card_grid(publish, "No publish-ready packets.")}</section>
 <section><h2>Manual Review</h2>{card_grid(review, "No manual review packets.")}</section>
 <section><h2>Source Observations</h2>{obs_table(observations)}</section>
