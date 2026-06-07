@@ -1,6 +1,6 @@
 # Her Sports Daily News Brief Queue v1
 
-Generated: 2026-06-07T01:18:24.783276+00:00
+Generated: 2026-06-07T01:22:53.669754+00:00
 
 This is the news layer on top of Results Desk. Results Desk remains the score source of truth.
 
