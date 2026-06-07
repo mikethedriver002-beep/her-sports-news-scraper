@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 FILES_TO_ARCHIVE = [
+    "news_input_status_report.csv",
+    "news_setup_error.md",
     "news_candidate_queue.csv",
     "news_source_observations.csv",
     "news_fact_packets.csv",

@@ -14,6 +14,7 @@ HUB_MD = "news_sync_hub.md"
 QUEUE_MD = "news_brief_queue.md"
 OUTPUT_DIR = Path("news_dashboard")
 OUTPUT_FILE = OUTPUT_DIR / "index.html"
+INPUT_STATUS_CSV = "news_input_status_report.csv"
 
 
 def clean(value) -> str:
@@ -62,6 +63,25 @@ def card_grid(rows: List[Dict[str, str]], empty: str = "Nothing to show.") -> st
     return '<div class="grid">' + "\n".join(cards) + "</div>"
 
 
+def input_status_table(rows: List[Dict[str, str]]) -> str:
+    if not rows:
+        return '<div class="empty">No input status rows.</div>'
+    trs = []
+    for row in rows:
+        trs.append(
+            "<tr>"
+            f"<td>{esc(row.get('input_name'))}</td>"
+            f"<td>{esc(row.get('resolved_path'))}</td>"
+            f"<td>{esc(row.get('exists'))}</td>"
+            f"<td>{esc(row.get('size_bytes'))}</td>"
+            f"<td>{esc(row.get('has_result_graphic'))}</td>"
+            f"<td>{esc(row.get('has_must_post'))}</td>"
+            f"<td>{esc(row.get('notes'))}</td>"
+            "</tr>"
+        )
+    return "<table><thead><tr><th>Input</th><th>Resolved Path</th><th>Exists</th><th>Bytes</th><th>Result Blocks</th><th>Priority Sections</th><th>Notes</th></tr></thead><tbody>" + "".join(trs) + "</tbody></table>"
+
+
 def obs_table(rows: List[Dict[str, str]]) -> str:
     trs = []
     for row in rows:
@@ -81,6 +101,7 @@ def obs_table(rows: List[Dict[str, str]]) -> str:
 def main() -> None:
     packets = load_csv(PACKETS_CSV)
     observations = load_csv(OBS_CSV)
+    input_status = load_csv(INPUT_STATUS_CSV)
     hub = load_text(HUB_MD)
     queue = load_text(QUEUE_MD)
 
@@ -133,6 +154,7 @@ a {{ color:var(--accent2); }}
 <header><div class="wrap brand"><div class="bug">HER<br>SPORTS<br>DAILY</div><div><h1>News Sync v1</h1><div class="sub">Generated {esc(datetime.now(timezone.utc).isoformat())}. Source-backed news packets on top of Results Desk.</div></div></div></header>
 <main>
 <section><h2>System Hub</h2><div class="card"><pre>{esc(hub)}</pre></div></section>
+<section><h2>Input Status</h2>{input_status_table(input_status)}</section>
 <section><h2>Publish Ready</h2>{card_grid(publish, "No publish-ready packets.")}</section>
 <section><h2>Manual Review</h2>{card_grid(review, "No manual review packets.")}</section>
 <section><h2>Source Observations</h2>{obs_table(observations)}</section>

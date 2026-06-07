@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1"
+VERSION = "news-sync-v1.1"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -42,6 +42,8 @@ NEWS_GRAPHICS_HANDOFF_MD = "news_graphics_handoff.md"
 NEWS_MANUAL_REVIEW_CSV = "news_manual_review_queue.csv"
 NEWS_SYNC_HUB_MD = "news_sync_hub.md"
 NEWS_MANIFEST_JSON = "news_sync_manifest.json"
+NEWS_INPUT_STATUS_CSV = "news_input_status_report.csv"
+NEWS_SETUP_ERROR_MD = "news_setup_error.md"
 
 USER_AGENT = "Mozilla/5.0 (compatible; HerSportsDailyNewsSync/1.0; +https://hersportsdaily.example)"
 
@@ -69,6 +71,11 @@ PACKET_FIELDS = [
     "slide3_context", "graphics_handoff", "source_count", "primary_source_count",
     "source_urls_json", "context_signal", "top_performers", "review_flags",
     "manual_review", "score_accuracy_check", "rights_safe_note",
+]
+
+INPUT_STATUS_FIELDS = [
+    "input_name", "resolved_path", "exists", "size_bytes", "line_count",
+    "has_result_graphic", "has_must_post", "has_strong_maybe", "notes",
 ]
 
 
@@ -101,9 +108,53 @@ def load_json(path: str, default: Any) -> Any:
         return default
 
 
-def read_text(path: str) -> str:
+def candidate_input_paths(path: str) -> List[Path]:
+    """
+    News Sync v1.1 searches both root outputs and archived latest outputs.
+
+    This fixes the first-run failure mode where News Sync ran successfully
+    but found 0 candidates because it did not locate Results Desk files.
+    """
     p = Path(path)
-    return p.read_text(encoding="utf-8") if p.exists() else ""
+    names = [p]
+    if not p.is_absolute():
+        names.extend([
+            Path("results_run_history") / "latest" / path,
+            Path("results_run_history") / "latest" / p.name,
+            Path("results_run_history") / p.name,
+        ])
+    return names
+
+
+def resolve_input(path: str) -> Tuple[Path, str]:
+    for p in candidate_input_paths(path):
+        if p.exists() and p.is_file():
+            try:
+                text = p.read_text(encoding="utf-8")
+            except Exception:
+                text = p.read_text(encoding="utf-8", errors="replace")
+            return p, text
+    return Path(path), ""
+
+
+def read_text(path: str) -> str:
+    _, txt = resolve_input(path)
+    return txt
+
+
+def input_status_row(input_name: str, path: str, text_value: str, resolved_path: Path) -> Dict[str, Any]:
+    exists = resolved_path.exists() and resolved_path.is_file()
+    return {
+        "input_name": input_name,
+        "resolved_path": resolved_path.as_posix(),
+        "exists": "Yes" if exists else "No",
+        "size_bytes": resolved_path.stat().st_size if exists else 0,
+        "line_count": len(text_value.splitlines()) if text_value else 0,
+        "has_result_graphic": "Yes" if "## RESULT GRAPHIC" in text_value else "No",
+        "has_must_post": "Yes" if "MUST POST" in text_value or "## Make First" in text_value else "No",
+        "has_strong_maybe": "Yes" if "STRONG MAYBE" in text_value or "## Strong Maybe" in text_value else "No",
+        "notes": "",
+    }
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fieldnames: List[str]) -> None:
@@ -239,6 +290,109 @@ def parse_graphics_queue(text: str, run_id: str) -> List[Dict[str, Any]]:
             candidates.append(row)
 
     # enforce news-sync scope cap
+    must = [c for c in candidates if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
+    maybe = [c for c in candidates if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
+    return must + maybe
+
+
+
+def parse_recommendations_fallback(text: str, run_id: str) -> List[Dict[str, Any]]:
+    """
+    Fallback parser for `daily_results_recommendations.md`.
+
+    It is less rich than the graphics queue, but prevents a silent zero-output run
+    when the graphics queue path changes or is missing.
+    """
+    if not text.strip():
+        return []
+
+    candidates: List[Dict[str, Any]] = []
+    section = ""
+    current: Optional[Dict[str, Any]] = None
+
+    for raw in text.splitlines():
+        line = raw.rstrip()
+
+        if line.startswith("## Make First"):
+            section = "MUST POST"
+            current = None
+            continue
+        if line.startswith("## Strong Maybe"):
+            section = "STRONG MAYBE"
+            current = None
+            continue
+        if line.startswith("## Watchlist") or line.startswith("## Manual Review"):
+            section = ""
+            current = None
+            continue
+
+        if section and re.match(r"^\d+\.\s+\*\*", line):
+            if current:
+                candidates.append(current)
+
+            headline = re.sub(r"^\d+\.\s+\*\*", "", line)
+            headline = re.sub(r"\*\*.*$", "", headline).strip()
+            current = {
+                "run_id": run_id,
+                "candidate_id": stable_id(run_id, headline, section),
+                "queue_section": section,
+                "content_action": "Make First" if section == "MUST POST" else "Strong Maybe",
+                "sport": "",
+                "league": "",
+                "editorial_tier": "",
+                "editorial_bucket": "Must Post" if section == "MUST POST" else "Strong Maybe",
+                "template": "News Sync fallback",
+                "selected_source": "results_recommendations",
+                "all_sources": "",
+                "confidence": "",
+                "manual_review": "No",
+                "editorial_rank": "",
+                "outcome_type": "",
+                "matchup": headline,
+                "final_score": "",
+                "winner": "",
+                "loser": "",
+                "game_status": "final",
+                "date": "",
+                "source_url": "",
+                "graphics_headline": headline,
+                "graphics_subhead": "",
+                "slide1_hook": headline,
+                "slide2_result": "",
+                "slide3_context": "",
+                "slide4_cta": "",
+                "raw_block": line,
+            }
+            continue
+
+        if current and line.strip().startswith("- "):
+            detail = clean(line.strip()[2:])
+            current["raw_block"] = clean((current.get("raw_block", "") + " " + detail).strip())
+
+            # Typical v4.3 rec line:
+            # basketball | WNBA | confidence 1.00 | rank 292.7
+            if "|" in detail:
+                parts = [clean(p) for p in detail.split("|")]
+                if len(parts) >= 1 and not current.get("sport"):
+                    current["sport"] = parts[0]
+                if len(parts) >= 2 and not current.get("league"):
+                    current["league"] = parts[1]
+                for part in parts:
+                    m = re.search(r"confidence\s+([0-9.]+)", part, re.I)
+                    if m:
+                        current["confidence"] = m.group(1)
+                    m = re.search(r"rank\s+([0-9.]+)", part, re.I)
+                    if m:
+                        current["editorial_rank"] = m.group(1)
+            else:
+                if not current.get("graphics_subhead"):
+                    current["graphics_subhead"] = detail
+                elif not current.get("slide3_context"):
+                    current["slide3_context"] = detail
+
+    if current:
+        candidates.append(current)
+
     must = [c for c in candidates if c.get("queue_section") == "MUST POST"][:MAX_MUST_POST]
     maybe = [c for c in candidates if c.get("queue_section") == "STRONG MAYBE"][:MAX_STRONG_MAYBE]
     return must + maybe
@@ -943,11 +1097,29 @@ def main() -> None:
     registry = load_json(SOURCE_REGISTRY_FILE, source_registry_defaults())
     angle_rules = load_json(ANGLE_RULES_FILE, angle_rules_defaults())
 
-    queue_text = read_text(INPUT_RESULTS_QUEUE)
-    recs_text = read_text(INPUT_RESULTS_RECS)
-    box_text = read_text(INPUT_WNBA_BOX)
+    queue_path, queue_text = resolve_input(INPUT_RESULTS_QUEUE)
+    recs_path, recs_text = resolve_input(INPUT_RESULTS_RECS)
+    box_path, box_text = resolve_input(INPUT_WNBA_BOX)
+    hub_path, hub_text = resolve_input(INPUT_RESULTS_HUB)
+
+    input_status = [
+        input_status_row("results_graphics_queue", INPUT_RESULTS_QUEUE, queue_text, queue_path),
+        input_status_row("daily_results_recommendations", INPUT_RESULTS_RECS, recs_text, recs_path),
+        input_status_row("wnba_box_score_summary", INPUT_WNBA_BOX, box_text, box_path),
+        input_status_row("results_system_hub", INPUT_RESULTS_HUB, hub_text, hub_path),
+    ]
 
     candidates = parse_graphics_queue(queue_text, run_id)
+
+    if not candidates:
+        fallback_candidates = parse_recommendations_fallback(recs_text, run_id)
+        if fallback_candidates:
+            candidates = fallback_candidates
+            input_status[1]["notes"] = "Used fallback parser because graphics queue produced 0 candidates."
+        else:
+            input_status[0]["notes"] = "No RESULT GRAPHIC blocks parsed. Check that Results Desk has run and committed results_graphics_queue.md."
+            input_status[1]["notes"] = "Fallback recommendations parser also produced 0 candidates."
+
     box_map = parse_box_score_summary(box_text)
 
     all_observations: List[Dict[str, Any]] = []
@@ -966,6 +1138,7 @@ def main() -> None:
 
     manual_packets = [p for p in packets if p.get("manual_review") == "Yes"]
 
+    write_csv(NEWS_INPUT_STATUS_CSV, input_status, INPUT_STATUS_FIELDS)
     write_csv(NEWS_CANDIDATES_CSV, candidates, CANDIDATE_FIELDS)
     write_csv(NEWS_SOURCE_OBS_CSV, all_observations, SOURCE_OBS_FIELDS)
     write_csv(NEWS_FACT_PACKETS_CSV, packets, PACKET_FIELDS)
@@ -987,6 +1160,7 @@ def main() -> None:
             "results_system_hub": INPUT_RESULTS_HUB,
         },
         "outputs": [
+            NEWS_INPUT_STATUS_CSV,
             NEWS_CANDIDATES_CSV,
             NEWS_SOURCE_OBS_CSV,
             NEWS_FACT_PACKETS_CSV,
@@ -1011,7 +1185,20 @@ def main() -> None:
     }
     Path(NEWS_MANIFEST_JSON).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    print("Created Her Sports Daily News Sync v1 outputs")
+    if not candidates:
+        Path(NEWS_SETUP_ERROR_MD).write_text(
+            "# Her Sports Daily News Sync Setup Error\\n\\n"
+            "News Sync ran, but found 0 candidates.\\n\\n"
+            "Most likely causes:\\n\\n"
+            "1. `results_graphics_queue.md` is missing from the repo root.\\n"
+            "2. Results Desk has not committed its latest outputs yet.\\n"
+            "3. The file exists only in `results_run_history/latest/`, but the workflow did not include it.\\n"
+            "4. The Results Desk queue format changed.\\n\\n"
+            "Open `news_input_status_report.csv` first.\\n",
+            encoding="utf-8"
+        )
+
+    print("Created Her Sports Daily News Sync v1.1 outputs")
     print(json.dumps(manifest["counts"], indent=2))
 
 
