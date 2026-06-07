@@ -1,4 +1,4 @@
-name: Her Sports Daily News Sync v1.7
+name: Her Sports Daily News Sync v1.8
 
 on:
   workflow_dispatch:
@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-news-sync.txt
 
-      - name: Run News Sync v1.7
+      - name: Run News Sync v1.8
         env:
           HSD_NEWS_MAX_MUST_POST: "5"
           HSD_NEWS_MAX_STRONG_MAYBE: "5"
@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-news-sync-v1-7
+          name: hsd-news-sync-v1-8
           path: news_run_history/latest/
 
       - name: Commit and push updated news files
@@ -101,7 +101,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Update HSD News Sync v1.7"
+          git commit -m "Update HSD News Sync v1.8"
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
