@@ -1,6 +1,6 @@
 {
   "version": "hsd-studio-bridge-v1.2",
-  "generated_at_utc": "2026-06-07T05:44:47.619860+00:00",
+  "generated_at_utc": "2026-06-07T10:11:45.806878+00:00",
   "inputs": {
     "news_fact_packets": "news_fact_packets.csv",
     "news_daily_plan": "news_daily_plan.md",
@@ -28,11 +28,11 @@
     "brand_assets/hsd_watermark_bug.svg"
   ],
   "counts": {
-    "news_packets_read": 14,
-    "studio_graphics_queued": 14,
-    "studio_bundles_created": 4,
+    "news_packets_read": 0,
+    "studio_graphics_queued": 0,
+    "studio_bundles_created": 0,
     "manual_review_graphics": 0,
-    "checklist_rows": 98
+    "checklist_rows": 0
   },
   "rules": [
     "Never fabricate jersey numbers, player teams, uniforms, logos, quotes, injuries, rankings, or milestones.",

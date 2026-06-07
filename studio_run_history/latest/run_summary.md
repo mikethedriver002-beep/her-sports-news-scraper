@@ -1,13 +1,13 @@
 # HSD Studio Bridge v1.2 Run Summary
 
-Run timestamp UTC: `2026-06-07 05:44:47 UTC`
-Archive folder: `studio_run_history/2026-06-07/0544_UTC`
+Run timestamp UTC: `2026-06-07 10:11:45 UTC`
+Archive folder: `studio_run_history/2026-06-07/1011_UTC`
 
 ## Row counts
 
-- `studio_graphics_queue.csv`: 14
-- `studio_bundle_queue.csv`: 4
-- `studio_accuracy_checklist.csv`: 98
+- `studio_graphics_queue.csv`: 0
+- `studio_bundle_queue.csv`: 0
+- `studio_accuracy_checklist.csv`: 0
 - `studio_manual_review_graphics.csv`: 0
 
 ## Archived files
