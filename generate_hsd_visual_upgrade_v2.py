@@ -5,12 +5,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-studio-visual-upgrade-v2.1"
+VERSION = "hsd-studio-visual-upgrade-v2.2"
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
 INPUT_LAUNCH_GRAPHICS_BRIEF = os.environ.get("HSD_LAUNCH_GRAPHICS_BRIEF", "launch_graphics_chat_brief.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
-
+INPUT_FACT_WARNINGS = os.environ.get("HSD_FACT_WARNING_QUEUE", "fact_warning_queue.csv")
 
 def now(): return datetime.now(timezone.utc).isoformat()
 def clean(v): return re.sub(r"\s+", " ", str(v or "")).strip()
@@ -76,10 +76,19 @@ def matched_assets(bundle, assets):
     blob=" ".join(str(v).lower() for v in bundle.values())
     return [a for a in assets if clean(a.get("entity_name")).lower() and clean(a.get("entity_name")).lower() in blob]
 
-def prompt(bundle, assets):
+def warnings_for(bundle_id, warnings):
+    return [w for w in warnings if w.get("bundle_id") == bundle_id]
+
+def prompt(bundle, assets, warnings):
     m=matched_assets(bundle,assets)
-    asset_block="\n".join([f"- {a.get('entity_name')} | {a.get('approved_variant')} | {a.get('source_url')}" for a in m]) or "No approved exact assets matched. Use premium text-forward design. Do not invent logos or players."
-    return f"""HSD VISUAL UPGRADE v2.1 PROMPT
+    bundle_warnings = warnings_for(bundle.get("bundle_id"), warnings)
+    player_assets = [a for a in m if a.get("entity_type") == "player"]
+    approved_asset_block="\n".join([f"- {a.get('entity_name')} | {a.get('approved_variant')} | {a.get('source_url')}" for a in m]) or "No approved exact assets matched. Use premium text-forward design. Do not invent logos or players."
+    warning_block="\n".join([f"- {w.get('warning_type')}: {w.get('details')}" for w in bundle_warnings]) or "No fact warnings."
+    safe_mode = "logos_and_text_only" if not player_assets else "player_images_allowed"
+    safe_instruction = "Do not show any player photo. Use team logos, typography, score treatment, textures, and editorial design only." if safe_mode == "logos_and_text_only" else "Player photos are allowed only for approved exact player assets listed below. Never invent or substitute."
+
+    return f"""HSD VISUAL UPGRADE v2.2 PROMPT
 Bundle: {clean(bundle.get('bundle_name'))}
 Template: {template_for(bundle)}
 Canvas: 1080x1350 carousel
@@ -87,13 +96,20 @@ Source facts: {clean(bundle.get('source_headlines'))}
 Caption/context: {clean(bundle.get('caption_seed'))}
 Accuracy lock: {clean(bundle.get('accuracy_lock'))}
 
+Safe graphics mode: {safe_mode}
+Critical instruction: {safe_instruction}
+
 Approved exact assets:
-{asset_block}
+{approved_asset_block}
+
+Fact warnings:
+{warning_block}
 
 Art direction:
 Create a premium women’s sports media carousel, not a dashboard card. Use bold hierarchy, huge result typography, sport-specific atmosphere, diagonal panels, depth, glow accents, and a polished CTA/end slide.
-If no approved exact asset is listed, use text, sport texture, court/field/pitch lines, scoreboard energy, and HSD branding only.
+If no approved exact player asset is listed, do not use player photography. Use text-forward design with logos, flags, sport texture, court or field lines, and scoreboard energy.
 Never invent player bodies, fake jerseys, fake jersey numbers, fake logos, fake headshots, unsupported stats, rankings, injuries, quotes, or records.
+If a fact warning exists, require manual human verification before posting.
 Accuracy beats aesthetics, but aesthetics must be premium.
 """.strip()
 
@@ -103,23 +119,29 @@ def main():
     Path("visual_upgrade_dashboard").mkdir(exist_ok=True)
     bundles=load_bundles()
     assets=read_csv_any(INPUT_APPROVED_ASSETS)
+    warnings=read_csv_any(INPUT_FACT_WARNINGS)
     Path("brand_system/hsd_tokens.json").write_text(json.dumps(tokens(),indent=2),encoding="utf-8")
-    rules={"version":VERSION,"rules":["one dominant thesis per slide","never use boxed tables as full design","use exact assets only","text-forward when assets missing","CTA/end slide required"]}
+    rules={"version":VERSION,"rules":["one dominant thesis per slide","never use boxed tables as full design","use exact assets only","text-forward when player assets missing","CTA/end slide required","manual review on fact warnings"]}
     Path("brand_system/hsd_template_rules.json").write_text(json.dumps(rules,indent=2),encoding="utf-8")
     for t in ["carousel_cover_v2","result_slide_v2","roundup_v2","radar_v2","cta_v2"]:
         Path(f"studio_templates_v2/{t}.json").write_text(json.dumps({"template":t,"tokens":"brand_system/hsd_tokens.json"},indent=2),encoding="utf-8")
-    lines=["# HSD Bundle Prompts v2.1","",f"Generated: {now()}",""]
+    lines=["# HSD Bundle Prompts v2.2","",f"Generated: {now()}",""]
     render={"version":VERSION,"generated_at_utc":now(),"bundles":[]}
     for i,b in enumerate(bundles,1):
         slug=slugify(b.get("bundle_name") or f"bundle-{i}")
         m=matched_assets(b,assets)
-        lines += [f"## {clean(b.get('bundle_name'))}","","```text",prompt(b,assets),"```",""]
+        bw=warnings_for(b.get("bundle_id"), warnings)
+        player_assets = [a.get("approved_asset_id") for a in m if a.get("entity_type") == "player" and a.get("approved_asset_id")]
+        safe_mode = "logos_and_text_only" if not player_assets else "player_images_allowed"
+        lines += [f"## {clean(b.get('bundle_name'))}","","```text",prompt(b,assets,warnings),"```",""]
         render["bundles"].append({
             "bundle_id":b.get("bundle_id") or f"bundle_{i}",
             "post_slug":slug,
             "bundle_name":b.get("bundle_name"),
             "template_name":template_for(b),
             "asset_ids":[a.get("approved_asset_id") for a in m if a.get("approved_asset_id")],
+            "safe_graphics_mode": safe_mode,
+            "fact_warning_count": len(bw),
             "source_facts":{"source_headlines":b.get("source_headlines"),"caption_seed":b.get("caption_seed"),"accuracy_lock":b.get("accuracy_lock")},
             "text_layers":[{"layer_id":slug+"_headline","text":b.get("bundle_name"),"font_size_px":72,"font_weight":800,"color_hex":"#F4F7FB","background_hex":"#071226","essential":True}],
             "all_layers":[{"layer_id":slug+"_watermark","bbox":[48,48,76,76]},{"layer_id":slug+"_headline","bbox":[96,160,850,220]},{"layer_id":slug+"_cta","bbox":[96,1150,888,110]}],
@@ -127,10 +149,10 @@ def main():
         })
     Path("studio_bundle_prompts_v2.md").write_text("\n".join(lines),encoding="utf-8")
     Path("studio_render_manifest_v2.json").write_text(json.dumps(render,indent=2),encoding="utf-8")
-    Path("studio_visual_upgrade_v2.md").write_text(f"# HSD Studio Visual Upgrade v2.1\n\nGenerated: {now()}\n\nBundles: {len(bundles)}\nApproved exact assets: {len(assets)}\n",encoding="utf-8")
-    Path("visual_upgrade_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles":len(bundles),"approved_assets":len(assets)}},indent=2),encoding="utf-8")
-    Path("visual_upgrade_dashboard/index.html").write_text(f"<html><body><h1>HSD Visual Upgrade v2.1</h1><p>Bundles: {len(bundles)}</p><p>Assets: {len(assets)}</p></body></html>",encoding="utf-8")
-    print("Created HSD Visual Upgrade v2.1 outputs")
+    Path("studio_visual_upgrade_v2.md").write_text(f"# HSD Studio Visual Upgrade v2.2\n\nGenerated: {now()}\n\nBundles: {len(bundles)}\nApproved exact assets: {len(assets)}\nFact warnings: {len(warnings)}\n",encoding="utf-8")
+    Path("visual_upgrade_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles":len(bundles),"approved_assets":len(assets),"fact_warnings":len(warnings)}},indent=2),encoding="utf-8")
+    Path("visual_upgrade_dashboard/index.html").write_text(f"<html><body><h1>HSD Visual Upgrade v2.2</h1><p>Bundles: {len(bundles)}</p><p>Assets: {len(assets)}</p><p>Fact warnings: {len(warnings)}</p></body></html>",encoding="utf-8")
+    print("Created HSD Visual Upgrade v2.2 outputs")
 
 if __name__=="__main__":
     main()
