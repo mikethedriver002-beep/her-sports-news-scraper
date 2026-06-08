@@ -1,26 +1,26 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-08T19:38:52.753596+00:00
+Generated: 2026-06-08T22:12:14.681779+00:00
 
 ## Daily Content Command Center
 
-### Rank 1: Texas wins second straight Women's College World Series title | FINAL OUT
-
-- Decision: Must Post
-- Content family: Breaking / Must Post Carousel
-- Recommended asset: 4-slide news carousel
-- Hook: Here is the quick version of what happened and why it matters.
-- First slide / main text: Quick recap: Texas wins second straight Women's College World Series title | FINAL OUT
-- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
-- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
-
-### Rank 2: Nelly Korda wins U.S. Women's Open title with perilous final putt, claiming her 2nd straight major
+### Rank 1: Nelly Korda wins U.S. Women's Open title with perilous final putt, claiming her 2nd straight major
 
 - Decision: Must Post
 - Content family: Breaking / Must Post Carousel
 - Recommended asset: 4-slide news carousel
 - Hook: Here is the quick version of what happened and why it matters.
 - First slide / main text: Quick recap: Nelly Korda wins U.S. Women's Open title with perilous final putt, claiming her 2nd straight major
+- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
+- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
+
+### Rank 2: Texas wins second straight Women's College World Series title | FINAL OUT
+
+- Decision: Must Post
+- Content family: Breaking / Must Post Carousel
+- Recommended asset: 4-slide news carousel
+- Hook: Here is the quick version of what happened and why it matters.
+- First slide / main text: Quick recap: Texas wins second straight Women's College World Series title | FINAL OUT
 - Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
@@ -54,7 +54,17 @@ Generated: 2026-06-08T19:38:52.753596+00:00
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 6: Toronto and Portland are in the middle of the standings a month into their WNBA expansion seasons
+### Rank 6: Report: Las Vegas trading Hilary Knight to PWHL expansion Detroit
+
+- Decision: Maybe Post
+- Content family: Context Carousel
+- Recommended asset: single feed card
+- Hook: Another market is betting big on women's sports.
+- First slide / main text: Expansion watch: Report: Las Vegas trading Hilary Knight to PWHL expansion Detroit
+- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
+- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
+
+### Rank 7: Toronto and Portland are in the middle of the standings a month into their WNBA expansion seasons
 
 - Decision: Maybe Post
 - Content family: Context Carousel
@@ -64,7 +74,7 @@ Generated: 2026-06-08T19:38:52.753596+00:00
 - Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
 - Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
-### Rank 7: Purdue Women's Basketball Big Ten Home, Road Opponents Announced for 2026-27
+### Rank 8: Purdue Women's Basketball Big Ten Home, Road Opponents Announced for 2026-27
 
 - Decision: Save for Weekend
 - Content family: Feed Post
@@ -74,7 +84,7 @@ Generated: 2026-06-08T19:38:52.753596+00:00
 - Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
 - Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
 
-### Rank 8: Big Ten announces home, road matchups for Wisconsin women's basketball
+### Rank 9: Big Ten announces home, road matchups for Wisconsin women's basketball
 
 - Decision: Save for Weekend
 - Content family: Feed Post
@@ -84,23 +94,13 @@ Generated: 2026-06-08T19:38:52.753596+00:00
 - Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
 - Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
 
-### Rank 9: Toronto Sceptres Pushing Through Expansion Process
+### Rank 10: Toronto Sceptres Pushing Through Expansion Process
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
 - Recommended asset: single feed card
 - Hook: Another market is betting big on women's sports.
 - First slide / main text: Expansion watch: Toronto Sceptres Pushing Through Expansion Process
-- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
-- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
-
-### Rank 10: Muller leaves Boston to sign in Hamilton, San Jose signs O'Neill in PWHL expansion team moves
-
-- Decision: Save for Weekend
-- Content family: Context Carousel
-- Recommended asset: single feed card
-- Hook: Another market is betting big on women's sports.
-- First slide / main text: Expansion watch: Muller leaves Boston to sign in Hamilton, San Jose signs O'Neill in PWHL expansion team moves
 - Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
 - Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
