@@ -1,6 +1,6 @@
 # HSD Graphics QA Scorer v1.2 Report
 
-Generated: 2026-06-08T14:52:17.189532+00:00
+Generated: 2026-06-08T14:52:50.818308+00:00
 
 Bundles scored: 4
 
