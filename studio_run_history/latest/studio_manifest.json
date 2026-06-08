@@ -1,6 +1,6 @@
 {
   "version": "hsd-studio-bridge-v1.2",
-  "generated_at_utc": "2026-06-08T04:07:13.535505+00:00",
+  "generated_at_utc": "2026-06-08T04:08:10.405831+00:00",
   "inputs": {
     "news_fact_packets": "news_fact_packets.csv",
     "news_daily_plan": "news_daily_plan.md",
