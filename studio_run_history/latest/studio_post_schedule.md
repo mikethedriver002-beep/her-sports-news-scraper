@@ -1,6 +1,6 @@
 # Her Sports Daily Studio Post Schedule v1.2
 
-Generated: 2026-06-08T02:17:16.193242+00:00
+Generated: 2026-06-08T02:35:43.636801+00:00
 
 Bundle Mode is the primary production schedule. Individual graphics are backups, alternates, or extra posts.
 
