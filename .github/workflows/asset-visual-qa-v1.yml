@@ -1,0 +1,132 @@
+name: Her Sports Daily Asset Visual QA v1
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Her Sports Daily Launch Control v1.1.2"
+      - "Her Sports Daily Studio Bridge v1.2"
+    types:
+      - completed
+  schedule:
+    - cron: "25 12 * * *"
+    - cron: "25 18 * * *"
+    - cron: "25 00 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hsd-repo-writer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  asset-visual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-asset-visual-qa.txt
+
+      - name: Generate, archive, commit, and push safely
+        shell: bash
+        env:
+          HSD_ASSET_RIGHTS_MODE: aggressive
+          HSD_ASSET_DOWNLOAD: "1"
+          BING_SEARCH_API_KEY: ${{ secrets.BING_SEARCH_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          FILES=(
+            "asset_manifest.csv"
+            "asset_manifest.json"
+            "team_assets.csv"
+            "team_assets.json"
+            "player_assets.csv"
+            "player_assets.json"
+            "asset_rights_review.csv"
+            "approved_graphics_assets.csv"
+            "approved_graphics_assets.json"
+            "launch_integration_points.csv"
+            "asset_source_seed_list.csv"
+            "asset_candidates_review.md"
+            "asset_desk_manifest.json"
+            "asset_desk_dashboard/index.html"
+            "brand_system"
+            "studio_templates_v2"
+            "studio_visual_upgrade_v2.md"
+            "studio_bundle_prompts_v2.md"
+            "studio_render_manifest_v2.json"
+            "visual_upgrade_manifest.json"
+            "visual_upgrade_dashboard/index.html"
+            "graphics_qa_results.csv"
+            "graphics_qa_report.md"
+            "graphics_qa_manifest.json"
+            "graphics_qa_dashboard/index.html"
+            "data/assets"
+            "latest_asset_visual_qa_run_summary.md"
+            "asset_run_history"
+          )
+
+          for attempt in 1 2 3; do
+            echo "Safe publish attempt $attempt"
+
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            python generate_hsd_asset_desk_v1.py
+            python generate_hsd_visual_upgrade_v2.py
+            python generate_hsd_graphics_qa_v1.py
+            python archive_hsd_asset_visual_qa_runs_v1.py
+
+            for file in "${FILES[@]}"; do
+              if [ -e "$file" ]; then
+                git add "$file"
+              else
+                echo "Optional output not present, skipping: $file"
+              fi
+            done
+
+            if git diff --cached --quiet; then
+              echo "No changes to commit"
+              exit 0
+            fi
+
+            git commit -m "Update HSD Asset Visual QA v1"
+
+            if git push origin HEAD:main; then
+              echo "Push succeeded"
+              exit 0
+            fi
+
+            echo "Push failed, retrying from latest remote main..."
+            sleep 5
+          done
+
+          echo "Push failed after 3 attempts"
+          exit 1
+
+      - name: Upload Asset Visual QA artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-asset-visual-qa-v1
+          path: asset_run_history/latest/
