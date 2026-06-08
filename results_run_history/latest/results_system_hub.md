@@ -1,8 +1,8 @@
 # Her Sports Daily Results Desk v4.3 Hub
 
-Run ID: `2cf3071c5ff97564`
-Generated: `2026-06-07T21:47:44.539305+00:00`
-Date window: `2026-06-06, 2026-06-07, 2026-06-08`
+Run ID: `09e9bd43d7ebf10d`
+Generated: `2026-06-08T14:38:11.154169+00:00`
+Date window: `2026-06-07, 2026-06-08, 2026-06-09`
 
 ## Source strategy
 
@@ -12,10 +12,10 @@ Date window: `2026-06-06, 2026-06-07, 2026-06-08`
 
 ## Run summary
 
-- Raw source observations: 9
-- Reconciled events: 9
-- Women's events surfaced: 9
-- Women's finals: 5
+- Raw source observations: 8
+- Reconciled events: 8
+- Women's events surfaced: 8
+- Women's finals: 2
 - Graphics-ready results: 0
 - Manual review items: 0
 - Carryover or outside-window events archived: 0
@@ -25,11 +25,11 @@ Date window: `2026-06-06, 2026-06-07, 2026-06-08`
 
 ## Observations by source
 
-- espn_wnba: 9
+- espn_wnba: 8
 
 ## Women's events by sport
 
-- basketball: 9
+- basketball: 8
 
 ## Graphics gate
 
