@@ -1,7 +1,7 @@
 # Her Sports Daily Results Desk v4.3 Run Summary
 
-Run timestamp UTC: `2026-06-08 14:38:11 UTC`
-Archive folder: `results_run_history/2026-06-08/1438_UTC`
+Run timestamp UTC: `2026-06-08 22:53:02 UTC`
+Archive folder: `results_run_history/2026-06-08/2253_UTC`
 
 ## Row counts
 
