@@ -1,8 +1,13 @@
 {
-  "version": "hsd-launch-control-v1.1",
-  "generated_at_utc": "2026-06-08T02:17:28.077997+00:00",
+  "version": "hsd-launch-control-v1.1.2",
+  "generated_at_utc": "2026-06-08T02:35:59.677244+00:00",
   "inputs": {
     "studio_bundle_queue": "studio_bundle_queue.csv",
+    "resolved_bundle_queue_path": "studio_run_history/2026-06-07/0544_UTC/studio_bundle_queue.csv",
+    "bundle_source_status": "archive_nonempty_fallback",
+    "setup_notes": [
+      "Used archived non-empty Studio Bundle queue: studio_run_history/2026-06-07/0544_UTC/studio_bundle_queue.csv"
+    ],
     "studio_bundle_packets": "studio_bundle_packets.md",
     "studio_command": "studio_command_center.md",
     "studio_manifest": "studio_manifest.json"
@@ -29,9 +34,10 @@
     "launch_analytics_dashboard/index.html"
   ],
   "counts": {
-    "bundles_read": 0,
-    "publish_queue_rows": 0,
-    "quality_gate_rows": 0,
+    "bundles_read": 4,
+    "publish_queue_rows": 4,
+    "used_archive_bundle_fallback": "Yes",
+    "quality_gate_rows": 36,
     "post_tracker_rows": 4,
     "metrics_input_rows": 4,
     "pillar_balance_rows": 5,

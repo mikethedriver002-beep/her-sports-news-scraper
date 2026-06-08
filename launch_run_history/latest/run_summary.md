@@ -1,12 +1,12 @@
-# HSD Launch Control v1.1 Run Summary
+# HSD Launch Control v1.1.2 Run Summary
 
-Run timestamp UTC: `2026-06-08 02:17:28 UTC`
-Archive folder: `launch_run_history/2026-06-08/0217_UTC`
+Run timestamp UTC: `2026-06-08 02:35:59 UTC`
+Archive folder: `launch_run_history/2026-06-08/0235_UTC`
 
 ## Row counts
 
-- `launch_instagram_publish_queue.csv`: 0
-- `launch_quality_gate.csv`: 0
+- `launch_instagram_publish_queue.csv`: 4
+- `launch_quality_gate.csv`: 36
 - `launch_post_publish_tracker.csv`: 4
 - `launch_metrics_manual_input.csv`: 4
 - `launch_content_pillar_balance.csv`: 5

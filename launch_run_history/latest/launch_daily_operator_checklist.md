@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Account Operator Checklist v1.1
 
-Generated: 2026-06-08T02:17:28.077292+00:00
+Generated: 2026-06-08T02:35:59.676181+00:00
 
 ## Morning setup
 
@@ -18,6 +18,10 @@ Generated: 2026-06-08T02:17:28.077292+00:00
 
 ## Posting
 
+- 1. Main WNBA Result: Make and post during `ASAP after graphics QA`.
+- 2. Tonight in the W Mini-Roundup: Make if WNBA slate has room during `Next available WNBA slot, usually 1 to 3 hours after lead post`.
+- 3. Volleyball Results Roundup: Make as roundup during `Roundup window, later same day or next morning`.
+- 4. Women's Soccer Radar: Make as diversity/soccer radar during `Diversity slot, story-first or feed slot when audience is active`.
 
 ## After posting
 
