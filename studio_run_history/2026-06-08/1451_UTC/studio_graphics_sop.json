@@ -1,0 +1,26 @@
+{
+  "version": "hsd-studio-bridge-v1",
+  "non_negotiables": [
+    "Never fabricate jersey numbers, player teams, uniforms, logos, quotes, injuries, rankings, or milestones.",
+    "Never swap team sides, logos, scores, or winners. Scoreboard rows must be validated against the final_score field.",
+    "Use the locked HSD watermark bug every time. Do not regenerate a different watermark.",
+    "If player identity, team, jersey number, or image rights are not verified, use text-forward graphics, silhouettes, generic court/field textures, or supplied approved reference images.",
+    "Every carousel must include a branded end slide.",
+    "Results Desk remains score source of truth. News Sync remains context source of truth."
+  ],
+  "asset_modes": {
+    "safe_text_forward": "Use typography, verified score, abstract sport texture, team names, and HSD brand system. No player jersey renderings.",
+    "verified_player_context": "Only use player imagery when user supplies/approves reference images or source-safe assets. Do not invent jersey numbers.",
+    "roundup": "Use multi-result cards with verified scores and minimal context. No fake action scenes."
+  },
+  "watermark": "Compact stacked square HER SPORTS DAILY logo bug. Top-left by default.",
+  "required_checks": [
+    "Winner/check final score pairing",
+    "Loser/check final score pairing",
+    "Player stat lock",
+    "Watermark present and consistent",
+    "No invented jersey numbers",
+    "No fake logos unless official assets supplied",
+    "Carousel end slide included"
+  ]
+}
