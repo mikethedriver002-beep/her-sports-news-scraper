@@ -1,15 +1,5 @@
 [
   {
-    "team_id": "_ast",
-    "sport": "",
-    "league": "",
-    "team_slug": "ast",
-    "team_name": "AST",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No approved exact asset."
-  },
-  {
     "team_id": "international-soccer_australia-w",
     "sport": "soccer",
     "league": "International Soccer",
@@ -155,9 +145,9 @@
     "league": "WNBA",
     "team_slug": "los-angeles-sparks",
     "team_name": "Los Angeles Sparks",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No auto-approved logo in v1.1. Use text-forward until verified."
+    "logo_asset_id": "appr_7eea0085424fe3",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
   },
   {
     "team_id": "international-soccer_mexico-w",
@@ -175,19 +165,9 @@
     "league": "WNBA",
     "team_slug": "minnesota-lynx",
     "team_name": "Minnesota Lynx",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No auto-approved logo in v1.1. Use text-forward until verified."
-  },
-  {
-    "team_id": "_pts",
-    "sport": "",
-    "league": "",
-    "team_slug": "pts",
-    "team_name": "PTS",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No approved exact asset."
+    "logo_asset_id": "appr_047086213c7096",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
   },
   {
     "team_id": "wnba_phoenix-mercury",
@@ -205,29 +185,9 @@
     "league": "WNBA",
     "team_slug": "portland-fire",
     "team_name": "Portland Fire",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No auto-approved logo in v1.1. Use text-forward until verified."
-  },
-  {
-    "team_id": "_reb",
-    "sport": "",
-    "league": "",
-    "team_slug": "reb",
-    "team_name": "REB",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No approved exact asset."
-  },
-  {
-    "team_id": "_stl",
-    "sport": "",
-    "league": "",
-    "team_slug": "stl",
-    "team_name": "STL",
-    "logo_asset_id": "",
-    "status": "text_forward_only",
-    "notes": "No approved exact asset."
+    "logo_asset_id": "appr_01d68c2809f81f",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
   },
   {
     "team_id": "wnba_seattle-storm",

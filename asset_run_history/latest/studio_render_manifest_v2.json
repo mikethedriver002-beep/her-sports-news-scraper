@@ -1,6 +1,6 @@
 {
-  "version": "hsd-studio-visual-upgrade-v2.1",
-  "generated_at_utc": "2026-06-08T04:08:57.221941+00:00",
+  "version": "hsd-studio-visual-upgrade-v2.2",
+  "generated_at_utc": "2026-06-08T04:20:31.064680+00:00",
   "bundles": [
     {
       "bundle_id": "bundle_34740d18e445ce",
@@ -8,8 +8,11 @@
       "bundle_name": "Main WNBA Result",
       "template_name": "result_slide_v2",
       "asset_ids": [
-        "appr_7ca8ac2b2a4ad9"
+        "appr_7ca8ac2b2a4ad9",
+        "appr_7eea0085424fe3"
       ],
+      "safe_graphics_mode": "logos_and_text_only",
+      "fact_warning_count": 0,
       "source_facts": {
         "source_headlines": "",
         "caption_seed": "Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.",
@@ -65,9 +68,13 @@
       "asset_ids": [
         "appr_df24e2082f811d",
         "appr_9c7fc211069805",
+        "appr_047086213c7096",
         "appr_9edeb1cdaa6f4c",
+        "appr_01d68c2809f81f",
         "appr_52d46724c00ec9"
       ],
+      "safe_graphics_mode": "logos_and_text_only",
+      "fact_warning_count": 0,
       "source_facts": {
         "source_headlines": "",
         "caption_seed": "Tonight in the W roundup: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72",
@@ -133,6 +140,8 @@
         "appr_dd35c3cb61c372",
         "appr_49824984287991"
       ],
+      "safe_graphics_mode": "logos_and_text_only",
+      "fact_warning_count": 0,
       "source_facts": {
         "source_headlines": "",
         "caption_seed": "Around Women\u2019s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1",
@@ -195,6 +204,8 @@
         "appr_2d1d5b6b4b59b0",
         "appr_49824984287991"
       ],
+      "safe_graphics_mode": "logos_and_text_only",
+      "fact_warning_count": 0,
       "source_facts": {
         "source_headlines": "",
         "caption_seed": "Women\u2019s soccer radar: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0",

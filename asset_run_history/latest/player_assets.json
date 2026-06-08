@@ -7,7 +7,7 @@
     "player_name": "Arike Ogunbowale",
     "headshot_asset_id": "",
     "status": "text_forward_only",
-    "notes": "No player image approved. Do not use WNBA fallback or fake player image."
+    "notes": "No player image approved. Do not use fallback or fake player image."
   },
   {
     "player_id": "wnba_jessica-shepard",
@@ -17,7 +17,7 @@
     "player_name": "Jessica Shepard",
     "headshot_asset_id": "",
     "status": "text_forward_only",
-    "notes": "No player image approved. Do not use WNBA fallback or fake player image."
+    "notes": "No player image approved. Do not use fallback or fake player image."
   },
   {
     "player_id": "wnba_paige-bueckers",
@@ -27,6 +27,6 @@
     "player_name": "Paige Bueckers",
     "headshot_asset_id": "",
     "status": "text_forward_only",
-    "notes": "No player image approved. Do not use WNBA fallback or fake player image."
+    "notes": "No player image approved. Do not use fallback or fake player image."
   }
 ]

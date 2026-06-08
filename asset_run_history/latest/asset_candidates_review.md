@@ -1,12 +1,13 @@
-# HSD Asset Desk v1.1 Candidate Review
+# HSD Asset Desk v1.2 Candidate Review
 
-Generated: 2026-06-08T04:08:57.115217+00:00
+Generated: 2026-06-08T04:20:30.970839+00:00
 
-v1.1 blocks generic fallback images, VNL nav logos, random Wikimedia logo matches, app icons, PDFs, and WNBA fallback player images.
+v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.
 
-Teams detected: 29
+Teams detected: 25
 Players detected: 3
-Approved assets: 22
+Approved assets: 25
+Fact warnings: 1
 
 ## Approved
 - approved | Australia W | logo | https://flagcdn.com/w320/au.png
@@ -23,8 +24,11 @@ Approved assets: 22
 - approved | Japan W | logo | https://flagcdn.com/w320/jp.png
 - approved | Korea Republic U20 W | logo | https://flagcdn.com/w320/kr.png
 - approved | Las Vegas Aces | logo | https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg
+- approved | Los Angeles Sparks | logo | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
 - approved | Mexico W | logo | https://flagcdn.com/w320/mx.png
+- approved | Minnesota Lynx | logo | https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg
 - approved | Phoenix Mercury | logo | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | Portland Fire | logo | https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg
 - approved | Seattle Storm | logo | https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg
 - approved | Serbia W | logo | https://flagcdn.com/w320/rs.png
 - approved | South Africa W | logo | https://flagcdn.com/w320/za.png
@@ -32,14 +36,10 @@ Approved assets: 22
 - approved | Turkey W | logo | https://flagcdn.com/w320/tr.png
 - approved | USA W | logo | https://flagcdn.com/w320/us.png
 
+## Fact warnings
+- high | player_team_mismatch | Jessica Shepard expected team Minnesota Lynx but bundle text says Dallas Wings.
+
 ## Text-forward / needs verification
-- AST: no exact approved logo. Use text-forward.
-- Los Angeles Sparks: no exact approved logo. Use text-forward.
-- Minnesota Lynx: no exact approved logo. Use text-forward.
-- PTS: no exact approved logo. Use text-forward.
-- Portland Fire: no exact approved logo. Use text-forward.
-- REB: no exact approved logo. Use text-forward.
-- STL: no exact approved logo. Use text-forward.
 - Arike Ogunbowale: no exact approved player image. Use text-forward.
 - Jessica Shepard: no exact approved player image. Use text-forward.
 - Paige Bueckers: no exact approved player image. Use text-forward.

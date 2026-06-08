@@ -1,6 +1,6 @@
 {
-  "version": "hsd-asset-desk-v1.1",
-  "generated_at_utc": "2026-06-08T04:08:57.115377+00:00",
+  "version": "hsd-asset-desk-v1.2",
+  "generated_at_utc": "2026-06-08T04:20:30.970920+00:00",
   "rights_mode": "aggressive",
   "download": true,
   "inputs": {
@@ -10,17 +10,20 @@
   },
   "counts": {
     "bundles": 4,
-    "teams_detected": 29,
+    "teams_detected": 25,
     "players_detected": 3,
-    "asset_candidates": 22,
-    "approved_assets": 22,
-    "integration_rows": 4
+    "asset_candidates": 25,
+    "approved_assets": 25,
+    "integration_rows": 4,
+    "fact_warnings": 1
   },
   "guardrails": [
     "No WNBA fallback player images are approved.",
     "No generic VNL nav logos are approved as team logos.",
     "No random Wikimedia logo search results are approved.",
     "No PDF/app icon/background/logo-nav assets are approved.",
-    "If exact asset cannot be verified, output remains text-forward."
+    "Stat abbreviations are filtered out before entity creation.",
+    "If exact asset cannot be verified, output remains text-forward.",
+    "Player-team mismatches are written to fact_warning_queue.csv."
   ]
 }

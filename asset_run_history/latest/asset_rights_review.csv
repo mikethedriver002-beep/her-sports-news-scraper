@@ -1,23 +1,26 @@
 asset_id,review_status,decision_reason
-ast_a954f58ba7b766,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_dbd34b035cd6e1,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_a79adaf6457f0c,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_3b613e56ad6ec8,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_6849fd04b54eb4,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_14a6cc66f75be0,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_885836e9869631,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_7ca8ac2b2a4ad9,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_65747d24fe25ad,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_df24e2082f811d,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_2a96d8d56f4ac2,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_2bfc766277e6da,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_67a033c94405f7,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_9c7fc211069805,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_34556a69591b47,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_9edeb1cdaa6f4c,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_52d46724c00ec9,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_9426bf971998ee,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_2d1d5b6b4b59b0,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_526f2acaa1d24e,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_dd35c3cb61c372,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
-ast_49824984287991,approved,"Curated exact-match asset, not fallback/nav/random Wikimedia."
+ast_a954f58ba7b766,approved,Curated exact-match asset.
+ast_dbd34b035cd6e1,approved,Curated exact-match asset.
+ast_a79adaf6457f0c,approved,Curated exact-match asset.
+ast_3b613e56ad6ec8,approved,Curated exact-match asset.
+ast_6849fd04b54eb4,approved,Curated exact-match asset.
+ast_14a6cc66f75be0,approved,Curated exact-match asset.
+ast_885836e9869631,approved,Curated exact-match asset.
+ast_7ca8ac2b2a4ad9,approved,Curated exact-match asset.
+ast_65747d24fe25ad,approved,Curated exact-match asset.
+ast_df24e2082f811d,approved,Curated exact-match asset.
+ast_2a96d8d56f4ac2,approved,Curated exact-match asset.
+ast_2bfc766277e6da,approved,Curated exact-match asset.
+ast_67a033c94405f7,approved,Curated exact-match asset.
+ast_9c7fc211069805,approved,Curated exact-match asset.
+ast_7eea0085424fe3,approved,Curated exact-match asset.
+ast_34556a69591b47,approved,Curated exact-match asset.
+ast_047086213c7096,approved,Curated exact-match asset.
+ast_9edeb1cdaa6f4c,approved,Curated exact-match asset.
+ast_01d68c2809f81f,approved,Curated exact-match asset.
+ast_52d46724c00ec9,approved,Curated exact-match asset.
+ast_9426bf971998ee,approved,Curated exact-match asset.
+ast_2d1d5b6b4b59b0,approved,Curated exact-match asset.
+ast_526f2acaa1d24e,approved,Curated exact-match asset.
+ast_dd35c3cb61c372,approved,Curated exact-match asset.
+ast_49824984287991,approved,Curated exact-match asset.
