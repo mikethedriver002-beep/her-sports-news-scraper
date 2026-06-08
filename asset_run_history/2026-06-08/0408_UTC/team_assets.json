@@ -1,0 +1,292 @@
+[
+  {
+    "team_id": "_ast",
+    "sport": "",
+    "league": "",
+    "team_slug": "ast",
+    "team_name": "AST",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No approved exact asset."
+  },
+  {
+    "team_id": "international-soccer_australia-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "australia-w",
+    "team_name": "Australia W",
+    "logo_asset_id": "appr_a954f58ba7b766",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_belgium-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "belgium-w",
+    "team_name": "Belgium W",
+    "logo_asset_id": "appr_dbd34b035cd6e1",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-soccer_brazil-u20-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "brazil-u20-w",
+    "team_name": "Brazil U20 W",
+    "logo_asset_id": "appr_a79adaf6457f0c",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-soccer_brazil-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "brazil-w",
+    "team_name": "Brazil W",
+    "logo_asset_id": "appr_3b613e56ad6ec8",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_bulgaria-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "bulgaria-w",
+    "team_name": "Bulgaria W",
+    "logo_asset_id": "appr_6849fd04b54eb4",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_canada-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "canada-w",
+    "team_name": "Canada W",
+    "logo_asset_id": "appr_14a6cc66f75be0",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_china-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "china-w",
+    "team_name": "China W",
+    "logo_asset_id": "appr_885836e9869631",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "wnba_dallas-wings",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "dallas-wings",
+    "team_name": "Dallas Wings",
+    "logo_asset_id": "appr_7ca8ac2b2a4ad9",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_france-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "france-w",
+    "team_name": "France W",
+    "logo_asset_id": "appr_65747d24fe25ad",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "wnba_golden-state-valkyries",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "golden-state-valkyries",
+    "team_name": "Golden State Valkyries",
+    "logo_asset_id": "appr_df24e2082f811d",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_italy-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "italy-w",
+    "team_name": "Italy W",
+    "logo_asset_id": "appr_2a96d8d56f4ac2",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-soccer_japan-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "japan-w",
+    "team_name": "Japan W",
+    "logo_asset_id": "appr_2bfc766277e6da",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-soccer_korea-republic-u20-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "korea-republic-u20-w",
+    "team_name": "Korea Republic U20 W",
+    "logo_asset_id": "appr_67a033c94405f7",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "wnba_las-vegas-aces",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "las-vegas-aces",
+    "team_name": "Las Vegas Aces",
+    "logo_asset_id": "appr_9c7fc211069805",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "wnba_los-angeles-sparks",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "los-angeles-sparks",
+    "team_name": "Los Angeles Sparks",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No auto-approved logo in v1.1. Use text-forward until verified."
+  },
+  {
+    "team_id": "international-soccer_mexico-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "mexico-w",
+    "team_name": "Mexico W",
+    "logo_asset_id": "appr_34556a69591b47",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "wnba_minnesota-lynx",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "minnesota-lynx",
+    "team_name": "Minnesota Lynx",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No auto-approved logo in v1.1. Use text-forward until verified."
+  },
+  {
+    "team_id": "_pts",
+    "sport": "",
+    "league": "",
+    "team_slug": "pts",
+    "team_name": "PTS",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No approved exact asset."
+  },
+  {
+    "team_id": "wnba_phoenix-mercury",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "phoenix-mercury",
+    "team_name": "Phoenix Mercury",
+    "logo_asset_id": "appr_9edeb1cdaa6f4c",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "wnba_portland-fire",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "portland-fire",
+    "team_name": "Portland Fire",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No auto-approved logo in v1.1. Use text-forward until verified."
+  },
+  {
+    "team_id": "_reb",
+    "sport": "",
+    "league": "",
+    "team_slug": "reb",
+    "team_name": "REB",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No approved exact asset."
+  },
+  {
+    "team_id": "_stl",
+    "sport": "",
+    "league": "",
+    "team_slug": "stl",
+    "team_name": "STL",
+    "logo_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No approved exact asset."
+  },
+  {
+    "team_id": "wnba_seattle-storm",
+    "sport": "basketball",
+    "league": "WNBA",
+    "team_slug": "seattle-storm",
+    "team_name": "Seattle Storm",
+    "logo_asset_id": "appr_52d46724c00ec9",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_serbia-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "serbia-w",
+    "team_name": "Serbia W",
+    "logo_asset_id": "appr_9426bf971998ee",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-soccer_south-africa-w",
+    "sport": "soccer",
+    "league": "International Soccer",
+    "team_slug": "south-africa-w",
+    "team_name": "South Africa W",
+    "logo_asset_id": "appr_2d1d5b6b4b59b0",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_thailand-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "thailand-w",
+    "team_name": "Thailand W",
+    "logo_asset_id": "appr_526f2acaa1d24e",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_turkey-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "turkey-w",
+    "team_name": "Turkey W",
+    "logo_asset_id": "appr_dd35c3cb61c372",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  },
+  {
+    "team_id": "international-volleyball_usa-w",
+    "sport": "volleyball",
+    "league": "International Volleyball",
+    "team_slug": "usa-w",
+    "team_name": "USA W",
+    "logo_asset_id": "appr_49824984287991",
+    "status": "asset_found",
+    "notes": "Approved exact asset."
+  }
+]

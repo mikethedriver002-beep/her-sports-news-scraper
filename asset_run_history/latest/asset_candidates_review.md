@@ -1,6 +1,6 @@
 # HSD Asset Desk v1.1 Candidate Review
 
-Generated: 2026-06-08T04:07:51.859165+00:00
+Generated: 2026-06-08T04:08:57.115217+00:00
 
 v1.1 blocks generic fallback images, VNL nav logos, random Wikimedia logo matches, app icons, PDFs, and WNBA fallback player images.
 
