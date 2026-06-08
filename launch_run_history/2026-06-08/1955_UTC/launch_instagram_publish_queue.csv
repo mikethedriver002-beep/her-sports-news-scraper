@@ -1,0 +1,21 @@
+publish_rank,post_status,priority,bundle_name,bundle_type,post_format,asset_shape,slide_count,recommended_window,source_items_count,caption_seed,caption_draft,primary_prompt_source,graphics_file_naming,publish_decision,notes
+1,Ready for graphics,POST FIRST,Main WNBA Result,main_wnba_lead,4-slide carousel,1080x1350,4,ASAP after graphics QA,1,"Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.","Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.
+
+This is the kind of result that belongs on the radar.
+
+#WomensSports #HerSportsDaily #WNBA #WomenInSports #SportsNews",studio_bundle_packets.md,01_main_wnba_result_1080x1350,Make and post,Bundle-first. Do not duplicate with individual backup graphics unless intentionally making an extra post.
+2,Ready for graphics,POST NEXT,Tonight in the W Mini-Roundup,wnba_mini_roundup,5-slide carousel,1080x1350,5,"Next available WNBA slot, usually 1 to 3 hours after lead post",3,"Tonight in the W roundup: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72","Tonight in the W roundup: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72
+
+The W had a full slate, so we bundled the results worth knowing.
+
+#WomensSports #HerSportsDaily #WNBA #WomenInSports #SportsNews",studio_bundle_packets.md,02_tonight_in_the_w_mini_roundup_1080x1350,Make if WNBA slate has room,Bundle-first. Do not duplicate with individual backup graphics unless intentionally making an extra post.
+3,Ready for graphics,ROUNDUP WINDOW,Volleyball Results Roundup,volleyball_roundup,5-slide carousel,1080x1350,5,"Roundup window, later same day or next morning",6,Around Women’s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1,"Around Women’s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1
+
+Around Women’s Sports means keeping up with the results outside the biggest headlines too.
+
+#WomensSports #HerSportsDaily #Volleyball #WomenInSports #SportsNews",studio_bundle_packets.md,03_volleyball_results_roundup_1080x1350,Make as roundup,Bundle-first. Do not duplicate with individual backup graphics unless intentionally making an extra post.
+4,Ready for graphics,DIVERSITY SLOT,Women's Soccer Radar,soccer_radar,5-slide carousel,1080x1350,5,"Diversity slot, story-first or feed slot when audience is active",4,Women’s soccer radar: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0,"Women’s soccer radar: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0
+
+Women’s soccer radar stays on.
+
+#WomensSports #HerSportsDaily #WomensSoccer #WomenInSports #SportsNews",studio_bundle_packets.md,04_women_s_soccer_radar_1080x1350,Make as diversity/soccer radar,Bundle-first. Do not duplicate with individual backup graphics unless intentionally making an extra post.
