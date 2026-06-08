@@ -1,0 +1,402 @@
+# HSD Asset Desk v1 Candidate Review
+
+- approved | A'ja Wilson | headshot | https://www.wnba.com/images/WNBA_fallback.png
+- approved | A'ja Wilson | headshot | https://www.wnba.com/images/fallbackimage_black.jpg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/static/next/images/logos/wnba-secondary-logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661329/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661323/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661321/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661325/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661319/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661324/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661313/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661317/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661327/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661328/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661332/primary/L/logo.svg
+- approved | A'ja Wilson | headshot | https://cdn.wnba.com/logos/wnba/1611661322/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://www.wnba.com/images/WNBA_fallback.png
+- approved | Arike Ogunbowale | headshot | https://www.wnba.com/images/fallbackimage_black.jpg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/static/next/images/logos/wnba-secondary-logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661329/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661323/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661321/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661325/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661319/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661324/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661313/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661317/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661327/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661328/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661332/primary/L/logo.svg
+- approved | Arike Ogunbowale | headshot | https://cdn.wnba.com/logos/wnba/1611661322/primary/L/logo.svg
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/6/6d/Dollar-Bank-Logo-w-Tagline.png
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/d/dd/IC2020_Logo_-_teal_emblem_-_horiz_-_w_strap_-_transparent_background.png
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/3/38/Life_fm_logo_spearmint_rgb_900px_w_72ppi.png
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_Canberra_Liberals.jpg
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/0/01/Logo_of_City_of_Canterbury-Bankstown.svg
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/1/13/Logo_of_Liverpool_City_Council.svg
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/8/88/MTBA_Logo_-_Corporate_wText_-_CYMK_%281%29.jpg
+- approved | Australia W | logo | https://upload.wikimedia.org/wikipedia/commons/8/8b/MVFC_W-League_Logo.jpg
+- approved | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/523948c113ab21be02342645437bdbe6c2650fcd-31x56.svg
+- approved | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/1744aad52a63ef65823fd5a3b754cfe7d7ddfbf8-169x221.png?w=100
+- approved | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/47d9c34a8fede26f94c4816bb3531a91ea330d0f-1920x1080.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/df3c926b7dd66b522a0e3c9c67caee08e4df2b2e-2732x1555.png?h=235
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/10dad1a9b1a2dbd065165bbe96814a8b911902ce-674x1342.png?h=235
+- review | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/3bde6302e6576e34bccef082900b62ea35d0af0e-150x150.svg?max-w=60
+- review | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/14aeb53e39047e558377517d0ac2baaca55ea48b-17x17.svg?max-w=60
+- review | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/8e4623d2e096c691ce77b1cd003ee166103a9afd-26x26.svg?max-w=60
+- review | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/4fd76378b118192353dd5645f9a07214e1c4adf7-2859x3333.svg?max-w=60
+- review | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/c14d33a03bde0412088df161d744364ec1228f99-800x800.svg?max-w=60
+- review | Australia W | logo | https://cdn.sanity.io/images/oyf3dba6/production/aa11370d4c5f1c9e06fbdad1241ca106aea84fae-40x40.svg?max-w=60
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/24816f3583a740f42387eb263aca3023165ea277-512x536.png?w=142
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/9e4a4c219f2b1261b944e811e4d090afc59b7a88-512x213.png?w=142
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bf72ee7b299178803e565d6c872cdb4baf2aef2d-640x877.png
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bf72ee7b299178803e565d6c872cdb4baf2aef2d-640x877.png?w=40
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/df3c926b7dd66b522a0e3c9c67caee08e4df2b2e-2732x1555.png?w=200
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/1cb1697b6190dde8f34a50f841af25b09cffe0a2-315x81.png?w=200
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/24816f3583a740f42387eb263aca3023165ea277-512x536.png?w=100
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/9e4a4c219f2b1261b944e811e4d090afc59b7a88-512x213.png?w=100
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/5b013cbc86fdd8ba8444dbbe0df2ae01bca2df93-161x54.png?w=200
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/604375206833377aa3524ac994df229561038ef8-183x54.png?w=200
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/5584510e30d8db02b57ddd4c0c19e645d9bc16c0-524x396.jpg?w=600
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bb073f748c7ee2a0cae87c1943a00321128bda03-469x92.png?w=300
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/7c0f6d13098dcc70ae65889be39df74b12e30554-842x465.png?max-w=300
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/7e69b0e250eef135c67bbc3e248ddc69b9dd6e04-1125x618.png?max-w=300
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/f5f9c427cfb974301e5712a0def6f0c41e8f25a9-4913x4913.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/70d7050e8190dbc5ad88085e15928345a4e73ff6-1080x1080.png
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/98f1ed077c62b9e560d870eefe5c08619fc4f5f2-4839x4839.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/a075251aa3854d6795f8b14fd98003fafc1d65a5-3400x3400.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/22afd41f179fe2535ac553ce226bef458211ab0c-1080x1080.png
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/b273af163f18d676415b3ddeb9fcf41d2d9f4a45-5510x5510.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/85489e851ea68959f1c916325afbad413cd21484-580x580.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/07c7cb876fa8ae48c6054a555bdbc2989ccce457-580x580.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/316dba0e090fe8086f4b649ddcffceb03745da5e-4500x4500.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/395e8cf0327c5eadea6d4c552268d13c74129c83-4000x4000.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/4583e6ecea8caf14ff5724969fe4cbeaf2e8198d-580x580.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/4a5e7787ab309fcbe094a4bccd9201d2f87cc651-4000x4000.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/522085e1c9f4938c4edc3a266e1684e64e67ddef-580x580.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/f5cfc210cb9ed3a406d667fa63dc7edf52acb888-580x580.jpg
+- review | Australia W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/fc3dbe14733144d5df4536afd7eae0e9bb712ebc-580x580.jpg
+- approved | Belgium W | logo | https://images.volleyballworld.com/image/upload/f_png/v1747056390/assets/v2/logos/volleyball-nations-league-logo-nav
+- approved | Belgium W | logo | https://images.volleyballworld.com/image/upload/f_png/v1748261995/assets/competition-logos/Events%202025/Volleyball/volleyball-nations-league/header
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/assets/app-icons/VNL%202023/vnl-2023-app-icon-800-630px.png
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bel
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bra
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bul
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_can
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_chn
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_cze
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_dom
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_fra
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ger
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ita
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_jpn
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ned
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_pol
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_srb
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tha
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tur
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ukr
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_usa
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_wide/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_tablet/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Belgium W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_portrait/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/523948c113ab21be02342645437bdbe6c2650fcd-31x56.svg
+- approved | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/1744aad52a63ef65823fd5a3b754cfe7d7ddfbf8-169x221.png?w=100
+- approved | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/47d9c34a8fede26f94c4816bb3531a91ea330d0f-1920x1080.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/df3c926b7dd66b522a0e3c9c67caee08e4df2b2e-2732x1555.png?h=235
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/10dad1a9b1a2dbd065165bbe96814a8b911902ce-674x1342.png?h=235
+- review | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/3bde6302e6576e34bccef082900b62ea35d0af0e-150x150.svg?max-w=60
+- review | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/14aeb53e39047e558377517d0ac2baaca55ea48b-17x17.svg?max-w=60
+- review | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/8e4623d2e096c691ce77b1cd003ee166103a9afd-26x26.svg?max-w=60
+- review | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/4fd76378b118192353dd5645f9a07214e1c4adf7-2859x3333.svg?max-w=60
+- review | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/c14d33a03bde0412088df161d744364ec1228f99-800x800.svg?max-w=60
+- review | Brazil U20 W | logo | https://cdn.sanity.io/images/oyf3dba6/production/aa11370d4c5f1c9e06fbdad1241ca106aea84fae-40x40.svg?max-w=60
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/24816f3583a740f42387eb263aca3023165ea277-512x536.png?w=142
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/9e4a4c219f2b1261b944e811e4d090afc59b7a88-512x213.png?w=142
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bf72ee7b299178803e565d6c872cdb4baf2aef2d-640x877.png
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bf72ee7b299178803e565d6c872cdb4baf2aef2d-640x877.png?w=40
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/df3c926b7dd66b522a0e3c9c67caee08e4df2b2e-2732x1555.png?w=200
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/1cb1697b6190dde8f34a50f841af25b09cffe0a2-315x81.png?w=200
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/24816f3583a740f42387eb263aca3023165ea277-512x536.png?w=100
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/9e4a4c219f2b1261b944e811e4d090afc59b7a88-512x213.png?w=100
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/5b013cbc86fdd8ba8444dbbe0df2ae01bca2df93-161x54.png?w=200
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/604375206833377aa3524ac994df229561038ef8-183x54.png?w=200
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/5584510e30d8db02b57ddd4c0c19e645d9bc16c0-524x396.jpg?w=600
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bb073f748c7ee2a0cae87c1943a00321128bda03-469x92.png?w=300
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/7c0f6d13098dcc70ae65889be39df74b12e30554-842x465.png?max-w=300
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/7e69b0e250eef135c67bbc3e248ddc69b9dd6e04-1125x618.png?max-w=300
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/f5f9c427cfb974301e5712a0def6f0c41e8f25a9-4913x4913.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/70d7050e8190dbc5ad88085e15928345a4e73ff6-1080x1080.png
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/98f1ed077c62b9e560d870eefe5c08619fc4f5f2-4839x4839.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/a075251aa3854d6795f8b14fd98003fafc1d65a5-3400x3400.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/22afd41f179fe2535ac553ce226bef458211ab0c-1080x1080.png
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/b273af163f18d676415b3ddeb9fcf41d2d9f4a45-5510x5510.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/85489e851ea68959f1c916325afbad413cd21484-580x580.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/07c7cb876fa8ae48c6054a555bdbc2989ccce457-580x580.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/316dba0e090fe8086f4b649ddcffceb03745da5e-4500x4500.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/395e8cf0327c5eadea6d4c552268d13c74129c83-4000x4000.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/4583e6ecea8caf14ff5724969fe4cbeaf2e8198d-580x580.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/4a5e7787ab309fcbe094a4bccd9201d2f87cc651-4000x4000.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/522085e1c9f4938c4edc3a266e1684e64e67ddef-580x580.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/f5cfc210cb9ed3a406d667fa63dc7edf52acb888-580x580.jpg
+- review | Brazil U20 W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/fc3dbe14733144d5df4536afd7eae0e9bb712ebc-580x580.jpg
+- approved | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/523948c113ab21be02342645437bdbe6c2650fcd-31x56.svg
+- approved | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/1744aad52a63ef65823fd5a3b754cfe7d7ddfbf8-169x221.png?w=100
+- approved | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/47d9c34a8fede26f94c4816bb3531a91ea330d0f-1920x1080.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/df3c926b7dd66b522a0e3c9c67caee08e4df2b2e-2732x1555.png?h=235
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/10dad1a9b1a2dbd065165bbe96814a8b911902ce-674x1342.png?h=235
+- review | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/3bde6302e6576e34bccef082900b62ea35d0af0e-150x150.svg?max-w=60
+- review | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/14aeb53e39047e558377517d0ac2baaca55ea48b-17x17.svg?max-w=60
+- review | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/8e4623d2e096c691ce77b1cd003ee166103a9afd-26x26.svg?max-w=60
+- review | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/4fd76378b118192353dd5645f9a07214e1c4adf7-2859x3333.svg?max-w=60
+- review | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/c14d33a03bde0412088df161d744364ec1228f99-800x800.svg?max-w=60
+- review | Brazil W | logo | https://cdn.sanity.io/images/oyf3dba6/production/aa11370d4c5f1c9e06fbdad1241ca106aea84fae-40x40.svg?max-w=60
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/24816f3583a740f42387eb263aca3023165ea277-512x536.png?w=142
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/9e4a4c219f2b1261b944e811e4d090afc59b7a88-512x213.png?w=142
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bf72ee7b299178803e565d6c872cdb4baf2aef2d-640x877.png
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bf72ee7b299178803e565d6c872cdb4baf2aef2d-640x877.png?w=40
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/df3c926b7dd66b522a0e3c9c67caee08e4df2b2e-2732x1555.png?w=200
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/1cb1697b6190dde8f34a50f841af25b09cffe0a2-315x81.png?w=200
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/24816f3583a740f42387eb263aca3023165ea277-512x536.png?w=100
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/9e4a4c219f2b1261b944e811e4d090afc59b7a88-512x213.png?w=100
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/5b013cbc86fdd8ba8444dbbe0df2ae01bca2df93-161x54.png?w=200
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/604375206833377aa3524ac994df229561038ef8-183x54.png?w=200
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/5584510e30d8db02b57ddd4c0c19e645d9bc16c0-524x396.jpg?w=600
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/bb073f748c7ee2a0cae87c1943a00321128bda03-469x92.png?w=300
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/7c0f6d13098dcc70ae65889be39df74b12e30554-842x465.png?max-w=300
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/7e69b0e250eef135c67bbc3e248ddc69b9dd6e04-1125x618.png?max-w=300
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/f5f9c427cfb974301e5712a0def6f0c41e8f25a9-4913x4913.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/70d7050e8190dbc5ad88085e15928345a4e73ff6-1080x1080.png
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/98f1ed077c62b9e560d870eefe5c08619fc4f5f2-4839x4839.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/a075251aa3854d6795f8b14fd98003fafc1d65a5-3400x3400.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/22afd41f179fe2535ac553ce226bef458211ab0c-1080x1080.png
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/b273af163f18d676415b3ddeb9fcf41d2d9f4a45-5510x5510.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/85489e851ea68959f1c916325afbad413cd21484-580x580.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/07c7cb876fa8ae48c6054a555bdbc2989ccce457-580x580.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/316dba0e090fe8086f4b649ddcffceb03745da5e-4500x4500.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/395e8cf0327c5eadea6d4c552268d13c74129c83-4000x4000.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/4583e6ecea8caf14ff5724969fe4cbeaf2e8198d-580x580.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/4a5e7787ab309fcbe094a4bccd9201d2f87cc651-4000x4000.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/522085e1c9f4938c4edc3a266e1684e64e67ddef-580x580.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/f5cfc210cb9ed3a406d667fa63dc7edf52acb888-580x580.jpg
+- review | Brazil W | logo_candidate | https://cdn.sanity.io/images/oyf3dba6/production/fc3dbe14733144d5df4536afd7eae0e9bb712ebc-580x580.jpg
+- approved | Bulgaria W | logo | https://images.volleyballworld.com/image/upload/f_png/v1747056390/assets/v2/logos/volleyball-nations-league-logo-nav
+- approved | Bulgaria W | logo | https://images.volleyballworld.com/image/upload/f_png/v1748261995/assets/competition-logos/Events%202025/Volleyball/volleyball-nations-league/header
+- approved | Bulgaria W | logo | https://upload.wikimedia.org/wikipedia/commons/a/a5/Logo-ip-sofia.png
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/assets/app-icons/VNL%202023/vnl-2023-app-icon-800-630px.png
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bel
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bra
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bul
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_can
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_chn
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_cze
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_dom
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_fra
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ger
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ita
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_jpn
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ned
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_pol
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_srb
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tha
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tur
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ukr
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_usa
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_wide/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_tablet/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Bulgaria W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_portrait/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/3/30/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090001%29.jpg
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/4/44/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090002%29.jpg
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/e/e0/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090005%29.jpg
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/c/cb/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090006%29.jpg
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/8/8b/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090010%29.jpg
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/f/f4/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090011%29.jpg
+- approved | Bulgaria W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/3/3f/Bulgaria_Signs_Artemis_Accords_%28NHQ202311090012%29.jpg
+- approved | Canada W | logo | https://images.volleyballworld.com/image/upload/f_png/v1747056390/assets/v2/logos/volleyball-nations-league-logo-nav
+- approved | Canada W | logo | https://images.volleyballworld.com/image/upload/f_png/v1748261995/assets/competition-logos/Events%202025/Volleyball/volleyball-nations-league/header
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/b/bc/A%26W_Canada_Logo.svg
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/b/bd/Aboriginal_Peoples_Party_of_Canada_%28logo%29.jpg
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/b/b1/National_Research_Council_of_Canada_%28logo%29.svg
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/c/ca/Premi%C3%A8re_Cha%C3%AEne_de_Radio-Canada_%28logo%29.svg
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/c/c7/WealthONE_Bank_of_Canada_logo.png
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/5/59/Writers_Guild_of_Canada_logo.svg
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/assets/app-icons/VNL%202023/vnl-2023-app-icon-800-630px.png
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bel
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bra
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bul
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_can
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_chn
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_cze
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_dom
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_fra
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ger
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ita
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_jpn
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ned
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_pol
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_srb
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tha
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tur
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ukr
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_usa
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_wide/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_tablet/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Canada W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_portrait/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/c/c7/Conservative_Party_of_Canada_symbol.svg
+- approved | Canada W | logo | https://upload.wikimedia.org/wikipedia/commons/b/b9/Liberal_Party_of_Canada_red_symbol.svg
+- approved | China W | logo | https://images.volleyballworld.com/image/upload/f_png/v1747056390/assets/v2/logos/volleyball-nations-league-logo-nav
+- approved | China W | logo | https://images.volleyballworld.com/image/upload/f_png/v1748261995/assets/competition-logos/Events%202025/Volleyball/volleyball-nations-league/header
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/8/83/2009_Chinese_New_Year_Wikipedia_logo_%28Skjackey_tse_Propose%29.png
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/c/c4/2025_Jubilee_logo_in_Catholic_Church_in_Xining_%28China%29.jpg
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/9/91/Ameson_Year_in_China_Logo.png
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/c/cb/Logo-ip-beijing.png
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/a/a0/Wikipedia-logo-v2-zh.svg
+- approved | China W | logo | https://upload.wikimedia.org/wikipedia/commons/2/2b/Wuling_logo_%28silver%29.svg
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/assets/app-icons/VNL%202023/vnl-2023-app-icon-800-630px.png
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bel
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bra
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bul
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_can
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_chn
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_cze
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_dom
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_fra
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ger
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ita
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_jpn
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ned
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_pol
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_srb
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tha
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tur
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ukr
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_usa
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_wide/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_tablet/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | China W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_portrait/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | China W | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/1/18/China_TV_Chinese-English_title_since_1997-10-30.png
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661329/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661323/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661321/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661325/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661319/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661324/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661313/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661317/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661327/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661328/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661332/primary/L/logo.svg
+- approved | Dallas Wings | logo | https://cdn.wnba.com/logos/wnba/1611661322/primary/L/logo.svg
+- approved | Dallas Wings | logo_candidate | https://wings.wnba.com/images/WNBA_fallback.jpg
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/203824.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1642784.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1643424.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/202252.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1629501.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1642793.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1642808.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1641652.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1629481.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1629574.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1629491.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1630386.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1643425.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1643385.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1643604.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1643605.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/201067.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1642906.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/203973.png
+- approved | Dallas Wings | logo_candidate | https://cdn.wnba.com/headshots/wnba/latest/260x190/1642897.png
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/b/bc/10April2007.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/6/65/11March2008.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/1/1f/15March2008.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/5/5f/16April2007.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/8/83/21May2008.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/6/69/22February2008.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/a/a6/24April2008.pdf
+- approved | Dallas Wings | logo_candidate | https://upload.wikimedia.org/wikipedia/commons/f/f1/6May2008.pdf
+- review | Dallas Wings | logo | https://global.nba.com/nba-apps/static/apple.svg
+- review | Dallas Wings | logo | https://global.nba.com/nba-apps/static/google.svg
+- approved | DeWanna Bonner | headshot | https://www.wnba.com/images/WNBA_fallback.png
+- approved | DeWanna Bonner | headshot | https://www.wnba.com/images/fallbackimage_black.jpg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/static/next/images/logos/wnba-secondary-logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661329/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661323/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661321/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661325/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661319/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661324/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661313/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661317/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661327/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661328/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661332/primary/L/logo.svg
+- approved | DeWanna Bonner | headshot | https://cdn.wnba.com/logos/wnba/1611661322/primary/L/logo.svg
+- approved | France W | logo | https://images.volleyballworld.com/image/upload/f_png/v1747056390/assets/v2/logos/volleyball-nations-league-logo-nav
+- approved | France W | logo | https://images.volleyballworld.com/image/upload/f_png/v1748261995/assets/competition-logos/Events%202025/Volleyball/volleyball-nations-league/header
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/assets/app-icons/VNL%202023/vnl-2023-app-icon-800-630px.png
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bel
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bra
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_bul
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_can
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_chn
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_cze
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_dom
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_fra
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ger
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ita
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_jpn
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ned
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_pol
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_srb
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tha
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_tur
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_ukr
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/f_png/t_flag/assets/flags/flag_usa
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_wide/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_tablet/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | France W | logo_candidate | https://images.volleyballworld.com/image/upload/t_background_portrait/f_png/v1653482795/assets/backgrounds/VBW_white_V_BG.png
+- approved | Gabby Williams | headshot | https://www.wnba.com/images/WNBA_fallback.png
+- approved | Gabby Williams | headshot | https://www.wnba.com/images/fallbackimage_black.jpg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/static/next/images/logos/wnba-secondary-logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661329/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661323/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661321/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661325/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661319/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661324/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661313/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661317/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661327/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661328/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661332/primary/L/logo.svg
+- approved | Gabby Williams | headshot | https://cdn.wnba.com/logos/wnba/1611661322/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661329/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661323/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661321/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661325/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661319/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg
+- approved | Golden State Valkyries | logo | https://cdn.wnba.com/logos/wnba/1611661324/primary/L/logo.svg

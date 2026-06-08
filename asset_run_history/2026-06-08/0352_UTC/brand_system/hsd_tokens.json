@@ -1,0 +1,58 @@
+{
+  "version": "hsd-studio-visual-upgrade-v2",
+  "canvas": {
+    "feed": {
+      "width": 1080,
+      "height": 1350
+    }
+  },
+  "grid": {
+    "columns": 12,
+    "gutter": 24,
+    "safe_left": 96,
+    "safe_right": 984,
+    "safe_top": 84,
+    "safe_bottom": 1254
+  },
+  "colors": {
+    "bg_900": "#071226",
+    "bg_800": "#0C1730",
+    "surface_1": "#101D3A",
+    "surface_2": "#142447",
+    "text_strong": "#F4F7FB",
+    "text_muted": "#AEB9CE",
+    "accent_cyan": "#62E8FF",
+    "accent_magenta": "#FF4FD8",
+    "accent_lime": "#C6FF4D"
+  },
+  "type": {
+    "display_headline": {
+      "family": "Sora or Anton fallback",
+      "weight": 700,
+      "size": 88
+    },
+    "slide_headline": {
+      "family": "Sora or Anton fallback",
+      "weight": 700,
+      "size": 64
+    },
+    "score_digits": {
+      "family": "Sora or Anton fallback",
+      "weight": 700,
+      "size": 96
+    },
+    "body": {
+      "family": "Inter fallback",
+      "weight": 500,
+      "size": 28
+    }
+  },
+  "watermark": {
+    "file": "brand_assets/hsd_watermark_bug.svg",
+    "position": "top-left",
+    "size": [
+      76,
+      76
+    ]
+  }
+}

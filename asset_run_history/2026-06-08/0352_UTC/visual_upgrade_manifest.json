@@ -1,0 +1,17 @@
+{
+  "version": "hsd-studio-visual-upgrade-v2",
+  "generated_at_utc": "2026-06-08T03:52:45.833456+00:00",
+  "outputs": [
+    "brand_system/hsd_tokens.json",
+    "brand_system/hsd_template_rules.json",
+    "studio_visual_upgrade_v2.md",
+    "studio_bundle_prompts_v2.md",
+    "studio_render_manifest_v2.json",
+    "visual_upgrade_dashboard/index.html"
+  ],
+  "counts": {
+    "bundles": 0,
+    "approved_assets": 38,
+    "render_manifests": 0
+  }
+}

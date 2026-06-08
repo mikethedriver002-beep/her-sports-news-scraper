@@ -1,0 +1,5 @@
+{
+  "template_name": "result_slide_v2",
+  "purpose": "One game with huge score slab.",
+  "tokens_ref": "brand_system/hsd_tokens.json"
+}

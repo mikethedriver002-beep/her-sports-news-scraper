@@ -1,0 +1,14 @@
+{
+  "version": "hsd-graphics-qa-scorer-v1",
+  "generated_at_utc": "2026-06-08T03:52:45.887942+00:00",
+  "outputs": [
+    "graphics_qa_results.csv",
+    "graphics_qa_report.md",
+    "graphics_qa_dashboard/index.html"
+  ],
+  "counts": {
+    "bundles_scored": 0,
+    "passes": 0,
+    "review_or_revise_or_fail": 0
+  }
+}
