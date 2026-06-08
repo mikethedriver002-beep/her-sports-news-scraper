@@ -1,0 +1,29 @@
+{
+  "brand_name": "Her Sports Daily",
+  "locked_watermark": {
+    "file": "brand_assets/hsd_watermark_bug.svg",
+    "rule": "Use one consistent compact stacked square HER SPORTS DAILY logo bug in the top-left unless a player face or scoreboard safe zone requires a small top-right shift.",
+    "safe_zone": "48 px minimum margin on 1080x1350. Never stretch, recolor, rotate, or regenerate differently."
+  },
+  "colors": {
+    "dark_night": "#0F1020",
+    "deep_panel": "#181A2F",
+    "neon_pink": "#FF4FD8",
+    "electric_cyan": "#7CF7FF",
+    "off_white": "#F8F4FF",
+    "muted_lavender": "#C5BDD9"
+  },
+  "fonts": {
+    "headline": "Anton or bold condensed sans fallback",
+    "body": "Inter or clean geometric sans fallback",
+    "score": "Anton or bold condensed sans fallback",
+    "note": "No font files are included or redistributed."
+  },
+  "layout": {
+    "primary_feed_size": "1080x1350",
+    "story_size": "1080x1920",
+    "safe_margin_px": 72,
+    "carousel_end_slide_required": true,
+    "visual_style": "bold women\u2019s sports editorial, dark neon system, oversized score/type hierarchy, clean source-safe context panels"
+  }
+}
