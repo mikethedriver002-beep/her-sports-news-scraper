@@ -1,6 +1,6 @@
 # Her Sports Daily Launch Graphics Chat Brief v1
 
-Generated: 2026-06-08T14:39:19.671857+00:00
+Generated: 2026-06-08T14:40:50.285110+00:00
 
 # Graphics Chat Starter Prompt
 
