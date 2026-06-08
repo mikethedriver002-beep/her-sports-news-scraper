@@ -64,7 +64,7 @@ def main() -> None:
 
     counts = {name: row_count(Path(name)) for name in copied if name.endswith(".csv")}
     summary = [
-        "# HSD Launch Control v1.1 Run Summary",
+        "# HSD Launch Control v1.1.2 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",

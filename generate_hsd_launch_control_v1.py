@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 
-VERSION = "hsd-launch-control-v1.1"
+VERSION = "hsd-launch-control-v1.1.2"
 
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
@@ -100,11 +100,62 @@ def find_input(path: str) -> Path:
         Path(path),
         Path("studio_run_history") / "latest" / path,
         Path("news_run_history") / "latest" / path,
+        Path("launch_run_history") / "latest" / path,
     ]
     for p in candidates:
         if p.exists():
             return p
     return Path(path)
+
+
+def read_csv_path(path: Path) -> List[Dict[str, str]]:
+    if path.exists() and path.is_file():
+        with path.open(newline="", encoding="utf-8", errors="replace") as f:
+            return list(csv.DictReader(f))
+    return []
+
+
+def historical_candidates(filename: str, roots: List[str]) -> List[Path]:
+    paths: List[Path] = []
+    for root in roots:
+        r = Path(root)
+        if r.exists():
+            paths.extend([p for p in r.rglob(filename) if p.is_file()])
+    paths = sorted(set(paths), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+    return paths
+
+
+def resolve_nonempty_csv(path: str, roots: Optional[List[str]] = None) -> Tuple[List[Dict[str, str]], Path, str]:
+    """
+    Resolve a CSV, preferring current files but falling back to the newest
+    non-empty archive. This prevents scheduled Launch runs from overwriting a
+    working publish slate with a blank slate when Studio Bridge latest is empty.
+    """
+    roots = roots or []
+    filename = Path(path).name
+
+    candidates = [
+        Path(path),
+        Path("studio_run_history") / "latest" / filename,
+        Path("launch_run_history") / "latest" / filename,
+        Path("news_run_history") / "latest" / filename,
+    ]
+
+    for p in candidates:
+        rows = read_csv_path(p)
+        if rows:
+            return rows, p, "direct_or_latest_nonempty"
+
+    for p in historical_candidates(filename, roots):
+        rows = read_csv_path(p)
+        if rows:
+            return rows, p, "archive_nonempty_fallback"
+
+    for p in candidates:
+        if p.exists():
+            return [], p, "empty_found"
+
+    return [], Path(path), "missing"
 
 
 def load_text(path: str) -> str:
@@ -114,12 +165,25 @@ def load_text(path: str) -> str:
     return ""
 
 
+def load_text_near(csv_path: Path, filename: str, default_path: str) -> str:
+    near = csv_path.parent / filename
+    if near.exists() and near.is_file():
+        return near.read_text(encoding="utf-8", errors="replace")
+    return load_text(default_path)
+
+
+def load_json_near(csv_path: Path, filename: str, default_path: str) -> Dict[str, Any]:
+    near = csv_path.parent / filename
+    if near.exists() and near.is_file():
+        try:
+            return json.loads(near.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return load_json(default_path)
+
+
 def load_csv(path: str) -> List[Dict[str, str]]:
-    p = find_input(path)
-    if p.exists() and p.is_file():
-        with p.open(newline="", encoding="utf-8", errors="replace") as f:
-            return list(csv.DictReader(f))
-    return []
+    return read_csv_path(find_input(path))
 
 
 def load_json(path: str) -> Dict[str, Any]:
@@ -726,9 +790,10 @@ th {{ color:var(--text); }}
 </html>"""
 
 
-def markdown_command_center(bundles: List[Dict[str, str]], queue: List[Dict[str, Any]], studio_manifest: Dict[str, Any]) -> str:
+def markdown_command_center(bundles: List[Dict[str, str]], queue: List[Dict[str, Any]], studio_manifest: Dict[str, Any], setup_notes: Optional[List[str]] = None) -> str:
+    setup_notes = setup_notes or []
     lines = [
-        "# Her Sports Daily Launch Command Center v1",
+        "# Her Sports Daily Launch Command Center v1.1.2",
         "",
         f"Generated: `{utc_now()}`",
         "",
@@ -743,6 +808,18 @@ def markdown_command_center(bundles: List[Dict[str, str]], queue: List[Dict[str,
         f"- Studio source version: {studio_manifest.get('version', 'unknown')}",
         f"- Studio bundles created: {studio_manifest.get('counts', {}).get('studio_bundles_created', 'unknown')}",
         "",
+    ]
+
+    if setup_notes:
+        lines.extend([
+            "## Input recovery notes",
+            "",
+        ])
+        for note in setup_notes:
+            lines.append(f"- {note}")
+        lines.append("")
+
+    lines.extend([
         "## Open first",
         "",
         "1. `launch_graphics_chat_brief.md`",
@@ -753,7 +830,7 @@ def markdown_command_center(bundles: List[Dict[str, str]], queue: List[Dict[str,
         "",
         "## Bundle-first publishing slate",
         "",
-    ]
+    ])
 
     for row in queue:
         lines.extend([
@@ -1041,22 +1118,36 @@ pre {{ white-space:pre-wrap; overflow:auto; background:rgba(0,0,0,.25); border:1
 
 
 def main() -> None:
-    bundles = load_csv(INPUT_BUNDLE_QUEUE)
-    bundle_packets = load_text(INPUT_BUNDLE_PACKETS)
-    bundle_prompts = load_text(INPUT_BUNDLE_PROMPTS)
-    bundle_captions = load_text(INPUT_BUNDLE_CAPTIONS)
-    studio_command = load_text(INPUT_STUDIO_COMMAND)
-    studio_manifest = load_json(INPUT_STUDIO_MANIFEST)
+    bundles, bundle_queue_path, bundle_source_status = resolve_nonempty_csv(
+        INPUT_BUNDLE_QUEUE,
+        roots=["studio_run_history", "launch_run_history"],
+    )
+    bundle_packets = load_text_near(bundle_queue_path, "studio_bundle_packets.md", INPUT_BUNDLE_PACKETS)
+    bundle_prompts = load_text_near(bundle_queue_path, "studio_bundle_prompts.md", INPUT_BUNDLE_PROMPTS)
+    bundle_captions = load_text_near(bundle_queue_path, "studio_bundle_caption_bank.md", INPUT_BUNDLE_CAPTIONS)
+    studio_command = load_text_near(bundle_queue_path, "studio_command_center.md", INPUT_STUDIO_COMMAND)
+    studio_manifest = load_json_near(bundle_queue_path, "studio_manifest.json", INPUT_STUDIO_MANIFEST)
     studio_sop = load_json(INPUT_STUDIO_SOP)
     brand = load_json(INPUT_STUDIO_BRAND)
 
+    setup_notes = []
+    if bundle_source_status == "archive_nonempty_fallback":
+        setup_notes.append(f"Used archived non-empty Studio Bundle queue: {bundle_queue_path.as_posix()}")
+    elif bundle_source_status in {"missing", "empty_found"}:
+        setup_notes.append("No non-empty Studio Bundle queue found.")
+
     if not bundles:
         Path("launch_setup_error.md").write_text(
-            "# Launch Control Setup Error\n\nNo bundle rows found. Run Studio Bridge Bundle Mode first.\n",
+            "# Launch Control Setup Error\n\nNo non-empty bundle rows found. Run Studio Bridge Bundle Mode with valid bundle output first. Existing metrics/tracker files may still be preserved, but the launch slate cannot be rebuilt safely.\n",
             encoding="utf-8",
         )
 
     publish_queue = build_publish_queue(bundles)
+    if not publish_queue:
+        existing_publish_queue = read_existing_csv(OUT_PUBLISH_QUEUE)
+        if existing_publish_queue:
+            publish_queue = existing_publish_queue
+            setup_notes.append("Recovered publish queue from existing launch_instagram_publish_queue.csv because bundle input was empty.")
     quality_gate = build_quality_gate(bundles)
     post_tracker = build_post_publish_tracker(publish_queue)
     metrics_input = build_metrics_input(publish_queue)
@@ -1064,7 +1155,7 @@ def main() -> None:
     experiments = build_growth_experiment_log(publish_queue)
     double_down_report = markdown_double_down_report(metrics_input, pillar_rows, publish_queue)
 
-    command = markdown_command_center(bundles, publish_queue, studio_manifest)
+    command = markdown_command_center(bundles, publish_queue, studio_manifest, setup_notes)
     runbook = markdown_runbook()
 
     write_csv(OUT_PUBLISH_QUEUE, publish_queue, PUBLISH_FIELDS)
@@ -1096,6 +1187,9 @@ def main() -> None:
         "generated_at_utc": utc_now(),
         "inputs": {
             "studio_bundle_queue": INPUT_BUNDLE_QUEUE,
+            "resolved_bundle_queue_path": bundle_queue_path.as_posix(),
+            "bundle_source_status": bundle_source_status,
+            "setup_notes": setup_notes,
             "studio_bundle_packets": INPUT_BUNDLE_PACKETS,
             "studio_command": INPUT_STUDIO_COMMAND,
             "studio_manifest": INPUT_STUDIO_MANIFEST,
@@ -1124,6 +1218,7 @@ def main() -> None:
         "counts": {
             "bundles_read": len(bundles),
             "publish_queue_rows": len(publish_queue),
+            "used_archive_bundle_fallback": "Yes" if bundle_source_status == "archive_nonempty_fallback" else "No",
             "quality_gate_rows": len(quality_gate),
             "post_tracker_rows": len(post_tracker),
             "metrics_input_rows": len(metrics_input),
