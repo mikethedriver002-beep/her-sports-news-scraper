@@ -1,27 +1,23 @@
 [
   {
-    "player_id": "wnba_jessica-shepard",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "jessica-shepard",
-    "player_name": "Jessica Shepard",
-    "headshot_asset_id": "appr_f4a80b178903db",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691374+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
     "player_id": "wnba_arike-ogunbowale",
     "sport": "basketball",
     "league": "WNBA",
     "player_slug": "arike-ogunbowale",
     "player_name": "Arike Ogunbowale",
-    "headshot_asset_id": "appr_bfb44c786e3def",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691384+00:00",
-    "status": "asset_found",
-    "notes": ""
+    "headshot_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No player image approved. Do not use WNBA fallback or fake player image."
+  },
+  {
+    "player_id": "wnba_jessica-shepard",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "jessica-shepard",
+    "player_name": "Jessica Shepard",
+    "headshot_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No player image approved. Do not use WNBA fallback or fake player image."
   },
   {
     "player_id": "wnba_paige-bueckers",
@@ -29,118 +25,8 @@
     "league": "WNBA",
     "player_slug": "paige-bueckers",
     "player_name": "Paige Bueckers",
-    "headshot_asset_id": "appr_c4d04bfa24673a",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691394+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_a-ja-wilson",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "a-ja-wilson",
-    "player_name": "A'ja Wilson",
-    "headshot_asset_id": "appr_c158a654a3bd50",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691404+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_gabby-williams",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "gabby-williams",
-    "player_name": "Gabby Williams",
-    "headshot_asset_id": "appr_e42e2d4ecc7f87",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691413+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_jackie-young",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "jackie-young",
-    "player_name": "Jackie Young",
-    "headshot_asset_id": "appr_63e8c8d550d381",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691423+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_natasha-howard",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "natasha-howard",
-    "player_name": "Natasha Howard",
-    "headshot_asset_id": "appr_063462a3b4c012",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691433+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_olivia-miles",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "olivia-miles",
-    "player_name": "Olivia Miles",
-    "headshot_asset_id": "appr_34d205672be2e2",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691443+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_natisha-hiedeman",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "natisha-hiedeman",
-    "player_name": "Natisha Hiedeman",
-    "headshot_asset_id": "appr_8b75d98d9e0e96",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691454+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_dewanna-bonner",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "dewanna-bonner",
-    "player_name": "DeWanna Bonner",
-    "headshot_asset_id": "appr_ed65cd25c15583",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691464+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_natasha-mack",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "natasha-mack",
-    "player_name": "Natasha Mack",
-    "headshot_asset_id": "appr_d86d955161dd80",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691474+00:00",
-    "status": "asset_found",
-    "notes": ""
-  },
-  {
-    "player_id": "wnba_monique-akoa-makani",
-    "sport": "basketball",
-    "league": "WNBA",
-    "player_slug": "monique-akoa-makani",
-    "player_name": "Monique Akoa Makani",
-    "headshot_asset_id": "appr_faabed60b32793",
-    "canonical_page_url": "https://www.wnba.com/players",
-    "last_verified_utc": "2026-06-08T03:52:45.691485+00:00",
-    "status": "asset_found",
-    "notes": ""
+    "headshot_asset_id": "",
+    "status": "text_forward_only",
+    "notes": "No player image approved. Do not use WNBA fallback or fake player image."
   }
 ]

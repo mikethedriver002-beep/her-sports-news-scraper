@@ -1,29 +1,10 @@
 {
-  "version": "hsd-studio-visual-upgrade-v2",
-  "non_negotiables": [
-    "One dominant visual thesis per slide.",
-    "Use approved assets when available. Do not invent players, jerseys, logos, or numbers.",
-    "Scoreboard accuracy outranks art direction.",
-    "Every carousel has a premium CTA/end slide."
-  ],
-  "templates": {
-    "carousel_cover_v2": {
-      "purpose": "Premium cover with hero visual/logo cluster."
-    },
-    "result_slide_v2": {
-      "purpose": "One game with huge score slab."
-    },
-    "top_performers_v2": {
-      "purpose": "Top performer context with approved player/logo assets."
-    },
-    "roundup_v2": {
-      "purpose": "Multi-result editorial grid. Max six rows per slide."
-    },
-    "radar_v2": {
-      "purpose": "Soccer/multi-sport radar with matchday feel."
-    },
-    "cta_v2": {
-      "purpose": "Minimal HSD close slide."
-    }
-  }
+  "version": "hsd-studio-visual-upgrade-v2.1",
+  "rules": [
+    "one dominant thesis per slide",
+    "never use boxed tables as full design",
+    "use exact assets only",
+    "text-forward when assets missing",
+    "CTA/end slide required"
+  ]
 }

@@ -1,5 +1,246 @@
 {
-  "version": "hsd-studio-visual-upgrade-v2",
-  "generated_at_utc": "2026-06-08T03:52:45.833223+00:00",
-  "bundles": []
+  "version": "hsd-studio-visual-upgrade-v2.1",
+  "generated_at_utc": "2026-06-08T04:07:51.953106+00:00",
+  "bundles": [
+    {
+      "bundle_id": "bundle_34740d18e445ce",
+      "post_slug": "main-wnba-result",
+      "bundle_name": "Main WNBA Result",
+      "template_name": "result_slide_v2",
+      "asset_ids": [
+        "appr_7ca8ac2b2a4ad9"
+      ],
+      "source_facts": {
+        "source_headlines": "",
+        "caption_seed": "Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.",
+        "accuracy_lock": "BUNDLE LOCKED FACTS: Dallas Wings beat Los Angeles Sparks: Dallas Wings 104, Los Angeles Sparks 96. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting."
+      },
+      "text_layers": [
+        {
+          "layer_id": "main-wnba-result_headline",
+          "text": "Main WNBA Result",
+          "font_size_px": 72,
+          "font_weight": 800,
+          "color_hex": "#F4F7FB",
+          "background_hex": "#071226",
+          "essential": true
+        }
+      ],
+      "all_layers": [
+        {
+          "layer_id": "main-wnba-result_watermark",
+          "bbox": [
+            48,
+            48,
+            76,
+            76
+          ]
+        },
+        {
+          "layer_id": "main-wnba-result_headline",
+          "bbox": [
+            96,
+            160,
+            850,
+            220
+          ]
+        },
+        {
+          "layer_id": "main-wnba-result_cta",
+          "bbox": [
+            96,
+            1150,
+            888,
+            110
+          ]
+        }
+      ],
+      "render_path": "generated_graphics/main-wnba-result.png"
+    },
+    {
+      "bundle_id": "bundle_ab66100c39c23e",
+      "post_slug": "tonight-in-the-w-mini-roundup",
+      "bundle_name": "Tonight in the W Mini-Roundup",
+      "template_name": "roundup_v2",
+      "asset_ids": [
+        "appr_df24e2082f811d",
+        "appr_9c7fc211069805",
+        "appr_9edeb1cdaa6f4c",
+        "appr_52d46724c00ec9"
+      ],
+      "source_facts": {
+        "source_headlines": "",
+        "caption_seed": "Tonight in the W roundup: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72",
+        "accuracy_lock": "BUNDLE LOCKED FACTS: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting."
+      },
+      "text_layers": [
+        {
+          "layer_id": "tonight-in-the-w-mini-roundup_headline",
+          "text": "Tonight in the W Mini-Roundup",
+          "font_size_px": 72,
+          "font_weight": 800,
+          "color_hex": "#F4F7FB",
+          "background_hex": "#071226",
+          "essential": true
+        }
+      ],
+      "all_layers": [
+        {
+          "layer_id": "tonight-in-the-w-mini-roundup_watermark",
+          "bbox": [
+            48,
+            48,
+            76,
+            76
+          ]
+        },
+        {
+          "layer_id": "tonight-in-the-w-mini-roundup_headline",
+          "bbox": [
+            96,
+            160,
+            850,
+            220
+          ]
+        },
+        {
+          "layer_id": "tonight-in-the-w-mini-roundup_cta",
+          "bbox": [
+            96,
+            1150,
+            888,
+            110
+          ]
+        }
+      ],
+      "render_path": "generated_graphics/tonight-in-the-w-mini-roundup.png"
+    },
+    {
+      "bundle_id": "bundle_99dc10394fd30c",
+      "post_slug": "volleyball-results-roundup",
+      "bundle_name": "Volleyball Results Roundup",
+      "template_name": "roundup_v2",
+      "asset_ids": [
+        "appr_dbd34b035cd6e1",
+        "appr_3b613e56ad6ec8",
+        "appr_6849fd04b54eb4",
+        "appr_14a6cc66f75be0",
+        "appr_885836e9869631",
+        "appr_65747d24fe25ad",
+        "appr_2a96d8d56f4ac2",
+        "appr_9426bf971998ee",
+        "appr_526f2acaa1d24e",
+        "appr_dd35c3cb61c372",
+        "appr_49824984287991"
+      ],
+      "source_facts": {
+        "source_headlines": "",
+        "caption_seed": "Around Women\u2019s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1",
+        "accuracy_lock": "BUNDLE LOCKED FACTS: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting."
+      },
+      "text_layers": [
+        {
+          "layer_id": "volleyball-results-roundup_headline",
+          "text": "Volleyball Results Roundup",
+          "font_size_px": 72,
+          "font_weight": 800,
+          "color_hex": "#F4F7FB",
+          "background_hex": "#071226",
+          "essential": true
+        }
+      ],
+      "all_layers": [
+        {
+          "layer_id": "volleyball-results-roundup_watermark",
+          "bbox": [
+            48,
+            48,
+            76,
+            76
+          ]
+        },
+        {
+          "layer_id": "volleyball-results-roundup_headline",
+          "bbox": [
+            96,
+            160,
+            850,
+            220
+          ]
+        },
+        {
+          "layer_id": "volleyball-results-roundup_cta",
+          "bbox": [
+            96,
+            1150,
+            888,
+            110
+          ]
+        }
+      ],
+      "render_path": "generated_graphics/volleyball-results-roundup.png"
+    },
+    {
+      "bundle_id": "bundle_33580e1adf9d95",
+      "post_slug": "women-s-soccer-radar",
+      "bundle_name": "Women's Soccer Radar",
+      "template_name": "radar_v2",
+      "asset_ids": [
+        "appr_a954f58ba7b766",
+        "appr_a79adaf6457f0c",
+        "appr_3b613e56ad6ec8",
+        "appr_2bfc766277e6da",
+        "appr_67a033c94405f7",
+        "appr_34556a69591b47",
+        "appr_2d1d5b6b4b59b0",
+        "appr_49824984287991"
+      ],
+      "source_facts": {
+        "source_headlines": "",
+        "caption_seed": "Women\u2019s soccer radar: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0",
+        "accuracy_lock": "BUNDLE LOCKED FACTS: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting."
+      },
+      "text_layers": [
+        {
+          "layer_id": "women-s-soccer-radar_headline",
+          "text": "Women's Soccer Radar",
+          "font_size_px": 72,
+          "font_weight": 800,
+          "color_hex": "#F4F7FB",
+          "background_hex": "#071226",
+          "essential": true
+        }
+      ],
+      "all_layers": [
+        {
+          "layer_id": "women-s-soccer-radar_watermark",
+          "bbox": [
+            48,
+            48,
+            76,
+            76
+          ]
+        },
+        {
+          "layer_id": "women-s-soccer-radar_headline",
+          "bbox": [
+            96,
+            160,
+            850,
+            220
+          ]
+        },
+        {
+          "layer_id": "women-s-soccer-radar_cta",
+          "bbox": [
+            96,
+            1150,
+            888,
+            110
+          ]
+        }
+      ],
+      "render_path": "generated_graphics/women-s-soccer-radar.png"
+    }
+  ]
 }

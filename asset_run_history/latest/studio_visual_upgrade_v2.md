@@ -1,5 +1,6 @@
-# HSD Studio Visual Upgrade v2
+# HSD Studio Visual Upgrade v2.1
 
-Generated: 2026-06-08T03:52:45.833326+00:00
+Generated: 2026-06-08T04:07:51.954314+00:00
 
-Use approved assets when available. If unavailable, use premium sport-specific abstraction, not fake visuals.
+Bundles: 4
+Approved exact assets: 22

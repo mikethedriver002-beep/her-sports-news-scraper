@@ -1,35 +1,26 @@
 {
-  "version": "hsd-asset-desk-v1",
-  "generated_at_utc": "2026-06-08T03:52:45.750621+00:00",
+  "version": "hsd-asset-desk-v1.1",
+  "generated_at_utc": "2026-06-08T04:07:51.859319+00:00",
   "rights_mode": "aggressive",
   "download": true,
-  "outputs": [
-    "asset_manifest.csv",
-    "asset_manifest.json",
-    "team_assets.csv",
-    "team_assets.json",
-    "player_assets.csv",
-    "player_assets.json",
-    "asset_rights_review.csv",
-    "approved_graphics_assets.csv",
-    "approved_graphics_assets.json",
-    "launch_integration_points.csv",
-    "asset_source_seed_list.csv",
-    "asset_candidates_review.md",
-    "asset_desk_dashboard/index.html",
-    "asset_desk_manifest.json"
-  ],
-  "counts": {
-    "entities_detected": 38,
-    "asset_candidates": 1175,
-    "approved_assets": 38,
-    "teams": 26,
-    "players": 12,
-    "integration_rows": 0
+  "inputs": {
+    "bundle_queue": "studio_bundle_queue.csv",
+    "bundle_packets": "studio_bundle_packets.md",
+    "launch_graphics_brief": "launch_graphics_chat_brief.md"
   },
-  "notes": [
-    "Aggressive policy auto-approves public candidates while retaining provenance.",
-    "No paywall/login bypass or watermark removal is performed.",
-    "Add BING_SEARCH_API_KEY for broader image discovery."
+  "counts": {
+    "bundles": 4,
+    "teams_detected": 29,
+    "players_detected": 3,
+    "asset_candidates": 22,
+    "approved_assets": 22,
+    "integration_rows": 4
+  },
+  "guardrails": [
+    "No WNBA fallback player images are approved.",
+    "No generic VNL nav logos are approved as team logos.",
+    "No random Wikimedia logo search results are approved.",
+    "No PDF/app icon/background/logo-nav assets are approved.",
+    "If exact asset cannot be verified, output remains text-forward."
   ]
 }

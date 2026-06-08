@@ -1,42 +1,18 @@
-# HSD Asset + Visual + QA Run Summary
+# HSD Asset Visual QA v1.1 Run Summary
 
-Run timestamp UTC: `2026-06-08 03:52:45 UTC`
-Archive folder: `asset_run_history/2026-06-08/0352_UTC`
+Run timestamp UTC: `2026-06-08 04:07:52 UTC`
+Archive folder: `asset_run_history/2026-06-08/0407_UTC`
 
 ## Row counts
-- `asset_manifest.csv`: 1175
-- `team_assets.csv`: 26
-- `player_assets.csv`: 12
-- `asset_rights_review.csv`: 1175
-- `approved_graphics_assets.csv`: 38
-- `launch_integration_points.csv`: 0
-- `asset_source_seed_list.csv`: 113
-- `graphics_qa_results.csv`: 0
 
-## Archived files
-- `asset_manifest.csv`
-- `asset_manifest.json`
-- `team_assets.csv`
-- `team_assets.json`
-- `player_assets.csv`
-- `player_assets.json`
-- `asset_rights_review.csv`
-- `approved_graphics_assets.csv`
-- `approved_graphics_assets.json`
-- `launch_integration_points.csv`
-- `asset_source_seed_list.csv`
-- `asset_candidates_review.md`
-- `asset_desk_manifest.json`
-- `asset_desk_dashboard/index.html`
-- `brand_system`
-- `studio_templates_v2`
-- `studio_visual_upgrade_v2.md`
-- `studio_bundle_prompts_v2.md`
-- `studio_render_manifest_v2.json`
-- `visual_upgrade_manifest.json`
-- `visual_upgrade_dashboard/index.html`
-- `graphics_qa_results.csv`
-- `graphics_qa_report.md`
-- `graphics_qa_manifest.json`
-- `graphics_qa_dashboard/index.html`
-- `data/assets`
+- `asset_manifest.csv`: 22
+- `team_assets.csv`: 29
+- `player_assets.csv`: 3
+- `asset_rights_review.csv`: 22
+- `approved_graphics_assets.csv`: 22
+- `launch_integration_points.csv`: 4
+- `asset_source_seed_list.csv`: 32
+- `graphics_qa_results.csv`: 4
+
+## Missing optional files
+

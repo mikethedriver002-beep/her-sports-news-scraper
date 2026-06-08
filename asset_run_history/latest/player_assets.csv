@@ -1,13 +1,4 @@
-player_id,sport,league,player_slug,player_name,headshot_asset_id,canonical_page_url,last_verified_utc,status,notes
-wnba_jessica-shepard,basketball,WNBA,jessica-shepard,Jessica Shepard,appr_f4a80b178903db,https://www.wnba.com/players,2026-06-08T03:52:45.691374+00:00,asset_found,
-wnba_arike-ogunbowale,basketball,WNBA,arike-ogunbowale,Arike Ogunbowale,appr_bfb44c786e3def,https://www.wnba.com/players,2026-06-08T03:52:45.691384+00:00,asset_found,
-wnba_paige-bueckers,basketball,WNBA,paige-bueckers,Paige Bueckers,appr_c4d04bfa24673a,https://www.wnba.com/players,2026-06-08T03:52:45.691394+00:00,asset_found,
-wnba_a-ja-wilson,basketball,WNBA,a-ja-wilson,A'ja Wilson,appr_c158a654a3bd50,https://www.wnba.com/players,2026-06-08T03:52:45.691404+00:00,asset_found,
-wnba_gabby-williams,basketball,WNBA,gabby-williams,Gabby Williams,appr_e42e2d4ecc7f87,https://www.wnba.com/players,2026-06-08T03:52:45.691413+00:00,asset_found,
-wnba_jackie-young,basketball,WNBA,jackie-young,Jackie Young,appr_63e8c8d550d381,https://www.wnba.com/players,2026-06-08T03:52:45.691423+00:00,asset_found,
-wnba_natasha-howard,basketball,WNBA,natasha-howard,Natasha Howard,appr_063462a3b4c012,https://www.wnba.com/players,2026-06-08T03:52:45.691433+00:00,asset_found,
-wnba_olivia-miles,basketball,WNBA,olivia-miles,Olivia Miles,appr_34d205672be2e2,https://www.wnba.com/players,2026-06-08T03:52:45.691443+00:00,asset_found,
-wnba_natisha-hiedeman,basketball,WNBA,natisha-hiedeman,Natisha Hiedeman,appr_8b75d98d9e0e96,https://www.wnba.com/players,2026-06-08T03:52:45.691454+00:00,asset_found,
-wnba_dewanna-bonner,basketball,WNBA,dewanna-bonner,DeWanna Bonner,appr_ed65cd25c15583,https://www.wnba.com/players,2026-06-08T03:52:45.691464+00:00,asset_found,
-wnba_natasha-mack,basketball,WNBA,natasha-mack,Natasha Mack,appr_d86d955161dd80,https://www.wnba.com/players,2026-06-08T03:52:45.691474+00:00,asset_found,
-wnba_monique-akoa-makani,basketball,WNBA,monique-akoa-makani,Monique Akoa Makani,appr_faabed60b32793,https://www.wnba.com/players,2026-06-08T03:52:45.691485+00:00,asset_found,
+player_id,sport,league,player_slug,player_name,headshot_asset_id,status,notes
+wnba_arike-ogunbowale,basketball,WNBA,arike-ogunbowale,Arike Ogunbowale,,text_forward_only,No player image approved. Do not use WNBA fallback or fake player image.
+wnba_jessica-shepard,basketball,WNBA,jessica-shepard,Jessica Shepard,,text_forward_only,No player image approved. Do not use WNBA fallback or fake player image.
+wnba_paige-bueckers,basketball,WNBA,paige-bueckers,Paige Bueckers,,text_forward_only,No player image approved. Do not use WNBA fallback or fake player image.

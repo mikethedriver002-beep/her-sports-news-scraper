@@ -1,5 +1,4 @@
 {
-  "template_name": "carousel_cover_v2",
-  "purpose": "Premium cover with hero visual/logo cluster.",
-  "tokens_ref": "brand_system/hsd_tokens.json"
+  "template": "carousel_cover_v2",
+  "tokens": "brand_system/hsd_tokens.json"
 }

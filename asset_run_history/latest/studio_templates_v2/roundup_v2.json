@@ -1,5 +1,4 @@
 {
-  "template_name": "roundup_v2",
-  "purpose": "Multi-result editorial grid. Max six rows per slide.",
-  "tokens_ref": "brand_system/hsd_tokens.json"
+  "template": "roundup_v2",
+  "tokens": "brand_system/hsd_tokens.json"
 }

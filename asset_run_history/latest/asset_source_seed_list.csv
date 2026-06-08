@@ -1,114 +1,33 @@
-entity_name,entity_type,sport,league,source_priority,source_url,search_query,notes
-Dallas Wings,team,basketball,WNBA,official,https://wings.wnba.com/roster/,Dallas Wings logo official WNBA,official/team page
-Dallas Wings,team,basketball,WNBA,wikimedia,,Dallas Wings logo,wikimedia
-Dallas Wings,team,basketball,WNBA,bing,,Dallas Wings logo transparent png,bing image fallback
-Los Angeles Sparks,team,basketball,WNBA,official,https://sparks.wnba.com/roster/,Los Angeles Sparks logo official WNBA,official/team page
-Los Angeles Sparks,team,basketball,WNBA,wikimedia,,Los Angeles Sparks logo,wikimedia
-Los Angeles Sparks,team,basketball,WNBA,bing,,Los Angeles Sparks logo transparent png,bing image fallback
-Los Angeles Sparks. Top performers,team,basketball,WNBA,wikimedia,,Los Angeles Sparks. Top performers logo,wikimedia
-Los Angeles Sparks. Top performers,team,basketball,WNBA,bing,,Los Angeles Sparks. Top performers logo transparent png,bing image fallback
-Las Vegas Aces,team,basketball,WNBA,official,https://aces.wnba.com/roster/,Las Vegas Aces logo official WNBA,official/team page
-Las Vegas Aces,team,basketball,WNBA,wikimedia,,Las Vegas Aces logo,wikimedia
-Las Vegas Aces,team,basketball,WNBA,bing,,Las Vegas Aces logo transparent png,bing image fallback
-Golden State Valkyries,team,basketball,WNBA,official,https://valkyries.wnba.com/roster/,Golden State Valkyries logo official WNBA,official/team page
-Golden State Valkyries,team,basketball,WNBA,wikimedia,,Golden State Valkyries logo,wikimedia
-Golden State Valkyries,team,basketball,WNBA,bing,,Golden State Valkyries logo transparent png,bing image fallback
-Minnesota Lynx,team,basketball,WNBA,official,https://lynx.wnba.com/roster/,Minnesota Lynx logo official WNBA,official/team page
-Minnesota Lynx,team,basketball,WNBA,wikimedia,,Minnesota Lynx logo,wikimedia
-Minnesota Lynx,team,basketball,WNBA,bing,,Minnesota Lynx logo transparent png,bing image fallback
-Seattle Storm,team,basketball,WNBA,official,https://storm.wnba.com/roster/,Seattle Storm logo official WNBA,official/team page
-Seattle Storm,team,basketball,WNBA,wikimedia,,Seattle Storm logo,wikimedia
-Seattle Storm,team,basketball,WNBA,bing,,Seattle Storm logo transparent png,bing image fallback
-Phoenix Mercury,team,basketball,WNBA,official,https://mercury.wnba.com/roster/,Phoenix Mercury logo official WNBA,official/team page
-Phoenix Mercury,team,basketball,WNBA,wikimedia,,Phoenix Mercury logo,wikimedia
-Phoenix Mercury,team,basketball,WNBA,bing,,Phoenix Mercury logo transparent png,bing image fallback
-Portland Fire,team,basketball,WNBA,official,https://www.wnba.com/teams,Portland Fire logo official WNBA,official/team page
-Portland Fire,team,basketball,WNBA,wikimedia,,Portland Fire logo,wikimedia
-Portland Fire,team,basketball,WNBA,bing,,Portland Fire logo transparent png,bing image fallback
-USA W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,USA W volleyball logo,volleyball world
-USA W,team,volleyball,Volleyball,wikimedia,,USA W logo,wikimedia
-USA W,team,volleyball,Volleyball,bing,,USA W logo transparent png,bing image fallback
-France W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,France W volleyball logo,volleyball world
-France W,team,volleyball,Volleyball,wikimedia,,France W logo,wikimedia
-France W,team,volleyball,Volleyball,bing,,France W logo transparent png,bing image fallback
-Belgium W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Belgium W volleyball logo,volleyball world
-Belgium W,team,volleyball,Volleyball,wikimedia,,Belgium W logo,wikimedia
-Belgium W,team,volleyball,Volleyball,bing,,Belgium W logo transparent png,bing image fallback
-Thailand W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Thailand W volleyball logo,volleyball world
-Thailand W,team,volleyball,Volleyball,wikimedia,,Thailand W logo,wikimedia
-Thailand W,team,volleyball,Volleyball,bing,,Thailand W logo transparent png,bing image fallback
-Brazil W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,Brazil W soccer logo,soccer fallback
-Brazil W,team,soccer,Soccer,wikimedia,,Brazil W logo,wikimedia
-Brazil W,team,soccer,Soccer,bing,,Brazil W logo transparent png,bing image fallback
-Bulgaria W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Bulgaria W volleyball logo,volleyball world
-Bulgaria W,team,volleyball,Volleyball,wikimedia,,Bulgaria W logo,wikimedia
-Bulgaria W,team,volleyball,Volleyball,bing,,Bulgaria W logo transparent png,bing image fallback
-Canada W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Canada W volleyball logo,volleyball world
-Canada W,team,volleyball,Volleyball,wikimedia,,Canada W logo,wikimedia
-Canada W,team,volleyball,Volleyball,bing,,Canada W logo transparent png,bing image fallback
-China W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,China W volleyball logo,volleyball world
-China W,team,volleyball,Volleyball,wikimedia,,China W logo,wikimedia
-China W,team,volleyball,Volleyball,bing,,China W logo transparent png,bing image fallback
-Serbia W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Serbia W volleyball logo,volleyball world
-Serbia W,team,volleyball,Volleyball,wikimedia,,Serbia W logo,wikimedia
-Serbia W,team,volleyball,Volleyball,bing,,Serbia W logo transparent png,bing image fallback
-Italy W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Italy W volleyball logo,volleyball world
-Italy W,team,volleyball,Volleyball,wikimedia,,Italy W logo,wikimedia
-Italy W,team,volleyball,Volleyball,bing,,Italy W logo transparent png,bing image fallback
-Turkey W,team,volleyball,Volleyball,official,https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/teams/women/,Turkey W volleyball logo,volleyball world
-Turkey W,team,volleyball,Volleyball,wikimedia,,Turkey W logo,wikimedia
-Turkey W,team,volleyball,Volleyball,bing,,Turkey W logo transparent png,bing image fallback
-Japan W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,Japan W soccer logo,soccer fallback
-Japan W,team,soccer,Soccer,wikimedia,,Japan W logo,wikimedia
-Japan W,team,soccer,Soccer,bing,,Japan W logo transparent png,bing image fallback
-South Africa W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,South Africa W soccer logo,soccer fallback
-South Africa W,team,soccer,Soccer,wikimedia,,South Africa W logo,wikimedia
-South Africa W,team,soccer,Soccer,bing,,South Africa W logo transparent png,bing image fallback
-Mexico W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,Mexico W soccer logo,soccer fallback
-Mexico W,team,soccer,Soccer,wikimedia,,Mexico W logo,wikimedia
-Mexico W,team,soccer,Soccer,bing,,Mexico W logo transparent png,bing image fallback
-Australia W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,Australia W soccer logo,soccer fallback
-Australia W,team,soccer,Soccer,wikimedia,,Australia W logo,wikimedia
-Australia W,team,soccer,Soccer,bing,,Australia W logo transparent png,bing image fallback
-Brazil U20 W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,Brazil U20 W soccer logo,soccer fallback
-Brazil U20 W,team,soccer,Soccer,wikimedia,,Brazil U20 W logo,wikimedia
-Brazil U20 W,team,soccer,Soccer,bing,,Brazil U20 W logo transparent png,bing image fallback
-Korea Republic U20 W,team,soccer,Soccer,official,https://www.ussoccer.com/teams/uswnt,Korea Republic U20 W soccer logo,soccer fallback
-Korea Republic U20 W,team,soccer,Soccer,wikimedia,,Korea Republic U20 W logo,wikimedia
-Korea Republic U20 W,team,soccer,Soccer,bing,,Korea Republic U20 W logo transparent png,bing image fallback
-Jessica Shepard,player,basketball,WNBA,official,https://www.wnba.com/players,Jessica Shepard WNBA headshot,wnba players page
-Jessica Shepard,player,basketball,WNBA,wikimedia,,Jessica Shepard athlete image,wikimedia
-Jessica Shepard,player,basketball,WNBA,bing,,Jessica Shepard headshot official,bing image fallback
-Arike Ogunbowale,player,basketball,WNBA,official,https://www.wnba.com/players,Arike Ogunbowale WNBA headshot,wnba players page
-Arike Ogunbowale,player,basketball,WNBA,wikimedia,,Arike Ogunbowale athlete image,wikimedia
-Arike Ogunbowale,player,basketball,WNBA,bing,,Arike Ogunbowale headshot official,bing image fallback
-Paige Bueckers,player,basketball,WNBA,official,https://www.wnba.com/players,Paige Bueckers WNBA headshot,wnba players page
-Paige Bueckers,player,basketball,WNBA,wikimedia,,Paige Bueckers athlete image,wikimedia
-Paige Bueckers,player,basketball,WNBA,bing,,Paige Bueckers headshot official,bing image fallback
-A'ja Wilson,player,basketball,WNBA,official,https://www.wnba.com/players,A'ja Wilson WNBA headshot,wnba players page
-A'ja Wilson,player,basketball,WNBA,wikimedia,,A'ja Wilson athlete image,wikimedia
-A'ja Wilson,player,basketball,WNBA,bing,,A'ja Wilson headshot official,bing image fallback
-Gabby Williams,player,basketball,WNBA,official,https://www.wnba.com/players,Gabby Williams WNBA headshot,wnba players page
-Gabby Williams,player,basketball,WNBA,wikimedia,,Gabby Williams athlete image,wikimedia
-Gabby Williams,player,basketball,WNBA,bing,,Gabby Williams headshot official,bing image fallback
-Jackie Young,player,basketball,WNBA,official,https://www.wnba.com/players,Jackie Young WNBA headshot,wnba players page
-Jackie Young,player,basketball,WNBA,wikimedia,,Jackie Young athlete image,wikimedia
-Jackie Young,player,basketball,WNBA,bing,,Jackie Young headshot official,bing image fallback
-Natasha Howard,player,basketball,WNBA,official,https://www.wnba.com/players,Natasha Howard WNBA headshot,wnba players page
-Natasha Howard,player,basketball,WNBA,wikimedia,,Natasha Howard athlete image,wikimedia
-Natasha Howard,player,basketball,WNBA,bing,,Natasha Howard headshot official,bing image fallback
-Olivia Miles,player,basketball,WNBA,official,https://www.wnba.com/players,Olivia Miles WNBA headshot,wnba players page
-Olivia Miles,player,basketball,WNBA,wikimedia,,Olivia Miles athlete image,wikimedia
-Olivia Miles,player,basketball,WNBA,bing,,Olivia Miles headshot official,bing image fallback
-Natisha Hiedeman,player,basketball,WNBA,official,https://www.wnba.com/players,Natisha Hiedeman WNBA headshot,wnba players page
-Natisha Hiedeman,player,basketball,WNBA,wikimedia,,Natisha Hiedeman athlete image,wikimedia
-Natisha Hiedeman,player,basketball,WNBA,bing,,Natisha Hiedeman headshot official,bing image fallback
-DeWanna Bonner,player,basketball,WNBA,official,https://www.wnba.com/players,DeWanna Bonner WNBA headshot,wnba players page
-DeWanna Bonner,player,basketball,WNBA,wikimedia,,DeWanna Bonner athlete image,wikimedia
-DeWanna Bonner,player,basketball,WNBA,bing,,DeWanna Bonner headshot official,bing image fallback
-Natasha Mack,player,basketball,WNBA,official,https://www.wnba.com/players,Natasha Mack WNBA headshot,wnba players page
-Natasha Mack,player,basketball,WNBA,wikimedia,,Natasha Mack athlete image,wikimedia
-Natasha Mack,player,basketball,WNBA,bing,,Natasha Mack headshot official,bing image fallback
-Monique Akoa Makani,player,basketball,WNBA,official,https://www.wnba.com/players,Monique Akoa Makani WNBA headshot,wnba players page
-Monique Akoa Makani,player,basketball,WNBA,wikimedia,,Monique Akoa Makani athlete image,wikimedia
-Monique Akoa Makani,player,basketball,WNBA,bing,,Monique Akoa Makani headshot official,bing image fallback
+entity_name,entity_type,sport,league,source_url,search_query,notes
+AST,team,,,,AST logo official,Needs manual verification; no auto-approved asset
+Australia W,team,soccer,International Soccer,https://flagcdn.com/w320/au.png,,Curated exact country flag map
+Belgium W,team,volleyball,International Volleyball,https://flagcdn.com/w320/be.png,,Curated exact country flag map
+Brazil U20 W,team,soccer,International Soccer,https://flagcdn.com/w320/br.png,,Curated exact country flag map
+Brazil W,team,soccer,International Soccer,https://flagcdn.com/w320/br.png,,Curated exact country flag map
+Bulgaria W,team,volleyball,International Volleyball,https://flagcdn.com/w320/bg.png,,Curated exact country flag map
+Canada W,team,volleyball,International Volleyball,https://flagcdn.com/w320/ca.png,,Curated exact country flag map
+China W,team,volleyball,International Volleyball,https://flagcdn.com/w320/cn.png,,Curated exact country flag map
+Dallas Wings,team,basketball,WNBA,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,,Curated exact logo map
+France W,team,volleyball,International Volleyball,https://flagcdn.com/w320/fr.png,,Curated exact country flag map
+Golden State Valkyries,team,basketball,WNBA,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,,Curated exact logo map
+Italy W,team,volleyball,International Volleyball,https://flagcdn.com/w320/it.png,,Curated exact country flag map
+Japan W,team,soccer,International Soccer,https://flagcdn.com/w320/jp.png,,Curated exact country flag map
+Korea Republic U20 W,team,soccer,International Soccer,https://flagcdn.com/w320/kr.png,,Curated exact country flag map
+Las Vegas Aces,team,basketball,WNBA,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,,Curated exact logo map
+Los Angeles Sparks,team,basketball,WNBA,,Los Angeles Sparks logo official,Needs manual verification; no auto-approved asset
+Mexico W,team,soccer,International Soccer,https://flagcdn.com/w320/mx.png,,Curated exact country flag map
+Minnesota Lynx,team,basketball,WNBA,,Minnesota Lynx logo official,Needs manual verification; no auto-approved asset
+PTS,team,,,,PTS logo official,Needs manual verification; no auto-approved asset
+Phoenix Mercury,team,basketball,WNBA,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,,Curated exact logo map
+Portland Fire,team,basketball,WNBA,,Portland Fire logo official,Needs manual verification; no auto-approved asset
+REB,team,,,,REB logo official,Needs manual verification; no auto-approved asset
+STL,team,,,,STL logo official,Needs manual verification; no auto-approved asset
+Seattle Storm,team,basketball,WNBA,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,,Curated exact logo map
+Serbia W,team,volleyball,International Volleyball,https://flagcdn.com/w320/rs.png,,Curated exact country flag map
+South Africa W,team,soccer,International Soccer,https://flagcdn.com/w320/za.png,,Curated exact country flag map
+Thailand W,team,volleyball,International Volleyball,https://flagcdn.com/w320/th.png,,Curated exact country flag map
+Turkey W,team,volleyball,International Volleyball,https://flagcdn.com/w320/tr.png,,Curated exact country flag map
+USA W,team,volleyball,International Volleyball,https://flagcdn.com/w320/us.png,,Curated exact country flag map
+Arike Ogunbowale,player,basketball,WNBA,,Arike Ogunbowale WNBA headshot official,Bing/API only. No WNBA fallback images allowed.
+Jessica Shepard,player,basketball,WNBA,,Jessica Shepard WNBA headshot official,Bing/API only. No WNBA fallback images allowed.
+Paige Bueckers,player,basketball,WNBA,,Paige Bueckers WNBA headshot official,Bing/API only. No WNBA fallback images allowed.
