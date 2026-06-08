@@ -1,10 +1,20 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-08T12:52:55.227302+00:00
+Generated: 2026-06-08T19:38:52.753596+00:00
 
 ## Daily Content Command Center
 
-### Rank 1: Nelly Korda wins U.S. Women's Open title with perilous final putt, claiming her 2nd straight major
+### Rank 1: Texas wins second straight Women's College World Series title | FINAL OUT
+
+- Decision: Must Post
+- Content family: Breaking / Must Post Carousel
+- Recommended asset: 4-slide news carousel
+- Hook: Here is the quick version of what happened and why it matters.
+- First slide / main text: Quick recap: Texas wins second straight Women's College World Series title | FINAL OUT
+- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
+- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
+
+### Rank 2: Nelly Korda wins U.S. Women's Open title with perilous final putt, claiming her 2nd straight major
 
 - Decision: Must Post
 - Content family: Breaking / Must Post Carousel
@@ -14,67 +24,67 @@ Generated: 2026-06-08T12:52:55.227302+00:00
 - Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 2: A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
-
-- Decision: Must Post
-- Content family: Breaking / Must Post Carousel
-- Recommended asset: 4-slide news carousel
-- Hook: This is the kind of milestone that shows where the game is headed.
-- First slide / main text: Milestone watch: A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
-- Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
-- Visual brief: Use a milestone carousel with the record, context, and why it matters.
-
-### Rank 3: PWHL Las Vegas signs first-ever players ahead of inaugural season
+### Rank 3: Mirra Andreeva Becomes Youngest French Open Women’s Champion Since 1992
 
 - Decision: Maybe Post
 - Content family: Context Carousel
 - Recommended asset: 3 to 4-slide milestone graphic
 - Hook: This is the kind of milestone that shows where the game is headed.
-- First slide / main text: Milestone watch: PWHL Las Vegas signs first-ever players ahead of inaugural season
+- First slide / main text: Milestone watch: Mirra Andreeva Becomes Youngest French Open Women’s Champion Since 1992
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 4: Reese Atwood Caps Texas Career with Back-to-Back WCWS Championships
+### Rank 4: Dream's Angel Reese is setting such a dominant record that her only competition is an NBA star
+
+- Decision: Verify First
+- Content family: Context Carousel
+- Recommended asset: 3 to 4-slide milestone graphic
+- Hook: This is the kind of milestone that shows where the game is headed.
+- First slide / main text: Milestone watch: Dream's Angel Reese is setting such a dominant record that her only competition is an NBA star
+- Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
+- Visual brief: Use a milestone carousel with the record, context, and why it matters.
+
+### Rank 5: Washington Coach Sydney Johnson Ejected in Blowout Mystics vs Dream Loss
 
 - Decision: Maybe Post
 - Content family: Context Carousel
 - Recommended asset: 3 to 4-slide milestone graphic
 - Hook: This is the kind of milestone that shows where the game is headed.
-- First slide / main text: Milestone watch: Reese Atwood Caps Texas Career with Back-to-Back WCWS Championships
+- First slide / main text: Milestone watch: Washington Coach Sydney Johnson Ejected in Blowout Mystics vs Dream Loss
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 5: WNBA gameday discussion: Can the Toronto Tempo and Portland Fire earn their first-ever Commissioner’s Cup wins?
+### Rank 6: Toronto and Portland are in the middle of the standings a month into their WNBA expansion seasons
 
 - Decision: Maybe Post
-- Content family: Tonight in the W
-- Recommended asset: 4-slide matchup/pregame graphic
-- Hook: Here is the quick version of what happened and why it matters.
-- First slide / main text: Quick recap: WNBA gameday discussion: Can the Toronto Tempo and Portland Fire earn their first-ever Commissioner’s Cup wins?
-- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
-- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
+- Content family: Context Carousel
+- Recommended asset: single feed card
+- Hook: Another market is betting big on women's sports.
+- First slide / main text: Expansion watch: Toronto and Portland are in the middle of the standings a month into their WNBA expansion seasons
+- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
+- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
-### Rank 6: Indiana Fever vs. New York Liberty - Final Score - June 06, 2026
-
-- Decision: Maybe Post
-- Content family: Tonight in the W
-- Recommended asset: 4-slide matchup/pregame graphic
-- Hook: Here is the quick version of what happened and why it matters.
-- First slide / main text: Quick recap: Indiana Fever vs. New York Liberty - Final Score - June 06, 2026
-- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
-- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
-
-### Rank 7: Breaking News: Mirra Andreeva Wins Women's French Open Final Stream of Tennis
+### Rank 7: Purdue Women's Basketball Big Ten Home, Road Opponents Announced for 2026-27
 
 - Decision: Save for Weekend
 - Content family: Feed Post
-- Recommended asset: single recap card or quick carousel
-- Hook: Here is the quick version of what happened and why it matters.
-- First slide / main text: Quick recap: Breaking News: Mirra Andreeva Wins Women's French Open Final Stream of Tennis
-- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
-- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
+- Recommended asset: single feed card
+- Hook: Purdue Women's Basketball Big Ten Home, Road Opponents Announced for 2026-27
+- First slide / main text: Purdue Women's Basketball Big Ten Home, Road Opponents Announced for 2026-27
+- Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
+- Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
 
-### Rank 8: Toronto Sceptres Pushing Through Expansion Process
+### Rank 8: Big Ten announces home, road matchups for Wisconsin women's basketball
+
+- Decision: Save for Weekend
+- Content family: Feed Post
+- Recommended asset: single feed card
+- Hook: Big Ten announces home, road matchups for Wisconsin women's basketball
+- First slide / main text: Big Ten announces home, road matchups for Wisconsin women's basketball
+- Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
+- Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
+
+### Rank 9: Toronto Sceptres Pushing Through Expansion Process
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
@@ -84,45 +94,28 @@ Generated: 2026-06-08T12:52:55.227302+00:00
 - Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
 - Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
-### Rank 9: UCLA women’s basketball signs Slovenian guard Lina Jerkovic
-
-- Decision: Save for Weekend
-- Content family: Feed Post
-- Recommended asset: single feed card
-- Hook: UCLA women’s basketball signs Slovenian guard Lina Jerkovic
-- First slide / main text: UCLA women’s basketball signs Slovenian guard Lina Jerkovic
-- Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
-- Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
-
-### Rank 10: Queen's Club 411: Dates, who's playing, prize money and more
+### Rank 10: Muller leaves Boston to sign in Hamilton, San Jose signs O'Neill in PWHL expansion team moves
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
-- Recommended asset: 4-slide data carousel
-- Hook: Women's sports are becoming impossible for the business world to ignore.
-- First slide / main text: The business of women's sports keeps growing: Queen's Club 411: Dates, who's playing, prize money and more
-- Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
-- Visual brief: Use a clean data carousel with bold numbers and simple context.
+- Recommended asset: single feed card
+- Hook: Another market is betting big on women's sports.
+- First slide / main text: Expansion watch: Muller leaves Boston to sign in Hamilton, San Jose signs O'Neill in PWHL expansion team moves
+- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
+- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
 ## Tonight in the W
 
-### Card 1: Tonight in the W Watch: A’ja Wilson, Caitlin Clark, and Top Rookies Shatter WNBA Records 1 Month Into 2026
+### Card 1: Tonight in the W Watch: Washington Coach Sydney Johnson Ejected in Blowout Mystics vs Dream Loss
 
 - Card type: Stat Watch
 - Subhead: This is the kind of milestone that shows where the game is headed.
 - Key stat or angle: Records and milestones are proof points for the rise of women's sports.
 - CTA: What are you watching in the W tonight?
 
-### Card 2: Tonight in the W Recap: WNBA gameday discussion: Can the Toronto Tempo and Portland Fire earn their first-ever Commissioner’s Cup wins?
+### Card 2: Tonight in the W Watch: Toronto and Portland are in the middle of the standings a month into their WNBA expansion seasons
 
-- Card type: Postgame
-- Subhead: Here is the quick version of what happened and why it matters.
-- Key stat or angle: Key takeaway: what changed and who stood out.
-- CTA: What are you watching in the W tonight?
-
-### Card 3: Tonight in the W Recap: Indiana Fever vs. New York Liberty - Final Score - June 06, 2026
-
-- Card type: Postgame
-- Subhead: Here is the quick version of what happened and why it matters.
-- Key stat or angle: Key takeaway: what changed and who stood out.
+- Card type: League Watch
+- Subhead: Another market is betting big on women's sports.
+- Key stat or angle: Another sign that women's sports demand is outgrowing the old model.
 - CTA: What are you watching in the W tonight?
