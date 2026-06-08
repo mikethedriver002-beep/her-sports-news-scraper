@@ -1,4 +1,4 @@
-name: Her Sports Daily Launch Control v1.1.1
+name: Her Sports Daily Launch Control v1.1.2
 
 on:
   workflow_dispatch:
@@ -74,8 +74,6 @@ jobs:
           for attempt in 1 2 3; do
             echo "Safe publish attempt $attempt"
 
-            # Always start from the newest remote main before generating outputs.
-            # This avoids rebase conflicts in generated timestamped files.
             git fetch origin main
             git reset --hard origin/main
             git clean -fd
@@ -96,7 +94,7 @@ jobs:
               exit 0
             fi
 
-            git commit -m "Update HSD Launch Control v1.1"
+            git commit -m "Update HSD Launch Control v1.1.2"
 
             if git push origin HEAD:main; then
               echo "Push succeeded"
@@ -114,5 +112,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-launch-control-v1-1
+          name: hsd-launch-control-v1-1-2
           path: launch_run_history/latest/
