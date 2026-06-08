@@ -1,6 +1,6 @@
 # HSD Bundle Prompts v2.2
 
-Generated: 2026-06-08T19:56:21.431257+00:00
+Generated: 2026-06-08T20:40:03.830062+00:00
 
 ## Main WNBA Result
 
