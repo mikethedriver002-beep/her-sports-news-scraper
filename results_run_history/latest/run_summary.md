@@ -1,7 +1,7 @@
 # Her Sports Daily Results Desk v4.3 Run Summary
 
-Run timestamp UTC: `2026-06-08 22:53:02 UTC`
-Archive folder: `results_run_history/2026-06-08/2253_UTC`
+Run timestamp UTC: `2026-06-09 10:49:35 UTC`
+Archive folder: `results_run_history/2026-06-09/1049_UTC`
 
 ## Row counts
 
@@ -9,7 +9,7 @@ Archive folder: `results_run_history/2026-06-08/2253_UTC`
 - `reconciled_events.csv`: 8
 - `today_results_board.csv`: 8
 - `today_womens_results.csv`: 8
-- `today_final_results.csv`: 2
+- `today_final_results.csv`: 3
 - `top_womens_results.csv`: 8
 - `manual_review_queue.csv`: 0
 - `source_health_report.csv`: 24
