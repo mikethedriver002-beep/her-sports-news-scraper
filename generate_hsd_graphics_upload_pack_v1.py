@@ -24,7 +24,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.3.1"
+VERSION = "hsd-graphics-upload-pack-v1.4"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -285,6 +285,10 @@ def main() -> None:
 
         prompt_text = prompt_for_bundle(prompts_md, bundle_name)
         (folder / "00_PROMPT_TO_PASTE.md").write_text(prompt_text, encoding="utf-8")
+        for extra_name in ["graphics_slide_blueprints.md", "graphics_production_specs.json", "player_image_requirements.csv", "player_image_sourcing_report.md"]:
+            extra = Path(extra_name)
+            if extra.exists():
+                shutil.copy2(extra, folder / extra_name)
 
         instructions = [
             f"# Upload instructions: {bundle_name}",
@@ -293,7 +297,7 @@ def main() -> None:
             "",
             "If a PNG preferred asset is missing, upload the matching file from `assets_original/`.",
             "",
-            "Do not let the graphics chat fetch logo URLs. The logos must be attached as files.",
+            "Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files.",
             "",
         ]
 
@@ -366,9 +370,9 @@ def main() -> None:
         "",
         "1. Open `graphics_chat_upload_pack/<post_slug>/`.",
         "2. Upload `00_PROMPT_TO_PASTE.md`.",
-        "3. Upload every file in `assets_png_preferred/`.",
+        "3. Upload every file in `assets_png_preferred/`, including player/person images if present.",
         "4. If a PNG is missing, upload the matching file in `assets_original/`.",
-        "5. Tell the graphics chat: use only the attached assets, do not fetch or invent logos.",
+        "5. Tell the graphics chat: use only the attached assets, do not fetch or invent logos or player images.",
         "",
         "Quick ZIPs are in `graphics_chat_upload_pack_zips/`.",
         "",
@@ -396,7 +400,7 @@ def main() -> None:
             "Instructions to paste into the graphics chat:",
             "",
             "```text",
-            "Use the uploaded prompt and uploaded logo files only. Do not fetch logo URLs. Do not substitute logos. Do not invent logos. If an uploaded logo file is missing, use text-forward design for that team. Output separate slide files.",
+            "Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. If required player/person images are missing, stop and ask for the files. Output separate slide files.",
             "```",
             "",
         ]

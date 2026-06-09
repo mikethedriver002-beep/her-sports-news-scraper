@@ -6,7 +6,7 @@ from pathlib import Path
 FILES=[
 "asset_manifest.csv","asset_manifest.json","team_assets.csv","team_assets.json","player_assets.csv","player_assets.json",
 "asset_rights_review.csv","approved_graphics_assets.csv","approved_graphics_assets.json","launch_integration_points.csv",
-"asset_source_seed_list.csv","fact_warning_queue.csv","asset_candidates_review.md","asset_desk_manifest.json","brand_system","studio_templates_v2",
+"asset_source_seed_list.csv","fact_warning_queue.csv","player_image_requirements.csv","player_image_sourcing_report.md","graphics_production_specs.json","graphics_slide_blueprints.md","asset_candidates_review.md","asset_desk_manifest.json","brand_system","studio_templates_v2",
 "studio_visual_upgrade_v2.md","studio_bundle_prompts_v2.md","studio_render_manifest_v2.json","visual_upgrade_manifest.json",
 "visual_upgrade_dashboard/index.html","graphics_qa_results.csv","graphics_qa_report.md","graphics_qa_manifest.json",
 "graphics_qa_dashboard/index.html","graphics_chat_upload_pack","graphics_chat_upload_pack_zips","graphics_chat_upload_manifest.csv","graphics_chat_upload_manifest.json","graphics_chat_upload_instructions.md","graphics_chat_direct_handoff.md","data/assets","chatgpt_review_pack","hsd_chatgpt_review_packet.md"
@@ -114,7 +114,7 @@ def main():
         if copy(src,run) and copy(src,latest): copied.append(name)
         else: missing.append(name)
     counts={n:rows(Path(n)) for n in copied if n.endswith(".csv")}
-    summary=["# HSD Asset Visual QA v1.3.1 Run Summary","",f"Run timestamp UTC: `{stamp}`",f"Archive folder: `{run.as_posix()}`","","## Row counts",""]
+    summary=["# HSD Asset Visual QA v1.4 Run Summary","",f"Run timestamp UTC: `{stamp}`",f"Archive folder: `{run.as_posix()}`","","## Row counts",""]
     for k,v in counts.items(): summary.append(f"- `{k}`: {v}")
     summary += ["","## Missing optional files",""] + [f"- `{m}`" for m in missing]
     text="\n".join(summary)+"\n"
