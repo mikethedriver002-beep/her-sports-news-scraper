@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.5.1"
+VERSION = "hsd-graphics-upload-pack-v1.6"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -405,6 +405,10 @@ def main() -> None:
             "graphics_production_specs.json",
             "player_image_requirements.csv",
             "player_image_sourcing_report.md",
+            "graphics_copy_style_guide.md",
+            "graphics_display_copy.csv",
+            "graphics_banned_language.csv",
+            "graphics_asset_usage_map.csv",
         ]:
             extra = Path(extra_name)
             if extra.exists():
@@ -417,7 +421,7 @@ def main() -> None:
             "",
             "If a PNG preferred asset is missing, upload the matching file from `assets_original/`.",
             "",
-            "Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files.",
+            "Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files. Use graphics_display_copy.csv and graphics_copy_style_guide.md for display language. Do not render banned language from graphics_banned_language.csv.",
             "",
         ]
 
@@ -528,6 +532,10 @@ def main() -> None:
             OUT_STATUS_JSON,
             OUT_INSTRUCTIONS,
             OUT_DIRECT_HANDOFF,
+            "graphics_copy_style_guide.md",
+            "graphics_display_copy.csv",
+            "graphics_banned_language.csv",
+            "graphics_asset_usage_map.csv",
         ],
     }, indent=2), encoding="utf-8")
 
@@ -576,7 +584,7 @@ def main() -> None:
             "Instructions to paste into the graphics chat:",
             "",
             "```text",
-            "Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Output separate slide files.",
+            "Use the uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, and graphics_asset_usage_map.csv only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render the words Verified Final, Winner, or Loser. Output separate slide files.",
             "```",
             "",
         ]

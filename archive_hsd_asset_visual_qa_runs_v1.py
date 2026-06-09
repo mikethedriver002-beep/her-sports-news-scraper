@@ -33,6 +33,11 @@ CHATGPT_REVIEW_FILES = [
     ("14_graphics_upload_pack_status.csv", "graphics_upload_pack_status.csv"),
     ("15_graphics_upload_pack_status.json", "graphics_upload_pack_status.json"),
     ("16_graphics_qa_report.md", "graphics_qa_report.md"),
+    ("20_graphics_copy_style_guide.md", "graphics_copy_style_guide.md"),
+    ("21_graphics_display_copy.csv", "graphics_display_copy.csv"),
+    ("22_graphics_banned_language.csv", "graphics_banned_language.csv"),
+    ("23_graphics_asset_usage_map.csv", "graphics_asset_usage_map.csv"),
+    ("24_graphics_language_manifest.json", "graphics_language_manifest.json"),
     ("17_visual_upgrade_manifest.json", "visual_upgrade_manifest.json"),
     ("18_graphics_qa_manifest.json", "graphics_qa_manifest.json"),
 ]
@@ -115,7 +120,7 @@ def main() -> None:
     latest.mkdir(parents=True, exist_ok=True)
 
     counts = {name: row_count(Path(name)) for name in FILES if name.endswith(".csv") and Path(name).exists()}
-    summary = ["# HSD Asset Visual QA v1.5.1 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
+    summary = ["# HSD Asset Visual QA v1.6 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
     for k, v in counts.items(): summary.append(f"- `{k}`: {v}")
 
     if Path("player_image_sourcing_report.md").exists():
@@ -157,7 +162,7 @@ def main() -> None:
     copy_any(Path("chatgpt_review_pack"), run)
     copy_any(Path("chatgpt_review_pack"), latest)
 
-    print("Archived HSD Asset Visual QA v1.5.1")
+    print("Archived HSD Asset Visual QA v1.6")
 
 
 if __name__ == "__main__":

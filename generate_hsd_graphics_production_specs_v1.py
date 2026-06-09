@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-graphics-production-specs-v1.5"
+VERSION = "hsd-graphics-production-specs-v1.6"
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_PLAYER_REQS = os.environ.get("HSD_PLAYER_IMAGE_REQUIREMENTS", "player_image_requirements.csv")
@@ -78,16 +78,16 @@ def build_main_spec(reqs: List[Dict[str, str]]) -> Dict[str, Any]:
             {
                 "slide": 1,
                 "name": "Result hero with people",
-                "must_include": ["Dallas Wings player/person image", "Los Angeles Sparks player/person image", "Dallas Wings logo", "Los Angeles Sparks logo", "Dallas Wings 104", "Los Angeles Sparks 96", "Verified Final"],
+                "must_include": ["Dallas Wings player/person image", "Los Angeles Sparks player/person image", "Dallas Wings logo", "Los Angeles Sparks logo", "Dallas Wings 104", "Los Angeles Sparks 96", "Final in Los Angeles"],
                 "layout": "Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.",
                 "forbidden": ["fake jerseys", "fake numbers", "logo-only cover if player images are present", "empty right or left side"],
             },
             {
                 "slide": 2,
                 "name": "Balanced final score board",
-                "must_include": ["Dallas Wings 104", "Los Angeles Sparks 96", "winner label", "loser label", "one Dallas logo", "one Sparks logo"],
+                "must_include": ["Dallas Wings 104", "Los Angeles Sparks 96", "Dallas wins it", "Final Score", "one Dallas logo", "one Sparks logo"],
                 "layout": "Symmetric split scoreboard. Fill both sides equally with score slab, team label, logo, and small context strip. No extra logo floating on the left margin.",
-                "forbidden": ["duplicate logo in corner or left rail", "empty side", "tiny verified final text strip", "cropped score"],
+                "forbidden": ["duplicate logo in corner or left rail", "empty side", "tiny robotic verification strip", "cropped score"],
             },
             {
                 "slide": 3,
@@ -100,7 +100,7 @@ def build_main_spec(reqs: List[Dict[str, str]]) -> Dict[str, Any]:
             {
                 "slide": 4,
                 "name": "CTA with filled composition",
-                "must_include": ["Your take?", "Follow Her Sports Daily", "both team logos", "HSD lockup"],
+                "must_include": ["What stood out?", "Follow Her Sports Daily", "both team logos", "HSD lockup", "Dallas 104 · Los Angeles 96"],
                 "layout": "Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.",
                 "forbidden": ["huge empty dark area", "logo pair only with no context", "same composition as slide 2"],
             },
@@ -129,7 +129,18 @@ def append_specs_to_prompts(prompts: str, specs: Dict[str, Any]) -> str:
             "",
             "PLAYER IMAGE STATUS: required player/person images are present in the upload pack. Use the uploaded player image files only. Do not generate or invent people.",
         ]
-    spec_text += ["", "Slide-by-slide requirements:", ""]
+    spec_text += [
+        "",
+        "DISPLAY COPY LANGUAGE RULES:",
+        "- Keep verification language internal. Do not render 'Verified Final' on any slide.",
+        "- Use 'Final', 'Final Score', 'Dallas wins it', or 'Wings Take L.A.' instead.",
+        "- Do not render 'Winner' or 'Loser' labels. Use team names and natural result language.",
+        "- Do not render internal QA phrases such as BUNDLE LOCKED FACTS, source-safe context, or do not alter.",
+        "- Use the exact display copy from graphics_display_copy.csv when that file is uploaded.",
+        "",
+        "Slide-by-slide requirements:",
+        "",
+    ]
     for s in main["slides"]:
         spec_text += [
             f"SLIDE {s['slide']} - {s['name']}",
@@ -144,6 +155,7 @@ def append_specs_to_prompts(prompts: str, specs: Dict[str, Any]) -> str:
         "- Do not create a Wings-only top performers slide. Sparks performers are required too.",
         "- Keep slide 2 balanced so neither side feels empty.",
         "- Use uploaded player/person images when present. No fake player bodies or fake jersey numbers.",
+        "- Do not render the phrase Verified Final; use Final or Final Score.",
         "",
     ]
     addition = "\n".join(spec_text)
