@@ -1,7 +1,7 @@
 {
   "version": "news-sync-v1.8",
-  "run_id": "26fae37df5d567ca",
-  "generated_at_utc": "2026-06-09T12:57:28.395193+00:00",
+  "run_id": "182c0e606a7ea142",
+  "generated_at_utc": "2026-06-09T12:58:53.684442+00:00",
   "inputs": {
     "results_graphics_queue": "results_graphics_queue.md",
     "daily_results_recommendations": "daily_results_recommendations.md",

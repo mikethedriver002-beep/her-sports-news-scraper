@@ -2,6 +2,7 @@
 
 | Run UTC | Archive Folder | Files |
 |---|---:|---:|
+| 2026-06-09 12:58:53 UTC | [Open archive](news_run_history/2026-06-09/1258_UTC) | 13 files |
 | 2026-06-09 12:57:28 UTC | [Open archive](news_run_history/2026-06-09/1257_UTC) | 13 files |
 | 2026-06-09 11:43:22 UTC | [Open archive](news_run_history/2026-06-09/1143_UTC) | 13 files |
 | 2026-06-09 10:50:08 UTC | [Open archive](news_run_history/2026-06-09/1050_UTC) | 13 files |
