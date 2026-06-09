@@ -1,12 +1,12 @@
 # HSD Graphics Prompt Sanitizer v1.7.2
 
-Generated: 2026-06-09T20:45:00.061411+00:00
+Generated: 2026-06-09T20:59:45.013227+00:00
 
 ## Main WNBA Result
 
 - Prompt path: `graphics_clean_prompts/main-wnba-result/00_PROMPT_TO_PASTE.md`
-- Raw prompt chars: 6353
-- Clean prompt chars: 14550
+- Raw prompt chars: 6055
+- Clean prompt chars: 14482
 - Removed internal lines: 4
 - Term replacements/removals: 8
 

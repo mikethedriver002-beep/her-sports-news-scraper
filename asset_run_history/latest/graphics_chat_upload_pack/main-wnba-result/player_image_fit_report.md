@@ -1,10 +1,10 @@
 # HSD Player Image Fit Gate v1.8
 
-Generated: 2026-06-09T20:45:00.023847+00:00
+Generated: 2026-06-09T20:59:44.980026+00:00
 
 - checked: 36
-- approved: 4
-- review: 27
+- approved: 3
+- review: 28
 - blocked: 5
 
 This gate does not prove identity by face recognition. It catches sourcing/team-context risks and gives the graphics chat crop rules to avoid wrong-team jersey exposure.
@@ -12,10 +12,10 @@ This gate does not prove identity by face recognition. It catches sourcing/team-
 ## Jessica Shepard
 
 - Team: Dallas Wings
-- Status: **approved**
-- Usage mode: `normal_player_photo`
-- Risk: low | none
-- Crop rule: Normal crop is allowed if the image clearly matches the player and team context.
+- Status: **review**
+- Usage mode: `tight_face_crop_only`
+- Risk: medium | public-source image needs visual review
+- Crop rule: Crop tightly around face/head-and-shoulders. Do not show overseas, college, or wrong-team jersey marks.
 
 ## Arike Ogunbowale
 
