@@ -1,7 +1,7 @@
 {
-  "version": "news-sync-v1.8",
-  "run_id": "d5efa4ae9bdf0517",
-  "generated_at_utc": "2026-06-09T19:35:09.622154+00:00",
+  "version": "news-sync-v1.8.2-event-dates",
+  "run_id": "44cbdb35edb66b26",
+  "generated_at_utc": "2026-06-09T20:21:41.753712+00:00",
   "inputs": {
     "results_graphics_queue": "results_graphics_queue.md",
     "daily_results_recommendations": "daily_results_recommendations.md",
@@ -29,7 +29,9 @@
     "fact_packets": 0,
     "manual_review": 0,
     "publish_ready": 0,
-    "production_ready": 0
+    "production_ready": 0,
+    "packets_with_event_date": 0,
+    "packets_missing_event_date": 0
   },
   "settings": {
     "max_must_post": 5,
