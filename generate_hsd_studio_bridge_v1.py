@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
-VERSION = "hsd-studio-bridge-v1.2"
+VERSION = "hsd-studio-bridge-v1.3-event-dates"
 
 INPUT_NEWS_FACT_PACKETS = os.environ.get("HSD_NEWS_FACT_PACKETS", "news_fact_packets.csv")
 INPUT_NEWS_DAILY_PLAN = os.environ.get("HSD_NEWS_DAILY_PLAN", "news_daily_plan.md")
@@ -27,6 +27,8 @@ INPUT_STUDIO_SOP = os.environ.get("HSD_STUDIO_SOP", "studio_graphics_sop.json")
 
 MAX_TOP_PACKETS = int(os.environ.get("HSD_STUDIO_MAX_TOP_PACKETS", "6"))
 MAX_QUEUE_ITEMS = int(os.environ.get("HSD_STUDIO_MAX_QUEUE_ITEMS", "14"))
+MAX_RESULT_AGE_HOURS = float(os.environ.get("HSD_STUDIO_MAX_RESULT_AGE_HOURS", "18"))
+STRICT_EVENT_DATES = os.environ.get("HSD_STUDIO_REQUIRE_EVENT_DATE", "1").lower() not in {"0", "false", "no"}
 
 OUT_COMMAND_CENTER = "studio_command_center.md"
 OUT_GRAPHICS_QUEUE_CSV = "studio_graphics_queue.csv"
@@ -43,6 +45,8 @@ OUT_BUNDLE_CAPTION_BANK = "studio_bundle_caption_bank.md"
 OUT_BRAND_CONFIG = "studio_brand_config.json"
 OUT_SOP = "studio_graphics_sop.json"
 OUT_MANIFEST = "studio_manifest.json"
+OUT_FRESH_PACKET_REPORT = "studio_fresh_packet_report.md"
+OUT_FRESH_PACKET_GATE_CSV = "studio_fresh_packet_gate.csv"
 OUT_WATERMARK_SVG = "brand_assets/hsd_watermark_bug.svg"
 
 QUEUE_FIELDS = [
@@ -52,6 +56,16 @@ QUEUE_FIELDS = [
     "production_ready", "graphics_safety_mode", "watermark_rule",
     "slide_count", "caption_seed", "graphic_prompt", "accuracy_lock",
     "source_urls_json", "packet_id",
+    "event_date",
+    "event_datetime",
+    "result_date",
+    "freshness_label",
+    "freshness_source",
+    "source_run_timestamp",
+    "event_date_confidence",
+    "event_age_hours",
+    "freshness_status",
+    "freshness_decision"
 ]
 
 CHECKLIST_FIELDS = [
@@ -65,6 +79,16 @@ BUNDLE_FIELDS = [
     "asset_type", "asset_shape", "slide_count", "content_family", "sports_mix",
     "source_items_count", "source_headlines", "caption_seed", "bundle_prompt",
     "accuracy_lock", "watermark_rule", "source_packet_ids_json",
+    "event_date",
+    "event_datetime",
+    "result_date",
+    "freshness_label",
+    "freshness_source",
+    "source_run_timestamp",
+    "event_age_hours",
+    "freshness_status",
+    "freshness_decision",
+    "source_event_dates_json"
 ]
 
 
@@ -85,6 +109,102 @@ def norm(value: Any) -> str:
 def stable_id(*parts: Any) -> str:
     blob = "|".join(clean(p) for p in parts)
     return hashlib.sha1(blob.encode("utf-8")).hexdigest()[:16]
+
+
+
+def parse_event_datetime(value: Any) -> Optional[datetime]:
+    s = clean(value)
+    if not s:
+        return None
+    s2 = s.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(s2)
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        pass
+    m = re.search(r"\b(20\d{2})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?\b", s)
+    if m:
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        hh, mm, ss = int(m.group(4) or 12), int(m.group(5) or 0), int(m.group(6) or 0)
+        return datetime(y, mo, d, hh, mm, ss, tzinfo=timezone.utc)
+    m = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2})(?:[ T](\d{1,2}):(\d{2}))?\b", s)
+    if m:
+        mo, d, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        hh, mm = int(m.group(4) or 12), int(m.group(5) or 0)
+        return datetime(y, mo, d, hh, mm, tzinfo=timezone.utc)
+    return None
+
+
+def packet_event_payload(packet: Dict[str, Any]) -> Dict[str, str]:
+    keys = ["event_datetime", "event_date", "result_date", "date", "game_date", "scheduled_date_local", "completed_at"]
+    dt: Optional[datetime] = None
+    source = ""
+    for key in keys:
+        dt = parse_event_datetime(packet.get(key))
+        if dt:
+            source = key
+            break
+    if not dt:
+        # Some News Sync versions embed the date only in story/caption text.
+        blob = " ".join(str(packet.get(k, "")) for k in ["story_text", "caption_hard_fact", "caption_voice", "graphics_handoff", "raw_block"])
+        dt = parse_event_datetime(blob)
+        if dt:
+            source = "text_blob_date"
+
+    if not dt:
+        return {
+            "event_date": "",
+            "event_datetime": "",
+            "result_date": "",
+            "freshness_label": "missing_event_date",
+            "freshness_source": "",
+            "source_run_timestamp": clean(packet.get("source_run_timestamp")),
+            "event_date_confidence": "missing",
+        }
+    d = dt.date().isoformat()
+    return {
+        "event_date": d,
+        "event_datetime": dt.isoformat(),
+        "result_date": d,
+        "freshness_label": clean(packet.get("freshness_label")) or "dated_result",
+        "freshness_source": clean(packet.get("freshness_source")) or source,
+        "source_run_timestamp": clean(packet.get("source_run_timestamp")),
+        "event_date_confidence": clean(packet.get("event_date_confidence")) or "studio_bridge_detected",
+    }
+
+
+def freshness_for_payload(payload: Dict[str, str]) -> Dict[str, Any]:
+    dt = parse_event_datetime(payload.get("event_datetime") or payload.get("event_date"))
+    if not dt:
+        return {
+            "event_age_hours": "",
+            "freshness_status": "blocked_missing_event_date" if STRICT_EVENT_DATES else "review_missing_event_date",
+            "freshness_decision": "block" if STRICT_EVENT_DATES else "review",
+        }
+    age = max(0.0, (datetime.now(timezone.utc) - dt).total_seconds() / 3600.0)
+    if age > MAX_RESULT_AGE_HOURS:
+        return {
+            "event_age_hours": f"{age:.1f}",
+            "freshness_status": "blocked_stale_event",
+            "freshness_decision": "block",
+        }
+    return {
+        "event_age_hours": f"{age:.1f}",
+        "freshness_status": "fresh",
+        "freshness_decision": "allow",
+    }
+
+
+def apply_freshness(packet: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(packet)
+    payload = packet_event_payload(out)
+    fresh = freshness_for_payload(payload)
+    out.update(payload)
+    out.update(fresh)
+    if out["freshness_decision"] == "block":
+        out["production_ready"] = "No"
+        out["manual_review"] = "Yes"
+    return out
 
 
 def load_text(path: str) -> str:
@@ -307,9 +427,10 @@ def production_bucket(packet: Dict[str, str], rank: int) -> str:
 def accuracy_lock(packet: Dict[str, str]) -> str:
     return (
         f"LOCKED FACTS: headline='{clean(packet.get('headline'))}'; "
+        f"event_date='{clean(packet.get('event_date')) or 'missing'}'; "
         f"final_score='{packet_final_score(packet)}'; "
         f"angle='{packet_angle(packet)}'. "
-        "Do not alter winner, loser, score, player stats, or source-safe context."
+        "Do not alter winner, loser, score, player stats, event date, or source-safe context."
     )
 
 
@@ -426,7 +547,12 @@ def build_queue(packets: List[Dict[str, str]], brand: Dict[str, Any], sop: Dict[
             score = 0
         return (priority, score, clean(p.get("headline")))
 
-    valid = [p for p in packets if clean(p.get("production_ready")).lower() != "no"]
+    enriched_packets = [apply_freshness(p) for p in packets]
+    valid = [
+        p for p in enriched_packets
+        if clean(p.get("production_ready")).lower() != "no"
+        and clean(p.get("freshness_decision")) != "block"
+    ]
     valid = sorted(valid, key=sort_key)[:MAX_QUEUE_ITEMS]
 
     rows: List[Dict[str, Any]] = []
@@ -456,7 +582,17 @@ def build_queue(packets: List[Dict[str, str]], brand: Dict[str, Any], sop: Dict[
             "graphic_prompt": build_graphic_prompt(p, brand, sop, i),
             "accuracy_lock": accuracy_lock(p),
             "source_urls_json": json.dumps(parse_source_urls(p), ensure_ascii=False),
-            "packet_id": stable_id(VERSION, clean(p.get("headline")), packet_final_score(p), source_queue(p)),
+            "event_date": clean(p.get("event_date")),
+            "event_datetime": clean(p.get("event_datetime")),
+            "result_date": clean(p.get("result_date")),
+            "freshness_label": clean(p.get("freshness_label")),
+            "freshness_source": clean(p.get("freshness_source")),
+            "source_run_timestamp": clean(p.get("source_run_timestamp")),
+            "event_date_confidence": clean(p.get("event_date_confidence")),
+            "event_age_hours": clean(p.get("event_age_hours")),
+            "freshness_status": clean(p.get("freshness_status")),
+            "freshness_decision": clean(p.get("freshness_decision")),
+            "packet_id": stable_id(VERSION, clean(p.get("headline")), packet_final_score(p), source_queue(p), clean(p.get("event_date"))),
         }
         rows.append(row)
 
@@ -531,12 +667,55 @@ def safe_context_for_row(row: Dict[str, Any]) -> str:
     return clean(row.get("angle")) or "Verified result"
 
 
+
+def source_event_dates(rows: List[Dict[str, Any]]) -> List[str]:
+    dates = []
+    for r in rows:
+        d = clean(r.get("event_date") or r.get("result_date"))
+        if d and d not in dates:
+            dates.append(d)
+    return dates
+
+
+def bundle_freshness(rows: List[Dict[str, Any]]) -> Dict[str, str]:
+    dates = []
+    for r in rows:
+        dt = parse_event_datetime(r.get("event_datetime") or r.get("event_date"))
+        if dt:
+            dates.append(dt)
+    if not dates:
+        return {
+            "event_date": "",
+            "event_datetime": "",
+            "result_date": "",
+            "freshness_label": "missing_event_date",
+            "freshness_source": "",
+            "source_run_timestamp": "",
+            "event_age_hours": "",
+            "freshness_status": "blocked_missing_event_date" if STRICT_EVENT_DATES else "review_missing_event_date",
+            "freshness_decision": "block" if STRICT_EVENT_DATES else "review",
+            "source_event_dates_json": json.dumps([], ensure_ascii=False),
+        }
+    oldest = min(dates)
+    payload = {
+        "event_date": oldest.date().isoformat(),
+        "event_datetime": oldest.isoformat(),
+        "result_date": oldest.date().isoformat(),
+        "freshness_label": "dated_bundle",
+        "freshness_source": "source_rows",
+        "source_run_timestamp": clean(rows[0].get("source_run_timestamp")) if rows else "",
+        "source_event_dates_json": json.dumps(source_event_dates(rows), ensure_ascii=False),
+    }
+    payload.update(freshness_for_payload(payload))
+    return payload
+
+
 def bundle_accuracy_lock(rows: List[Dict[str, Any]]) -> str:
-    facts = [compact_result_line(r) for r in rows]
+    facts = [f"{compact_result_line(r)} (event_date: {clean(r.get('event_date')) or 'missing'})" for r in rows]
     return (
         "BUNDLE LOCKED FACTS: "
         + " | ".join(facts)
-        + ". Do not alter winners, losers, scores, stat lines, team order, or source-safe context. "
+        + ". Do not alter winners, losers, scores, stat lines, team order, event dates, or source-safe context. "
         + "Check every result row before posting."
     )
 
@@ -559,6 +738,7 @@ def make_bundle_prompt(bundle_name: str, bundle_type: str, rows: List[Dict[str, 
 BUNDLE GRAPHIC: {bundle_name}
 Asset: 4-slide carousel, 1080x1350
 Bundle type: Main WNBA lead carousel
+Event date: {clean(lead.get('event_date')) or 'missing'}
 
 {base_rules}
 
@@ -594,6 +774,7 @@ Watermark:
 BUNDLE GRAPHIC: {bundle_name}
 Asset: 5-slide carousel, 1080x1350
 Bundle type: WNBA mini-roundup
+Event dates: {", ".join(source_event_dates(rows)) or "missing"}
 
 {base_rules}
 
@@ -626,6 +807,7 @@ Watermark:
 BUNDLE GRAPHIC: {bundle_name}
 Asset: 5-slide carousel, 1080x1350
 Bundle type: Volleyball results roundup
+Event dates: {", ".join(source_event_dates(rows)) or "missing"}
 
 {base_rules}
 
@@ -655,6 +837,7 @@ Watermark:
 BUNDLE GRAPHIC: {bundle_name}
 Asset: 5-slide carousel, 1080x1350
 Bundle type: Women's soccer radar
+Event dates: {", ".join(source_event_dates(rows)) or "missing"}
 
 {base_rules}
 
@@ -725,6 +908,8 @@ def create_bundle(bundle_rank: int, bundle_name: str, bundle_type: str, priority
     packet_ids = [clean(r.get("packet_id")) for r in rows if clean(r.get("packet_id"))]
     source_headlines = " | ".join(clean(r.get("headline")) for r in rows)
 
+    fresh = bundle_freshness(rows)
+
     return {
         "bundle_rank": bundle_rank,
         "bundle_id": stable_id(VERSION, bundle_name, source_headlines),
@@ -741,6 +926,16 @@ def create_bundle(bundle_rank: int, bundle_name: str, bundle_type: str, priority
         "caption_seed": bundle_caption(bundle_type, rows),
         "bundle_prompt": make_bundle_prompt(bundle_name, bundle_type, rows, brand),
         "accuracy_lock": bundle_accuracy_lock(rows),
+        "event_date": fresh.get("event_date", ""),
+        "event_datetime": fresh.get("event_datetime", ""),
+        "result_date": fresh.get("result_date", ""),
+        "freshness_label": fresh.get("freshness_label", ""),
+        "freshness_source": fresh.get("freshness_source", ""),
+        "source_run_timestamp": fresh.get("source_run_timestamp", ""),
+        "event_age_hours": fresh.get("event_age_hours", ""),
+        "freshness_status": fresh.get("freshness_status", ""),
+        "freshness_decision": fresh.get("freshness_decision", ""),
+        "source_event_dates_json": fresh.get("source_event_dates_json", "[]"),
         "watermark_rule": brand["locked_watermark"]["rule"],
         "source_packet_ids_json": json.dumps(packet_ids, ensure_ascii=False),
     }
@@ -751,6 +946,7 @@ def build_bundles(rows: List[Dict[str, Any]], brand: Dict[str, Any]) -> List[Dic
     Bundle Mode turns a 14-card production queue into a smaller daily slate.
     Individual prompts still exist, but these are the preferred posts.
     """
+    rows = [r for r in rows if clean(r.get("freshness_decision")) == "allow"]
     wnba_rows = [r for r in rows if row_is_wnba(r)]
     volleyball_rows = [r for r in rows if row_is_volleyball(r)]
     soccer_rows = [r for r in rows if row_is_soccer(r)]
@@ -823,6 +1019,8 @@ def markdown_bundle_packets(bundles: List[Dict[str, Any]]) -> str:
             f"**Shape:** {b['asset_shape']}",
             f"**Slides:** {b['slide_count']}",
             f"**Items:** {b['source_items_count']}",
+            f"**Event date:** {b.get('event_date') or 'missing'}",
+            f"**Freshness:** {b.get('freshness_status')} / {b.get('freshness_decision')}",
             "",
             "### Prompt",
             "",
@@ -890,6 +1088,7 @@ def markdown_command_center(rows: List[Dict[str, Any]], bundles: List[Dict[str, 
     roundup = [r for r in rows if r["production_bucket"] == "ROUNDUP BANK"]
     diversity = [r for r in rows if r["production_bucket"] == "DIVERSITY WATCH"]
     manual = build_manual_rows(rows)
+    freshness_blocked = [r for r in rows if clean(r.get("freshness_decision")) == "block"]
 
     lines = [
         "# Her Sports Daily Studio Command Center v1.2",
@@ -910,6 +1109,7 @@ def markdown_command_center(rows: List[Dict[str, Any]], bundles: List[Dict[str, 
         f"- Diversity Watch: {len(diversity)}",
         f"- Manual review graphics: {len(manual)}",
         f"- Bundle Mode posts: {len(bundles)}",
+        f"- Freshness-blocked graphics: {len(freshness_blocked)}",
         "",
         "## Open first",
         "",
@@ -932,6 +1132,8 @@ def markdown_command_center(rows: List[Dict[str, Any]], bundles: List[Dict[str, 
                 f"- Asset: {bundle['asset_type']} ({bundle['asset_shape']})",
                 f"- Slides: {bundle['slide_count']}",
                 f"- Source items: {bundle['source_items_count']}",
+                f"- Event date: {bundle.get('event_date') or 'missing'}",
+                f"- Freshness: {bundle.get('freshness_status')} / {bundle.get('freshness_decision')}",
                 f"- Source headlines: {bundle['source_headlines']}",
                 "",
             ])
@@ -1077,6 +1279,8 @@ def markdown_post_schedule(rows: List[Dict[str, Any]], bundles: List[Dict[str, A
                 f"- Asset: {bundle.get('asset_type')} ({bundle.get('asset_shape')})",
                 f"- Slides: {bundle.get('slide_count')}",
                 f"- Source items: {bundle.get('source_items_count')}",
+                f"- Event date: {bundle.get('event_date') or 'missing'}",
+                f"- Freshness: {bundle.get('freshness_status')} / {bundle.get('freshness_decision')}",
                 f"- Source headlines: {bundle.get('source_headlines')}",
                 f"- Caption seed: {bundle.get('caption_seed')}",
                 "",
@@ -1130,6 +1334,45 @@ def markdown_post_schedule(rows: List[Dict[str, Any]], bundles: List[Dict[str, A
 
 
 
+
+def markdown_fresh_packet_report(rows: List[Dict[str, Any]], bundles: List[Dict[str, Any]], packets_read: int) -> str:
+    blocked_packets = [r for r in rows if clean(r.get("freshness_decision")) == "block"]
+    lines = [
+        "# HSD Studio Fresh Packet Selection v1.3",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        f"- News packets read: {packets_read}",
+        f"- Studio rows produced: {len(rows)}",
+        f"- Fresh bundles created: {len(bundles)}",
+        f"- Freshness blocked rows: {len(blocked_packets)}",
+        f"- Max result age hours: {MAX_RESULT_AGE_HOURS}",
+        f"- Strict event dates: {'Yes' if STRICT_EVENT_DATES else 'No'}",
+        "",
+    ]
+    if bundles:
+        lines += ["## Fresh bundles selected", ""]
+        for b in bundles:
+            lines += [
+                f"- **{b.get('bundle_name')}** | event_date `{b.get('event_date')}` | {b.get('freshness_status')}",
+            ]
+        lines.append("")
+    if blocked_packets:
+        lines += ["## Blocked / stale packets", ""]
+        for r in blocked_packets[:20]:
+            lines += [
+                f"- **{r.get('headline')}** | event_date `{r.get('event_date') or 'missing'}` | reason `{r.get('freshness_status')}`",
+            ]
+        lines.append("")
+    lines += [
+        "## Rule",
+        "",
+        "Studio Bridge v1.3 only creates bundles from rows that have a usable event date and pass the freshness window.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> None:
     brand = default_brand_config()
     user_brand = load_json(INPUT_STUDIO_BRAND_CONFIG, {})
@@ -1149,6 +1392,7 @@ def main() -> None:
 
     packets = load_csv(INPUT_NEWS_FACT_PACKETS)
     news_hub = load_text(INPUT_NEWS_HUB)
+    packet_gates = [apply_freshness(p) for p in packets]
 
     rows = build_queue(packets, brand, sop)
     bundles = build_bundles(rows, brand)
@@ -1156,11 +1400,13 @@ def main() -> None:
     manual_rows = build_manual_rows(rows)
 
     write_csv(OUT_GRAPHICS_QUEUE_CSV, rows, QUEUE_FIELDS)
+    write_csv(OUT_FRESH_PACKET_GATE_CSV, packet_gates, list(packet_gates[0].keys()) if packet_gates else QUEUE_FIELDS)
     write_csv(OUT_BUNDLE_QUEUE_CSV, bundles, BUNDLE_FIELDS)
     write_csv(OUT_ACCURACY_CHECKLIST_CSV, checklist, CHECKLIST_FIELDS)
     write_csv(OUT_MANUAL_REVIEW_CSV, manual_rows, MANUAL_FIELDS)
 
     Path(OUT_COMMAND_CENTER).write_text(markdown_command_center(rows, bundles, brand, news_hub), encoding="utf-8")
+    Path(OUT_FRESH_PACKET_REPORT).write_text(markdown_fresh_packet_report(packet_gates, bundles, len(packets)), encoding="utf-8")
     Path(OUT_TOP_PACKETS).write_text(markdown_top_packets(rows), encoding="utf-8")
     Path(OUT_IMAGE_PROMPTS).write_text(markdown_image_prompts(rows), encoding="utf-8")
     Path(OUT_CAPTION_BANK).write_text(markdown_caption_bank(rows), encoding="utf-8")
@@ -1183,6 +1429,8 @@ def main() -> None:
         },
         "outputs": [
             OUT_COMMAND_CENTER,
+            OUT_FRESH_PACKET_REPORT,
+            OUT_FRESH_PACKET_GATE_CSV,
             OUT_GRAPHICS_QUEUE_CSV,
             OUT_BUNDLE_QUEUE_CSV,
             OUT_BUNDLE_PACKETS,
@@ -1200,6 +1448,8 @@ def main() -> None:
         ],
         "counts": {
             "news_packets_read": len(packets),
+            "fresh_packets_selected": len([p for p in packet_gates if clean(p.get("freshness_decision")) == "allow"]),
+            "freshness_blocked_packets": len([p for p in packet_gates if clean(p.get("freshness_decision")) == "block"]),
             "studio_graphics_queued": len(rows),
             "studio_bundles_created": len(bundles),
             "manual_review_graphics": len(manual_rows),

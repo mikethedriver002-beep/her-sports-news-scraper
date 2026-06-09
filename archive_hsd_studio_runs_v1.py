@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 FILES = [
+    "studio_fresh_packet_report.md",
+    "studio_fresh_packet_gate.csv",
     "studio_command_center.md",
     "studio_graphics_queue.csv",
     "studio_bundle_queue.csv",
@@ -37,7 +39,7 @@ def row_count(path: Path) -> int:
 def main() -> None:
     now = datetime.now(timezone.utc)
     date = now.strftime("%Y-%m-%d")
-    time = now.strftime("%H%M_UTC")
+    time = f"{now.strftime('%H%M%S_UTC')}_{__import__('os').environ.get('GITHUB_RUN_ID', 'local')}"
     stamp = now.strftime("%Y-%m-%d %H:%M:%S UTC")
 
     run_dir = Path("studio_run_history") / date / time
@@ -60,7 +62,7 @@ def main() -> None:
 
     counts = {name: row_count(Path(name)) for name in copied if name.endswith(".csv")}
     summary = [
-        "# HSD Studio Bridge v1.2 Run Summary",
+        "# HSD Studio Bridge v1.3 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",
