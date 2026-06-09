@@ -1,13 +1,13 @@
 {
   "version": "hsd-graphics-upload-pack-v1.5.1",
-  "generated_at_utc": "2026-06-09T03:09:49.172781+00:00",
+  "generated_at_utc": "2026-06-09T03:29:17.851630+00:00",
   "counts": {
     "bundles": 4,
     "asset_rows": 35,
-    "files_created": 34,
-    "png_preferred_created": 34,
-    "upload_packs_ready": 3,
-    "upload_packs_blocked": 1
+    "files_created": 35,
+    "png_preferred_created": 35,
+    "upload_packs_ready": 4,
+    "upload_packs_blocked": 0
   },
   "bundles": [
     {
@@ -26,13 +26,13 @@
       "bundle_id": "bundle_ab66100c39c23e",
       "post_slug": "tonight-in-the-w-mini-roundup",
       "bundle_name": "Tonight in the W Mini-Roundup",
-      "upload_pack_status": "blocked_missing_required_assets",
+      "upload_pack_status": "ready",
       "assets_expected": 6,
-      "assets_ready": 5,
-      "assets_missing": 1,
-      "missing_asset_names": "Portland Fire",
+      "assets_ready": 6,
+      "assets_missing": 0,
+      "missing_asset_names": "",
       "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-mini-roundup_graphics_chat_upload_pack.zip",
-      "notes": "Do not use this upload pack until missing assets are fixed."
+      "notes": "Upload pack is complete."
     },
     {
       "bundle_id": "bundle_99dc10394fd30c",
