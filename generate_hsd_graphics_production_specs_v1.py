@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-graphics-production-specs-v1.7.1"
+VERSION = "hsd-graphics-production-specs-v1.7.2"
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_PLAYER_REQS = os.environ.get("HSD_PLAYER_IMAGE_REQUIREMENTS", "player_image_requirements.csv")
 OUT_JSON = "graphics_production_specs.json"

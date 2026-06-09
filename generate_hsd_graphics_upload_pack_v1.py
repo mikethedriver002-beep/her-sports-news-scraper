@@ -23,11 +23,12 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.7.1"
+VERSION = "hsd-graphics-upload-pack-v1.7.2"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
+INPUT_CLEAN_PROMPTS_DIR = Path(os.environ.get("HSD_CLEAN_PROMPTS_DIR", "graphics_clean_prompts"))
 
 OUT_DIR = Path("graphics_chat_upload_pack")
 OUT_ZIP_DIR = Path("graphics_chat_upload_pack_zips")
@@ -146,6 +147,42 @@ def prompt_for_bundle(prompts_md: str, bundle_name: str) -> str:
     if m:
         return f"# {bundle_name}\n\n{m.group(1).strip()}\n"
     return prompts_md
+
+
+DEFAULT_BANNED_PROMPT_TERMS = ["Verified Final", "VERIFIED FINAL", "Winner", "Loser", "BUNDLE LOCKED FACTS", "source-safe context", "graphics-safe context", "Do not alter", "Accuracy lock"]
+
+
+def sanitize_prompt_text(prompt_text: str) -> str:
+    out: List[str] = []
+    for raw_line in prompt_text.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        line = raw_line.strip()
+        lower = line.lower()
+        if not line:
+            if out and out[-1] != "":
+                out.append("")
+            continue
+        if any(term.lower() in lower for term in ["bundle locked facts", "source-safe context", "graphics-safe context", "do not alter", "accuracy lock"]):
+            continue
+        if line.startswith("```"):
+            continue
+        line = re.sub(r"(?i)verified final", "Final", line)
+        line = re.sub(r"(?i)\bwinner\b", "winning team", line)
+        line = re.sub(r"(?i)\bloser\b", "opposing team", line)
+        line = re.sub(r"\s+", " ", line).strip()
+        if line:
+            out.append(line)
+    while out and out[-1] == "":
+        out.pop()
+    return "\n".join(out).strip() + ("\n" if out else "")
+
+
+def clean_prompt_for_bundle(prompts_md: str, post_slug: str, bundle_name: str) -> str:
+    clean_path = INPUT_CLEAN_PROMPTS_DIR / post_slug / "00_PROMPT_TO_PASTE.md"
+    if clean_path.exists():
+        return read_text(clean_path.as_posix())
+    raw = prompt_for_bundle(prompts_md, bundle_name)
+    sanitized = sanitize_prompt_text(raw)
+    return sanitized or raw
 
 
 def url_ext(url: str, content_type: str = "") -> str:
@@ -397,7 +434,7 @@ def main() -> None:
         asset_folder.mkdir(parents=True, exist_ok=True)
         png_folder.mkdir(parents=True, exist_ok=True)
 
-        prompt_text = prompt_for_bundle(prompts_md, bundle_name)
+        prompt_text = clean_prompt_for_bundle(prompts_md, post_slug, bundle_name)
         (folder / "00_PROMPT_TO_PASTE.md").write_text(prompt_text, encoding="utf-8")
 
         for extra_name in [
@@ -411,6 +448,8 @@ def main() -> None:
             "graphics_asset_usage_map.csv",
             "graphics_layout_blueprint.csv",
             "graphics_prompt_sanitizer_rules.md",
+            "graphics_prompt_clean_report.md",
+            "graphics_prompt_clean_manifest.json",
         ]:
             extra = Path(extra_name)
             if extra.exists():
@@ -419,7 +458,7 @@ def main() -> None:
         instructions = [
             f"# Upload instructions: {bundle_name}",
             "",
-            "Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to the graphics chat.",
+            "Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to the graphics chat. The prompt file is already sanitized for display-safe use.",
             "",
             "If a PNG preferred asset is missing, upload the matching file from `assets_original/`.",
             "",
@@ -540,6 +579,8 @@ def main() -> None:
             "graphics_asset_usage_map.csv",
             "graphics_layout_blueprint.csv",
             "graphics_prompt_sanitizer_rules.md",
+            "graphics_prompt_clean_report.md",
+            "graphics_prompt_clean_manifest.json",
         ],
     }, indent=2), encoding="utf-8")
 
@@ -588,7 +629,7 @@ def main() -> None:
             "Instructions to paste into the graphics chat:",
             "",
             "```text",
-            "Use the uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, and graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, and graphics_prompt_sanitizer_rules.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render the words Verified Final, Winner, or Loser. Output separate slide files.",
+            "Use the sanitized uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, graphics_prompt_sanitizer_rules.md, and graphics_prompt_clean_report.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render internal terms such as Verified Final, Winner, Loser, BUNDLE LOCKED FACTS, source-safe context, graphics-safe context, or Do not alter. Output separate slide files.",
             "```",
             "",
         ]

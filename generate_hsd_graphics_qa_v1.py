@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-graphics-qa-scorer-v1.7.1"
+VERSION = "hsd-graphics-qa-scorer-v1.7.2"
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_BANNED = "graphics_banned_language.csv"
@@ -168,7 +168,18 @@ def main() -> None:
                 issues.append({"code": "LANGUAGE_PACK_MISSING", "severity": "major", "message": language_file})
                 score -= 8
 
+        prompt_pack_path = Path("graphics_chat_upload_pack") / post_slug / "00_PROMPT_TO_PASTE.md"
         render_path = clean(b.get("render_path"))
+
+        if prompt_pack_path.exists():
+            prompt_text = prompt_pack_path.read_text(encoding="utf-8", errors="replace")
+            prompt_hits = [term for term in banned_terms if clean(term).lower() in clean(prompt_text).lower()]
+            if prompt_hits:
+                issues.append({"code": "PROMPT_NOT_SANITIZED", "severity": "critical", "message": ", ".join(prompt_hits)})
+                score -= 35
+        else:
+            issues.append({"code": "UPLOAD_PROMPT_MISSING", "severity": "major", "message": str(prompt_pack_path)})
+            score -= 10
         if render_path and Path(render_path).exists():
             if Image:
                 try:
@@ -216,7 +227,7 @@ def main() -> None:
         decision = "fail" if any(i["severity"] == "critical" for i in issues) or score < 70 else "revise" if score < 88 else "pass_with_review" if issues else "pass"
         remediation = []
         codes = {i["code"] for i in issues}
-        if "BANNED_LANGUAGE_RENDERED" in codes or "ROBOTIC_SCOREBOARD_LANGUAGE" in codes:
+        if "BANNED_LANGUAGE_RENDERED" in codes or "ROBOTIC_SCOREBOARD_LANGUAGE" in codes or "PROMPT_NOT_SANITIZED" in codes:
             remediation.append("Strip banned terms with the prompt sanitizer and rerender.")
         if "SPARKS_PERFORMERS_MISSING" in codes:
             remediation.append("Rebuild slide 3 as a true two-team performer comparison.")
@@ -241,7 +252,7 @@ def main() -> None:
 
     write_csv("graphics_qa_results.csv", rows, FIELDS)
 
-    report = ["# HSD Graphics QA Scorer v1.7.1 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
+    report = ["# HSD Graphics QA Scorer v1.7.2 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:
@@ -262,10 +273,10 @@ def main() -> None:
         "counts": {"bundles_scored": len(rows), "upload_status_rows": len(upload_status_rows)},
     }, indent=2), encoding="utf-8")
     Path("graphics_qa_dashboard/index.html").write_text(
-        f"<html><body><h1>Graphics QA v1.7.1</h1><p>Bundles scored: {len(rows)}</p></body></html>",
+        f"<html><body><h1>Graphics QA v1.7.2</h1><p>Bundles scored: {len(rows)}</p></body></html>",
         encoding="utf-8",
     )
-    print("Created HSD Graphics QA v1.7.1 outputs")
+    print("Created HSD Graphics QA v1.7.2 outputs")
 
 
 if __name__ == "__main__":

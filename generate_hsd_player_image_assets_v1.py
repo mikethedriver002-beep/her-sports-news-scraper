@@ -35,7 +35,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.5-free-sourcing"
+VERSION = "hsd-player-image-assets-v1.5.1-free-sourcing"
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_PLAYER_ASSETS = os.environ.get("HSD_PLAYER_ASSETS", "player_assets.csv")
@@ -597,6 +597,18 @@ def make_asset_row(player_name: str, team_name: str, local_path: str, source_url
     return approved, player
 
 
+def refresh_asset_candidates_review(requirements: List[Dict[str, str]]) -> None:
+    p = Path("asset_candidates_review.md")
+    if not p.exists():
+        return
+    text = p.read_text(encoding="utf-8", errors="replace").rstrip() + "\n\n"
+    lines = ["## Player image status refresh", ""]
+    for r in requirements:
+        status = "approved" if clean(r.get("approved_asset_id")) else "missing"
+        lines.append(f"- {status} | {r.get('player_name','')} | {r.get('team_name','')} | {r.get('local_path') or 'missing'} | {r.get('sourcing_method') or 'n/a'}")
+    p.write_text(text + "\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     approved_rows = read_csv(INPUT_APPROVED_ASSETS)
     player_rows = read_csv(INPUT_PLAYER_ASSETS)
@@ -729,6 +741,7 @@ def main() -> None:
             "",
         ]
     Path(OUT_REPORT).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    refresh_asset_candidates_review(requirements)
 
     print("Created HSD player image asset outputs")
     print(json.dumps({"required_players": len(requirements), "found_required_player_images": len(found), "missing_required_player_images": len(missing), "candidate_rows": len(candidate_rows), "added_player_assets": len(added_approved)}, indent=2))

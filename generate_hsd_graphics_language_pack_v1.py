@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-graphics-language-pack-v1.7.1"
+VERSION = "hsd-graphics-language-pack-v1.7.2"
 
 INPUT_RENDER_MANIFEST = "studio_render_manifest_v2.json"
 INPUT_PLAYER_REQUIREMENTS = "player_image_requirements.csv"

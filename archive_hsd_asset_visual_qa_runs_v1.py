@@ -10,7 +10,7 @@ FILES = [
     "player_image_sourcing_report.md", "graphics_production_specs.json", "graphics_slide_blueprints.md", "graphics_prompt_sanitizer_rules.md", "asset_candidates_review.md",
     "asset_desk_manifest.json", "brand_system", "studio_templates_v2", "studio_visual_upgrade_v2.md", "studio_bundle_prompts_v2.md",
     "studio_render_manifest_v2.json", "visual_upgrade_manifest.json", "visual_upgrade_dashboard/index.html", "graphics_qa_results.csv",
-    "graphics_qa_report.md", "graphics_copy_style_guide.md", "graphics_display_copy.csv", "graphics_banned_language.csv", "graphics_language_manifest.json", "graphics_qa_manifest.json", "graphics_qa_dashboard/index.html", "graphics_chat_upload_pack",
+    "graphics_qa_report.md", "graphics_copy_style_guide.md", "graphics_display_copy.csv", "graphics_banned_language.csv", "graphics_language_manifest.json", "graphics_qa_manifest.json", "graphics_qa_dashboard/index.html", "graphics_clean_prompts", "graphics_prompt_clean_report.md", "graphics_prompt_clean_manifest.json", "graphics_chat_upload_pack",
     "graphics_chat_upload_pack_zips", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json", "graphics_upload_pack_status.csv", "graphics_upload_pack_status.json",
     "graphics_chat_upload_instructions.md", "graphics_chat_direct_handoff.md", "data/assets", "chatgpt_review_pack",
     "hsd_chatgpt_review_packet.md", "latest_asset_visual_qa_run_summary.md"
@@ -40,6 +40,8 @@ CHATGPT_REVIEW_FILES = [
     ("24_graphics_language_manifest.json", "graphics_language_manifest.json"),
     ("25_graphics_layout_blueprint.csv", "graphics_layout_blueprint.csv"),
     ("26_graphics_prompt_sanitizer_rules.md", "graphics_prompt_sanitizer_rules.md"),
+    ("27_graphics_prompt_clean_report.md", "graphics_prompt_clean_report.md"),
+    ("28_graphics_prompt_clean_manifest.json", "graphics_prompt_clean_manifest.json"),
     ("17_visual_upgrade_manifest.json", "visual_upgrade_manifest.json"),
     ("18_graphics_qa_manifest.json", "graphics_qa_manifest.json"),
 ]
@@ -122,7 +124,7 @@ def main() -> None:
     latest.mkdir(parents=True, exist_ok=True)
 
     counts = {name: row_count(Path(name)) for name in FILES if name.endswith(".csv") and Path(name).exists()}
-    summary = ["# HSD Asset Visual QA v1.7.1 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
+    summary = ["# HSD Asset Visual QA v1.7.2 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
     for k, v in counts.items(): summary.append(f"- `{k}`: {v}")
 
     if Path("player_image_sourcing_report.md").exists():
@@ -164,7 +166,7 @@ def main() -> None:
     copy_any(Path("chatgpt_review_pack"), run)
     copy_any(Path("chatgpt_review_pack"), latest)
 
-    print("Archived HSD Asset Visual QA v1.7.1")
+    print("Archived HSD Asset Visual QA v1.7.2")
 
 
 if __name__ == "__main__":
