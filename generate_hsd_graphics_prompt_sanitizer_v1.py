@@ -14,6 +14,7 @@ INPUT_DISPLAY_COPY = "graphics_display_copy.csv"
 INPUT_BANNED = "graphics_banned_language.csv"
 INPUT_USAGE_MAP = "graphics_asset_usage_map.csv"
 INPUT_LAYOUT = "graphics_layout_blueprint.csv"
+INPUT_PLAYER_FIT = "player_image_fit_gate.csv"
 OUT_DIR = Path("graphics_clean_prompts")
 OUT_REPORT = "graphics_prompt_clean_report.md"
 OUT_MANIFEST = "graphics_prompt_clean_manifest.json"
@@ -202,6 +203,26 @@ def build_layout_section(bundle_slug: str, layout_rows: List[Dict[str, str]], re
     return lines
 
 
+def build_player_fit_section(bundle_slug: str, fit_rows: List[Dict[str, str]]) -> List[str]:
+    rows = [r for r in fit_rows if clean(r.get("bundle_slug")) == bundle_slug]
+    if not rows:
+        return []
+    lines = ["## Player image crop and fit rules", ""]
+    for r in rows:
+        player = clean(r.get("player_name"))
+        mode = clean(r.get("usage_mode"))
+        instruction = clean(r.get("prompt_instruction"))
+        risk = clean(r.get("risk_reasons"))
+        if mode == "tight_face_crop_only":
+            lines.append(f"- {player}: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. {instruction}")
+        else:
+            lines.append(f"- {player}: {instruction}")
+        if risk:
+            lines.append(f"  - Review note: {risk}")
+    lines.append("")
+    return lines
+
+
 def build_asset_section(bundle_slug: str, usage_rows: List[Dict[str, str]], repl_map: Dict[str, str]) -> List[str]:
     rows = [r for r in usage_rows if clean(r.get("bundle_slug")) == bundle_slug]
     if not rows:
@@ -225,7 +246,7 @@ def build_asset_section(bundle_slug: str, usage_rows: List[Dict[str, str]], repl
     return lines
 
 
-def build_prompt(bundle_name: str, bundle_slug: str, raw_prompt: str, display_rows: List[Dict[str, str]], layout_rows: List[Dict[str, str]], usage_rows: List[Dict[str, str]], banned_terms: List[str], repl_map: Dict[str, str]) -> Tuple[str, Dict[str, int]]:
+def build_prompt(bundle_name: str, bundle_slug: str, raw_prompt: str, display_rows: List[Dict[str, str]], layout_rows: List[Dict[str, str]], usage_rows: List[Dict[str, str]], fit_rows: List[Dict[str, str]], banned_terms: List[str], repl_map: Dict[str, str]) -> Tuple[str, Dict[str, int]]:
     cleaned_raw, stats = sanitize_text(raw_prompt, repl_map)
     lines = [
         f"# HSD Graphics Prompt: {bundle_name}",
@@ -243,6 +264,7 @@ def build_prompt(bundle_name: str, bundle_slug: str, raw_prompt: str, display_ro
     lines += build_display_section(bundle_slug, display_rows, repl_map)
     lines += build_layout_section(bundle_slug, layout_rows, repl_map)
     lines += build_asset_section(bundle_slug, usage_rows, repl_map)
+    lines += build_player_fit_section(bundle_slug, fit_rows)
     lines += [
         "## Internal-language rule",
         "",
@@ -263,6 +285,7 @@ def main() -> None:
     display_rows = read_csv(INPUT_DISPLAY_COPY)
     usage_rows = read_csv(INPUT_USAGE_MAP)
     layout_rows = read_csv(INPUT_LAYOUT)
+    fit_rows = read_csv(INPUT_PLAYER_FIT)
     banned = banned_rows()
     banned_terms = [clean(r.get("term")) for r in banned if clean(r.get("term"))]
     repl_map = replacement_map(banned)
@@ -274,7 +297,7 @@ def main() -> None:
         if not slug:
             continue
         raw = prompt_for_bundle(prompts_md, name)
-        prompt_text, stats = build_prompt(name, slug, raw, display_rows, layout_rows, usage_rows, banned_terms, repl_map)
+        prompt_text, stats = build_prompt(name, slug, raw, display_rows, layout_rows, usage_rows, fit_rows, banned_terms, repl_map)
         folder = OUT_DIR / slug
         folder.mkdir(parents=True, exist_ok=True)
         out_path = folder / "00_PROMPT_TO_PASTE.md"

@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.7.2"
+VERSION = "hsd-graphics-upload-pack-v1.8"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -131,6 +131,18 @@ def read_json(path: str) -> Dict[str, Any]:
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def read_status_map(path: str, key_field: str) -> Dict[str, Dict[str, str]]:
+    return {r.get(key_field, ""): r for r in read_csv(path) if r.get(key_field)}
+
+
+def freshness_status_for(post_slug: str) -> Dict[str, str]:
+    return read_status_map("studio_freshness_gate.csv", "bundle_slug").get(post_slug, {})
+
+
+def player_fit_rows_for(post_slug: str) -> List[Dict[str, str]]:
+    return [r for r in read_csv("player_image_fit_gate.csv") if r.get("bundle_slug") == post_slug]
 
 
 def read_text(path: str) -> str:
@@ -450,6 +462,17 @@ def main() -> None:
             "graphics_prompt_sanitizer_rules.md",
             "graphics_prompt_clean_report.md",
             "graphics_prompt_clean_manifest.json",
+            "studio_freshness_gate.csv",
+            "studio_freshness_report.md",
+            "player_image_fit_gate.csv",
+            "player_image_fit_report.md",
+            "rendered_slide_qa_report.md",
+            "studio_freshness_gate.csv",
+            "studio_freshness_report.md",
+            "player_image_fit_gate.csv",
+            "player_image_fit_report.md",
+            "rendered_slide_qa.csv",
+            "rendered_slide_qa_report.md",
         ]:
             extra = Path(extra_name)
             if extra.exists():
@@ -514,19 +537,61 @@ def main() -> None:
                 "",
             ])
 
-        missing_count = len(missing_names)
-        upload_status = "ready" if missing_count == 0 else "blocked_missing_required_assets"
-        if missing_count:
+        freshness = freshness_status_for(post_slug)
+        freshness_decision = freshness.get("freshness_decision", "")
+        freshness_blocked = freshness_decision == "block"
+        freshness_review = freshness_decision == "review"
+        if freshness:
             instructions.extend([
-                "## BLOCKED",
+                "## Freshness gate",
                 "",
-                "This upload pack is incomplete. Do not send this bundle to the graphics chat until the missing files are fixed.",
-                "",
-                "Missing assets:",
-                "",
-                *[f"- {name}" for name in missing_names],
+                f"- Decision: {freshness_decision or 'unknown'}",
+                f"- Status: {freshness.get('freshness_status', '')}",
+                f"- Event date: {freshness.get('event_date', '') or 'missing'}",
+                f"- Recommended label: {freshness.get('recommended_label', '') or 'none'}",
+                f"- Reason: {freshness.get('reason', '')}",
                 "",
             ])
+
+        fit_rows = player_fit_rows_for(post_slug)
+        review_fit = [r for r in fit_rows if r.get("fit_status") == "review"]
+        blocked_fit = [r for r in fit_rows if r.get("fit_status", "").startswith("blocked")]
+        if fit_rows:
+            instructions.extend([
+                "## Player image fit gate",
+                "",
+                "Use player photos exactly as mapped. If a player image is flagged for tight crop, crop to face/head-and-shoulders and avoid showing wrong-team, overseas, college, or national-team jersey marks.",
+                "",
+            ])
+            for r in fit_rows:
+                instructions.append(f"- {r.get('player_name')}: {r.get('usage_mode')} | {r.get('prompt_instruction')}")
+            instructions.append("")
+
+        missing_count = len(missing_names)
+        if missing_count:
+            upload_status = "blocked_missing_required_assets"
+        elif freshness_blocked:
+            upload_status = "blocked_freshness_gate"
+        elif blocked_fit:
+            upload_status = "blocked_player_image_fit"
+        elif freshness_review or review_fit:
+            upload_status = "ready_with_review"
+        else:
+            upload_status = "ready"
+
+        if upload_status != "ready":
+            instructions.extend([
+                "## REVIEW OR BLOCKED",
+                "",
+                f"Upload pack status: {upload_status}",
+                "",
+            ])
+            if missing_count:
+                instructions.extend(["Missing assets:", "", *[f"- {name}" for name in missing_names], ""])
+            if freshness_blocked:
+                instructions.extend(["Freshness gate blocked this packet. Do not post unless you intentionally relabel it as carryover/yesterday and accept the risk.", ""])
+            if blocked_fit:
+                instructions.extend(["Player image fit blocked one or more player images. Do not substitute players.", ""])
 
         (folder / "01_UPLOAD_INSTRUCTIONS.md").write_text("\n".join(instructions), encoding="utf-8")
         zip_path = OUT_ZIP_DIR / f"{post_slug}_graphics_chat_upload_pack.zip"
@@ -542,7 +607,7 @@ def main() -> None:
             "assets_missing": missing_count,
             "missing_asset_names": "; ".join(missing_names),
             "zip_path": zip_path.as_posix(),
-            "notes": "Upload pack is complete." if upload_status == "ready" else "Do not use this upload pack until missing assets are fixed.",
+            "notes": "Upload pack is complete." if upload_status == "ready" else "Review freshness/player-image-fit gate before using this pack.",
         })
 
     write_csv(OUT_MANIFEST_CSV, manifest_rows, FIELDS)
@@ -581,6 +646,11 @@ def main() -> None:
             "graphics_prompt_sanitizer_rules.md",
             "graphics_prompt_clean_report.md",
             "graphics_prompt_clean_manifest.json",
+            "studio_freshness_gate.csv",
+            "studio_freshness_report.md",
+            "player_image_fit_gate.csv",
+            "player_image_fit_report.md",
+            "rendered_slide_qa_report.md",
         ],
     }, indent=2), encoding="utf-8")
 
@@ -618,13 +688,13 @@ def main() -> None:
         "",
     ]
     main_status = next((r for r in status_rows if r.get("post_slug") == "main-wnba-result"), None)
-    if main_status and main_status.get("upload_pack_status") == "ready":
+    if main_status and main_status.get("upload_pack_status") in {"ready", "ready_with_review"}:
         direct += [
             "## Main WNBA Result",
             "",
             f"Recommended ZIP: `{main_status.get('zip_path')}`",
             "",
-            "Status: READY",
+            "Status: READY / REVIEW OK",
             "",
             "Instructions to paste into the graphics chat:",
             "",

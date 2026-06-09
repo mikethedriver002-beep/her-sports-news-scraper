@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-graphics-qa-scorer-v1.7.2"
+VERSION = "hsd-graphics-qa-scorer-v1.8"
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_BANNED = "graphics_banned_language.csv"
@@ -122,6 +122,8 @@ def main() -> None:
     approved = {r.get("approved_asset_id") for r in read_csv_any(INPUT_APPROVED_ASSETS) if r.get("approved_asset_id")}
     banned_terms = [clean(r.get("term")) for r in read_csv_any(INPUT_BANNED) if clean(r.get("term"))]
     upload_status_rows = {r.get("post_slug"): r for r in read_csv_any("graphics_upload_pack_status.csv") if r.get("post_slug")}
+    freshness_rows = {r.get("bundle_slug"): r for r in read_csv_any("studio_freshness_gate.csv") if r.get("bundle_slug")}
+    player_fit_rows = read_csv_any("player_image_fit_gate.csv")
     bundles = manifest.get("bundles", [])
     rows: List[Dict[str, Any]] = []
     run = "qa_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -156,6 +158,28 @@ def main() -> None:
         if not upload_row:
             issues.append({"code": "UPLOAD_PACK_STATUS_MISSING", "severity": "major", "message": "graphics_upload_pack_status.csv has no row for this bundle"})
             score -= 10
+
+        freshness = freshness_rows.get(post_slug)
+        if freshness:
+            if freshness.get("freshness_decision") == "block":
+                issues.append({"code": "FRESHNESS_GATE_BLOCKED", "severity": "critical", "message": freshness.get("reason", "stale or missing event date")})
+                score -= 45
+            elif freshness.get("freshness_decision") == "review":
+                issues.append({"code": "FRESHNESS_GATE_REVIEW", "severity": "major", "message": freshness.get("reason", "freshness review required")})
+                score -= 12
+        elif post_slug == "main-wnba-result":
+            issues.append({"code": "FRESHNESS_GATE_MISSING", "severity": "major", "message": "studio_freshness_gate.csv missing row for main bundle"})
+            score -= 10
+
+        fit_for_bundle = [r for r in player_fit_rows if r.get("bundle_slug") == post_slug]
+        blocked_fit = [r for r in fit_for_bundle if r.get("fit_status", "").startswith("blocked")]
+        review_fit = [r for r in fit_for_bundle if r.get("fit_status") == "review"]
+        if blocked_fit:
+            issues.append({"code": "PLAYER_IMAGE_FIT_BLOCKED", "severity": "critical", "message": ", ".join(r.get("player_name", "") for r in blocked_fit)})
+            score -= 35
+        elif review_fit:
+            issues.append({"code": "PLAYER_IMAGE_FIT_REVIEW", "severity": "review", "message": "Use tight crop rules for: " + ", ".join(r.get("player_name", "") for r in review_fit)})
+            score -= 3
 
         for language_file in [
             "graphics_copy_style_guide.md",
@@ -252,7 +276,7 @@ def main() -> None:
 
     write_csv("graphics_qa_results.csv", rows, FIELDS)
 
-    report = ["# HSD Graphics QA Scorer v1.7.2 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
+    report = ["# HSD Graphics QA Scorer v1.8 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:
@@ -270,13 +294,13 @@ def main() -> None:
     Path("graphics_qa_manifest.json").write_text(json.dumps({
         "version": VERSION,
         "generated_at_utc": now(),
-        "counts": {"bundles_scored": len(rows), "upload_status_rows": len(upload_status_rows)},
+        "counts": {"bundles_scored": len(rows), "upload_status_rows": len(upload_status_rows), "freshness_rows": len(freshness_rows), "player_fit_rows": len(player_fit_rows)},
     }, indent=2), encoding="utf-8")
     Path("graphics_qa_dashboard/index.html").write_text(
-        f"<html><body><h1>Graphics QA v1.7.2</h1><p>Bundles scored: {len(rows)}</p></body></html>",
+        f"<html><body><h1>Graphics QA v1.8</h1><p>Bundles scored: {len(rows)}</p></body></html>",
         encoding="utf-8",
     )
-    print("Created HSD Graphics QA v1.7.2 outputs")
+    print("Created HSD Graphics QA v1.8 outputs")
 
 
 if __name__ == "__main__":
