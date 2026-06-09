@@ -22,10 +22,10 @@ Do not let the graphics chat fetch logo URLs. The logos must be attached as file
 
 ## Minnesota Lynx
 
-- Preferred upload: `missing`
-- Original asset: `missing`
+- Preferred upload: `minnesota-lynx_primary-logo-v1_3c7096.png`
+- Original asset: `minnesota-lynx_primary-logo-v1_3c7096.svg`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg
-- Status: download_failed; no_local_asset
+- Status: downloaded:200; converted_svg_to_png
 
 ## Phoenix Mercury
 
