@@ -24,7 +24,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1"
+VERSION = "hsd-graphics-upload-pack-v1.3.1"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -35,6 +35,7 @@ OUT_ZIP_DIR = Path("graphics_chat_upload_pack_zips")
 OUT_MANIFEST_CSV = "graphics_chat_upload_manifest.csv"
 OUT_MANIFEST_JSON = "graphics_chat_upload_manifest.json"
 OUT_INSTRUCTIONS = "graphics_chat_upload_instructions.md"
+OUT_DIRECT_HANDOFF = "graphics_chat_direct_handoff.md"
 
 FIELDS = [
     "bundle_id", "post_slug", "bundle_name", "entity_name", "entity_type", "approved_asset_id",
@@ -377,6 +378,34 @@ def main() -> None:
         "",
     ]
     Path(OUT_INSTRUCTIONS).write_text("\n".join(instructions), encoding="utf-8")
+
+    # Build a short direct handoff file for the most likely first graphic.
+    direct = [
+        "# HSD Graphics Chat Direct Handoff",
+        "",
+        "Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat cannot unzip.",
+        "",
+    ]
+    main_zip = OUT_ZIP_DIR / "main-wnba-result_graphics_chat_upload_pack.zip"
+    if main_zip.exists():
+        direct += [
+            "## Main WNBA Result",
+            "",
+            f"Recommended ZIP: `{main_zip.as_posix()}`",
+            "",
+            "Instructions to paste into the graphics chat:",
+            "",
+            "```text",
+            "Use the uploaded prompt and uploaded logo files only. Do not fetch logo URLs. Do not substitute logos. Do not invent logos. If an uploaded logo file is missing, use text-forward design for that team. Output separate slide files.",
+            "```",
+            "",
+        ]
+    else:
+        direct += [
+            "Main WNBA Result ZIP was not created. Check graphics_chat_upload_manifest.csv for missing asset download rows.",
+            "",
+        ]
+    Path(OUT_DIRECT_HANDOFF).write_text("\n".join(direct), encoding="utf-8")
 
     print("Created HSD graphics upload pack")
     print(json.dumps(json.loads(Path(OUT_MANIFEST_JSON).read_text())["counts"], indent=2))
