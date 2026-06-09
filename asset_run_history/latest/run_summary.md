@@ -1,7 +1,7 @@
-# HSD Asset Visual QA v1.3 Run Summary
+# HSD Asset Visual QA v1.3.1 Run Summary
 
-Run timestamp UTC: `2026-06-09 01:09:52 UTC`
-Archive folder: `asset_run_history/2026-06-09/0109_UTC`
+Run timestamp UTC: `2026-06-09 01:16:18 UTC`
+Archive folder: `asset_run_history/2026-06-09/0116_UTC`
 
 ## Row counts
 

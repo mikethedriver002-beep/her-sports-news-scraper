@@ -15,7 +15,7 @@ Do not let the graphics chat fetch logo URLs. The logos must be attached as file
 
 ## Los Angeles Sparks
 
-- Preferred upload: `missing`
-- Original asset: `missing`
+- Preferred upload: `los-angeles-sparks_primary-logo-v1_424fe3.png`
+- Original asset: `los-angeles-sparks_primary-logo-v1_424fe3.svg`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
-- Status: download_failed; no_local_asset
+- Status: downloaded:200; converted_svg_to_png

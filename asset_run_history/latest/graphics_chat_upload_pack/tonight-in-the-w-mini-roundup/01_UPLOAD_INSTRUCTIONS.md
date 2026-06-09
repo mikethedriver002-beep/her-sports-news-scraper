@@ -22,10 +22,10 @@ Do not let the graphics chat fetch logo URLs. The logos must be attached as file
 
 ## Minnesota Lynx
 
-- Preferred upload: `minnesota-lynx_primary-logo-v1_3c7096.png`
-- Original asset: `minnesota-lynx_primary-logo-v1_3c7096.svg`
+- Preferred upload: `missing`
+- Original asset: `missing`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg
-- Status: downloaded:200; converted_svg_to_png
+- Status: download_failed; no_local_asset
 
 ## Phoenix Mercury
 
@@ -36,10 +36,10 @@ Do not let the graphics chat fetch logo URLs. The logos must be attached as file
 
 ## Portland Fire
 
-- Preferred upload: `missing`
-- Original asset: `missing`
+- Preferred upload: `portland-fire_primary-logo-v1_09f81f.png`
+- Original asset: `portland-fire_primary-logo-v1_09f81f.svg`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg
-- Status: download_failed; no_local_asset
+- Status: downloaded:200; converted_svg_to_png
 
 ## Seattle Storm
 
