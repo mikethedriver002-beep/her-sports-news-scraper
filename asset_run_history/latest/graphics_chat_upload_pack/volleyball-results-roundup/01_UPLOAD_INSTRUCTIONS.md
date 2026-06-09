@@ -12,6 +12,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `belgium-w_primary-flag-v1_5cd6e1.png`
 - Source URL: https://flagcdn.com/w320/be.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Brazil W
 
@@ -19,6 +20,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `brazil-w_primary-flag-v1_ad6ec8.png`
 - Source URL: https://flagcdn.com/w320/br.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Bulgaria W
 
@@ -26,6 +28,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `bulgaria-w_primary-flag-v1_b54eb4.png`
 - Source URL: https://flagcdn.com/w320/bg.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Canada W
 
@@ -33,6 +36,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `canada-w_primary-flag-v1_f75be0.png`
 - Source URL: https://flagcdn.com/w320/ca.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## China W
 
@@ -40,6 +44,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `china-w_primary-flag-v1_869631.png`
 - Source URL: https://flagcdn.com/w320/cn.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## France W
 
@@ -47,6 +52,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `france-w_primary-flag-v1_fe25ad.png`
 - Source URL: https://flagcdn.com/w320/fr.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Italy W
 
@@ -54,6 +60,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `italy-w_primary-flag-v1_6f4ac2.png`
 - Source URL: https://flagcdn.com/w320/it.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Serbia W
 
@@ -61,6 +68,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `serbia-w_primary-flag-v1_1998ee.png`
 - Source URL: https://flagcdn.com/w320/rs.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Thailand W
 
@@ -68,6 +76,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `thailand-w_primary-flag-v1_a1d24e.png`
 - Source URL: https://flagcdn.com/w320/th.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Turkey W
 
@@ -75,6 +84,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `turkey-w_primary-flag-v1_61c372.png`
 - Source URL: https://flagcdn.com/w320/tr.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## USA W
 
@@ -82,3 +92,4 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `usa-w_primary-flag-v1_287991.png`
 - Source URL: https://flagcdn.com/w320/us.png
 - Status: copied_local; already_png
+- Ready: Yes

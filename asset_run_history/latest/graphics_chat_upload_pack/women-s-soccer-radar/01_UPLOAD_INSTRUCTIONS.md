@@ -12,6 +12,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `australia-w_primary-flag-v1_a7b766.png`
 - Source URL: https://flagcdn.com/w320/au.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Brazil U20 W
 
@@ -19,6 +20,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `brazil-u20-w_primary-flag-v1_457f0c.png`
 - Source URL: https://flagcdn.com/w320/br.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Brazil W
 
@@ -26,6 +28,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `brazil-w_primary-flag-v1_ad6ec8.png`
 - Source URL: https://flagcdn.com/w320/br.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Japan W
 
@@ -33,6 +36,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `japan-w_primary-flag-v1_77e6da.png`
 - Source URL: https://flagcdn.com/w320/jp.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Korea Republic U20 W
 
@@ -40,6 +44,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `korea-republic-u20-w_primary-flag-v1_4405f7.png`
 - Source URL: https://flagcdn.com/w320/kr.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## Mexico W
 
@@ -47,6 +52,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `mexico-w_primary-flag-v1_591b47.png`
 - Source URL: https://flagcdn.com/w320/mx.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## South Africa W
 
@@ -54,6 +60,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `south-africa-w_primary-flag-v1_4b59b0.png`
 - Source URL: https://flagcdn.com/w320/za.png
 - Status: copied_local; already_png
+- Ready: Yes
 
 ## USA W
 
@@ -61,3 +68,4 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Original asset: `usa-w_primary-flag-v1_287991.png`
 - Source URL: https://flagcdn.com/w320/us.png
 - Status: copied_local; already_png
+- Ready: Yes

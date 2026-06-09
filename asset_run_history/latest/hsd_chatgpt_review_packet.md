@@ -4,10 +4,10 @@ Upload this single file for review. The numbered files in `chatgpt_review_pack/`
 
 ## latest_asset_visual_qa_run_summary.md
 
-# HSD Asset Visual QA v1.5 Run Summary
+# HSD Asset Visual QA v1.5.1 Run Summary
 
-Run timestamp UTC: `2026-06-09 02:41:21 UTC`
-Archive folder: `asset_run_history/2026-06-09/0241_UTC`
+Run timestamp UTC: `2026-06-09 03:09:49 UTC`
+Archive folder: `asset_run_history/2026-06-09/0309_UTC`
 
 ## Row counts
 
@@ -20,15 +20,16 @@ Archive folder: `asset_run_history/2026-06-09/0241_UTC`
 - `asset_source_seed_list.csv`: 28
 - `fact_warning_queue.csv`: 0
 - `player_image_requirements.csv`: 8
-- `player_image_candidates.csv`: 49
+- `player_image_candidates.csv`: 38
 - `graphics_qa_results.csv`: 4
 - `graphics_chat_upload_manifest.csv`: 35
+- `graphics_upload_pack_status.csv`: 4
 
 ## Player image sourcing
 
 # HSD Player Image Sourcing Report
 
-Generated: 2026-06-09T02:41:18.205532+00:00
+Generated: 2026-06-09T03:09:41.820877+00:00
 Version: hsd-player-image-assets-v1.5-free-sourcing
 
 Player images required: Yes
@@ -37,7 +38,7 @@ Found required player images: 8
 Missing required player images: 0
 Free search enabled: Yes
 DuckDuckGo package available: Yes
-Candidate rows inspected: 49
+Candidate rows inspected: 38
 
 ## Required players
 
@@ -49,8 +50,10 @@ Candidate rows inspected: 49
 
 - bundles: 4
 - asset rows: 35
-- files created: 33
-- png preferred created: 33
+- files created: 34
+- png preferred created: 34
+- upload packs ready: 3
+- upload packs blocked: 1
 
 ## Missing optional files
 
@@ -61,7 +64,7 @@ Candidate rows inspected: 49
 ```json
 {
   "version": "hsd-asset-desk-v1.2.2",
-  "generated_at_utc": "2026-06-09T02:22:33.459960+00:00",
+  "generated_at_utc": "2026-06-09T02:55:46.289572+00:00",
   "rights_mode": "aggressive",
   "download": true,
   "inputs": {
@@ -94,7 +97,7 @@ Candidate rows inspected: 49
 
 # HSD Asset Desk v1.2 Candidate Review
 
-Generated: 2026-06-09T02:22:33.459896+00:00
+Generated: 2026-06-09T02:55:46.289505+00:00
 
 v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.
 
@@ -140,37 +143,37 @@ Fact warnings: 0
 
 ```csv
 approved_asset_id,asset_id,approved_variant,entity_type,entity_name,source_url,page_url,master_path,web_path,rights_status,approved_by,approved_utc,usage_scope,notes
-appr_a954f58ba7b766,ast_a954f58ba7b766,primary_flag_v1,team,Australia W,https://flagcdn.com/w320/au.png,https://flagcdn.com/w320/au.png,data/assets/approved/appr_a954f58ba7b766.png,data/assets/approved/appr_a954f58ba7b766.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456672+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_dbd34b035cd6e1,ast_dbd34b035cd6e1,primary_flag_v1,team,Belgium W,https://flagcdn.com/w320/be.png,https://flagcdn.com/w320/be.png,data/assets/approved/appr_dbd34b035cd6e1.png,data/assets/approved/appr_dbd34b035cd6e1.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456690+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_a79adaf6457f0c,ast_a79adaf6457f0c,primary_flag_v1,team,Brazil U20 W,https://flagcdn.com/w320/br.png,https://flagcdn.com/w320/br.png,data/assets/approved/appr_a79adaf6457f0c.png,data/assets/approved/appr_a79adaf6457f0c.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456692+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_3b613e56ad6ec8,ast_3b613e56ad6ec8,primary_flag_v1,team,Brazil W,https://flagcdn.com/w320/br.png,https://flagcdn.com/w320/br.png,data/assets/approved/appr_3b613e56ad6ec8.png,data/assets/approved/appr_3b613e56ad6ec8.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456694+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_6849fd04b54eb4,ast_6849fd04b54eb4,primary_flag_v1,team,Bulgaria W,https://flagcdn.com/w320/bg.png,https://flagcdn.com/w320/bg.png,data/assets/approved/appr_6849fd04b54eb4.png,data/assets/approved/appr_6849fd04b54eb4.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456696+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_14a6cc66f75be0,ast_14a6cc66f75be0,primary_flag_v1,team,Canada W,https://flagcdn.com/w320/ca.png,https://flagcdn.com/w320/ca.png,data/assets/approved/appr_14a6cc66f75be0.png,data/assets/approved/appr_14a6cc66f75be0.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456697+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_885836e9869631,ast_885836e9869631,primary_flag_v1,team,China W,https://flagcdn.com/w320/cn.png,https://flagcdn.com/w320/cn.png,data/assets/approved/appr_885836e9869631.png,data/assets/approved/appr_885836e9869631.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456699+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_7ca8ac2b2a4ad9,ast_7ca8ac2b2a4ad9,primary_logo_v1,team,Dallas Wings,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,data/assets/approved/appr_7ca8ac2b2a4ad9.svg,data/assets/approved/appr_7ca8ac2b2a4ad9.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456725+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_65747d24fe25ad,ast_65747d24fe25ad,primary_flag_v1,team,France W,https://flagcdn.com/w320/fr.png,https://flagcdn.com/w320/fr.png,data/assets/approved/appr_65747d24fe25ad.png,data/assets/approved/appr_65747d24fe25ad.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456728+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_df24e2082f811d,ast_df24e2082f811d,primary_logo_v1,team,Golden State Valkyries,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,data/assets/approved/appr_df24e2082f811d.svg,data/assets/approved/appr_df24e2082f811d.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456731+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_2a96d8d56f4ac2,ast_2a96d8d56f4ac2,primary_flag_v1,team,Italy W,https://flagcdn.com/w320/it.png,https://flagcdn.com/w320/it.png,data/assets/approved/appr_2a96d8d56f4ac2.png,data/assets/approved/appr_2a96d8d56f4ac2.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456733+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_2bfc766277e6da,ast_2bfc766277e6da,primary_flag_v1,team,Japan W,https://flagcdn.com/w320/jp.png,https://flagcdn.com/w320/jp.png,data/assets/approved/appr_2bfc766277e6da.png,data/assets/approved/appr_2bfc766277e6da.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456735+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_67a033c94405f7,ast_67a033c94405f7,primary_flag_v1,team,Korea Republic U20 W,https://flagcdn.com/w320/kr.png,https://flagcdn.com/w320/kr.png,data/assets/approved/appr_67a033c94405f7.png,data/assets/approved/appr_67a033c94405f7.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456736+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_9c7fc211069805,ast_9c7fc211069805,primary_logo_v1,team,Las Vegas Aces,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,data/assets/approved/appr_9c7fc211069805.svg,data/assets/approved/appr_9c7fc211069805.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456738+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_7eea0085424fe3,ast_7eea0085424fe3,primary_logo_v1,team,Los Angeles Sparks,https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg,https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg,,,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456739+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_34556a69591b47,ast_34556a69591b47,primary_flag_v1,team,Mexico W,https://flagcdn.com/w320/mx.png,https://flagcdn.com/w320/mx.png,data/assets/approved/appr_34556a69591b47.png,data/assets/approved/appr_34556a69591b47.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456740+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_047086213c7096,ast_047086213c7096,primary_logo_v1,team,Minnesota Lynx,https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg,https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg,,,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456742+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_9edeb1cdaa6f4c,ast_9edeb1cdaa6f4c,primary_logo_v1,team,Phoenix Mercury,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,data/assets/approved/appr_9edeb1cdaa6f4c.svg,data/assets/approved/appr_9edeb1cdaa6f4c.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456745+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_01d68c2809f81f,ast_01d68c2809f81f,primary_logo_v1,team,Portland Fire,https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg,https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg,,,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456747+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_52d46724c00ec9,ast_52d46724c00ec9,primary_logo_v1,team,Seattle Storm,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,data/assets/approved/appr_52d46724c00ec9.svg,data/assets/approved/appr_52d46724c00ec9.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456748+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_9426bf971998ee,ast_9426bf971998ee,primary_flag_v1,team,Serbia W,https://flagcdn.com/w320/rs.png,https://flagcdn.com/w320/rs.png,data/assets/approved/appr_9426bf971998ee.png,data/assets/approved/appr_9426bf971998ee.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456750+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_2d1d5b6b4b59b0,ast_2d1d5b6b4b59b0,primary_flag_v1,team,South Africa W,https://flagcdn.com/w320/za.png,https://flagcdn.com/w320/za.png,data/assets/approved/appr_2d1d5b6b4b59b0.png,data/assets/approved/appr_2d1d5b6b4b59b0.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456751+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_526f2acaa1d24e,ast_526f2acaa1d24e,primary_flag_v1,team,Thailand W,https://flagcdn.com/w320/th.png,https://flagcdn.com/w320/th.png,data/assets/approved/appr_526f2acaa1d24e.png,data/assets/approved/appr_526f2acaa1d24e.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456752+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_dd35c3cb61c372,ast_dd35c3cb61c372,primary_flag_v1,team,Turkey W,https://flagcdn.com/w320/tr.png,https://flagcdn.com/w320/tr.png,data/assets/approved/appr_dd35c3cb61c372.png,data/assets/approved/appr_dd35c3cb61c372.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456754+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_49824984287991,ast_49824984287991,primary_flag_v1,team,USA W,https://flagcdn.com/w320/us.png,https://flagcdn.com/w320/us.png,data/assets/approved/appr_49824984287991.png,data/assets/approved/appr_49824984287991.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:22:33.456755+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
-appr_e229246a508b2e,ast_e229246a508b2e,primary_player_photo_v1,player,Jessica Shepard,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg,data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:24:51.376624+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
-appr_2646dc354c1762,ast_2646dc354c1762,primary_player_photo_v1,player,Arike Ogunbowale,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg,data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:27:07.234652+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
-appr_717263c3d3e94e,ast_717263c3d3e94e,primary_player_photo_v1,player,Paige Bueckers,https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg,data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg,data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:28:33.176192+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
-appr_a6b966fc2efd2d,ast_a6b966fc2efd2d,primary_player_photo_v1,player,Kelsey Plum,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg,data/assets/player_images/kelsey-plum_wikipedia_pageimage_1be29b.jpg,data/assets/player_images/kelsey-plum_wikipedia_pageimage_1be29b.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:29:59.035842+00:00,HSD social graphics,Required player image sourced via wikipedia_pageimage. Free/no-paid-API capable pipeline.
-appr_d3440f8552d66f,ast_d3440f8552d66f,primary_player_photo_v1,player,Ariel Atkins,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg,data/assets/player_images/ariel-atkins_wikidata_p18_475bc8.jpg,data/assets/player_images/ariel-atkins_wikidata_p18_475bc8.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:31:25.035252+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
-appr_505914b839a2ec,ast_505914b839a2ec,primary_player_photo_v1,player,Dearica Hamby,https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg,data/assets/player_images/dearica-hamby_wikidata_p18_19f001.jpg,data/assets/player_images/dearica-hamby_wikidata_p18_19f001.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:32:55.291722+00:00,HSD social graphics,Required player image sourced via w
+appr_a954f58ba7b766,ast_a954f58ba7b766,primary_flag_v1,team,Australia W,https://flagcdn.com/w320/au.png,https://flagcdn.com/w320/au.png,data/assets/approved/appr_a954f58ba7b766.png,data/assets/approved/appr_a954f58ba7b766.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284621+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_dbd34b035cd6e1,ast_dbd34b035cd6e1,primary_flag_v1,team,Belgium W,https://flagcdn.com/w320/be.png,https://flagcdn.com/w320/be.png,data/assets/approved/appr_dbd34b035cd6e1.png,data/assets/approved/appr_dbd34b035cd6e1.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284643+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_a79adaf6457f0c,ast_a79adaf6457f0c,primary_flag_v1,team,Brazil U20 W,https://flagcdn.com/w320/br.png,https://flagcdn.com/w320/br.png,data/assets/approved/appr_a79adaf6457f0c.png,data/assets/approved/appr_a79adaf6457f0c.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284647+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_3b613e56ad6ec8,ast_3b613e56ad6ec8,primary_flag_v1,team,Brazil W,https://flagcdn.com/w320/br.png,https://flagcdn.com/w320/br.png,data/assets/approved/appr_3b613e56ad6ec8.png,data/assets/approved/appr_3b613e56ad6ec8.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284650+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_6849fd04b54eb4,ast_6849fd04b54eb4,primary_flag_v1,team,Bulgaria W,https://flagcdn.com/w320/bg.png,https://flagcdn.com/w320/bg.png,data/assets/approved/appr_6849fd04b54eb4.png,data/assets/approved/appr_6849fd04b54eb4.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284653+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_14a6cc66f75be0,ast_14a6cc66f75be0,primary_flag_v1,team,Canada W,https://flagcdn.com/w320/ca.png,https://flagcdn.com/w320/ca.png,data/assets/approved/appr_14a6cc66f75be0.png,data/assets/approved/appr_14a6cc66f75be0.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284656+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_885836e9869631,ast_885836e9869631,primary_flag_v1,team,China W,https://flagcdn.com/w320/cn.png,https://flagcdn.com/w320/cn.png,data/assets/approved/appr_885836e9869631.png,data/assets/approved/appr_885836e9869631.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284659+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_7ca8ac2b2a4ad9,ast_7ca8ac2b2a4ad9,primary_logo_v1,team,Dallas Wings,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,data/assets/approved/appr_7ca8ac2b2a4ad9.svg,data/assets/approved/appr_7ca8ac2b2a4ad9.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284669+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_65747d24fe25ad,ast_65747d24fe25ad,primary_flag_v1,team,France W,https://flagcdn.com/w320/fr.png,https://flagcdn.com/w320/fr.png,data/assets/approved/appr_65747d24fe25ad.png,data/assets/approved/appr_65747d24fe25ad.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284672+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_df24e2082f811d,ast_df24e2082f811d,primary_logo_v1,team,Golden State Valkyries,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,data/assets/approved/appr_df24e2082f811d.svg,data/assets/approved/appr_df24e2082f811d.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284676+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_2a96d8d56f4ac2,ast_2a96d8d56f4ac2,primary_flag_v1,team,Italy W,https://flagcdn.com/w320/it.png,https://flagcdn.com/w320/it.png,data/assets/approved/appr_2a96d8d56f4ac2.png,data/assets/approved/appr_2a96d8d56f4ac2.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284679+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_2bfc766277e6da,ast_2bfc766277e6da,primary_flag_v1,team,Japan W,https://flagcdn.com/w320/jp.png,https://flagcdn.com/w320/jp.png,data/assets/approved/appr_2bfc766277e6da.png,data/assets/approved/appr_2bfc766277e6da.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284682+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_67a033c94405f7,ast_67a033c94405f7,primary_flag_v1,team,Korea Republic U20 W,https://flagcdn.com/w320/kr.png,https://flagcdn.com/w320/kr.png,data/assets/approved/appr_67a033c94405f7.png,data/assets/approved/appr_67a033c94405f7.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284685+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_9c7fc211069805,ast_9c7fc211069805,primary_logo_v1,team,Las Vegas Aces,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,data/assets/approved/appr_9c7fc211069805.svg,data/assets/approved/appr_9c7fc211069805.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284688+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_7eea0085424fe3,ast_7eea0085424fe3,primary_logo_v1,team,Los Angeles Sparks,https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg,https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg,,,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284691+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_34556a69591b47,ast_34556a69591b47,primary_flag_v1,team,Mexico W,https://flagcdn.com/w320/mx.png,https://flagcdn.com/w320/mx.png,data/assets/approved/appr_34556a69591b47.png,data/assets/approved/appr_34556a69591b47.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284694+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_047086213c7096,ast_047086213c7096,primary_logo_v1,team,Minnesota Lynx,https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg,https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg,,,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284697+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_9edeb1cdaa6f4c,ast_9edeb1cdaa6f4c,primary_logo_v1,team,Phoenix Mercury,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,data/assets/approved/appr_9edeb1cdaa6f4c.svg,data/assets/approved/appr_9edeb1cdaa6f4c.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284702+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_01d68c2809f81f,ast_01d68c2809f81f,primary_logo_v1,team,Portland Fire,https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg,https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg,,,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284705+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_52d46724c00ec9,ast_52d46724c00ec9,primary_logo_v1,team,Seattle Storm,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,data/assets/approved/appr_52d46724c00ec9.svg,data/assets/approved/appr_52d46724c00ec9.svg,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284708+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_9426bf971998ee,ast_9426bf971998ee,primary_flag_v1,team,Serbia W,https://flagcdn.com/w320/rs.png,https://flagcdn.com/w320/rs.png,data/assets/approved/appr_9426bf971998ee.png,data/assets/approved/appr_9426bf971998ee.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284712+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_2d1d5b6b4b59b0,ast_2d1d5b6b4b59b0,primary_flag_v1,team,South Africa W,https://flagcdn.com/w320/za.png,https://flagcdn.com/w320/za.png,data/assets/approved/appr_2d1d5b6b4b59b0.png,data/assets/approved/appr_2d1d5b6b4b59b0.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284715+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_526f2acaa1d24e,ast_526f2acaa1d24e,primary_flag_v1,team,Thailand W,https://flagcdn.com/w320/th.png,https://flagcdn.com/w320/th.png,data/assets/approved/appr_526f2acaa1d24e.png,data/assets/approved/appr_526f2acaa1d24e.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284717+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_dd35c3cb61c372,ast_dd35c3cb61c372,primary_flag_v1,team,Turkey W,https://flagcdn.com/w320/tr.png,https://flagcdn.com/w320/tr.png,data/assets/approved/appr_dd35c3cb61c372.png,data/assets/approved/appr_dd35c3cb61c372.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284720+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_49824984287991,ast_49824984287991,primary_flag_v1,team,USA W,https://flagcdn.com/w320/us.png,https://flagcdn.com/w320/us.png,data/assets/approved/appr_49824984287991.png,data/assets/approved/appr_49824984287991.png,auto_approved_by_hsd_aggressive_policy,HSD aggressive asset policy with v1.2 exact-entity and fallback guard,2026-06-09T02:55:46.284723+00:00,HSD social graphics,"Auto-approved only after exact-match, fallback, and entity-cleanup guard."
+appr_e229246a508b2e,ast_e229246a508b2e,primary_player_photo_v1,player,Jessica Shepard,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg,data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:57:12.578766+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
+appr_2646dc354c1762,ast_2646dc354c1762,primary_player_photo_v1,player,Arike Ogunbowale,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg,data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T02:58:37.234104+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
+appr_717263c3d3e94e,ast_717263c3d3e94e,primary_player_photo_v1,player,Paige Bueckers,https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg,data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg,data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T03:00:02.322361+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
+appr_a6b966fc2efd2d,ast_a6b966fc2efd2d,primary_player_photo_v1,player,Kelsey Plum,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg,data/assets/player_images/kelsey-plum_wikipedia_pageimage_1be29b.jpg,data/assets/player_images/kelsey-plum_wikipedia_pageimage_1be29b.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T03:01:28.099113+00:00,HSD social graphics,Required player image sourced via wikipedia_pageimage. Free/no-paid-API capable pipeline.
+appr_d3440f8552d66f,ast_d3440f8552d66f,primary_player_photo_v1,player,Ariel Atkins,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg,data/assets/player_images/ariel-atkins_wikidata_p18_475bc8.jpg,data/assets/player_images/ariel-atkins_wikidata_p18_475bc8.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T03:02:53.491425+00:00,HSD social graphics,Required player image sourced via wikidata_p18. Free/no-paid-API capable pipeline.
+appr_505914b839a2ec,ast_505914b839a2ec,primary_player_photo_v1,player,Dearica Hamby,https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg,https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg,data/assets/player_images/dearica-hamby_wikidata_p18_19f001.jpg,data/assets/player_images/dearica-hamby_wikidata_p18_19f001.jpg,auto_approved_by_hsd_aggressive_policy,HSD free player image sourcing pipeline,2026-06-09T03:04:18.147309+00:00,HSD social graphics,Required player image sourced via w
 ...TRUNCATED...
 ```
 
@@ -193,7 +196,7 @@ main-wnba-result,Cameron Brink,Los Angeles Sparks,Yes,found_downloaded_200,appr_
 
 # HSD Player Image Sourcing Report
 
-Generated: 2026-06-09T02:41:18.205532+00:00
+Generated: 2026-06-09T03:09:41.820877+00:00
 Version: hsd-player-image-assets-v1.5-free-sourcing
 
 Player images required: Yes
@@ -202,7 +205,7 @@ Found required player images: 8
 Missing required player images: 0
 Free search enabled: Yes
 DuckDuckGo package available: Yes
-Candidate rows inspected: 49
+Candidate rows inspected: 38
 
 ## Required players
 
@@ -223,14 +226,10 @@ candidate_id,player_name,team_name,candidate_url,page_url,source_domain,title,me
 pcand_6fdd96620f1e49,Jessica Shepard,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1629574.png,https://wings.wnba.com/roster/,cdn.wnba.com,Jessica Shepard Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_bef2bde953e036,Jessica Shepard,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1629491.png,https://wings.wnba.com/roster/,cdn.wnba.com,Jessica Shepard Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_b4f70a0ed3d6be,Jessica Shepard,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1630386.png,https://wings.wnba.com/roster/,cdn.wnba.com,Jessica Shepard Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
-pcand_40409d3b5a58df,Jessica Shepard,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1643385.png,https://wings.wnba.com/roster/,cdn.wnba.com,Jessica Shepard Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
-pcand_3664cc0dec2901,Jessica Shepard,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/203973.png,https://wings.wnba.com/roster/,cdn.wnba.com,Jessica Shepard Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_e229246a508b2e,Jessica Shepard,Dallas Wings,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,https://www.wikidata.org/wiki/Q63314355,commons.wikimedia.org,Jessica Shepard American basketball player,wikidata_p18,110,downloaded_200,data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg,1684,2902,image/jpeg,Yes,
 pcand_f3f1c7d1bc2114,Arike Ogunbowale,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1641652.png,https://wings.wnba.com/roster/,cdn.wnba.com,Arike Ogunbowale Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_8250f840619acf,Arike Ogunbowale,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1629481.png,https://wings.wnba.com/roster/,cdn.wnba.com,Arike Ogunbowale Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_c38557d0556125,Arike Ogunbowale,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1629574.png,https://wings.wnba.com/roster/,cdn.wnba.com,Arike Ogunbowale Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
-pcand_637c5e207306f8,Arike Ogunbowale,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/201067.png,https://wings.wnba.com/roster/,cdn.wnba.com,Arike Ogunbowale Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
-pcand_935a13dc795b7a,Arike Ogunbowale,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1642897.png,https://wings.wnba.com/roster/,cdn.wnba.com,Arike Ogunbowale Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_2646dc354c1762,Arike Ogunbowale,Dallas Wings,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,https://www.wikidata.org/wiki/Q51858305,commons.wikimedia.org,Arike Ogunbowale American basketball player,wikidata_p18,110,downloaded_200,data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg,1653,2361,image/jpeg,Yes,
 pcand_c6f0b63de9f919,Paige Bueckers,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/203824.png,https://wings.wnba.com/roster/,cdn.wnba.com,Paige Bueckers Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_417d225e678a78,Paige Bueckers,Dallas Wings,https://cdn.wnba.com/headshots/wnba/latest/260x190/1642784.png,https://wings.wnba.com/roster/,cdn.wnba.com,Paige Bueckers Dallas Wings roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
@@ -252,12 +251,15 @@ pcand_7ed9d44b619092,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/head
 pcand_52fc83d1ba0351,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/203014.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_cb79787df01ce6,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/1628242.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_fceffd4d16d180,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/1642749.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
-pcand_4928131f76e2f1,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/1630694.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_5ce4d2e686e77d,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/sites/4/2026/05/Ally-Wordmark_Offwhite.png,https://www.wnba.com/team/1611661320/los-angeles-sparks,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_0e0e31b4c2789b,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/sites/4/2023/06/att2.png,https://www.wnba.com/team/1611661320/los-angeles-sparks,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_a8ca5e8c80872c,Nneka Ogwumike,Los Angeles Sparks,https://cdn.wnba.com/sites/4/2023/06/DEL_PRI_ALL_WHT.png,https://www.wnba.com/team/1611661320/los-angeles-sparks,cdn.wnba.com,Nneka Ogwumike Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
 pcand_9a4d6394f0547e,Nneka Ogwumike,Los Angeles Sparks,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg,https://www.wikidata.org/wiki/Q3342371,commons.wikimedia.org,Nneka Ogwumike American basketball player (born 1990),wikidata_p18,110,downloaded_200,data/assets/player_images/nneka-ogwumike_wikidata_p18_aea79f.jpg,1924,3430,image/jpeg,Yes,
-pcand_59ac3921243e69,Cameron Br
+pcand_59ac3921243e69,Cameron Brink,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/1642324.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Cameron Brink Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
+pcand_81f4e7d274b33a,Cameron Brink,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/1642287.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Cameron Brink Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
+pcand_d147e3129a7aea,Cameron Brink,Los Angeles Sparks,https://cdn.wnba.com/headshots/wnba/latest/260x190/203014.png,https://sparks.wnba.com/roster/,cdn.wnba.com,Cameron Brink Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
+pcand_f5379df7f63109,Cameron Brink,Los Angeles Sparks,https://cdn.wnba.com/sites/4/2026/05/Ally-Wordmark_Offwhite.png,https://www.wnba.com/team/1611661320/los-angeles-sparks,cdn.wnba.com,Cameron Brink Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)"
+pcand_66dd3040afb045,Cameron Brink,Los Angeles Sparks,https://cdn.wnba.com/sites/4/2023/06/att2.png,https://www.wnba.com/team/1611661320/los-angeles-sparks,cdn.wnba.com,Cameron Brink Los Angeles Sparks roster,wnba_roster_html,140,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Read timed out. (read timeout=25)",,0,0,,No,"download_error:HTTPSConnectionPool(host='cdn.wnba.com', port=443): Rea
 ...TRUNCATED...
 ```
 
@@ -272,7 +274,7 @@ warning_id,bundle_id,warning_type,severity,subject,details,manual_review_require
 
 # HSD Graphics Slide Blueprints
 
-Generated: 2026-06-09T02:41:18.428821+00:00
+Generated: 2026-06-09T03:09:42.086772+00:00
 
 ## Main WNBA Result
 
@@ -363,7 +365,7 @@ Forbidden:
 
 # HSD Bundle Prompts v2.2
 
-Generated: 2026-06-09T02:41:18.407485+00:00
+Generated: 2026-06-09T03:09:42.056738+00:00
 
 ## Main WNBA Result
 
@@ -549,7 +551,7 @@ Accuracy beats aesthetics, but aesthetics must be premium.
 
 # HSD Graphics Chat Upload Instructions
 
-The graphics chat cannot reliably fetch external logo URLs. Use this upload pack instead.
+The graphics chat cannot reliably fetch external logo or player image URLs. Use this upload pack instead.
 
 For the post you are making:
 
@@ -561,43 +563,39 @@ For the post you are making:
 
 Quick ZIPs are in `graphics_chat_upload_pack_zips/`.
 
-For Main WNBA Result, upload:
-
-- `graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip`
+Upload pack status is in `graphics_upload_pack_status.csv`.
 
 
 ## graphics_chat_upload_manifest.csv
 
 ```csv
-bundle_id,post_slug,bundle_name,entity_name,entity_type,approved_asset_id,approved_variant,source_url,source_domain,local_asset_path,local_png_path,asset_filename,png_filename,download_status,conversion_status,upload_instruction
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Dallas Wings,team,appr_7ca8ac2b2a4ad9,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/main-wnba-result/assets_original/dallas-wings_primary-logo-v1_2a4ad9.svg,graphics_chat_upload_pack/main-wnba-result/assets_png_preferred/dallas-wings_primary-logo-v1_2a4ad9.png,dallas-wings_primary-logo-v1_2a4ad9.svg,dallas-wings_primary-logo-v1_2a4ad9.png,copied_local,converted_svg_to_png,Upload dallas-wings_primary-logo-v1_2a4ad9.png
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Los Angeles Sparks,team,appr_7eea0085424fe3,primary_logo_v1,https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg,upload.wikimedia.org,,,,,download_failed,no_local_asset,"No file created, use text-forward for this asset"
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Jessica Shepard,player,appr_e229246a508b2e,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/jessica-shepard_primary-player-photo-v1_508b2e.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/jessica-shepard_primary-player-photo-v1_508b2e.jpg,jessica-shepard_primary-player-photo-v1_508b2e.jpg,jessica-shepard_primary-player-photo-v1_508b2e.jpg,copied_local,raster_no_conversion,Upload jessica-shepard_primary-player-photo-v1_508b2e.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Arike Ogunbowale,player,appr_2646dc354c1762,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,copied_local,raster_no_conversion,Upload arike-ogunbowale_primary-player-photo-v1_4c1762.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Paige Bueckers,player,appr_717263c3d3e94e,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/paige-bueckers_primary-player-photo-v1_d3e94e.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/paige-bueckers_primary-player-photo-v1_d3e94e.jpg,paige-bueckers_primary-player-photo-v1_d3e94e.jpg,paige-bueckers_primary-player-photo-v1_d3e94e.jpg,copied_local,raster_no_conversion,Upload paige-bueckers_primary-player-photo-v1_d3e94e.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Kelsey Plum,player,appr_a6b966fc2efd2d,primary_player_photo_v1,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg,upload.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/kelsey-plum_primary-player-photo-v1_2efd2d.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/kelsey-plum_primary-player-photo-v1_2efd2d.jpg,kelsey-plum_primary-player-photo-v1_2efd2d.jpg,kelsey-plum_primary-player-photo-v1_2efd2d.jpg,copied_local,raster_no_conversion,Upload kelsey-plum_primary-player-photo-v1_2efd2d.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Ariel Atkins,player,appr_d3440f8552d66f,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/ariel-atkins_primary-player-photo-v1_52d66f.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/ariel-atkins_primary-player-photo-v1_52d66f.jpg,ariel-atkins_primary-player-photo-v1_52d66f.jpg,ariel-atkins_primary-player-photo-v1_52d66f.jpg,copied_local,raster_no_conversion,Upload ariel-atkins_primary-player-photo-v1_52d66f.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Dearica Hamby,player,appr_505914b839a2ec,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/dearica-hamby_primary-player-photo-v1_39a2ec.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/dearica-hamby_primary-player-photo-v1_39a2ec.jpg,dearica-hamby_primary-player-photo-v1_39a2ec.jpg,dearica-hamby_primary-player-photo-v1_39a2ec.jpg,copied_local,raster_no_conversion,Upload dearica-hamby_primary-player-photo-v1_39a2ec.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Nneka Ogwumike,player,appr_9a4d6394f0547e,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,copied_local,raster_no_conversion,Upload nneka-ogwumike_primary-player-photo-v1_f0547e.jpg
-bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Cameron Brink,player,appr_5665d39f6486d0,primary_player_photo_v1,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cameron_Brink_Sparks_%28cropped%29.jpg/1280px-Cameron_Brink_Sparks_%28cropped%29.jpg,upload.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/cameron-brink_primary-player-photo-v1_6486d0.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/cameron-brink_primary-player-photo-v1_6486d0.jpg,cameron-brink_primary-player-photo-v1_6486d0.jpg,cameron-brink_primary-player-photo-v1_6486d0.jpg,copied_local,raster_no_conversion,Upload cameron-brink_primary-player-photo-v1_6486d0.jpg
-bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Golden State Valkyries,team,appr_df24e2082f811d,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/golden-state-valkyries_primary-logo-v1_2f811d.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/golden-state-valkyries_primary-logo-v1_2f811d.png,golden-state-valkyries_primary-logo-v1_2f811d.svg,golden-state-valkyries_primary-logo-v1_2f811d.png,copied_local,converted_svg_to_png,Upload golden-state-valkyries_primary-logo-v1_2f811d.png
-bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Las Vegas Aces,team,appr_9c7fc211069805,primary_logo_v1,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,upload.wikimedia.org,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/las-vegas-aces_primary-logo-v1_069805.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/las-vegas-aces_primary-logo-v1_069805.png,las-vegas-aces_primary-logo-v1_069805.svg,las-vegas-aces_primary-logo-v1_069805.png,copied_local,converted_svg_to_png,Upload las-vegas-aces_primary-logo-v1_069805.png
-bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Minnesota Lynx,team,appr_047086213c7096,primary_logo_v1,https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg,upload.wikimedia.org,,,,,download_failed,no_local_asset,"No file created, use text-forward for this asset"
-bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Phoenix Mercury,team,appr_9edeb1cdaa6f4c,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/phoenix-mercury_primary-logo-v1_aa6f4c.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/phoenix-mercury_primary-logo-v1_aa6f4c.png,phoenix-mercury_primary-logo-v1_aa6f4c.svg,phoenix-mercury_primary-logo-v1_aa6f4c.png,copied_local,converted_svg_to_png,Upload phoenix-mercury_primary-logo-v1_aa6f4c.png
-bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Portland Fire,team,appr_01d68c2809f81f,primary_logo_v1,https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg,upload.wikimedia.org,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/portland-fire_primary-logo-v1_09f81f.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/portland-fire_primary-logo-v1_09f81f.png,portland-fire_primary-logo-v1_09f81f.svg,portland-fire_primary-logo-v1_09f81f.png,downloaded:200,converted_svg_to_png,Upload portland-fire_primary-logo-v1_09f81f.png
-bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Seattle Storm,team,appr_52d46724c00ec9,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/seattle-storm_primary-logo-v1_c00ec9.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/seattle-storm_primary-logo-v1_c00ec9.png,seattle-storm_primary-logo-v1_c00ec9.svg,seattle-storm_primary-logo-v1_c00ec9.png,copied_local,converted_svg_to_png,Upload seattle-storm_primary-logo-v1_c00ec9.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Belgium W,team,appr_dbd34b035cd6e1,primary_flag_v1,https://flagcdn.com/w320/be.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/belgium-w_primary-flag-v1_5cd6e1.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/belgium-w_primary-flag-v1_5cd6e1.png,belgium-w_primary-flag-v1_5cd6e1.png,belgium-w_primary-flag-v1_5cd6e1.png,copied_local,already_png,Upload belgium-w_primary-flag-v1_5cd6e1.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Brazil W,team,appr_3b613e56ad6ec8,primary_flag_v1,https://flagcdn.com/w320/br.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/brazil-w_primary-flag-v1_ad6ec8.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/brazil-w_primary-flag-v1_ad6ec8.png,brazil-w_primary-flag-v1_ad6ec8.png,brazil-w_primary-flag-v1_ad6ec8.png,copied_local,already_png,Upload brazil-w_primary-flag-v1_ad6ec8.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Bulgaria W,team,appr_6849fd04b54eb4,primary_flag_v1,https://flagcdn.com/w320/bg.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/bulgaria-w_primary-flag-v1_b54eb4.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/bulgaria-w_primary-flag-v1_b54eb4.png,bulgaria-w_primary-flag-v1_b54eb4.png,bulgaria-w_primary-flag-v1_b54eb4.png,copied_local,already_png,Upload bulgaria-w_primary-flag-v1_b54eb4.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Canada W,team,appr_14a6cc66f75be0,primary_flag_v1,https://flagcdn.com/w320/ca.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/canada-w_primary-flag-v1_f75be0.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/canada-w_primary-flag-v1_f75be0.png,canada-w_primary-flag-v1_f75be0.png,canada-w_primary-flag-v1_f75be0.png,copied_local,already_png,Upload canada-w_primary-flag-v1_f75be0.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,China W,team,appr_885836e9869631,primary_flag_v1,https://flagcdn.com/w320/cn.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/china-w_primary-flag-v1_869631.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/china-w_primary-flag-v1_869631.png,china-w_primary-flag-v1_869631.png,china-w_primary-flag-v1_869631.png,copied_local,already_png,Upload china-w_primary-flag-v1_869631.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,France W,team,appr_65747d24fe25ad,primary_flag_v1,https://flagcdn.com/w320/fr.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/france-w_primary-flag-v1_fe25ad.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/france-w_primary-flag-v1_fe25ad.png,france-w_primary-flag-v1_fe25ad.png,france-w_primary-flag-v1_fe25ad.png,copied_local,already_png,Upload france-w_primary-flag-v1_fe25ad.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Italy W,team,appr_2a96d8d56f4ac2,primary_flag_v1,https://flagcdn.com/w320/it.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/italy-w_primary-flag-v1_6f4ac2.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/italy-w_primary-flag-v1_6f4ac2.png,italy-w_primary-flag-v1_6f4ac2.png,italy-w_primary-flag-v1_6f4ac2.png,copied_local,already_png,Upload italy-w_primary-flag-v1_6f4ac2.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Serbia W,team,appr_9426bf971998ee,primary_flag_v1,https://flagcdn.com/w320/rs.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/serbia-w_primary-flag-v1_1998ee.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/serbia-w_primary-flag-v1_1998ee.png,serbia-w_primary-flag-v1_1998ee.png,serbia-w_primary-flag-v1_1998ee.png,copied_local,already_png,Upload serbia-w_primary-flag-v1_1998ee.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Thailand W,team,appr_526f2acaa1d24e,primary_flag_v1,https://flagcdn.com/w320/th.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/thailand-w_primary-flag-v1_a1d24e.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/thailand-w_primary-flag-v1_a1d24e.png,thailand-w_primary-flag-v1_a1d24e.png,thailand-w_primary-flag-v1_a1d24e.png,copied_local,already_png,Upload thailand-w_primary-flag-v1_a1d24e.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Turkey W,team,appr_dd35c3cb61c372,primary_flag_v1,https://flagcdn.com/w320/tr.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/turkey-w_primary-flag-v1_61c372.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/turkey-w_primary-flag-v1_61c372.png,turkey-w_primary-flag-v1_61c372.png,turkey-w_primary-flag-v1_61c372.png,copied_local,already_png,Upload turkey-w_primary-flag-v1_61c372.png
-bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,USA W,team,appr_49824984287991,primary_flag_v1,https://flagcdn.com/w320/us.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/usa-w_primary-flag-v1_287991.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/usa-w_primary-flag-v1_287991.png,usa-w_primary-flag-v1_287991.png,usa-w_primary-flag-v1_287991.png,copied_local,already_png,Upload usa-w_primary-flag-v1_287991.png
-bundle_33580e1adf9d95,women-s-soccer-radar,Women's Soccer Radar,Australia W,team,appr_a954f58ba7b766,primary_flag_v1,https://flagcdn.com/w320/au.png,flagcdn.com,graphics_chat_upload_pack/women-s-soccer-radar/assets_original/australia-w_primary-flag-v1_a7b766.png,graphics_chat_upload_pack/women-s-soccer-radar/assets_original/australia-w_primary-flag-v1_a7b766.png,australia-w_primary-flag-v1_a7b766.png,australia-w_primary-flag-
+bundle_id,post_slug,bundle_name,entity_name,entity_type,approved_asset_id,approved_variant,source_url,source_domain,local_asset_path,local_png_path,asset_filename,png_filename,download_status,conversion_status,asset_ready,required_for_bundle,upload_instruction
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Dallas Wings,team,appr_7ca8ac2b2a4ad9,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/main-wnba-result/assets_original/dallas-wings_primary-logo-v1_2a4ad9.svg,graphics_chat_upload_pack/main-wnba-result/assets_png_preferred/dallas-wings_primary-logo-v1_2a4ad9.png,dallas-wings_primary-logo-v1_2a4ad9.svg,dallas-wings_primary-logo-v1_2a4ad9.png,copied_local,converted_svg_to_png,Yes,Yes,Upload dallas-wings_primary-logo-v1_2a4ad9.png
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Los Angeles Sparks,team,appr_7eea0085424fe3,primary_logo_v1,https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg,upload.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/los-angeles-sparks_primary-logo-v1_424fe3.svg,graphics_chat_upload_pack/main-wnba-result/assets_png_preferred/los-angeles-sparks_primary-logo-v1_424fe3.png,los-angeles-sparks_primary-logo-v1_424fe3.svg,los-angeles-sparks_primary-logo-v1_424fe3.png,downloaded:200:content_type_image,converted_svg_to_png,Yes,Yes,Upload los-angeles-sparks_primary-logo-v1_424fe3.png
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Jessica Shepard,player,appr_e229246a508b2e,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/jessica-shepard_primary-player-photo-v1_508b2e.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/jessica-shepard_primary-player-photo-v1_508b2e.jpg,jessica-shepard_primary-player-photo-v1_508b2e.jpg,jessica-shepard_primary-player-photo-v1_508b2e.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload jessica-shepard_primary-player-photo-v1_508b2e.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Arike Ogunbowale,player,appr_2646dc354c1762,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,arike-ogunbowale_primary-player-photo-v1_4c1762.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload arike-ogunbowale_primary-player-photo-v1_4c1762.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Paige Bueckers,player,appr_717263c3d3e94e,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/paige-bueckers_primary-player-photo-v1_d3e94e.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/paige-bueckers_primary-player-photo-v1_d3e94e.jpg,paige-bueckers_primary-player-photo-v1_d3e94e.jpg,paige-bueckers_primary-player-photo-v1_d3e94e.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload paige-bueckers_primary-player-photo-v1_d3e94e.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Kelsey Plum,player,appr_a6b966fc2efd2d,primary_player_photo_v1,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg,upload.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/kelsey-plum_primary-player-photo-v1_2efd2d.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/kelsey-plum_primary-player-photo-v1_2efd2d.jpg,kelsey-plum_primary-player-photo-v1_2efd2d.jpg,kelsey-plum_primary-player-photo-v1_2efd2d.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload kelsey-plum_primary-player-photo-v1_2efd2d.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Ariel Atkins,player,appr_d3440f8552d66f,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/ariel-atkins_primary-player-photo-v1_52d66f.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/ariel-atkins_primary-player-photo-v1_52d66f.jpg,ariel-atkins_primary-player-photo-v1_52d66f.jpg,ariel-atkins_primary-player-photo-v1_52d66f.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload ariel-atkins_primary-player-photo-v1_52d66f.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Dearica Hamby,player,appr_505914b839a2ec,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/dearica-hamby_primary-player-photo-v1_39a2ec.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/dearica-hamby_primary-player-photo-v1_39a2ec.jpg,dearica-hamby_primary-player-photo-v1_39a2ec.jpg,dearica-hamby_primary-player-photo-v1_39a2ec.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload dearica-hamby_primary-player-photo-v1_39a2ec.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Nneka Ogwumike,player,appr_9a4d6394f0547e,primary_player_photo_v1,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg,commons.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,nneka-ogwumike_primary-player-photo-v1_f0547e.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload nneka-ogwumike_primary-player-photo-v1_f0547e.jpg
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,Cameron Brink,player,appr_5665d39f6486d0,primary_player_photo_v1,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cameron_Brink_Sparks_%28cropped%29.jpg/1280px-Cameron_Brink_Sparks_%28cropped%29.jpg,upload.wikimedia.org,graphics_chat_upload_pack/main-wnba-result/assets_original/cameron-brink_primary-player-photo-v1_6486d0.jpg,graphics_chat_upload_pack/main-wnba-result/assets_original/cameron-brink_primary-player-photo-v1_6486d0.jpg,cameron-brink_primary-player-photo-v1_6486d0.jpg,cameron-brink_primary-player-photo-v1_6486d0.jpg,copied_local,raster_no_conversion,Yes,Yes,Upload cameron-brink_primary-player-photo-v1_6486d0.jpg
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Golden State Valkyries,team,appr_df24e2082f811d,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/golden-state-valkyries_primary-logo-v1_2f811d.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/golden-state-valkyries_primary-logo-v1_2f811d.png,golden-state-valkyries_primary-logo-v1_2f811d.svg,golden-state-valkyries_primary-logo-v1_2f811d.png,copied_local,converted_svg_to_png,Yes,Yes,Upload golden-state-valkyries_primary-logo-v1_2f811d.png
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Las Vegas Aces,team,appr_9c7fc211069805,primary_logo_v1,https://upload.wikimedia.org/wikipedia/commons/f/fb/Las_Vegas_Aces_logo.svg,upload.wikimedia.org,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/las-vegas-aces_primary-logo-v1_069805.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/las-vegas-aces_primary-logo-v1_069805.png,las-vegas-aces_primary-logo-v1_069805.svg,las-vegas-aces_primary-logo-v1_069805.png,copied_local,converted_svg_to_png,Yes,Yes,Upload las-vegas-aces_primary-logo-v1_069805.png
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Minnesota Lynx,team,appr_047086213c7096,primary_logo_v1,https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg,upload.wikimedia.org,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/minnesota-lynx_primary-logo-v1_3c7096.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/minnesota-lynx_primary-logo-v1_3c7096.png,minnesota-lynx_primary-logo-v1_3c7096.svg,minnesota-lynx_primary-logo-v1_3c7096.png,downloaded:200:content_type_image,converted_svg_to_png,Yes,Yes,Upload minnesota-lynx_primary-logo-v1_3c7096.png
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Phoenix Mercury,team,appr_9edeb1cdaa6f4c,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/phoenix-mercury_primary-logo-v1_aa6f4c.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/phoenix-mercury_primary-logo-v1_aa6f4c.png,phoenix-mercury_primary-logo-v1_aa6f4c.svg,phoenix-mercury_primary-logo-v1_aa6f4c.png,copied_local,converted_svg_to_png,Yes,Yes,Upload phoenix-mercury_primary-logo-v1_aa6f4c.png
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Portland Fire,team,appr_01d68c2809f81f,primary_logo_v1,https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg,upload.wikimedia.org,,,,,download_failed:https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg -> status_429; https://upload.wikimedia.org/wikipedia/en/c/cf/Portland_Fire_logo.svg -> status_429; https://en.wikipedia.org/wiki/Special:Redirect/file/Portland_Fire_logo.svg -> status_429; https://en.wikipedia.org/wiki/Special:FilePath/Portland_Fire_logo.svg -> status_429,no_local_asset,No,Yes,MISSING REQUIRED FILE: rerun upload pack or add this asset manually
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,Seattle Storm,team,appr_52d46724c00ec9,primary_logo_v1,https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg,cdn.wnba.com,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_original/seattle-storm_primary-logo-v1_c00ec9.svg,graphics_chat_upload_pack/tonight-in-the-w-mini-roundup/assets_png_preferred/seattle-storm_primary-logo-v1_c00ec9.png,seattle-storm_primary-logo-v1_c00ec9.svg,seattle-storm_primary-logo-v1_c00ec9.png,copied_local,converted_svg_to_png,Yes,Yes,Upload seattle-storm_primary-logo-v1_c00ec9.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Belgium W,team,appr_dbd34b035cd6e1,primary_flag_v1,https://flagcdn.com/w320/be.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/belgium-w_primary-flag-v1_5cd6e1.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/belgium-w_primary-flag-v1_5cd6e1.png,belgium-w_primary-flag-v1_5cd6e1.png,belgium-w_primary-flag-v1_5cd6e1.png,copied_local,already_png,Yes,Yes,Upload belgium-w_primary-flag-v1_5cd6e1.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Brazil W,team,appr_3b613e56ad6ec8,primary_flag_v1,https://flagcdn.com/w320/br.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/brazil-w_primary-flag-v1_ad6ec8.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/brazil-w_primary-flag-v1_ad6ec8.png,brazil-w_primary-flag-v1_ad6ec8.png,brazil-w_primary-flag-v1_ad6ec8.png,copied_local,already_png,Yes,Yes,Upload brazil-w_primary-flag-v1_ad6ec8.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Bulgaria W,team,appr_6849fd04b54eb4,primary_flag_v1,https://flagcdn.com/w320/bg.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/bulgaria-w_primary-flag-v1_b54eb4.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/bulgaria-w_primary-flag-v1_b54eb4.png,bulgaria-w_primary-flag-v1_b54eb4.png,bulgaria-w_primary-flag-v1_b54eb4.png,copied_local,already_png,Yes,Yes,Upload bulgaria-w_primary-flag-v1_b54eb4.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Canada W,team,appr_14a6cc66f75be0,primary_flag_v1,https://flagcdn.com/w320/ca.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/canada-w_primary-flag-v1_f75be0.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/canada-w_primary-flag-v1_f75be0.png,canada-w_primary-flag-v1_f75be0.png,canada-w_primary-flag-v1_f75be0.png,copied_local,already_png,Yes,Yes,Upload canada-w_primary-flag-v1_f75be0.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,China W,team,appr_885836e9869631,primary_flag_v1,https://flagcdn.com/w320/cn.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/china-w_primary-flag-v1_869631.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/china-w_primary-flag-v1_869631.png,china-w_primary-flag-v1_869631.png,china-w_primary-flag-v1_869631.png,copied_local,already_png,Yes,Yes,Upload china-w_primary-flag-v1_869631.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,France W,team,appr_65747d24fe25ad,primary_flag_v1,https://flagcdn.com/w320/fr.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/france-w_primary-flag-v1_fe25ad.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/france-w_primary-flag-v1_fe25ad.png,france-w_primary-flag-v1_fe25ad.png,france-w_primary-flag-v1_fe25ad.png,copied_local,already_png,Yes,Yes,Upload france-w_primary-flag-v1_fe25ad.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Italy W,team,appr_2a96d8d56f4ac2,primary_flag_v1,https://flagcdn.com/w320/it.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/italy-w_primary-flag-v1_6f4ac2.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/italy-w_primary-flag-v1_6f4ac2.png,italy-w_primary-flag-v1_6f4ac2.png,italy-w_primary-flag-v1_6f4ac2.png,copied_local,already_png,Yes,Yes,Upload italy-w_primary-flag-v1_6f4ac2.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Serbia W,team,appr_9426bf971998ee,primary_flag_v1,https://flagcdn.com/w320/rs.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/serbia-w_primary-flag-v1_1998ee.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/serbia-w_primary-flag-v1_1998ee.png,serbia-w_primary-flag-v1_1998ee.png,serbia-w_primary-flag-v1_1998ee.png,copied_local,already_png,Yes,Yes,Upload serbia-w_primary-flag-v1_1998ee.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Thailand W,team,appr_526f2acaa1d24e,primary_flag_v1,https://flagcdn.com/w320/th.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/thailand-w_primary-flag-v1_a1d24e.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/thailand-w_primary-flag-v1_a1d24e.png,thailand-w_primary-flag-v1_a1d24e.png,thailand-w_primary-flag-v1_a1d24e.png,copied_local,already_png,Yes,Yes,Upload thailand-w_primary-flag-v1_a1d24e.png
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,Turkey W,team,appr_dd35c3cb61c372,primary_flag_v1,https://flagcdn.com/w320/tr.png,flagcdn.com,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/turkey-w_primary-flag-v1_61c372.png,graphics_chat_upload_pack/volleyball-results-roundup/assets_original/turkey-w_primary-flag-v1_61c372.png,turkey-w_primary-flag-v1_61c372.png,turkey-w_primary-flag-v1_61c372.png,copied_local,already_png,Yes,Yes,Upload turkey-w_prima
 ...TRUNCATED...
 ```
 
@@ -611,18 +609,98 @@ Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat can
 
 Recommended ZIP: `graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip`
 
+Status: READY
+
 Instructions to paste into the graphics chat:
 
 ```text
-Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. If required player/person images are missing, stop and ask for the files. Output separate slide files.
+Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Output separate slide files.
 ```
 
 
+## graphics_upload_pack_status.csv
+
+```csv
+bundle_id,post_slug,bundle_name,upload_pack_status,assets_expected,assets_ready,assets_missing,missing_asset_names,zip_path,notes
+bundle_34740d18e445ce,main-wnba-result,Main WNBA Result,ready,10,10,0,,graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip,Upload pack is complete.
+bundle_ab66100c39c23e,tonight-in-the-w-mini-roundup,Tonight in the W Mini-Roundup,blocked_missing_required_assets,6,5,1,Portland Fire,graphics_chat_upload_pack_zips/tonight-in-the-w-mini-roundup_graphics_chat_upload_pack.zip,Do not use this upload pack until missing assets are fixed.
+bundle_99dc10394fd30c,volleyball-results-roundup,Volleyball Results Roundup,ready,11,11,0,,graphics_chat_upload_pack_zips/volleyball-results-roundup_graphics_chat_upload_pack.zip,Upload pack is complete.
+bundle_33580e1adf9d95,women-s-soccer-radar,Women's Soccer Radar,ready,8,8,0,,graphics_chat_upload_pack_zips/women-s-soccer-radar_graphics_chat_upload_pack.zip,Upload pack is complete.
+
+```
+
+## graphics_upload_pack_status.json
+
+```json
+{
+  "version": "hsd-graphics-upload-pack-v1.5.1",
+  "generated_at_utc": "2026-06-09T03:09:49.172781+00:00",
+  "counts": {
+    "bundles": 4,
+    "asset_rows": 35,
+    "files_created": 34,
+    "png_preferred_created": 34,
+    "upload_packs_ready": 3,
+    "upload_packs_blocked": 1
+  },
+  "bundles": [
+    {
+      "bundle_id": "bundle_34740d18e445ce",
+      "post_slug": "main-wnba-result",
+      "bundle_name": "Main WNBA Result",
+      "upload_pack_status": "ready",
+      "assets_expected": 10,
+      "assets_ready": 10,
+      "assets_missing": 0,
+      "missing_asset_names": "",
+      "zip_path": "graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip",
+      "notes": "Upload pack is complete."
+    },
+    {
+      "bundle_id": "bundle_ab66100c39c23e",
+      "post_slug": "tonight-in-the-w-mini-roundup",
+      "bundle_name": "Tonight in the W Mini-Roundup",
+      "upload_pack_status": "blocked_missing_required_assets",
+      "assets_expected": 6,
+      "assets_ready": 5,
+      "assets_missing": 1,
+      "missing_asset_names": "Portland Fire",
+      "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-mini-roundup_graphics_chat_upload_pack.zip",
+      "notes": "Do not use this upload pack until missing assets are fixed."
+    },
+    {
+      "bundle_id": "bundle_99dc10394fd30c",
+      "post_slug": "volleyball-results-roundup",
+      "bundle_name": "Volleyball Results Roundup",
+      "upload_pack_status": "ready",
+      "assets_expected": 11,
+      "assets_ready": 11,
+      "assets_missing": 0,
+      "missing_asset_names": "",
+      "zip_path": "graphics_chat_upload_pack_zips/volleyball-results-roundup_graphics_chat_upload_pack.zip",
+      "notes": "Upload pack is complete."
+    },
+    {
+      "bundle_id": "bundle_33580e1adf9d95",
+      "post_slug": "women-s-soccer-radar",
+      "bundle_name": "Women's Soccer Radar",
+      "upload_pack_status": "ready",
+      "assets_expected": 8,
+      "assets_ready": 8,
+      "assets_missing": 0,
+      "missing_asset_names": "",
+      "zip_path": "graphics_chat_upload_pack_zips/women-s-soccer-radar_graphics_chat_upload_pack.zip",
+      "notes": "Upload pack is complete."
+    }
+  ]
+}
+```
+
 ## graphics_qa_report.md
 
-# HSD Graphics QA Scorer v1.5 Report
+# HSD Graphics QA Scorer v1.5.1 Report
 
-Generated: 2026-06-09T02:41:21.661949+00:00
+Generated: 2026-06-09T03:09:49.224328+00:00
 
 Bundles scored: 4
 
@@ -634,9 +712,9 @@ Bundles scored: 4
 
 ## tonight-in-the-w-mini-roundup
 
-- Decision: **pass_with_review**
-- Score: 95
-- Issues: `[{"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
+- Decision: **fail**
+- Score: 50
+- Issues: `[{"code": "UPLOAD_PACK_INCOMPLETE", "severity": "critical", "message": "Portland Fire"}, {"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
 
 ## volleyball-results-roundup
 
@@ -656,7 +734,7 @@ Bundles scored: 4
 ```json
 {
   "version": "hsd-studio-visual-upgrade-v2.5",
-  "generated_at_utc": "2026-06-09T02:41:18.408344+00:00",
+  "generated_at_utc": "2026-06-09T03:09:42.058089+00:00",
   "counts": {
     "bundles": 4,
     "approved_assets": 33,
@@ -670,10 +748,11 @@ Bundles scored: 4
 
 ```json
 {
-  "version": "hsd-graphics-qa-scorer-v1.5",
-  "generated_at_utc": "2026-06-09T02:41:21.662006+00:00",
+  "version": "hsd-graphics-qa-scorer-v1.5.1",
+  "generated_at_utc": "2026-06-09T03:09:49.224392+00:00",
   "counts": {
-    "bundles_scored": 4
+    "bundles_scored": 4,
+    "upload_status_rows": 4
   }
 }
 ```

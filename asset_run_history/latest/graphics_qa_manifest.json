@@ -1,7 +1,8 @@
 {
-  "version": "hsd-graphics-qa-scorer-v1.5",
-  "generated_at_utc": "2026-06-09T02:41:21.662006+00:00",
+  "version": "hsd-graphics-qa-scorer-v1.5.1",
+  "generated_at_utc": "2026-06-09T03:09:49.224392+00:00",
   "counts": {
-    "bundles_scored": 4
+    "bundles_scored": 4,
+    "upload_status_rows": 4
   }
 }

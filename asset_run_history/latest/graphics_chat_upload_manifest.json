@@ -1,20 +1,25 @@
 {
-  "version": "hsd-graphics-upload-pack-v1.4",
-  "generated_at_utc": "2026-06-09T02:41:21.620065+00:00",
+  "version": "hsd-graphics-upload-pack-v1.5.1",
+  "generated_at_utc": "2026-06-09T03:09:49.172659+00:00",
   "input_prompts": "studio_bundle_prompts_v2.md",
   "input_approved_assets": "approved_graphics_assets.csv",
   "input_render_manifest": "studio_render_manifest_v2.json",
   "counts": {
     "bundles": 4,
     "asset_rows": 35,
-    "files_created": 33,
-    "png_preferred_created": 33
+    "files_created": 34,
+    "png_preferred_created": 34,
+    "upload_packs_ready": 3,
+    "upload_packs_blocked": 1
   },
   "outputs": [
     "graphics_chat_upload_pack",
     "graphics_chat_upload_pack_zips",
     "graphics_chat_upload_manifest.csv",
     "graphics_chat_upload_manifest.json",
-    "graphics_chat_upload_instructions.md"
+    "graphics_upload_pack_status.csv",
+    "graphics_upload_pack_status.json",
+    "graphics_chat_upload_instructions.md",
+    "graphics_chat_direct_handoff.md"
   ]
 }

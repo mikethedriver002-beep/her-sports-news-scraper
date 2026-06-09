@@ -1,6 +1,6 @@
 # HSD Graphics Chat Upload Instructions
 
-The graphics chat cannot reliably fetch external logo URLs. Use this upload pack instead.
+The graphics chat cannot reliably fetch external logo or player image URLs. Use this upload pack instead.
 
 For the post you are making:
 
@@ -12,6 +12,4 @@ For the post you are making:
 
 Quick ZIPs are in `graphics_chat_upload_pack_zips/`.
 
-For Main WNBA Result, upload:
-
-- `graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip`
+Upload pack status is in `graphics_upload_pack_status.csv`.
