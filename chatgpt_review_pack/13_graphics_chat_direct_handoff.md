@@ -11,5 +11,5 @@ Status: READY
 Instructions to paste into the graphics chat:
 
 ```text
-Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Output separate slide files.
+Use the uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, and graphics_asset_usage_map.csv only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render the words Verified Final, Winner, or Loser. Output separate slide files.
 ```

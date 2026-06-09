@@ -1,6 +1,6 @@
 {
-  "version": "hsd-graphics-upload-pack-v1.5.1",
-  "generated_at_utc": "2026-06-09T03:29:17.851451+00:00",
+  "version": "hsd-graphics-upload-pack-v1.6",
+  "generated_at_utc": "2026-06-09T04:09:14.678536+00:00",
   "input_prompts": "studio_bundle_prompts_v2.md",
   "input_approved_assets": "approved_graphics_assets.csv",
   "input_render_manifest": "studio_render_manifest_v2.json",
@@ -20,6 +20,10 @@
     "graphics_upload_pack_status.csv",
     "graphics_upload_pack_status.json",
     "graphics_chat_upload_instructions.md",
-    "graphics_chat_direct_handoff.md"
+    "graphics_chat_direct_handoff.md",
+    "graphics_copy_style_guide.md",
+    "graphics_display_copy.csv",
+    "graphics_banned_language.csv",
+    "graphics_asset_usage_map.csv"
   ]
 }

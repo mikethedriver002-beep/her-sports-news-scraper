@@ -1,6 +1,6 @@
 {
-  "version": "hsd-graphics-production-specs-v1.5",
-  "generated_at_utc": "2026-06-09T03:29:14.643569+00:00",
+  "version": "hsd-graphics-production-specs-v1.6",
+  "generated_at_utc": "2026-06-09T04:09:11.273948+00:00",
   "posts": [
     {
       "post_slug": "main-wnba-result",
@@ -20,7 +20,7 @@
             "Los Angeles Sparks logo",
             "Dallas Wings 104",
             "Los Angeles Sparks 96",
-            "Verified Final"
+            "Final in Los Angeles"
           ],
           "layout": "Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.",
           "forbidden": [
@@ -36,8 +36,8 @@
           "must_include": [
             "Dallas Wings 104",
             "Los Angeles Sparks 96",
-            "winner label",
-            "loser label",
+            "Dallas wins it",
+            "Final Score",
             "one Dallas logo",
             "one Sparks logo"
           ],
@@ -45,7 +45,7 @@
           "forbidden": [
             "duplicate logo in corner or left rail",
             "empty side",
-            "tiny verified final text strip",
+            "tiny robotic verification strip",
             "cropped score"
           ]
         },
@@ -81,10 +81,11 @@
           "slide": 4,
           "name": "CTA with filled composition",
           "must_include": [
-            "Your take?",
+            "What stood out?",
             "Follow Her Sports Daily",
             "both team logos",
-            "HSD lockup"
+            "HSD lockup",
+            "Dallas 104 \u00b7 Los Angeles 96"
           ],
           "layout": "Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.",
           "forbidden": [

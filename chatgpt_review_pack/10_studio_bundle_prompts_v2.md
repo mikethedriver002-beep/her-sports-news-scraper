@@ -1,6 +1,6 @@
 # HSD Bundle Prompts v2.2
 
-Generated: 2026-06-09T03:29:14.609275+00:00
+Generated: 2026-06-09T04:09:11.239370+00:00
 
 ## Main WNBA Result
 
@@ -12,17 +12,24 @@ Production decision: ready_for_graphics_chat
 
 PLAYER IMAGE STATUS: required player/person images are present in the upload pack. Use the uploaded player image files only. Do not generate or invent people.
 
+DISPLAY COPY LANGUAGE RULES:
+- Keep verification language internal. Do not render 'Verified Final' on any slide.
+- Use 'Final', 'Final Score', 'Dallas wins it', or 'Wings Take L.A.' instead.
+- Do not render 'Winner' or 'Loser' labels. Use team names and natural result language.
+- Do not render internal QA phrases such as BUNDLE LOCKED FACTS, source-safe context, or do not alter.
+- Use the exact display copy from graphics_display_copy.csv when that file is uploaded.
+
 Slide-by-slide requirements:
 
 SLIDE 1 - Result hero with people
 Layout: Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.
-Must include: Dallas Wings player/person image; Los Angeles Sparks player/person image; Dallas Wings logo; Los Angeles Sparks logo; Dallas Wings 104; Los Angeles Sparks 96; Verified Final
+Must include: Dallas Wings player/person image; Los Angeles Sparks player/person image; Dallas Wings logo; Los Angeles Sparks logo; Dallas Wings 104; Los Angeles Sparks 96; Final in Los Angeles
 Forbidden: fake jerseys; fake numbers; logo-only cover if player images are present; empty right or left side
 
 SLIDE 2 - Balanced final score board
 Layout: Symmetric split scoreboard. Fill both sides equally with score slab, team label, logo, and small context strip. No extra logo floating on the left margin.
-Must include: Dallas Wings 104; Los Angeles Sparks 96; winner label; loser label; one Dallas logo; one Sparks logo
-Forbidden: duplicate logo in corner or left rail; empty side; tiny verified final text strip; cropped score
+Must include: Dallas Wings 104; Los Angeles Sparks 96; Dallas wins it; Final Score; one Dallas logo; one Sparks logo
+Forbidden: duplicate logo in corner or left rail; empty side; tiny robotic verification strip; cropped score
 
 SLIDE 3 - Two-sided top performers
 Layout: Two equal columns. Left column Dallas leaders. Right column Sparks leaders. Use small player photos if uploaded. Use logos only as column headers. No giant logo in the margin.
@@ -31,7 +38,7 @@ Forbidden: Wings-only performer slide; Sparks side missing; duplicate logo on le
 
 SLIDE 4 - CTA with filled composition
 Layout: Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.
-Must include: Your take?; Follow Her Sports Daily; both team logos; HSD lockup
+Must include: What stood out?; Follow Her Sports Daily; both team logos; HSD lockup; Dallas 104 · Los Angeles 96
 Forbidden: huge empty dark area; logo pair only with no context; same composition as slide 2
 
 Global correction from previous output:
@@ -39,6 +46,7 @@ Global correction from previous output:
 - Do not create a Wings-only top performers slide. Sparks performers are required too.
 - Keep slide 2 balanced so neither side feels empty.
 - Use uploaded player/person images when present. No fake player bodies or fake jersey numbers.
+- Do not render the phrase Verified Final; use Final or Final Score.
 
 ```text
 HSD VISUAL UPGRADE v2.5 PROMPT
@@ -56,7 +64,7 @@ Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
 - Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
-- Arike Ogunbowale | primary_player_photo_v1 | https://media.gettyimages.com/id/2214193685/photo/2025-dallas-wings-media-day.jpg?s=1024x1024&w=gi&k=20&c=FNhvng7pUboPcxv0142yFuYDaLmjCQwH_JV7qOIRV8U=
+- Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
 - Kelsey Plum | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg
 - Ariel Atkins | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg

@@ -4,7 +4,7 @@ Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to t
 
 If a PNG preferred asset is missing, upload the matching file from `assets_original/`.
 
-Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files.
+Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files. Use graphics_display_copy.csv and graphics_copy_style_guide.md for display language. Do not render banned language from graphics_banned_language.csv.
 
 ## Dallas Wings
 
@@ -32,9 +32,9 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Arike Ogunbowale
 
-- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_a896f3.jpg`
-- Original asset: `arike-ogunbowale_primary-player-photo-v1_a896f3.jpg`
-- Source URL: https://media.gettyimages.com/id/2214193685/photo/2025-dallas-wings-media-day.jpg?s=1024x1024&w=gi&k=20&c=FNhvng7pUboPcxv0142yFuYDaLmjCQwH_JV7qOIRV8U=
+- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Original asset: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 

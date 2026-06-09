@@ -1,6 +1,6 @@
 # HSD Graphics Slide Blueprints
 
-Generated: 2026-06-09T03:29:14.643822+00:00
+Generated: 2026-06-09T04:09:11.274210+00:00
 
 ## Main WNBA Result
 
@@ -18,7 +18,7 @@ Must include:
 - Los Angeles Sparks logo
 - Dallas Wings 104
 - Los Angeles Sparks 96
-- Verified Final
+- Final in Los Angeles
 
 Forbidden:
 
@@ -35,8 +35,8 @@ Must include:
 
 - Dallas Wings 104
 - Los Angeles Sparks 96
-- winner label
-- loser label
+- Dallas wins it
+- Final Score
 - one Dallas logo
 - one Sparks logo
 
@@ -44,7 +44,7 @@ Forbidden:
 
 - duplicate logo in corner or left rail
 - empty side
-- tiny verified final text strip
+- tiny robotic verification strip
 - cropped score
 
 ### Slide 3: Two-sided top performers
@@ -75,10 +75,11 @@ Layout: Strong CTA, but not empty. Use both logos in footer, basketball texture,
 
 Must include:
 
-- Your take?
+- What stood out?
 - Follow Her Sports Daily
 - both team logos
 - HSD lockup
+- Dallas 104 · Los Angeles 96
 
 Forbidden:
 

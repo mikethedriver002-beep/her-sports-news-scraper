@@ -1,7 +1,7 @@
-# HSD Asset Visual QA v1.5.1 Run Summary
+# HSD Asset Visual QA v1.6 Run Summary
 
-Run timestamp UTC: `2026-06-09 03:29:17 UTC`
-Archive folder: `asset_run_history/2026-06-09/0329_UTC`
+Run timestamp UTC: `2026-06-09 04:09:14 UTC`
+Archive folder: `asset_run_history/2026-06-09/0409_UTC`
 
 ## Row counts
 
@@ -14,7 +14,7 @@ Archive folder: `asset_run_history/2026-06-09/0329_UTC`
 - `asset_source_seed_list.csv`: 28
 - `fact_warning_queue.csv`: 0
 - `player_image_requirements.csv`: 8
-- `player_image_candidates.csv`: 48
+- `player_image_candidates.csv`: 56
 - `graphics_qa_results.csv`: 4
 - `graphics_chat_upload_manifest.csv`: 35
 - `graphics_upload_pack_status.csv`: 4
@@ -23,7 +23,7 @@ Archive folder: `asset_run_history/2026-06-09/0329_UTC`
 
 # HSD Player Image Sourcing Report
 
-Generated: 2026-06-09T03:29:14.265754+00:00
+Generated: 2026-06-09T04:09:10.907915+00:00
 Version: hsd-player-image-assets-v1.5-free-sourcing
 
 Player images required: Yes
@@ -32,12 +32,12 @@ Found required player images: 8
 Missing required player images: 0
 Free search enabled: Yes
 DuckDuckGo package available: Yes
-Candidate rows inspected: 48
+Candidate rows inspected: 56
 
 ## Required players
 
 - found_downloaded_200 | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg | wikidata_p18
-- found_downloaded_200 | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_duckduckgo_images_free_db1bfc.jpg | duckduckgo_images_free
+- found_downloaded_200 | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg | wikidata_p18
 - found_downloaded_200 | Paige Bueckers | Dallas Wings | data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg | wikidata_p18
 
 ## Graphics chat upload pack
