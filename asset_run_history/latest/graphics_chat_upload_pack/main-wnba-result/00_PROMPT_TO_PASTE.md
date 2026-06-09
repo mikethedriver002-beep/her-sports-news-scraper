@@ -67,7 +67,7 @@ Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
 - Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
-- Arike Ogunbowale | primary_player_photo_v1 | https://media.gettyimages.com/id/2214193685/photo/2025-dallas-wings-media-day.jpg?s=1024x1024&w=gi&k=20&c=FNhvng7pUboPcxv0142yFuYDaLmjCQwH_JV7qOIRV8U=
+- Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
 - Kelsey Plum | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg
 - Ariel Atkins | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg
@@ -139,7 +139,8 @@ Accuracy beats aesthetics, but aesthetics must be premium.
 
 - Jessica Shepard: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Jessica Shepard's image only for Jessica Shepard. Crop tightly if the jersey is not clearly Dallas Wings.
   - Review note: public-source image needs visual review
-- Arike Ogunbowale: Use Arike Ogunbowale's image only for Arike Ogunbowale.
+- Arike Ogunbowale: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
+  - Review note: public-source image needs visual review
 - Paige Bueckers: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.
   - Review note: public-source image needs visual review
 - Kelsey Plum: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Kelsey Plum's image only for Kelsey Plum. Crop tightly if the jersey is not clearly Los Angeles Sparks.

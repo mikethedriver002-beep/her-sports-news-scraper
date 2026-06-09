@@ -1,6 +1,6 @@
 # HSD Asset Desk v1.2 Candidate Review
 
-Generated: 2026-06-09T19:38:09.603990+00:00
+Generated: 2026-06-09T20:00:10.486702+00:00
 
 v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.
 
@@ -44,7 +44,7 @@ Fact warnings: 0
 ## Player image status refresh
 
 - approved | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg | wikidata_p18
-- approved | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_duckduckgo_images_free_db1bfc.jpg | duckduckgo_images_free
+- approved | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg | wikidata_p18
 - approved | Paige Bueckers | Dallas Wings | data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg | wikidata_p18
 - approved | Kelsey Plum | Los Angeles Sparks | data/assets/player_images/kelsey-plum_wikipedia_pageimage_1be29b.jpg | wikipedia_pageimage
 - approved | Ariel Atkins | Los Angeles Sparks | data/assets/player_images/ariel-atkins_wikidata_p18_475bc8.jpg | wikidata_p18

@@ -1,6 +1,6 @@
 # HSD Rendered Slide QA v1.8
 
-Generated: 2026-06-09T19:01:35.607024+00:00
+Generated: 2026-06-09T19:59:00.117437+00:00
 
 - rendered image files found: 0
 - pass: 0

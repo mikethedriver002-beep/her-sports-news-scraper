@@ -32,9 +32,9 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Arike Ogunbowale
 
-- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_a896f3.jpg`
-- Original asset: `arike-ogunbowale_primary-player-photo-v1_a896f3.jpg`
-- Source URL: https://media.gettyimages.com/id/2214193685/photo/2025-dallas-wings-media-day.jpg?s=1024x1024&w=gi&k=20&c=FNhvng7pUboPcxv0142yFuYDaLmjCQwH_JV7qOIRV8U=
+- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Original asset: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
@@ -99,7 +99,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 Use player photos exactly as mapped. If a player image is flagged for tight crop, crop to face/head-and-shoulders and avoid showing wrong-team, overseas, college, or national-team jersey marks.
 
 - Jessica Shepard: tight_face_crop_only | Use Jessica Shepard's image only for Jessica Shepard. Crop tightly if the jersey is not clearly Dallas Wings.
-- Arike Ogunbowale: normal_player_photo | Use Arike Ogunbowale's image only for Arike Ogunbowale.
+- Arike Ogunbowale: tight_face_crop_only | Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
 - Paige Bueckers: tight_face_crop_only | Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.
 - Kelsey Plum: tight_face_crop_only | Use Kelsey Plum's image only for Kelsey Plum. Crop tightly if the jersey is not clearly Los Angeles Sparks.
 - Ariel Atkins: tight_face_crop_only | Use Ariel Atkins's image only for Ariel Atkins. Crop tightly if the jersey is not clearly Los Angeles Sparks.
