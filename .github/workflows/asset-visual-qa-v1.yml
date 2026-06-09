@@ -1,4 +1,4 @@
-name: Her Sports Daily Asset Visual QA v1.5.1
+name: Her Sports Daily Asset Visual QA v1.6
 
 on:
   workflow_dispatch:
@@ -79,6 +79,7 @@ jobs:
             python generate_hsd_player_image_assets_v1.py
             python generate_hsd_visual_upgrade_v2.py
             python generate_hsd_graphics_production_specs_v1.py
+            python generate_hsd_graphics_language_pack_v1.py
             python generate_hsd_graphics_upload_pack_v1.py
             python generate_hsd_graphics_qa_v1.py
             python archive_hsd_asset_visual_qa_runs_v1.py
@@ -88,7 +89,7 @@ jobs:
             done
 
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
-            git commit -m "Update HSD Asset Visual QA v1.5.1"
+            git commit -m "Update HSD Asset Visual QA v1.6"
             if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
@@ -98,5 +99,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-asset-visual-qa-v1-5-1
+          name: hsd-asset-visual-qa-v1-6
           path: asset_run_history/latest/
