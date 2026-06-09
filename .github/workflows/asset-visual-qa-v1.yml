@@ -1,4 +1,4 @@
-name: Her Sports Daily Asset Visual QA v1.5
+name: Her Sports Daily Asset Visual QA v1.5.1
 
 on:
   workflow_dispatch:
@@ -65,7 +65,7 @@ jobs:
             "brand_system" "studio_templates_v2" "studio_visual_upgrade_v2.md"
             "studio_bundle_prompts_v2.md" "studio_render_manifest_v2.json" "visual_upgrade_manifest.json"
             "visual_upgrade_dashboard/index.html" "graphics_qa_results.csv" "graphics_qa_report.md"
-            "graphics_qa_manifest.json" "graphics_qa_dashboard/index.html" "graphics_chat_upload_pack" "graphics_chat_upload_pack_zips" "graphics_chat_upload_manifest.csv" "graphics_chat_upload_manifest.json" "graphics_chat_upload_instructions.md" "graphics_chat_direct_handoff.md" "data/assets"
+            "graphics_qa_manifest.json" "graphics_qa_dashboard/index.html" "graphics_chat_upload_pack" "graphics_chat_upload_pack_zips" "graphics_chat_upload_manifest.csv" "graphics_chat_upload_manifest.json" "graphics_upload_pack_status.csv" "graphics_upload_pack_status.json" "graphics_chat_upload_instructions.md" "graphics_chat_direct_handoff.md" "data/assets"
             "latest_asset_visual_qa_run_summary.md" "hsd_chatgpt_review_packet.md" "chatgpt_review_pack" "asset_run_history"
           )
 
@@ -88,7 +88,7 @@ jobs:
             done
 
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
-            git commit -m "Update HSD Asset Visual QA v1.5"
+            git commit -m "Update HSD Asset Visual QA v1.5.1"
             if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
@@ -98,5 +98,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-asset-visual-qa-v1-5
+          name: hsd-asset-visual-qa-v1-5-1
           path: asset_run_history/latest/
