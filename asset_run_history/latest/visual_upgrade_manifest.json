@@ -1,9 +1,9 @@
 {
-  "version": "hsd-studio-visual-upgrade-v2.2.2",
-  "generated_at_utc": "2026-06-09T01:58:51.774462+00:00",
+  "version": "hsd-studio-visual-upgrade-v2.5",
+  "generated_at_utc": "2026-06-09T02:41:18.408344+00:00",
   "counts": {
     "bundles": 4,
-    "approved_assets": 25,
+    "approved_assets": 33,
     "fact_warnings": 0,
     "warnings_propagated_to_prompts": 0
   }

@@ -1,6 +1,6 @@
 {
-  "version": "hsd-studio-visual-upgrade-v2.2.2",
-  "generated_at_utc": "2026-06-09T01:58:51.772904+00:00",
+  "version": "hsd-studio-visual-upgrade-v2.5",
+  "generated_at_utc": "2026-06-09T02:41:18.407496+00:00",
   "bundles": [
     {
       "bundle_id": "bundle_34740d18e445ce",
@@ -9,9 +9,17 @@
       "template_name": "result_slide_v2",
       "asset_ids": [
         "appr_7ca8ac2b2a4ad9",
-        "appr_7eea0085424fe3"
+        "appr_7eea0085424fe3",
+        "appr_e229246a508b2e",
+        "appr_2646dc354c1762",
+        "appr_717263c3d3e94e",
+        "appr_a6b966fc2efd2d",
+        "appr_d3440f8552d66f",
+        "appr_505914b839a2ec",
+        "appr_9a4d6394f0547e",
+        "appr_5665d39f6486d0"
       ],
-      "safe_graphics_mode": "logos_and_text_only",
+      "safe_graphics_mode": "player_images_allowed",
       "fact_warning_count": 0,
       "source_facts": {
         "source_headlines": "",

@@ -1,21 +1,10 @@
 # HSD Graphics Slide Blueprints
 
-Generated: 2026-06-09T01:58:51.807043+00:00
+Generated: 2026-06-09T02:41:18.428821+00:00
 
 ## Main WNBA Result
 
-Decision: `blocked_missing_player_images`
-
-Missing required player images:
-
-- Jessica Shepard
-- Arike Ogunbowale
-- Paige Bueckers
-- Kelsey Plum
-- Ariel Atkins
-- Dearica Hamby
-- Nneka Ogwumike
-- Cameron Brink
+Decision: `ready_for_graphics_chat`
 
 ### Slide 1: Result hero with people
 

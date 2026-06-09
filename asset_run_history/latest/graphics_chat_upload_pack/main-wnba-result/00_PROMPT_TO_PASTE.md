@@ -3,17 +3,9 @@
 ### STRICT HSD SLIDE BLUEPRINT OVERRIDE
 
 Player images required: YES
-Production decision: blocked_missing_player_images
+Production decision: ready_for_graphics_chat
 
-STOP: Missing required player images. Do not generate this carousel until these player/person image files are uploaded:
-- Jessica Shepard
-- Arike Ogunbowale
-- Paige Bueckers
-- Kelsey Plum
-- Ariel Atkins
-- Dearica Hamby
-- Nneka Ogwumike
-- Cameron Brink
+PLAYER IMAGE STATUS: required player/person images are present in the upload pack. Use the uploaded player image files only. Do not generate or invent people.
 
 Slide-by-slide requirements:
 
@@ -44,7 +36,7 @@ Global correction from previous output:
 - Use uploaded player/person images when present. No fake player bodies or fake jersey numbers.
 
 ```text
-HSD VISUAL UPGRADE v2.2 PROMPT
+HSD VISUAL UPGRADE v2.5 PROMPT
 Bundle: Main WNBA Result
 Template: result_slide_v2
 Canvas: 1080x1350 carousel
@@ -52,12 +44,20 @@ Source facts:
 Caption/context: Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.
 Accuracy lock: BUNDLE LOCKED FACTS: Dallas Wings beat Los Angeles Sparks: Dallas Wings 104, Los Angeles Sparks 96. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.
 
-Safe graphics mode: logos_and_text_only
-Critical instruction: Do not show any player photo. Use team logos, typography, score treatment, textures, and editorial design only.
+Safe graphics mode: player_images_allowed
+Critical instruction: Player photos are allowed only for approved exact player assets listed below. Never invent or substitute.
 
 Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
+- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
+- Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
+- Kelsey Plum | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg
+- Ariel Atkins | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg
+- Dearica Hamby | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg
+- Nneka Ogwumike | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg
+- Cameron Brink | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cameron_Brink_Sparks_%28cropped%29.jpg/1280px-Cameron_Brink_Sparks_%28cropped%29.jpg
 
 Fact warnings:
 No fact warnings.

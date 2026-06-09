@@ -1,7 +1,7 @@
 # Women's Soccer Radar
 
 ```text
-HSD VISUAL UPGRADE v2.2 PROMPT
+HSD VISUAL UPGRADE v2.5 PROMPT
 Bundle: Women's Soccer Radar
 Template: radar_v2
 Canvas: 1080x1350 carousel

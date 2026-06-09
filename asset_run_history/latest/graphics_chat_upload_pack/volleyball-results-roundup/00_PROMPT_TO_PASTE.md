@@ -1,7 +1,7 @@
 # Volleyball Results Roundup
 
 ```text
-HSD VISUAL UPGRADE v2.2 PROMPT
+HSD VISUAL UPGRADE v2.5 PROMPT
 Bundle: Volleyball Results Roundup
 Template: roundup_v2
 Canvas: 1080x1350 carousel

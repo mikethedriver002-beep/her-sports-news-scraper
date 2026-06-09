@@ -15,7 +15,63 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Los Angeles Sparks
 
-- Preferred upload: `los-angeles-sparks_primary-logo-v1_424fe3.png`
-- Original asset: `los-angeles-sparks_primary-logo-v1_424fe3.svg`
+- Preferred upload: `missing`
+- Original asset: `missing`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
-- Status: downloaded:200; converted_svg_to_png
+- Status: download_failed; no_local_asset
+
+## Jessica Shepard
+
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+
+## Arike Ogunbowale
+
+- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Original asset: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+
+## Paige Bueckers
+
+- Preferred upload: `paige-bueckers_primary-player-photo-v1_d3e94e.jpg`
+- Original asset: `paige-bueckers_primary-player-photo-v1_d3e94e.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+
+## Kelsey Plum
+
+- Preferred upload: `kelsey-plum_primary-player-photo-v1_2efd2d.jpg`
+- Original asset: `kelsey-plum_primary-player-photo-v1_2efd2d.jpg`
+- Source URL: https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+
+## Ariel Atkins
+
+- Preferred upload: `ariel-atkins_primary-player-photo-v1_52d66f.jpg`
+- Original asset: `ariel-atkins_primary-player-photo-v1_52d66f.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+
+## Dearica Hamby
+
+- Preferred upload: `dearica-hamby_primary-player-photo-v1_39a2ec.jpg`
+- Original asset: `dearica-hamby_primary-player-photo-v1_39a2ec.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Dearica%20Hamby%202024%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+
+## Nneka Ogwumike
+
+- Preferred upload: `nneka-ogwumike_primary-player-photo-v1_f0547e.jpg`
+- Original asset: `nneka-ogwumike_primary-player-photo-v1_f0547e.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg
+- Status: copied_local; raster_no_conversion
+
+## Cameron Brink
+
+- Preferred upload: `cameron-brink_primary-player-photo-v1_6486d0.jpg`
+- Original asset: `cameron-brink_primary-player-photo-v1_6486d0.jpg`
+- Source URL: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cameron_Brink_Sparks_%28cropped%29.jpg/1280px-Cameron_Brink_Sparks_%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion

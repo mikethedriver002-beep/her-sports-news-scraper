@@ -1,7 +1,7 @@
 # Tonight in the W Mini-Roundup
 
 ```text
-HSD VISUAL UPGRADE v2.2 PROMPT
+HSD VISUAL UPGRADE v2.5 PROMPT
 Bundle: Tonight in the W Mini-Roundup
 Template: roundup_v2
 Canvas: 1080x1350 carousel
