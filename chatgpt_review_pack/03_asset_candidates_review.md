@@ -1,6 +1,6 @@
 # HSD Asset Desk v1.2 Candidate Review
 
-Generated: 2026-06-09T01:16:16.169092+00:00
+Generated: 2026-06-09T01:17:21.975017+00:00
 
 v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.
 
