@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.8"
+VERSION = "news-sync-v1.8.2-event-dates"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -61,6 +61,13 @@ CANDIDATE_FIELDS = [
     "final_score", "winner", "loser", "game_status", "date", "source_url",
     "graphics_headline", "graphics_subhead", "slide1_hook", "slide2_result",
     "slide3_context", "slide4_cta", "raw_block",
+    "event_date",
+    "event_datetime",
+    "result_date",
+    "freshness_label",
+    "freshness_source",
+    "source_run_timestamp",
+    "event_date_confidence"
 ]
 
 SOURCE_OBS_FIELDS = [
@@ -79,6 +86,14 @@ PACKET_FIELDS = [
     "context_quality", "quality_score", "production_ready",
     "content_format_recommendation", "result_record_source",
     "manual_review", "score_accuracy_check", "rights_safe_note",
+    "event_date",
+    "event_datetime",
+    "result_date",
+    "freshness_label",
+    "freshness_source",
+    "source_run_timestamp",
+    "event_date_confidence",
+    "event_date_required"
 ]
 
 INPUT_STATUS_FIELDS = [
@@ -104,6 +119,100 @@ def norm(value: Any) -> str:
 def stable_id(*parts: Any) -> str:
     blob = "|".join(clean(p) for p in parts)
     return hashlib.sha1(blob.encode("utf-8")).hexdigest()[:16]
+
+
+
+def parse_event_datetime(value: Any) -> Optional[datetime]:
+    s = clean(value)
+    if not s:
+        return None
+    s2 = s.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(s2)
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        pass
+
+    patterns = [
+        r"\b(20\d{2})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?\b",
+        r"\b(\d{1,2})/(\d{1,2})/(20\d{2})(?:[ T](\d{1,2}):(\d{2}))?\b",
+    ]
+    m = re.search(patterns[0], s)
+    if m:
+        y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        hh, mm, ss = int(m.group(4) or 12), int(m.group(5) or 0), int(m.group(6) or 0)
+        return datetime(y, mo, d, hh, mm, ss, tzinfo=timezone.utc)
+    m = re.search(patterns[1], s)
+    if m:
+        mo, d, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        hh, mm = int(m.group(4) or 12), int(m.group(5) or 0)
+        return datetime(y, mo, d, hh, mm, tzinfo=timezone.utc)
+    return None
+
+
+def event_date_payload(row: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Produce a clear event-date payload for every candidate/packet.
+
+    The goal is not to guess stale content into freshness. The goal is to
+    carry the actual event date from Results Desk CSVs into News Sync and
+    Studio Bridge so Asset Visual QA can prove freshness.
+    """
+    raw = row.get("raw_block", "")
+    raw_json: Dict[str, Any] = {}
+    if isinstance(raw, str) and raw.strip().startswith("{"):
+        try:
+            raw_json = json.loads(raw)
+        except Exception:
+            raw_json = {}
+
+    keys = [
+        "event_datetime", "event_date", "result_date", "scheduled_datetime_local",
+        "scheduled_date_local", "game_datetime", "game_date", "start_time",
+        "date_utc", "date", "played_at", "completed_at"
+    ]
+
+    source = ""
+    dt: Optional[datetime] = None
+    for key in keys:
+        for obj_name, obj in [("candidate", row), ("raw_record", raw_json)]:
+            value = obj.get(key) if isinstance(obj, dict) else ""
+            dt = parse_event_datetime(value)
+            if dt:
+                source = f"{obj_name}.{key}"
+                break
+        if dt:
+            break
+
+    if not dt:
+        return {
+            "event_date": "",
+            "event_datetime": "",
+            "result_date": "",
+            "freshness_label": "missing_event_date",
+            "freshness_source": "",
+            "source_run_timestamp": utc_now(),
+            "event_date_confidence": "missing",
+        }
+
+    event_date = dt.date().isoformat()
+    return {
+        "event_date": event_date,
+        "event_datetime": dt.isoformat(),
+        "result_date": event_date,
+        "freshness_label": "dated_result",
+        "freshness_source": source,
+        "source_run_timestamp": utc_now(),
+        "event_date_confidence": "exact_from_results_record" if source.startswith("raw_record") else "candidate_field",
+    }
+
+
+def apply_event_date_payload(row: Dict[str, Any]) -> Dict[str, Any]:
+    payload = event_date_payload(row)
+    for k, v in payload.items():
+        if not clean(row.get(k)):
+            row[k] = v
+    return row
 
 
 def load_json(path: str, default: Any) -> Any:
@@ -266,6 +375,7 @@ def normalize_candidate_fields(row: Dict[str, Any]) -> Dict[str, Any]:
     if not clean(row.get("matchup")) and clean(row.get("winner")) and clean(row.get("loser")):
         row["matchup"] = f"{row.get('winner')} vs {row.get('loser')}"
 
+    row = apply_event_date_payload(row)
     return row
 
 
@@ -413,6 +523,12 @@ def enrich_candidate_from_record(candidate: Dict[str, Any], record: Dict[str, st
         ("loser", "loser"),
         ("source_url", "source_url"),
         ("scheduled_date_local", "date"),
+        ("scheduled_date_local", "event_date"),
+        ("scheduled_datetime_local", "event_datetime"),
+        ("event_date", "event_date"),
+        ("event_datetime", "event_datetime"),
+        ("result_date", "result_date"),
+        ("date_utc", "event_datetime"),
     ]:
         if clean(record.get(src_key)) and not clean(candidate.get(dest_key)):
             candidate[dest_key] = clean(record.get(src_key))
@@ -728,6 +844,7 @@ def candidate_from_record(run_id: str, r: Dict[str, str], queue: str, template: 
         "raw_block": json.dumps(r, ensure_ascii=False),
         "result_record_source": clean(r.get("_result_record_source")),
     }
+    candidate.update(event_date_payload(candidate))
     return normalize_candidate_fields(candidate)
 
 
@@ -1762,6 +1879,15 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
 
     production_ready = "Yes" if manual_review == "No" and packet_context_quality in {"High", "Medium"} else "No"
     urgency = "P1" if candidate.get("queue_section") == "MUST POST" else "P2"
+    event_payload = event_date_payload(candidate)
+    if event_payload.get("event_date_confidence") == "missing":
+        # Event dates are now required downstream for freshness gating.
+        manual_review = "Yes"
+        if "event_date_missing" not in review_flags:
+            review_flags.append("event_date_missing")
+        production_ready = "No"
+        publish_reco = "Hold for editor"
+        packet_format_reco = "Hold until event_date is available from Results Desk"
 
     return {
         "run_id": run_id,
@@ -1795,6 +1921,14 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         "manual_review": manual_review,
         "score_accuracy_check": score_accuracy_check,
         "rights_safe_note": "Facts and links only. Do not copy article body or source prose.",
+        "event_date": event_payload.get("event_date", ""),
+        "event_datetime": event_payload.get("event_datetime", ""),
+        "result_date": event_payload.get("result_date", ""),
+        "freshness_label": event_payload.get("freshness_label", ""),
+        "freshness_source": event_payload.get("freshness_source", ""),
+        "source_run_timestamp": event_payload.get("source_run_timestamp", ""),
+        "event_date_confidence": event_payload.get("event_date_confidence", ""),
+        "event_date_required": "Yes",
     }
 
 
@@ -1831,8 +1965,10 @@ def markdown_brief_queue(packets: List[Dict[str, Any]], observations_by_candidat
                 f"**Content family:** {p.get('content_family')}",
                 f"**Recommendation:** {p.get('publish_recommendation')}",
                 f"**Manual review:** {p.get('manual_review')}",
+            f"**Event date:** {p.get('event_date') or 'missing'}",
                 f"**Review flags:** {p.get('review_flags') or 'None'}",
                 f"**Source depth:** {p.get('source_count')} usable / {p.get('primary_source_count')} primary",
+                f"**Event date:** {p.get('event_date') or 'missing'}",
                 "",
                 "#### Headline",
                 p.get("headline", ""),
@@ -1886,7 +2022,7 @@ def markdown_social_packets(packets: List[Dict[str, Any]]) -> str:
         lines.extend([
             f"## {p.get('headline')}",
             "",
-            f"**Queue:** {p.get('queue_section')} | **Manual review:** {p.get('manual_review')}",
+            f"**Queue:** {p.get('queue_section')} | **Manual review:** {p.get('manual_review')} | **Event date:** {p.get('event_date') or 'missing'}",
             "",
             "### Instagram caption",
             p.get("caption_voice", ""),
@@ -1918,6 +2054,7 @@ def markdown_graphics_handoff(packets: List[Dict[str, Any]]) -> str:
             "",
             f"**Content family:** {p.get('content_family')}",
             f"**Manual review:** {p.get('manual_review')}",
+            f"**Event date:** {p.get('event_date') or 'missing'}",
             "",
             p.get("graphics_handoff", ""),
             "",
@@ -2166,6 +2303,8 @@ def main() -> None:
             "manual_review": len(manual_packets),
             "publish_ready": len([p for p in packets if p.get("manual_review") != "Yes"]),
             "production_ready": len([p for p in packets if p.get("production_ready") == "Yes"]),
+            "packets_with_event_date": len([p for p in packets if clean(p.get("event_date"))]),
+            "packets_missing_event_date": len([p for p in packets if not clean(p.get("event_date"))]),
         },
         "settings": {
             "max_must_post": MAX_MUST_POST,
@@ -2190,7 +2329,7 @@ def main() -> None:
             encoding="utf-8"
         )
 
-    print("Created Her Sports Daily News Sync v1.1 outputs")
+    print("Created Her Sports Daily News Sync v1.8.2 event-date outputs")
     print(json.dumps(manifest["counts"], indent=2))
 
 

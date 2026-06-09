@@ -34,7 +34,7 @@ def row_count(path: Path) -> int:
 def main() -> None:
     now = datetime.now(timezone.utc)
     run_date = now.strftime("%Y-%m-%d")
-    run_time = now.strftime("%H%M_UTC")
+    run_time = f"{now.strftime('%H%M%S_UTC')}_{os.environ.get('GITHUB_RUN_ID', 'local')}"
     stamp = now.strftime("%Y-%m-%d %H:%M:%S UTC")
 
     run_dir = Path("news_run_history") / run_date / run_time
@@ -68,7 +68,7 @@ def main() -> None:
     }
 
     summary = [
-        "# Her Sports Daily News Sync v1.8 Run Summary",
+        "# Her Sports Daily News Sync v1.8.2 Run Summary",
         "",
         f"Run timestamp UTC: `{stamp}`",
         f"Archive folder: `{run_dir.as_posix()}`",
