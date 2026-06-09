@@ -1,0 +1,235 @@
+name: Her Sports Daily Pipeline Control v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: "What should run?"
+        required: true
+        default: "full_pipeline"
+        type: choice
+        options:
+          - full_pipeline
+          - news_only
+          - studio_only
+          - asset_only
+      publish:
+        description: "Commit and push generated outputs?"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      strict_freshness:
+        description: "Block packets without event_date?"
+        required: true
+        default: "1"
+        type: choice
+        options:
+          - "1"
+          - "0"
+      max_result_age_hours:
+        description: "Freshness window in hours"
+        required: true
+        default: "18"
+        type: string
+  schedule:
+    - cron: "10 12 * * *"
+    - cron: "10 18 * * *"
+    - cron: "10 00 * * *"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: hsd-pipeline-control-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run-hsd-pipeline:
+    # Scheduled runs are off by default. To enable them, set repo variable HSD_PIPELINE_AUTO_RUN=true.
+    if: github.event_name == 'workflow_dispatch' || vars.HSD_PIPELINE_AUTO_RUN == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+
+    env:
+      HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
+      HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'true' }}
+      HSD_STRICT_FRESHNESS_GATE: ${{ github.event.inputs.strict_freshness || '1' }}
+      HSD_MAX_RESULT_FRESH_HOURS: ${{ github.event.inputs.max_result_age_hours || '18' }}
+      HSD_STUDIO_REQUIRE_EVENT_DATE: ${{ github.event.inputs.strict_freshness || '1' }}
+      HSD_STUDIO_MAX_RESULT_AGE_HOURS: ${{ github.event.inputs.max_result_age_hours || '18' }}
+      HSD_NEWS_REQUIRE_EVENT_DATE: "true"
+      HSD_NEWS_ENABLE_FETCH: "true"
+      HSD_ASSET_RIGHTS_MODE: aggressive
+      HSD_ASSET_DOWNLOAD: "1"
+      HSD_PLAYER_IMAGES_REQUIRED: "1"
+      HSD_PLAYER_IMAGE_FREE_SEARCH: "1"
+      HSD_PLAYER_IMAGE_MAX_CANDIDATES: "8"
+      BING_SEARCH_API_KEY: ${{ secrets.BING_SEARCH_API_KEY }}
+      SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies once
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements-news-sync.txt ]; then pip install -r requirements-news-sync.txt; fi
+          if [ -f requirements-asset-visual-qa.txt ]; then pip install -r requirements-asset-visual-qa.txt; fi
+
+      - name: Show pipeline plan
+        shell: bash
+        run: |
+          echo "Run mode: ${HSD_RUN_MODE}"
+          echo "Publish outputs: ${HSD_PUBLISH_OUTPUTS}"
+          echo "Strict freshness: ${HSD_STRICT_FRESHNESS_GATE}"
+          echo "Max result age hours: ${HSD_MAX_RESULT_FRESH_HOURS}"
+
+      - name: Run News Sync stage
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python generate_hsd_news_sync_v1.py
+          if [ -f generate_news_dashboard_v1.py ]; then python generate_news_dashboard_v1.py; fi
+          if [ -f archive_news_runs_v1.py ]; then python archive_news_runs_v1.py; fi
+
+      - name: Run Studio Bridge stage
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python generate_hsd_studio_bridge_v1.py
+          if [ -f generate_hsd_studio_dashboard_v1.py ]; then python generate_hsd_studio_dashboard_v1.py; fi
+          if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py; fi
+
+      - name: Run Asset Visual QA stage
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python generate_hsd_asset_desk_v1.py
+          python generate_hsd_player_image_assets_v1.py
+          python generate_hsd_visual_upgrade_v2.py
+          python generate_hsd_graphics_production_specs_v1.py
+          python generate_hsd_graphics_language_pack_v1.py
+          python generate_hsd_studio_freshness_gate_v1.py
+          python generate_hsd_player_image_fit_gate_v1.py
+          python generate_hsd_graphics_prompt_sanitizer_v1.py
+          python generate_hsd_graphics_upload_pack_v1.py
+          python generate_hsd_graphics_qa_v1.py
+          python generate_hsd_rendered_slide_qa_v1.py
+          python archive_hsd_asset_visual_qa_runs_v1.py
+
+      - name: Upload pipeline review artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-pipeline-control-v1-review
+          path: |
+            latest_news_sync_run_summary.md
+            latest_studio_run_summary.md
+            latest_asset_visual_qa_run_summary.md
+            hsd_chatgpt_review_packet.md
+            00_hsd_chatgpt_review_packet.md
+            chatgpt_review_pack/
+            news_run_history/latest/
+            studio_run_history/latest/
+            asset_run_history/latest/
+            graphics_chat_upload_pack_zips/
+            graphics_upload_pack_status.csv
+            graphics_chat_direct_handoff.md
+            studio_freshness_report.md
+            studio_freshness_gate.csv
+            player_image_sourcing_report.md
+            player_image_requirements.csv
+            player_image_fit_report.md
+            player_image_fit_gate.csv
+
+      - name: Commit and push all generated outputs once
+        if: env.HSD_PUBLISH_OUTPUTS == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          FILES=(
+            "news_input_status_report.csv" "news_setup_error.md" "news_candidate_queue.csv" "news_source_observations.csv"
+            "news_fact_packets.csv" "news_brief_queue.md" "news_social_packets.md" "news_graphics_handoff.md"
+            "news_daily_plan.md" "news_manual_review_queue.csv" "news_sync_hub.md" "news_sync_manifest.json"
+            "news_dashboard" "latest_news_sync_run_summary.md" "news_run_history"
+
+            "studio_fresh_packet_report.md" "studio_fresh_packet_gate.csv" "studio_command_center.md" "studio_graphics_queue.csv"
+            "studio_bundle_queue.csv" "studio_bundle_packets.md" "studio_bundle_prompts.md" "studio_bundle_prompts_v2.md"
+            "studio_bundle_caption_bank.md" "studio_top_graphic_packets.md" "studio_image_prompts.md" "studio_caption_bank.md"
+            "studio_accuracy_checklist.csv" "studio_manual_review_graphics.csv" "studio_post_schedule.md" "studio_brand_config.json"
+            "studio_graphics_sop.json" "studio_manifest.json" "studio_dashboard" "brand_assets" "latest_studio_run_summary.md" "studio_run_history"
+
+            "asset_manifest.csv" "asset_manifest.json" "team_assets.csv" "team_assets.json" "player_assets.csv" "player_assets.json"
+            "asset_rights_review.csv" "fact_warning_queue.csv" "player_image_requirements.csv" "player_image_candidates.csv"
+            "player_image_sourcing_report.md" "approved_graphics_assets.csv" "approved_graphics_assets.json" "launch_integration_points.csv"
+            "asset_source_seed_list.csv" "asset_candidates_review.md" "asset_desk_manifest.json" "brand_system" "studio_templates_v2"
+            "studio_visual_upgrade_v2.md" "studio_render_manifest_v2.json" "visual_upgrade_manifest.json" "visual_upgrade_dashboard"
+            "graphics_production_specs.json" "graphics_slide_blueprints.md" "graphics_qa_results.csv" "graphics_qa_report.md" "graphics_qa_manifest.json"
+            "graphics_language_manifest.json" "graphics_copy_style_guide.md" "graphics_display_copy.csv" "graphics_banned_language.csv"
+            "graphics_asset_usage_map.csv" "graphics_layout_blueprint.csv" "graphics_prompt_sanitizer_rules.md" "graphics_clean_prompts"
+            "graphics_prompt_clean_report.md" "graphics_prompt_clean_manifest.json" "graphics_qa_dashboard" "graphics_chat_upload_pack"
+            "graphics_chat_upload_pack_zips" "graphics_chat_upload_manifest.csv" "graphics_chat_upload_manifest.json" "graphics_upload_pack_status.csv"
+            "graphics_upload_pack_status.json" "graphics_chat_upload_instructions.md" "graphics_chat_direct_handoff.md" "data/assets"
+            "studio_freshness_gate.csv" "studio_stale_packet_queue.csv" "studio_freshness_report.md" "studio_freshness_manifest.json"
+            "player_image_fit_gate.csv" "player_image_fit_report.md" "player_image_fit_manifest.json"
+            "rendered_slide_qa.csv" "rendered_slide_qa_report.md" "rendered_slide_qa_manifest.json"
+            "latest_asset_visual_qa_run_summary.md" "hsd_chatgpt_review_packet.md" "00_hsd_chatgpt_review_packet.md" "chatgpt_review_pack" "asset_run_history"
+          )
+
+          for file in "${FILES[@]}"; do
+            if [ -e "$file" ]; then git add "$file"; else echo "Optional output not present, skipping: $file"; fi
+          done
+
+          if git diff --cached --quiet; then
+            echo "No generated output changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Run HSD Pipeline Control v1"
+
+          for attempt in 1 2 3; do
+            echo "Push attempt $attempt"
+            git fetch origin main
+            if git rebase origin/main; then
+              echo "Rebase succeeded"
+            else
+              echo "Rebase conflict on generated outputs. Keeping current pipeline outputs."
+              conflicted="$(git diff --name-only --diff-filter=U || true)"
+              if [ -n "$conflicted" ]; then
+                echo "$conflicted" | while IFS= read -r file; do
+                  git checkout --theirs -- "$file" 2>/dev/null || true
+                  git add "$file" 2>/dev/null || true
+                done
+                git rebase --continue || git rebase --skip
+              fi
+            fi
+            if git push origin HEAD:main; then
+              echo "Push succeeded"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Push failed after 3 attempts"
+          exit 1
