@@ -1,0 +1,37 @@
+bundle_id,bundle_name,check_order,check_type,status,instruction
+4db1b9906333eb4b,Main WNBA Result,1,bundle_prompt,Required,"Use the prompt from studio_bundle_packets.md, not the individual backup prompt."
+4db1b9906333eb4b,Main WNBA Result,2,score_lock,Required,"Every winner, loser, and score must match the bundle accuracy lock exactly."
+4db1b9906333eb4b,Main WNBA Result,3,side_lock,Required,"No team side, score side, scoreboard order, or logo side may be swapped."
+4db1b9906333eb4b,Main WNBA Result,4,watermark,Required,"Locked HSD watermark bug must appear consistently, top-left unless safe-zone conflict."
+4db1b9906333eb4b,Main WNBA Result,5,no_fake_assets,Required,"No fake jerseys, fake uniforms, fake logos, fake player images, or invented numbers."
+4db1b9906333eb4b,Main WNBA Result,6,context_lock,Required,"Do not add stats, quotes, rankings, injuries, or milestones beyond the bundle."
+4db1b9906333eb4b,Main WNBA Result,7,end_slide,Required,Carousel must include the required branded CTA/end slide.
+4db1b9906333eb4b,Main WNBA Result,8,export,Required,Export feed graphic at 1080x1350. Make story crop only when needed.
+4db1b9906333eb4b,Main WNBA Result,9,caption,Required,Caption must not add unsupported claims.
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,1,bundle_prompt,Required,"Use the prompt from studio_bundle_packets.md, not the individual backup prompt."
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,2,score_lock,Required,"Every winner, loser, and score must match the bundle accuracy lock exactly."
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,3,side_lock,Required,"No team side, score side, scoreboard order, or logo side may be swapped."
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,4,watermark,Required,"Locked HSD watermark bug must appear consistently, top-left unless safe-zone conflict."
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,5,no_fake_assets,Required,"No fake jerseys, fake uniforms, fake logos, fake player images, or invented numbers."
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,6,context_lock,Required,"Do not add stats, quotes, rankings, injuries, or milestones beyond the bundle."
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,7,end_slide,Required,Carousel must include the required branded CTA/end slide.
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,8,export,Required,Export feed graphic at 1080x1350. Make story crop only when needed.
+1664b6c32a704b9a,Tonight in the W Mini-Roundup,9,caption,Required,Caption must not add unsupported claims.
+f93ae9d559bedbaf,Volleyball Results Roundup,1,bundle_prompt,Required,"Use the prompt from studio_bundle_packets.md, not the individual backup prompt."
+f93ae9d559bedbaf,Volleyball Results Roundup,2,score_lock,Required,"Every winner, loser, and score must match the bundle accuracy lock exactly."
+f93ae9d559bedbaf,Volleyball Results Roundup,3,side_lock,Required,"No team side, score side, scoreboard order, or logo side may be swapped."
+f93ae9d559bedbaf,Volleyball Results Roundup,4,watermark,Required,"Locked HSD watermark bug must appear consistently, top-left unless safe-zone conflict."
+f93ae9d559bedbaf,Volleyball Results Roundup,5,no_fake_assets,Required,"No fake jerseys, fake uniforms, fake logos, fake player images, or invented numbers."
+f93ae9d559bedbaf,Volleyball Results Roundup,6,context_lock,Required,"Do not add stats, quotes, rankings, injuries, or milestones beyond the bundle."
+f93ae9d559bedbaf,Volleyball Results Roundup,7,end_slide,Required,Carousel must include the required branded CTA/end slide.
+f93ae9d559bedbaf,Volleyball Results Roundup,8,export,Required,Export feed graphic at 1080x1350. Make story crop only when needed.
+f93ae9d559bedbaf,Volleyball Results Roundup,9,caption,Required,Caption must not add unsupported claims.
+2ab5c6fdf630b1fb,Women's Soccer Radar,1,bundle_prompt,Required,"Use the prompt from studio_bundle_packets.md, not the individual backup prompt."
+2ab5c6fdf630b1fb,Women's Soccer Radar,2,score_lock,Required,"Every winner, loser, and score must match the bundle accuracy lock exactly."
+2ab5c6fdf630b1fb,Women's Soccer Radar,3,side_lock,Required,"No team side, score side, scoreboard order, or logo side may be swapped."
+2ab5c6fdf630b1fb,Women's Soccer Radar,4,watermark,Required,"Locked HSD watermark bug must appear consistently, top-left unless safe-zone conflict."
+2ab5c6fdf630b1fb,Women's Soccer Radar,5,no_fake_assets,Required,"No fake jerseys, fake uniforms, fake logos, fake player images, or invented numbers."
+2ab5c6fdf630b1fb,Women's Soccer Radar,6,context_lock,Required,"Do not add stats, quotes, rankings, injuries, or milestones beyond the bundle."
+2ab5c6fdf630b1fb,Women's Soccer Radar,7,end_slide,Required,Carousel must include the required branded CTA/end slide.
+2ab5c6fdf630b1fb,Women's Soccer Radar,8,export,Required,Export feed graphic at 1080x1350. Make story crop only when needed.
+2ab5c6fdf630b1fb,Women's Soccer Radar,9,caption,Required,Caption must not add unsupported claims.
