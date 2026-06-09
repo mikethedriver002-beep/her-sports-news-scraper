@@ -1,7 +1,7 @@
 # Her Sports Daily News Sync v1.8 Run Summary
 
-Run timestamp UTC: `2026-06-09 14:14:09 UTC`
-Archive folder: `news_run_history/2026-06-09/1414_UTC`
+Run timestamp UTC: `2026-06-09 18:37:24 UTC`
+Archive folder: `news_run_history/2026-06-09/1837_UTC`
 
 ## Row counts
 
