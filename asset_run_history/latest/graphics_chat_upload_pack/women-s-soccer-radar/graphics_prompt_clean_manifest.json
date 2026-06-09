@@ -1,6 +1,6 @@
 {
   "version": "hsd-graphics-prompt-sanitizer-v1.7.2",
-  "generated_at_utc": "2026-06-09T19:01:31.777579+00:00",
+  "generated_at_utc": "2026-06-09T19:58:55.331649+00:00",
   "bundle_count": 4,
   "outputs": [
     "graphics_clean_prompts",
@@ -12,8 +12,8 @@
       "bundle_slug": "main-wnba-result",
       "bundle_name": "Main WNBA Result",
       "prompt_path": "graphics_clean_prompts/main-wnba-result/00_PROMPT_TO_PASTE.md",
-      "raw_prompt_chars": 5830,
-      "clean_prompt_chars": 13964,
+      "raw_prompt_chars": 5709,
+      "clean_prompt_chars": 13843,
       "removed_lines": 4,
       "replacements": 8
     },

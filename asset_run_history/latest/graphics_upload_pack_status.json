@@ -1,11 +1,11 @@
 {
   "version": "hsd-graphics-upload-pack-v1.8",
-  "generated_at_utc": "2026-06-09T19:01:35.432105+00:00",
+  "generated_at_utc": "2026-06-09T19:58:59.963201+00:00",
   "counts": {
     "bundles": 4,
     "asset_rows": 35,
-    "files_created": 34,
-    "png_preferred_created": 34,
+    "files_created": 35,
+    "png_preferred_created": 35,
     "upload_packs_ready": 0,
     "upload_packs_blocked": 4
   },
@@ -26,11 +26,11 @@
       "bundle_id": "bundle_ab66100c39c23e",
       "post_slug": "tonight-in-the-w-mini-roundup",
       "bundle_name": "Tonight in the W Mini-Roundup",
-      "upload_pack_status": "blocked_missing_required_assets",
+      "upload_pack_status": "blocked_freshness_gate",
       "assets_expected": 6,
-      "assets_ready": 5,
-      "assets_missing": 1,
-      "missing_asset_names": "Portland Fire",
+      "assets_ready": 6,
+      "assets_missing": 0,
+      "missing_asset_names": "",
       "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-mini-roundup_graphics_chat_upload_pack.zip",
       "notes": "Review freshness/player-image-fit gate before using this pack."
     },

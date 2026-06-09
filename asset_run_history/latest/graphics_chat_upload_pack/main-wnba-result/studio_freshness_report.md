@@ -1,6 +1,6 @@
 # HSD Studio Freshness Gate v1.8
 
-Generated: 2026-06-09T19:01:31.701581+00:00
+Generated: 2026-06-09T19:58:55.261839+00:00
 
 - bundles checked: 4
 - allowed: 0
