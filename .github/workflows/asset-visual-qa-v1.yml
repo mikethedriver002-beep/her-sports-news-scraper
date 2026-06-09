@@ -1,4 +1,4 @@
-name: Her Sports Daily Asset Visual QA v1.4
+name: Her Sports Daily Asset Visual QA v1.5
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ concurrency:
 jobs:
   asset-visual-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Check out repo
@@ -50,6 +50,8 @@ jobs:
           BING_SEARCH_API_KEY: ${{ secrets.BING_SEARCH_API_KEY }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           HSD_PLAYER_IMAGES_REQUIRED: "1"
+          HSD_PLAYER_IMAGE_FREE_SEARCH: "1"
+          HSD_PLAYER_IMAGE_MAX_CANDIDATES: "8"
         run: |
           set -euo pipefail
           git config user.name "github-actions"
@@ -57,7 +59,7 @@ jobs:
 
           FILES=(
             "asset_manifest.csv" "asset_manifest.json" "team_assets.csv" "team_assets.json"
-            "player_assets.csv" "player_assets.json" "asset_rights_review.csv" "fact_warning_queue.csv" "player_image_requirements.csv" "player_image_sourcing_report.md" "graphics_production_specs.json" "graphics_slide_blueprints.md"
+            "player_assets.csv" "player_assets.json" "asset_rights_review.csv" "fact_warning_queue.csv" "player_image_requirements.csv" "player_image_candidates.csv" "player_image_sourcing_report.md" "graphics_production_specs.json" "graphics_slide_blueprints.md"
             "approved_graphics_assets.csv" "approved_graphics_assets.json" "launch_integration_points.csv"
             "asset_source_seed_list.csv" "asset_candidates_review.md" "asset_desk_manifest.json"
             "brand_system" "studio_templates_v2" "studio_visual_upgrade_v2.md"
@@ -86,7 +88,7 @@ jobs:
             done
 
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
-            git commit -m "Update HSD Asset Visual QA v1.4"
+            git commit -m "Update HSD Asset Visual QA v1.5"
             if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
@@ -96,5 +98,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-asset-visual-qa-v1-4
+          name: hsd-asset-visual-qa-v1-5
           path: asset_run_history/latest/
