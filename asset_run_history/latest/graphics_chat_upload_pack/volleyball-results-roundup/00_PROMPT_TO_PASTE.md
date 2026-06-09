@@ -1,13 +1,22 @@
+# HSD Graphics Prompt: Volleyball Results Roundup
+
+Use the attached files only.
+Use the attached logo files and attached player/person image files exactly as mapped. Do not fetch, substitute, or invent any logos, player images, bodies, jerseys, or numbers.
+Treat the game facts, scores, team names, and player names as locked facts and preserve them exactly.
+Render only display-safe editorial language. Never render internal QA or prompt-control language.
+Create polished Her Sports Daily graphics with premium editorial sports-media styling.
+Output separate slide files.
+
+## Cleaned production brief
+
 # Volleyball Results Roundup
 
-```text
 HSD VISUAL UPGRADE v2.5 PROMPT
 Bundle: Volleyball Results Roundup
 Template: roundup_v2
 Canvas: 1080x1350 carousel
-Source facts: 
+Source facts:
 Caption/context: Around Women’s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1
-Accuracy lock: BUNDLE LOCKED FACTS: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1. Do not alter winners, losers, scores, stat lines, team order, or source-safe context. Check every result row before posting.
 
 Safe graphics mode: logos_and_text_only
 Critical instruction: Do not show any player photo. Use team logos, typography, score treatment, textures, and editorial design only.
@@ -34,4 +43,20 @@ If no approved exact player asset is listed, do not use player photography. Use 
 Never invent player bodies, fake jerseys, fake jersey numbers, fake logos, fake headshots, unsupported stats, rankings, injuries, quotes, or records.
 If a fact warning exists, require manual human verification before posting.
 Accuracy beats aesthetics, but aesthetics must be premium.
-```
+
+## Display-safe slide copy
+
+### Slide 1 - bundle_cover
+- Headline: Volleyball Results Roundup
+- Subhead: Results worth knowing
+- Kicker: Around women’s sports
+- CTA: Follow Her Sports Daily for more women’s sports coverage
+- Notes: Avoid robotic verification language. Use natural sports-editor phrasing
+
+## Internal-language rule
+
+Never render internal QA or verification labels. If a line sounds like workflow language instead of editorial sports language, rewrite it before rendering.
+
+## Final reminder
+
+Use natural, human sports-editor phrasing. Keep the facts exact and the wording clean.

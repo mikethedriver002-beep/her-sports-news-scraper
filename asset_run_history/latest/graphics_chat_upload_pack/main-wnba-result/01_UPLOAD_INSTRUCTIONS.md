@@ -1,6 +1,6 @@
 # Upload instructions: Main WNBA Result
 
-Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to the graphics chat.
+Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to the graphics chat. The prompt file is already sanitized for display-safe use.
 
 If a PNG preferred asset is missing, upload the matching file from `assets_original/`.
 
@@ -24,17 +24,17 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Jessica Shepard
 
-- Preferred upload: `jessica-shepard_primary-player-photo-v1_56a690.jpg`
-- Original asset: `jessica-shepard_primary-player-photo-v1_56a690.jpg`
-- Source URL: https://c8.alamy.com/comp/3BBRAY4/dallas-wings-guard-paige-bueckers-5-fouls-minnesota-lynx-forward-jessica-shepard-15-who-shoots-in-the-second-half-of-a-wnba-basketball-game-friday-may-16-2025-in-arlington-texas-ap-photorichard-w-rodriguez-3BBRAY4.jpg
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
 ## Arike Ogunbowale
 
-- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
-- Original asset: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
-- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
+- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_b00342.jpg`
+- Original asset: `arike-ogunbowale_primary-player-photo-v1_b00342.jpg`
+- Source URL: https://statico.profootballnetwork.com/wp-content/uploads/2025/05/11030756/arike-ogunbowale-paige-bueckers-impact-dallas-wings-1920x1280.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 

@@ -1,6 +1,6 @@
 # Upload instructions: Volleyball Results Roundup
 
-Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to the graphics chat.
+Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to the graphics chat. The prompt file is already sanitized for display-safe use.
 
 If a PNG preferred asset is missing, upload the matching file from `assets_original/`.
 

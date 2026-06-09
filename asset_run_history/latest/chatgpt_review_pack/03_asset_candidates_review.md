@@ -1,6 +1,6 @@
 # HSD Asset Desk v1.2 Candidate Review
 
-Generated: 2026-06-09T13:26:19.140580+00:00
+Generated: 2026-06-09T14:14:56.228338+00:00
 
 v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.
 
@@ -40,3 +40,14 @@ Fact warnings: 0
 - Arike Ogunbowale: no exact approved player image. Use text-forward.
 - Jessica Shepard: no exact approved player image. Use text-forward.
 - Paige Bueckers: no exact approved player image. Use text-forward.
+
+## Player image status refresh
+
+- approved | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg | wikidata_p18
+- approved | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_duckduckgo_images_free_ae0efd.jpg | duckduckgo_images_free
+- approved | Paige Bueckers | Dallas Wings | data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg | wikidata_p18
+- approved | Kelsey Plum | Los Angeles Sparks | data/assets/player_images/kelsey-plum_wikipedia_pageimage_1be29b.jpg | wikipedia_pageimage
+- approved | Ariel Atkins | Los Angeles Sparks | data/assets/player_images/ariel-atkins_wikidata_p18_475bc8.jpg | wikidata_p18
+- approved | Dearica Hamby | Los Angeles Sparks | data/assets/player_images/dearica-hamby_wikidata_p18_19f001.jpg | wikidata_p18
+- approved | Nneka Ogwumike | Los Angeles Sparks | data/assets/player_images/nneka-ogwumike_wikidata_p18_aea79f.jpg | wikidata_p18
+- approved | Cameron Brink | Los Angeles Sparks | data/assets/player_images/cameron-brink_wikipedia_pageimage_9343dd.jpg | wikipedia_pageimage

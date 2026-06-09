@@ -11,5 +11,5 @@ Status: READY
 Instructions to paste into the graphics chat:
 
 ```text
-Use the uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, and graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, and graphics_prompt_sanitizer_rules.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render the words Verified Final, Winner, or Loser. Output separate slide files.
+Use the sanitized uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, graphics_prompt_sanitizer_rules.md, and graphics_prompt_clean_report.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render internal terms such as Verified Final, Winner, Loser, BUNDLE LOCKED FACTS, source-safe context, graphics-safe context, or Do not alter. Output separate slide files.
 ```
