@@ -6,9 +6,9 @@ For the post you are making:
 
 1. Open `graphics_chat_upload_pack/<post_slug>/`.
 2. Upload `00_PROMPT_TO_PASTE.md`.
-3. Upload every file in `assets_png_preferred/`.
+3. Upload every file in `assets_png_preferred/`, including player/person images if present.
 4. If a PNG is missing, upload the matching file in `assets_original/`.
-5. Tell the graphics chat: use only the attached assets, do not fetch or invent logos.
+5. Tell the graphics chat: use only the attached assets, do not fetch or invent logos or player images.
 
 Quick ZIPs are in `graphics_chat_upload_pack_zips/`.
 

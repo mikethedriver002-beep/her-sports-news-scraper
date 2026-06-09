@@ -4,7 +4,7 @@ Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to t
 
 If a PNG preferred asset is missing, upload the matching file from `assets_original/`.
 
-Do not let the graphics chat fetch logo URLs. The logos must be attached as files.
+Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files.
 
 ## Golden State Valkyries
 
@@ -22,10 +22,10 @@ Do not let the graphics chat fetch logo URLs. The logos must be attached as file
 
 ## Minnesota Lynx
 
-- Preferred upload: `minnesota-lynx_primary-logo-v1_3c7096.png`
-- Original asset: `minnesota-lynx_primary-logo-v1_3c7096.svg`
+- Preferred upload: `missing`
+- Original asset: `missing`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg
-- Status: downloaded:200; converted_svg_to_png
+- Status: download_failed; no_local_asset
 
 ## Phoenix Mercury
 

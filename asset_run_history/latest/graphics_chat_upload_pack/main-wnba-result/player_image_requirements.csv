@@ -1,0 +1,9 @@
+bundle_slug,player_name,team_name,required,status,approved_asset_id,source_url,local_path,sourcing_method,notes
+main-wnba-result,Jessica Shepard,Dallas Wings,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Arike Ogunbowale,Dallas Wings,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Paige Bueckers,Dallas Wings,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Kelsey Plum,Los Angeles Sparks,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Ariel Atkins,Los Angeles Sparks,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Dearica Hamby,Los Angeles Sparks,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Nneka Ogwumike,Los Angeles Sparks,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."
+main-wnba-result,Cameron Brink,Los Angeles Sparks,Yes,missing,,,,,"Required player image missing. Add BING_SEARCH_API_KEY, SERPAPI_KEY, manual_player_assets.csv, or file in player_image_assets/<player-slug>.png."

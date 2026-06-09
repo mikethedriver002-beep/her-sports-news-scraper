@@ -1,0 +1,108 @@
+{
+  "version": "hsd-graphics-production-specs-v1",
+  "generated_at_utc": "2026-06-09T01:57:39.685968+00:00",
+  "posts": [
+    {
+      "post_slug": "main-wnba-result",
+      "bundle_name": "Main WNBA Result",
+      "player_images_required": true,
+      "missing_required_player_images": [
+        "Jessica Shepard",
+        "Arike Ogunbowale",
+        "Paige Bueckers",
+        "Kelsey Plum",
+        "Ariel Atkins",
+        "Dearica Hamby",
+        "Nneka Ogwumike",
+        "Cameron Brink"
+      ],
+      "decision": "blocked_missing_player_images",
+      "slide_count": 4,
+      "slides": [
+        {
+          "slide": 1,
+          "name": "Result hero with people",
+          "must_include": [
+            "Dallas Wings player/person image",
+            "Los Angeles Sparks player/person image",
+            "Dallas Wings logo",
+            "Los Angeles Sparks logo",
+            "Dallas Wings 104",
+            "Los Angeles Sparks 96",
+            "Verified Final"
+          ],
+          "layout": "Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.",
+          "forbidden": [
+            "fake jerseys",
+            "fake numbers",
+            "logo-only cover if player images are present",
+            "empty right or left side"
+          ]
+        },
+        {
+          "slide": 2,
+          "name": "Balanced final score board",
+          "must_include": [
+            "Dallas Wings 104",
+            "Los Angeles Sparks 96",
+            "winner label",
+            "loser label",
+            "one Dallas logo",
+            "one Sparks logo"
+          ],
+          "layout": "Symmetric split scoreboard. Fill both sides equally with score slab, team label, logo, and small context strip. No extra logo floating on the left margin.",
+          "forbidden": [
+            "duplicate logo in corner or left rail",
+            "empty side",
+            "tiny verified final text strip",
+            "cropped score"
+          ]
+        },
+        {
+          "slide": 3,
+          "name": "Two-sided top performers",
+          "must_include": [
+            "Dallas leaders",
+            "Sparks leaders",
+            "Jessica Shepard 22 PTS 15 REB 5 AST 2 STL",
+            "Arike Ogunbowale 30 PTS 6 REB 6 AST",
+            "Paige Bueckers 18 PTS 3 REB 14 AST 1 STL",
+            "Kelsey Plum 27 PTS 6 AST",
+            "Ariel Atkins 16 PTS",
+            "Dearica Hamby 15 PTS"
+          ],
+          "layout": "Two equal columns. Left column Dallas leaders. Right column Sparks leaders. Use small player photos if uploaded. Use logos only as column headers. No giant logo in the margin.",
+          "forbidden": [
+            "Wings-only performer slide",
+            "Sparks side missing",
+            "duplicate logo on left rail",
+            "players assigned to wrong team"
+          ],
+          "sparks_performers": [
+            "Kelsey Plum (Los Angeles Sparks): PTS 27, AST 6",
+            "Ariel Atkins (Los Angeles Sparks): PTS 16",
+            "Dearica Hamby (Los Angeles Sparks): PTS 15",
+            "Nneka Ogwumike (Los Angeles Sparks): PTS 13, REB 10",
+            "Cameron Brink (Los Angeles Sparks): PTS 10"
+          ]
+        },
+        {
+          "slide": 4,
+          "name": "CTA with filled composition",
+          "must_include": [
+            "Your take?",
+            "Follow Her Sports Daily",
+            "both team logos",
+            "HSD lockup"
+          ],
+          "layout": "Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.",
+          "forbidden": [
+            "huge empty dark area",
+            "logo pair only with no context",
+            "same composition as slide 2"
+          ]
+        }
+      ]
+    }
+  ]
+}

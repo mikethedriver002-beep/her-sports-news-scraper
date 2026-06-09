@@ -4,7 +4,7 @@ Upload `00_PROMPT_TO_PASTE.md` and the files inside `assets_png_preferred/` to t
 
 If a PNG preferred asset is missing, upload the matching file from `assets_original/`.
 
-Do not let the graphics chat fetch logo URLs. The logos must be attached as files.
+Do not let the graphics chat fetch logo or player image URLs. Logos and player/person images must be attached as files.
 
 ## Australia W
 

@@ -1,14 +1,14 @@
-# HSD Graphics QA Scorer v1.2.2 Report
+# HSD Graphics QA Scorer v1.4 Report
 
-Generated: 2026-06-09T01:22:42.273910+00:00
+Generated: 2026-06-09T01:57:41.969536+00:00
 
 Bundles scored: 4
 
 ## main-wnba-result
 
-- Decision: **pass_with_review**
-- Score: 95
-- Issues: `[{"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
+- Decision: **fail**
+- Score: 50
+- Issues: `[{"code": "MISSING_REQUIRED_PLAYER_IMAGES", "severity": "critical", "message": "Jessica Shepard, Arike Ogunbowale, Paige Bueckers, Kelsey Plum, Ariel Atkins, Dearica Hamby, Nneka Ogwumike, Cameron Brink"}, {"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
 
 ## tonight-in-the-w-mini-roundup
 
