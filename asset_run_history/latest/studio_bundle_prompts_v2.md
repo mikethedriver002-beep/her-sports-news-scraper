@@ -1,6 +1,6 @@
 # HSD Bundle Prompts v2.2
 
-Generated: 2026-06-08T23:04:47.367440+00:00
+Generated: 2026-06-09T00:36:41.213268+00:00
 
 ## Main WNBA Result
 
@@ -21,7 +21,7 @@ Approved exact assets:
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
 
 Fact warnings:
-No fact warnings.
+- player_team_mismatch: Jessica Shepard expected team Minnesota Lynx but bundle text says Dallas Wings.
 
 Art direction:
 Create a premium women’s sports media carousel, not a dashboard card. Use bold hierarchy, huge result typography, sport-specific atmosphere, diagonal panels, depth, glow accents, and a polished CTA/end slide.

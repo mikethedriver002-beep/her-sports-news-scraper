@@ -1,14 +1,14 @@
-# HSD Graphics QA Scorer v1.2 Report
+# HSD Graphics QA Scorer v1.2.1 Report
 
-Generated: 2026-06-08T23:04:47.397854+00:00
+Generated: 2026-06-09T00:36:41.247900+00:00
 
 Bundles scored: 4
 
 ## main-wnba-result
 
-- Decision: **pass_with_review**
-- Score: 95
-- Issues: `[{"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
+- Decision: **fail**
+- Score: 60
+- Issues: `[{"code": "FACT_WARNING_PRESENT", "severity": "critical", "message": "1 fact warnings present"}, {"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
 
 ## tonight-in-the-w-mini-roundup
 

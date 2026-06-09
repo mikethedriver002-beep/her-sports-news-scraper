@@ -1,6 +1,6 @@
 {
-  "version": "hsd-studio-visual-upgrade-v2.2",
-  "generated_at_utc": "2026-06-08T23:04:47.367457+00:00",
+  "version": "hsd-studio-visual-upgrade-v2.2.1",
+  "generated_at_utc": "2026-06-09T00:36:41.213286+00:00",
   "bundles": [
     {
       "bundle_id": "bundle_34740d18e445ce",
@@ -12,7 +12,7 @@
         "appr_7eea0085424fe3"
       ],
       "safe_graphics_mode": "logos_and_text_only",
-      "fact_warning_count": 0,
+      "fact_warning_count": 1,
       "source_facts": {
         "source_headlines": "",
         "caption_seed": "Dallas Wings beat Los Angeles Sparks. Top performers: Jessica Shepard (Dallas Wings): PTS 22, REB 15, AST 5, STL 2; Arike Ogunbowale (Dallas Wings): PTS 30, REB 6, AST 6; Paige Bueckers (Dallas Wings): PTS 18, REB 3, AST 14, STL 1.",
