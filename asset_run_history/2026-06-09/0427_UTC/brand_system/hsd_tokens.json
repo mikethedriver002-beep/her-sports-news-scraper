@@ -1,0 +1,24 @@
+{
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "colors": {
+    "dark": "#071226",
+    "panel": "#101D3A",
+    "cyan": "#62E8FF",
+    "magenta": "#FF4FD8",
+    "white": "#F4F7FB",
+    "muted": "#AEB9CE"
+  },
+  "type": {
+    "headline": "bold condensed, 72-96px",
+    "body": "Inter-style, 28-36px",
+    "score": "oversized 96px+"
+  },
+  "watermark": {
+    "file": "brand_assets/hsd_watermark_bug.svg",
+    "position": "top-left",
+    "size_px": 76
+  }
+}

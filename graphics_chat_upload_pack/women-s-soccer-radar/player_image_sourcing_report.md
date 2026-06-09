@@ -1,6 +1,6 @@
 # HSD Player Image Sourcing Report
 
-Generated: 2026-06-09T04:09:10.907915+00:00
+Generated: 2026-06-09T04:27:05.446775+00:00
 Version: hsd-player-image-assets-v1.5-free-sourcing
 
 Player images required: Yes
@@ -9,7 +9,7 @@ Found required player images: 8
 Missing required player images: 0
 Free search enabled: Yes
 DuckDuckGo package available: Yes
-Candidate rows inspected: 56
+Candidate rows inspected: 43
 
 ## Required players
 
