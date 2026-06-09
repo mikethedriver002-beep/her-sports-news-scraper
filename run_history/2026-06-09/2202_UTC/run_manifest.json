@@ -1,0 +1,39 @@
+{
+  "run_timestamp_utc": "2026-06-09 22:02:12 UTC",
+  "run_date": "2026-06-09",
+  "run_time": "2202_UTC",
+  "archive_folder": "run_history/2026-06-09/2202_UTC",
+  "copied_files": [
+    "womens_sports_articles.csv",
+    "daily_content_brief.csv",
+    "story_context_enriched.csv",
+    "master_posting_dashboard.csv",
+    "daily_command_file.csv",
+    "today_graphics_queue.md",
+    "today_graphics_queue.csv",
+    "top_3_graphic_packets.md",
+    "dashboard/index.html",
+    "ready_to_post_graphic_copy.csv",
+    "caption_bank_v2.csv",
+    "reel_script_package.md",
+    "image_generation_prompts.csv",
+    "hsd_daily_content_hub.md",
+    "hsd_publish_system_hub.md",
+    "hsd_graphics_system_hub.md"
+  ],
+  "missing_files": [],
+  "row_counts": {
+    "womens_sports_articles.csv": 1664,
+    "daily_content_brief.csv": 10,
+    "story_context_enriched.csv": 10,
+    "master_posting_dashboard.csv": 10,
+    "daily_command_file.csv": 10,
+    "today_graphics_queue.csv": 8,
+    "ready_to_post_graphic_copy.csv": 40,
+    "caption_bank_v2.csv": 30,
+    "image_generation_prompts.csv": 10
+  },
+  "github_run_id": "27238651504",
+  "github_run_number": "151",
+  "github_sha": "c3f062e4001b3ffb4c475d8e9432188ccd80bd98"
+}

@@ -1,6 +1,6 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-09T18:35:48.505401+00:00
+Generated: 2026-06-09T22:02:12.503976+00:00
 
 ## Daily Content Command Center
 
@@ -54,17 +54,7 @@ Generated: 2026-06-09T18:35:48.505401+00:00
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 6: Uggla's complete City Ladies takeover in historic move for women's football in York
-
-- Decision: Maybe Post
-- Content family: Context Carousel
-- Recommended asset: 3 to 4-slide milestone graphic
-- Hook: This is the kind of milestone that shows where the game is headed.
-- First slide / main text: Milestone watch: Uggla's complete City Ladies takeover in historic move for women's football in York
-- Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
-- Visual brief: Use a milestone carousel with the record, context, and why it matters.
-
-### Rank 7: Hilary Knight will play for PWHL expansion Detroit via sign-and-trade with Las Vegas, AP source says
+### Rank 6: Hilary Knight will play for PWHL expansion Detroit via sign-and-trade with Las Vegas, AP source says
 
 - Decision: Maybe Post
 - Content family: Context Carousel
@@ -74,17 +64,17 @@ Generated: 2026-06-09T18:35:48.505401+00:00
 - Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
 - Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
-### Rank 8: MM 6.9: Maryland women’s basketball announces 2026-27 conference opponents
+### Rank 7: Sol Ruca Defeats Lyra Valkyria, Wins First WWE Women's IC Title Defense On Raw
 
 - Decision: Save for Weekend
 - Content family: Feed Post
-- Recommended asset: single feed card
-- Hook: MM 6.9: Maryland women’s basketball announces 2026-27 conference opponents
-- First slide / main text: MM 6.9: Maryland women’s basketball announces 2026-27 conference opponents
-- Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
-- Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
+- Recommended asset: single recap card or quick carousel
+- Hook: Here is the quick version of what happened and why it matters.
+- First slide / main text: Quick recap: Sol Ruca Defeats Lyra Valkyria, Wins First WWE Women's IC Title Defense On Raw
+- Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
+- Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 9: Athletes Unlimited and TOGETHXR Debut “Everyone Watches Women’s Softball” Amid Historic Growth for the Game
+### Rank 8: Athletes Unlimited and TOGETHXR Debut “Everyone Watches Women’s Softball” Amid Historic Growth for the Game
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
@@ -94,7 +84,7 @@ Generated: 2026-06-09T18:35:48.505401+00:00
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 10: Toronto Sceptres Pushing Through Expansion Process
+### Rank 9: Toronto Sceptres Pushing Through Expansion Process
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
@@ -103,6 +93,16 @@ Generated: 2026-06-09T18:35:48.505401+00:00
 - First slide / main text: Expansion watch: Toronto Sceptres Pushing Through Expansion Process
 - Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
 - Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
+
+### Rank 10: Michigan Women’s Basketball announces Big Ten home/away opponents
+
+- Decision: Save for Weekend
+- Content family: Feed Post
+- Recommended asset: single feed card
+- Hook: Michigan Women’s Basketball announces Big Ten home/away opponents
+- First slide / main text: Michigan Women’s Basketball announces Big Ten home/away opponents
+- Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
+- Visual brief: Use a simple NCAA Women's Basketball news card with headline, context, and one engagement question.
 
 ## Tonight in the W
 
