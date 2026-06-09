@@ -24,11 +24,11 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Minnesota Lynx
 
-- Preferred upload: `missing`
-- Original asset: `missing`
+- Preferred upload: `minnesota-lynx_primary-logo-v1_3c7096.png`
+- Original asset: `minnesota-lynx_primary-logo-v1_3c7096.svg`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg
-- Status: download_failed:https://upload.wikimedia.org/wikipedia/en/7/70/Minnesota_Lynx_logo.svg -> status_429; https://upload.wikimedia.org/wikipedia/en/7/75/Minnesota_Lynx_logo.svg -> status_429; https://en.wikipedia.org/wiki/Special:Redirect/file/Minnesota_Lynx_logo.svg -> status_429; https://en.wikipedia.org/wiki/Special:FilePath/Minnesota_Lynx_logo.svg -> status_429; no_local_asset
-- Ready: No
+- Status: downloaded:200:content_type_image; converted_svg_to_png
+- Ready: Yes
 
 ## Phoenix Mercury
 
@@ -53,11 +53,3 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Source URL: https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg
 - Status: copied_local; converted_svg_to_png
 - Ready: Yes
-
-## BLOCKED
-
-This upload pack is incomplete. Do not send this bundle to the graphics chat until the missing files are fixed.
-
-Missing assets:
-
-- Minnesota Lynx

@@ -1,6 +1,6 @@
 # HSD Graphics QA Scorer v1.6 Report
 
-Generated: 2026-06-09T11:10:08.092764+00:00
+Generated: 2026-06-09T12:01:11.989356+00:00
 
 Bundles scored: 4
 
@@ -12,9 +12,9 @@ Bundles scored: 4
 
 ## tonight-in-the-w-mini-roundup
 
-- Decision: **fail**
-- Score: 50
-- Issues: `[{"code": "UPLOAD_PACK_INCOMPLETE", "severity": "critical", "message": "Minnesota Lynx"}, {"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
+- Decision: **pass_with_review**
+- Score: 95
+- Issues: `[{"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."}]`
 
 ## volleyball-results-roundup
 

@@ -1,6 +1,6 @@
 # HSD Graphics Copy Style Guide v1.6
 
-Generated: 2026-06-09T11:10:02.188964+00:00
+Generated: 2026-06-09T12:01:08.633485+00:00
 
 ## Core rule
 
