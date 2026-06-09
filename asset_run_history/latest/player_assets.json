@@ -7,7 +7,7 @@
     "player_name": "Arike Ogunbowale",
     "headshot_asset_id": "appr_2646dc354c1762",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikidata_p18."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_jessica-shepard",
@@ -17,7 +17,7 @@
     "player_name": "Jessica Shepard",
     "headshot_asset_id": "appr_e229246a508b2e",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikidata_p18."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_paige-bueckers",
@@ -27,7 +27,7 @@
     "player_name": "Paige Bueckers",
     "headshot_asset_id": "appr_717263c3d3e94e",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikidata_p18."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_kelsey-plum",
@@ -35,9 +35,9 @@
     "league": "WNBA",
     "player_slug": "kelsey-plum",
     "player_name": "Kelsey Plum",
-    "headshot_asset_id": "appr_a6b966fc2efd2d",
+    "headshot_asset_id": "appr_d8c206f8d07cbd",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikipedia_pageimage."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_ariel-atkins",
@@ -47,7 +47,7 @@
     "player_name": "Ariel Atkins",
     "headshot_asset_id": "appr_d3440f8552d66f",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikidata_p18."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_dearica-hamby",
@@ -57,7 +57,7 @@
     "player_name": "Dearica Hamby",
     "headshot_asset_id": "appr_505914b839a2ec",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikidata_p18."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_nneka-ogwumike",
@@ -67,7 +67,7 @@
     "player_name": "Nneka Ogwumike",
     "headshot_asset_id": "appr_9a4d6394f0547e",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikidata_p18."
+    "notes": "Required people/player image sourced via wikidata_p18."
   },
   {
     "player_id": "wnba_cameron-brink",
@@ -75,8 +75,158 @@
     "league": "WNBA",
     "player_slug": "cameron-brink",
     "player_name": "Cameron Brink",
-    "headshot_asset_id": "appr_5665d39f6486d0",
+    "headshot_asset_id": "appr_26395171db11b9",
     "status": "asset_found",
-    "notes": "Required player image sourced via wikipedia_pageimage."
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_player-image-status",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "player-image-status",
+    "player_name": "PLAYER IMAGE STATUS",
+    "headshot_asset_id": "appr_97c6c2747ba7de",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via commons_api."
+  },
+  {
+    "player_id": "wnba_one-dallas",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "one-dallas",
+    "player_name": "One Dallas",
+    "headshot_asset_id": "appr_31c010fb6e1321",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_one-sparks",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "one-sparks",
+    "player_name": "One Sparks",
+    "headshot_asset_id": "appr_c53adf657a1ff5",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via commons_api."
+  },
+  {
+    "player_id": "wnba_los-angeles",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "los-angeles",
+    "player_name": "Los Angeles",
+    "headshot_asset_id": "appr_315287c0f37435",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_use-dallas",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "use-dallas",
+    "player_name": "Use Dallas",
+    "headshot_asset_id": "appr_46c4bc5989b05f",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via commons_api."
+  },
+  {
+    "player_id": "wnba_los-angeles-sparks",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "los-angeles-sparks",
+    "player_name": "Los Angeles Sparks.",
+    "headshot_asset_id": "appr_14945fd31a3a9d",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via commons_api."
+  },
+  {
+    "player_id": "wnba_a-ja-wilson",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "a-ja-wilson",
+    "player_name": "A'ja Wilson",
+    "headshot_asset_id": "appr_2d9a5cdffd79d7",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_gabby-williams",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "gabby-williams",
+    "player_name": "Gabby Williams",
+    "headshot_asset_id": "appr_f99707780fd466",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_jackie-young",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "jackie-young",
+    "player_name": "Jackie Young",
+    "headshot_asset_id": "appr_08c59b4ecde0c1",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_natasha-howard",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "natasha-howard",
+    "player_name": "Natasha Howard",
+    "headshot_asset_id": "appr_f9ebd695d5736c",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_olivia-miles",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "olivia-miles",
+    "player_name": "Olivia Miles",
+    "headshot_asset_id": "appr_37bca07ca08aa4",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_natisha-hiedeman",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "natisha-hiedeman",
+    "player_name": "Natisha Hiedeman",
+    "headshot_asset_id": "appr_8bd0af15e97991",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_dewanna-bonner",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "dewanna-bonner",
+    "player_name": "DeWanna Bonner",
+    "headshot_asset_id": "appr_920597fdff68d4",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_natasha-mack",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "natasha-mack",
+    "player_name": "Natasha Mack",
+    "headshot_asset_id": "appr_00637795ef7ab5",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_monique-akoa-makani",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "monique-akoa-makani",
+    "player_name": "Monique Akoa Makani",
+    "headshot_asset_id": "appr_8618f797bbf877",
+    "status": "asset_found",
+    "notes": "Required people/player image sourced via wikidata_p18."
   }
 ]

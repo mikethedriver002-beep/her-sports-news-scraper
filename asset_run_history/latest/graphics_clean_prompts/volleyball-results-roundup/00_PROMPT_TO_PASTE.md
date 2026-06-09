@@ -16,6 +16,8 @@ Bundle: Volleyball Results Roundup
 Template: roundup_v2
 Canvas: 1080x1350 carousel
 Source facts:
+Event date: missing
+Freshness: unknown / unknown
 Caption/context: Around Women’s Sports volleyball radar: USA W beat France W: USA W 3 - France W 2 | Belgium W beat Thailand W: Belgium W 3 - Thailand W 2 | Brazil W beat Bulgaria W: Brazil W 3 - Bulgaria W 0 | Canada W beat France W: Canada W 3 - France W 1 | China W beat Serbia W: China W 3 - Serbia W 0 | Italy W beat Turkey W: Italy W 3 - Turkey W 1
 
 Safe graphics mode: logos_and_text_only

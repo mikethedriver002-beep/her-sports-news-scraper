@@ -16,6 +16,8 @@ Bundle: Tonight in the W Mini-Roundup
 Template: roundup_v2
 Canvas: 1080x1350 carousel
 Source facts:
+Event date: missing
+Freshness: unknown / unknown
 Caption/context: Tonight in the W roundup: Las Vegas Aces beat Golden State Valkyries: Las Vegas Aces 84, Golden State Valkyries 79 | Minnesota Lynx beat Seattle Storm: Minnesota Lynx 88, Seattle Storm 68 | Phoenix Mercury beat Portland Fire: Phoenix Mercury 78, Portland Fire 72
 
 Safe graphics mode: logos_and_text_only

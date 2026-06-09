@@ -16,6 +16,8 @@ Bundle: Women's Soccer Radar
 Template: radar_v2
 Canvas: 1080x1350 carousel
 Source facts:
+Event date: missing
+Freshness: unknown / unknown
 Caption/context: Women’s soccer radar: Brazil U20 W beat Korea Republic U20 W: Brazil U20 W 3 - Korea Republic U20 W 0 | Brazil W beat USA W: Brazil W 2 - USA W 1 | Japan W beat South Africa W: Japan W 5 - South Africa W 0 | Mexico W beat Australia W: Mexico W 1 - Australia W 0
 
 Safe graphics mode: logos_and_text_only

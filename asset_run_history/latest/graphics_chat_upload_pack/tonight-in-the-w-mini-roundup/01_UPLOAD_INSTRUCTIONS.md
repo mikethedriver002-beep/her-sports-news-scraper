@@ -40,11 +40,11 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Portland Fire
 
-- Preferred upload: `missing`
-- Original asset: `missing`
+- Preferred upload: `portland-fire_primary-logo-v1_09f81f.png`
+- Original asset: `portland-fire_primary-logo-v1_09f81f.svg`
 - Source URL: https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg
-- Status: download_failed:https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg -> status_429; https://upload.wikimedia.org/wikipedia/en/c/cf/Portland_Fire_logo.svg -> status_429; https://en.wikipedia.org/wiki/Special:Redirect/file/Portland_Fire_logo.svg -> status_429; https://en.wikipedia.org/wiki/Special:FilePath/Portland_Fire_logo.svg -> status_429; no_local_asset
-- Ready: No
+- Status: downloaded:200:content_type_image; converted_svg_to_png
+- Ready: Yes
 
 ## Seattle Storm
 
@@ -64,10 +64,6 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## REVIEW OR BLOCKED
 
-Upload pack status: blocked_missing_required_assets
-
-Missing assets:
-
-- Portland Fire
+Upload pack status: blocked_freshness_gate
 
 Freshness gate blocked this packet. Do not post unless you intentionally relabel it as carryover/yesterday and accept the risk.

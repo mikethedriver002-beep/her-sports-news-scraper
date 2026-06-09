@@ -24,9 +24,9 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Jessica Shepard
 
-- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_56a690.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_56a690.jpg`
+- Source URL: https://c8.alamy.com/comp/3BBRAY4/dallas-wings-guard-paige-bueckers-5-fouls-minnesota-lynx-forward-jessica-shepard-15-who-shoots-in-the-second-half-of-a-wnba-basketball-game-friday-may-16-2025-in-arlington-texas-ap-photorichard-w-rodriguez-3BBRAY4.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
@@ -48,9 +48,9 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Kelsey Plum
 
-- Preferred upload: `kelsey-plum_primary-player-photo-v1_2efd2d.jpg`
-- Original asset: `kelsey-plum_primary-player-photo-v1_2efd2d.jpg`
-- Source URL: https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg
+- Preferred upload: `kelsey-plum_primary-player-photo-v1_d07cbd.jpg`
+- Original asset: `kelsey-plum_primary-player-photo-v1_d07cbd.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Kelsey%20Plum%20Fenerbah%C3%A7e%20Women%27s%20Basketball%20vs%20BC%20Nadezhda%20Orenburg%20EuroLeague%20Women%2020171011%20%282%29%20%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
@@ -80,9 +80,33 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Cameron Brink
 
-- Preferred upload: `cameron-brink_primary-player-photo-v1_6486d0.jpg`
-- Original asset: `cameron-brink_primary-player-photo-v1_6486d0.jpg`
-- Source URL: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cameron_Brink_Sparks_%28cropped%29.jpg/1280px-Cameron_Brink_Sparks_%28cropped%29.jpg
+- Preferred upload: `cameron-brink_primary-player-photo-v1_db11b9.jpg`
+- Original asset: `cameron-brink_primary-player-photo-v1_db11b9.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Cameron%20Brink%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+- Ready: Yes
+
+## Los Angeles
+
+- Preferred upload: `los-angeles_primary-player-photo-v1_f37435.jpg`
+- Original asset: `los-angeles_primary-player-photo-v1_f37435.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Los%20Angeles%20with%20Mount%20Baldy.jpg
+- Status: copied_local; raster_no_conversion
+- Ready: Yes
+
+## Jessica Shepard
+
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Status: copied_local; raster_no_conversion
+- Ready: Yes
+
+## Los Angeles Sparks.
+
+- Preferred upload: `los-angeles-sparks_primary-player-photo-v1_1a3a9d.jpg`
+- Original asset: `los-angeles-sparks_primary-player-photo-v1_1a3a9d.jpg`
+- Source URL: https://upload.wikimedia.org/wikipedia/commons/c/c2/The_Minnesota_Lynx_huddle_during_the_second_half_of_the_game_against_the_Los_Angeles_Sparks.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
@@ -98,7 +122,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 Use player photos exactly as mapped. If a player image is flagged for tight crop, crop to face/head-and-shoulders and avoid showing wrong-team, overseas, college, or national-team jersey marks.
 
-- Jessica Shepard: tight_face_crop_only | Use Jessica Shepard's image only for Jessica Shepard. Crop tightly if the jersey is not clearly Dallas Wings.
+- Jessica Shepard: normal_player_photo | Use Jessica Shepard's image only for Jessica Shepard.
 - Arike Ogunbowale: tight_face_crop_only | Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
 - Paige Bueckers: tight_face_crop_only | Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.
 - Kelsey Plum: tight_face_crop_only | Use Kelsey Plum's image only for Kelsey Plum. Crop tightly if the jersey is not clearly Los Angeles Sparks.
