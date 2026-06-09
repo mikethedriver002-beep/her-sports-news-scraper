@@ -1,0 +1,11 @@
+{
+  "version": "hsd-studio-visual-upgrade-v2.5",
+  "rules": [
+    "one dominant thesis per slide",
+    "never use boxed tables as full design",
+    "use exact assets only",
+    "text-forward when player assets missing",
+    "CTA/end slide required",
+    "manual review on fact warnings"
+  ]
+}

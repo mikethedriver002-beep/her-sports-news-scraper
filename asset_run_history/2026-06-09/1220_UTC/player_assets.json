@@ -1,0 +1,82 @@
+[
+  {
+    "player_id": "wnba_arike-ogunbowale",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "arike-ogunbowale",
+    "player_name": "Arike Ogunbowale",
+    "headshot_asset_id": "appr_2646dc354c1762",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_jessica-shepard",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "jessica-shepard",
+    "player_name": "Jessica Shepard",
+    "headshot_asset_id": "appr_e229246a508b2e",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_paige-bueckers",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "paige-bueckers",
+    "player_name": "Paige Bueckers",
+    "headshot_asset_id": "appr_717263c3d3e94e",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_kelsey-plum",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "kelsey-plum",
+    "player_name": "Kelsey Plum",
+    "headshot_asset_id": "appr_a6b966fc2efd2d",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikipedia_pageimage."
+  },
+  {
+    "player_id": "wnba_ariel-atkins",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "ariel-atkins",
+    "player_name": "Ariel Atkins",
+    "headshot_asset_id": "appr_d3440f8552d66f",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_dearica-hamby",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "dearica-hamby",
+    "player_name": "Dearica Hamby",
+    "headshot_asset_id": "appr_505914b839a2ec",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_nneka-ogwumike",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "nneka-ogwumike",
+    "player_name": "Nneka Ogwumike",
+    "headshot_asset_id": "appr_9a4d6394f0547e",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikidata_p18."
+  },
+  {
+    "player_id": "wnba_cameron-brink",
+    "sport": "basketball",
+    "league": "WNBA",
+    "player_slug": "cameron-brink",
+    "player_name": "Cameron Brink",
+    "headshot_asset_id": "appr_5665d39f6486d0",
+    "status": "asset_found",
+    "notes": "Required player image sourced via wikipedia_pageimage."
+  }
+]

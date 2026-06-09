@@ -1,7 +1,7 @@
 # HSD Asset Visual QA v1.6 Run Summary
 
-Run timestamp UTC: `2026-06-09 12:01:12 UTC`
-Archive folder: `asset_run_history/2026-06-09/1201_UTC`
+Run timestamp UTC: `2026-06-09 12:20:43 UTC`
+Archive folder: `asset_run_history/2026-06-09/1220_UTC`
 
 ## Row counts
 
@@ -14,7 +14,7 @@ Archive folder: `asset_run_history/2026-06-09/1201_UTC`
 - `asset_source_seed_list.csv`: 28
 - `fact_warning_queue.csv`: 0
 - `player_image_requirements.csv`: 8
-- `player_image_candidates.csv`: 43
+- `player_image_candidates.csv`: 49
 - `graphics_qa_results.csv`: 4
 - `graphics_chat_upload_manifest.csv`: 35
 - `graphics_upload_pack_status.csv`: 4
@@ -23,7 +23,7 @@ Archive folder: `asset_run_history/2026-06-09/1201_UTC`
 
 # HSD Player Image Sourcing Report
 
-Generated: 2026-06-09T12:01:08.213774+00:00
+Generated: 2026-06-09T12:20:39.728328+00:00
 Version: hsd-player-image-assets-v1.5-free-sourcing
 
 Player images required: Yes
@@ -32,7 +32,7 @@ Found required player images: 8
 Missing required player images: 0
 Free search enabled: Yes
 DuckDuckGo package available: Yes
-Candidate rows inspected: 43
+Candidate rows inspected: 49
 
 ## Required players
 
