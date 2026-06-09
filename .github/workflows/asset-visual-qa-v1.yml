@@ -1,11 +1,11 @@
-name: Her Sports Daily Asset Visual QA v1.8
+name: Her Sports Daily Asset Visual QA v1.8.1
 
 on:
   workflow_dispatch:
   workflow_run:
     workflows:
       - "Her Sports Daily Launch Control v1.1.2"
-      - "Her Sports Daily Studio Bridge v1.2"
+      - "Her Sports Daily Studio Bridge v1.3"
     types:
       - completed
   schedule:
@@ -95,7 +95,7 @@ jobs:
             done
 
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
-            git commit -m "Update HSD Asset Visual QA v1.8"
+            git commit -m "Update HSD Asset Visual QA v1.8.1"
             if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
@@ -105,5 +105,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-asset-visual-qa-v1-8
+          name: hsd-asset-visual-qa-v1-8-1
           path: asset_run_history/latest/
