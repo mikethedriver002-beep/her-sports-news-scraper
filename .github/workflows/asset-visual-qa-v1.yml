@@ -1,4 +1,4 @@
-name: Her Sports Daily Asset Visual QA v1.8.1
+name: Her Sports Daily Asset Visual QA v1.8.2
 
 on:
   workflow_dispatch:
@@ -95,7 +95,7 @@ jobs:
             done
 
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
-            git commit -m "Update HSD Asset Visual QA v1.8.1"
+            git commit -m "Update HSD Asset Visual QA v1.8.2"
             if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
@@ -105,5 +105,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-asset-visual-qa-v1-8-1
+          name: hsd-asset-visual-qa-v1-8-2
           path: asset_run_history/latest/
