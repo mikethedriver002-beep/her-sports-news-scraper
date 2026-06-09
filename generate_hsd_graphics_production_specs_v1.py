@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-graphics-production-specs-v1"
+VERSION = "hsd-graphics-production-specs-v1.5"
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_PLAYER_REQS = os.environ.get("HSD_PLAYER_IMAGE_REQUIREMENTS", "player_image_requirements.csv")
@@ -120,10 +120,15 @@ def append_specs_to_prompts(prompts: str, specs: Dict[str, Any]) -> str:
     if main["missing_required_player_images"]:
         spec_text += [
             "",
-            "STOP: Missing required player images. Do not generate this carousel until these player/person image files are uploaded:",
+            "STOP: Missing required player images. Do not generate this carousel until these player/person image files are uploaded or sourced by the free player-image pipeline:",
         ]
         for p in main["missing_required_player_images"]:
             spec_text.append(f"- {p}")
+    else:
+        spec_text += [
+            "",
+            "PLAYER IMAGE STATUS: required player/person images are present in the upload pack. Use the uploaded player image files only. Do not generate or invent people.",
+        ]
     spec_text += ["", "Slide-by-slide requirements:", ""]
     for s in main["slides"]:
         spec_text += [

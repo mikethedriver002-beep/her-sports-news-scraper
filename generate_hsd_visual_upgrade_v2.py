@@ -5,12 +5,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-studio-visual-upgrade-v2.2.2"
+VERSION = "hsd-studio-visual-upgrade-v2.5"
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
 INPUT_LAUNCH_GRAPHICS_BRIEF = os.environ.get("HSD_LAUNCH_GRAPHICS_BRIEF", "launch_graphics_chat_brief.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_FACT_WARNINGS = os.environ.get("HSD_FACT_WARNING_QUEUE", "fact_warning_queue.csv")
+
+MAIN_RESULT_REQUIRED_PLAYERS = {
+    "Jessica Shepard", "Arike Ogunbowale", "Paige Bueckers",
+    "Kelsey Plum", "Ariel Atkins", "Dearica Hamby", "Nneka Ogwumike", "Cameron Brink",
+}
 
 def now(): return datetime.now(timezone.utc).isoformat()
 def clean(v): return re.sub(r"\s+", " ", str(v or "")).strip()
@@ -74,7 +79,26 @@ def template_for(b):
 
 def matched_assets(bundle, assets):
     blob=" ".join(str(v).lower() for v in bundle.values())
-    return [a for a in assets if clean(a.get("entity_name")).lower() and clean(a.get("entity_name")).lower() in blob]
+    bundle_name = clean(bundle.get("bundle_name")).lower()
+    matched = []
+    for a in assets:
+        name = clean(a.get("entity_name"))
+        if not name:
+            continue
+        name_l = name.lower()
+        if name_l in blob:
+            matched.append(a)
+            continue
+        # Main result requires player/person assets even when the original source packet only names one side.
+        if "main wnba result" in bundle_name and name in MAIN_RESULT_REQUIRED_PLAYERS:
+            matched.append(a)
+    seen = set(); out=[]
+    for a in matched:
+        key = a.get("approved_asset_id") or a.get("source_url") or a.get("entity_name")
+        if key in seen:
+            continue
+        seen.add(key); out.append(a)
+    return out
 
 def warnings_for_bundle(bundle, warnings):
     """Attach warnings by bundle_id when possible, otherwise by subject/detail text.
@@ -121,7 +145,7 @@ def prompt(bundle, assets, warnings):
     safe_mode = "logos_and_text_only" if not player_assets else "player_images_allowed"
     safe_instruction = "Do not show any player photo. Use team logos, typography, score treatment, textures, and editorial design only." if safe_mode == "logos_and_text_only" else "Player photos are allowed only for approved exact player assets listed below. Never invent or substitute."
 
-    return f"""HSD VISUAL UPGRADE v2.2 PROMPT
+    return f"""HSD VISUAL UPGRADE v2.5 PROMPT
 Bundle: {clean(bundle.get('bundle_name'))}
 Template: {template_for(bundle)}
 Canvas: 1080x1350 carousel
