@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-studio-visual-upgrade-v2.2"
+VERSION = "hsd-studio-visual-upgrade-v2.2.1"
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
 INPUT_LAUNCH_GRAPHICS_BRIEF = os.environ.get("HSD_LAUNCH_GRAPHICS_BRIEF", "launch_graphics_chat_brief.md")
@@ -76,12 +76,45 @@ def matched_assets(bundle, assets):
     blob=" ".join(str(v).lower() for v in bundle.values())
     return [a for a in assets if clean(a.get("entity_name")).lower() and clean(a.get("entity_name")).lower() in blob]
 
-def warnings_for(bundle_id, warnings):
-    return [w for w in warnings if w.get("bundle_id") == bundle_id]
+def warnings_for_bundle(bundle, warnings):
+    """Attach warnings by bundle_id when possible, otherwise by subject/detail text.
+
+    v1.2 found warnings but sometimes the warning bundle_id and the later visual
+    bundle_id did not match because the bundle source was parsed from a different
+    file. This fallback makes sure high-risk warnings still reach prompts and QA.
+    """
+    bundle_id = bundle.get("bundle_id")
+    blob = " ".join(str(v).lower() for v in bundle.values())
+    out = []
+    for w in warnings:
+        if w.get("bundle_id") and w.get("bundle_id") == bundle_id:
+            out.append(w)
+            continue
+        subject = clean(w.get("subject")).lower()
+        details = clean(w.get("details")).lower()
+        if subject and subject in blob:
+            out.append(w)
+            continue
+        # For player/team mismatch warnings, also match if the named teams appear.
+        if w.get("warning_type") == "player_team_mismatch":
+            for token in re.findall(r"(?:expected team|says) ([A-Z][A-Za-z .'-]+)", w.get("details", "")):
+                if clean(token).lower() in blob:
+                    out.append(w)
+                    break
+    # Dedupe by warning_id/details.
+    seen = set()
+    deduped = []
+    for w in out:
+        key = w.get("warning_id") or w.get("details")
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(w)
+    return deduped
 
 def prompt(bundle, assets, warnings):
     m=matched_assets(bundle,assets)
-    bundle_warnings = warnings_for(bundle.get("bundle_id"), warnings)
+    bundle_warnings = warnings_for_bundle(bundle, warnings)
     player_assets = [a for a in m if a.get("entity_type") == "player"]
     approved_asset_block="\n".join([f"- {a.get('entity_name')} | {a.get('approved_variant')} | {a.get('source_url')}" for a in m]) or "No approved exact assets matched. Use premium text-forward design. Do not invent logos or players."
     warning_block="\n".join([f"- {w.get('warning_type')}: {w.get('details')}" for w in bundle_warnings]) or "No fact warnings."
@@ -130,7 +163,7 @@ def main():
     for i,b in enumerate(bundles,1):
         slug=slugify(b.get("bundle_name") or f"bundle-{i}")
         m=matched_assets(b,assets)
-        bw=warnings_for(b.get("bundle_id"), warnings)
+        bw=warnings_for_bundle(b, warnings)
         player_assets = [a.get("approved_asset_id") for a in m if a.get("entity_type") == "player" and a.get("approved_asset_id")]
         safe_mode = "logos_and_text_only" if not player_assets else "player_images_allowed"
         lines += [f"## {clean(b.get('bundle_name'))}","","```text",prompt(b,assets,warnings),"```",""]
@@ -150,7 +183,7 @@ def main():
     Path("studio_bundle_prompts_v2.md").write_text("\n".join(lines),encoding="utf-8")
     Path("studio_render_manifest_v2.json").write_text(json.dumps(render,indent=2),encoding="utf-8")
     Path("studio_visual_upgrade_v2.md").write_text(f"# HSD Studio Visual Upgrade v2.2\n\nGenerated: {now()}\n\nBundles: {len(bundles)}\nApproved exact assets: {len(assets)}\nFact warnings: {len(warnings)}\n",encoding="utf-8")
-    Path("visual_upgrade_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles":len(bundles),"approved_assets":len(assets),"fact_warnings":len(warnings)}},indent=2),encoding="utf-8")
+    Path("visual_upgrade_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles":len(bundles),"approved_assets":len(assets),"fact_warnings":len(warnings),"warnings_propagated_to_prompts":sum(1 for b in bundles if warnings_for_bundle(b, warnings))}},indent=2),encoding="utf-8")
     Path("visual_upgrade_dashboard/index.html").write_text(f"<html><body><h1>HSD Visual Upgrade v2.2</h1><p>Bundles: {len(bundles)}</p><p>Assets: {len(assets)}</p><p>Fact warnings: {len(warnings)}</p></body></html>",encoding="utf-8")
     print("Created HSD Visual Upgrade v2.2 outputs")
 
