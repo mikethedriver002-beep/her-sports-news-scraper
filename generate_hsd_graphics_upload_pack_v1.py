@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.6"
+VERSION = "hsd-graphics-upload-pack-v1.7.1"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -409,6 +409,8 @@ def main() -> None:
             "graphics_display_copy.csv",
             "graphics_banned_language.csv",
             "graphics_asset_usage_map.csv",
+            "graphics_layout_blueprint.csv",
+            "graphics_prompt_sanitizer_rules.md",
         ]:
             extra = Path(extra_name)
             if extra.exists():
@@ -536,6 +538,8 @@ def main() -> None:
             "graphics_display_copy.csv",
             "graphics_banned_language.csv",
             "graphics_asset_usage_map.csv",
+            "graphics_layout_blueprint.csv",
+            "graphics_prompt_sanitizer_rules.md",
         ],
     }, indent=2), encoding="utf-8")
 
@@ -584,7 +588,7 @@ def main() -> None:
             "Instructions to paste into the graphics chat:",
             "",
             "```text",
-            "Use the uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, and graphics_asset_usage_map.csv only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render the words Verified Final, Winner, or Loser. Output separate slide files.",
+            "Use the uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, and graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, and graphics_prompt_sanitizer_rules.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render the words Verified Final, Winner, or Loser. Output separate slide files.",
             "```",
             "",
         ]
