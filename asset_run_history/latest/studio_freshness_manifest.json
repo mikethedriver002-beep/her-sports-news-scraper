@@ -1,0 +1,16 @@
+{
+  "version": "hsd-studio-freshness-gate-v1.8",
+  "generated_at_utc": "2026-06-09T19:01:31.701680+00:00",
+  "counts": {
+    "bundles_checked": 4,
+    "allowed": 0,
+    "review": 0,
+    "blocked": 4
+  },
+  "outputs": [
+    "studio_freshness_gate.csv",
+    "studio_stale_packet_queue.csv",
+    "studio_freshness_report.md",
+    "studio_freshness_manifest.json"
+  ]
+}

@@ -24,17 +24,17 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Jessica Shepard
 
-- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_5c27d1.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_5c27d1.jpg`
+- Source URL: https://c8.alamy.com/comp/3BD05JN/minnesota-lynx-forward-jessica-shepard-15-looks-to-shoot-as-dallas-wings-forward-myisha-hines-allen-2-back-defends-during-the-second-half-of-a-wnba-basketball-game-wednesday-may-21-2025-in-minneapolis-ap-photoabbie-parr-3BD05JN.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
 ## Arike Ogunbowale
 
-- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_b00342.jpg`
-- Original asset: `arike-ogunbowale_primary-player-photo-v1_b00342.jpg`
-- Source URL: https://statico.profootballnetwork.com/wp-content/uploads/2025/05/11030756/arike-ogunbowale-paige-bueckers-impact-dallas-wings-1920x1280.jpg
+- Preferred upload: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Original asset: `arike-ogunbowale_primary-player-photo-v1_4c1762.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
@@ -85,3 +85,30 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Source URL: https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Cameron_Brink_Sparks_%28cropped%29.jpg/1280px-Cameron_Brink_Sparks_%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
+
+## Freshness gate
+
+- Decision: block
+- Status: blocked_missing_event_date
+- Event date: missing
+- Recommended label: Add event_date upstream or mark carryover
+- Reason: no event date found and strict freshness gate is enabled
+
+## Player image fit gate
+
+Use player photos exactly as mapped. If a player image is flagged for tight crop, crop to face/head-and-shoulders and avoid showing wrong-team, overseas, college, or national-team jersey marks.
+
+- Jessica Shepard: normal_player_photo | Use Jessica Shepard's image only for Jessica Shepard.
+- Arike Ogunbowale: tight_face_crop_only | Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
+- Paige Bueckers: tight_face_crop_only | Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.
+- Kelsey Plum: tight_face_crop_only | Use Kelsey Plum's image only for Kelsey Plum. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+- Ariel Atkins: tight_face_crop_only | Use Ariel Atkins's image only for Ariel Atkins. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+- Dearica Hamby: tight_face_crop_only | Use Dearica Hamby's image only for Dearica Hamby. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+- Nneka Ogwumike: tight_face_crop_only | Use Nneka Ogwumike's image only for Nneka Ogwumike. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+- Cameron Brink: tight_face_crop_only | Use Cameron Brink's image only for Cameron Brink. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+
+## REVIEW OR BLOCKED
+
+Upload pack status: blocked_freshness_gate
+
+Freshness gate blocked this packet. Do not post unless you intentionally relabel it as carryover/yesterday and accept the risk.

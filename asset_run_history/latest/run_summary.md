@@ -1,7 +1,7 @@
-# HSD Asset Visual QA v1.7.2 Run Summary
+# HSD Asset Visual QA v1.8 Run Summary
 
-Run timestamp UTC: `2026-06-09 14:35:13 UTC`
-Archive folder: `asset_run_history/2026-06-09/1435_UTC`
+Run timestamp UTC: `2026-06-09 19:01:35 UTC`
+Archive folder: `asset_run_history/2026-06-09/1901_UTC`
 
 ## Row counts
 
@@ -14,10 +14,14 @@ Archive folder: `asset_run_history/2026-06-09/1435_UTC`
 - `asset_source_seed_list.csv`: 28
 - `fact_warning_queue.csv`: 0
 - `player_image_requirements.csv`: 8
-- `player_image_candidates.csv`: 53
+- `player_image_candidates.csv`: 43
 - `graphics_qa_results.csv`: 4
 - `graphics_display_copy.csv`: 7
 - `graphics_banned_language.csv`: 10
+- `studio_freshness_gate.csv`: 4
+- `studio_stale_packet_queue.csv`: 4
+- `player_image_fit_gate.csv`: 8
+- `rendered_slide_qa.csv`: 0
 - `graphics_chat_upload_manifest.csv`: 35
 - `graphics_upload_pack_status.csv`: 4
 
@@ -25,7 +29,7 @@ Archive folder: `asset_run_history/2026-06-09/1435_UTC`
 
 # HSD Player Image Sourcing Report
 
-Generated: 2026-06-09T14:35:09.433876+00:00
+Generated: 2026-06-09T19:01:31.179266+00:00
 Version: hsd-player-image-assets-v1.5.1-free-sourcing
 
 Player images required: Yes
@@ -34,22 +38,22 @@ Found required player images: 8
 Missing required player images: 0
 Free search enabled: Yes
 DuckDuckGo package available: Yes
-Candidate rows inspected: 53
+Candidate rows inspected: 43
 
 ## Required players
 
-- found_downloaded_200 | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_wikidata_p18_496bd6.jpg | wikidata_p18
-- found_downloaded_200 | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_duckduckgo_images_free_ae0efd.jpg | duckduckgo_images_free
+- found_downloaded_200 | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_duckduckgo_images_free_201a9c.jpg | duckduckgo_images_free
+- found_downloaded_200 | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_wikidata_p18_660f71.jpg | wikidata_p18
 - found_downloaded_200 | Paige Bueckers | Dallas Wings | data/assets/player_images/paige-bueckers_wikidata_p18_154e0a.jpg | wikidata_p18
 
 ## Graphics chat upload pack
 
 - bundles: 4
 - asset rows: 35
-- files created: 35
-- png preferred created: 35
-- upload packs ready: 4
-- upload packs blocked: 0
+- files created: 34
+- png preferred created: 34
+- upload packs ready: 0
+- upload packs blocked: 4
 
 ## Missing optional files
 

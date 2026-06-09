@@ -66,8 +66,8 @@ Critical instruction: Player photos are allowed only for approved exact player a
 Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
-- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
-- Arike Ogunbowale | primary_player_photo_v1 | https://statico.profootballnetwork.com/wp-content/uploads/2025/05/11030756/arike-ogunbowale-paige-bueckers-impact-dallas-wings-1920x1280.jpg
+- Jessica Shepard | primary_player_photo_v1 | https://c8.alamy.com/comp/3BD05JN/minnesota-lynx-forward-jessica-shepard-15-looks-to-shoot-as-dallas-wings-forward-myisha-hines-allen-2-back-defends-during-the-second-half-of-a-wnba-basketball-game-wednesday-may-21-2025-in-minneapolis-ap-photoabbie-parr-3BD05JN.jpg
+- Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
 - Kelsey Plum | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg
 - Ariel Atkins | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ariel%20Atkins%203%20Fenerbah%C3%A7e%20WB%2020241002%20%28cropped%29.jpg
@@ -134,6 +134,24 @@ Accuracy beats aesthetics, but aesthetics must be premium.
 - player_photo: Dearica Hamby | Los Angeles Sparks | Use this image only for Dearica Hamby (Los Angeles Sparks) | Never: Never use this image for any player other than Dearica Hamby. Never swap with another player. If unsure, omit the photo rather than substituting
 - player_photo: Nneka Ogwumike | Los Angeles Sparks | Use this image only for Nneka Ogwumike (Los Angeles Sparks) | Never: Never use this image for any player other than Nneka Ogwumike. Never swap with another player. If unsure, omit the photo rather than substituting
 - player_photo: Cameron Brink | Los Angeles Sparks | Use this image only for Cameron Brink (Los Angeles Sparks) | Never: Never use this image for any player other than Cameron Brink. Never swap with another player. If unsure, omit the photo rather than substituting
+
+## Player image crop and fit rules
+
+- Jessica Shepard: Use Jessica Shepard's image only for Jessica Shepard.
+- Arike Ogunbowale: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
+  - Review note: public-source image needs visual review
+- Paige Bueckers: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.
+  - Review note: public-source image needs visual review
+- Kelsey Plum: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Kelsey Plum's image only for Kelsey Plum. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+  - Review note: public-source image needs visual review
+- Ariel Atkins: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Ariel Atkins's image only for Ariel Atkins. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+  - Review note: public-source image needs visual review
+- Dearica Hamby: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Dearica Hamby's image only for Dearica Hamby. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+  - Review note: public-source image needs visual review
+- Nneka Ogwumike: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Nneka Ogwumike's image only for Nneka Ogwumike. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+  - Review note: public-source image needs visual review
+- Cameron Brink: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Cameron Brink's image only for Cameron Brink. Crop tightly if the jersey is not clearly Los Angeles Sparks.
+  - Review note: public-source image needs visual review
 
 ## Internal-language rule
 

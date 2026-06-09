@@ -4,12 +4,8 @@ Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat can
 
 ## Main WNBA Result
 
-Recommended ZIP: `graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip`
+Status: BLOCKED
 
-Status: READY
+Missing assets: 
 
-Instructions to paste into the graphics chat:
-
-```text
-Use the sanitized uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, graphics_prompt_sanitizer_rules.md, and graphics_prompt_clean_report.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render internal terms such as Verified Final, Winner, Loser, BUNDLE LOCKED FACTS, source-safe context, graphics-safe context, or Do not alter. Output separate slide files.
-```
+Do not send this pack to the graphics chat yet.

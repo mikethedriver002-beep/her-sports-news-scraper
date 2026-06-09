@@ -1,0 +1,15 @@
+{
+  "version": "hsd-rendered-slide-qa-v1.8",
+  "generated_at_utc": "2026-06-09T19:01:35.607119+00:00",
+  "counts": {
+    "files_checked": 0,
+    "pass": 0,
+    "review": 0,
+    "fail": 0
+  },
+  "outputs": [
+    "rendered_slide_qa.csv",
+    "rendered_slide_qa_report.md",
+    "rendered_slide_qa_manifest.json"
+  ]
+}

@@ -1,16 +1,16 @@
 {
-  "version": "hsd-graphics-upload-pack-v1.7.2",
-  "generated_at_utc": "2026-06-09T14:35:13.325611+00:00",
+  "version": "hsd-graphics-upload-pack-v1.8",
+  "generated_at_utc": "2026-06-09T19:01:35.431915+00:00",
   "input_prompts": "studio_bundle_prompts_v2.md",
   "input_approved_assets": "approved_graphics_assets.csv",
   "input_render_manifest": "studio_render_manifest_v2.json",
   "counts": {
     "bundles": 4,
     "asset_rows": 35,
-    "files_created": 35,
-    "png_preferred_created": 35,
-    "upload_packs_ready": 4,
-    "upload_packs_blocked": 0
+    "files_created": 34,
+    "png_preferred_created": 34,
+    "upload_packs_ready": 0,
+    "upload_packs_blocked": 4
   },
   "outputs": [
     "graphics_chat_upload_pack",
@@ -28,6 +28,11 @@
     "graphics_layout_blueprint.csv",
     "graphics_prompt_sanitizer_rules.md",
     "graphics_prompt_clean_report.md",
-    "graphics_prompt_clean_manifest.json"
+    "graphics_prompt_clean_manifest.json",
+    "studio_freshness_gate.csv",
+    "studio_freshness_report.md",
+    "player_image_fit_gate.csv",
+    "player_image_fit_report.md",
+    "rendered_slide_qa_report.md"
   ]
 }

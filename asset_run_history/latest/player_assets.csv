@@ -1,6 +1,6 @@
 player_id,sport,league,player_slug,player_name,headshot_asset_id,status,notes
-wnba_arike-ogunbowale,basketball,WNBA,arike-ogunbowale,Arike Ogunbowale,appr_fb1a6b2fb00342,asset_found,Required player image sourced via duckduckgo_images_free.
-wnba_jessica-shepard,basketball,WNBA,jessica-shepard,Jessica Shepard,appr_e229246a508b2e,asset_found,Required player image sourced via wikidata_p18.
+wnba_arike-ogunbowale,basketball,WNBA,arike-ogunbowale,Arike Ogunbowale,appr_2646dc354c1762,asset_found,Required player image sourced via wikidata_p18.
+wnba_jessica-shepard,basketball,WNBA,jessica-shepard,Jessica Shepard,appr_02cebc205c27d1,asset_found,Required player image sourced via duckduckgo_images_free.
 wnba_paige-bueckers,basketball,WNBA,paige-bueckers,Paige Bueckers,appr_717263c3d3e94e,asset_found,Required player image sourced via wikidata_p18.
 wnba_kelsey-plum,basketball,WNBA,kelsey-plum,Kelsey Plum,appr_a6b966fc2efd2d,asset_found,Required player image sourced via wikipedia_pageimage.
 wnba_ariel-atkins,basketball,WNBA,ariel-atkins,Ariel Atkins,appr_d3440f8552d66f,asset_found,Required player image sourced via wikidata_p18.

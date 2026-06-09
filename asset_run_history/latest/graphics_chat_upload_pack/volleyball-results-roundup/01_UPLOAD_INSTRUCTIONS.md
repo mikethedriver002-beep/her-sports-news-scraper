@@ -93,3 +93,17 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Source URL: https://flagcdn.com/w320/us.png
 - Status: copied_local; already_png
 - Ready: Yes
+
+## Freshness gate
+
+- Decision: block
+- Status: blocked_missing_event_date
+- Event date: missing
+- Recommended label: Add event_date upstream or mark carryover
+- Reason: no event date found and strict freshness gate is enabled
+
+## REVIEW OR BLOCKED
+
+Upload pack status: blocked_freshness_gate
+
+Freshness gate blocked this packet. Do not post unless you intentionally relabel it as carryover/yesterday and accept the risk.
