@@ -1,6 +1,6 @@
 # HSD Graphics Prompt Sanitizer Rules v1.7
 
-Generated: 2026-06-09T20:59:44.873868+00:00
+Generated: 2026-06-09T21:30:55.752315+00:00
 
 ## Purpose
 

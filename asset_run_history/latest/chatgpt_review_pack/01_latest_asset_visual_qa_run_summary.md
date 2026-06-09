@@ -1,7 +1,7 @@
 # HSD Asset Visual QA v1.8.1 Run Summary
 
-Run timestamp UTC: `2026-06-09 20:59:49 UTC`
-Archive folder: `asset_run_history/2026-06-09/2059_UTC`
+Run timestamp UTC: `2026-06-09 21:30:59 UTC`
+Archive folder: `asset_run_history/2026-06-09/2130_UTC`
 
 ## Row counts
 
@@ -29,7 +29,7 @@ Archive folder: `asset_run_history/2026-06-09/2059_UTC`
 
 # HSD People and Player Image Sourcing Report
 
-Generated: 2026-06-09T20:59:44.407341+00:00
+Generated: 2026-06-09T21:30:55.273418+00:00
 Version: hsd-player-image-assets-v1.6-all-sports-people
 
 People/player images required: Yes
