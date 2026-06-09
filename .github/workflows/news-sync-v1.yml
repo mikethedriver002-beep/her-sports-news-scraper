@@ -1,4 +1,4 @@
-name: Her Sports Daily News Sync v1.8
+name: Her Sports Daily News Sync v1.8.1
 
 on:
   workflow_dispatch:
@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-news-sync.txt
 
-      - name: Run News Sync v1.8
+      - name: Run News Sync v1.8.1
         env:
           HSD_NEWS_MAX_MUST_POST: "5"
           HSD_NEWS_MAX_STRONG_MAYBE: "5"
@@ -59,13 +59,13 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-news-sync-v1-8
+          name: hsd-news-sync-v1-8-1
           path: news_run_history/latest/
 
-      - name: Commit and push updated news files
+      - name: Commit and push updated news files safely
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -88,28 +88,62 @@ jobs:
             "news_run_history"
           )
 
-          for file in "${FILES[@]}"; do
-            if [ -e "$file" ]; then
-              git add "$file"
-            else
-              echo "Optional output not present, skipping: $file"
+          stage_outputs() {
+            for file in "${FILES[@]}"; do
+              if [ -e "$file" ]; then
+                git add "$file"
+              else
+                echo "Optional output not present, skipping: $file"
+              fi
+            done
+          }
+
+          resolve_generated_conflicts_current_run_wins() {
+            echo "Resolving generated-output conflicts by keeping this run's generated files..."
+            conflicted="$(git diff --name-only --diff-filter=U || true)"
+            if [ -z "$conflicted" ]; then
+              return 0
             fi
-          done
+
+            echo "$conflicted" | while IFS= read -r file; do
+              if [ -n "$file" ]; then
+                echo "Keeping current-run version of: $file"
+                git checkout --theirs -- "$file" 2>/dev/null || true
+                git add "$file" 2>/dev/null || true
+              fi
+            done
+
+            git rebase --continue || git rebase --skip
+          }
+
+          stage_outputs
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          git commit -m "Update HSD News Sync v1.8"
+          git commit -m "Update HSD News Sync v1.8.1"
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
-            git pull --rebase --autostash origin main
+
+            # Clean up any rebase state left by a failed retry.
+            git rebase --abort 2>/dev/null || true
+
+            git fetch origin main
+
+            if git rebase origin/main; then
+              echo "Rebase succeeded"
+            else
+              resolve_generated_conflicts_current_run_wins
+            fi
+
             if git push origin HEAD:main; then
               echo "Push succeeded"
               exit 0
             fi
+
             echo "Push failed, retrying after short wait..."
             sleep 5
           done
