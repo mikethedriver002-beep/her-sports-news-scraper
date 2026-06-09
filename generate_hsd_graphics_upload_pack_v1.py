@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import mimetypes
 import os
@@ -24,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.4"
+VERSION = "hsd-graphics-upload-pack-v1.5.1"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -34,14 +33,65 @@ OUT_DIR = Path("graphics_chat_upload_pack")
 OUT_ZIP_DIR = Path("graphics_chat_upload_pack_zips")
 OUT_MANIFEST_CSV = "graphics_chat_upload_manifest.csv"
 OUT_MANIFEST_JSON = "graphics_chat_upload_manifest.json"
+OUT_STATUS_CSV = "graphics_upload_pack_status.csv"
+OUT_STATUS_JSON = "graphics_upload_pack_status.json"
 OUT_INSTRUCTIONS = "graphics_chat_upload_instructions.md"
 OUT_DIRECT_HANDOFF = "graphics_chat_direct_handoff.md"
 
 FIELDS = [
     "bundle_id", "post_slug", "bundle_name", "entity_name", "entity_type", "approved_asset_id",
     "approved_variant", "source_url", "source_domain", "local_asset_path", "local_png_path",
-    "asset_filename", "png_filename", "download_status", "conversion_status", "upload_instruction"
+    "asset_filename", "png_filename", "download_status", "conversion_status", "asset_ready",
+    "required_for_bundle", "upload_instruction"
 ]
+
+STATUS_FIELDS = [
+    "bundle_id", "post_slug", "bundle_name", "upload_pack_status", "assets_expected",
+    "assets_ready", "assets_missing", "missing_asset_names", "zip_path", "notes"
+]
+
+# Official/local fallback routes used only when the approved source URL cannot be turned
+# into a local file. These do not change the approved asset source, they only make the
+# upload pack reliable for graphics-chat handoff.
+TEAM_LOGO_DOWNLOAD_FALLBACKS = {
+    "Los Angeles Sparks": [
+        "https://cdn.wnba.com/logos/wnba/1611661320/primary/L/logo.svg",
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Los_Angeles_Sparks_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Los_Angeles_Sparks_logo.svg",
+    ],
+    "Minnesota Lynx": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Minnesota_Lynx_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Minnesota_Lynx_logo.svg",
+    ],
+    "Portland Fire": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Portland_Fire_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Portland_Fire_logo.svg",
+    ],
+    "Atlanta Dream": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Atlanta_Dream_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Atlanta_Dream_logo.svg",
+    ],
+    "Chicago Sky": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Chicago_Sky_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Chicago_Sky_logo.svg",
+    ],
+    "Connecticut Sun": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Connecticut_Sun_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Connecticut_Sun_logo.svg",
+    ],
+    "Indiana Fever": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Indiana_Fever_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Indiana_Fever_logo.svg",
+    ],
+    "New York Liberty": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/New_York_Liberty_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/New_York_Liberty_logo.svg",
+    ],
+    "Washington Mystics": [
+        "https://en.wikipedia.org/wiki/Special:Redirect/file/Washington_Mystics_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Washington_Mystics_logo.svg",
+    ],
+}
 
 
 def now() -> str:
@@ -95,7 +145,6 @@ def prompt_for_bundle(prompts_md: str, bundle_name: str) -> str:
     m = re.search(pat, prompts_md, flags=re.S)
     if m:
         return f"# {bundle_name}\n\n{m.group(1).strip()}\n"
-    # fallback by first title-ish phrase
     return prompts_md
 
 
@@ -105,89 +154,154 @@ def url_ext(url: str, content_type: str = "") -> str:
         if ext:
             return ".jpg" if ext == ".jpe" else ext
     suffix = Path(urlparse(url).path).suffix
-    if suffix:
-        return suffix
-    return ".asset"
+    return suffix or ".asset"
 
 
 def wikimedia_file_title_from_url(url: str) -> str:
-    name = unquote(Path(urlparse(url).path).name)
-    if not name:
+    path = unquote(urlparse(url).path)
+    parts = [p for p in path.split("/") if p]
+    if not parts:
         return ""
-    return name
+    # Upload thumb URLs look like /wikipedia/commons/thumb/1/1d/File.jpg/1280px-File.jpg
+    # The real file name is the second-to-last segment.
+    if "thumb" in parts and len(parts) >= 2:
+        return parts[-2]
+    if "Special:Redirect" in path or "Special:FilePath" in path:
+        return parts[-1]
+    return parts[-1]
 
 
-def mediawiki_image_url(file_name: str) -> str:
+def title_variants(file_name: str) -> List[str]:
+    if not file_name:
+        return []
+    raw = unquote(file_name)
+    variants = [
+        raw,
+        raw.replace("_", " "),
+        raw.replace(" ", "_"),
+    ]
+    out = []
+    for v in variants:
+        if v and v not in out:
+            out.append(v)
+    return out
+
+
+def mediawiki_image_urls(file_name: str) -> List[str]:
     if not requests or not file_name:
-        return ""
-    title = "File:" + file_name
-    for api in ["https://en.wikipedia.org/w/api.php", "https://commons.wikimedia.org/w/api.php"]:
-        try:
-            r = requests.get(
-                api,
-                params={
-                    "action": "query",
-                    "titles": title,
-                    "prop": "imageinfo",
-                    "iiprop": "url|mime",
-                    "format": "json",
-                },
-                headers={"User-Agent": "HSDGraphicsUploadPack/1.0"},
-                timeout=20,
-            )
-            if r.status_code >= 400:
+        return []
+    urls: List[str] = []
+    for title_name in title_variants(file_name):
+        title = "File:" + title_name
+        for api in ["https://en.wikipedia.org/w/api.php", "https://commons.wikimedia.org/w/api.php"]:
+            try:
+                r = requests.get(
+                    api,
+                    params={
+                        "action": "query",
+                        "titles": title,
+                        "redirects": "1",
+                        "prop": "imageinfo",
+                        "iiprop": "url|mime",
+                        "format": "json",
+                    },
+                    headers={"User-Agent": "HSDGraphicsUploadPack/1.5.1"},
+                    timeout=25,
+                )
+                if r.status_code >= 400:
+                    continue
+                pages = r.json().get("query", {}).get("pages", {})
+                for page in pages.values():
+                    for info in page.get("imageinfo", []) or []:
+                        u = info.get("url")
+                        if u and u not in urls:
+                            urls.append(u)
+            except Exception:
                 continue
-            pages = r.json().get("query", {}).get("pages", {})
-            for page in pages.values():
-                infos = page.get("imageinfo", [])
-                if infos and infos[0].get("url"):
-                    return infos[0]["url"]
-        except Exception:
-            continue
-    return ""
+    return urls
 
 
-def download_url(url: str, dest_dir: Path, base_name: str) -> Tuple[str, str]:
-    """Return local path and status."""
-    if not requests or not url:
-        return "", "no_requests_or_url"
+def candidate_urls_for_asset(asset: Dict[str, str]) -> List[str]:
+    source = clean(asset.get("source_url"))
+    entity = clean(asset.get("entity_name"))
+    candidates: List[str] = []
 
-    urls_to_try = [url]
-    if "wikimedia.org" in urlparse(url).netloc:
-        file_name = wikimedia_file_title_from_url(url)
-        api_url = mediawiki_image_url(file_name)
-        if api_url and api_url not in urls_to_try:
-            urls_to_try.append(api_url)
-        if file_name:
-            urls_to_try.append(f"https://en.wikipedia.org/wiki/Special:Redirect/file/{quote(file_name)}")
-            urls_to_try.append(f"https://commons.wikimedia.org/wiki/Special:Redirect/file/{quote(file_name)}")
+    def add(url: str) -> None:
+        if url and url not in candidates:
+            candidates.append(url)
 
-    for candidate in urls_to_try:
+    add(source)
+
+    if "wikimedia.org" in urlparse(source).netloc or "wikipedia.org" in urlparse(source).netloc:
+        file_name = wikimedia_file_title_from_url(source)
+        for u in mediawiki_image_urls(file_name):
+            add(u)
+        for variant in title_variants(file_name):
+            quoted = quote(variant, safe="")
+            add(f"https://en.wikipedia.org/wiki/Special:Redirect/file/{quoted}")
+            add(f"https://en.wikipedia.org/wiki/Special:FilePath/{quoted}")
+            add(f"https://commons.wikimedia.org/wiki/Special:Redirect/file/{quoted}")
+            add(f"https://commons.wikimedia.org/wiki/Special:FilePath/{quoted}")
+
+    for fallback in TEAM_LOGO_DOWNLOAD_FALLBACKS.get(entity, []):
+        add(fallback)
+
+    return candidates
+
+
+def looks_like_image_payload(raw: bytes, content_type: str, url: str) -> Tuple[bool, str]:
+    head = raw[:800].lower()
+    ctype = content_type.lower()
+    if "image/" in ctype:
+        return True, "content_type_image"
+    if b"<svg" in head:
+        return True, "svg_payload"
+    if raw.startswith(b"\x89PNG"):
+        return True, "png_signature"
+    if raw.startswith(b"\xff\xd8"):
+        return True, "jpeg_signature"
+    if raw.startswith(b"RIFF") and b"WEBP" in raw[:20]:
+        return True, "webp_signature"
+    # Some Wikimedia Special pages return HTML. Do not save those as images.
+    return False, "not_image_payload"
+
+
+def download_candidates(asset: Dict[str, str], dest_dir: Path, base_name: str) -> Tuple[str, str]:
+    if not requests:
+        return "", "no_requests"
+    errors: List[str] = []
+    for url in candidate_urls_for_asset(asset):
         try:
             r = requests.get(
-                candidate,
+                url,
                 headers={
-                    "User-Agent": "HSDGraphicsUploadPack/1.0",
+                    "User-Agent": "HSDGraphicsUploadPack/1.5.1",
                     "Accept": "image/svg+xml,image/png,image/jpeg,image/webp,*/*",
+                    "Referer": "https://www.wikipedia.org/",
                 },
-                timeout=30,
+                timeout=40,
                 allow_redirects=True,
             )
             if r.status_code >= 400 or not r.content:
+                errors.append(f"{url} -> status_{r.status_code}")
                 continue
-            ctype = r.headers.get("content-type", "")
-            ext = url_ext(candidate, ctype)
-            if ext.lower() in {".html", ".htm"} and b"<svg" not in r.content[:500].lower():
+            ok, reason = looks_like_image_payload(r.content, r.headers.get("content-type", ""), r.url)
+            if not ok:
+                errors.append(f"{url} -> {reason}")
                 continue
-            if b"<svg" in r.content[:500].lower():
+            ext = url_ext(r.url or url, r.headers.get("content-type", ""))
+            if b"<svg" in r.content[:800].lower():
                 ext = ".svg"
+            if ext.lower() in {".html", ".htm", ".php", ".aspx", ".asset"}:
+                ext = ".svg" if b"<svg" in r.content[:800].lower() else ".png"
             dest = dest_dir / f"{base_name}{ext}"
             dest.write_bytes(r.content)
-            return dest.as_posix(), f"downloaded:{r.status_code}"
+            return dest.as_posix(), f"downloaded:{r.status_code}:{reason}"
         except Exception as exc:
-            last_error = str(exc)
+            errors.append(f"{url} -> {type(exc).__name__}")
             continue
-    return "", "download_failed"
+    detail = "; ".join(errors[:4])
+    return "", f"download_failed:{detail}" if detail else "download_failed"
 
 
 def copy_or_download(asset: Dict[str, str], dest_dir: Path) -> Tuple[str, str]:
@@ -205,7 +319,7 @@ def copy_or_download(asset: Dict[str, str], dest_dir: Path) -> Tuple[str, str]:
             shutil.copy2(src, dest)
             return dest.as_posix(), "copied_local"
 
-    return download_url(clean(asset.get("source_url")), dest_dir, base_name)
+    return download_candidates(asset, dest_dir, base_name)
 
 
 def convert_to_png(local_path: str, dest_dir: Path) -> Tuple[str, str]:
@@ -217,7 +331,6 @@ def convert_to_png(local_path: str, dest_dir: Path) -> Tuple[str, str]:
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}:
-        # Still copy a PNG-named preferred version only if already PNG.
         if p.suffix.lower() == ".png":
             return p.as_posix(), "already_png"
         return p.as_posix(), "raster_no_conversion"
@@ -230,7 +343,7 @@ def convert_to_png(local_path: str, dest_dir: Path) -> Tuple[str, str]:
             cairosvg.svg2png(url=p.as_posix(), write_to=out.as_posix(), output_width=1200, output_height=1200)
             return out.as_posix(), "converted_svg_to_png"
         except Exception as exc:
-            return "", f"conversion_failed:{exc}"
+            return "", f"conversion_failed:{type(exc).__name__}"
 
     return "", "unsupported_conversion"
 
@@ -270,6 +383,7 @@ def main() -> None:
     asset_map = bundle_asset_map(render_manifest, approved_assets)
 
     manifest_rows: List[Dict[str, Any]] = []
+    status_rows: List[Dict[str, Any]] = []
 
     for bundle in render_manifest.get("bundles", []):
         post_slug = clean(bundle.get("post_slug")) or slugify(bundle.get("bundle_name"))
@@ -285,7 +399,13 @@ def main() -> None:
 
         prompt_text = prompt_for_bundle(prompts_md, bundle_name)
         (folder / "00_PROMPT_TO_PASTE.md").write_text(prompt_text, encoding="utf-8")
-        for extra_name in ["graphics_slide_blueprints.md", "graphics_production_specs.json", "player_image_requirements.csv", "player_image_sourcing_report.md"]:
+
+        for extra_name in [
+            "graphics_slide_blueprints.md",
+            "graphics_production_specs.json",
+            "player_image_requirements.csv",
+            "player_image_sourcing_report.md",
+        ]:
             extra = Path(extra_name)
             if extra.exists():
                 shutil.copy2(extra, folder / extra_name)
@@ -301,11 +421,21 @@ def main() -> None:
             "",
         ]
 
-        for asset in asset_map.get(post_slug, []):
+        expected_assets = asset_map.get(post_slug, [])
+        ready_count = 0
+        missing_names: List[str] = []
+
+        for asset in expected_assets:
             local_path, status = copy_or_download(asset, asset_folder)
             png_path, conversion_status = convert_to_png(local_path, png_folder)
             upload_path = png_path or local_path
-            upload_instruction = f"Upload {Path(upload_path).name}" if upload_path else "No file created, use text-forward for this asset"
+            asset_ready = bool(upload_path and Path(upload_path).exists())
+            if asset_ready:
+                ready_count += 1
+                upload_instruction = f"Upload {Path(upload_path).name}"
+            else:
+                missing_names.append(clean(asset.get("entity_name")))
+                upload_instruction = "MISSING REQUIRED FILE: rerun upload pack or add this asset manually"
 
             manifest_rows.append({
                 "bundle_id": bundle_id,
@@ -323,6 +453,8 @@ def main() -> None:
                 "png_filename": Path(png_path).name if png_path else "",
                 "download_status": status,
                 "conversion_status": conversion_status,
+                "asset_ready": "Yes" if asset_ready else "No",
+                "required_for_bundle": "Yes",
                 "upload_instruction": upload_instruction,
             })
 
@@ -333,38 +465,83 @@ def main() -> None:
                 f"- Original asset: `{Path(local_path).name if local_path else 'missing'}`",
                 f"- Source URL: {asset.get('source_url')}",
                 f"- Status: {status}; {conversion_status}",
+                f"- Ready: {'Yes' if asset_ready else 'No'}",
+                "",
+            ])
+
+        missing_count = len(missing_names)
+        upload_status = "ready" if missing_count == 0 else "blocked_missing_required_assets"
+        if missing_count:
+            instructions.extend([
+                "## BLOCKED",
+                "",
+                "This upload pack is incomplete. Do not send this bundle to the graphics chat until the missing files are fixed.",
+                "",
+                "Missing assets:",
+                "",
+                *[f"- {name}" for name in missing_names],
                 "",
             ])
 
         (folder / "01_UPLOAD_INSTRUCTIONS.md").write_text("\n".join(instructions), encoding="utf-8")
-        zip_folder(folder, OUT_ZIP_DIR / f"{post_slug}_graphics_chat_upload_pack.zip")
+        zip_path = OUT_ZIP_DIR / f"{post_slug}_graphics_chat_upload_pack.zip"
+        zip_folder(folder, zip_path)
+
+        status_rows.append({
+            "bundle_id": bundle_id,
+            "post_slug": post_slug,
+            "bundle_name": bundle_name,
+            "upload_pack_status": upload_status,
+            "assets_expected": len(expected_assets),
+            "assets_ready": ready_count,
+            "assets_missing": missing_count,
+            "missing_asset_names": "; ".join(missing_names),
+            "zip_path": zip_path.as_posix(),
+            "notes": "Upload pack is complete." if upload_status == "ready" else "Do not use this upload pack until missing assets are fixed.",
+        })
 
     write_csv(OUT_MANIFEST_CSV, manifest_rows, FIELDS)
+    write_csv(OUT_STATUS_CSV, status_rows, STATUS_FIELDS)
+
+    counts = {
+        "bundles": len(render_manifest.get("bundles", [])),
+        "asset_rows": len(manifest_rows),
+        "files_created": sum(1 for r in manifest_rows if r.get("local_asset_path") or r.get("local_png_path")),
+        "png_preferred_created": sum(1 for r in manifest_rows if r.get("local_png_path")),
+        "upload_packs_ready": sum(1 for r in status_rows if r.get("upload_pack_status") == "ready"),
+        "upload_packs_blocked": sum(1 for r in status_rows if r.get("upload_pack_status") != "ready"),
+    }
+
     Path(OUT_MANIFEST_JSON).write_text(json.dumps({
         "version": VERSION,
         "generated_at_utc": now(),
         "input_prompts": INPUT_PROMPTS,
         "input_approved_assets": INPUT_APPROVED_ASSETS,
         "input_render_manifest": INPUT_RENDER_MANIFEST,
-        "counts": {
-            "bundles": len(render_manifest.get("bundles", [])),
-            "asset_rows": len(manifest_rows),
-            "files_created": sum(1 for r in manifest_rows if r.get("local_asset_path") or r.get("local_png_path")),
-            "png_preferred_created": sum(1 for r in manifest_rows if r.get("local_png_path")),
-        },
+        "counts": counts,
         "outputs": [
             OUT_DIR.as_posix(),
             OUT_ZIP_DIR.as_posix(),
             OUT_MANIFEST_CSV,
             OUT_MANIFEST_JSON,
+            OUT_STATUS_CSV,
+            OUT_STATUS_JSON,
             OUT_INSTRUCTIONS,
+            OUT_DIRECT_HANDOFF,
         ],
+    }, indent=2), encoding="utf-8")
+
+    Path(OUT_STATUS_JSON).write_text(json.dumps({
+        "version": VERSION,
+        "generated_at_utc": now(),
+        "counts": counts,
+        "bundles": status_rows,
     }, indent=2), encoding="utf-8")
 
     instructions = [
         "# HSD Graphics Chat Upload Instructions",
         "",
-        "The graphics chat cannot reliably fetch external logo URLs. Use this upload pack instead.",
+        "The graphics chat cannot reliably fetch external logo or player image URLs. Use this upload pack instead.",
         "",
         "For the post you are making:",
         "",
@@ -376,43 +553,53 @@ def main() -> None:
         "",
         "Quick ZIPs are in `graphics_chat_upload_pack_zips/`.",
         "",
-        "For Main WNBA Result, upload:",
-        "",
-        "- `graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip`",
+        "Upload pack status is in `graphics_upload_pack_status.csv`.",
         "",
     ]
     Path(OUT_INSTRUCTIONS).write_text("\n".join(instructions), encoding="utf-8")
 
-    # Build a short direct handoff file for the most likely first graphic.
     direct = [
         "# HSD Graphics Chat Direct Handoff",
         "",
         "Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat cannot unzip.",
         "",
     ]
-    main_zip = OUT_ZIP_DIR / "main-wnba-result_graphics_chat_upload_pack.zip"
-    if main_zip.exists():
+    main_status = next((r for r in status_rows if r.get("post_slug") == "main-wnba-result"), None)
+    if main_status and main_status.get("upload_pack_status") == "ready":
         direct += [
             "## Main WNBA Result",
             "",
-            f"Recommended ZIP: `{main_zip.as_posix()}`",
+            f"Recommended ZIP: `{main_status.get('zip_path')}`",
+            "",
+            "Status: READY",
             "",
             "Instructions to paste into the graphics chat:",
             "",
             "```text",
-            "Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. If required player/person images are missing, stop and ask for the files. Output separate slide files.",
+            "Use the uploaded prompt, uploaded logo files, and uploaded player/person image files only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Output separate slide files.",
             "```",
+            "",
+        ]
+    elif main_status:
+        direct += [
+            "## Main WNBA Result",
+            "",
+            "Status: BLOCKED",
+            "",
+            f"Missing assets: {main_status.get('missing_asset_names')}",
+            "",
+            "Do not send this pack to the graphics chat yet.",
             "",
         ]
     else:
         direct += [
-            "Main WNBA Result ZIP was not created. Check graphics_chat_upload_manifest.csv for missing asset download rows.",
+            "Main WNBA Result ZIP was not created. Check graphics_chat_upload_manifest.csv.",
             "",
         ]
     Path(OUT_DIRECT_HANDOFF).write_text("\n".join(direct), encoding="utf-8")
 
     print("Created HSD graphics upload pack")
-    print(json.dumps(json.loads(Path(OUT_MANIFEST_JSON).read_text())["counts"], indent=2))
+    print(json.dumps(counts, indent=2))
 
 
 if __name__ == "__main__":

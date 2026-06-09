@@ -11,7 +11,7 @@ FILES = [
     "asset_desk_manifest.json", "brand_system", "studio_templates_v2", "studio_visual_upgrade_v2.md", "studio_bundle_prompts_v2.md",
     "studio_render_manifest_v2.json", "visual_upgrade_manifest.json", "visual_upgrade_dashboard/index.html", "graphics_qa_results.csv",
     "graphics_qa_report.md", "graphics_qa_manifest.json", "graphics_qa_dashboard/index.html", "graphics_chat_upload_pack",
-    "graphics_chat_upload_pack_zips", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json",
+    "graphics_chat_upload_pack_zips", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json", "graphics_upload_pack_status.csv", "graphics_upload_pack_status.json",
     "graphics_chat_upload_instructions.md", "graphics_chat_direct_handoff.md", "data/assets", "chatgpt_review_pack",
     "hsd_chatgpt_review_packet.md", "latest_asset_visual_qa_run_summary.md"
 ]
@@ -30,9 +30,11 @@ CHATGPT_REVIEW_FILES = [
     ("11_graphics_chat_upload_instructions.md", "graphics_chat_upload_instructions.md"),
     ("12_graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.csv"),
     ("13_graphics_chat_direct_handoff.md", "graphics_chat_direct_handoff.md"),
-    ("14_graphics_qa_report.md", "graphics_qa_report.md"),
-    ("15_visual_upgrade_manifest.json", "visual_upgrade_manifest.json"),
-    ("16_graphics_qa_manifest.json", "graphics_qa_manifest.json"),
+    ("14_graphics_upload_pack_status.csv", "graphics_upload_pack_status.csv"),
+    ("15_graphics_upload_pack_status.json", "graphics_upload_pack_status.json"),
+    ("16_graphics_qa_report.md", "graphics_qa_report.md"),
+    ("17_visual_upgrade_manifest.json", "visual_upgrade_manifest.json"),
+    ("18_graphics_qa_manifest.json", "graphics_qa_manifest.json"),
 ]
 
 
@@ -113,7 +115,7 @@ def main() -> None:
     latest.mkdir(parents=True, exist_ok=True)
 
     counts = {name: row_count(Path(name)) for name in FILES if name.endswith(".csv") and Path(name).exists()}
-    summary = ["# HSD Asset Visual QA v1.5 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
+    summary = ["# HSD Asset Visual QA v1.5.1 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
     for k, v in counts.items(): summary.append(f"- `{k}`: {v}")
 
     if Path("player_image_sourcing_report.md").exists():
@@ -125,7 +127,7 @@ def main() -> None:
         try:
             obj = json.loads(read_text_safe("graphics_chat_upload_manifest.json"))
             c = obj.get("counts", {})
-            summary += ["", "## Graphics chat upload pack", "", f"- bundles: {c.get('bundles', 0)}", f"- asset rows: {c.get('asset_rows', 0)}", f"- files created: {c.get('files_created', 0)}", f"- png preferred created: {c.get('png_preferred_created', 0)}"]
+            summary += ["", "## Graphics chat upload pack", "", f"- bundles: {c.get('bundles', 0)}", f"- asset rows: {c.get('asset_rows', 0)}", f"- files created: {c.get('files_created', 0)}", f"- png preferred created: {c.get('png_preferred_created', 0)}", f"- upload packs ready: {c.get('upload_packs_ready', 0)}", f"- upload packs blocked: {c.get('upload_packs_blocked', 0)}"]
         except Exception:
             pass
 
@@ -155,7 +157,7 @@ def main() -> None:
     copy_any(Path("chatgpt_review_pack"), run)
     copy_any(Path("chatgpt_review_pack"), latest)
 
-    print("Archived HSD Asset Visual QA v1.5")
+    print("Archived HSD Asset Visual QA v1.5.1")
 
 
 if __name__ == "__main__":

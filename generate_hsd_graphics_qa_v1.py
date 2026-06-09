@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION="hsd-graphics-qa-scorer-v1.5"
+VERSION="hsd-graphics-qa-scorer-v1.5.1"
 INPUT_RENDER_MANIFEST=os.environ.get("HSD_RENDER_MANIFEST","studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS=os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS","approved_graphics_assets.csv")
 FIELDS=["qa_run_id","bundle_id","post_slug","template_name","render_path","score_total","critical_fail","decision","issues_json","remediation_suggestions","checked_utc"]
@@ -27,6 +27,7 @@ def main():
     if Path(INPUT_RENDER_MANIFEST).exists():
         manifest=json.loads(Path(INPUT_RENDER_MANIFEST).read_text(encoding="utf-8"))
     approved={r.get("approved_asset_id") for r in read_csv_any(INPUT_APPROVED_ASSETS) if r.get("approved_asset_id")}
+    upload_status_rows={r.get("post_slug"): r for r in read_csv_any("graphics_upload_pack_status.csv") if r.get("post_slug")}
     bundles=manifest.get("bundles",[])
     rows=[]
     run="qa_"+datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -47,19 +48,24 @@ def main():
             pass
         if b.get("post_slug") == "main-wnba-result" and missing_required_players:
             issues.append({"code":"MISSING_REQUIRED_PLAYER_IMAGES","severity":"critical","message":", ".join([r.get("player_name","") for r in missing_required_players])}); score-=45
+        upload_row = upload_status_rows.get(b.get("post_slug"))
+        if upload_row and upload_row.get("upload_pack_status") != "ready":
+            issues.append({"code":"UPLOAD_PACK_INCOMPLETE","severity":"critical","message":upload_row.get("missing_asset_names","missing required upload assets")}); score-=45
+        if not upload_row:
+            issues.append({"code":"UPLOAD_PACK_STATUS_MISSING","severity":"major","message":"graphics_upload_pack_status.csv has no row for this bundle"}); score-=10
         if not Path(b.get("render_path","")).exists():
             issues.append({"code":"RENDER_NOT_FOUND","severity":"review","message":"Graphic file not exported yet. Manifest QA only."}); score-=5
         decision="fail" if any(i["severity"]=="critical" for i in issues) or score<70 else "revise" if score<85 else "pass_with_review" if issues else "pass"
         rows.append({"qa_run_id":run,"bundle_id":b.get("bundle_id"),"post_slug":b.get("post_slug"),"template_name":b.get("template_name"),"render_path":b.get("render_path"),"score_total":max(0,score),"critical_fail":"Yes" if decision=="fail" else "No","decision":decision,"issues_json":json.dumps(issues),"remediation_suggestions":"Resolve fact warnings, export graphic, and rerun QA.","checked_utc":now()})
     write_csv("graphics_qa_results.csv",rows,FIELDS)
-    report=["# HSD Graphics QA Scorer v1.5 Report","",f"Generated: {now()}","",f"Bundles scored: {len(rows)}",""]
+    report=["# HSD Graphics QA Scorer v1.5.1 Report","",f"Generated: {now()}","",f"Bundles scored: {len(rows)}",""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:
         report += [f"## {r['post_slug']}","",f"- Decision: **{r['decision']}**",f"- Score: {r['score_total']}",f"- Issues: `{r['issues_json']}`",""]
     Path("graphics_qa_report.md").write_text("\n".join(report),encoding="utf-8")
-    Path("graphics_qa_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles_scored":len(rows)}},indent=2),encoding="utf-8")
-    Path("graphics_qa_dashboard/index.html").write_text(f"<html><body><h1>Graphics QA v1.5</h1><p>Bundles scored: {len(rows)}</p></body></html>",encoding="utf-8")
+    Path("graphics_qa_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles_scored":len(rows),"upload_status_rows":len(upload_status_rows)}},indent=2),encoding="utf-8")
+    Path("graphics_qa_dashboard/index.html").write_text(f"<html><body><h1>Graphics QA v1.5.1</h1><p>Bundles scored: {len(rows)}</p></body></html>",encoding="utf-8")
     print("Created HSD Graphics QA v1.5 outputs")
 if __name__=="__main__":
     main()
