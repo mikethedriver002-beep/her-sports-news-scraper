@@ -1,0 +1,5 @@
+{
+  "template_name": "top_performers_v2",
+  "purpose": "Top performer context with approved player/logo assets.",
+  "tokens_ref": "brand_system/hsd_tokens.json"
+}
