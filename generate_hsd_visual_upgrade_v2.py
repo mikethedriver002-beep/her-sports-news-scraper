@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-studio-visual-upgrade-v2.5"
+VERSION = "hsd-studio-visual-upgrade-v2.6-event-dates"
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
 INPUT_LAUNCH_GRAPHICS_BRIEF = os.environ.get("HSD_LAUNCH_GRAPHICS_BRIEF", "launch_graphics_chat_brief.md")
@@ -53,7 +53,7 @@ def parse_bundle_text(text: str) -> List[Dict[str,str]]:
         lock=re.search(r"### Accuracy lock\s+(.+?)(?:\n---|\Z)", block, re.S)
         sm=re.search(r"Source items:\s*(.+)", block)
         btype="main_wnba_lead" if "Main WNBA" in name else "wnba_mini_roundup" if "WNBA" in name or "Tonight in the W" in name else "volleyball_roundup" if "Volleyball" in name else "soccer_radar" if "Soccer" in name else "bundle"
-        bundles.append({"bundle_rank":rank,"bundle_id":sid("bundle",name),"bundle_name":name,"bundle_type":btype,"production_priority":"POST FIRST" if rank=="1" else "POST NEXT","source_headlines":clean(sm.group(1)) if sm else "", "caption_seed":clean(cap.group(1)) if cap else "", "accuracy_lock":clean(lock.group(1)) if lock else ""})
+        bundles.append({"bundle_rank":rank,"bundle_id":sid("bundle",name),"bundle_name":name,"bundle_type":btype,"production_priority":"POST FIRST" if rank=="1" else "POST NEXT","source_headlines":clean(sm.group(1)) if sm else "", "caption_seed":clean(cap.group(1)) if cap else "", "accuracy_lock":clean(lock.group(1)) if lock else "", "event_date": "", "event_datetime": "", "result_date": "", "freshness_status": "", "freshness_decision": ""})
     return bundles
 
 def load_bundles():
@@ -150,6 +150,8 @@ Bundle: {clean(bundle.get('bundle_name'))}
 Template: {template_for(bundle)}
 Canvas: 1080x1350 carousel
 Source facts: {clean(bundle.get('source_headlines'))}
+Event date: {clean(bundle.get('event_date') or bundle.get('result_date')) or 'missing'}
+Freshness: {clean(bundle.get('freshness_status')) or 'unknown'} / {clean(bundle.get('freshness_decision')) or 'unknown'}
 Caption/context: {clean(bundle.get('caption_seed'))}
 Accuracy lock: {clean(bundle.get('accuracy_lock'))}
 
@@ -198,18 +200,34 @@ def main():
             "template_name":template_for(b),
             "asset_ids":[a.get("approved_asset_id") for a in m if a.get("approved_asset_id")],
             "safe_graphics_mode": safe_mode,
+            "event_date": b.get("event_date") or b.get("result_date") or "",
+            "event_datetime": b.get("event_datetime") or "",
+            "result_date": b.get("result_date") or b.get("event_date") or "",
+            "freshness_status": b.get("freshness_status") or "",
+            "freshness_decision": b.get("freshness_decision") or "",
+            "source_run_timestamp": b.get("source_run_timestamp") or "",
             "fact_warning_count": len(bw),
-            "source_facts":{"source_headlines":b.get("source_headlines"),"caption_seed":b.get("caption_seed"),"accuracy_lock":b.get("accuracy_lock")},
+            "source_facts":{
+                "source_headlines":b.get("source_headlines"),
+                "caption_seed":b.get("caption_seed"),
+                "accuracy_lock":b.get("accuracy_lock"),
+                "event_date": b.get("event_date") or b.get("result_date") or "",
+                "event_datetime": b.get("event_datetime") or "",
+                "result_date": b.get("result_date") or b.get("event_date") or "",
+                "freshness_status": b.get("freshness_status") or "",
+                "freshness_decision": b.get("freshness_decision") or "",
+                "source_event_dates_json": b.get("source_event_dates_json") or "[]",
+            },
             "text_layers":[{"layer_id":slug+"_headline","text":b.get("bundle_name"),"font_size_px":72,"font_weight":800,"color_hex":"#F4F7FB","background_hex":"#071226","essential":True}],
             "all_layers":[{"layer_id":slug+"_watermark","bbox":[48,48,76,76]},{"layer_id":slug+"_headline","bbox":[96,160,850,220]},{"layer_id":slug+"_cta","bbox":[96,1150,888,110]}],
             "render_path":f"generated_graphics/{slug}.png"
         })
     Path("studio_bundle_prompts_v2.md").write_text("\n".join(lines),encoding="utf-8")
     Path("studio_render_manifest_v2.json").write_text(json.dumps(render,indent=2),encoding="utf-8")
-    Path("studio_visual_upgrade_v2.md").write_text(f"# HSD Studio Visual Upgrade v2.2\n\nGenerated: {now()}\n\nBundles: {len(bundles)}\nApproved exact assets: {len(assets)}\nFact warnings: {len(warnings)}\n",encoding="utf-8")
+    Path("studio_visual_upgrade_v2.md").write_text(f"# HSD Studio Visual Upgrade v2.6\n\nGenerated: {now()}\n\nBundles: {len(bundles)}\nApproved exact assets: {len(assets)}\nFact warnings: {len(warnings)}\n",encoding="utf-8")
     Path("visual_upgrade_manifest.json").write_text(json.dumps({"version":VERSION,"generated_at_utc":now(),"counts":{"bundles":len(bundles),"approved_assets":len(assets),"fact_warnings":len(warnings),"warnings_propagated_to_prompts":sum(1 for b in bundles if warnings_for_bundle(b, warnings))}},indent=2),encoding="utf-8")
-    Path("visual_upgrade_dashboard/index.html").write_text(f"<html><body><h1>HSD Visual Upgrade v2.2</h1><p>Bundles: {len(bundles)}</p><p>Assets: {len(assets)}</p><p>Fact warnings: {len(warnings)}</p></body></html>",encoding="utf-8")
-    print("Created HSD Visual Upgrade v2.2 outputs")
+    Path("visual_upgrade_dashboard/index.html").write_text(f"<html><body><h1>HSD Visual Upgrade v2.6</h1><p>Bundles: {len(bundles)}</p><p>Assets: {len(assets)}</p><p>Fact warnings: {len(warnings)}</p></body></html>",encoding="utf-8")
+    print("Created HSD Visual Upgrade v2.6 outputs")
 
 if __name__=="__main__":
     main()
