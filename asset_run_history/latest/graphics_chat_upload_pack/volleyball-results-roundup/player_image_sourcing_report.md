@@ -1,6 +1,6 @@
 # HSD People and Player Image Sourcing Report
 
-Generated: 2026-06-09T21:30:55.273418+00:00
+Generated: 2026-06-09T23:11:20.226649+00:00
 Version: hsd-player-image-assets-v1.6-all-sports-people
 
 People/player images required: Yes
@@ -13,7 +13,7 @@ Candidate rows inspected: 47
 
 ## Required people and players
 
-- found_downloaded | main-wnba-result | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_img_1720d64e496bd6.jpg | wikidata_p18
+- found_downloaded | main-wnba-result | Jessica Shepard | Dallas Wings | data/assets/player_images/jessica-shepard_img_d10dd596201a9c.jpg | duckduckgo_images_free
 - found_downloaded | main-wnba-result | Arike Ogunbowale | Dallas Wings | data/assets/player_images/arike-ogunbowale_img_b657bc0d660f71.jpg | wikidata_p18
 - found_downloaded | main-wnba-result | Paige Bueckers | Dallas Wings | data/assets/player_images/paige-bueckers_img_83ab92fe154e0a.jpg | wikidata_p18
 - found_downloaded | main-wnba-result | Kelsey Plum | Los Angeles Sparks | data/assets/player_images/kelsey-plum_img_4a7054cd62f785.jpg | wikidata_p18

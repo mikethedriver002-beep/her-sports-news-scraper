@@ -1,12 +1,12 @@
 {
   "version": "hsd-graphics-upload-pack-v1.8",
-  "generated_at_utc": "2026-06-09T21:30:59.464507+00:00",
+  "generated_at_utc": "2026-06-09T23:11:32.658765+00:00",
   "input_prompts": "studio_bundle_prompts_v2.md",
   "input_approved_assets": "approved_graphics_assets.csv",
   "input_render_manifest": "studio_render_manifest_v2.json",
   "counts": {
     "bundles": 4,
-    "asset_rows": 37,
+    "asset_rows": 38,
     "files_created": 37,
     "png_preferred_created": 37,
     "upload_packs_ready": 0,

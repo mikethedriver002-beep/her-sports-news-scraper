@@ -68,7 +68,7 @@ Critical instruction: Player photos are allowed only for approved exact player a
 Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
-- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Jessica Shepard | primary_player_photo_v1 | https://c8.alamy.com/comp/3BD05JN/minnesota-lynx-forward-jessica-shepard-15-looks-to-shoot-as-dallas-wings-forward-myisha-hines-allen-2-back-defends-during-the-second-half-of-a-wnba-basketball-game-wednesday-may-21-2025-in-minneapolis-ap-photoabbie-parr-3BD05JN.jpg
 - Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
 - Kelsey Plum | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Kelsey%20Plum%20Fenerbah%C3%A7e%20Women%27s%20Basketball%20vs%20BC%20Nadezhda%20Orenburg%20EuroLeague%20Women%2020171011%20%282%29%20%28cropped%29.jpg
@@ -77,6 +77,7 @@ Approved exact assets:
 - Nneka Ogwumike | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg
 - Cameron Brink | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Cameron%20Brink%20%28cropped%29.jpg
 - Los Angeles | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Los%20Angeles%20with%20Mount%20Baldy.jpg
+- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
 - Los Angeles Sparks. | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/c/c2/The_Minnesota_Lynx_huddle_during_the_second_half_of_the_game_against_the_Los_Angeles_Sparks.jpg
 
 Fact warnings:
@@ -141,8 +142,7 @@ Accuracy beats aesthetics, but aesthetics must be premium.
 
 ## Player image crop and fit rules
 
-- Jessica Shepard: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Jessica Shepard's image only for Jessica Shepard. Crop tightly if the jersey is not clearly Dallas Wings.
-  - Review note: public-source image needs visual review
+- Jessica Shepard: Use Jessica Shepard's image only for Jessica Shepard.
 - Arike Ogunbowale: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
   - Review note: public-source image needs visual review
 - Paige Bueckers: tight face/head-and-shoulders crop only. Avoid showing wrong-team, overseas, college, or national-team jersey marks. Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.

@@ -1,6 +1,6 @@
 # HSD Bundle Prompts v2.2
 
-Generated: 2026-06-09T21:30:55.715380+00:00
+Generated: 2026-06-09T23:11:20.670872+00:00
 
 ## Main WNBA Result
 
@@ -65,7 +65,7 @@ Critical instruction: Player photos are allowed only for approved exact player a
 Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
-- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Jessica Shepard | primary_player_photo_v1 | https://c8.alamy.com/comp/3BD05JN/minnesota-lynx-forward-jessica-shepard-15-looks-to-shoot-as-dallas-wings-forward-myisha-hines-allen-2-back-defends-during-the-second-half-of-a-wnba-basketball-game-wednesday-may-21-2025-in-minneapolis-ap-photoabbie-parr-3BD05JN.jpg
 - Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
 - Kelsey Plum | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Kelsey%20Plum%20Fenerbah%C3%A7e%20Women%27s%20Basketball%20vs%20BC%20Nadezhda%20Orenburg%20EuroLeague%20Women%2020171011%20%282%29%20%28cropped%29.jpg
@@ -74,6 +74,7 @@ Approved exact assets:
 - Nneka Ogwumike | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Ogwumike%2020161011.jpg
 - Cameron Brink | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Cameron%20Brink%20%28cropped%29.jpg
 - Los Angeles | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Los%20Angeles%20with%20Mount%20Baldy.jpg
+- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
 - Los Angeles Sparks. | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/c/c2/The_Minnesota_Lynx_huddle_during_the_second_half_of_the_game_against_the_Los_Angeles_Sparks.jpg
 
 Fact warnings:

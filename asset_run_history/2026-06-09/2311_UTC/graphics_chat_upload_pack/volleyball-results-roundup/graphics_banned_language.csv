@@ -1,0 +1,11 @@
+term,severity,replacement,reason
+Verified Final,hard_ban,Final / Final Score,Keep verification internal only. Display language must sound editorial.
+VERIFIED FINAL,hard_ban,Final / Final Score,Keep verification internal only. Display language must sound editorial.
+Winner,soft_ban,Dallas gets the win / Dallas beats L.A.,Too generic for HSD graphics.
+Loser,hard_ban,Los Angeles Sparks / Sparks fall,Harsh and uneditorial.
+Your Take?,soft_ban,What stood out?,More natural CTA language.
+Biggest takeaway,soft_ban,What stood out in this one?,Avoid repetitive robotic CTA copy.
+BUNDLE LOCKED FACTS,hard_ban,,Internal instruction only.
+source-safe context,hard_ban,,Internal instruction only.
+graphics-safe context,hard_ban,,Internal instruction only.
+Do not alter,hard_ban,,Internal instruction only.

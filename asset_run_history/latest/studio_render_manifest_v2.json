@@ -1,6 +1,6 @@
 {
   "version": "hsd-studio-visual-upgrade-v2.6-event-dates",
-  "generated_at_utc": "2026-06-09T21:30:55.715418+00:00",
+  "generated_at_utc": "2026-06-09T23:11:20.670906+00:00",
   "bundles": [
     {
       "bundle_id": "bundle_34740d18e445ce",
@@ -10,7 +10,7 @@
       "asset_ids": [
         "appr_7ca8ac2b2a4ad9",
         "appr_7eea0085424fe3",
-        "appr_e229246a508b2e",
+        "appr_02cebc205c27d1",
         "appr_2646dc354c1762",
         "appr_717263c3d3e94e",
         "appr_d8c206f8d07cbd",
@@ -19,6 +19,7 @@
         "appr_9a4d6394f0547e",
         "appr_26395171db11b9",
         "appr_315287c0f37435",
+        "appr_e229246a508b2e",
         "appr_14945fd31a3a9d"
       ],
       "safe_graphics_mode": "player_images_allowed",
