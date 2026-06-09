@@ -114,7 +114,7 @@ def main():
         if copy(src,run) and copy(src,latest): copied.append(name)
         else: missing.append(name)
     counts={n:rows(Path(n)) for n in copied if n.endswith(".csv")}
-    summary=["# HSD Asset Visual QA v1.2.1 Run Summary","",f"Run timestamp UTC: `{stamp}`",f"Archive folder: `{run.as_posix()}`","","## Row counts",""]
+    summary=["# HSD Asset Visual QA v1.2.2 Run Summary","",f"Run timestamp UTC: `{stamp}`",f"Archive folder: `{run.as_posix()}`","","## Row counts",""]
     for k,v in counts.items(): summary.append(f"- `{k}`: {v}")
     summary += ["","## Missing optional files",""] + [f"- `{m}`" for m in missing]
     text="\n".join(summary)+"\n"

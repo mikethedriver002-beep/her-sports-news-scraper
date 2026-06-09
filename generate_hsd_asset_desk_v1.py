@@ -17,7 +17,7 @@ try:
 except Exception:
     requests = None
 
-VERSION = "hsd-asset-desk-v1.2"
+VERSION = "hsd-asset-desk-v1.2.2"
 
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
@@ -82,7 +82,7 @@ PLAYER_TEAM_HINTS = {
     "DeWanna Bonner": "Phoenix Mercury",
     "Gabby Williams": "Seattle Storm",
     "Jackie Young": "Las Vegas Aces",
-    "Jessica Shepard": "Minnesota Lynx",
+    "Jessica Shepard": "Dallas Wings",
     "Natasha Howard": "Indiana Fever",
     "Olivia Miles": "Minnesota Lynx",
     "Paige Bueckers": "Dallas Wings",
