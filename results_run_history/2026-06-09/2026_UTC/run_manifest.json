@@ -1,0 +1,22 @@
+{
+  "run_timestamp_utc": "2026-06-09 20:26:29 UTC",
+  "archive_folder": "results_run_history/2026-06-09/2026_UTC",
+  "copied_files": [
+    "today_results_board.csv",
+    "today_box_scores.csv",
+    "top_performers.csv",
+    "results_graphics_queue.md",
+    "results_dashboard_seed.csv",
+    "results_system_hub.md",
+    "results_dashboard/index.html"
+  ],
+  "missing_files": [],
+  "row_counts": {
+    "today_results_board.csv": 8,
+    "today_box_scores.csv": 8,
+    "top_performers.csv": 15,
+    "results_dashboard_seed.csv": 8
+  },
+  "github_run_id": "27233636943",
+  "github_sha": "4b0a2f0aac79853237af19c2316fb0f7d71cb642"
+}
