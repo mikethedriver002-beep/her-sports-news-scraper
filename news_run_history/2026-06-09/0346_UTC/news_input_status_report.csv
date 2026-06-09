@@ -1,0 +1,8 @@
+input_name,resolved_path,exists,size_bytes,line_count,has_result_graphic,has_must_post,has_strong_maybe,notes
+results_graphics_queue,results_graphics_queue.md,Yes,6989,194,Yes,No,No,No RESULT GRAPHIC blocks parsed. Check that Results Desk has run and committed results_graphics_queue.md.
+daily_results_recommendations,daily_results_recommendations.md,Yes,464,25,No,Yes,Yes,Fallback recommendations parser also produced 0 candidates.
+wnba_box_score_summary,wnba_box_score_summary.md,Yes,129,5,No,No,No,
+results_system_hub,results_system_hub.md,Yes,896,32,No,No,No,
+top_womens_results_csv,top_womens_results.csv,Yes,8595,9,No,No,No,CSV candidate builder also produced 0 candidates.
+reconciled_events_csv,reconciled_events.csv,Yes,8595,9,No,No,No,Loaded 8 CSV rows.
+today_final_results_csv,today_final_results.csv,Yes,3380,3,No,No,No,Loaded 2 CSV rows.
