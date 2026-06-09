@@ -1,7 +1,7 @@
 # Her Sports Daily News Sync v1.8 Hub
 
-Run ID: `5784a88eda094630`
-Generated: `2026-06-09T18:37:24.765066+00:00`
+Run ID: `a74512f4fbe6160c`
+Generated: `2026-06-09T18:44:52.068197+00:00`
 
 ## Architecture
 
