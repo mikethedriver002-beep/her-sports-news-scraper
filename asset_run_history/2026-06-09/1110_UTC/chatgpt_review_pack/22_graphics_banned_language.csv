@@ -1,0 +1,10 @@
+term,severity,replacement,reason
+Verified Final,hard_ban,Final,Sounds robotic and database-like on graphics. Keep verification internal only.
+VERIFIED FINAL,hard_ban,Final,Same as above.
+Winner,soft_ban,Dallas wins it / team name,Generic label. Use editorial result language instead.
+Loser,hard_ban,Los Angeles Sparks / final score,Too harsh and not editorial.
+Your Take?,soft_ban,What stood out?,Less generic CTA.
+Biggest takeaway,soft_ban,What stood out in Dallas’ win?,More natural sentence.
+BUNDLE LOCKED FACTS,hard_ban,,Internal instruction only.
+source-safe context,hard_ban,,Internal instruction only.
+Do not alter,hard_ban,,Internal instruction only.
