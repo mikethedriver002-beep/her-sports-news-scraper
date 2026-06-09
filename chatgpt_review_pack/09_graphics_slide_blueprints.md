@@ -1,55 +1,54 @@
 # HSD Graphics Slide Blueprints
 
-Generated: 2026-06-09T12:20:40.140956+00:00
+Generated: 2026-06-09T13:40:10.831051+00:00
 
 ## Main WNBA Result
 
 Decision: `ready_for_graphics_chat`
 
-### Slide 1: Result hero with people
+### Slide 1: Result hero with both teams represented
 
-Layout: Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.
+Layout: Two-player hero, Dallas left/cyan, Sparks right/magenta. Both sides should feel visually full.
 
 Must include:
 
-- Dallas Wings player/person image
-- Los Angeles Sparks player/person image
+- One Dallas player image
+- One Sparks player image
 - Dallas Wings logo
 - Los Angeles Sparks logo
-- Dallas Wings 104
-- Los Angeles Sparks 96
-- Final in Los Angeles
+- Dallas 104
+- Los Angeles 96
 
 Forbidden:
 
-- fake jerseys
-- fake numbers
-- logo-only cover if player images are present
-- empty right or left side
+- Verified Final
+- empty side
+- logos-only cover when player images are available
+- fake players or fake jerseys
 
 ### Slide 2: Balanced final score board
 
-Layout: Symmetric split scoreboard. Fill both sides equally with score slab, team label, logo, and small context strip. No extra logo floating on the left margin.
+Layout: Symmetric split scoreboard. Fill both sides equally with team name, score, and logo.
 
 Must include:
 
+- Final Score
 - Dallas Wings 104
 - Los Angeles Sparks 96
-- Dallas wins it
-- Final Score
 - one Dallas logo
 - one Sparks logo
 
 Forbidden:
 
-- duplicate logo in corner or left rail
+- Winner label
+- Loser label
+- Verified Final strip
 - empty side
-- tiny robotic verification strip
-- cropped score
+- duplicate logo floating in margin
 
 ### Slide 3: Two-sided top performers
 
-Layout: Two equal columns. Left column Dallas leaders. Right column Sparks leaders. Use small player photos if uploaded. Use logos only as column headers. No giant logo in the margin.
+Layout: Two equal columns or stacked two-team comparison. Use Dallas players only on the Dallas side and Sparks players only on the Sparks side.
 
 Must include:
 
@@ -66,23 +65,24 @@ Forbidden:
 
 - Wings-only performer slide
 - Sparks side missing
-- duplicate logo on left rail
-- players assigned to wrong team
+- duplicate giant team logo in the margin
+- mixed-up player identities
 
 ### Slide 4: CTA with filled composition
 
-Layout: Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.
+Layout: Strong CTA with score echo, both logos, HSD branding, and one community prompt.
 
 Must include:
 
 - What stood out?
 - Follow Her Sports Daily
-- both team logos
-- HSD lockup
-- Dallas 104 · Los Angeles 96
+- Dallas 104
+- Los Angeles 96
+- both logos
 
 Forbidden:
 
-- huge empty dark area
-- logo pair only with no context
+- dead space
+- Verified Final
+- generic robotic CTA
 - same composition as slide 2

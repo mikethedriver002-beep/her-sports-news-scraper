@@ -1,52 +1,52 @@
 # HSD Bundle Prompts v2.2
 
-Generated: 2026-06-09T12:20:40.106348+00:00
+Generated: 2026-06-09T13:40:10.793558+00:00
 
 ## Main WNBA Result
 
 
-### STRICT HSD SLIDE BLUEPRINT OVERRIDE
+### STRICT HSD SLIDE BLUEPRINT OVERRIDE v1.7
 
 Player images required: YES
 Production decision: ready_for_graphics_chat
 
-PLAYER IMAGE STATUS: required player/person images are present in the upload pack. Use the uploaded player image files only. Do not generate or invent people.
+PROMPT SANITIZER RULES:
+- Strip internal QA language before writing the final prompt.
+- Never render: Verified Final, Winner, Loser, BUNDLE LOCKED FACTS, source-safe context, graphics-safe context, or Do not alter.
+- Prefer display language from graphics_display_copy.csv.
+- If both team performer data exists, slide 3 must include both teams.
+- If approved player images exist, use them. Do not replace with invented people.
 
-DISPLAY COPY LANGUAGE RULES:
-- Keep verification language internal. Do not render 'Verified Final' on any slide.
-- Use 'Final', 'Final Score', 'Dallas wins it', or 'Wings Take L.A.' instead.
-- Do not render 'Winner' or 'Loser' labels. Use team names and natural result language.
-- Do not render internal QA phrases such as BUNDLE LOCKED FACTS, source-safe context, or do not alter.
-- Use the exact display copy from graphics_display_copy.csv when that file is uploaded.
+PLAYER IMAGE STATUS: required player images are present in the upload pack. Use the uploaded player image files only.
 
 Slide-by-slide requirements:
 
-SLIDE 1 - Result hero with people
-Layout: Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.
-Must include: Dallas Wings player/person image; Los Angeles Sparks player/person image; Dallas Wings logo; Los Angeles Sparks logo; Dallas Wings 104; Los Angeles Sparks 96; Final in Los Angeles
-Forbidden: fake jerseys; fake numbers; logo-only cover if player images are present; empty right or left side
+SLIDE 1 - Result hero with both teams represented
+Layout: Two-player hero, Dallas left/cyan, Sparks right/magenta. Both sides should feel visually full.
+Must include: One Dallas player image; One Sparks player image; Dallas Wings logo; Los Angeles Sparks logo; Dallas 104; Los Angeles 96
+Forbidden: Verified Final; empty side; logos-only cover when player images are available; fake players or fake jerseys
 
 SLIDE 2 - Balanced final score board
-Layout: Symmetric split scoreboard. Fill both sides equally with score slab, team label, logo, and small context strip. No extra logo floating on the left margin.
-Must include: Dallas Wings 104; Los Angeles Sparks 96; Dallas wins it; Final Score; one Dallas logo; one Sparks logo
-Forbidden: duplicate logo in corner or left rail; empty side; tiny robotic verification strip; cropped score
+Layout: Symmetric split scoreboard. Fill both sides equally with team name, score, and logo.
+Must include: Final Score; Dallas Wings 104; Los Angeles Sparks 96; one Dallas logo; one Sparks logo
+Forbidden: Winner label; Loser label; Verified Final strip; empty side; duplicate logo floating in margin
 
 SLIDE 3 - Two-sided top performers
-Layout: Two equal columns. Left column Dallas leaders. Right column Sparks leaders. Use small player photos if uploaded. Use logos only as column headers. No giant logo in the margin.
+Layout: Two equal columns or stacked two-team comparison. Use Dallas players only on the Dallas side and Sparks players only on the Sparks side.
 Must include: Dallas leaders; Sparks leaders; Jessica Shepard 22 PTS 15 REB 5 AST 2 STL; Arike Ogunbowale 30 PTS 6 REB 6 AST; Paige Bueckers 18 PTS 3 REB 14 AST 1 STL; Kelsey Plum 27 PTS 6 AST; Ariel Atkins 16 PTS; Dearica Hamby 15 PTS
-Forbidden: Wings-only performer slide; Sparks side missing; duplicate logo on left rail; players assigned to wrong team
+Forbidden: Wings-only performer slide; Sparks side missing; duplicate giant team logo in the margin; mixed-up player identities
 
 SLIDE 4 - CTA with filled composition
-Layout: Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.
-Must include: What stood out?; Follow Her Sports Daily; both team logos; HSD lockup; Dallas 104 · Los Angeles 96
-Forbidden: huge empty dark area; logo pair only with no context; same composition as slide 2
+Layout: Strong CTA with score echo, both logos, HSD branding, and one community prompt.
+Must include: What stood out?; Follow Her Sports Daily; Dallas 104; Los Angeles 96; both logos
+Forbidden: dead space; Verified Final; generic robotic CTA; same composition as slide 2
 
-Global correction from previous output:
-- Do not put a duplicate Dallas Wings logo on the left margin of the top performers slide.
-- Do not create a Wings-only top performers slide. Sparks performers are required too.
-- Keep slide 2 balanced so neither side feels empty.
-- Use uploaded player/person images when present. No fake player bodies or fake jersey numbers.
-- Do not render the phrase Verified Final; use Final or Final Score.
+Global correction rules from prior runs:
+- Never render the phrase Verified Final.
+- Never label teams as Winner or Loser.
+- Slide 2 must feel balanced on both sides.
+- Slide 3 must include Sparks performers as well as Dallas performers.
+- Do not place a duplicate team logo in an unused margin just to fill space.
 
 ```text
 HSD VISUAL UPGRADE v2.5 PROMPT
@@ -63,7 +63,7 @@ Critical instruction: Player photos are allowed only for approved exact player a
 Approved exact assets:
 - Dallas Wings | primary_logo_v1 | https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg
 - Los Angeles Sparks | primary_logo_v1 | https://upload.wikimedia.org/wikipedia/en/9/98/Los_Angeles_Sparks_logo.svg
-- Jessica Shepard | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Jessica Shepard | primary_player_photo_v1 | https://c8.alamy.com/comp/3BBRAY4/dallas-wings-guard-paige-bueckers-5-fouls-minnesota-lynx-forward-jessica-shepard-15-who-shoots-in-the-second-half-of-a-wnba-basketball-game-friday-may-16-2025-in-arlington-texas-ap-photorichard-w-rodriguez-3BBRAY4.jpg
 - Arike Ogunbowale | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Arike%20Ogunbowale%2001%20%28cropped%29.jpg
 - Paige Bueckers | primary_player_photo_v1 | https://commons.wikimedia.org/wiki/Special:Redirect/file/Paige%20Bueckers%20Dallas%20Wings%202%20%28cropped%29.jpg
 - Kelsey Plum | primary_player_photo_v1 | https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kelsey_Plum_2025_Sparks_%28cropped%29.jpg/1280px-Kelsey_Plum_2025_Sparks_%28cropped%29.jpg

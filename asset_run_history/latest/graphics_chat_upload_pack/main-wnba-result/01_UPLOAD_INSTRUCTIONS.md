@@ -24,9 +24,9 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Jessica Shepard
 
-- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_56a690.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_56a690.jpg`
+- Source URL: https://c8.alamy.com/comp/3BBRAY4/dallas-wings-guard-paige-bueckers-5-fouls-minnesota-lynx-forward-jessica-shepard-15-who-shoots-in-the-second-half-of-a-wnba-basketball-game-friday-may-16-2025-in-arlington-texas-ap-photorichard-w-rodriguez-3BBRAY4.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 

@@ -1,6 +1,6 @@
 {
-  "version": "hsd-graphics-production-specs-v1.6",
-  "generated_at_utc": "2026-06-09T12:20:40.140702+00:00",
+  "version": "hsd-graphics-production-specs-v1.7.1",
+  "generated_at_utc": "2026-06-09T13:40:10.830713+00:00",
   "posts": [
     {
       "post_slug": "main-wnba-result",
@@ -9,44 +9,61 @@
       "missing_required_player_images": [],
       "decision": "ready_for_graphics_chat",
       "slide_count": 4,
+      "language_rules": {
+        "must_not_render": [
+          "Verified Final",
+          "Winner",
+          "Loser",
+          "BUNDLE LOCKED FACTS",
+          "source-safe context",
+          "graphics-safe context",
+          "Do not alter"
+        ],
+        "preferred_display_words": [
+          "Final",
+          "Final Score",
+          "Dallas gets the win",
+          "What stood out?",
+          "Follow Her Sports Daily"
+        ]
+      },
       "slides": [
         {
           "slide": 1,
-          "name": "Result hero with people",
+          "name": "Result hero with both teams represented",
           "must_include": [
-            "Dallas Wings player/person image",
-            "Los Angeles Sparks player/person image",
+            "One Dallas player image",
+            "One Sparks player image",
             "Dallas Wings logo",
             "Los Angeles Sparks logo",
-            "Dallas Wings 104",
-            "Los Angeles Sparks 96",
-            "Final in Los Angeles"
+            "Dallas 104",
+            "Los Angeles 96"
           ],
-          "layout": "Two-player hero, Dallas left/cyan, Los Angeles right/magenta. Headline centered lower third. Logos small near score, not repeated in margins.",
+          "layout": "Two-player hero, Dallas left/cyan, Sparks right/magenta. Both sides should feel visually full.",
           "forbidden": [
-            "fake jerseys",
-            "fake numbers",
-            "logo-only cover if player images are present",
-            "empty right or left side"
+            "Verified Final",
+            "empty side",
+            "logos-only cover when player images are available",
+            "fake players or fake jerseys"
           ]
         },
         {
           "slide": 2,
           "name": "Balanced final score board",
           "must_include": [
+            "Final Score",
             "Dallas Wings 104",
             "Los Angeles Sparks 96",
-            "Dallas wins it",
-            "Final Score",
             "one Dallas logo",
             "one Sparks logo"
           ],
-          "layout": "Symmetric split scoreboard. Fill both sides equally with score slab, team label, logo, and small context strip. No extra logo floating on the left margin.",
+          "layout": "Symmetric split scoreboard. Fill both sides equally with team name, score, and logo.",
           "forbidden": [
-            "duplicate logo in corner or left rail",
+            "Winner label",
+            "Loser label",
+            "Verified Final strip",
             "empty side",
-            "tiny robotic verification strip",
-            "cropped score"
+            "duplicate logo floating in margin"
           ]
         },
         {
@@ -62,19 +79,17 @@
             "Ariel Atkins 16 PTS",
             "Dearica Hamby 15 PTS"
           ],
-          "layout": "Two equal columns. Left column Dallas leaders. Right column Sparks leaders. Use small player photos if uploaded. Use logos only as column headers. No giant logo in the margin.",
+          "layout": "Two equal columns or stacked two-team comparison. Use Dallas players only on the Dallas side and Sparks players only on the Sparks side.",
           "forbidden": [
             "Wings-only performer slide",
             "Sparks side missing",
-            "duplicate logo on left rail",
-            "players assigned to wrong team"
+            "duplicate giant team logo in the margin",
+            "mixed-up player identities"
           ],
           "sparks_performers": [
-            "Kelsey Plum (Los Angeles Sparks): PTS 27, AST 6",
-            "Ariel Atkins (Los Angeles Sparks): PTS 16",
-            "Dearica Hamby (Los Angeles Sparks): PTS 15",
-            "Nneka Ogwumike (Los Angeles Sparks): PTS 13, REB 10",
-            "Cameron Brink (Los Angeles Sparks): PTS 10"
+            "Kelsey Plum (Los Angeles Sparks): 27 PTS, 6 AST",
+            "Ariel Atkins (Los Angeles Sparks): 16 PTS",
+            "Dearica Hamby (Los Angeles Sparks): 15 PTS"
           ]
         },
         {
@@ -83,14 +98,15 @@
           "must_include": [
             "What stood out?",
             "Follow Her Sports Daily",
-            "both team logos",
-            "HSD lockup",
-            "Dallas 104 \u00b7 Los Angeles 96"
+            "Dallas 104",
+            "Los Angeles 96",
+            "both logos"
           ],
-          "layout": "Strong CTA, but not empty. Use both logos in footer, basketball texture, score echo, and one comment prompt.",
+          "layout": "Strong CTA with score echo, both logos, HSD branding, and one community prompt.",
           "forbidden": [
-            "huge empty dark area",
-            "logo pair only with no context",
+            "dead space",
+            "Verified Final",
+            "generic robotic CTA",
             "same composition as slide 2"
           ]
         }
