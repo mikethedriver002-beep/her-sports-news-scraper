@@ -1,6 +1,6 @@
 {
   "version": "hsd-graphics-upload-pack-v1.4",
-  "generated_at_utc": "2026-06-09T01:57:41.913470+00:00",
+  "generated_at_utc": "2026-06-09T01:58:54.276295+00:00",
   "input_prompts": "studio_bundle_prompts_v2.md",
   "input_approved_assets": "approved_graphics_assets.csv",
   "input_render_manifest": "studio_render_manifest_v2.json",

@@ -1,0 +1,4 @@
+player_id,sport,league,player_slug,player_name,headshot_asset_id,status,notes
+wnba_arike-ogunbowale,basketball,WNBA,arike-ogunbowale,Arike Ogunbowale,,text_forward_only,No player image approved. Do not use fallback or fake player image.
+wnba_jessica-shepard,basketball,WNBA,jessica-shepard,Jessica Shepard,,text_forward_only,No player image approved. Do not use fallback or fake player image.
+wnba_paige-bueckers,basketball,WNBA,paige-bueckers,Paige Bueckers,,text_forward_only,No player image approved. Do not use fallback or fake player image.
