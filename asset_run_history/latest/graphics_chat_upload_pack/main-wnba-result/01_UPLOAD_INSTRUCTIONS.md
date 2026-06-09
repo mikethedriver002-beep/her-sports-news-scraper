@@ -24,9 +24,9 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 ## Jessica Shepard
 
-- Preferred upload: `jessica-shepard_primary-player-photo-v1_5c27d1.jpg`
-- Original asset: `jessica-shepard_primary-player-photo-v1_5c27d1.jpg`
-- Source URL: https://c8.alamy.com/comp/3BD05JN/minnesota-lynx-forward-jessica-shepard-15-looks-to-shoot-as-dallas-wings-forward-myisha-hines-allen-2-back-defends-during-the-second-half-of-a-wnba-basketball-game-wednesday-may-21-2025-in-minneapolis-ap-photoabbie-parr-3BD05JN.jpg
+- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
+- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
@@ -94,14 +94,6 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 - Status: copied_local; raster_no_conversion
 - Ready: Yes
 
-## Jessica Shepard
-
-- Preferred upload: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Original asset: `jessica-shepard_primary-player-photo-v1_508b2e.jpg`
-- Source URL: https://commons.wikimedia.org/wiki/Special:Redirect/file/Jessica%20Shepard%20%28cropped%29.jpg
-- Status: copied_local; raster_no_conversion
-- Ready: Yes
-
 ## Los Angeles Sparks.
 
 - Preferred upload: `los-angeles-sparks_primary-player-photo-v1_1a3a9d.jpg`
@@ -122,7 +114,7 @@ Do not let the graphics chat fetch logo or player image URLs. Logos and player/p
 
 Use player photos exactly as mapped. If a player image is flagged for tight crop, crop to face/head-and-shoulders and avoid showing wrong-team, overseas, college, or national-team jersey marks.
 
-- Jessica Shepard: normal_player_photo | Use Jessica Shepard's image only for Jessica Shepard.
+- Jessica Shepard: tight_face_crop_only | Use Jessica Shepard's image only for Jessica Shepard. Crop tightly if the jersey is not clearly Dallas Wings.
 - Arike Ogunbowale: tight_face_crop_only | Use Arike Ogunbowale's image only for Arike Ogunbowale. Crop tightly if the jersey is not clearly Dallas Wings.
 - Paige Bueckers: tight_face_crop_only | Use Paige Bueckers's image only for Paige Bueckers. Crop tightly if the jersey is not clearly Dallas Wings.
 - Kelsey Plum: tight_face_crop_only | Use Kelsey Plum's image only for Kelsey Plum. Crop tightly if the jersey is not clearly Los Angeles Sparks.
