@@ -1,0 +1,1 @@
+run_id,candidate_id,source_id,source_name,source_priority,source_type,url,domain,fetch_status,http_status,title,description,matched_terms,published_hint,usable_context,context_signal,fetched_at_utc,review_flag,notes
