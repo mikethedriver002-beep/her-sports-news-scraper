@@ -9,7 +9,7 @@ FILES=[
 "asset_source_seed_list.csv","fact_warning_queue.csv","asset_candidates_review.md","asset_desk_manifest.json","brand_system","studio_templates_v2",
 "studio_visual_upgrade_v2.md","studio_bundle_prompts_v2.md","studio_render_manifest_v2.json","visual_upgrade_manifest.json",
 "visual_upgrade_dashboard/index.html","graphics_qa_results.csv","graphics_qa_report.md","graphics_qa_manifest.json",
-"graphics_qa_dashboard/index.html","data/assets","chatgpt_review_pack","hsd_chatgpt_review_packet.md"
+"graphics_qa_dashboard/index.html","graphics_chat_upload_pack","graphics_chat_upload_pack_zips","graphics_chat_upload_manifest.csv","graphics_chat_upload_manifest.json","graphics_chat_upload_instructions.md","data/assets","chatgpt_review_pack","hsd_chatgpt_review_packet.md"
 ]
 
 CHATGPT_REVIEW_FILES = [
@@ -114,7 +114,7 @@ def main():
         if copy(src,run) and copy(src,latest): copied.append(name)
         else: missing.append(name)
     counts={n:rows(Path(n)) for n in copied if n.endswith(".csv")}
-    summary=["# HSD Asset Visual QA v1.2.2 Run Summary","",f"Run timestamp UTC: `{stamp}`",f"Archive folder: `{run.as_posix()}`","","## Row counts",""]
+    summary=["# HSD Asset Visual QA v1.3 Run Summary","",f"Run timestamp UTC: `{stamp}`",f"Archive folder: `{run.as_posix()}`","","## Row counts",""]
     for k,v in counts.items(): summary.append(f"- `{k}`: {v}")
     summary += ["","## Missing optional files",""] + [f"- `{m}`" for m in missing]
     text="\n".join(summary)+"\n"
