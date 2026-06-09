@@ -1,0 +1,21 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856970,WNBA,Chicago Sky at Toronto Tempo,Final,Toronto Tempo,Chicago Sky 68 - Toronto Tempo 85,1,Brittney Sykes,Toronto Tempo,"PTS 25, REB 7, AST 3, STL 1, FG 9-23",WNBA
+401856971,WNBA,Portland Fire at Los Angeles Sparks,Final,Los Angeles Sparks,Portland Fire 72 - Los Angeles Sparks 89,1,Nneka Ogwumike,Los Angeles Sparks,"PTS 20, REB 17, AST 2, STL 2, FG 8-14",WNBA
+401856972,WNBA,New York Liberty at Connecticut Sun,Final,New York Liberty,New York Liberty 89 - Connecticut Sun 80,1,Breanna Stewart,New York Liberty,"PTS 28, REB 9, AST 3, STL 3, FG 9-17",WNBA
+401856973,WNBA,Indiana Fever at Washington Mystics,Final,Indiana Fever,Indiana Fever 78 - Washington Mystics 76,1,Aliyah Boston,Indiana Fever,"PTS 14, REB 10, AST 3, STL 2, BLK 2",WNBA
+401856970,WNBA,Chicago Sky at Toronto Tempo,Final,Toronto Tempo,Chicago Sky 68 - Toronto Tempo 85,2,Azura Stevens,Chicago Sky,"PTS 18, REB 10, FG 8-15, 3PT 0-4, FT 2-2",WNBA
+401856971,WNBA,Portland Fire at Los Angeles Sparks,Final,Los Angeles Sparks,Portland Fire 72 - Los Angeles Sparks 89,2,Dearica Hamby,Los Angeles Sparks,"PTS 22, REB 12, STL 2, BLK 1, FG 8-14",WNBA
+401856972,WNBA,New York Liberty at Connecticut Sun,Final,New York Liberty,New York Liberty 89 - Connecticut Sun 80,2,Han Xu,New York Liberty,"PTS 14, REB 6, AST 2, BLK 2, FG 4-8",WNBA
+401856973,WNBA,Indiana Fever at Washington Mystics,Final,Indiana Fever,Indiana Fever 78 - Washington Mystics 76,2,Caitlin Clark,Indiana Fever,"PTS 19, REB 3, AST 5, STL 1, FG 7-16",WNBA
+401856970,WNBA,Chicago Sky at Toronto Tempo,Final,Toronto Tempo,Chicago Sky 68 - Toronto Tempo 85,3,Nyara Sabally,Toronto Tempo,"PTS 15, REB 6, AST 1, STL 1, BLK 1",WNBA
+401856971,WNBA,Portland Fire at Los Angeles Sparks,Final,Los Angeles Sparks,Portland Fire 72 - Los Angeles Sparks 89,3,Kelsey Plum,Los Angeles Sparks,"PTS 16, REB 6, AST 7, STL 3, FG 5-10",WNBA
+401856972,WNBA,New York Liberty at Connecticut Sun,Final,New York Liberty,New York Liberty 89 - Connecticut Sun 80,3,Aaliyah Edwards,Connecticut Sun,"PTS 15, REB 5, STL 3, FG 6-15, FT 3-3",WNBA
+401856973,WNBA,Indiana Fever at Washington Mystics,Final,Indiana Fever,Indiana Fever 78 - Washington Mystics 76,3,Shakira Austin,Washington Mystics,"PTS 10, REB 9, AST 4, BLK 1, FG 4-11",WNBA
+401856970,WNBA,Chicago Sky at Toronto Tempo,Final,Toronto Tempo,Chicago Sky 68 - Toronto Tempo 85,4,Marina Mabrey,Toronto Tempo,"PTS 9, REB 4, AST 6, STL 2, BLK 1",WNBA
+401856971,WNBA,Portland Fire at Los Angeles Sparks,Final,Los Angeles Sparks,Portland Fire 72 - Los Angeles Sparks 89,4,Megan Gustafson,Portland Fire,"PTS 16, REB 11, BLK 1, FG 6-13, 3PT 0-2",WNBA
+401856972,WNBA,New York Liberty at Connecticut Sun,Final,New York Liberty,New York Liberty 89 - Connecticut Sun 80,4,Olivia Nelson-Ododa,Connecticut Sun,"PTS 15, REB 8, AST 1, BLK 1, FG 6-6",WNBA
+401856973,WNBA,Indiana Fever at Washington Mystics,Final,Indiana Fever,Indiana Fever 78 - Washington Mystics 76,4,Kelsey Mitchell,Indiana Fever,"PTS 15, REB 2, AST 3, STL 1, BLK 1",WNBA
+401856970,WNBA,Chicago Sky at Toronto Tempo,Final,Toronto Tempo,Chicago Sky 68 - Toronto Tempo 85,5,Isabelle Harrison,Toronto Tempo,"PTS 14, REB 6, AST 2, STL 1, FG 6-9",WNBA
+401856971,WNBA,Portland Fire at Los Angeles Sparks,Final,Los Angeles Sparks,Portland Fire 72 - Los Angeles Sparks 89,5,Emily Engstler,Portland Fire,"PTS 10, REB 8, STL 1, FG 4-7, 3PT 0-2",WNBA
+401856972,WNBA,New York Liberty at Connecticut Sun,Final,New York Liberty,New York Liberty 89 - Connecticut Sun 80,5,Saniya Rivers,Connecticut Sun,"PTS 12, REB 5, AST 3, BLK 2, FG 6-15",WNBA
+401856973,WNBA,Indiana Fever at Washington Mystics,Final,Indiana Fever,Indiana Fever 78 - Washington Mystics 76,5,Sonia Citron,Washington Mystics,"PTS 12, AST 5, STL 1, BLK 2, FG 3-9",WNBA
