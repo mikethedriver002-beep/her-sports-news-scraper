@@ -1,4 +1,4 @@
-name: Her Sports Daily Asset Visual QA v1.7.2
+name: Her Sports Daily Asset Visual QA v1.8
 
 on:
   workflow_dispatch:
@@ -52,6 +52,8 @@ jobs:
           HSD_PLAYER_IMAGES_REQUIRED: "1"
           HSD_PLAYER_IMAGE_FREE_SEARCH: "1"
           HSD_PLAYER_IMAGE_MAX_CANDIDATES: "8"
+          HSD_STRICT_FRESHNESS_GATE: "1"
+          HSD_MAX_RESULT_FRESH_HOURS: "18"
         run: |
           set -euo pipefail
           git config user.name "github-actions"
@@ -59,7 +61,7 @@ jobs:
 
           FILES=(
             "asset_manifest.csv" "asset_manifest.json" "team_assets.csv" "team_assets.json"
-            "player_assets.csv" "player_assets.json" "asset_rights_review.csv" "fact_warning_queue.csv" "player_image_requirements.csv" "player_image_candidates.csv" "player_image_sourcing_report.md" "graphics_production_specs.json" "graphics_slide_blueprints.md" "graphics_prompt_sanitizer_rules.md" "graphics_layout_blueprint.csv"
+            "player_assets.csv" "player_assets.json" "asset_rights_review.csv" "fact_warning_queue.csv" "player_image_requirements.csv" "player_image_candidates.csv" "player_image_sourcing_report.md" "graphics_production_specs.json" "graphics_slide_blueprints.md" "graphics_prompt_sanitizer_rules.md" "studio_freshness_gate.csv" "studio_stale_packet_queue.csv" "studio_freshness_report.md" "studio_freshness_manifest.json" "player_image_fit_gate.csv" "player_image_fit_report.md" "player_image_fit_manifest.json" "rendered_slide_qa.csv" "rendered_slide_qa_report.md" "rendered_slide_qa_manifest.json" "graphics_layout_blueprint.csv"
             "approved_graphics_assets.csv" "approved_graphics_assets.json" "launch_integration_points.csv"
             "asset_source_seed_list.csv" "asset_candidates_review.md" "asset_desk_manifest.json"
             "brand_system" "studio_templates_v2" "studio_visual_upgrade_v2.md"
@@ -80,9 +82,12 @@ jobs:
             python generate_hsd_visual_upgrade_v2.py
             python generate_hsd_graphics_production_specs_v1.py
             python generate_hsd_graphics_language_pack_v1.py
+            python generate_hsd_studio_freshness_gate_v1.py
+            python generate_hsd_player_image_fit_gate_v1.py
             python generate_hsd_graphics_prompt_sanitizer_v1.py
             python generate_hsd_graphics_upload_pack_v1.py
             python generate_hsd_graphics_qa_v1.py
+            python generate_hsd_rendered_slide_qa_v1.py
             python archive_hsd_asset_visual_qa_runs_v1.py
 
             for file in "${FILES[@]}"; do
@@ -90,7 +95,7 @@ jobs:
             done
 
             if git diff --cached --quiet; then echo "No changes to commit"; exit 0; fi
-            git commit -m "Update HSD Asset Visual QA v1.7.2"
+            git commit -m "Update HSD Asset Visual QA v1.8"
             if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
@@ -100,5 +105,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-asset-visual-qa-v1-7-2
+          name: hsd-asset-visual-qa-v1-8
           path: asset_run_history/latest/
