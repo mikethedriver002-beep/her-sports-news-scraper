@@ -1,6 +1,6 @@
 {
-  "version": "hsd-studio-bridge-v1.2",
-  "generated_at_utc": "2026-06-09T19:36:45.191100+00:00",
+  "version": "hsd-studio-bridge-v1.3-event-dates",
+  "generated_at_utc": "2026-06-09T20:23:47.979851+00:00",
   "inputs": {
     "news_fact_packets": "news_fact_packets.csv",
     "news_daily_plan": "news_daily_plan.md",
@@ -12,6 +12,8 @@
   },
   "outputs": [
     "studio_command_center.md",
+    "studio_fresh_packet_report.md",
+    "studio_fresh_packet_gate.csv",
     "studio_graphics_queue.csv",
     "studio_bundle_queue.csv",
     "studio_bundle_packets.md",
@@ -29,6 +31,8 @@
   ],
   "counts": {
     "news_packets_read": 0,
+    "fresh_packets_selected": 0,
+    "freshness_blocked_packets": 0,
     "studio_graphics_queued": 0,
     "studio_bundles_created": 0,
     "manual_review_graphics": 0,

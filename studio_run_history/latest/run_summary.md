@@ -1,10 +1,11 @@
-# HSD Studio Bridge v1.2 Run Summary
+# HSD Studio Bridge v1.3 Run Summary
 
-Run timestamp UTC: `2026-06-09 19:36:45 UTC`
-Archive folder: `studio_run_history/2026-06-09/1936_UTC`
+Run timestamp UTC: `2026-06-09 20:23:48 UTC`
+Archive folder: `studio_run_history/2026-06-09/202348_UTC_27233480926`
 
 ## Row counts
 
+- `studio_fresh_packet_gate.csv`: 0
 - `studio_graphics_queue.csv`: 0
 - `studio_bundle_queue.csv`: 0
 - `studio_accuracy_checklist.csv`: 0
@@ -12,6 +13,8 @@ Archive folder: `studio_run_history/2026-06-09/1936_UTC`
 
 ## Archived files
 
+- `studio_fresh_packet_report.md`
+- `studio_fresh_packet_gate.csv`
 - `studio_command_center.md`
 - `studio_graphics_queue.csv`
 - `studio_bundle_queue.csv`
