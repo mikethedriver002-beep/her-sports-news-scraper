@@ -1,10 +1,10 @@
-name: Her Sports Daily Studio Bridge v1.2
+name: Her Sports Daily Studio Bridge v1.3
 
 on:
   workflow_dispatch:
   workflow_run:
     workflows:
-      - "Her Sports Daily News Sync v1.8"
+      - "Her Sports Daily News Sync v1.8.2"
       - "Her Sports Daily News Sync v1.7"
       - "Her Sports Daily News Sync v1.6.1"
     types:
@@ -37,10 +37,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run Studio Bridge Bundle Mode v1.2
+      - name: Run Studio Bridge Fresh Packet Mode v1.3
         env:
           HSD_STUDIO_MAX_TOP_PACKETS: "6"
           HSD_STUDIO_MAX_QUEUE_ITEMS: "14"
+          HSD_STUDIO_REQUIRE_EVENT_DATE: "1"
+          HSD_STUDIO_MAX_RESULT_AGE_HOURS: "18"
         run: python generate_hsd_studio_bridge_v1.py
 
       - name: Generate Studio Dashboard
@@ -53,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-studio-bridge-v1-2
+          name: hsd-studio-bridge-v1-3
           path: studio_run_history/latest/
 
       - name: Commit and push Studio outputs
@@ -65,6 +67,8 @@ jobs:
           git config user.email "github-actions@github.com"
 
           FILES=(
+            "studio_fresh_packet_report.md"
+            "studio_fresh_packet_gate.csv"
             "studio_command_center.md"
             "studio_graphics_queue.csv"
             "studio_bundle_queue.csv"
@@ -99,11 +103,33 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Update HSD Studio Bridge v1.2"
+          git commit -m "Update HSD Studio Bridge v1.3"
+
+          resolve_generated_conflicts_current_run_wins() {
+            echo "Resolving generated-output conflicts by keeping this run's generated files..."
+            conflicted="$(git diff --name-only --diff-filter=U || true)"
+            if [ -z "$conflicted" ]; then
+              return 0
+            fi
+            echo "$conflicted" | while IFS= read -r file; do
+              if [ -n "$file" ]; then
+                echo "Keeping current-run version of: $file"
+                git checkout --theirs -- "$file" 2>/dev/null || true
+                git add "$file" 2>/dev/null || true
+              fi
+            done
+            git rebase --continue || git rebase --skip
+          }
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
-            git pull --rebase --autostash origin main
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            if git rebase origin/main; then
+              echo "Rebase succeeded"
+            else
+              resolve_generated_conflicts_current_run_wins
+            fi
             if git push origin HEAD:main; then
               echo "Push succeeded"
               exit 0
