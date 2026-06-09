@@ -1,6 +1,6 @@
 {
   "version": "hsd-launch-control-v1.1.2",
-  "generated_at_utc": "2026-06-09T01:17:57.879956+00:00",
+  "generated_at_utc": "2026-06-09T01:59:28.546446+00:00",
   "inputs": {
     "studio_bundle_queue": "studio_bundle_queue.csv",
     "resolved_bundle_queue_path": "studio_run_history/2026-06-07/0544_UTC/studio_bundle_queue.csv",
