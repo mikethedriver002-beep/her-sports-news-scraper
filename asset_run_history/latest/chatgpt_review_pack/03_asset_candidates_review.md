@@ -1,13 +1,13 @@
 # HSD Asset Desk v1.2 Candidate Review
 
-Generated: 2026-06-09T00:38:10.614702+00:00
+Generated: 2026-06-09T00:52:38.380071+00:00
 
 v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.
 
 Teams detected: 25
 Players detected: 3
 Approved assets: 25
-Fact warnings: 1
+Fact warnings: 0
 
 ## Approved
 - approved | Australia W | logo | https://flagcdn.com/w320/au.png
@@ -35,9 +35,6 @@ Fact warnings: 1
 - approved | Thailand W | logo | https://flagcdn.com/w320/th.png
 - approved | Turkey W | logo | https://flagcdn.com/w320/tr.png
 - approved | USA W | logo | https://flagcdn.com/w320/us.png
-
-## Fact warnings
-- high | player_team_mismatch | Jessica Shepard expected team Minnesota Lynx but bundle text says Dallas Wings.
 
 ## Text-forward / needs verification
 - Arike Ogunbowale: no exact approved player image. Use text-forward.

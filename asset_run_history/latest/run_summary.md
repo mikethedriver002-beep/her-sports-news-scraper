@@ -1,7 +1,7 @@
-# HSD Asset Visual QA v1.2.1 Run Summary
+# HSD Asset Visual QA v1.2.2 Run Summary
 
-Run timestamp UTC: `2026-06-09 00:38:10 UTC`
-Archive folder: `asset_run_history/2026-06-09/0038_UTC`
+Run timestamp UTC: `2026-06-09 00:52:38 UTC`
+Archive folder: `asset_run_history/2026-06-09/0052_UTC`
 
 ## Row counts
 
@@ -12,7 +12,7 @@ Archive folder: `asset_run_history/2026-06-09/0038_UTC`
 - `approved_graphics_assets.csv`: 25
 - `launch_integration_points.csv`: 4
 - `asset_source_seed_list.csv`: 28
-- `fact_warning_queue.csv`: 1
+- `fact_warning_queue.csv`: 0
 - `graphics_qa_results.csv`: 4
 
 ## Missing optional files
