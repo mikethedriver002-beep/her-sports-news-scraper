@@ -5,12 +5,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v1.7"
+VERSION = "hsd-pipeline-review-lite-v1.8"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 
 KEY_FILES = [
     "pipeline_outcome.md",
+    "pipeline_publish_warning.md",
     "pipeline_stop_reason.md",
     "studio_preview_fallback_report.md",
     "results_freshness_report.md",
@@ -182,7 +183,8 @@ def main() -> None:
         for pack in status["ready_upload_packs_included"]:
             lines.append(f"- {pack.get('bundle_name')}: included={pack.get('included')} | {pack.get('zip_path')} | {pack.get('reason')}")
     if Path("pipeline_outcome.md").exists():
-        lines += ["", "## Outcome", "", "```", head_text("pipeline_outcome.md", 3000), "```"]
+        lines += ["", "## Outcome", "", "```", head_text("pipeline_outcome.md",
+    "pipeline_publish_warning.md", 3000), "```"]
     if Path("pipeline_stop_reason.md").exists():
         lines += ["", "## Stop reason", "", "```", head_text("pipeline_stop_reason.md", 3000), "```"]
     (OUT_DIR/"README.md").write_text("\n".join(lines)+"\n", encoding="utf-8")
