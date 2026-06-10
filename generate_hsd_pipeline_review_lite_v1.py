@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v2.0"
+VERSION = "hsd-pipeline-review-lite-v2.2"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 
@@ -22,6 +22,7 @@ KEY_FILES = [
     "results_freshness_report.md",
     "results_freshness_gate.csv",
     "results_freshness_manifest.json",
+    "results_contract_report.md",
     "latest_results_run_summary.md",
     "latest_news_sync_run_summary.md",
     "latest_studio_run_summary.md",
@@ -208,9 +209,10 @@ def main() -> None:
         lines += ["", "## Ready upload packs included", ""]
         for pack in ready_packs:
             lines.append(f"- {pack.get('bundle_name')}: included={pack.get('included')} | {pack.get('zip_path')} | {pack.get('reason')}")
+    if Path("operator_status.md").exists():
+        lines += ["", "## Operator status", "", "```", head_text("operator_status.md", 3000), "```"]
     if Path("pipeline_outcome.md").exists():
-        lines += ["", "## Outcome", "", "```", head_text("operator_status.md",
-    "pipeline_outcome.md", 3000), "```"]
+        lines += ["", "## Outcome", "", "```", head_text("pipeline_outcome.md", 3000), "```"]
     if Path("pipeline_publish_warning.md").exists():
         lines += ["", "## Publish warning", "", "```", head_text("pipeline_publish_warning.md", 3000), "```"]
     if Path("pipeline_stop_reason.md").exists():

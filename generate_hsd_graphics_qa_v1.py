@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-graphics-qa-scorer-v1.8.1-event-date-bridge"
+VERSION = "hsd-graphics-qa-scorer-v1.8"
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_BANNED = "graphics_banned_language.csv"
@@ -152,18 +152,8 @@ def main() -> None:
             score -= 45
 
         upload_row = upload_status_rows.get(post_slug)
-        if upload_row and upload_row.get("upload_pack_status") not in {"ready", "ready_with_review"}:
-            status = upload_row.get("upload_pack_status", "")
-            if status == "blocked_freshness_gate":
-                code = "UPLOAD_PACK_BLOCKED_BY_FRESHNESS"
-            elif status == "blocked_player_image_fit":
-                code = "UPLOAD_PACK_BLOCKED_BY_PLAYER_IMAGE_FIT"
-            elif status == "blocked_missing_required_assets":
-                code = "UPLOAD_PACK_INCOMPLETE"
-            else:
-                code = "UPLOAD_PACK_BLOCKED"
-            msg = upload_row.get("missing_asset_names") or status or "upload pack blocked"
-            issues.append({"code": code, "severity": "critical", "message": msg})
+        if upload_row and upload_row.get("upload_pack_status") != "ready":
+            issues.append({"code": "UPLOAD_PACK_INCOMPLETE", "severity": "critical", "message": upload_row.get("missing_asset_names", "missing required upload assets")})
             score -= 45
         if not upload_row:
             issues.append({"code": "UPLOAD_PACK_STATUS_MISSING", "severity": "major", "message": "graphics_upload_pack_status.csv has no row for this bundle"})
@@ -286,7 +276,7 @@ def main() -> None:
 
     write_csv("graphics_qa_results.csv", rows, FIELDS)
 
-    report = ["# HSD Graphics QA Scorer v1.8.1 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
+    report = ["# HSD Graphics QA Scorer v1.8 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:
@@ -307,10 +297,10 @@ def main() -> None:
         "counts": {"bundles_scored": len(rows), "upload_status_rows": len(upload_status_rows), "freshness_rows": len(freshness_rows), "player_fit_rows": len(player_fit_rows)},
     }, indent=2), encoding="utf-8")
     Path("graphics_qa_dashboard/index.html").write_text(
-        f"<html><body><h1>Graphics QA v1.8.1</h1><p>Bundles scored: {len(rows)}</p></body></html>",
+        f"<html><body><h1>Graphics QA v1.8</h1><p>Bundles scored: {len(rows)}</p></body></html>",
         encoding="utf-8",
     )
-    print("Created HSD Graphics QA v1.8.1 outputs")
+    print("Created HSD Graphics QA v1.8 outputs")
 
 
 if __name__ == "__main__":

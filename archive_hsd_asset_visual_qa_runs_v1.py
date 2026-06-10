@@ -132,7 +132,7 @@ def main() -> None:
     latest.mkdir(parents=True, exist_ok=True)
 
     counts = {name: row_count(Path(name)) for name in FILES if name.endswith(".csv") and Path(name).exists()}
-    summary = ["# HSD Asset Visual QA v1.8.1 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
+    summary = ["# HSD Asset Visual QA v1.8 Run Summary", "", f"Run timestamp UTC: `{stamp}`", f"Archive folder: `{run.as_posix()}`", "", "## Row counts", ""]
     for k, v in counts.items(): summary.append(f"- `{k}`: {v}")
 
     if Path("player_image_sourcing_report.md").exists():
@@ -174,7 +174,7 @@ def main() -> None:
     copy_any(Path("chatgpt_review_pack"), run)
     copy_any(Path("chatgpt_review_pack"), latest)
 
-    print("Archived HSD Asset Visual QA v1.8.1")
+    print("Archived HSD Asset Visual QA v1.8")
 
 
 if __name__ == "__main__":
