@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v1.5
+name: Her Sports Daily Pipeline Control v1.6
 
 on:
   workflow_dispatch:
@@ -86,6 +86,7 @@ jobs:
       HSD_NEWS_ENABLE_FETCH: "true"
       HSD_TIMEZONE: America/New_York
       HSD_RESULTS_SOURCES: apisports,espn
+      HSD_PIPELINE_CONTROL_VERSION: v1.6
       HSD_REVIEW_ARTIFACT_SIZE: ${{ github.event.inputs.review_artifact_size || 'lite' }}
       HSD_COMMIT_HEAVY_OUTPUTS: ${{ github.event.inputs.commit_heavy_outputs || 'false' }}
       HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
