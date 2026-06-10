@@ -1,26 +1,4 @@
 team_id,sport,league,team_slug,team_name,logo_asset_id,status,notes
-international-soccer_australia-w,soccer,International Soccer,australia-w,Australia W,appr_a954f58ba7b766,asset_found,Approved exact asset.
-international-volleyball_belgium-w,volleyball,International Volleyball,belgium-w,Belgium W,appr_dbd34b035cd6e1,asset_found,Approved exact asset.
-international-soccer_brazil-u20-w,soccer,International Soccer,brazil-u20-w,Brazil U20 W,appr_a79adaf6457f0c,asset_found,Approved exact asset.
-international-soccer_brazil-w,soccer,International Soccer,brazil-w,Brazil W,appr_3b613e56ad6ec8,asset_found,Approved exact asset.
-international-volleyball_bulgaria-w,volleyball,International Volleyball,bulgaria-w,Bulgaria W,appr_6849fd04b54eb4,asset_found,Approved exact asset.
-international-volleyball_canada-w,volleyball,International Volleyball,canada-w,Canada W,appr_14a6cc66f75be0,asset_found,Approved exact asset.
-international-volleyball_china-w,volleyball,International Volleyball,china-w,China W,appr_885836e9869631,asset_found,Approved exact asset.
-wnba_dallas-wings,basketball,WNBA,dallas-wings,Dallas Wings,appr_7ca8ac2b2a4ad9,asset_found,Approved exact asset.
-international-volleyball_france-w,volleyball,International Volleyball,france-w,France W,appr_65747d24fe25ad,asset_found,Approved exact asset.
-wnba_golden-state-valkyries,basketball,WNBA,golden-state-valkyries,Golden State Valkyries,appr_df24e2082f811d,asset_found,Approved exact asset.
-international-volleyball_italy-w,volleyball,International Volleyball,italy-w,Italy W,appr_2a96d8d56f4ac2,asset_found,Approved exact asset.
-international-soccer_japan-w,soccer,International Soccer,japan-w,Japan W,appr_2bfc766277e6da,asset_found,Approved exact asset.
-international-soccer_korea-republic-u20-w,soccer,International Soccer,korea-republic-u20-w,Korea Republic U20 W,appr_67a033c94405f7,asset_found,Approved exact asset.
-wnba_las-vegas-aces,basketball,WNBA,las-vegas-aces,Las Vegas Aces,appr_9c7fc211069805,asset_found,Approved exact asset.
+wnba_connecticut-sun,basketball,WNBA,connecticut-sun,Connecticut Sun,appr_41e4beca67bf4e,asset_found,Approved exact asset.
 wnba_los-angeles-sparks,basketball,WNBA,los-angeles-sparks,Los Angeles Sparks,appr_7eea0085424fe3,asset_found,Approved exact asset.
-international-soccer_mexico-w,soccer,International Soccer,mexico-w,Mexico W,appr_34556a69591b47,asset_found,Approved exact asset.
-wnba_minnesota-lynx,basketball,WNBA,minnesota-lynx,Minnesota Lynx,appr_047086213c7096,asset_found,Approved exact asset.
-wnba_phoenix-mercury,basketball,WNBA,phoenix-mercury,Phoenix Mercury,appr_9edeb1cdaa6f4c,asset_found,Approved exact asset.
-wnba_portland-fire,basketball,WNBA,portland-fire,Portland Fire,appr_01d68c2809f81f,asset_found,Approved exact asset.
 wnba_seattle-storm,basketball,WNBA,seattle-storm,Seattle Storm,appr_52d46724c00ec9,asset_found,Approved exact asset.
-international-volleyball_serbia-w,volleyball,International Volleyball,serbia-w,Serbia W,appr_9426bf971998ee,asset_found,Approved exact asset.
-international-soccer_south-africa-w,soccer,International Soccer,south-africa-w,South Africa W,appr_2d1d5b6b4b59b0,asset_found,Approved exact asset.
-international-volleyball_thailand-w,volleyball,International Volleyball,thailand-w,Thailand W,appr_526f2acaa1d24e,asset_found,Approved exact asset.
-international-volleyball_turkey-w,volleyball,International Volleyball,turkey-w,Turkey W,appr_dd35c3cb61c372,asset_found,Approved exact asset.
-international-volleyball_usa-w,volleyball,International Volleyball,usa-w,USA W,appr_49824984287991,asset_found,Approved exact asset.

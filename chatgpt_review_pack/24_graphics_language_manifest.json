@@ -1,6 +1,6 @@
 {
   "version": "hsd-graphics-language-pack-v1.7.2",
-  "generated_at_utc": "2026-06-09T23:25:10.206603+00:00",
+  "generated_at_utc": "2026-06-10T02:43:20.635028+00:00",
   "outputs": [
     "graphics_copy_style_guide.md",
     "graphics_display_copy.csv",
@@ -9,9 +9,9 @@
     "graphics_layout_blueprint.csv"
   ],
   "counts": {
-    "display_copy_rows": 7,
+    "display_copy_rows": 5,
     "banned_language_rows": 10,
-    "asset_usage_rows": 10,
+    "asset_usage_rows": 1,
     "layout_blueprint_rows": 4
   }
 }

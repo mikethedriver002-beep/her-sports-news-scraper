@@ -1,0 +1,132 @@
+{
+  "version": "hsd-pipeline-review-lite-v1.4",
+  "generated_at_utc": "2026-06-10T02:43:23.093028+00:00",
+  "counts": {
+    "results_freshness_rows": 29,
+    "news_fact_packets": 5,
+    "studio_bundle_rows": 1,
+    "upload_pack_rows": 1,
+    "player_image_requirements": 1
+  },
+  "results": {
+    "fresh": 6,
+    "stale": 23,
+    "missing": 0,
+    "examples": [
+      {
+        "headline": "Indiana Fever beat Washington Mystics",
+        "event_date": "2026-06-08",
+        "event_age_hours": "50.7",
+        "status": "stale",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "New York Liberty beat Connecticut Sun",
+        "event_date": "2026-06-08",
+        "event_age_hours": "50.7",
+        "status": "stale",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "Las Vegas Aces beat Seattle Storm",
+        "event_date": "2026-06-08",
+        "event_age_hours": "50.7",
+        "status": "stale",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "Atlanta Dream beat Chicago Sky",
+        "event_date": "2026-06-09",
+        "event_age_hours": "26.7",
+        "status": "stale",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "Minnesota Lynx beat Dallas Wings",
+        "event_date": "2026-06-09",
+        "event_age_hours": "26.7",
+        "status": "stale",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "Phoenix Mercury vs Golden State Valkyrie",
+        "event_date": "2026-06-09",
+        "event_age_hours": "26.7",
+        "status": "stale",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "Connecticut Sun vs Toronto Tempo",
+        "event_date": "2026-06-10",
+        "event_age_hours": "2.7",
+        "status": "fresh",
+        "source_file": "top_womens_results.csv"
+      },
+      {
+        "headline": "Los Angeles Sparks vs Seattle Storm",
+        "event_date": "2026-06-10",
+        "event_age_hours": "2.7",
+        "status": "fresh",
+        "source_file": "top_womens_results.csv"
+      }
+    ]
+  },
+  "studio": {
+    "rows": 5,
+    "counts": {
+      "blocked_stale_event": 5
+    },
+    "examples": [
+      {
+        "headline": "Indiana Fever beat Washington Mystics",
+        "event_date": "2026-06-08",
+        "event_age_hours": "50.7",
+        "freshness_status": "blocked_stale_event",
+        "freshness_decision": "block"
+      },
+      {
+        "headline": "Atlanta Dream beat Chicago Sky",
+        "event_date": "2026-06-09",
+        "event_age_hours": "26.7",
+        "freshness_status": "blocked_stale_event",
+        "freshness_decision": "block"
+      },
+      {
+        "headline": "Las Vegas Aces beat Seattle Storm",
+        "event_date": "2026-06-08",
+        "event_age_hours": "50.7",
+        "freshness_status": "blocked_stale_event",
+        "freshness_decision": "block"
+      },
+      {
+        "headline": "Minnesota Lynx beat Dallas Wings",
+        "event_date": "2026-06-09",
+        "event_age_hours": "26.7",
+        "freshness_status": "blocked_stale_event",
+        "freshness_decision": "block"
+      },
+      {
+        "headline": "New York Liberty beat Connecticut Sun",
+        "event_date": "2026-06-08",
+        "event_age_hours": "50.7",
+        "freshness_status": "blocked_stale_event",
+        "freshness_decision": "block"
+      }
+    ]
+  },
+  "upload_packs": {
+    "rows": 1,
+    "bundles": [
+      {
+        "bundle_name": "Tonight in the W Preview",
+        "upload_pack_status": "ready_with_review",
+        "assets_expected": "4",
+        "assets_ready": "4",
+        "assets_missing": "0",
+        "missing_asset_names": "",
+        "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-preview_graphics_chat_upload_pack.zip"
+      }
+    ]
+  },
+  "stop_reason_file_exists": true
+}

@@ -1,35 +1,11 @@
 # HSD Graphics Prompt Sanitizer v1.7.2
 
-Generated: 2026-06-09T23:25:10.321863+00:00
+Generated: 2026-06-10T02:43:20.739007+00:00
 
-## Main WNBA Result
+## Tonight in the W Preview
 
-- Prompt path: `graphics_clean_prompts/main-wnba-result/00_PROMPT_TO_PASTE.md`
-- Raw prompt chars: 6055
-- Clean prompt chars: 14482
-- Removed internal lines: 4
-- Term replacements/removals: 8
-
-## Tonight in the W Mini-Roundup
-
-- Prompt path: `graphics_clean_prompts/tonight-in-the-w-mini-roundup/00_PROMPT_TO_PASTE.md`
-- Raw prompt chars: 2459
-- Clean prompt chars: 3252
-- Removed internal lines: 3
-- Term replacements/removals: 0
-
-## Volleyball Results Roundup
-
-- Prompt path: `graphics_clean_prompts/volleyball-results-roundup/00_PROMPT_TO_PASTE.md`
-- Raw prompt chars: 2650
-- Clean prompt chars: 3376
-- Removed internal lines: 3
-- Term replacements/removals: 0
-
-## Women's Soccer Radar
-
-- Prompt path: `graphics_clean_prompts/women-s-soccer-radar/00_PROMPT_TO_PASTE.md`
-- Raw prompt chars: 2334
-- Clean prompt chars: 3106
+- Prompt path: `graphics_clean_prompts/tonight-in-the-w-preview/00_PROMPT_TO_PASTE.md`
+- Raw prompt chars: 1945
+- Clean prompt chars: 3358
 - Removed internal lines: 3
 - Term replacements/removals: 0

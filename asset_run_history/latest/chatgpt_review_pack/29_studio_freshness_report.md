@@ -1,42 +1,18 @@
 # HSD Studio Freshness Gate v1.8
 
-Generated: 2026-06-09T23:25:10.247860+00:00
+Generated: 2026-06-10T02:43:20.671111+00:00
 
-- bundles checked: 4
-- allowed: 0
+- bundles checked: 1
+- allowed: 1
 - review: 0
-- blocked: 4
+- blocked: 0
 - max fresh hours: 18.0
 - strict missing event date: Yes
 
-## Main WNBA Result
+## Tonight in the W Preview
 
-- Decision: **block**
-- Status: `blocked_missing_event_date`
-- Event date: `missing`
-- Recommended label: Add event_date upstream or mark carryover
-- Reason: no event date found and strict freshness gate is enabled
-
-## Tonight in the W Mini-Roundup
-
-- Decision: **block**
-- Status: `blocked_missing_event_date`
-- Event date: `missing`
-- Recommended label: Add event_date upstream or mark carryover
-- Reason: no event date found and strict freshness gate is enabled
-
-## Volleyball Results Roundup
-
-- Decision: **block**
-- Status: `blocked_missing_event_date`
-- Event date: `missing`
-- Recommended label: Add event_date upstream or mark carryover
-- Reason: no event date found and strict freshness gate is enabled
-
-## Women's Soccer Radar
-
-- Decision: **block**
-- Status: `blocked_missing_event_date`
-- Event date: `missing`
-- Recommended label: Add event_date upstream or mark carryover
-- Reason: no event date found and strict freshness gate is enabled
+- Decision: **allow**
+- Status: `fresh`
+- Event date: `2026-06-10T00:00:00+00:00`
+- Recommended label: none
+- Reason: event date is within freshness window

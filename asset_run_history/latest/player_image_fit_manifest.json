@@ -1,11 +1,11 @@
 {
   "version": "hsd-player-image-fit-gate-v1.8",
-  "generated_at_utc": "2026-06-09T23:25:10.285488+00:00",
+  "generated_at_utc": "2026-06-10T02:43:20.704490+00:00",
   "counts": {
-    "checked": 36,
-    "approved": 3,
-    "review": 28,
-    "blocked": 5
+    "checked": 1,
+    "approved": 0,
+    "review": 1,
+    "blocked": 0
   },
   "outputs": [
     "player_image_fit_gate.csv",

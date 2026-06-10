@@ -1,6 +1,6 @@
 {
   "version": "hsd-asset-desk-v1.2.2",
-  "generated_at_utc": "2026-06-09T23:12:51.465301+00:00",
+  "generated_at_utc": "2026-06-10T02:43:10.229872+00:00",
   "rights_mode": "aggressive",
   "download": true,
   "inputs": {
@@ -9,12 +9,12 @@
     "launch_graphics_brief": "launch_graphics_chat_brief.md"
   },
   "counts": {
-    "bundles": 4,
-    "teams_detected": 25,
-    "players_detected": 3,
-    "asset_candidates": 25,
-    "approved_assets": 25,
-    "integration_rows": 4,
+    "bundles": 1,
+    "teams_detected": 3,
+    "players_detected": 0,
+    "asset_candidates": 3,
+    "approved_assets": 3,
+    "integration_rows": 1,
     "fact_warnings": 0
   },
   "guardrails": [

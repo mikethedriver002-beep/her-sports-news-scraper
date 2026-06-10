@@ -1,61 +1,25 @@
 {
-  "version": "hsd-graphics-upload-pack-v1.8",
-  "generated_at_utc": "2026-06-09T23:25:19.036197+00:00",
+  "version": "hsd-graphics-upload-pack-v1.8.3",
+  "generated_at_utc": "2026-06-10T02:43:22.278003+00:00",
   "counts": {
-    "bundles": 4,
-    "asset_rows": 37,
-    "files_created": 36,
-    "png_preferred_created": 36,
+    "bundles": 1,
+    "asset_rows": 4,
+    "files_created": 4,
+    "png_preferred_created": 4,
     "upload_packs_ready": 0,
-    "upload_packs_blocked": 4
+    "upload_packs_blocked": 1
   },
   "bundles": [
     {
-      "bundle_id": "bundle_34740d18e445ce",
-      "post_slug": "main-wnba-result",
-      "bundle_name": "Main WNBA Result",
-      "upload_pack_status": "blocked_freshness_gate",
-      "assets_expected": 12,
-      "assets_ready": 12,
+      "bundle_id": "bundle_4ce84aeaf997c0",
+      "post_slug": "tonight-in-the-w-preview",
+      "bundle_name": "Tonight in the W Preview",
+      "upload_pack_status": "ready_with_review",
+      "assets_expected": 4,
+      "assets_ready": 4,
       "assets_missing": 0,
       "missing_asset_names": "",
-      "zip_path": "graphics_chat_upload_pack_zips/main-wnba-result_graphics_chat_upload_pack.zip",
-      "notes": "Review freshness/player-image-fit gate before using this pack."
-    },
-    {
-      "bundle_id": "bundle_ab66100c39c23e",
-      "post_slug": "tonight-in-the-w-mini-roundup",
-      "bundle_name": "Tonight in the W Mini-Roundup",
-      "upload_pack_status": "blocked_missing_required_assets",
-      "assets_expected": 6,
-      "assets_ready": 5,
-      "assets_missing": 1,
-      "missing_asset_names": "Portland Fire",
-      "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-mini-roundup_graphics_chat_upload_pack.zip",
-      "notes": "Review freshness/player-image-fit gate before using this pack."
-    },
-    {
-      "bundle_id": "bundle_99dc10394fd30c",
-      "post_slug": "volleyball-results-roundup",
-      "bundle_name": "Volleyball Results Roundup",
-      "upload_pack_status": "blocked_freshness_gate",
-      "assets_expected": 11,
-      "assets_ready": 11,
-      "assets_missing": 0,
-      "missing_asset_names": "",
-      "zip_path": "graphics_chat_upload_pack_zips/volleyball-results-roundup_graphics_chat_upload_pack.zip",
-      "notes": "Review freshness/player-image-fit gate before using this pack."
-    },
-    {
-      "bundle_id": "bundle_33580e1adf9d95",
-      "post_slug": "women-s-soccer-radar",
-      "bundle_name": "Women's Soccer Radar",
-      "upload_pack_status": "blocked_freshness_gate",
-      "assets_expected": 8,
-      "assets_ready": 8,
-      "assets_missing": 0,
-      "missing_asset_names": "",
-      "zip_path": "graphics_chat_upload_pack_zips/women-s-soccer-radar_graphics_chat_upload_pack.zip",
+      "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-preview_graphics_chat_upload_pack.zip",
       "notes": "Review freshness/player-image-fit gate before using this pack."
     }
   ]

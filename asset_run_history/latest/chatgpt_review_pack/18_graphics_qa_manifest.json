@@ -1,10 +1,10 @@
 {
   "version": "hsd-graphics-qa-scorer-v1.8.1-event-date-bridge",
-  "generated_at_utc": "2026-06-09T23:25:19.142529+00:00",
+  "generated_at_utc": "2026-06-10T02:43:22.367587+00:00",
   "counts": {
-    "bundles_scored": 4,
-    "upload_status_rows": 4,
-    "freshness_rows": 4,
-    "player_fit_rows": 36
+    "bundles_scored": 1,
+    "upload_status_rows": 1,
+    "freshness_rows": 1,
+    "player_fit_rows": 1
   }
 }

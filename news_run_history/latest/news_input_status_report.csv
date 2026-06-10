@@ -3,6 +3,6 @@ results_graphics_queue,results_graphics_queue.md,Yes,612,18,No,No,No,Markdown qu
 daily_results_recommendations,daily_results_recommendations.md,Yes,464,25,No,Yes,Yes,
 wnba_box_score_summary,wnba_box_score_summary.md,Yes,129,5,No,No,No,
 results_system_hub,results_system_hub.md,Yes,1121,39,No,No,No,
-top_womens_results_csv,top_womens_results.csv,Yes,10276,9,No,No,No,Used CSV-primary candidate builder with 5 candidates. Markdown remains backup.
-reconciled_events_csv,reconciled_events.csv,Yes,10276,9,No,No,No,Loaded 8 CSV rows.
+top_womens_results_csv,top_womens_results.csv,Yes,10394,9,No,No,No,Used CSV-primary candidate builder with 5 candidates. Markdown remains backup.
+reconciled_events_csv,reconciled_events.csv,Yes,10394,9,No,No,No,Loaded 8 CSV rows.
 today_final_results_csv,today_final_results.csv,Yes,7483,6,No,No,No,Loaded 5 CSV rows.

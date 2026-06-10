@@ -1,9 +1,9 @@
 {
   "version": "hsd-studio-visual-upgrade-v2.6-event-dates",
-  "generated_at_utc": "2026-06-09T23:25:10.133816+00:00",
+  "generated_at_utc": "2026-06-10T02:43:20.566683+00:00",
   "counts": {
-    "bundles": 4,
-    "approved_assets": 48,
+    "bundles": 1,
+    "approved_assets": 4,
     "fact_warnings": 0,
     "warnings_propagated_to_prompts": 0
   }

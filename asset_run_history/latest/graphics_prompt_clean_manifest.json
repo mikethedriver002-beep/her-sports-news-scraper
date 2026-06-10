@@ -1,7 +1,7 @@
 {
   "version": "hsd-graphics-prompt-sanitizer-v1.7.2",
-  "generated_at_utc": "2026-06-09T23:25:10.330604+00:00",
-  "bundle_count": 4,
+  "generated_at_utc": "2026-06-10T02:43:20.740707+00:00",
+  "bundle_count": 1,
   "outputs": [
     "graphics_clean_prompts",
     "graphics_prompt_clean_report.md",
@@ -9,38 +9,11 @@
   ],
   "bundles": [
     {
-      "bundle_slug": "main-wnba-result",
-      "bundle_name": "Main WNBA Result",
-      "prompt_path": "graphics_clean_prompts/main-wnba-result/00_PROMPT_TO_PASTE.md",
-      "raw_prompt_chars": 6055,
-      "clean_prompt_chars": 14482,
-      "removed_lines": 4,
-      "replacements": 8
-    },
-    {
-      "bundle_slug": "tonight-in-the-w-mini-roundup",
-      "bundle_name": "Tonight in the W Mini-Roundup",
-      "prompt_path": "graphics_clean_prompts/tonight-in-the-w-mini-roundup/00_PROMPT_TO_PASTE.md",
-      "raw_prompt_chars": 2459,
-      "clean_prompt_chars": 3252,
-      "removed_lines": 3,
-      "replacements": 0
-    },
-    {
-      "bundle_slug": "volleyball-results-roundup",
-      "bundle_name": "Volleyball Results Roundup",
-      "prompt_path": "graphics_clean_prompts/volleyball-results-roundup/00_PROMPT_TO_PASTE.md",
-      "raw_prompt_chars": 2650,
-      "clean_prompt_chars": 3376,
-      "removed_lines": 3,
-      "replacements": 0
-    },
-    {
-      "bundle_slug": "women-s-soccer-radar",
-      "bundle_name": "Women's Soccer Radar",
-      "prompt_path": "graphics_clean_prompts/women-s-soccer-radar/00_PROMPT_TO_PASTE.md",
-      "raw_prompt_chars": 2334,
-      "clean_prompt_chars": 3106,
+      "bundle_slug": "tonight-in-the-w-preview",
+      "bundle_name": "Tonight in the W Preview",
+      "prompt_path": "graphics_clean_prompts/tonight-in-the-w-preview/00_PROMPT_TO_PASTE.md",
+      "raw_prompt_chars": 1945,
+      "clean_prompt_chars": 3358,
       "removed_lines": 3,
       "replacements": 0
     }
