@@ -1919,6 +1919,31 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         publish_reco = "Hold for editor"
         packet_format_reco = "Hold until event_date is available from Results Desk"
 
+    # v1.8.3: Results Desk final-score rows are graphics-ready when score + event_date exist.
+    # They should not be blocked just because there is not a separate article/context source.
+    source_hint = " ".join([
+        clean(candidate.get("_result_record_source")),
+        clean(candidate.get("result_record_source")),
+        clean(candidate.get("status_norm")),
+        clean(candidate.get("game_status")),
+        clean(candidate.get("queue_section")),
+    ]).lower()
+    results_desk_final = bool(clean(candidate.get("final_score"))) and any(
+        token in source_hint for token in ["top_womens", "today_final", "reconciled", "result", "final", "must post"]
+    )
+    if results_desk_final and event_payload.get("event_date_confidence") != "missing":
+        review_flags = [
+            f for f in review_flags
+            if f not in {"no_primary_context_for_must_post", "no_usable_context_for_strong_maybe", "source_fetch_failed"}
+        ]
+        manual_review = "No"
+        production_ready = "Yes"
+        publish_reco = "Publish graphics-ready result"
+        packet_context_quality = "Medium" if packet_context_quality not in {"High", "Medium"} else packet_context_quality
+        packet_quality_score = max(int(packet_quality_score or 0), 70)
+        if not packet_format_reco or packet_format_reco.startswith("Hold"):
+            packet_format_reco = "Graphics-ready result from Results Desk"
+
     return {
         "run_id": run_id,
         "candidate_id": candidate.get("candidate_id"),

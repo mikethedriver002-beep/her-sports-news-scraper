@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
-VERSION = "hsd-studio-bridge-v1.3-event-dates"
+VERSION = "hsd-studio-bridge-v1.4-results-ready"
 
 INPUT_NEWS_FACT_PACKETS = os.environ.get("HSD_NEWS_FACT_PACKETS", "news_fact_packets.csv")
 INPUT_NEWS_DAILY_PLAN = os.environ.get("HSD_NEWS_DAILY_PLAN", "news_daily_plan.md")
@@ -550,7 +550,10 @@ def build_queue(packets: List[Dict[str, str]], brand: Dict[str, Any], sop: Dict[
     enriched_packets = [apply_freshness(p) for p in packets]
     valid = [
         p for p in enriched_packets
-        if clean(p.get("production_ready")).lower() != "no"
+        if (
+            clean(p.get("production_ready")).lower() != "no"
+            or clean(p.get("score_accuracy_check")).lower() == "locked_to_results_desk"
+        )
         and clean(p.get("freshness_decision")) != "block"
     ]
     valid = sorted(valid, key=sort_key)[:MAX_QUEUE_ITEMS]
