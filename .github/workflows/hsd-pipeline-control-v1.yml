@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v1.1
+name: Her Sports Daily Pipeline Control v1.2
 
 on:
   workflow_dispatch:
@@ -130,14 +130,16 @@ jobs:
 
           Check `news_setup_error.md` and `news_input_status_report.csv`.
           EOF
+            echo "Pipeline stopped after News Sync: zero fact packets." >> "$GITHUB_STEP_SUMMARY"
             if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
               echo "Stopping pipeline to prevent stale outputs."
-              exit 2
+              echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
+              echo "HSD_PIPELINE_STOP_STAGE=news_sync" >> "$GITHUB_ENV"
             fi
           fi
 
       - name: Run Studio Bridge stage
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
+        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -146,7 +148,7 @@ jobs:
           if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py; fi
 
       - name: Gate after Studio Bridge
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
+        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -160,15 +162,24 @@ jobs:
           Stopped after Studio Bridge because `studio_bundle_queue.csv` had zero rows.
 
           Asset Visual QA was not run because it would otherwise package stale committed bundle files.
+
+          Most likely causes:
+          - News Sync rows were created but marked production_ready=No.
+          - Event dates were still missing or outside the freshness window.
+          - Studio Bridge filtered all rows before bundle creation.
+
+          Check `news_fact_packets.csv`, `studio_fresh_packet_report.md`, and `studio_fresh_packet_gate.csv`.
           EOF
+            echo "Pipeline stopped after Studio Bridge: zero bundle rows." >> "$GITHUB_STEP_SUMMARY"
             if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
               echo "Stopping pipeline to prevent stale outputs."
-              exit 3
+              echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
+              echo "HSD_PIPELINE_STOP_STAGE=studio_bridge" >> "$GITHUB_ENV"
             fi
           fi
 
       - name: Run Asset Visual QA stage
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only'
+        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only') && env.HSD_PIPELINE_STOPPED != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -189,7 +200,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-pipeline-control-v1-1-review
+          name: hsd-pipeline-control-v1-2-review
           path: |
             pipeline_stop_reason.md
             latest_news_sync_run_summary.md
@@ -259,7 +270,7 @@ jobs:
             echo "No generated output changes to commit"
             exit 0
           fi
-          git commit -m "Run HSD Pipeline Control v1.1"
+          git commit -m "Run HSD Pipeline Control v1.2"
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
             git fetch origin main
