@@ -1,14 +1,14 @@
 # Her Sports Daily News Sync v1.8.2 Run Summary
 
-Run timestamp UTC: `2026-06-09 22:57:01 UTC`
-Archive folder: `news_run_history/2026-06-09/225701_UTC_27241171062`
+Run timestamp UTC: `2026-06-10 01:48:23 UTC`
+Archive folder: `news_run_history/2026-06-10/014823_UTC_27247615763`
 
 ## Row counts
 
 - `news_input_status_report.csv`: 7
-- `news_candidate_queue.csv`: 0
-- `news_source_observations.csv`: 0
-- `news_fact_packets.csv`: 0
+- `news_candidate_queue.csv`: 3
+- `news_source_observations.csv`: 12
+- `news_fact_packets.csv`: 3
 - `news_manual_review_queue.csv`: 0
 
 ## Archived files
