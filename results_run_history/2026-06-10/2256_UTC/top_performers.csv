@@ -1,0 +1,16 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856975,WNBA,Atlanta Dream at Chicago Sky,Final,Atlanta Dream,Atlanta Dream 82 - Chicago Sky 75,1,Angel Reese,Atlanta Dream,"PTS 17, REB 17, AST 4, STL 2, FG 5-12",WNBA
+401856976,WNBA,Dallas Wings at Minnesota Lynx,Final,Minnesota Lynx,Dallas Wings 76 - Minnesota Lynx 100,1,Olivia Miles,Minnesota Lynx,"PTS 24, REB 7, AST 6, STL 1, BLK 1",WNBA
+401856977,WNBA,Phoenix Mercury at Golden State Valkyries,Final,Golden State Valkyries,Phoenix Mercury 81 - Golden State Valkyries 87,1,Alyssa Thomas,Phoenix Mercury,"PTS 22, REB 8, AST 9, STL 1, FG 9-14",WNBA
+401856975,WNBA,Atlanta Dream at Chicago Sky,Final,Atlanta Dream,Atlanta Dream 82 - Chicago Sky 75,2,Natasha Cloud,Chicago Sky,"PTS 18, REB 6, AST 4, STL 2, BLK 2",WNBA
+401856976,WNBA,Dallas Wings at Minnesota Lynx,Final,Minnesota Lynx,Dallas Wings 76 - Minnesota Lynx 100,2,Natasha Howard,Minnesota Lynx,"PTS 21, REB 4, AST 4, STL 3, BLK 1",WNBA
+401856977,WNBA,Phoenix Mercury at Golden State Valkyries,Final,Golden State Valkyries,Phoenix Mercury 81 - Golden State Valkyries 87,2,Veronica Burton,Golden State Valkyries,"PTS 25, REB 3, AST 8, FG 7-15, 3PT 2-7",WNBA
+401856975,WNBA,Atlanta Dream at Chicago Sky,Final,Atlanta Dream,Atlanta Dream 82 - Chicago Sky 75,3,Rhyne Howard,Atlanta Dream,"PTS 17, REB 3, AST 5, STL 3, FG 7-17",WNBA
+401856976,WNBA,Dallas Wings at Minnesota Lynx,Final,Minnesota Lynx,Dallas Wings 76 - Minnesota Lynx 100,3,Courtney Williams,Minnesota Lynx,"PTS 16, REB 8, AST 2, STL 3, FG 8-14",WNBA
+401856977,WNBA,Phoenix Mercury at Golden State Valkyries,Final,Golden State Valkyries,Phoenix Mercury 81 - Golden State Valkyries 87,3,Gabby Williams,Golden State Valkyries,"PTS 25, REB 4, AST 1, STL 1, FG 9-19",WNBA
+401856975,WNBA,Atlanta Dream at Chicago Sky,Final,Atlanta Dream,Atlanta Dream 82 - Chicago Sky 75,4,Kamilla Cardoso,Chicago Sky,"PTS 13, REB 2, AST 5, STL 1, BLK 4",WNBA
+401856976,WNBA,Dallas Wings at Minnesota Lynx,Final,Minnesota Lynx,Dallas Wings 76 - Minnesota Lynx 100,4,Arike Ogunbowale,Dallas Wings,"PTS 16, REB 3, AST 6, STL 3, FG 4-8",WNBA
+401856977,WNBA,Phoenix Mercury at Golden State Valkyries,Final,Golden State Valkyries,Phoenix Mercury 81 - Golden State Valkyries 87,4,Monique Akoa Makani,Phoenix Mercury,"PTS 19, REB 3, AST 3, STL 1, FG 7-11",WNBA
+401856975,WNBA,Atlanta Dream at Chicago Sky,Final,Atlanta Dream,Atlanta Dream 82 - Chicago Sky 75,5,Naz Hillmon,Atlanta Dream,"PTS 16, REB 6, AST 1, STL 1, FG 6-12",WNBA
+401856976,WNBA,Dallas Wings at Minnesota Lynx,Final,Minnesota Lynx,Dallas Wings 76 - Minnesota Lynx 100,5,Kayla McBride,Minnesota Lynx,"PTS 22, REB 5, AST 4, FG 7-10, 3PT 4-6",WNBA
+401856977,WNBA,Phoenix Mercury at Golden State Valkyries,Final,Golden State Valkyries,Phoenix Mercury 81 - Golden State Valkyries 87,5,Natasha Mack,Phoenix Mercury,"PTS 9, REB 10, AST 1, BLK 1, FG 3-5",WNBA
