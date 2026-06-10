@@ -17,7 +17,7 @@ try:
 except Exception:
     requests = None
 
-VERSION = "hsd-asset-desk-v1.2.5-preview-logo-url-fix"
+VERSION = "hsd-asset-desk-v1.2.6-preview-team-logo-fix"
 
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
@@ -227,6 +227,12 @@ def extract_teams_and_players(bundles: List[Dict[str, str]]) -> Tuple[List[str],
 
     # common "X beat Y" pattern
     for m in re.finditer(r"([A-Z][A-Za-z .'\-]+?)\s+beat\s+([A-Z][A-Za-z .'\-]+?)(?::|,|\.|\|)", blob):
+        for t in [clean(m.group(1)), clean(m.group(2))]:
+            if not looks_like_junk_entity(t):
+                teams.append(t)
+
+    # common preview/schedule patterns: "X at Y" or "X vs Y".
+    for m in re.finditer(r"([A-Z][A-Za-z .'\-]+?)\s+(?:at|vs\.?|versus)\s+([A-Z][A-Za-z .'\-]+?)(?:\s+-|:|,|\.|\||$)", blob):
         for t in [clean(m.group(1)), clean(m.group(2))]:
             if not looks_like_junk_entity(t):
                 teams.append(t)

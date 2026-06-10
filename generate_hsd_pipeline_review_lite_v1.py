@@ -9,11 +9,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v1.9"
+VERSION = "hsd-pipeline-review-lite-v2.0"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 
 KEY_FILES = [
+    "operator_status.md",
     "pipeline_outcome.md",
     "pipeline_publish_warning.md",
     "pipeline_stop_reason.md",
@@ -155,6 +156,14 @@ def ready_upload_pack_zips(max_mb: float = 25.0) -> List[Dict[str, Any]]:
 
 
 def main() -> None:
+    # stale_cleanup_done_v2: always rebuild review artifacts from scratch.
+    import shutil
+    for stale in [Path("hsd_pipeline_lite_review"), Path("hsd_pipeline_lite_review.zip")]:
+        if stale.is_dir():
+            shutil.rmtree(stale, ignore_errors=True)
+        elif stale.exists():
+            stale.unlink()
+
     # Hard reset review outputs so stale nested review zips cannot be uploaded again.
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
@@ -200,7 +209,8 @@ def main() -> None:
         for pack in ready_packs:
             lines.append(f"- {pack.get('bundle_name')}: included={pack.get('included')} | {pack.get('zip_path')} | {pack.get('reason')}")
     if Path("pipeline_outcome.md").exists():
-        lines += ["", "## Outcome", "", "```", head_text("pipeline_outcome.md", 3000), "```"]
+        lines += ["", "## Outcome", "", "```", head_text("operator_status.md",
+    "pipeline_outcome.md", 3000), "```"]
     if Path("pipeline_publish_warning.md").exists():
         lines += ["", "## Publish warning", "", "```", head_text("pipeline_publish_warning.md", 3000), "```"]
     if Path("pipeline_stop_reason.md").exists():

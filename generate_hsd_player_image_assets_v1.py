@@ -33,7 +33,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.6.3-active-bundle-only"
+VERSION = "hsd-player-image-assets-v1.6.3-preview-safe"
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_PLAYER_ASSETS = os.environ.get("HSD_PLAYER_ASSETS", "player_assets.csv")
@@ -48,6 +48,7 @@ BING_API_KEY = os.environ.get("BING_SEARCH_API_KEY", "").strip()
 SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "").strip()
 FREE_SEARCH_ENABLED = os.environ.get("HSD_PLAYER_IMAGE_FREE_SEARCH", "1").strip().lower() not in {"0", "false", "no"}
 PLAYER_IMAGES_REQUIRED = os.environ.get("HSD_PLAYER_IMAGES_REQUIRED", "1").strip().lower() not in {"0", "false", "no"}
+ALLOW_PREVIEW_PLAYER_IMAGES = os.environ.get("HSD_ALLOW_PREVIEW_PLAYER_IMAGES", "0").strip().lower() in {"1", "true", "yes"}
 MAX_CANDIDATES = int(os.environ.get("HSD_PLAYER_IMAGE_MAX_CANDIDATES", "8"))
 REQUEST_SLEEP = float(os.environ.get("HSD_PLAYER_IMAGE_REQUEST_SLEEP", "0.35"))
 MIN_WIDTH = int(os.environ.get("HSD_PLAYER_IMAGE_MIN_WIDTH", "160"))
@@ -296,8 +297,8 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
     for row in queue_rows:
         bundle_name = clean(row.get("bundle_name") or row.get("post_slug") or row.get("bundle_slug"))
         bundle_slug = clean(row.get("post_slug") or row.get("bundle_slug") or slugify(bundle_name))
-        if any(x in bundle_name.lower() for x in ["preview", "schedule"]):
-            # Preview/schedule bundles are team/logo driven unless real named players are explicitly attached upstream.
+        if any(x in bundle_name.lower() for x in ["preview", "schedule"]) and not ALLOW_PREVIEW_PLAYER_IMAGES:
+            # Preview/schedule bundles are team/logo driven. Do not source people unless explicitly enabled.
             continue
         section = bundle_prompt_section(bundle_name, prompts_md)
         blob = "\n".join([
