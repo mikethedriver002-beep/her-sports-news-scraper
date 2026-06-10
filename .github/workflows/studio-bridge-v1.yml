@@ -1,18 +1,7 @@
-name: Her Sports Daily Studio Bridge v1.3
+name: HSD Worker Studio Bridge v1.3 Manual Only
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "Her Sports Daily News Sync v1.8.2"
-      - "Her Sports Daily News Sync v1.7"
-      - "Her Sports Daily News Sync v1.6.1"
-    types:
-      - completed
-  schedule:
-    - cron: "05 12 * * *"
-    - cron: "05 18 * * *"
-    - cron: "05 00 * * *"
 
 permissions:
   contents: write

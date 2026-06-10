@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v1
+name: Her Sports Daily Pipeline Control v1.1
 
 on:
   workflow_dispatch:
@@ -34,10 +34,14 @@ on:
         required: true
         default: "18"
         type: string
-  schedule:
-    - cron: "10 12 * * *"
-    - cron: "10 18 * * *"
-    - cron: "10 00 * * *"
+      continue_on_empty:
+        description: "Debug only: continue if News/Studio produces zero rows?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: write
@@ -49,14 +53,13 @@ concurrency:
 
 jobs:
   run-hsd-pipeline:
-    # Scheduled runs are off by default. To enable them, set repo variable HSD_PIPELINE_AUTO_RUN=true.
-    if: github.event_name == 'workflow_dispatch' || vars.HSD_PIPELINE_AUTO_RUN == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 70
 
     env:
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'true' }}
+      HSD_CONTINUE_ON_EMPTY: ${{ github.event.inputs.continue_on_empty || 'false' }}
       HSD_STRICT_FRESHNESS_GATE: ${{ github.event.inputs.strict_freshness || '1' }}
       HSD_MAX_RESULT_FRESH_HOURS: ${{ github.event.inputs.max_result_age_hours || '18' }}
       HSD_STUDIO_REQUIRE_EVENT_DATE: ${{ github.event.inputs.strict_freshness || '1' }}
@@ -98,6 +101,7 @@ jobs:
           echo "Publish outputs: ${HSD_PUBLISH_OUTPUTS}"
           echo "Strict freshness: ${HSD_STRICT_FRESHNESS_GATE}"
           echo "Max result age hours: ${HSD_MAX_RESULT_FRESH_HOURS}"
+          echo "Continue on empty: ${HSD_CONTINUE_ON_EMPTY}"
 
       - name: Run News Sync stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only'
@@ -108,6 +112,30 @@ jobs:
           if [ -f generate_news_dashboard_v1.py ]; then python generate_news_dashboard_v1.py; fi
           if [ -f archive_news_runs_v1.py ]; then python archive_news_runs_v1.py; fi
 
+      - name: Gate after News Sync
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rows=0
+          if [ -f news_fact_packets.csv ]; then rows=$(( $(wc -l < news_fact_packets.csv) - 1 )); fi
+          echo "News fact packet rows: $rows"
+          if [ "$rows" -le 0 ]; then
+            cat > pipeline_stop_reason.md <<'EOF'
+          # HSD Pipeline Stop
+
+          Stopped after News Sync because `news_fact_packets.csv` had zero rows.
+
+          This prevents Studio Bridge and Asset Visual QA from reading stale committed bundle files.
+
+          Check `news_setup_error.md` and `news_input_status_report.csv`.
+          EOF
+            if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
+              echo "Stopping pipeline to prevent stale outputs."
+              exit 2
+            fi
+          fi
+
       - name: Run Studio Bridge stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
         shell: bash
@@ -116,6 +144,28 @@ jobs:
           python generate_hsd_studio_bridge_v1.py
           if [ -f generate_hsd_studio_dashboard_v1.py ]; then python generate_hsd_studio_dashboard_v1.py; fi
           if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py; fi
+
+      - name: Gate after Studio Bridge
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rows=0
+          if [ -f studio_bundle_queue.csv ]; then rows=$(( $(wc -l < studio_bundle_queue.csv) - 1 )); fi
+          echo "Studio bundle rows: $rows"
+          if [ "$rows" -le 0 ]; then
+            cat > pipeline_stop_reason.md <<'EOF'
+          # HSD Pipeline Stop
+
+          Stopped after Studio Bridge because `studio_bundle_queue.csv` had zero rows.
+
+          Asset Visual QA was not run because it would otherwise package stale committed bundle files.
+          EOF
+            if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
+              echo "Stopping pipeline to prevent stale outputs."
+              exit 3
+            fi
+          fi
 
       - name: Run Asset Visual QA stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only'
@@ -139,15 +189,22 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hsd-pipeline-control-v1-review
+          name: hsd-pipeline-control-v1-1-review
           path: |
+            pipeline_stop_reason.md
             latest_news_sync_run_summary.md
             latest_studio_run_summary.md
             latest_asset_visual_qa_run_summary.md
             hsd_chatgpt_review_packet.md
             00_hsd_chatgpt_review_packet.md
             chatgpt_review_pack/
+            news_setup_error.md
+            news_input_status_report.csv
+            news_fact_packets.csv
             news_run_history/latest/
+            studio_fresh_packet_report.md
+            studio_fresh_packet_gate.csv
+            studio_bundle_queue.csv
             studio_run_history/latest/
             asset_run_history/latest/
             graphics_chat_upload_pack_zips/
@@ -160,7 +217,7 @@ jobs:
             player_image_fit_report.md
             player_image_fit_gate.csv
 
-      - name: Commit and push all generated outputs once
+      - name: Commit and push generated outputs once
         if: env.HSD_PUBLISH_OUTPUTS == 'true'
         shell: bash
         run: |
@@ -169,17 +226,16 @@ jobs:
           git config user.email "github-actions@github.com"
 
           FILES=(
+            "pipeline_stop_reason.md"
             "news_input_status_report.csv" "news_setup_error.md" "news_candidate_queue.csv" "news_source_observations.csv"
             "news_fact_packets.csv" "news_brief_queue.md" "news_social_packets.md" "news_graphics_handoff.md"
             "news_daily_plan.md" "news_manual_review_queue.csv" "news_sync_hub.md" "news_sync_manifest.json"
             "news_dashboard" "latest_news_sync_run_summary.md" "news_run_history"
-
             "studio_fresh_packet_report.md" "studio_fresh_packet_gate.csv" "studio_command_center.md" "studio_graphics_queue.csv"
             "studio_bundle_queue.csv" "studio_bundle_packets.md" "studio_bundle_prompts.md" "studio_bundle_prompts_v2.md"
             "studio_bundle_caption_bank.md" "studio_top_graphic_packets.md" "studio_image_prompts.md" "studio_caption_bank.md"
             "studio_accuracy_checklist.csv" "studio_manual_review_graphics.csv" "studio_post_schedule.md" "studio_brand_config.json"
             "studio_graphics_sop.json" "studio_manifest.json" "studio_dashboard" "brand_assets" "latest_studio_run_summary.md" "studio_run_history"
-
             "asset_manifest.csv" "asset_manifest.json" "team_assets.csv" "team_assets.json" "player_assets.csv" "player_assets.json"
             "asset_rights_review.csv" "fact_warning_queue.csv" "player_image_requirements.csv" "player_image_candidates.csv"
             "player_image_sourcing_report.md" "approved_graphics_assets.csv" "approved_graphics_assets.json" "launch_integration_points.csv"
@@ -196,18 +252,14 @@ jobs:
             "rendered_slide_qa.csv" "rendered_slide_qa_report.md" "rendered_slide_qa_manifest.json"
             "latest_asset_visual_qa_run_summary.md" "hsd_chatgpt_review_packet.md" "00_hsd_chatgpt_review_packet.md" "chatgpt_review_pack" "asset_run_history"
           )
-
           for file in "${FILES[@]}"; do
             if [ -e "$file" ]; then git add "$file"; else echo "Optional output not present, skipping: $file"; fi
           done
-
           if git diff --cached --quiet; then
             echo "No generated output changes to commit"
             exit 0
           fi
-
-          git commit -m "Run HSD Pipeline Control v1"
-
+          git commit -m "Run HSD Pipeline Control v1.1"
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
             git fetch origin main
@@ -224,12 +276,8 @@ jobs:
                 git rebase --continue || git rebase --skip
               fi
             fi
-            if git push origin HEAD:main; then
-              echo "Push succeeded"
-              exit 0
-            fi
+            if git push origin HEAD:main; then echo "Push succeeded"; exit 0; fi
             sleep 5
           done
-
           echo "Push failed after 3 attempts"
           exit 1

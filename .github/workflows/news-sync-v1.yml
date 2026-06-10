@@ -1,18 +1,7 @@
-name: Her Sports Daily News Sync v1.8.2
+name: HSD Worker News Sync v1.8.2 Manual Only
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "Women's Sports Results Desk v4.1"
-      - "Women's Sports Results Desk v4.2"
-      - "Women's Sports Results Desk v4.3"
-    types:
-      - completed
-  schedule:
-    - cron: "45 11 * * *"
-    - cron: "45 17 * * *"
-    - cron: "45 23 * * *"
 
 permissions:
   contents: write
