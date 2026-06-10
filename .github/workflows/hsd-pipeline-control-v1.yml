@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v2.0
+name: Her Sports Daily Pipeline Control v2.2
 
 on:
   workflow_dispatch:
@@ -86,7 +86,7 @@ jobs:
       HSD_NEWS_ENABLE_FETCH: "true"
       HSD_TIMEZONE: America/New_York
       HSD_RESULTS_SOURCES: apisports,espn
-      HSD_PIPELINE_CONTROL_VERSION: v2.0
+      HSD_PIPELINE_CONTROL_VERSION: v2.2
       HSD_REVIEW_ARTIFACT_SIZE: ${{ github.event.inputs.review_artifact_size || 'lite' }}
       HSD_COMMIT_HEAVY_OUTPUTS: ${{ github.event.inputs.commit_heavy_outputs || 'false' }}
       HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
@@ -140,31 +140,47 @@ jobs:
           set -euo pipefail
           rm -rf hsd_pipeline_lite_review hsd_pipeline_lite_review.zip
           rm -f pipeline_stop_reason.md pipeline_outcome.md pipeline_publish_warning.md operator_status.md
-          rm -f results_freshness_report.md results_freshness_gate.csv results_freshness_manifest.json
+          rm -f results_freshness_report.md results_freshness_gate.csv results_freshness_manifest.json results_contract_report.md
           rm -f latest_news_sync_run_summary.md latest_studio_run_summary.md latest_asset_visual_qa_run_summary.md
-          rm -f news_fact_packets.csv studio_bundle_queue.csv studio_preview_fallback_report.md
+          rm -f news_fact_packets.csv news_setup_error.md news_input_status_report.csv news_candidate_queue.csv news_source_observations.csv studio_fresh_packet_report.md studio_fresh_packet_gate.csv studio_graphics_queue.csv studio_bundle_queue.csv studio_bundle_packets.md studio_bundle_prompts.md studio_preview_fallback_report.md
           rm -f graphics_upload_pack_status.csv graphics_chat_direct_handoff.md graphics_qa_report.md
           rm -f player_image_requirements.csv player_image_sourcing_report.md player_image_fit_report.md player_image_fit_gate.csv
           rm -f asset_candidates_review.md graphics_chat_upload_manifest.csv approved_graphics_assets.csv
+          rm -f top_womens_results.csv today_womens_results.csv today_final_results.csv reconciled_events.csv
           echo "Stale generated runtime outputs removed."
 
       - name: Verify pipeline controller install
         shell: bash
         run: |
           set -euo pipefail
-          echo "Verifying v2.0 install files..."
-          grep -q "Her Sports Daily Pipeline Control v2.0" .github/workflows/hsd-pipeline-control-v1.yml
+          echo "Verifying v2.2 install files..."
+          grep -q "Her Sports Daily Pipeline Control v2.2" .github/workflows/hsd-pipeline-control-v1.yml
           grep -q "Toronto Tempo" generate_hsd_asset_desk_v1.py
           grep -q "Connecticut Sun" generate_hsd_asset_desk_v1.py
-          grep -q "hsd-pipeline-review-lite-v2.0" generate_hsd_pipeline_review_lite_v1.py
+          grep -q "hsd-pipeline-review-lite-v2.2" generate_hsd_pipeline_review_lite_v1.py
           grep -q "preview-team-filter" generate_hsd_player_image_assets_v1.py || grep -q "all-sports" generate_hsd_player_image_assets_v1.py
           grep -q "Connecticut_Sun_logo.svg" generate_hsd_asset_desk_v1.py
           grep -q "Toronto_Tempo_logo.svg" generate_hsd_asset_desk_v1.py
           if grep -q "Connecticut_Sun_logo.svg/250px" generate_hsd_asset_desk_v1.py; then echo "Old Connecticut thumbnail URL still present"; exit 1; fi
           grep -q "hsd-asset-desk-v1.2.6-preview-team-logo-fix" generate_hsd_asset_desk_v1.py
           grep -q "hsd-player-image-assets-v1.6.3-preview-safe" generate_hsd_player_image_assets_v1.py
-          grep -q "hsd-pipeline-review-lite-v2.0" generate_hsd_pipeline_review_lite_v1.py
-          echo "v2.0 install verified."
+          grep -q "hsd-pipeline-review-lite-v2.2" generate_hsd_pipeline_review_lite_v1.py
+          grep -q "hsd-results-contract-v2.2" generate_hsd_results_contract_v1.py
+          grep -q "hsd-graphics-upload-pack-v2.2" generate_hsd_graphics_upload_pack_v1.py
+          grep -q "Toronto Tempo" generate_hsd_graphics_upload_pack_v1.py
+          required_files=(
+            generate_hsd_results_desk_v4.py generate_results_dashboard_v4.py archive_results_runs_v4.py
+            generate_hsd_results_contract_v1.py generate_hsd_news_sync_v1.py generate_hsd_studio_bridge_v1.py
+            generate_hsd_tonight_preview_bridge_v1.py generate_hsd_asset_desk_v1.py generate_hsd_player_image_assets_v1.py
+            generate_hsd_graphics_upload_pack_v1.py generate_hsd_pipeline_review_lite_v1.py generate_hsd_operator_status_v1.py
+          )
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Missing required pipeline file: $file"
+              exit 1
+            fi
+          done
+          echo "v2.2 install verified."
 
       - name: Run Results Desk stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
@@ -180,88 +196,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import csv, json, os, re
-          from datetime import datetime, timezone
+          python generate_hsd_results_contract_v1.py
+          fresh=$(python - <<'PY'
+          import json
           from pathlib import Path
-          max_hours = float(os.environ.get('HSD_MAX_RESULT_FRESH_HOURS','18'))
-          now = datetime.now(timezone.utc)
-          candidate_files = ['top_womens_results.csv','today_final_results.csv','today_womens_results.csv','reconciled_events.csv']
-          date_keys = ['event_datetime','event_date','result_date','scheduled_datetime_local','scheduled_date_local','game_datetime','game_date','date_utc','date','played_at','completed_at']
-          def clean(v): return re.sub(r'\s+',' ',str(v or '')).strip()
-          def parse_dt(v):
-              s=clean(v).replace('Z','+00:00')
-              if not s: return None
-              try:
-                  dt=datetime.fromisoformat(s)
-                  return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-              except Exception:
-                  pass
-              m=re.search(r'\b(20\d{2})-(\d{1,2})-(\d{1,2})\b',s)
-              if m:
-                  # Use noon UTC for date-only rows so yesterday morning posts do not get overblocked.
-                  return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), 12, 0, 0, tzinfo=timezone.utc)
-              m=re.search(r'\b(\d{1,2})/(\d{1,2})/(20\d{2})\b',s)
-              if m:
-                  return datetime(int(m.group(3)), int(m.group(1)), int(m.group(2)), 12, 0, 0, tzinfo=timezone.utc)
-              return None
-          rows=[]
-          for fname in candidate_files:
-              p=Path(fname)
-              if not p.exists():
-                  continue
-              try:
-                  with p.open(newline='', encoding='utf-8', errors='replace') as f:
-                      for r in csv.DictReader(f):
-                          r['_source_file']=fname
-                          rows.append(r)
-              except Exception:
-                  continue
-          checked=[]; fresh=[]; stale=[]; missing=[]
-          for r in rows:
-              dt=None; src=''
-              for k in date_keys:
-                  dt=parse_dt(r.get(k))
-                  if dt:
-                      src=k; break
-              age=''
-              status='missing_event_date'
-              if dt:
-                  age=max(0.0, (now-dt).total_seconds()/3600.0)
-                  status='fresh' if age <= max_hours else 'stale'
-              out={
-                  'source_file': r.get('_source_file',''),
-                  'headline': clean(r.get('graphics_headline') or r.get('headline') or r.get('matchup') or r.get('event_name')),
-                  'event_date': dt.date().isoformat() if dt else '',
-                  'event_age_hours': f'{age:.1f}' if isinstance(age,float) else '',
-                  'status': status,
-                  'date_source': src,
-              }
-              checked.append(out)
-              if status=='fresh': fresh.append(out)
-              elif status=='stale': stale.append(out)
-              else: missing.append(out)
-          with open('results_freshness_gate.csv','w',newline='',encoding='utf-8') as f:
-              fields=['source_file','headline','event_date','event_age_hours','status','date_source']
-              w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(checked)
-          lines=['# HSD Results Freshness Gate v1.3','',f'Generated: {now.isoformat()}','',f'- result rows checked: {len(checked)}',f'- fresh rows: {len(fresh)}',f'- stale rows: {len(stale)}',f'- missing event date rows: {len(missing)}',f'- max result age hours: {max_hours}','']
-          if fresh:
-              lines += ['## Fresh rows',''] + [f"- {x['headline']} | {x['event_date']} | {x['event_age_hours']}h | {x['source_file']}" for x in fresh[:20]] + ['']
-          if stale:
-              lines += ['## Stale rows',''] + [f"- {x['headline']} | {x['event_date']} | {x['event_age_hours']}h | {x['source_file']}" for x in stale[:20]] + ['']
-          if missing:
-              lines += ['## Missing event date rows',''] + [f"- {x['headline']} | {x['source_file']}" for x in missing[:20]] + ['']
-          Path('results_freshness_report.md').write_text('\n'.join(lines),encoding='utf-8')
-          Path('results_freshness_manifest.json').write_text(json.dumps({'checked':len(checked),'fresh':len(fresh),'stale':len(stale),'missing_event_date':len(missing),'max_hours':max_hours},indent=2),encoding='utf-8')
-          if not fresh:
-              Path('pipeline_stop_reason.md').write_text('# HSD Pipeline Stop\n\nStopped after Results Desk because no fresh final result rows passed the freshness window.\n\nThis prevents News Sync, Studio Bridge, and Asset Visual QA from building graphics from stale results.\n\nCheck `results_freshness_report.md`, `top_womens_results.csv`, and `today_final_results.csv`.\n', encoding='utf-8')
-              print('No fresh Results Desk rows passed freshness gate.')
-              print('HSD_PIPELINE_STOPPED=true')
+          p=Path("results_freshness_manifest.json")
+          if not p.exists():
+              print(0)
           else:
-              print(f'Fresh Results Desk rows: {len(fresh)}')
+              print(json.loads(p.read_text()).get("counts",{}).get("fresh",0))
           PY
-          if grep -q "Stopped after Results Desk" pipeline_stop_reason.md 2>/dev/null; then
-            echo "Pipeline stopped after Results Desk: no fresh results." >> "$GITHUB_STEP_SUMMARY"
+          )
+          echo "Fresh Results Contract rows: $fresh"
+          if [ "$fresh" -le 0 ]; then
+            cat > pipeline_stop_reason.md <<'EOF'
+          # HSD Pipeline Stop
+
+          Stopped after Results Desk because no fresh result or upcoming schedule rows passed the freshness window.
+
+          This prevents News Sync, Studio Bridge, and Asset Visual QA from building graphics from stale results.
+
+          Check `results_contract_report.md`, `results_freshness_report.md`, and the Results Desk CSVs.
+          EOF
+            echo "Pipeline stopped after Results Desk: no fresh rows." >> "$GITHUB_STEP_SUMMARY"
             if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
               echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
               echo "HSD_PIPELINE_STOP_STAGE=results_desk" >> "$GITHUB_ENV"
@@ -295,19 +252,38 @@ jobs:
           )
           echo "News fact packet rows: $rows"
           if [ "$rows" -le 0 ]; then
-            cat > pipeline_stop_reason.md <<'EOF'
+            preview_rows=$(python - <<'PY'
+            import csv
+            from pathlib import Path
+            p=Path("results_freshness_gate.csv")
+            n=0
+            if p.exists():
+                with p.open(newline="",encoding="utf-8",errors="replace") as f:
+                    for r in csv.DictReader(f):
+                        if r.get("status") == "fresh" and r.get("row_type") == "preview":
+                            n += 1
+            print(n)
+            PY
+            )
+            if [ "$preview_rows" -gt 0 ]; then
+              echo "News Sync produced zero packets, but fresh preview rows exist. Continuing to preview fallback."
+              rm -f pipeline_stop_reason.md
+              echo "HSD_NEWS_ZERO_BUT_PREVIEW_AVAILABLE=true" >> "$GITHUB_ENV"
+            else
+              cat > pipeline_stop_reason.md <<'EOF'
           # HSD Pipeline Stop
 
-          Stopped after News Sync because `news_fact_packets.csv` had zero rows.
+          Stopped after News Sync because `news_fact_packets.csv` had zero rows and no fresh preview fallback rows were available.
 
           This prevents Studio Bridge and Asset Visual QA from reading stale committed bundle files.
 
-          Check `news_setup_error.md` and `news_input_status_report.csv`.
+          Check `news_setup_error.md`, `news_input_status_report.csv`, and `results_contract_report.md`.
           EOF
-            echo "Pipeline stopped after News Sync: zero fact packets." >> "$GITHUB_STEP_SUMMARY"
-            if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
-              echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
-              echo "HSD_PIPELINE_STOP_STAGE=news_sync" >> "$GITHUB_ENV"
+              echo "Pipeline stopped after News Sync: zero fact packets." >> "$GITHUB_STEP_SUMMARY"
+              if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
+                echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
+                echo "HSD_PIPELINE_STOP_STAGE=news_sync" >> "$GITHUB_ENV"
+              fi
             fi
           fi
 
@@ -407,7 +383,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v2-0-lite-review
+          name: hsd-pipeline-control-v2-2-lite-review
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -416,7 +392,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'full' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v2-0-full-review
+          name: hsd-pipeline-control-v2-2-full-review
           path: |
             pipeline_stop_reason.md
             pipeline_publish_warning.md
@@ -427,6 +403,7 @@ jobs:
             results_freshness_report.md
             results_freshness_gate.csv
             results_freshness_manifest.json
+            results_contract_report.md
             latest_results_run_summary.md
             results_run_history/latest/
             top_womens_results.csv
@@ -477,7 +454,7 @@ jobs:
           FILES=(
             "operator_status.md" "pipeline_outcome.md" "pipeline_stop_reason.md" "pipeline_publish_warning.md"
             "hsd_pipeline_lite_review.zip" "hsd_pipeline_lite_review"
-            "results_freshness_report.md" "results_freshness_gate.csv" "results_freshness_manifest.json"
+            "results_freshness_report.md" "results_freshness_gate.csv" "results_freshness_manifest.json" "results_contract_report.md"
             "latest_results_run_summary.md" "source_observations.csv" "reconciled_events.csv" "today_results_board.csv" "today_womens_results.csv" "today_final_results.csv" "top_womens_results.csv" "manual_review_queue.csv" "source_health_report.csv" "results_graphics_queue.md" "daily_results_recommendations.md" "wnba_box_score_audit.csv" "wnba_box_score_summary.md" "results_system_hub.md" "run_manifest.json"
             "latest_news_sync_run_summary.md" "news_input_status_report.csv" "news_setup_error.md" "news_candidate_queue.csv" "news_source_observations.csv" "news_fact_packets.csv" "news_brief_queue.md" "news_social_packets.md" "news_graphics_handoff.md" "news_daily_plan.md" "news_manual_review_queue.csv" "news_sync_hub.md" "news_sync_manifest.json"
             "latest_studio_run_summary.md" "studio_preview_fallback_report.md" "studio_fresh_packet_report.md" "studio_fresh_packet_gate.csv" "studio_command_center.md" "studio_graphics_queue.csv" "studio_bundle_queue.csv" "studio_bundle_packets.md" "studio_bundle_prompts.md" "studio_bundle_caption_bank.md" "studio_top_graphic_packets.md" "studio_image_prompts.md" "studio_caption_bank.md" "studio_accuracy_checklist.csv" "studio_manual_review_graphics.csv" "studio_post_schedule.md" "studio_brand_config.json" "studio_graphics_sop.json" "studio_manifest.json"
@@ -499,7 +476,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Run HSD Pipeline Control v2.0"
+          git commit -m "Run HSD Pipeline Control v2.2"
 
           resolve_generated_conflicts_current_run_wins() {
             echo "Resolving generated-output conflicts by keeping this run's generated files..."
