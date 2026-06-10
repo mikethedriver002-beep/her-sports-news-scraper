@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v1.3
+name: Her Sports Daily Pipeline Control v1.4
 
 on:
   workflow_dispatch:
@@ -43,6 +43,15 @@ on:
         options:
           - "false"
           - "true"
+      review_artifact_size:
+        description: "Review artifact size"
+        required: true
+        default: "lite"
+        type: choice
+        options:
+          - "lite"
+          - "full"
+          - "both"
 
 permissions:
   contents: write
@@ -69,6 +78,8 @@ jobs:
       HSD_NEWS_ENABLE_FETCH: "true"
       HSD_TIMEZONE: America/New_York
       HSD_RESULTS_SOURCES: apisports,espn
+      HSD_REVIEW_ARTIFACT_SIZE: ${{ github.event.inputs.review_artifact_size || 'lite' }}
+      HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
       HSD_LOOKBACK_DAYS: "1"
       HSD_LOOKAHEAD_DAYS: "1"
       HSD_ASSET_RIGHTS_MODE: aggressive
@@ -110,6 +121,7 @@ jobs:
           echo "Max result age hours: ${HSD_MAX_RESULT_FRESH_HOURS}"
           echo "Continue on empty: ${HSD_CONTINUE_ON_EMPTY}"
           echo "Results sources: ${HSD_RESULTS_SOURCES}"
+          echo "Review artifact size: ${HSD_REVIEW_ARTIFACT_SIZE}"
 
       - name: Run Results Desk stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
@@ -256,6 +268,15 @@ jobs:
           if [ -f generate_hsd_studio_dashboard_v1.py ]; then python generate_hsd_studio_dashboard_v1.py; fi
           if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py; fi
 
+      - name: Build preview fallback if no fresh result bundles
+        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f generate_hsd_tonight_preview_bridge_v1.py ]; then
+            python generate_hsd_tonight_preview_bridge_v1.py
+          fi
+
       - name: Gate after Studio Bridge
         if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
         shell: bash
@@ -304,13 +325,32 @@ jobs:
           python generate_hsd_rendered_slide_qa_v1.py
           python archive_hsd_asset_visual_qa_runs_v1.py
 
-      - name: Upload pipeline review artifact
-        uses: actions/upload-artifact@v4
+      - name: Build lite review artifact
         if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python generate_hsd_pipeline_review_lite_v1.py || true
+
+      - name: Upload lite pipeline review artifact
+        uses: actions/upload-artifact@v4
+        if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v1-3-review
+          name: hsd-pipeline-control-v1-4-lite-review
+          path: |
+            hsd_pipeline_lite_review.zip
+            hsd_pipeline_lite_review/
+
+      - name: Upload full pipeline review artifact
+        uses: actions/upload-artifact@v4
+        if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'full' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
+        with:
+          name: hsd-pipeline-control-v1-4-full-review
           path: |
             pipeline_stop_reason.md
+            hsd_pipeline_lite_review.zip
+            hsd_pipeline_lite_review/
+            studio_preview_fallback_report.md
             results_freshness_report.md
             results_freshness_gate.csv
             results_freshness_manifest.json
@@ -361,7 +401,7 @@ jobs:
           git config user.email "github-actions@github.com"
 
           FILES=(
-            "pipeline_stop_reason.md" "results_freshness_report.md" "results_freshness_gate.csv" "results_freshness_manifest.json"
+            "pipeline_stop_reason.md" "studio_preview_fallback_report.md" "hsd_pipeline_lite_review.zip" "hsd_pipeline_lite_review" "results_freshness_report.md" "results_freshness_gate.csv" "results_freshness_manifest.json"
             "source_observations.csv" "reconciled_events.csv" "today_results_board.csv" "today_womens_results.csv" "today_final_results.csv" "top_womens_results.csv" "manual_review_queue.csv" "source_health_report.csv" "results_graphics_queue.md" "daily_results_recommendations.md" "wnba_box_score_audit.csv" "wnba_box_score_summary.md" "results_system_hub.md" "run_manifest.json" "results_dashboard" "latest_results_run_summary.md" "results_run_history"
             "news_input_status_report.csv" "news_setup_error.md" "news_candidate_queue.csv" "news_source_observations.csv" "news_fact_packets.csv" "news_brief_queue.md" "news_social_packets.md" "news_graphics_handoff.md" "news_daily_plan.md" "news_manual_review_queue.csv" "news_sync_hub.md" "news_sync_manifest.json" "news_dashboard" "latest_news_sync_run_summary.md" "news_run_history"
             "studio_fresh_packet_report.md" "studio_fresh_packet_gate.csv" "studio_command_center.md" "studio_graphics_queue.csv" "studio_bundle_queue.csv" "studio_bundle_packets.md" "studio_bundle_prompts.md" "studio_bundle_prompts_v2.md" "studio_bundle_caption_bank.md" "studio_top_graphic_packets.md" "studio_image_prompts.md" "studio_caption_bank.md" "studio_accuracy_checklist.csv" "studio_manual_review_graphics.csv" "studio_post_schedule.md" "studio_brand_config.json" "studio_graphics_sop.json" "studio_manifest.json" "studio_dashboard" "brand_assets" "latest_studio_run_summary.md" "studio_run_history"
@@ -372,7 +412,7 @@ jobs:
             if [ -e "$f" ]; then git add "$f"; fi
           done
 
-          git commit -m "Update HSD Pipeline Control v1.3 outputs" || echo "No changes to commit"
+          git commit -m "Update HSD Pipeline Control v1.4 outputs" || echo "No changes to commit"
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt"
