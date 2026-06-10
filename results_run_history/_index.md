@@ -2,6 +2,7 @@
 
 | Run UTC | Archive Folder | Files |
 |---|---:|---:|
+| 2026-06-10 03:10:09 UTC | [Open archive](results_run_history/2026-06-10/0310_UTC) | 7 files |
 | 2026-06-10 02:42:57 UTC | [Open archive](results_run_history/2026-06-10/0242_UTC) | 15 files |
 | 2026-06-10 02:40:23 UTC | [Open archive](results_run_history/2026-06-10/0240_UTC) | 7 files |
 | 2026-06-10 02:21:19 UTC | [Open archive](results_run_history/2026-06-10/0221_UTC) | 15 files |
