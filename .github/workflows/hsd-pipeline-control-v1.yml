@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v1.6
+name: Her Sports Daily Pipeline Control v1.7
 
 on:
   workflow_dispatch:
@@ -86,7 +86,7 @@ jobs:
       HSD_NEWS_ENABLE_FETCH: "true"
       HSD_TIMEZONE: America/New_York
       HSD_RESULTS_SOURCES: apisports,espn
-      HSD_PIPELINE_CONTROL_VERSION: v1.6
+      HSD_PIPELINE_CONTROL_VERSION: v1.7
       HSD_REVIEW_ARTIFACT_SIZE: ${{ github.event.inputs.review_artifact_size || 'lite' }}
       HSD_COMMIT_HEAVY_OUTPUTS: ${{ github.event.inputs.commit_heavy_outputs || 'false' }}
       HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
@@ -132,6 +132,18 @@ jobs:
           echo "Continue on empty: ${HSD_CONTINUE_ON_EMPTY}"
           echo "Results sources: ${HSD_RESULTS_SOURCES}"
           echo "Review artifact size: ${HSD_REVIEW_ARTIFACT_SIZE}"
+
+      - name: Verify pipeline controller install
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Verifying v1.7 install files..."
+          grep -q "Her Sports Daily Pipeline Control v1.7" .github/workflows/hsd-pipeline-control-v1.yml
+          grep -q "Toronto Tempo" generate_hsd_asset_desk_v1.py
+          grep -q "Connecticut Sun" generate_hsd_asset_desk_v1.py
+          grep -q "hsd-pipeline-review-lite-v1.7" generate_hsd_pipeline_review_lite_v1.py
+          grep -q "preview-team-filter" generate_hsd_player_image_assets_v1.py || grep -q "all-sports" generate_hsd_player_image_assets_v1.py
+          echo "v1.7 install verified."
 
       - name: Run Results Desk stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
@@ -355,7 +367,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v1-5-lite-review
+          name: hsd-pipeline-control-v1-7-lite-review
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -364,7 +376,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'full' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v1-5-full-review
+          name: hsd-pipeline-control-v1-7-full-review
           path: |
             pipeline_stop_reason.md
             hsd_pipeline_lite_review.zip
@@ -443,7 +455,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No generated output changes to commit."
           else
-            git commit -m "Run HSD Pipeline Control v1.5"
+            git commit -m "Run HSD Pipeline Control v1.7"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
