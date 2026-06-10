@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Account Operator Checklist v1.1
 
-Generated: 2026-06-10T12:44:39.603728+00:00
+Generated: 2026-06-10T21:27:41.964368+00:00
 
 ## Morning setup
 
