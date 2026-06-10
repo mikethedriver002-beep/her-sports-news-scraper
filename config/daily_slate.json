@@ -1,0 +1,21 @@
+{
+  "max_posts": {
+    "lean": 1,
+    "balanced": 3,
+    "full_slate": 5
+  },
+  "min_spacing_minutes": 45,
+  "quiet_hours_local": ["00:00-07:00"],
+  "caps": {
+    "breaking": 1,
+    "result": 2,
+    "preview": 1,
+    "feature": 1
+  },
+  "fallback_order": ["breaking", "result", "preview", "feature"],
+  "carryover": {
+    "allow": true,
+    "max_age_hours": 36,
+    "label_required": true
+  }
+}

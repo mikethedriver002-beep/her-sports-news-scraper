@@ -1,0 +1,7 @@
+{
+  "pipeline_name": "Her Sports Daily Production Control Plane",
+  "pipeline_version": "v3.0",
+  "contract_version": "v2",
+  "default_publish_mode": "artifact_only",
+  "default_review_artifact_size": "lite"
+}

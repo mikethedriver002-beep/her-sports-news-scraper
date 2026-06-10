@@ -1,0 +1,12 @@
+{
+  "robots_policy": "respect",
+  "manual_social_policy": {
+    "x": "manual_only_requires_confirmation",
+    "instagram": "manual_only",
+    "threads": "manual_only",
+    "tiktok": "manual_only_metadata_only"
+  },
+  "auto_publish_allowed_source_tiers": ["official", "primary_media", "operator_verified"],
+  "blocked_url_substrings": ["placeholder", "default-avatar", "fallback", "tracking"],
+  "strip_query_params": ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"]
+}

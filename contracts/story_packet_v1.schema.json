@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HSD Story Candidate v1",
+  "type": "object",
+  "required": ["story_id", "source_url", "story_kind", "verification_status", "status", "idempotency_key"],
+  "properties": {
+    "story_id": {"type": "string"},
+    "source_url": {"type": "string"},
+    "story_kind": {"type": "string"},
+    "verification_status": {"type": "string"},
+    "status": {"type": "string"},
+    "idempotency_key": {"type": "string"}
+  }
+}

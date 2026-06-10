@@ -1,0 +1,6 @@
+{
+  "production_controller": ".github/workflows/hsd-pipeline-control-v1.yml",
+  "allowed_auto_workflows": [".github/workflows/hsd-ci.yml"],
+  "workers_should_not_have": ["push", "schedule", "workflow_run"],
+  "publish_default": "artifact_only"
+}

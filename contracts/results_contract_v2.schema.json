@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HSD Results Contract v2",
+  "type": "object",
+  "required": ["run_id", "event_id", "row_kind", "status", "sport", "league", "event_date_local", "content_eligibility"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "event_id": {"type": "string"},
+    "row_kind": {"enum": ["result", "preview", "news", "manual_story"]},
+    "status": {"type": "string"},
+    "sport": {"type": "string"},
+    "league": {"type": "string"},
+    "event_date_local": {"type": "string"},
+    "content_eligibility": {"enum": ["eligible", "review", "blocked"]}
+  }
+}

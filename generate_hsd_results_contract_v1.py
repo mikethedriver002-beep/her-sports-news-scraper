@@ -1,65 +1,36 @@
 from __future__ import annotations
-
-import csv
-import json
-import re
-from datetime import datetime, timezone, timedelta
+import csv, hashlib, json, os, re
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-VERSION = "hsd-results-contract-v2.2"
+VERSION = "hsd-results-contract-v3.0"
+OUT_CSV = Path("results_contract_v2.csv")
+OUT_JSONL = Path("results_contract_v2.jsonl")
+OUT_REPORT = Path("results_contract_report.md")
+OUT_DIR = None
 
-OUT_TOP = "top_womens_results.csv"
-OUT_WOMENS = "today_womens_results.csv"
-OUT_FINALS = "today_final_results.csv"
-OUT_RECON = "reconciled_events.csv"
-OUT_GATE = "results_freshness_gate.csv"
-OUT_REPORT = "results_freshness_report.md"
-OUT_MANIFEST = "results_freshness_manifest.json"
-OUT_CONTRACT = "results_contract_report.md"
-
-RESULT_FIELDS = [
-    "graphics_headline","caption_seed","matchup","winner","loser","final_score_display",
-    "sport_norm","league_norm","gender_scope","status_norm","manual_review","editorial_bucket",
-    "content_action","posting_priority","confidence","editorial_rank","scheduled_date_local",
-    "source_url","selected_source","all_sources_json","outcome_type","event_date","event_datetime"
+FIELDS = [
+    "run_id","event_id","row_kind","source_id","source_file","source_url","source_observed_at_utc","source_timezone",
+    "scheduled_start_utc","completed_at_utc","sport","league","status","home_team_name","away_team_name",
+    "winner_team_name","loser_team_name","score_home","score_away","score_display","event_date_local",
+    "content_eligibility","freshness_reason","manual_review","headline","summary"
 ]
-GATE_FIELDS = ["source_file","headline","event_date","event_age_hours","status","date_source","row_type"]
-
-SOURCE_FILES = [
-    "top_womens_results.csv",
-    "today_womens_results.csv",
-    "today_final_results.csv",
-    "reconciled_events.csv",
-    "today_results_board.csv",
-    "results_dashboard_seed.csv",
-]
-
-def now() -> datetime:
-    return datetime.now(timezone.utc)
-
-def iso_now() -> str:
-    return now().isoformat()
+SOURCE_FILES = ["top_womens_results.csv","today_final_results.csv","today_womens_results.csv","reconciled_events.csv","today_results_board.csv","today_box_scores.csv"]
 
 def clean(v: Any) -> str:
     return re.sub(r"\s+", " ", str(v or "")).strip()
 
-
-
-def local_eastern_to_utc(year: int, month: int, day: int, hour: int, minute: int) -> datetime:
-    """Approximate US Eastern local time to UTC for schedule strings like 7:00 PM EDT.
-
-    GitHub runners do not always have zoneinfo data issues, so this helper keeps
-    the contract deterministic. March-November is treated as EDT (UTC-4), other
-    months as EST (UTC-5). This is sufficient for sports slate freshness gating.
-    """
-    offset_hours = 4 if 3 <= month <= 11 else 5
-    return datetime(year, month, day, hour, minute, tzinfo=timezone.utc) + timedelta(hours=offset_hours)
-
+def read_current_run() -> Dict[str, str]:
+    p = Path("hsd_current_run.json")
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: pass
+    return {"run_id": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ_local"), "run_dir": "."}
 
 def read_csv(path: str) -> List[Dict[str, str]]:
     p = Path(path)
-    if not p.exists() or p.stat().st_size == 0:
+    if not p.exists():
         return []
     try:
         with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -67,234 +38,118 @@ def read_csv(path: str) -> List[Dict[str, str]]:
     except Exception:
         return []
 
-def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k, "") for k in fields})
-
-def parse_dt(value: Any) -> Optional[datetime]:
-    s = clean(value).replace("Z", "+00:00")
-    if not s:
-        return None
-    try:
-        dt = datetime.fromisoformat(s)
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-    except Exception:
-        pass
-    m = re.search(r"\b(20\d{2})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?\b", s)
-    if m:
-        hh = int(m.group(4) or 12)
-        mm = int(m.group(5) or 0)
-        ss = int(m.group(6) or 0)
-        return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), hh, mm, ss, tzinfo=timezone.utc)
-    m = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2})(?:[ T](\d{1,2}):(\d{2}))?\b", s)
-    if m:
-        hh = int(m.group(4) or 12)
-        mm = int(m.group(5) or 0)
-        return datetime(int(m.group(3)), int(m.group(1)), int(m.group(2)), hh, mm, tzinfo=timezone.utc)
-    m = re.search(r"\b(jan|feb|mar|apr|may|jun|june|jul|july|aug|sep|sept|oct|nov|dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+at\s+(\d{1,2}):(\d{2})\s*(am|pm))?(?:\s*(edt|est))?", s, re.I)
-    if m:
-        month_names = {"jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,"june":6,"jul":7,"july":7,"aug":8,"sep":9,"sept":9,"oct":10,"nov":11,"dec":12}
-        y = now().year
-        mo = month_names[m.group(1).lower()]
-        d = int(m.group(2))
-        hh = int(m.group(3) or 12)
-        mi = int(m.group(4) or 0)
-        ap = (m.group(5) or "").lower()
-        tz = (m.group(6) or "").lower()
-        if ap == "pm" and hh != 12: hh += 12
-        if ap == "am" and hh == 12: hh = 0
-        if tz in {"edt", "est"} or ap:
-            return local_eastern_to_utc(y, mo, d, hh, mi)
-        return datetime(y, mo, d, hh, mi, tzinfo=timezone.utc)
-    return None
-
-def first(row: Dict[str,str], keys: List[str]) -> str:
-    for k in keys:
-        if clean(row.get(k)):
-            return clean(row.get(k))
+def parse_date(row: Dict[str, str]) -> str:
+    for k in ["event_date","result_date","scheduled_date_local","game_date","date","event_datetime","scheduled_datetime_local","completed_at"]:
+        v = clean(row.get(k))
+        m = re.search(r"\b(20\d{2})-(\d{1,2})-(\d{1,2})\b", v)
+        if m:
+            return f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        m = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2})\b", v)
+        if m:
+            return f"{int(m.group(3)):04d}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
     return ""
 
-def normalize_row(row: Dict[str, str], source_file: str) -> Dict[str, str]:
-    matchup = first(row, ["matchup","event_name","game","fixture","title","graphics_headline","headline"])
-    home = first(row, ["home_team","home","team_home"])
-    away = first(row, ["away_team","away","team_away"])
-    if not matchup and home and away:
-        matchup = f"{away} at {home}"
-    winner = first(row, ["winner","winning_team"])
-    loser = first(row, ["loser","losing_team"])
-    score = first(row, ["final_score_display","score","final_score","result"])
-    headline = first(row, ["graphics_headline","headline","title"])
-    status = first(row, ["status_norm","status","game_status","event_status"]).lower()
-    outcome = first(row, ["outcome_type","row_type","content_type"]).lower()
-    if not headline:
-        if winner and loser:
-            headline = f"{winner} beat {loser}"
-        elif matchup:
-            headline = matchup
-    if not outcome:
-        outcome = "preview" if any(x in status for x in ["sched","upcoming","pre","not started"]) or ((" vs " in matchup.lower() or " at " in matchup.lower()) and not score) else "win"
-    dt = None
-    date_source = ""
-    for k in ["event_datetime","event_date","result_date","scheduled_datetime_local","scheduled_date_local","game_datetime","game_date","date_utc","date","played_at","completed_at","start_time"]:
-        dt = parse_dt(row.get(k))
-        if dt:
-            date_source = k
-            break
-    if not dt:
-        for val in [matchup, headline, first(row, ["caption_seed","notes","time","start_time_display"])]:
-            dt = parse_dt(val)
-            if dt:
-                date_source = "text_time"
-                break
-    event_date = dt.date().isoformat() if dt else ""
-    event_datetime = dt.isoformat() if dt else ""
+def event_id(row: Dict[str, str], source_file: str, event_date: str) -> str:
+    blob = "|".join([
+        event_date,
+        clean(row.get("matchup") or row.get("event_name") or row.get("graphics_headline") or row.get("headline")),
+        clean(row.get("winner") or row.get("winner_team_name")),
+        clean(row.get("loser") or row.get("loser_team_name")),
+        clean(row.get("final_score_display") or row.get("score_display")),
+        source_file,
+    ])
+    return "event_" + hashlib.sha1(blob.encode()).hexdigest()[:14]
 
-    sport = first(row, ["sport_norm","sport"]) or ("basketball" if re.search(r"wnba|fever|storm|sun|tempo|sparks|aces|lynx|wings|liberty|dream|sky|mercury", f"{matchup} {headline}", re.I) else "")
-    league = first(row, ["league_norm","league"]) or ("WNBA" if sport == "basketball" else "")
+def row_kind(row: Dict[str, str]) -> str:
+    status = clean(row.get("status_norm") or row.get("status")).lower()
+    headline = clean(row.get("graphics_headline") or row.get("headline") or row.get("matchup")).lower()
+    if "final" in status or "beat" in headline or clean(row.get("winner")):
+        return "result"
+    if " vs " in headline or " at " in headline or "scheduled" in status or "preview" in status:
+        return "preview"
+    return "news"
 
+def normalize(row: Dict[str, str], source_file: str, run_id: str) -> Dict[str, str]:
+    e_date = parse_date(row)
+    kind = row_kind(row)
+    headline = clean(row.get("graphics_headline") or row.get("headline") or row.get("matchup") or row.get("event_name"))
+    score = clean(row.get("final_score_display") or row.get("score_display") or row.get("score"))
+    eligibility = "eligible"
+    reason = "normalized"
+    manual_review = "No"
+    if not e_date:
+        eligibility = "blocked"
+        reason = "missing_event_date"
+        manual_review = "Yes"
+    if kind == "news" and not headline:
+        eligibility = "blocked"
+        reason = "missing_headline"
+        manual_review = "Yes"
     return {
-        "graphics_headline": headline,
-        "caption_seed": first(row, ["caption_seed","dek","summary"]) or headline,
-        "matchup": matchup,
-        "winner": winner,
-        "loser": loser,
-        "final_score_display": score,
-        "sport_norm": sport,
-        "league_norm": league,
-        "gender_scope": first(row, ["gender_scope"]) or "women",
-        "status_norm": status or ("scheduled" if outcome == "preview" else "final"),
-        "manual_review": first(row, ["manual_review"]) or "No",
-        "editorial_bucket": first(row, ["editorial_bucket"]) or ("Preview" if outcome == "preview" else "Must Post"),
-        "content_action": first(row, ["content_action"]) or ("Preview Tonight" if outcome == "preview" else "Make First"),
-        "posting_priority": first(row, ["posting_priority"]) or ("P1" if outcome != "archive" else "P3"),
-        "confidence": first(row, ["confidence"]) or "1.0",
-        "editorial_rank": first(row, ["editorial_rank"]) or "100",
-        "scheduled_date_local": event_date,
-        "source_url": first(row, ["source_url","url","link"]) or "results_desk",
-        "selected_source": first(row, ["selected_source","source"]) or source_file,
-        "all_sources_json": first(row, ["all_sources_json"]) or "[]",
-        "outcome_type": outcome,
-        "event_date": event_date,
-        "event_datetime": event_datetime,
-        "_date_source": date_source,
-        "_source_file": source_file,
+        "run_id": run_id,
+        "event_id": event_id(row, source_file, e_date),
+        "row_kind": kind,
+        "source_id": clean(row.get("source_id") or source_file.replace(".csv","")),
+        "source_file": source_file,
+        "source_url": clean(row.get("source_url") or row.get("selected_source")),
+        "source_observed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "source_timezone": clean(row.get("source_timezone") or "America/New_York"),
+        "scheduled_start_utc": clean(row.get("scheduled_datetime_utc") or row.get("event_datetime")),
+        "completed_at_utc": clean(row.get("completed_at_utc") or row.get("completed_at")),
+        "sport": clean(row.get("sport_norm") or row.get("sport") or "basketball"),
+        "league": clean(row.get("league_norm") or row.get("league") or "WNBA"),
+        "status": clean(row.get("status_norm") or row.get("status")),
+        "home_team_name": clean(row.get("home_team") or row.get("home_team_name")),
+        "away_team_name": clean(row.get("away_team") or row.get("away_team_name")),
+        "winner_team_name": clean(row.get("winner") or row.get("winner_team_name")),
+        "loser_team_name": clean(row.get("loser") or row.get("loser_team_name")),
+        "score_home": clean(row.get("score_home")),
+        "score_away": clean(row.get("score_away")),
+        "score_display": score,
+        "event_date_local": e_date,
+        "content_eligibility": eligibility,
+        "freshness_reason": reason,
+        "manual_review": manual_review,
+        "headline": headline,
+        "summary": clean(row.get("caption_seed") or row.get("summary")),
     }
 
-def collect_source_rows() -> List[Dict[str,str]]:
-    rows: List[Dict[str,str]] = []
-    for fname in SOURCE_FILES:
-        for r in read_csv(fname):
-            n = normalize_row(r, fname)
-            if clean(n.get("graphics_headline")) or clean(n.get("matchup")):
-                rows.append(n)
-    if not rows and Path("results_graphics_queue.md").exists():
-        text = Path("results_graphics_queue.md").read_text(encoding="utf-8", errors="replace")
-        for line in text.splitlines():
-            if re.search(r"\b(vs|at)\b", line, re.I):
-                rows.append(normalize_row({"graphics_headline": clean(line), "matchup": clean(line), "status_norm": "scheduled"}, "results_graphics_queue.md"))
-    out, seen = [], set()
-    for r in rows:
-        key = (r.get("graphics_headline","").lower(), r.get("event_date",""), r.get("_source_file",""))
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(r)
-    return out
-
-def freshness_rows(rows: List[Dict[str,str]], max_hours: float) -> List[Dict[str,str]]:
-    import os
-    current = now()
-    lookahead_hours = float(os.environ.get("HSD_PREVIEW_LOOKAHEAD_HOURS", "30"))
-    out = []
-    for r in rows:
-        dt = parse_dt(r.get("event_datetime") or r.get("event_date"))
-        status = "missing_event_date"
-        age = ""
-        if dt:
-            age_f = (current - dt).total_seconds() / 3600.0
-            age = f"{max(0.0, age_f):.1f}"
-            if r.get("outcome_type") == "preview":
-                # Allow upcoming schedules only inside the configured lookahead window,
-                # and keep recently started schedules for max_hours.
-                status = "fresh" if (-lookahead_hours <= age_f <= max_hours) else "stale"
-            else:
-                status = "fresh" if 0 <= age_f <= max_hours else "stale"
-        out.append({
-            "source_file": r.get("_source_file",""),
-            "headline": r.get("graphics_headline",""),
-            "event_date": r.get("event_date",""),
-            "event_age_hours": age,
-            "status": status,
-            "date_source": r.get("_date_source",""),
-            "row_type": r.get("outcome_type",""),
-        })
-    return out
-
 def main() -> None:
-    import os
-    max_hours = float(os.environ.get("HSD_MAX_RESULT_FRESH_HOURS", "18"))
-    rows = collect_source_rows()
-    gate = freshness_rows(rows, max_hours)
+    current = read_current_run()
+    run_id = current.get("run_id","local")
+    rows = []
+    for source_file in SOURCE_FILES:
+        for r in read_csv(source_file):
+            rows.append(normalize(r, source_file, run_id))
+    # Dedupe by event_id, prefer eligible rows and top_womens_results
+    priority = {"top_womens_results.csv": 0, "today_final_results.csv": 1, "today_womens_results.csv": 2, "reconciled_events.csv": 3}
+    rows = sorted(rows, key=lambda r: (r["event_id"], 0 if r["content_eligibility"] == "eligible" else 1, priority.get(r["source_file"], 9)))
+    by_event = {}
+    for r in rows:
+        by_event.setdefault(r["event_id"], r)
+    rows = list(by_event.values())
 
-    # Always overwrite the canonical contract files. No stale downstream CSVs.
-    write_csv(OUT_TOP, rows, RESULT_FIELDS)
-    write_csv(OUT_WOMENS, rows, RESULT_FIELDS)
-    finals = [r for r in rows if r.get("outcome_type") != "preview" and clean(r.get("final_score_display"))]
-    write_csv(OUT_FINALS, finals, RESULT_FIELDS)
-    write_csv(OUT_RECON, rows, RESULT_FIELDS)
-    write_csv(OUT_GATE, gate, GATE_FIELDS)
-
-    fresh = [r for r in gate if r["status"] == "fresh"]
-    stale = [r for r in gate if r["status"] == "stale"]
-    missing = [r for r in gate if r["status"] == "missing_event_date"]
-
-    lines = [
-        "# HSD Results Freshness Gate v2.1",
-        "",
-        f"Generated: {iso_now()}",
-        "",
-        f"- result rows checked: {len(gate)}",
-        f"- fresh rows: {len(fresh)}",
-        f"- stale rows: {len(stale)}",
-        f"- missing event date rows: {len(missing)}",
-        f"- max result age hours: {max_hours}",
-        "",
-    ]
-    if fresh:
-        lines += ["## Fresh rows", ""] + [f"- {r['headline']} | {r['event_date']} | {r['event_age_hours']}h | {r['source_file']} | {r['row_type']}" for r in fresh[:25]] + [""]
-    if stale:
-        lines += ["## Stale rows", ""] + [f"- {r['headline']} | {r['event_date']} | {r['event_age_hours']}h | {r['source_file']} | {r['row_type']}" for r in stale[:25]] + [""]
-    if missing:
-        lines += ["## Missing event date rows", ""] + [f"- {r['headline']} | {r['source_file']}" for r in missing[:25]] + [""]
-    Path(OUT_REPORT).write_text("\n".join(lines), encoding="utf-8")
-    Path(OUT_CONTRACT).write_text(
-        "# HSD Results Contract v2.1\n\n"
-        f"Generated: {iso_now()}\n\n"
-        f"- normalized_rows: {len(rows)}\n"
-        f"- canonical_top_rows: {len(rows)}\n"
-        f"- canonical_final_rows: {len(finals)}\n"
-        f"- fresh_rows: {len(fresh)}\n"
-        f"- stale_rows: {len(stale)}\n"
-        f"- missing_date_rows: {len(missing)}\n\n"
-        "This script normalizes whatever Results Desk emitted into the CSV contract expected by News Sync and Studio Bridge.\n",
-        encoding="utf-8",
+    with OUT_CSV.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w.writeheader(); w.writerows(rows)
+    OUT_JSONL.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + ("\n" if rows else ""), encoding="utf-8")
+    eligible = sum(1 for r in rows if r["content_eligibility"] == "eligible")
+    OUT_REPORT.write_text(
+        "# HSD Results Contract v2 Report\n\n"
+        f"Generated: {datetime.now(timezone.utc).isoformat()}\n\n"
+        f"- rows: {len(rows)}\n"
+        f"- eligible: {eligible}\n"
+        f"- blocked: {len(rows)-eligible}\n\n"
+        + "\n".join(f"- {r['content_eligibility']} | {r['row_kind']} | {r['event_date_local']} | {r['headline']}" for r in rows[:30]) + "\n",
+        encoding="utf-8"
     )
-    Path(OUT_MANIFEST).write_text(json.dumps({
-        "version": VERSION,
-        "generated_at_utc": iso_now(),
-        "counts": {
-            "normalized_rows": len(rows),
-            "fresh": len(fresh),
-            "stale": len(stale),
-            "missing_event_date": len(missing),
-            "final_rows": len(finals),
-        },
-        "outputs": [OUT_TOP, OUT_WOMENS, OUT_FINALS, OUT_RECON, OUT_GATE, OUT_REPORT, OUT_CONTRACT],
-    }, indent=2), encoding="utf-8")
-    print(json.dumps({"normalized_rows": len(rows), "fresh": len(fresh), "stale": len(stale), "final_rows": len(finals)}, indent=2))
+    # Run scoped copy
+    run_dir = Path(current.get("run_dir","."))
+    if run_dir != Path("."):
+        (run_dir / "results").mkdir(parents=True, exist_ok=True)
+        for p in [OUT_CSV, OUT_JSONL, OUT_REPORT]:
+            (run_dir / "results" / p.name).write_text(p.read_text(encoding="utf-8"), encoding="utf-8")
+    print(json.dumps({"results_contract_rows": len(rows), "eligible": eligible}, indent=2))
 
 if __name__ == "__main__":
     main()

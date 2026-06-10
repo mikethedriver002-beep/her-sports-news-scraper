@@ -1,0 +1,47 @@
+{
+  "sources": [
+    {
+      "source_id": "manual_story_inbox",
+      "source_type": "manual",
+      "enabled": true,
+      "tier": "operator",
+      "path_csv": "operator/story_inbox.csv",
+      "path_jsonl": "operator/story_inbox.jsonl"
+    },
+    {
+      "source_id": "wnba_official_news_rss_placeholder",
+      "source_type": "rss",
+      "enabled": false,
+      "tier": "official",
+      "urls": [],
+      "poll_interval_minutes": 15,
+      "notes": "Add official RSS/Atom feeds here when available."
+    },
+    {
+      "source_id": "reddit_womens_sports_discovery",
+      "source_type": "reddit_public_json",
+      "enabled": false,
+      "tier": "community",
+      "subreddits": ["wnba", "NWSL", "womenssports"],
+      "limit": 25,
+      "publish_policy": "discovery_only"
+    },
+    {
+      "source_id": "mastodon_discovery_tags",
+      "source_type": "mastodon_public",
+      "enabled": false,
+      "tier": "social",
+      "instances": ["mastodon.social"],
+      "tags": ["WNBA", "NWSL", "WomensSports"],
+      "publish_policy": "discovery_only"
+    },
+    {
+      "source_id": "x_manual_only",
+      "source_type": "x_manual_only",
+      "enabled": true,
+      "tier": "social_manual",
+      "publish_policy": "requires_non_x_confirmation",
+      "notes": "No automated X website scraping. Paste URLs into manual inbox with supporting source."
+    }
+  ]
+}

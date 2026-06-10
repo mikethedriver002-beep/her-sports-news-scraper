@@ -1,0 +1,27 @@
+# Human-editable source registry.
+# The scripts read config/source_registry.json by default; keep this YAML as documentation.
+sources:
+  - source_id: manual_story_inbox
+    source_type: manual
+    enabled: true
+    tier: operator
+  - source_id: wnba_official_news_rss_placeholder
+    source_type: rss
+    enabled: false
+    tier: official
+    urls: []
+  - source_id: reddit_womens_sports_discovery
+    source_type: reddit_public_json
+    enabled: false
+    tier: community
+    subreddits: [wnba, NWSL, womenssports]
+  - source_id: mastodon_discovery_tags
+    source_type: mastodon_public
+    enabled: false
+    tier: social
+    instances: [mastodon.social]
+    tags: [WNBA, NWSL, WomensSports]
+  - source_id: x_manual_only
+    source_type: x_manual_only
+    enabled: true
+    tier: social_manual

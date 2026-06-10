@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HSD Asset Registry v1",
+  "type": "object",
+  "required": ["asset_id", "entity_type", "asset_kind", "source_domain", "rights_status", "approval_status"],
+  "properties": {
+    "asset_id": {"type": "string"},
+    "entity_type": {"type": "string"},
+    "asset_kind": {"type": "string"},
+    "source_domain": {"type": "string"},
+    "rights_status": {"type": "string"},
+    "approval_status": {"type": "string"}
+  }
+}
