@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v1.9
+name: Her Sports Daily Pipeline Control v2.0
 
 on:
   workflow_dispatch:
@@ -86,7 +86,7 @@ jobs:
       HSD_NEWS_ENABLE_FETCH: "true"
       HSD_TIMEZONE: America/New_York
       HSD_RESULTS_SOURCES: apisports,espn
-      HSD_PIPELINE_CONTROL_VERSION: v1.9
+      HSD_PIPELINE_CONTROL_VERSION: v2.0
       HSD_REVIEW_ARTIFACT_SIZE: ${{ github.event.inputs.review_artifact_size || 'lite' }}
       HSD_COMMIT_HEAVY_OUTPUTS: ${{ github.event.inputs.commit_heavy_outputs || 'false' }}
       HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
@@ -133,20 +133,38 @@ jobs:
           echo "Results sources: ${HSD_RESULTS_SOURCES}"
           echo "Review artifact size: ${HSD_REVIEW_ARTIFACT_SIZE}"
 
+
+      - name: Clean stale generated runtime outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf hsd_pipeline_lite_review hsd_pipeline_lite_review.zip
+          rm -f pipeline_stop_reason.md pipeline_outcome.md pipeline_publish_warning.md operator_status.md
+          rm -f results_freshness_report.md results_freshness_gate.csv results_freshness_manifest.json
+          rm -f latest_news_sync_run_summary.md latest_studio_run_summary.md latest_asset_visual_qa_run_summary.md
+          rm -f news_fact_packets.csv studio_bundle_queue.csv studio_preview_fallback_report.md
+          rm -f graphics_upload_pack_status.csv graphics_chat_direct_handoff.md graphics_qa_report.md
+          rm -f player_image_requirements.csv player_image_sourcing_report.md player_image_fit_report.md player_image_fit_gate.csv
+          rm -f asset_candidates_review.md graphics_chat_upload_manifest.csv approved_graphics_assets.csv
+          echo "Stale generated runtime outputs removed."
+
       - name: Verify pipeline controller install
         shell: bash
         run: |
           set -euo pipefail
-          echo "Verifying v1.9 install files..."
-          grep -q "Her Sports Daily Pipeline Control v1.9" .github/workflows/hsd-pipeline-control-v1.yml
+          echo "Verifying v2.0 install files..."
+          grep -q "Her Sports Daily Pipeline Control v2.0" .github/workflows/hsd-pipeline-control-v1.yml
           grep -q "Toronto Tempo" generate_hsd_asset_desk_v1.py
           grep -q "Connecticut Sun" generate_hsd_asset_desk_v1.py
-          grep -q "hsd-pipeline-review-lite-v1.9" generate_hsd_pipeline_review_lite_v1.py
+          grep -q "hsd-pipeline-review-lite-v2.0" generate_hsd_pipeline_review_lite_v1.py
           grep -q "preview-team-filter" generate_hsd_player_image_assets_v1.py || grep -q "all-sports" generate_hsd_player_image_assets_v1.py
           grep -q "Connecticut_Sun_logo.svg" generate_hsd_asset_desk_v1.py
           grep -q "Toronto_Tempo_logo.svg" generate_hsd_asset_desk_v1.py
           if grep -q "Connecticut_Sun_logo.svg/250px" generate_hsd_asset_desk_v1.py; then echo "Old Connecticut thumbnail URL still present"; exit 1; fi
-          echo "v1.9 install verified."
+          grep -q "hsd-asset-desk-v1.2.6-preview-team-logo-fix" generate_hsd_asset_desk_v1.py
+          grep -q "hsd-player-image-assets-v1.6.3-preview-safe" generate_hsd_player_image_assets_v1.py
+          grep -q "hsd-pipeline-review-lite-v2.0" generate_hsd_pipeline_review_lite_v1.py
+          echo "v2.0 install verified."
 
       - name: Run Results Desk stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
@@ -376,30 +394,33 @@ jobs:
           python generate_hsd_graphics_qa_v1.py
           python generate_hsd_rendered_slide_qa_v1.py
           python archive_hsd_asset_visual_qa_runs_v1.py
+          python generate_hsd_operator_status_v1.py
 
       - name: Build lite review artifact
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf hsd_pipeline_lite_review hsd_pipeline_lite_review.zip
-          python generate_hsd_pipeline_review_lite_v1.py
+          python generate_hsd_pipeline_review_lite_v1.py || true
 
       - name: Upload lite pipeline review artifact
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v1-9-lite-review
-          path: hsd_pipeline_lite_review.zip
+          name: hsd-pipeline-control-v2-0-lite-review
+          path: |
+            hsd_pipeline_lite_review.zip
+            hsd_pipeline_lite_review/
 
       - name: Upload full pipeline review artifact
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'full' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v1-9-full-review
+          name: hsd-pipeline-control-v2-0-full-review
           path: |
             pipeline_stop_reason.md
             pipeline_publish_warning.md
+            operator_status.md
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
             studio_preview_fallback_report.md
@@ -446,7 +467,6 @@ jobs:
 
       - name: Commit and push generated outputs once
         if: env.HSD_PUBLISH_OUTPUTS == 'true'
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -455,7 +475,7 @@ jobs:
 
           # Default mode keeps the repo lean. Heavy folders remain available in the workflow artifact.
           FILES=(
-            "pipeline_outcome.md" "pipeline_stop_reason.md" "pipeline_publish_warning.md"
+            "operator_status.md" "pipeline_outcome.md" "pipeline_stop_reason.md" "pipeline_publish_warning.md"
             "hsd_pipeline_lite_review.zip" "hsd_pipeline_lite_review"
             "results_freshness_report.md" "results_freshness_gate.csv" "results_freshness_manifest.json"
             "latest_results_run_summary.md" "source_observations.csv" "reconciled_events.csv" "today_results_board.csv" "today_womens_results.csv" "today_final_results.csv" "top_womens_results.csv" "manual_review_queue.csv" "source_health_report.csv" "results_graphics_queue.md" "daily_results_recommendations.md" "wnba_box_score_audit.csv" "wnba_box_score_summary.md" "results_system_hub.md" "run_manifest.json"
@@ -479,7 +499,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Run HSD Pipeline Control v1.9"
+          git commit -m "Run HSD Pipeline Control v2.0"
 
           resolve_generated_conflicts_current_run_wins() {
             echo "Resolving generated-output conflicts by keeping this run's generated files..."
