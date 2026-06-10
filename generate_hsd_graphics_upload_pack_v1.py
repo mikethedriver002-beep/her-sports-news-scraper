@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v2.2"
+VERSION = "hsd-graphics-upload-pack-v3.1-text-badge-fallback"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -376,6 +376,46 @@ def copy_or_download(asset: Dict[str, str], dest_dir: Path) -> Tuple[str, str]:
     return download_candidates(asset, dest_dir, base_name)
 
 
+
+def create_team_text_badge(asset: Dict[str, str], dest_dir: Path) -> Tuple[str, str]:
+    """Create a simple text-only team badge SVG when an exact logo cannot be downloaded.
+    This is deliberately not a fake logo. It is a plain text label asset.
+    """
+    if clean(asset.get("entity_type")) != "team":
+        return "", ""
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    name = clean(asset.get("entity_name"))
+    if not name:
+        return "", ""
+    entity_slug = slugify(name)
+    approved_id = clean(asset.get("approved_asset_id"))
+    dest = dest_dir / f"{entity_slug}_text-team-badge-fallback_{approved_id[-6:] if approved_id else 'asset'}.svg"
+    safe = name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    words = safe.split()
+    if len(words) > 2:
+        line1 = " ".join(words[:-1])
+        line2 = words[-1]
+    elif len(words) == 2:
+        line1, line2 = words
+    else:
+        line1, line2 = safe, ""
+    y1 = "520" if line2 else "620"
+    size1 = "150" if len(line1) < 11 else "112"
+    size2 = "150" if len(line2) < 11 else "112"
+    second = ""
+    if line2:
+        second = f'<text x="600" y="705" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="{size2}" font-weight="900" fill="#ffffff" letter-spacing="4">{line2.upper()}</text>'
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <rect width="1200" height="1200" rx="150" fill="#101018"/>
+  <rect x="54" y="54" width="1092" height="1092" rx="120" fill="none" stroke="#ffffff" stroke-width="22" opacity="0.78"/>
+  <text x="600" y="{y1}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="{size1}" font-weight="900" fill="#ffffff" letter-spacing="4">{line1.upper()}</text>
+  {second}
+  <text x="600" y="1010" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700" fill="#ffffff" opacity="0.62">TEXT TEAM BADGE</text>
+</svg>"""
+    dest.write_text(svg, encoding="utf-8")
+    return dest.as_posix(), "generated_text_team_badge_fallback_not_logo"
+
+
 def convert_to_png(local_path: str, dest_dir: Path) -> Tuple[str, str]:
     if not local_path:
         return "", "no_local_asset"
@@ -497,15 +537,28 @@ def main() -> None:
         expected_assets = asset_map.get(post_slug, [])
         ready_count = 0
         missing_names: List[str] = []
+        fallback_names: List[str] = []
 
         for asset in expected_assets:
             local_path, status = copy_or_download(asset, asset_folder)
             png_path, conversion_status = convert_to_png(local_path, png_folder)
+            used_text_badge_fallback = False
+            if not (png_path or local_path):
+                fallback_path, fallback_status = create_team_text_badge(asset, asset_folder)
+                if fallback_path:
+                    local_path = fallback_path
+                    status = fallback_status
+                    png_path, conversion_status = convert_to_png(local_path, png_folder)
+                    used_text_badge_fallback = True
             upload_path = png_path or local_path
             asset_ready = bool(upload_path and Path(upload_path).exists())
             if asset_ready:
                 ready_count += 1
-                upload_instruction = f"Upload {Path(upload_path).name}"
+                if used_text_badge_fallback:
+                    fallback_names.append(clean(asset.get("entity_name")))
+                    upload_instruction = f"Upload {Path(upload_path).name} (text team badge fallback, not a logo)"
+                else:
+                    upload_instruction = f"Upload {Path(upload_path).name}"
             else:
                 missing_names.append(clean(asset.get("entity_name")))
                 upload_instruction = "MISSING REQUIRED FILE: rerun upload pack or add this asset manually"
@@ -579,7 +632,7 @@ def main() -> None:
             upload_status = "blocked_freshness_gate"
         elif blocked_fit:
             upload_status = "blocked_player_image_fit"
-        elif freshness_review or review_fit:
+        elif freshness_review or review_fit or fallback_names:
             upload_status = "ready_with_review"
         else:
             upload_status = "ready"
@@ -593,6 +646,8 @@ def main() -> None:
             ])
             if missing_count:
                 instructions.extend(["Missing assets:", "", *[f"- {name}" for name in missing_names], ""])
+            if fallback_names:
+                instructions.extend(["Text-badge fallback assets were generated for:", "", *[f"- {name}" for name in fallback_names], "", "These are not fake logos. They are text-only team labels.", ""])
             if freshness_blocked:
                 instructions.extend(["Freshness gate blocked this packet. Do not post unless you intentionally relabel it as carryover/yesterday and accept the risk.", ""])
             if blocked_fit:
@@ -612,7 +667,7 @@ def main() -> None:
             "assets_missing": missing_count,
             "missing_asset_names": "; ".join(missing_names),
             "zip_path": zip_path.as_posix(),
-            "notes": "Upload pack is complete." if upload_status == "ready" else "Review freshness/player-image-fit gate before using this pack.",
+            "notes": "Upload pack is complete." if upload_status == "ready" else "Ready with review or blocked. Check upload instructions.",
         })
 
     write_csv(OUT_MANIFEST_CSV, manifest_rows, FIELDS)
@@ -692,38 +747,30 @@ def main() -> None:
         "Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat cannot unzip.",
         "",
     ]
-    main_status = next((r for r in status_rows if r.get("post_slug") == "main-wnba-result"), None)
-    if main_status and main_status.get("upload_pack_status") in {"ready", "ready_with_review"}:
+    any_ready = False
+    for srow in status_rows:
+        if srow.get("upload_pack_status") in {"ready", "ready_with_review"}:
+            any_ready = True
+            direct += [
+                f"## {srow.get('bundle_name')}",
+                "",
+                f"Recommended ZIP: `{srow.get('zip_path')}`",
+                "",
+                f"Status: {srow.get('upload_pack_status').upper()}",
+                "",
+                "Instructions to paste into the graphics chat:",
+                "",
+                "```text",
+                "Use the sanitized uploaded prompt and uploaded asset files only. Use uploaded logo files, text team badge fallback files, and uploaded player/person image files only if present for this specific bundle. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, jersey numbers, fake player images, or fake logos. If a text team badge fallback is included, treat it as a plain team label, not as a logo. If no approved player/person image is present for this bundle, stay text-forward. Output separate slide files.",
+                "```",
+                "",
+            ]
+    if not any_ready:
         direct += [
-            "## Main WNBA Result",
-            "",
-            f"Recommended ZIP: `{main_status.get('zip_path')}`",
-            "",
-            "Status: READY / REVIEW OK",
-            "",
-            "Instructions to paste into the graphics chat:",
-            "",
-            "```text",
-            "Use the sanitized uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, graphics_prompt_sanitizer_rules.md, and graphics_prompt_clean_report.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render internal terms such as Verified Final, Winner, Loser, BUNDLE LOCKED FACTS, source-safe context, graphics-safe context, or Do not alter. Output separate slide files.",
-            "```",
+            "No ready upload pack was created. Check graphics_upload_pack_status.csv.",
             "",
         ]
-    elif main_status:
-        direct += [
-            "## Main WNBA Result",
-            "",
-            "Status: BLOCKED",
-            "",
-            f"Missing assets: {main_status.get('missing_asset_names')}",
-            "",
-            "Do not send this pack to the graphics chat yet.",
-            "",
-        ]
-    else:
-        direct += [
-            "Main WNBA Result ZIP was not created. Check graphics_chat_upload_manifest.csv.",
-            "",
-        ]
+
     Path(OUT_DIRECT_HANDOFF).write_text("\n".join(direct), encoding="utf-8")
 
     print("Created HSD graphics upload pack")

@@ -3,7 +3,7 @@ import hashlib, json, re
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "hsd-install-verifier-v3.0"
+VERSION = "hsd-install-verifier-v3.1"
 REQUIRED_FILES = [
     ".github/workflows/hsd-pipeline-control-v1.yml",
     "build_hsd_run_manifest_v1.py",
@@ -14,6 +14,7 @@ REQUIRED_FILES = [
     "publish_hsd_guard_v1.py",
     "generate_hsd_operator_status_v1.py",
     "generate_hsd_pipeline_review_lite_v1.py",
+    "generate_hsd_graphics_upload_pack_v1.py",
     "validate_hsd_contracts_v1.py",
     "config/pipeline_version.json",
     "config/daily_slate.json",
@@ -41,7 +42,7 @@ def main() -> None:
     if pv.exists():
         try:
             version = json.loads(pv.read_text()).get("pipeline_version")
-            if version != "v3.0":
+            if version != "v3.1":
                 issues.append(f"pipeline_version mismatch: {version}")
         except Exception:
             issues.append("config/pipeline_version.json unreadable")

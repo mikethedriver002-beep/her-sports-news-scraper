@@ -1,7 +1,8 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.0",
+  "pipeline_version": "v3.1",
   "contract_version": "v2",
   "default_publish_mode": "artifact_only",
-  "default_review_artifact_size": "lite"
+  "default_review_artifact_size": "lite",
+  "notes": "v3.1 patches freshness-dedupe contracts, slate dedupe, soft validator, and text team badge upload fallback."
 }

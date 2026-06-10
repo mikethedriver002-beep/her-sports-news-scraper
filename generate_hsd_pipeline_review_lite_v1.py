@@ -3,7 +3,7 @@ import csv, json, shutil, zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "hsd-pipeline-review-lite-v3.0"
+VERSION = "hsd-pipeline-review-lite-v3.1"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 KEY_FILES = [
@@ -12,7 +12,7 @@ KEY_FILES = [
     "install_report.md","contract_validation_report.md","pipeline_outcome.md","pipeline_stop_reason.md",
     "results_contract_report.md","results_contract_v2.csv","manual_story_inbox_report.md","story_candidates_manual.csv",
     "discovery_sources_report.md","story_candidates_discovery.csv","daily_slate_plan.md","daily_slate_plan.csv",
-    "latest_results_run_summary.md","results_freshness_report.md","news_fact_packets.csv","latest_news_sync_run_summary.md",
+    "latest_results_run_summary.md","news_fact_packets.csv","latest_news_sync_run_summary.md",
     "studio_bundle_queue.csv","studio_bundle_packets.md","studio_bundle_prompts.md","studio_fresh_packet_report.md",
     "graphics_upload_pack_status.csv","graphics_chat_direct_handoff.md","graphics_qa_report.md",
     "player_image_sourcing_report.md","player_image_requirements.csv","player_image_fit_report.md",
