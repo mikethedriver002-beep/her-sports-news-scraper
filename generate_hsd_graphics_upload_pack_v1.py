@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v1.8"
+VERSION = "hsd-graphics-upload-pack-v1.8.3"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -687,38 +687,29 @@ def main() -> None:
         "Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat cannot unzip.",
         "",
     ]
-    main_status = next((r for r in status_rows if r.get("post_slug") == "main-wnba-result"), None)
-    if main_status and main_status.get("upload_pack_status") in {"ready", "ready_with_review"}:
-        direct += [
-            "## Main WNBA Result",
-            "",
-            f"Recommended ZIP: `{main_status.get('zip_path')}`",
-            "",
-            "Status: READY / REVIEW OK",
-            "",
-            "Instructions to paste into the graphics chat:",
-            "",
-            "```text",
-            "Use the sanitized uploaded prompt, uploaded logo files, uploaded player/person image files, graphics_display_copy.csv, graphics_copy_style_guide.md, graphics_asset_usage_map.csv, graphics_layout_blueprint.csv, graphics_prompt_sanitizer_rules.md, and graphics_prompt_clean_report.md only. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, or numbers. Do not render internal terms such as Verified Final, Winner, Loser, BUNDLE LOCKED FACTS, source-safe context, graphics-safe context, or Do not alter. Output separate slide files.",
-            "```",
-            "",
-        ]
-    elif main_status:
-        direct += [
-            "## Main WNBA Result",
-            "",
-            "Status: BLOCKED",
-            "",
-            f"Missing assets: {main_status.get('missing_asset_names')}",
-            "",
-            "Do not send this pack to the graphics chat yet.",
-            "",
-        ]
+    ready_rows = [r for r in status_rows if r.get("upload_pack_status") in {"ready", "ready_with_review"}]
+    blocked_rows = [r for r in status_rows if r.get("upload_pack_status") not in {"ready", "ready_with_review"}]
+    if ready_rows:
+        for row in ready_rows:
+            direct += [
+                f"## {row.get('bundle_name')}",
+                "",
+                f"Recommended ZIP: `{row.get('zip_path')}`",
+                "",
+                f"Status: {row.get('upload_pack_status').upper()}",
+                "",
+                "```text",
+                "Use the sanitized uploaded prompt and uploaded asset files only. Use uploaded logo files and uploaded player/person image files if present for this specific bundle. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, jersey numbers, fake player images, or fake logos. If no approved player/person image is present for this bundle, stay text-forward. Output separate slide files.",
+                "```",
+                "",
+            ]
     else:
-        direct += [
-            "Main WNBA Result ZIP was not created. Check graphics_chat_upload_manifest.csv.",
-            "",
-        ]
+        direct += ["No READY upload packs were created yet. Check graphics_upload_pack_status.csv.", ""]
+    if blocked_rows:
+        direct += ["## Blocked bundles", ""]
+        for row in blocked_rows:
+            direct += [f"- {row.get('bundle_name')}: {row.get('upload_pack_status')} | {row.get('missing_asset_names')}"]
+        direct.append("")
     Path(OUT_DIRECT_HANDOFF).write_text("\n".join(direct), encoding="utf-8")
 
     print("Created HSD graphics upload pack")

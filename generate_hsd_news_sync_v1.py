@@ -17,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-VERSION = "news-sync-v1.8.2-event-dates"
+VERSION = "news-sync-v1.8.3-csv-intake-fix"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -185,6 +185,18 @@ def event_date_payload(row: Dict[str, Any]) -> Dict[str, str]:
             break
 
     if not dt:
+        source_hint = " ".join([clean(row.get("_result_record_source")), clean(row.get("result_record_source")), clean(row.get("status_norm")), clean(row.get("game_status"))]).lower()
+        if any(token in source_hint for token in ["top_womens", "today_final", "reconciled", "final"]):
+            dt = datetime.now(timezone.utc).replace(hour=12, minute=0, second=0, microsecond=0)
+            return {
+                "event_date": dt.date().isoformat(),
+                "event_datetime": dt.isoformat(),
+                "result_date": dt.date().isoformat(),
+                "freshness_label": "run_date_fallback",
+                "freshness_source": "news_sync_run_date_fallback",
+                "source_run_timestamp": utc_now(),
+                "event_date_confidence": "run_date_fallback",
+            }
         return {
             "event_date": "",
             "event_datetime": "",
@@ -706,7 +718,12 @@ def row_is_final(record: Dict[str, str]) -> bool:
 
 
 def row_is_news_safe(record: Dict[str, str]) -> bool:
-    if clean(record.get("gender_scope")).lower() != "women":
+    gender = clean(record.get("gender_scope")).lower()
+    source_name = clean(record.get("_result_record_source")).lower()
+    women_source = any(token in source_name for token in ["top_womens", "women", "today_final", "reconciled"])
+    if gender and gender not in {"women", "w", "female", "girls"}:
+        return False
+    if not gender and not women_source:
         return False
     if not row_is_final(record):
         return False
@@ -859,16 +876,29 @@ def candidates_from_result_csvs(run_id: str, csv_sources: List[Tuple[str, List[D
     rows: List[Dict[str, str]] = []
     for source_name, source_rows in csv_sources:
         for r in source_rows:
-            if not row_is_news_safe(r):
-                continue
             rr = dict(r)
             rr["_result_record_source"] = source_name
+            if not clean(rr.get("gender_scope")) and any(token in source_name.lower() for token in ["top_womens", "today_final", "reconciled"]):
+                rr["gender_scope"] = "women"
+            if not clean(rr.get("editorial_bucket")):
+                if "top_womens" in source_name.lower():
+                    rr["editorial_bucket"] = "Must Post"
+                    rr["content_action"] = rr.get("content_action") or "Make First"
+                elif "today_final" in source_name.lower() or "reconciled" in source_name.lower():
+                    rr["editorial_bucket"] = "Strong Maybe"
+            if not row_is_news_safe(rr):
+                continue
             rows.append(rr)
 
     rows = dedupe_result_records(rows)
 
     must_rows = [r for r in rows if row_is_must(r)]
     strong_rows = [r for r in rows if row_is_strong(r) and not row_is_must(r)]
+    if not must_rows and rows:
+        must_rows = [r for r in rows if "top_womens" in clean(r.get("_result_record_source")).lower()][:MAX_MUST_POST]
+    if not strong_rows and rows:
+        must_keys = {result_unique_key_from_record(r) for r in must_rows}
+        strong_rows = [r for r in rows if result_unique_key_from_record(r) not in must_keys]
 
     must_rows.sort(key=record_rank_value, reverse=True)
     strong_rows.sort(key=record_rank_value, reverse=True)
@@ -2329,7 +2359,7 @@ def main() -> None:
             encoding="utf-8"
         )
 
-    print("Created Her Sports Daily News Sync v1.8.2 event-date outputs")
+    print("Created Her Sports Daily News Sync v1.8.3 CSV intake outputs")
     print(json.dumps(manifest["counts"], indent=2))
 
 

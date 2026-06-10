@@ -33,7 +33,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.6-all-sports-people"
+VERSION = "hsd-player-image-assets-v1.6.1-people-filter-fix"
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_PLAYER_ASSETS = os.environ.get("HSD_PLAYER_ASSETS", "player_assets.csv")
@@ -208,17 +208,15 @@ def infer_sport_league(bundle_row: Dict[str, str], prompt_blob: str) -> Tuple[st
 
 def candidate_person_names_from_line(line: str, teams: List[str]) -> List[str]:
     compact = clean(line)
-    staty = any(word in compact.lower() for word in STAT_WORDS)
-    if not staty and not re.search(r"(?:player|players|performer|performers|leader|leaders|spotlight|mvp|mop|rookie|stars?)", compact, re.I):
+    staty = any(word in compact.lower() for word in STAT_WORDS) or bool(re.search(r"\b\d+\s*(?:pts|reb|ast|stl|blk|goals?|assists?|saves?|kills|digs|aces)\b", compact.lower()))
+    if not staty:
         return []
     pattern = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2}"
     out: List[str] = []
     seen = set()
     for m in re.finditer(pattern, compact):
         name = clean(m.group(0))
-        if name in PERSON_EXCLUDE or name in teams:
-            continue
-        if any(ch.isdigit() for ch in name):
+        if name in PERSON_EXCLUDE or not valid_person_extract(name, teams):
             continue
         if name not in seen:
             seen.add(name)
@@ -234,6 +232,32 @@ def detect_team_for_line(line: str, teams: List[str], current_team: str = "") ->
     return current_team
 
 
+BAD_PERSON_EXTRACTS = {
+    "HSD Bundle Prompts", "PLAYER IMAGE STATUS", "One Dallas", "One Sparks", "Los Angeles", "Verified Final",
+    "Use Dallas", "BUNDLE LOCKED FACTS", "Graphics Chat Starter", "HER SPORTS DAILY", "Los Angeles Sparks.",
+    "Source Items", "Approved exact assets", "Fact warnings", "Safe graphics mode", "Critical instruction",
+}
+BAD_PERSON_TOKENS = {"HSD", "BUNDLE", "LOCKED", "FACTS", "GRAPHICS", "CHAT", "STARTER", "VERIFIED", "FINAL", "STATUS", "PROMPT", "PROMPTS", "SOURCE", "ASSET", "ASSETS", "UPLOAD"}
+
+
+def valid_person_extract(name: str, teams: List[str]) -> bool:
+    name = clean(name).strip(" .,:;|/-_")
+    if not name or name in BAD_PERSON_EXTRACTS or name in teams:
+        return False
+    parts = name.split()
+    if len(parts) < 2 or len(parts) > 3:
+        return False
+    if any(ch.isdigit() for ch in name):
+        return False
+    if {p.upper() for p in parts} & BAD_PERSON_TOKENS:
+        return False
+    if parts[0] in {"One", "Use", "Safe", "Critical", "Approved", "Source", "Fact", "Player"}:
+        return False
+    if parts[-1].rstrip(".") in {"Wings", "Sparks", "Aces", "Storm", "Lynx", "Mercury", "Fire", "Valkyries"}:
+        return False
+    return True
+
+
 def required_players() -> List[Tuple[str, str, str, str, str, str]]:
     prompts_md = read_text(INPUT_BUNDLE_PROMPTS)
     queue_rows = read_csv(INPUT_BUNDLE_QUEUE)
@@ -243,8 +267,13 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
     seen = set()
 
     def add(bundle_slug: str, bundle_name: str, player_name: str, team_name: str, sport: str, league: str):
+        player_name = clean(player_name).strip(" .,:;|/-_")
+        if bundle_slug == "general-bundle":
+            return
+        if not valid_person_extract(player_name, teams):
+            return
         key = (bundle_slug, player_name)
-        if not player_name or key in seen:
+        if key in seen:
             return
         seen.add(key)
         req.append((bundle_slug, bundle_name, player_name, team_name, sport, league))
