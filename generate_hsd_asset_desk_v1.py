@@ -17,7 +17,7 @@ try:
 except Exception:
     requests = None
 
-VERSION = "hsd-asset-desk-v1.2.3-preview-logo-registry"
+VERSION = "hsd-asset-desk-v1.2.4-preview-logo-registry"
 
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
@@ -539,7 +539,7 @@ def review_md(teams, players, rows, approved, warnings) -> str:
         "",
         f"Generated: {now()}",
         "",
-        "v1.2 adds exact entity cleanup, stat-token filtering, expanded WNBA logo registry, safer player-image logic, and mismatch warnings.",
+        "v1.2.4 adds exact entity cleanup, stat-token filtering, expanded WNBA/preview logo registry, safer player-image logic, and mismatch warnings.",
         "",
         f"Teams detected: {len(teams)}",
         f"Players detected: {len(players)}",
