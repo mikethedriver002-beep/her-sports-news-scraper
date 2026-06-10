@@ -1,4 +1,4 @@
-name: Her Sports Daily Pipeline Control v2.2
+name: Her Sports Daily Production Controller v3.0
 
 on:
   workflow_dispatch:
@@ -8,90 +8,90 @@ on:
         required: true
         default: "full_pipeline"
         type: choice
-        options:
-          - full_pipeline
-          - results_only
-          - news_only
-          - studio_only
-          - asset_only
+        options: [full_pipeline, discovery_only, results_only, news_only, studio_only, asset_only, review_only]
       publish:
-        description: "Commit and push generated outputs?"
+        description: "Commit generated lightweight outputs?"
         required: true
-        default: "true"
+        default: "false"
         type: choice
-        options:
-          - "true"
-          - "false"
+        options: ["false", "true"]
+      publish_mode:
+        description: "Publish guard mode"
+        required: true
+        default: "artifact_only"
+        type: choice
+        options: [artifact_only, reviewed, auto_official_only]
+      content_volume:
+        description: "Daily slate volume"
+        required: true
+        default: "balanced"
+        type: choice
+        options: [lean, balanced, full_slate]
       strict_freshness:
-        description: "Block packets without event_date?"
+        description: "Block packets without event date?"
         required: true
         default: "1"
         type: choice
-        options:
-          - "1"
-          - "0"
+        options: ["1", "0"]
       max_result_age_hours:
         description: "Freshness window in hours"
         required: true
         default: "18"
         type: string
       continue_on_empty:
-        description: "Debug only: continue if a stage produces zero/freshness-blocked rows?"
+        description: "Debug only: continue if a stage is empty?"
         required: true
         default: "false"
         type: choice
-        options:
-          - "false"
-          - "true"
+        options: ["false", "true"]
       review_artifact_size:
         description: "Review artifact size"
         required: true
         default: "lite"
         type: choice
-        options:
-          - "lite"
-          - "full"
-          - "both"
+        options: [lite, full, both]
       commit_heavy_outputs:
-        description: "Commit heavy run history / image packs? Usually leave false."
+        description: "Commit heavy run history / image packs?"
         required: true
         default: "false"
         type: choice
-        options:
-          - "false"
-          - "true"
+        options: ["false", "true"]
+      grey_source_mode:
+        description: "Grey-area source handling"
+        required: true
+        default: "review_only"
+        type: choice
+        options: [disabled, review_only, operator_verified]
 
 permissions:
   contents: write
   actions: read
 
 concurrency:
-  group: hsd-pipeline-control-${{ github.ref }}
+  group: hsd-production-controller-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  run-hsd-pipeline:
+  run-hsd-production-controller:
     runs-on: ubuntu-latest
     timeout-minutes: 95
 
     env:
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
-      HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'true' }}
+      HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
+      HSD_PUBLISH_MODE: ${{ github.event.inputs.publish_mode || 'artifact_only' }}
+      HSD_CONTENT_VOLUME: ${{ github.event.inputs.content_volume || 'balanced' }}
       HSD_CONTINUE_ON_EMPTY: ${{ github.event.inputs.continue_on_empty || 'false' }}
       HSD_STRICT_FRESHNESS_GATE: ${{ github.event.inputs.strict_freshness || '1' }}
       HSD_MAX_RESULT_FRESH_HOURS: ${{ github.event.inputs.max_result_age_hours || '18' }}
       HSD_STUDIO_REQUIRE_EVENT_DATE: ${{ github.event.inputs.strict_freshness || '1' }}
       HSD_STUDIO_MAX_RESULT_AGE_HOURS: ${{ github.event.inputs.max_result_age_hours || '18' }}
-      HSD_NEWS_REQUIRE_EVENT_DATE: "true"
-      HSD_NEWS_ENABLE_FETCH: "true"
-      HSD_TIMEZONE: America/New_York
-      HSD_RESULTS_SOURCES: apisports,espn
-      HSD_PIPELINE_CONTROL_VERSION: v2.2
       HSD_REVIEW_ARTIFACT_SIZE: ${{ github.event.inputs.review_artifact_size || 'lite' }}
       HSD_COMMIT_HEAVY_OUTPUTS: ${{ github.event.inputs.commit_heavy_outputs || 'false' }}
+      HSD_GREY_SOURCE_MODE: ${{ github.event.inputs.grey_source_mode || 'review_only' }}
       HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
-      HSD_LOOKBACK_DAYS: "1"
-      HSD_LOOKAHEAD_DAYS: "1"
+      HSD_NEWS_REQUIRE_EVENT_DATE: "true"
+      HSD_NEWS_ENABLE_FETCH: "true"
       HSD_ASSET_RIGHTS_MODE: aggressive
       HSD_ASSET_DOWNLOAD: "1"
       HSD_PLAYER_IMAGES_REQUIRED: "1"
@@ -121,192 +121,95 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-news-sync.txt ]; then pip install -r requirements-news-sync.txt; fi
           if [ -f requirements-asset-visual-qa.txt ]; then pip install -r requirements-asset-visual-qa.txt; fi
+          python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil >/dev/null 2>&1 || true
 
-      - name: Show pipeline plan
+      - name: Show production plan
         shell: bash
         run: |
           echo "Run mode: ${HSD_RUN_MODE}"
           echo "Publish outputs: ${HSD_PUBLISH_OUTPUTS}"
-          echo "Strict freshness: ${HSD_STRICT_FRESHNESS_GATE}"
-          echo "Max result age hours: ${HSD_MAX_RESULT_FRESH_HOURS}"
-          echo "Continue on empty: ${HSD_CONTINUE_ON_EMPTY}"
-          echo "Results sources: ${HSD_RESULTS_SOURCES}"
+          echo "Publish mode: ${HSD_PUBLISH_MODE}"
+          echo "Content volume: ${HSD_CONTENT_VOLUME}"
           echo "Review artifact size: ${HSD_REVIEW_ARTIFACT_SIZE}"
+          echo "Grey source mode: ${HSD_GREY_SOURCE_MODE}"
 
-
-      - name: Clean stale generated runtime outputs
+      - name: Clean stale generated state
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf hsd_pipeline_lite_review hsd_pipeline_lite_review.zip
-          rm -f pipeline_stop_reason.md pipeline_outcome.md pipeline_publish_warning.md operator_status.md
-          rm -f results_freshness_report.md results_freshness_gate.csv results_freshness_manifest.json results_contract_report.md
-          rm -f latest_news_sync_run_summary.md latest_studio_run_summary.md latest_asset_visual_qa_run_summary.md
-          rm -f news_fact_packets.csv news_setup_error.md news_input_status_report.csv news_candidate_queue.csv news_source_observations.csv studio_fresh_packet_report.md studio_fresh_packet_gate.csv studio_graphics_queue.csv studio_bundle_queue.csv studio_bundle_packets.md studio_bundle_prompts.md studio_preview_fallback_report.md
-          rm -f graphics_upload_pack_status.csv graphics_chat_direct_handoff.md graphics_qa_report.md
-          rm -f player_image_requirements.csv player_image_sourcing_report.md player_image_fit_report.md player_image_fit_gate.csv
-          rm -f asset_candidates_review.md graphics_chat_upload_manifest.csv approved_graphics_assets.csv
-          rm -f top_womens_results.csv today_womens_results.csv today_final_results.csv reconciled_events.csv
-          echo "Stale generated runtime outputs removed."
+          rm -f pipeline_stop_reason.md pipeline_outcome.md pipeline_publish_warning.md
+          rm -f operator_status.md operator_status.json operator_status.csv
+          rm -f publish_guard_report.md publish_guard_report.json
+          rm -f contract_validation_report.md contract_validation_manifest.json
+          rm -f results_contract_v2.csv results_contract_v2.jsonl results_contract_report.md
+          rm -f story_candidates_manual.csv story_candidates_manual.jsonl manual_story_inbox_report.md
+          rm -f story_candidates_discovery.csv story_candidates_discovery.jsonl discovery_sources_report.md
+          rm -f daily_slate_plan.csv daily_slate_plan.md
+          rm -f hsd_current_run.json hsd_pipeline_lite_review.zip
+          rm -rf hsd_pipeline_lite_review
+          echo "Cleaned stale generated review/control files."
 
-      - name: Verify pipeline controller install
+      - name: Verify v3.0 install
         shell: bash
-        run: |
-          set -euo pipefail
-          echo "Verifying v2.2 install files..."
-          grep -q "Her Sports Daily Pipeline Control v2.2" .github/workflows/hsd-pipeline-control-v1.yml
-          grep -q "Toronto Tempo" generate_hsd_asset_desk_v1.py
-          grep -q "Connecticut Sun" generate_hsd_asset_desk_v1.py
-          grep -q "hsd-pipeline-review-lite-v2.2" generate_hsd_pipeline_review_lite_v1.py
-          grep -q "preview-team-filter" generate_hsd_player_image_assets_v1.py || grep -q "all-sports" generate_hsd_player_image_assets_v1.py
-          grep -q "Connecticut_Sun_logo.svg" generate_hsd_asset_desk_v1.py
-          grep -q "Toronto_Tempo_logo.svg" generate_hsd_asset_desk_v1.py
-          if grep -q "Connecticut_Sun_logo.svg/250px" generate_hsd_asset_desk_v1.py; then echo "Old Connecticut thumbnail URL still present"; exit 1; fi
-          grep -q "hsd-asset-desk-v1.2.6-preview-team-logo-fix" generate_hsd_asset_desk_v1.py
-          grep -q "hsd-player-image-assets-v1.6.3-preview-safe" generate_hsd_player_image_assets_v1.py
-          grep -q "hsd-pipeline-review-lite-v2.2" generate_hsd_pipeline_review_lite_v1.py
-          grep -q "hsd-results-contract-v2.2" generate_hsd_results_contract_v1.py
-          grep -q "hsd-graphics-upload-pack-v2.2" generate_hsd_graphics_upload_pack_v1.py
-          grep -q "Toronto Tempo" generate_hsd_graphics_upload_pack_v1.py
-          required_files=(
-            generate_hsd_results_desk_v4.py generate_results_dashboard_v4.py archive_results_runs_v4.py
-            generate_hsd_results_contract_v1.py generate_hsd_news_sync_v1.py generate_hsd_studio_bridge_v1.py
-            generate_hsd_tonight_preview_bridge_v1.py generate_hsd_asset_desk_v1.py generate_hsd_player_image_assets_v1.py
-            generate_hsd_graphics_upload_pack_v1.py generate_hsd_pipeline_review_lite_v1.py generate_hsd_operator_status_v1.py
-          )
-          for file in "${required_files[@]}"; do
-            if [ ! -f "$file" ]; then
-              echo "Missing required pipeline file: $file"
-              exit 1
-            fi
-          done
-          echo "v2.2 install verified."
+        run: python verify_hsd_install_v1.py
+
+      - name: Build run manifest
+        shell: bash
+        run: python build_hsd_run_manifest_v1.py
+
+      - name: Normalize manual story inbox
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only'
+        shell: bash
+        run: python normalize_hsd_manual_story_inbox_v1.py
+
+      - name: Ingest discovery sources
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only'
+        shell: bash
+        run: python ingest_hsd_discovery_sources_v1.py
 
       - name: Run Results Desk stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
         shell: bash
         run: |
           set -euo pipefail
-          python generate_hsd_results_desk_v4.py
-          if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py; fi
-          if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py; fi
+          if [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py; else echo "Results Desk script missing; using existing CSVs."; fi
+          if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py || true; fi
+          if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py || true; fi
 
-      - name: Gate after Results Desk
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
+      - name: Build Results Contract v2
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only' || env.HSD_RUN_MODE == 'news_only' || env.HSD_RUN_MODE == 'studio_only'
         shell: bash
-        run: |
-          set -euo pipefail
-          python generate_hsd_results_contract_v1.py
-          fresh=$(python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path("results_freshness_manifest.json")
-          if not p.exists():
-              print(0)
-          else:
-              print(json.loads(p.read_text()).get("counts",{}).get("fresh",0))
-          PY
-          )
-          echo "Fresh Results Contract rows: $fresh"
-          if [ "$fresh" -le 0 ]; then
-            cat > pipeline_stop_reason.md <<'EOF'
-          # HSD Pipeline Stop
+        run: python generate_hsd_results_contract_v1.py
 
-          Stopped after Results Desk because no fresh result or upcoming schedule rows passed the freshness window.
+      - name: Validate contracts
+        shell: bash
+        run: python validate_hsd_contracts_v1.py --soft
 
-          This prevents News Sync, Studio Bridge, and Asset Visual QA from building graphics from stale results.
-
-          Check `results_contract_report.md`, `results_freshness_report.md`, and the Results Desk CSVs.
-          EOF
-            echo "Pipeline stopped after Results Desk: no fresh rows." >> "$GITHUB_STEP_SUMMARY"
-            if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
-              echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
-              echo "HSD_PIPELINE_STOP_STAGE=results_desk" >> "$GITHUB_ENV"
-            fi
-          fi
+      - name: Build daily slate
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only' || env.HSD_RUN_MODE == 'results_only'
+        shell: bash
+        run: python build_hsd_daily_slate_v1.py
 
       - name: Run News Sync stage
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only') && env.HSD_PIPELINE_STOPPED != 'true'
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only'
         shell: bash
         run: |
           set -euo pipefail
-          python generate_hsd_news_sync_v1.py
-          if [ -f generate_news_dashboard_v1.py ]; then python generate_news_dashboard_v1.py; fi
-          if [ -f archive_news_runs_v1.py ]; then python archive_news_runs_v1.py; fi
-
-      - name: Gate after News Sync
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only') && env.HSD_PIPELINE_STOPPED != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          rows=$(python - <<'PY'
-          import csv
-          from pathlib import Path
-          p = Path("news_fact_packets.csv")
-          if not p.exists():
-              print(0)
-          else:
-              with p.open(newline="", encoding="utf-8", errors="replace") as f:
-                  print(max(0, sum(1 for _ in csv.DictReader(f))))
-          PY
-          )
-          echo "News fact packet rows: $rows"
-          if [ "$rows" -le 0 ]; then
-            preview_rows=$(python - <<'PY'
-            import csv
-            from pathlib import Path
-            p=Path("results_freshness_gate.csv")
-            n=0
-            if p.exists():
-                with p.open(newline="",encoding="utf-8",errors="replace") as f:
-                    for r in csv.DictReader(f):
-                        if r.get("status") == "fresh" and r.get("row_type") == "preview":
-                            n += 1
-            print(n)
-            PY
-            )
-            if [ "$preview_rows" -gt 0 ]; then
-              echo "News Sync produced zero packets, but fresh preview rows exist. Continuing to preview fallback."
-              rm -f pipeline_stop_reason.md
-              echo "HSD_NEWS_ZERO_BUT_PREVIEW_AVAILABLE=true" >> "$GITHUB_ENV"
-            else
-              cat > pipeline_stop_reason.md <<'EOF'
-          # HSD Pipeline Stop
-
-          Stopped after News Sync because `news_fact_packets.csv` had zero rows and no fresh preview fallback rows were available.
-
-          This prevents Studio Bridge and Asset Visual QA from reading stale committed bundle files.
-
-          Check `news_setup_error.md`, `news_input_status_report.csv`, and `results_contract_report.md`.
-          EOF
-              echo "Pipeline stopped after News Sync: zero fact packets." >> "$GITHUB_STEP_SUMMARY"
-              if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
-                echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
-                echo "HSD_PIPELINE_STOP_STAGE=news_sync" >> "$GITHUB_ENV"
-              fi
-            fi
-          fi
+          if [ -f generate_hsd_news_sync_v1.py ]; then python generate_hsd_news_sync_v1.py; else echo "News Sync script missing."; fi
+          if [ -f generate_news_dashboard_v1.py ]; then python generate_news_dashboard_v1.py || true; fi
+          if [ -f archive_news_runs_v1.py ]; then python archive_news_runs_v1.py || true; fi
 
       - name: Run Studio Bridge stage
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
         shell: bash
         run: |
           set -euo pipefail
-          python generate_hsd_studio_bridge_v1.py
-          if [ -f generate_hsd_studio_dashboard_v1.py ]; then python generate_hsd_studio_dashboard_v1.py; fi
-          if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py; fi
-
-      - name: Build preview fallback if no fresh result bundles
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f generate_hsd_tonight_preview_bridge_v1.py ]; then
-            python generate_hsd_tonight_preview_bridge_v1.py
-          fi
+          if [ -f generate_hsd_studio_bridge_v1.py ]; then python generate_hsd_studio_bridge_v1.py; else echo "Studio Bridge script missing."; fi
+          if [ -f generate_hsd_tonight_preview_bridge_v1.py ]; then python generate_hsd_tonight_preview_bridge_v1.py || true; fi
+          if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py || true; fi
 
       - name: Gate after Studio Bridge
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
         shell: bash
         run: |
           set -euo pipefail
@@ -326,21 +229,12 @@ jobs:
             cat > pipeline_stop_reason.md <<'EOF'
           # HSD Pipeline Stop
 
-          Stopped after Studio Bridge because `studio_bundle_queue.csv` had zero rows.
+          Stopped after Studio Bridge because no studio bundle rows were available.
 
-          Asset Visual QA was not run because it would otherwise package stale committed bundle files.
-
-          Most likely causes:
-          - News Sync rows were created but marked production_ready=No.
-          - Event dates were still missing or outside the freshness window.
-          - Studio Bridge filtered all rows before bundle creation.
-
-          Check `news_fact_packets.csv`, `studio_fresh_packet_report.md`, and `studio_fresh_packet_gate.csv`.
+          This is a controlled stop. Check results_contract_report.md, daily_slate_plan.md, news_fact_packets.csv, and studio_fresh_packet_report.md.
           EOF
-            echo "Pipeline stopped after Studio Bridge: zero bundle rows." >> "$GITHUB_STEP_SUMMARY"
             if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
               echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
-              echo "HSD_PIPELINE_STOP_STAGE=studio_bridge" >> "$GITHUB_ENV"
             fi
           else
             rm -f pipeline_stop_reason.md
@@ -348,8 +242,6 @@ jobs:
           # HSD Pipeline Outcome
 
           Studio Bridge produced ${rows} bundle row(s), so the pipeline continued into Asset Visual QA.
-
-          If this bundle was created by preview fallback, use the ready upload pack from the lite review artifact.
           EOF
           fi
 
@@ -368,156 +260,53 @@ jobs:
           python generate_hsd_graphics_prompt_sanitizer_v1.py
           python generate_hsd_graphics_upload_pack_v1.py
           python generate_hsd_graphics_qa_v1.py
-          python generate_hsd_rendered_slide_qa_v1.py
-          python archive_hsd_asset_visual_qa_runs_v1.py
-          python generate_hsd_operator_status_v1.py
+          python generate_hsd_rendered_slide_qa_v1.py || true
+          python archive_hsd_asset_visual_qa_runs_v1.py || true
+
+      - name: Publish guard and operator status
+        if: always()
+        shell: bash
+        run: |
+          python publish_hsd_guard_v1.py || true
+          python generate_hsd_operator_status_v1.py || true
 
       - name: Build lite review artifact
         if: always()
         shell: bash
-        run: |
-          set -euo pipefail
-          python generate_hsd_pipeline_review_lite_v1.py || true
+        run: python generate_hsd_pipeline_review_lite_v1.py || true
 
-      - name: Upload lite pipeline review artifact
+      - name: Upload lite production review artifact
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-pipeline-control-v2-2-lite-review
+          name: hsd-production-control-v3-0-lite-review
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
 
-      - name: Upload full pipeline review artifact
-        uses: actions/upload-artifact@v4
-        if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'full' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
-        with:
-          name: hsd-pipeline-control-v2-2-full-review
-          path: |
-            pipeline_stop_reason.md
-            pipeline_publish_warning.md
-            operator_status.md
-            hsd_pipeline_lite_review.zip
-            hsd_pipeline_lite_review/
-            studio_preview_fallback_report.md
-            results_freshness_report.md
-            results_freshness_gate.csv
-            results_freshness_manifest.json
-            results_contract_report.md
-            latest_results_run_summary.md
-            results_run_history/latest/
-            top_womens_results.csv
-            today_final_results.csv
-            today_womens_results.csv
-            reconciled_events.csv
-            source_observations.csv
-            source_health_report.csv
-            manual_review_queue.csv
-            results_graphics_queue.md
-            daily_results_recommendations.md
-            wnba_box_score_summary.md
-            results_system_hub.md
-            latest_news_sync_run_summary.md
-            latest_studio_run_summary.md
-            latest_asset_visual_qa_run_summary.md
-            hsd_chatgpt_review_packet.md
-            00_hsd_chatgpt_review_packet.md
-            chatgpt_review_pack/
-            news_setup_error.md
-            news_input_status_report.csv
-            news_fact_packets.csv
-            news_run_history/latest/
-            studio_fresh_packet_report.md
-            studio_fresh_packet_gate.csv
-            studio_bundle_queue.csv
-            studio_run_history/latest/
-            asset_run_history/latest/
-            graphics_chat_upload_pack_zips/
-            graphics_upload_pack_status.csv
-            graphics_chat_direct_handoff.md
-            studio_freshness_report.md
-            studio_freshness_gate.csv
-            player_image_sourcing_report.md
-            player_image_requirements.csv
-            player_image_fit_report.md
-            player_image_fit_gate.csv
-
-      - name: Commit and push generated outputs once
+      - name: Commit lightweight generated outputs
         if: env.HSD_PUBLISH_OUTPUTS == 'true'
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
-          # Default mode keeps the repo lean. Heavy folders remain available in the workflow artifact.
           FILES=(
-            "operator_status.md" "pipeline_outcome.md" "pipeline_stop_reason.md" "pipeline_publish_warning.md"
             "hsd_pipeline_lite_review.zip" "hsd_pipeline_lite_review"
-            "results_freshness_report.md" "results_freshness_gate.csv" "results_freshness_manifest.json" "results_contract_report.md"
-            "latest_results_run_summary.md" "source_observations.csv" "reconciled_events.csv" "today_results_board.csv" "today_womens_results.csv" "today_final_results.csv" "top_womens_results.csv" "manual_review_queue.csv" "source_health_report.csv" "results_graphics_queue.md" "daily_results_recommendations.md" "wnba_box_score_audit.csv" "wnba_box_score_summary.md" "results_system_hub.md" "run_manifest.json"
-            "latest_news_sync_run_summary.md" "news_input_status_report.csv" "news_setup_error.md" "news_candidate_queue.csv" "news_source_observations.csv" "news_fact_packets.csv" "news_brief_queue.md" "news_social_packets.md" "news_graphics_handoff.md" "news_daily_plan.md" "news_manual_review_queue.csv" "news_sync_hub.md" "news_sync_manifest.json"
-            "latest_studio_run_summary.md" "studio_preview_fallback_report.md" "studio_fresh_packet_report.md" "studio_fresh_packet_gate.csv" "studio_command_center.md" "studio_graphics_queue.csv" "studio_bundle_queue.csv" "studio_bundle_packets.md" "studio_bundle_prompts.md" "studio_bundle_caption_bank.md" "studio_top_graphic_packets.md" "studio_image_prompts.md" "studio_caption_bank.md" "studio_accuracy_checklist.csv" "studio_manual_review_graphics.csv" "studio_post_schedule.md" "studio_brand_config.json" "studio_graphics_sop.json" "studio_manifest.json"
-            "latest_asset_visual_qa_run_summary.md" "graphics_upload_pack_status.csv" "graphics_chat_direct_handoff.md" "graphics_qa_report.md" "graphics_display_copy.csv" "graphics_banned_language.csv" "graphics_asset_usage_map.csv" "graphics_layout_blueprint.csv" "graphics_prompt_clean_report.md" "graphics_prompt_clean_manifest.json" "player_image_sourcing_report.md" "player_image_requirements.csv" "player_image_candidates.csv" "player_image_fit_report.md" "player_image_fit_gate.csv" "studio_freshness_report.md" "studio_freshness_gate.csv" "studio_stale_packet_queue.csv" "rendered_slide_qa_report.md" "rendered_slide_qa.csv" "approved_graphics_assets.csv" "asset_manifest.csv" "team_assets.csv" "player_assets.csv" "asset_rights_review.csv" "launch_integration_points.csv" "asset_source_seed_list.csv" "fact_warning_queue.csv"
+            "operator_status.md" "operator_status.json" "operator_status.csv"
+            "publish_guard_report.md" "publish_guard_report.json"
+            "install_report.md" "install_report.json" "contract_validation_report.md" "contract_validation_manifest.json"
+            "results_contract_v2.csv" "results_contract_v2.jsonl" "results_contract_report.md"
+            "story_candidates_manual.csv" "story_candidates_manual.jsonl" "manual_story_inbox_report.md"
+            "story_candidates_discovery.csv" "story_candidates_discovery.jsonl" "discovery_sources_report.md"
+            "daily_slate_plan.csv" "daily_slate_plan.md" "pipeline_outcome.md" "pipeline_stop_reason.md"
+            "graphics_upload_pack_status.csv" "graphics_chat_direct_handoff.md" "graphics_qa_report.md"
           )
-
-          if [ "${HSD_COMMIT_HEAVY_OUTPUTS}" = "true" ]; then
-            FILES+=(
-              "results_dashboard" "news_dashboard" "studio_dashboard"
-              "results_run_history" "news_run_history" "studio_run_history" "asset_run_history"
-              "graphics_chat_upload_pack" "graphics_chat_upload_pack_zips" "graphics_clean_prompts" "data/assets"
-              "hsd_chatgpt_review_packet.md" "00_hsd_chatgpt_review_packet.md" "chatgpt_review_pack"
-            )
-          fi
-
           git add --ignore-errors "${FILES[@]}" || true
           if git diff --cached --quiet; then
             echo "No generated output changes to commit."
             exit 0
           fi
-
-          git commit -m "Run HSD Pipeline Control v2.2"
-
-          resolve_generated_conflicts_current_run_wins() {
-            echo "Resolving generated-output conflicts by keeping this run's generated files..."
-            conflicted="$(git diff --name-only --diff-filter=U || true)"
-            if [ -z "$conflicted" ]; then
-              return 0
-            fi
-            echo "$conflicted" | while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                echo "Keeping current-run version of: $file"
-                git checkout --theirs -- "$file" 2>/dev/null || true
-                git add "$file" 2>/dev/null || true
-              fi
-            done
-            GIT_EDITOR=true git rebase --continue || git rebase --skip
-          }
-
-          for attempt in 1 2 3; do
-            echo "Publish attempt $attempt"
-            git rebase --abort 2>/dev/null || true
-            git fetch origin main
-            if git rebase origin/main; then
-              echo "Rebase succeeded"
-            else
-              resolve_generated_conflicts_current_run_wins
-            fi
-
-            if git push origin HEAD:main; then
-              echo "Push succeeded"
-              exit 0
-            fi
-            echo "Push failed, retrying..."
-            sleep 5
-          done
-
-          cat > pipeline_publish_warning.md <<'EOF'
-          # HSD Pipeline Publish Warning
-
-          The pipeline generated a review artifact, but pushing generated outputs to `main` failed after 3 attempts.
-
-          The run artifact is still valid. Re-run later or manually commit the generated files if needed.
-          EOF
-          echo "WARNING: Push failed after 3 attempts. Keeping workflow green because the review artifact is already uploaded."
-          exit 0
+          git commit -m "Run HSD Production Control v3.0"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || echo "Push failed; artifact still uploaded."

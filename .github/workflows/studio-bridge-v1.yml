@@ -1,131 +1,19 @@
-name: HSD Worker Studio Bridge v1.3 Manual Only
+name: Her Sports Daily Studio Bridge Worker - Manual Only
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: hsd-repo-writer-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  studio-bridge:
+  manual-worker:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Run Studio Bridge Fresh Packet Mode v1.3
-        env:
-          HSD_STUDIO_MAX_TOP_PACKETS: "6"
-          HSD_STUDIO_MAX_QUEUE_ITEMS: "14"
-          HSD_STUDIO_REQUIRE_EVENT_DATE: "1"
-          HSD_STUDIO_MAX_RESULT_AGE_HOURS: "18"
-        run: python generate_hsd_studio_bridge_v1.py
-
-      - name: Generate Studio Dashboard
-        run: python generate_hsd_studio_dashboard_v1.py
-
-      - name: Archive Studio Run
-        run: python archive_hsd_studio_runs_v1.py
-
-      - name: Upload Studio artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: hsd-studio-bridge-v1-3
-          path: studio_run_history/latest/
-
-      - name: Commit and push Studio outputs
-        shell: bash
-        run: |
-          set -e
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          FILES=(
-            "studio_fresh_packet_report.md"
-            "studio_fresh_packet_gate.csv"
-            "studio_command_center.md"
-            "studio_graphics_queue.csv"
-            "studio_bundle_queue.csv"
-            "studio_bundle_packets.md"
-            "studio_bundle_prompts.md"
-            "studio_bundle_caption_bank.md"
-            "studio_top_graphic_packets.md"
-            "studio_image_prompts.md"
-            "studio_caption_bank.md"
-            "studio_accuracy_checklist.csv"
-            "studio_manual_review_graphics.csv"
-            "studio_post_schedule.md"
-            "studio_brand_config.json"
-            "studio_graphics_sop.json"
-            "studio_manifest.json"
-            "studio_dashboard/index.html"
-            "brand_assets/hsd_watermark_bug.svg"
-            "latest_studio_run_summary.md"
-            "studio_run_history"
-          )
-
-          for file in "${FILES[@]}"; do
-            if [ -e "$file" ]; then
-              git add "$file"
-            else
-              echo "Optional output not present, skipping: $file"
-            fi
-          done
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          git commit -m "Update HSD Studio Bridge v1.3"
-
-          resolve_generated_conflicts_current_run_wins() {
-            echo "Resolving generated-output conflicts by keeping this run's generated files..."
-            conflicted="$(git diff --name-only --diff-filter=U || true)"
-            if [ -z "$conflicted" ]; then
-              return 0
-            fi
-            echo "$conflicted" | while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                echo "Keeping current-run version of: $file"
-                git checkout --theirs -- "$file" 2>/dev/null || true
-                git add "$file" 2>/dev/null || true
-              fi
-            done
-            git rebase --continue || git rebase --skip
-          }
-
-          for attempt in 1 2 3; do
-            echo "Push attempt $attempt"
-            git rebase --abort 2>/dev/null || true
-            git fetch origin main
-            if git rebase origin/main; then
-              echo "Rebase succeeded"
-            else
-              resolve_generated_conflicts_current_run_wins
-            fi
-            if git push origin HEAD:main; then
-              echo "Push succeeded"
-              exit 0
-            fi
-            echo "Push failed, retrying after short wait..."
-            sleep 5
-          done
-
-          echo "Push failed after 3 attempts"
-          exit 1
+      - run: |
+          echo "Manual-only worker. Production runs should use Her Sports Daily Production Controller v3.0."
+          if [ -f generate_hsd_studio_bridge_v1.py ]; then python generate_hsd_studio_bridge_v1.py; else echo "generate_hsd_studio_bridge_v1.py not present in this repo."; fi

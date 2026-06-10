@@ -1,43 +1,19 @@
-name: Women's Sports Results Desk v4.3 Manual Worker
+name: Her Sports Daily Results Desk Worker - Manual Only
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-defaults:
-  run:
-    shell: bash
-
-concurrency:
-  group: hsd-manual-worker-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  results-worker:
+  manual-worker:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Run Results Desk only
-        env:
-          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
-          HSD_TIMEZONE: America/New_York
-          HSD_RESULTS_SOURCES: apisports,espn
-          HSD_LOOKBACK_DAYS: "1"
-          HSD_LOOKAHEAD_DAYS: "1"
-        run: |
-          python generate_hsd_results_desk_v4.py
-          if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py; fi
-          if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py; fi
+      - run: |
+          echo "Manual-only worker. Production runs should use Her Sports Daily Production Controller v3.0."
+          if [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py; else echo "generate_hsd_results_desk_v4.py not present in this repo."; fi

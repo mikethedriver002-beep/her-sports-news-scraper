@@ -1,142 +1,19 @@
-name: HSD Worker News Sync v1.8.2 Manual Only
+name: Her Sports Daily News Sync Worker - Manual Only
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: hsd-repo-writer-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  news-sync:
+  manual-worker:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-
     steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install -r requirements-news-sync.txt
-
-      - name: Run News Sync v1.8.2
-        env:
-          HSD_NEWS_MAX_MUST_POST: "5"
-          HSD_NEWS_MAX_STRONG_MAYBE: "5"
-          HSD_NEWS_MAX_DIVERSITY_PROMOTIONS: "4"
-          HSD_NEWS_MAX_SOCCER_DIVERSITY: "3"
-          HSD_NEWS_ENABLE_FETCH: "true"
-          HSD_NEWS_REQUIRE_EVENT_DATE: "true"
-        run: python generate_hsd_news_sync_v1.py
-
-      - name: Generate news dashboard
-        run: python generate_news_dashboard_v1.py
-
-      - name: Archive news sync run
-        run: python archive_news_runs_v1.py
-
-      - name: Upload news sync artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: hsd-news-sync-v1-8-2
-          path: news_run_history/latest/
-
-      - name: Commit and push updated news files safely
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          FILES=(
-            "news_input_status_report.csv"
-            "news_setup_error.md"
-            "news_candidate_queue.csv"
-            "news_source_observations.csv"
-            "news_fact_packets.csv"
-            "news_brief_queue.md"
-            "news_social_packets.md"
-            "news_graphics_handoff.md"
-            "news_daily_plan.md"
-            "news_manual_review_queue.csv"
-            "news_sync_hub.md"
-            "news_sync_manifest.json"
-            "news_dashboard/index.html"
-            "latest_news_sync_run_summary.md"
-            "news_run_history"
-          )
-
-          stage_outputs() {
-            for file in "${FILES[@]}"; do
-              if [ -e "$file" ]; then
-                git add "$file"
-              else
-                echo "Optional output not present, skipping: $file"
-              fi
-            done
-          }
-
-          resolve_generated_conflicts_current_run_wins() {
-            echo "Resolving generated-output conflicts by keeping this run's generated files..."
-            conflicted="$(git diff --name-only --diff-filter=U || true)"
-            if [ -z "$conflicted" ]; then
-              return 0
-            fi
-
-            echo "$conflicted" | while IFS= read -r file; do
-              if [ -n "$file" ]; then
-                echo "Keeping current-run version of: $file"
-                git checkout --theirs -- "$file" 2>/dev/null || true
-                git add "$file" 2>/dev/null || true
-              fi
-            done
-
-            git rebase --continue || git rebase --skip
-          }
-
-          stage_outputs
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          git commit -m "Update HSD News Sync v1.8.2"
-
-          for attempt in 1 2 3; do
-            echo "Push attempt $attempt"
-
-            # Clean up any rebase state left by a failed retry.
-            git rebase --abort 2>/dev/null || true
-
-            git fetch origin main
-
-            if git rebase origin/main; then
-              echo "Rebase succeeded"
-            else
-              resolve_generated_conflicts_current_run_wins
-            fi
-
-            if git push origin HEAD:main; then
-              echo "Push succeeded"
-              exit 0
-            fi
-
-            echo "Push failed, retrying after short wait..."
-            sleep 5
-          done
-
-          echo "Push failed after 3 attempts"
-          exit 1
+      - run: |
+          echo "Manual-only worker. Production runs should use Her Sports Daily Production Controller v3.0."
+          if [ -f generate_hsd_news_sync_v1.py ]; then python generate_hsd_news_sync_v1.py; else echo "generate_hsd_news_sync_v1.py not present in this repo."; fi

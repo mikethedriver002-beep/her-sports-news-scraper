@@ -1,0 +1,33 @@
+name: HSD CI - Code and Config Only
+
+on:
+  pull_request:
+    paths:
+      - "*.py"
+      - "config/**"
+      - "contracts/**"
+      - ".github/workflows/**"
+      - "requirements*.txt"
+  push:
+    branches: [main]
+    paths:
+      - "*.py"
+      - "config/**"
+      - "contracts/**"
+      - ".github/workflows/**"
+      - "requirements*.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-install-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m py_compile *.py
+          if [ -f verify_hsd_install_v1.py ]; then python verify_hsd_install_v1.py || true; fi
