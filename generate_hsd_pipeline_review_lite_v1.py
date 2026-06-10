@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v1.5"
+VERSION = "hsd-pipeline-review-lite-v1.6"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 
@@ -38,6 +38,11 @@ KEY_FILES = [
     "player_image_fit_gate.csv",
     "studio_freshness_report.md",
     "studio_freshness_gate.csv",
+    "asset_candidates_review.md",
+    "asset_manifest.csv",
+    "team_assets.csv",
+    "approved_graphics_assets.csv",
+    "graphics_chat_upload_manifest.csv",
 ]
 
 

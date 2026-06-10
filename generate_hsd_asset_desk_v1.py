@@ -17,7 +17,7 @@ try:
 except Exception:
     requests = None
 
-VERSION = "hsd-asset-desk-v1.2.2"
+VERSION = "hsd-asset-desk-v1.2.3-preview-logo-registry"
 
 INPUT_BUNDLE_QUEUE = os.environ.get("HSD_STUDIO_BUNDLE_QUEUE", "studio_bundle_queue.csv")
 INPUT_BUNDLE_PACKETS = os.environ.get("HSD_STUDIO_BUNDLE_PACKETS", "studio_bundle_packets.md")
@@ -53,7 +53,7 @@ WARNING_FIELDS = ["warning_id","bundle_id","warning_type","severity","subject","
 WNBA_LOGO_MAP = {
     "Atlanta Dream": "https://upload.wikimedia.org/wikipedia/en/5/53/Atlanta_Dream_logo.svg",
     "Chicago Sky": "https://upload.wikimedia.org/wikipedia/en/9/9b/Chicago_Sky_logo.svg",
-    "Connecticut Sun": "https://upload.wikimedia.org/wikipedia/en/7/79/Connecticut_Sun_logo.svg",
+    "Connecticut Sun": "https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Connecticut_Sun_logo.svg/250px-Connecticut_Sun_logo.svg.png",
     "Dallas Wings": "https://cdn.wnba.com/logos/wnba/1611661321/primary/D/logo.svg",
     "Golden State Valkyries": "https://cdn.wnba.com/logos/wnba/1611661331/primary/L/logo.svg",
     "Indiana Fever": "https://upload.wikimedia.org/wikipedia/en/5/54/Indiana_Fever_logo.svg",
@@ -64,8 +64,9 @@ WNBA_LOGO_MAP = {
     "Phoenix Mercury": "https://cdn.wnba.com/logos/wnba/1611661330/primary/L/logo.svg",
     "Seattle Storm": "https://cdn.wnba.com/logos/wnba/1611661328/primary/D/logo.svg",
     "Washington Mystics": "https://upload.wikimedia.org/wikipedia/en/2/24/Washington_Mystics_logo.svg",
+    "Toronto Tempo": "https://upload.wikimedia.org/wikipedia/en/thumb/1/1b/Toronto_Tempo_logo.svg/250px-Toronto_Tempo_logo.svg.png",
     # kept because it appears in your feeds
-    "Portland Fire": "https://upload.wikimedia.org/wikipedia/en/0/09/Portland_Fire_logo.svg",
+    "Portland Fire": "https://upload.wikimedia.org/wikipedia/en/thumb/c/cf/Portland_Fire_logo.svg/250px-Portland_Fire_logo.svg.png",
 }
 
 COUNTRY_CODES = {
