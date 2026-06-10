@@ -1,6 +1,6 @@
 # Her Sports Daily Launch Command Center v1.1.2
 
-Generated: `2026-06-09T19:37:24.268732+00:00`
+Generated: `2026-06-10T12:44:39.602500+00:00`
 
 ## Purpose
 
@@ -8,14 +8,10 @@ This turns Studio Bridge Bundle Mode into the daily launch workflow. Use `studio
 
 ## Launch status
 
-- Bundle posts ready: 4
-- Publish queue rows: 4
-- Studio source version: hsd-studio-bridge-v1.2
-- Studio bundles created: 4
-
-## Input recovery notes
-
-- Used archived non-empty Studio Bundle queue: studio_run_history/2026-06-07/0544_UTC/studio_bundle_queue.csv
+- Bundle posts ready: 1
+- Publish queue rows: 1
+- Studio source version: hsd-studio-bridge-v1.4-results-ready
+- Studio bundles created: 0
 
 ## Open first
 
@@ -27,37 +23,13 @@ This turns Studio Bridge Bundle Mode into the daily launch workflow. Use `studio
 
 ## Bundle-first publishing slate
 
-### 1. Main WNBA Result
+### 1. Tonight in the W Preview
 
 - Decision: **Make and post**
 - Priority: POST FIRST
 - Format: 4-slide carousel
 - Window: ASAP after graphics QA
-- File name stem: `01_main_wnba_result_1080x1350`
-
-### 2. Tonight in the W Mini-Roundup
-
-- Decision: **Make if WNBA slate has room**
-- Priority: POST NEXT
-- Format: 5-slide carousel
-- Window: Next available WNBA slot, usually 1 to 3 hours after lead post
-- File name stem: `02_tonight_in_the_w_mini_roundup_1080x1350`
-
-### 3. Volleyball Results Roundup
-
-- Decision: **Make as roundup**
-- Priority: ROUNDUP WINDOW
-- Format: 5-slide carousel
-- Window: Roundup window, later same day or next morning
-- File name stem: `03_volleyball_results_roundup_1080x1350`
-
-### 4. Women's Soccer Radar
-
-- Decision: **Make as diversity/soccer radar**
-- Priority: DIVERSITY SLOT
-- Format: 5-slide carousel
-- Window: Diversity slot, story-first or feed slot when audience is active
-- File name stem: `04_women_s_soccer_radar_1080x1350`
+- File name stem: `01_tonight_in_the_w_preview_1080x1350`
 
 ## Rule
 

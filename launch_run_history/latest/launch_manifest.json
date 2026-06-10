@@ -1,13 +1,11 @@
 {
   "version": "hsd-launch-control-v1.1.2",
-  "generated_at_utc": "2026-06-09T19:37:24.271556+00:00",
+  "generated_at_utc": "2026-06-10T12:44:39.604412+00:00",
   "inputs": {
     "studio_bundle_queue": "studio_bundle_queue.csv",
-    "resolved_bundle_queue_path": "studio_run_history/2026-06-07/0544_UTC/studio_bundle_queue.csv",
-    "bundle_source_status": "archive_nonempty_fallback",
-    "setup_notes": [
-      "Used archived non-empty Studio Bundle queue: studio_run_history/2026-06-07/0544_UTC/studio_bundle_queue.csv"
-    ],
+    "resolved_bundle_queue_path": "studio_bundle_queue.csv",
+    "bundle_source_status": "direct_or_latest_nonempty",
+    "setup_notes": [],
     "studio_bundle_packets": "studio_bundle_packets.md",
     "studio_command": "studio_command_center.md",
     "studio_manifest": "studio_manifest.json"
@@ -34,18 +32,18 @@
     "launch_analytics_dashboard/index.html"
   ],
   "counts": {
-    "bundles_read": 4,
-    "publish_queue_rows": 4,
-    "used_archive_bundle_fallback": "Yes",
-    "quality_gate_rows": 36,
-    "post_tracker_rows": 4,
-    "metrics_input_rows": 4,
+    "bundles_read": 1,
+    "publish_queue_rows": 1,
+    "used_archive_bundle_fallback": "No",
+    "quality_gate_rows": 9,
+    "post_tracker_rows": 5,
+    "metrics_input_rows": 5,
     "pillar_balance_rows": 5,
     "growth_experiments": 3,
     "metrics_rows_with_data": 0
   },
   "source_versions": {
-    "studio_manifest_version": "hsd-studio-bridge-v1.2",
+    "studio_manifest_version": "hsd-studio-bridge-v1.4-results-ready",
     "studio_sop_version": "hsd-studio-bridge-v1",
     "brand_name": "Her Sports Daily"
   }

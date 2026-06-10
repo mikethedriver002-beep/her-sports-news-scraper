@@ -1,6 +1,6 @@
 # Her Sports Daily What To Double Down On v1.1
 
-Generated: 2026-06-09T19:37:24.268713+00:00
+Generated: 2026-06-10T12:44:39.602487+00:00
 
 No post metrics are available yet, so this report is using the launch plan as the starting hypothesis.
 
@@ -13,10 +13,7 @@ No post metrics are available yet, so this report is using the launch plan as th
 
 ## Today's slate to test
 
-- **Main WNBA Result**: Make and post
-- **Tonight in the W Mini-Roundup**: Make if WNBA slate has room
-- **Volleyball Results Roundup**: Make as roundup
-- **Women's Soccer Radar**: Make as diversity/soccer radar
+- **Tonight in the W Preview**: Make and post
 
 ## Decision rule
 

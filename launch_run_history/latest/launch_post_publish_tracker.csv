@@ -1,4 +1,5 @@
 post_id,bundle_name,content_pillar,post_format,asset_file_stem,publish_status,planned_window,actual_publish_date,actual_publish_time_local,graphics_done,quality_gate_done,caption_done,posted_to_feed,posted_to_story,metrics_logged_24h,metrics_logged_7d,notes
+01_tonight_in_the_w_preview_1080x1350,Tonight in the W Preview,WNBA Roundup,4-slide carousel,01_tonight_in_the_w_preview_1080x1350,Planned,ASAP after graphics QA,,,No,No,No,No,No,No,No,
 01_main_wnba_result_1080x1350,Main WNBA Result,WNBA Lead,4-slide carousel,01_main_wnba_result_1080x1350,Planned,ASAP after graphics QA,,,No,No,No,No,No,No,No,
 02_tonight_in_the_w_mini_roundup_1080x1350,Tonight in the W Mini-Roundup,WNBA Roundup,5-slide carousel,02_tonight_in_the_w_mini_roundup_1080x1350,Planned,"Next available WNBA slot, usually 1 to 3 hours after lead post",,,No,No,No,No,No,No,No,
 03_volleyball_results_roundup_1080x1350,Volleyball Results Roundup,Volleyball,5-slide carousel,03_volleyball_results_roundup_1080x1350,Planned,"Roundup window, later same day or next morning",,,No,No,No,No,No,No,No,
