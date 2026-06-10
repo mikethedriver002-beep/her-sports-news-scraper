@@ -33,7 +33,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.6.2-preview-team-filter"
+VERSION = "hsd-player-image-assets-v1.6.3-active-bundle-only"
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_PLAYER_ASSETS = os.environ.get("HSD_PLAYER_ASSETS", "player_assets.csv")
@@ -296,6 +296,9 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
     for row in queue_rows:
         bundle_name = clean(row.get("bundle_name") or row.get("post_slug") or row.get("bundle_slug"))
         bundle_slug = clean(row.get("post_slug") or row.get("bundle_slug") or slugify(bundle_name))
+        if any(x in bundle_name.lower() for x in ["preview", "schedule"]):
+            # Preview/schedule bundles are team/logo driven unless real named players are explicitly attached upstream.
+            continue
         section = bundle_prompt_section(bundle_name, prompts_md)
         blob = "\n".join([
             clean(row.get("bundle_name")), clean(row.get("source_headlines")), clean(row.get("caption_seed")),
@@ -322,7 +325,9 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
             for name in MAIN_RESULT_PLAYER_SET:
                 add(bundle_slug, bundle_name, name, PLAYER_TEAM_HINTS.get(name, ""), sport or "basketball", league or "WNBA")
 
-    if not req:
+    # Only use legacy prompt fallback when there is no active Studio bundle queue.
+    # This prevents stale Main WNBA player requirements from leaking into preview-only runs.
+    if not req and not queue_rows:
         blob = prompt_text()
         sport, league = infer_sport_league({}, blob)
         if "Main WNBA Result" in blob and "Dallas Wings" in blob and "Los Angeles Sparks" in blob:
