@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-tonight-preview-bridge-v1.4"
+VERSION = "hsd-tonight-preview-bridge-v1.5"
 MAX_HOURS_AHEAD = float(os.environ.get("HSD_PREVIEW_LOOKAHEAD_HOURS", "30"))
 TIMEZONE_LABEL = os.environ.get("HSD_TIMEZONE_LABEL", "ET")
 
@@ -92,7 +92,7 @@ def main() -> None:
         seen.add(key); upcoming.append(r)
     upcoming=upcoming[:4]
     if not upcoming:
-        Path("studio_preview_fallback_report.md").write_text(f"# HSD Tonight Preview Fallback v1.4\n\nGenerated: {now()}\n\nNo upcoming rows found.\n", encoding="utf-8")
+        Path("studio_preview_fallback_report.md").write_text(f"# HSD Tonight Preview Fallback v1.5\n\nGenerated: {now()}\n\nNo upcoming rows found.\n", encoding="utf-8")
         print("No upcoming rows found for preview fallback.")
         return
     first_dt=parse_dt(upcoming[0].get("scheduled_start_utc") or upcoming[0].get("scheduled_date_local")) or now_dt
@@ -126,7 +126,12 @@ def main() -> None:
     write_csv("studio_graphics_queue.csv", [{"post_rank":"1","post_slug":slugify(bundle_name),"post_title":bundle_name,"content_family":"Tonight in the W","asset_type":"4-slide carousel","asset_shape":"1080x1350","priority":"POST FIRST","source_headline":source_headlines,"caption_seed":row['caption_seed'],"event_date":event_date,"event_datetime":row['event_datetime'],"freshness_status":"fresh_upcoming_schedule"}], GRAPHICS_FIELDS)
     Path("studio_bundle_packets.md").write_text(f"# HSD Studio Bundle Packets\n\n## BUNDLE 1: {bundle_name}\n\nSource items: {source_headlines}\n\n### Caption seed\n{row['caption_seed']}\n\n### Accuracy lock\n{row['accuracy_lock']}\n", encoding="utf-8")
     Path("studio_bundle_prompts.md").write_text(f"# HSD Studio Bundle Prompts\n\n## {bundle_name}\n\n```text\n{prompt}\n```\n", encoding="utf-8")
-    Path("studio_preview_fallback_report.md").write_text("# HSD Tonight Preview Fallback v1.4\n\nGenerated: "+now()+"\n\nCreated preview bundle from fresh upcoming schedule rows.\n\n"+"\n".join([f"- {x}" for x in schedule_lines])+"\n", encoding="utf-8")
+    Path("studio_preview_fallback_report.md").write_text("# HSD Tonight Preview Fallback v1.5\n\nGenerated: "+now()+"\n\nCreated preview bundle from fresh upcoming schedule rows.\n\n"+"\n".join([f"- {x}" for x in schedule_lines])+"\n", encoding="utf-8")
+    Path("pipeline_outcome.md").write_text("# HSD Pipeline Outcome\n\nPreview fallback created a fresh `Tonight in the W Preview` bundle because no fresh final-result bundle passed Studio Bridge.\n\nBundle: Tonight in the W Preview\n\nGames:\n"+"\n".join([f"- {x}" for x in schedule_lines])+"\n", encoding="utf-8")
+    try:
+        Path("pipeline_stop_reason.md").unlink()
+    except FileNotFoundError:
+        pass
     print(f"Created {bundle_name} preview bundle with {len(upcoming)} games.")
 
 if __name__ == "__main__": main()

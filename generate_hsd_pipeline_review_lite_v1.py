@@ -5,12 +5,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v1.4"
+VERSION = "hsd-pipeline-review-lite-v1.5"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 
 KEY_FILES = [
+    "pipeline_outcome.md",
     "pipeline_stop_reason.md",
+    "studio_preview_fallback_report.md",
     "results_freshness_report.md",
     "results_freshness_gate.csv",
     "results_freshness_manifest.json",
@@ -112,10 +114,35 @@ def summarize_upload() -> Dict[str, Any]:
     return {"rows":len(rows),"bundles":[{k:r.get(k,"") for k in ["bundle_name","upload_pack_status","assets_expected","assets_ready","assets_missing","missing_asset_names","zip_path"]} for r in rows]}
 
 
+
+def ready_upload_pack_zips(max_mb: float = 25.0) -> List[Dict[str, Any]]:
+    """Copy ready/ready_with_review pack ZIPs into the lite review when small enough."""
+    out: List[Dict[str, Any]] = []
+    dest_dir = OUT_DIR / "ready_upload_packs"
+    for row in read_csv_rows("graphics_upload_pack_status.csv", 100):
+        status = clean(row.get("upload_pack_status")).lower()
+        zip_path = clean(row.get("zip_path"))
+        if status not in {"ready", "ready_with_review"} or not zip_path:
+            continue
+        p = Path(zip_path)
+        if not p.exists():
+            out.append({"bundle_name": row.get("bundle_name",""), "status": status, "zip_path": zip_path, "included": "no", "reason": "zip_missing"})
+            continue
+        size_mb = p.stat().st_size / (1024 * 1024)
+        if size_mb > max_mb:
+            out.append({"bundle_name": row.get("bundle_name",""), "status": status, "zip_path": zip_path, "included": "no", "reason": f"too_large_{size_mb:.1f}mb"})
+            continue
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest = dest_dir / p.name
+        dest.write_bytes(p.read_bytes())
+        out.append({"bundle_name": row.get("bundle_name",""), "status": status, "zip_path": str(dest.relative_to(OUT_DIR)), "included": "yes", "reason": f"{size_mb:.2f}mb"})
+    return out
+
 def main() -> None:
     if OUT_DIR.exists():
         import shutil; shutil.rmtree(OUT_DIR)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    ready_packs = ready_upload_pack_zips()
     status={
         "version":VERSION,
         "generated_at_utc":now(),
@@ -129,7 +156,9 @@ def main() -> None:
         "results":summarize_results(),
         "studio":summarize_studio(),
         "upload_packs":summarize_upload(),
+        "ready_upload_packs_included": ready_packs,
         "stop_reason_file_exists":Path("pipeline_stop_reason.md").exists(),
+        "outcome_file_exists":Path("pipeline_outcome.md").exists(),
     }
     (OUT_DIR/"pipeline_status.json").write_text(json.dumps(status, indent=2), encoding="utf-8")
     lines=["# HSD Pipeline Lite Review", "", f"Generated: {status['generated_at_utc']}", "", "## Counts", ""]
@@ -143,6 +172,12 @@ def main() -> None:
     lines += ["## Upload packs", ""]
     for b in status["upload_packs"]["bundles"]:
         lines.append(f"- {b.get('bundle_name')}: {b.get('upload_pack_status')} | ready {b.get('assets_ready')}/{b.get('assets_expected')} | missing {b.get('missing_asset_names')}")
+    if status.get("ready_upload_packs_included"):
+        lines += ["", "## Ready upload packs included", ""]
+        for pack in status["ready_upload_packs_included"]:
+            lines.append(f"- {pack.get('bundle_name')}: included={pack.get('included')} | {pack.get('zip_path')} | {pack.get('reason')}")
+    if Path("pipeline_outcome.md").exists():
+        lines += ["", "## Outcome", "", "```", head_text("pipeline_outcome.md", 3000), "```"]
     if Path("pipeline_stop_reason.md").exists():
         lines += ["", "## Stop reason", "", "```", head_text("pipeline_stop_reason.md", 3000), "```"]
     (OUT_DIR/"README.md").write_text("\n".join(lines)+"\n", encoding="utf-8")

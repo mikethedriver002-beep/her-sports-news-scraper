@@ -33,7 +33,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.6.1-people-filter-fix"
+VERSION = "hsd-player-image-assets-v1.6.2-preview-team-filter"
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_PLAYER_ASSETS = os.environ.get("HSD_PLAYER_ASSETS", "player_assets.csv")
@@ -208,9 +208,23 @@ def infer_sport_league(bundle_row: Dict[str, str], prompt_blob: str) -> Tuple[st
 
 def candidate_person_names_from_line(line: str, teams: List[str]) -> List[str]:
     compact = clean(line)
-    staty = any(word in compact.lower() for word in STAT_WORDS) or bool(re.search(r"\b\d+\s*(?:pts|reb|ast|stl|blk|goals?|assists?|saves?|kills|digs|aces)\b", compact.lower()))
-    if not staty:
+    low = compact.lower()
+
+    # Never mine people from instruction, asset, schedule, or prompt-control lines.
+    # v1.6.1 overfired here and treated teams / internal prompt phrases as people.
+    instruction_bits = [
+        "asset", "assets", "logo", "logos", "watermark", "uploaded", "prompt", "graphics chat",
+        "slide ", "carousel", "games:", "schedule board", "previewing", "do not invent", "use only",
+        "approved team", "caption seed", "accuracy lock", "source items",
+    ]
+    if any(bit in low for bit in instruction_bits):
         return []
+
+    stat_word_hit = any(re.search(rf"\b{re.escape(word)}\b", low) for word in STAT_WORDS)
+    stat_abbrev_hit = bool(re.search(r"\b\d+\s*(?:pts|reb|ast|stl|blk|goals?|assists?|saves?|kills|digs|aces)\b", low))
+    if not (stat_word_hit or stat_abbrev_hit):
+        return []
+
     pattern = r"[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2}"
     out: List[str] = []
     seen = set()
@@ -236,6 +250,7 @@ BAD_PERSON_EXTRACTS = {
     "HSD Bundle Prompts", "PLAYER IMAGE STATUS", "One Dallas", "One Sparks", "Los Angeles", "Verified Final",
     "Use Dallas", "BUNDLE LOCKED FACTS", "Graphics Chat Starter", "HER SPORTS DAILY", "Los Angeles Sparks.",
     "Source Items", "Approved exact assets", "Fact warnings", "Safe graphics mode", "Critical instruction",
+    "Connecticut Sun", "Toronto Tempo", "Seattle Storm", "Los Angeles Sparks",
 }
 BAD_PERSON_TOKENS = {"HSD", "BUNDLE", "LOCKED", "FACTS", "GRAPHICS", "CHAT", "STARTER", "VERIFIED", "FINAL", "STATUS", "PROMPT", "PROMPTS", "SOURCE", "ASSET", "ASSETS", "UPLOAD"}
 
@@ -286,6 +301,14 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
             clean(row.get("bundle_name")), clean(row.get("source_headlines")), clean(row.get("caption_seed")),
             clean(row.get("accuracy_lock")), clean(row.get("bundle_prompt")), section,
         ])
+        # Schedule/preview bundles should not require player/person images unless true stat lines exist.
+        preview_context = " ".join([
+            clean(row.get("bundle_name")), clean(row.get("bundle_type")), clean(row.get("content_family")),
+            clean(row.get("asset_type")), clean(row.get("source_headlines")), clean(row.get("caption_seed")),
+        ]).lower()
+        has_real_stat_line = bool(re.search(r"\b\d+\s*(?:pts|reb|ast|stl|blk|goals?|assists?|saves?|kills|digs|aces)\b", blob.lower()))
+        if any(tok in preview_context for tok in ["preview", "schedule", "tonight in the w"]) and not has_real_stat_line:
+            continue
         sport, league = infer_sport_league(row, blob)
         current_team = ""
         for raw in blob.splitlines():
