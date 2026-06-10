@@ -1,6 +1,6 @@
 # Her Sports Daily Social Packets v1
 
-Generated: 2026-06-10T01:48:23.683613+00:00
+Generated: 2026-06-10T02:21:31.965241+00:00
 
 ## Indiana Fever beat Washington Mystics
 
@@ -21,6 +21,25 @@ Angle: close WNBA finish
 
 ---
 
+## Atlanta Dream beat Chicago Sky
+
+**Queue:** MUST POST | **Manual review:** No | **Event date:** 2026-06-09
+
+### Instagram caption
+Atlanta Dream beat Chicago Sky. Verified final: Atlanta Dream 82, Chicago Sky 75.
+
+### X / Threads / Bluesky
+Atlanta Dream beat Chicago Sky. Verified final: Atlanta Dream 82, Chicago Sky 75.
+
+### Story text
+Atlanta Dream beat Chicago Sky
+
+Verified final: Atlanta Dream 82, Chicago Sky 75
+
+Angle: WNBA result watch
+
+---
+
 ## Las Vegas Aces beat Seattle Storm
 
 **Queue:** MUST POST | **Manual review:** No | **Event date:** 2026-06-08
@@ -35,6 +54,25 @@ Las Vegas Aces beat Seattle Storm. Verified final: Las Vegas Aces 101, Seattle S
 Las Vegas Aces beat Seattle Storm
 
 Verified final: Las Vegas Aces 101, Seattle Storm 91
+
+Angle: high-scoring WNBA result
+
+---
+
+## Minnesota Lynx beat Dallas Wings
+
+**Queue:** MUST POST | **Manual review:** No | **Event date:** 2026-06-09
+
+### Instagram caption
+Minnesota Lynx beat Dallas Wings. Verified final: Minnesota Lynx 100, Dallas Wings 76.
+
+### X / Threads / Bluesky
+Minnesota Lynx beat Dallas Wings. Verified final: Minnesota Lynx 100, Dallas Wings 76.
+
+### Story text
+Minnesota Lynx beat Dallas Wings
+
+Verified final: Minnesota Lynx 100, Dallas Wings 76
 
 Angle: high-scoring WNBA result
 

@@ -1,6 +1,6 @@
 {
   "version": "hsd-studio-bridge-v1.4-results-ready",
-  "generated_at_utc": "2026-06-10T01:48:23.879783+00:00",
+  "generated_at_utc": "2026-06-10T02:21:32.155069+00:00",
   "inputs": {
     "news_fact_packets": "news_fact_packets.csv",
     "news_daily_plan": "news_daily_plan.md",
@@ -30,9 +30,9 @@
     "brand_assets/hsd_watermark_bug.svg"
   ],
   "counts": {
-    "news_packets_read": 3,
+    "news_packets_read": 5,
     "fresh_packets_selected": 0,
-    "freshness_blocked_packets": 3,
+    "freshness_blocked_packets": 5,
     "studio_graphics_queued": 0,
     "studio_bundles_created": 0,
     "manual_review_graphics": 0,

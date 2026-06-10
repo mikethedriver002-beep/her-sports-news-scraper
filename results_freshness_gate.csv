@@ -1,0 +1,30 @@
+source_file,headline,event_date,event_age_hours,status,date_source
+top_womens_results.csv,Indiana Fever beat Washington Mystics,2026-06-08,50.4,stale,scheduled_date_local
+top_womens_results.csv,New York Liberty beat Connecticut Sun,2026-06-08,50.4,stale,scheduled_date_local
+top_womens_results.csv,Las Vegas Aces beat Seattle Storm,2026-06-08,50.4,stale,scheduled_date_local
+top_womens_results.csv,Atlanta Dream beat Chicago Sky,2026-06-09,26.4,stale,scheduled_date_local
+top_womens_results.csv,Minnesota Lynx beat Dallas Wings,2026-06-09,26.4,stale,scheduled_date_local
+top_womens_results.csv,Phoenix Mercury vs Golden State Valkyrie,2026-06-09,26.4,stale,scheduled_date_local
+top_womens_results.csv,Connecticut Sun vs Toronto Tempo,2026-06-10,2.4,fresh,scheduled_date_local
+top_womens_results.csv,Los Angeles Sparks vs Seattle Storm,2026-06-10,2.4,fresh,scheduled_date_local
+today_final_results.csv,Indiana Fever beat Washington Mystics,2026-06-08,50.4,stale,scheduled_date_local
+today_final_results.csv,New York Liberty beat Connecticut Sun,2026-06-08,50.4,stale,scheduled_date_local
+today_final_results.csv,Las Vegas Aces beat Seattle Storm,2026-06-08,50.4,stale,scheduled_date_local
+today_final_results.csv,Atlanta Dream beat Chicago Sky,2026-06-09,26.4,stale,scheduled_date_local
+today_final_results.csv,Minnesota Lynx beat Dallas Wings,2026-06-09,26.4,stale,scheduled_date_local
+today_womens_results.csv,Indiana Fever beat Washington Mystics,2026-06-08,50.4,stale,scheduled_date_local
+today_womens_results.csv,New York Liberty beat Connecticut Sun,2026-06-08,50.4,stale,scheduled_date_local
+today_womens_results.csv,Las Vegas Aces beat Seattle Storm,2026-06-08,50.4,stale,scheduled_date_local
+today_womens_results.csv,Atlanta Dream beat Chicago Sky,2026-06-09,26.4,stale,scheduled_date_local
+today_womens_results.csv,Minnesota Lynx beat Dallas Wings,2026-06-09,26.4,stale,scheduled_date_local
+today_womens_results.csv,Phoenix Mercury vs Golden State Valkyrie,2026-06-09,26.4,stale,scheduled_date_local
+today_womens_results.csv,Connecticut Sun vs Toronto Tempo,2026-06-10,2.4,fresh,scheduled_date_local
+today_womens_results.csv,Los Angeles Sparks vs Seattle Storm,2026-06-10,2.4,fresh,scheduled_date_local
+reconciled_events.csv,Indiana Fever beat Washington Mystics,2026-06-08,50.4,stale,scheduled_date_local
+reconciled_events.csv,New York Liberty beat Connecticut Sun,2026-06-08,50.4,stale,scheduled_date_local
+reconciled_events.csv,Las Vegas Aces beat Seattle Storm,2026-06-08,50.4,stale,scheduled_date_local
+reconciled_events.csv,Atlanta Dream beat Chicago Sky,2026-06-09,26.4,stale,scheduled_date_local
+reconciled_events.csv,Minnesota Lynx beat Dallas Wings,2026-06-09,26.4,stale,scheduled_date_local
+reconciled_events.csv,Phoenix Mercury vs Golden State Valkyrie,2026-06-09,26.4,stale,scheduled_date_local
+reconciled_events.csv,Connecticut Sun vs Toronto Tempo,2026-06-10,2.4,fresh,scheduled_date_local
+reconciled_events.csv,Los Angeles Sparks vs Seattle Storm,2026-06-10,2.4,fresh,scheduled_date_local
