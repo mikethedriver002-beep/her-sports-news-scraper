@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v3.2.2-bebe-ops-v2.1"
+VERSION = "hsd-graphics-upload-pack-v3.2.3-bebe-ops-v2.2"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")

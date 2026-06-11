@@ -33,7 +33,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.7.0-preview-focus"
+VERSION = "hsd-player-image-assets-v1.7.1-no-team-as-player"
 INPUT_PREVIEW_FOCUS = os.environ.get("HSD_PREVIEW_PLAYER_FOCUS", "preview_player_focus.csv")
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -77,6 +77,17 @@ CANDIDATE_FIELDS = [
     "score", "download_status", "local_path", "width_px", "height_px", "mime_type", "approved", "reject_reason"
 ]
 
+
+WNBA_TEAM_NAMES = {
+    "Atlanta Dream", "Chicago Sky", "Connecticut Sun", "Dallas Wings", "Golden State Valkyries",
+    "Indiana Fever", "Las Vegas Aces", "Los Angeles Sparks", "Minnesota Lynx", "New York Liberty",
+    "Phoenix Mercury", "Seattle Storm", "Washington Mystics", "Toronto Tempo", "Portland Fire",
+}
+TEAM_NAME_TOKENS = {
+    "Dream", "Sky", "Sun", "Wings", "Valkyries", "Fever", "Aces", "Sparks", "Lynx",
+    "Liberty", "Mercury", "Storm", "Mystics", "Tempo", "Fire"
+}
+
 PLAYER_TEAM_HINTS = {
     "Jessica Shepard": "Dallas Wings",
     "Arike Ogunbowale": "Dallas Wings",
@@ -114,7 +125,7 @@ GOOD_SOURCE_BITS = [
 PERSON_EXCLUDE = {
     "Her Sports Daily", "Main WNBA Result", "Final Score", "Top Performers", "Women’s Sports", "Women's Sports",
     "Tonight In The W", "What Stood Out", "Follow Her Sports Daily", "Around Women's Sports", "Quick Final Story Recap",
-    "Biggest Takeaway", "Source Items", "Dallas Wings", "Los Angeles Sparks"
+    "Biggest Takeaway", "Source Items", *WNBA_TEAM_NAMES
 }
 STAT_WORDS = [
     "pts", "reb", "ast", "stl", "blk", "goals", "goal", "assists", "assist", "saves", "save", "kills", "digs", "aces",
@@ -188,7 +199,7 @@ def bundle_prompt_section(bundle_name: str, prompts_md: str) -> str:
 
 
 def known_team_names(approved_rows: List[Dict[str, str]]) -> List[str]:
-    names = set(PLAYER_TEAM_HINTS.values())
+    names = set(PLAYER_TEAM_HINTS.values()) | set(WNBA_TEAM_NAMES)
     for row in approved_rows:
         entity_type = clean(row.get("entity_type")).lower()
         name = clean(row.get("entity_name"))
@@ -256,14 +267,15 @@ BAD_PERSON_EXTRACTS = {
     "HSD Bundle Prompts", "PLAYER IMAGE STATUS", "One Dallas", "One Sparks", "Los Angeles", "Verified Final",
     "Use Dallas", "BUNDLE LOCKED FACTS", "Graphics Chat Starter", "HER SPORTS DAILY", "Los Angeles Sparks.",
     "Source Items", "Approved exact assets", "Fact warnings", "Safe graphics mode", "Critical instruction",
-    "Connecticut Sun", "Toronto Tempo", "Seattle Storm", "Los Angeles Sparks",
+    *WNBA_TEAM_NAMES,
 }
 BAD_PERSON_TOKENS = {"HSD", "BUNDLE", "LOCKED", "FACTS", "GRAPHICS", "CHAT", "STARTER", "VERIFIED", "FINAL", "STATUS", "PROMPT", "PROMPTS", "SOURCE", "ASSET", "ASSETS", "UPLOAD"}
 
 
 def valid_person_extract(name: str, teams: List[str]) -> bool:
     name = clean(name).strip(" .,:;|/-_")
-    if not name or name in BAD_PERSON_EXTRACTS or name in teams:
+    normalized_teams = {clean(x).lower() for x in teams} | {x.lower() for x in WNBA_TEAM_NAMES}
+    if not name or name in BAD_PERSON_EXTRACTS or name.lower() in normalized_teams:
         return False
     parts = name.split()
     if len(parts) < 2 or len(parts) > 3:
@@ -274,7 +286,7 @@ def valid_person_extract(name: str, teams: List[str]) -> bool:
         return False
     if parts[0] in {"One", "Use", "Safe", "Critical", "Approved", "Source", "Fact", "Player"}:
         return False
-    if parts[-1].rstrip(".") in {"Wings", "Sparks", "Aces", "Storm", "Lynx", "Mercury", "Fire", "Valkyries"}:
+    if parts[-1].rstrip(".") in TEAM_NAME_TOKENS:
         return False
     return True
 
@@ -320,7 +332,13 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
         if any(tok in preview_context for tok in ["preview", "schedule", "tonight in the w"]) and not has_real_stat_line and not preview_focus:
             continue
         for pf in preview_focus:
-            add(bundle_slug, bundle_name, clean(pf.get("player_name")), clean(pf.get("team_name")), infer_sport_league(row, blob)[0], infer_sport_league(row, blob)[1])
+            pf_player = clean(pf.get("player_name"))
+            pf_team = clean(pf.get("team_name"))
+            # v1.7.0 could treat an expansion-team row with no player mapping as a player image request.
+            # BeBe v2.2 keeps preview graphics team-forward unless the focus row is an actual person.
+            if not pf_player or pf_player.lower() == pf_team.lower() or pf_player.lower() in {x.lower() for x in WNBA_TEAM_NAMES}:
+                continue
+            add(bundle_slug, bundle_name, pf_player, pf_team, infer_sport_league(row, blob)[0], infer_sport_league(row, blob)[1])
         sport, league = infer_sport_league(row, blob)
         current_team = ""
         for raw in blob.splitlines():

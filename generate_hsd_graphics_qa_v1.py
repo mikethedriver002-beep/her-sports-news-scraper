@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-graphics-qa-scorer-v1.9-bebe-ops-v2.1"
+VERSION = "hsd-graphics-qa-scorer-v1.9-bebe-ops-v2.2"
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_BANNED = "graphics_banned_language.csv"
@@ -277,7 +277,7 @@ def main() -> None:
         })
 
     write_csv("graphics_qa_results.csv", rows, FIELDS)
-    report = ["# HSD Graphics QA Scorer v1.9 BeBe Ops v2.1 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
+    report = ["# HSD Graphics QA Scorer v1.9 BeBe Ops v2.2 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:

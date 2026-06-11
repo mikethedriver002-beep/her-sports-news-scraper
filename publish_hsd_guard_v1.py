@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "hsd-publish-guard-v3.2.2-bebe-ops-v2.1"
+VERSION = "hsd-publish-guard-v3.2.3-bebe-ops-v2.2"
 OUT_JSON = Path("publish_guard_report.json")
 OUT_MD = Path("publish_guard_report.md")
 LEDGER = Path("audit/publish_ledger.jsonl")

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-operator-command-center-bebe-v2.1"
+VERSION = "hsd-operator-command-center-bebe-v2.2"
 OUT_HTML = Path("operator_command_center.html")
 OUT_MD = Path("operator_command_center.md")
 OUT_JSON = Path("operator_command_center.json")
