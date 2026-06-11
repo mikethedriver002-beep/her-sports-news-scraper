@@ -1,16 +1,13 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.6-bebe-ops-v2.5",
+  "pipeline_version": "v3.2.8-bebe-ops-v2.7",
   "contract_version": "v2",
   "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
   "default_review_artifact_size": "lite",
-  "platforms": [
-    "Instagram",
-    "Threads"
-  ],
-  "github_visible_version": "Her Sports Daily Production Controller v3.2.6 BeBe Ops v2.5",
-  "artifact_name_prefix": "hsd-production-control-v3-2-6-bebe-ops-v2-5",
+  "platforms": ["Instagram", "Threads"],
+  "github_visible_version": "Her Sports Daily Production Controller v3.2.8 BeBe Ops v2.7",
+  "artifact_name_prefix": "hsd-production-control-v3-2-8-bebe-ops-v2-7",
   "release_date_local": "2026-06-11",
-  "notes": "BeBe Ops v2.5 same-day preview freshness fix: preview/Tonight packs that pass the slate gate are not blocked by date-only midnight timestamps; graphics language pack no longer carries stale Dallas-LA result copy into Tonight preview packs."
+  "notes": "BeBe Ops v2.7 exact asset lock: scraps v2.6 text-badge fallback; exact real team logos and exact player/person images are required. Missing assets block the upload pack instead of downgrading graphics."
 }

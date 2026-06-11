@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.2.5-bebe-ops-v2.4"
+VERSION = "hsd-pipeline-review-lite-v3.2.8-bebe-ops-v2.7"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -30,9 +30,11 @@ KEY_FILES = [
     "graphics_upload_pack_status.csv", "graphics_upload_pack_status.json", "graphics_chat_direct_handoff.md", "graphics_chat_upload_instructions.md",
     "graphics_qa_report.md", "graphics_qa_results.csv", "graphics_qa_manifest.json",
     "graphics_prompt_clean_report.md", "graphics_prompt_clean_manifest.json", "graphics_banned_language.csv",
+    "exact_asset_audit.csv", "exact_asset_audit_report.md", "exact_asset_audit_manifest.json",
     "graphics_copy_style_guide.md", "graphics_display_copy.csv", "graphics_asset_usage_map.csv", "graphics_layout_blueprint.csv",
     "player_image_sourcing_report.md", "player_image_requirements.csv", "player_image_fit_report.md", "player_image_fit_gate.csv",
     "asset_candidates_review.md", "approved_graphics_assets.csv", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json",
+    "config/hsd_exact_asset_policy_v1.json", "config/hsd_verified_logo_registry_v1.json",
     "rendered_slide_qa.csv", "rendered_slide_qa_report.md", "rendered_slide_qa_manifest.json", "rendered_graphics_manual_review_template.csv",
 ]
 

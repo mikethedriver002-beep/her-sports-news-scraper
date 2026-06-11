@@ -1,0 +1,90 @@
+{
+  "registry_name": "HSD Verified Team Logo Registry",
+  "version": "v1.0-bebe-ops-v2.7",
+  "rule": "Try to acquire exact real team logos. Do not fall back to text badges. If acquisition fails, block the pack.",
+  "teams": {
+    "Atlanta Dream": {
+      "league": "WNBA",
+      "page_urls": ["https://dream.wnba.com/", "https://www.wnba.com/team/atlanta-dream"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Atlanta_Dream_logo.svg"]
+    },
+    "Chicago Sky": {
+      "league": "WNBA",
+      "page_urls": ["https://sky.wnba.com/", "https://www.wnba.com/team/chicago-sky"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Chicago_Sky_logo.svg"]
+    },
+    "Connecticut Sun": {
+      "league": "WNBA",
+      "page_urls": ["https://sun.wnba.com/", "https://www.wnba.com/team/connecticut-sun"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Connecticut_Sun_logo.svg"]
+    },
+    "Dallas Wings": {
+      "league": "WNBA",
+      "page_urls": ["https://wings.wnba.com/", "https://www.wnba.com/team/dallas-wings"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Dallas_Wings_logo.svg"]
+    },
+    "Golden State Valkyries": {
+      "league": "WNBA",
+      "page_urls": ["https://valkyries.wnba.com/", "https://www.wnba.com/team/golden-state-valkyries"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Golden_State_Valkyries_logo.svg"]
+    },
+    "Indiana Fever": {
+      "league": "WNBA",
+      "page_urls": ["https://fever.wnba.com/", "https://www.wnba.com/team/indiana-fever"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Indiana_Fever_logo.svg"]
+    },
+    "Las Vegas Aces": {
+      "league": "WNBA",
+      "page_urls": ["https://aces.wnba.com/", "https://www.wnba.com/team/las-vegas-aces"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Las_Vegas_Aces_logo.svg"]
+    },
+    "Los Angeles Sparks": {
+      "league": "WNBA",
+      "page_urls": ["https://sparks.wnba.com/", "https://www.wnba.com/team/los-angeles-sparks"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Los_Angeles_Sparks_logo.svg"]
+    },
+    "Minnesota Lynx": {
+      "league": "WNBA",
+      "page_urls": ["https://lynx.wnba.com/", "https://www.wnba.com/team/minnesota-lynx"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Minnesota_Lynx_logo.svg"]
+    },
+    "New York Liberty": {
+      "league": "WNBA",
+      "page_urls": ["https://liberty.wnba.com/", "https://www.wnba.com/team/new-york-liberty"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/New_York_Liberty_logo.svg"]
+    },
+    "Phoenix Mercury": {
+      "league": "WNBA",
+      "page_urls": ["https://mercury.wnba.com/", "https://www.wnba.com/team/phoenix-mercury"],
+      "direct_urls": [
+        "https://en.wikipedia.org/wiki/Special:FilePath/Phoenix_Mercury_logo_2025.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Phoenix_Mercury_logo_2025.png",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Phoenix_Mercury_logo.svg"
+      ],
+      "notes": "Do not use opaque old cdn.wnba.com numeric logo candidates unless manually verified; this registry entry intentionally prioritizes exact Phoenix Mercury file names and official team pages."
+    },
+    "Portland Fire": {
+      "league": "WNBA",
+      "page_urls": ["https://fire.wnba.com/", "https://www.wnba.com/team/portland-fire"],
+      "direct_urls": [
+        "https://en.wikipedia.org/wiki/Special:FilePath/Portland_Fire_logo.svg",
+        "https://en.wikipedia.org/wiki/Special:FilePath/Portland_Fire_26.png"
+      ]
+    },
+    "Seattle Storm": {
+      "league": "WNBA",
+      "page_urls": ["https://storm.wnba.com/", "https://www.wnba.com/team/seattle-storm"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Seattle_Storm_(2021)_logo.svg"]
+    },
+    "Toronto Tempo": {
+      "league": "WNBA",
+      "page_urls": ["https://tempo.wnba.com/", "https://www.wnba.com/team/toronto-tempo"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Toronto_Tempo_logo.svg"]
+    },
+    "Washington Mystics": {
+      "league": "WNBA",
+      "page_urls": ["https://mystics.wnba.com/", "https://www.wnba.com/team/washington-mystics"],
+      "direct_urls": ["https://en.wikipedia.org/wiki/Special:FilePath/Washington_Mystics_logo.svg"]
+    }
+  }
+}

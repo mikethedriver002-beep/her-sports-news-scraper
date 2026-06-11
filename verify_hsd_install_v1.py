@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.6-bebe-ops-v2.5"
-EXPECTED_PIPELINE_VERSION = "v3.2.6-bebe-ops-v2.5"
+VERSION = "hsd-install-verifier-v3.2.8-bebe-ops-v2.7"
+EXPECTED_PIPELINE_VERSION = "v3.2.8-bebe-ops-v2.7"
 MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
@@ -26,6 +26,7 @@ REQUIRED_FILES = [
     "generate_hsd_preview_quality_gate_v1.py",
     "generate_hsd_player_image_assets_v1.py",
     "generate_hsd_graphics_upload_pack_v1.py",
+    "generate_hsd_exact_asset_audit_v1.py",
     "generate_hsd_graphics_qa_v1.py",
     "generate_hsd_rendered_slide_qa_v1.py",
     "generate_hsd_bebe_daily_ops_plan_v2.py",
@@ -40,6 +41,8 @@ REQUIRED_FILES = [
     "config/hsd_platform_policy_v2.json",
     "config/graphics_rendered_qa_policy_v2.json",
     "config/preview_focus_map.json",
+    "config/hsd_exact_asset_policy_v1.json",
+    "config/hsd_verified_logo_registry_v1.json",
 ]
 
 OPTIONAL_TEMPLATE_FILES = [
@@ -171,6 +174,8 @@ def inspect_workflow(path: Path, issues: List[str], warnings: List[str], hashes:
         warnings.append(f"{path}: preview player-image mode env is missing")
     if "generate_hsd_bebe_daily_ops_plan_v2.py" not in txt:
         issues.append(f"{path}: does not run BeBe daily ops plan")
+    if "generate_hsd_exact_asset_audit_v1.py" not in txt:
+        warnings.append(f"{path}: exact asset audit step is missing; logos/player image gating may be weaker than v2.7")
     if "STRICT FRESHNESS GATE" not in txt:
         warnings.append(f"{path}: GitHub UI still has old strict_freshness label. Safe to run, but copy the hidden .github workflow to fix the display.")
     if EXPECTED_PIPELINE_VERSION not in txt:

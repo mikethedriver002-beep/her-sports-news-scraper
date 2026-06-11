@@ -1,0 +1,29 @@
+{
+  "policy_name": "HSD Exact Logo and Player Image Policy",
+  "version": "v1.0-bebe-ops-v2.7",
+  "team_logo_rule": "real_exact_logo_required",
+  "player_image_rule": "real_exact_player_or_person_image_required_when_asset_is_required",
+  "text_logo_fallback_allowed": false,
+  "placeholder_logo_allowed": false,
+  "ai_redrawn_logo_allowed": false,
+  "ai_invented_player_image_allowed": false,
+  "if_exact_team_logo_missing": "block_upload_pack_until_logo_acquired",
+  "if_exact_player_image_missing": "block_or_remove_required_player_asset_upstream; never_substitute",
+  "source_priority": [
+    "operator_approved_local_asset",
+    "verified_exact_logo_registry_direct_url",
+    "official_team_or_league_site_logo_candidate",
+    "verified_exact_public_file_name"
+  ],
+  "operator_logo_dirs": [
+    "operator/assets/brand_logos",
+    "operator/assets/team_logos",
+    "data/assets/operator_approved/team_logos"
+  ],
+  "operator_player_image_dirs": [
+    "operator/assets/player_images",
+    "operator/assets/players",
+    "data/assets/operator_approved/player_images"
+  ],
+  "notes": "This supersedes and scraps the v2.6 text-badge fallback approach. BeBe should either acquire real assets or block clearly."
+}

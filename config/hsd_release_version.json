@@ -1,8 +1,8 @@
 {
-  "release": "BeBe Ops v2.5",
-  "pipeline_version": "v3.2.6-bebe-ops-v2.5",
-  "github_visible_name": "Her Sports Daily Production Controller v3.2.6 BeBe Ops v2.5",
-  "artifact_name_prefix": "hsd-production-control-v3-2-6-bebe-ops-v2-5",
+  "release": "BeBe Ops v2.7",
+  "pipeline_version": "v3.2.8-bebe-ops-v2.7",
+  "github_visible_name": "Her Sports Daily Production Controller v3.2.8 BeBe Ops v2.7",
+  "artifact_name_prefix": "hsd-production-control-v3-2-8-bebe-ops-v2-7",
   "release_date_local": "2026-06-11",
-  "summary": "Same-day Tonight preview freshness fix plus preview-safe graphics language pack."
+  "summary": "Exact Asset Lock: real verified team logos and exact player/person images are required; no text fallback; missing exact assets block the pack."
 }

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-graphics-language-pack-v2.5-preview-safe"
+VERSION = "hsd-graphics-language-pack-v2.7-exact-asset-display-safe"
 
 INPUT_RENDER_MANIFEST = "studio_render_manifest_v2.json"
 INPUT_PLAYER_REQUIREMENTS = "player_image_requirements.csv"
@@ -147,7 +147,7 @@ def display_copy_for_bundle(bundle: Dict[str, Any]) -> List[Dict[str, str]]:
                 "slide_role": "slate_board",
                 "display_headline": "The slate",
                 "display_subhead": matchup_text or "Today’s matchups",
-                "display_kicker": "All games listed are for the target date",
+                "display_kicker": "Four games. One night.",
                 "score_copy": "",
                 "cta_copy": "",
                 "do_not_render_terms": PREVIEW_BANNED,
@@ -159,7 +159,7 @@ def display_copy_for_bundle(bundle: Dict[str, Any]) -> List[Dict[str, str]]:
                 "slide_role": "player_watch",
                 "display_headline": "Players to watch",
                 "display_subhead": "Star power across the night",
-                "display_kicker": "Use only approved exact player assets",
+                "display_kicker": "Names to know",
                 "score_copy": "",
                 "cta_copy": "",
                 "do_not_render_terms": PREVIEW_BANNED,
