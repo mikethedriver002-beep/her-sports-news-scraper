@@ -1,4 +1,5 @@
-name: Her Sports Daily Production Controller v3.2.1 BeBe Ops v2
+name: Her Sports Daily Production Controller v3.2.5 BeBe Ops v2.4
+run-name: HSD BeBe Ops v2.4 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -33,21 +34,21 @@ on:
         default: "normal_day"
         type: choice
         options: [normal_day, big_sports_day, slow_day]
-      target_date_local:
-        description: "Optional ET target date override for preview posts, YYYY-MM-DD. Leave blank for today."
-        required: false
-        default: ""
-        type: string
       strict_freshness:
-        description: "Block packets without event date?"
+        description: "STRICT FRESHNESS GATE — leave 1 for normal runs; 0 is debug only."
         required: true
         default: "1"
         type: choice
         options: ["1", "0"]
       max_result_age_hours:
-        description: "Freshness window in hours"
+        description: "Freshness window in hours for result/recap packets"
         required: true
         default: "18"
+        type: string
+      target_date_local:
+        description: "Optional ET target date override for preview posts, YYYY-MM-DD. Leave blank for today."
+        required: false
+        default: ""
         type: string
       continue_on_empty:
         description: "Debug only: continue if a stage is empty?"
@@ -88,6 +89,8 @@ jobs:
     timeout-minutes: 95
 
     env:
+      HSD_RELEASE_VERSION: "v3.2.5-bebe-ops-v2.4"
+      HSD_ARTIFACT_NAME_PREFIX: "hsd-production-control-v3-2-5-bebe-ops-v2-4"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
       HSD_PUBLISH_MODE: ${{ github.event.inputs.publish_mode || 'artifact_only' }}
@@ -156,6 +159,8 @@ jobs:
           echo "Content volume: ${HSD_CONTENT_VOLUME}"
           echo "Desk day type: ${HSD_DESK_DAY_TYPE}"
           echo "Target local date: ${HSD_TARGET_DATE_LOCAL:-today}"
+          echo "Strict freshness gate: ${HSD_STRICT_FRESHNESS_GATE}"
+          echo "Max result fresh hours: ${HSD_MAX_RESULT_FRESH_HOURS}"
           echo "Review artifact size: ${HSD_REVIEW_ARTIFACT_SIZE}"
           echo "Grey source mode: ${HSD_GREY_SOURCE_MODE}"
           echo "Preview player image sourcing: enabled, aggressive public review"
@@ -172,7 +177,15 @@ jobs:
           rm -f story_candidates_manual.csv story_candidates_manual.jsonl manual_story_inbox_report.md
           rm -f story_candidates_discovery.csv story_candidates_discovery.jsonl discovery_sources_report.md
           rm -f daily_slate_plan.csv daily_slate_plan.md
+          rm -f studio_bundle_queue.csv studio_graphics_queue.csv studio_bundle_packets.md studio_bundle_prompts.md studio_fresh_packet_report.md studio_freshness_gate.csv studio_freshness_report.md studio_stale_packet_queue.csv
           rm -f studio_preview_build_v2_report.md studio_preview_build_v2.json preview_player_focus.csv preview_bundle_quality.csv preview_bundle_quality.md preview_bundle_quality_summary.csv
+          rm -f news_fact_packets.csv latest_news_sync_run_summary.md latest_results_run_summary.md
+          rm -f approved_graphics_assets.csv approved_graphics_assets.json asset_candidates_review.md player_assets.csv player_assets.json player_image_candidates.csv
+          rm -f player_image_sourcing_report.md player_image_requirements.csv player_image_fit_report.md player_image_fit_gate.csv
+          rm -f graphics_upload_pack_status.csv graphics_upload_pack_status.json graphics_chat_direct_handoff.md graphics_chat_upload_instructions.md graphics_chat_upload_manifest.csv graphics_chat_upload_manifest.json
+          rm -f graphics_qa_report.md graphics_qa_results.csv graphics_qa_manifest.json
+          rm -f graphics_prompt_clean_report.md graphics_prompt_clean_manifest.json graphics_banned_language.csv graphics_copy_style_guide.md graphics_display_copy.csv graphics_asset_usage_map.csv graphics_layout_blueprint.csv
+          rm -rf graphics_chat_upload_pack graphics_chat_upload_pack_zips graphics_clean_prompts graphics_qa_dashboard generated_graphics
           rm -f source_registry_audit.csv source_registry_audit.md source_registry_audit.json
           rm -f bebe_daily_ops_plan.md bebe_daily_ops_plan.csv bebe_daily_ops_status.json bebe_priority_board.md bebe_posting_schedule_today.md
           rm -f operator_command_center.html operator_command_center.md operator_command_center.json
@@ -181,7 +194,7 @@ jobs:
           rm -rf hsd_pipeline_lite_review
           echo "Cleaned stale generated review/control files."
 
-      - name: Verify BeBe Ops v2 install
+      - name: Verify BeBe Ops v2.4 install
         shell: bash
         run: python verify_hsd_install_v1.py
 
@@ -368,7 +381,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-production-control-v3-2-1-bebe-ops-v2-lite-review
+          name: hsd-production-control-v3-2-5-bebe-ops-v2-4-lite-review-${{ github.run_number }}
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -393,6 +406,11 @@ jobs:
             preview_bundle_quality_summary.csv
             graphics_upload_pack_status.csv
             graphics_chat_direct_handoff.md
+            graphics_chat_upload_instructions.md
+            graphics_chat_upload_manifest.csv
+            graphics_chat_upload_manifest.json
+            graphics_chat_upload_pack_zips/**/*.zip
+            graphics_chat_upload_pack/**
             rendered_slide_qa.csv
             rendered_slide_qa_report.md
             rendered_slide_qa_manifest.json
@@ -426,6 +444,6 @@ jobs:
             echo "No generated output changes to commit."
             exit 0
           fi
-          git commit -m "Run HSD Production Control v3.2.1 BeBe Ops v2"
+          git commit -m "Run HSD Production Control v3.2.5 BeBe Ops v2.4"
           git pull --rebase origin main || true
           git push origin HEAD:main || echo "Push failed; artifact still uploaded."
