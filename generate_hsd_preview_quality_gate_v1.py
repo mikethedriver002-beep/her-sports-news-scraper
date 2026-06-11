@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "hsd-preview-quality-gate-v3.2.1-bebe-ops-v2"
+VERSION = "hsd-preview-quality-gate-v3.2.4-bebe-ops-v2.3"
 
 REQUIRE_PEOPLE = os.environ.get("HSD_REQUIRE_PREVIEW_PEOPLE", "0").strip().lower() in {"1", "true", "yes"}
 TARGET_DATE_ENV = os.environ.get("HSD_TARGET_DATE_LOCAL", "").strip()

@@ -1,5 +1,5 @@
 {
-  "version": "hsd-rendered-graphics-qa-policy-bebe-v2",
+  "version": "hsd-rendered-graphics-qa-policy-bebe-v2.3",
   "required_output": {
     "slide_files": "separate files",
     "width": 1080,

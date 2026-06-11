@@ -33,7 +33,7 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.7.1-no-team-as-player"
+VERSION = "hsd-player-image-assets-v2.3-no-team-as-player"
 INPUT_PREVIEW_FOCUS = os.environ.get("HSD_PREVIEW_PLAYER_FOCUS", "preview_player_focus.csv")
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -335,7 +335,7 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
             pf_player = clean(pf.get("player_name"))
             pf_team = clean(pf.get("team_name"))
             # v1.7.0 could treat an expansion-team row with no player mapping as a player image request.
-            # BeBe v2.2 keeps preview graphics team-forward unless the focus row is an actual person.
+            # BeBe v2.3 keeps preview graphics team-forward unless the focus row is an actual person.
             if not pf_player or pf_player.lower() == pf_team.lower() or pf_player.lower() in {x.lower() for x in WNBA_TEAM_NAMES}:
                 continue
             add(bundle_slug, bundle_name, pf_player, pf_team, infer_sport_league(row, blob)[0], infer_sport_league(row, blob)[1])

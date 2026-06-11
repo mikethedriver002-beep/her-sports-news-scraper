@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.2-bebe-ops-v2.1",
+  "pipeline_version": "v3.2.4-bebe-ops-v2.3",
   "contract_version": "v2",
   "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
@@ -9,5 +9,8 @@
     "Instagram",
     "Threads"
   ],
-  "notes": "BeBe Ops v2.1 hotfix: clearer strict freshness input, graphics upload ZIP included in lite artifact, ready_with_review status stabilized, actual prompt included in graphics handoff."
+  "github_visible_version": "Her Sports Daily Production Controller v3.2.4 BeBe Ops v2.3",
+  "artifact_name_prefix": "hsd-production-control-v3-2-4-bebe-ops-v2-3",
+  "release_date_local": "2026-06-11",
+  "notes": "BeBe Ops v2.3 stability fix: version mismatch is no longer a hard failure, GitHub run/artifact names include v2.3 and run number, and install verification explains partial installs without stopping safe runs."
 }

@@ -20,7 +20,7 @@ try:
 except Exception:
     feedparser = None
 
-VERSION = "hsd-discovery-ingest-v3.2.1-bebe-ops-v2"
+VERSION = "hsd-discovery-ingest-v3.2.4-bebe-ops-v2.3"
 
 REGISTRY = Path("config/source_registry.json")
 OUT_CSV = Path("story_candidates_discovery.csv")

@@ -1,5 +1,5 @@
 {
-  "registry_version": "hsd-source-registry-bebe-v2",
+  "registry_version": "hsd-source-registry-bebe-v2.3",
   "updated_local_date": "2026-06-11",
   "operating_policy": {
     "green_use": "Can be used as a primary fact source when the relevant fact appears directly on the source or has been operator verified.",

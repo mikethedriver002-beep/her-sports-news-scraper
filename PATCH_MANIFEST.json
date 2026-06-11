@@ -1,0 +1,210 @@
+{
+  "version": "v3.2.4-bebe-ops-v2.3",
+  "files": [
+    {
+      "path": "repo_files/.github/workflows/hsd-pipeline-control-v1.yml",
+      "sha256": "6e5cb2330f1ef92fcbabb4040e4a8f9a88369f8ab5964bc8462576aa92c61b9a",
+      "size": 21162
+    },
+    {
+      "path": "repo_files/.github/workflows/hsd-production-controller-v3-2-4-bebe-v2-3.yml",
+      "sha256": "ad856ddfb4de1a01d99dae668d4126bfd679411505a0212f9cba04d0ec109a99",
+      "size": 21176
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_bebe_daily_ops_plan_v2.cpython-313.pyc",
+      "sha256": "4e89406693c38ced3509ae3c8e0a6bef49ff1dfccaeab2accbf2fb54d9bdfa71",
+      "size": 18207
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_graphics_qa_v1.cpython-313.pyc",
+      "sha256": "a83b8b34843df3b41c5128f0161b9e01021480ea33fdcba3e7f1b7af2d88f0e6",
+      "size": 21880
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_graphics_upload_pack_v1.cpython-313.pyc",
+      "sha256": "8ddf9a5f271d49b003bcd2108e3b27324a48ab355de0c91a3c21fa6ba5d0a5f8",
+      "size": 42376
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_operator_command_center_v2.cpython-313.pyc",
+      "sha256": "f7a0de8a58fa5d93f564c130aeb665b7567a99232b257eb900fe0a9149450fa4",
+      "size": 13157
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_operator_status_v1.cpython-313.pyc",
+      "sha256": "a97ec41a59f0d1676e21fcef3577dea15de40b2bad857e5e6ba67a65a4959061",
+      "size": 8699
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_pipeline_review_lite_v1.cpython-313.pyc",
+      "sha256": "8098f424abd424946351286e0aec4ff65a7026a80163783fcf23afb63c672685",
+      "size": 12052
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_player_image_assets_v1.cpython-313.pyc",
+      "sha256": "835c628fb8193cb46c2b02f835719aa160263310448f4498997a166311d54205",
+      "size": 55747
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_preview_quality_gate_v1.cpython-313.pyc",
+      "sha256": "0c17db85f266c354012d9ca4cffc4400e672e1666bb6a3df6c4fe9ba6ea3d57f",
+      "size": 14977
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_rendered_slide_qa_v1.cpython-313.pyc",
+      "sha256": "0938674f5c9184870e0b7e4f9c89b3ddc1cdbe5c02b53776b59d8ac8a5c70038",
+      "size": 17926
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_source_registry_audit_v2.cpython-313.pyc",
+      "sha256": "0b8d94c4dd1afc25902141a13f5e2a792bc29bef93e1bb0813e5bae9987b645e",
+      "size": 11162
+    },
+    {
+      "path": "repo_files/__pycache__/generate_hsd_tonight_preview_bridge_v1.cpython-313.pyc",
+      "sha256": "36885dddd649969dba975e55134ed56f47fe368805912539016f365679ea5de2",
+      "size": 27050
+    },
+    {
+      "path": "repo_files/__pycache__/ingest_hsd_discovery_sources_v1.cpython-313.pyc",
+      "sha256": "4442dd018c89b0ef69d5eabcf9fa65e11fc05ca2ac9215fe066b4c1a3e057869",
+      "size": 11297
+    },
+    {
+      "path": "repo_files/__pycache__/normalize_hsd_manual_story_inbox_v1.cpython-313.pyc",
+      "sha256": "aaee7b040f6ecdad2e028eb3b6c7ad4b8ab20334b18bd2756bca5e3e6f5fa9b4",
+      "size": 17788
+    },
+    {
+      "path": "repo_files/__pycache__/publish_hsd_guard_v1.cpython-313.pyc",
+      "sha256": "c03452e846ae0d9f6b9c8135c24ba4afa0f4cae9730e2e205d9d9b552d991dcc",
+      "size": 12933
+    },
+    {
+      "path": "repo_files/__pycache__/verify_hsd_install_v1.cpython-313.pyc",
+      "sha256": "610733f83c2f58b89a32f9a0cbb241d9a78a87a943cc2a65d19c1e95d5dd2657",
+      "size": 14716
+    },
+    {
+      "path": "repo_files/config/graphics_rendered_qa_policy_v2.json",
+      "sha256": "6ac468c79c0cd3d41159ef9f950ef241da66d0d6ba8f9ed5e4d8c1219d1e1035",
+      "size": 1035
+    },
+    {
+      "path": "repo_files/config/hsd_daily_cadence_v2.json",
+      "sha256": "d2560bcc16cefc93c619162d985ce460040e7b146545f1a3fc677999366e4e11",
+      "size": 4015
+    },
+    {
+      "path": "repo_files/config/hsd_platform_policy_v2.json",
+      "sha256": "8e464cb31d4162c23b3a436504f4849071d3f1f2f755e9ecd50e6bb2ce156ab2",
+      "size": 827
+    },
+    {
+      "path": "repo_files/config/hsd_priority_sports_14d_v2.json",
+      "sha256": "52c35521603be13786ce4f0705f032841ee5588b319c1abc02cba3501f7d442b",
+      "size": 5093
+    },
+    {
+      "path": "repo_files/config/hsd_release_version.json",
+      "sha256": "458099ba3504683912c4a03595284b0a9d835b7eba6d866c02d590a5a2f003df",
+      "size": 391
+    },
+    {
+      "path": "repo_files/config/pipeline_version.json",
+      "sha256": "2626c3e96b08d1b2c251a32648836e95d04f1ea2fdcaf3c030dc89a92687df3b",
+      "size": 735
+    },
+    {
+      "path": "repo_files/config/preview_focus_map.json",
+      "sha256": "4c36948d1ef7f595187d425e3a5d7e6e2f096b54029ba618d3a0cb24e7943107",
+      "size": 1252
+    },
+    {
+      "path": "repo_files/config/source_registry.json",
+      "sha256": "9283d15edd941e9381f90c8ea78daff5e6f34f7e225a26018bbd015a63dc4e4b",
+      "size": 12287
+    },
+    {
+      "path": "repo_files/generate_hsd_bebe_daily_ops_plan_v2.py",
+      "sha256": "2204e1bf52cdef5a4505d80265dd929ea564625ff9951ce4529389cf17c1f987",
+      "size": 12320
+    },
+    {
+      "path": "repo_files/generate_hsd_graphics_qa_v1.py",
+      "sha256": "cfdf328abc3d4515af6d7ca7620365b9a498c1df570b726df73292054f9e2eb3",
+      "size": 14128
+    },
+    {
+      "path": "repo_files/generate_hsd_graphics_upload_pack_v1.py",
+      "sha256": "ae3b40511cd428067acb55ebb1c3e506b57ff6a62ccfe4cc147993008a0c0d67",
+      "size": 34269
+    },
+    {
+      "path": "repo_files/generate_hsd_operator_command_center_v2.py",
+      "sha256": "4f637b5326aecb3d3c41a31ebf703910dca6342cf1ceb487ca52f6cdf7c2c321",
+      "size": 8815
+    },
+    {
+      "path": "repo_files/generate_hsd_operator_status_v1.py",
+      "sha256": "ba455db40eac3e956c689ca16c76db4796414e7bc222b89e08b2ddc859bc0280",
+      "size": 6259
+    },
+    {
+      "path": "repo_files/generate_hsd_pipeline_review_lite_v1.py",
+      "sha256": "cd8aa267f33630327ebb63f8cf894fc376e2085ede79785b50a841e631506b81",
+      "size": 8953
+    },
+    {
+      "path": "repo_files/generate_hsd_player_image_assets_v1.py",
+      "sha256": "1c1d146c16db18858ed507f808a9d2df46082dbe61d87eb9cfe3f5816804f0ab",
+      "size": 40767
+    },
+    {
+      "path": "repo_files/generate_hsd_preview_quality_gate_v1.py",
+      "sha256": "2fe43b1b13253babc520def995274e665aea2aee93b640d85863cb2f08d8852f",
+      "size": 9331
+    },
+    {
+      "path": "repo_files/generate_hsd_rendered_slide_qa_v1.py",
+      "sha256": "f77c0c103378edf4113bbcd19abde36a1fdb3432b61c60b65798d8fd486f2366",
+      "size": 12495
+    },
+    {
+      "path": "repo_files/generate_hsd_source_registry_audit_v2.py",
+      "sha256": "22e02dc932ba134923dc88efe9ad807d71be03b788812d4896c6c2031bff3e7a",
+      "size": 6367
+    },
+    {
+      "path": "repo_files/generate_hsd_tonight_preview_bridge_v1.py",
+      "sha256": "50d0594c18a023ba64740603f084b83093c3234b7c6fdbeb1422d54c814c5e83",
+      "size": 17685
+    },
+    {
+      "path": "repo_files/ingest_hsd_discovery_sources_v1.py",
+      "sha256": "444e4d7ae7b6e5d8fc319631deda11cd6a5b1eb5f3d5d17fa5b6c0c66bd61fa0",
+      "size": 7295
+    },
+    {
+      "path": "repo_files/normalize_hsd_manual_story_inbox_v1.py",
+      "sha256": "2a6f10a104db9d7e6974c335c623e1715bb20ca48429fffde55ad6efab6934cd",
+      "size": 10626
+    },
+    {
+      "path": "repo_files/operator/inbox/story_inbox_template_v2.csv",
+      "sha256": "210e1ec1159af15677c1b5d42464e23f1e71b2326a9bf15bfacb93540c16da52",
+      "size": 390
+    },
+    {
+      "path": "repo_files/publish_hsd_guard_v1.py",
+      "sha256": "8881734fe135c8e29d37dbac6707863f660b7856cfe2a2c3bdc32e8982c178f1",
+      "size": 8580
+    },
+    {
+      "path": "repo_files/verify_hsd_install_v1.py",
+      "sha256": "6814c27994ddbb346fe2f023413112a27074cac82d3723473285a4bd877ba6d5",
+      "size": 12066
+    }
+  ]
+}

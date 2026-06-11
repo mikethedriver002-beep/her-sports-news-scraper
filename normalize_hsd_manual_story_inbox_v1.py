@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-VERSION = "hsd-manual-story-inbox-v3.2.1-bebe-ops-v2"
+VERSION = "hsd-manual-story-inbox-v3.2.4-bebe-ops-v2.3"
 
 CSV_PATH = Path("operator/inbox/story_inbox.csv")
 JSONL_PATH = Path("operator/inbox/story_inbox.jsonl")

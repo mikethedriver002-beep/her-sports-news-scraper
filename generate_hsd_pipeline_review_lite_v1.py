@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.2.3-bebe-ops-v2.2"
+VERSION = "hsd-pipeline-review-lite-v3.2.4-bebe-ops-v2.3"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -17,7 +17,7 @@ MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTE
 KEY_FILES = [
     "operator_status.md", "operator_status.json", "operator_status.csv",
     "publish_guard_report.md", "publish_guard_report.json",
-    "install_report.md", "install_report.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
+    "install_report.md", "install_report.json", "config/hsd_release_version.json", "config/pipeline_version.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
     "results_contract_report.md", "results_contract_v2.csv", "manual_story_inbox_report.md", "story_candidates_manual.csv",
     "discovery_sources_report.md", "story_candidates_discovery.csv", "daily_slate_plan.md", "daily_slate_plan.csv",
     "latest_results_run_summary.md", "news_fact_packets.csv", "latest_news_sync_run_summary.md",

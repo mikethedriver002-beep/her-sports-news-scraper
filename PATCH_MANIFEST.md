@@ -1,0 +1,45 @@
+# Patch manifest
+
+Version: `v3.2.4-bebe-ops-v2.3`
+
+- `repo_files/.github/workflows/hsd-pipeline-control-v1.yml` — 21162 bytes
+- `repo_files/.github/workflows/hsd-production-controller-v3-2-4-bebe-v2-3.yml` — 21176 bytes
+- `repo_files/__pycache__/generate_hsd_bebe_daily_ops_plan_v2.cpython-313.pyc` — 18207 bytes
+- `repo_files/__pycache__/generate_hsd_graphics_qa_v1.cpython-313.pyc` — 21880 bytes
+- `repo_files/__pycache__/generate_hsd_graphics_upload_pack_v1.cpython-313.pyc` — 42376 bytes
+- `repo_files/__pycache__/generate_hsd_operator_command_center_v2.cpython-313.pyc` — 13157 bytes
+- `repo_files/__pycache__/generate_hsd_operator_status_v1.cpython-313.pyc` — 8699 bytes
+- `repo_files/__pycache__/generate_hsd_pipeline_review_lite_v1.cpython-313.pyc` — 12052 bytes
+- `repo_files/__pycache__/generate_hsd_player_image_assets_v1.cpython-313.pyc` — 55747 bytes
+- `repo_files/__pycache__/generate_hsd_preview_quality_gate_v1.cpython-313.pyc` — 14977 bytes
+- `repo_files/__pycache__/generate_hsd_rendered_slide_qa_v1.cpython-313.pyc` — 17926 bytes
+- `repo_files/__pycache__/generate_hsd_source_registry_audit_v2.cpython-313.pyc` — 11162 bytes
+- `repo_files/__pycache__/generate_hsd_tonight_preview_bridge_v1.cpython-313.pyc` — 27050 bytes
+- `repo_files/__pycache__/ingest_hsd_discovery_sources_v1.cpython-313.pyc` — 11297 bytes
+- `repo_files/__pycache__/normalize_hsd_manual_story_inbox_v1.cpython-313.pyc` — 17788 bytes
+- `repo_files/__pycache__/publish_hsd_guard_v1.cpython-313.pyc` — 12933 bytes
+- `repo_files/__pycache__/verify_hsd_install_v1.cpython-313.pyc` — 14716 bytes
+- `repo_files/config/graphics_rendered_qa_policy_v2.json` — 1035 bytes
+- `repo_files/config/hsd_daily_cadence_v2.json` — 4015 bytes
+- `repo_files/config/hsd_platform_policy_v2.json` — 827 bytes
+- `repo_files/config/hsd_priority_sports_14d_v2.json` — 5093 bytes
+- `repo_files/config/hsd_release_version.json` — 391 bytes
+- `repo_files/config/pipeline_version.json` — 735 bytes
+- `repo_files/config/preview_focus_map.json` — 1252 bytes
+- `repo_files/config/source_registry.json` — 12287 bytes
+- `repo_files/generate_hsd_bebe_daily_ops_plan_v2.py` — 12320 bytes
+- `repo_files/generate_hsd_graphics_qa_v1.py` — 14128 bytes
+- `repo_files/generate_hsd_graphics_upload_pack_v1.py` — 34269 bytes
+- `repo_files/generate_hsd_operator_command_center_v2.py` — 8815 bytes
+- `repo_files/generate_hsd_operator_status_v1.py` — 6259 bytes
+- `repo_files/generate_hsd_pipeline_review_lite_v1.py` — 8953 bytes
+- `repo_files/generate_hsd_player_image_assets_v1.py` — 40767 bytes
+- `repo_files/generate_hsd_preview_quality_gate_v1.py` — 9331 bytes
+- `repo_files/generate_hsd_rendered_slide_qa_v1.py` — 12495 bytes
+- `repo_files/generate_hsd_source_registry_audit_v2.py` — 6367 bytes
+- `repo_files/generate_hsd_tonight_preview_bridge_v1.py` — 17685 bytes
+- `repo_files/ingest_hsd_discovery_sources_v1.py` — 7295 bytes
+- `repo_files/normalize_hsd_manual_story_inbox_v1.py` — 10626 bytes
+- `repo_files/operator/inbox/story_inbox_template_v2.csv` — 390 bytes
+- `repo_files/publish_hsd_guard_v1.py` — 8580 bytes
+- `repo_files/verify_hsd_install_v1.py` — 12066 bytes

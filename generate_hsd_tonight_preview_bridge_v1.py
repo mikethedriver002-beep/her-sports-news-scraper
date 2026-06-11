@@ -15,7 +15,7 @@ try:
 except Exception:
     ZoneInfo = None
 
-VERSION = "hsd-tonight-preview-bridge-v3.2.3-bebe-ops-v2.2"
+VERSION = "hsd-tonight-preview-bridge-v3.2.4-bebe-ops-v2.3"
 
 LOCAL_TZ = os.environ.get("HSD_LOCAL_TIMEZONE", "America/New_York")
 INCLUDE_NEXT_DAY = os.environ.get("HSD_PREVIEW_ALLOW_NEXT_DAY", "0").strip().lower() in {"1", "true", "yes"}
@@ -278,7 +278,7 @@ def main() -> None:
         has_preview = any(clean(r.get("bundle_name") or r.get("content_family")).lower().startswith("tonight in the w") for r in existing)
         if has_preview:
             Path("studio_preview_build_v2_report.md").write_text(
-                f"# HSD Tonight Preview Bridge v3.2.3 BeBe Ops v2.2\n\nExisting preview bundle already present for {tgt}. No rebuild performed.\n",
+                f"# HSD Tonight Preview Bridge v3.2.4 BeBe Ops v2.3\n\nExisting preview bundle already present for {tgt}. No rebuild performed.\n",
                 encoding="utf-8",
             )
             print("Existing Tonight in the W preview bundle detected. Skipping rebuild.")
@@ -293,7 +293,7 @@ def main() -> None:
     schedule_lines = [f"{matchup(r)} - {time_label(r)}" for r in schedule]
 
     report = [
-        "# HSD Tonight Preview Bridge v3.2.3 BeBe Ops v2.2",
+        "# HSD Tonight Preview Bridge v3.2.4 BeBe Ops v2.3",
         "",
         f"Target local date: {tgt}",
         f"Source same-day WNBA games found: {len(same_day_source)}",

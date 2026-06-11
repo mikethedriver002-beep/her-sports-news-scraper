@@ -1,0 +1,9 @@
+{
+  "release_version": "v3.2.4-bebe-ops-v2.3",
+  "display_name": "Her Sports Daily Production Controller v3.2.4 BeBe Ops v2.3",
+  "artifact_name_prefix": "hsd-production-control-v3-2-4-bebe-ops-v2-3",
+  "workflow_run_name": "HSD BeBe Ops v2.3",
+  "operator_codename": "BeBe",
+  "created_utc": "2026-06-11T16:10:00Z",
+  "notes": "Canonical version file for GitHub-visible BeBe Ops naming."
+}

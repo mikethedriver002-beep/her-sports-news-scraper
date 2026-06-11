@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.3-bebe-ops-v2.2"
-EXPECTED_PIPELINE_VERSION = "v3.2.3-bebe-ops-v2.2"
+VERSION = "hsd-install-verifier-v3.2.4-bebe-ops-v2.3"
+EXPECTED_PIPELINE_VERSION = "v3.2.4-bebe-ops-v2.3"
+MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
     ".github/workflows/hsd-pipeline-control-v1.yml",
@@ -40,7 +42,12 @@ REQUIRED_FILES = [
     "config/preview_focus_map.json",
 ]
 
-OPTIONAL_TEMPLATE_FILES = ["operator/inbox/story_inbox_template_v2.csv"]
+OPTIONAL_TEMPLATE_FILES = [
+    "operator/inbox/story_inbox_template_v2.csv",
+    "config/hsd_release_version.json",
+    ".github/workflows/hsd-production-controller-v3-2-4-bebe-v2-3.yml",
+]
+
 MANUAL_ONLY_WORKFLOW_MARKERS = ["workflow_dispatch"]
 UNSAFE_WORKFLOW_MARKERS = ["workflow_run", "\npush:", "\nschedule:", "pull_request:"]
 
@@ -84,6 +91,10 @@ def sha(path: Path) -> str:
         return ""
 
 
+def clean(v: Any) -> str:
+    return re.sub(r"\s+", " ", str(v or "")).strip()
+
+
 def read_json(path: str) -> Dict[str, Any]:
     p = Path(path)
     if not p.exists():
@@ -92,11 +103,6 @@ def read_json(path: str) -> Dict[str, Any]:
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return {}
-
-
-def issue_if(condition: bool, issues: List[str], message: str) -> None:
-    if condition:
-        issues.append(message)
 
 
 def remove_stale_generated_state() -> Dict[str, int]:
@@ -121,23 +127,56 @@ def remove_stale_generated_state() -> Dict[str, int]:
     return {"files": removed_files, "dirs": removed_dirs}
 
 
-def validate_registry(issues: List[str]) -> None:
+def validate_registry(issues: List[str], warnings: List[str]) -> None:
     registry = read_json("config/source_registry.json")
     sources = registry.get("sources", [])
-    issue_if(not isinstance(sources, list) or not sources, issues, "config/source_registry.json has no sources list")
+    if not isinstance(sources, list) or not sources:
+        issues.append("config/source_registry.json has no sources list")
+        return
     source_ids = set()
+    green = 0
     for idx, src in enumerate(sources):
         if not isinstance(src, dict):
             issues.append(f"source_registry source index {idx} is not an object")
             continue
-        sid = str(src.get("source_id") or "").strip()
+        sid = clean(src.get("source_id"))
+        band = clean(src.get("trust_band") or src.get("tier")).lower()
         if not sid:
             issues.append(f"source_registry source index {idx} missing source_id")
         elif sid in source_ids:
             issues.append(f"source_registry duplicate source_id: {sid}")
         source_ids.add(sid)
-        if str(src.get("trust_band") or src.get("tier") or "").strip().lower() == "red" and src.get("enabled"):
+        if band in {"green", "official", "primary", "operator"}:
+            green += 1
+        if band == "red" and src.get("enabled"):
             issues.append(f"red/prohibited source is enabled: {sid}")
+    if green < 3:
+        warnings.append("source registry has fewer than 3 green/official sources; discovery may be thin")
+
+
+def inspect_workflow(path: Path, issues: List[str], warnings: List[str], hashes: Dict[str, str]) -> None:
+    if not path.exists():
+        return
+    hashes[path.as_posix()] = sha(path)
+    txt = path.read_text(encoding="utf-8", errors="replace")
+    for marker in MANUAL_ONLY_WORKFLOW_MARKERS:
+        if marker not in txt:
+            issues.append(f"{path}: missing manual trigger marker: {marker}")
+    for marker in UNSAFE_WORKFLOW_MARKERS:
+        if marker in txt:
+            issues.append(f"{path}: has unsafe auto trigger marker: {marker.strip()}")
+    if "HSD_PUBLISH_OUTPUTS" not in txt or "artifact_only" not in txt:
+        warnings.append(f"{path}: may not be locked to artifact-first publish mode")
+    if "HSD_ALLOW_PREVIEW_PLAYER_IMAGES" not in txt:
+        warnings.append(f"{path}: preview player-image mode env is missing")
+    if "generate_hsd_bebe_daily_ops_plan_v2.py" not in txt:
+        issues.append(f"{path}: does not run BeBe daily ops plan")
+    if "STRICT FRESHNESS GATE" not in txt:
+        warnings.append(f"{path}: GitHub UI still has old strict_freshness label. Safe to run, but copy the hidden .github workflow to fix the display.")
+    if EXPECTED_PIPELINE_VERSION not in txt and "v3.2.4" not in txt:
+        warnings.append(f"{path}: visible workflow name/artifact name does not show {EXPECTED_PIPELINE_VERSION}; copy the hidden .github workflow to fix GitHub display.")
+    if "${{ github.run_number }}" not in txt:
+        warnings.append(f"{path}: artifact/run name does not include github.run_number; GitHub artifact names may remain confusing")
 
 
 def main() -> None:
@@ -156,34 +195,21 @@ def main() -> None:
     for name in OPTIONAL_TEMPLATE_FILES:
         p = Path(name)
         if not p.exists():
-            warnings.append(f"optional template missing: {name}")
+            warnings.append(f"optional/version helper missing: {name}")
         else:
             hashes[name] = sha(p)
 
     pv = read_json("config/pipeline_version.json")
-    version = pv.get("pipeline_version")
-    if version != EXPECTED_PIPELINE_VERSION:
-        issues.append(f"pipeline_version mismatch: {version!r}; expected {EXPECTED_PIPELINE_VERSION!r}")
+    pipeline_version = clean(pv.get("pipeline_version"))
+    version_status = "pass" if pipeline_version == EXPECTED_PIPELINE_VERSION else "warning"
+    if pipeline_version != EXPECTED_PIPELINE_VERSION:
+        if not pipeline_version.startswith(MIN_SAFE_PIPELINE_PREFIXES):
+            issues.append(f"pipeline_version too old or missing: {pipeline_version!r}; expected {EXPECTED_PIPELINE_VERSION!r}")
+        else:
+            warnings.append(f"pipeline_version mismatch: {pipeline_version!r}; expected {EXPECTED_PIPELINE_VERSION!r}. This no longer blocks the run; update config/pipeline_version.json for cleaner GitHub/operator display.")
 
-    wf = Path(".github/workflows/hsd-pipeline-control-v1.yml")
-    if wf.exists():
-        txt = wf.read_text(encoding="utf-8", errors="replace")
-        for marker in MANUAL_ONLY_WORKFLOW_MARKERS:
-            if marker not in txt:
-                issues.append(f"controller workflow missing manual trigger marker: {marker}")
-        for marker in UNSAFE_WORKFLOW_MARKERS:
-            if marker in txt:
-                issues.append(f"controller workflow has unsafe auto trigger marker: {marker.strip()}")
-        if "HSD_PUBLISH_OUTPUTS" not in txt or "artifact_only" not in txt:
-            warnings.append("controller workflow may not be locked to artifact-first publish mode")
-        if "HSD_ALLOW_PREVIEW_PLAYER_IMAGES" not in txt:
-            warnings.append("preview player-image mode env is missing")
-        if "generate_hsd_bebe_daily_ops_plan_v2.py" not in txt:
-            issues.append("controller workflow does not run BeBe daily ops plan")
-        if "STRICT FRESHNESS GATE" not in txt:
-            warnings.append("workflow UI still has the old strict_freshness label; functionality is safe, but copy the hidden .github workflow for cleaner UI")
-        if "graphics_chat_upload_pack_zips/**/*.zip" not in txt:
-            warnings.append("workflow artifact path does not explicitly list graphics_chat_upload_pack_zips/**/*.zip; lite review generator still includes ready ZIPs under hsd_pipeline_lite_review/ready_upload_packs")
+    inspect_workflow(Path(".github/workflows/hsd-pipeline-control-v1.yml"), issues, warnings, hashes)
+    inspect_workflow(Path(".github/workflows/hsd-production-controller-v3-2-4-bebe-v2-3.yml"), issues, warnings, hashes)
 
     review_gen = Path("generate_hsd_pipeline_review_lite_v1.py")
     if review_gen.exists():
@@ -191,10 +217,13 @@ def main() -> None:
         if "include_ready_upload_packs" not in rt or "graphics_chat_upload_pack_zips" not in rt:
             issues.append("lite review generator does not include graphics upload pack ZIP safety net")
 
-    validate_registry(issues)
+    validate_registry(issues, warnings)
 
     report = {
         "version": VERSION,
+        "expected_pipeline_version": EXPECTED_PIPELINE_VERSION,
+        "installed_pipeline_version": pipeline_version,
+        "version_status": version_status,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "preflight_cleanup": cleanup,
         "issues": issues,
@@ -206,11 +235,14 @@ def main() -> None:
     lines = [
         "# HSD Install Verification",
         "",
-        f"Version: {VERSION}",
+        f"Verifier: {VERSION}",
+        f"Expected pipeline version: `{EXPECTED_PIPELINE_VERSION}`",
+        f"Installed pipeline version: `{pipeline_version or 'missing'}`",
         f"Generated: {report['generated_at_utc']}",
         "",
         f"- issues: {len(issues)}",
         f"- warnings: {len(warnings)}",
+        f"- version status: {version_status}",
         f"- stale files removed before run: {cleanup['files']}",
         f"- stale directories removed before run: {cleanup['dirs']}",
         "",
@@ -220,10 +252,10 @@ def main() -> None:
     if warnings:
         lines += ["## Warnings", "", *[f"- {x}" for x in warnings], ""]
     if not issues:
-        lines.append("Install verification passed for BeBe Ops v2.2 / v3.2.3.")
+        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.3.")
     Path("install_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print(json.dumps({"issues": len(issues), "warnings": len(warnings), "preflight_cleanup": cleanup}, indent=2))
+    print(json.dumps({"issues": len(issues), "warnings": len(warnings), "version_status": version_status, "preflight_cleanup": cleanup}, indent=2))
     if issues:
         raise SystemExit(2)
 
