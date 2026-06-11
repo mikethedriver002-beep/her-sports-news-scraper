@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-rendered-slide-qa-v2.3-bebe-dynamic-preview"
+VERSION = "hsd-rendered-slide-qa-v2.4-bebe-dynamic-preview"
 
 INPUT_DIRS = [
     Path(os.environ.get("HSD_RENDERED_GRAPHICS_DIR", "rendered_graphics_input")),

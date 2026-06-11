@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "hsd-preview-quality-gate-v3.2.4-bebe-ops-v2.3"
+VERSION = "hsd-preview-quality-gate-v3.2.5-bebe-ops-v2.4"
 
 REQUIRE_PEOPLE = os.environ.get("HSD_REQUIRE_PREVIEW_PEOPLE", "0").strip().lower() in {"1", "true", "yes"}
 TARGET_DATE_ENV = os.environ.get("HSD_TARGET_DATE_LOCAL", "").strip()
@@ -82,6 +82,8 @@ def has_score_or_result_language(text: str) -> Tuple[bool, str]:
     # Allow guardrail phrases such as "No final scores" without treating them as result copy.
     scrubbed = re.sub(r"\bno\s+final\s+scores?\b", "", text, flags=re.I)
     scrubbed = re.sub(r"\bno\s+scores?\b", "", scrubbed, flags=re.I)
+    scrubbed = re.sub(r"\bno\s+game\s+scores?\b", "", scrubbed, flags=re.I)
+    scrubbed = re.sub(r"\bno\s+game\s+scores?\s+or\s+postgame\s+outcomes?\b", "", scrubbed, flags=re.I)
     scrubbed = re.sub(r"\bdo\s+not\s+(?:include|use|render)\s+[^.]{0,60}?(?:final|score|result)[^.]*", "", scrubbed, flags=re.I)
     scrubbed = re.sub(r"\b20\d{2}-\d{2}-\d{2}\b", "", scrubbed)
     for pat in SCORE_PATTERNS:
@@ -93,8 +95,10 @@ def has_score_or_result_language(text: str) -> Tuple[bool, str]:
 
 def prompt_strength(prompt: str) -> Tuple[bool, List[str]]:
     low = prompt.lower()
-    required = ["premium", "editorial", "do not include tomorrow", "all must be represented", "no final scores"]
+    required = ["premium", "editorial", "do not include tomorrow", "all must be represented"]
     missing = [x for x in required if x not in low]
+    if not any(x in low for x in ["no final scores", "no game scores", "no scores"]):
+        missing.append("no score guardrail")
     return not missing, missing
 
 

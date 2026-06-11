@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
 
-VERSION = "hsd-source-registry-audit-bebe-v2.3"
+VERSION = "hsd-source-registry-audit-bebe-v2.4"
 REGISTRY = Path("config/source_registry.json")
 OUT_CSV = Path("source_registry_audit.csv")
 OUT_MD = Path("source_registry_audit.md")

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-operator-command-center-bebe-v2.3"
+VERSION = "hsd-operator-command-center-bebe-v2.4"
 OUT_HTML = Path("operator_command_center.html")
 OUT_MD = Path("operator_command_center.md")
 OUT_JSON = Path("operator_command_center.json")
@@ -180,7 +180,7 @@ def main() -> None:
 <body>
   <header>
     <h1>HSD Operator Command Center</h1>
-    <div>BeBe Ops v2.3 · generated {html.escape(payload['generated_at_utc'])}</div>
+    <div>BeBe Ops v2.4 · generated {html.escape(payload['generated_at_utc'])}</div>
   </header>
   <main>
     <section class="grid">

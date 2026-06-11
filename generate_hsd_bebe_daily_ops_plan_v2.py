@@ -13,7 +13,7 @@ try:
 except Exception:
     ZoneInfo = None
 
-VERSION = "hsd-bebe-daily-ops-plan-v2.3"
+VERSION = "hsd-bebe-daily-ops-plan-v2.4"
 LOCAL_TZ = os.environ.get("HSD_LOCAL_TIMEZONE", "America/New_York")
 DAY_TYPE = os.environ.get("HSD_DESK_DAY_TYPE", "normal_day").strip() or "normal_day"
 CADENCE_PATH = Path(os.environ.get("HSD_DAILY_CADENCE_CONFIG", "config/hsd_daily_cadence_v2.json"))

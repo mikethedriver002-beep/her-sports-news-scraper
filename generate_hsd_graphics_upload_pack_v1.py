@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v3.2.4-bebe-ops-v2.3"
+VERSION = "hsd-graphics-upload-pack-v3.2.5-bebe-ops-v2.4"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -193,13 +193,40 @@ def sanitize_prompt_text(prompt_text: str) -> str:
     return "\n".join(out).strip() + ("\n" if out else "")
 
 
+
+
+def sanitize_preview_prompt_text(prompt_text: str) -> str:
+    """Make preview prompts display-safe without removing useful guardrails."""
+    replacements = [
+        (r"Treat the game facts, scores, team names, and player names as locked facts and preserve them exactly\.",
+         "Treat the game facts, team names, and player names as locked facts and preserve them exactly."),
+        (r"huge result typography", "huge matchup typography"),
+        (r"Huge result typography", "Huge matchup typography"),
+        (r"Results worth knowing", "Games worth watching"),
+        (r"results worth knowing", "games worth watching"),
+        (r"result labels", "postgame labels"),
+        (r"Result labels", "Postgame labels"),
+        (r"## Final reminder", "## Reminder"),
+        (r"Final reminder", "Reminder"),
+    ]
+    out = prompt_text
+    for old, new in replacements:
+        out = re.sub(old, new, out, flags=re.I)
+    return out
+
 def clean_prompt_for_bundle(prompts_md: str, post_slug: str, bundle_name: str) -> str:
     clean_path = INPUT_CLEAN_PROMPTS_DIR / post_slug / "00_PROMPT_TO_PASTE.md"
     if clean_path.exists():
-        return read_text(clean_path.as_posix())
+        final_prompt = read_text(clean_path.as_posix())
+        if post_slug == "tonight-in-the-w" or "preview" in (post_slug + " " + bundle_name + " " + final_prompt).lower():
+            final_prompt = sanitize_preview_prompt_text(final_prompt)
+        return final_prompt
     raw = prompt_for_bundle(prompts_md, bundle_name)
     sanitized = sanitize_prompt_text(raw)
-    return sanitized or raw
+    final_prompt = sanitized or raw
+    if post_slug == "tonight-in-the-w" or "preview" in (post_slug + " " + bundle_name + " " + final_prompt).lower():
+        final_prompt = sanitize_preview_prompt_text(final_prompt)
+    return final_prompt
 
 
 def url_ext(url: str, content_type: str = "") -> str:

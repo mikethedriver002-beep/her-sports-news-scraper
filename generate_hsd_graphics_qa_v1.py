@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-graphics-qa-scorer-v1.9-bebe-ops-v2.3"
+VERSION = "hsd-graphics-qa-scorer-v1.10-bebe-ops-v2.4"
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_BANNED = "graphics_banned_language.csv"
@@ -114,6 +114,48 @@ def has_review_or_major(issues: List[Dict[str, str]]) -> bool:
     return any(i.get("severity") in {"review", "major"} for i in issues)
 
 
+def preview_prompt_has_display_result_language(prompt_text: str, preview_status: str) -> Tuple[bool, str]:
+    """Detect true preview-result language without flagging guardrails.
+
+    The preview quality gate already validates slate copy. If that gate passed,
+    graphics QA should not hard-fail because the prompt contains safety phrases
+    like "No final scores" or section headings like "Final reminder".
+    When the gate is unavailable, inspect only likely display-copy lines.
+    """
+    if clean(preview_status).upper() == "PASS":
+        return False, "preview_gate_passed"
+    text = prompt_text.replace("\r\n", "\n").replace("\r", "\n")
+    # Prefer the display-copy section, because that is what may render.
+    m = re.search(r"##\s*Display-safe slide copy(.*?)(?:\n##\s+|\Z)", text, flags=re.I | re.S)
+    scan = m.group(1) if m else text
+    # Remove guardrail/control language that tells the model what NOT to do.
+    cleaned_lines: List[str] = []
+    for line in scan.split("\n"):
+        low = clean(line).lower()
+        if not low:
+            continue
+        if low.startswith(("no final", "no score", "no game score", "do not", "never ", "avoid ")):
+            continue
+        if low in {"## final reminder", "final reminder", "reminder"}:
+            continue
+        cleaned_lines.append(line)
+    low = (" " + clean(" ".join(cleaned_lines)).lower() + " ")
+    for term in ["verified final", " winner ", " loser "]:
+        if term in low:
+            return True, term.strip()
+    # Flag actual score/result phrasing, not matchup wording.
+    pats = [
+        re.compile(r"(?<!\d{4}-)\b\d{2,3}\s*[-–—]\s*\d{2,3}\b(?!-\d{2})"),
+        re.compile(r"\bwon\b|\blost\b|\bbeats?\b|\bdefeats?\b", flags=re.I),
+        re.compile(r"\bfinal score\b|\bfinal:|\bpostgame\b", flags=re.I),
+    ]
+    for pat in pats:
+        hit = pat.search(low)
+        if hit:
+            return True, hit.group(0)
+    return False, ""
+
+
 def main() -> None:
     Path("graphics_qa_dashboard").mkdir(exist_ok=True)
     player_reqs = read_csv_any("player_image_requirements.csv")
@@ -203,9 +245,11 @@ def main() -> None:
             if prompt_hits:
                 issue(issues, "PROMPT_NOT_SANITIZED", "critical", ", ".join(prompt_hits))
                 score -= 35
-            if is_preview and any(x in clean(prompt_text).lower() for x in [" final ", " winner ", " loser ", "verified final"]):
-                issue(issues, "PREVIEW_PROMPT_HAS_RESULT_LANGUAGE", "critical", "Preview prompt appears to include result language.")
-                score -= 35
+            if is_preview:
+                has_bad_preview_language, bad_hit = preview_prompt_has_display_result_language(prompt_text, preview_status)
+                if has_bad_preview_language:
+                    issue(issues, "PREVIEW_PROMPT_HAS_RESULT_LANGUAGE", "critical", f"Preview display copy appears to include result language: {bad_hit}")
+                    score -= 35
         else:
             issue(issues, "UPLOAD_PROMPT_MISSING", "major", str(prompt_pack_path))
             score -= 10
@@ -277,7 +321,7 @@ def main() -> None:
         })
 
     write_csv("graphics_qa_results.csv", rows, FIELDS)
-    report = ["# HSD Graphics QA Scorer v1.9 BeBe Ops v2.3 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
+    report = ["# HSD Graphics QA Scorer v1.10 BeBe Ops v2.4 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:
@@ -306,10 +350,10 @@ def main() -> None:
         },
     }, indent=2), encoding="utf-8")
     Path("graphics_qa_dashboard/index.html").write_text(
-        f"<html><body><h1>Graphics QA v1.9</h1><p>Bundles scored: {len(rows)}</p></body></html>",
+        f"<html><body><h1>Graphics QA v1.10</h1><p>Bundles scored: {len(rows)}</p></body></html>",
         encoding="utf-8",
     )
-    print("Created HSD Graphics QA v1.9 BeBe outputs")
+    print("Created HSD Graphics QA v1.10 BeBe outputs")
 
 
 if __name__ == "__main__":

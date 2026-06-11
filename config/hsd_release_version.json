@@ -1,9 +1,9 @@
 {
-  "release_version": "v3.2.4-bebe-ops-v2.3",
-  "display_name": "Her Sports Daily Production Controller v3.2.4 BeBe Ops v2.3",
-  "artifact_name_prefix": "hsd-production-control-v3-2-4-bebe-ops-v2-3",
-  "workflow_run_name": "HSD BeBe Ops v2.3",
+  "release_version": "v3.2.5-bebe-ops-v2.4",
+  "display_name": "Her Sports Daily Production Controller v3.2.5 BeBe Ops v2.4",
+  "artifact_name_prefix": "hsd-production-control-v3-2-5-bebe-ops-v2-4",
+  "workflow_run_name": "HSD BeBe Ops v2.4",
   "operator_codename": "BeBe",
-  "created_utc": "2026-06-11T16:10:00Z",
-  "notes": "Canonical version file for GitHub-visible BeBe Ops naming."
+  "created_utc": "2026-06-11T16:45:00Z",
+  "notes": "Canonical version file for GitHub-visible BeBe Ops naming. v2.4 fixes preview graphics QA false positives and keeps review-ready handoff allowed."
 }

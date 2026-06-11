@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-operator-status-v3.2.4-bebe-ops-v2.3"
+VERSION = "hsd-operator-status-v3.2.5-bebe-ops-v2.4"
 FIELDS = ["run_id", "bundle_id", "bundle_name", "readiness", "publish_eligible", "reason_code", "reason_detail", "manual_action"]
 
 

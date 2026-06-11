@@ -15,7 +15,7 @@ try:
 except Exception:
     ZoneInfo = None
 
-VERSION = "hsd-tonight-preview-bridge-v3.2.4-bebe-ops-v2.3"
+VERSION = "hsd-tonight-preview-bridge-v3.2.5-bebe-ops-v2.4"
 
 LOCAL_TZ = os.environ.get("HSD_LOCAL_TIMEZONE", "America/New_York")
 INCLUDE_NEXT_DAY = os.environ.get("HSD_PREVIEW_ALLOW_NEXT_DAY", "0").strip().lower() in {"1", "true", "yes"}
@@ -278,7 +278,7 @@ def main() -> None:
         has_preview = any(clean(r.get("bundle_name") or r.get("content_family")).lower().startswith("tonight in the w") for r in existing)
         if has_preview:
             Path("studio_preview_build_v2_report.md").write_text(
-                f"# HSD Tonight Preview Bridge v3.2.4 BeBe Ops v2.3\n\nExisting preview bundle already present for {tgt}. No rebuild performed.\n",
+                f"# HSD Tonight Preview Bridge v3.2.5 BeBe Ops v2.4\n\nExisting preview bundle already present for {tgt}. No rebuild performed.\n",
                 encoding="utf-8",
             )
             print("Existing Tonight in the W preview bundle detected. Skipping rebuild.")
@@ -293,7 +293,7 @@ def main() -> None:
     schedule_lines = [f"{matchup(r)} - {time_label(r)}" for r in schedule]
 
     report = [
-        "# HSD Tonight Preview Bridge v3.2.4 BeBe Ops v2.3",
+        "# HSD Tonight Preview Bridge v3.2.5 BeBe Ops v2.4",
         "",
         f"Target local date: {tgt}",
         f"Source same-day WNBA games found: {len(same_day_source)}",
@@ -358,12 +358,12 @@ def main() -> None:
         "This must feel like premium women’s sports media, not a flat schedule board. Use bold editorial hierarchy, strong contrast, clean spacing, human energy, and modern social-first composition. Make the cover feel like an event, not a scoreboard. "
         "Use approved player/person images for featured matchups only when attached and exactly mapped to that player/team. If no safe player image exists, stay team-forward with logos/text badges and strong type. "
         f"Suggested player focus: {focus_text}. "
-        "No final scores. No invented stats. No injuries, records, rankings, or quotes unless explicitly included. "
+        "No game scores or postgame outcomes. No invented stats. No injuries, records, rankings, or quotes unless explicitly included. "
         "Slide 1: premium cover with the full target-date slate and a clear “Tonight in the W” editorial hook. "
         "Slide 2: featured matchup spotlight with player-led visual energy only if approved images exist; otherwise use team-forward matchup drama. "
         "Slide 3: remaining matchups or balanced slate board with strong editorial hierarchy and no clutter. "
         "Slide 4: CTA asking which matchup people are watching. "
-        "Do not render workflow labels, QA labels, result labels, or internal production language. "
+        "Do not render workflow labels, QA labels, postgame labels, or internal production language. "
         "One HSD watermark only, top-left safe zone. "
         "Games: " + " | ".join(schedule_lines)
     )
@@ -383,7 +383,7 @@ def main() -> None:
         "source_headlines": source_headlines,
         "caption_seed": caption_seed,
         "bundle_prompt": prompt,
-        "accuracy_lock": f"Use only the {tgt} WNBA slate. Represent all {len(schedule)} games. Do not invent scores, injuries, stats, or extra games. Do not mix dates.",
+        "accuracy_lock": f"Use only the {tgt} WNBA slate. Represent all {len(schedule)} games. Do not invent game scores, injuries, stats, or extra games. Do not mix dates.",
         "watermark_rule": "Use one compact HSD watermark/logo bug in the top-left safe zone.",
         "source_packet_ids_json": json.dumps([clean(r.get("event_uid") or matchup(r)) for r in schedule]),
         "event_date": tgt,

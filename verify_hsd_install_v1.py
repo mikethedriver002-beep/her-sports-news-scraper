@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.4-bebe-ops-v2.3"
-EXPECTED_PIPELINE_VERSION = "v3.2.4-bebe-ops-v2.3"
+VERSION = "hsd-install-verifier-v3.2.5-bebe-ops-v2.4"
+EXPECTED_PIPELINE_VERSION = "v3.2.5-bebe-ops-v2.4"
 MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
@@ -45,7 +45,7 @@ REQUIRED_FILES = [
 OPTIONAL_TEMPLATE_FILES = [
     "operator/inbox/story_inbox_template_v2.csv",
     "config/hsd_release_version.json",
-    ".github/workflows/hsd-production-controller-v3-2-4-bebe-v2-3.yml",
+    ".github/workflows/hsd-production-controller-v3-2-5-bebe-v2-4.yml",
 ]
 
 MANUAL_ONLY_WORKFLOW_MARKERS = ["workflow_dispatch"]
@@ -173,7 +173,7 @@ def inspect_workflow(path: Path, issues: List[str], warnings: List[str], hashes:
         issues.append(f"{path}: does not run BeBe daily ops plan")
     if "STRICT FRESHNESS GATE" not in txt:
         warnings.append(f"{path}: GitHub UI still has old strict_freshness label. Safe to run, but copy the hidden .github workflow to fix the display.")
-    if EXPECTED_PIPELINE_VERSION not in txt and "v3.2.4" not in txt:
+    if EXPECTED_PIPELINE_VERSION not in txt:
         warnings.append(f"{path}: visible workflow name/artifact name does not show {EXPECTED_PIPELINE_VERSION}; copy the hidden .github workflow to fix GitHub display.")
     if "${{ github.run_number }}" not in txt:
         warnings.append(f"{path}: artifact/run name does not include github.run_number; GitHub artifact names may remain confusing")
@@ -209,7 +209,7 @@ def main() -> None:
             warnings.append(f"pipeline_version mismatch: {pipeline_version!r}; expected {EXPECTED_PIPELINE_VERSION!r}. This no longer blocks the run; update config/pipeline_version.json for cleaner GitHub/operator display.")
 
     inspect_workflow(Path(".github/workflows/hsd-pipeline-control-v1.yml"), issues, warnings, hashes)
-    inspect_workflow(Path(".github/workflows/hsd-production-controller-v3-2-4-bebe-v2-3.yml"), issues, warnings, hashes)
+    inspect_workflow(Path(".github/workflows/hsd-production-controller-v3-2-5-bebe-v2-4.yml"), issues, warnings, hashes)
 
     review_gen = Path("generate_hsd_pipeline_review_lite_v1.py")
     if review_gen.exists():
@@ -252,7 +252,7 @@ def main() -> None:
     if warnings:
         lines += ["## Warnings", "", *[f"- {x}" for x in warnings], ""]
     if not issues:
-        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.3.")
+        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.4.")
     Path("install_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps({"issues": len(issues), "warnings": len(warnings), "version_status": version_status, "preflight_cleanup": cleanup}, indent=2))
