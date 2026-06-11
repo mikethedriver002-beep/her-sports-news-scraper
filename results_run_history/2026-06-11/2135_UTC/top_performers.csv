@@ -1,0 +1,11 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856978,WNBA,Connecticut Sun at Toronto Tempo,Final,Toronto Tempo,Connecticut Sun 102 - Toronto Tempo 106,1,Brittney Sykes,Toronto Tempo,"PTS 38, REB 4, AST 1, STL 2, BLK 1",WNBA
+401856979,WNBA,Los Angeles Sparks at Seattle Storm,Final,Los Angeles Sparks,Los Angeles Sparks 88 - Seattle Storm 83,1,Kelsey Plum,Los Angeles Sparks,"PTS 19, REB 1, AST 11, STL 4, FG 6-17",WNBA
+401856978,WNBA,Connecticut Sun at Toronto Tempo,Final,Toronto Tempo,Connecticut Sun 102 - Toronto Tempo 106,2,Laura Juskaite,Toronto Tempo,"PTS 19, REB 6, AST 2, STL 4, BLK 1",WNBA
+401856979,WNBA,Los Angeles Sparks at Seattle Storm,Final,Los Angeles Sparks,Los Angeles Sparks 88 - Seattle Storm 83,2,Nneka Ogwumike,Los Angeles Sparks,"PTS 24, REB 9, AST 1, STL 1, FG 9-18",WNBA
+401856978,WNBA,Connecticut Sun at Toronto Tempo,Final,Toronto Tempo,Connecticut Sun 102 - Toronto Tempo 106,3,Leila Lacan,Connecticut Sun,"PTS 24, REB 1, AST 7, STL 1, BLK 1",WNBA
+401856979,WNBA,Los Angeles Sparks at Seattle Storm,Final,Los Angeles Sparks,Los Angeles Sparks 88 - Seattle Storm 83,3,Flau'jae Johnson,Seattle Storm,"PTS 14, REB 12, AST 6, FG 4-11, 3PT 1-4",WNBA
+401856978,WNBA,Connecticut Sun at Toronto Tempo,Final,Toronto Tempo,Connecticut Sun 102 - Toronto Tempo 106,4,Saniya Rivers,Connecticut Sun,"PTS 12, REB 7, AST 7, STL 1, BLK 2",WNBA
+401856979,WNBA,Los Angeles Sparks at Seattle Storm,Final,Los Angeles Sparks,Los Angeles Sparks 88 - Seattle Storm 83,4,Cameron Brink,Los Angeles Sparks,"PTS 15, REB 6, AST 1, BLK 2, FG 5-7",WNBA
+401856978,WNBA,Connecticut Sun at Toronto Tempo,Final,Toronto Tempo,Connecticut Sun 102 - Toronto Tempo 106,5,Marina Mabrey,Toronto Tempo,"PTS 21, REB 1, AST 1, STL 3, FG 8-20",WNBA
+401856979,WNBA,Los Angeles Sparks at Seattle Storm,Final,Los Angeles Sparks,Los Angeles Sparks 88 - Seattle Storm 83,5,Awa Fam,Seattle Storm,"PTS 12, REB 6, AST 4, BLK 2, FG 4-6",WNBA
