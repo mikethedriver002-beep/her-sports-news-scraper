@@ -1,16 +1,16 @@
 # Her Sports Daily Graphics Copy Package
 
-Generated: 2026-06-11T12:29:58.233860+00:00
+Generated: 2026-06-11T22:31:27.355567+00:00
 
 ## Daily Content Command Center
 
-### Rank 1: Angel Reese Posts Historic Double-Double in Dream vs Sky Victory
+### Rank 1: New York Puts Unbeaten Commissioner’s Cup Record on the Line in Atlanta
 
-- Decision: Must Post
-- Content family: Breaking / Must Post Carousel
-- Recommended asset: 4-slide news carousel
+- Decision: Maybe Post
+- Content family: Context Carousel
+- Recommended asset: 3 to 4-slide milestone graphic
 - Hook: This is the kind of milestone that shows where the game is headed.
-- First slide / main text: Milestone watch: Angel Reese Posts Historic Double-Double in Dream vs Sky Victory
+- First slide / main text: Milestone watch: New York Puts Unbeaten Commissioner’s Cup Record on the Line in Atlanta
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
@@ -24,17 +24,27 @@ Generated: 2026-06-11T12:29:58.233860+00:00
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 3: A’ja Wilson, Dawn Staley Top 2026 TIME 100 Most Influential People in Sports List
+### Rank 3: Brittney Sykes Drops 38 as Toronto Outlasts Connecticut in OT Thriller
+
+- Decision: Maybe Post
+- Content family: Context Carousel
+- Recommended asset: 3 to 4-slide milestone graphic
+- Hook: This is the kind of milestone that shows where the game is headed.
+- First slide / main text: Milestone watch: Brittney Sykes Drops 38 as Toronto Outlasts Connecticut in OT Thriller
+- Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
+- Visual brief: Use a milestone carousel with the record, context, and why it matters.
+
+### Rank 4: PWHL Expansion: Rumour Mill Continues To Swirl As PWHL Talent-Pool Continues To Be Shuffled
 
 - Decision: Maybe Post
 - Content family: Context Carousel
 - Recommended asset: single feed card
 - Hook: Another market is betting big on women's sports.
-- First slide / main text: Expansion watch: A’ja Wilson, Dawn Staley Top 2026 TIME 100 Most Influential People in Sports List
+- First slide / main text: Expansion watch: PWHL Expansion: Rumour Mill Continues To Swirl As PWHL Talent-Pool Continues To Be Shuffled
 - Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
 - Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
 
-### Rank 4: Gotham FC announces first-ever ‘dedicated’ training facility
+### Rank 5: Gotham FC announces first-ever ‘dedicated’ training facility
 
 - Decision: Maybe Post
 - Content family: Context Carousel
@@ -44,47 +54,27 @@ Generated: 2026-06-11T12:29:58.233860+00:00
 - Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a milestone carousel with the record, context, and why it matters.
 
-### Rank 5: Laila Edwards 2026 Draft Profile
+### Rank 6: Berlin Open 411: Dates, draws, prize money and everything to know
 
-- Decision: Maybe Post
+- Decision: Save for Weekend
+- Content family: Context Carousel
+- Recommended asset: 4-slide data carousel
+- Hook: Women's sports are becoming impossible for the business world to ignore.
+- First slide / main text: The business of women's sports keeps growing: Berlin Open 411: Dates, draws, prize money and everything to know
+- Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
+- Visual brief: Use a clean data carousel with bold numbers and simple context.
+
+### Rank 7: Trinity Rodman: ‘Insane’ USWNT friendlies in Brazil are good prep for Women’s World Cup
+
+- Decision: Save for Weekend
 - Content family: Feed Post
 - Recommended asset: single feed card
-- Hook: Laila Edwards 2026 Draft Profile
-- First slide / main text: Laila Edwards 2026 Draft Profile
-- Carousel outline: Slide 1: headline | Slide 2: context | Slide 3: why it matters | Slide 4: audience question
-- Visual brief: Use a simple PWHL / Women's Hockey news card with headline, context, and one engagement question.
+- Hook: Here is why this matchup is worth your time tonight.
+- First slide / main text: Tonight's watchlist: Trinity Rodman: ‘Insane’ USWNT friendlies in Brazil are good prep for Women’s World Cup
+- Carousel outline: Slide 1: matchup | Slide 2: player to watch | Slide 3: key matchup | Slide 4: prediction or question
+- Visual brief: Use a Tonight graphic with matchup, time/network if available, and one key player.
 
-### Rank 6: Grand Slams, Lights-Out Pitching Define AUSL Opening Day
-
-- Decision: Save for Weekend
-- Content family: Context Carousel
-- Recommended asset: single feed card
-- Hook: Another market is betting big on women's sports.
-- First slide / main text: Expansion watch: Grand Slams, Lights-Out Pitching Define AUSL Opening Day
-- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
-- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
-
-### Rank 7: Athletes Unlimited and TOGETHXR Debut “Everyone Watches Women’s Softball” Amid Historic Growth for the Game
-
-- Decision: Save for Weekend
-- Content family: Context Carousel
-- Recommended asset: 3 to 4-slide milestone graphic
-- Hook: This is the kind of milestone that shows where the game is headed.
-- First slide / main text: Milestone watch: Athletes Unlimited and TOGETHXR Debut “Everyone Watches Women’s Softball” Amid Historic Growth for the Game
-- Carousel outline: Slide 1: milestone | Slide 2: context | Slide 3: why it matters | Slide 4: what comes next
-- Visual brief: Use a milestone carousel with the record, context, and why it matters.
-
-### Rank 8: Iowa women's basketball reoffers 2028 4-star as recruitment reopens
-
-- Decision: Save for Weekend
-- Content family: Story + Feed Combo
-- Recommended asset: single graphic + Story follow-up
-- Hook: The next wave of talent is already changing the future.
-- First slide / main text: Roster watch: Iowa women's basketball reoffers 2028 4-star as recruitment reopens
-- Carousel outline: Slide 1: roster/recruiting news | Slide 2: who is involved | Slide 3: why it matters | Slide 4: what comes next
-- Visual brief: Use a roster/recruiting graphic with the player, school/team, and why it matters.
-
-### Rank 9: Zaria Tears Through Tatum Paxley, Wins WWE NXT Women's NA Title
+### Rank 8: Zaria Tears Through Tatum Paxley, Wins WWE NXT Women's NA Title
 
 - Decision: Save for Weekend
 - Content family: Feed Post
@@ -94,28 +84,38 @@ Generated: 2026-06-11T12:29:58.233860+00:00
 - Carousel outline: Slide 1: result | Slide 2: top performer | Slide 3: turning point | Slide 4: what is next
 - Visual brief: Use a quick recap carousel with final result, top performer, and next game.
 
-### Rank 10: England women's player ratings vs Ukraine: Lauren James dazzles and Georgia Stanway scores again but Lionesses set for Women's World Cup qualifying play-offs
+### Rank 9: After Phase 2 losses, who will the Montréal Victoire protect in Phase 3 of expansion?
+
+- Decision: Save for Weekend
+- Content family: Context Carousel
+- Recommended asset: single feed card
+- Hook: Another market is betting big on women's sports.
+- First slide / main text: Expansion watch: After Phase 2 losses, who will the Montréal Victoire protect in Phase 3 of expansion?
+- Carousel outline: Slide 1: expansion headline | Slide 2: market/team details | Slide 3: why demand is rising | Slide 4: fan question
+- Visual brief: Use a map, team/logo style graphic, or market comparison carousel.
+
+### Rank 10: Audience Analysis: McAfee special not a viewership hit; WCWS finale sets record
 
 - Decision: Save for Weekend
 - Content family: Context Carousel
 - Recommended asset: 4-slide data carousel
 - Hook: Women's sports are becoming impossible for the business world to ignore.
-- First slide / main text: The business of women's sports keeps growing: England women's player ratings vs Ukraine: Lauren James dazzles and Georgia Stanway scores again but Lionesses set for Women's World Cup qualifying play-offs
+- First slide / main text: The business of women's sports keeps growing: Audience Analysis: McAfee special not a viewership hit; WCWS finale sets record
 - Carousel outline: Slide 1: headline stat | Slide 2: what changed | Slide 3: why it matters | Slide 4: what comes next
 - Visual brief: Use a clean data carousel with bold numbers and simple context.
 
 ## Tonight in the W
 
-### Card 1: Tonight in the W Watch: Angel Reese Posts Historic Double-Double in Dream vs Sky Victory
+### Card 1: Tonight in the W Watch: New York Puts Unbeaten Commissioner’s Cup Record on the Line in Atlanta
 
 - Card type: Stat Watch
 - Subhead: This is the kind of milestone that shows where the game is headed.
 - Key stat or angle: Records and milestones are proof points for the rise of women's sports.
 - CTA: What are you watching in the W tonight?
 
-### Card 2: Tonight in the W Watch: A’ja Wilson, Dawn Staley Top 2026 TIME 100 Most Influential People in Sports List
+### Card 2: Tonight in the W Watch: Brittney Sykes Drops 38 as Toronto Outlasts Connecticut in OT Thriller
 
-- Card type: League Watch
-- Subhead: Another market is betting big on women's sports.
-- Key stat or angle: Another sign that women's sports demand is outgrowing the old model.
+- Card type: Stat Watch
+- Subhead: This is the kind of milestone that shows where the game is headed.
+- Key stat or angle: Records and milestones are proof points for the rise of women's sports.
 - CTA: What are you watching in the W tonight?
