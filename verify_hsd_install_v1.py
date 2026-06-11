@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.5-bebe-ops-v2.4"
-EXPECTED_PIPELINE_VERSION = "v3.2.5-bebe-ops-v2.4"
+VERSION = "hsd-install-verifier-v3.2.6-bebe-ops-v2.5"
+EXPECTED_PIPELINE_VERSION = "v3.2.6-bebe-ops-v2.5"
 MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
@@ -45,7 +45,7 @@ REQUIRED_FILES = [
 OPTIONAL_TEMPLATE_FILES = [
     "operator/inbox/story_inbox_template_v2.csv",
     "config/hsd_release_version.json",
-    ".github/workflows/hsd-production-controller-v3-2-5-bebe-v2-4.yml",
+    ".github/workflows/hsd-production-controller-v3-2-6-bebe-v2-5.yml",
 ]
 
 MANUAL_ONLY_WORKFLOW_MARKERS = ["workflow_dispatch"]
@@ -209,7 +209,7 @@ def main() -> None:
             warnings.append(f"pipeline_version mismatch: {pipeline_version!r}; expected {EXPECTED_PIPELINE_VERSION!r}. This no longer blocks the run; update config/pipeline_version.json for cleaner GitHub/operator display.")
 
     inspect_workflow(Path(".github/workflows/hsd-pipeline-control-v1.yml"), issues, warnings, hashes)
-    inspect_workflow(Path(".github/workflows/hsd-production-controller-v3-2-5-bebe-v2-4.yml"), issues, warnings, hashes)
+    inspect_workflow(Path(".github/workflows/hsd-production-controller-v3-2-6-bebe-v2-5.yml"), issues, warnings, hashes)
 
     review_gen = Path("generate_hsd_pipeline_review_lite_v1.py")
     if review_gen.exists():

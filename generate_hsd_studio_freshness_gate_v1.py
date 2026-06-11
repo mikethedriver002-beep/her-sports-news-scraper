@@ -4,17 +4,24 @@ import csv
 import json
 import os
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-VERSION = "hsd-studio-freshness-gate-v1.8"
+try:
+    from zoneinfo import ZoneInfo
+except Exception:  # pragma: no cover
+    ZoneInfo = None  # type: ignore
+
+VERSION = "hsd-studio-freshness-gate-v2.5-same-day-preview"
 
 INPUT_RENDER_MANIFEST = "studio_render_manifest_v2.json"
 INPUT_BUNDLE_PACKETS = "studio_bundle_packets.md"
 INPUT_BUNDLE_PROMPTS = "studio_bundle_prompts_v2.md"
 INPUT_QUEUE = "studio_bundle_queue.csv"
 INPUT_LAUNCH_BRIEF = "launch_graphics_chat_brief.md"
+INPUT_PREVIEW_SUMMARY = "preview_bundle_quality_summary.csv"
+INPUT_PREVIEW_BUILD = "studio_preview_build_v2.json"
 INPUT_RESULTS_MANIFESTS = [
     "results_sync_manifest.json",
     "latest_results_sync_run_summary.md",
@@ -37,10 +44,24 @@ FIELDS = [
 
 MAX_FRESH_HOURS = float(os.environ.get("HSD_MAX_RESULT_FRESH_HOURS", "18"))
 STRICT_MISSING_EVENT_DATE = os.environ.get("HSD_STRICT_FRESHNESS_GATE", "1").lower() not in {"0", "false", "no"}
+LOCAL_TZ_NAME = os.environ.get("HSD_LOCAL_TIMEZONE", "America/New_York")
+
+
+def local_tz():
+    if ZoneInfo:
+        try:
+            return ZoneInfo(LOCAL_TZ_NAME)
+        except Exception:
+            return ZoneInfo("America/New_York")
+    return timezone.utc
 
 
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def now_local_date() -> str:
+    return now_utc().astimezone(local_tz()).date().isoformat()
 
 
 def iso(dt: Optional[datetime]) -> str:
@@ -92,7 +113,6 @@ def parse_datetime(value: Any) -> Optional[datetime]:
         return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
     except Exception:
         pass
-    # Common dates in generated markdown/csv.
     patterns = [
         r"\b(20\d{2})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?\b",
         r"\b(\d{1,2})/(\d{1,2})/(20\d{2})(?:[ T](\d{1,2}):(\d{2}))?\b",
@@ -138,12 +158,11 @@ def prompt_for_bundle(prompts_md: str, bundle_name: str) -> str:
 
 def bundle_text(bundle: Dict[str, Any], all_text: str, prompts_md: str) -> str:
     name = clean(bundle.get("bundle_name"))
-    slug = clean(bundle.get("post_slug"))
+    slug = clean(bundle.get("post_slug") or bundle.get("bundle_slug"))
     prompt = prompt_for_bundle(prompts_md, name)
     source = json.dumps(bundle, ensure_ascii=False)
     lines = [name, slug, prompt, source]
     if all_text:
-        # Keep only lines likely related to this bundle.
         key_terms = [name, slug.replace("-", " ")]
         for line in all_text.splitlines():
             low = line.lower()
@@ -183,7 +202,6 @@ def infer_event_date(bundle: Dict[str, Any], related_text: str) -> Tuple[Optiona
             dt = parse_datetime(source.get(key))
             if dt:
                 return dt, key
-    # Look for an explicit Event date label first.
     m = re.search(r"(?:event|game|result|played|date)\s*(?:date|time|at)?\s*[:=]\s*([^\n|]+)", related_text, flags=re.I)
     if m:
         dt = parse_datetime(m.group(1))
@@ -191,7 +209,6 @@ def infer_event_date(bundle: Dict[str, Any], related_text: str) -> Tuple[Optiona
             return dt, "related_text_labeled_date"
     dates = find_dates_in_text(related_text)
     if dates:
-        # Prefer the oldest plausible event date inside the bundle text rather than the generated timestamp.
         dates.sort()
         return dates[0], "related_text_date"
     return None, ""
@@ -206,19 +223,87 @@ def carryover_info(text: str) -> Tuple[bool, str]:
     return False, ""
 
 
+def load_preview_summary() -> Dict[str, str]:
+    rows = read_csv(INPUT_PREVIEW_SUMMARY)
+    if rows:
+        return rows[0]
+    build = read_json(INPUT_PREVIEW_BUILD)
+    target = clean(build.get("target_local_date") or build.get("target_date_local") or build.get("event_date"))
+    if target:
+        return {"target_date_local": target[:10], "gate_status": "PASS" if build else ""}
+    return {}
+
+
+def is_preview_bundle(bundle: Dict[str, Any], related_text: str) -> bool:
+    blob = " ".join([
+        clean(bundle.get("post_slug") or bundle.get("bundle_slug")),
+        clean(bundle.get("bundle_name")),
+        clean(bundle.get("template_name")),
+        related_text[:2000],
+    ]).lower()
+    return any(x in blob for x in ["tonight in the w", "tonight-in-the-w", "preview", "upcoming", "schedule"])
+
+
+def same_target_date(event_dt: Optional[datetime], related_text: str, target_date: str) -> bool:
+    if not target_date:
+        return False
+    if event_dt:
+        dates = {event_dt.date().isoformat()}
+        try:
+            dates.add(event_dt.astimezone(local_tz()).date().isoformat())
+        except Exception:
+            pass
+        if target_date in dates:
+            return True
+    if target_date in related_text:
+        return True
+    return False
+
+
+def preview_gate_allows_same_day(bundle: Dict[str, Any], related_text: str, event_dt: Optional[datetime]) -> Tuple[bool, str]:
+    summary = load_preview_summary()
+    gate_status = clean(summary.get("gate_status")).upper()
+    target = clean(os.environ.get("HSD_TARGET_DATE_LOCAL")) or clean(summary.get("target_date_local")) or now_local_date()
+    target = target[:10]
+    if not is_preview_bundle(bundle, related_text):
+        return False, ""
+    if gate_status and gate_status != "PASS":
+        return False, f"preview gate status={gate_status}"
+    if same_target_date(event_dt, related_text, target):
+        return True, f"same-day preview allowed by preview gate for target_date_local={target}"
+    # If the preview gate passed and the build/summary counted same-day games, allow even when no event date was inferred.
+    same_day_count = clean(summary.get("source_same_day_count"))
+    included_count = clean(summary.get("included_count"))
+    if gate_status == "PASS" and (same_day_count not in {"", "0"} or included_count not in {"", "0"}):
+        return True, f"same-day preview allowed by preview gate summary for target_date_local={target}"
+    return False, ""
+
+
 def decision_for_bundle(bundle: Dict[str, Any], related_text: str, source_run_dt: Optional[datetime]) -> Dict[str, Any]:
     now = now_utc()
     event_dt, event_source = infer_event_date(bundle, related_text)
     is_carry, carry_reason = carryover_info(related_text)
+    preview_allow, preview_reason = preview_gate_allows_same_day(bundle, related_text, event_dt)
     rec_label = ""
     requires_relabel = "No"
-    reasons = []
+    reasons: List[str] = []
     status = "fresh"
     decision = "allow"
 
-    if event_dt:
+    if preview_allow:
+        age_hours = max(0.0, (now - event_dt).total_seconds() / 3600.0) if event_dt else ""
+        status = "allowed_same_day_preview"
+        decision = "allow"
+        reasons.append(preview_reason)
+        if event_dt:
+            reasons.append("date-only/same-day preview timestamps are treated as the schedule date, not stale completed results")
+    elif event_dt:
         age_hours = max(0.0, (now - event_dt).total_seconds() / 3600.0)
-        if age_hours > MAX_FRESH_HOURS:
+        if event_dt > now:
+            status = "fresh_upcoming_event"
+            decision = "allow"
+            reasons.append("event start is upcoming")
+        elif age_hours > MAX_FRESH_HOURS:
             if is_carry:
                 status = "allowed_carryover"
                 decision = "allow"
@@ -230,12 +315,12 @@ def decision_for_bundle(bundle: Dict[str, Any], related_text: str, source_run_dt
                 decision = "block"
                 rec_label = "Refresh with newer upstream packet"
                 reasons.append(f"event age {age_hours:.1f}h exceeds {MAX_FRESH_HOURS:.1f}h")
-        elif event_dt.date() < now.date():
+        elif event_dt.astimezone(local_tz()).date() < now.astimezone(local_tz()).date():
             status = "allowed_recent_yesterday" if is_carry else "review_yesterday_without_label"
             decision = "allow" if is_carry else "review"
             rec_label = "Last Night / Yesterday"
             requires_relabel = "Yes"
-            reasons.append("event date is before today's date")
+            reasons.append("event local date is before today's local date")
         else:
             reasons.append("event date is within freshness window")
     else:
@@ -253,7 +338,7 @@ def decision_for_bundle(bundle: Dict[str, Any], related_text: str, source_run_dt
 
     if source_run_dt:
         run_age = (now - source_run_dt).total_seconds() / 3600.0
-        if run_age > MAX_FRESH_HOURS and decision != "block":
+        if run_age > MAX_FRESH_HOURS and decision != "block" and status != "allowed_same_day_preview":
             status = "review_old_upstream_run"
             decision = "review"
             reasons.append(f"upstream run timestamp is {run_age:.1f}h old")
@@ -313,7 +398,7 @@ def main() -> None:
     write_csv(OUT_STALE, stale, FIELDS)
 
     report = [
-        "# HSD Studio Freshness Gate v1.8",
+        "# HSD Studio Freshness Gate v2.5",
         "",
         f"Generated: {iso(now_utc())}",
         "",
@@ -321,8 +406,9 @@ def main() -> None:
         f"- allowed: {sum(1 for r in rows if r.get('freshness_decision') == 'allow')}",
         f"- review: {sum(1 for r in rows if r.get('freshness_decision') == 'review')}",
         f"- blocked: {sum(1 for r in rows if r.get('freshness_decision') == 'block')}",
-        f"- max fresh hours: {MAX_FRESH_HOURS}",
+        f"- max fresh hours for result-style packets: {MAX_FRESH_HOURS}",
         f"- strict missing event date: {'Yes' if STRICT_MISSING_EVENT_DATE else 'No'}",
+        "- same-day preview override: enabled when preview quality gate passes",
         "",
     ]
     for r in rows:
@@ -348,7 +434,7 @@ def main() -> None:
         },
         "outputs": [OUT_GATE, OUT_STALE, OUT_REPORT, OUT_MANIFEST],
     }, indent=2), encoding="utf-8")
-    print("Created HSD Studio Freshness Gate outputs")
+    print("Created HSD Studio Freshness Gate v2.5 outputs")
     print(json.dumps(read_json(OUT_MANIFEST).get("counts", {}), indent=2))
 
 

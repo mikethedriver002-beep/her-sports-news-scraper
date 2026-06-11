@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.5-bebe-ops-v2.4",
+  "pipeline_version": "v3.2.6-bebe-ops-v2.5",
   "contract_version": "v2",
   "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
@@ -9,8 +9,8 @@
     "Instagram",
     "Threads"
   ],
-  "github_visible_version": "Her Sports Daily Production Controller v3.2.5 BeBe Ops v2.4",
-  "artifact_name_prefix": "hsd-production-control-v3-2-5-bebe-ops-v2-4",
+  "github_visible_version": "Her Sports Daily Production Controller v3.2.6 BeBe Ops v2.5",
+  "artifact_name_prefix": "hsd-production-control-v3-2-6-bebe-ops-v2-5",
   "release_date_local": "2026-06-11",
-  "notes": "BeBe Ops v2.4 graphics QA fix: preview prompt result-language false positives no longer block review-ready graphics handoff; GitHub-visible workflow/artifact naming is v3.2.5/v2.4 when the hidden workflow is copied."
+  "notes": "BeBe Ops v2.5 same-day preview freshness fix: preview/Tonight packs that pass the slate gate are not blocked by date-only midnight timestamps; graphics language pack no longer carries stale Dallas-LA result copy into Tonight preview packs."
 }
