@@ -1,0 +1,142 @@
+{
+  "version": "hsd-daily-cadence-bebe-v2",
+  "timezone": "America/New_York",
+  "platforms": [
+    "Instagram",
+    "Threads"
+  ],
+  "daily_baseline": [
+    {
+      "time_et": "08:15",
+      "platform": "Internal",
+      "post_type": "Research scan",
+      "purpose": "Find the day's 5 to 10 story candidates"
+    },
+    {
+      "time_et": "09:00",
+      "platform": "Threads",
+      "post_type": "Morning board",
+      "purpose": "What we're watching today"
+    },
+    {
+      "time_et": "10:30",
+      "platform": "IG Stories",
+      "post_type": "2 to 4 frames",
+      "purpose": "Poll, question, schedule, quick take"
+    },
+    {
+      "time_et": "12:00",
+      "platform": "IG Feed",
+      "post_type": "Main post 1",
+      "purpose": "Daily Debrief if 3 legit stories; otherwise best single story"
+    },
+    {
+      "time_et": "12:10",
+      "platform": "IG Comment",
+      "post_type": "First comment",
+      "purpose": "Debate hook immediately after posting"
+    },
+    {
+      "time_et": "14:30",
+      "platform": "Threads",
+      "post_type": "Take post",
+      "purpose": "One sharp opinion/question to spark replies"
+    },
+    {
+      "time_et": "16:45",
+      "platform": "IG Feed or Stories",
+      "post_type": "Main post 2",
+      "purpose": "Tonight in the W or Tonight in Women's Sports"
+    },
+    {
+      "time_et": "19:00-23:30",
+      "platform": "Threads",
+      "post_type": "Live reactions",
+      "purpose": "3 to 6 posts during games/events"
+    },
+    {
+      "time_et": "23:30",
+      "platform": "Threads or Stories",
+      "post_type": "Nightcap",
+      "purpose": "Story of the night or what mattered"
+    },
+    {
+      "time_et": "Next day 08:45",
+      "platform": "IG/Threads",
+      "post_type": "Recap candidate",
+      "purpose": "Last Night in the W or morning recap if strong"
+    }
+  ],
+  "daily_volume": {
+    "normal_day": {
+      "ig_feed": "1 to 2",
+      "ig_stories_frames": "4 to 8",
+      "threads": "4 to 7",
+      "reels": "0"
+    },
+    "big_sports_day": {
+      "ig_feed": "2 to 3 max",
+      "ig_stories_frames": "8 to 12",
+      "threads": "8 to 15",
+      "reels": "1 only if viral clip/quote/emotional moment exists"
+    },
+    "slow_day": {
+      "ig_feed": "1 strong post",
+      "ig_stories_frames": "3 to 5",
+      "threads": "3 to 5",
+      "reels": "0"
+    }
+  },
+  "fixed_templates": {
+    "morning_threads": "Today in women’s sports 👀\n\nWhat I’m watching:\n1. [Story/game]\n2. [Story/game]\n3. [Story/game]\n\nBiggest question: [debate question]",
+    "daily_rule": "Never force three IG feed posts just to look active. Threads can carry volume. IG should carry quality.",
+    "live_threads": [
+      "Pregame question",
+      "Halftime or mid-event take",
+      "Final result reaction",
+      "One debate reply",
+      "Follow-up stat/storyline only if verified"
+    ]
+  },
+  "weekly_rhythm": {
+    "Monday": {
+      "theme": "Reset day",
+      "ig": "Weekly women’s sports watchlist",
+      "threads": "3 things to watch this week",
+      "stories": "polls"
+    },
+    "Tuesday": {
+      "theme": "Growth story + WNBA",
+      "ig_noon": "Business/culture, milestone, or tennis",
+      "ig_evening": "Tonight in the W"
+    },
+    "Wednesday": {
+      "theme": "Daily Debrief day",
+      "ig_noon": "Daily Debrief",
+      "ig_evening": "Tonight in the W or top event preview"
+    },
+    "Thursday": {
+      "theme": "Preview day",
+      "ig_noon": "Weekend women’s soccer / tennis / golf setup",
+      "ig_evening": "WNBA slate"
+    },
+    "Friday": {
+      "theme": "Weekend launch",
+      "ig_noon": "Weekend in Women’s Sports",
+      "ig_evening": "Tonight in the W",
+      "threads": "heavy"
+    },
+    "Saturday": {
+      "theme": "Live sports day",
+      "ig": "1 strong post unless huge news",
+      "stories": "active",
+      "threads": "live desk"
+    },
+    "Sunday": {
+      "theme": "Recap + debate",
+      "ig": "What mattered most this weekend?",
+      "threads": "debate post",
+      "stories": "poll"
+    }
+  }
+}

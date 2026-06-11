@@ -1,0 +1,172 @@
+{
+  "version": "hsd-priority-sports-14d-bebe-v2",
+  "effective_start_et": "2026-06-11",
+  "effective_end_et": "2026-06-25",
+  "priority_order": [
+    "WNBA",
+    "WTA / women’s tennis",
+    "NWSL / women’s soccer",
+    "LPGA / women’s golf",
+    "Women’s volleyball / VNL",
+    "College softball evergreen",
+    "Women’s college basketball offseason only"
+  ],
+  "leagues": [
+    {
+      "rank": 1,
+      "name": "WNBA",
+      "priority": "must_cover_daily",
+      "posting_frequency": "daily",
+      "best_formats": [
+        "Tonight in the W",
+        "Last Night in the W",
+        "Daily Debrief",
+        "milestone post",
+        "Commissioner’s Cup stakes"
+      ],
+      "daily_rule": "At least one WNBA touch every day, even on non-WNBA-led days.",
+      "angle_bank": [
+        "Who needs this win more?",
+        "Commissioner’s Cup pressure",
+        "Rookie watch",
+        "Star watch",
+        "Statement win",
+        "Upset watch",
+        "Injury impact only if verified"
+      ]
+    },
+    {
+      "rank": 2,
+      "name": "WTA / women’s tennis",
+      "priority": "must_cover_when_story_strong",
+      "posting_frequency": "4 to 6 times per week if strong",
+      "best_formats": [
+        "big-name watch only if verified",
+        "grass-court watch",
+        "Wimbledon lead-in",
+        "upset post",
+        "American tennis watch"
+      ],
+      "daily_rule": "IG feed only when there is a big name, comeback, upset, or clear Wimbledon implication.",
+      "angle_bank": [
+        "Serena comeback/appearance watch only if officially verified",
+        "Wimbledon loading",
+        "American women on grass",
+        "Upset watch",
+        "Teen/rising star watch",
+        "Comeback stories",
+        "Grass-court chaos"
+      ]
+    },
+    {
+      "rank": 3,
+      "name": "NWSL / women’s soccer",
+      "priority": "high",
+      "posting_frequency": "3 to 5 times per week",
+      "best_formats": [
+        "Weekend preview",
+        "club growth post",
+        "rivalry/storyline post",
+        "business/culture post",
+        "USWNT follow-up"
+      ],
+      "daily_rule": "Second identity after WNBA; use soccer to make HSD feel bigger than basketball.",
+      "angle_bank": [
+        "NWSL weekend watch",
+        "Club building like a giant",
+        "USWNT aftermath",
+        "Attendance/culture growth",
+        "Transfer watch",
+        "Player spotlight",
+        "Who is actually the best team?"
+      ]
+    },
+    {
+      "rank": 4,
+      "name": "LPGA / women’s golf",
+      "priority": "medium_high",
+      "posting_frequency": "2 to 4 total posts",
+      "best_formats": [
+        "smart culture/business post",
+        "major lead-in",
+        "player spotlight",
+        "why this matters explainer"
+      ],
+      "daily_rule": "Do not overpost golf yet; use it to make HSD feel smart and broad.",
+      "angle_bank": [
+        "Women’s golf has a team event",
+        "LPGA stars to know",
+        "KPMG major loading",
+        "Why women’s golf deserves more attention",
+        "Nelly/Lydia/Lilia watch if relevant"
+      ]
+    },
+    {
+      "rank": 5,
+      "name": "Women’s volleyball / VNL",
+      "priority": "medium",
+      "posting_frequency": "1 to 2 posts per week",
+      "best_formats": [
+        "global women’s sports post",
+        "teams to know",
+        "USA volleyball watch",
+        "quick explainer"
+      ],
+      "daily_rule": "Post only when the context can be made simple for casual followers.",
+      "angle_bank": [
+        "Women’s volleyball is having a moment",
+        "USA volleyball watch",
+        "VNL teams to know",
+        "Global women’s sports board",
+        "Olympic stars are back"
+      ]
+    },
+    {
+      "rank": 6,
+      "name": "College softball evergreen",
+      "priority": "low",
+      "posting_frequency": "1 max",
+      "best_formats": [
+        "legacy recap",
+        "championship hangover",
+        "Texas dynasty angle"
+      ],
+      "daily_rule": "Use as evergreen only; main event has passed.",
+      "angle_bank": [
+        "Texas dynasty check",
+        "Teagan Kavan legacy post",
+        "Why college softball keeps growing"
+      ]
+    },
+    {
+      "rank": 7,
+      "name": "Women’s college basketball offseason",
+      "priority": "low_unless_news_breaks",
+      "posting_frequency": "only when warranted",
+      "best_formats": [
+        "recruiting",
+        "transfer",
+        "injury",
+        "coaching",
+        "schedule",
+        "viral athlete moment"
+      ],
+      "daily_rule": "Only use for major transfer, commitment, injury, coaching move, schedule announcement, or culture moment.",
+      "angle_bank": [
+        "Recruiting watch",
+        "Transfer watch",
+        "Coaching move",
+        "Schedule drop",
+        "Viral athlete moment"
+      ]
+    }
+  ],
+  "formula": [
+    "WNBA every day",
+    "Tennis when big names move",
+    "Women’s soccer every weekend and when business/growth hits",
+    "LPGA and volleyball as smart secondary pillars",
+    "Threads all day",
+    "IG feed only when hook is clean"
+  ]
+}

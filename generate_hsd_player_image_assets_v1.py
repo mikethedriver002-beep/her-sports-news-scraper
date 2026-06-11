@@ -33,7 +33,8 @@ try:
 except Exception:  # pragma: no cover
     DDGS = None
 
-VERSION = "hsd-player-image-assets-v1.6.3-preview-safe"
+VERSION = "hsd-player-image-assets-v1.7.0-preview-focus"
+INPUT_PREVIEW_FOCUS = os.environ.get("HSD_PREVIEW_PLAYER_FOCUS", "preview_player_focus.csv")
 
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_PLAYER_ASSETS = os.environ.get("HSD_PLAYER_ASSETS", "player_assets.csv")
@@ -174,6 +175,10 @@ def prompt_text() -> str:
     return "\n".join([read_text(INPUT_BUNDLE_PROMPTS), read_text(INPUT_BUNDLE_PACKETS), read_text(INPUT_LAUNCH_GRAPHICS_BRIEF)])
 
 
+def preview_focus_rows() -> List[Dict[str, str]]:
+    return read_csv(INPUT_PREVIEW_FOCUS)
+
+
 def bundle_prompt_section(bundle_name: str, prompts_md: str) -> str:
     if not prompts_md or not bundle_name:
         return ""
@@ -298,21 +303,24 @@ def required_players() -> List[Tuple[str, str, str, str, str, str]]:
         bundle_name = clean(row.get("bundle_name") or row.get("post_slug") or row.get("bundle_slug"))
         bundle_slug = clean(row.get("post_slug") or row.get("bundle_slug") or slugify(bundle_name))
         if any(x in bundle_name.lower() for x in ["preview", "schedule"]) and not ALLOW_PREVIEW_PLAYER_IMAGES:
-            # Preview/schedule bundles are team/logo driven. Do not source people unless explicitly enabled.
+            # Preview/schedule bundles are team/logo driven unless explicit preview player mode is enabled.
             continue
         section = bundle_prompt_section(bundle_name, prompts_md)
         blob = "\n".join([
             clean(row.get("bundle_name")), clean(row.get("source_headlines")), clean(row.get("caption_seed")),
             clean(row.get("accuracy_lock")), clean(row.get("bundle_prompt")), section,
         ])
-        # Schedule/preview bundles should not require player/person images unless true stat lines exist.
+        # Preview bundles may use explicit preview player focus rows even without stat lines.
         preview_context = " ".join([
             clean(row.get("bundle_name")), clean(row.get("bundle_type")), clean(row.get("content_family")),
             clean(row.get("asset_type")), clean(row.get("source_headlines")), clean(row.get("caption_seed")),
         ]).lower()
         has_real_stat_line = bool(re.search(r"\b\d+\s*(?:pts|reb|ast|stl|blk|goals?|assists?|saves?|kills|digs|aces)\b", blob.lower()))
-        if any(tok in preview_context for tok in ["preview", "schedule", "tonight in the w"]) and not has_real_stat_line:
+        preview_focus = [x for x in preview_focus_rows() if clean(x.get("bundle_slug")) == bundle_slug or clean(x.get("bundle_name")) == bundle_name]
+        if any(tok in preview_context for tok in ["preview", "schedule", "tonight in the w"]) and not has_real_stat_line and not preview_focus:
             continue
+        for pf in preview_focus:
+            add(bundle_slug, bundle_name, clean(pf.get("player_name")), clean(pf.get("team_name")), infer_sport_league(row, blob)[0], infer_sport_league(row, blob)[1])
         sport, league = infer_sport_league(row, blob)
         current_team = ""
         for raw in blob.splitlines():

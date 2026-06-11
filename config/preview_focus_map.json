@@ -1,0 +1,59 @@
+{
+  "WNBA": {
+    "Los Angeles Sparks": [
+      "Kelsey Plum",
+      "Cameron Brink"
+    ],
+    "Seattle Storm": [
+      "Skylar Diggins",
+      "Ezi Magbegor"
+    ],
+    "Dallas Wings": [
+      "Arike Ogunbowale",
+      "Paige Bueckers"
+    ],
+    "Indiana Fever": [
+      "Caitlin Clark",
+      "Kelsey Mitchell"
+    ],
+    "Chicago Sky": [
+      "Kamilla Cardoso",
+      "Rachel Banham"
+    ],
+    "Atlanta Dream": [
+      "Rhyne Howard",
+      "Allisha Gray"
+    ],
+    "Las Vegas Aces": [
+      "A'ja Wilson",
+      "Jackie Young"
+    ],
+    "New York Liberty": [
+      "Breanna Stewart",
+      "Sabrina Ionescu"
+    ],
+    "Phoenix Mercury": [
+      "Kahleah Copper",
+      "Alyssa Thomas"
+    ],
+    "Minnesota Lynx": [
+      "Napheesa Collier",
+      "Courtney Williams"
+    ],
+    "Washington Mystics": [
+      "Brittney Sykes",
+      "Sonia Citron"
+    ],
+    "Connecticut Sun": [
+      "Marina Mabrey",
+      "Tina Charles"
+    ],
+    "Golden State Valkyries": [
+      "Kayla Thornton",
+      "Janelle Salaün"
+    ],
+    "Toronto Tempo": [],
+    "Portland Fire": []
+  },
+  "notes": "BeBe Ops v2 uses this only as a suggested preview focus map. Expansion-team rows are intentionally empty until roster/player-image mappings are verified."
+}

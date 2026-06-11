@@ -1,47 +1,430 @@
 {
+  "registry_version": "hsd-source-registry-bebe-v2",
+  "updated_local_date": "2026-06-11",
+  "operating_policy": {
+    "green_use": "Can be used as a primary fact source when the relevant fact appears directly on the source or has been operator verified.",
+    "yellow_use": "Discovery or manual lead only; requires official/primary/wire confirmation before publish.",
+    "red_use": "Do not automate, scrape, bypass login, bypass paywall, or use as a sole publish source.",
+    "player_image_policy": "Aggressive public sourcing is allowed only from public URLs, official pages, Wikimedia/Wikidata/Commons, manually supplied files/URLs, or search APIs. No private/login/credentialed scraping. Player identity/team fit must still pass review."
+  },
+  "green_approved_decision": [
+    "Official league/team/event sites and official press releases",
+    "Official schedule/score pages for WNBA, WTA, NWSL, LPGA, Volleyball World/VNL, NCAA, US Soccer, FIFA, CONCACAF",
+    "AP and Reuters wires",
+    "Major scoreboard/stat providers for cross-checking: ESPN, CBS Sports, Sports Reference where available",
+    "Operator-verified manual submissions with locked facts and evidence URLs"
+  ],
   "sources": [
     {
       "source_id": "manual_story_inbox",
       "source_type": "manual",
       "enabled": true,
       "tier": "operator",
-      "path_csv": "operator/story_inbox.csv",
-      "path_jsonl": "operator/story_inbox.jsonl"
+      "trust_band": "green_when_operator_verified",
+      "sport_league": "all",
+      "path_csv": "operator/inbox/story_inbox.csv",
+      "path_jsonl": "operator/inbox/story_inbox.jsonl",
+      "allowed_use": [
+        "breaking_news",
+        "feature_intake",
+        "operator_verified_lead",
+        "story_override"
+      ],
+      "publish_policy": "green only when verification_status is verified_official, verified_multi_source, or operator_verified",
+      "automation_status": "active"
     },
     {
-      "source_id": "wnba_official_news_rss_placeholder",
-      "source_type": "rss",
-      "enabled": false,
+      "source_id": "wnba_official_schedule",
+      "source_type": "official_site",
+      "enabled": true,
       "tier": "official",
-      "urls": [],
-      "poll_interval_minutes": 15,
-      "notes": "Add official RSS/Atom feeds here when available."
+      "trust_band": "green",
+      "sport_league": "WNBA",
+      "urls": [
+        "https://www.wnba.com/schedule"
+      ],
+      "domains": [
+        "wnba.com"
+      ],
+      "allowed_use": [
+        "schedule",
+        "score",
+        "preview_fact_source",
+        "cross_check"
+      ],
+      "publish_policy": "primary_source_for_wnba_slate",
+      "automation_status": "cross_check_or_existing_results_pipeline"
+    },
+    {
+      "source_id": "wnba_official_news",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "WNBA",
+      "urls": [
+        "https://www.wnba.com/news"
+      ],
+      "domains": [
+        "wnba.com"
+      ],
+      "allowed_use": [
+        "official_news",
+        "press_release",
+        "transaction",
+        "injury_only_if_official"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "wnba_team_official_pages",
+      "source_type": "official_site_collection",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "WNBA",
+      "domains": [
+        "wnba.com"
+      ],
+      "allowed_use": [
+        "team_news",
+        "roster_cross_check",
+        "player_image_identity_check",
+        "press_release"
+      ],
+      "publish_policy": "green_official_when_team_page_confirms_fact",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "espn_wnba_scoreboard_cross_check",
+      "source_type": "scoreboard_site",
+      "enabled": true,
+      "tier": "primary_media",
+      "trust_band": "green_cross_check",
+      "sport_league": "WNBA",
+      "urls": [
+        "https://www.espn.com/wnba/scoreboard"
+      ],
+      "domains": [
+        "espn.com"
+      ],
+      "allowed_use": [
+        "score_cross_check",
+        "schedule_cross_check",
+        "game_status"
+      ],
+      "publish_policy": "use_as_cross_check; official league source wins on conflict",
+      "automation_status": "cross_check"
+    },
+    {
+      "source_id": "ap_womens_sports_wire",
+      "source_type": "wire",
+      "enabled": true,
+      "tier": "wire",
+      "trust_band": "green",
+      "sport_league": "all",
+      "urls": [
+        "https://apnews.com/hub/womens-sports"
+      ],
+      "domains": [
+        "apnews.com"
+      ],
+      "allowed_use": [
+        "wire_report",
+        "breaking_news_confirmation",
+        "quote_confirmation"
+      ],
+      "publish_policy": "green_wire",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "reuters_sports_wire",
+      "source_type": "wire",
+      "enabled": true,
+      "tier": "wire",
+      "trust_band": "green",
+      "sport_league": "all",
+      "urls": [
+        "https://www.reuters.com/sports/"
+      ],
+      "domains": [
+        "reuters.com"
+      ],
+      "allowed_use": [
+        "wire_report",
+        "breaking_news_confirmation",
+        "business_growth_confirmation"
+      ],
+      "publish_policy": "green_wire",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "wta_official_tournaments",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "WTA",
+      "urls": [
+        "https://www.wtatennis.com/tournaments"
+      ],
+      "domains": [
+        "wtatennis.com"
+      ],
+      "allowed_use": [
+        "schedule",
+        "draw",
+        "result",
+        "tournament_context"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "wta_official_news",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "WTA",
+      "urls": [
+        "https://www.wtatennis.com/news"
+      ],
+      "domains": [
+        "wtatennis.com"
+      ],
+      "allowed_use": [
+        "official_news",
+        "player_context",
+        "tournament_context"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "nwsl_official_schedule",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "NWSL",
+      "urls": [
+        "https://www.nwslsoccer.com/schedule"
+      ],
+      "domains": [
+        "nwslsoccer.com"
+      ],
+      "allowed_use": [
+        "schedule",
+        "score",
+        "club_news_cross_check"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "nwsl_official_news",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "NWSL",
+      "urls": [
+        "https://www.nwslsoccer.com/news"
+      ],
+      "domains": [
+        "nwslsoccer.com"
+      ],
+      "allowed_use": [
+        "official_news",
+        "club_news",
+        "business_growth"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "lpga_official_tournaments",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "LPGA",
+      "urls": [
+        "https://www.lpga.com/tournaments"
+      ],
+      "domains": [
+        "lpga.com"
+      ],
+      "allowed_use": [
+        "tournament_schedule",
+        "leaderboard_context",
+        "major_lead_in"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "volleyball_world_vnl",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "Volleyball Nations League",
+      "urls": [
+        "https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/"
+      ],
+      "domains": [
+        "volleyballworld.com"
+      ],
+      "allowed_use": [
+        "schedule",
+        "result",
+        "global_womens_sports_context"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "ncaa_softball_official",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "NCAA softball",
+      "urls": [
+        "https://www.ncaa.com/sports/softball/d1"
+      ],
+      "domains": [
+        "ncaa.com"
+      ],
+      "allowed_use": [
+        "evergreen_context",
+        "championship_recap",
+        "stats_cross_check"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "us_soccer_uswnt_official",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "USWNT",
+      "urls": [
+        "https://www.ussoccer.com/teams/uswnt"
+      ],
+      "domains": [
+        "ussoccer.com"
+      ],
+      "allowed_use": [
+        "national_team_news",
+        "roster",
+        "match_recap",
+        "attendance_if_confirmed"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "fifa_womens_official",
+      "source_type": "official_site",
+      "enabled": true,
+      "tier": "official",
+      "trust_band": "green",
+      "sport_league": "FIFA women",
+      "urls": [
+        "https://www.fifa.com/en/tournaments/womens"
+      ],
+      "domains": [
+        "fifa.com"
+      ],
+      "allowed_use": [
+        "international_schedule",
+        "tournament_context",
+        "official_global_context"
+      ],
+      "publish_policy": "green_official",
+      "automation_status": "manual_review_or_fetch_later"
+    },
+    {
+      "source_id": "team_social_manual_only",
+      "source_type": "social_manual_only",
+      "enabled": true,
+      "tier": "social_manual",
+      "trust_band": "yellow_to_green_if_official_account_and_operator_verified",
+      "sport_league": "all",
+      "domains": [
+        "instagram.com",
+        "threads.net",
+        "x.com",
+        "twitter.com",
+        "tiktok.com",
+        "youtube.com"
+      ],
+      "allowed_use": [
+        "lead",
+        "quote_embed_reference",
+        "official_account_confirmation_with_review"
+      ],
+      "publish_policy": "requires operator verification and preferably non-social source confirmation",
+      "automation_status": "manual_only"
     },
     {
       "source_id": "reddit_womens_sports_discovery",
       "source_type": "reddit_public_json",
       "enabled": false,
       "tier": "community",
-      "subreddits": ["wnba", "NWSL", "womenssports"],
+      "trust_band": "yellow",
+      "sport_league": "all",
+      "subreddits": [
+        "wnba",
+        "NWSL",
+        "womenssports"
+      ],
       "limit": 25,
-      "publish_policy": "discovery_only"
+      "allowed_use": [
+        "discovery_only",
+        "sentiment_signal"
+      ],
+      "publish_policy": "never publish without green confirmation",
+      "automation_status": "disabled_until_registry_audit_passes"
     },
     {
       "source_id": "mastodon_discovery_tags",
       "source_type": "mastodon_public",
       "enabled": false,
       "tier": "social",
-      "instances": ["mastodon.social"],
-      "tags": ["WNBA", "NWSL", "WomensSports"],
-      "publish_policy": "discovery_only"
+      "trust_band": "yellow",
+      "sport_league": "all",
+      "instances": [
+        "mastodon.social"
+      ],
+      "tags": [
+        "WNBA",
+        "NWSL",
+        "WomensSports"
+      ],
+      "allowed_use": [
+        "discovery_only"
+      ],
+      "publish_policy": "never publish without green confirmation",
+      "automation_status": "disabled"
     },
     {
-      "source_id": "x_manual_only",
-      "source_type": "x_manual_only",
-      "enabled": true,
-      "tier": "social_manual",
-      "publish_policy": "requires_non_x_confirmation",
-      "notes": "No automated X website scraping. Paste URLs into manual inbox with supporting source."
+      "source_id": "private_login_paywall_scraping",
+      "source_type": "prohibited",
+      "enabled": false,
+      "tier": "red",
+      "trust_band": "red",
+      "sport_league": "all",
+      "allowed_use": [],
+      "publish_policy": "do_not_use",
+      "automation_status": "blocked",
+      "notes": "No credentialed scraping, private groups, paywall bypassing, or automation against closed platforms."
     }
   ]
 }

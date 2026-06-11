@@ -1,8 +1,13 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.1",
+  "pipeline_version": "v3.2.1-bebe-ops-v2",
   "contract_version": "v2",
+  "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
   "default_review_artifact_size": "lite",
-  "notes": "v3.1 patches freshness-dedupe contracts, slate dedupe, soft validator, and text team badge upload fallback."
+  "platforms": [
+    "Instagram",
+    "Threads"
+  ],
+  "notes": "BeBe Ops v2 installs v3.2 preview hardening plus HSD desk cadence, source registry, platform plan, aggressive public player-image sourcing, dynamic preview QA, and an operator command center artifact."
 }

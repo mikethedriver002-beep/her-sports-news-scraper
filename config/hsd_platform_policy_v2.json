@@ -1,0 +1,27 @@
+{
+  "version": "hsd-platform-policy-bebe-v2",
+  "publishing_platforms": [
+    "Instagram",
+    "Threads"
+  ],
+  "publish_automation": "off",
+  "scheduler": "manual_native_instagram_threads_for_now",
+  "allowed_pipeline_publish_mode": "artifact_only",
+  "manual_approval_required": true,
+  "instagram": {
+    "role": "quality anchor",
+    "feed_rule": "1 to 2 strong posts normal day; third only on big sports day",
+    "stories_rule": "daily low-friction engagement",
+    "first_comment_rule": "debate hook at 12:10 or immediately after feed post"
+  },
+  "threads": {
+    "role": "live desk and volume engine",
+    "rule": "carry volume, debate, live reaction, quick takes"
+  },
+  "blocked_until_stable": [
+    "auto-posting",
+    "scheduler API",
+    "publish on green status",
+    "posting without rendered-slide QA"
+  ]
+}

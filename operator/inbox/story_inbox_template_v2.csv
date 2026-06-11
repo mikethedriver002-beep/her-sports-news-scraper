@@ -1,0 +1,2 @@
+story_id,input_type,source_url,title,summary,sport,league,story_kind,priority,verification_status,status,requires_second_source,evidence_urls_json,fact_lock_json,publish_not_after_utc
+example_delete_me,url,https://www.wnba.com/news/example,Example official story,Replace with a short operator note.,basketball,WNBA,breaking,P1,verified_official,queued,false,[],"[""Example fact lock""]",

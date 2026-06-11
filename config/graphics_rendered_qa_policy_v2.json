@@ -1,0 +1,38 @@
+{
+  "version": "hsd-rendered-graphics-qa-policy-bebe-v2",
+  "required_output": {
+    "slide_files": "separate files",
+    "width": 1080,
+    "height": 1350,
+    "watermark": "one HSD watermark/logo bug top-left safe zone"
+  },
+  "banned_rendered_terms": [
+    "Verified Final",
+    "Winner",
+    "Loser",
+    "BUNDLE LOCKED FACTS",
+    "source-safe context",
+    "graphics-safe context",
+    "Do not alter",
+    "Accuracy lock"
+  ],
+  "preview_rules": [
+    "No final scores",
+    "No yesterday/tomorrow games in Tonight posts",
+    "All target-date games represented",
+    "No invented injuries, records, rankings, stats, or quotes"
+  ],
+  "asset_rules": [
+    "Use uploaded assets only",
+    "Do not fetch logo URLs in graphics chat",
+    "Do not fetch player image URLs in graphics chat",
+    "Do not substitute players",
+    "Do not invent logos, jerseys, jersey numbers, or bodies",
+    "Use text team badge fallback as a plain label, not a logo"
+  ],
+  "qa_decisions": [
+    "post_ready",
+    "needs_edit",
+    "blocked"
+  ]
+}
