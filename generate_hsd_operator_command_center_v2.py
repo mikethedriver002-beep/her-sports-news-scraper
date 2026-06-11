@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-operator-command-center-bebe-v2"
+VERSION = "hsd-operator-command-center-bebe-v2.1"
 OUT_HTML = Path("operator_command_center.html")
 OUT_MD = Path("operator_command_center.md")
 OUT_JSON = Path("operator_command_center.json")
@@ -76,9 +76,11 @@ def read_json(path: str) -> Dict[str, Any]:
 def status_pill(label: str) -> str:
     low = label.lower()
     cls = "warn"
-    if any(x in low for x in ["pass", "ready", "post_ready", "yes", "0 fail"]):
+    if any(x in low for x in ["pass", "ready_for_graphics", "post_ready", "yes", "0 fail"]):
         cls = "good"
-    if any(x in low for x in ["fail", "blocked", "missing", "error"]):
+    if any(x in low for x in ["ready_with_review", "review_ready", "needs_manual_review", "pending", "not_checked"]):
+        cls = "warn"
+    if any(x in low for x in ["fail", "blocked", "missing", "error", "no-go"]):
         cls = "bad"
     return f'<span class="pill {cls}">{html.escape(label)}</span>'
 
@@ -96,10 +98,15 @@ def top_status() -> Dict[str, str]:
     preview = read_csv("preview_bundle_quality_summary.csv")
     render = read_json("rendered_slide_qa_manifest.json")
     packs = read_csv("graphics_upload_pack_status.csv")
+    operator = read_json("operator_status.json")
+    guard = read_json("publish_guard_report.json")
     return {
         "install": "PASS" if not install.get("issues") else "FAIL",
         "preview_gate": preview[0].get("gate_status", "NOT_RUN") if preview else "NOT_RUN",
         "graphics_pack": "; ".join(sorted({clean(r.get("upload_pack_status")) for r in packs if clean(r.get("upload_pack_status"))})) or "not_created",
+        "operator_overall": clean(operator.get("overall")) or "not_run",
+        "graphics_handoff_allowed": str(bool(guard.get("graphics_handoff_allowed"))),
+        "publish_allowed": str(bool(guard.get("publish_allowed"))),
         "rendered_slide_qa": (render.get("counts", {}) or {}).get("decision", "see_report") if render else "not_run",
         "day_type": clean(ops.get("day_type")) or "normal_day",
         "weekday": clean(ops.get("weekday")) or "",
@@ -123,6 +130,9 @@ def main() -> None:
         f"- Install: {status['install']}",
         f"- Preview gate: {status['preview_gate']}",
         f"- Graphics pack: {status['graphics_pack']}",
+        f"- Operator overall: {status['operator_overall']}",
+        f"- Graphics handoff allowed: {status['graphics_handoff_allowed']}",
+        f"- Publish allowed: {status['publish_allowed']}",
         f"- Rendered slide QA: {status['rendered_slide_qa']}",
         f"- Day type: {status['day_type']}",
         "",
@@ -177,6 +187,9 @@ def main() -> None:
       <div class="metric"><strong>Install</strong><span>{status_pill(status['install'])}</span></div>
       <div class="metric"><strong>Preview gate</strong><span>{status_pill(status['preview_gate'])}</span></div>
       <div class="metric"><strong>Graphics pack</strong><span>{status_pill(status['graphics_pack'])}</span></div>
+      <div class="metric"><strong>Operator overall</strong><span>{status_pill(status['operator_overall'])}</span></div>
+      <div class="metric"><strong>Graphics handoff</strong><span>{status_pill(status['graphics_handoff_allowed'])}</span></div>
+      <div class="metric"><strong>Publish allowed</strong><span>{status_pill(status['publish_allowed'])}</span></div>
       <div class="metric"><strong>Rendered slide QA</strong><span>{status_pill(status['rendered_slide_qa'])}</span></div>
       <div class="metric"><strong>Desk day</strong><span>{html.escape(status['weekday'] or 'today')} · {html.escape(status['day_type'])}</span></div>
     </section>

@@ -23,7 +23,7 @@ except Exception:
     cairosvg = None
 
 
-VERSION = "hsd-graphics-upload-pack-v3.2-premium-preview-support"
+VERSION = "hsd-graphics-upload-pack-v3.2.2-bebe-ops-v2.1"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -744,27 +744,54 @@ def main() -> None:
     direct = [
         "# HSD Graphics Chat Direct Handoff",
         "",
-        "Use the ZIP below for the graphics chat. Upload the ZIP contents if the chat cannot unzip.",
+        "Use the ZIP below for the graphics chat. The lite review artifact should also include the ZIP under `hsd_pipeline_lite_review/ready_upload_packs/`.",
+        "",
+        "Workflow: upload/open the ZIP, attach `00_PROMPT_TO_PASTE.md` plus the files in `assets_png_preferred/`, then paste the instructions below.",
         "",
     ]
     any_ready = False
     for srow in status_rows:
         if srow.get("upload_pack_status") in {"ready", "ready_with_review"}:
             any_ready = True
+            post_slug = clean(srow.get("post_slug"))
+            bundle_name = clean(srow.get("bundle_name")) or post_slug
+            prompt_path = OUT_DIR / post_slug / "00_PROMPT_TO_PASTE.md"
+            upload_inst_path = OUT_DIR / post_slug / "01_UPLOAD_INSTRUCTIONS.md"
+            prompt_text = read_text(prompt_path.as_posix()).strip()
+            upload_inst = read_text(upload_inst_path.as_posix()).strip()
             direct += [
-                f"## {srow.get('bundle_name')}",
+                f"## {bundle_name}",
                 "",
                 f"Recommended ZIP: `{srow.get('zip_path')}`",
+                f"Lite review copy: `hsd_pipeline_lite_review/ready_upload_packs/{Path(srow.get('zip_path', '')).name}`",
                 "",
                 f"Status: {srow.get('upload_pack_status').upper()}",
                 "",
-                "Instructions to paste into the graphics chat:",
+                "### Paste this after uploading the ZIP contents",
                 "",
                 "```text",
-                "Use the sanitized uploaded prompt and uploaded asset files only. Use uploaded logo files, text team badge fallback files, and uploaded player/person image files only if present for this specific bundle. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, jersey numbers, fake player images, or fake logos. If a text team badge fallback is included, treat it as a plain team label, not as a logo. If no approved player/person image is present for this bundle, stay text-forward. Output separate slide files.",
+                "Use the sanitized uploaded prompt and uploaded asset files only. Use uploaded logo files, text team badge fallback files, and uploaded player/person image files only if present for this specific bundle. Do not fetch logo URLs. Do not fetch player image URLs. Do not substitute logos or players. Do not invent player bodies, jerseys, jersey numbers, fake player images, or fake logos. If a text team badge fallback is included, treat it as a plain team label, not as a logo. If no approved player/person image is present for this bundle, stay text-forward. Output 4 separate 1080x1350 slide files.",
                 "```",
                 "",
             ]
+            if prompt_text:
+                direct += [
+                    "### Sanitized prompt included in the upload pack",
+                    "",
+                    "```text",
+                    prompt_text,
+                    "```",
+                    "",
+                ]
+            if upload_inst:
+                direct += [
+                    "### Upload checklist from the pack",
+                    "",
+                    "```text",
+                    upload_inst[:7000],
+                    "```",
+                    "",
+                ]
     if not any_ready:
         direct += [
             "No ready upload pack was created. Check graphics_upload_pack_status.csv.",

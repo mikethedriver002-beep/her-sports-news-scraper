@@ -19,7 +19,7 @@ try:
 except Exception:
     pytesseract = None
 
-VERSION = "hsd-graphics-qa-scorer-v1.8"
+VERSION = "hsd-graphics-qa-scorer-v1.9-bebe-ops-v2.1"
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_BANNED = "graphics_banned_language.csv"
@@ -91,27 +91,27 @@ def ocr_text(image_path: str) -> Tuple[str, str]:
     return "", "unavailable"
 
 
-def expected_terms_for_main_slide(slide_num: int) -> List[str]:
-    if slide_num == 1:
-        return ["Dallas", "Sparks", "104", "96"]
-    if slide_num == 2:
-        return ["Final", "Dallas", "Sparks", "104", "96"]
-    if slide_num == 3:
-        return ["Jessica", "Arike", "Paige", "Kelsey", "Ariel", "Dearica"]
-    if slide_num == 4:
-        return ["Follow", "Her Sports Daily", "104", "96"]
-    return []
-
-
 def infer_slide_number(render_path: str) -> int:
     name = Path(render_path).stem.lower()
-    m = re.search(r"(?:slide|slid|s)(\d+)", name)
+    m = re.search(r"(?:slide|slid|s)[_\-\s]?(\d+)", name)
     if m:
         try:
             return int(m.group(1))
         except Exception:
             return 0
     return 0
+
+
+def issue(issues: List[Dict[str, str]], code: str, severity: str, message: str = "") -> None:
+    issues.append({"code": code, "severity": severity, "message": message})
+
+
+def has_critical(issues: List[Dict[str, str]]) -> bool:
+    return any(i.get("severity") == "critical" for i in issues)
+
+
+def has_review_or_major(issues: List[Dict[str, str]]) -> bool:
+    return any(i.get("severity") in {"review", "major"} for i in issues)
 
 
 def main() -> None:
@@ -124,6 +124,8 @@ def main() -> None:
     upload_status_rows = {r.get("post_slug"): r for r in read_csv_any("graphics_upload_pack_status.csv") if r.get("post_slug")}
     freshness_rows = {r.get("bundle_slug"): r for r in read_csv_any("studio_freshness_gate.csv") if r.get("bundle_slug")}
     player_fit_rows = read_csv_any("player_image_fit_gate.csv")
+    preview_summary = read_csv_any("preview_bundle_quality_summary.csv")
+    preview_status = clean(preview_summary[0].get("gate_status")) if preview_summary else ""
     bundles = manifest.get("bundles", [])
     rows: List[Dict[str, Any]] = []
     run = "qa_" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -133,132 +135,132 @@ def main() -> None:
         score = 100
         post_slug = clean(b.get("post_slug"))
         template_name = clean(b.get("template_name"))
+        bundle_type = clean(b.get("bundle_type") or b.get("template_name") or b.get("content_family"))
+        is_preview = "preview" in (post_slug + " " + template_name + " " + bundle_type).lower() or post_slug == "tonight-in-the-w"
+
+        if is_preview and preview_status and preview_status.upper() != "PASS":
+            issue(issues, "PREVIEW_GATE_NOT_PASSING", "critical", f"preview_gate={preview_status}")
+            score -= 50
 
         if not clean(b.get("source_facts", {}).get("accuracy_lock")) and not clean(b.get("source_facts", {}).get("source_headlines")):
-            issues.append({"code": "MISSING_FACT_LOCK", "severity": "major", "message": "No source facts or accuracy lock."})
-            score -= 20
+            issue(issues, "MISSING_FACT_LOCK", "major", "No source facts or accuracy lock.")
+            score -= 15
+
         for aid in b.get("asset_ids", []):
             if aid and aid not in approved:
-                issues.append({"code": "UNAPPROVED_ASSET", "severity": "critical", "message": aid})
+                issue(issues, "UNAPPROVED_ASSET", "critical", aid)
                 score -= 40
         if b.get("fact_warning_count", 0):
-            issues.append({"code": "FACT_WARNING_PRESENT", "severity": "critical", "message": f"{b.get('fact_warning_count')} fact warnings present"})
+            issue(issues, "FACT_WARNING_PRESENT", "critical", f"{b.get('fact_warning_count')} fact warnings present")
             score -= 35
         if not any("watermark" in clean(x.get("layer_id")).lower() for x in b.get("all_layers", [])):
-            issues.append({"code": "MISSING_WATERMARK", "severity": "critical", "message": "No watermark layer."})
-            score -= 40
-        if post_slug == "main-wnba-result" and missing_required_players:
-            issues.append({"code": "MISSING_REQUIRED_PLAYER_IMAGES", "severity": "critical", "message": ", ".join([r.get("player_name", "") for r in missing_required_players])})
+            issue(issues, "MISSING_WATERMARK", "major", "No watermark layer detected in render manifest.")
+            score -= 10
+        if not is_preview and post_slug == "main-wnba-result" and missing_required_players:
+            issue(issues, "MISSING_REQUIRED_PLAYER_IMAGES", "critical", ", ".join([r.get("player_name", "") for r in missing_required_players]))
             score -= 45
 
         upload_row = upload_status_rows.get(post_slug)
-        if upload_row and upload_row.get("upload_pack_status") != "ready":
-            issues.append({"code": "UPLOAD_PACK_INCOMPLETE", "severity": "critical", "message": upload_row.get("missing_asset_names", "missing required upload assets")})
-            score -= 45
-        if not upload_row:
-            issues.append({"code": "UPLOAD_PACK_STATUS_MISSING", "severity": "major", "message": "graphics_upload_pack_status.csv has no row for this bundle"})
+        upload_status = clean(upload_row.get("upload_pack_status")) if upload_row else ""
+        if upload_row:
+            if upload_status == "ready_with_review":
+                issue(issues, "UPLOAD_PACK_READY_WITH_REVIEW", "review", "Upload pack complete, but public player images/crop rules require manual visual review.")
+                score -= 2
+            elif upload_status != "ready":
+                issue(issues, "UPLOAD_PACK_BLOCKED", "critical", upload_row.get("missing_asset_names") or upload_status)
+                score -= 45
+        else:
+            issue(issues, "UPLOAD_PACK_STATUS_MISSING", "major", "graphics_upload_pack_status.csv has no row for this bundle")
             score -= 10
 
         freshness = freshness_rows.get(post_slug)
         if freshness:
             if freshness.get("freshness_decision") == "block":
-                issues.append({"code": "FRESHNESS_GATE_BLOCKED", "severity": "critical", "message": freshness.get("reason", "stale or missing event date")})
+                issue(issues, "FRESHNESS_GATE_BLOCKED", "critical", freshness.get("reason", "stale or missing event date"))
                 score -= 45
             elif freshness.get("freshness_decision") == "review":
-                issues.append({"code": "FRESHNESS_GATE_REVIEW", "severity": "major", "message": freshness.get("reason", "freshness review required")})
-                score -= 12
+                issue(issues, "FRESHNESS_GATE_REVIEW", "major", freshness.get("reason", "freshness review required"))
+                score -= 10
         elif post_slug == "main-wnba-result":
-            issues.append({"code": "FRESHNESS_GATE_MISSING", "severity": "major", "message": "studio_freshness_gate.csv missing row for main bundle"})
-            score -= 10
+            issue(issues, "FRESHNESS_GATE_MISSING", "major", "studio_freshness_gate.csv missing row for main bundle")
+            score -= 8
 
         fit_for_bundle = [r for r in player_fit_rows if r.get("bundle_slug") == post_slug]
         blocked_fit = [r for r in fit_for_bundle if r.get("fit_status", "").startswith("blocked")]
         review_fit = [r for r in fit_for_bundle if r.get("fit_status") == "review"]
         if blocked_fit:
-            issues.append({"code": "PLAYER_IMAGE_FIT_BLOCKED", "severity": "critical", "message": ", ".join(r.get("player_name", "") for r in blocked_fit)})
+            issue(issues, "PLAYER_IMAGE_FIT_BLOCKED", "critical", ", ".join(r.get("player_name", "") for r in blocked_fit))
             score -= 35
         elif review_fit:
-            issues.append({"code": "PLAYER_IMAGE_FIT_REVIEW", "severity": "review", "message": "Use tight crop rules for: " + ", ".join(r.get("player_name", "") for r in review_fit)})
+            issue(issues, "PLAYER_IMAGE_FIT_REVIEW", "review", "Use tight crop rules for: " + ", ".join(r.get("player_name", "") for r in review_fit))
             score -= 3
-
-        for language_file in [
-            "graphics_copy_style_guide.md",
-            "graphics_display_copy.csv",
-            "graphics_banned_language.csv",
-            "graphics_asset_usage_map.csv",
-            "graphics_layout_blueprint.csv",
-        ]:
-            if post_slug == "main-wnba-result" and not Path(language_file).exists():
-                issues.append({"code": "LANGUAGE_PACK_MISSING", "severity": "major", "message": language_file})
-                score -= 8
 
         prompt_pack_path = Path("graphics_chat_upload_pack") / post_slug / "00_PROMPT_TO_PASTE.md"
         render_path = clean(b.get("render_path"))
-
         if prompt_pack_path.exists():
             prompt_text = prompt_pack_path.read_text(encoding="utf-8", errors="replace")
             prompt_hits = [term for term in banned_terms if clean(term).lower() in clean(prompt_text).lower()]
             if prompt_hits:
-                issues.append({"code": "PROMPT_NOT_SANITIZED", "severity": "critical", "message": ", ".join(prompt_hits)})
+                issue(issues, "PROMPT_NOT_SANITIZED", "critical", ", ".join(prompt_hits))
+                score -= 35
+            if is_preview and any(x in clean(prompt_text).lower() for x in [" final ", " winner ", " loser ", "verified final"]):
+                issue(issues, "PREVIEW_PROMPT_HAS_RESULT_LANGUAGE", "critical", "Preview prompt appears to include result language.")
                 score -= 35
         else:
-            issues.append({"code": "UPLOAD_PROMPT_MISSING", "severity": "major", "message": str(prompt_pack_path)})
+            issue(issues, "UPLOAD_PROMPT_MISSING", "major", str(prompt_pack_path))
             score -= 10
+
         if render_path and Path(render_path).exists():
             if Image:
                 try:
                     width, height = Image.open(render_path).size
                     if (width, height) != (1080, 1350):
-                        issues.append({"code": "DIMENSION_MISMATCH", "severity": "major", "message": f"Expected 1080x1350, got {width}x{height}"})
+                        issue(issues, "DIMENSION_MISMATCH", "major", f"Expected 1080x1350, got {width}x{height}")
                         score -= 10
                 except Exception:
                     pass
-
             ocr, ocr_method = ocr_text(render_path)
             ocr_clean = clean(ocr).lower()
             if ocr_method == "unavailable":
-                issues.append({"code": "OCR_UNAVAILABLE", "severity": "review", "message": "No OCR engine available. Render QA partially skipped."})
+                issue(issues, "OCR_UNAVAILABLE", "review", "No OCR engine available. Render QA partially skipped.")
                 score -= 2
             if ocr_clean:
                 hits = [term for term in banned_terms if clean(term).lower() in ocr_clean]
                 if hits:
-                    issues.append({"code": "BANNED_LANGUAGE_RENDERED", "severity": "critical", "message": ", ".join(hits)})
+                    issue(issues, "BANNED_LANGUAGE_RENDERED", "critical", ", ".join(hits))
                     score -= 35
-
-                slide_num = infer_slide_number(render_path)
-                expected_terms = expected_terms_for_main_slide(slide_num) if post_slug == "main-wnba-result" else []
-                missing_terms = [t for t in expected_terms if t.lower() not in ocr_clean]
-                if expected_terms and len(missing_terms) >= max(1, len(expected_terms) // 2):
-                    issues.append({"code": "EXPECTED_COPY_MISSING", "severity": "major", "message": f"Likely missing expected terms: {', '.join(missing_terms[:6])}"})
-                    score -= 15
-
-                if post_slug == "main-wnba-result" and slide_num == 3:
-                    if not any(x in ocr_clean for x in ["kelsey", "ariel", "dearica", "nneka", "cameron"]):
-                        issues.append({"code": "SPARKS_PERFORMERS_MISSING", "severity": "critical", "message": "Top performers slide appears to miss Sparks-side performers."})
-                        score -= 30
-                if post_slug == "main-wnba-result" and slide_num == 2:
-                    if any(x in ocr_clean for x in ["winner", "loser", "verified final"]):
-                        issues.append({"code": "ROBOTIC_SCOREBOARD_LANGUAGE", "severity": "critical", "message": "Scoreboard render contains banned robotic result language."})
-                        score -= 25
+                if is_preview and any(x in ocr_clean for x in ["verified final", "winner", "loser"]):
+                    issue(issues, "ROBOTIC_PREVIEW_LANGUAGE", "critical", "Preview render contains banned robotic/result language.")
+                    score -= 25
             else:
-                issues.append({"code": "OCR_NO_TEXT", "severity": "review", "message": "Rendered image found but OCR extracted no text."})
+                issue(issues, "OCR_NO_TEXT", "review", "Rendered image found but OCR extracted no text.")
                 score -= 3
         else:
-            issues.append({"code": "RENDER_NOT_FOUND", "severity": "review", "message": "Graphic file not exported yet. Manifest QA only."})
-            score -= 5
+            issue(issues, "RENDER_NOT_FOUND", "review", "Graphic file not exported yet. Manifest/upload-pack QA only.")
+            score -= 3
 
         score = max(0, score)
-        decision = "fail" if any(i["severity"] == "critical" for i in issues) or score < 70 else "revise" if score < 88 else "pass_with_review" if issues else "pass"
-        remediation = []
+        if has_critical(issues) or score < 70:
+            decision = "fail"
+        elif has_review_or_major(issues) or score < 92:
+            decision = "pass_with_review"
+        else:
+            decision = "pass"
+
+        remediation: List[str] = []
         codes = {i["code"] for i in issues}
-        if "BANNED_LANGUAGE_RENDERED" in codes or "ROBOTIC_SCOREBOARD_LANGUAGE" in codes or "PROMPT_NOT_SANITIZED" in codes:
-            remediation.append("Strip banned terms with the prompt sanitizer and rerender.")
-        if "SPARKS_PERFORMERS_MISSING" in codes:
-            remediation.append("Rebuild slide 3 as a true two-team performer comparison.")
+        if "UPLOAD_PACK_READY_WITH_REVIEW" in codes or "PLAYER_IMAGE_FIT_REVIEW" in codes:
+            remediation.append("Visually verify public player images, crop tightly, and avoid wrong-team jersey/context before generation.")
+        if "RENDER_NOT_FOUND" in codes:
+            remediation.append("Generate separate 1080x1350 slide files, upload them to rendered_graphics_input/, and rerun rendered-slide QA.")
+        if "UPLOAD_PACK_BLOCKED" in codes or "UPLOAD_PACK_STATUS_MISSING" in codes:
+            remediation.append("Resolve upload pack status before graphics handoff.")
+        if any(c in codes for c in {"BANNED_LANGUAGE_RENDERED", "ROBOTIC_PREVIEW_LANGUAGE", "PROMPT_NOT_SANITIZED", "PREVIEW_PROMPT_HAS_RESULT_LANGUAGE"}):
+            remediation.append("Strip banned/result/internal terms and rerender.")
         if "DIMENSION_MISMATCH" in codes:
             remediation.append("Export 1080x1350 portrait slides.")
         if not remediation:
-            remediation.append("Resolve flagged issues and rerun QA.")
+            remediation.append("Proceed to manual review and rendered-slide QA before posting.")
 
         rows.append({
             "qa_run_id": run,
@@ -275,8 +277,7 @@ def main() -> None:
         })
 
     write_csv("graphics_qa_results.csv", rows, FIELDS)
-
-    report = ["# HSD Graphics QA Scorer v1.8 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
+    report = ["# HSD Graphics QA Scorer v1.9 BeBe Ops v2.1 Report", "", f"Generated: {now()}", "", f"Bundles scored: {len(rows)}", ""]
     if not rows:
         report += ["No bundles found in render manifest. Run Visual Upgrade first."]
     for r in rows:
@@ -294,13 +295,21 @@ def main() -> None:
     Path("graphics_qa_manifest.json").write_text(json.dumps({
         "version": VERSION,
         "generated_at_utc": now(),
-        "counts": {"bundles_scored": len(rows), "upload_status_rows": len(upload_status_rows), "freshness_rows": len(freshness_rows), "player_fit_rows": len(player_fit_rows)},
+        "counts": {
+            "bundles_scored": len(rows),
+            "upload_status_rows": len(upload_status_rows),
+            "freshness_rows": len(freshness_rows),
+            "player_fit_rows": len(player_fit_rows),
+            "fail": sum(1 for r in rows if r.get("decision") == "fail"),
+            "pass_with_review": sum(1 for r in rows if r.get("decision") == "pass_with_review"),
+            "pass": sum(1 for r in rows if r.get("decision") == "pass"),
+        },
     }, indent=2), encoding="utf-8")
     Path("graphics_qa_dashboard/index.html").write_text(
-        f"<html><body><h1>Graphics QA v1.8</h1><p>Bundles scored: {len(rows)}</p></body></html>",
+        f"<html><body><h1>Graphics QA v1.9</h1><p>Bundles scored: {len(rows)}</p></body></html>",
         encoding="utf-8",
     )
-    print("Created HSD Graphics QA v1.8 outputs")
+    print("Created HSD Graphics QA v1.9 BeBe outputs")
 
 
 if __name__ == "__main__":

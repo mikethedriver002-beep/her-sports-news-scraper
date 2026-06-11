@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.1-bebe-ops-v2"
-EXPECTED_PIPELINE_VERSION = "v3.2.1-bebe-ops-v2"
+VERSION = "hsd-install-verifier-v3.2.2-bebe-ops-v2.1"
+EXPECTED_PIPELINE_VERSION = "v3.2.2-bebe-ops-v2.1"
 
 REQUIRED_FILES = [
     ".github/workflows/hsd-pipeline-control-v1.yml",
@@ -24,6 +24,7 @@ REQUIRED_FILES = [
     "generate_hsd_preview_quality_gate_v1.py",
     "generate_hsd_player_image_assets_v1.py",
     "generate_hsd_graphics_upload_pack_v1.py",
+    "generate_hsd_graphics_qa_v1.py",
     "generate_hsd_rendered_slide_qa_v1.py",
     "generate_hsd_bebe_daily_ops_plan_v2.py",
     "generate_hsd_source_registry_audit_v2.py",
@@ -129,6 +130,10 @@ def main() -> None:
             warnings.append("preview player-image mode env is missing")
         if "generate_hsd_bebe_daily_ops_plan_v2.py" not in txt:
             issues.append("controller workflow does not run BeBe daily ops plan")
+        if "STRICT FRESHNESS GATE" not in txt:
+            warnings.append("strict_freshness input exists but is not labeled with the BeBe v2.1 wording")
+        if "graphics_chat_upload_pack_zips/**/*.zip" not in txt:
+            issues.append("controller workflow does not upload graphics pack ZIPs in lite artifact")
 
     validate_registry(issues)
 
@@ -156,7 +161,7 @@ def main() -> None:
     if warnings:
         lines += ["## Warnings", "", *[f"- {x}" for x in warnings], ""]
     if not issues:
-        lines.append("Install verification passed for BeBe Ops v2 / v3.2.1.")
+        lines.append("Install verification passed for BeBe Ops v2.1 / v3.2.2.")
     Path("install_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps({"issues": len(issues), "warnings": len(warnings)}, indent=2))
