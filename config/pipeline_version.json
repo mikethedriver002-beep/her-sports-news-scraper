@@ -1,16 +1,17 @@
 {
-  "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.13-bebe-ops-v2.11",
+  "pipeline_name": "Her Sports Daily Mermaid Ops",
+  "pipeline_version": "v3.2.14-mermaid-ops-v1.0",
   "contract_version": "v2",
-  "operator_codename": "BeBe",
+  "operator_codename": "BB",
+  "system_codename": "Mermaid",
   "default_publish_mode": "artifact_only",
   "default_review_artifact_size": "lite",
   "platforms": [
     "Instagram",
     "Threads"
   ],
-  "github_visible_version": "Her Sports Daily Production Controller v3.2.13 BeBe Ops v2.11",
-  "artifact_name_prefix": "hsd-production-control-v3-2-13-bebe-ops-v2-11",
+  "github_visible_version": "HSD Mermaid Ops v1",
+  "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "release_date_local": "2026-06-12",
-  "notes": "Manual Workflow Merge v1 plus Final Score Stories all-games frame coverage fix."
+  "notes": "Mermaid workflow consolidation plus Multi-Post Desk v1. BB is the assistant/operator nickname; Mermaid is the automation system codename."
 }
