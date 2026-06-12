@@ -1,5 +1,5 @@
-name: Her Sports Daily Production Controller v3.2.10 BeBe Ops v2.9
-run-name: HSD BeBe Ops v2.9 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
+name: Her Sports Daily Production Controller v3.2.11 BeBe Ops v2.10
+run-name: HSD BeBe Ops v2.10 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -90,7 +90,7 @@ jobs:
 
     env:
       HSD_RELEASE_VERSION: "v3.2.9-bebe-ops-v2.8"
-      HSD_ARTIFACT_NAME_PREFIX: "hsd-production-control-v3-2-10-bebe-ops-v2-9"
+      HSD_ARTIFACT_NAME_PREFIX: "hsd-production-control-v3-2-11-bebe-ops-v2-10"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
       HSD_PUBLISH_MODE: ${{ github.event.inputs.publish_mode || 'artifact_only' }}
@@ -125,6 +125,8 @@ jobs:
       HSD_PLAYER_IMAGES_REQUIRED: "1"
       HSD_PLAYER_IMAGE_FREE_SEARCH: "1"
       HSD_PLAYER_IMAGE_MAX_CANDIDATES: "24"
+      HSD_FINAL_SCORE_STORIES_ENABLE_ESPN_FETCH: "1"
+      HSD_FINAL_SCORE_STORIES_POLICY: "config/hsd_final_score_stories_policy_v1.json"
       HSD_PLAYER_IMAGE_AUTO_APPROVE_SCORE: "45"
       HSD_PLAYER_IMAGE_MIN_WIDTH: "240"
       HSD_PLAYER_IMAGE_MIN_HEIGHT: "240"
@@ -152,7 +154,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-news-sync.txt ]; then pip install -r requirements-news-sync.txt; fi
           if [ -f requirements-asset-visual-qa.txt ]; then pip install -r requirements-asset-visual-qa.txt; fi
-          python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil pillow >/dev/null 2>&1 || true
+          python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil pillow requests cairosvg >/dev/null 2>&1 || true
 
       - name: Show production plan
         shell: bash
@@ -194,6 +196,9 @@ jobs:
           rm -f bebe_daily_ops_plan.md bebe_daily_ops_plan.csv bebe_daily_ops_status.json bebe_priority_board.md bebe_posting_schedule_today.md
           rm -f operator_command_center.html operator_command_center.md operator_command_center.json
           rm -f rendered_slide_qa.csv rendered_slide_qa_report.md rendered_slide_qa_manifest.json rendered_graphics_manual_review_template.csv
+          rm -f ig_story_results_queue.csv ig_story_results_frames.md ig_story_results_graphics_prompt.md ig_story_results_upload_pack_status.csv ig_story_results_upload_pack_status.json
+          rm -f ig_story_results_upload_manifest.csv final_score_story_guard_report.md final_score_story_guard_report.json ig_story_caption_bank.md ig_story_poll_stickers.md ig_story_player_image_candidates.csv
+          rm -rf ig_story_results_upload_pack ig_story_results_upload_pack_zips
           rm -f hsd_current_run.json hsd_pipeline_lite_review.zip
           rm -rf hsd_pipeline_lite_review
           echo "Cleaned stale generated review/control files."
@@ -243,6 +248,11 @@ jobs:
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only' || env.HSD_RUN_MODE == 'results_only'
         shell: bash
         run: python build_hsd_daily_slate_v1.py
+
+      - name: Build Final Score Stories Desk
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only' || env.HSD_RUN_MODE == 'review_only'
+        shell: bash
+        run: python generate_hsd_final_score_stories_v1.py || true
 
       - name: Build preliminary BeBe daily ops plan
         if: always()
@@ -375,6 +385,7 @@ jobs:
           python publish_hsd_guard_v1.py || true
           python generate_hsd_operator_status_v1.py || true
           python generate_hsd_source_registry_audit_v2.py || true
+          python generate_hsd_final_score_stories_v1.py || true
           python generate_hsd_bebe_daily_ops_plan_v2.py || true
           python generate_hsd_operator_command_center_v2.py || true
 
@@ -387,7 +398,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-production-control-v3-2-10-bebe-ops-v2-9-lite-review-${{ github.run_number }}
+          name: hsd-production-control-v3-2-11-bebe-ops-v2-10-lite-review-${{ github.run_number }}
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -424,6 +435,18 @@ jobs:
             rendered_slide_qa_report.md
             rendered_slide_qa_manifest.json
             rendered_graphics_manual_review_template.csv
+            ig_story_results_queue.csv
+            ig_story_results_frames.md
+            ig_story_results_graphics_prompt.md
+            ig_story_results_upload_pack_status.csv
+            ig_story_results_upload_pack_status.json
+            ig_story_results_upload_manifest.csv
+            final_score_story_guard_report.md
+            final_score_story_guard_report.json
+            ig_story_caption_bank.md
+            ig_story_poll_stickers.md
+            ig_story_player_image_candidates.csv
+            ig_story_results_upload_pack_zips/*.zip
 
       - name: Commit lightweight generated outputs
         if: env.HSD_PUBLISH_OUTPUTS == 'true'
@@ -447,13 +470,15 @@ jobs:
             "exact_asset_audit.csv" "exact_asset_audit_report.md" "exact_asset_audit_manifest.json"
             "rendered_slide_qa.csv" "rendered_slide_qa_report.md" "rendered_slide_qa_manifest.json" "rendered_graphics_manual_review_template.csv"
             "bebe_daily_ops_plan.md" "bebe_daily_ops_plan.csv" "bebe_daily_ops_status.json" "bebe_priority_board.md" "bebe_posting_schedule_today.md"
-            "operator_command_center.html" "operator_command_center.md" "operator_command_center.json"
+            "ig_story_results_queue.csv" "ig_story_results_frames.md" "ig_story_results_graphics_prompt.md"
+            "ig_story_results_upload_pack_status.csv" "ig_story_results_upload_pack_status.json" "ig_story_results_upload_manifest.csv"
+            "final_score_story_guard_report.md" "final_score_story_guard_report.json" "ig_story_caption_bank.md" "ig_story_poll_stickers.md" "ig_story_player_image_candidates.csv"
           )
           git add --ignore-errors "${FILES[@]}" || true
           if git diff --cached --quiet; then
             echo "No generated output changes to commit."
             exit 0
           fi
-          git commit -m "Run HSD Production Control v3.2.10 BeBe Ops v2.9"
+          git commit -m "Run HSD Production Control v3.2.11 BeBe Ops v2.10"
           git pull --rebase origin main || true
           git push origin HEAD:main || echo "Push failed; artifact still uploaded."
