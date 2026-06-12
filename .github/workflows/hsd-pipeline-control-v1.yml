@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 95
     env:
-      HSD_RELEASE_VERSION: "v3.2.14-mermaid-ops-v1.0"
+      HSD_RELEASE_VERSION: "v3.2.15-mermaid-ops-v1.1"
       HSD_ARTIFACT_NAME_PREFIX: "hsd-mermaid-ops-v1"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
@@ -160,7 +160,7 @@ jobs:
           rm -f operator_status.md operator_status.json operator_status.csv publish_guard_report.md publish_guard_report.json
           rm -f results_contract_v2.csv results_contract_v2.jsonl results_contract_report.md daily_slate_plan.csv daily_slate_guard_report.md daily_slate_plan.md
           rm -f multi_post_daily_board.md multi_post_daily_board.json post_slot_status.csv ig_feed_queue.csv ig_story_queue.csv threads_queue.csv caption_bank.md first_comment_hooks.md
-          rm -f ig_story_results_queue.csv ig_story_results_frames.md ig_story_results_graphics_prompt.md ig_story_results_upload_pack_status.csv ig_story_results_upload_pack_status.json ig_story_results_upload_manifest.csv final_score_story_guard_report.md final_score_story_guard_report.json ig_story_caption_bank.md ig_story_poll_stickers.md ig_story_player_image_candidates.csv
+          rm -f ig_story_results_queue.csv ig_story_results_frames.md ig_story_results_graphics_prompt.md ig_story_results_upload_pack_status.csv ig_story_results_upload_pack_status.json ig_story_results_upload_manifest.csv final_score_story_guard_report.md final_score_story_guard_report.json ig_story_caption_bank.md ig_story_poll_stickers.md ig_story_player_image_candidates.csv ig_story_results_headlines.csv ig_story_results_brand_lock_status.json
           rm -f manual_workflow_content_packets.jsonl manual_workflow_content_packets.csv manual_workflow_render_plans.json manual_workflow_copy_desk.md manual_workflow_threads_copy.md manual_workflow_first_comments.md manual_workflow_priority_report.md manual_workflow_pack_status.csv manual_workflow_pack_status.json manual_workflow_handoff.md
           rm -rf manual_workflow_packets manual_workflow_handoff_packs ig_story_results_upload_pack ig_story_results_upload_pack_zips
           rm -f studio_bundle_queue.csv studio_graphics_queue.csv studio_bundle_packets.md studio_bundle_prompts.md studio_preview_build_v2_report.md studio_preview_build_v2.json preview_player_focus.csv preview_bundle_quality.csv preview_bundle_quality.md preview_bundle_quality_summary.csv
@@ -199,6 +199,7 @@ jobs:
         shell: bash
         run: |
           python generate_hsd_final_score_stories_v1.py || true
+          python generate_hsd_story_results_brand_lock_v1.py || true
           python generate_hsd_manual_workflow_merge_v1.py || true
           python generate_hsd_multi_post_desk_v1.py || true
           python generate_hsd_bebe_daily_ops_plan_v2.py || true
@@ -246,6 +247,7 @@ jobs:
           python generate_hsd_operator_status_v1.py || true
           python generate_hsd_source_registry_audit_v2.py || true
           python generate_hsd_final_score_stories_v1.py || true
+          python generate_hsd_story_results_brand_lock_v1.py || true
           python generate_hsd_manual_workflow_merge_v1.py || true
           python generate_hsd_multi_post_desk_v1.py || true
           python generate_hsd_bebe_daily_ops_plan_v2.py || true
@@ -303,6 +305,8 @@ jobs:
             ig_story_results_queue.csv
             ig_story_results_frames.md
             ig_story_results_graphics_prompt.md
+            ig_story_results_headlines.csv
+            ig_story_results_brand_lock_status.json
             ig_story_results_upload_pack_status.csv
             ig_story_results_upload_pack_status.json
             ig_story_results_upload_manifest.csv
