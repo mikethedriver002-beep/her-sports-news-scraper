@@ -1,5 +1,5 @@
-name: Her Sports Daily Production Controller v3.2.13 BeBe Ops v2.11
-run-name: HSD BeBe Ops v2.11 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
+name: HSD Mermaid Ops v1
+run-name: HSD Mermaid Ops v1 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -29,13 +29,13 @@ on:
         type: choice
         options: [lean, balanced, full_slate]
       desk_day_type:
-        description: "HSD posting day type for BeBe cadence plan"
+        description: "HSD posting day type for Mermaid cadence plan"
         required: true
         default: "normal_day"
         type: choice
         options: [normal_day, big_sports_day, slow_day]
       strict_freshness:
-        description: "STRICT FRESHNESS GATE — leave 1 for normal runs; same-day previews are schedule-safe."
+        description: "STRICT FRESHNESS GATE — leave 1 for normal runs."
         required: true
         default: "1"
         type: choice
@@ -80,17 +80,16 @@ permissions:
   actions: read
 
 concurrency:
-  group: hsd-production-controller-${{ github.ref }}
+  group: hsd-mermaid-ops-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  run-hsd-production-controller:
+  mermaid-ops:
     runs-on: ubuntu-latest
     timeout-minutes: 95
-
     env:
-      HSD_RELEASE_VERSION: "v3.2.9-bebe-ops-v2.8"
-      HSD_ARTIFACT_NAME_PREFIX: "hsd-production-control-v3-2-11-bebe-ops-v2-10"
+      HSD_RELEASE_VERSION: "v3.2.14-mermaid-ops-v1.0"
+      HSD_ARTIFACT_NAME_PREFIX: "hsd-mermaid-ops-v1"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
       HSD_PUBLISH_MODE: ${{ github.event.inputs.publish_mode || 'artifact_only' }}
@@ -135,19 +134,16 @@ jobs:
       APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
       BING_SEARCH_API_KEY: ${{ secrets.BING_SEARCH_API_KEY }}
       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install dependencies once
         shell: bash
         run: |
@@ -157,237 +153,92 @@ jobs:
           if [ -f requirements-news-sync.txt ]; then pip install -r requirements-news-sync.txt; fi
           if [ -f requirements-asset-visual-qa.txt ]; then pip install -r requirements-asset-visual-qa.txt; fi
           python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil pillow requests cairosvg >/dev/null 2>&1 || true
-
-      - name: Show production plan
-        shell: bash
-        run: |
-          echo "Run mode: ${HSD_RUN_MODE}"
-          echo "Publish outputs: ${HSD_PUBLISH_OUTPUTS}"
-          echo "Publish mode: ${HSD_PUBLISH_MODE}"
-          echo "Content volume: ${HSD_CONTENT_VOLUME}"
-          echo "Desk day type: ${HSD_DESK_DAY_TYPE}"
-          echo "Target local date: ${HSD_TARGET_DATE_LOCAL:-today}"
-          echo "Strict freshness gate: ${HSD_STRICT_FRESHNESS_GATE}"
-          echo "Max result fresh hours: ${HSD_MAX_RESULT_FRESH_HOURS}"
-          echo "Review artifact size: ${HSD_REVIEW_ARTIFACT_SIZE}"
-          echo "Grey source mode: ${HSD_GREY_SOURCE_MODE}"
-          echo "Preview player image sourcing: enabled, aggressive public review"
-
       - name: Clean stale generated state
         shell: bash
         run: |
-          set -euo pipefail
           rm -f pipeline_stop_reason.md pipeline_outcome.md pipeline_publish_warning.md
-          rm -f operator_status.md operator_status.json operator_status.csv
-          rm -f publish_guard_report.md publish_guard_report.json
-          rm -f contract_validation_report.md contract_validation_manifest.json
-          rm -f results_contract_v2.csv results_contract_v2.jsonl results_contract_report.md
-          rm -f story_candidates_manual.csv story_candidates_manual.jsonl manual_story_inbox_report.md
-          rm -f story_candidates_discovery.csv story_candidates_discovery.jsonl discovery_sources_report.md
-          rm -f daily_slate_plan.csv daily_slate_plan.md
-          rm -f studio_bundle_queue.csv studio_graphics_queue.csv studio_bundle_packets.md studio_bundle_prompts.md studio_fresh_packet_report.md studio_freshness_gate.csv studio_freshness_report.md studio_stale_packet_queue.csv
-          rm -f studio_preview_build_v2_report.md studio_preview_build_v2.json preview_player_focus.csv preview_bundle_quality.csv preview_bundle_quality.md preview_bundle_quality_summary.csv
-          rm -f news_fact_packets.csv latest_news_sync_run_summary.md latest_results_run_summary.md
-          rm -f approved_graphics_assets.csv approved_graphics_assets.json asset_candidates_review.md player_assets.csv player_assets.json player_image_candidates.csv
-          rm -f player_image_sourcing_report.md player_image_requirements.csv player_image_fit_report.md player_image_fit_gate.csv
-          rm -f graphics_upload_pack_status.csv graphics_upload_pack_status.json graphics_chat_direct_handoff.md graphics_chat_upload_instructions.md graphics_chat_upload_manifest.csv graphics_chat_upload_manifest.json
-          rm -f graphics_qa_report.md graphics_qa_results.csv graphics_qa_manifest.json
-          rm -f graphics_prompt_clean_report.md graphics_prompt_clean_manifest.json graphics_banned_language.csv graphics_copy_style_guide.md graphics_display_copy.csv graphics_asset_usage_map.csv graphics_layout_blueprint.csv
-          rm -rf graphics_chat_upload_pack graphics_chat_upload_pack_zips graphics_clean_prompts graphics_qa_dashboard generated_graphics
-          rm -f source_registry_audit.csv source_registry_audit.md source_registry_audit.json
-          rm -f bebe_daily_ops_plan.md bebe_daily_ops_plan.csv bebe_daily_ops_status.json bebe_priority_board.md bebe_posting_schedule_today.md
-          rm -f operator_command_center.html operator_command_center.md operator_command_center.json
-          rm -f rendered_slide_qa.csv rendered_slide_qa_report.md rendered_slide_qa_manifest.json rendered_graphics_manual_review_template.csv
-          rm -f ig_story_results_queue.csv ig_story_results_frames.md ig_story_results_graphics_prompt.md ig_story_results_upload_pack_status.csv ig_story_results_upload_pack_status.json
-          rm -f ig_story_results_upload_manifest.csv final_score_story_guard_report.md final_score_story_guard_report.json ig_story_caption_bank.md ig_story_poll_stickers.md ig_story_player_image_candidates.csv
+          rm -f operator_status.md operator_status.json operator_status.csv publish_guard_report.md publish_guard_report.json
+          rm -f results_contract_v2.csv results_contract_v2.jsonl results_contract_report.md daily_slate_plan.csv daily_slate_guard_report.md daily_slate_plan.md
+          rm -f multi_post_daily_board.md multi_post_daily_board.json post_slot_status.csv ig_feed_queue.csv ig_story_queue.csv threads_queue.csv caption_bank.md first_comment_hooks.md
+          rm -f ig_story_results_queue.csv ig_story_results_frames.md ig_story_results_graphics_prompt.md ig_story_results_upload_pack_status.csv ig_story_results_upload_pack_status.json ig_story_results_upload_manifest.csv final_score_story_guard_report.md final_score_story_guard_report.json ig_story_caption_bank.md ig_story_poll_stickers.md ig_story_player_image_candidates.csv
           rm -f manual_workflow_content_packets.jsonl manual_workflow_content_packets.csv manual_workflow_render_plans.json manual_workflow_copy_desk.md manual_workflow_threads_copy.md manual_workflow_first_comments.md manual_workflow_priority_report.md manual_workflow_pack_status.csv manual_workflow_pack_status.json manual_workflow_handoff.md
-          rm -rf manual_workflow_packets manual_workflow_handoff_packs
-          rm -rf ig_story_results_upload_pack ig_story_results_upload_pack_zips
+          rm -rf manual_workflow_packets manual_workflow_handoff_packs ig_story_results_upload_pack ig_story_results_upload_pack_zips
+          rm -f studio_bundle_queue.csv studio_graphics_queue.csv studio_bundle_packets.md studio_bundle_prompts.md studio_preview_build_v2_report.md studio_preview_build_v2.json preview_player_focus.csv preview_bundle_quality.csv preview_bundle_quality.md preview_bundle_quality_summary.csv
+          rm -f graphics_upload_pack_status.csv graphics_upload_pack_status.json graphics_chat_direct_handoff.md graphics_chat_upload_instructions.md graphics_chat_upload_manifest.csv graphics_chat_upload_manifest.json graphics_qa_report.md graphics_qa_results.csv graphics_qa_manifest.json
+          rm -rf graphics_chat_upload_pack graphics_chat_upload_pack_zips graphics_clean_prompts generated_graphics
+          rm -f rendered_slide_qa.csv rendered_slide_qa_report.md rendered_slide_qa_manifest.json rendered_graphics_manual_review_template.csv
+          rm -f source_registry_audit.csv source_registry_audit.md source_registry_audit.json operator_command_center.html operator_command_center.md operator_command_center.json
           rm -f hsd_current_run.json hsd_pipeline_lite_review.zip
           rm -rf hsd_pipeline_lite_review
-          echo "Cleaned stale generated review/control files."
-
-      - name: Verify BeBe Ops v2.4 install
+      - name: Verify Mermaid Ops install
         shell: bash
         run: python verify_hsd_install_v1.py
-
-      - name: Build run manifest
-        shell: bash
-        run: python build_hsd_run_manifest_v1.py
-
-      - name: Audit source registry
-        if: always()
-        shell: bash
-        run: python generate_hsd_source_registry_audit_v2.py || true
-
-      - name: Normalize manual story inbox
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only'
-        shell: bash
-        run: python normalize_hsd_manual_story_inbox_v1.py
-
-      - name: Ingest discovery sources
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only'
-        shell: bash
-        run: python ingest_hsd_discovery_sources_v1.py
-
-      - name: Run Results Desk stage
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only'
+      - name: Run core discovery and results
         shell: bash
         run: |
-          set -euo pipefail
-          if [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py; else echo "Results Desk script missing; using existing CSVs."; fi
-          if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py || true; fi
-          if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py || true; fi
-
-      - name: Build Results Contract v2
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only' || env.HSD_RUN_MODE == 'news_only' || env.HSD_RUN_MODE == 'studio_only'
-        shell: bash
-        run: python generate_hsd_results_contract_v1.py
-
-      - name: Validate contracts
-        shell: bash
-        run: python validate_hsd_contracts_v1.py --soft
-
-      - name: Build daily slate
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'discovery_only' || env.HSD_RUN_MODE == 'results_only'
-        shell: bash
-        run: python build_hsd_daily_slate_v1.py
-
-      - name: Build Final Score Stories Desk
-        if: always() && (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only' || env.HSD_RUN_MODE == 'review_only' || env.HSD_RUN_MODE == 'discovery_only')
-        shell: bash
-        run: python generate_hsd_final_score_stories_v1.py || true
-
-      - name: Build Manual Workflow Merge v1
-        if: always()
-        shell: bash
-        run: python generate_hsd_manual_workflow_merge_v1.py || true
-
-      - name: Build preliminary BeBe daily ops plan
-        if: always()
-        shell: bash
-        run: python generate_hsd_bebe_daily_ops_plan_v2.py || true
-
-      - name: Run News Sync stage
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f generate_hsd_news_sync_v1.py ]; then python generate_hsd_news_sync_v1.py; else echo "News Sync script missing."; fi
-          if [ -f generate_news_dashboard_v1.py ]; then python generate_news_dashboard_v1.py || true; fi
-          if [ -f archive_news_runs_v1.py ]; then python archive_news_runs_v1.py || true; fi
-
-      - name: Run Studio Bridge stage
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f generate_hsd_studio_bridge_v1.py ]; then python generate_hsd_studio_bridge_v1.py; else echo "Studio Bridge script missing."; fi
-          if [ -f generate_hsd_tonight_preview_bridge_v1.py ]; then python generate_hsd_tonight_preview_bridge_v1.py || true; fi
-          if [ -f archive_hsd_studio_runs_v1.py ]; then python archive_hsd_studio_runs_v1.py || true; fi
-
-      - name: Gate after Studio Bridge
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only'
-        shell: bash
-        run: |
-          set -euo pipefail
-          rows=$(python - <<'PY'
-          import csv
-          from pathlib import Path
-          p = Path("studio_bundle_queue.csv")
-          if not p.exists():
-              print(0)
-          else:
-              with p.open(newline="", encoding="utf-8", errors="replace") as f:
-                  print(max(0, sum(1 for _ in csv.DictReader(f))))
-          PY
-          )
-          echo "Studio bundle rows: $rows"
-          if [ "$rows" -le 0 ]; then
-            cat > pipeline_stop_reason.md <<'EOF'
-          # HSD Pipeline Stop
-
-          Stopped after Studio Bridge because no studio bundle rows were available.
-
-          This is a controlled stop. Check results_contract_report.md, daily_slate_plan.md, news_fact_packets.csv, and studio_fresh_packet_report.md.
-          EOF
-            if [ "${HSD_CONTINUE_ON_EMPTY}" != "true" ]; then
-              echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
-            fi
-          else
-            rm -f pipeline_stop_reason.md
-            cat > pipeline_outcome.md <<EOF
-          # HSD Pipeline Outcome
-
-          Studio Bridge produced ${rows} bundle row(s), so the pipeline continued into Asset Visual QA.
-          EOF
+          python build_hsd_run_manifest_v1.py
+          python generate_hsd_source_registry_audit_v2.py || true
+          if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "discovery_only" ]]; then
+            python normalize_hsd_manual_story_inbox_v1.py
+            python ingest_hsd_discovery_sources_v1.py
           fi
-
-      - name: Run Tonight preview quality gate
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'studio_only') && env.HSD_PIPELINE_STOPPED != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f generate_hsd_preview_quality_gate_v1.py ]; then
-            python generate_hsd_preview_quality_gate_v1.py
+          if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "results_only" ]]; then
+            if [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py; fi
+            if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py || true; fi
+            if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py || true; fi
           fi
-
-          set +e
-          python - <<'PY'
-          import csv
-          import sys
-          from pathlib import Path
-
-          p = Path("preview_bundle_quality.csv")
-          should_stop = False
-          if p.exists():
-              with p.open(newline="", encoding="utf-8", errors="replace") as f:
-                  rows = list(csv.DictReader(f))
-              should_stop = any(
-                  (r.get("severity") or "").upper() == "FAIL" and
-                  (r.get("status") or "").upper() == "FAIL"
-                  for r in rows
-              )
-          sys.exit(1 if should_stop else 0)
-          PY
-          status=$?
-          set -e
-
-          if [ "$status" -ne 0 ]; then
-            cat > pipeline_stop_reason.md <<'EOF'
-          # HSD Pipeline Stop
-
-          Stopped after preview quality gate because at least one FAIL condition was triggered.
-          EOF
-            echo "HSD_PIPELINE_STOPPED=true" >> "$GITHUB_ENV"
+          if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "results_only" || "${HSD_RUN_MODE}" == "news_only" || "${HSD_RUN_MODE}" == "studio_only" ]]; then
+            python generate_hsd_results_contract_v1.py
           fi
-
-      - name: Refresh BeBe daily ops plan after preview gate
+          python validate_hsd_contracts_v1.py --soft
+          if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "discovery_only" || "${HSD_RUN_MODE}" == "results_only" ]]; then
+            python build_hsd_daily_slate_v1.py
+          fi
+      - name: Build Stories, Manual Workflow, and Multi-Post Desk
         if: always()
         shell: bash
-        run: python generate_hsd_bebe_daily_ops_plan_v2.py || true
-
+        run: |
+          python generate_hsd_final_score_stories_v1.py || true
+          python generate_hsd_manual_workflow_merge_v1.py || true
+          python generate_hsd_multi_post_desk_v1.py || true
+          python generate_hsd_bebe_daily_ops_plan_v2.py || true
+      - name: Run News and Studio stages
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only' || env.HSD_RUN_MODE == 'studio_only'
+        shell: bash
+        run: |
+          if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "news_only" ]]; then
+            if [ -f generate_hsd_news_sync_v1.py ]; then python generate_hsd_news_sync_v1.py; fi
+            if [ -f generate_news_dashboard_v1.py ]; then python generate_news_dashboard_v1.py || true; fi
+            if [ -f archive_news_runs_v1.py ]; then python archive_news_runs_v1.py || true; fi
+          fi
+          if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "studio_only" ]]; then
+            if [ -f generate_hsd_studio_bridge_v1.py ]; then python generate_hsd_studio_bridge_v1.py; fi
+            if [ -f generate_hsd_tonight_preview_bridge_v1.py ]; then python generate_hsd_tonight_preview_bridge_v1.py || true; fi
+            if [ -f generate_hsd_preview_quality_gate_v1.py ]; then python generate_hsd_preview_quality_gate_v1.py || true; fi
+          fi
       - name: Run Asset Visual QA stage
-        if: (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only') && env.HSD_PIPELINE_STOPPED != 'true'
+        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only'
         shell: bash
         run: |
-          set -euo pipefail
-          python generate_hsd_asset_desk_v1.py
-          python generate_hsd_player_image_assets_v1.py
-          python generate_hsd_visual_upgrade_v2.py
-          python generate_hsd_graphics_production_specs_v1.py
-          python generate_hsd_graphics_language_pack_v1.py
-          python generate_hsd_studio_freshness_gate_v1.py
-          python generate_hsd_player_image_fit_gate_v1.py
-          python generate_hsd_graphics_prompt_sanitizer_v1.py
-          python generate_hsd_exact_asset_audit_v1.py || true
-          python generate_hsd_graphics_upload_pack_v1.py
-          python generate_hsd_exact_asset_audit_v1.py || true
-          python generate_hsd_graphics_qa_v1.py
-          python generate_hsd_rendered_slide_qa_v1.py || true
-          python archive_hsd_asset_visual_qa_runs_v1.py || true
-
-      - name: Publish guard and final operator status
+          if [ -f studio_bundle_queue.csv ]; then
+            python generate_hsd_asset_desk_v1.py
+            python generate_hsd_player_image_assets_v1.py
+            python generate_hsd_visual_upgrade_v2.py
+            python generate_hsd_graphics_production_specs_v1.py
+            python generate_hsd_graphics_language_pack_v1.py
+            python generate_hsd_studio_freshness_gate_v1.py
+            python generate_hsd_player_image_fit_gate_v1.py
+            python generate_hsd_graphics_prompt_sanitizer_v1.py
+            python generate_hsd_exact_asset_audit_v1.py || true
+            python generate_hsd_graphics_upload_pack_v1.py
+            python generate_hsd_exact_asset_audit_v1.py || true
+            python generate_hsd_graphics_qa_v1.py
+            python generate_hsd_rendered_slide_qa_v1.py || true
+            python archive_hsd_asset_visual_qa_runs_v1.py || true
+          else
+            echo "No studio bundle queue; skipping feed graphics pack."
+          fi
+      - name: Final status and review artifact
         if: always()
         shell: bash
         run: |
@@ -396,19 +247,15 @@ jobs:
           python generate_hsd_source_registry_audit_v2.py || true
           python generate_hsd_final_score_stories_v1.py || true
           python generate_hsd_manual_workflow_merge_v1.py || true
+          python generate_hsd_multi_post_desk_v1.py || true
           python generate_hsd_bebe_daily_ops_plan_v2.py || true
           python generate_hsd_operator_command_center_v2.py || true
-
-      - name: Build lite review artifact
-        if: always()
-        shell: bash
-        run: python generate_hsd_pipeline_review_lite_v1.py || true
-
+          python generate_hsd_pipeline_review_lite_v1.py || true
       - name: Upload lite production review artifact
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-production-control-v3-2-13-bebe-ops-v2-11-lite-review-${{ github.run_number }}
+          name: hsd-mermaid-ops-v1-lite-review-${{ github.run_number }}
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -417,6 +264,14 @@ jobs:
             source_registry_audit.csv
             source_registry_audit.md
             source_registry_audit.json
+            multi_post_daily_board.md
+            multi_post_daily_board.json
+            post_slot_status.csv
+            ig_feed_queue.csv
+            ig_story_queue.csv
+            threads_queue.csv
+            caption_bank.md
+            first_comment_hooks.md
             bebe_daily_ops_plan.md
             bebe_daily_ops_plan.csv
             bebe_daily_ops_status.json
@@ -468,41 +323,15 @@ jobs:
             manual_workflow_pack_status.json
             manual_workflow_handoff.md
             manual_workflow_handoff_packs/*.zip
-
       - name: Commit lightweight generated outputs
         if: env.HSD_PUBLISH_OUTPUTS == 'true'
         shell: bash
         run: |
-          set -euo pipefail
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          FILES=(
-            "hsd_pipeline_lite_review.zip" "hsd_pipeline_lite_review"
-            "operator_status.md" "operator_status.json" "operator_status.csv"
-            "publish_guard_report.md" "publish_guard_report.json"
-            "install_report.md" "install_report.json" "contract_validation_report.md" "contract_validation_manifest.json"
-            "source_registry_audit.csv" "source_registry_audit.md" "source_registry_audit.json"
-            "results_contract_v2.csv" "results_contract_v2.jsonl" "results_contract_report.md"
-            "story_candidates_manual.csv" "story_candidates_manual.jsonl" "manual_story_inbox_report.md"
-            "story_candidates_discovery.csv" "story_candidates_discovery.jsonl" "discovery_sources_report.md"
-            "daily_slate_plan.csv" "daily_slate_guard_report.md" "daily_slate_plan.md" "pipeline_outcome.md" "pipeline_stop_reason.md"
-            "studio_preview_build_v2_report.md" "studio_preview_build_v2.json" "preview_player_focus.csv" "preview_bundle_quality.csv" "preview_bundle_quality.md" "preview_bundle_quality_summary.csv"
-            "graphics_upload_pack_status.csv" "graphics_chat_direct_handoff.md" "graphics_qa_report.md"
-            "exact_asset_audit.csv" "exact_asset_audit_report.md" "exact_asset_audit_manifest.json"
-            "rendered_slide_qa.csv" "rendered_slide_qa_report.md" "rendered_slide_qa_manifest.json" "rendered_graphics_manual_review_template.csv"
-            "bebe_daily_ops_plan.md" "bebe_daily_ops_plan.csv" "bebe_daily_ops_status.json" "bebe_priority_board.md" "bebe_posting_schedule_today.md"
-            "ig_story_results_queue.csv" "ig_story_results_frames.md" "ig_story_results_graphics_prompt.md"
-            "ig_story_results_upload_pack_status.csv" "ig_story_results_upload_pack_status.json" "ig_story_results_upload_manifest.csv"
-            "final_score_story_guard_report.md" "final_score_story_guard_report.json" "ig_story_caption_bank.md" "ig_story_poll_stickers.md" "ig_story_player_image_candidates.csv"
-            "manual_workflow_content_packets.jsonl" "manual_workflow_content_packets.csv" "manual_workflow_render_plans.json"
-            "manual_workflow_copy_desk.md" "manual_workflow_threads_copy.md" "manual_workflow_first_comments.md"
-            "manual_workflow_priority_report.md" "manual_workflow_pack_status.csv" "manual_workflow_pack_status.json" "manual_workflow_handoff.md"
-          )
-          git add --ignore-errors "${FILES[@]}" || true
-          if git diff --cached --quiet; then
-            echo "No generated output changes to commit."
-            exit 0
-          fi
-          git commit -m "Run HSD Production Control v3.2.13 BeBe Ops v2.11"
+          git add --ignore-errors multi_post_daily_board.md multi_post_daily_board.json post_slot_status.csv ig_feed_queue.csv ig_story_queue.csv threads_queue.csv caption_bank.md first_comment_hooks.md || true
+          git add --ignore-errors hsd_pipeline_lite_review.zip hsd_pipeline_lite_review operator_status.md publish_guard_report.md || true
+          if git diff --cached --quiet; then echo "No generated output changes to commit."; exit 0; fi
+          git commit -m "Run HSD Mermaid Ops v1"
           git pull --rebase origin main || true
           git push origin HEAD:main || echo "Push failed; artifact still uploaded."
