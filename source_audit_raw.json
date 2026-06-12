@@ -1,68 +1,32 @@
 {
-  "generated_at": "2026-06-09T18:30:24.819564+00:00",
+  "generated_at": "2026-06-12T18:22:13.672353+00:00",
   "date_window": [
-    {
-      "iso": "2026-06-08",
-      "compact": "20260608",
-      "slash": "06/08/2026",
-      "sofa": "2026-06-08"
-    },
-    {
-      "iso": "2026-06-09",
-      "compact": "20260609",
-      "slash": "06/09/2026",
-      "sofa": "2026-06-09"
-    },
-    {
-      "iso": "2026-06-10",
-      "compact": "20260610",
-      "slash": "06/10/2026",
-      "sofa": "2026-06-10"
-    },
     {
       "iso": "2026-06-11",
       "compact": "20260611",
       "slash": "06/11/2026",
       "sofa": "2026-06-11"
+    },
+    {
+      "iso": "2026-06-12",
+      "compact": "20260612",
+      "slash": "06/12/2026",
+      "sofa": "2026-06-12"
+    },
+    {
+      "iso": "2026-06-13",
+      "compact": "20260613",
+      "slash": "06/13/2026",
+      "sofa": "2026-06-13"
+    },
+    {
+      "iso": "2026-06-14",
+      "compact": "20260614",
+      "slash": "06/14/2026",
+      "sofa": "2026-06-14"
     }
   ],
   "sofascore": {
-    "sofascore::basketball::2026-06-08::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-08": {
-      "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-08",
-      "event_count": 0,
-      "host_pattern": "https://api.sofascore.com"
-    },
-    "sofascore::basketball::2026-06-08::https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-08": {
-      "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-08",
-      "event_count": 0,
-      "host_pattern": "https://www.sofascore.com"
-    },
-    "sofascore::basketball::2026-06-09::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-09": {
-      "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-09",
-      "event_count": 0,
-      "host_pattern": "https://api.sofascore.com"
-    },
-    "sofascore::basketball::2026-06-09::https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-09": {
-      "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-09",
-      "event_count": 0,
-      "host_pattern": "https://www.sofascore.com"
-    },
-    "sofascore::basketball::2026-06-10::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-10": {
-      "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-10",
-      "event_count": 0,
-      "host_pattern": "https://api.sofascore.com"
-    },
-    "sofascore::basketball::2026-06-10::https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-10": {
-      "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-10",
-      "event_count": 0,
-      "host_pattern": "https://www.sofascore.com"
-    },
     "sofascore::basketball::2026-06-11::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-11": {
       "status": 403,
       "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-11",
@@ -75,39 +39,39 @@
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::football::2026-06-08::https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-08": {
+    "sofascore::basketball::2026-06-12::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::football::2026-06-08::https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-08": {
+    "sofascore::basketball::2026-06-12::https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::football::2026-06-09::https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-09": {
+    "sofascore::basketball::2026-06-13::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::football::2026-06-09::https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-09": {
+    "sofascore::basketball::2026-06-13::https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::football::2026-06-10::https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-10": {
+    "sofascore::basketball::2026-06-14::https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::football::2026-06-10::https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-10": {
+    "sofascore::basketball::2026-06-14::https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/basketball/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
@@ -123,39 +87,39 @@
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::tennis::2026-06-08::https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-08": {
+    "sofascore::football::2026-06-12::https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::tennis::2026-06-08::https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-08": {
+    "sofascore::football::2026-06-12::https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::tennis::2026-06-09::https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-09": {
+    "sofascore::football::2026-06-13::https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::tennis::2026-06-09::https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-09": {
+    "sofascore::football::2026-06-13::https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::tennis::2026-06-10::https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-10": {
+    "sofascore::football::2026-06-14::https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::tennis::2026-06-10::https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-10": {
+    "sofascore::football::2026-06-14::https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/football/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
@@ -171,39 +135,39 @@
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::volleyball::2026-06-08::https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-08": {
+    "sofascore::tennis::2026-06-12::https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::volleyball::2026-06-08::https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-08": {
+    "sofascore::tennis::2026-06-12::https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::volleyball::2026-06-09::https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-09": {
+    "sofascore::tennis::2026-06-13::https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::volleyball::2026-06-09::https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-09": {
+    "sofascore::tennis::2026-06-13::https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::volleyball::2026-06-10::https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-10": {
+    "sofascore::tennis::2026-06-14::https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::volleyball::2026-06-10::https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-10": {
+    "sofascore::tennis::2026-06-14::https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/tennis/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
@@ -219,39 +183,39 @@
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::ice-hockey::2026-06-08::https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-08": {
+    "sofascore::volleyball::2026-06-12::https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::ice-hockey::2026-06-08::https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-08": {
+    "sofascore::volleyball::2026-06-12::https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::ice-hockey::2026-06-09::https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-09": {
+    "sofascore::volleyball::2026-06-13::https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::ice-hockey::2026-06-09::https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-09": {
+    "sofascore::volleyball::2026-06-13::https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::ice-hockey::2026-06-10::https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-10": {
+    "sofascore::volleyball::2026-06-14::https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::ice-hockey::2026-06-10::https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-10": {
+    "sofascore::volleyball::2026-06-14::https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/volleyball/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
@@ -267,39 +231,39 @@
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::handball::2026-06-08::https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-08": {
+    "sofascore::ice-hockey::2026-06-12::https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::handball::2026-06-08::https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-08": {
+    "sofascore::ice-hockey::2026-06-12::https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::handball::2026-06-09::https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-09": {
+    "sofascore::ice-hockey::2026-06-13::https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::handball::2026-06-09::https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-09": {
+    "sofascore::ice-hockey::2026-06-13::https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::handball::2026-06-10::https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-10": {
+    "sofascore::ice-hockey::2026-06-14::https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::handball::2026-06-10::https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-10": {
+    "sofascore::ice-hockey::2026-06-14::https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/ice-hockey/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
@@ -315,39 +279,39 @@
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::baseball::2026-06-08::https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-08": {
+    "sofascore::handball::2026-06-12::https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::baseball::2026-06-08::https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-08": {
+    "sofascore::handball::2026-06-12::https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-12": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-08",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-12",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::baseball::2026-06-09::https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-09": {
+    "sofascore::handball::2026-06-13::https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::baseball::2026-06-09::https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-09": {
+    "sofascore::handball::2026-06-13::https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-13": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-09",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-13",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
-    "sofascore::baseball::2026-06-10::https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-10": {
+    "sofascore::handball::2026-06-14::https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://api.sofascore.com"
     },
-    "sofascore::baseball::2026-06-10::https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-10": {
+    "sofascore::handball::2026-06-14::https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-14": {
       "status": 403,
-      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-10",
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/handball/scheduled-events/2026-06-14",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
     },
@@ -362,39 +326,45 @@
       "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-11",
       "event_count": 0,
       "host_pattern": "https://www.sofascore.com"
+    },
+    "sofascore::baseball::2026-06-12::https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-12": {
+      "status": 403,
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-12",
+      "event_count": 0,
+      "host_pattern": "https://api.sofascore.com"
+    },
+    "sofascore::baseball::2026-06-12::https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-12": {
+      "status": 403,
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-12",
+      "event_count": 0,
+      "host_pattern": "https://www.sofascore.com"
+    },
+    "sofascore::baseball::2026-06-13::https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-13": {
+      "status": 403,
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-13",
+      "event_count": 0,
+      "host_pattern": "https://api.sofascore.com"
+    },
+    "sofascore::baseball::2026-06-13::https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-13": {
+      "status": 403,
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-13",
+      "event_count": 0,
+      "host_pattern": "https://www.sofascore.com"
+    },
+    "sofascore::baseball::2026-06-14::https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-14": {
+      "status": 403,
+      "error": "403 Client Error: Forbidden for url: https://api.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-14",
+      "event_count": 0,
+      "host_pattern": "https://api.sofascore.com"
+    },
+    "sofascore::baseball::2026-06-14::https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-14": {
+      "status": 403,
+      "error": "403 Client Error: Forbidden for url: https://www.sofascore.com/api/v1/sport/baseball/scheduled-events/2026-06-14",
+      "event_count": 0,
+      "host_pattern": "https://www.sofascore.com"
     }
   },
   "espn": {
-    "espn::WNBA::2026-06-08": {
-      "status": 200,
-      "error": "",
-      "event_count": 3,
-      "keys": [
-        "leagues",
-        "events",
-        "provider"
-      ]
-    },
-    "espn::WNBA::2026-06-09": {
-      "status": 200,
-      "error": "",
-      "event_count": 3,
-      "keys": [
-        "leagues",
-        "events",
-        "provider"
-      ]
-    },
-    "espn::WNBA::2026-06-10": {
-      "status": 200,
-      "error": "",
-      "event_count": 2,
-      "keys": [
-        "leagues",
-        "events",
-        "provider"
-      ]
-    },
     "espn::WNBA::2026-06-11": {
       "status": 200,
       "error": "",
@@ -405,40 +375,34 @@
         "provider"
       ]
     },
-    "espn::NCAA Women's Basketball::2026-06-08": {
+    "espn::WNBA::2026-06-12": {
       "status": 200,
       "error": "",
-      "event_count": 0,
+      "event_count": 2,
       "keys": [
         "leagues",
-        "groups",
         "events",
-        "provider",
-        "eventsDate"
+        "provider"
       ]
     },
-    "espn::NCAA Women's Basketball::2026-06-09": {
+    "espn::WNBA::2026-06-13": {
       "status": 200,
       "error": "",
-      "event_count": 0,
+      "event_count": 4,
       "keys": [
         "leagues",
-        "groups",
         "events",
-        "provider",
-        "eventsDate"
+        "provider"
       ]
     },
-    "espn::NCAA Women's Basketball::2026-06-10": {
+    "espn::WNBA::2026-06-14": {
       "status": 200,
       "error": "",
-      "event_count": 0,
+      "event_count": 2,
       "keys": [
         "leagues",
-        "groups",
         "events",
-        "provider",
-        "eventsDate"
+        "provider"
       ]
     },
     "espn::NCAA Women's Basketball::2026-06-11": {
@@ -453,23 +417,41 @@
         "eventsDate"
       ]
     },
-    "espn::NCAA Softball::2026-06-08": {
-      "status": 400,
-      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/softball/college-softball/scoreboard?dates=20260608",
+    "espn::NCAA Women's Basketball::2026-06-12": {
+      "status": 200,
+      "error": "",
       "event_count": 0,
-      "keys": []
+      "keys": [
+        "leagues",
+        "groups",
+        "events",
+        "provider",
+        "eventsDate"
+      ]
     },
-    "espn::NCAA Softball::2026-06-09": {
-      "status": 400,
-      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/softball/college-softball/scoreboard?dates=20260609",
+    "espn::NCAA Women's Basketball::2026-06-13": {
+      "status": 200,
+      "error": "",
       "event_count": 0,
-      "keys": []
+      "keys": [
+        "leagues",
+        "groups",
+        "events",
+        "provider",
+        "eventsDate"
+      ]
     },
-    "espn::NCAA Softball::2026-06-10": {
-      "status": 400,
-      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/softball/college-softball/scoreboard?dates=20260610",
+    "espn::NCAA Women's Basketball::2026-06-14": {
+      "status": 200,
+      "error": "",
       "event_count": 0,
-      "keys": []
+      "keys": [
+        "leagues",
+        "groups",
+        "events",
+        "provider",
+        "eventsDate"
+      ]
     },
     "espn::NCAA Softball::2026-06-11": {
       "status": 400,
@@ -477,35 +459,23 @@
       "event_count": 0,
       "keys": []
     },
-    "espn::NWSL::2026-06-08": {
-      "status": 200,
-      "error": "",
+    "espn::NCAA Softball::2026-06-12": {
+      "status": 400,
+      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/softball/college-softball/scoreboard?dates=20260612",
       "event_count": 0,
-      "keys": [
-        "leagues",
-        "events",
-        "provider"
-      ]
+      "keys": []
     },
-    "espn::NWSL::2026-06-09": {
-      "status": 200,
-      "error": "",
+    "espn::NCAA Softball::2026-06-13": {
+      "status": 400,
+      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/softball/college-softball/scoreboard?dates=20260613",
       "event_count": 0,
-      "keys": [
-        "leagues",
-        "events",
-        "provider"
-      ]
+      "keys": []
     },
-    "espn::NWSL::2026-06-10": {
-      "status": 200,
-      "error": "",
+    "espn::NCAA Softball::2026-06-14": {
+      "status": 400,
+      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/softball/college-softball/scoreboard?dates=20260614",
       "event_count": 0,
-      "keys": [
-        "leagues",
-        "events",
-        "provider"
-      ]
+      "keys": []
     },
     "espn::NWSL::2026-06-11": {
       "status": 200,
@@ -517,7 +487,7 @@
         "provider"
       ]
     },
-    "espn::NCAA Women's Volleyball::2026-06-08": {
+    "espn::NWSL::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -527,7 +497,7 @@
         "provider"
       ]
     },
-    "espn::NCAA Women's Volleyball::2026-06-09": {
+    "espn::NWSL::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -537,7 +507,7 @@
         "provider"
       ]
     },
-    "espn::NCAA Women's Volleyball::2026-06-10": {
+    "espn::NWSL::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -557,170 +527,62 @@
         "provider"
       ]
     },
-    "espn::NCAA Women's Soccer::2026-06-08": {
-      "status": 400,
-      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260608",
+    "espn::NCAA Women's Volleyball::2026-06-12": {
+      "status": 200,
+      "error": "",
       "event_count": 0,
-      "keys": []
+      "keys": [
+        "leagues",
+        "events",
+        "provider"
+      ]
     },
-    "espn::NCAA Women's Soccer::2026-06-09": {
-      "status": 400,
-      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260609",
+    "espn::NCAA Women's Volleyball::2026-06-13": {
+      "status": 200,
+      "error": "",
       "event_count": 0,
-      "keys": []
+      "keys": [
+        "leagues",
+        "events",
+        "provider"
+      ]
     },
-    "espn::NCAA Women's Soccer::2026-06-10": {
-      "status": 400,
-      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260610",
+    "espn::NCAA Women's Volleyball::2026-06-14": {
+      "status": 200,
+      "error": "",
       "event_count": 0,
-      "keys": []
+      "keys": [
+        "leagues",
+        "events",
+        "provider"
+      ]
     },
     "espn::NCAA Women's Soccer::2026-06-11": {
       "status": 400,
       "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260611",
       "event_count": 0,
       "keys": []
+    },
+    "espn::NCAA Women's Soccer::2026-06-12": {
+      "status": 400,
+      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260612",
+      "event_count": 0,
+      "keys": []
+    },
+    "espn::NCAA Women's Soccer::2026-06-13": {
+      "status": 400,
+      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260613",
+      "event_count": 0,
+      "keys": []
+    },
+    "espn::NCAA Women's Soccer::2026-06-14": {
+      "status": 400,
+      "error": "400 Client Error: Bad Request for url: https://site.api.espn.com/apis/site/v2/sports/soccer/womens-college-soccer/scoreboard?dates=20260614",
+      "event_count": 0,
+      "keys": []
     }
   },
   "ncaa_api": {
-    "ncaa::DI Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-08": {
-      "status": 200,
-      "error": "",
-      "raw_event_count": 1,
-      "fresh_event_count": 0,
-      "stale_event_count": 1,
-      "data_type": "dict",
-      "top_keys": [
-        "inputMD5Sum",
-        "instanceId",
-        "updated_at",
-        "games"
-      ]
-    },
-    "ncaa::DI Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/softball/d1/20260608": {
-      "status": 200,
-      "error": "",
-      "raw_event_count": 1,
-      "fresh_event_count": 0,
-      "stale_event_count": 1,
-      "data_type": "dict",
-      "top_keys": [
-        "inputMD5Sum",
-        "instanceId",
-        "updated_at",
-        "games"
-      ]
-    },
-    "ncaa::DI Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-08": {
-      "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-08",
-      "raw_event_count": 0,
-      "fresh_event_count": 0,
-      "stale_event_count": 0,
-      "data_type": "NoneType",
-      "top_keys": []
-    },
-    "ncaa::DI Softball::2026-06-08::https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-08": {
-      "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-08",
-      "raw_event_count": 0,
-      "fresh_event_count": 0,
-      "stale_event_count": 0,
-      "data_type": "NoneType",
-      "top_keys": []
-    },
-    "ncaa::DI Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-09": {
-      "status": 200,
-      "error": "",
-      "raw_event_count": 1,
-      "fresh_event_count": 0,
-      "stale_event_count": 1,
-      "data_type": "dict",
-      "top_keys": [
-        "inputMD5Sum",
-        "instanceId",
-        "updated_at",
-        "games"
-      ]
-    },
-    "ncaa::DI Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/softball/d1/20260609": {
-      "status": 200,
-      "error": "",
-      "raw_event_count": 1,
-      "fresh_event_count": 0,
-      "stale_event_count": 1,
-      "data_type": "dict",
-      "top_keys": [
-        "inputMD5Sum",
-        "instanceId",
-        "updated_at",
-        "games"
-      ]
-    },
-    "ncaa::DI Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-09": {
-      "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-09",
-      "raw_event_count": 0,
-      "fresh_event_count": 0,
-      "stale_event_count": 0,
-      "data_type": "NoneType",
-      "top_keys": []
-    },
-    "ncaa::DI Softball::2026-06-09::https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-09": {
-      "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-09",
-      "raw_event_count": 0,
-      "fresh_event_count": 0,
-      "stale_event_count": 0,
-      "data_type": "NoneType",
-      "top_keys": []
-    },
-    "ncaa::DI Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-10": {
-      "status": 200,
-      "error": "",
-      "raw_event_count": 1,
-      "fresh_event_count": 0,
-      "stale_event_count": 1,
-      "data_type": "dict",
-      "top_keys": [
-        "inputMD5Sum",
-        "instanceId",
-        "updated_at",
-        "games"
-      ]
-    },
-    "ncaa::DI Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/softball/d1/20260610": {
-      "status": 200,
-      "error": "",
-      "raw_event_count": 1,
-      "fresh_event_count": 0,
-      "stale_event_count": 1,
-      "data_type": "dict",
-      "top_keys": [
-        "inputMD5Sum",
-        "instanceId",
-        "updated_at",
-        "games"
-      ]
-    },
-    "ncaa::DI Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-10": {
-      "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-10",
-      "raw_event_count": 0,
-      "fresh_event_count": 0,
-      "stale_event_count": 0,
-      "data_type": "NoneType",
-      "top_keys": []
-    },
-    "ncaa::DI Softball::2026-06-10::https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-10": {
-      "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-10",
-      "raw_event_count": 0,
-      "fresh_event_count": 0,
-      "stale_event_count": 0,
-      "data_type": "NoneType",
-      "top_keys": []
-    },
     "ncaa::DI Softball::2026-06-11::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-11": {
       "status": 200,
       "error": "",
@@ -767,7 +629,7 @@
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DII Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/softball/d2/2026-06-08": {
+    "ncaa::DI Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-12": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -781,7 +643,7 @@
         "games"
       ]
     },
-    "ncaa::DII Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/softball/d2/20260608": {
+    "ncaa::DI Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/softball/d1/20260612": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -795,25 +657,25 @@
         "games"
       ]
     },
-    "ncaa::DII Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-08": {
+    "ncaa::DI Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DII Softball::2026-06-08::https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-08": {
+    "ncaa::DI Softball::2026-06-12::https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DII Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/softball/d2/2026-06-09": {
+    "ncaa::DI Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-13": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -827,7 +689,7 @@
         "games"
       ]
     },
-    "ncaa::DII Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/softball/d2/20260609": {
+    "ncaa::DI Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/softball/d1/20260613": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -841,25 +703,25 @@
         "games"
       ]
     },
-    "ncaa::DII Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-09": {
+    "ncaa::DI Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DII Softball::2026-06-09::https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-09": {
+    "ncaa::DI Softball::2026-06-13::https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DII Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/softball/d2/2026-06-10": {
+    "ncaa::DI Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/softball/d1/2026-06-14": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -873,7 +735,7 @@
         "games"
       ]
     },
-    "ncaa::DII Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/softball/d2/20260610": {
+    "ncaa::DI Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/softball/d1/20260614": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -887,18 +749,18 @@
         "games"
       ]
     },
-    "ncaa::DII Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-10": {
+    "ncaa::DI Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/softball/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DII Softball::2026-06-10::https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-10": {
+    "ncaa::DI Softball::2026-06-14::https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d1/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
@@ -951,7 +813,7 @@
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DIII Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/softball/d3/2026-06-08": {
+    "ncaa::DII Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/softball/d2/2026-06-12": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -965,7 +827,7 @@
         "games"
       ]
     },
-    "ncaa::DIII Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/softball/d3/20260608": {
+    "ncaa::DII Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/softball/d2/20260612": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -979,25 +841,25 @@
         "games"
       ]
     },
-    "ncaa::DIII Softball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-08": {
+    "ncaa::DII Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DIII Softball::2026-06-08::https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-08": {
+    "ncaa::DII Softball::2026-06-12::https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DIII Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/softball/d3/2026-06-09": {
+    "ncaa::DII Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/softball/d2/2026-06-13": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1011,7 +873,7 @@
         "games"
       ]
     },
-    "ncaa::DIII Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/softball/d3/20260609": {
+    "ncaa::DII Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/softball/d2/20260613": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1025,25 +887,25 @@
         "games"
       ]
     },
-    "ncaa::DIII Softball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-09": {
+    "ncaa::DII Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DIII Softball::2026-06-09::https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-09": {
+    "ncaa::DII Softball::2026-06-13::https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DIII Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/softball/d3/2026-06-10": {
+    "ncaa::DII Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/softball/d2/2026-06-14": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1057,7 +919,7 @@
         "games"
       ]
     },
-    "ncaa::DIII Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/softball/d3/20260610": {
+    "ncaa::DII Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/softball/d2/20260614": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1071,18 +933,18 @@
         "games"
       ]
     },
-    "ncaa::DIII Softball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-10": {
+    "ncaa::DII Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d2/softball/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DIII Softball::2026-06-10::https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-10": {
+    "ncaa::DII Softball::2026-06-14::https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d2/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
@@ -1135,7 +997,7 @@
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Basketball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026-06-08": {
+    "ncaa::DIII Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/softball/d3/2026-06-12": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1149,7 +1011,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Basketball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/20260608": {
+    "ncaa::DIII Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/softball/d3/20260612": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1163,25 +1025,25 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Basketball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-08": {
+    "ncaa::DIII Softball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Basketball::2026-06-08::https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-08": {
+    "ncaa::DIII Softball::2026-06-12::https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Basketball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026-06-09": {
+    "ncaa::DIII Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/softball/d3/2026-06-13": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1195,7 +1057,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Basketball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/20260609": {
+    "ncaa::DIII Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/softball/d3/20260613": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1209,25 +1071,25 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Basketball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-09": {
+    "ncaa::DIII Softball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Basketball::2026-06-09::https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-09": {
+    "ncaa::DIII Softball::2026-06-13::https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Basketball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026-06-10": {
+    "ncaa::DIII Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/softball/d3/2026-06-14": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1241,7 +1103,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Basketball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/20260610": {
+    "ncaa::DIII Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/softball/d3/20260614": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1255,18 +1117,18 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Basketball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-10": {
+    "ncaa::DIII Softball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d3/softball/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Basketball::2026-06-10::https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-10": {
+    "ncaa::DIII Softball::2026-06-14::https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/softball/d3/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
@@ -1319,7 +1181,7 @@
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Volleyball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/2026-06-08": {
+    "ncaa::DI Women's Basketball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026-06-12": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1333,7 +1195,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Volleyball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/20260608": {
+    "ncaa::DI Women's Basketball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/20260612": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1347,25 +1209,25 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Volleyball::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-08": {
+    "ncaa::DI Women's Basketball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Volleyball::2026-06-08::https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-08": {
+    "ncaa::DI Women's Basketball::2026-06-12::https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Volleyball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/2026-06-09": {
+    "ncaa::DI Women's Basketball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026-06-13": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1379,7 +1241,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Volleyball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/20260609": {
+    "ncaa::DI Women's Basketball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/20260613": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1393,25 +1255,25 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Volleyball::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-09": {
+    "ncaa::DI Women's Basketball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Volleyball::2026-06-09::https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-09": {
+    "ncaa::DI Women's Basketball::2026-06-13::https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Volleyball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/2026-06-10": {
+    "ncaa::DI Women's Basketball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/2026-06-14": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1425,7 +1287,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Volleyball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/20260610": {
+    "ncaa::DI Women's Basketball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/basketball-women/d1/20260614": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1439,18 +1301,18 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Volleyball::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-10": {
+    "ncaa::DI Women's Basketball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/basketball-women/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Volleyball::2026-06-10::https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-10": {
+    "ncaa::DI Women's Basketball::2026-06-14::https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/basketball-women/d1/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
@@ -1503,7 +1365,7 @@
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Soccer::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/2026-06-08": {
+    "ncaa::DI Women's Volleyball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/2026-06-12": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1517,7 +1379,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Soccer::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/20260608": {
+    "ncaa::DI Women's Volleyball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/20260612": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1531,25 +1393,25 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Soccer::2026-06-08::https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-08": {
+    "ncaa::DI Women's Volleyball::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Soccer::2026-06-08::https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-08": {
+    "ncaa::DI Women's Volleyball::2026-06-12::https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-12": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-08",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-12",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Soccer::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/2026-06-09": {
+    "ncaa::DI Women's Volleyball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/2026-06-13": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1563,7 +1425,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Soccer::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/20260609": {
+    "ncaa::DI Women's Volleyball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/20260613": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1577,25 +1439,25 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Soccer::2026-06-09::https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-09": {
+    "ncaa::DI Women's Volleyball::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Soccer::2026-06-09::https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-09": {
+    "ncaa::DI Women's Volleyball::2026-06-13::https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-13": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-09",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-13",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Soccer::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/2026-06-10": {
+    "ncaa::DI Women's Volleyball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/2026-06-14": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1609,7 +1471,7 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Soccer::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/20260610": {
+    "ncaa::DI Women's Volleyball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/volleyball-women/d1/20260614": {
       "status": 200,
       "error": "",
       "raw_event_count": 1,
@@ -1623,18 +1485,18 @@
         "games"
       ]
     },
-    "ncaa::DI Women's Soccer::2026-06-10::https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-10": {
+    "ncaa::DI Women's Volleyball::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/volleyball-women/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
     },
-    "ncaa::DI Women's Soccer::2026-06-10::https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-10": {
+    "ncaa::DI Women's Volleyball::2026-06-14::https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-14": {
       "status": 422,
-      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-10",
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/volleyball-women/d1/2026-06-14",
       "raw_event_count": 0,
       "fresh_event_count": 0,
       "stale_event_count": 0,
@@ -1686,37 +1548,175 @@
       "stale_event_count": 0,
       "data_type": "NoneType",
       "top_keys": []
+    },
+    "ncaa::DI Women's Soccer::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/2026-06-12": {
+      "status": 200,
+      "error": "",
+      "raw_event_count": 1,
+      "fresh_event_count": 0,
+      "stale_event_count": 1,
+      "data_type": "dict",
+      "top_keys": [
+        "inputMD5Sum",
+        "instanceId",
+        "updated_at",
+        "games"
+      ]
+    },
+    "ncaa::DI Women's Soccer::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/20260612": {
+      "status": 200,
+      "error": "",
+      "raw_event_count": 1,
+      "fresh_event_count": 0,
+      "stale_event_count": 1,
+      "data_type": "dict",
+      "top_keys": [
+        "inputMD5Sum",
+        "instanceId",
+        "updated_at",
+        "games"
+      ]
+    },
+    "ncaa::DI Women's Soccer::2026-06-12::https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-12": {
+      "status": 422,
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-12",
+      "raw_event_count": 0,
+      "fresh_event_count": 0,
+      "stale_event_count": 0,
+      "data_type": "NoneType",
+      "top_keys": []
+    },
+    "ncaa::DI Women's Soccer::2026-06-12::https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-12": {
+      "status": 422,
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-12",
+      "raw_event_count": 0,
+      "fresh_event_count": 0,
+      "stale_event_count": 0,
+      "data_type": "NoneType",
+      "top_keys": []
+    },
+    "ncaa::DI Women's Soccer::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/2026-06-13": {
+      "status": 200,
+      "error": "",
+      "raw_event_count": 1,
+      "fresh_event_count": 0,
+      "stale_event_count": 1,
+      "data_type": "dict",
+      "top_keys": [
+        "inputMD5Sum",
+        "instanceId",
+        "updated_at",
+        "games"
+      ]
+    },
+    "ncaa::DI Women's Soccer::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/20260613": {
+      "status": 200,
+      "error": "",
+      "raw_event_count": 1,
+      "fresh_event_count": 0,
+      "stale_event_count": 1,
+      "data_type": "dict",
+      "top_keys": [
+        "inputMD5Sum",
+        "instanceId",
+        "updated_at",
+        "games"
+      ]
+    },
+    "ncaa::DI Women's Soccer::2026-06-13::https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-13": {
+      "status": 422,
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-13",
+      "raw_event_count": 0,
+      "fresh_event_count": 0,
+      "stale_event_count": 0,
+      "data_type": "NoneType",
+      "top_keys": []
+    },
+    "ncaa::DI Women's Soccer::2026-06-13::https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-13": {
+      "status": 422,
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-13",
+      "raw_event_count": 0,
+      "fresh_event_count": 0,
+      "stale_event_count": 0,
+      "data_type": "NoneType",
+      "top_keys": []
+    },
+    "ncaa::DI Women's Soccer::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/2026-06-14": {
+      "status": 200,
+      "error": "",
+      "raw_event_count": 1,
+      "fresh_event_count": 0,
+      "stale_event_count": 1,
+      "data_type": "dict",
+      "top_keys": [
+        "inputMD5Sum",
+        "instanceId",
+        "updated_at",
+        "games"
+      ]
+    },
+    "ncaa::DI Women's Soccer::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/soccer-women/d1/20260614": {
+      "status": 200,
+      "error": "",
+      "raw_event_count": 1,
+      "fresh_event_count": 0,
+      "stale_event_count": 1,
+      "data_type": "dict",
+      "top_keys": [
+        "inputMD5Sum",
+        "instanceId",
+        "updated_at",
+        "games"
+      ]
+    },
+    "ncaa::DI Women's Soccer::2026-06-14::https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-14": {
+      "status": 422,
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/scoreboard/d1/soccer-women/2026-06-14",
+      "raw_event_count": 0,
+      "fresh_event_count": 0,
+      "stale_event_count": 0,
+      "data_type": "NoneType",
+      "top_keys": []
+    },
+    "ncaa::DI Women's Soccer::2026-06-14::https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-14": {
+      "status": 422,
+      "error": "422 Client Error: Unprocessable Entity for url: https://ncaa-api.henrygd.me/game/scoreboard/soccer-women/d1/2026-06-14",
+      "raw_event_count": 0,
+      "fresh_event_count": 0,
+      "stale_event_count": 0,
+      "data_type": "NoneType",
+      "top_keys": []
     }
   },
   "thesportsdb": {
-    "thesportsdb::2026-06-08": {
-      "status": 200,
-      "error": "",
-      "event_count": 3,
-      "api_key_used": "secret_or_public",
-      "keys": [
-        "events"
-      ]
-    },
-    "thesportsdb::2026-06-09": {
-      "status": 200,
-      "error": "",
-      "event_count": 3,
-      "api_key_used": "secret_or_public",
-      "keys": [
-        "events"
-      ]
-    },
-    "thesportsdb::2026-06-10": {
-      "status": 200,
-      "error": "",
-      "event_count": 3,
-      "api_key_used": "secret_or_public",
-      "keys": [
-        "events"
-      ]
-    },
     "thesportsdb::2026-06-11": {
+      "status": 200,
+      "error": "",
+      "event_count": 3,
+      "api_key_used": "secret_or_public",
+      "keys": [
+        "events"
+      ]
+    },
+    "thesportsdb::2026-06-12": {
+      "status": 200,
+      "error": "",
+      "event_count": 3,
+      "api_key_used": "secret_or_public",
+      "keys": [
+        "events"
+      ]
+    },
+    "thesportsdb::2026-06-13": {
+      "status": 200,
+      "error": "",
+      "event_count": 3,
+      "api_key_used": "secret_or_public",
+      "keys": [
+        "events"
+      ]
+    },
+    "thesportsdb::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 3,
@@ -1737,57 +1737,6 @@
       "rugby",
       "baseball"
     ],
-    "apisports::basketball::2026-06-08": {
-      "status": 200,
-      "error": "",
-      "event_count": 0,
-      "likely_womens_events": 0,
-      "top_level_keys": [
-        "get",
-        "parameters",
-        "errors",
-        "results",
-        "paging",
-        "response"
-      ],
-      "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
-      }
-    },
-    "apisports::basketball::2026-06-09": {
-      "status": 200,
-      "error": "",
-      "event_count": 0,
-      "likely_womens_events": 0,
-      "top_level_keys": [
-        "get",
-        "parameters",
-        "errors",
-        "results",
-        "paging",
-        "response"
-      ],
-      "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
-      }
-    },
-    "apisports::basketball::2026-06-10": {
-      "status": 200,
-      "error": "",
-      "event_count": 0,
-      "likely_womens_events": 0,
-      "top_level_keys": [
-        "get",
-        "parameters",
-        "errors",
-        "results",
-        "paging",
-        "response"
-      ],
-      "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
-      }
-    },
     "apisports::basketball::2026-06-11": {
       "status": 200,
       "error": "",
@@ -1802,10 +1751,10 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::football::2026-06-08": {
+    "apisports::basketball::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1822,7 +1771,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::football::2026-06-09": {
+    "apisports::basketball::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1839,7 +1788,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::football::2026-06-10": {
+    "apisports::basketball::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1853,7 +1802,7 @@
         "response"
       ],
       "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     },
     "apisports::football::2026-06-11": {
@@ -1870,10 +1819,10 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::hockey::2026-06-08": {
+    "apisports::football::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1890,7 +1839,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::hockey::2026-06-09": {
+    "apisports::football::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1907,7 +1856,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::hockey::2026-06-10": {
+    "apisports::football::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1921,7 +1870,7 @@
         "response"
       ],
       "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     },
     "apisports::hockey::2026-06-11": {
@@ -1938,10 +1887,10 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::volleyball::2026-06-08": {
+    "apisports::hockey::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1958,7 +1907,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::volleyball::2026-06-09": {
+    "apisports::hockey::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1975,7 +1924,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::volleyball::2026-06-10": {
+    "apisports::hockey::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -1989,7 +1938,7 @@
         "response"
       ],
       "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     },
     "apisports::volleyball::2026-06-11": {
@@ -2006,10 +1955,10 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::handball::2026-06-08": {
+    "apisports::volleyball::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2026,7 +1975,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::handball::2026-06-09": {
+    "apisports::volleyball::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2043,7 +1992,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::handball::2026-06-10": {
+    "apisports::volleyball::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2057,7 +2006,7 @@
         "response"
       ],
       "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     },
     "apisports::handball::2026-06-11": {
@@ -2074,10 +2023,10 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::rugby::2026-06-08": {
+    "apisports::handball::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2094,7 +2043,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::rugby::2026-06-09": {
+    "apisports::handball::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2111,7 +2060,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::rugby::2026-06-10": {
+    "apisports::handball::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2125,7 +2074,7 @@
         "response"
       ],
       "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     },
     "apisports::rugby::2026-06-11": {
@@ -2142,10 +2091,10 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::baseball::2026-06-08": {
+    "apisports::rugby::2026-06-12": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2162,7 +2111,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::baseball::2026-06-09": {
+    "apisports::rugby::2026-06-13": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2179,7 +2128,7 @@
         "access": "Your account is suspended, check on https://dashboard.api-football.com."
       }
     },
-    "apisports::baseball::2026-06-10": {
+    "apisports::rugby::2026-06-14": {
       "status": 200,
       "error": "",
       "event_count": 0,
@@ -2193,7 +2142,7 @@
         "response"
       ],
       "errors": {
-        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     },
     "apisports::baseball::2026-06-11": {
@@ -2210,7 +2159,58 @@
         "response"
       ],
       "errors": {
-        "plan": "Free plans do not have access to this date, try from 2026-06-08 to 2026-06-10."
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+      }
+    },
+    "apisports::baseball::2026-06-12": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+      }
+    },
+    "apisports::baseball::2026-06-13": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "access": "Your account is suspended, check on https://dashboard.api-football.com."
+      }
+    },
+    "apisports::baseball::2026-06-14": {
+      "status": 200,
+      "error": "",
+      "event_count": 0,
+      "likely_womens_events": 0,
+      "top_level_keys": [
+        "get",
+        "parameters",
+        "errors",
+        "results",
+        "paging",
+        "response"
+      ],
+      "errors": {
+        "plan": "Free plans do not have access to this date, try from 2026-06-11 to 2026-06-13."
       }
     }
   }
