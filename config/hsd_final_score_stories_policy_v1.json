@@ -21,7 +21,8 @@
     "enabled": true,
     "days_back": 2,
     "league": "wnba",
-    "note": "Used as a structured final-score backfill/cross-check. Final-only guard still applies."
+    "note": "Used as a structured final-score backfill/cross-check. Final-only guard still applies.",
+    "mode": "backfill_only"
   },
   "display_copy_bans": [
     "Verified Final",
@@ -32,5 +33,11 @@
     "accuracy lock",
     "QA labels",
     "workflow labels"
-  ]
+  ],
+  "min_contract_finals_before_skip_espn": 1,
+  "max_total_runtime_seconds": 55,
+  "logo_download_timeout_seconds": 5,
+  "espn_download_timeout_seconds": 5,
+  "max_logo_urls_per_team": 4,
+  "always_write_outputs": true
 }

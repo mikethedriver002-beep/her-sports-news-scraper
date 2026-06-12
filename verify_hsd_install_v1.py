@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.11-bebe-ops-v2.10"
-EXPECTED_PIPELINE_VERSION = "v3.2.11-bebe-ops-v2.10"
+VERSION = "hsd-install-verifier-v3.2.12-bebe-ops-v2.10.1"
+EXPECTED_PIPELINE_VERSION = "v3.2.12-bebe-ops-v2.10.1"
 MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
@@ -264,7 +264,7 @@ def main() -> None:
     if warnings:
         lines += ["## Warnings", "", *[f"- {x}" for x in warnings], ""]
     if not issues:
-        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.10.")
+        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.10.1.")
     Path("install_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps({"issues": len(issues), "warnings": len(warnings), "version_status": version_status, "preflight_cleanup": cleanup}, indent=2))

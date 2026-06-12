@@ -1,13 +1,16 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.11-bebe-ops-v2.10",
+  "pipeline_version": "v3.2.12-bebe-ops-v2.10.1",
   "contract_version": "v2",
   "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
   "default_review_artifact_size": "lite",
-  "platforms": ["Instagram", "Threads"],
-  "github_visible_version": "Her Sports Daily Production Controller v3.2.11 BeBe Ops v2.10",
-  "artifact_name_prefix": "hsd-production-control-v3-2-11-bebe-ops-v2-10",
+  "platforms": [
+    "Instagram",
+    "Threads"
+  ],
+  "github_visible_version": "Her Sports Daily Production Controller v3.2.12 BeBe Ops v2.10.1",
+  "artifact_name_prefix": "hsd-production-control-v3-2-12-bebe-ops-v2-10-1",
   "release_date_local": "2026-06-12",
-  "notes": "BeBe Ops v2.10 adds Final Score Stories Desk: recent verified final scores to IG Story graphics packs, exact team logos required, live games held out."
+  "notes": "BeBe Ops v2.10.1 integration fix: Final Score Stories Desk always runs/reports, skips slow network backfill when Results Contract already has finals, and always appears in lite review."
 }

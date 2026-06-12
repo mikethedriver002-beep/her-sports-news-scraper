@@ -1,8 +1,8 @@
 {
-  "release": "BeBe Ops v2.10",
-  "pipeline_version": "v3.2.11-bebe-ops-v2.10",
-  "github_visible_name": "Her Sports Daily Production Controller v3.2.11 BeBe Ops v2.10",
-  "artifact_name_prefix": "hsd-production-control-v3-2-11-bebe-ops-v2-10",
+  "release": "BeBe Ops v2.10.1",
+  "pipeline_version": "v3.2.12-bebe-ops-v2.10.1",
+  "github_visible_name": "Her Sports Daily Production Controller v3.2.12 BeBe Ops v2.10.1",
+  "artifact_name_prefix": "hsd-production-control-v3-2-12-bebe-ops-v2-10-1",
   "release_date_local": "2026-06-12",
-  "summary": "Final Score Stories Desk: recent verified final scores become IG Story graphics upload packs with exact-logo enforcement and live-game safety."
+  "summary": "Final Score Stories Desk v2.10.1 integration/hardening: always run, always report, bounded network, independent of Tonight preview."
 }
