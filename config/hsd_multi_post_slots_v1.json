@@ -1,0 +1,47 @@
+{
+  "version": "hsd-multi-post-slots-v1",
+  "slots": [
+    {
+      "slot_id": "threads_morning_board",
+      "slot_name": "Morning Threads board",
+      "platform": "Threads",
+      "window_et": "9:00 AM",
+      "type": "threads_board"
+    },
+    {
+      "slot_id": "ig_feed_noon",
+      "slot_name": "Noon IG feed",
+      "platform": "IG Feed",
+      "window_et": "12:00 PM",
+      "type": "feed"
+    },
+    {
+      "slot_id": "ig_story_results",
+      "slot_name": "IG Stories results/update lane",
+      "platform": "IG Stories",
+      "window_et": "10:30 AM / 8:45 AM next day",
+      "type": "story"
+    },
+    {
+      "slot_id": "ig_feed_preview",
+      "slot_name": "Afternoon preview post",
+      "platform": "IG Feed",
+      "window_et": "4:45 PM",
+      "type": "preview"
+    },
+    {
+      "slot_id": "threads_live_desk",
+      "slot_name": "Threads live desk",
+      "platform": "Threads",
+      "window_et": "7:00 PM - 11:30 PM",
+      "type": "threads_live"
+    },
+    {
+      "slot_id": "night_recap",
+      "slot_name": "Night recap / debate",
+      "platform": "Threads",
+      "window_et": "11:30 PM",
+      "type": "recap"
+    }
+  ]
+}
