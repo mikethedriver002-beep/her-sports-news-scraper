@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-daily-slate-v3.2.10-bebe-ops-v2.9-live-result-safety"
+VERSION = "hsd-daily-slate-v3.2.11-bebe-ops-v2.10-live-result-safety"
 OUT_CSV = Path("daily_slate_plan.csv")
 OUT_MD = Path("daily_slate_plan.md")
 OUT_GUARD = Path("daily_slate_guard_report.md")

@@ -1,0 +1,36 @@
+{
+  "policy_name": "HSD Final Score Stories Policy",
+  "version": "v1.0-bebe-ops-v2.10",
+  "purpose": "Generate IG Story graphics packs from recent verified final scores only.",
+  "max_results": 4,
+  "max_result_age_hours": 36,
+  "story_title_single_day": "Last Night in the W",
+  "story_title_same_day": "Finals in the W",
+  "story_shape": "1080x1920",
+  "require_exact_team_logos": true,
+  "allow_text_logo_fallback": false,
+  "allow_fake_or_substitute_logos": false,
+  "allow_live_games": false,
+  "allow_upcoming_games": false,
+  "player_images": {
+    "mode": "aggressive_optional",
+    "required_for_scoreboard": false,
+    "rule": "Player images are welcome when exact and attached. Never substitute or invent a player image."
+  },
+  "espn_fetch": {
+    "enabled": true,
+    "days_back": 2,
+    "league": "wnba",
+    "note": "Used as a structured final-score backfill/cross-check. Final-only guard still applies."
+  },
+  "display_copy_bans": [
+    "Verified Final",
+    "BUNDLE LOCKED FACTS",
+    "source-safe context",
+    "target date",
+    "all games listed",
+    "accuracy lock",
+    "QA labels",
+    "workflow labels"
+  ]
+}

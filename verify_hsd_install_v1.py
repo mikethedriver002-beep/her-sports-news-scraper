@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.10-bebe-ops-v2.9"
-EXPECTED_PIPELINE_VERSION = "v3.2.10-bebe-ops-v2.9"
+VERSION = "hsd-install-verifier-v3.2.11-bebe-ops-v2.10"
+EXPECTED_PIPELINE_VERSION = "v3.2.11-bebe-ops-v2.10"
 MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
@@ -27,6 +27,7 @@ REQUIRED_FILES = [
     "generate_hsd_player_image_assets_v1.py",
     "generate_hsd_graphics_upload_pack_v1.py",
     "generate_hsd_exact_asset_audit_v1.py",
+    "generate_hsd_final_score_stories_v1.py",
     "generate_hsd_graphics_qa_v1.py",
     "generate_hsd_rendered_slide_qa_v1.py",
     "generate_hsd_bebe_daily_ops_plan_v2.py",
@@ -43,12 +44,12 @@ REQUIRED_FILES = [
     "config/preview_focus_map.json",
     "config/hsd_exact_asset_policy_v1.json",
     "config/hsd_verified_logo_registry_v1.json",
+    "config/hsd_final_score_stories_policy_v1.json",
 ]
 
 OPTIONAL_TEMPLATE_FILES = [
     "operator/inbox/story_inbox_template_v2.csv",
     "config/hsd_release_version.json",
-    ".github/workflows/hsd-production-controller-v3-2-6-bebe-v2-5.yml",
 ]
 
 MANUAL_ONLY_WORKFLOW_MARKERS = ["workflow_dispatch"]
@@ -77,11 +78,14 @@ STALE_FILES = [
     "graphics_qa_report.md", "graphics_qa_results.csv", "graphics_qa_manifest.json",
     "graphics_prompt_clean_report.md", "graphics_prompt_clean_manifest.json", "graphics_banned_language.csv", "graphics_copy_style_guide.md", "graphics_display_copy.csv", "graphics_asset_usage_map.csv", "graphics_layout_blueprint.csv",
     "rendered_slide_qa.csv", "rendered_slide_qa_report.md", "rendered_slide_qa_manifest.json", "rendered_graphics_manual_review_template.csv",
+    "ig_story_results_queue.csv", "ig_story_results_frames.md", "ig_story_results_graphics_prompt.md", "ig_story_results_upload_pack_status.csv", "ig_story_results_upload_pack_status.json",
+    "ig_story_results_upload_manifest.csv", "final_score_story_guard_report.md", "final_score_story_guard_report.json", "ig_story_caption_bank.md", "ig_story_poll_stickers.md", "ig_story_player_image_candidates.csv",
     "hsd_current_run.json", "hsd_pipeline_lite_review.zip",
 ]
 
 STALE_DIRS = [
     "hsd_pipeline_lite_review", "graphics_chat_upload_pack", "graphics_chat_upload_pack_zips", "graphics_clean_prompts", "graphics_qa_dashboard", "generated_graphics",
+    "ig_story_results_upload_pack", "ig_story_results_upload_pack_zips",
 ]
 
 
@@ -176,6 +180,8 @@ def inspect_workflow(path: Path, issues: List[str], warnings: List[str], hashes:
         issues.append(f"{path}: does not run BeBe daily ops plan")
     if "generate_hsd_exact_asset_audit_v1.py" not in txt:
         warnings.append(f"{path}: exact asset audit step is missing; logos/player image gating may be weaker than v2.7")
+    if "generate_hsd_final_score_stories_v1.py" not in txt:
+        warnings.append(f"{path}: Final Score Stories Desk step is missing; IG Story result packs will not be generated")
     if "STRICT FRESHNESS GATE" not in txt:
         warnings.append(f"{path}: GitHub UI still has old strict_freshness label. Safe to run, but copy the hidden .github workflow to fix the display.")
     if EXPECTED_PIPELINE_VERSION not in txt:
@@ -214,13 +220,14 @@ def main() -> None:
             warnings.append(f"pipeline_version mismatch: {pipeline_version!r}; expected {EXPECTED_PIPELINE_VERSION!r}. This no longer blocks the run; update config/pipeline_version.json for cleaner GitHub/operator display.")
 
     inspect_workflow(Path(".github/workflows/hsd-pipeline-control-v1.yml"), issues, warnings, hashes)
-    inspect_workflow(Path(".github/workflows/hsd-production-controller-v3-2-6-bebe-v2-5.yml"), issues, warnings, hashes)
 
     review_gen = Path("generate_hsd_pipeline_review_lite_v1.py")
     if review_gen.exists():
         rt = review_gen.read_text(encoding="utf-8", errors="replace")
         if "include_ready_upload_packs" not in rt or "graphics_chat_upload_pack_zips" not in rt:
             issues.append("lite review generator does not include graphics upload pack ZIP safety net")
+        if "ig_story_results_upload_pack_zips" not in rt:
+            warnings.append("lite review generator does not include Final Score Stories upload pack ZIPs")
 
     validate_registry(issues, warnings)
 
@@ -257,7 +264,7 @@ def main() -> None:
     if warnings:
         lines += ["## Warnings", "", *[f"- {x}" for x in warnings], ""]
     if not issues:
-        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.4.")
+        lines.append("Install verification passed for safe execution. Version/display mismatches are warnings, not blockers, in BeBe Ops v2.10.")
     Path("install_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps({"issues": len(issues), "warnings": len(warnings), "version_status": version_status, "preflight_cleanup": cleanup}, indent=2))

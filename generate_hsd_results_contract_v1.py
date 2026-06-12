@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "hsd-results-contract-v3.2.10-bebe-ops-v2.9-live-result-safety"
+VERSION = "hsd-results-contract-v3.2.11-bebe-ops-v2.10-live-result-safety"
 OUT_CSV = Path("results_contract_v2.csv")
 OUT_JSONL = Path("results_contract_v2.jsonl")
 OUT_REPORT = Path("results_contract_report.md")

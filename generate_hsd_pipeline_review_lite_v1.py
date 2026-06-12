@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.2.10-bebe-ops-v2.9"
+VERSION = "hsd-pipeline-review-lite-v3.2.11-bebe-ops-v2.10"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -36,6 +36,10 @@ KEY_FILES = [
     "asset_candidates_review.md", "approved_graphics_assets.csv", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json",
     "config/hsd_exact_asset_policy_v1.json", "config/hsd_verified_logo_registry_v1.json",
     "rendered_slide_qa.csv", "rendered_slide_qa_report.md", "rendered_slide_qa_manifest.json", "rendered_graphics_manual_review_template.csv",
+    "ig_story_results_queue.csv", "ig_story_results_frames.md", "ig_story_results_graphics_prompt.md",
+    "ig_story_results_upload_pack_status.csv", "ig_story_results_upload_pack_status.json", "ig_story_results_upload_manifest.csv",
+    "final_score_story_guard_report.md", "final_score_story_guard_report.json",
+    "ig_story_caption_bank.md", "ig_story_poll_stickers.md", "ig_story_player_image_candidates.csv",
 ]
 
 
@@ -154,6 +158,22 @@ def main() -> None:
     ready_packs = include_ready_upload_packs(ready_dir, manifest)
     pack_file_count = safe_copy_tree_files(Path("graphics_chat_upload_pack"), pack_dir, manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
 
+    story_ready_dir = OUT_DIR / "ig_story_results_ready_upload_packs"
+    story_ready_dir.mkdir(parents=True, exist_ok=True)
+    story_ready_packs = []
+    story_zip_dir = Path("ig_story_results_upload_pack_zips")
+    if story_zip_dir.exists():
+        for p in sorted(story_zip_dir.glob("*.zip")):
+            size = p.stat().st_size
+            if size > MAX_UPLOAD_PACK_BYTES:
+                story_ready_packs.append({"zip": p.as_posix(), "included": False, "reason": f"zip larger than {MAX_UPLOAD_PACK_BYTES} bytes", "size": size})
+                continue
+            dest = story_ready_dir / p.name
+            shutil.copy2(p, dest)
+            manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": size})
+            story_ready_packs.append({"zip": dest.as_posix(), "included": True, "size": size})
+    story_pack_file_count = safe_copy_tree_files(Path("ig_story_results_upload_pack"), OUT_DIR / "ig_story_results_upload_pack", manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
+
     counts = {
         "results_contract_rows": row_count("results_contract_v2.csv"),
         "manual_story_candidates": row_count("story_candidates_manual.csv"),
@@ -162,12 +182,15 @@ def main() -> None:
         "upload_pack_rows": row_count("graphics_upload_pack_status.csv"),
         "ready_packs_included": sum(1 for p in ready_packs if p.get("included")),
         "graphics_upload_pack_files_included": pack_file_count,
+        "ig_story_results_ready_packs_included": sum(1 for p in story_ready_packs if p.get("included")),
+        "ig_story_results_upload_pack_files_included": story_pack_file_count,
     }
     status_json = {
         "version": VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "counts": counts,
         "ready_packs": ready_packs,
+        "ig_story_results_ready_packs": story_ready_packs,
         "max_upload_pack_bytes": MAX_UPLOAD_PACK_BYTES,
     }
     (OUT_DIR / "pipeline_status.json").write_text(json.dumps(status_json, indent=2), encoding="utf-8")

@@ -1,8 +1,8 @@
 {
-  "release": "BeBe Ops v2.9",
-  "pipeline_version": "v3.2.10-bebe-ops-v2.9",
-  "github_visible_name": "Her Sports Daily Production Controller v3.2.10 BeBe Ops v2.9",
-  "artifact_name_prefix": "hsd-production-control-v3-2-10-bebe-ops-v2-9",
-  "release_date_local": "2026-06-11",
-  "summary": "Live/in-progress games are held out of result posts; daily slate blocks non-final result candidates and preserves exact-asset/logo locking."
+  "release": "BeBe Ops v2.10",
+  "pipeline_version": "v3.2.11-bebe-ops-v2.10",
+  "github_visible_name": "Her Sports Daily Production Controller v3.2.11 BeBe Ops v2.10",
+  "artifact_name_prefix": "hsd-production-control-v3-2-11-bebe-ops-v2-10",
+  "release_date_local": "2026-06-12",
+  "summary": "Final Score Stories Desk: recent verified final scores become IG Story graphics upload packs with exact-logo enforcement and live-game safety."
 }

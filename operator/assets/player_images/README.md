@@ -1,13 +1,10 @@
-# HSD operator-approved player/person images
+# HSD Operator-Approved Player Images
 
-Put exact, real, operator-approved player images here to override public acquisition.
+Put exact player images/headshots here when you manually approve them.
 
-Name files with the player slug, for example:
+File names should include the player name, for example:
 
-- `aja-wilson.jpg`
-- `paige-bueckers.png`
-- `caitlin-clark.webp`
+- caitlin-clark.jpg
+- breanna-stewart.png
 
-Allowed extensions: `.png`, `.jpg`, `.jpeg`, `.webp`.
-
-Never put AI-generated players or mismatched player photos here.
+Never add a player image unless the identity is confirmed.
