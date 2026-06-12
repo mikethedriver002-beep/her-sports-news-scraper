@@ -1,6 +1,6 @@
 {
   "policy_name": "HSD Exact Logo and Player Image Policy",
-  "version": "v1.0-bebe-ops-v2.7",
+  "version": "v1.1-bebe-ops-v2.8",
   "team_logo_rule": "real_exact_logo_required",
   "player_image_rule": "real_exact_player_or_person_image_required_when_asset_is_required",
   "text_logo_fallback_allowed": false,
@@ -25,5 +25,10 @@
     "operator/assets/players",
     "data/assets/operator_approved/player_images"
   ],
-  "notes": "This supersedes and scraps the v2.6 text-badge fallback approach. BeBe should either acquire real assets or block clearly."
+  "notes": "This supersedes and scraps the v2.6 text-badge fallback approach. BeBe should either acquire real assets or block clearly.",
+  "headline": "Exact real logos/player images required. Current identity source preferred. No text fallback.",
+  "rules": [
+    "Known stale/legacy logo URLs are blocked even if the file name matches a team.",
+    "If a full-day Tonight graphic is generated after some games have started, label it as remaining slate, not full slate."
+  ]
 }

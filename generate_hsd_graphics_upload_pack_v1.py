@@ -22,7 +22,7 @@ try:
 except Exception:
     cairosvg = None
 
-VERSION = "hsd-graphics-upload-pack-v3.2.8-bebe-ops-v2.7-exact-assets"
+VERSION = "hsd-graphics-upload-pack-v3.2.9-bebe-ops-v2.8-current-logo-lock"
 
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
@@ -205,6 +205,16 @@ def registry_for_team(entity: str) -> Dict[str, Any]:
     return load_logo_registry().get(entity, {})
 
 
+def url_is_blocked_for_team(url: str, entity: str, registry: Dict[str, Any]) -> bool:
+    if not url:
+        return False
+    low = url.lower()
+    for token in registry.get("blocked_url_substrings", []) or []:
+        if str(token).lower() in low:
+            return True
+    return False
+
+
 def local_exact_files(entity: str, dirs: List[Path]) -> List[Path]:
     slug = slugify(entity)
     patterns = [slug, slug.replace("-", "_"), clean(entity).replace(" ", "_").lower(), clean(entity).lower().replace(" ", "-")]
@@ -310,10 +320,14 @@ def extract_logo_urls_from_page(page_url: str, entity: str) -> List[str]:
 
 
 def source_is_exact_for_team(source: str, entity: str, registry: Dict[str, Any]) -> bool:
-    if not source:
+    if not source or url_is_blocked_for_team(source, entity, registry):
         return False
     if source in set(registry.get("direct_urls", []) or []):
         return True
+    # For teams with blocked legacy patterns, only accept registry-direct or official-page extracted candidates.
+    # This prevents stale but slug-matching files such as legacy Portland_Fire_logo.svg from passing.
+    if registry.get("blocked_url_substrings"):
+        return False
     low = source.lower()
     slug = slugify(entity)
     compact = slug.replace("-", "")
@@ -328,7 +342,11 @@ def candidate_urls_for_team_logo(asset: Dict[str, str]) -> List[str]:
     candidates: List[str] = []
 
     def add(url: str) -> None:
-        if url and url not in candidates:
+        if not url:
+            return
+        if url_is_blocked_for_team(url, entity, registry):
+            return
+        if url not in candidates:
             candidates.append(url)
 
     for url in registry.get("direct_urls", []) or []:

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-graphics-language-pack-v2.7-exact-asset-display-safe"
+VERSION = "hsd-graphics-language-pack-v2.8-dynamic-preview-copy"
 
 INPUT_RENDER_MANIFEST = "studio_render_manifest_v2.json"
 INPUT_PLAYER_REQUIREMENTS = "player_image_requirements.csv"
@@ -99,19 +99,46 @@ def source_facts_text(bundle: Dict[str, Any]) -> str:
     return clean(sf)
 
 
+def preview_build() -> Dict[str, Any]:
+    return read_json(INPUT_PREVIEW_BUILD)
+
+
+def number_word(n: int) -> str:
+    return {0: "Zero", 1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight"}.get(n, str(n))
+
+
 def preview_matchups() -> List[str]:
-    build = read_json(INPUT_PREVIEW_BUILD)
+    build = preview_build()
     games = build.get("included_games") or build.get("games") or []
     rows: List[str] = []
     if isinstance(games, list):
         for g in games:
             if not isinstance(g, dict):
                 continue
+            m = clean(g.get("matchup"))
             away = clean(g.get("away_team") or g.get("away") or g.get("visitor_team"))
             home = clean(g.get("home_team") or g.get("home"))
-            if away and home:
+            if m:
+                rows.append(m)
+            elif away and home:
                 rows.append(f"{away} at {home}")
     return rows
+
+
+def preview_scope_info() -> tuple[str, str, str, int]:
+    build = preview_build()
+    matchups = preview_matchups()
+    included_count = int(build.get("included_count") or len(matchups) or 0)
+    full_count = int(build.get("full_target_date_count") or build.get("source_same_day_count") or included_count or 0)
+    scope = clean(build.get("preview_scope")) or ("remaining_slate" if full_count > included_count > 0 else "full_slate")
+    headline = clean(build.get("display_headline")) or ("Still to Come in the W" if scope == "remaining_slate" else "Tonight in the W")
+    if clean(build.get("display_kicker")):
+        kicker = clean(build.get("display_kicker"))
+    elif scope == "remaining_slate":
+        kicker = f"{number_word(included_count)} games still to go."
+    else:
+        kicker = f"{number_word(included_count)} games. One night."
+    return scope, headline, kicker, included_count
 
 
 def matchups_from_bundle(bundle: Dict[str, Any]) -> List[str]:
@@ -127,15 +154,18 @@ def display_copy_for_bundle(bundle: Dict[str, Any]) -> List[Dict[str, str]]:
     cta = "Follow Her Sports Daily for more women’s sports coverage."
     if is_preview_bundle(bundle):
         matchups = preview_matchups() or matchups_from_bundle(bundle)
-        matchup_text = " | ".join(matchups[:4])
+        matchup_text = " | ".join(matchups[:8])
+        scope, headline, slate_kicker, included_count = preview_scope_info()
+        subhead = "Late slate, big stakes" if scope == "remaining_slate" else "Games worth watching"
+        board_headline = "Still to come" if scope == "remaining_slate" else "The slate"
         rows = [
             {
                 "bundle_slug": slug,
                 "slide_number": 1,
                 "slide_role": "preview_cover",
-                "display_headline": "Tonight in the W" if "w" in name.lower() else name,
-                "display_subhead": "Games worth watching",
-                "display_kicker": "WNBA slate preview" if "w" in name.lower() else "Women’s sports preview",
+                "display_headline": headline if "w" in name.lower() else name,
+                "display_subhead": subhead,
+                "display_kicker": "WNBA slate preview" if scope == "full_slate" else "WNBA late slate",
                 "score_copy": "",
                 "cta_copy": "",
                 "do_not_render_terms": PREVIEW_BANNED,
@@ -145,13 +175,13 @@ def display_copy_for_bundle(bundle: Dict[str, Any]) -> List[Dict[str, str]]:
                 "bundle_slug": slug,
                 "slide_number": 2,
                 "slide_role": "slate_board",
-                "display_headline": "The slate",
+                "display_headline": board_headline,
                 "display_subhead": matchup_text or "Today’s matchups",
-                "display_kicker": "Four games. One night.",
+                "display_kicker": slate_kicker,
                 "score_copy": "",
                 "cta_copy": "",
                 "do_not_render_terms": PREVIEW_BANNED,
-                "notes": "Use matchup cards with time/team hierarchy. No result language.",
+                "notes": "Use matchup cards with time/team hierarchy. No result language. Do not imply a full slate if the bridge marked this as remaining_slate.",
             },
             {
                 "bundle_slug": slug,
@@ -367,7 +397,7 @@ def main() -> None:
         },
     }, indent=2), encoding="utf-8")
 
-    print("Created HSD graphics language pack v2.5")
+    print("Created HSD graphics language pack v2.8")
     print(json.dumps({
         "display_copy_rows": len(display_rows),
         "banned_language_rows": len(banned_rows),

@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-install-verifier-v3.2.8-bebe-ops-v2.7"
-EXPECTED_PIPELINE_VERSION = "v3.2.8-bebe-ops-v2.7"
+VERSION = "hsd-install-verifier-v3.2.9-bebe-ops-v2.8"
+EXPECTED_PIPELINE_VERSION = "v3.2.9-bebe-ops-v2.8"
 MIN_SAFE_PIPELINE_PREFIXES = ("v3.2", "v3.3")
 
 REQUIRED_FILES = [
