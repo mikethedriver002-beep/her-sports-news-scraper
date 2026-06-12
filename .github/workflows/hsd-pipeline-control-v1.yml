@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 95
     env:
-      HSD_RELEASE_VERSION: "v3.2.15-mermaid-ops-v1.1"
+      HSD_RELEASE_VERSION: "v3.2.16-mermaid-preview-intelligence-v1.0"
       HSD_ARTIFACT_NAME_PREFIX: "hsd-mermaid-ops-v1"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
@@ -168,6 +168,7 @@ jobs:
           rm -rf graphics_chat_upload_pack graphics_chat_upload_pack_zips graphics_clean_prompts generated_graphics
           rm -f rendered_slide_qa.csv rendered_slide_qa_report.md rendered_slide_qa_manifest.json rendered_graphics_manual_review_template.csv
           rm -f source_registry_audit.csv source_registry_audit.md source_registry_audit.json operator_command_center.html operator_command_center.md operator_command_center.json
+          rm -f tonight_preview_intelligence_report.md tonight_preview_slide_plan.md tonight_preview_player_lock_report.csv tonight_preview_storylines.csv tonight_preview_graphics_prompt_v2.md tonight_preview_pack_status.json tonight_preview_guard_report.md tonight_preview_layout_blueprint.csv tonight_preview_graphics_chat_override.txt
           rm -f hsd_current_run.json hsd_pipeline_lite_review.zip
           rm -rf hsd_pipeline_lite_review
       - name: Verify Mermaid Ops install
@@ -232,6 +233,7 @@ jobs:
             python generate_hsd_graphics_prompt_sanitizer_v1.py
             python generate_hsd_exact_asset_audit_v1.py || true
             python generate_hsd_graphics_upload_pack_v1.py
+            python generate_hsd_preview_intelligence_v1.py || true
             python generate_hsd_exact_asset_audit_v1.py || true
             python generate_hsd_graphics_qa_v1.py
             python generate_hsd_rendered_slide_qa_v1.py || true
@@ -288,6 +290,15 @@ jobs:
             preview_bundle_quality.csv
             preview_bundle_quality.md
             preview_bundle_quality_summary.csv
+            tonight_preview_intelligence_report.md
+            tonight_preview_slide_plan.md
+            tonight_preview_player_lock_report.csv
+            tonight_preview_storylines.csv
+            tonight_preview_graphics_prompt_v2.md
+            tonight_preview_pack_status.json
+            tonight_preview_guard_report.md
+            tonight_preview_layout_blueprint.csv
+            tonight_preview_graphics_chat_override.txt
             graphics_upload_pack_status.csv
             graphics_chat_direct_handoff.md
             graphics_chat_upload_instructions.md
