@@ -1,0 +1,40 @@
+{
+  "version": "v3.2.15-mermaid-ops-v1.1",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "watermark_rule": {
+    "allowed_count": 1,
+    "placement": "top_left",
+    "consistency_required": true,
+    "forbidden_alternates": [
+      "boxed_hsd_bug_when_other_frames_use_wordmark",
+      "multiple_logo_bugs_in_same_story_pack"
+    ]
+  },
+  "logo_rule": {
+    "exact_asset_required": true,
+    "single_variant_per_team_per_pack": true,
+    "forbidden_behaviors": [
+      "redraw_logo",
+      "switch_logo_variants_across_frames",
+      "substitute_team_logo"
+    ],
+    "special_attention_teams": [
+      "Phoenix Mercury",
+      "Portland Fire"
+    ]
+  },
+  "headline_rule": {
+    "preferred_template": "{winner} beat {loser}",
+    "forbidden_phrases": [
+      "gets the win"
+    ]
+  },
+  "cta_rule": {
+    "headline": "Best win of the night?",
+    "subheadline": "Tap in with HSD",
+    "poll_prompt": "Vote in the poll or reply with your pick.",
+    "reserve_poll_sticker_space": true,
+    "max_empty_poll_zone_percent": 22
+  }
+}
