@@ -1,13 +1,16 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.9-bebe-ops-v2.8",
+  "pipeline_version": "v3.2.10-bebe-ops-v2.9",
   "contract_version": "v2",
   "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
   "default_review_artifact_size": "lite",
-  "platforms": ["Instagram", "Threads"],
-  "github_visible_version": "Her Sports Daily Production Controller v3.2.9 BeBe Ops v2.8",
-  "artifact_name_prefix": "hsd-production-control-v3-2-9-bebe-ops-v2-8",
+  "platforms": [
+    "Instagram",
+    "Threads"
+  ],
+  "github_visible_version": "Her Sports Daily Production Controller v3.2.10 BeBe Ops v2.9",
+  "artifact_name_prefix": "hsd-production-control-v3-2-10-bebe-ops-v2-9",
   "release_date_local": "2026-06-11",
-  "notes": "BeBe Ops v2.8: current logo source lock for Mercury/Portland and dynamic full-slate vs remaining-slate preview copy."
+  "notes": "BeBe Ops v2.9: live-result safety gate plus daily slate guard. Live games cannot become IG/feed result candidates."
 }

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.2.8-bebe-ops-v2.7"
+VERSION = "hsd-pipeline-review-lite-v3.2.10-bebe-ops-v2.9"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -19,7 +19,7 @@ KEY_FILES = [
     "publish_guard_report.md", "publish_guard_report.json",
     "install_report.md", "install_report.json", "config/hsd_release_version.json", "config/pipeline_version.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
     "results_contract_report.md", "results_contract_v2.csv", "manual_story_inbox_report.md", "story_candidates_manual.csv",
-    "discovery_sources_report.md", "story_candidates_discovery.csv", "daily_slate_plan.md", "daily_slate_plan.csv",
+    "discovery_sources_report.md", "story_candidates_discovery.csv", "daily_slate_plan.md", "daily_slate_plan.csv", "daily_slate_guard_report.md",
     "latest_results_run_summary.md", "news_fact_packets.csv", "latest_news_sync_run_summary.md",
     "studio_bundle_queue.csv", "studio_bundle_packets.md", "studio_bundle_prompts.md", "studio_fresh_packet_report.md",
     "studio_preview_build_v2_report.md", "studio_preview_build_v2.json", "preview_player_focus.csv",

@@ -1,8 +1,8 @@
 {
-  "release": "BeBe Ops v2.8",
-  "pipeline_version": "v3.2.9-bebe-ops-v2.8",
-  "github_visible_name": "Her Sports Daily Production Controller v3.2.9 BeBe Ops v2.8",
-  "artifact_name_prefix": "hsd-production-control-v3-2-9-bebe-ops-v2-8",
+  "release": "BeBe Ops v2.9",
+  "pipeline_version": "v3.2.10-bebe-ops-v2.9",
+  "github_visible_name": "Her Sports Daily Production Controller v3.2.10 BeBe Ops v2.9",
+  "artifact_name_prefix": "hsd-production-control-v3-2-10-bebe-ops-v2-9",
   "release_date_local": "2026-06-11",
-  "summary": "Current-logo lock for Mercury/Portland plus dynamic full-slate/remaining-slate preview copy."
+  "summary": "Live/in-progress games are held out of result posts; daily slate blocks non-final result candidates and preserves exact-asset/logo locking."
 }
