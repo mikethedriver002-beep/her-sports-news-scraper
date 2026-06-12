@@ -1,5 +1,5 @@
-name: Her Sports Daily Production Controller v3.2.11 BeBe Ops v2.10
-run-name: HSD BeBe Ops v2.10 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
+name: Her Sports Daily Production Controller v3.2.12 BeBe Ops v2.10.1
+run-name: HSD BeBe Ops v2.10.1 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -127,6 +127,8 @@ jobs:
       HSD_PLAYER_IMAGE_MAX_CANDIDATES: "24"
       HSD_FINAL_SCORE_STORIES_ENABLE_ESPN_FETCH: "1"
       HSD_FINAL_SCORE_STORIES_POLICY: "config/hsd_final_score_stories_policy_v1.json"
+      HSD_FINAL_SCORE_STORIES_NETWORK: "1"
+      HSD_FINAL_SCORE_STORIES_FETCH_TIMEOUT_SECONDS: "5"
       HSD_PLAYER_IMAGE_AUTO_APPROVE_SCORE: "45"
       HSD_PLAYER_IMAGE_MIN_WIDTH: "240"
       HSD_PLAYER_IMAGE_MIN_HEIGHT: "240"
@@ -250,7 +252,7 @@ jobs:
         run: python build_hsd_daily_slate_v1.py
 
       - name: Build Final Score Stories Desk
-        if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only' || env.HSD_RUN_MODE == 'review_only'
+        if: always() && (env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'results_only' || env.HSD_RUN_MODE == 'review_only' || env.HSD_RUN_MODE == 'discovery_only')
         shell: bash
         run: python generate_hsd_final_score_stories_v1.py || true
 
@@ -398,7 +400,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-production-control-v3-2-11-bebe-ops-v2-10-lite-review-${{ github.run_number }}
+          name: hsd-production-control-v3-2-12-bebe-ops-v2-10-1-lite-review-${{ github.run_number }}
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -479,6 +481,6 @@ jobs:
             echo "No generated output changes to commit."
             exit 0
           fi
-          git commit -m "Run HSD Production Control v3.2.11 BeBe Ops v2.10"
+          git commit -m "Run HSD Production Control v3.2.12 BeBe Ops v2.10.1"
           git pull --rebase origin main || true
           git push origin HEAD:main || echo "Push failed; artifact still uploaded."
