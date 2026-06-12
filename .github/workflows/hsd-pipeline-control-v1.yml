@@ -1,5 +1,5 @@
-name: Her Sports Daily Production Controller v3.2.9 BeBe Ops v2.8
-run-name: HSD BeBe Ops v2.8 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
+name: Her Sports Daily Production Controller v3.2.10 BeBe Ops v2.9
+run-name: HSD BeBe Ops v2.9 • ${{ github.event.inputs.run_mode || 'full_pipeline' }} • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -90,7 +90,7 @@ jobs:
 
     env:
       HSD_RELEASE_VERSION: "v3.2.9-bebe-ops-v2.8"
-      HSD_ARTIFACT_NAME_PREFIX: "hsd-production-control-v3-2-9-bebe-ops-v2-8"
+      HSD_ARTIFACT_NAME_PREFIX: "hsd-production-control-v3-2-10-bebe-ops-v2-9"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
       HSD_PUBLISH_MODE: ${{ github.event.inputs.publish_mode || 'artifact_only' }}
@@ -387,7 +387,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
         with:
-          name: hsd-production-control-v3-2-9-bebe-ops-v2-8-lite-review-${{ github.run_number }}
+          name: hsd-production-control-v3-2-10-bebe-ops-v2-9-lite-review-${{ github.run_number }}
           path: |
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/
@@ -441,7 +441,7 @@ jobs:
             "results_contract_v2.csv" "results_contract_v2.jsonl" "results_contract_report.md"
             "story_candidates_manual.csv" "story_candidates_manual.jsonl" "manual_story_inbox_report.md"
             "story_candidates_discovery.csv" "story_candidates_discovery.jsonl" "discovery_sources_report.md"
-            "daily_slate_plan.csv" "daily_slate_plan.md" "pipeline_outcome.md" "pipeline_stop_reason.md"
+            "daily_slate_plan.csv" "daily_slate_guard_report.md" "daily_slate_plan.md" "pipeline_outcome.md" "pipeline_stop_reason.md"
             "studio_preview_build_v2_report.md" "studio_preview_build_v2.json" "preview_player_focus.csv" "preview_bundle_quality.csv" "preview_bundle_quality.md" "preview_bundle_quality_summary.csv"
             "graphics_upload_pack_status.csv" "graphics_chat_direct_handoff.md" "graphics_qa_report.md"
             "exact_asset_audit.csv" "exact_asset_audit_report.md" "exact_asset_audit_manifest.json"
@@ -454,6 +454,6 @@ jobs:
             echo "No generated output changes to commit."
             exit 0
           fi
-          git commit -m "Run HSD Production Control v3.2.9 BeBe Ops v2.8"
+          git commit -m "Run HSD Production Control v3.2.10 BeBe Ops v2.9"
           git pull --rebase origin main || true
           git push origin HEAD:main || echo "Push failed; artifact still uploaded."
