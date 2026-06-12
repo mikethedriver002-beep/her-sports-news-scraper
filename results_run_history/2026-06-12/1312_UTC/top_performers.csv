@@ -1,0 +1,21 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856980,WNBA,Chicago Sky at Indiana Fever,Final,Indiana Fever,Chicago Sky 106 - Indiana Fever 114,1,Aliyah Boston,Indiana Fever,"PTS 34, REB 12, AST 3, STL 1, BLK 2",WNBA
+401856981,WNBA,New York Liberty at Atlanta Dream,Final,New York Liberty,New York Liberty 104 - Atlanta Dream 90,1,Angel Reese,Atlanta Dream,"PTS 25, REB 9, AST 3, STL 2, BLK 1",WNBA
+401856982,WNBA,Phoenix Mercury at Dallas Wings,Final,Dallas Wings,Phoenix Mercury 70 - Dallas Wings 85,1,Paige Bueckers,Dallas Wings,"PTS 31, REB 6, AST 5, STL 1, FG 14-20",WNBA
+401856983,WNBA,Las Vegas Aces at Portland Fire,Final,Las Vegas Aces,Las Vegas Aces 105 - Portland Fire 89,1,A'ja Wilson,Las Vegas Aces,"PTS 32, REB 5, AST 4, STL 1, BLK 2",WNBA
+401856980,WNBA,Chicago Sky at Indiana Fever,Final,Indiana Fever,Chicago Sky 106 - Indiana Fever 114,2,Caitlin Clark,Indiana Fever,"PTS 32, REB 7, AST 10, FG 8-18, 3PT 1-6",WNBA
+401856981,WNBA,New York Liberty at Atlanta Dream,Final,New York Liberty,New York Liberty 104 - Atlanta Dream 90,2,Breanna Stewart,New York Liberty,"PTS 19, REB 11, AST 5, STL 2, BLK 1",WNBA
+401856982,WNBA,Phoenix Mercury at Dallas Wings,Final,Dallas Wings,Phoenix Mercury 70 - Dallas Wings 85,2,Jessica Shepard,Dallas Wings,"PTS 17, REB 10, AST 7, STL 2, FG 7-8",WNBA
+401856983,WNBA,Las Vegas Aces at Portland Fire,Final,Las Vegas Aces,Las Vegas Aces 105 - Portland Fire 89,2,Jackie Young,Las Vegas Aces,"PTS 18, REB 8, AST 10, STL 1, BLK 1",WNBA
+401856980,WNBA,Chicago Sky at Indiana Fever,Final,Indiana Fever,Chicago Sky 106 - Indiana Fever 114,3,Sydney Taylor,Chicago Sky,"PTS 30, REB 2, AST 2, STL 1, BLK 1",WNBA
+401856981,WNBA,New York Liberty at Atlanta Dream,Final,New York Liberty,New York Liberty 104 - Atlanta Dream 90,3,Rhyne Howard,Atlanta Dream,"PTS 24, REB 4, AST 3, STL 4, BLK 1",WNBA
+401856982,WNBA,Phoenix Mercury at Dallas Wings,Final,Dallas Wings,Phoenix Mercury 70 - Dallas Wings 85,3,Azzi Fudd,Dallas Wings,"PTS 17, REB 3, AST 4, STL 1, BLK 3",WNBA
+401856983,WNBA,Las Vegas Aces at Portland Fire,Final,Las Vegas Aces,Las Vegas Aces 105 - Portland Fire 89,3,Chelsea Gray,Las Vegas Aces,"PTS 29, REB 5, AST 3, FG 10-15, 3PT 9-13",WNBA
+401856980,WNBA,Chicago Sky at Indiana Fever,Final,Indiana Fever,Chicago Sky 106 - Indiana Fever 114,4,Azura Stevens,Chicago Sky,"PTS 10, REB 9, AST 6, STL 1, BLK 1",WNBA
+401856981,WNBA,New York Liberty at Atlanta Dream,Final,New York Liberty,New York Liberty 104 - Atlanta Dream 90,4,Jonquel Jones,New York Liberty,"PTS 16, REB 10, AST 5, BLK 3, FG 5-8",WNBA
+401856982,WNBA,Phoenix Mercury at Dallas Wings,Final,Dallas Wings,Phoenix Mercury 70 - Dallas Wings 85,4,Alyssa Thomas,Phoenix Mercury,"PTS 6, REB 9, AST 10, STL 2, FG 3-8",WNBA
+401856983,WNBA,Las Vegas Aces at Portland Fire,Final,Las Vegas Aces,Las Vegas Aces 105 - Portland Fire 89,4,Carla Leite,Portland Fire,"PTS 18, REB 3, AST 8, STL 1, FG 8-13",WNBA
+401856980,WNBA,Chicago Sky at Indiana Fever,Final,Indiana Fever,Chicago Sky 106 - Indiana Fever 114,5,Kelsey Mitchell,Indiana Fever,"PTS 19, REB 1, AST 3, STL 3, FG 7-17",WNBA
+401856981,WNBA,New York Liberty at Atlanta Dream,Final,New York Liberty,New York Liberty 104 - Atlanta Dream 90,5,Pauline Astier,New York Liberty,"PTS 16, REB 8, AST 5, FG 6-10, 3PT 1-2",WNBA
+401856982,WNBA,Phoenix Mercury at Dallas Wings,Final,Dallas Wings,Phoenix Mercury 70 - Dallas Wings 85,5,Lexi Held,Phoenix Mercury,"PTS 17, REB 4, AST 1, STL 1, FG 6-10",WNBA
+401856983,WNBA,Las Vegas Aces at Portland Fire,Final,Las Vegas Aces,Las Vegas Aces 105 - Portland Fire 89,5,Stephanie Talbot,Las Vegas Aces,"PTS 8, REB 10, AST 3, STL 1, BLK 1",WNBA
