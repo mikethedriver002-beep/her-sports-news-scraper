@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.2.12-bebe-ops-v2.10.1"
+VERSION = "hsd-pipeline-review-lite-v3.2.13-bebe-ops-v2.11"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -36,6 +36,9 @@ KEY_FILES = [
     "asset_candidates_review.md", "approved_graphics_assets.csv", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json",
     "config/hsd_exact_asset_policy_v1.json", "config/hsd_verified_logo_registry_v1.json",
     "rendered_slide_qa.csv", "rendered_slide_qa_report.md", "rendered_slide_qa_manifest.json", "rendered_graphics_manual_review_template.csv",
+    "manual_workflow_content_packets.jsonl", "manual_workflow_content_packets.csv", "manual_workflow_render_plans.json",
+    "manual_workflow_copy_desk.md", "manual_workflow_threads_copy.md", "manual_workflow_first_comments.md",
+    "manual_workflow_priority_report.md", "manual_workflow_pack_status.csv", "manual_workflow_pack_status.json", "manual_workflow_handoff.md",
     "ig_story_results_queue.csv", "ig_story_results_frames.md", "ig_story_results_graphics_prompt.md",
     "ig_story_results_upload_pack_status.csv", "ig_story_results_upload_pack_status.json", "ig_story_results_upload_manifest.csv",
     "final_score_story_guard_report.md", "final_score_story_guard_report.json",
@@ -156,6 +159,17 @@ def main() -> None:
         copy_if_exists(name, files_dir, manifest)
 
     ready_packs = include_ready_upload_packs(ready_dir, manifest)
+    manual_workflow_dir = OUT_DIR / "manual_workflow_handoff_packs"
+    manual_workflow_pack_count = 0
+    src_manual_zips = Path("manual_workflow_handoff_packs")
+    if src_manual_zips.exists():
+        manual_workflow_dir.mkdir(parents=True, exist_ok=True)
+        for p in src_manual_zips.glob("*.zip"):
+            if p.stat().st_size <= MAX_UPLOAD_PACK_BYTES:
+                dest = manual_workflow_dir / p.name
+                shutil.copy2(p, dest)
+                manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
+                manual_workflow_pack_count += 1
     pack_file_count = safe_copy_tree_files(Path("graphics_chat_upload_pack"), pack_dir, manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
 
     story_ready_dir = OUT_DIR / "ig_story_results_ready_upload_packs"
@@ -182,6 +196,7 @@ def main() -> None:
         "upload_pack_rows": row_count("graphics_upload_pack_status.csv"),
         "ready_packs_included": sum(1 for p in ready_packs if p.get("included")),
         "graphics_upload_pack_files_included": pack_file_count,
+        "manual_workflow_packs_included": manual_workflow_pack_count,
         "ig_story_results_ready_packs_included": sum(1 for p in story_ready_packs if p.get("included")),
         "ig_story_results_upload_pack_files_included": story_pack_file_count,
     }

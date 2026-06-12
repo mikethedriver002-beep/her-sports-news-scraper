@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Production Control Plane",
-  "pipeline_version": "v3.2.12-bebe-ops-v2.10.1",
+  "pipeline_version": "v3.2.13-bebe-ops-v2.11",
   "contract_version": "v2",
   "operator_codename": "BeBe",
   "default_publish_mode": "artifact_only",
@@ -9,8 +9,8 @@
     "Instagram",
     "Threads"
   ],
-  "github_visible_version": "Her Sports Daily Production Controller v3.2.12 BeBe Ops v2.10.1",
-  "artifact_name_prefix": "hsd-production-control-v3-2-12-bebe-ops-v2-10-1",
+  "github_visible_version": "Her Sports Daily Production Controller v3.2.13 BeBe Ops v2.11",
+  "artifact_name_prefix": "hsd-production-control-v3-2-13-bebe-ops-v2-11",
   "release_date_local": "2026-06-12",
-  "notes": "BeBe Ops v2.10.1 integration fix: Final Score Stories Desk always runs/reports, skips slow network backfill when Results Contract already has finals, and always appears in lite review."
+  "notes": "Manual Workflow Merge v1 plus Final Score Stories all-games frame coverage fix."
 }

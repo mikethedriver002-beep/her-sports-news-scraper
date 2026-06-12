@@ -1,8 +1,8 @@
 {
-  "release": "BeBe Ops v2.10.1",
-  "pipeline_version": "v3.2.12-bebe-ops-v2.10.1",
-  "github_visible_name": "Her Sports Daily Production Controller v3.2.12 BeBe Ops v2.10.1",
-  "artifact_name_prefix": "hsd-production-control-v3-2-12-bebe-ops-v2-10-1",
+  "release": "BeBe Ops v2.11",
+  "pipeline_version": "v3.2.13-bebe-ops-v2.11",
+  "github_visible_name": "Her Sports Daily Production Controller v3.2.13 BeBe Ops v2.11",
+  "artifact_name_prefix": "hsd-production-control-v3-2-13-bebe-ops-v2-11",
   "release_date_local": "2026-06-12",
-  "summary": "Final Score Stories Desk v2.10.1 integration/hardening: always run, always report, bounded network, independent of Tonight preview."
+  "summary": "Manual Workflow Merge v1 plus Final Score Stories all-games frame coverage fix."
 }

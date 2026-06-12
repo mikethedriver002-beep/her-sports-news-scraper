@@ -1,0 +1,28 @@
+{
+  "version": "v3.2.13-bebe-ops-v2.11",
+  "name": "HSD Manual Workflow Merge v1",
+  "purpose": "Convert manual editorial decisions into content_packet.json, render_plan.json, copy desk outputs, Threads copy, first comments, asset index stubs, checksums, and handoff ZIPs.",
+  "inputs": [
+    "operator/inbox/manual_workflow_inbox.csv",
+    "operator/inbox/manual_workflow_inbox.jsonl",
+    "story_candidates_manual.csv",
+    "ig_story_results_queue.csv",
+    "daily_slate_plan.csv"
+  ],
+  "outputs": [
+    "manual_workflow_content_packets.jsonl",
+    "manual_workflow_render_plans.json",
+    "manual_workflow_copy_desk.md",
+    "manual_workflow_threads_copy.md",
+    "manual_workflow_first_comments.md",
+    "manual_workflow_priority_report.md",
+    "manual_workflow_handoff_packs/*.zip"
+  ],
+  "asset_policy": {
+    "team_logos": "exact_real_logo_required",
+    "player_images": "exact_real_player_image_only_when_used",
+    "no_fake_logos": true,
+    "no_player_substitution": true
+  },
+  "manual_approval_required": true
+}

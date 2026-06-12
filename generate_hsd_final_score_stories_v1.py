@@ -19,7 +19,7 @@ try:
 except Exception:  # pragma: no cover
     requests = None
 
-VERSION = "hsd-final-score-stories-v3.2.12-bebe-ops-v2.10.1"
+VERSION = "hsd-final-score-stories-v3.2.13-bebe-ops-v2.11"
 
 INPUT_RESULTS_CONTRACT = Path(os.environ.get("HSD_RESULTS_CONTRACT", "results_contract_v2.csv"))
 POLICY_PATH = Path(os.environ.get("HSD_FINAL_SCORE_STORIES_POLICY", "config/hsd_final_score_stories_policy_v1.json"))
@@ -401,13 +401,55 @@ def game_line(game: Dict[str, Any]) -> str:
     return " · ".join(f"{x['team']} {x['score']}" for x in game.get("teams_scores", []) if x.get("team")) or clean(game.get("score_summary") or game.get("headline"))
 
 def build_frames(games: List[Dict[str, Any]], title: str) -> List[Dict[str, str]]:
-    frames = [{"frame": "1", "role": "cover_scoreboard", "headline": title, "subhead": "Final scores from the W", "body": " / ".join(game_line(g) for g in games[:3]), "sticker": "Poll: Best win of the night?"}]
-    for idx, game in enumerate(games[:3], start=2):
+    """Build one cover, one card per selected final, and one CTA.
+
+    Critical production rule: every selected final must appear in its own
+    game-card frame. Do not cap game cards at three. If four finals are
+    selected, output six frames total: cover + four cards + CTA.
+    """
+    game_lines = [game_line(g) for g in games]
+    count = len(game_lines)
+    cover_body = " / ".join(game_lines)
+    if count >= 4:
+        cover_body = f"{count} finals from the W. Every game gets a card."
+    frames = [{
+        "frame": "1",
+        "role": "cover_scoreboard",
+        "headline": title,
+        "subhead": f"{count} final score{'s' if count != 1 else ''} from the W",
+        "body": cover_body,
+        "sticker": "Poll: Best win of the night?",
+    }]
+    for idx, game in enumerate(games, start=2):
         winner = clean(game.get("winner"))
         headline = f"{winner} gets the win" if winner else "Final Score"
-        frames.append({"frame": str(idx), "role": "final_score_card", "headline": headline, "subhead": "FINAL", "body": game_line(game), "sticker": "Question: What stood out?" if idx == 2 else ""})
-    frames.append({"frame": str(len(frames) + 1), "role": "engagement_cta", "headline": "Best win of the night?", "subhead": "Tap in with HSD", "body": "Vote in the poll or reply with your pick.", "sticker": "Poll: Best win / Biggest statement / Other"})
-    return frames[:5]
+        frames.append({
+            "frame": str(idx),
+            "role": "final_score_card",
+            "headline": headline,
+            "subhead": "FINAL",
+            "body": game_line(game),
+            "sticker": "Question: What stood out?" if idx == 2 else "",
+        })
+    frames.append({
+        "frame": str(len(frames) + 1),
+        "role": "engagement_cta",
+        "headline": "Best win of the night?",
+        "subhead": "Tap in with HSD",
+        "body": "Vote in the poll or reply with your pick.",
+        "sticker": "Poll: Best win / Biggest statement / Other",
+    })
+    return frames
+
+def story_frame_coverage_issues(games: List[Dict[str, Any]], frames: List[Dict[str, str]]) -> List[str]:
+    """Return selected game lines that do not have a dedicated final_score_card."""
+    card_bodies = {clean(f.get("body")) for f in frames if f.get("role") == "final_score_card"}
+    missing = []
+    for game in games:
+        line = clean(game_line(game))
+        if line and line not in card_bodies:
+            missing.append(line)
+    return missing
 
 def create_prompt(title: str, games: List[Dict[str, Any]], frames: List[Dict[str, str]], required_teams: List[str]) -> str:
     games_txt = "\n".join(f"- {game_line(g)}" for g in games)
@@ -428,6 +470,8 @@ Player images are optional. Use a player image only when it is attached and clea
 
 Frame plan:
 {frames_txt}
+
+Coverage rule: every final score listed above must appear in a dedicated final_score_card frame. Do not drop any game to fit the CTA. If four finals are selected, output cover plus four game cards plus CTA.
 
 Style direction: premium women’s sports media, sharp HSD desk energy, high contrast, clean score hierarchy, bold readable type, designed for mobile Stories. Keep space for Instagram stickers on the CTA/poll frame.
 
@@ -467,6 +511,7 @@ def write_all_outputs(cfg: Dict[str, Any], registry: Dict[str, Any], games: List
             missing.append(team)
         manifest_rows.append({"story_id": story_id, "story_slug": story_slug, "entity_name": team, "entity_type": "team", "asset_role": "team_logo", "source_url": resolved.get("source_url", ""), "source_method": resolved.get("source_method", ""), "local_asset_path": resolved.get("local_asset_path", ""), "asset_filename": Path(resolved.get("local_asset_path", "")).name if resolved.get("local_asset_path") else "", "asset_ready": "Yes" if asset_ready else "No", "required": "Yes", "notes": resolved.get("notes", "")})
     frames = build_frames(games, title) if games else []
+    frame_coverage_missing = story_frame_coverage_issues(games, frames) if games else []
     prompt = create_prompt(title, games, frames, required_teams) if games else "No verified final-score story pack created.\n"
     (folder / "00_PROMPT_TO_PASTE.md").write_text(prompt, encoding="utf-8")
     (folder / "01_UPLOAD_INSTRUCTIONS.md").write_text("# HSD Final Score Stories Upload Instructions\n\nUpload `00_PROMPT_TO_PASTE.md` and every file inside `assets_original/`. Do not allow the graphics chat to fetch logos or player images. Use attached real assets only. If any required logo is missing, do not generate.\n", encoding="utf-8")
@@ -480,6 +525,10 @@ def write_all_outputs(cfg: Dict[str, Any], registry: Dict[str, Any], games: List
     elif not games:
         upload_status = "blocked_no_recent_finals"
         block_reason = "no recent verified final games available for IG Story result graphics"
+        guard_issues.append(block_reason)
+    elif frame_coverage_missing:
+        upload_status = "blocked_story_frame_coverage"
+        block_reason = "Story frame plan omitted selected final(s): " + "; ".join(frame_coverage_missing)
         guard_issues.append(block_reason)
     elif missing:
         upload_status = "blocked_missing_exact_team_logos"
@@ -505,9 +554,9 @@ def write_all_outputs(cfg: Dict[str, Any], registry: Dict[str, Any], games: List
     OUT_PROMPT.write_text("# HSD IG Story Results Graphics Prompt\n\n```text\n" + prompt + "```\n", encoding="utf-8")
     OUT_CAPTIONS.write_text("# HSD IG Story Caption Bank\n\n" + (f"Final scores from the W: {score_summary}\n\n" if score_summary else "No caption generated because no final-score story pack was ready.\n") + "Suggested story caption: Which result stood out most?\n", encoding="utf-8")
     OUT_POLLS.write_text("# HSD IG Story Poll / Sticker Ideas\n\n- Poll: Best win of the night?\n- Question: What stood out?\n- Slider: How big was this result?\n", encoding="utf-8")
-    guard = {"version": VERSION, "generated_at_utc": now_utc().isoformat(), "runtime_seconds": round(time.monotonic() - START, 2), "upload_pack_status": upload_status, "games_from_results_contract": contract_count, "games_from_espn_fetch": espn_count, "games_selected": len(games), "required_team_logos": len(required_teams), "logos_ready": ready, "logos_missing": missing, "issues": guard_issues + ([block_reason] if block_reason else []), "contract_guard_notes": contract_notes[:60], "espn_fetch_notes": espn_notes[:30], "outputs": [OUT_QUEUE.as_posix(), OUT_FRAMES.as_posix(), OUT_PROMPT.as_posix(), OUT_STATUS_CSV.as_posix(), OUT_MANIFEST_CSV.as_posix(), OUT_CAPTIONS.as_posix(), OUT_POLLS.as_posix(), OUT_PLAYER_CANDIDATES.as_posix()]}
+    guard = {"version": VERSION, "generated_at_utc": now_utc().isoformat(), "runtime_seconds": round(time.monotonic() - START, 2), "upload_pack_status": upload_status, "games_from_results_contract": contract_count, "games_from_espn_fetch": espn_count, "games_selected": len(games), "frame_coverage_missing": frame_coverage_missing, "required_team_logos": len(required_teams), "logos_ready": ready, "logos_missing": missing, "issues": guard_issues + ([block_reason] if block_reason else []), "contract_guard_notes": contract_notes[:60], "espn_fetch_notes": espn_notes[:30], "outputs": [OUT_QUEUE.as_posix(), OUT_FRAMES.as_posix(), OUT_PROMPT.as_posix(), OUT_STATUS_CSV.as_posix(), OUT_MANIFEST_CSV.as_posix(), OUT_CAPTIONS.as_posix(), OUT_POLLS.as_posix(), OUT_PLAYER_CANDIDATES.as_posix()]}
     OUT_GUARD_JSON.write_text(json.dumps(guard, indent=2), encoding="utf-8")
-    guard_lines = ["# HSD Final Score Story Guard Report", "", f"Generated: {guard['generated_at_utc']}", f"Version: {VERSION}", "", f"- upload_pack_status: {upload_status}", f"- runtime_seconds: {guard['runtime_seconds']}", f"- games from results_contract_v2.csv: {contract_count}", f"- games from ESPN scoreboard fetch: {espn_count}", f"- games selected: {len(games)}", f"- required team logos: {len(required_teams)}", f"- logos ready: {ready}", f"- logos missing: {len(missing)}", f"- zip: {zip_path or 'none'}", ""]
+    guard_lines = ["# HSD Final Score Story Guard Report", "", f"Generated: {guard['generated_at_utc']}", f"Version: {VERSION}", "", f"- upload_pack_status: {upload_status}", f"- runtime_seconds: {guard['runtime_seconds']}", f"- games from results_contract_v2.csv: {contract_count}", f"- games from ESPN scoreboard fetch: {espn_count}", f"- games selected: {len(games)}", f"- frame coverage missing: {len(frame_coverage_missing)}", f"- required team logos: {len(required_teams)}", f"- logos ready: {ready}", f"- logos missing: {len(missing)}", f"- zip: {zip_path or 'none'}", ""]
     if missing:
         guard_lines += ["## Missing exact team logos", "", *[f"- {x}" for x in missing], ""]
     guard_lines += ["## Selected finals", ""] + ([f"- {game_line(g)}" for g in games] if games else ["- none"]) + [""]
