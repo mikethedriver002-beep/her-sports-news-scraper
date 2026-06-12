@@ -1,0 +1,38 @@
+{
+  "version": "v3.2.16-mermaid-preview-intelligence-v1.0",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "content_family": "Tonight in the W",
+  "rules": {
+    "all_slate_games_must_be_represented": true,
+    "no_duplicate_slide_function": true,
+    "slide_1_function": "cover",
+    "slide_2_function": "what_to_know_tonight",
+    "slide_3_primary_function": "players_to_watch",
+    "slide_3_fallback_function": "storylines_to_know",
+    "slide_4_function": "cta",
+    "require_all_teams_for_player_slide": true,
+    "min_exact_players_per_team": 1,
+    "preferred_player_layout": "one_player_per_team_or_two_matchup_panels",
+    "forbid_three_team_player_rows_for_two_game_slate": true,
+    "forbid_repeating_full_slate_board_on_slide_2_if_slide_1_already_covers_it": true,
+    "forbid_text_only_logo_fallback": true,
+    "prefer_exact_attached_assets_only": true
+  },
+  "copy_templates": {
+    "slide_2_header": "What to know tonight",
+    "slide_3_header_player": "Players to watch",
+    "slide_3_header_fallback": "Storylines to know",
+    "slide_4_header": "Which game are you locked in for?",
+    "slide_4_subheader": "Drop your pick before tipoff",
+    "generic_hook_1": "Who sets the tone early?",
+    "generic_hook_2": "Which side owns the key moments?",
+    "generic_hook_3": "What matters most: pace, execution, or late-game shotmaking?"
+  },
+  "team_logo_display_notes": {
+    "Toronto Tempo": "Use the exact attached logo asset, but increase panel contrast and supporting edge glow so the dark logo does not get buried.",
+    "Washington Mystics": "Keep exact attached logo asset and strong contrast.",
+    "Golden State Valkyries": "Keep exact attached logo asset and strong contrast.",
+    "Seattle Storm": "Keep exact attached logo asset and strong contrast."
+  }
+}
