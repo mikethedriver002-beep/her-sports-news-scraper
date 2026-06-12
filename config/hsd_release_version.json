@@ -1,8 +1,10 @@
 {
-  "release": "BeBe Ops v2.11",
-  "pipeline_version": "v3.2.13-bebe-ops-v2.11",
-  "github_visible_name": "Her Sports Daily Production Controller v3.2.13 BeBe Ops v2.11",
-  "artifact_name_prefix": "hsd-production-control-v3-2-13-bebe-ops-v2-11",
+  "release": "HSD Mermaid Ops v1",
+  "pipeline_version": "v3.2.14-mermaid-ops-v1.0",
+  "github_visible_name": "HSD Mermaid Ops v1",
+  "artifact_name_prefix": "hsd-mermaid-ops-v1",
+  "assistant_operator": "BB",
+  "system_codename": "Mermaid",
   "release_date_local": "2026-06-12",
-  "summary": "Manual Workflow Merge v1 plus Final Score Stories all-games frame coverage fix."
+  "summary": "Workflow consolidation, Actions declutter, and Multi-Post Desk v1 wiring."
 }
