@@ -1,0 +1,60 @@
+{
+  "version": "v3.3.3-mermaid-content-director-v2.3",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "mission": "Turn the quality graph into an HSD editorial lineup with no accidental duplication, better sport hygiene, and sharper platform copy.",
+  "slot_policy": {
+    "allow_crosspost": true,
+    "crosspost_requires_label": true,
+    "ig_feed_max_posts": 2,
+    "threads_volume_target": 5,
+    "ig_story_target": 3
+  },
+  "duplicate_policy": {
+    "no_unlabeled_duplicate_story_ids": true,
+    "allowed_crosspost_pairs": [
+      ["ig_feed_noon", "threads_morning"],
+      ["ig_feed_evening_preview", "threads_live"]
+    ]
+  },
+  "wrong_sport_filters": {
+    "NCAA Softball": [
+      "cross country",
+      "tennis",
+      "basketball",
+      "baseball",
+      "football",
+      "soccer",
+      "track",
+      "swimming",
+      "golf",
+      "volleyball",
+      "men",
+      "- men"
+    ]
+  },
+  "floor_targets": {
+    "WNBA": 4,
+    "NWSL": 2,
+    "WTA": 2,
+    "LPGA": 1,
+    "Volleyball": 1,
+    "USWNT": 1,
+    "NCAA Softball": 1
+  },
+  "queue_priority": {
+    "IG Feed": ["manual_packet", "result_or_recap", "preview_event", "official_news_article", "ig_story_final_scores"],
+    "IG Stories": ["preview_event", "official_news_article", "result_or_recap", "ig_story_final_scores"],
+    "Threads": ["official_news_article", "preview_event", "result_or_recap", "breaking_or_rumor", "ig_story_final_scores"]
+  },
+  "voice": {
+    "threads_intensity": "debate-driven, sharp, quick-read",
+    "ig_feed_intensity": "premium, contextual, not filler",
+    "ig_story_intensity": "fast, visual, one idea per frame"
+  },
+  "asset_strategy": {
+    "player_graphic_required_when_appropriate": true,
+    "exact_player_asset_only": true,
+    "non_player_story_asset_options": ["team logos", "event logo", "league logo", "scoreboard typography", "editorial type card"]
+  }
+}
