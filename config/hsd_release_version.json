@@ -1,10 +1,10 @@
 {
-  "release": "HSD Mermaid Quality Brain v2.1",
-  "pipeline_version": "v3.3.1-mermaid-quality-brain-v2.1",
+  "release": "HSD Mermaid Quality Brain v2.2",
+  "pipeline_version": "v3.3.2-mermaid-quality-brain-v2.2",
   "github_visible_name": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "assistant_operator": "BB",
   "system_codename": "Mermaid",
   "release_date_local": "2026-06-12",
-  "summary": "Quality Brain: filters scout junk, balances sports, bridges player asset debt, improves ranking, and aliases quality packets into the existing artifact paths."
+  "summary": "Story Classification + Sport Floors: classifies scoreboard matchups as preview events, runs supplemental multi-sport scan, reports sport-floor shortfalls, improves queues and prompt packets."
 }
