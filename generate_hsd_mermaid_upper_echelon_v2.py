@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import json
 import re
-import hashlib
 import shutil
 import subprocess
 import sys
@@ -14,10 +13,6 @@ from typing import Any, Dict, List
 
 def clean(v: Any) -> str:
     return re.sub(r"\s+", " ", str(v or "")).strip()
-
-
-def slug(v: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", clean(v).lower()).strip("-") or "item"
 
 
 def now_iso() -> str:
@@ -60,7 +55,7 @@ def copy_if_exists(src: str | Path, dst: str | Path) -> bool:
     return True
 
 
-VERSION = "v3.3.1-mermaid-upper-echelon-quality-brain-bridge"
+VERSION = "v3.3.2-mermaid-upper-echelon-quality-brain-v2.2-bridge"
 OUT_MD = "mermaid_upper_echelon_report.md"
 OUT_JSON = "mermaid_upper_echelon_manifest.json"
 
@@ -73,6 +68,7 @@ STEPS = [
     ("Prompt Compiler v2", "generate_hsd_mermaid_prompt_compiler_v2.py"),
     ("Content Engine v2", "generate_hsd_mermaid_content_engine_v2.py"),
     ("Quality Brain v2.1", "generate_hsd_mermaid_quality_brain_v2_1.py"),
+    ("Quality Brain v2.2", "generate_hsd_mermaid_quality_brain_v2_2.py"),
 ]
 
 
@@ -81,14 +77,14 @@ def run_step(name: str, script: str) -> Dict[str, Any]:
     if not p.exists():
         return {"name": name, "script": script, "status": "missing", "returncode": 127}
     try:
-        proc = subprocess.run([sys.executable, script], text=True, capture_output=True, timeout=180)
+        proc = subprocess.run([sys.executable, script], text=True, capture_output=True, timeout=240)
         return {
             "name": name,
             "script": script,
             "status": "ok" if proc.returncode == 0 else "error",
             "returncode": proc.returncode,
-            "stdout": proc.stdout[-4000:],
-            "stderr": proc.stderr[-4000:],
+            "stdout": proc.stdout[-5000:],
+            "stderr": proc.stderr[-5000:],
         }
     except Exception as exc:
         return {
@@ -101,32 +97,24 @@ def run_step(name: str, script: str) -> Dict[str, Any]:
 
 
 def bridge_quality_outputs() -> List[str]:
-    """Make Quality Brain outputs visible through the existing artifact list.
-
-    The workflow already uploads the classic Upper Echelon paths. This bridge lets us
-    upgrade output quality without requiring the operator to patch PowerShell or YAML.
-    """
     actions: List[str] = []
     aliases = [
-        ("mermaid_master_content_board_v2_1.md", "mermaid_master_content_board.md"),
-        ("mermaid_quality_story_graph.csv", "mermaid_story_graph.csv"),
-        ("mermaid_quality_content_slots.csv", "mermaid_content_slots_v2.csv"),
-        ("ig_feed_queue_v2_1.csv", "ig_feed_queue_v2.csv"),
-        ("ig_story_queue_v2_1.csv", "ig_story_queue_v2.csv"),
-        ("threads_queue_v2_1.csv", "threads_queue_v2.csv"),
-        ("breaking_news_queue_v2_1.csv", "breaking_news_queue.csv"),
-        ("rumor_watch_queue_v2_1.csv", "rumor_watch_queue.csv"),
-        ("player_asset_debt_v2_1.csv", "player_asset_debt.csv"),
-        ("mermaid_quality_prompt_index.csv", "mermaid_compiled_packet_index.csv"),
+        ("mermaid_master_content_board_v2_2.md", "mermaid_master_content_board.md"),
+        ("mermaid_classified_story_graph.csv", "mermaid_story_graph.csv"),
+        ("mermaid_content_slots_v2_2.csv", "mermaid_content_slots_v2.csv"),
+        ("ig_feed_queue_v2_2.csv", "ig_feed_queue_v2.csv"),
+        ("ig_story_queue_v2_2.csv", "ig_story_queue_v2.csv"),
+        ("threads_queue_v2_2.csv", "threads_queue_v2.csv"),
+        ("multisport_scout_candidates_filtered_v2_2.csv", "multisport_scout_candidates_filtered.csv"),
+        ("multisport_rejected_candidates_v2_2.csv", "multisport_rejected_candidates.csv"),
+        ("mermaid_quality_prompt_index_v2_2.csv", "mermaid_compiled_packet_index.csv"),
     ]
     for src, dst in aliases:
         if copy_if_exists(src, dst):
             actions.append(f"aliased {src} -> {dst}")
-
-    if Path("mermaid_quality_compiled_packets").exists():
-        copy_if_exists("mermaid_quality_compiled_packets", "mermaid_compiled_packets")
-        actions.append("aliased mermaid_quality_compiled_packets -> mermaid_compiled_packets")
-
+    if Path("mermaid_quality_compiled_packets_v2_2").exists():
+        copy_if_exists("mermaid_quality_compiled_packets_v2_2", "mermaid_compiled_packets")
+        actions.append("aliased mermaid_quality_compiled_packets_v2_2 -> mermaid_compiled_packets")
     return actions
 
 
@@ -136,12 +124,13 @@ def counts() -> Dict[str, int]:
         "compiled_packets": len(read_csv("mermaid_compiled_packet_index.csv")),
         "content_slots": len(read_csv("mermaid_content_slots_v2.csv")),
         "multisport_candidates_raw": len(read_csv("multisport_scout_candidates.csv")),
+        "multisport_candidates_v2_2": len(read_csv("multisport_scout_candidates_v2_2.csv")),
         "multisport_candidates_filtered": len(read_csv("multisport_scout_candidates_filtered.csv")),
         "multisport_candidates_rejected": len(read_csv("multisport_rejected_candidates.csv")),
         "rumor_claims": len(read_csv("social_rumor_candidates.csv")),
         "player_asset_debt": len(read_csv("player_asset_debt.csv")),
-        "quality_slots": len(read_csv("mermaid_quality_content_slots.csv")),
-        "quality_packets": len(read_csv("mermaid_quality_prompt_index.csv")),
+        "quality_slots_v2_2": len(read_csv("mermaid_content_slots_v2_2.csv")),
+        "quality_packets_v2_2": len(read_csv("mermaid_quality_prompt_index_v2_2.csv")),
     }
 
 
@@ -149,17 +138,15 @@ def main() -> None:
     results = [run_step(name, script) for name, script in STEPS]
     bridge_actions = bridge_quality_outputs()
     c = counts()
-
     manifest = {
         "version": VERSION,
         "generated_at": now_iso(),
         "steps": results,
         "bridge_actions": bridge_actions,
         "counts": c,
-        "quality_brain_present": Path("mermaid_quality_brain_report.md").exists(),
+        "quality_brain_v2_2_present": Path("mermaid_quality_brain_v2_2_report.md").exists(),
     }
     write_text(OUT_JSON, json.dumps(manifest, indent=2))
-
     lines = [
         "# HSD Mermaid Upper Echelon Report",
         "",
@@ -168,7 +155,7 @@ def main() -> None:
         "",
         "## Status",
         "",
-        "Upper Echelon ran with the Quality Brain bridge. The quality outputs are aliased into the existing artifact paths so the operator does not need local PowerShell/Git/Python wiring.",
+        "Upper Echelon ran with Quality Brain v2.2. Quality outputs are aliased into the existing artifact paths so the operator can stay on GitHub Actions.",
         "",
         "## Counts",
         "",
@@ -178,30 +165,23 @@ def main() -> None:
     for r in results:
         lines.append(f"- {r['name']}: {r['status']} ({r['returncode']})")
         if r.get("status") not in {"ok"} and r.get("stderr"):
-            lines.append(f"  - stderr: {clean(r.get('stderr'))[:500]}")
-
+            lines.append(f"  - stderr: {clean(r.get('stderr'))[:700]}")
     lines += ["", "## Quality bridge actions", ""]
-    if bridge_actions:
-        lines += [f"- {a}" for a in bridge_actions]
-    else:
-        lines.append("- No quality aliases were created. Check whether Quality Brain generated outputs.")
-
-    qb_report = read_text("mermaid_quality_brain_report.md")
-    if qb_report:
-        lines += ["", "---", "", "## Quality Brain v2.1 Report", ""]
-        lines += qb_report.splitlines()
-
+    lines += [f"- {a}" for a in bridge_actions] if bridge_actions else ["- No quality aliases were created."]
+    v22 = read_text("mermaid_quality_brain_v2_2_report.md")
+    if v22:
+        lines += ["", "---", "", "## Quality Brain v2.2 Report", ""]
+        lines += v22.splitlines()
     lines += ["", "## Next operator focus", ""]
     if c["player_asset_debt"]:
         lines.append("- Fill player asset debt before relying on player-led preview graphics.")
     if c["multisport_candidates_filtered"]:
-        lines.append("- Review the quality-filtered multi-sport scout candidates, not the raw scout dump.")
-    if c["quality_slots"]:
-        lines.append("- Use the quality-routed v2 queues and compiled packets for handoff.")
+        lines.append("- Review quality-filtered multi-sport candidates, not the raw scout dump.")
+    if c["quality_slots_v2_2"]:
+        lines.append("- Use the v2.2 quality-routed queues and compiled packets for handoff.")
     if c["rumor_claims"]:
         lines.append("- Review rumor desk claims. Confirmed/corroborated only should move to publish lanes.")
     lines.append("- Keep publish mode artifact-only until rendered QA passes.")
-
     write_text(OUT_MD, "\n".join(lines) + "\n")
     print(json.dumps(c, indent=2))
 
