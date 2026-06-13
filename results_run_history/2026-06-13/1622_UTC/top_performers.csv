@@ -1,0 +1,11 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856984,WNBA,Toronto Tempo at Washington Mystics,Final,Washington Mystics,Toronto Tempo 85 - Washington Mystics 86,1,Marina Mabrey,Toronto Tempo,"PTS 27, REB 1, AST 3, STL 1, FG 9-15",WNBA
+401856985,WNBA,Golden State Valkyries at Seattle Storm,Final,Golden State Valkyries,Golden State Valkyries 76 - Seattle Storm 72,1,Natisha Hiedeman,Seattle Storm,"PTS 26, REB 4, AST 5, STL 2, BLK 1",WNBA
+401856984,WNBA,Toronto Tempo at Washington Mystics,Final,Washington Mystics,Toronto Tempo 85 - Washington Mystics 86,2,Shakira Austin,Washington Mystics,"PTS 12, REB 11, AST 3, BLK 2, FG 3-6",WNBA
+401856985,WNBA,Golden State Valkyries at Seattle Storm,Final,Golden State Valkyries,Golden State Valkyries 76 - Seattle Storm 72,2,Veronica Burton,Golden State Valkyries,"PTS 11, REB 5, AST 8, STL 2, BLK 1",WNBA
+401856984,WNBA,Toronto Tempo at Washington Mystics,Final,Washington Mystics,Toronto Tempo 85 - Washington Mystics 86,3,Brittney Sykes,Toronto Tempo,"PTS 20, REB 2, AST 3, STL 1, BLK 1",WNBA
+401856985,WNBA,Golden State Valkyries at Seattle Storm,Final,Golden State Valkyries,Golden State Valkyries 76 - Seattle Storm 72,3,Janelle Salaun,Golden State Valkyries,"PTS 22, REB 7, AST 1, FG 7-14, 3PT 5-12",WNBA
+401856984,WNBA,Toronto Tempo at Washington Mystics,Final,Washington Mystics,Toronto Tempo 85 - Washington Mystics 86,4,Sonia Citron,Washington Mystics,"PTS 17, REB 5, AST 3, STL 2, FG 6-16",WNBA
+401856985,WNBA,Golden State Valkyries at Seattle Storm,Final,Golden State Valkyries,Golden State Valkyries 76 - Seattle Storm 72,4,Gabby Williams,Golden State Valkyries,"PTS 19, REB 1, AST 4, STL 1, FG 6-16",WNBA
+401856984,WNBA,Toronto Tempo at Washington Mystics,Final,Washington Mystics,Toronto Tempo 85 - Washington Mystics 86,5,Michaela Onyenwere,Washington Mystics,"PTS 17, REB 8, AST 1, STL 1, FG 7-15",WNBA
+401856985,WNBA,Golden State Valkyries at Seattle Storm,Final,Golden State Valkyries,Golden State Valkyries 76 - Seattle Storm 72,5,Tiffany Hayes,Golden State Valkyries,"PTS 17, REB 4, AST 3, FG 5-9, 3PT 0-2",WNBA
