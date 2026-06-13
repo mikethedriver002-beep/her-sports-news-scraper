@@ -1,0 +1,9 @@
+event_id,league_label,matchup,game_state,winner,loser,final_score,top_performer_1,top_performer_1_statline,top_performer_2,top_performer_2_statline,period_summary,confidence,manual_review_flag,source_url
+401856984,WNBA,Toronto Tempo at Washington Mystics,Final,Washington Mystics,Toronto Tempo,Toronto Tempo 85 - Washington Mystics 86,Marina Mabrey,"PTS 27, REB 1, AST 3, STL 1, FG 9-15",Shakira Austin,"PTS 12, REB 11, AST 3, BLK 2, FG 3-6",WSH: 17 | 23 | 25 | 21 || TOR: 14 | 23 | 15 | 33,High,No,https://www.espn.com/basketball/game/_/gameId/401856984
+401856985,WNBA,Golden State Valkyries at Seattle Storm,Final,Golden State Valkyries,Seattle Storm,Golden State Valkyries 76 - Seattle Storm 72,Natisha Hiedeman,"PTS 26, REB 4, AST 5, STL 2, BLK 1",Veronica Burton,"PTS 11, REB 5, AST 8, STL 2, BLK 1",SEA: 21 | 17 | 15 | 19 || GS: 21 | 19 | 26 | 10,High,No,https://www.espn.com/basketball/game/_/gameId/401856985
+401856986,WNBA,Indiana Fever at Connecticut Sun,Upcoming,,,Indiana Fever 0 - Connecticut Sun 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856986
+401856987,WNBA,Minnesota Lynx at Las Vegas Aces,Upcoming,,,Minnesota Lynx 0 - Las Vegas Aces 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856987
+401856988,WNBA,Dallas Wings at Portland Fire,Upcoming,,,Dallas Wings 0 - Portland Fire 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856988
+401856989,WNBA,Los Angeles Sparks at Phoenix Mercury,Upcoming,,,Los Angeles Sparks 0 - Phoenix Mercury 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856989
+401856990,WNBA,Washington Mystics at New York Liberty,Upcoming,,,Washington Mystics 0 - New York Liberty 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856990
+401856991,WNBA,Atlanta Dream at Toronto Tempo,Upcoming,,,Atlanta Dream 0 - Toronto Tempo 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856991
