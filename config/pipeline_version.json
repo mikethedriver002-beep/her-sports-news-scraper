@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Mermaid Ops",
-  "pipeline_version": "v3.3.2-mermaid-quality-brain-v2.2",
+  "pipeline_version": "v3.3.3-mermaid-content-director-v2.3",
   "contract_version": "v2",
   "operator_codename": "BB",
   "system_codename": "Mermaid",
@@ -13,5 +13,5 @@
   "github_visible_version": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "release_date_local": "2026-06-12",
-  "notes": "Quality Brain v2.2: story classification, supplemental multi-sport scan, sport floors, improved slot routing, and HSD prompt packets."
+  "notes": "Content Director v2.3: slot dedupe, intentional crosspost labels, NCAA wrong-sport filters, platform-specific HSD copy, asset strategy, and director-compiled packets."
 }
