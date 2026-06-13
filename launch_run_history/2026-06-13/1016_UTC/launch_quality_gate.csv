@@ -1,0 +1,10 @@
+bundle_id,bundle_name,check_order,check_type,status,instruction
+bundle_4ce84aeaf997c0,Tonight in the W Preview,1,bundle_prompt,Required,"Use the prompt from studio_bundle_packets.md, not the individual backup prompt."
+bundle_4ce84aeaf997c0,Tonight in the W Preview,2,score_lock,Required,"Every winner, loser, and score must match the bundle accuracy lock exactly."
+bundle_4ce84aeaf997c0,Tonight in the W Preview,3,side_lock,Required,"No team side, score side, scoreboard order, or logo side may be swapped."
+bundle_4ce84aeaf997c0,Tonight in the W Preview,4,watermark,Required,"Locked HSD watermark bug must appear consistently, top-left unless safe-zone conflict."
+bundle_4ce84aeaf997c0,Tonight in the W Preview,5,no_fake_assets,Required,"No fake jerseys, fake uniforms, fake logos, fake player images, or invented numbers."
+bundle_4ce84aeaf997c0,Tonight in the W Preview,6,context_lock,Required,"Do not add stats, quotes, rankings, injuries, or milestones beyond the bundle."
+bundle_4ce84aeaf997c0,Tonight in the W Preview,7,end_slide,Required,Carousel must include the required branded CTA/end slide.
+bundle_4ce84aeaf997c0,Tonight in the W Preview,8,export,Required,Export feed graphic at 1080x1350. Make story crop only when needed.
+bundle_4ce84aeaf997c0,Tonight in the W Preview,9,caption,Required,Caption must not add unsupported claims.

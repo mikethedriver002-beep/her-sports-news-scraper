@@ -1,6 +1,6 @@
 # Her Sports Daily 7-Day Launch Content Calendar v1
 
-Generated: 2026-06-12T23:04:03.937317+00:00
+Generated: 2026-06-13T10:16:11.526620+00:00
 
 This is the starting cadence. Adjust based on actual results and bandwidth.
 
