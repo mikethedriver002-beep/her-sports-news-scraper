@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Mermaid Ops",
-  "pipeline_version": "v3.2.14-mermaid-ops-v1.0",
+  "pipeline_version": "v3.3.0-mermaid-upper-echelon-v2",
   "contract_version": "v2",
   "operator_codename": "BB",
   "system_codename": "Mermaid",
@@ -13,5 +13,5 @@
   "github_visible_version": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "release_date_local": "2026-06-12",
-  "notes": "Mermaid workflow consolidation plus Multi-Post Desk v1. BB is the assistant/operator nickname; Mermaid is the automation system codename."
+  "notes": "Upper Echelon v2: Preview Player Lock v2 plus story graph, multi-sport scout, rumor desk, player registry v2, deterministic prompt compiler, and expanded daily content engine."
 }
