@@ -1,6 +1,6 @@
 # Her Sports Daily Daily Launch Runbook v1
 
-Generated: 2026-06-13T10:16:11.525409+00:00
+Generated: 2026-06-13T17:03:49.169161+00:00
 
 ## Daily workflow
 
