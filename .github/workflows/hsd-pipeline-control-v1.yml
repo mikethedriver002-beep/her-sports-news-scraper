@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 95
     env:
-      HSD_RELEASE_VERSION: "v3.2.16-mermaid-preview-intelligence-v1.0"
+      HSD_RELEASE_VERSION: "v3.3.0-mermaid-upper-echelon-v2"
       HSD_ARTIFACT_NAME_PREFIX: "hsd-mermaid-ops-v1"
       HSD_RUN_MODE: ${{ github.event.inputs.run_mode || 'full_pipeline' }}
       HSD_PUBLISH_OUTPUTS: ${{ github.event.inputs.publish || 'false' }}
@@ -134,16 +134,19 @@ jobs:
       APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
       BING_SEARCH_API_KEY: ${{ secrets.BING_SEARCH_API_KEY }}
       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install dependencies once
         shell: bash
         run: |
@@ -153,6 +156,7 @@ jobs:
           if [ -f requirements-news-sync.txt ]; then pip install -r requirements-news-sync.txt; fi
           if [ -f requirements-asset-visual-qa.txt ]; then pip install -r requirements-asset-visual-qa.txt; fi
           python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil pillow requests cairosvg >/dev/null 2>&1 || true
+
       - name: Clean stale generated state
         shell: bash
         run: |
@@ -169,11 +173,18 @@ jobs:
           rm -f rendered_slide_qa.csv rendered_slide_qa_report.md rendered_slide_qa_manifest.json rendered_graphics_manual_review_template.csv
           rm -f source_registry_audit.csv source_registry_audit.md source_registry_audit.json operator_command_center.html operator_command_center.md operator_command_center.json
           rm -f tonight_preview_intelligence_report.md tonight_preview_slide_plan.md tonight_preview_player_lock_report.csv tonight_preview_storylines.csv tonight_preview_graphics_prompt_v2.md tonight_preview_pack_status.json tonight_preview_guard_report.md tonight_preview_layout_blueprint.csv tonight_preview_graphics_chat_override.txt
+          rm -f tonight_preview_player_lock_v2_report.md tonight_preview_player_lock_v2.csv tonight_preview_player_lock_v2_status.json tonight_preview_safe_prompt_v2.md tonight_preview_copy_family_guard.csv tonight_preview_matchup_plan_v2.md tonight_preview_asset_actions_v2.csv
+          rm -f mermaid_upper_echelon_report.md mermaid_upper_echelon_manifest.json mermaid_story_graph.csv mermaid_story_graph.jsonl mermaid_story_graph_report.md mermaid_master_content_board.md mermaid_content_slots_v2.csv mermaid_content_engine_manifest.json
+          rm -f multisport_scout_candidates.csv multisport_scout_report.md multisport_scout_manifest.json social_rumor_candidates.csv social_rumor_desk_report.md social_rumor_desk_manifest.json player_asset_registry.csv player_asset_debt.csv player_registry_status.md player_registry_manifest.json official_player_headshot_candidates.csv official_player_headshot_report.md
+          rm -f mermaid_compiled_packet_index.csv mermaid_prompt_compiler_report.md ig_feed_queue_v2.csv ig_story_queue_v2.csv threads_queue_v2.csv breaking_news_queue.csv rumor_watch_queue.csv
+          rm -rf mermaid_compiled_packets
           rm -f hsd_current_run.json hsd_pipeline_lite_review.zip
           rm -rf hsd_pipeline_lite_review
+
       - name: Verify Mermaid Ops install
         shell: bash
         run: python verify_hsd_install_v1.py
+
       - name: Run core discovery and results
         shell: bash
         run: |
@@ -195,6 +206,7 @@ jobs:
           if [[ "${HSD_RUN_MODE}" == "full_pipeline" || "${HSD_RUN_MODE}" == "discovery_only" || "${HSD_RUN_MODE}" == "results_only" ]]; then
             python build_hsd_daily_slate_v1.py
           fi
+
       - name: Build Stories, Manual Workflow, and Multi-Post Desk
         if: always()
         shell: bash
@@ -204,6 +216,7 @@ jobs:
           python generate_hsd_manual_workflow_merge_v1.py || true
           python generate_hsd_multi_post_desk_v1.py || true
           python generate_hsd_bebe_daily_ops_plan_v2.py || true
+
       - name: Run News and Studio stages
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'news_only' || env.HSD_RUN_MODE == 'studio_only'
         shell: bash
@@ -218,6 +231,7 @@ jobs:
             if [ -f generate_hsd_tonight_preview_bridge_v1.py ]; then python generate_hsd_tonight_preview_bridge_v1.py || true; fi
             if [ -f generate_hsd_preview_quality_gate_v1.py ]; then python generate_hsd_preview_quality_gate_v1.py || true; fi
           fi
+
       - name: Run Asset Visual QA stage
         if: env.HSD_RUN_MODE == 'full_pipeline' || env.HSD_RUN_MODE == 'asset_only'
         shell: bash
@@ -234,6 +248,7 @@ jobs:
             python generate_hsd_exact_asset_audit_v1.py || true
             python generate_hsd_graphics_upload_pack_v1.py
             python generate_hsd_preview_intelligence_v1.py || true
+            python generate_hsd_preview_player_lock_v2.py || true
             python generate_hsd_exact_asset_audit_v1.py || true
             python generate_hsd_graphics_qa_v1.py
             python generate_hsd_rendered_slide_qa_v1.py || true
@@ -241,6 +256,12 @@ jobs:
           else
             echo "No studio bundle queue; skipping feed graphics pack."
           fi
+
+      - name: Mermaid Upper Echelon Control Plane
+        if: always()
+        shell: bash
+        run: python generate_hsd_mermaid_upper_echelon_v2.py || true
+
       - name: Final status and review artifact
         if: always()
         shell: bash
@@ -255,6 +276,7 @@ jobs:
           python generate_hsd_bebe_daily_ops_plan_v2.py || true
           python generate_hsd_operator_command_center_v2.py || true
           python generate_hsd_pipeline_review_lite_v1.py || true
+
       - name: Upload lite production review artifact
         uses: actions/upload-artifact@v4
         if: always() && (env.HSD_REVIEW_ARTIFACT_SIZE == 'lite' || env.HSD_REVIEW_ARTIFACT_SIZE == 'both')
@@ -276,6 +298,34 @@ jobs:
             threads_queue.csv
             caption_bank.md
             first_comment_hooks.md
+            mermaid_upper_echelon_report.md
+            mermaid_upper_echelon_manifest.json
+            mermaid_story_graph.csv
+            mermaid_story_graph.jsonl
+            mermaid_story_graph_report.md
+            mermaid_master_content_board.md
+            mermaid_content_slots_v2.csv
+            mermaid_content_engine_manifest.json
+            multisport_scout_candidates.csv
+            multisport_scout_report.md
+            multisport_scout_manifest.json
+            social_rumor_candidates.csv
+            social_rumor_desk_report.md
+            social_rumor_desk_manifest.json
+            player_asset_registry.csv
+            player_asset_debt.csv
+            player_registry_status.md
+            player_registry_manifest.json
+            official_player_headshot_candidates.csv
+            official_player_headshot_report.md
+            mermaid_compiled_packet_index.csv
+            mermaid_prompt_compiler_report.md
+            mermaid_compiled_packets/**
+            ig_feed_queue_v2.csv
+            ig_story_queue_v2.csv
+            threads_queue_v2.csv
+            breaking_news_queue.csv
+            rumor_watch_queue.csv
             bebe_daily_ops_plan.md
             bebe_daily_ops_plan.csv
             bebe_daily_ops_status.json
@@ -299,6 +349,13 @@ jobs:
             tonight_preview_guard_report.md
             tonight_preview_layout_blueprint.csv
             tonight_preview_graphics_chat_override.txt
+            tonight_preview_player_lock_v2_report.md
+            tonight_preview_player_lock_v2.csv
+            tonight_preview_player_lock_v2_status.json
+            tonight_preview_safe_prompt_v2.md
+            tonight_preview_copy_family_guard.csv
+            tonight_preview_matchup_plan_v2.md
+            tonight_preview_asset_actions_v2.csv
             graphics_upload_pack_status.csv
             graphics_chat_direct_handoff.md
             graphics_chat_upload_instructions.md
@@ -338,6 +395,7 @@ jobs:
             manual_workflow_pack_status.json
             manual_workflow_handoff.md
             manual_workflow_handoff_packs/*.zip
+
       - name: Commit lightweight generated outputs
         if: env.HSD_PUBLISH_OUTPUTS == 'true'
         shell: bash
@@ -345,6 +403,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add --ignore-errors multi_post_daily_board.md multi_post_daily_board.json post_slot_status.csv ig_feed_queue.csv ig_story_queue.csv threads_queue.csv caption_bank.md first_comment_hooks.md || true
+          git add --ignore-errors mermaid_upper_echelon_report.md mermaid_story_graph.csv mermaid_master_content_board.md mermaid_content_slots_v2.csv ig_feed_queue_v2.csv ig_story_queue_v2.csv threads_queue_v2.csv breaking_news_queue.csv rumor_watch_queue.csv || true
           git add --ignore-errors hsd_pipeline_lite_review.zip hsd_pipeline_lite_review operator_status.md publish_guard_report.md || true
           if git diff --cached --quiet; then echo "No generated output changes to commit."; exit 0; fi
           git commit -m "Run HSD Mermaid Ops v1"
