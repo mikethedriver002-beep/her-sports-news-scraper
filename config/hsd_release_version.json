@@ -1,10 +1,10 @@
 {
-  "release": "HSD Mermaid Ops v1",
-  "pipeline_version": "v3.2.14-mermaid-ops-v1.0",
+  "release": "HSD Mermaid Upper Echelon v2",
+  "pipeline_version": "v3.3.0-mermaid-upper-echelon-v2",
   "github_visible_name": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "assistant_operator": "BB",
   "system_codename": "Mermaid",
   "release_date_local": "2026-06-12",
-  "summary": "Workflow consolidation, Actions declutter, and Multi-Post Desk v1 wiring."
+  "summary": "Preview Player Lock v2 plus Story Graph, Multi-Sport Scout, Social Rumor Desk, Player Registry v2, Deterministic Prompt Compiler, and Content Engine v2."
 }
