@@ -55,7 +55,7 @@ def copy_if_exists(src: str | Path, dst: str | Path) -> bool:
     return True
 
 
-VERSION = "v3.3.2-mermaid-upper-echelon-quality-brain-v2.2-bridge"
+VERSION = "v3.3.3-mermaid-upper-echelon-content-director-v2.3-bridge"
 OUT_MD = "mermaid_upper_echelon_report.md"
 OUT_JSON = "mermaid_upper_echelon_manifest.json"
 
@@ -69,6 +69,7 @@ STEPS = [
     ("Content Engine v2", "generate_hsd_mermaid_content_engine_v2.py"),
     ("Quality Brain v2.1", "generate_hsd_mermaid_quality_brain_v2_1.py"),
     ("Quality Brain v2.2", "generate_hsd_mermaid_quality_brain_v2_2.py"),
+    ("Content Director v2.3", "generate_hsd_mermaid_content_director_v2_3.py"),
 ]
 
 
@@ -99,22 +100,22 @@ def run_step(name: str, script: str) -> Dict[str, Any]:
 def bridge_quality_outputs() -> List[str]:
     actions: List[str] = []
     aliases = [
-        ("mermaid_master_content_board_v2_2.md", "mermaid_master_content_board.md"),
-        ("mermaid_classified_story_graph.csv", "mermaid_story_graph.csv"),
-        ("mermaid_content_slots_v2_2.csv", "mermaid_content_slots_v2.csv"),
-        ("ig_feed_queue_v2_2.csv", "ig_feed_queue_v2.csv"),
-        ("ig_story_queue_v2_2.csv", "ig_story_queue_v2.csv"),
-        ("threads_queue_v2_2.csv", "threads_queue_v2.csv"),
-        ("multisport_scout_candidates_filtered_v2_2.csv", "multisport_scout_candidates_filtered.csv"),
-        ("multisport_rejected_candidates_v2_2.csv", "multisport_rejected_candidates.csv"),
-        ("mermaid_quality_prompt_index_v2_2.csv", "mermaid_compiled_packet_index.csv"),
+        ("mermaid_content_director_report.md", "mermaid_master_content_board.md"),
+        ("mermaid_director_story_graph.csv", "mermaid_story_graph.csv"),
+        ("mermaid_director_content_slots.csv", "mermaid_content_slots_v2.csv"),
+        ("ig_feed_queue_v2_3.csv", "ig_feed_queue_v2.csv"),
+        ("ig_story_queue_v2_3.csv", "ig_story_queue_v2.csv"),
+        ("threads_queue_v2_3.csv", "threads_queue_v2.csv"),
+        ("mermaid_director_prompt_index.csv", "mermaid_compiled_packet_index.csv"),
+        ("content_director_sport_floor_status.csv", "multisport_sport_floor_status.csv"),
+        ("content_director_rejected_wrong_sport.csv", "multisport_wrong_sport_rejections.csv"),
     ]
     for src, dst in aliases:
         if copy_if_exists(src, dst):
             actions.append(f"aliased {src} -> {dst}")
-    if Path("mermaid_quality_compiled_packets_v2_2").exists():
-        copy_if_exists("mermaid_quality_compiled_packets_v2_2", "mermaid_compiled_packets")
-        actions.append("aliased mermaid_quality_compiled_packets_v2_2 -> mermaid_compiled_packets")
+    if Path("mermaid_director_compiled_packets").exists():
+        copy_if_exists("mermaid_director_compiled_packets", "mermaid_compiled_packets")
+        actions.append("aliased mermaid_director_compiled_packets -> mermaid_compiled_packets")
     return actions
 
 
@@ -124,13 +125,15 @@ def counts() -> Dict[str, int]:
         "compiled_packets": len(read_csv("mermaid_compiled_packet_index.csv")),
         "content_slots": len(read_csv("mermaid_content_slots_v2.csv")),
         "multisport_candidates_raw": len(read_csv("multisport_scout_candidates.csv")),
-        "multisport_candidates_v2_2": len(read_csv("multisport_scout_candidates_v2_2.csv")),
         "multisport_candidates_filtered": len(read_csv("multisport_scout_candidates_filtered.csv")),
         "multisport_candidates_rejected": len(read_csv("multisport_rejected_candidates.csv")),
         "rumor_claims": len(read_csv("social_rumor_candidates.csv")),
         "player_asset_debt": len(read_csv("player_asset_debt.csv")),
-        "quality_slots_v2_2": len(read_csv("mermaid_content_slots_v2_2.csv")),
-        "quality_packets_v2_2": len(read_csv("mermaid_quality_prompt_index_v2_2.csv")),
+        "director_story_graph_rows": len(read_csv("mermaid_director_story_graph.csv")),
+        "director_slots": len(read_csv("mermaid_director_content_slots.csv")),
+        "director_packets": len(read_csv("mermaid_director_prompt_index.csv")),
+        "director_wrong_sport_rejections": len(read_csv("content_director_rejected_wrong_sport.csv")),
+        "director_crossposts": len(read_csv("content_director_crosspost_plan.csv")),
     }
 
 
@@ -144,7 +147,7 @@ def main() -> None:
         "steps": results,
         "bridge_actions": bridge_actions,
         "counts": c,
-        "quality_brain_v2_2_present": Path("mermaid_quality_brain_v2_2_report.md").exists(),
+        "content_director_present": Path("mermaid_content_director_report.md").exists(),
     }
     write_text(OUT_JSON, json.dumps(manifest, indent=2))
     lines = [
@@ -155,7 +158,7 @@ def main() -> None:
         "",
         "## Status",
         "",
-        "Upper Echelon ran with Quality Brain v2.2. Quality outputs are aliased into the existing artifact paths so the operator can stay on GitHub Actions.",
+        "Upper Echelon ran with Content Director v2.3. Director outputs are aliased into the normal artifact paths so the operator can stay on GitHub Actions.",
         "",
         "## Counts",
         "",
@@ -166,19 +169,19 @@ def main() -> None:
         lines.append(f"- {r['name']}: {r['status']} ({r['returncode']})")
         if r.get("status") not in {"ok"} and r.get("stderr"):
             lines.append(f"  - stderr: {clean(r.get('stderr'))[:700]}")
-    lines += ["", "## Quality bridge actions", ""]
-    lines += [f"- {a}" for a in bridge_actions] if bridge_actions else ["- No quality aliases were created."]
-    v22 = read_text("mermaid_quality_brain_v2_2_report.md")
-    if v22:
-        lines += ["", "---", "", "## Quality Brain v2.2 Report", ""]
-        lines += v22.splitlines()
+    lines += ["", "## Director bridge actions", ""]
+    lines += [f"- {a}" for a in bridge_actions] if bridge_actions else ["- No director aliases were created."]
+    director = read_text("mermaid_content_director_report.md")
+    if director:
+        lines += ["", "---", "", "## Content Director v2.3 Report", ""]
+        lines += director.splitlines()
     lines += ["", "## Next operator focus", ""]
     if c["player_asset_debt"]:
         lines.append("- Fill player asset debt before relying on player-led preview graphics.")
-    if c["multisport_candidates_filtered"]:
-        lines.append("- Review quality-filtered multi-sport candidates, not the raw scout dump.")
-    if c["quality_slots_v2_2"]:
-        lines.append("- Use the v2.2 quality-routed queues and compiled packets for handoff.")
+    if c["director_wrong_sport_rejections"]:
+        lines.append("- Review wrong-sport rejections, especially NCAA Softball filters.")
+    if c["director_slots"]:
+        lines.append("- Use Content Director queues and compiled packets for handoff.")
     if c["rumor_claims"]:
         lines.append("- Review rumor desk claims. Confirmed/corroborated only should move to publish lanes.")
     lines.append("- Keep publish mode artifact-only until rendered QA passes.")
