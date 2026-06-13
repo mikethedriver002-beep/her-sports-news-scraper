@@ -1,0 +1,52 @@
+{
+  "version": "v3.2.17-mermaid-preview-player-lock-v2",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "content_family": "Tonight in the W",
+  "player_gate": {
+    "preview_player_images_default": "strict_optional",
+    "minimum_exact_players_per_team_for_player_slide": 1,
+    "all_slate_teams_required_for_player_slide": true,
+    "remove_player_assets_from_upload_pack_when_gate_fails": true,
+    "remove_unselected_player_assets_when_gate_passes": true,
+    "forbid_generated_player_images": true,
+    "forbid_player_substitution": true,
+    "forbid_wrong_team_context": true,
+    "forbid_three_team_layout_for_two_game_slate": true
+  },
+  "fallback_slide": {
+    "slide_3_role": "storylines_to_know",
+    "headline": "Storylines to know",
+    "layout": "two matchup panels",
+    "allowed_when_player_gate_fails": true
+  },
+  "preview_copy_family_bans": [
+    "What stood out?",
+    "Final",
+    "Final Score",
+    "Last Night",
+    "gets the win",
+    "beat",
+    "winner",
+    "loser",
+    "result",
+    "results"
+  ],
+  "allowed_preview_ctas": [
+    "Which game are you locked in for?",
+    "Which matchup are you watching first?",
+    "Who needs this one more?",
+    "What are you watching for tonight?",
+    "Which game has upset potential?"
+  ],
+  "slide_roles": {
+    "slide_1": "cover",
+    "slide_2": "what_to_know_tonight",
+    "slide_3_when_player_gate_passes": "players_to_watch_one_per_team",
+    "slide_3_when_player_gate_fails": "storylines_to_know",
+    "slide_4": "pregame_cta"
+  },
+  "team_logo_display_notes": {
+    "Toronto Tempo": "Use exact attached logo but lift the panel contrast and support it with glow/edge separation; do not alter or redraw the logo."
+  }
+}
