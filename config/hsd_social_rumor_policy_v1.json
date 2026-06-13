@@ -1,0 +1,35 @@
+{
+  "version": "hsd-social-rumor-policy-v1",
+  "states": {
+    "confirmed_official": {
+      "publish_lane": "breaking_ready_with_review",
+      "requirements": "official team/league/governing body source"
+    },
+    "corroborated_report": {
+      "publish_lane": "review_with_attribution",
+      "requirements": "two reputable non-official sources or one reputable source plus source material"
+    },
+    "single_source_report": {
+      "publish_lane": "manual_review_only",
+      "requirements": "one reputable source"
+    },
+    "social_buzz": {
+      "publish_lane": "hold_social_buzz",
+      "requirements": "social posts without strong confirmation"
+    },
+    "debunked": {
+      "publish_lane": "do_not_publish",
+      "requirements": "known false or contradicted by official source"
+    }
+  },
+  "platform_rules": {
+    "threads": "Can carry attributed confirmed/corroborated updates after review.",
+    "instagram_feed": "Only confirmed or deeply corroborated major stories.",
+    "instagram_stories": "Review-only, source-labeled context."
+  },
+  "never": [
+    "never auto-publish rumor",
+    "never present single-source claim as fact",
+    "never post unsourced screenshots"
+  ]
+}

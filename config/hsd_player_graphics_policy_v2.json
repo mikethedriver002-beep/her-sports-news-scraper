@@ -1,0 +1,32 @@
+{
+  "version": "hsd-player-graphics-policy-v2",
+  "source_order": [
+    "operator_approved_local",
+    "official_roster_headshot_exact",
+    "official_player_page_exact",
+    "licensed_commons_verified",
+    "manual_review_only"
+  ],
+  "auto_approve": {
+    "official_roster_exact_name_team_match": true,
+    "commons_or_wikidata": false,
+    "search_engine_result": false
+  },
+  "player_graphics_when_appropriate": {
+    "required_for": [
+      "star_watch",
+      "players_to_watch",
+      "rookie_watch",
+      "player_spotlight",
+      "quote_card"
+    ],
+    "fallback": "If all required exact images are not available, create asset debt and switch to non-player storylines; do not invent."
+  },
+  "strict_identity": {
+    "one_asset_per_player": true,
+    "team_match_required": true,
+    "wrong_jersey_context_blocks": true,
+    "duplicate_face_hash_review": true,
+    "no_generated_people": true
+  }
+}

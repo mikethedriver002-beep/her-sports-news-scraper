@@ -1,0 +1,45 @@
+{
+  "version": "v3.3.0-mermaid-upper-echelon-v2",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "mission": "Run HSD like a women\u2019s sports desk: story graph first, exact assets, deterministic prompts, multi-sport coverage, Threads volume, Instagram quality.",
+  "operating_modes": {
+    "publish_mode": "artifact_only",
+    "manual_review_required": true,
+    "auto_publish_allowed": false
+  },
+  "content_volume_targets": {
+    "normal_day": {
+      "ig_feed": "1-2",
+      "ig_stories": "4-8",
+      "threads": "4-7"
+    },
+    "big_sports_day": {
+      "ig_feed": "2-3 max",
+      "ig_stories": "8-12",
+      "threads": "8-15"
+    },
+    "slow_day": {
+      "ig_feed": "1 strong post",
+      "ig_stories": "3-5",
+      "threads": "3-5"
+    }
+  },
+  "priority_order": [
+    "WNBA",
+    "WTA",
+    "NWSL",
+    "LPGA",
+    "Volleyball",
+    "College Softball",
+    "NCAAW Basketball"
+  ],
+  "hard_rules": [
+    "No cross-bundle artifact contamination.",
+    "No player graphic unless every required player image is exact and mapped.",
+    "No invented player faces, bodies, jerseys, or logos.",
+    "No generic social volume on Instagram feed; Threads carries volume.",
+    "Breaking/rumor content requires verification state and source label.",
+    "Prompts compile from canonical content packets only."
+  ]
+}

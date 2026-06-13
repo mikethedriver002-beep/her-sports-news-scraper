@@ -1,0 +1,24 @@
+{
+  "version": "hsd-official-player-sources-v1",
+  "leagues": {
+    "WNBA": {
+      "league_players_url": "https://www.wnba.com/players",
+      "team_roster_pages": {
+        "Atlanta Dream": "https://dream.wnba.com/roster",
+        "Chicago Sky": "https://sky.wnba.com/roster",
+        "Connecticut Sun": "https://sun.wnba.com/roster",
+        "Dallas Wings": "https://wings.wnba.com/roster",
+        "Golden State Valkyries": "https://valkyries.wnba.com/roster",
+        "Indiana Fever": "https://fever.wnba.com/roster",
+        "Las Vegas Aces": "https://aces.wnba.com/roster",
+        "Los Angeles Sparks": "https://sparks.wnba.com/roster",
+        "Minnesota Lynx": "https://lynx.wnba.com/roster",
+        "New York Liberty": "https://liberty.wnba.com/roster",
+        "Phoenix Mercury": "https://mercury.wnba.com/roster",
+        "Seattle Storm": "https://storm.wnba.com/roster",
+        "Toronto Tempo": "https://tempo.wnba.com/roster",
+        "Washington Mystics": "https://mystics.wnba.com/roster"
+      }
+    }
+  }
+}

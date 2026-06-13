@@ -1,0 +1,2 @@
+claim_id,submitted_at,platform,source_url,source_handle,claim_text,sport,league,teams_people,claim_type,operator_notes,verification_hint
+rumor_001,2026-06-13T09:00:00-04:00,X,https://x.com/example/status/123,@example,Example claim text, basketball,WNBA,Player/Team,injury_or_roster,Add notes here,needs_official_confirmation

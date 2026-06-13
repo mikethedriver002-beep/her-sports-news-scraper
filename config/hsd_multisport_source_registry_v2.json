@@ -1,0 +1,120 @@
+{
+  "version": "hsd-multisport-source-registry-v2",
+  "sources": [
+    {
+      "source_id": "wnba_official_news",
+      "sport": "basketball",
+      "league": "WNBA",
+      "trust_band": "green",
+      "url": "https://www.wnba.com/news",
+      "use": "news"
+    },
+    {
+      "source_id": "wnba_official_scores",
+      "sport": "basketball",
+      "league": "WNBA",
+      "trust_band": "green",
+      "url": "https://www.wnba.com/schedule",
+      "use": "schedule_results"
+    },
+    {
+      "source_id": "espn_wnba_scoreboard",
+      "sport": "basketball",
+      "league": "WNBA",
+      "trust_band": "green_crosscheck",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard",
+      "use": "scoreboard_crosscheck"
+    },
+    {
+      "source_id": "wta_news",
+      "sport": "tennis",
+      "league": "WTA",
+      "trust_band": "green",
+      "url": "https://www.wtatennis.com/news",
+      "use": "news"
+    },
+    {
+      "source_id": "wta_tournaments",
+      "sport": "tennis",
+      "league": "WTA",
+      "trust_band": "green",
+      "url": "https://www.wtatennis.com/tournaments",
+      "use": "schedule"
+    },
+    {
+      "source_id": "nwsl_news",
+      "sport": "soccer",
+      "league": "NWSL",
+      "trust_band": "green",
+      "url": "https://www.nwslsoccer.com/news",
+      "use": "news"
+    },
+    {
+      "source_id": "nwsl_schedule",
+      "sport": "soccer",
+      "league": "NWSL",
+      "trust_band": "green",
+      "url": "https://www.nwslsoccer.com/schedule",
+      "use": "schedule_results"
+    },
+    {
+      "source_id": "lpga_news",
+      "sport": "golf",
+      "league": "LPGA",
+      "trust_band": "green",
+      "url": "https://www.lpga.com/news",
+      "use": "news"
+    },
+    {
+      "source_id": "lpga_tournaments",
+      "sport": "golf",
+      "league": "LPGA",
+      "trust_band": "green",
+      "url": "https://www.lpga.com/tournaments",
+      "use": "schedule"
+    },
+    {
+      "source_id": "volleyball_world_vnl",
+      "sport": "volleyball",
+      "league": "VNL",
+      "trust_band": "green",
+      "url": "https://en.volleyballworld.com/volleyball/competitions/volleyball-nations-league/schedule/",
+      "use": "schedule_results"
+    },
+    {
+      "source_id": "ncaa_softball_scoreboard",
+      "sport": "softball",
+      "league": "NCAA Softball",
+      "trust_band": "green",
+      "url": "https://www.ncaa.com/scoreboard/softball/d1",
+      "use": "schedule_results"
+    },
+    {
+      "source_id": "us_soccer_wnt",
+      "sport": "soccer",
+      "league": "USWNT",
+      "trust_band": "green",
+      "url": "https://www.ussoccer.com/teams/uswnt",
+      "use": "news_schedule"
+    },
+    {
+      "source_id": "fifa_womens",
+      "sport": "soccer",
+      "league": "FIFA Women",
+      "trust_band": "green",
+      "url": "https://www.fifa.com/en/tournaments/womens",
+      "use": "news_schedule"
+    }
+  ],
+  "limits": {
+    "timeout_seconds": 12,
+    "max_items_per_source": 8,
+    "max_total_candidates": 50
+  },
+  "routing": {
+    "green": "eligible_for_story_graph",
+    "green_crosscheck": "crosscheck_only_or_scoreboard",
+    "yellow": "review_only",
+    "red": "disabled"
+  }
+}

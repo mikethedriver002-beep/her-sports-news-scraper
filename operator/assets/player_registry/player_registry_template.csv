@@ -1,0 +1,2 @@
+player_id,league,team_name,player_name,approved_asset_path,source_url,source_type,current_team_verified,identity_verified,rights_status,usage_status,notes
+wnba_example,WNBA,Example Team,Example Player,operator/assets/player_registry/example-player.png,https://team.example/roster,operator_approved_local,Yes,Yes,operator_approved,active,Replace with real player data
