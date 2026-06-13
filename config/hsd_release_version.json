@@ -1,10 +1,10 @@
 {
-  "release": "HSD Mermaid Quality Brain v2.2",
-  "pipeline_version": "v3.3.2-mermaid-quality-brain-v2.2",
+  "release": "HSD Mermaid Content Director v2.3",
+  "pipeline_version": "v3.3.3-mermaid-content-director-v2.3",
   "github_visible_name": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "assistant_operator": "BB",
   "system_codename": "Mermaid",
   "release_date_local": "2026-06-12",
-  "summary": "Story Classification + Sport Floors: classifies scoreboard matchups as preview events, runs supplemental multi-sport scan, reports sport-floor shortfalls, improves queues and prompt packets."
+  "summary": "Content Director: slot dedupe, intentional crosspost labels, NCAA wrong-sport filters, sharper HSD platform copy, asset strategy, and director-compiled packets."
 }
