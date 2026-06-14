@@ -1,0 +1,9 @@
+{
+  "pipeline": "HSD Mermaid Ops v1",
+  "version": "v3.3.8-mermaid-render-publish-bridge-v2.8",
+  "codename": "Mermaid",
+  "operator": "BB",
+  "artifact_mode": "artifact_only",
+  "status": "active",
+  "latest_outputs_path": "outputs/latest"
+}
