@@ -5,6 +5,8 @@
   "operator": "BB",
   "artifact_mode": "artifact_only",
   "status": "active",
-  "strict_team_logo_policy": true,
-  "latest_outputs_path": "outputs/latest"
+  "latest_outputs_path": "outputs/latest",
+  "render_engine": "Render Studio v2.9.1 Visual Polish Pass 1",
+  "team_logo_policy": "exact_required",
+  "asset_database_next": "WNBA Asset Database v1"
 }
