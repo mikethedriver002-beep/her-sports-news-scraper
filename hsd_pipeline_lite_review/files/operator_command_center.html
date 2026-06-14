@@ -1,0 +1,376 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>HSD Operator Command Center</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;background:#f7f7fb;color:#181821}header{background:#181821;color:white;padding:28px 32px}main{padding:24px 32px 48px;max-width:1180px;margin:0 auto}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:18px}.metric,.card{background:white;border:1px solid #e6e6ee;border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}.metric strong{display:block;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:.04em}.metric span{display:block;margin-top:8px;font-size:20px;font-weight:700}.pill{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;background:#fff2bd;color:#574400}.pill.good{background:#d9f7e3;color:#10451f}.pill.bad{background:#ffe0df;color:#74110c}.card.missing{opacity:.64}pre{white-space:pre-wrap;max-height:220px;overflow:auto;background:#fafafa;border-radius:10px;padding:10px;font-size:12px}code{background:#f0f0f5;padding:2px 5px;border-radius:5px}</style></head><body><header><h1>HSD Operator Command Center</h1><div>generated 2026-06-14T17:02:07.820003+00:00</div></header><main><section class='grid'><div class='metric'><strong>Install</strong><span><span class="pill good">PASS</span></span></div><div class='metric'><strong>Preview Gate</strong><span><span class="pill good">PASS</span></span></div><div class='metric'><strong>Graphics Pack</strong><span><span class="pill good">ready_with_review</span></span></div><div class='metric'><strong>Operator Overall</strong><span><span class="pill bad">NO-GO</span></span></div><div class='metric'><strong>Graphics Handoff Allowed</strong><span><span class="pill bad">False</span></span></div><div class='metric'><strong>Publish Allowed</strong><span><span class="pill bad">False</span></span></div><div class='metric'><strong>Rendered Slide Qa</strong><span><span class="pill warn">needs_manual_review</span></span></div><div class='metric'><strong>Day Type</strong><span><span class="pill warn">normal_day</span></span></div><div class='metric'><strong>Weekday</strong><span><span class="pill warn">Sunday</span></span></div><div class='metric'><strong>Assignment Handoff Refresh</strong><span><span class="pill good">ok</span></span></div><div class='metric'><strong>Handoff Packets</strong><span><span class="pill warn">7</span></span></div><div class='metric'><strong>Manual Zip Count</strong><span><span class="pill warn">14</span></span></div></section><h2>Review order</h2><section class='grid'>
+        <section class="card ">
+          <h3>Install verification</h3>
+          <p><code>install_report.md</code> <span class="pill warn">found</span></p>
+          <pre># HSD Install Verification
+
+Verifier: hsd-install-verifier-v3.2.13-bebe-ops-v2.11
+Expected pipeline version: `v3.2.13-bebe-ops-v2.11`
+Installed pipeline version: `v3.3.6-mermaid-assignment-handoff-v2.6`
+Generated: 2026-06-14T17:00:07.063820+00:00
+
+- issues: 0
+- warnings: 2
+- version status: warning
+- stale files removed before run: 24
+- stale directories removed before run: 1
+
+## Warnings
+
+- pipeline_version mismatch: &#x27;v3.3.6-mermaid-assignment-handoff-v2.6&#x27;; expected &#x27;v3.2.13-bebe-ops-v2.11&#x27;. This no longer blocks the run; update config/pipeline_version.json for cleaner GitHub/operator display.
+- .github/workflows/hsd-pipeline-control-v1.yml</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Operator status</h3>
+          <p><code>operator_status.md</code> <span class="pill warn">found</span></p>
+          <pre># HSD Operator Status
+
+Generated: 2026-06-14T17:01:59.975678+00:00
+Version: hsd-operator-status-v3.2.5-bebe-ops-v2.4
+
+## NO-GO
+
+- Graphics handoff allowed: False
+- Publish allowed: False
+- Clean ready upload packs: 0
+- Ready-with-review upload packs: 1
+- Blocked upload packs: 0
+- Critical issues: 1
+- Review issues: 2
+
+## Manual actions
+
+- Tonight in the W: ready_with_review — Open upload pack, visually verify public player images/crop rules, then send to graphics chat. Do not post until rendered-slide QA passes.
+
+## Issues / review notes
+
+- review | ready_with_review_upload_pack | Tonight in the W
+- critical | graphics_qa_failed | fail
+- revi</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Publish guard</h3>
+          <p><code>publish_guard_report.md</code> <span class="pill warn">found</span></p>
+          <pre># HSD Publish Guard
+
+Generated: 2026-06-14T17:01:59.949265+00:00
+Version: hsd-publish-guard-v3.2.5-bebe-ops-v2.4
+
+- publish_mode: artifact_only
+- requested_publish: True
+- publish_allowed: False
+- graphics_handoff_allowed: False
+- ready_upload_packs: 0
+- ready_with_review_upload_packs: 1
+- blocked_upload_packs: 0
+- slate_items: 1
+- preview_gate_status: PASS
+- graphics_qa_status: fail
+- rendered_qa_status: needs_manual_review
+
+## Issues / Review Notes
+
+- review | ready_with_review_upload_pack | Tonight in the W
+- critical | graphics_qa_failed | fail
+- review | rendered_slide_qa_pending | files_checked=0
+</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>BeBe daily ops plan</h3>
+          <p><code>bebe_daily_ops_plan.md</code> <span class="pill warn">found</span></p>
+          <pre># BeBe Daily Ops Plan
+
+Generated local: 2026-06-14 01:02 PM EDT
+Day: Sunday
+Day type: normal_day
+Platforms: Instagram + Threads
+Publish automation: OFF / artifact-only
+
+## Today’s volume target
+
+- ig_feed: 1 to 2
+- ig_stories_frames: 4 to 8
+- threads: 4 to 7
+- reels: 0
+
+## Weekly rhythm
+
+- theme: Recap + debate
+- ig: What mattered most this weekend?
+- threads: debate post
+- stories: poll
+
+## Hard rules
+
+- Never force three IG feed posts just to look active. Threads can carry volume. IG should carry quality.
+- WNBA gets at least one daily touch.
+- No auto-posting. Use artifacts for review and post manually to Instagram/Threads.
+- No Tonight in</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>BeBe posting schedule</h3>
+          <p><code>bebe_posting_schedule_today.md</code> <span class="pill warn">found</span></p>
+          <pre>## Posting schedule
+
+| Time ET | Platform | Slot | Status | Recommended action | Artifact |
+|---|---|---|---|---|---|
+| 08:15 | Internal | Research scan | operator_action | Research scan: find 5 to 10 candidates; add manual links to story inbox if needed. |  |
+| 09:00 | Threads | Morning board | draft_needed | Post morning board using top WNBA + tennis/soccer/golf watch items. | bebe_priority_board.md |
+| 10:30 | IG Stories | 2 to 4 frames | operator_action | Post 2 to 4 IG Story frames: poll, question, schedule, or quick take. |  |
+| 12:00 | IG Feed | Main post 1 | ready_with_review | Main IG post 1: Atlanta Dream vs Toronto Tempo | daily_sl</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Preview quality</h3>
+          <p><code>preview_bundle_quality.md</code> <span class="pill warn">found</span></p>
+          <pre># HSD Preview Quality Gate
+
+Version: hsd-preview-quality-gate-v3.2.5-bebe-ops-v2.4
+Gate status: **PASS**
+Target local date: 2026-06-14
+
+## Checks
+
+- **bundle_exists** [PASS] - Tonight in the W bundle exists.
+- **preview_build_json_exists** [PASS] - studio_preview_build_v2.json exists.
+- **target_date_present** [PASS] - Target date locked to 2026-06-14.
+- **same_date_only** [PASS] - Only the target local date is present in the bundle.
+- **no_robot_language** [PASS] - Prompt is sanitized for public-facing language.
+- **complete_slate** [PASS] - All detected target-date games are represented.
+- **mixed_dates** [PASS] - No mixed-date issue detect</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Graphics upload status</h3>
+          <p><code>graphics_upload_pack_status.csv</code> <span class="pill warn">found</span></p>
+          <pre>bundle_id,post_slug,bundle_name,upload_pack_status,assets_expected,assets_ready,assets_missing,missing_asset_names,missing_team_logos,missing_player_images,zip_path,notes
+bundle_2406cc7200b4f4,tonight-in-the-w,Tonight in the W,ready_with_review,10,10,0,,,,graphics_chat_upload_pack_zips/tonight-in-the-w_graphics_chat_upload_pack.zip,Ready with review or blocked. Check upload instructions. No text/logo fallback is allowed. Preview Player Lock v2 applied: storylines_to_know_no_players. Use safe prompt and rebuilt zip.
+</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Mermaid Upper Echelon</h3>
+          <p><code>mermaid_upper_echelon_report.md</code> <span class="pill warn">found</span></p>
+          <pre># HSD Mermaid Upper Echelon Report
+
+Generated: 2026-06-14T17:01:59.904759+00:00
+Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
+
+## Counts
+
+- final_slots: 7
+- held_slots: 0
+- feed_rows: 2
+- story_rows: 2
+- thread_rows: 3
+- compiled_packets: 7
+- handoff_packets: 7
+- handoff_held: 0
+- player_asset_debt: 1
+
+## Step status
+
+- Social Rumor Desk: ok (0)
+- Multi-Sport Scout: ok (0)
+- Official Player Backfill: ok (0)
+- Player Registry v2: ok (0)
+- Story Graph: ok (0)
+- Prompt Compiler v2: ok (0)
+- Content Engine v2: ok (0)
+- Quality Brain v2.1: ok (0)
+- Quality Brain v2.2: ok (0)
+- Content Director v2.3: ok (0)
+- Assignment Desk v2.4: ok (0)
+-</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Mermaid content board</h3>
+          <p><code>mermaid_master_content_board.md</code> <span class="pill warn">found</span></p>
+          <pre># Mermaid Assignment Freshness Gate v2.5
+
+Generated: 2026-06-14T17:01:59.852023+00:00
+Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
+
+## Verdict
+
+Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced, nightcap duplicate angles are reshaped, and platform mix is checked.
+
+## Preview block signals
+
+- None
+
+## Counts
+
+- final slots: 7
+- held slots: 0
+- packets: 7
+
+## Final slots
+
+### threads_morning — Threads / 9:00 AM
+- Status: ready_with_review
+- Headline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026
+- Type: official_news_article
+- Freshness: fresh
+- Hook: T</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Mermaid slots</h3>
+          <p><code>mermaid_content_slots_v2.csv</code> <span class="pill warn">found</span></p>
+          <pre>slot_id,platform,slot_time_et,content_type,headline,league,priority,story_id,status,asset_state,quality_score,assignment_label,freshness_label,crosspost_group,copy_hook,threads_copy,ig_caption_seed,story_frame_text,first_comment,notes
+threads_morning,Threads,9:00 AM,official_news_article,&quot;Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026&quot;,LPGA,P3,story_b43261c4005f93,ready_with_review,needs_assets,83,non_wnba_debate_starter,fresh,crosspost_story_b43261c4005f93,&quot;The LPGA lane has a real storyline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026.</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Assignment freshness gate</h3>
+          <p><code>mermaid_assignment_freshness_gate_report.md</code> <span class="pill warn">found</span></p>
+          <pre># Mermaid Assignment Freshness Gate v2.5
+
+Generated: 2026-06-14T17:01:59.852023+00:00
+Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
+
+## Verdict
+
+Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced, nightcap duplicate angles are reshaped, and platform mix is checked.
+
+## Preview block signals
+
+- None
+
+## Counts
+
+- final slots: 7
+- held slots: 0
+- packets: 7
+
+## Final slots
+
+### threads_morning — Threads / 9:00 AM
+- Status: ready_with_review
+- Headline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026
+- Type: official_news_article
+- Freshness: fresh
+- Hook: T</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Assignment handoff</h3>
+          <p><code>assignment_handoff_report.md</code> <span class="pill warn">found</span></p>
+          <pre># Mermaid Assignment Handoff v2.6
+
+Generated: 2026-06-14T17:02:04.985407+00:00
+Version: v3.3.6-mermaid-assignment-handoff-v2.6
+
+- slots seen: 7
+- packets ready: 7
+- held: 0
+
+## Packets
+
+- Threads / threads_morning: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026 — `assignment_handoff_zips/threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026.zip`
+- IG Feed / ig_feed_noon: Last Night in the W — `assignment_handoff_zips/ig-feed_ig-feed-noon_last-night-in-the-w.zip`
+- IG Stories / ig_stories_rolling_1: Last Night in the W — `assig</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Assignment handoff publisher</h3>
+          <p><code>assignment_handoff_publisher_report.md</code> <span class="pill warn">found</span></p>
+          <pre># Mermaid Handoff Publisher v2.8
+
+Generated: 2026-06-14T17:02:07.813222+00:00
+Version: v3.3.8-mermaid-render-publish-bridge
+
+## Counts
+
+- handoff_packets: 7
+- manual_packets: 7
+- handoff_status_rows: 7
+- manual_status_rows: 7
+- manual_zip_count: 14
+- rendered_rows: 7
+- render_blocked_rows: 0
+- latest_outputs_files: 44
+
+## Commit latest outputs
+
+- status: pushed
+
+## Actions
+
+- assignment_handoff_report.md -&gt; manual_workflow_handoff.md
+- assignment_handoff_index.csv -&gt; manual_workflow_content_packets.csv
+- assignment_handoff_status.csv -&gt; manual_workflow_pack_status.csv
+- assignment_handoff_packets -&gt; manual_workflow_packets
+- assignment_handof</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Manual workflow handoff</h3>
+          <p><code>manual_workflow_handoff.md</code> <span class="pill warn">found</span></p>
+          <pre># Mermaid Assignment Handoff v2.6
+
+Generated: 2026-06-14T17:02:04.985407+00:00
+Version: v3.3.6-mermaid-assignment-handoff-v2.6
+
+- slots seen: 7
+- packets ready: 7
+- held: 0
+
+## Packets
+
+- Threads / threads_morning: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026 — `assignment_handoff_zips/threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026.zip`
+- IG Feed / ig_feed_noon: Last Night in the W — `assignment_handoff_zips/ig-feed_ig-feed-noon_last-night-in-the-w.zip`
+- IG Stories / ig_stories_rolling_1: Last Night in the W — `assig</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Manual workflow content packets</h3>
+          <p><code>manual_workflow_content_packets.csv</code> <span class="pill warn">found</span></p>
+          <pre>packet_id,slot_id,platform,headline,league,content_type,status,packet_dir,zip_path,public_prompt,copy_desk,threads_copy,asset_instructions
+threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026,threads_morning,Threads,&quot;Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026&quot;,LPGA,official_news_article,ready_with_review,assignment_handoff_packets/threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026,assignment_handoff_zips/threads_threads-morning_twice-as-nice-iwai-twins-f</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Manual workflow pack status</h3>
+          <p><code>manual_workflow_pack_status.csv</code> <span class="pill warn">found</span></p>
+          <pre>slot_id,platform,headline,status,reason,packet_id
+threads_morning,Threads,&quot;Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026&quot;,packet_ready,ready,threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026
+ig_feed_noon,IG Feed,Last Night in the W,packet_ready,ready,ig-feed_ig-feed-noon_last-night-in-the-w
+ig_stories_rolling_1,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-1_last-night-in-the-w
+ig_stories_rolling_2,IG Stories,&quot;Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Champio</pre>
+        </section>
+        
+        <section class="card ">
+          <h3>Rendered slide QA</h3>
+          <p><code>rendered_slide_qa_report.md</code> <span class="pill warn">found</span></p>
+          <pre># HSD Rendered Slide QA
+
+Generated: 2026-06-14T17:01:50.563360+00:00
+Version: hsd-rendered-slide-qa-v2.4-bebe-dynamic-preview
+
+- rendered image files found: 0
+- expected slide count: 4
+- slide count status: not_checked_no_files
+- pass: 0
+- review: 0
+- fail: 0
+- final decision: **needs_manual_review**
+
+## Preview expectation
+
+- target date: 2026-06-14
+- matchups: Atlanta Dream at Toronto Tempo | Washington Mystics at New York Liberty
+- preview rule: no final scores or result language
+
+No rendered slide files were found.
+
+To use this gate, upload finished graphics into `rendered_graphics_input/` in the repo and rerun Asset Visual QA.
+A manual c</pre>
+        </section>
+        </section></main></body></html>

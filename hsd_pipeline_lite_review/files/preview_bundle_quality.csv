@@ -1,0 +1,12 @@
+check_name,severity,status,details
+bundle_exists,FAIL,PASS,Tonight in the W bundle exists.
+preview_build_json_exists,FAIL,PASS,studio_preview_build_v2.json exists.
+target_date_present,FAIL,PASS,Target date locked to 2026-06-14.
+same_date_only,FAIL,PASS,Only the target local date is present in the bundle.
+no_robot_language,FAIL,PASS,Prompt is sanitized for public-facing language.
+complete_slate,FAIL,PASS,All detected target-date games are represented.
+mixed_dates,FAIL,PASS,No mixed-date issue detected.
+preview_has_no_scores_or_results,FAIL,PASS,Preview copy does not contain score/final-result language.
+slide_spec,FAIL,PASS,Slide count and dimensions are locked to 4 x 1080x1350.
+player_focus_present,WARN,PASS,Preview player focus rows are present.
+premium_prompt,WARN,PASS,"Prompt includes premium visual, slate-lock, and no-score instructions."

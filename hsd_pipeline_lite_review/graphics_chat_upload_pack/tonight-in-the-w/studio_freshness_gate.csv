@@ -1,0 +1,2 @@
+bundle_slug,bundle_name,freshness_status,freshness_decision,event_date,event_age_hours,bundle_created_at,source_run_timestamp,is_carryover,requires_relabel,recommended_label,reason,source_evidence
+tonight-in-the-w,Tonight in the W,allowed_same_day_preview,allow,2026-06-14T00:00:00+00:00,17.0,,2026-06-14T17:00:32.736034+00:00,No,No,,"same-day preview allowed by preview gate for target_date_local=2026-06-14; date-only/same-day preview timestamps are treated as the schedule date, not stale completed results",event_date

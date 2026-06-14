@@ -1,0 +1,36 @@
+{
+  "version": "hsd-operator-status-v3.2.5-bebe-ops-v2.4",
+  "generated_at_utc": "2026-06-14T17:01:59.975678+00:00",
+  "run_id": "20260614T170007Z_27505823379",
+  "overall": "NO-GO",
+  "publish_allowed": false,
+  "graphics_handoff_allowed": false,
+  "ready_upload_packs": 0,
+  "ready_with_review_upload_packs": 1,
+  "blocked_upload_packs": 0,
+  "critical_issue_count": 1,
+  "review_issue_count": 2,
+  "issues": [
+    {
+      "severity": "review",
+      "code": "ready_with_review_upload_pack",
+      "detail": "Manual visual review required before graphics or posting.",
+      "headline": "Tonight in the W"
+    },
+    {
+      "severity": "critical",
+      "code": "graphics_qa_failed",
+      "detail": "fail",
+      "headline": ""
+    },
+    {
+      "severity": "review",
+      "code": "rendered_slide_qa_pending",
+      "detail": "files_checked=0",
+      "headline": ""
+    }
+  ],
+  "manual_actions": [
+    "Open upload pack, visually verify public player images/crop rules, then send to graphics chat. Do not post until rendered-slide QA passes."
+  ]
+}

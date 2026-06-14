@@ -1,132 +1,40 @@
 {
-  "version": "hsd-pipeline-review-lite-v1.4",
-  "generated_at_utc": "2026-06-10T02:43:23.093028+00:00",
+  "version": "hsd-pipeline-review-lite-v3.2.13-bebe-ops-v2.11",
+  "generated_at_utc": "2026-06-14T17:02:07.869732+00:00",
   "counts": {
-    "results_freshness_rows": 29,
-    "news_fact_packets": 5,
-    "studio_bundle_rows": 1,
+    "results_contract_rows": 18,
+    "manual_story_candidates": 0,
+    "discovery_candidates": 0,
+    "slate_items": 1,
     "upload_pack_rows": 1,
-    "player_image_requirements": 1
+    "ready_packs_included": 2,
+    "graphics_upload_pack_files_included": 39,
+    "manual_workflow_packs_included": 14,
+    "ig_story_results_ready_packs_included": 1,
+    "ig_story_results_upload_pack_files_included": 10
   },
-  "results": {
-    "fresh": 6,
-    "stale": 23,
-    "missing": 0,
-    "examples": [
-      {
-        "headline": "Indiana Fever beat Washington Mystics",
-        "event_date": "2026-06-08",
-        "event_age_hours": "50.7",
-        "status": "stale",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "New York Liberty beat Connecticut Sun",
-        "event_date": "2026-06-08",
-        "event_age_hours": "50.7",
-        "status": "stale",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "Las Vegas Aces beat Seattle Storm",
-        "event_date": "2026-06-08",
-        "event_age_hours": "50.7",
-        "status": "stale",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "Atlanta Dream beat Chicago Sky",
-        "event_date": "2026-06-09",
-        "event_age_hours": "26.7",
-        "status": "stale",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "Minnesota Lynx beat Dallas Wings",
-        "event_date": "2026-06-09",
-        "event_age_hours": "26.7",
-        "status": "stale",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "Phoenix Mercury vs Golden State Valkyrie",
-        "event_date": "2026-06-09",
-        "event_age_hours": "26.7",
-        "status": "stale",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "Connecticut Sun vs Toronto Tempo",
-        "event_date": "2026-06-10",
-        "event_age_hours": "2.7",
-        "status": "fresh",
-        "source_file": "top_womens_results.csv"
-      },
-      {
-        "headline": "Los Angeles Sparks vs Seattle Storm",
-        "event_date": "2026-06-10",
-        "event_age_hours": "2.7",
-        "status": "fresh",
-        "source_file": "top_womens_results.csv"
-      }
-    ]
-  },
-  "studio": {
-    "rows": 5,
-    "counts": {
-      "blocked_stale_event": 5
+  "ready_packs": [
+    {
+      "bundle_name": "Tonight in the W",
+      "zip": "hsd_pipeline_lite_review/ready_upload_packs/tonight-in-the-w_graphics_chat_upload_pack.zip",
+      "status": "ready_with_review",
+      "included": true,
+      "size": 607771
     },
-    "examples": [
-      {
-        "headline": "Indiana Fever beat Washington Mystics",
-        "event_date": "2026-06-08",
-        "event_age_hours": "50.7",
-        "freshness_status": "blocked_stale_event",
-        "freshness_decision": "block"
-      },
-      {
-        "headline": "Atlanta Dream beat Chicago Sky",
-        "event_date": "2026-06-09",
-        "event_age_hours": "26.7",
-        "freshness_status": "blocked_stale_event",
-        "freshness_decision": "block"
-      },
-      {
-        "headline": "Las Vegas Aces beat Seattle Storm",
-        "event_date": "2026-06-08",
-        "event_age_hours": "50.7",
-        "freshness_status": "blocked_stale_event",
-        "freshness_decision": "block"
-      },
-      {
-        "headline": "Minnesota Lynx beat Dallas Wings",
-        "event_date": "2026-06-09",
-        "event_age_hours": "26.7",
-        "freshness_status": "blocked_stale_event",
-        "freshness_decision": "block"
-      },
-      {
-        "headline": "New York Liberty beat Connecticut Sun",
-        "event_date": "2026-06-08",
-        "event_age_hours": "50.7",
-        "freshness_status": "blocked_stale_event",
-        "freshness_decision": "block"
-      }
-    ]
-  },
-  "upload_packs": {
-    "rows": 1,
-    "bundles": [
-      {
-        "bundle_name": "Tonight in the W Preview",
-        "upload_pack_status": "ready_with_review",
-        "assets_expected": "4",
-        "assets_ready": "4",
-        "assets_missing": "0",
-        "missing_asset_names": "",
-        "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w-preview_graphics_chat_upload_pack.zip"
-      }
-    ]
-  },
-  "stop_reason_file_exists": true
+    {
+      "bundle_name": "tonight-in-the-w_preview-intelligence-v1_companion",
+      "zip": "hsd_pipeline_lite_review/ready_upload_packs/tonight-in-the-w_preview-intelligence-v1_companion.zip",
+      "status": "found_zip",
+      "included": true,
+      "size": 5265
+    }
+  ],
+  "ig_story_results_ready_packs": [
+    {
+      "zip": "hsd_pipeline_lite_review/ig_story_results_ready_upload_packs/last-night-in-the-w_ig_story_results_upload_pack.zip",
+      "included": true,
+      "size": 54424
+    }
+  ],
+  "max_upload_pack_bytes": 100000000
 }

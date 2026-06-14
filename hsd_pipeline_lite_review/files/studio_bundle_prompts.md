@@ -1,13 +1,7 @@
 # HSD Studio Bundle Prompts
 
-## Tonight in the W Preview
+## Tonight in the W
 
 ```text
-Create a 4-slide 1080x1350 Her Sports Daily carousel previewing tonight's women's sports slate.
-Use only exact approved team/logo assets. Do not invent player photos.
-Slide 1: strong Tonight in the W cover with the full slate.
-Slide 2: schedule board with game times.
-Slide 3: what to watch, using only matchup context, no invented stats.
-Slide 4: CTA asking which game people are watching.
-Games: Connecticut Sun at Toronto Tempo - wed, june 10th at 7:00 pm edt | Los Angeles Sparks at Seattle Storm - wed, june 10th at 10:00 pm edt
+Create a premium Her Sports Daily 4-slide 1080x1350 carousel named Tonight in the W. Use ONLY games scheduled for 2026-06-14 that are listed in this prompt. Do not include tomorrow or any other date. This is the full target-date slate: exactly 2 game(s) are included and all must be represented. This must feel like premium women’s sports media, not a flat schedule board. Use bold editorial hierarchy, strong contrast, clean spacing, human energy, and modern social-first composition. Make the cover feel like an event, not a scoreboard. Use attached exact player/person images for featured matchups only when attached and exactly mapped to that player/team. If a safe player image is not attached, stay team-forward with exact attached logos and strong type. Suggested player focus: Atlanta Dream: Rhyne Howard; Atlanta Dream: Allisha Gray; Washington Mystics: Brittney Sykes; Washington Mystics: Sonia Citron; New York Liberty: Breanna Stewart; New York Liberty: Sabrina Ionescu. No game scores or postgame outcomes. No invented stats. No injuries, records, rankings, or quotes unless explicitly included. Slide 1: premium cover with the Tonight in the W editorial hook. Slide 2: slate board with matchup cards and time/team hierarchy. Slide 3: player-watch or featured-matchup energy only if exact attached player images exist. Slide 4: CTA asking which matchup people are watching. Do not render workflow labels, QA labels, postgame labels, or internal production language. One HSD watermark only, top-left safe zone. Public-facing slate line: Two games. One night. Games: Atlanta Dream at Toronto Tempo - sun, june 14th at 3:00 pm edt | Washington Mystics at New York Liberty - sun, june 14th at 3:00 pm edt
 ```

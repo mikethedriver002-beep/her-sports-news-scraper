@@ -1,0 +1,30 @@
+{
+  "version": "hsd-graphics-upload-pack-v3.2.9-bebe-ops-v2.8-current-logo-lock",
+  "generated_at_utc": "2026-06-14T17:01:50.320708+00:00",
+  "rule": "Exact real logos/images required. No text fallback.",
+  "counts": {
+    "bundles": 1,
+    "asset_rows": 10,
+    "files_created": 10,
+    "png_preferred_created": 10,
+    "upload_packs_ready": 0,
+    "upload_packs_review": 1,
+    "upload_packs_blocked": 0
+  },
+  "bundles": [
+    {
+      "bundle_id": "bundle_2406cc7200b4f4",
+      "post_slug": "tonight-in-the-w",
+      "bundle_name": "Tonight in the W",
+      "upload_pack_status": "ready_with_review",
+      "assets_expected": 10,
+      "assets_ready": 10,
+      "assets_missing": 0,
+      "missing_asset_names": "",
+      "missing_team_logos": "",
+      "missing_player_images": "",
+      "zip_path": "graphics_chat_upload_pack_zips/tonight-in-the-w_graphics_chat_upload_pack.zip",
+      "notes": "Ready with review or blocked. Check upload instructions. No text/logo fallback is allowed."
+    }
+  ]
+}

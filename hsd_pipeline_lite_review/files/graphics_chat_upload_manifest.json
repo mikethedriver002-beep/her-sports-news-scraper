@@ -1,0 +1,28 @@
+{
+  "version": "hsd-graphics-upload-pack-v3.2.9-bebe-ops-v2.8-current-logo-lock",
+  "generated_at_utc": "2026-06-14T17:01:50.320583+00:00",
+  "input_prompts": "studio_bundle_prompts_v2.md",
+  "input_approved_assets": "approved_graphics_assets.csv",
+  "input_render_manifest": "studio_render_manifest_v2.json",
+  "input_logo_registry": "config/hsd_verified_logo_registry_v1.json",
+  "rule": "Exact real logos/images required. No text fallback.",
+  "counts": {
+    "bundles": 1,
+    "asset_rows": 10,
+    "files_created": 10,
+    "png_preferred_created": 10,
+    "upload_packs_ready": 0,
+    "upload_packs_review": 1,
+    "upload_packs_blocked": 0
+  },
+  "outputs": [
+    "graphics_chat_upload_pack",
+    "graphics_chat_upload_pack_zips",
+    "graphics_chat_upload_manifest.csv",
+    "graphics_chat_upload_manifest.json",
+    "graphics_upload_pack_status.csv",
+    "graphics_upload_pack_status.json",
+    "graphics_chat_upload_instructions.md",
+    "graphics_chat_direct_handoff.md"
+  ]
+}

@@ -1,0 +1,11 @@
+time_et,platform,post_type,purpose,recommended_action,status,source_artifact,notes
+08:15,Internal,Research scan,Find the day's 5 to 10 story candidates,Research scan: find 5 to 10 candidates; add manual links to story inbox if needed.,operator_action,,
+09:00,Threads,Morning board,What we're watching today,Post morning board using top WNBA + tennis/soccer/golf watch items.,draft_needed,bebe_priority_board.md,
+10:30,IG Stories,2 to 4 frames,"Poll, question, schedule, quick take","Post 2 to 4 IG Story frames: poll, question, schedule, or quick take.",operator_action,,
+12:00,IG Feed,Main post 1,Daily Debrief if 3 legit stories; otherwise best single story,Main IG post 1: Atlanta Dream vs Toronto Tempo,ready_with_review,daily_slate_plan.md,
+12:10,IG Comment,First comment,Debate hook immediately after posting,Add first comment with a debate hook tied to the noon post.,operator_action,bebe_daily_ops_plan.md,
+14:30,Threads,Take post,One sharp opinion/question to spark replies,"One sharp Threads opinion/question. Use WNBA, tennis, soccer, or business angle.",draft_needed,,
+16:45,IG Feed or Stories,Main post 2,Tonight in the W or Tonight in Women's Sports,Use Tonight in the W upload pack for Main Post 2.,ready_with_review,graphics_chat_direct_handoff.md,
+19:00-23:30,Threads,Live reactions,3 to 6 posts during games/events,"Threads live desk: pregame question, halftime/mid-event take, final reaction, debate reply, verified follow-up.",manual_live_desk,,
+23:30,Threads or Stories,Nightcap,Story of the night or what mattered,Nightcap only if there is a clear story of the night. No filler.,manual_after_results,,
+Next day 08:45,IG/Threads,Recap candidate,Last Night in the W or morning recap if strong,Create next-morning recap only if a strong verified result/story emerges.,candidate_only,,

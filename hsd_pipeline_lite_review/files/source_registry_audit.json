@@ -1,0 +1,14 @@
+{
+  "version": "hsd-source-registry-audit-bebe-v2.4",
+  "generated_at_utc": "2026-06-14T17:02:00.003133+00:00",
+  "counts": {
+    "sources": 20,
+    "green": 17,
+    "yellow": 2,
+    "red": 1,
+    "pass": 20,
+    "review": 0,
+    "fail": 0
+  },
+  "registry_version": "hsd-source-registry-bebe-v2.4"
+}

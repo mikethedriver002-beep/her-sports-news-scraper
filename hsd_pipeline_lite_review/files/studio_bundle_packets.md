@@ -1,11 +1,27 @@
 # HSD Studio Bundle Packets
 
-## BUNDLE 1: Tonight in the W Preview
+## BUNDLE 1: Tonight in the W
 
-Source items: Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm
+Target date: 2026-06-14
+Preview scope: full_slate
+Public slate line: Two games. One night.
+
+Source items: Atlanta Dream at Toronto Tempo | Washington Mystics at New York Liberty
+
+### Games
+Atlanta Dream at Toronto Tempo - sun, june 14th at 3:00 pm edt
+Washington Mystics at New York Liberty - sun, june 14th at 3:00 pm edt
 
 ### Caption seed
-Tonight in the W: Connecticut Sun at Toronto Tempo - wed, june 10th at 7:00 pm edt | Los Angeles Sparks at Seattle Storm - wed, june 10th at 10:00 pm edt
+Tonight in the W: Atlanta Dream at Toronto Tempo - sun, june 14th at 3:00 pm edt | Washington Mystics at New York Liberty - sun, june 14th at 3:00 pm edt
 
 ### Accuracy lock
-Preview schedule only. Do not invent final scores, player stats, injuries, records, or quotes.
+Use only the listed 2026-06-14 WNBA preview games. Represent all 2 listed game(s). Do not invent game scores, injuries, stats, or extra games. Do not mix dates.
+
+### Player focus
+- Atlanta Dream: Rhyne Howard
+- Atlanta Dream: Allisha Gray
+- Washington Mystics: Brittney Sykes
+- Washington Mystics: Sonia Citron
+- New York Liberty: Breanna Stewart
+- New York Liberty: Sabrina Ionescu

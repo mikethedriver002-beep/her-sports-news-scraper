@@ -1,0 +1,5 @@
+team_name,requested_players,exact_attached_players,selected_player,selected_asset,player_gate_status,reason,recommended_action
+Atlanta Dream,Rhyne Howard | Allisha Gray,Rhyne Howard | Allisha Gray,Rhyne Howard,graphics_chat_upload_pack/tonight-in-the-w/assets_original/rhyne-howard_primary-player-photo-v1_db5ead.jpg,PASS,one exact player selected for team,allow_player_slide
+Toronto Tempo,,,,,FAIL,no exact attached player for this slate team,fallback_to_storylines_slide
+Washington Mystics,Brittney Sykes | Sonia Citron,Brittney Sykes | Sonia Citron,Brittney Sykes,graphics_chat_upload_pack/tonight-in-the-w/assets_original/brittney-sykes_primary-player-photo-v1_c79d43.jpg,PASS,one exact player selected for team,allow_player_slide
+New York Liberty,Breanna Stewart | Sabrina Ionescu,Breanna Stewart | Sabrina Ionescu,Breanna Stewart,graphics_chat_upload_pack/tonight-in-the-w/assets_original/breanna-stewart_primary-player-photo-v1_3d072c.jpg,PASS,one exact player selected for team,allow_player_slide

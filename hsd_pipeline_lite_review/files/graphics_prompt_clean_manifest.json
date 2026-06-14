@@ -1,0 +1,21 @@
+{
+  "version": "hsd-graphics-prompt-sanitizer-v1.7.2",
+  "generated_at_utc": "2026-06-14T17:01:43.900336+00:00",
+  "bundle_count": 1,
+  "outputs": [
+    "graphics_clean_prompts",
+    "graphics_prompt_clean_report.md",
+    "graphics_prompt_clean_manifest.json"
+  ],
+  "bundles": [
+    {
+      "bundle_slug": "tonight-in-the-w",
+      "bundle_name": "Tonight in the W",
+      "prompt_path": "graphics_clean_prompts/tonight-in-the-w/00_PROMPT_TO_PASTE.md",
+      "raw_prompt_chars": 2939,
+      "clean_prompt_chars": 8607,
+      "removed_lines": 3,
+      "replacements": 0
+    }
+  ]
+}

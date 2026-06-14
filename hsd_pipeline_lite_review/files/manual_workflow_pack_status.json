@@ -1,0 +1,26 @@
+{
+  "version": "hsd-manual-workflow-merge-v3.2.13-bebe-ops-v2.11",
+  "generated_at_utc": "2026-06-14T17:02:04.834576+00:00",
+  "packs": [
+    {
+      "packet_id": "packet_6221da7edef493",
+      "headline": "Last Night in the W",
+      "content_family": "Last Night in the W",
+      "platform_targets": "IG Stories; Threads",
+      "content_readiness": "ready_with_review",
+      "pack_status": "ready_with_review",
+      "zip_path": "manual_workflow_handoff_packs/01-last-night-in-the-w-last-night-in-the-w_manual_workflow_pack.zip",
+      "reason": "manual workflow packet ready for copy/render planning review"
+    },
+    {
+      "packet_id": "packet_94b7fb96cf1b62",
+      "headline": "Atlanta Dream vs Toronto Tempo",
+      "content_family": "preview",
+      "platform_targets": "IG Feed; Threads",
+      "content_readiness": "ready_with_review",
+      "pack_status": "ready_with_review",
+      "zip_path": "manual_workflow_handoff_packs/02-preview-atlanta-dream-vs-toronto-tempo_manual_workflow_pack.zip",
+      "reason": "manual workflow packet ready for copy/render planning review"
+    }
+  ]
+}
