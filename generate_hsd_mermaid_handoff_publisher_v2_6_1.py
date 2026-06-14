@@ -90,7 +90,7 @@ def main() -> None:
     copy_file("assignment_handoff_status.csv", "manual_workflow_pack_status.csv", actions)
     copy_dir("assignment_handoff_packets", "manual_workflow_packets", actions)
     copy_dir("assignment_handoff_zips", "manual_workflow_handoff_packs", actions)
-    render_run = run_script("scripts/generate_hsd_mermaid_render_studio_v2_9.py")
+    render_run = run_script("scripts/generate_hsd_mermaid_render_studio_v2_9_pass1.py")
     if Path("rendered_handoff_zips").exists():
         target = Path("manual_workflow_handoff_packs")
         target.mkdir(exist_ok=True)
