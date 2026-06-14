@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.3.4-mermaid-assignment-desk-v2.4-bridge"
+VERSION = "v3.3.5-mermaid-assignment-freshness-gate-v2.5-bridge"
 OUT_MD = Path("mermaid_upper_echelon_report.md")
 OUT_JSON = Path("mermaid_upper_echelon_manifest.json")
 
@@ -25,16 +25,16 @@ STEPS = [
     ("Quality Brain v2.2", "generate_hsd_mermaid_quality_brain_v2_2.py"),
     ("Content Director v2.3", "generate_hsd_mermaid_content_director_v2_3.py"),
     ("Assignment Desk v2.4", "generate_hsd_mermaid_assignment_desk_v2_4.py"),
+    ("Assignment Freshness Gate v2.5", "generate_hsd_mermaid_assignment_freshness_gate_v2_5.py"),
 ]
 
 ALIASES = [
-    ("mermaid_assignment_desk_report.md", "mermaid_master_content_board.md"),
-    ("mermaid_assignment_story_graph.csv", "mermaid_story_graph.csv"),
-    ("mermaid_assignment_content_slots.csv", "mermaid_content_slots_v2.csv"),
-    ("ig_feed_queue_v2_4.csv", "ig_feed_queue_v2.csv"),
-    ("ig_story_queue_v2_4.csv", "ig_story_queue_v2.csv"),
-    ("threads_queue_v2_4.csv", "threads_queue_v2.csv"),
-    ("mermaid_assignment_prompt_index.csv", "mermaid_compiled_packet_index.csv"),
+    ("mermaid_assignment_freshness_gate_report.md", "mermaid_master_content_board.md"),
+    ("mermaid_assignment_final_slots.csv", "mermaid_content_slots_v2.csv"),
+    ("ig_feed_queue_v2_5.csv", "ig_feed_queue_v2.csv"),
+    ("ig_story_queue_v2_5.csv", "ig_story_queue_v2.csv"),
+    ("threads_queue_v2_5.csv", "threads_queue_v2.csv"),
+    ("mermaid_assignment_final_prompt_index.csv", "mermaid_compiled_packet_index.csv"),
 ]
 
 
@@ -82,24 +82,22 @@ def bridge_outputs() -> List[str]:
     for src, dst in ALIASES:
         if copy_alias(src, dst):
             actions.append(f"{src} -> {dst}")
-    if Path("mermaid_assignment_compiled_packets").exists():
-        copy_alias("mermaid_assignment_compiled_packets", "mermaid_compiled_packets")
-        actions.append("mermaid_assignment_compiled_packets -> mermaid_compiled_packets")
+    if Path("mermaid_assignment_final_packets").exists():
+        copy_alias("mermaid_assignment_final_packets", "mermaid_compiled_packets")
+        actions.append("mermaid_assignment_final_packets -> mermaid_compiled_packets")
     return actions
 
 
 def counts() -> Dict[str, int]:
     return {
-        "story_graph_rows": len(read_csv("mermaid_story_graph.csv")),
-        "content_slots": len(read_csv("mermaid_content_slots_v2.csv")),
-        "compiled_packets": len(read_csv("mermaid_compiled_packet_index.csv")),
+        "final_slots": len(read_csv("mermaid_assignment_final_slots.csv")),
+        "held_slots": len(read_csv("assignment_freshness_held_slots.csv")),
         "feed_rows": len(read_csv("ig_feed_queue_v2.csv")),
         "story_rows": len(read_csv("ig_story_queue_v2.csv")),
         "thread_rows": len(read_csv("threads_queue_v2.csv")),
-        "assignment_rows": len(read_csv("mermaid_assignment_content_slots.csv")),
-        "held_rows": len(read_csv("assignment_desk_held_stories.csv")),
-        "crosspost_rows": len(read_csv("assignment_desk_crosspost_plan.csv")),
+        "compiled_packets": len(read_csv("mermaid_compiled_packet_index.csv")),
         "player_asset_debt": len(read_csv("player_asset_debt.csv")),
+        "assignment_rows": len(read_csv("mermaid_assignment_content_slots.csv")),
     }
 
 
@@ -116,8 +114,8 @@ def main() -> None:
         lines.append(f"- {r['name']}: {r['status']} ({r['returncode']})")
     lines += ["", "## Output bridge", ""]
     lines += [f"- {b}" for b in bridge] if bridge else ["- No aliases created."]
-    if Path("mermaid_assignment_desk_report.md").exists():
-        lines += ["", "---", "", Path("mermaid_assignment_desk_report.md").read_text(encoding="utf-8", errors="replace")]
+    if Path("mermaid_assignment_freshness_gate_report.md").exists():
+        lines += ["", "---", "", Path("mermaid_assignment_freshness_gate_report.md").read_text(encoding="utf-8", errors="replace")]
     OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(c, indent=2))
 
