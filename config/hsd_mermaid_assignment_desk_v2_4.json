@@ -1,0 +1,69 @@
+{
+  "version": "v3.3.4-mermaid-assignment-desk-v2.4",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "mission": "Act like the HSD assignment editor: one strongest feed post, supporting stories, Threads debate, true previews only, and clean split prompts.",
+  "type_rules": {
+    "preview_requires_matchup_and_schedule_source": true,
+    "article_paths_stay_articles": true,
+    "lpga_news_never_preview_unless_schedule_path": true,
+    "generic_short_titles_hold": true
+  },
+  "generic_hold_titles": [
+    "challenge cup",
+    "schedule",
+    "standings",
+    "stats",
+    "player stats",
+    "how to watch",
+    "where to watch",
+    "tournament",
+    "news",
+    "home"
+  ],
+  "wrong_sport_filters": {
+    "NCAA Softball": [
+      "cross country",
+      "tennis",
+      "basketball",
+      "baseball",
+      "football",
+      "soccer",
+      "track",
+      "swimming",
+      "golf",
+      "volleyball",
+      "men",
+      "- men"
+    ]
+  },
+  "assignment_rules": {
+    "ig_feed_noon": "best non-duplicate official article or major recap, preferably non-WNBA when strong",
+    "ig_feed_evening_preview": "actual preview event only",
+    "ig_stories": "supporting unique stories, one idea per card",
+    "threads": "debate, reaction, and watch hooks",
+    "nightcap": "result/recap only"
+  },
+  "duplicate_limits": {
+    "max_platforms_per_story_without_intent": 1,
+    "max_platforms_per_story_with_intent": 2,
+    "allowed_intent_pairs": [
+      ["ig_feed_noon", "threads_morning"],
+      ["ig_feed_evening_preview", "threads_live"]
+    ]
+  },
+  "floor_targets": {
+    "WNBA": 4,
+    "NWSL": 2,
+    "WTA": 2,
+    "LPGA": 1,
+    "Volleyball": 1,
+    "USWNT": 1,
+    "NCAA Softball": 1
+  },
+  "voice": {
+    "threads": "sharp, conversational, debate-ready",
+    "ig_feed": "premium, contextual, not filler",
+    "ig_story": "fast, visual, one clean angle"
+  }
+}
