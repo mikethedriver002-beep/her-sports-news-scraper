@@ -1,0 +1,32 @@
+{
+  "version": "v3.3.6-mermaid-assignment-handoff-v2.6",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "mission": "Turn final assignment slots into handoff-ready packets for IG Feed, IG Stories, and Threads.",
+  "rules": {
+    "use_final_freshness_slots_only": true,
+    "skip_held_or_blocked_slots": true,
+    "split_public_prompt_and_control_rules": true,
+    "one_packet_per_ready_slot": true,
+    "copy_only_threads_allowed": true,
+    "graphics_required_for_ig_feed": true,
+    "stories_can_be_graphics_or_text_story": true,
+    "exact_assets_only": true,
+    "no_generated_players_or_logos": true
+  },
+  "platform_outputs": {
+    "IG Feed": "graphics_prompt_plus_caption",
+    "IG Stories": "story_frame_prompt_plus_sticker_copy",
+    "Threads": "copy_only_or_optional_graphic"
+  },
+  "packet_files": [
+    "00_PUBLIC_PROMPT_TO_PASTE.md",
+    "01_CONTROL_RULES_DO_NOT_RENDER.md",
+    "02_COPY_DESK.md",
+    "03_THREADS_COPY.md",
+    "04_FIRST_COMMENT.md",
+    "05_ASSET_INSTRUCTIONS.md",
+    "content_packet.json",
+    "render_plan.json"
+  ]
+}
