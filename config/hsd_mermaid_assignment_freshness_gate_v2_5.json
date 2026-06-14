@@ -1,0 +1,32 @@
+{
+  "version": "v3.3.5-mermaid-assignment-freshness-gate-v2.5",
+  "system_codename": "Mermaid",
+  "assistant_operator": "BB",
+  "mission": "Apply final freshness and platform-mix judgment after Assignment Desk v2.4.",
+  "preview_block_signals": [
+    "Preview gate: BLOCKED",
+    "blocked_freshness_gate",
+    "Graphics handoff allowed: False",
+    "same-day games not included",
+    "started/live/final",
+    "Preview games included: 0"
+  ],
+  "rules": {
+    "block_preview_slots_when_preview_gate_blocked": true,
+    "do_not_reassign_blocked_preview_to_feed_preview": true,
+    "threads_live_can_fallback_to_result_or_article": true,
+    "nightcap_duplicate_requires_new_angle": true,
+    "prefer_non_wnba_support_when_feed_is_wnba": true,
+    "keep_publish_artifact_only": true
+  },
+  "slot_replacement_priority": {
+    "threads_live": ["result_or_recap", "official_news_article", "manual_packet"],
+    "ig_stories": ["official_news_article", "result_or_recap", "preview_event"],
+    "nightcap": ["result_or_recap", "official_news_article"]
+  },
+  "copy_angles": {
+    "nightcap_followup": "Different angle for the nightcap: what this changes next.",
+    "preview_blocked": "Preview held because the freshness gate blocked this game window.",
+    "non_wnba_support": "HSD keeps the broader women’s sports board active."
+  }
+}
