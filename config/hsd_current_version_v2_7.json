@@ -1,0 +1,9 @@
+{
+  "pipeline": "HSD Mermaid Ops v1",
+  "version": "v3.3.7-mermaid-render-studio-v2.7",
+  "codename": "Mermaid",
+  "operator": "BB",
+  "artifact_mode": "artifact_only",
+  "status": "active",
+  "render_policy": "official_watermark_required"
+}
