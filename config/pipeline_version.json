@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Mermaid Ops",
-  "pipeline_version": "v3.3.4-mermaid-assignment-desk-v2.4",
+  "pipeline_version": "v3.3.5-mermaid-assignment-freshness-gate-v2.5",
   "contract_version": "v2",
   "operator_codename": "BB",
   "system_codename": "Mermaid",
@@ -13,5 +13,5 @@
   "github_visible_version": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "release_date_local": "2026-06-12",
-  "notes": "Assignment Desk v2.4: editorial assignment rules, article-vs-preview correction, one strongest feed post, split public/control prompts, and cleaner slot routing."
+  "notes": "Assignment Freshness Gate v2.5 is active in the Mermaid Upper Echelon bridge."
 }
