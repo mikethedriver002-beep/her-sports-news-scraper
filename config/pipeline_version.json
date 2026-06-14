@@ -1,17 +1,14 @@
 {
   "pipeline_name": "Her Sports Daily Mermaid Ops",
-  "pipeline_version": "v3.3.5-mermaid-assignment-freshness-gate-v2.5",
+  "pipeline_version": "v3.3.6-mermaid-assignment-handoff-v2.6",
   "contract_version": "v2",
   "operator_codename": "BB",
   "system_codename": "Mermaid",
   "default_publish_mode": "artifact_only",
   "default_review_artifact_size": "lite",
-  "platforms": [
-    "Instagram",
-    "Threads"
-  ],
+  "platforms": ["Instagram", "Threads"],
   "github_visible_version": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "release_date_local": "2026-06-12",
-  "notes": "Assignment Freshness Gate v2.5 is active in the Mermaid Upper Echelon bridge."
+  "notes": "v2.6 active"
 }
