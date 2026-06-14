@@ -1,10 +1,10 @@
 {
-  "release": "HSD Mermaid Assignment Desk v2.4",
-  "pipeline_version": "v3.3.4-mermaid-assignment-desk-v2.4",
+  "release": "HSD Mermaid Assignment Freshness Gate v2.5",
+  "pipeline_version": "v3.3.5-mermaid-assignment-freshness-gate-v2.5",
   "github_visible_name": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "assistant_operator": "BB",
   "system_codename": "Mermaid",
   "release_date_local": "2026-06-12",
-  "summary": "Editorial Assignment Desk: true previews only, one strongest feed post, support slots, Threads debate, intentional crossposts, and split public/control prompt packets."
+  "summary": "Assignment Freshness Gate v2.5 is active in the Mermaid Upper Echelon bridge."
 }
