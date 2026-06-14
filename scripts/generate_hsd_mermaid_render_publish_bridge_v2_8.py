@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v2.8"
+VERSION = "v2.8.1"
 OUT_ROOT = Path("outputs/latest")
 OUT_GRAPHICS = OUT_ROOT / "rendered_graphics"
 OUT_ZIPS = OUT_ROOT / "rendered_zips"
@@ -15,6 +15,7 @@ OUT_FILES = OUT_ROOT / "review_files"
 
 COPY_FILES = [
     "rendered_handoff_qa_report.md",
+    "rendered_handoff_visual_qa.csv",
     "rendered_handoff_manifest.csv",
     "rendered_handoff_status.csv",
     "rendered_handoff_metadata.json",
@@ -130,10 +131,11 @@ def main() -> None:
         "## Review order",
         "",
         "1. `review_files/rendered_handoff_qa_report.md`",
-        "2. `review_files/rendered_handoff_contact_sheet.jpg`",
-        "3. `review_files/rendered_handoff_status.csv`",
-        "4. `rendered_graphics/`",
-        "5. `rendered_zips/`",
+        "2. `review_files/rendered_handoff_visual_qa.csv`",
+        "3. `review_files/rendered_handoff_contact_sheet.jpg`",
+        "4. `review_files/rendered_handoff_status.csv`",
+        "5. `rendered_graphics/`",
+        "6. `rendered_zips/`",
         "",
         "## Notes",
         "",
