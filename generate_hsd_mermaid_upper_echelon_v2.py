@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.3.5-mermaid-assignment-freshness-gate-v2.5-bridge"
+VERSION = "v3.3.6-mermaid-assignment-handoff-v2.6-bridge"
 OUT_MD = Path("mermaid_upper_echelon_report.md")
 OUT_JSON = Path("mermaid_upper_echelon_manifest.json")
 
@@ -26,6 +26,7 @@ STEPS = [
     ("Content Director v2.3", "generate_hsd_mermaid_content_director_v2_3.py"),
     ("Assignment Desk v2.4", "generate_hsd_mermaid_assignment_desk_v2_4.py"),
     ("Assignment Freshness Gate v2.5", "generate_hsd_mermaid_assignment_freshness_gate_v2_5.py"),
+    ("Assignment Handoff v2.6", "generate_hsd_mermaid_assignment_handoff_v2_6.py"),
 ]
 
 ALIASES = [
@@ -35,6 +36,8 @@ ALIASES = [
     ("ig_story_queue_v2_5.csv", "ig_story_queue_v2.csv"),
     ("threads_queue_v2_5.csv", "threads_queue_v2.csv"),
     ("mermaid_assignment_final_prompt_index.csv", "mermaid_compiled_packet_index.csv"),
+    ("assignment_handoff_report.md", "manual_workflow_handoff.md"),
+    ("assignment_handoff_index.csv", "manual_workflow_content_packets.csv"),
 ]
 
 
@@ -85,6 +88,12 @@ def bridge_outputs() -> List[str]:
     if Path("mermaid_assignment_final_packets").exists():
         copy_alias("mermaid_assignment_final_packets", "mermaid_compiled_packets")
         actions.append("mermaid_assignment_final_packets -> mermaid_compiled_packets")
+    if Path("assignment_handoff_packets").exists():
+        copy_alias("assignment_handoff_packets", "manual_workflow_packets")
+        actions.append("assignment_handoff_packets -> manual_workflow_packets")
+    if Path("assignment_handoff_zips").exists():
+        copy_alias("assignment_handoff_zips", "manual_workflow_handoff_packs")
+        actions.append("assignment_handoff_zips -> manual_workflow_handoff_packs")
     return actions
 
 
@@ -96,8 +105,9 @@ def counts() -> Dict[str, int]:
         "story_rows": len(read_csv("ig_story_queue_v2.csv")),
         "thread_rows": len(read_csv("threads_queue_v2.csv")),
         "compiled_packets": len(read_csv("mermaid_compiled_packet_index.csv")),
+        "handoff_packets": len(read_csv("assignment_handoff_index.csv")),
+        "handoff_held": len([r for r in read_csv("assignment_handoff_status.csv") if r.get("status") == "held"]),
         "player_asset_debt": len(read_csv("player_asset_debt.csv")),
-        "assignment_rows": len(read_csv("mermaid_assignment_content_slots.csv")),
     }
 
 
@@ -114,8 +124,10 @@ def main() -> None:
         lines.append(f"- {r['name']}: {r['status']} ({r['returncode']})")
     lines += ["", "## Output bridge", ""]
     lines += [f"- {b}" for b in bridge] if bridge else ["- No aliases created."]
-    if Path("mermaid_assignment_freshness_gate_report.md").exists():
-        lines += ["", "---", "", Path("mermaid_assignment_freshness_gate_report.md").read_text(encoding="utf-8", errors="replace")]
+    for report in ["mermaid_assignment_freshness_gate_report.md", "assignment_handoff_report.md"]:
+        p = Path(report)
+        if p.exists():
+            lines += ["", "---", "", p.read_text(encoding="utf-8", errors="replace")]
     OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(c, indent=2))
 
