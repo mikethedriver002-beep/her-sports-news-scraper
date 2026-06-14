@@ -1,6 +1,6 @@
 {
   "pipeline_name": "Her Sports Daily Mermaid Ops",
-  "pipeline_version": "v3.3.3-mermaid-content-director-v2.3",
+  "pipeline_version": "v3.3.4-mermaid-assignment-desk-v2.4",
   "contract_version": "v2",
   "operator_codename": "BB",
   "system_codename": "Mermaid",
@@ -13,5 +13,5 @@
   "github_visible_version": "HSD Mermaid Ops v1",
   "artifact_name_prefix": "hsd-mermaid-ops-v1",
   "release_date_local": "2026-06-12",
-  "notes": "Content Director v2.3: slot dedupe, intentional crosspost labels, NCAA wrong-sport filters, platform-specific HSD copy, asset strategy, and director-compiled packets."
+  "notes": "Assignment Desk v2.4: editorial assignment rules, article-vs-preview correction, one strongest feed post, split public/control prompts, and cleaner slot routing."
 }
