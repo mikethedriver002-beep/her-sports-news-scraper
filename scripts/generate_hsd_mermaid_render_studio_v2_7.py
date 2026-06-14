@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-VERSION = "v2.7.1"
+VERSION = "v2.7.2"
 OUT_DIR = Path("rendered_handoff_graphics")
 ZIP_DIR = Path("rendered_handoff_zips")
 STATUS = Path("rendered_handoff_status.csv")
@@ -23,6 +23,7 @@ CONTACT = Path("rendered_handoff_contact_sheet.jpg")
 META = Path("rendered_handoff_metadata.json")
 PACKET_DIRS = [Path("manual_workflow_handoff_packs"), Path("assignment_handoff_zips")]
 WATERMARK_PNGS = [
+    Path("assets/branding/official_hsd_watermark.png"),
     Path("data/assets/brand/hsd_watermark.png"),
     Path("data/assets/brand/hsd_official_watermark.png"),
     Path("assets/hsd_watermark.png"),
@@ -133,15 +134,7 @@ def parse_packet(zp: Path) -> Optional[Dict[str, Any]]:
             data = json.loads(z.read("content_packet.json").decode("utf-8"))
         slot = data.get("slot", {})
         pub = data.get("public_copy", {})
-        return {
-            "packet_id": data.get("packet_id") or zp.stem,
-            "platform": clean(slot.get("platform") or pub.get("platform") or "IG Feed"),
-            "headline": clean(pub.get("headline") or slot.get("headline") or zp.stem),
-            "league": clean(pub.get("league") or slot.get("league")),
-            "content_type": clean(pub.get("content_type") or slot.get("content_type")),
-            "hook": clean(pub.get("hook") or slot.get("copy_hook")),
-            "first": clean(pub.get("first") or slot.get("first_comment")),
-        }
+        return {"packet_id": data.get("packet_id") or zp.stem, "platform": clean(slot.get("platform") or pub.get("platform") or "IG Feed"), "headline": clean(pub.get("headline") or slot.get("headline") or zp.stem), "league": clean(pub.get("league") or slot.get("league")), "content_type": clean(pub.get("content_type") or slot.get("content_type")), "hook": clean(pub.get("hook") or slot.get("copy_hook")), "first": clean(pub.get("first") or slot.get("first_comment"))}
     except Exception:
         return None
 
