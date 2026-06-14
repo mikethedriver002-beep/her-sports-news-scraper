@@ -1,0 +1,8 @@
+{
+  "pipeline": "HSD Mermaid Ops v1",
+  "version": "v3.3.6-mermaid-assignment-handoff-v2.6",
+  "codename": "Mermaid",
+  "operator": "BB",
+  "artifact_mode": "artifact_only",
+  "status": "active"
+}
