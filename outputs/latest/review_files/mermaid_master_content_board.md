@@ -1,6 +1,6 @@
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-14T13:51:56.437049+00:00
+Generated: 2026-06-14T17:01:59.852023+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -49,17 +49,17 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_feed_evening_preview — IG Feed / 4:45 PM
 - Status: ready_with_review
-- Headline: Los Angeles Sparks at Phoenix Mercury
+- Headline: Washington Mystics at New York Liberty
 - Type: preview_event
 - Freshness: fresh
-- Hook: Los Angeles Sparks at Phoenix Mercury: the game lane to watch.
+- Hook: Washington Mystics at New York Liberty: the game lane to watch.
 
 ### threads_live — Threads / 7:00-11:30 PM
 - Status: ready_with_review
-- Headline: Los Angeles Sparks at Phoenix Mercury
+- Headline: Washington Mystics at New York Liberty
 - Type: preview_event
 - Freshness: fresh
-- Hook: Los Angeles Sparks at Phoenix Mercury: the game lane to watch.
+- Hook: Washington Mystics at New York Liberty: the game lane to watch.
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review

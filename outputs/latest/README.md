@@ -1,6 +1,6 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-14T13:52:01.903957+00:00
+Generated: 2026-06-14T17:02:05.805404+00:00
 Version: Mermaid Render Publish Bridge v2.8
 
 ## Counts
@@ -28,10 +28,10 @@ Version: Mermaid Render Publish Bridge v2.8
 
 ## Rendered packets
 
-- ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-phoenix-mercury: Los Angeles Sparks at Phoenix Mercury
+- ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty: Washington Mystics at New York Liberty
 - ig-feed_ig-feed-noon_last-night-in-the-w: Last Night in the W
 - ig-stories_ig-stories-rolling-1_last-night-in-the-w: Last Night in the W
 - ig-stories_ig-stories-rolling-2_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026
 - threads_nightcap_last-night-in-the-w: Last Night in the W
-- threads_threads-live_los-angeles-sparks-at-phoenix-mercury: Los Angeles Sparks at Phoenix Mercury
+- threads_threads-live_washington-mystics-at-new-york-liberty: Washington Mystics at New York Liberty
 - threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026
