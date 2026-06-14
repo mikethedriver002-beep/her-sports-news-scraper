@@ -1,0 +1,10 @@
+{
+  "pipeline": "HSD Mermaid Ops v1",
+  "version": "v3.3.9-mermaid-render-studio-v2.9-visual-polish-pass1",
+  "codename": "Mermaid",
+  "operator": "BB",
+  "artifact_mode": "artifact_only",
+  "status": "active",
+  "strict_team_logo_policy": true,
+  "latest_outputs_path": "outputs/latest"
+}
