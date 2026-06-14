@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -56,6 +57,31 @@ def run_script(path: str) -> Dict[str, Any]:
     return {"status": "ok" if proc.returncode == 0 else "error", "returncode": proc.returncode, "stdout": proc.stdout[-1200:], "stderr": proc.stderr[-1200:]}
 
 
+def run_cmd(args: List[str]) -> Dict[str, Any]:
+    proc = subprocess.run(args, text=True, capture_output=True, timeout=120)
+    return {"cmd": " ".join(args), "returncode": proc.returncode, "stdout": proc.stdout[-1200:], "stderr": proc.stderr[-1200:]}
+
+
+def maybe_commit_latest_outputs() -> Dict[str, Any]:
+    if os.environ.get("HSD_COMMIT_HEAVY_OUTPUTS", "false").lower() != "true":
+        return {"status": "skipped", "reason": "HSD_COMMIT_HEAVY_OUTPUTS is not true"}
+    if not Path("outputs/latest").exists():
+        return {"status": "skipped", "reason": "outputs/latest does not exist"}
+    steps = []
+    steps.append(run_cmd(["git", "config", "user.name", "github-actions"]))
+    steps.append(run_cmd(["git", "config", "user.email", "github-actions@github.com"]))
+    steps.append(run_cmd(["git", "add", "-A", "outputs/latest"]))
+    diff = run_cmd(["git", "diff", "--cached", "--quiet"])
+    steps.append(diff)
+    if diff["returncode"] == 0:
+        return {"status": "no_changes", "steps": steps}
+    commit = run_cmd(["git", "commit", "-m", "Update latest HSD render review outputs"])
+    steps.append(commit)
+    push = run_cmd(["git", "push", "origin", "HEAD:main"])
+    steps.append(push)
+    return {"status": "pushed" if push["returncode"] == 0 else "push_failed", "steps": steps}
+
+
 def main() -> None:
     handoff_run = run_script("generate_hsd_mermaid_assignment_handoff_v2_6.py")
     actions: List[str] = []
@@ -72,6 +98,7 @@ def main() -> None:
             shutil.copy2(zp, target / ("rendered_" + zp.name))
             actions.append(f"{zp.as_posix()} -> {(target / ('rendered_' + zp.name)).as_posix()}")
     publish_run = run_script("scripts/generate_hsd_mermaid_render_publish_bridge_v2_8.py")
+    commit_run = maybe_commit_latest_outputs()
     counts = {
         "handoff_packets": len(read_csv("assignment_handoff_index.csv")),
         "manual_packets": len(read_csv("manual_workflow_content_packets.csv")),
@@ -82,10 +109,13 @@ def main() -> None:
         "render_blocked_rows": len([r for r in read_csv("rendered_handoff_status.csv") if r.get("status") == "blocked"]),
         "latest_outputs_files": len(list(Path("outputs/latest").rglob("*"))) if Path("outputs/latest").exists() else 0,
     }
-    manifest = {"version": VERSION, "generated_at": now_iso(), "handoff_run": handoff_run, "render_run": render_run, "publish_run": publish_run, "actions": actions, "counts": counts}
+    manifest = {"version": VERSION, "generated_at": now_iso(), "handoff_run": handoff_run, "render_run": render_run, "publish_run": publish_run, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     lines = ["# Mermaid Handoff Publisher v2.8", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
+    lines += ["", "## Commit latest outputs", "", f"- status: {commit_run.get('status')}"]
+    if commit_run.get("reason"):
+        lines.append(f"- reason: {commit_run.get('reason')}")
     lines += ["", "## Actions", ""]
     lines += [f"- {a}" for a in actions] if actions else ["- No actions completed."]
     if Path("rendered_handoff_qa_report.md").exists():
@@ -93,7 +123,7 @@ def main() -> None:
     if Path("outputs/latest/README.md").exists():
         lines += ["", "---", "", Path("outputs/latest/README.md").read_text(encoding="utf-8", errors="replace")]
     OUT_REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(json.dumps({"counts": counts, "actions": len(actions)}, indent=2))
+    print(json.dumps({"counts": counts, "actions": len(actions), "commit_status": commit_run.get("status")}, indent=2))
 
 
 if __name__ == "__main__":
