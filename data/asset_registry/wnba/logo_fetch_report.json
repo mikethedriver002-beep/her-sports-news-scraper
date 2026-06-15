@@ -1,9 +1,9 @@
 {
   "version": "hsd-wnba-logo-source-fetcher-v1",
-  "generated_at_utc": "2026-06-15T14:10:06.862323+00:00",
+  "generated_at_utc": "2026-06-15T14:27:27.111488+00:00",
   "sources": 10,
-  "downloaded": 3,
-  "existing": 0,
+  "downloaded": 0,
+  "existing": 3,
   "failed": 7,
   "results": [
     {
@@ -11,7 +11,7 @@
       "team_name": "Chicago Sky",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/f/fc/Chicago_Sky_logo.svg",
       "target_path": "assets/leagues/wnba/teams/chicago_sky/logo.svg",
-      "status": "downloaded",
+      "status": "exists",
       "bytes": 9431,
       "reason": ""
     },
@@ -65,7 +65,7 @@
       "team_name": "Phoenix Mercury",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/4/48/Phoenix_Mercury_logo_2025.svg",
       "target_path": "assets/leagues/wnba/teams/phoenix_mercury/logo.svg",
-      "status": "downloaded",
+      "status": "exists",
       "bytes": 7979,
       "reason": ""
     },
@@ -92,7 +92,7 @@
       "team_name": "Seattle Storm",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/a/a0/Seattle_Storm_%282021%29_logo.svg",
       "target_path": "assets/leagues/wnba/teams/seattle_storm/logo.svg",
-      "status": "downloaded",
+      "status": "exists",
       "bytes": 45871,
       "reason": ""
     }

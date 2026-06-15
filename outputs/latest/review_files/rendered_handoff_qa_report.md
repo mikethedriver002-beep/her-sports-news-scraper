@@ -1,6 +1,6 @@
 # Mermaid Render Studio v3.0 Registry Resolver QA Report
 
-Generated: 2026-06-15T14:10:15.508513+00:00
+Generated: 2026-06-15T14:27:43.763502+00:00
 Version: v3.0.1-router-fix-logo-gap-pack
 
 ## Counts

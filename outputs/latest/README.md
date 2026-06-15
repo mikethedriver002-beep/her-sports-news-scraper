@@ -1,7 +1,7 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-15T14:10:15.573207+00:00
-Version: Mermaid Render Publish Bridge v2.8.5-athlete-registry-review
+Generated: 2026-06-15T14:27:43.831486+00:00
+Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
 
@@ -14,27 +14,31 @@ Version: Mermaid Render Publish Bridge v2.8.5-athlete-registry-review
 - verified WNBA team logos: 13
 - missing WNBA team logos: 2
 - logo sources: 10
-- logos downloaded: 3
-- logos existing: 0
+- logos downloaded: 0
+- logos existing: 3
 - logos failed: 7
+- athlete source urls: 15
+- athlete source urls ok: 15
+- athlete source urls failed: 0
 - athlete sources: 15
-- athlete sources ok: 0
-- athletes discovered: 0
-- athlete image candidates: 0
+- athlete sources ok: 15
+- athletes discovered: 327
+- athlete image candidates: 300
 - approved athlete images: 0
 
 ## Review order
 
 1. `review_files/rendered_handoff_qa_report.md`
 2. `review_files/rendered_handoff_visual_qa.csv`
-3. `review_files/athlete_registry_report.md`
-4. `review_files/athlete_image_candidates.csv`
-5. `review_files/logo_fetch_report.md`
-6. `review_files/asset_registry_report.md`
-7. `review_files/asset_gap_report.md`
-8. `review_files/rendered_handoff_contact_sheet.jpg`
-9. `rendered_graphics/`
-10. `rendered_zips/`
+3. `review_files/athlete_source_resolver_report.md`
+4. `review_files/athlete_registry_report.md`
+5. `review_files/athlete_image_candidates.csv`
+6. `review_files/logo_fetch_report.md`
+7. `review_files/asset_registry_report.md`
+8. `review_files/asset_gap_report.md`
+9. `review_files/rendered_handoff_contact_sheet.jpg`
+10. `rendered_graphics/`
+11. `rendered_zips/`
 
 ## Notes
 

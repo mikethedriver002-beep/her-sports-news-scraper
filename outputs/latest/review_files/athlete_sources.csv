@@ -1,16 +1,16 @@
 team_id,team_name,roster_url,source_note
-atlanta_dream,Atlanta Dream,https://www.wnba.com/team/atlanta-dream/roster,official_wnba_roster_page
-chicago_sky,Chicago Sky,https://www.wnba.com/team/chicago-sky/roster,official_wnba_roster_page
-connecticut_sun,Connecticut Sun,https://www.wnba.com/team/connecticut-sun/roster,official_wnba_roster_page
-indiana_fever,Indiana Fever,https://www.wnba.com/team/indiana-fever/roster,official_wnba_roster_page
-new_york_liberty,New York Liberty,https://www.wnba.com/team/new-york-liberty/roster,official_wnba_roster_page
-toronto_tempo,Toronto Tempo,https://www.wnba.com/team/toronto-tempo/roster,official_wnba_roster_page
-washington_mystics,Washington Mystics,https://www.wnba.com/team/washington-mystics/roster,official_wnba_roster_page
-dallas_wings,Dallas Wings,https://www.wnba.com/team/dallas-wings/roster,official_wnba_roster_page
-golden_state_valkyries,Golden State Valkyries,https://www.wnba.com/team/golden-state-valkyries/roster,official_wnba_roster_page
-las_vegas_aces,Las Vegas Aces,https://www.wnba.com/team/las-vegas-aces/roster,official_wnba_roster_page
-los_angeles_sparks,Los Angeles Sparks,https://www.wnba.com/team/los-angeles-sparks/roster,official_wnba_roster_page
-minnesota_lynx,Minnesota Lynx,https://www.wnba.com/team/minnesota-lynx/roster,official_wnba_roster_page
-phoenix_mercury,Phoenix Mercury,https://www.wnba.com/team/phoenix-mercury/roster,official_wnba_roster_page
-portland_fire,Portland Fire,https://www.wnba.com/team/portland-fire/roster,official_wnba_roster_page
-seattle_storm,Seattle Storm,https://www.wnba.com/team/seattle-storm/roster,official_wnba_roster_page
+atlanta_dream,Atlanta Dream,https://dream.wnba.com/roster,official_team_subdomain_roster_ok
+chicago_sky,Chicago Sky,https://sky.wnba.com/roster,official_team_subdomain_roster_ok
+connecticut_sun,Connecticut Sun,https://sun.wnba.com/roster,official_team_subdomain_roster_ok
+indiana_fever,Indiana Fever,https://fever.wnba.com/roster,official_team_subdomain_roster_ok
+new_york_liberty,New York Liberty,https://liberty.wnba.com/roster,official_team_subdomain_roster_ok
+toronto_tempo,Toronto Tempo,https://tempo.wnba.com/roster,official_team_subdomain_roster_ok
+washington_mystics,Washington Mystics,https://mystics.wnba.com/roster,official_team_subdomain_roster_ok
+dallas_wings,Dallas Wings,https://wings.wnba.com/roster,official_team_subdomain_roster_ok
+golden_state_valkyries,Golden State Valkyries,https://valkyries.wnba.com/roster,official_team_subdomain_roster_ok
+las_vegas_aces,Las Vegas Aces,https://aces.wnba.com/roster,official_team_subdomain_roster_ok
+los_angeles_sparks,Los Angeles Sparks,https://sparks.wnba.com/roster,official_team_subdomain_roster_ok
+minnesota_lynx,Minnesota Lynx,https://lynx.wnba.com/roster,official_team_subdomain_roster_ok
+phoenix_mercury,Phoenix Mercury,https://mercury.wnba.com/roster,official_team_subdomain_roster_ok
+portland_fire,Portland Fire,https://fire.wnba.com/roster,official_team_subdomain_roster_ok
+seattle_storm,Seattle Storm,https://storm.wnba.com/roster,official_team_subdomain_roster_ok

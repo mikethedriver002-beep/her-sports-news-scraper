@@ -1,0 +1,161 @@
+{
+  "version": "hsd-wnba-athlete-source-resolver-v1",
+  "generated_at_utc": "2026-06-15T14:27:36.661785+00:00",
+  "sources": 15,
+  "ok": 15,
+  "needs_review": 0,
+  "failed": 0,
+  "source_file": "data/asset_registry/wnba/athlete_sources.csv",
+  "checks": [
+    {
+      "url": "https://dream.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "atlanta_dream",
+      "team_name": "Atlanta Dream"
+    },
+    {
+      "url": "https://sky.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "chicago_sky",
+      "team_name": "Chicago Sky"
+    },
+    {
+      "url": "https://sun.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "connecticut_sun",
+      "team_name": "Connecticut Sun"
+    },
+    {
+      "url": "https://fever.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "indiana_fever",
+      "team_name": "Indiana Fever"
+    },
+    {
+      "url": "https://liberty.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "new_york_liberty",
+      "team_name": "New York Liberty"
+    },
+    {
+      "url": "https://tempo.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "toronto_tempo",
+      "team_name": "Toronto Tempo"
+    },
+    {
+      "url": "https://mystics.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "washington_mystics",
+      "team_name": "Washington Mystics"
+    },
+    {
+      "url": "https://wings.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "dallas_wings",
+      "team_name": "Dallas Wings"
+    },
+    {
+      "url": "https://valkyries.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "golden_state_valkyries",
+      "team_name": "Golden State Valkyries"
+    },
+    {
+      "url": "https://aces.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "las_vegas_aces",
+      "team_name": "Las Vegas Aces"
+    },
+    {
+      "url": "https://sparks.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "los_angeles_sparks",
+      "team_name": "Los Angeles Sparks"
+    },
+    {
+      "url": "https://lynx.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "minnesota_lynx",
+      "team_name": "Minnesota Lynx"
+    },
+    {
+      "url": "https://mercury.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "phoenix_mercury",
+      "team_name": "Phoenix Mercury"
+    },
+    {
+      "url": "https://fire.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "portland_fire",
+      "team_name": "Portland Fire"
+    },
+    {
+      "url": "https://storm.wnba.com/roster",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
+      "team_id": "seattle_storm",
+      "team_name": "Seattle Storm"
+    }
+  ]
+}
