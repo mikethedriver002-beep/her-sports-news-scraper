@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.3.9-mermaid-render-studio-v2.9-visual-polish"
+VERSION = "v3.4.0-mermaid-asset-registry-v1"
 OUT_REPORT = Path("assignment_handoff_publisher_report.md")
 OUT_MANIFEST = Path("assignment_handoff_publisher_manifest.json")
 
@@ -83,6 +83,9 @@ def maybe_commit_latest_outputs() -> Dict[str, Any]:
 
 
 def main() -> None:
+    registry_build = run_script("scripts/build_hsd_wnba_asset_registry_v1.py")
+    registry_validate = run_script("scripts/validate_hsd_wnba_asset_registry_v1.py")
+    registry_gaps = run_script("scripts/report_hsd_wnba_asset_gaps_v1.py")
     handoff_run = run_script("generate_hsd_mermaid_assignment_handoff_v2_6.py")
     actions: List[str] = []
     copy_file("assignment_handoff_report.md", "manual_workflow_handoff.md", actions)
@@ -108,20 +111,22 @@ def main() -> None:
         "rendered_rows": len(read_csv("rendered_handoff_manifest.csv")),
         "render_blocked_rows": len([r for r in read_csv("rendered_handoff_status.csv") if r.get("status") == "blocked"]),
         "latest_outputs_files": len(list(Path("outputs/latest").rglob("*"))) if Path("outputs/latest").exists() else 0,
+        "verified_team_logos": len([r for r in read_csv("data/asset_registry/wnba/team_logos.csv") if r.get("file_exists") == "true"]),
+        "missing_team_logos": len(read_csv("data/asset_registry/wnba/missing_team_logos.csv")),
     }
-    manifest = {"version": VERSION, "generated_at": now_iso(), "handoff_run": handoff_run, "render_run": render_run, "publish_run": publish_run, "commit_run": commit_run, "actions": actions, "counts": counts}
+    manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "publish_run": publish_run, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    lines = ["# Mermaid Handoff Publisher v2.9", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
+    lines = ["# Mermaid Handoff Publisher v1.0 Asset Registry", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
     lines += ["", "## Commit latest outputs", "", f"- status: {commit_run.get('status')}"]
     if commit_run.get("reason"):
         lines.append(f"- reason: {commit_run.get('reason')}")
     lines += ["", "## Actions", ""]
     lines += [f"- {a}" for a in actions] if actions else ["- No actions completed."]
-    if Path("rendered_handoff_qa_report.md").exists():
-        lines += ["", "---", "", Path("rendered_handoff_qa_report.md").read_text(encoding="utf-8", errors="replace")]
-    if Path("outputs/latest/README.md").exists():
-        lines += ["", "---", "", Path("outputs/latest/README.md").read_text(encoding="utf-8", errors="replace")]
+    for extra in ["data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "outputs/latest/README.md"]:
+        p = Path(extra)
+        if p.exists():
+            lines += ["", "---", "", p.read_text(encoding="utf-8", errors="replace")]
     OUT_REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps({"counts": counts, "actions": len(actions), "commit_status": commit_run.get("status")}, indent=2))
 
