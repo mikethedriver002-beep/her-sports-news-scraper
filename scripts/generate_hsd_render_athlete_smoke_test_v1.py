@@ -21,6 +21,7 @@ REPORT = SMOKE_ROOT / "rendered_handoff_qa_report.md"
 CONTACT = SMOKE_ROOT / "rendered_handoff_contact_sheet.jpg"
 META = SMOKE_ROOT / "rendered_handoff_metadata.json"
 SUMMARY = Path("outputs/latest/summary.json")
+_ORIGINAL_BASE_PARSE_PACKET = base_render.parse_packet
 
 
 def now_iso() -> str:
@@ -81,6 +82,10 @@ def main() -> None:
     base_render.CONTACT = CONTACT
     base_render.META = META
 
+    # The approved renderer monkey-patches base_render.parse_packet inside main().
+    # Force its module-level parser to the original base parser so the smoke packet
+    # does not recurse through the approved parser wrapper.
+    approved_render.parse_packet = _ORIGINAL_BASE_PARSE_PACKET
     approved_render.main()
     meta = read_json(META)
     summary = read_json(SUMMARY)
@@ -94,7 +99,7 @@ def main() -> None:
         SUMMARY.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     smoke_report = SMOKE_ROOT / "athlete_smoke_test_report.md"
     smoke_report.write_text(
-        "# HSD Approved Athlete Render Smoke Test v1\n\n"
+        "# HSD Approved Athlete Render Smoke Test v1.1\n\n"
         f"Generated: {now_iso()}\n\n"
         "## Expected\n\n"
         "- Render one internal WNBA test packet.\n"
