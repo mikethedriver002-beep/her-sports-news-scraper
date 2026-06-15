@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v2.8.1"
+VERSION = "v2.8.2"
 OUT_ROOT = Path("outputs/latest")
 OUT_GRAPHICS = OUT_ROOT / "rendered_graphics"
 OUT_ZIPS = OUT_ROOT / "rendered_zips"
@@ -36,6 +36,18 @@ COPY_FILES = [
     "ig_feed_queue_v2.csv",
     "ig_story_queue_v2.csv",
     "threads_queue_v2.csv",
+    "data/asset_registry/wnba/teams.csv",
+    "data/asset_registry/wnba/team_aliases.csv",
+    "data/asset_registry/wnba/team_logos.csv",
+    "data/asset_registry/wnba/missing_team_logos.csv",
+    "data/asset_registry/wnba/roster_entities.csv",
+    "data/asset_registry/wnba/roster_names.csv",
+    "data/asset_registry/wnba/asset_registry_summary.json",
+    "data/asset_registry/wnba/asset_registry_report.md",
+    "data/asset_registry/wnba/asset_registry_validation.json",
+    "data/asset_registry/wnba/asset_registry_validation_report.md",
+    "data/asset_registry/wnba/asset_gap_report.json",
+    "data/asset_registry/wnba/asset_gap_report.md",
 ]
 
 
@@ -99,6 +111,8 @@ def main() -> None:
     blocked_rows = [r for r in rendered_status if r.get("status") == "blocked"]
     handoff_rows = read_csv("assignment_handoff_index.csv") or read_csv("manual_workflow_content_packets.csv")
     slots = read_csv("mermaid_content_slots_v2.csv")
+    missing_logos = read_csv("data/asset_registry/wnba/missing_team_logos.csv")
+    team_logos = read_csv("data/asset_registry/wnba/team_logos.csv")
 
     summary = {
         "version": VERSION,
@@ -109,6 +123,8 @@ def main() -> None:
         "blocked_packets": len(blocked_rows),
         "handoff_packets": len(handoff_rows),
         "content_slots": len(slots),
+        "verified_team_logos": len([r for r in team_logos if r.get("file_exists") == "true"]),
+        "missing_team_logos": len(missing_logos),
         "outputs_root": OUT_ROOT.as_posix(),
     }
     (OUT_ROOT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -127,20 +143,24 @@ def main() -> None:
         f"- content slots: {summary['content_slots']}",
         f"- graphics files copied: {summary['graphics_files']}",
         f"- rendered zip files copied: {summary['zip_files']}",
+        f"- verified WNBA team logos: {summary['verified_team_logos']}",
+        f"- missing WNBA team logos: {summary['missing_team_logos']}",
         "",
         "## Review order",
         "",
         "1. `review_files/rendered_handoff_qa_report.md`",
         "2. `review_files/rendered_handoff_visual_qa.csv`",
-        "3. `review_files/rendered_handoff_contact_sheet.jpg`",
-        "4. `review_files/rendered_handoff_status.csv`",
-        "5. `rendered_graphics/`",
-        "6. `rendered_zips/`",
+        "3. `review_files/asset_registry_report.md`",
+        "4. `review_files/asset_gap_report.md`",
+        "5. `review_files/rendered_handoff_contact_sheet.jpg`",
+        "6. `rendered_graphics/`",
+        "7. `rendered_zips/`",
         "",
         "## Notes",
         "",
         "- This folder is safe to commit for review.",
         "- It does not publish to Instagram or Threads.",
+        "- WNBA team logos are required for team-led WNBA graphics.",
         "- Review before posting.",
         "",
     ]
@@ -157,9 +177,9 @@ def main() -> None:
     (OUT_ROOT / "README.md").write_text("\n".join(lines), encoding="utf-8")
     with (OUT_ROOT / "publish_manifest.csv").open("w", newline="", encoding="utf-8") as f:
         fields = ["source", "dest", "size"]
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        w.writerows(manifest)
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(manifest)
     print(json.dumps(summary, indent=2))
 
 
