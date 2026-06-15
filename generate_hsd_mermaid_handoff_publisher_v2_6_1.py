@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.6.2-athlete-image-matcher-v1.4"
+VERSION = "v3.6.3-athlete-image-approval-apply"
 OUT_REPORT = Path("assignment_handoff_publisher_report.md")
 OUT_MANIFEST = Path("assignment_handoff_publisher_manifest.json")
 
@@ -80,7 +80,7 @@ def maybe_commit_latest_outputs() -> Dict[str, Any]:
     steps = []
     steps.append(run_cmd(["git", "config", "user.name", "github-actions"]))
     steps.append(run_cmd(["git", "config", "user.email", "github-actions@github.com"]))
-    steps.append(run_cmd(["git", "add", "-A", "outputs/latest", "assets/leagues/wnba/teams", "data/asset_registry/wnba"]))
+    steps.append(run_cmd(["git", "add", "-A", "outputs/latest", "assets/leagues/wnba/teams", "assets/leagues/wnba/athletes", "data/asset_registry/wnba"]))
     diff = run_cmd(["git", "diff", "--cached", "--quiet"])
     steps.append(diff)
     if diff["returncode"] == 0:
@@ -121,6 +121,7 @@ def main() -> None:
     logo_fetch_report = read_json("data/asset_registry/wnba/logo_fetch_report.json")
     athlete_source_report = read_json("data/asset_registry/wnba/athlete_source_resolver_report.json")
     athlete_report = read_json("data/asset_registry/wnba/athlete_registry_report.json")
+    approval_apply_report = read_json("data/asset_registry/wnba/athlete_image_approval_apply_report.json")
     commit_run = maybe_commit_latest_outputs()
     counts = {
         "logo_sources": logo_fetch_report.get("sources", 0),
@@ -138,6 +139,10 @@ def main() -> None:
         "unmatched_image_candidates": athlete_report.get("unmatched_image_candidates", 0),
         "match_review_rows": athlete_report.get("match_review_rows", 0),
         "approved_athlete_images": athlete_report.get("approved_images", 0),
+        "approval_apply_approved": approval_apply_report.get("approved", 0),
+        "approval_apply_needs_fix": approval_apply_report.get("needs_fix", 0),
+        "approval_apply_rejected": approval_apply_report.get("rejected", 0),
+        "approval_apply_failed": approval_apply_report.get("failed", 0),
         "missing_approved_athlete_images": athlete_report.get("missing_approved_images", 0),
         "handoff_packets": len(read_csv("assignment_handoff_index.csv")),
         "manual_packets": len(read_csv("manual_workflow_content_packets.csv")),
@@ -153,16 +158,16 @@ def main() -> None:
         "render_integrity": render_meta.get("integrity_status", "unknown"),
         "publish_integrity": latest_summary.get("integrity_status", "unknown"),
     }
-    manifest = {"version": VERSION, "generated_at": now_iso(), "logo_fetch": logo_fetch, "logo_fetch_report": logo_fetch_report, "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "athlete_source_resolver": athlete_source_resolver, "athlete_source_report": athlete_source_report, "athlete_registry": athlete_registry, "athlete_report": athlete_report, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "match_sync": match_sync, "integrity_run": integrity_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
+    manifest = {"version": VERSION, "generated_at": now_iso(), "logo_fetch": logo_fetch, "logo_fetch_report": logo_fetch_report, "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "athlete_source_resolver": athlete_source_resolver, "athlete_source_report": athlete_source_report, "athlete_registry": athlete_registry, "athlete_report": athlete_report, "approval_apply_report": approval_apply_report, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "match_sync": match_sync, "integrity_run": integrity_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    lines = ["# Mermaid Handoff Publisher v3.6.2 Athlete Image Matcher", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
+    lines = ["# Mermaid Handoff Publisher v3.6.3 Athlete Image Approval Apply", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
     lines += ["", "## Commit latest outputs and registry assets", "", f"- status: {commit_run.get('status')}"]
     if commit_run.get("reason"):
         lines.append(f"- reason: {commit_run.get('reason')}")
     lines += ["", "## Actions", ""]
     lines += [f"- {a}" for a in actions] if actions else ["- No actions completed."]
-    for extra in ["data/asset_registry/wnba/logo_fetch_report.md", "data/asset_registry/wnba/athlete_source_resolver_report.md", "data/asset_registry/wnba/athlete_registry_report.md", "outputs/latest/review_files/athlete_image_match_review_report.md", "data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "render_integrity_report.md", "outputs/latest/README.md"]:
+    for extra in ["data/asset_registry/wnba/logo_fetch_report.md", "data/asset_registry/wnba/athlete_source_resolver_report.md", "data/asset_registry/wnba/athlete_registry_report.md", "outputs/latest/review_files/athlete_image_match_review_report.md", "data/asset_registry/wnba/athlete_image_approval_apply_report.md", "data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "render_integrity_report.md", "outputs/latest/README.md"]:
         p = Path(extra)
         if p.exists():
             lines += ["", "---", "", p.read_text(encoding="utf-8", errors="replace")]
