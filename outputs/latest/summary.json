@@ -1,11 +1,11 @@
 {
-  "version": "v2.8",
-  "generated_at": "2026-06-14T17:02:05.805404+00:00",
-  "graphics_files": 7,
-  "zip_files": 7,
-  "rendered_packets": 7,
+  "version": "v2.8.1",
+  "generated_at": "2026-06-15T01:32:23.930673+00:00",
+  "graphics_files": 4,
+  "zip_files": 0,
+  "rendered_packets": 0,
   "blocked_packets": 0,
-  "handoff_packets": 7,
-  "content_slots": 7,
+  "handoff_packets": 5,
+  "content_slots": 6,
   "outputs_root": "outputs/latest"
 }

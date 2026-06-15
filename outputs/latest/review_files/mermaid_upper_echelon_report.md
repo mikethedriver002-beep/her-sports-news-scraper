@@ -1,19 +1,19 @@
 # HSD Mermaid Upper Echelon Report
 
-Generated: 2026-06-14T17:01:59.904759+00:00
+Generated: 2026-06-15T01:32:19.888697+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 ## Counts
 
-- final_slots: 7
-- held_slots: 0
-- feed_rows: 2
+- final_slots: 6
+- held_slots: 2
+- feed_rows: 1
 - story_rows: 2
 - thread_rows: 3
-- compiled_packets: 7
-- handoff_packets: 7
-- handoff_held: 0
-- player_asset_debt: 1
+- compiled_packets: 6
+- handoff_packets: 5
+- handoff_held: 1
+- player_asset_debt: 0
 
 ## Step status
 
@@ -49,7 +49,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-14T17:01:59.852023+00:00
+Generated: 2026-06-15T01:32:19.825273+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -58,29 +58,32 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ## Preview block signals
 
-- None
+- blocked_freshness_gate
+- same-day games not included
+- started/live/final
+- Preview games included: 0
 
 ## Counts
 
-- final slots: 7
-- held slots: 0
-- packets: 7
+- final slots: 6
+- held slots: 2
+- packets: 6
 
 ## Final slots
 
 ### threads_morning — Threads / 9:00 AM
 - Status: ready_with_review
-- Headline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026
+- Headline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
 - Type: official_news_article
 - Freshness: fresh
-- Hook: The LPGA lane has a real storyline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026.
+- Hook: The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
 
 ### ig_feed_noon — IG Feed / 12:00 PM
 - Status: ready_with_review
-- Headline: Last Night in the W
+- Headline: Atlanta Dream beat Toronto Tempo
 - Type: result_or_recap
 - Freshness: fresh
-- Hook: Last Night in the W: put this result on the board.
+- Hook: Atlanta Dream beat Toronto Tempo: put this result on the board.
 
 ### ig_stories_rolling_1 — IG Stories / 10:30 AM
 - Status: ready_with_review
@@ -91,52 +94,47 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_stories_rolling_2 — IG Stories / 12:30 PM
 - Status: ready_with_review
-- Headline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026
-- Type: official_news_article
+- Headline: Last Night in the W
+- Type: result_or_recap
 - Freshness: fresh
-- Hook: The LPGA lane has a real storyline: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026.
-
-### ig_feed_evening_preview — IG Feed / 4:45 PM
-- Status: ready_with_review
-- Headline: Washington Mystics at New York Liberty
-- Type: preview_event
-- Freshness: fresh
-- Hook: Washington Mystics at New York Liberty: the game lane to watch.
+- Hook: Last Night in the W: put this result on the board.
 
 ### threads_live — Threads / 7:00-11:30 PM
 - Status: ready_with_review
-- Headline: Washington Mystics at New York Liberty
-- Type: preview_event
-- Freshness: fresh
-- Hook: Washington Mystics at New York Liberty: the game lane to watch.
+- Headline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026
+- Type: official_news_article
+- Freshness: preview_blocked_replaced
+- Hook: The LPGA lane has a real storyline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026.
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review
-- Headline: Last Night in the W
+- Headline: Atlanta Dream beat Toronto Tempo
 - Type: result_or_recap
 - Freshness: nightcap_followup_angle
-- Hook: Last Night in the W: what this changes next.
+- Hook: Atlanta Dream beat Toronto Tempo: what this changes next.
 
+## Held slots
+
+- ig_feed_evening_preview: Washington Mystics at New York Liberty — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / pending
+- threads_live: Washington Mystics at New York Liberty — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / replaced_with_story_d8f79330b7b89a
 
 
 ---
 
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-14T17:01:59.891561+00:00
+Generated: 2026-06-15T01:32:19.871184+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
-- slots seen: 7
-- packets ready: 7
-- held: 0
+- slots seen: 6
+- packets ready: 5
+- held: 1
 
 ## Packets
 
-- Threads / threads_morning: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026 — `assignment_handoff_zips/threads_threads-morning_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-12-2026.zip`
-- IG Feed / ig_feed_noon: Last Night in the W — `assignment_handoff_zips/ig-feed_ig-feed-noon_last-night-in-the-w.zip`
+- Threads / threads_morning: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 — `assignment_handoff_zips/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge.zip`
+- IG Feed / ig_feed_noon: Atlanta Dream beat Toronto Tempo — `assignment_handoff_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip`
 - IG Stories / ig_stories_rolling_1: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-1_last-night-in-the-w.zip`
-- IG Stories / ig_stories_rolling_2: Twice as Nice: Iwai Twins Fire 7-Under 63, Climb the Leaderboard at Dow Championship June 12, 2026 — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_twice-as-nice-iwai-twins-fire-7-under-63-climb-the-leaderboard-at-dow-championship-june-.zip`
-- IG Feed / ig_feed_evening_preview: Washington Mystics at New York Liberty — `assignment_handoff_zips/ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty.zip`
-- Threads / threads_live: Washington Mystics at New York Liberty — `assignment_handoff_zips/threads_threads-live_washington-mystics-at-new-york-liberty.zip`
-- Threads / nightcap: Last Night in the W — `assignment_handoff_zips/threads_nightcap_last-night-in-the-w.zip`
+- IG Stories / ig_stories_rolling_2: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_last-night-in-the-w.zip`
+- Threads / nightcap: Atlanta Dream beat Toronto Tempo — `assignment_handoff_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip`
 
