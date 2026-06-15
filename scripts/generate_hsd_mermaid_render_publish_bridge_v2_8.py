@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v2.8.4-logo-fetch-report"
+VERSION = "v2.8.5-athlete-registry-review"
 OUT_ROOT = Path("outputs/latest")
 OUT_GRAPHICS = OUT_ROOT / "rendered_graphics"
 OUT_ZIPS = OUT_ROOT / "rendered_zips"
@@ -44,6 +44,14 @@ COPY_FILES = [
     "data/asset_registry/wnba/logo_fetch_report.md",
     "data/asset_registry/wnba/logo_gap_upload_manifest.csv",
     "data/asset_registry/wnba/missing_team_logos.csv",
+    "data/asset_registry/wnba/athlete_sources.csv",
+    "data/asset_registry/wnba/athletes.csv",
+    "data/asset_registry/wnba/athlete_aliases.csv",
+    "data/asset_registry/wnba/athlete_images.csv",
+    "data/asset_registry/wnba/athlete_image_candidates.csv",
+    "data/asset_registry/wnba/missing_athlete_images.csv",
+    "data/asset_registry/wnba/athlete_registry_report.json",
+    "data/asset_registry/wnba/athlete_registry_report.md",
     "data/asset_registry/wnba/roster_entities.csv",
     "data/asset_registry/wnba/roster_names.csv",
     "data/asset_registry/wnba/asset_registry_summary.json",
@@ -128,6 +136,7 @@ def main() -> None:
     missing_logos = read_csv("data/asset_registry/wnba/missing_team_logos.csv")
     team_logos = read_csv("data/asset_registry/wnba/team_logos.csv")
     logo_fetch = read_json("data/asset_registry/wnba/logo_fetch_report.json")
+    athlete_report = read_json("data/asset_registry/wnba/athlete_registry_report.json")
 
     summary = {
         "version": VERSION,
@@ -144,6 +153,12 @@ def main() -> None:
         "logos_downloaded": logo_fetch.get("downloaded", 0),
         "logos_existing": logo_fetch.get("existing", 0),
         "logos_failed": logo_fetch.get("failed", 0),
+        "athlete_sources": athlete_report.get("source_count", 0),
+        "athlete_sources_ok": athlete_report.get("sources_ok", 0),
+        "athletes": athlete_report.get("athletes", 0),
+        "athlete_image_candidates": athlete_report.get("image_candidates", 0),
+        "approved_athlete_images": athlete_report.get("approved_images", 0),
+        "missing_approved_athlete_images": athlete_report.get("missing_approved_images", 0),
         "outputs_root": OUT_ROOT.as_posix(),
     }
     (OUT_ROOT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -168,23 +183,31 @@ def main() -> None:
         f"- logos downloaded: {summary['logos_downloaded']}",
         f"- logos existing: {summary['logos_existing']}",
         f"- logos failed: {summary['logos_failed']}",
+        f"- athlete sources: {summary['athlete_sources']}",
+        f"- athlete sources ok: {summary['athlete_sources_ok']}",
+        f"- athletes discovered: {summary['athletes']}",
+        f"- athlete image candidates: {summary['athlete_image_candidates']}",
+        f"- approved athlete images: {summary['approved_athlete_images']}",
         "",
         "## Review order",
         "",
         "1. `review_files/rendered_handoff_qa_report.md`",
         "2. `review_files/rendered_handoff_visual_qa.csv`",
-        "3. `review_files/logo_fetch_report.md`",
-        "4. `review_files/asset_registry_report.md`",
-        "5. `review_files/asset_gap_report.md`",
-        "6. `review_files/rendered_handoff_contact_sheet.jpg`",
-        "7. `rendered_graphics/`",
-        "8. `rendered_zips/`",
+        "3. `review_files/athlete_registry_report.md`",
+        "4. `review_files/athlete_image_candidates.csv`",
+        "5. `review_files/logo_fetch_report.md`",
+        "6. `review_files/asset_registry_report.md`",
+        "7. `review_files/asset_gap_report.md`",
+        "8. `review_files/rendered_handoff_contact_sheet.jpg`",
+        "9. `rendered_graphics/`",
+        "10. `rendered_zips/`",
         "",
         "## Notes",
         "",
         "- This folder is safe to commit for review.",
         "- It does not publish to Instagram or Threads.",
         "- WNBA team logos are required for team-led WNBA graphics.",
+        "- Athlete image candidates are review-only and are not used in public graphics automatically.",
         "- Review before posting.",
         "",
     ]
