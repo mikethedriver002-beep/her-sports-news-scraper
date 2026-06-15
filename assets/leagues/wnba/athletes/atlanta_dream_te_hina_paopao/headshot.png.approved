@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.214283+00:00",
+  "athlete_id": "atlanta_dream_te_hina_paopao",
+  "display_name": "Te-Hina Paopao",
+  "team_id": "atlanta_dream",
+  "provider_player_id": "1642804",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/atlanta_dream/atlanta_dream_te_hina_paopao__1642804.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

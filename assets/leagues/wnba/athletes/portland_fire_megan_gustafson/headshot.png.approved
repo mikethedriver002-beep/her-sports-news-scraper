@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.264329+00:00",
+  "athlete_id": "portland_fire_megan_gustafson",
+  "display_name": "Megan Gustafson",
+  "team_id": "portland_fire",
+  "provider_player_id": "1629484",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/portland_fire/portland_fire_megan_gustafson__1629484.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

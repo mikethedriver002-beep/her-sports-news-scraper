@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.232958+00:00",
+  "athlete_id": "new_york_liberty_breanna_stewart",
+  "display_name": "Breanna Stewart",
+  "team_id": "new_york_liberty",
+  "provider_player_id": "1630993",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/new_york_liberty/new_york_liberty_breanna_stewart__1630993.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.243184+00:00",
+  "athlete_id": "dallas_wings_jessica_shepard",
+  "display_name": "Jessica Shepard",
+  "team_id": "dallas_wings",
+  "provider_player_id": "1629491",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/dallas_wings/dallas_wings_jessica_shepard__1629491.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

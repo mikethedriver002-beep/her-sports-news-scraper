@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.223207+00:00",
+  "athlete_id": "connecticut_sun_aaliyah_edwards",
+  "display_name": "Aaliyah Edwards",
+  "team_id": "connecticut_sun",
+  "provider_player_id": "1642290",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/connecticut_sun/connecticut_sun_aaliyah_edwards__1642290.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.254406+00:00",
+  "athlete_id": "los_angeles_sparks_nneka_ogwumike",
+  "display_name": "Nneka Ogwumike",
+  "team_id": "los_angeles_sparks",
+  "provider_player_id": "203014",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/los_angeles_sparks/los_angeles_sparks_nneka_ogwumike__203014.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

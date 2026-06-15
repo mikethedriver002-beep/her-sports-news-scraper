@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.241986+00:00",
+  "athlete_id": "dallas_wings_aziaha_james",
+  "display_name": "Aziaha James",
+  "team_id": "dallas_wings",
+  "provider_player_id": "1642793",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/dallas_wings/dallas_wings_aziaha_james__1642793.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

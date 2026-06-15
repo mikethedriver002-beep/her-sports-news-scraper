@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.221006+00:00",
+  "athlete_id": "chicago_sky_rachel_banham",
+  "display_name": "Rachel Banham",
+  "team_id": "chicago_sky",
+  "provider_player_id": "1627671",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/chicago_sky/chicago_sky_rachel_banham__1627671.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

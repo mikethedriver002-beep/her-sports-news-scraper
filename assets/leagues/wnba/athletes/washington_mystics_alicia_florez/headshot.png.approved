@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.236894+00:00",
+  "athlete_id": "washington_mystics_alicia_florez",
+  "display_name": "Alicia Florez",
+  "team_id": "washington_mystics",
+  "provider_player_id": "1643644",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/washington_mystics/washington_mystics_alicia_florez__1643644.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

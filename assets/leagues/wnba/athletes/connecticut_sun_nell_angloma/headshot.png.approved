@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.224974+00:00",
+  "athlete_id": "connecticut_sun_nell_angloma",
+  "display_name": "Nell Angloma",
+  "team_id": "connecticut_sun",
+  "provider_player_id": "1643448",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/connecticut_sun/connecticut_sun_nell_angloma__1643448.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

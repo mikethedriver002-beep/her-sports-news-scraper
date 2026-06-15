@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.238909+00:00",
+  "athlete_id": "washington_mystics_cotie_mcmahon",
+  "display_name": "Cotie McMahon",
+  "team_id": "washington_mystics",
+  "provider_player_id": "1643430",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/washington_mystics/washington_mystics_cotie_mcmahon__1643430.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

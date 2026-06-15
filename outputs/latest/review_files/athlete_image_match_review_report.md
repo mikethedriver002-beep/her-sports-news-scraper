@@ -1,6 +1,6 @@
 # HSD Athlete Image Match Review
 
-Generated: 2026-06-15T18:29:38.159935+00:00
+Generated: 2026-06-15T19:15:30.277670+00:00
 
 ## Counts
 
@@ -14,7 +14,14 @@ Generated: 2026-06-15T18:29:38.159935+00:00
 - returncode: 0
 - folder: `outputs/latest/review_files/athlete_image_approval_pack/`
 
+## Approval Apply
+
+- status: ok
+- returncode: 0
+- report: `data/asset_registry/wnba/athlete_image_approval_apply_report.md`
+
 ## Usage policy
 
 - These are order-based candidate matches only.
-- Do not use any athlete image in public graphics until the image is reviewed, placed at the approval target path, and an `.approved` marker exists.
+- Approved rows create public-use files only after human review decisions are applied.
+- Needs-fix and rejected rows remain blocked from public graphics.

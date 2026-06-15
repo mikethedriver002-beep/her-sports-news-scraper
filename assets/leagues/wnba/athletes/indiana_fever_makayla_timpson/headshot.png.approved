@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.228252+00:00",
+  "athlete_id": "indiana_fever_makayla_timpson",
+  "display_name": "Makayla Timpson",
+  "team_id": "indiana_fever",
+  "provider_player_id": "1642815",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/indiana_fever/indiana_fever_makayla_timpson__1642815.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

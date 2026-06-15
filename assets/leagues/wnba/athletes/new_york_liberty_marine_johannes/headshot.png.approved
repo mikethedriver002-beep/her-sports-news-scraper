@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.232386+00:00",
+  "athlete_id": "new_york_liberty_marine_johannes",
+  "display_name": "Marine Johannes",
+  "team_id": "new_york_liberty",
+  "provider_player_id": "1629566",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/new_york_liberty/new_york_liberty_marine_johannes__1629566.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

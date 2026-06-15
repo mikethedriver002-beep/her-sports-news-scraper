@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.249128+00:00",
+  "athlete_id": "las_vegas_aces_dana_evans",
+  "display_name": "Dana Evans",
+  "team_id": "las_vegas_aces",
+  "provider_player_id": "1630389",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/las_vegas_aces/las_vegas_aces_dana_evans__1630389.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

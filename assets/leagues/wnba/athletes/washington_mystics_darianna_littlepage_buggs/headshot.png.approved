@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.237425+00:00",
+  "athlete_id": "washington_mystics_darianna_littlepage_buggs",
+  "display_name": "Darianna Littlepage-Buggs",
+  "team_id": "washington_mystics",
+  "provider_player_id": "1643440",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/washington_mystics/washington_mystics_darianna_littlepage_buggs__1643440.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

@@ -1,6 +1,6 @@
 # HSD WNBA Asset Gap Report
 
-Generated: 2026-06-15T18:28:43.356709+00:00
+Generated: 2026-06-15T19:15:03.271475+00:00
 Validation status: **pass**
 
 ## Missing required team logos

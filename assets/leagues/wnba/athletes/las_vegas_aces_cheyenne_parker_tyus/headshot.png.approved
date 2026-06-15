@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.250890+00:00",
+  "athlete_id": "las_vegas_aces_cheyenne_parker_tyus",
+  "display_name": "Cheyenne Parker-Tyus",
+  "team_id": "las_vegas_aces",
+  "provider_player_id": "204323",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/las_vegas_aces/las_vegas_aces_cheyenne_parker_tyus__204323.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

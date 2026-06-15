@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.245538+00:00",
+  "athlete_id": "golden_state_valkyries_miela_sowah",
+  "display_name": "Miela Sowah",
+  "team_id": "golden_state_valkyries",
+  "provider_player_id": "1631039",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/golden_state_valkyries/golden_state_valkyries_miela_sowah__1631039.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

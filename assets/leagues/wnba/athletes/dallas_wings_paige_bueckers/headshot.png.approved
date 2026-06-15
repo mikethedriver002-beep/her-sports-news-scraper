@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.240886+00:00",
+  "athlete_id": "dallas_wings_paige_bueckers",
+  "display_name": "Paige Bueckers",
+  "team_id": "dallas_wings",
+  "provider_player_id": "1642784",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/dallas_wings/dallas_wings_paige_bueckers__1642784.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

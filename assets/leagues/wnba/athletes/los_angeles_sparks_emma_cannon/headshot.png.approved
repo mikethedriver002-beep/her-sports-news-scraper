@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.254696+00:00",
+  "athlete_id": "los_angeles_sparks_emma_cannon",
+  "display_name": "Emma Cannon",
+  "team_id": "los_angeles_sparks",
+  "provider_player_id": "1628242",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/los_angeles_sparks/los_angeles_sparks_emma_cannon__1628242.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

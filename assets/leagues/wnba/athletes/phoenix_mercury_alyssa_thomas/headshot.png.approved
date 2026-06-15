@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.260943+00:00",
+  "athlete_id": "phoenix_mercury_alyssa_thomas",
+  "display_name": "Alyssa Thomas",
+  "team_id": "phoenix_mercury",
+  "provider_player_id": "1630461",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/phoenix_mercury/phoenix_mercury_alyssa_thomas__1630461.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}

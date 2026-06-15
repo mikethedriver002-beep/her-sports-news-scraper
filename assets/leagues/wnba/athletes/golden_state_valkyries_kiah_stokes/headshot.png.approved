@@ -1,0 +1,10 @@
+{
+  "approved_at_utc": "2026-06-15T19:15:30.247492+00:00",
+  "athlete_id": "golden_state_valkyries_kiah_stokes",
+  "display_name": "Kiah Stokes",
+  "team_id": "golden_state_valkyries",
+  "provider_player_id": "204329",
+  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/golden_state_valkyries/golden_state_valkyries_kiah_stokes__204329.png",
+  "decision_source": "default",
+  "policy": "human_reviewed_contact_sheet_then_approved"
+}
