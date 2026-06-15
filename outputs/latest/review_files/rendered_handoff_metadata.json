@@ -1,0 +1,16 @@
+{
+  "version": "v3.0-registry-resolver-accounting-fix",
+  "generated_at_utc": "2026-06-15T03:13:09.958958+00:00",
+  "packets_seen": 5,
+  "rendered_packets": 2,
+  "blocked_packets": 3,
+  "graphics_files": 2,
+  "zip_files": 2,
+  "watermark_source": "assets/branding/official_hsd_watermark.png",
+  "score_pairs_found": 6,
+  "registry_team_count": 15,
+  "registry_logo_count": 15,
+  "integrity_status": "pass",
+  "integrity_reason": "ok",
+  "logo_source": "data/asset_registry/wnba/team_logos.csv"
+}
