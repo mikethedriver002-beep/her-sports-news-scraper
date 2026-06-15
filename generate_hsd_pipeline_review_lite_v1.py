@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.2.13-bebe-ops-v2.11"
+VERSION = "hsd-pipeline-review-lite-v3.6.3-athlete-approval-pack"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -43,6 +43,12 @@ KEY_FILES = [
     "ig_story_results_upload_pack_status.csv", "ig_story_results_upload_pack_status.json", "ig_story_results_upload_manifest.csv",
     "final_score_story_guard_report.md", "final_score_story_guard_report.json",
     "ig_story_caption_bank.md", "ig_story_poll_stickers.md", "ig_story_player_image_candidates.csv",
+    "outputs/latest/review_files/athlete_image_match_review.csv",
+    "outputs/latest/review_files/athlete_image_match_review_report.md",
+    "outputs/latest/review_files/athlete_image_approval_pack/approval_decisions.csv",
+    "outputs/latest/review_files/athlete_image_approval_pack/download_manifest.csv",
+    "outputs/latest/review_files/athlete_image_approval_pack/athlete_image_approval_pack_report.md",
+    "outputs/latest/review_files/athlete_image_approval_pack/athlete_image_approval_pack_manifest.json",
 ]
 
 
@@ -126,7 +132,6 @@ def include_ready_upload_packs(ready_dir: Path, manifest: List[Dict[str, Any]]) 
                     "included": True,
                     "size": size,
                 })
-    # Safety net: include any zip files even if status CSV path had a mismatch.
     zip_dir = Path("graphics_chat_upload_pack_zips")
     if zip_dir.exists():
         for p in zip_dir.glob("*.zip"):
@@ -187,6 +192,7 @@ def main() -> None:
             manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": size})
             story_ready_packs.append({"zip": dest.as_posix(), "included": True, "size": size})
     story_pack_file_count = safe_copy_tree_files(Path("ig_story_results_upload_pack"), OUT_DIR / "ig_story_results_upload_pack", manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
+    athlete_approval_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_image_approval_pack"), OUT_DIR / "athlete_image_approval_pack", manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
 
     counts = {
         "results_contract_rows": row_count("results_contract_v2.csv"),
@@ -199,6 +205,7 @@ def main() -> None:
         "manual_workflow_packs_included": manual_workflow_pack_count,
         "ig_story_results_ready_packs_included": sum(1 for p in story_ready_packs if p.get("included")),
         "ig_story_results_upload_pack_files_included": story_pack_file_count,
+        "athlete_image_approval_pack_files_included": athlete_approval_file_count,
     }
     status_json = {
         "version": VERSION,
@@ -215,7 +222,7 @@ def main() -> None:
     )
     (OUT_DIR / "README.md").write_text(
         "# HSD Pipeline Lite Review\n\n"
-        "This lite review includes BeBe status files plus ready graphics upload packs when available.\n\n"
+        "This lite review includes BeBe status files, ready graphics upload packs, rendered handoff packs, and the athlete image approval pack when available.\n\n"
         + json.dumps(status_json, indent=2)
         + "\n",
         encoding="utf-8",
