@@ -1,6 +1,6 @@
 # HSD Athlete Image Match Review
 
-Generated: 2026-06-15T19:56:28.162687+00:00
+Generated: 2026-06-15T20:18:25.928004+00:00
 
 ## Counts
 
@@ -20,8 +20,12 @@ Generated: 2026-06-15T19:56:28.162687+00:00
 - returncode: 0
 - report: `data/asset_registry/wnba/athlete_image_approval_apply_report.md`
 
-## Usage policy
+## Render Smoke Test
 
-- These are order-based candidate matches only.
-- Approved rows create public-use files only after human review decisions are applied.
-- Needs-fix and rejected rows remain blocked from public graphics.
+- status: ok
+- returncode: 0
+- folder: `outputs/latest/review_files/athlete_smoke_test/`
+
+## Policy
+
+- Needs-fix and rejected rows remain blocked from graphics.

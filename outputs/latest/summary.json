@@ -1,6 +1,6 @@
 {
   "version": "v2.8.6-athlete-source-resolver-review",
-  "generated_at": "2026-06-15T19:56:13.930438+00:00",
+  "generated_at": "2026-06-15T20:18:11.789104+00:00",
   "graphics_files": 7,
   "zip_files": 7,
   "rendered_packets": 7,
@@ -34,7 +34,11 @@
   "athlete_approval_apply_needs_fix": 4,
   "athlete_approval_apply_rejected": 0,
   "athlete_approval_apply_failed": 0,
+  "athlete_smoke_test_rendered_packets": 0,
+  "athlete_smoke_test_blocked_packets": 1,
+  "athlete_smoke_test_packets_using_approved_athletes": 0,
+  "athlete_smoke_test_integrity_status": "pass",
   "integrity_status": "pass",
   "integrity_errors": [],
-  "integrity_checked_at": "2026-06-15T19:56:28.193381+00:00"
+  "integrity_checked_at": "2026-06-15T20:18:25.958797+00:00"
 }

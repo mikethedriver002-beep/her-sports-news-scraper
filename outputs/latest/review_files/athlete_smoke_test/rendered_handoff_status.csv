@@ -1,0 +1,2 @@
+packet_id,platform,headline,status,reason,template_family,rendered_files,used_watermark,used_logos,used_score_context,missing_logos,used_athletes,missing_athletes
+athlete-smoke-test-approved-headshots,,athlete-smoke-test-approved-headshots,blocked,packet parse error: RecursionError,unknown,0,yes,no,no,,no,

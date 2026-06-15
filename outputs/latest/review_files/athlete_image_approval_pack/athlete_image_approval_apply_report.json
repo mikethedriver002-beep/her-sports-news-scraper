@@ -1,6 +1,6 @@
 {
   "version": "hsd-athlete-image-approval-apply-v1",
-  "generated_at_utc": "2026-06-15T19:56:28.155132+00:00",
+  "generated_at_utc": "2026-06-15T20:18:24.995083+00:00",
   "decision_rows": 200,
   "default_decision": "approve",
   "override_rows": 4,
