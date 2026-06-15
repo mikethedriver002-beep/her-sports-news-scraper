@@ -1,12 +1,18 @@
 # HSD Athlete Image Match Review
 
-Generated: 2026-06-15T16:06:07.688740+00:00
+Generated: 2026-06-15T16:39:32.035135+00:00
 
 ## Counts
 
 - match review rows: 200
 - needs human approval: 200
 - confidence 0.70 or higher: 200
+
+## Approval Pack
+
+- status: ok
+- returncode: 0
+- folder: `outputs/latest/review_files/athlete_image_approval_pack/`
 
 ## Usage policy
 

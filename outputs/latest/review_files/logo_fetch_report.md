@@ -1,6 +1,6 @@
 # HSD WNBA Logo Source Fetch Report
 
-Generated: 2026-06-15T16:05:47.552251+00:00
+Generated: 2026-06-15T16:39:03.681998+00:00
 Version: hsd-wnba-logo-source-fetcher-v1.1-favicon-fallback
 
 ## Counts
