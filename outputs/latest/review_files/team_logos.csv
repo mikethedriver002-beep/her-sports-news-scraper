@@ -1,0 +1,16 @@
+team_id,asset_type,file_path,file_exists,approved,required,last_verified_utc,source_note
+atlanta_dream,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/atlanta-dream_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.103318+00:00,resolved_by_hsd_wnba_asset_registry_v1
+chicago_sky,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.104037+00:00,resolved_by_hsd_wnba_asset_registry_v1
+connecticut_sun,primary_logo,graphics_chat_upload_pack/tonight-in-the-w-preview/assets_original/connecticut-sun_primary-logo-v1_217049.svg,true,true,true,2026-06-15T02:38:33.104757+00:00,resolved_by_hsd_wnba_asset_registry_v1
+indiana_fever,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.105441+00:00,resolved_by_hsd_wnba_asset_registry_v1
+new_york_liberty,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/new-york-liberty_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.106207+00:00,resolved_by_hsd_wnba_asset_registry_v1
+toronto_tempo,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.106889+00:00,resolved_by_hsd_wnba_asset_registry_v1
+washington_mystics,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/washington-mystics_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.107601+00:00,resolved_by_hsd_wnba_asset_registry_v1
+dallas_wings,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.108273+00:00,resolved_by_hsd_wnba_asset_registry_v1
+golden_state_valkyries,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.109070+00:00,resolved_by_hsd_wnba_asset_registry_v1
+las_vegas_aces,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.109830+00:00,resolved_by_hsd_wnba_asset_registry_v1
+los_angeles_sparks,primary_logo,graphics_chat_upload_pack/tonight-in-the-w-preview/assets_original/los-angeles-sparks_primary-logo-v1_424fe3.svg,true,true,true,2026-06-15T02:38:33.110607+00:00,resolved_by_hsd_wnba_asset_registry_v1
+minnesota_lynx,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.111293+00:00,resolved_by_hsd_wnba_asset_registry_v1
+phoenix_mercury,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.111987+00:00,resolved_by_hsd_wnba_asset_registry_v1
+portland_fire,primary_logo,ig_story_results_upload_pack/last-night-in-the-w/assets_original/toronto-tempo_verified-logo-1.svg,true,true,true,2026-06-15T02:38:33.112683+00:00,resolved_by_hsd_wnba_asset_registry_v1
+seattle_storm,primary_logo,graphics_chat_upload_pack/tonight-in-the-w-preview/assets_original/seattle-storm_primary-logo-v1_c00ec9.svg,true,true,true,2026-06-15T02:38:33.113357+00:00,resolved_by_hsd_wnba_asset_registry_v1

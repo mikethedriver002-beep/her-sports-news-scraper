@@ -1,11 +1,13 @@
 {
-  "version": "v2.8.1",
-  "generated_at": "2026-06-15T01:32:23.930673+00:00",
+  "version": "v2.8.2",
+  "generated_at": "2026-06-15T02:38:35.048941+00:00",
   "graphics_files": 4,
   "zip_files": 0,
   "rendered_packets": 0,
   "blocked_packets": 0,
   "handoff_packets": 5,
   "content_slots": 6,
+  "verified_team_logos": 15,
+  "missing_team_logos": 0,
   "outputs_root": "outputs/latest"
 }
