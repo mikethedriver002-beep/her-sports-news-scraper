@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.4.0-mermaid-asset-registry-v1"
+VERSION = "v3.5.0-render-studio-v3-registry-resolver"
 OUT_REPORT = Path("assignment_handoff_publisher_report.md")
 OUT_MANIFEST = Path("assignment_handoff_publisher_manifest.json")
 
@@ -28,6 +28,16 @@ def read_csv(path: str | Path) -> List[Dict[str, str]]:
             return list(csv.DictReader(f))
     except Exception:
         return []
+
+
+def read_json(path: str | Path) -> Dict[str, Any]:
+    p = Path(path)
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return {}
 
 
 def copy_file(src: str, dst: str, actions: List[str]) -> None:
@@ -93,7 +103,7 @@ def main() -> None:
     copy_file("assignment_handoff_status.csv", "manual_workflow_pack_status.csv", actions)
     copy_dir("assignment_handoff_packets", "manual_workflow_packets", actions)
     copy_dir("assignment_handoff_zips", "manual_workflow_handoff_packs", actions)
-    render_run = run_script("scripts/generate_hsd_mermaid_render_studio_v2_9_pass1.py")
+    render_run = run_script("scripts/generate_hsd_mermaid_render_studio_v3_0.py")
     if Path("rendered_handoff_zips").exists():
         target = Path("manual_workflow_handoff_packs")
         target.mkdir(exist_ok=True)
@@ -101,6 +111,8 @@ def main() -> None:
             shutil.copy2(zp, target / ("rendered_" + zp.name))
             actions.append(f"{zp.as_posix()} -> {(target / ('rendered_' + zp.name)).as_posix()}")
     publish_run = run_script("scripts/generate_hsd_mermaid_render_publish_bridge_v2_8.py")
+    render_meta = read_json("rendered_handoff_metadata.json")
+    latest_summary = read_json("outputs/latest/summary.json")
     commit_run = maybe_commit_latest_outputs()
     counts = {
         "handoff_packets": len(read_csv("assignment_handoff_index.csv")),
@@ -110,13 +122,16 @@ def main() -> None:
         "manual_zip_count": len(list(Path("manual_workflow_handoff_packs").glob("*.zip"))) if Path("manual_workflow_handoff_packs").exists() else 0,
         "rendered_rows": len(read_csv("rendered_handoff_manifest.csv")),
         "render_blocked_rows": len([r for r in read_csv("rendered_handoff_status.csv") if r.get("status") == "blocked"]),
+        "render_zip_count": len(list(Path("rendered_handoff_zips").glob("*.zip"))) if Path("rendered_handoff_zips").exists() else 0,
         "latest_outputs_files": len(list(Path("outputs/latest").rglob("*"))) if Path("outputs/latest").exists() else 0,
         "verified_team_logos": len([r for r in read_csv("data/asset_registry/wnba/team_logos.csv") if r.get("file_exists") == "true"]),
         "missing_team_logos": len(read_csv("data/asset_registry/wnba/missing_team_logos.csv")),
+        "render_integrity": render_meta.get("integrity_status", "unknown"),
+        "publish_integrity": latest_summary.get("integrity_status", "unknown"),
     }
-    manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "publish_run": publish_run, "commit_run": commit_run, "actions": actions, "counts": counts}
+    manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    lines = ["# Mermaid Handoff Publisher v1.0 Asset Registry", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
+    lines = ["# Mermaid Handoff Publisher v3.0 Registry Resolver", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
     lines += ["", "## Commit latest outputs", "", f"- status: {commit_run.get('status')}"]
     if commit_run.get("reason"):
