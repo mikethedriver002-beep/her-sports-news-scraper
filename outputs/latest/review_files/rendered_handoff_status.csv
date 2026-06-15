@@ -1,8 +1,8 @@
-packet_id,platform,headline,status,reason,template_family,rendered_files,used_watermark,used_logos,used_score_context,missing_logos
-ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-golden-state-valkyries,IG Feed,Los Angeles Sparks at Golden State Valkyries,rendered,ok,preview_matchup,1,yes,yes,no,
-ig-feed_ig-feed-noon_last-night-in-the-w,IG Feed,Last Night in the W,rendered,ok,last_night_scoreboard,1,yes,yes,yes,
-ig-stories_ig-stories-rolling-1_last-night-in-the-w,IG Stories,Last Night in the W,rendered,ok,last_night_scoreboard,1,yes,yes,yes,
-ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti,IG Stories,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",rendered,ok,storyline_feature,1,yes,not_required,no,
-threads_nightcap_last-night-in-the-w,Threads,Last Night in the W,rendered,ok,last_night_scoreboard,1,yes,yes,yes,
-threads_threads-live_los-angeles-sparks-at-golden-state-valkyries,Threads,Los Angeles Sparks at Golden State Valkyries,rendered,ok,preview_matchup,1,yes,yes,no,
-threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",rendered,ok,storyline_feature,1,yes,not_required,no,
+packet_id,platform,headline,status,reason,template_family,rendered_files,used_watermark,used_logos,used_score_context,missing_logos,used_athletes,missing_athletes
+ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-golden-state-valkyries,IG Feed,Los Angeles Sparks at Golden State Valkyries,rendered,ok,preview_matchup,1,yes,yes,no,,no,
+ig-feed_ig-feed-noon_last-night-in-the-w,IG Feed,Last Night in the W,rendered,ok,last_night_scoreboard,1,yes,yes,yes,,no,
+ig-stories_ig-stories-rolling-1_last-night-in-the-w,IG Stories,Last Night in the W,rendered,ok,last_night_scoreboard,1,yes,yes,yes,,no,
+ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti,IG Stories,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",rendered,ok,storyline_feature,1,yes,not_required,no,,no,
+threads_nightcap_last-night-in-the-w,Threads,Last Night in the W,rendered,ok,last_night_scoreboard,1,yes,yes,yes,,no,
+threads_threads-live_los-angeles-sparks-at-golden-state-valkyries,Threads,Los Angeles Sparks at Golden State Valkyries,rendered,ok,preview_matchup,1,yes,yes,no,,no,
+threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",rendered,ok,storyline_feature,1,yes,not_required,no,,no,
