@@ -1,0 +1,135 @@
+{
+  "version": "hsd-wnba-athlete-registry-v1",
+  "generated_at_utc": "2026-06-15T14:10:13.037110+00:00",
+  "source_count": 15,
+  "sources_ok": 0,
+  "sources_failed": 15,
+  "athletes": 0,
+  "aliases": 0,
+  "image_candidates": 0,
+  "approved_images": 0,
+  "missing_approved_images": 0,
+  "usage_policy": "review_only_until_approved_marker_present",
+  "source_status": [
+    {
+      "team_id": "atlanta_dream",
+      "team_name": "Atlanta Dream",
+      "source_url": "https://www.wnba.com/team/atlanta-dream/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "chicago_sky",
+      "team_name": "Chicago Sky",
+      "source_url": "https://www.wnba.com/team/chicago-sky/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "connecticut_sun",
+      "team_name": "Connecticut Sun",
+      "source_url": "https://www.wnba.com/team/connecticut-sun/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "indiana_fever",
+      "team_name": "Indiana Fever",
+      "source_url": "https://www.wnba.com/team/indiana-fever/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "new_york_liberty",
+      "team_name": "New York Liberty",
+      "source_url": "https://www.wnba.com/team/new-york-liberty/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "toronto_tempo",
+      "team_name": "Toronto Tempo",
+      "source_url": "https://www.wnba.com/team/toronto-tempo/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "washington_mystics",
+      "team_name": "Washington Mystics",
+      "source_url": "https://www.wnba.com/team/washington-mystics/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "dallas_wings",
+      "team_name": "Dallas Wings",
+      "source_url": "https://www.wnba.com/team/dallas-wings/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "golden_state_valkyries",
+      "team_name": "Golden State Valkyries",
+      "source_url": "https://www.wnba.com/team/golden-state-valkyries/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "las_vegas_aces",
+      "team_name": "Las Vegas Aces",
+      "source_url": "https://www.wnba.com/team/las-vegas-aces/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "los_angeles_sparks",
+      "team_name": "Los Angeles Sparks",
+      "source_url": "https://www.wnba.com/team/los-angeles-sparks/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "minnesota_lynx",
+      "team_name": "Minnesota Lynx",
+      "source_url": "https://www.wnba.com/team/minnesota-lynx/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "phoenix_mercury",
+      "team_name": "Phoenix Mercury",
+      "source_url": "https://www.wnba.com/team/phoenix-mercury/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "portland_fire",
+      "team_name": "Portland Fire",
+      "source_url": "https://www.wnba.com/team/portland-fire/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    },
+    {
+      "team_id": "seattle_storm",
+      "team_name": "Seattle Storm",
+      "source_url": "https://www.wnba.com/team/seattle-storm/roster",
+      "status": "HTTPError: HTTP Error 404: Not Found",
+      "names_found": 0,
+      "image_urls_found": 0
+    }
+  ]
+}

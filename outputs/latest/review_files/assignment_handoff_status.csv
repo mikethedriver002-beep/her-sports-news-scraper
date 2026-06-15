@@ -1,8 +1,8 @@
 slot_id,platform,headline,status,reason,packet_id
 threads_morning,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",packet_ready,ready,threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge
-ig_feed_noon,IG Feed,Atlanta Dream beat Toronto Tempo,packet_ready,ready,ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo
+ig_feed_noon,IG Feed,Last Night in the W,packet_ready,ready,ig-feed_ig-feed-noon_last-night-in-the-w
 ig_stories_rolling_1,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-1_last-night-in-the-w
-ig_stories_rolling_2,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-2_last-night-in-the-w
+ig_stories_rolling_2,IG Stories,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",packet_ready,ready,ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti
 ig_feed_evening_preview,IG Feed,Washington Mystics at New York Liberty,packet_ready,ready,ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty
 threads_live,Threads,Washington Mystics at New York Liberty,packet_ready,ready,threads_threads-live_washington-mystics-at-new-york-liberty
-nightcap,Threads,Atlanta Dream beat Toronto Tempo,packet_ready,ready,threads_nightcap_atlanta-dream-beat-toronto-tempo
+nightcap,Threads,Last Night in the W,packet_ready,ready,threads_nightcap_last-night-in-the-w

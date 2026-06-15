@@ -1,1 +1,3 @@
 team_id,team_name,required_asset,reason,recommended_path
+connecticut_sun,Connecticut Sun,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/connecticut_sun/logo.png
+indiana_fever,Indiana Fever,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/indiana_fever/logo.png

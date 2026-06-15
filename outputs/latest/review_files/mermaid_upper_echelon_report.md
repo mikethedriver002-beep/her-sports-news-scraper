@@ -1,6 +1,6 @@
 # HSD Mermaid Upper Echelon Report
 
-Generated: 2026-06-15T04:38:36.916629+00:00
+Generated: 2026-06-15T14:10:01.920200+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 ## Counts
@@ -49,7 +49,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-15T04:38:36.846429+00:00
+Generated: 2026-06-15T14:10:01.852404+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -77,10 +77,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_feed_noon — IG Feed / 12:00 PM
 - Status: ready_with_review
-- Headline: Atlanta Dream beat Toronto Tempo
+- Headline: Last Night in the W
 - Type: result_or_recap
 - Freshness: fresh
-- Hook: Atlanta Dream beat Toronto Tempo: put this result on the board.
+- Hook: Last Night in the W: put this result on the board.
 
 ### ig_stories_rolling_1 — IG Stories / 10:30 AM
 - Status: ready_with_review
@@ -91,10 +91,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_stories_rolling_2 — IG Stories / 12:30 PM
 - Status: ready_with_review
-- Headline: Last Night in the W
-- Type: result_or_recap
+- Headline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
+- Type: official_news_article
 - Freshness: fresh
-- Hook: Last Night in the W: put this result on the board.
+- Hook: The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
 
 ### ig_feed_evening_preview — IG Feed / 4:45 PM
 - Status: ready_with_review
@@ -112,10 +112,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review
-- Headline: Atlanta Dream beat Toronto Tempo
+- Headline: Last Night in the W
 - Type: result_or_recap
 - Freshness: nightcap_followup_angle
-- Hook: Atlanta Dream beat Toronto Tempo: what this changes next.
+- Hook: Last Night in the W: what this changes next.
 
 
 
@@ -123,7 +123,7 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-15T04:38:36.897275+00:00
+Generated: 2026-06-15T14:10:01.902899+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
 - slots seen: 7
@@ -133,10 +133,10 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6
 ## Packets
 
 - Threads / threads_morning: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 — `assignment_handoff_zips/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge.zip`
-- IG Feed / ig_feed_noon: Atlanta Dream beat Toronto Tempo — `assignment_handoff_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip`
+- IG Feed / ig_feed_noon: Last Night in the W — `assignment_handoff_zips/ig-feed_ig-feed-noon_last-night-in-the-w.zip`
 - IG Stories / ig_stories_rolling_1: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-1_last-night-in-the-w.zip`
-- IG Stories / ig_stories_rolling_2: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_last-night-in-the-w.zip`
+- IG Stories / ig_stories_rolling_2: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti.zip`
 - IG Feed / ig_feed_evening_preview: Washington Mystics at New York Liberty — `assignment_handoff_zips/ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty.zip`
 - Threads / threads_live: Washington Mystics at New York Liberty — `assignment_handoff_zips/threads_threads-live_washington-mystics-at-new-york-liberty.zip`
-- Threads / nightcap: Atlanta Dream beat Toronto Tempo — `assignment_handoff_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip`
+- Threads / nightcap: Last Night in the W — `assignment_handoff_zips/threads_nightcap_last-night-in-the-w.zip`
 
