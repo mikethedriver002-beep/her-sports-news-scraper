@@ -1,6 +1,6 @@
 # Mermaid Render Studio v3.0 Registry Resolver QA Report
 
-Generated: 2026-06-15T03:13:09.958958+00:00
+Generated: 2026-06-15T03:24:14.616927+00:00
 Version: v3.0-registry-resolver-accounting-fix
 
 ## Counts
