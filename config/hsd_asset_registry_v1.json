@@ -1,0 +1,9 @@
+{
+  "version": "hsd-asset-registry-v1.0",
+  "league_bootstrap": "WNBA",
+  "registry_root": "data/asset_registry",
+  "wnba_root": "data/asset_registry/wnba",
+  "team_logo_policy": "required_for_team_led_wnba_graphics",
+  "render_integration": "pre_render_registry_build_and_validation",
+  "status": "active"
+}
