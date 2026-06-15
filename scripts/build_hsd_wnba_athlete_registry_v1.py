@@ -7,7 +7,7 @@ import re
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 ROOT = Path("data/asset_registry/wnba")
 SOURCES = ROOT / "athlete_sources.csv"
@@ -15,6 +15,7 @@ ATHLETES = ROOT / "athletes.csv"
 ALIASES = ROOT / "athlete_aliases.csv"
 IMAGES = ROOT / "athlete_images.csv"
 CANDIDATES = ROOT / "athlete_image_candidates.csv"
+MATCH_REVIEW = ROOT / "athlete_image_match_review.csv"
 MISSING_IMAGES = ROOT / "missing_athlete_images.csv"
 REPORT_JSON = ROOT / "athlete_registry_report.json"
 REPORT_MD = ROOT / "athlete_registry_report.md"
@@ -25,6 +26,7 @@ ATHLETE_FIELDS = ["athlete_id", "league", "display_name", "team_id", "provider_p
 ALIAS_FIELDS = ["name_variant", "athlete_id", "type"]
 IMAGE_FIELDS = ["athlete_id", "display_name", "team_id", "provider_player_id", "image_type", "file_path", "file_exists", "approved", "source_note", "last_verified_utc"]
 CANDIDATE_FIELDS = ["candidate_id", "athlete_id", "display_name", "team_id", "provider_player_id", "source_url", "image_url", "image_type", "status", "notes"]
+MATCH_FIELDS = ["team_id", "athlete_id", "display_name", "provider_player_id", "image_url", "match_method", "confidence", "status", "approval_target_path", "notes"]
 MISSING_FIELDS = ["athlete_id", "display_name", "team_id", "required_image_type", "reason", "recommended_path"]
 ROSTER_ENTITY_FIELDS = ["id", "league", "name", "display_name", "team_id", "status", "source_url", "last_verified_utc", "notes"]
 ROSTER_NAME_FIELDS = ["name_variant", "entity_id", "type"]
@@ -83,7 +85,7 @@ def write_csv(path: Path, rows: List[Dict[str, Any]], fields: List[str]) -> None
 
 def fetch_url(url: str) -> Tuple[str, str]:
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "HerSportsDailyAthleteRegistry/1.2"})
+        req = urllib.request.Request(url, headers={"User-Agent": "HerSportsDailyAthleteRegistry/1.4"})
         with urllib.request.urlopen(req, timeout=25) as resp:
             raw = resp.read()
         return raw.decode("utf-8", errors="replace"), "ok"
@@ -125,27 +127,45 @@ def extract_player_links(text: str) -> Dict[str, Dict[str, str]]:
     return players
 
 
-def extract_roster_names_from_plain(text: str) -> Dict[str, Dict[str, str]]:
+def extract_roster_names_ordered(text: str) -> List[str]:
     plain = strip_tags(text)
-    players: Dict[str, Dict[str, str]] = {}
+    names: List[str] = []
+    seen: Set[str] = set()
     pos_pattern = "|".join(re.escape(p) for p in POSITIONS)
     pattern = re.compile(rf"#\s*\d{{1,2}}\s+([A-Z][A-Za-z' .-]{{2,42}}?)\s+(?:{pos_pattern})\s+PPG", flags=re.I)
     for m in pattern.finditer(plain):
         name = clean_name(m.group(1))
-        if valid_name(name):
-            players[slug(name)] = {"provider_player_id": "", "display_name": name, "source": "roster_text"}
-    return players
+        key = name.lower()
+        if valid_name(name) and key not in seen:
+            names.append(name)
+            seen.add(key)
+    return names
+
+
+def extract_roster_names_from_plain(text: str) -> Dict[str, Dict[str, str]]:
+    return {slug(name): {"provider_player_id": "", "display_name": name, "source": "roster_text"} for name in extract_roster_names_ordered(text)}
+
+
+def extract_headshot_pairs_ordered(text: str) -> List[Tuple[str, str]]:
+    pairs: List[Tuple[str, str]] = []
+    seen: Set[str] = set()
+    patterns = [
+        r'https?:\\/\\/cdn\.wnba\.com\\/headshots\\/wnba\\/latest\\/260x190\\/(\d+)\.png',
+        r'https?://cdn\.wnba\.com/headshots/wnba/latest/260x190/(\d+)\.png',
+    ]
+    for pat in patterns:
+        for m in re.finditer(pat, text):
+            player_id = m.group(1)
+            if player_id in seen:
+                continue
+            raw = m.group(0).replace("\\/", "/")
+            pairs.append((player_id, raw))
+            seen.add(player_id)
+    return pairs
 
 
 def extract_headshot_urls(text: str) -> Dict[str, str]:
-    out: Dict[str, str] = {}
-    for m in re.finditer(r'https?:\\/\\/cdn\.wnba\.com\\/headshots\\/wnba\\/latest\\/260x190\\/(\d+)\.png', text):
-        player_id = m.group(1)
-        out[player_id] = m.group(0).replace("\\/", "/")
-    for m in re.finditer(r'https?://cdn\.wnba\.com/headshots/wnba/latest/260x190/(\d+)\.png', text):
-        player_id = m.group(1)
-        out[player_id] = m.group(0)
-    return out
+    return {pid: url for pid, url in extract_headshot_pairs_ordered(text)}
 
 
 def row_for_athlete(name: str, team_id: str, player_id: str, source_url: str, note: str) -> Dict[str, Any]:
@@ -218,10 +238,62 @@ def build_image_rows(athlete_rows: List[Dict[str, Any]]) -> Tuple[List[Dict[str,
     return images, missing
 
 
+def order_match_candidates(team_id: str, url: str, names_ordered: List[str], headshots_ordered: List[Tuple[str, str]], athletes_by_key: Dict[str, Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    candidates: List[Dict[str, Any]] = []
+    review_rows: List[Dict[str, Any]] = []
+    usable_count = min(len(names_ordered), len(headshots_ordered))
+    confidence = "0.72" if len(headshots_ordered) >= len(names_ordered) and len(names_ordered) >= 10 else "0.55"
+    for index, (player_id, img_url) in enumerate(headshots_ordered):
+        if index < usable_count:
+            name = names_ordered[index]
+            athlete_id = f"{team_id}_{slug(name)}"
+            if athlete_id not in athletes_by_key:
+                athletes_by_key[athlete_id] = row_for_athlete(name, team_id, "", url, "official_roster_order_text_review_required")
+            status = "order_match_review_required"
+            display_name = name
+            match_method = "roster_order_name_to_headshot_order"
+            target_path = f"assets/leagues/wnba/athletes/{athlete_id}/headshot.png"
+            notes = "review_before_approval; do_not_use_until_approved_marker_present"
+        else:
+            athlete_id = "unmatched_review_required"
+            display_name = ""
+            status = "unmatched_extra_headshot_review_required"
+            match_method = "extra_headshot_no_roster_name"
+            target_path = ""
+            notes = "extra headshot beyond roster-name count"
+        candidates.append({
+            "candidate_id": f"{team_id}_{player_id}",
+            "athlete_id": athlete_id,
+            "display_name": display_name,
+            "team_id": team_id,
+            "provider_player_id": player_id,
+            "source_url": url,
+            "image_url": img_url,
+            "image_type": "headshot_candidate",
+            "status": status,
+            "notes": notes,
+        })
+        if status == "order_match_review_required":
+            review_rows.append({
+                "team_id": team_id,
+                "athlete_id": athlete_id,
+                "display_name": display_name,
+                "provider_player_id": player_id,
+                "image_url": img_url,
+                "match_method": match_method,
+                "confidence": confidence,
+                "status": "needs_human_approval",
+                "approval_target_path": target_path,
+                "notes": notes,
+            })
+    return candidates, review_rows
+
+
 def main() -> None:
     source_rows = read_csv(SOURCES)
     athletes_by_key: Dict[str, Dict[str, Any]] = {}
     candidate_rows: List[Dict[str, Any]] = []
+    match_review_rows: List[Dict[str, Any]] = []
     source_status: List[Dict[str, Any]] = []
     dirty_name_drops = 0
     for source in source_rows:
@@ -229,15 +301,14 @@ def main() -> None:
         url = source.get("roster_url", "")
         text, status = fetch_url(url)
         player_links = extract_player_links(text) if text else {}
-        roster_names = extract_roster_names_from_plain(text) if text else {}
-        headshot_urls = extract_headshot_urls(text) if text else {}
+        names_ordered = extract_roster_names_ordered(text) if text else []
+        roster_names = {slug(name): {"provider_player_id": "", "display_name": name, "source": "roster_text"} for name in names_ordered}
+        headshot_pairs = extract_headshot_pairs_ordered(text) if text else []
 
-        # Player links are most reliable because they carry WNBA provider player IDs.
         for player_id, info in player_links.items():
             row = row_for_athlete(info["display_name"], team_id, player_id, url, "official_roster_player_link_review_required")
             athletes_by_key[row["athlete_id"]] = row
-        # Roster text names fill any page that has names but hides player links.
-        for key, info in roster_names.items():
+        for info in roster_names.values():
             name = info["display_name"]
             if not any(row["display_name"].lower() == name.lower() and row["team_id"] == team_id for row in athletes_by_key.values()):
                 row = row_for_athlete(name, team_id, "", url, "official_roster_text_review_required")
@@ -246,21 +317,10 @@ def main() -> None:
             if not valid_name(clean_name(name)):
                 dirty_name_drops += 1
 
-        for player_id, img_url in sorted(headshot_urls.items()):
-            match = next((row for row in athletes_by_key.values() if row.get("team_id") == team_id and row.get("provider_player_id") == player_id), None)
-            candidate_rows.append({
-                "candidate_id": f"{team_id}_{player_id}",
-                "athlete_id": match["athlete_id"] if match else "unmatched_review_required",
-                "display_name": match["display_name"] if match else "",
-                "team_id": team_id,
-                "provider_player_id": player_id,
-                "source_url": url,
-                "image_url": img_url,
-                "image_type": "headshot_candidate",
-                "status": "matched_review_required" if match else "unmatched_review_required",
-                "notes": "do_not_use_until_approved_marker_present",
-            })
-        source_status.append({"team_id": team_id, "team_name": source.get("team_name", ""), "source_url": url, "status": status, "player_links": len(player_links), "roster_names": len(roster_names), "headshot_urls": len(headshot_urls)})
+        team_candidates, team_review_rows = order_match_candidates(team_id, url, names_ordered, headshot_pairs, athletes_by_key)
+        candidate_rows.extend(team_candidates)
+        match_review_rows.extend(team_review_rows)
+        source_status.append({"team_id": team_id, "team_name": source.get("team_name", ""), "source_url": url, "status": status, "player_links": len(player_links), "roster_names": len(names_ordered), "headshot_urls": len(headshot_pairs), "order_matches": len(team_review_rows)})
 
     athlete_rows = sorted(athletes_by_key.values(), key=lambda r: (r["team_id"], r["display_name"]))
     alias_rows = build_aliases(athlete_rows)
@@ -269,13 +329,15 @@ def main() -> None:
     write_csv(ALIASES, alias_rows, ALIAS_FIELDS)
     write_csv(IMAGES, image_rows, IMAGE_FIELDS)
     write_csv(CANDIDATES, candidate_rows, CANDIDATE_FIELDS)
+    write_csv(MATCH_REVIEW, match_review_rows, MATCH_FIELDS)
     write_csv(MISSING_IMAGES, missing_rows, MISSING_FIELDS)
     write_csv(ROSTER_ENTITIES, [{"id": r["athlete_id"], "league": r["league"], "name": r["display_name"], "display_name": r["display_name"], "team_id": r["team_id"], "status": r["status"], "source_url": r["source_url"], "last_verified_utc": r["last_verified_utc"], "notes": r["notes"]} for r in athlete_rows], ROSTER_ENTITY_FIELDS)
     write_csv(ROSTER_NAMES, [{"name_variant": r["name_variant"], "entity_id": r["athlete_id"], "type": r["type"]} for r in alias_rows], ROSTER_NAME_FIELDS)
 
-    matched_candidates = len([r for r in candidate_rows if r.get("status") == "matched_review_required"])
+    matched_candidates = len([r for r in candidate_rows if r.get("status") == "order_match_review_required"])
+    unmatched_candidates = len([r for r in candidate_rows if "unmatched" in r.get("status", "")])
     report = {
-        "version": "hsd-wnba-athlete-registry-v1.2-cleaner-player-id-matcher",
+        "version": "hsd-wnba-athlete-registry-v1.4-order-based-review-sheet",
         "generated_at_utc": now_iso(),
         "source_count": len(source_rows),
         "sources_ok": len([s for s in source_status if s["status"] == "ok"]),
@@ -284,6 +346,8 @@ def main() -> None:
         "aliases": len(alias_rows),
         "image_candidates": len(candidate_rows),
         "matched_image_candidates": matched_candidates,
+        "unmatched_image_candidates": unmatched_candidates,
+        "match_review_rows": len(match_review_rows),
         "approved_images": len([r for r in image_rows if r.get("approved") == "true"]),
         "missing_approved_images": len(missing_rows),
         "dirty_name_drops": dirty_name_drops,
@@ -292,7 +356,7 @@ def main() -> None:
     }
     REPORT_JSON.write_text(json.dumps(report, indent=2), encoding="utf-8")
     lines = [
-        "# HSD WNBA Athlete Registry v1.2",
+        "# HSD WNBA Athlete Registry v1.4",
         "",
         f"Generated: {report['generated_at_utc']}",
         "",
@@ -305,13 +369,16 @@ def main() -> None:
         f"- aliases: {report['aliases']}",
         f"- image candidates: {report['image_candidates']}",
         f"- matched image candidates: {matched_candidates}",
+        f"- unmatched image candidates: {unmatched_candidates}",
+        f"- match review rows: {len(match_review_rows)}",
         f"- approved images: {report['approved_images']}",
         f"- missing approved images: {report['missing_approved_images']}",
         f"- dirty name drops: {dirty_name_drops}",
         "",
         "## Usage policy",
         "",
-        "- Athlete images are review-only until a matching approved file exists and an `.approved` marker is present.",
+        "- Order matches are review-only, not auto-approved.",
+        "- Athlete images are public-use only when a matching approved file exists and an `.approved` marker is present.",
         "- Do not use athlete candidates in public graphics automatically.",
         "- Current team context comes from official WNBA roster source pages.",
         "",
@@ -319,9 +386,9 @@ def main() -> None:
         "",
     ]
     for item in source_status:
-        lines.append(f"- {item['team_name']}: {item['status']} | player_links={item['player_links']} | roster_names={item['roster_names']} | headshot_urls={item['headshot_urls']}")
+        lines.append(f"- {item['team_name']}: {item['status']} | player_links={item['player_links']} | roster_names={item['roster_names']} | headshot_urls={item['headshot_urls']} | order_matches={item['order_matches']}")
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(json.dumps({"athletes": len(athlete_rows), "image_candidates": len(candidate_rows), "matched_image_candidates": matched_candidates, "sources_ok": report["sources_ok"], "sources_failed": report["sources_failed"]}, indent=2))
+    print(json.dumps({"athletes": len(athlete_rows), "image_candidates": len(candidate_rows), "matched_image_candidates": matched_candidates, "match_review_rows": len(match_review_rows), "sources_ok": report["sources_ok"], "sources_failed": report["sources_failed"]}, indent=2))
 
 
 if __name__ == "__main__":
