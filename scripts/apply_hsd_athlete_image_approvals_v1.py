@@ -15,6 +15,7 @@ APPROVED_CSV = Path("data/asset_registry/wnba/athlete_image_approved_assets.csv"
 NEEDS_FIX_CSV = Path("data/asset_registry/wnba/athlete_image_needs_fix.csv")
 REJECTED_CSV = Path("data/asset_registry/wnba/athlete_image_rejected.csv")
 SUMMARY = Path("outputs/latest/summary.json")
+PACK_DIR = Path("outputs/latest/review_files/athlete_image_approval_pack")
 
 APPROVED_FIELDS = ["athlete_id", "display_name", "team_id", "provider_player_id", "approved_file", "approved_marker", "source_file", "approved_at_utc", "decision_source"]
 NEEDS_FIX_FIELDS = ["athlete_id", "display_name", "team_id", "provider_player_id", "downloaded_file", "approval_target_path", "reason"]
@@ -139,6 +140,20 @@ def update_summary(fields: Dict[str, Any]) -> None:
         SUMMARY.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
 
+def mirror_to_pack() -> None:
+    PACK_DIR.mkdir(parents=True, exist_ok=True)
+    mirrors = [
+        (REPORT_MD, PACK_DIR / "athlete_image_approval_apply_report.md"),
+        (REPORT_JSON, PACK_DIR / "athlete_image_approval_apply_report.json"),
+        (APPROVED_CSV, PACK_DIR / "approved_assets.csv"),
+        (NEEDS_FIX_CSV, PACK_DIR / "needs_fix.csv"),
+        (REJECTED_CSV, PACK_DIR / "rejected.csv"),
+    ]
+    for src, dst in mirrors:
+        if src.exists():
+            shutil.copy2(src, dst)
+
+
 def main() -> None:
     rows = read_csv(DECISIONS)
     default, overrides = load_overrides()
@@ -206,6 +221,7 @@ def main() -> None:
         "athlete_approval_apply_rejected": len(rejected),
         "athlete_approval_apply_failed": len(failed),
     })
+    mirror_to_pack()
     print(json.dumps(report, indent=2))
 
 
