@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "hsd-pipeline-review-lite-v3.6.4-athlete-smoke-test"
+VERSION = "hsd-pipeline-review-lite-v3.6.5-production-director-v4"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
@@ -17,7 +17,7 @@ MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTE
 KEY_FILES = [
     "operator_status.md", "operator_status.json", "operator_status.csv",
     "publish_guard_report.md", "publish_guard_report.json",
-    "install_report.md", "install_report.json", "config/hsd_release_version.json", "config/pipeline_version.json", "config/hsd_final_score_stories_policy_v1.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
+    "install_report.md", "install_report.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
     "results_contract_report.md", "results_contract_v2.csv", "manual_story_inbox_report.md", "story_candidates_manual.csv",
     "discovery_sources_report.md", "story_candidates_discovery.csv", "daily_slate_plan.md", "daily_slate_plan.csv", "daily_slate_guard_report.md",
     "latest_results_run_summary.md", "news_fact_packets.csv", "latest_news_sync_run_summary.md",
@@ -34,7 +34,6 @@ KEY_FILES = [
     "graphics_copy_style_guide.md", "graphics_display_copy.csv", "graphics_asset_usage_map.csv", "graphics_layout_blueprint.csv",
     "player_image_sourcing_report.md", "player_image_requirements.csv", "player_image_fit_report.md", "player_image_fit_gate.csv",
     "asset_candidates_review.md", "approved_graphics_assets.csv", "graphics_chat_upload_manifest.csv", "graphics_chat_upload_manifest.json",
-    "config/hsd_exact_asset_policy_v1.json", "config/hsd_verified_logo_registry_v1.json",
     "rendered_slide_qa.csv", "rendered_slide_qa_report.md", "rendered_slide_qa_manifest.json", "rendered_graphics_manual_review_template.csv",
     "manual_workflow_content_packets.jsonl", "manual_workflow_content_packets.csv", "manual_workflow_render_plans.json",
     "manual_workflow_copy_desk.md", "manual_workflow_threads_copy.md", "manual_workflow_first_comments.md",
@@ -49,6 +48,9 @@ KEY_FILES = [
     "outputs/latest/review_files/athlete_image_approval_pack/download_manifest.csv",
     "outputs/latest/review_files/athlete_image_approval_pack/athlete_image_approval_pack_report.md",
     "outputs/latest/review_files/athlete_image_approval_pack/athlete_image_approval_pack_manifest.json",
+    "outputs/latest/production_graphics_director/production_graphics_director_report.md",
+    "outputs/latest/production_graphics_director/production_graphics_director_manifest.json",
+    "outputs/latest/production_graphics_director/postable_export_manifest.csv",
 ]
 
 
@@ -77,9 +79,7 @@ def safe_copy_tree_files(src_dir: Path, dest_dir: Path, manifest: List[Dict[str,
         return 0
     count = 0
     for p in src_dir.rglob("*"):
-        if not p.is_file():
-            continue
-        if p.stat().st_size > max_file_bytes:
+        if not p.is_file() or p.stat().st_size > max_file_bytes:
             continue
         rel = p.relative_to(src_dir)
         dest = dest_dir / rel
@@ -102,11 +102,11 @@ def include_ready_upload_packs(ready_dir: Path, manifest: List[Dict[str, Any]]) 
                     continue
                 p = Path(r.get("zip_path", ""))
                 if not p.exists():
-                    ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": p.as_posix(), "status": r.get("upload_pack_status"), "included": False, "reason": "zip path not found at review artifact time"})
+                    ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": p.as_posix(), "status": r.get("upload_pack_status"), "included": False, "reason": "zip path not found"})
                     continue
                 size = p.stat().st_size
                 if size > MAX_UPLOAD_PACK_BYTES:
-                    ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": p.as_posix(), "status": r.get("upload_pack_status"), "included": False, "size": size, "reason": f"zip larger than {MAX_UPLOAD_PACK_BYTES} bytes"})
+                    ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": p.as_posix(), "status": r.get("upload_pack_status"), "included": False, "size": size, "reason": "zip too large"})
                     continue
                 dest = ready_dir / p.name
                 shutil.copy2(p, dest)
@@ -116,15 +116,12 @@ def include_ready_upload_packs(ready_dir: Path, manifest: List[Dict[str, Any]]) 
     zip_dir = Path("graphics_chat_upload_pack_zips")
     if zip_dir.exists():
         for p in zip_dir.glob("*.zip"):
-            if p.resolve().as_posix() in seen:
-                continue
-            size = p.stat().st_size
-            if size > MAX_UPLOAD_PACK_BYTES:
+            if p.resolve().as_posix() in seen or p.stat().st_size > MAX_UPLOAD_PACK_BYTES:
                 continue
             dest = ready_dir / p.name
             shutil.copy2(p, dest)
-            manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": size})
-            ready_packs.append({"bundle_name": p.stem, "zip": dest.as_posix(), "status": "found_zip", "included": True, "size": size})
+            manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
+            ready_packs.append({"bundle_name": p.stem, "zip": dest.as_posix(), "status": "found_zip", "included": True, "size": p.stat().st_size})
     return ready_packs
 
 
@@ -153,24 +150,25 @@ def main() -> None:
                 shutil.copy2(p, dest)
                 manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
                 manual_workflow_pack_count += 1
-    pack_file_count = safe_copy_tree_files(Path("graphics_chat_upload_pack"), pack_dir, manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
+    pack_file_count = safe_copy_tree_files(Path("graphics_chat_upload_pack"), pack_dir, manifest)
     story_ready_dir = OUT_DIR / "ig_story_results_ready_upload_packs"
     story_ready_dir.mkdir(parents=True, exist_ok=True)
     story_ready_packs = []
     story_zip_dir = Path("ig_story_results_upload_pack_zips")
     if story_zip_dir.exists():
         for p in sorted(story_zip_dir.glob("*.zip")):
-            size = p.stat().st_size
-            if size > MAX_UPLOAD_PACK_BYTES:
-                story_ready_packs.append({"zip": p.as_posix(), "included": False, "reason": f"zip larger than {MAX_UPLOAD_PACK_BYTES} bytes", "size": size})
+            if p.stat().st_size > MAX_UPLOAD_PACK_BYTES:
+                story_ready_packs.append({"zip": p.as_posix(), "included": False, "reason": "zip too large", "size": p.stat().st_size})
                 continue
             dest = story_ready_dir / p.name
             shutil.copy2(p, dest)
-            manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": size})
-            story_ready_packs.append({"zip": dest.as_posix(), "included": True, "size": size})
-    story_pack_file_count = safe_copy_tree_files(Path("ig_story_results_upload_pack"), OUT_DIR / "ig_story_results_upload_pack", manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
-    athlete_approval_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_image_approval_pack"), OUT_DIR / "athlete_image_approval_pack", manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
-    athlete_smoke_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_smoke_test"), OUT_DIR / "athlete_smoke_test", manifest, max_file_bytes=MAX_UPLOAD_PACK_BYTES)
+            manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
+            story_ready_packs.append({"zip": dest.as_posix(), "included": True, "size": p.stat().st_size})
+    story_pack_file_count = safe_copy_tree_files(Path("ig_story_results_upload_pack"), OUT_DIR / "ig_story_results_upload_pack", manifest)
+    athlete_approval_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_image_approval_pack"), OUT_DIR / "athlete_image_approval_pack", manifest)
+    athlete_smoke_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_smoke_test"), OUT_DIR / "athlete_smoke_test", manifest)
+    production_director_file_count = safe_copy_tree_files(Path("outputs/latest/production_graphics_director"), OUT_DIR / "production_graphics_director", manifest)
+    postable_graphics_file_count = safe_copy_tree_files(Path("outputs/latest/POSTABLE_GRAPHICS"), OUT_DIR / "POSTABLE_GRAPHICS", manifest)
     counts = {
         "results_contract_rows": row_count("results_contract_v2.csv"),
         "manual_story_candidates": row_count("story_candidates_manual.csv"),
@@ -184,11 +182,13 @@ def main() -> None:
         "ig_story_results_upload_pack_files_included": story_pack_file_count,
         "athlete_image_approval_pack_files_included": athlete_approval_file_count,
         "athlete_smoke_test_files_included": athlete_smoke_file_count,
+        "production_director_files_included": production_director_file_count,
+        "postable_graphics_files_included": postable_graphics_file_count,
     }
     status_json = {"version": VERSION, "generated_at_utc": datetime.now(timezone.utc).isoformat(), "counts": counts, "ready_packs": ready_packs, "ig_story_results_ready_packs": story_ready_packs, "max_upload_pack_bytes": MAX_UPLOAD_PACK_BYTES}
     (OUT_DIR / "pipeline_status.json").write_text(json.dumps(status_json, indent=2), encoding="utf-8")
     (OUT_DIR / "lite_manifest.csv").write_text("path,included_as,size\n" + "\n".join(f"{m['path']},{m['included_as']},{m['size']}" for m in manifest) + "\n", encoding="utf-8")
-    (OUT_DIR / "README.md").write_text("# HSD Pipeline Lite Review\n\nThis lite review includes BeBe status files, graphics packs, athlete approval pack, and athlete smoke test files when available.\n\n" + json.dumps(status_json, indent=2) + "\n", encoding="utf-8")
+    (OUT_DIR / "README.md").write_text("# HSD Pipeline Lite Review\n\nThis lite review includes BeBe status files, graphics packs, athlete approval pack, athlete smoke test, Production Graphics Director, and POSTABLE_GRAPHICS when available.\n\n" + json.dumps(status_json, indent=2) + "\n", encoding="utf-8")
     with zipfile.ZipFile(OUT_ZIP, "w", zipfile.ZIP_DEFLATED) as z:
         for p in OUT_DIR.rglob("*"):
             if p.is_file():
