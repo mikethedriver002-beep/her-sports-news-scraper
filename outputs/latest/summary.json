@@ -1,6 +1,6 @@
 {
   "version": "v2.8.6-athlete-source-resolver-review",
-  "generated_at": "2026-06-15T15:22:40.895813+00:00",
+  "generated_at": "2026-06-15T15:43:17.507970+00:00",
   "graphics_files": 7,
   "zip_files": 7,
   "rendered_packets": 7,
@@ -23,7 +23,10 @@
   "approved_athlete_images": 0,
   "missing_approved_athlete_images": 400,
   "outputs_root": "outputs/latest",
+  "athlete_match_review_rows": 200,
+  "athlete_matches_need_approval": 200,
+  "athlete_order_matches_confidence_70_plus": 200,
   "integrity_status": "pass",
   "integrity_errors": [],
-  "integrity_checked_at": "2026-06-15T15:22:40.924452+00:00"
+  "integrity_checked_at": "2026-06-15T15:43:17.571085+00:00"
 }

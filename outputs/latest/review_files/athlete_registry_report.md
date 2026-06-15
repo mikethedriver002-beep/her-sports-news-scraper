@@ -1,6 +1,6 @@
-# HSD WNBA Athlete Registry v1.2
+# HSD WNBA Athlete Registry v1.4
 
-Generated: 2026-06-15T15:22:38.397566+00:00
+Generated: 2026-06-15T15:43:15.029028+00:00
 
 ## Counts
 
@@ -10,31 +10,34 @@ Generated: 2026-06-15T15:22:38.397566+00:00
 - athletes discovered: 200
 - aliases: 610
 - image candidates: 294
-- matched image candidates: 0
+- matched image candidates: 200
+- unmatched image candidates: 94
+- match review rows: 200
 - approved images: 0
 - missing approved images: 400
 - dirty name drops: 30
 
 ## Usage policy
 
-- Athlete images are review-only until a matching approved file exists and an `.approved` marker is present.
+- Order matches are review-only, not auto-approved.
+- Athlete images are public-use only when a matching approved file exists and an `.approved` marker is present.
 - Do not use athlete candidates in public graphics automatically.
 - Current team context comes from official WNBA roster source pages.
 
 ## Source status
 
-- Atlanta Dream: ok | player_links=0 | roster_names=13 | headshot_urls=19
-- Chicago Sky: ok | player_links=0 | roster_names=15 | headshot_urls=22
-- Connecticut Sun: ok | player_links=0 | roster_names=14 | headshot_urls=20
-- Indiana Fever: ok | player_links=0 | roster_names=14 | headshot_urls=18
-- New York Liberty: ok | player_links=0 | roster_names=13 | headshot_urls=20
-- Toronto Tempo: ok | player_links=0 | roster_names=12 | headshot_urls=18
-- Washington Mystics: ok | player_links=0 | roster_names=13 | headshot_urls=17
-- Dallas Wings: ok | player_links=0 | roster_names=13 | headshot_urls=20
-- Golden State Valkyries: ok | player_links=0 | roster_names=15 | headshot_urls=21
-- Las Vegas Aces: ok | player_links=0 | roster_names=12 | headshot_urls=21
-- Los Angeles Sparks: ok | player_links=0 | roster_names=14 | headshot_urls=20
-- Minnesota Lynx: ok | player_links=0 | roster_names=14 | headshot_urls=20
-- Phoenix Mercury: ok | player_links=0 | roster_names=12 | headshot_urls=22
-- Portland Fire: ok | player_links=0 | roster_names=13 | headshot_urls=18
-- Seattle Storm: ok | player_links=0 | roster_names=13 | headshot_urls=18
+- Atlanta Dream: ok | player_links=0 | roster_names=13 | headshot_urls=19 | order_matches=13
+- Chicago Sky: ok | player_links=0 | roster_names=15 | headshot_urls=22 | order_matches=15
+- Connecticut Sun: ok | player_links=0 | roster_names=14 | headshot_urls=20 | order_matches=14
+- Indiana Fever: ok | player_links=0 | roster_names=14 | headshot_urls=18 | order_matches=14
+- New York Liberty: ok | player_links=0 | roster_names=13 | headshot_urls=20 | order_matches=13
+- Toronto Tempo: ok | player_links=0 | roster_names=12 | headshot_urls=18 | order_matches=12
+- Washington Mystics: ok | player_links=0 | roster_names=13 | headshot_urls=17 | order_matches=13
+- Dallas Wings: ok | player_links=0 | roster_names=13 | headshot_urls=20 | order_matches=13
+- Golden State Valkyries: ok | player_links=0 | roster_names=15 | headshot_urls=21 | order_matches=15
+- Las Vegas Aces: ok | player_links=0 | roster_names=12 | headshot_urls=21 | order_matches=12
+- Los Angeles Sparks: ok | player_links=0 | roster_names=14 | headshot_urls=20 | order_matches=14
+- Minnesota Lynx: ok | player_links=0 | roster_names=14 | headshot_urls=20 | order_matches=14
+- Phoenix Mercury: ok | player_links=0 | roster_names=12 | headshot_urls=22 | order_matches=12
+- Portland Fire: ok | player_links=0 | roster_names=13 | headshot_urls=18 | order_matches=13
+- Seattle Storm: ok | player_links=0 | roster_names=13 | headshot_urls=18 | order_matches=13

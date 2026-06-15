@@ -1,6 +1,6 @@
 {
   "version": "hsd-wnba-logo-source-fetcher-v1.1-favicon-fallback",
-  "generated_at_utc": "2026-06-15T15:22:31.263087+00:00",
+  "generated_at_utc": "2026-06-15T15:43:02.828454+00:00",
   "sources": 10,
   "downloaded": 1,
   "existing": 9,
@@ -47,7 +47,7 @@
       "target_path": "assets/leagues/wnba/teams/golden_state_valkyries/logo.svg",
       "fallback_url": "",
       "fallback_target_path": "",
-      "status": "downloaded",
+      "status": "exists",
       "bytes": 4943,
       "reason": ""
     },
@@ -67,11 +67,11 @@
       "team_name": "Minnesota Lynx",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/7/75/Minnesota_Lynx_logo.svg",
       "target_path": "assets/leagues/wnba/teams/minnesota_lynx/logo.svg",
-      "fallback_url": "https://cdn.wnba.com/static/next/teams/favicons/MIN/apple-touch-icon.png",
-      "fallback_target_path": "assets/leagues/wnba/teams/minnesota_lynx/logo.png",
-      "status": "exists_fallback",
-      "bytes": 5147,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "",
+      "fallback_target_path": "",
+      "status": "downloaded",
+      "bytes": 9820,
+      "reason": ""
     },
     {
       "team_id": "phoenix_mercury",

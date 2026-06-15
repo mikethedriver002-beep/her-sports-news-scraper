@@ -1,13 +1,15 @@
 {
-  "version": "hsd-wnba-athlete-registry-v1.2-cleaner-player-id-matcher",
-  "generated_at_utc": "2026-06-15T15:22:38.397566+00:00",
+  "version": "hsd-wnba-athlete-registry-v1.4-order-based-review-sheet",
+  "generated_at_utc": "2026-06-15T15:43:15.029028+00:00",
   "source_count": 15,
   "sources_ok": 15,
   "sources_failed": 0,
   "athletes": 200,
   "aliases": 610,
   "image_candidates": 294,
-  "matched_image_candidates": 0,
+  "matched_image_candidates": 200,
+  "unmatched_image_candidates": 94,
+  "match_review_rows": 200,
   "approved_images": 0,
   "missing_approved_images": 400,
   "dirty_name_drops": 30,
@@ -20,7 +22,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 13,
-      "headshot_urls": 19
+      "headshot_urls": 19,
+      "order_matches": 13
     },
     {
       "team_id": "chicago_sky",
@@ -29,7 +32,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 15,
-      "headshot_urls": 22
+      "headshot_urls": 22,
+      "order_matches": 15
     },
     {
       "team_id": "connecticut_sun",
@@ -38,7 +42,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 14,
-      "headshot_urls": 20
+      "headshot_urls": 20,
+      "order_matches": 14
     },
     {
       "team_id": "indiana_fever",
@@ -47,7 +52,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 14,
-      "headshot_urls": 18
+      "headshot_urls": 18,
+      "order_matches": 14
     },
     {
       "team_id": "new_york_liberty",
@@ -56,7 +62,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 13,
-      "headshot_urls": 20
+      "headshot_urls": 20,
+      "order_matches": 13
     },
     {
       "team_id": "toronto_tempo",
@@ -65,7 +72,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 12,
-      "headshot_urls": 18
+      "headshot_urls": 18,
+      "order_matches": 12
     },
     {
       "team_id": "washington_mystics",
@@ -74,7 +82,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 13,
-      "headshot_urls": 17
+      "headshot_urls": 17,
+      "order_matches": 13
     },
     {
       "team_id": "dallas_wings",
@@ -83,7 +92,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 13,
-      "headshot_urls": 20
+      "headshot_urls": 20,
+      "order_matches": 13
     },
     {
       "team_id": "golden_state_valkyries",
@@ -92,7 +102,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 15,
-      "headshot_urls": 21
+      "headshot_urls": 21,
+      "order_matches": 15
     },
     {
       "team_id": "las_vegas_aces",
@@ -101,7 +112,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 12,
-      "headshot_urls": 21
+      "headshot_urls": 21,
+      "order_matches": 12
     },
     {
       "team_id": "los_angeles_sparks",
@@ -110,7 +122,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 14,
-      "headshot_urls": 20
+      "headshot_urls": 20,
+      "order_matches": 14
     },
     {
       "team_id": "minnesota_lynx",
@@ -119,7 +132,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 14,
-      "headshot_urls": 20
+      "headshot_urls": 20,
+      "order_matches": 14
     },
     {
       "team_id": "phoenix_mercury",
@@ -128,7 +142,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 12,
-      "headshot_urls": 22
+      "headshot_urls": 22,
+      "order_matches": 12
     },
     {
       "team_id": "portland_fire",
@@ -137,7 +152,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 13,
-      "headshot_urls": 18
+      "headshot_urls": 18,
+      "order_matches": 13
     },
     {
       "team_id": "seattle_storm",
@@ -146,7 +162,8 @@
       "status": "ok",
       "player_links": 0,
       "roster_names": 13,
-      "headshot_urls": 18
+      "headshot_urls": 18,
+      "order_matches": 13
     }
   ]
 }
