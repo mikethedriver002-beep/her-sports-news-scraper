@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v2.8.5-athlete-registry-review"
+VERSION = "v2.8.6-athlete-source-resolver-review"
 OUT_ROOT = Path("outputs/latest")
 OUT_GRAPHICS = OUT_ROOT / "rendered_graphics"
 OUT_ZIPS = OUT_ROOT / "rendered_zips"
@@ -45,6 +45,8 @@ COPY_FILES = [
     "data/asset_registry/wnba/logo_gap_upload_manifest.csv",
     "data/asset_registry/wnba/missing_team_logos.csv",
     "data/asset_registry/wnba/athlete_sources.csv",
+    "data/asset_registry/wnba/athlete_source_resolver_report.json",
+    "data/asset_registry/wnba/athlete_source_resolver_report.md",
     "data/asset_registry/wnba/athletes.csv",
     "data/asset_registry/wnba/athlete_aliases.csv",
     "data/asset_registry/wnba/athlete_images.csv",
@@ -136,6 +138,7 @@ def main() -> None:
     missing_logos = read_csv("data/asset_registry/wnba/missing_team_logos.csv")
     team_logos = read_csv("data/asset_registry/wnba/team_logos.csv")
     logo_fetch = read_json("data/asset_registry/wnba/logo_fetch_report.json")
+    athlete_source_report = read_json("data/asset_registry/wnba/athlete_source_resolver_report.json")
     athlete_report = read_json("data/asset_registry/wnba/athlete_registry_report.json")
 
     summary = {
@@ -153,6 +156,9 @@ def main() -> None:
         "logos_downloaded": logo_fetch.get("downloaded", 0),
         "logos_existing": logo_fetch.get("existing", 0),
         "logos_failed": logo_fetch.get("failed", 0),
+        "athlete_source_urls": athlete_source_report.get("sources", 0),
+        "athlete_source_urls_ok": athlete_source_report.get("ok", 0),
+        "athlete_source_urls_failed": athlete_source_report.get("failed", 0),
         "athlete_sources": athlete_report.get("source_count", 0),
         "athlete_sources_ok": athlete_report.get("sources_ok", 0),
         "athletes": athlete_report.get("athletes", 0),
@@ -183,6 +189,9 @@ def main() -> None:
         f"- logos downloaded: {summary['logos_downloaded']}",
         f"- logos existing: {summary['logos_existing']}",
         f"- logos failed: {summary['logos_failed']}",
+        f"- athlete source urls: {summary['athlete_source_urls']}",
+        f"- athlete source urls ok: {summary['athlete_source_urls_ok']}",
+        f"- athlete source urls failed: {summary['athlete_source_urls_failed']}",
         f"- athlete sources: {summary['athlete_sources']}",
         f"- athlete sources ok: {summary['athlete_sources_ok']}",
         f"- athletes discovered: {summary['athletes']}",
@@ -193,14 +202,15 @@ def main() -> None:
         "",
         "1. `review_files/rendered_handoff_qa_report.md`",
         "2. `review_files/rendered_handoff_visual_qa.csv`",
-        "3. `review_files/athlete_registry_report.md`",
-        "4. `review_files/athlete_image_candidates.csv`",
-        "5. `review_files/logo_fetch_report.md`",
-        "6. `review_files/asset_registry_report.md`",
-        "7. `review_files/asset_gap_report.md`",
-        "8. `review_files/rendered_handoff_contact_sheet.jpg`",
-        "9. `rendered_graphics/`",
-        "10. `rendered_zips/`",
+        "3. `review_files/athlete_source_resolver_report.md`",
+        "4. `review_files/athlete_registry_report.md`",
+        "5. `review_files/athlete_image_candidates.csv`",
+        "6. `review_files/logo_fetch_report.md`",
+        "7. `review_files/asset_registry_report.md`",
+        "8. `review_files/asset_gap_report.md`",
+        "9. `review_files/rendered_handoff_contact_sheet.jpg`",
+        "10. `rendered_graphics/`",
+        "11. `rendered_zips/`",
         "",
         "## Notes",
         "",
