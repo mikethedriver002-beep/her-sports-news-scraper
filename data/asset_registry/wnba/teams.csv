@@ -1,0 +1,16 @@
+team_id,league,team_name,city,nickname,slug,conference,active,primary_hex,secondary_hex
+atlanta_dream,WNBA,Atlanta Dream,Atlanta,Dream,atlanta_dream,Eastern,true,E02D5F,25BBD2
+chicago_sky,WNBA,Chicago Sky,Chicago,Sky,chicago_sky,Eastern,true,FFCD31,4DC4E0
+connecticut_sun,WNBA,Connecticut Sun,Connecticut,Sun,connecticut_sun,Eastern,true,F77325,152D51
+indiana_fever,WNBA,Indiana Fever,Indiana,Fever,indiana_fever,Eastern,true,CB1230,102B54
+new_york_liberty,WNBA,New York Liberty,New York,Liberty,new_york_liberty,Eastern,true,62B9AC,082435
+toronto_tempo,WNBA,Toronto Tempo,Toronto,Tempo,toronto_tempo,Eastern,true,5BD69A,201A3A
+washington_mystics,WNBA,Washington Mystics,Washington,Mystics,washington_mystics,Eastern,true,E21836,072A56
+dallas_wings,WNBA,Dallas Wings,Dallas,Wings,dallas_wings,Western,true,007EB8,C49B3A
+golden_state_valkyries,WNBA,Golden State Valkyries,Golden State,Valkyries,golden_state_valkyries,Western,true,BE97FF,161321
+las_vegas_aces,WNBA,Las Vegas Aces,Las Vegas,Aces,las_vegas_aces,Western,true,C41E3A,231F20
+los_angeles_sparks,WNBA,Los Angeles Sparks,Los Angeles,Sparks,los_angeles_sparks,Western,true,582C83,FFC72C
+minnesota_lynx,WNBA,Minnesota Lynx,Minnesota,Lynx,minnesota_lynx,Western,true,236192,6FC4B2
+phoenix_mercury,WNBA,Phoenix Mercury,Phoenix,Mercury,phoenix_mercury,Western,true,E55F20,522D83
+portland_fire,WNBA,Portland Fire,Portland,Fire,portland_fire,Western,true,F14F2F,50261A
+seattle_storm,WNBA,Seattle Storm,Seattle,Storm,seattle_storm,Western,true,2FAE61,FFD540
