@@ -1,6 +1,6 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-15T04:17:16.465526+00:00
+Generated: 2026-06-15T04:38:45.590826+00:00
 Version: Mermaid Render Publish Bridge v2.8.4-logo-fetch-report
 
 ## Counts
@@ -11,10 +11,10 @@ Version: Mermaid Render Publish Bridge v2.8.4-logo-fetch-report
 - content slots: 7
 - graphics files copied: 7
 - rendered zip files copied: 7
-- verified WNBA team logos: 13
-- missing WNBA team logos: 2
-- logo sources: 8
-- logos downloaded: 3
+- verified WNBA team logos: 12
+- missing WNBA team logos: 3
+- logo sources: 10
+- logos downloaded: 5
 - logos existing: 0
 - logos failed: 5
 

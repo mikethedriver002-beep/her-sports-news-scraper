@@ -1,6 +1,6 @@
 # HSD WNBA Asset Registry Validation
 
-Generated: 2026-06-15T04:17:14.194763+00:00
+Generated: 2026-06-15T04:38:43.437970+00:00
 Status: **needs_assets**
 
 ## Counts
@@ -8,7 +8,7 @@ Status: **needs_assets**
 - teams: 15
 - aliases: 47
 - logo rows: 15
-- missing required team logos: 2
+- missing required team logos: 3
 
 ## Issues
 
@@ -17,4 +17,5 @@ Status: **needs_assets**
 ## Missing required logos
 
 - Connecticut Sun -> `assets/leagues/wnba/teams/connecticut_sun/logo.png`
+- Phoenix Mercury -> `assets/leagues/wnba/teams/phoenix_mercury/logo.png`
 - Seattle Storm -> `assets/leagues/wnba/teams/seattle_storm/logo.png`
