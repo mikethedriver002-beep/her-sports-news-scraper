@@ -29,14 +29,14 @@ data/asset_registry/wnba/athlete_sources.csv,outputs/latest/review_files/athlete
 data/asset_registry/wnba/athlete_source_resolver_report.json,outputs/latest/review_files/athlete_source_resolver_report.json,4094
 data/asset_registry/wnba/athlete_source_resolver_report.md,outputs/latest/review_files/athlete_source_resolver_report.md,1015
 data/asset_registry/wnba/athletes.csv,outputs/latest/review_files/athletes.csv,37072
-data/asset_registry/wnba/athlete_aliases.csv,outputs/latest/review_files/athlete_aliases.csv,32504
+data/asset_registry/wnba/athlete_aliases.csv,outputs/latest/review_files/athlete_aliases.csv,32488
 data/asset_registry/wnba/athlete_images.csv,outputs/latest/review_files/athlete_images.csv,84282
 data/asset_registry/wnba/athlete_image_candidates.csv,outputs/latest/review_files/athlete_image_candidates.csv,84895
 data/asset_registry/wnba/missing_athlete_images.csv,outputs/latest/review_files/missing_athlete_images.csv,34758
 data/asset_registry/wnba/athlete_registry_report.json,outputs/latest/review_files/athlete_registry_report.json,4518
 data/asset_registry/wnba/athlete_registry_report.md,outputs/latest/review_files/athlete_registry_report.md,2137
 data/asset_registry/wnba/roster_entities.csv,outputs/latest/review_files/roster_entities.csv,39765
-data/asset_registry/wnba/roster_names.csv,outputs/latest/review_files/roster_names.csv,32503
+data/asset_registry/wnba/roster_names.csv,outputs/latest/review_files/roster_names.csv,32487
 data/asset_registry/wnba/asset_registry_summary.json,outputs/latest/review_files/asset_registry_summary.json,456
 data/asset_registry/wnba/asset_registry_report.md,outputs/latest/review_files/asset_registry_report.md,190
 data/asset_registry/wnba/asset_registry_validation.json,outputs/latest/review_files/asset_registry_validation.json,254
