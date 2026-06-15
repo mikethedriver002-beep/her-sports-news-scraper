@@ -1,6 +1,6 @@
 {
   "version": "v2.8.6-athlete-source-resolver-review",
-  "generated_at": "2026-06-15T15:03:33.892866+00:00",
+  "generated_at": "2026-06-15T15:22:40.895813+00:00",
   "graphics_files": 7,
   "zip_files": 7,
   "rendered_packets": 7,
@@ -10,8 +10,8 @@
   "verified_team_logos": 15,
   "missing_team_logos": 0,
   "logo_sources": 10,
-  "logos_downloaded": 7,
-  "logos_existing": 3,
+  "logos_downloaded": 1,
+  "logos_existing": 9,
   "logos_failed": 0,
   "athlete_source_urls": 15,
   "athlete_source_urls_ok": 15,
@@ -25,5 +25,5 @@
   "outputs_root": "outputs/latest",
   "integrity_status": "pass",
   "integrity_errors": [],
-  "integrity_checked_at": "2026-06-15T15:03:33.917668+00:00"
+  "integrity_checked_at": "2026-06-15T15:22:40.924452+00:00"
 }

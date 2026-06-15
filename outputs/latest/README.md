@@ -1,6 +1,6 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-15T15:03:33.892866+00:00
+Generated: 2026-06-15T15:22:40.895813+00:00
 Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
@@ -14,8 +14,8 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 - verified WNBA team logos: 15
 - missing WNBA team logos: 0
 - logo sources: 10
-- logos downloaded: 7
-- logos existing: 3
+- logos downloaded: 1
+- logos existing: 9
 - logos failed: 0
 - athlete source urls: 15
 - athlete source urls ok: 15

@@ -1,6 +1,6 @@
 # HSD WNBA Athlete Registry v1.2
 
-Generated: 2026-06-15T15:03:31.544452+00:00
+Generated: 2026-06-15T15:22:38.397566+00:00
 
 ## Counts
 
