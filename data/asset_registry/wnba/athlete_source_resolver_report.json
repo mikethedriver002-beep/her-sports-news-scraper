@@ -1,10 +1,10 @@
 {
   "version": "hsd-wnba-athlete-source-resolver-v1",
-  "generated_at_utc": "2026-06-15T19:15:11.173864+00:00",
+  "generated_at_utc": "2026-06-15T19:24:51.048283+00:00",
   "sources": 15,
-  "ok": 14,
+  "ok": 15,
   "needs_review": 0,
-  "failed": 1,
+  "failed": 0,
   "source_file": "data/asset_registry/wnba/athlete_sources.csv",
   "checks": [
     {
@@ -149,10 +149,11 @@
     },
     {
       "url": "https://storm.wnba.com/roster",
-      "status": "failed",
-      "http_ok": false,
-      "has_roster_marker": false,
-      "reason": "HTTPError: HTTP Error 502: Bad Gateway",
+      "status": "ok",
+      "http_ok": true,
+      "has_roster_marker": true,
+      "reason": "",
+      "status_code": 200,
       "team_id": "seattle_storm",
       "team_name": "Seattle Storm"
     }

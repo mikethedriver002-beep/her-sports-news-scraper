@@ -1,6 +1,6 @@
 {
   "version": "hsd-wnba-athlete-registry-v1.4-order-based-review-sheet",
-  "generated_at_utc": "2026-06-15T19:15:13.051283+00:00",
+  "generated_at_utc": "2026-06-15T19:24:53.713640+00:00",
   "source_count": 15,
   "sources_ok": 15,
   "sources_failed": 0,
@@ -10,8 +10,8 @@
   "matched_image_candidates": 200,
   "unmatched_image_candidates": 94,
   "match_review_rows": 200,
-  "approved_images": 0,
-  "missing_approved_images": 400,
+  "approved_images": 196,
+  "missing_approved_images": 204,
   "dirty_name_drops": 30,
   "usage_policy": "review_only_until_approved_marker_present",
   "source_status": [

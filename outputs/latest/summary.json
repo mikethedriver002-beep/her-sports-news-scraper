@@ -1,6 +1,6 @@
 {
   "version": "v2.8.6-athlete-source-resolver-review",
-  "generated_at": "2026-06-15T19:15:15.555964+00:00",
+  "generated_at": "2026-06-15T19:24:56.318789+00:00",
   "graphics_files": 7,
   "zip_files": 7,
   "rendered_packets": 7,
@@ -14,14 +14,14 @@
   "logos_existing": 10,
   "logos_failed": 0,
   "athlete_source_urls": 15,
-  "athlete_source_urls_ok": 14,
-  "athlete_source_urls_failed": 1,
+  "athlete_source_urls_ok": 15,
+  "athlete_source_urls_failed": 0,
   "athlete_sources": 15,
   "athlete_sources_ok": 15,
   "athletes": 200,
   "athlete_image_candidates": 294,
-  "approved_athlete_images": 0,
-  "missing_approved_athlete_images": 400,
+  "approved_athlete_images": 196,
+  "missing_approved_athlete_images": 204,
   "outputs_root": "outputs/latest",
   "athlete_match_review_rows": 200,
   "athlete_matches_need_approval": 200,
@@ -36,5 +36,5 @@
   "athlete_approval_apply_failed": 0,
   "integrity_status": "pass",
   "integrity_errors": [],
-  "integrity_checked_at": "2026-06-15T19:15:30.305898+00:00"
+  "integrity_checked_at": "2026-06-15T19:25:07.419988+00:00"
 }

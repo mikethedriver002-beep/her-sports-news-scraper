@@ -1,6 +1,6 @@
 # HSD WNBA Athlete Registry v1.4
 
-Generated: 2026-06-15T19:15:13.051283+00:00
+Generated: 2026-06-15T19:24:53.713640+00:00
 
 ## Counts
 
@@ -13,8 +13,8 @@ Generated: 2026-06-15T19:15:13.051283+00:00
 - matched image candidates: 200
 - unmatched image candidates: 94
 - match review rows: 200
-- approved images: 0
-- missing approved images: 400
+- approved images: 196
+- missing approved images: 204
 - dirty name drops: 30
 
 ## Usage policy

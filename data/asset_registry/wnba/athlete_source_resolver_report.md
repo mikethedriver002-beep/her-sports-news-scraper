@@ -1,13 +1,13 @@
 # HSD WNBA Athlete Source Resolver v1
 
-Generated: 2026-06-15T19:15:11.173864+00:00
+Generated: 2026-06-15T19:24:51.048283+00:00
 
 ## Counts
 
 - sources: 15
-- ok: 14
+- ok: 15
 - needs_review: 0
-- failed: 1
+- failed: 0
 
 ## Sources
 
@@ -25,4 +25,4 @@ Generated: 2026-06-15T19:15:11.173864+00:00
 - Minnesota Lynx: ok -> `https://lynx.wnba.com/roster`
 - Phoenix Mercury: ok -> `https://mercury.wnba.com/roster`
 - Portland Fire: ok -> `https://fire.wnba.com/roster`
-- Seattle Storm: failed -> `https://storm.wnba.com/roster` - HTTPError: HTTP Error 502: Bad Gateway
+- Seattle Storm: ok -> `https://storm.wnba.com/roster`

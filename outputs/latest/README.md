@@ -1,6 +1,6 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-15T19:15:15.555964+00:00
+Generated: 2026-06-15T19:24:56.318789+00:00
 Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
@@ -18,13 +18,13 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 - logos existing: 10
 - logos failed: 0
 - athlete source urls: 15
-- athlete source urls ok: 14
-- athlete source urls failed: 1
+- athlete source urls ok: 15
+- athlete source urls failed: 0
 - athlete sources: 15
 - athlete sources ok: 15
 - athletes discovered: 200
 - athlete image candidates: 294
-- approved athlete images: 0
+- approved athlete images: 196
 
 ## Review order
 
