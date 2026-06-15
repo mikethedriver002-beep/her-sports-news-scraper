@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.5.2-render-studio-v3-0-1-router-fix"
+VERSION = "v3.5.3-logo-source-fetcher"
 OUT_REPORT = Path("assignment_handoff_publisher_report.md")
 OUT_MANIFEST = Path("assignment_handoff_publisher_manifest.json")
 
@@ -93,6 +93,7 @@ def maybe_commit_latest_outputs() -> Dict[str, Any]:
 
 
 def main() -> None:
+    logo_fetch = run_script("scripts/fetch_hsd_wnba_logo_sources_v1.py")
     registry_build = run_script("scripts/build_hsd_wnba_asset_registry_v1.py")
     registry_validate = run_script("scripts/validate_hsd_wnba_asset_registry_v1.py")
     registry_gaps = run_script("scripts/report_hsd_wnba_asset_gaps_v1.py")
@@ -114,8 +115,13 @@ def main() -> None:
     integrity_run = run_script("scripts/check_hsd_render_integrity_v1.py")
     render_meta = read_json("rendered_handoff_metadata.json")
     latest_summary = read_json("outputs/latest/summary.json")
+    logo_fetch_report = read_json("data/asset_registry/wnba/logo_fetch_report.json")
     commit_run = maybe_commit_latest_outputs()
     counts = {
+        "logo_sources": logo_fetch_report.get("sources", 0),
+        "logos_downloaded": logo_fetch_report.get("downloaded", 0),
+        "logos_existing": logo_fetch_report.get("existing", 0),
+        "logos_failed": logo_fetch_report.get("failed", 0),
         "handoff_packets": len(read_csv("assignment_handoff_index.csv")),
         "manual_packets": len(read_csv("manual_workflow_content_packets.csv")),
         "handoff_status_rows": len(read_csv("assignment_handoff_status.csv")),
@@ -130,16 +136,16 @@ def main() -> None:
         "render_integrity": render_meta.get("integrity_status", "unknown"),
         "publish_integrity": latest_summary.get("integrity_status", "unknown"),
     }
-    manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "integrity_run": integrity_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
+    manifest = {"version": VERSION, "generated_at": now_iso(), "logo_fetch": logo_fetch, "logo_fetch_report": logo_fetch_report, "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "integrity_run": integrity_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    lines = ["# Mermaid Handoff Publisher v3.0.1 Router Fix", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
+    lines = ["# Mermaid Handoff Publisher v3.0.1 Logo Source Fetcher", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
     lines += ["", "## Commit latest outputs", "", f"- status: {commit_run.get('status')}"]
     if commit_run.get("reason"):
         lines.append(f"- reason: {commit_run.get('reason')}")
     lines += ["", "## Actions", ""]
     lines += [f"- {a}" for a in actions] if actions else ["- No actions completed."]
-    for extra in ["data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "render_integrity_report.md", "outputs/latest/README.md"]:
+    for extra in ["data/asset_registry/wnba/logo_fetch_report.md", "data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "render_integrity_report.md", "outputs/latest/README.md"]:
         p = Path(extra)
         if p.exists():
             lines += ["", "---", "", p.read_text(encoding="utf-8", errors="replace")]
