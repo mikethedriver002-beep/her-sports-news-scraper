@@ -1,6 +1,6 @@
 # HSD WNBA Asset Registry v1.1
 
-Generated: 2026-06-15T20:58:08.853097+00:00
+Generated: 2026-06-15T21:15:43.155156+00:00
 
 ## Counts
 
