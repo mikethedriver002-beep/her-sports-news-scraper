@@ -1,0 +1,16 @@
+team_id,asset_type,file_path,file_exists,approved,required,last_verified_utc,source_note
+atlanta_dream,primary_logo,,false,false,true,,missing_until_asset_added
+chicago_sky,primary_logo,,false,false,true,,missing_until_asset_added
+connecticut_sun,primary_logo,,false,false,true,,missing_until_asset_added
+indiana_fever,primary_logo,,false,false,true,,missing_until_asset_added
+new_york_liberty,primary_logo,,false,false,true,,missing_until_asset_added
+toronto_tempo,primary_logo,,false,false,true,,missing_until_asset_added
+washington_mystics,primary_logo,,false,false,true,,missing_until_asset_added
+dallas_wings,primary_logo,,false,false,true,,missing_until_asset_added
+golden_state_valkyries,primary_logo,,false,false,true,,missing_until_asset_added
+las_vegas_aces,primary_logo,,false,false,true,,missing_until_asset_added
+los_angeles_sparks,primary_logo,,false,false,true,,missing_until_asset_added
+minnesota_lynx,primary_logo,,false,false,true,,missing_until_asset_added
+phoenix_mercury,primary_logo,,false,false,true,,missing_until_asset_added
+portland_fire,primary_logo,,false,false,true,,missing_until_asset_added
+seattle_storm,primary_logo,,false,false,true,,missing_until_asset_added
