@@ -1,16 +1,16 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-15T03:24:14.673513+00:00
+Generated: 2026-06-15T03:38:13.169718+00:00
 Version: Mermaid Render Publish Bridge v2.8.2
 
 ## Counts
 
-- rendered packets: 2
-- blocked packets: 3
+- rendered packets: 3
+- blocked packets: 2
 - handoff packets: 5
 - content slots: 6
-- graphics files copied: 2
-- rendered zip files copied: 2
+- graphics files copied: 3
+- rendered zip files copied: 3
 - verified WNBA team logos: 7
 - missing WNBA team logos: 8
 
@@ -35,9 +35,9 @@ Version: Mermaid Render Publish Bridge v2.8.2
 
 - ig-stories_ig-stories-rolling-1_last-night-in-the-w: missing required registry team logo(s): indiana_fever:missing_required_registry_logo; minnesota_lynx:missing_required_registry_logo; las_vegas_aces:missing_required_registry_logo; phoenix_mercury:missing_required_registry_logo
 - ig-stories_ig-stories-rolling-2_last-night-in-the-w: missing required registry team logo(s): indiana_fever:missing_required_registry_logo; minnesota_lynx:missing_required_registry_logo; las_vegas_aces:missing_required_registry_logo; phoenix_mercury:missing_required_registry_logo
-- threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge: render exception: IndexError: list index out of range
 
 ## Rendered packets
 
 - ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo: Atlanta Dream beat Toronto Tempo
 - threads_nightcap_atlanta-dream-beat-toronto-tempo: Atlanta Dream beat Toronto Tempo
+- threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026

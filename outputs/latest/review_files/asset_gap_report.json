@@ -1,7 +1,8 @@
 {
-  "version": "hsd-wnba-asset-gap-report-v1",
-  "generated_at_utc": "2026-06-15T03:24:13.040996+00:00",
+  "version": "hsd-wnba-asset-gap-report-v1.1-logo-upload-pack",
+  "generated_at_utc": "2026-06-15T03:38:11.491381+00:00",
   "missing_team_logos": 8,
   "validation_status": "needs_assets",
-  "next_action": "add exact primary logos for every missing team before team-led WNBA graphics are allowed"
+  "logo_upload_manifest": "data/asset_registry/wnba/logo_gap_upload_manifest.csv",
+  "next_action": "upload each exact primary team logo as logo.png into its recommended folder path"
 }

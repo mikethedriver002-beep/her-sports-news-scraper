@@ -1,6 +1,6 @@
 # HSD WNBA Asset Registry Validation
 
-Generated: 2026-06-15T03:24:13.012103+00:00
+Generated: 2026-06-15T03:38:11.465125+00:00
 Status: **needs_assets**
 
 ## Counts
