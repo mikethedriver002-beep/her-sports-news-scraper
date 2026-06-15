@@ -1,11 +1,11 @@
 {
   "version": "hsd-wnba-asset-registry-validator-v1",
-  "generated_at_utc": "2026-06-15T03:51:31.829415+00:00",
+  "generated_at_utc": "2026-06-15T04:17:14.194763+00:00",
   "status": "needs_assets",
   "teams": 15,
   "aliases": 47,
   "logo_rows": 15,
-  "missing_required_team_logos": 8,
+  "missing_required_team_logos": 2,
   "issues": [],
   "warnings": []
 }

@@ -3,5 +3,6 @@ threads_morning,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim a
 ig_feed_noon,IG Feed,Atlanta Dream beat Toronto Tempo,packet_ready,ready,ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo
 ig_stories_rolling_1,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-1_last-night-in-the-w
 ig_stories_rolling_2,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-2_last-night-in-the-w
-threads_live,Threads,"Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026",held,freshness=preview_blocked_replaced,
+ig_feed_evening_preview,IG Feed,Washington Mystics at New York Liberty,packet_ready,ready,ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty
+threads_live,Threads,Washington Mystics at New York Liberty,packet_ready,ready,threads_threads-live_washington-mystics-at-new-york-liberty
 nightcap,Threads,Atlanta Dream beat Toronto Tempo,packet_ready,ready,threads_nightcap_atlanta-dream-beat-toronto-tempo

@@ -1,11 +1,11 @@
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-15T03:51:31.905960+00:00
+Generated: 2026-06-15T04:17:14.275629+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
-- slots seen: 6
-- packets ready: 5
-- held: 1
+- slots seen: 7
+- packets ready: 7
+- held: 0
 
 ## Packets
 
@@ -13,4 +13,6 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6
 - IG Feed / ig_feed_noon: Atlanta Dream beat Toronto Tempo — `assignment_handoff_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip`
 - IG Stories / ig_stories_rolling_1: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-1_last-night-in-the-w.zip`
 - IG Stories / ig_stories_rolling_2: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_last-night-in-the-w.zip`
+- IG Feed / ig_feed_evening_preview: Washington Mystics at New York Liberty — `assignment_handoff_zips/ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty.zip`
+- Threads / threads_live: Washington Mystics at New York Liberty — `assignment_handoff_zips/threads_threads-live_washington-mystics-at-new-york-liberty.zip`
 - Threads / nightcap: Atlanta Dream beat Toronto Tempo — `assignment_handoff_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip`

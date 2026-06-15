@@ -1,6 +1,6 @@
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-15T03:51:30.355811+00:00
+Generated: 2026-06-15T04:17:10.324519+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -9,16 +9,13 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ## Preview block signals
 
-- blocked_freshness_gate
-- same-day games not included
-- started/live/final
-- Preview games included: 0
+- None
 
 ## Counts
 
-- final slots: 6
-- held slots: 2
-- packets: 6
+- final slots: 7
+- held slots: 0
+- packets: 7
 
 ## Final slots
 
@@ -50,12 +47,19 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - Freshness: fresh
 - Hook: Last Night in the W: put this result on the board.
 
+### ig_feed_evening_preview — IG Feed / 4:45 PM
+- Status: ready_with_review
+- Headline: Washington Mystics at New York Liberty
+- Type: preview_event
+- Freshness: fresh
+- Hook: Washington Mystics at New York Liberty: the game lane to watch.
+
 ### threads_live — Threads / 7:00-11:30 PM
 - Status: ready_with_review
-- Headline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026
-- Type: official_news_article
-- Freshness: preview_blocked_replaced
-- Hook: The LPGA lane has a real storyline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026.
+- Headline: Washington Mystics at New York Liberty
+- Type: preview_event
+- Freshness: fresh
+- Hook: Washington Mystics at New York Liberty: the game lane to watch.
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review
@@ -64,7 +68,3 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - Freshness: nightcap_followup_angle
 - Hook: Atlanta Dream beat Toronto Tempo: what this changes next.
 
-## Held slots
-
-- ig_feed_evening_preview: Washington Mystics at New York Liberty — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / pending
-- threads_live: Washington Mystics at New York Liberty — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / replaced_with_story_d8f79330b7b89a

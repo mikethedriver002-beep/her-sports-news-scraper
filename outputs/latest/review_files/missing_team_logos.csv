@@ -1,9 +1,3 @@
 team_id,team_name,required_asset,reason,recommended_path
-chicago_sky,Chicago Sky,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/chicago_sky/logo.png
-indiana_fever,Indiana Fever,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/indiana_fever/logo.png
-dallas_wings,Dallas Wings,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/dallas_wings/logo.png
-golden_state_valkyries,Golden State Valkyries,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/golden_state_valkyries/logo.png
-las_vegas_aces,Las Vegas Aces,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/las_vegas_aces/logo.png
-minnesota_lynx,Minnesota Lynx,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/minnesota_lynx/logo.png
-phoenix_mercury,Phoenix Mercury,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/phoenix_mercury/logo.png
-portland_fire,Portland Fire,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/portland_fire/logo.png
+connecticut_sun,Connecticut Sun,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/connecticut_sun/logo.png
+seattle_storm,Seattle Storm,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/seattle_storm/logo.png

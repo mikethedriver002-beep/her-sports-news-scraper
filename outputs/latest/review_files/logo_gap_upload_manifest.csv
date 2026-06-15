@@ -1,0 +1,3 @@
+team_id,team_name,required_filename,target_folder,target_path,upload_status
+connecticut_sun,Connecticut Sun,logo.png,assets/leagues/wnba/teams/connecticut_sun,assets/leagues/wnba/teams/connecticut_sun/logo.png,needed
+seattle_storm,Seattle Storm,logo.png,assets/leagues/wnba/teams/seattle_storm,assets/leagues/wnba/teams/seattle_storm/logo.png,needed
