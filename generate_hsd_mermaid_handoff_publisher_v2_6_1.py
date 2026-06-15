@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.5.0-render-studio-v3-registry-resolver"
+VERSION = "v3.5.1-render-studio-v3-integrity-check"
 OUT_REPORT = Path("assignment_handoff_publisher_report.md")
 OUT_MANIFEST = Path("assignment_handoff_publisher_manifest.json")
 
@@ -111,6 +111,7 @@ def main() -> None:
             shutil.copy2(zp, target / ("rendered_" + zp.name))
             actions.append(f"{zp.as_posix()} -> {(target / ('rendered_' + zp.name)).as_posix()}")
     publish_run = run_script("scripts/generate_hsd_mermaid_render_publish_bridge_v2_8.py")
+    integrity_run = run_script("scripts/check_hsd_render_integrity_v1.py")
     render_meta = read_json("rendered_handoff_metadata.json")
     latest_summary = read_json("outputs/latest/summary.json")
     commit_run = maybe_commit_latest_outputs()
@@ -129,7 +130,7 @@ def main() -> None:
         "render_integrity": render_meta.get("integrity_status", "unknown"),
         "publish_integrity": latest_summary.get("integrity_status", "unknown"),
     }
-    manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
+    manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "integrity_run": integrity_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     lines = ["# Mermaid Handoff Publisher v3.0 Registry Resolver", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
@@ -138,7 +139,7 @@ def main() -> None:
         lines.append(f"- reason: {commit_run.get('reason')}")
     lines += ["", "## Actions", ""]
     lines += [f"- {a}" for a in actions] if actions else ["- No actions completed."]
-    for extra in ["data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "outputs/latest/README.md"]:
+    for extra in ["data/asset_registry/wnba/asset_registry_report.md", "data/asset_registry/wnba/asset_registry_validation_report.md", "data/asset_registry/wnba/asset_gap_report.md", "rendered_handoff_qa_report.md", "render_integrity_report.md", "outputs/latest/README.md"]:
         p = Path(extra)
         if p.exists():
             lines += ["", "---", "", p.read_text(encoding="utf-8", errors="replace")]
