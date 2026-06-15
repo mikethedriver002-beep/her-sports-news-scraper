@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v2.8.2"
+VERSION = "v2.8.4-logo-fetch-report"
 OUT_ROOT = Path("outputs/latest")
 OUT_GRAPHICS = OUT_ROOT / "rendered_graphics"
 OUT_ZIPS = OUT_ROOT / "rendered_zips"
@@ -39,6 +39,10 @@ COPY_FILES = [
     "data/asset_registry/wnba/teams.csv",
     "data/asset_registry/wnba/team_aliases.csv",
     "data/asset_registry/wnba/team_logos.csv",
+    "data/asset_registry/wnba/logo_sources.csv",
+    "data/asset_registry/wnba/logo_fetch_report.json",
+    "data/asset_registry/wnba/logo_fetch_report.md",
+    "data/asset_registry/wnba/logo_gap_upload_manifest.csv",
     "data/asset_registry/wnba/missing_team_logos.csv",
     "data/asset_registry/wnba/roster_entities.csv",
     "data/asset_registry/wnba/roster_names.csv",
@@ -64,6 +68,16 @@ def read_csv(path: str | Path) -> List[Dict[str, str]]:
             return list(csv.DictReader(f))
     except Exception:
         return []
+
+
+def read_json(path: str | Path) -> Dict[str, Any]:
+    p = Path(path)
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return {}
 
 
 def copy_file(src: str | Path, dst_dir: Path, manifest: List[Dict[str, Any]]) -> None:
@@ -113,6 +127,7 @@ def main() -> None:
     slots = read_csv("mermaid_content_slots_v2.csv")
     missing_logos = read_csv("data/asset_registry/wnba/missing_team_logos.csv")
     team_logos = read_csv("data/asset_registry/wnba/team_logos.csv")
+    logo_fetch = read_json("data/asset_registry/wnba/logo_fetch_report.json")
 
     summary = {
         "version": VERSION,
@@ -125,6 +140,10 @@ def main() -> None:
         "content_slots": len(slots),
         "verified_team_logos": len([r for r in team_logos if r.get("file_exists") == "true"]),
         "missing_team_logos": len(missing_logos),
+        "logo_sources": logo_fetch.get("sources", 0),
+        "logos_downloaded": logo_fetch.get("downloaded", 0),
+        "logos_existing": logo_fetch.get("existing", 0),
+        "logos_failed": logo_fetch.get("failed", 0),
         "outputs_root": OUT_ROOT.as_posix(),
     }
     (OUT_ROOT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -145,16 +164,21 @@ def main() -> None:
         f"- rendered zip files copied: {summary['zip_files']}",
         f"- verified WNBA team logos: {summary['verified_team_logos']}",
         f"- missing WNBA team logos: {summary['missing_team_logos']}",
+        f"- logo sources: {summary['logo_sources']}",
+        f"- logos downloaded: {summary['logos_downloaded']}",
+        f"- logos existing: {summary['logos_existing']}",
+        f"- logos failed: {summary['logos_failed']}",
         "",
         "## Review order",
         "",
         "1. `review_files/rendered_handoff_qa_report.md`",
         "2. `review_files/rendered_handoff_visual_qa.csv`",
-        "3. `review_files/asset_registry_report.md`",
-        "4. `review_files/asset_gap_report.md`",
-        "5. `review_files/rendered_handoff_contact_sheet.jpg`",
-        "6. `rendered_graphics/`",
-        "7. `rendered_zips/`",
+        "3. `review_files/logo_fetch_report.md`",
+        "4. `review_files/asset_registry_report.md`",
+        "5. `review_files/asset_gap_report.md`",
+        "6. `review_files/rendered_handoff_contact_sheet.jpg`",
+        "7. `rendered_graphics/`",
+        "8. `rendered_zips/`",
         "",
         "## Notes",
         "",
