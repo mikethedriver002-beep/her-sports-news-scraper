@@ -1,328 +1,201 @@
-athlete_id,league,display_name,team_id,status,source_url,last_verified_utc,notes
-atlanta_dream_aaliyah_nye_headshot,WNBA,Aaliyah Nye headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804153+00:00,official_roster_candidate_review_required
-atlanta_dream_allisha_gray_headshot,WNBA,Allisha Gray headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804180+00:00,official_roster_candidate_review_required
-atlanta_dream_amy_okonkwo_headshot,WNBA,Amy Okonkwo headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804187+00:00,official_roster_candidate_review_required
-atlanta_dream_angel_reese_headshot,WNBA,Angel Reese headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804192+00:00,official_roster_candidate_review_required
-atlanta_dream_atlanta_dream,WNBA,Atlanta Dream,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804197+00:00,official_roster_candidate_review_required
-atlanta_dream_brandi_poole_headshot,WNBA,Brandi Poole headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804208+00:00,official_roster_candidate_review_required
-atlanta_dream_brionna_jones_headshot,WNBA,Brionna Jones headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804214+00:00,official_roster_candidate_review_required
-atlanta_dream_camryn_brown_headshot,WNBA,Camryn Brown headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804225+00:00,official_roster_candidate_review_required
-atlanta_dream_chelsea_lyles_headshot,WNBA,Chelsea Lyles headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804231+00:00,official_roster_candidate_review_required
-atlanta_dream_indya_nivar_headshot,WNBA,Indya Nivar headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804236+00:00,official_roster_candidate_review_required
-atlanta_dream_isobel_borlase_headshot,WNBA,Isobel Borlase headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804242+00:00,official_roster_candidate_review_required
-atlanta_dream_jordin_canada_headshot,WNBA,Jordin Canada headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804249+00:00,official_roster_candidate_review_required
-atlanta_dream_karl_smesko_headshot,WNBA,Karl Smesko headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804255+00:00,official_roster_candidate_review_required
-atlanta_dream_katie_buria_headshot,WNBA,Katie Buria headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804260+00:00,official_roster_candidate_review_required
-atlanta_dream_latoya_sanders_headshot,WNBA,LaToya Sanders headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804264+00:00,official_roster_candidate_review_required
-atlanta_dream_madina_okot_headshot,WNBA,Madina Okot headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804269+00:00,official_roster_candidate_review_required
-atlanta_dream_naz_hillmon_headshot,WNBA,Naz Hillmon headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804274+00:00,official_roster_candidate_review_required
-atlanta_dream_rhyne_howard_headshot,WNBA,Rhyne Howard headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804279+00:00,official_roster_candidate_review_required
-atlanta_dream_sika_kone_headshot,WNBA,Sika Kone headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804283+00:00,official_roster_candidate_review_required
-atlanta_dream_te_hina_paopao_headshot,WNBA,Te-Hina Paopao headshot,atlanta_dream,active_candidate,https://dream.wnba.com/roster,2026-06-15T14:27:36.804288+00:00,official_roster_candidate_review_required
-chicago_sky_aicha_coulibaly_headshot,WNBA,Aicha Coulibaly headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872658+00:00,official_roster_candidate_review_required
-chicago_sky_azura_stevens_headshot,WNBA,Azura Stevens headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872677+00:00,official_roster_candidate_review_required
-chicago_sky_chantal_hart_headshot,WNBA,Chantal Hart headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872688+00:00,official_roster_candidate_review_required
-chicago_sky_chicago_sky,WNBA,Chicago Sky,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872693+00:00,official_roster_candidate_review_required
-chicago_sky_courtney_vandersloot_headshot,WNBA,Courtney Vandersloot headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872699+00:00,official_roster_candidate_review_required
-chicago_sky_dijonai_carrington_headshot,WNBA,DiJonai Carrington headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872704+00:00,official_roster_candidate_review_required
-chicago_sky_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872710+00:00,official_roster_candidate_review_required
-chicago_sky_elizabeth_williams_headshot,WNBA,Elizabeth Williams headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872715+00:00,official_roster_candidate_review_required
-chicago_sky_gabriela_jaquez_headshot,WNBA,Gabriela Jaquez headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872719+00:00,official_roster_candidate_review_required
-chicago_sky_get_it_on_google_play,WNBA,Get it on Google Play,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872725+00:00,official_roster_candidate_review_required
-chicago_sky_jacy_sheldon_headshot,WNBA,Jacy Sheldon headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872729+00:00,official_roster_candidate_review_required
-chicago_sky_jhared_simpson_headshot,WNBA,Jhared Simpson headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872734+00:00,official_roster_candidate_review_required
-chicago_sky_kamilla_cardoso_headshot,WNBA,Kamilla Cardoso headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872740+00:00,official_roster_candidate_review_required
-chicago_sky_kelly_faris_headshot,WNBA,Kelly Faris headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872745+00:00,official_roster_candidate_review_required
-chicago_sky_latricia_trammell_headshot,WNBA,Latricia Trammell headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872750+00:00,official_roster_candidate_review_required
-chicago_sky_maddy_westbeld_headshot,WNBA,Maddy Westbeld headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872754+00:00,official_roster_candidate_review_required
-chicago_sky_matt_repa_headshot,WNBA,Matt Repa headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872760+00:00,official_roster_candidate_review_required
-chicago_sky_natasha_cloud_headshot,WNBA,Natasha Cloud headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872764+00:00,official_roster_candidate_review_required
-chicago_sky_rachel_banham_headshot,WNBA,Rachel Banham headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872769+00:00,official_roster_candidate_review_required
-chicago_sky_rena_wakama_headshot,WNBA,Rena Wakama headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872777+00:00,official_roster_candidate_review_required
-chicago_sky_rickea_jackson_headshot,WNBA,Rickea Jackson headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872782+00:00,official_roster_candidate_review_required
-chicago_sky_saylor_poffenbarger_headshot,WNBA,Saylor Poffenbarger headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872786+00:00,official_roster_candidate_review_required
-chicago_sky_skylar_diggins_headshot,WNBA,Skylar Diggins headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872793+00:00,official_roster_candidate_review_required
-chicago_sky_sydney_taylor_headshot,WNBA,Sydney Taylor headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872798+00:00,official_roster_candidate_review_required
-chicago_sky_tyler_marsh_headshot,WNBA,Tyler Marsh headshot,chicago_sky,active_candidate,https://sky.wnba.com/roster,2026-06-15T14:27:36.872803+00:00,official_roster_candidate_review_required
-connecticut_sun_aaliyah_edwards_headshot,WNBA,Aaliyah Edwards headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937277+00:00,official_roster_candidate_review_required
-connecticut_sun_aneesah_morrow_headshot,WNBA,Aneesah Morrow headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937296+00:00,official_roster_candidate_review_required
-connecticut_sun_ashlee_mcgee_headshot,WNBA,Ashlee McGee headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937302+00:00,official_roster_candidate_review_required
-connecticut_sun_ashlon_jackson_headshot,WNBA,Ashlon Jackson headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937307+00:00,official_roster_candidate_review_required
-connecticut_sun_brianna_robinson_headshot,WNBA,Brianna Robinson headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937312+00:00,official_roster_candidate_review_required
-connecticut_sun_brittney_griner_headshot,WNBA,Brittney Griner headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937318+00:00,official_roster_candidate_review_required
-connecticut_sun_charlisse_leger_walker_headshot,WNBA,Charlisse Leger-Walker headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937323+00:00,official_roster_candidate_review_required
-connecticut_sun_connecticut_sun,WNBA,Connecticut Sun,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937328+00:00,official_roster_candidate_review_required
-connecticut_sun_diamond_miller_headshot,WNBA,Diamond Miller headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937333+00:00,official_roster_candidate_review_required
-connecticut_sun_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937343+00:00,official_roster_candidate_review_required
-connecticut_sun_get_it_on_google_play,WNBA,Get it on Google Play,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937349+00:00,official_roster_candidate_review_required
-connecticut_sun_gianna_kneepkens_headshot,WNBA,Gianna Kneepkens headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937354+00:00,official_roster_candidate_review_required
-connecticut_sun_hailey_van_lith_headshot,WNBA,Hailey Van Lith headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937359+00:00,official_roster_candidate_review_required
-connecticut_sun_kennedy_burke_headshot,WNBA,Kennedy Burke headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937364+00:00,official_roster_candidate_review_required
-connecticut_sun_leila_lacan_headshot,WNBA,Leila Lacan headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937368+00:00,official_roster_candidate_review_required
-connecticut_sun_nell_angloma_headshot,WNBA,Nell Angloma headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937376+00:00,official_roster_candidate_review_required
-connecticut_sun_olivia_nelson_ododa_headshot,WNBA,Olivia Nelson-Ododa headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937381+00:00,official_roster_candidate_review_required
-connecticut_sun_pascal_angillis_headshot,WNBA,Pascal Angillis headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937386+00:00,official_roster_candidate_review_required
-connecticut_sun_rachid_meziane_headshot,WNBA,Rachid Meziane headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937390+00:00,official_roster_candidate_review_required
-connecticut_sun_raegan_beers_headshot,WNBA,Raegan Beers headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937395+00:00,official_roster_candidate_review_required
-connecticut_sun_roneeka_hodges_headshot,WNBA,Roneeka Hodges headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937400+00:00,official_roster_candidate_review_required
-connecticut_sun_saniya_rivers_headshot,WNBA,Saniya Rivers headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937405+00:00,official_roster_candidate_review_required
-connecticut_sun_terri_acosta_headshot,WNBA,Terri Acosta headshot,connecticut_sun,active_candidate,https://sun.wnba.com/roster,2026-06-15T14:27:36.937410+00:00,official_roster_candidate_review_required
-dallas_wings_aiyana_williams_headshot,WNBA,Aiyana Williams headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781866+00:00,official_roster_candidate_review_required
-dallas_wings_alanna_smith_headshot,WNBA,Alanna Smith headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781885+00:00,official_roster_candidate_review_required
-dallas_wings_allison_russell_headshot,WNBA,Allison Russell headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781891+00:00,official_roster_candidate_review_required
-dallas_wings_alysha_clark_headshot,WNBA,Alysha Clark headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781896+00:00,official_roster_candidate_review_required
-dallas_wings_arike_ogunbowale_headshot,WNBA,Arike Ogunbowale headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781901+00:00,official_roster_candidate_review_required
-dallas_wings_awak_kuier_headshot,WNBA,Awak Kuier headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781906+00:00,official_roster_candidate_review_required
-dallas_wings_aziaha_james_headshot,WNBA,Aziaha James headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781911+00:00,official_roster_candidate_review_required
-dallas_wings_azzi_fudd_headshot,WNBA,Azzi Fudd headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781916+00:00,official_roster_candidate_review_required
-dallas_wings_camille_smith_headshot,WNBA,Camille Smith headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781920+00:00,official_roster_candidate_review_required
-dallas_wings_costanza_verona_headshot,WNBA,Costanza Verona headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781928+00:00,official_roster_candidate_review_required
-dallas_wings_dallas_wings,WNBA,Dallas Wings,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781932+00:00,official_roster_candidate_review_required
-dallas_wings_david_adkins_headshot,WNBA,David Adkins headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781937+00:00,official_roster_candidate_review_required
-dallas_wings_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781943+00:00,official_roster_candidate_review_required
-dallas_wings_empress_davenport_headshot,WNBA,Empress Davenport headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781947+00:00,official_roster_candidate_review_required
-dallas_wings_get_it_on_google_play,WNBA,Get it on Google Play,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781953+00:00,official_roster_candidate_review_required
-dallas_wings_jessica_shepard_headshot,WNBA,Jessica Shepard headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781957+00:00,official_roster_candidate_review_required
-dallas_wings_jose_fernandez_headshot,WNBA,Jose Fernandez headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781962+00:00,official_roster_candidate_review_required
-dallas_wings_li_yueru_headshot,WNBA,Li Yueru headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781966+00:00,official_roster_candidate_review_required
-dallas_wings_maddy_siegrist_headshot,WNBA,Maddy Siegrist headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781973+00:00,official_roster_candidate_review_required
-dallas_wings_mike_neighbors_headshot,WNBA,Mike Neighbors headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781977+00:00,official_roster_candidate_review_required
-dallas_wings_odyssey_sims_headshot,WNBA,Odyssey Sims headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781985+00:00,official_roster_candidate_review_required
-dallas_wings_paige_bueckers_headshot,WNBA,Paige Bueckers headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781989+00:00,official_roster_candidate_review_required
-dallas_wings_sug_sutton_headshot,WNBA,Sug Sutton headshot,dallas_wings,active_candidate,https://wings.wnba.com/roster,2026-06-15T14:27:38.781994+00:00,official_roster_candidate_review_required
-golden_state_valkyries_allison_dekuiper_headshot,WNBA,Allison DeKuiper headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849278+00:00,official_roster_candidate_review_required
-golden_state_valkyries_ashten_prechtel_headshot,WNBA,Ashten Prechtel headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849297+00:00,official_roster_candidate_review_required
-golden_state_valkyries_cecilia_zandalasini_headshot,WNBA,Cecilia Zandalasini headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849304+00:00,official_roster_candidate_review_required
-golden_state_valkyries_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849310+00:00,official_roster_candidate_review_required
-golden_state_valkyries_gabby_williams_headshot,WNBA,Gabby Williams headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849315+00:00,official_roster_candidate_review_required
-golden_state_valkyries_get_it_on_google_play,WNBA,Get it on Google Play,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849321+00:00,official_roster_candidate_review_required
-golden_state_valkyries_golden_state_valkyries,WNBA,Golden State Valkyries,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849325+00:00,official_roster_candidate_review_required
-golden_state_valkyries_iliana_rupert_headshot,WNBA,Iliana Rupert headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849330+00:00,official_roster_candidate_review_required
-golden_state_valkyries_janelle_salaun_headshot,WNBA,Janelle Salaun headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849335+00:00,official_roster_candidate_review_required
-golden_state_valkyries_juste_jocyte_headshot,WNBA,Juste Jocyte headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849340+00:00,official_roster_candidate_review_required
-golden_state_valkyries_kaila_charles_headshot,WNBA,Kaila Charles headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849347+00:00,official_roster_candidate_review_required
-golden_state_valkyries_kaitlyn_chen_headshot,WNBA,Kaitlyn Chen headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849352+00:00,official_roster_candidate_review_required
-golden_state_valkyries_kasib_powell_headshot,WNBA,Kasib Powell headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849356+00:00,official_roster_candidate_review_required
-golden_state_valkyries_katelin_knox_headshot,WNBA,Katelin Knox headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849360+00:00,official_roster_candidate_review_required
-golden_state_valkyries_kayla_thornton_headshot,WNBA,Kayla Thornton headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849367+00:00,official_roster_candidate_review_required
-golden_state_valkyries_kiah_stokes_headshot,WNBA,Kiah Stokes headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849372+00:00,official_roster_candidate_review_required
-golden_state_valkyries_laeticia_amihere_headshot,WNBA,Laeticia Amihere headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849376+00:00,official_roster_candidate_review_required
-golden_state_valkyries_landon_tatum_headshot,WNBA,Landon Tatum headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849381+00:00,official_roster_candidate_review_required
-golden_state_valkyries_miela_sowah_headshot,WNBA,Miela Sowah headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849385+00:00,official_roster_candidate_review_required
-golden_state_valkyries_nadia_fingall_headshot,WNBA,Nadia Fingall headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849390+00:00,official_roster_candidate_review_required
-golden_state_valkyries_natalie_nakase_headshot,WNBA,Natalie Nakase headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849394+00:00,official_roster_candidate_review_required
-golden_state_valkyries_sugar_rodgers_headshot,WNBA,Sugar Rodgers headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849399+00:00,official_roster_candidate_review_required
-golden_state_valkyries_tiffany_hayes_headshot,WNBA,Tiffany Hayes headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849403+00:00,official_roster_candidate_review_required
-golden_state_valkyries_veronica_burton_headshot,WNBA,Veronica Burton headshot,golden_state_valkyries,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T14:27:38.849408+00:00,official_roster_candidate_review_required
-indiana_fever_aliyah_boston_headshot,WNBA,Aliyah Boston headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637506+00:00,official_roster_candidate_review_required
-indiana_fever_austin_kelly_headshot,WNBA,Austin Kelly headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637525+00:00,official_roster_candidate_review_required
-indiana_fever_bree_hall_headshot,WNBA,Bree Hall headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637532+00:00,official_roster_candidate_review_required
-indiana_fever_briann_january_headshot,WNBA,Briann January headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637537+00:00,official_roster_candidate_review_required
-indiana_fever_caitlin_clark_headshot,WNBA,Caitlin Clark headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637542+00:00,official_roster_candidate_review_required
-indiana_fever_damiris_dantas_headshot,WNBA,Damiris Dantas headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637547+00:00,official_roster_candidate_review_required
-indiana_fever_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637553+00:00,official_roster_candidate_review_required
-indiana_fever_get_it_on_google_play,WNBA,Get it on Google Play,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637578+00:00,official_roster_candidate_review_required
-indiana_fever_grace_vanslooten_headshot,WNBA,Grace VanSlooten headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637583+00:00,official_roster_candidate_review_required
-indiana_fever_indiana_fever,WNBA,Indiana Fever,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637588+00:00,official_roster_candidate_review_required
-indiana_fever_justine_pissott_headshot,WNBA,Justine Pissott headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637593+00:00,official_roster_candidate_review_required
-indiana_fever_karima_christmas_kelly_headshot,WNBA,Karima Christmas-Kelly headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637602+00:00,official_roster_candidate_review_required
-indiana_fever_kelsey_mitchell_headshot,WNBA,Kelsey Mitchell headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637607+00:00,official_roster_candidate_review_required
-indiana_fever_lexie_hull_headshot,WNBA,Lexie Hull headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637611+00:00,official_roster_candidate_review_required
-indiana_fever_makayla_timpson_headshot,WNBA,Makayla Timpson headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637616+00:00,official_roster_candidate_review_required
-indiana_fever_monique_billings_headshot,WNBA,Monique Billings headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637621+00:00,official_roster_candidate_review_required
-indiana_fever_myisha_hines_allen_headshot,WNBA,Myisha Hines-Allen headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637626+00:00,official_roster_candidate_review_required
-indiana_fever_raven_johnson_headshot,WNBA,Raven Johnson headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637631+00:00,official_roster_candidate_review_required
-indiana_fever_sophie_cunningham_headshot,WNBA,Sophie Cunningham headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637638+00:00,official_roster_candidate_review_required
-indiana_fever_stephanie_white_headshot,WNBA,Stephanie White headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637643+00:00,official_roster_candidate_review_required
-indiana_fever_tyasha_harris_headshot,WNBA,Tyasha Harris headshot,indiana_fever,active_candidate,https://fever.wnba.com/roster,2026-06-15T14:27:37.637648+00:00,official_roster_candidate_review_required
-las_vegas_aces_becky_hammon_headshot,WNBA,Becky Hammon headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560844+00:00,official_roster_candidate_review_required
-las_vegas_aces_brianna_turner_headshot,WNBA,Brianna Turner headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560864+00:00,official_roster_candidate_review_required
-las_vegas_aces_bryson_creer_headshot,WNBA,Bryson Creer headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560870+00:00,official_roster_candidate_review_required
-las_vegas_aces_charlene_thomas_swinson_headshot,WNBA,Charlene Thomas-Swinson headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560876+00:00,official_roster_candidate_review_required
-las_vegas_aces_chelsea_gray_headshot,WNBA,Chelsea Gray headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560881+00:00,official_roster_candidate_review_required
-las_vegas_aces_chennedy_carter_headshot,WNBA,Chennedy Carter headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560886+00:00,official_roster_candidate_review_required
-las_vegas_aces_cheyenne_parker_tyus_headshot,WNBA,Cheyenne Parker-Tyus headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560891+00:00,official_roster_candidate_review_required
-las_vegas_aces_ciara_burgi_headshot,WNBA,Ciara Burgi headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560901+00:00,official_roster_candidate_review_required
-las_vegas_aces_dana_evans_headshot,WNBA,Dana Evans headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560906+00:00,official_roster_candidate_review_required
-las_vegas_aces_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560912+00:00,official_roster_candidate_review_required
-las_vegas_aces_get_it_on_google_play,WNBA,Get it on Google Play,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560918+00:00,official_roster_candidate_review_required
-las_vegas_aces_jackie_young_headshot,WNBA,Jackie Young headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560922+00:00,official_roster_candidate_review_required
-las_vegas_aces_janiah_barker_headshot,WNBA,Janiah Barker headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560927+00:00,official_roster_candidate_review_required
-las_vegas_aces_jerrica_thomas_headshot,WNBA,Jerrica Thomas headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560932+00:00,official_roster_candidate_review_required
-las_vegas_aces_jewell_loyd_headshot,WNBA,Jewell Loyd headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560936+00:00,official_roster_candidate_review_required
-las_vegas_aces_kierstan_bell_headshot,WNBA,Kierstan Bell headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560941+00:00,official_roster_candidate_review_required
-las_vegas_aces_larry_lewis_headshot,WNBA,Larry Lewis headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560945+00:00,official_roster_candidate_review_required
-las_vegas_aces_las_vegas_aces,WNBA,Las Vegas Aces,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560950+00:00,official_roster_candidate_review_required
-las_vegas_aces_micah_fraction_headshot,WNBA,Micah Fraction headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560955+00:00,official_roster_candidate_review_required
-las_vegas_aces_nalyssa_smith_headshot,WNBA,NaLyssa Smith headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560960+00:00,official_roster_candidate_review_required
-las_vegas_aces_nola_henry_headshot,WNBA,Nola Henry headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560965+00:00,official_roster_candidate_review_required
-las_vegas_aces_stephanie_talbot_headshot,WNBA,Stephanie Talbot headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560970+00:00,official_roster_candidate_review_required
-las_vegas_aces_ty_ellis_headshot,WNBA,Ty Ellis headshot,las_vegas_aces,active_candidate,https://aces.wnba.com/roster,2026-06-15T14:27:39.560975+00:00,official_roster_candidate_review_required
-los_angeles_sparks_ariel_atkins_headshot,WNBA,Ariel Atkins headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666186+00:00,official_roster_candidate_review_required
-los_angeles_sparks_cameron_brink_headshot,WNBA,Cameron Brink headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666205+00:00,official_roster_candidate_review_required
-los_angeles_sparks_chance_gray_headshot,WNBA,Chance Gray headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666215+00:00,official_roster_candidate_review_required
-los_angeles_sparks_dearica_hamby_headshot,WNBA,Dearica Hamby headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666220+00:00,official_roster_candidate_review_required
-los_angeles_sparks_ebony_hoffman_headshot,WNBA,Ebony Hoffman headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666225+00:00,official_roster_candidate_review_required
-los_angeles_sparks_emma_cannon_headshot,WNBA,Emma Cannon headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666229+00:00,official_roster_candidate_review_required
-los_angeles_sparks_erica_wheeler_headshot,WNBA,Erica Wheeler headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666233+00:00,official_roster_candidate_review_required
-los_angeles_sparks_jihyun_park_headshot,WNBA,Jihyun Park headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666238+00:00,official_roster_candidate_review_required
-los_angeles_sparks_karrisa_scherer_headshot,WNBA,Karrisa Scherer headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666243+00:00,official_roster_candidate_review_required
-los_angeles_sparks_kate_martin_headshot,WNBA,Kate Martin headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666247+00:00,official_roster_candidate_review_required
-los_angeles_sparks_kelsey_plum_headshot,WNBA,Kelsey Plum headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666252+00:00,official_roster_candidate_review_required
-los_angeles_sparks_laura_ziegler_headshot,WNBA,Laura Ziegler headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666256+00:00,official_roster_candidate_review_required
-los_angeles_sparks_los_angeles_sparks,WNBA,Los Angeles Sparks,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666261+00:00,official_roster_candidate_review_required
-los_angeles_sparks_lynne_roberts_headshot,WNBA,Lynne Roberts headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666265+00:00,official_roster_candidate_review_required
-los_angeles_sparks_nneka_ogwumike_headshot,WNBA,Nneka Ogwumike headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666270+00:00,official_roster_candidate_review_required
-los_angeles_sparks_rae_burrell_headshot,WNBA,Rae Burrell headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666275+00:00,official_roster_candidate_review_required
-los_angeles_sparks_sania_feagin_headshot,WNBA,Sania Feagin headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666279+00:00,official_roster_candidate_review_required
-los_angeles_sparks_tavon_spears_headshot,WNBA,Tavon Spears headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666283+00:00,official_roster_candidate_review_required
-los_angeles_sparks_zak_buncik_headshot,WNBA,Zak Buncik headshot,los_angeles_sparks,active_candidate,https://sparks.wnba.com/roster,2026-06-15T14:27:39.666288+00:00,official_roster_candidate_review_required
-minnesota_lynx_anastasiia_olairi_kosu_headshot,WNBA,Anastasiia Olairi Kosu headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731118+00:00,official_roster_candidate_review_required
-minnesota_lynx_antonia_delaere_headshot,WNBA,Antonia Delaere headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731143+00:00,official_roster_candidate_review_required
-minnesota_lynx_cheryl_reeve_headshot,WNBA,Cheryl Reeve headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731149+00:00,official_roster_candidate_review_required
-minnesota_lynx_chuck_barta_headshot,WNBA,Chuck Barta headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731155+00:00,official_roster_candidate_review_required
-minnesota_lynx_courtney_williams_headshot,WNBA,Courtney Williams headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731160+00:00,official_roster_candidate_review_required
-minnesota_lynx_dorka_juhasz_headshot,WNBA,Dorka Juhasz headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731164+00:00,official_roster_candidate_review_required
-minnesota_lynx_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731170+00:00,official_roster_candidate_review_required
-minnesota_lynx_eliska_hamzova_headshot,WNBA,Eliska Hamzova headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731175+00:00,official_roster_candidate_review_required
-minnesota_lynx_emma_cechova_headshot,WNBA,Emma Cechova headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731180+00:00,official_roster_candidate_review_required
-minnesota_lynx_eric_thibault_headshot,WNBA,Eric Thibault headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731184+00:00,official_roster_candidate_review_required
-minnesota_lynx_get_it_on_google_play,WNBA,Get it on Google Play,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731190+00:00,official_roster_candidate_review_required
-minnesota_lynx_janel_mccarville_headshot,WNBA,Janel McCarville headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731195+00:00,official_roster_candidate_review_required
-minnesota_lynx_kayla_mcbride_headshot,WNBA,Kayla McBride headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731199+00:00,official_roster_candidate_review_required
-minnesota_lynx_liatu_king_headshot,WNBA,Liatu King headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731204+00:00,official_roster_candidate_review_required
-minnesota_lynx_lindsay_whalen_headshot,WNBA,Lindsay Whalen headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731209+00:00,official_roster_candidate_review_required
-minnesota_lynx_maya_caldwell_headshot,WNBA,Maya Caldwell headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731214+00:00,official_roster_candidate_review_required
-minnesota_lynx_minnesota_lynx,WNBA,Minnesota Lynx,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731218+00:00,official_roster_candidate_review_required
-minnesota_lynx_napheesa_collier_headshot,WNBA,Napheesa Collier headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731223+00:00,official_roster_candidate_review_required
-minnesota_lynx_natasha_howard_headshot,WNBA,Natasha Howard headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731228+00:00,official_roster_candidate_review_required
-minnesota_lynx_nia_coffey_headshot,WNBA,Nia Coffey headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731233+00:00,official_roster_candidate_review_required
-minnesota_lynx_olivia_miles_headshot,WNBA,Olivia Miles headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731238+00:00,official_roster_candidate_review_required
-minnesota_lynx_rebekkah_brunson_headshot,WNBA,Rebekkah Brunson headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731245+00:00,official_roster_candidate_review_required
-minnesota_lynx_teaira_mccowan_headshot,WNBA,Teaira McCowan headshot,minnesota_lynx,active_candidate,https://lynx.wnba.com/roster,2026-06-15T14:27:39.731250+00:00,official_roster_candidate_review_required
-new_york_liberty_addi_walters_headshot,WNBA,Addi Walters headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704037+00:00,official_roster_candidate_review_required
-new_york_liberty_andrew_wade_headshot,WNBA,Andrew Wade headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704057+00:00,official_roster_candidate_review_required
-new_york_liberty_anneli_maley_headshot,WNBA,Anneli Maley headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704064+00:00,official_roster_candidate_review_required
-new_york_liberty_betnijah_laney_hamilton_headshot,WNBA,Betnijah Laney-Hamilton headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704070+00:00,official_roster_candidate_review_required
-new_york_liberty_breanna_stewart_headshot,WNBA,Breanna Stewart headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704075+00:00,official_roster_candidate_review_required
-new_york_liberty_chris_demarco_headshot,WNBA,Chris DeMarco headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704080+00:00,official_roster_candidate_review_required
-new_york_liberty_courtney_paris_headshot,WNBA,Courtney Paris headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704085+00:00,official_roster_candidate_review_required
-new_york_liberty_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704091+00:00,official_roster_candidate_review_required
-new_york_liberty_get_it_on_google_play,WNBA,Get it on Google Play,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704096+00:00,official_roster_candidate_review_required
-new_york_liberty_han_xu_headshot,WNBA,Han Xu headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704101+00:00,official_roster_candidate_review_required
-new_york_liberty_jonquel_jones_headshot,WNBA,Jonquel Jones headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704106+00:00,official_roster_candidate_review_required
-new_york_liberty_leonie_fiebich_headshot,WNBA,Leonie Fiebich headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704111+00:00,official_roster_candidate_review_required
-new_york_liberty_marine_fauthoux_headshot,WNBA,Marine Fauthoux headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704115+00:00,official_roster_candidate_review_required
-new_york_liberty_marine_johannes_headshot,WNBA,Marine Johannes headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704120+00:00,official_roster_candidate_review_required
-new_york_liberty_new_york_liberty,WNBA,New York Liberty,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704125+00:00,official_roster_candidate_review_required
-new_york_liberty_norielis_subero_headshot,WNBA,Norielis Subero headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704130+00:00,official_roster_candidate_review_required
-new_york_liberty_pauline_astier_headshot,WNBA,Pauline Astier headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704135+00:00,official_roster_candidate_review_required
-new_york_liberty_raquel_carrera_headshot,WNBA,Raquel Carrera headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704140+00:00,official_roster_candidate_review_required
-new_york_liberty_rebecca_allen_headshot,WNBA,Rebecca Allen headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704144+00:00,official_roster_candidate_review_required
-new_york_liberty_rebekah_gardner_headshot,WNBA,Rebekah Gardner headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704149+00:00,official_roster_candidate_review_required
-new_york_liberty_sabrina_ionescu_headshot,WNBA,Sabrina Ionescu headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704154+00:00,official_roster_candidate_review_required
-new_york_liberty_satou_sabally_headshot,WNBA,Satou Sabally headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704158+00:00,official_roster_candidate_review_required
-new_york_liberty_will_sheehey_headshot,WNBA,Will Sheehey headshot,new_york_liberty,active_candidate,https://liberty.wnba.com/roster,2026-06-15T14:27:37.704163+00:00,official_roster_candidate_review_required
-phoenix_mercury_alyssa_thomas_headshot,WNBA,Alyssa Thomas headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493750+00:00,official_roster_candidate_review_required
-phoenix_mercury_chevelle_saunsoci_headshot,WNBA,Chevelle Saunsoci headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493770+00:00,official_roster_candidate_review_required
-phoenix_mercury_dewanna_bonner_headshot,WNBA,DeWanna Bonner headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493777+00:00,official_roster_candidate_review_required
-phoenix_mercury_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493783+00:00,official_roster_candidate_review_required
-phoenix_mercury_get_it_on_google_play,WNBA,Get it on Google Play,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493788+00:00,official_roster_candidate_review_required
-phoenix_mercury_hannah_wengertsman_headshot,WNBA,Hannah Wengertsman headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493793+00:00,official_roster_candidate_review_required
-phoenix_mercury_john_mccullough_headshot,WNBA,John McCullough headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493798+00:00,official_roster_candidate_review_required
-phoenix_mercury_jovana_nogic_headshot,WNBA,Jovana Nogic headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493803+00:00,official_roster_candidate_review_required
-phoenix_mercury_kahleah_copper_headshot,WNBA,Kahleah Copper headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493808+00:00,official_roster_candidate_review_required
-phoenix_mercury_kiana_williams_headshot,WNBA,Kiana Williams headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493812+00:00,official_roster_candidate_review_required
-phoenix_mercury_kristi_toliver_headshot,WNBA,Kristi Toliver headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493817+00:00,official_roster_candidate_review_required
-phoenix_mercury_kyara_linskens_headshot,WNBA,Kyara Linskens headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493821+00:00,official_roster_candidate_review_required
-phoenix_mercury_lexi_held_headshot,WNBA,Lexi Held headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493826+00:00,official_roster_candidate_review_required
-phoenix_mercury_marta_suarez_headshot,WNBA,Marta Suarez headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493830+00:00,official_roster_candidate_review_required
-phoenix_mercury_megan_vogel_headshot,WNBA,Megan Vogel headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493834+00:00,official_roster_candidate_review_required
-phoenix_mercury_monique_akoa_makani_headshot,WNBA,Monique Akoa Makani headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493839+00:00,official_roster_candidate_review_required
-phoenix_mercury_natasha_mack_headshot,WNBA,Natasha Mack headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493847+00:00,official_roster_candidate_review_required
-phoenix_mercury_nate_tibbetts_headshot,WNBA,Nate Tibbetts headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493851+00:00,official_roster_candidate_review_required
-phoenix_mercury_noemie_brochant_headshot,WNBA,Noemie Brochant headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493856+00:00,official_roster_candidate_review_required
-phoenix_mercury_phoenix_mercury,WNBA,Phoenix Mercury,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493860+00:00,official_roster_candidate_review_required
-phoenix_mercury_quionche_carter_headshot,WNBA,Quionche Carter headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493865+00:00,official_roster_candidate_review_required
-phoenix_mercury_sami_whitcomb_headshot,WNBA,Sami Whitcomb headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493870+00:00,official_roster_candidate_review_required
-phoenix_mercury_tc_swirsky_headshot,WNBA,TC Swirsky headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493874+00:00,official_roster_candidate_review_required
-phoenix_mercury_tangela_smith_headshot,WNBA,Tangela Smith headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493878+00:00,official_roster_candidate_review_required
-phoenix_mercury_valeriane_ayayi_headshot,WNBA,Valeriane Ayayi headshot,phoenix_mercury,active_candidate,https://mercury.wnba.com/roster,2026-06-15T14:27:40.493883+00:00,official_roster_candidate_review_required
-portland_fire_alex_sarama_headshot,WNBA,Alex Sarama headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097580+00:00,official_roster_candidate_review_required
-portland_fire_bridget_carleton_headshot,WNBA,Bridget Carleton headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097600+00:00,official_roster_candidate_review_required
-portland_fire_brittni_donaldson_headshot,WNBA,Brittni Donaldson headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097607+00:00,official_roster_candidate_review_required
-portland_fire_carla_leite_headshot,WNBA,Carla Leite headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097612+00:00,official_roster_candidate_review_required
-portland_fire_danielle_boiago_headshot,WNBA,Danielle Boiago headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097618+00:00,official_roster_candidate_review_required
-portland_fire_emily_engstler_headshot,WNBA,Emily Engstler headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097623+00:00,official_roster_candidate_review_required
-portland_fire_frieda_buhner_headshot,WNBA,Frieda Buhner headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097628+00:00,official_roster_candidate_review_required
-portland_fire_holly_winterburn_headshot,WNBA,Holly Winterburn headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097633+00:00,official_roster_candidate_review_required
-portland_fire_jordan_harrison_headshot,WNBA,Jordan Harrison headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097638+00:00,official_roster_candidate_review_required
-portland_fire_karlie_samuelson_headshot,WNBA,Karlie Samuelson headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097643+00:00,official_roster_candidate_review_required
-portland_fire_luisa_geiselsoder_headshot,WNBA,Luisa Geiselsoder headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097651+00:00,official_roster_candidate_review_required
-portland_fire_megan_gustafson_headshot,WNBA,Megan Gustafson headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097657+00:00,official_roster_candidate_review_required
-portland_fire_nyadiew_puoch_headshot,WNBA,Nyadiew Puoch headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097662+00:00,official_roster_candidate_review_required
-portland_fire_portland_fire,WNBA,Portland Fire,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097666+00:00,official_roster_candidate_review_required
-portland_fire_sarah_ashlee_barker_headshot,WNBA,Sarah Ashlee Barker headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097671+00:00,official_roster_candidate_review_required
-portland_fire_sefu_bernard_headshot,WNBA,Sefu Bernard headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097676+00:00,official_roster_candidate_review_required
-portland_fire_serah_williams_headshot,WNBA,Serah Williams headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097681+00:00,official_roster_candidate_review_required
-portland_fire_sylvia_fowles_headshot,WNBA,Sylvia Fowles headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097685+00:00,official_roster_candidate_review_required
-portland_fire_teja_oblak_headshot,WNBA,Teja Oblak headshot,portland_fire,active_candidate,https://fire.wnba.com/roster,2026-06-15T14:27:41.097690+00:00,official_roster_candidate_review_required
-seattle_storm_awa_fam_headshot,WNBA,Awa Fam headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192117+00:00,official_roster_candidate_review_required
-seattle_storm_dominique_malonga_headshot,WNBA,Dominique Malonga headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192139+00:00,official_roster_candidate_review_required
-seattle_storm_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192146+00:00,official_roster_candidate_review_required
-seattle_storm_ezi_magbegor_headshot,WNBA,Ezi Magbegor headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192152+00:00,official_roster_candidate_review_required
-seattle_storm_get_it_on_google_play,WNBA,Get it on Google Play,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192157+00:00,official_roster_candidate_review_required
-seattle_storm_jade_melbourne_headshot,WNBA,Jade Melbourne headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192162+00:00,official_roster_candidate_review_required
-seattle_storm_jarell_christian_headshot,WNBA,Jarell Christian headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192167+00:00,official_roster_candidate_review_required
-seattle_storm_jordan_horston_headshot,WNBA,Jordan Horston headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192171+00:00,official_roster_candidate_review_required
-seattle_storm_katie_lou_samuelson_headshot,WNBA,Katie Lou Samuelson headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192176+00:00,official_roster_candidate_review_required
-seattle_storm_laura_mancuso_headshot,WNBA,Laura Mancuso headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192184+00:00,official_roster_candidate_review_required
-seattle_storm_mackenzie_holmes_headshot,WNBA,Mackenzie Holmes headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192189+00:00,official_roster_candidate_review_required
-seattle_storm_michael_joiner_headshot,WNBA,Michael Joiner headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192194+00:00,official_roster_candidate_review_required
-seattle_storm_natalie_achonwa_headshot,WNBA,Natalie Achonwa headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192198+00:00,official_roster_candidate_review_required
-seattle_storm_natisha_hiedeman_headshot,WNBA,Natisha Hiedeman headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192203+00:00,official_roster_candidate_review_required
-seattle_storm_seattle_storm,WNBA,Seattle Storm,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192207+00:00,official_roster_candidate_review_required
-seattle_storm_sonia_raman_headshot,WNBA,Sonia Raman headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192213+00:00,official_roster_candidate_review_required
-seattle_storm_stefanie_dolson_headshot,WNBA,Stefanie Dolson headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192217+00:00,official_roster_candidate_review_required
-seattle_storm_taina_mair_headshot,WNBA,Taina Mair headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192222+00:00,official_roster_candidate_review_required
-seattle_storm_taylor_thierry_headshot,WNBA,Taylor Thierry headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192227+00:00,official_roster_candidate_review_required
-seattle_storm_zia_cooke_headshot,WNBA,Zia Cooke headshot,seattle_storm,active_candidate,https://storm.wnba.com/roster,2026-06-15T14:27:41.192231+00:00,official_roster_candidate_review_required
-toronto_tempo_brian_lankton_headshot,WNBA,Brian Lankton headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620808+00:00,official_roster_candidate_review_required
-toronto_tempo_brittney_sykes_headshot,WNBA,Brittney Sykes headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620827+00:00,official_roster_candidate_review_required
-toronto_tempo_carly_clarke_headshot,WNBA,Carly Clarke headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620837+00:00,official_roster_candidate_review_required
-toronto_tempo_ciara_carl_headshot,WNBA,Ciara Carl headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620842+00:00,official_roster_candidate_review_required
-toronto_tempo_isabelle_harrison_headshot,WNBA,Isabelle Harrison headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620847+00:00,official_roster_candidate_review_required
-toronto_tempo_julie_allemand_headshot,WNBA,Julie Allemand headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620852+00:00,official_roster_candidate_review_required
-toronto_tempo_kia_nurse_headshot,WNBA,Kia Nurse headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620857+00:00,official_roster_candidate_review_required
-toronto_tempo_kiki_rice_headshot,WNBA,Kiki Rice headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620862+00:00,official_roster_candidate_review_required
-toronto_tempo_laura_juskaite_headshot,WNBA,Laura Juskaite headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620867+00:00,official_roster_candidate_review_required
-toronto_tempo_maria_conde_headshot,WNBA,Maria Conde headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620872+00:00,official_roster_candidate_review_required
-toronto_tempo_marina_mabrey_headshot,WNBA,Marina Mabrey headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620876+00:00,official_roster_candidate_review_required
-toronto_tempo_nyara_sabally_headshot,WNBA,Nyara Sabally headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620881+00:00,official_roster_candidate_review_required
-toronto_tempo_olaf_lange_headshot,WNBA,Olaf Lange headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620885+00:00,official_roster_candidate_review_required
-toronto_tempo_sadie_edwards_headshot,WNBA,Sadie Edwards headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620890+00:00,official_roster_candidate_review_required
-toronto_tempo_sandy_brondello_headshot,WNBA,Sandy Brondello headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620895+00:00,official_roster_candidate_review_required
-toronto_tempo_temi_fagbenle_headshot,WNBA,Temi Fagbenle headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620900+00:00,official_roster_candidate_review_required
-toronto_tempo_teonni_key_headshot,WNBA,Teonni Key headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620905+00:00,official_roster_candidate_review_required
-toronto_tempo_tima_pouye_headshot,WNBA,Tima Pouye headshot,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620910+00:00,official_roster_candidate_review_required
-toronto_tempo_toronto_tempo,WNBA,Toronto Tempo,toronto_tempo,active_candidate,https://tempo.wnba.com/roster,2026-06-15T14:27:38.620914+00:00,official_roster_candidate_review_required
-washington_mystics_alicia_florez_headshot,WNBA,Alicia Florez headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678773+00:00,official_roster_candidate_review_required
-washington_mystics_angela_dugalic_headshot,WNBA,Angela Dugalic headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678793+00:00,official_roster_candidate_review_required
-washington_mystics_barbara_turner_headshot,WNBA,Barbara Turner headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678799+00:00,official_roster_candidate_review_required
-washington_mystics_cassandre_prosper_headshot,WNBA,Cassandre Prosper headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678804+00:00,official_roster_candidate_review_required
-washington_mystics_cotie_mcmahon_headshot,WNBA,Cotie McMahon headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678808+00:00,official_roster_candidate_review_required
-washington_mystics_darianna_littlepage_buggs_headshot,WNBA,Darianna Littlepage-Buggs headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678814+00:00,official_roster_candidate_review_required
-washington_mystics_download_on_the_apple_app_store,WNBA,Download on the Apple App Store,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678819+00:00,official_roster_candidate_review_required
-washington_mystics_emre_vatansever_headshot,WNBA,Emre Vatansever headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678824+00:00,official_roster_candidate_review_required
-washington_mystics_georgia_amoore_headshot,WNBA,Georgia Amoore headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678831+00:00,official_roster_candidate_review_required
-washington_mystics_get_it_on_google_play,WNBA,Get it on Google Play,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678837+00:00,official_roster_candidate_review_required
-washington_mystics_jessie_miller_headshot,WNBA,Jessie Miller headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678841+00:00,official_roster_candidate_review_required
-washington_mystics_kiki_iriafen_headshot,WNBA,Kiki Iriafen headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678845+00:00,official_roster_candidate_review_required
-washington_mystics_lauren_betts_headshot,WNBA,Lauren Betts headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678850+00:00,official_roster_candidate_review_required
-washington_mystics_lucy_olsen_headshot,WNBA,Lucy Olsen headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678854+00:00,official_roster_candidate_review_required
-washington_mystics_michaela_onyenwere_headshot,WNBA,Michaela Onyenwere headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678859+00:00,official_roster_candidate_review_required
-washington_mystics_rori_harmon_headshot,WNBA,Rori Harmon headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678863+00:00,official_roster_candidate_review_required
-washington_mystics_shakira_austin_headshot,WNBA,Shakira Austin headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678868+00:00,official_roster_candidate_review_required
-washington_mystics_sonia_citron_headshot,WNBA,Sonia Citron headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678872+00:00,official_roster_candidate_review_required
-washington_mystics_sydney_johnson_headshot,WNBA,Sydney Johnson headshot,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678877+00:00,official_roster_candidate_review_required
-washington_mystics_washington_mystics,WNBA,Washington Mystics,washington_mystics,active_candidate,https://mystics.wnba.com/roster,2026-06-15T14:27:38.678881+00:00,official_roster_candidate_review_required
+athlete_id,league,display_name,team_id,provider_player_id,status,source_url,last_verified_utc,notes
+atlanta_dream_aaliyah_nye,WNBA,Aaliyah Nye,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715601+00:00,official_roster_text_review_required
+atlanta_dream_allisha_gray,WNBA,Allisha Gray,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715558+00:00,official_roster_text_review_required
+atlanta_dream_amy_okonkwo,WNBA,Amy Okonkwo,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715482+00:00,official_roster_text_review_required
+atlanta_dream_angel_reese,WNBA,Angel Reese,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715520+00:00,official_roster_text_review_required
+atlanta_dream_brionna_jones,WNBA,Brionna Jones,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715612+00:00,official_roster_text_review_required
+atlanta_dream_indya_nivar,WNBA,Indya Nivar,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715580+00:00,official_roster_text_review_required
+atlanta_dream_isobel_borlase,WNBA,Isobel Borlase,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715570+00:00,official_roster_text_review_required
+atlanta_dream_jordin_canada,WNBA,Jordin Canada,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715506+00:00,official_roster_text_review_required
+atlanta_dream_madina_okot,WNBA,Madina Okot,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715540+00:00,official_roster_text_review_required
+atlanta_dream_naz_hillmon,WNBA,Naz Hillmon,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715453+00:00,official_roster_text_review_required
+atlanta_dream_rhyne_howard,WNBA,Rhyne Howard,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715530+00:00,official_roster_text_review_required
+atlanta_dream_sika_kone,WNBA,Sika Kone,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715590+00:00,official_roster_text_review_required
+atlanta_dream_te_hina_paopao,WNBA,Te-Hina Paopao,atlanta_dream,,active_candidate,https://dream.wnba.com/roster,2026-06-15T15:03:28.715495+00:00,official_roster_text_review_required
+chicago_sky_aicha_coulibaly,WNBA,Aicha Coulibaly,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901695+00:00,official_roster_text_review_required
+chicago_sky_azura_stevens,WNBA,Azura Stevens,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901682+00:00,official_roster_text_review_required
+chicago_sky_courtney_vandersloot,WNBA,Courtney Vandersloot,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901657+00:00,official_roster_text_review_required
+chicago_sky_dijonai_carrington,WNBA,DiJonai Carrington,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901585+00:00,official_roster_text_review_required
+chicago_sky_elizabeth_williams,WNBA,Elizabeth Williams,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901538+00:00,official_roster_text_review_required
+chicago_sky_gabriela_jaquez,WNBA,Gabriela Jaquez,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901620+00:00,official_roster_text_review_required
+chicago_sky_jacy_sheldon,WNBA,Jacy Sheldon,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901510+00:00,official_roster_text_review_required
+chicago_sky_kamilla_cardoso,WNBA,Kamilla Cardoso,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901608+00:00,official_roster_text_review_required
+chicago_sky_maddy_westbeld,WNBA,Maddy Westbeld,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901644+00:00,official_roster_text_review_required
+chicago_sky_natasha_cloud,WNBA,Natasha Cloud,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901597+00:00,official_roster_text_review_required
+chicago_sky_rachel_banham,WNBA,Rachel Banham,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901670+00:00,official_roster_text_review_required
+chicago_sky_rickea_jackson,WNBA,Rickea Jackson,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901561+00:00,official_roster_text_review_required
+chicago_sky_saylor_poffenbarger,WNBA,Saylor Poffenbarger,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901573+00:00,official_roster_text_review_required
+chicago_sky_skylar_diggins,WNBA,Skylar Diggins,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901550+00:00,official_roster_text_review_required
+chicago_sky_sydney_taylor,WNBA,Sydney Taylor,chicago_sky,,active_candidate,https://sky.wnba.com/roster,2026-06-15T15:03:28.901632+00:00,official_roster_text_review_required
+connecticut_sun_aaliyah_edwards,WNBA,Aaliyah Edwards,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092331+00:00,official_roster_text_review_required
+connecticut_sun_aneesah_morrow,WNBA,Aneesah Morrow,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092385+00:00,official_roster_text_review_required
+connecticut_sun_ashlon_jackson,WNBA,Ashlon Jackson,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092289+00:00,official_roster_text_review_required
+connecticut_sun_brittney_griner,WNBA,Brittney Griner,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092426+00:00,official_roster_text_review_required
+connecticut_sun_charlisse_leger_walker,WNBA,Charlisse Leger-Walker,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092304+00:00,official_roster_text_review_required
+connecticut_sun_diamond_miller,WNBA,Diamond Miller,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092245+00:00,official_roster_text_review_required
+connecticut_sun_gianna_kneepkens,WNBA,Gianna Kneepkens,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092317+00:00,official_roster_text_review_required
+connecticut_sun_hailey_van_lith,WNBA,Hailey Van Lith,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092275+00:00,official_roster_text_review_required
+connecticut_sun_kennedy_burke,WNBA,Kennedy Burke,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092398+00:00,official_roster_text_review_required
+connecticut_sun_leila_lacan,WNBA,Leila Lacan,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092439+00:00,official_roster_text_review_required
+connecticut_sun_nell_angloma,WNBA,Nell Angloma,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092412+00:00,official_roster_text_review_required
+connecticut_sun_olivia_nelson_ododa,WNBA,Olivia Nelson-Ododa,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092345+00:00,official_roster_text_review_required
+connecticut_sun_raegan_beers,WNBA,Raegan Beers,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092358+00:00,official_roster_text_review_required
+connecticut_sun_saniya_rivers,WNBA,Saniya Rivers,connecticut_sun,,active_candidate,https://sun.wnba.com/roster,2026-06-15T15:03:29.092372+00:00,official_roster_text_review_required
+dallas_wings_alanna_smith,WNBA,Alanna Smith,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105318+00:00,official_roster_text_review_required
+dallas_wings_alysha_clark,WNBA,Alysha Clark,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105297+00:00,official_roster_text_review_required
+dallas_wings_arike_ogunbowale,WNBA,Arike Ogunbowale,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105380+00:00,official_roster_text_review_required
+dallas_wings_awak_kuier,WNBA,Awak Kuier,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105444+00:00,official_roster_text_review_required
+dallas_wings_aziaha_james,WNBA,Aziaha James,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105338+00:00,official_roster_text_review_required
+dallas_wings_azzi_fudd,WNBA,Azzi Fudd,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105465+00:00,official_roster_text_review_required
+dallas_wings_costanza_verona,WNBA,Costanza Verona,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105276+00:00,official_roster_text_review_required
+dallas_wings_jessica_shepard,WNBA,Jessica Shepard,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105423+00:00,official_roster_text_review_required
+dallas_wings_li_yueru,WNBA,Li Yueru,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105401+00:00,official_roster_text_review_required
+dallas_wings_maddy_siegrist,WNBA,Maddy Siegrist,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105359+00:00,official_roster_text_review_required
+dallas_wings_odyssey_sims,WNBA,Odyssey Sims,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105198+00:00,official_roster_text_review_required
+dallas_wings_paige_bueckers,WNBA,Paige Bueckers,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105255+00:00,official_roster_text_review_required
+dallas_wings_sug_sutton,WNBA,Sug Sutton,dallas_wings,,active_candidate,https://wings.wnba.com/roster,2026-06-15T15:03:30.105233+00:00,official_roster_text_review_required
+golden_state_valkyries_ashten_prechtel,WNBA,Ashten Prechtel,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292749+00:00,official_roster_text_review_required
+golden_state_valkyries_cecilia_zandalasini,WNBA,Cecilia Zandalasini,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292862+00:00,official_roster_text_review_required
+golden_state_valkyries_gabby_williams,WNBA,Gabby Williams,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292580+00:00,official_roster_text_review_required
+golden_state_valkyries_iliana_rupert,WNBA,Iliana Rupert,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292772+00:00,official_roster_text_review_required
+golden_state_valkyries_janelle_salaun,WNBA,Janelle Salaun,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292795+00:00,official_roster_text_review_required
+golden_state_valkyries_juste_jocyte,WNBA,Juste Jocyte,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292661+00:00,official_roster_text_review_required
+golden_state_valkyries_kaila_charles,WNBA,Kaila Charles,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292705+00:00,official_roster_text_review_required
+golden_state_valkyries_kaitlyn_chen,WNBA,Kaitlyn Chen,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292616+00:00,official_roster_text_review_required
+golden_state_valkyries_kayla_thornton,WNBA,Kayla Thornton,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292682+00:00,official_roster_text_review_required
+golden_state_valkyries_kiah_stokes,WNBA,Kiah Stokes,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292884+00:00,official_roster_text_review_required
+golden_state_valkyries_laeticia_amihere,WNBA,Laeticia Amihere,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292638+00:00,official_roster_text_review_required
+golden_state_valkyries_miela_sowah,WNBA,Miela Sowah,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292726+00:00,official_roster_text_review_required
+golden_state_valkyries_nadia_fingall,WNBA,Nadia Fingall,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292907+00:00,official_roster_text_review_required
+golden_state_valkyries_tiffany_hayes,WNBA,Tiffany Hayes,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292817+00:00,official_roster_text_review_required
+golden_state_valkyries_veronica_burton,WNBA,Veronica Burton,golden_state_valkyries,,active_candidate,https://valkyries.wnba.com/roster,2026-06-15T15:03:30.292839+00:00,official_roster_text_review_required
+indiana_fever_aliyah_boston,WNBA,Aliyah Boston,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282413+00:00,official_roster_text_review_required
+indiana_fever_bree_hall,WNBA,Bree Hall,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282533+00:00,official_roster_text_review_required
+indiana_fever_caitlin_clark,WNBA,Caitlin Clark,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282519+00:00,official_roster_text_review_required
+indiana_fever_damiris_dantas,WNBA,Damiris Dantas,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282457+00:00,official_roster_text_review_required
+indiana_fever_grace_vanslooten,WNBA,Grace VanSlooten,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282488+00:00,official_roster_text_review_required
+indiana_fever_justine_pissott,WNBA,Justine Pissott,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282472+00:00,official_roster_text_review_required
+indiana_fever_kelsey_mitchell,WNBA,Kelsey Mitchell,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282353+00:00,official_roster_text_review_required
+indiana_fever_lexie_hull,WNBA,Lexie Hull,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282442+00:00,official_roster_text_review_required
+indiana_fever_makayla_timpson,WNBA,Makayla Timpson,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282503+00:00,official_roster_text_review_required
+indiana_fever_monique_billings,WNBA,Monique Billings,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282549+00:00,official_roster_text_review_required
+indiana_fever_myisha_hines_allen,WNBA,Myisha Hines-Allen,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282385+00:00,official_roster_text_review_required
+indiana_fever_raven_johnson,WNBA,Raven Johnson,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282399+00:00,official_roster_text_review_required
+indiana_fever_sophie_cunningham,WNBA,Sophie Cunningham,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282428+00:00,official_roster_text_review_required
+indiana_fever_tyasha_harris,WNBA,Tyasha Harris,indiana_fever,,active_candidate,https://fever.wnba.com/roster,2026-06-15T15:03:29.282564+00:00,official_roster_text_review_required
+las_vegas_aces_a_ja_wilson,WNBA,A'ja Wilson,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560536+00:00,official_roster_text_review_required
+las_vegas_aces_brianna_turner,WNBA,Brianna Turner,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560510+00:00,official_roster_text_review_required
+las_vegas_aces_chelsea_gray,WNBA,Chelsea Gray,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560486+00:00,official_roster_text_review_required
+las_vegas_aces_chennedy_carter,WNBA,Chennedy Carter,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560560+00:00,official_roster_text_review_required
+las_vegas_aces_cheyenne_parker_tyus,WNBA,Cheyenne Parker-Tyus,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560609+00:00,official_roster_text_review_required
+las_vegas_aces_dana_evans,WNBA,Dana Evans,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560461+00:00,official_roster_text_review_required
+las_vegas_aces_jackie_young,WNBA,Jackie Young,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560330+00:00,official_roster_text_review_required
+las_vegas_aces_janiah_barker,WNBA,Janiah Barker,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560391+00:00,official_roster_text_review_required
+las_vegas_aces_jewell_loyd,WNBA,Jewell Loyd,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560584+00:00,official_roster_text_review_required
+las_vegas_aces_kierstan_bell,WNBA,Kierstan Bell,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560367+00:00,official_roster_text_review_required
+las_vegas_aces_nalyssa_smith,WNBA,NaLyssa Smith,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560414+00:00,official_roster_text_review_required
+las_vegas_aces_stephanie_talbot,WNBA,Stephanie Talbot,las_vegas_aces,,active_candidate,https://aces.wnba.com/roster,2026-06-15T15:03:30.560438+00:00,official_roster_text_review_required
+los_angeles_sparks_ariel_atkins,WNBA,Ariel Atkins,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750394+00:00,official_roster_text_review_required
+los_angeles_sparks_cameron_brink,WNBA,Cameron Brink,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750543+00:00,official_roster_text_review_required
+los_angeles_sparks_chance_gray,WNBA,Chance Gray,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750295+00:00,official_roster_text_review_required
+los_angeles_sparks_dearica_hamby,WNBA,Dearica Hamby,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750345+00:00,official_roster_text_review_required
+los_angeles_sparks_emma_cannon,WNBA,Emma Cannon,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750593+00:00,official_roster_text_review_required
+los_angeles_sparks_erica_wheeler,WNBA,Erica Wheeler,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750468+00:00,official_roster_text_review_required
+los_angeles_sparks_jihyun_park,WNBA,Jihyun Park,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750370+00:00,official_roster_text_review_required
+los_angeles_sparks_kate_martin,WNBA,Kate Martin,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750517+00:00,official_roster_text_review_required
+los_angeles_sparks_kelsey_plum,WNBA,Kelsey Plum,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750419+00:00,official_roster_text_review_required
+los_angeles_sparks_laura_ziegler,WNBA,Laura Ziegler,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750321+00:00,official_roster_text_review_required
+los_angeles_sparks_nneka_ogwumike,WNBA,Nneka Ogwumike,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750568+00:00,official_roster_text_review_required
+los_angeles_sparks_rae_burrell,WNBA,Rae Burrell,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750443+00:00,official_roster_text_review_required
+los_angeles_sparks_sania_feagin,WNBA,Sania Feagin,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750493+00:00,official_roster_text_review_required
+los_angeles_sparks_ta_niya_latson,WNBA,Ta'Niya Latson,los_angeles_sparks,,active_candidate,https://sparks.wnba.com/roster,2026-06-15T15:03:30.750257+00:00,official_roster_text_review_required
+minnesota_lynx_anastasiia_olairi_kosu,WNBA,Anastasiia Olairi Kosu,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941683+00:00,official_roster_text_review_required
+minnesota_lynx_antonia_delaere,WNBA,Antonia Delaere,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941710+00:00,official_roster_text_review_required
+minnesota_lynx_courtney_williams,WNBA,Courtney Williams,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941736+00:00,official_roster_text_review_required
+minnesota_lynx_dorka_juhasz,WNBA,Dorka Juhasz,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941847+00:00,official_roster_text_review_required
+minnesota_lynx_eliska_hamzova,WNBA,Eliska Hamzova,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941762+00:00,official_roster_text_review_required
+minnesota_lynx_emma_cechova,WNBA,Emma Cechova,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941931+00:00,official_roster_text_review_required
+minnesota_lynx_kayla_mcbride,WNBA,Kayla McBride,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941901+00:00,official_roster_text_review_required
+minnesota_lynx_liatu_king,WNBA,Liatu King,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941595+00:00,official_roster_text_review_required
+minnesota_lynx_maya_caldwell,WNBA,Maya Caldwell,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941622+00:00,official_roster_text_review_required
+minnesota_lynx_napheesa_collier,WNBA,Napheesa Collier,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941959+00:00,official_roster_text_review_required
+minnesota_lynx_natasha_howard,WNBA,Natasha Howard,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941530+00:00,official_roster_text_review_required
+minnesota_lynx_nia_coffey,WNBA,Nia Coffey,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941788+00:00,official_roster_text_review_required
+minnesota_lynx_olivia_miles,WNBA,Olivia Miles,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941649+00:00,official_roster_text_review_required
+minnesota_lynx_teaira_mccowan,WNBA,Teaira McCowan,minnesota_lynx,,active_candidate,https://lynx.wnba.com/roster,2026-06-15T15:03:30.941874+00:00,official_roster_text_review_required
+new_york_liberty_anneli_maley,WNBA,Anneli Maley,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.544015+00:00,official_roster_text_review_required
+new_york_liberty_betnijah_laney_hamilton,WNBA,Betnijah Laney-Hamilton,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.544068+00:00,official_roster_text_review_required
+new_york_liberty_breanna_stewart,WNBA,Breanna Stewart,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.544032+00:00,official_roster_text_review_required
+new_york_liberty_han_xu,WNBA,Han Xu,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543980+00:00,official_roster_text_review_required
+new_york_liberty_jonquel_jones,WNBA,Jonquel Jones,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.544049+00:00,official_roster_text_review_required
+new_york_liberty_leonie_fiebich,WNBA,Leonie Fiebich,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543917+00:00,official_roster_text_review_required
+new_york_liberty_marine_fauthoux,WNBA,Marine Fauthoux,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543885+00:00,official_roster_text_review_required
+new_york_liberty_marine_johannes,WNBA,Marine Johannes,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543998+00:00,official_roster_text_review_required
+new_york_liberty_pauline_astier,WNBA,Pauline Astier,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543949+00:00,official_roster_text_review_required
+new_york_liberty_raquel_carrera,WNBA,Raquel Carrera,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543933+00:00,official_roster_text_review_required
+new_york_liberty_rebekah_gardner,WNBA,Rebekah Gardner,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543901+00:00,official_roster_text_review_required
+new_york_liberty_sabrina_ionescu,WNBA,Sabrina Ionescu,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543965+00:00,official_roster_text_review_required
+new_york_liberty_satou_sabally,WNBA,Satou Sabally,new_york_liberty,,active_candidate,https://liberty.wnba.com/roster,2026-06-15T15:03:29.543855+00:00,official_roster_text_review_required
+phoenix_mercury_alyssa_thomas,WNBA,Alyssa Thomas,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131590+00:00,official_roster_text_review_required
+phoenix_mercury_jovana_nogic,WNBA,Jovana Nogic,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131617+00:00,official_roster_text_review_required
+phoenix_mercury_kahleah_copper,WNBA,Kahleah Copper,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131383+00:00,official_roster_text_review_required
+phoenix_mercury_kiana_williams,WNBA,Kiana Williams,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131562+00:00,official_roster_text_review_required
+phoenix_mercury_kyara_linskens,WNBA,Kyara Linskens,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131649+00:00,official_roster_text_review_required
+phoenix_mercury_lexi_held,WNBA,Lexi Held,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131507+00:00,official_roster_text_review_required
+phoenix_mercury_marta_suarez,WNBA,Marta Suarez,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131705+00:00,official_roster_text_review_required
+phoenix_mercury_monique_akoa_makani,WNBA,Monique Akoa Makani,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131452+00:00,official_roster_text_review_required
+phoenix_mercury_natasha_mack,WNBA,Natasha Mack,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131422+00:00,official_roster_text_review_required
+phoenix_mercury_quionche_carter,WNBA,Quionche Carter,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131535+00:00,official_roster_text_review_required
+phoenix_mercury_sami_whitcomb,WNBA,Sami Whitcomb,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131677+00:00,official_roster_text_review_required
+phoenix_mercury_valeriane_ayayi,WNBA,Valeriane Ayayi,phoenix_mercury,,active_candidate,https://mercury.wnba.com/roster,2026-06-15T15:03:31.131480+00:00,official_roster_text_review_required
+portland_fire_bridget_carleton,WNBA,Bridget Carleton,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.318973+00:00,official_roster_text_review_required
+portland_fire_carla_leite,WNBA,Carla Leite,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.318868+00:00,official_roster_text_review_required
+portland_fire_emily_engstler,WNBA,Emily Engstler,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319160+00:00,official_roster_text_review_required
+portland_fire_frieda_buhner,WNBA,Frieda Buhner,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319130+00:00,official_roster_text_review_required
+portland_fire_holly_winterburn,WNBA,Holly Winterburn,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319249+00:00,official_roster_text_review_required
+portland_fire_jordan_harrison,WNBA,Jordan Harrison,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.318912+00:00,official_roster_text_review_required
+portland_fire_karlie_samuelson,WNBA,Karlie Samuelson,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319220+00:00,official_roster_text_review_required
+portland_fire_luisa_geiselsoder,WNBA,Luisa Geiselsoder,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319059+00:00,official_roster_text_review_required
+portland_fire_megan_gustafson,WNBA,Megan Gustafson,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319088+00:00,official_roster_text_review_required
+portland_fire_nyadiew_puoch,WNBA,Nyadiew Puoch,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319030+00:00,official_roster_text_review_required
+portland_fire_sarah_ashlee_barker,WNBA,Sarah Ashlee Barker,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.318943+00:00,official_roster_text_review_required
+portland_fire_serah_williams,WNBA,Serah Williams,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319189+00:00,official_roster_text_review_required
+portland_fire_teja_oblak,WNBA,Teja Oblak,portland_fire,,active_candidate,https://fire.wnba.com/roster,2026-06-15T15:03:31.319001+00:00,official_roster_text_review_required
+seattle_storm_awa_fam,WNBA,Awa Fam,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526147+00:00,official_roster_text_review_required
+seattle_storm_dominique_malonga,WNBA,Dominique Malonga,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526208+00:00,official_roster_text_review_required
+seattle_storm_ezi_magbegor,WNBA,Ezi Magbegor,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526177+00:00,official_roster_text_review_required
+seattle_storm_flau_jae_johnson,WNBA,Flau'jae Johnson,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526018+00:00,official_roster_text_review_required
+seattle_storm_jade_melbourne,WNBA,Jade Melbourne,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526079+00:00,official_roster_text_review_required
+seattle_storm_jordan_horston,WNBA,Jordan Horston,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526269+00:00,official_roster_text_review_required
+seattle_storm_katie_lou_samuelson,WNBA,Katie Lou Samuelson,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526333+00:00,official_roster_text_review_required
+seattle_storm_mackenzie_holmes,WNBA,Mackenzie Holmes,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526364+00:00,official_roster_text_review_required
+seattle_storm_natisha_hiedeman,WNBA,Natisha Hiedeman,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.525975+00:00,official_roster_text_review_required
+seattle_storm_stefanie_dolson,WNBA,Stefanie Dolson,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526301+00:00,official_roster_text_review_required
+seattle_storm_taina_mair,WNBA,Taina Mair,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526238+00:00,official_roster_text_review_required
+seattle_storm_taylor_thierry,WNBA,Taylor Thierry,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526049+00:00,official_roster_text_review_required
+seattle_storm_zia_cooke,WNBA,Zia Cooke,seattle_storm,,active_candidate,https://storm.wnba.com/roster,2026-06-15T15:03:31.526109+00:00,official_roster_text_review_required
+toronto_tempo_brittney_sykes,WNBA,Brittney Sykes,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729512+00:00,official_roster_text_review_required
+toronto_tempo_isabelle_harrison,WNBA,Isabelle Harrison,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729531+00:00,official_roster_text_review_required
+toronto_tempo_julie_allemand,WNBA,Julie Allemand,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729550+00:00,official_roster_text_review_required
+toronto_tempo_kia_nurse,WNBA,Kia Nurse,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729476+00:00,official_roster_text_review_required
+toronto_tempo_kiki_rice,WNBA,Kiki Rice,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729354+00:00,official_roster_text_review_required
+toronto_tempo_laura_juskaite,WNBA,Laura Juskaite,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729387+00:00,official_roster_text_review_required
+toronto_tempo_maria_conde,WNBA,Maria Conde,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729459+00:00,official_roster_text_review_required
+toronto_tempo_marina_mabrey,WNBA,Marina Mabrey,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729406+00:00,official_roster_text_review_required
+toronto_tempo_nyara_sabally,WNBA,Nyara Sabally,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729441+00:00,official_roster_text_review_required
+toronto_tempo_temi_fagbenle,WNBA,Temi Fagbenle,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729495+00:00,official_roster_text_review_required
+toronto_tempo_teonni_key,WNBA,Teonni Key,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729424+00:00,official_roster_text_review_required
+toronto_tempo_tima_pouye,WNBA,Tima Pouye,toronto_tempo,,active_candidate,https://tempo.wnba.com/roster,2026-06-15T15:03:29.729568+00:00,official_roster_text_review_required
+washington_mystics_alicia_florez,WNBA,Alicia Florez,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912360+00:00,official_roster_text_review_required
+washington_mystics_angela_dugalic,WNBA,Angela Dugalic,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912521+00:00,official_roster_text_review_required
+washington_mystics_cassandre_prosper,WNBA,Cassandre Prosper,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912460+00:00,official_roster_text_review_required
+washington_mystics_cotie_mcmahon,WNBA,Cotie McMahon,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912501+00:00,official_roster_text_review_required
+washington_mystics_darianna_littlepage_buggs,WNBA,Darianna Littlepage-Buggs,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912400+00:00,official_roster_text_review_required
+washington_mystics_georgia_amoore,WNBA,Georgia Amoore,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912419+00:00,official_roster_text_review_required
+washington_mystics_kiki_iriafen,WNBA,Kiki Iriafen,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912560+00:00,official_roster_text_review_required
+washington_mystics_lauren_betts,WNBA,Lauren Betts,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912579+00:00,official_roster_text_review_required
+washington_mystics_lucy_olsen,WNBA,Lucy Olsen,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912540+00:00,official_roster_text_review_required
+washington_mystics_michaela_onyenwere,WNBA,Michaela Onyenwere,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912441+00:00,official_roster_text_review_required
+washington_mystics_rori_harmon,WNBA,Rori Harmon,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912379+00:00,official_roster_text_review_required
+washington_mystics_shakira_austin,WNBA,Shakira Austin,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912326+00:00,official_roster_text_review_required
+washington_mystics_sonia_citron,WNBA,Sonia Citron,washington_mystics,,active_candidate,https://mystics.wnba.com/roster,2026-06-15T15:03:29.912481+00:00,official_roster_text_review_required

@@ -1,14 +1,16 @@
 {
-  "version": "hsd-wnba-athlete-registry-v1",
-  "generated_at_utc": "2026-06-15T14:27:41.220572+00:00",
+  "version": "hsd-wnba-athlete-registry-v1.2-cleaner-player-id-matcher",
+  "generated_at_utc": "2026-06-15T15:03:31.544452+00:00",
   "source_count": 15,
   "sources_ok": 15,
   "sources_failed": 0,
-  "athletes": 327,
-  "aliases": 990,
-  "image_candidates": 300,
+  "athletes": 200,
+  "aliases": 610,
+  "image_candidates": 294,
+  "matched_image_candidates": 0,
   "approved_images": 0,
-  "missing_approved_images": 654,
+  "missing_approved_images": 400,
+  "dirty_name_drops": 30,
   "usage_policy": "review_only_until_approved_marker_present",
   "source_status": [
     {
@@ -16,120 +18,135 @@
       "team_name": "Atlanta Dream",
       "source_url": "https://dream.wnba.com/roster",
       "status": "ok",
-      "names_found": 20,
-      "image_urls_found": 24
+      "player_links": 0,
+      "roster_names": 13,
+      "headshot_urls": 19
     },
     {
       "team_id": "chicago_sky",
       "team_name": "Chicago Sky",
       "source_url": "https://sky.wnba.com/roster",
       "status": "ok",
-      "names_found": 25,
-      "image_urls_found": 27
+      "player_links": 0,
+      "roster_names": 15,
+      "headshot_urls": 22
     },
     {
       "team_id": "connecticut_sun",
       "team_name": "Connecticut Sun",
       "source_url": "https://sun.wnba.com/roster",
       "status": "ok",
-      "names_found": 23,
-      "image_urls_found": 26
+      "player_links": 0,
+      "roster_names": 14,
+      "headshot_urls": 20
     },
     {
       "team_id": "indiana_fever",
       "team_name": "Indiana Fever",
       "source_url": "https://fever.wnba.com/roster",
       "status": "ok",
-      "names_found": 21,
-      "image_urls_found": 23
+      "player_links": 0,
+      "roster_names": 14,
+      "headshot_urls": 18
     },
     {
       "team_id": "new_york_liberty",
       "team_name": "New York Liberty",
       "source_url": "https://liberty.wnba.com/roster",
       "status": "ok",
-      "names_found": 23,
-      "image_urls_found": 25
+      "player_links": 0,
+      "roster_names": 13,
+      "headshot_urls": 20
     },
     {
       "team_id": "toronto_tempo",
       "team_name": "Toronto Tempo",
       "source_url": "https://tempo.wnba.com/roster",
       "status": "ok",
-      "names_found": 19,
-      "image_urls_found": 25
+      "player_links": 0,
+      "roster_names": 12,
+      "headshot_urls": 18
     },
     {
       "team_id": "washington_mystics",
       "team_name": "Washington Mystics",
       "source_url": "https://mystics.wnba.com/roster",
       "status": "ok",
-      "names_found": 20,
-      "image_urls_found": 22
+      "player_links": 0,
+      "roster_names": 13,
+      "headshot_urls": 17
     },
     {
       "team_id": "dallas_wings",
       "team_name": "Dallas Wings",
       "source_url": "https://wings.wnba.com/roster",
       "status": "ok",
-      "names_found": 23,
-      "image_urls_found": 25
+      "player_links": 0,
+      "roster_names": 13,
+      "headshot_urls": 20
     },
     {
       "team_id": "golden_state_valkyries",
       "team_name": "Golden State Valkyries",
       "source_url": "https://valkyries.wnba.com/roster",
       "status": "ok",
-      "names_found": 24,
-      "image_urls_found": 27
+      "player_links": 0,
+      "roster_names": 15,
+      "headshot_urls": 21
     },
     {
       "team_id": "las_vegas_aces",
       "team_name": "Las Vegas Aces",
       "source_url": "https://aces.wnba.com/roster",
       "status": "ok",
-      "names_found": 23,
-      "image_urls_found": 26
+      "player_links": 0,
+      "roster_names": 12,
+      "headshot_urls": 21
     },
     {
       "team_id": "los_angeles_sparks",
       "team_name": "Los Angeles Sparks",
       "source_url": "https://sparks.wnba.com/roster",
       "status": "ok",
-      "names_found": 19,
-      "image_urls_found": 25
+      "player_links": 0,
+      "roster_names": 14,
+      "headshot_urls": 20
     },
     {
       "team_id": "minnesota_lynx",
       "team_name": "Minnesota Lynx",
       "source_url": "https://lynx.wnba.com/roster",
       "status": "ok",
-      "names_found": 23,
-      "image_urls_found": 26
+      "player_links": 0,
+      "roster_names": 14,
+      "headshot_urls": 20
     },
     {
       "team_id": "phoenix_mercury",
       "team_name": "Phoenix Mercury",
       "source_url": "https://mercury.wnba.com/roster",
       "status": "ok",
-      "names_found": 25,
-      "image_urls_found": 29
+      "player_links": 0,
+      "roster_names": 12,
+      "headshot_urls": 22
     },
     {
       "team_id": "portland_fire",
       "team_name": "Portland Fire",
       "source_url": "https://fire.wnba.com/roster",
       "status": "ok",
-      "names_found": 19,
-      "image_urls_found": 24
+      "player_links": 0,
+      "roster_names": 13,
+      "headshot_urls": 18
     },
     {
       "team_id": "seattle_storm",
       "team_name": "Seattle Storm",
       "source_url": "https://storm.wnba.com/roster",
       "status": "ok",
-      "names_found": 20,
-      "image_urls_found": 24
+      "player_links": 0,
+      "roster_names": 13,
+      "headshot_urls": 18
     }
   ]
 }

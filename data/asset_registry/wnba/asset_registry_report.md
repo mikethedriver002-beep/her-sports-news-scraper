@@ -1,14 +1,13 @@
 # HSD WNBA Asset Registry v1.1
 
-Generated: 2026-06-15T14:27:27.163236+00:00
+Generated: 2026-06-15T15:03:20.506925+00:00
 
 ## Counts
 
 - teams: 15
-- team logos verified: 13
-- missing required team logos: 2
+- team logos verified: 15
+- missing required team logos: 0
 
 ## Missing team logos
 
-- Connecticut Sun -> `assets/leagues/wnba/teams/connecticut_sun/logo.png`
-- Indiana Fever -> `assets/leagues/wnba/teams/indiana_fever/logo.png`
+- None

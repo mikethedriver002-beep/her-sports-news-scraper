@@ -1,17 +1,19 @@
-# HSD WNBA Athlete Registry v1
+# HSD WNBA Athlete Registry v1.2
 
-Generated: 2026-06-15T14:27:41.220572+00:00
+Generated: 2026-06-15T15:03:31.544452+00:00
 
 ## Counts
 
 - roster sources: 15
 - sources ok: 15
 - sources failed: 0
-- athletes discovered: 327
-- aliases: 990
-- image candidates: 300
+- athletes discovered: 200
+- aliases: 610
+- image candidates: 294
+- matched image candidates: 0
 - approved images: 0
-- missing approved images: 654
+- missing approved images: 400
+- dirty name drops: 30
 
 ## Usage policy
 
@@ -21,18 +23,18 @@ Generated: 2026-06-15T14:27:41.220572+00:00
 
 ## Source status
 
-- Atlanta Dream: ok | names=20 | image_urls=24
-- Chicago Sky: ok | names=25 | image_urls=27
-- Connecticut Sun: ok | names=23 | image_urls=26
-- Indiana Fever: ok | names=21 | image_urls=23
-- New York Liberty: ok | names=23 | image_urls=25
-- Toronto Tempo: ok | names=19 | image_urls=25
-- Washington Mystics: ok | names=20 | image_urls=22
-- Dallas Wings: ok | names=23 | image_urls=25
-- Golden State Valkyries: ok | names=24 | image_urls=27
-- Las Vegas Aces: ok | names=23 | image_urls=26
-- Los Angeles Sparks: ok | names=19 | image_urls=25
-- Minnesota Lynx: ok | names=23 | image_urls=26
-- Phoenix Mercury: ok | names=25 | image_urls=29
-- Portland Fire: ok | names=19 | image_urls=24
-- Seattle Storm: ok | names=20 | image_urls=24
+- Atlanta Dream: ok | player_links=0 | roster_names=13 | headshot_urls=19
+- Chicago Sky: ok | player_links=0 | roster_names=15 | headshot_urls=22
+- Connecticut Sun: ok | player_links=0 | roster_names=14 | headshot_urls=20
+- Indiana Fever: ok | player_links=0 | roster_names=14 | headshot_urls=18
+- New York Liberty: ok | player_links=0 | roster_names=13 | headshot_urls=20
+- Toronto Tempo: ok | player_links=0 | roster_names=12 | headshot_urls=18
+- Washington Mystics: ok | player_links=0 | roster_names=13 | headshot_urls=17
+- Dallas Wings: ok | player_links=0 | roster_names=13 | headshot_urls=20
+- Golden State Valkyries: ok | player_links=0 | roster_names=15 | headshot_urls=21
+- Las Vegas Aces: ok | player_links=0 | roster_names=12 | headshot_urls=21
+- Los Angeles Sparks: ok | player_links=0 | roster_names=14 | headshot_urls=20
+- Minnesota Lynx: ok | player_links=0 | roster_names=14 | headshot_urls=20
+- Phoenix Mercury: ok | player_links=0 | roster_names=12 | headshot_urls=22
+- Portland Fire: ok | player_links=0 | roster_names=13 | headshot_urls=18
+- Seattle Storm: ok | player_links=0 | roster_names=13 | headshot_urls=18

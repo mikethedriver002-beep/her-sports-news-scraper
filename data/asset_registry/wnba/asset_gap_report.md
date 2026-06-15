@@ -1,19 +1,17 @@
 # HSD WNBA Asset Gap Report
 
-Generated: 2026-06-15T14:27:27.226304+00:00
-Validation status: **needs_assets**
+Generated: 2026-06-15T15:03:20.565944+00:00
+Validation status: **pass**
 
 ## Missing required team logos
 
-- Connecticut Sun -> `assets/leagues/wnba/teams/connecticut_sun/logo.png`
-- Indiana Fever -> `assets/leagues/wnba/teams/indiana_fever/logo.png`
+- None
 
 ## Logo Gap Upload Pack
 
 Upload each missing logo as `logo.png` to the exact folder below. Do not rename the file differently. Do not use text-only fallback. Do not substitute another team logo.
 
-- `assets/leagues/wnba/teams/connecticut_sun/logo.png`
-- `assets/leagues/wnba/teams/indiana_fever/logo.png`
+- None
 
 ## Next action
 

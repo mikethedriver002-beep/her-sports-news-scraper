@@ -1,16 +1,19 @@
 {
-  "version": "hsd-wnba-logo-source-fetcher-v1",
-  "generated_at_utc": "2026-06-15T14:27:27.111488+00:00",
+  "version": "hsd-wnba-logo-source-fetcher-v1.1-favicon-fallback",
+  "generated_at_utc": "2026-06-15T15:03:20.458432+00:00",
   "sources": 10,
-  "downloaded": 0,
+  "downloaded": 7,
   "existing": 3,
-  "failed": 7,
+  "failed": 0,
+  "fallback_downloaded": 2,
   "results": [
     {
       "team_id": "chicago_sky",
       "team_name": "Chicago Sky",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/f/fc/Chicago_Sky_logo.svg",
       "target_path": "assets/leagues/wnba/teams/chicago_sky/logo.svg",
+      "fallback_url": "",
+      "fallback_target_path": "",
       "status": "exists",
       "bytes": 9431,
       "reason": ""
@@ -20,51 +23,63 @@
       "team_name": "Indiana Fever",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/5/54/Indiana_Fever_logo.svg",
       "target_path": "assets/leagues/wnba/teams/indiana_fever/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "",
+      "fallback_target_path": "",
+      "status": "downloaded",
+      "bytes": 14015,
+      "reason": ""
     },
     {
       "team_id": "dallas_wings",
       "team_name": "Dallas Wings",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/9/95/Dallas_Wings_logo.svg",
       "target_path": "assets/leagues/wnba/teams/dallas_wings/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "",
+      "fallback_target_path": "",
+      "status": "downloaded",
+      "bytes": 18743,
+      "reason": ""
     },
     {
       "team_id": "golden_state_valkyries",
       "team_name": "Golden State Valkyries",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/0/00/Golden_State_Valkyries_logo.svg",
       "target_path": "assets/leagues/wnba/teams/golden_state_valkyries/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "https://cdn.wnba.com/static/next/teams/favicons/GSV/apple-touch-icon.png",
+      "fallback_target_path": "assets/leagues/wnba/teams/golden_state_valkyries/logo.png",
+      "status": "downloaded_fallback",
+      "bytes": 2916,
+      "reason": "primary failed: HTTPError: HTTP Error 429: Too many requests (76af2b0)"
     },
     {
       "team_id": "las_vegas_aces",
       "team_name": "Las Vegas Aces",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/f/ff/New_Las_Vegas_Aces_WNBA_logo_2024.svg",
       "target_path": "assets/leagues/wnba/teams/las_vegas_aces/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "",
+      "fallback_target_path": "",
+      "status": "downloaded",
+      "bytes": 9259,
+      "reason": ""
     },
     {
       "team_id": "minnesota_lynx",
       "team_name": "Minnesota Lynx",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/7/75/Minnesota_Lynx_logo.svg",
       "target_path": "assets/leagues/wnba/teams/minnesota_lynx/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "https://cdn.wnba.com/static/next/teams/favicons/MIN/apple-touch-icon.png",
+      "fallback_target_path": "assets/leagues/wnba/teams/minnesota_lynx/logo.png",
+      "status": "downloaded_fallback",
+      "bytes": 5147,
+      "reason": "primary failed: HTTPError: HTTP Error 429: Too many requests (76af2b0)"
     },
     {
       "team_id": "phoenix_mercury",
       "team_name": "Phoenix Mercury",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/4/48/Phoenix_Mercury_logo_2025.svg",
       "target_path": "assets/leagues/wnba/teams/phoenix_mercury/logo.svg",
+      "fallback_url": "",
+      "fallback_target_path": "",
       "status": "exists",
       "bytes": 7979,
       "reason": ""
@@ -74,24 +89,30 @@
       "team_name": "Portland Fire",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/c/cf/Portland_Fire_logo.svg",
       "target_path": "assets/leagues/wnba/teams/portland_fire/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "",
+      "fallback_target_path": "",
+      "status": "downloaded",
+      "bytes": 25840,
+      "reason": ""
     },
     {
       "team_id": "connecticut_sun",
       "team_name": "Connecticut Sun",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/0/09/Connecticut_Sun_logo.svg",
       "target_path": "assets/leagues/wnba/teams/connecticut_sun/logo.svg",
-      "status": "failed",
-      "bytes": 0,
-      "reason": "HTTPError: HTTP Error 429: Too many requests (76af2b0)"
+      "fallback_url": "",
+      "fallback_target_path": "",
+      "status": "downloaded",
+      "bytes": 11474,
+      "reason": ""
     },
     {
       "team_id": "seattle_storm",
       "team_name": "Seattle Storm",
       "source_url": "https://upload.wikimedia.org/wikipedia/en/a/a0/Seattle_Storm_%282021%29_logo.svg",
       "target_path": "assets/leagues/wnba/teams/seattle_storm/logo.svg",
+      "fallback_url": "",
+      "fallback_target_path": "",
       "status": "exists",
       "bytes": 45871,
       "reason": ""

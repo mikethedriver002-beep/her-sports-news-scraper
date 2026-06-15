@@ -1,6 +1,6 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-15T14:27:43.831486+00:00
+Generated: 2026-06-15T15:03:33.892866+00:00
 Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
@@ -11,19 +11,19 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 - content slots: 7
 - graphics files copied: 7
 - rendered zip files copied: 7
-- verified WNBA team logos: 13
-- missing WNBA team logos: 2
+- verified WNBA team logos: 15
+- missing WNBA team logos: 0
 - logo sources: 10
-- logos downloaded: 0
+- logos downloaded: 7
 - logos existing: 3
-- logos failed: 7
+- logos failed: 0
 - athlete source urls: 15
 - athlete source urls ok: 15
 - athlete source urls failed: 0
 - athlete sources: 15
 - athlete sources ok: 15
-- athletes discovered: 327
-- athlete image candidates: 300
+- athletes discovered: 200
+- athlete image candidates: 294
 - approved athlete images: 0
 
 ## Review order
@@ -50,10 +50,10 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Rendered packets
 
-- ig-feed_ig-feed-evening-preview_washington-mystics-at-new-york-liberty: Washington Mystics at New York Liberty
+- ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-golden-state-valkyries: Los Angeles Sparks at Golden State Valkyries
 - ig-feed_ig-feed-noon_last-night-in-the-w: Last Night in the W
 - ig-stories_ig-stories-rolling-1_last-night-in-the-w: Last Night in the W
 - ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
 - threads_nightcap_last-night-in-the-w: Last Night in the W
-- threads_threads-live_washington-mystics-at-new-york-liberty: Washington Mystics at New York Liberty
+- threads_threads-live_los-angeles-sparks-at-golden-state-valkyries: Los Angeles Sparks at Golden State Valkyries
 - threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
