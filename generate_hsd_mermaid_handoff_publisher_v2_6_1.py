@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v3.5.1-render-studio-v3-integrity-check"
+VERSION = "v3.5.2-render-studio-v3-0-1-router-fix"
 OUT_REPORT = Path("assignment_handoff_publisher_report.md")
 OUT_MANIFEST = Path("assignment_handoff_publisher_manifest.json")
 
@@ -103,7 +103,7 @@ def main() -> None:
     copy_file("assignment_handoff_status.csv", "manual_workflow_pack_status.csv", actions)
     copy_dir("assignment_handoff_packets", "manual_workflow_packets", actions)
     copy_dir("assignment_handoff_zips", "manual_workflow_handoff_packs", actions)
-    render_run = run_script("scripts/generate_hsd_mermaid_render_studio_v3_0.py")
+    render_run = run_script("scripts/generate_hsd_mermaid_render_studio_v3_0_1.py")
     if Path("rendered_handoff_zips").exists():
         target = Path("manual_workflow_handoff_packs")
         target.mkdir(exist_ok=True)
@@ -132,7 +132,7 @@ def main() -> None:
     }
     manifest = {"version": VERSION, "generated_at": now_iso(), "registry_build": registry_build, "registry_validate": registry_validate, "registry_gaps": registry_gaps, "handoff_run": handoff_run, "render_run": render_run, "render_meta": render_meta, "publish_run": publish_run, "integrity_run": integrity_run, "latest_summary": latest_summary, "commit_run": commit_run, "actions": actions, "counts": counts}
     OUT_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    lines = ["# Mermaid Handoff Publisher v3.0 Registry Resolver", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
+    lines = ["# Mermaid Handoff Publisher v3.0.1 Router Fix", "", f"Generated: {now_iso()}", f"Version: {VERSION}", "", "## Counts", ""]
     lines += [f"- {k}: {v}" for k, v in counts.items()]
     lines += ["", "## Commit latest outputs", "", f"- status: {commit_run.get('status')}"]
     if commit_run.get("reason"):
