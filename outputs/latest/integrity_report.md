@@ -1,6 +1,6 @@
 # HSD Render Integrity Report
 
-Generated: 2026-06-15T03:38:13.193430+00:00
+Generated: 2026-06-15T03:51:33.701566+00:00
 Status: **pass**
 
 ## Counts

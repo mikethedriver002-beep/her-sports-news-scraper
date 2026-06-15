@@ -4,7 +4,7 @@ rendered_handoff_visual_qa.csv,outputs/latest/review_files/rendered_handoff_visu
 rendered_handoff_manifest.csv,outputs/latest/review_files/rendered_handoff_manifest.csv,1163
 rendered_handoff_status.csv,outputs/latest/review_files/rendered_handoff_status.csv,1558
 rendered_handoff_metadata.json,outputs/latest/review_files/rendered_handoff_metadata.json,489
-rendered_handoff_contact_sheet.jpg,outputs/latest/review_files/rendered_handoff_contact_sheet.jpg,111684
+rendered_handoff_contact_sheet.jpg,outputs/latest/review_files/rendered_handoff_contact_sheet.jpg,111698
 assignment_handoff_report.md,outputs/latest/review_files/assignment_handoff_report.md,1082
 assignment_handoff_index.csv,outputs/latest/review_files/assignment_handoff_index.csv,4283
 assignment_handoff_status.csv,outputs/latest/review_files/assignment_handoff_status.csv,1024
@@ -19,7 +19,7 @@ ig_story_queue_v2.csv,outputs/latest/review_files/ig_story_queue_v2.csv,1211
 threads_queue_v2.csv,outputs/latest/review_files/threads_queue_v2.csv,2951
 data/asset_registry/wnba/teams.csv,outputs/latest/review_files/teams.csv,1508
 data/asset_registry/wnba/team_aliases.csv,outputs/latest/review_files/team_aliases.csv,1639
-data/asset_registry/wnba/team_logos.csv,outputs/latest/review_files/team_logos.csv,2862
+data/asset_registry/wnba/team_logos.csv,outputs/latest/review_files/team_logos.csv,2857
 data/asset_registry/wnba/missing_team_logos.csv,outputs/latest/review_files/missing_team_logos.csv,1136
 data/asset_registry/wnba/roster_entities.csv,outputs/latest/review_files/roster_entities.csv,49
 data/asset_registry/wnba/roster_names.csv,outputs/latest/review_files/roster_names.csv,28
@@ -29,9 +29,9 @@ data/asset_registry/wnba/asset_registry_validation.json,outputs/latest/review_fi
 data/asset_registry/wnba/asset_registry_validation_report.md,outputs/latest/review_files/asset_registry_validation_report.md,821
 data/asset_registry/wnba/asset_gap_report.json,outputs/latest/review_files/asset_gap_report.json,374
 data/asset_registry/wnba/asset_gap_report.md,outputs/latest/review_files/asset_gap_report.md,1453
-rendered_handoff_graphics/threads_nightcap_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,outputs/latest/rendered_graphics/threads_nightcap_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,62753
-rendered_handoff_graphics/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,outputs/latest/rendered_graphics/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,62121
+rendered_handoff_graphics/threads_nightcap_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,outputs/latest/rendered_graphics/threads_nightcap_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,66663
+rendered_handoff_graphics/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,outputs/latest/rendered_graphics/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo/atlanta-dream-beat-toronto-tempo.png,66046
 rendered_handoff_graphics/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge/from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti.png,outputs/latest/rendered_graphics/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge/from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti.png,112331
-rendered_handoff_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip,outputs/latest/rendered_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip,56948
+rendered_handoff_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip,outputs/latest/rendered_zips/ig-feed_ig-feed-noon_atlanta-dream-beat-toronto-tempo.zip,60123
 rendered_handoff_zips/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge.zip,outputs/latest/rendered_zips/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge.zip,104877
-rendered_handoff_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip,outputs/latest/rendered_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip,56796
+rendered_handoff_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip,outputs/latest/rendered_zips/threads_nightcap_atlanta-dream-beat-toronto-tempo.zip,60787
