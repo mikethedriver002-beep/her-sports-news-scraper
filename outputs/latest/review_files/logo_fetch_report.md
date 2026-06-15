@@ -1,13 +1,13 @@
 # HSD WNBA Logo Source Fetch Report
 
-Generated: 2026-06-15T15:43:02.828454+00:00
+Generated: 2026-06-15T16:05:47.552251+00:00
 Version: hsd-wnba-logo-source-fetcher-v1.1-favicon-fallback
 
 ## Counts
 
 - sources: 10
-- downloaded: 1
-- existing: 9
+- downloaded: 0
+- existing: 10
 - failed: 0
 - fallback downloaded: 0
 
@@ -18,7 +18,7 @@ Version: hsd-wnba-logo-source-fetcher-v1.1-favicon-fallback
 - Dallas Wings: exists -> `assets/leagues/wnba/teams/dallas_wings/logo.svg`
 - Golden State Valkyries: exists -> `assets/leagues/wnba/teams/golden_state_valkyries/logo.svg`
 - Las Vegas Aces: exists -> `assets/leagues/wnba/teams/las_vegas_aces/logo.svg`
-- Minnesota Lynx: downloaded -> `assets/leagues/wnba/teams/minnesota_lynx/logo.svg`
+- Minnesota Lynx: exists -> `assets/leagues/wnba/teams/minnesota_lynx/logo.svg`
 - Phoenix Mercury: exists -> `assets/leagues/wnba/teams/phoenix_mercury/logo.svg`
 - Portland Fire: exists -> `assets/leagues/wnba/teams/portland_fire/logo.svg`
 - Connecticut Sun: exists -> `assets/leagues/wnba/teams/connecticut_sun/logo.svg`

@@ -1,9 +1,9 @@
 {
   "version": "hsd-wnba-logo-source-fetcher-v1.1-favicon-fallback",
-  "generated_at_utc": "2026-06-15T15:43:02.828454+00:00",
+  "generated_at_utc": "2026-06-15T16:05:47.552251+00:00",
   "sources": 10,
-  "downloaded": 1,
-  "existing": 9,
+  "downloaded": 0,
+  "existing": 10,
   "failed": 0,
   "fallback_downloaded": 0,
   "results": [
@@ -69,7 +69,7 @@
       "target_path": "assets/leagues/wnba/teams/minnesota_lynx/logo.svg",
       "fallback_url": "",
       "fallback_target_path": "",
-      "status": "downloaded",
+      "status": "exists",
       "bytes": 9820,
       "reason": ""
     },
