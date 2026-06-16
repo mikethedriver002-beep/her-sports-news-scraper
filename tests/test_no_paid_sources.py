@@ -53,3 +53,13 @@ def test_v3_repo_state_audit_is_wired_into_lite_review() -> None:
     assert "scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py" in lite
     assert "repo_state_v3.md" in lite
     assert "repo_state_v3.json" in lite
+
+
+def test_v3_sanity_workflow_builds_upstream_before_acceptance_commands() -> None:
+    workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
+    assert "Build upstream packets for V3 sanity" in workflow
+    assert "python generate_hsd_final_score_stories_v1.py" in workflow
+    assert "python generate_hsd_manual_workflow_merge_v1.py" in workflow
+    assert "python generate_hsd_mermaid_upper_echelon_v2.py" in workflow
+    assert "V3 first-run acceptance commands" in workflow
+    assert workflow.index("Build upstream packets for V3 sanity") < workflow.index("V3 first-run acceptance commands")
