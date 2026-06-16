@@ -1,0 +1,95 @@
+{
+  "version": "hsd-template-registry-v1",
+  "status": "review_only_stage",
+  "default_review_only": true,
+  "production_auto_promotion_allowed": false,
+  "brand_policy": "config/graphics/brand_policy_v1.json",
+  "law_document": "docs/HSD_GRAPHICS_LAW_V1.md",
+  "template_spec_root": "config/graphics/templates",
+  "families": [
+    {
+      "template_id": "game_recap_final_score.a.v1",
+      "family": "Game Recap / Final Score",
+      "variant": "A",
+      "priority": 1,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350", "1080x1920"],
+      "spec_path": "config/graphics/templates/game_recap_final_score_a_v1.json",
+      "notes": "Highest-utility single-game final template family. Build first, approve before production."
+    },
+    {
+      "template_id": "tonight_in_the_w.a.v1",
+      "family": "Tonight in the W",
+      "variant": "A",
+      "priority": 2,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": true,
+      "supported_formats": ["1080x1350"],
+      "spec_path": "config/graphics/templates/tonight_in_the_w_a_v1.json",
+      "notes": "Canonical premium matchup preview direction from approved mockup, not production-promoted yet."
+    },
+    {
+      "template_id": "last_night_in_the_w.a.v1",
+      "family": "Last Night in the W",
+      "variant": "A",
+      "priority": 3,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350", "1080x1920"],
+      "spec_path": "config/graphics/templates/last_night_in_the_w_a_v1.json",
+      "notes": "Multi-game recap/scoreboard family."
+    },
+    {
+      "template_id": "daily_debrief.a.v1",
+      "family": "The Daily Debrief",
+      "variant": "A",
+      "priority": 4,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["carousel", "1080x1350", "1080x1920"],
+      "spec_path": "config/graphics/templates/daily_debrief_a_v1.json",
+      "notes": "Flagship multi-sport editorial roundup system, 3 stories max."
+    },
+    {
+      "template_id": "womens_soccer_match_story.a.v1",
+      "family": "Women’s Soccer / NWSL / USWNT",
+      "variant": "A",
+      "priority": 5,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350", "1080x1920"],
+      "spec_path": "config/graphics/templates/womens_soccer_match_story_a_v1.json",
+      "notes": "NWSL/USWNT/women’s soccer match or league story template."
+    },
+    {
+      "template_id": "tennis_wta_result.a.v1",
+      "family": "Tennis / WTA",
+      "variant": "A",
+      "priority": 6,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350", "1080x1920"],
+      "spec_path": "config/graphics/templates/tennis_wta_result_a_v1.json",
+      "notes": "WTA match result/tournament story template."
+    },
+    {
+      "template_id": "lpga_golf_winner_leaderboard.a.v1",
+      "family": "LPGA / Golf",
+      "variant": "A",
+      "priority": 7,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350", "1080x1920"],
+      "spec_path": "config/graphics/templates/lpga_golf_winner_leaderboard_a_v1.json",
+      "notes": "LPGA winner/leaderboard template family."
+    }
+  ]
+}
