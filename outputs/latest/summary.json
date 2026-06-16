@@ -1,6 +1,6 @@
 {
   "version": "v2.8.6-athlete-source-resolver-review",
-  "generated_at": "2026-06-16T01:19:10.696893+00:00",
+  "generated_at": "2026-06-16T01:47:01.107648+00:00",
   "graphics_files": 5,
   "zip_files": 5,
   "rendered_packets": 5,
@@ -38,12 +38,14 @@
   "athlete_smoke_test_blocked_packets": 0,
   "athlete_smoke_test_packets_using_approved_athletes": 1,
   "athlete_smoke_test_integrity_status": "pass",
-  "production_director_version": "v4.0-production-graphics-director",
+  "production_director_version": "v4.1-context-engine",
   "production_director_rendered_exports": 5,
   "production_director_copy_items": 5,
   "production_director_carousel_plans": 5,
   "production_director_prompt_dossiers": 5,
+  "production_director_context_rows": 5,
+  "production_director_rich_context_rows": 5,
   "integrity_status": "pass",
   "integrity_errors": [],
-  "integrity_checked_at": "2026-06-16T01:19:25.357472+00:00"
+  "integrity_checked_at": "2026-06-16T01:47:24.056446+00:00"
 }

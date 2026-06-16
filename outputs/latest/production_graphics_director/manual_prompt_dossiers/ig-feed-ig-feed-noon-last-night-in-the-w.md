@@ -3,49 +3,55 @@
 Packet ID: `ig-feed_ig-feed-noon_last-night-in-the-w`
 Platform: `IG Feed`
 League: `WNBA`
+Content family: `wnba_results_roundup`
+Context quality: `rich`
 
 ## Brand Style
 
-Create a premium Her Sports Daily women’s sports graphic. Use a cinematic black/dark navy background, neon edge lighting, team-color accents, bold condensed sports typography, visible HSD watermark/logo, high contrast, and clean spacing. Avoid generic Canva templates. Avoid white panels unless explicitly used as tiny text labels.
+Premium women’s sports editorial. Dark cinematic background, high contrast, bold condensed sports typography, neon team-color edge lighting, gold accents, clean logo rows, no white content cards, no generic Canva look.
 
-## Exact On-Image Copy Options
+## Approved Athlete Assets
 
-- LAST NIGHT IN THE W
-- The results that moved the night
-- Biggest win? Best finish? Most important answer?
+- No approved player image required for this packet.
+
+## Source Context
+
+Last Night in the W | WNBA | result_or_recap | Last Night in the W: put this result on the board. | Last Night in the W The result matters because it changes the conversation, not just the scoreboard. | RESULT CHECK: Last Night in the W What changed after this one? | What was the swing moment? | v3.3.6-mermaid-assignment-handoff-v2.6 | ig_feed_noon | IG Feed…
 
 ## Carousel Plan
 
 ### Slide 1: Cover
 On-image copy: Last Night in the W
-Visual direction: Premium scoreboard cover with bold title and neon/gold accents.
+Visual direction: Bold scoreboard cover with cinematic dark background.
 
 ### Slide 2: Scores
 On-image copy: Every final, clean and readable.
-Visual direction: Team logo scoreboard rows with large final scores.
+Visual direction: Large score rows, team logos, no clutter.
 
 ### Slide 3: Biggest win
 On-image copy: Which result moved the night?
-Visual direction: One result gets a full-card spotlight.
+Visual direction: One result gets the spotlight.
 
 ### Slide 4: Player standout
-On-image copy: Use approved headshot only if verified.
-Visual direction: Approved player headshot, stat slots, and short takeaway.
+On-image copy: Approved headshot only if verified.
+Visual direction: Player headshot, stat lane, short takeaway.
 
-### Slide 5: Poll
+### Slide 5: CTA
 On-image copy: Best win of the night?
-Visual direction: Audience engagement frame.
+Visual direction: Engagement slide with HSD branding.
 
 ## Caption
 
-Last Night in the W
+Last Night in the W.
 
-This is the kind of women’s sports story that deserves more than a scroll-by. The context matters, the names matter, and the moment has a chance to travel if people are actually paying attention.
+The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
 
-What part of this story are you watching closest?
+This is the kind of night where one final score can shift a whole conversation.
+
+Which result mattered most to you? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball
 
 ## Negative Prompt
 
-No fake players. No invented stats. No low-contrast white-on-white text. No cut-off names. No generic blank headshots. No overstuffed small text. No misspelled team names. No extra logos.
+No fake players. No invented stats. No unapproved headshots. No generic blank headshots. No low-contrast text. No cut-off names. No white panels. No extra teams. No misspelled team names.

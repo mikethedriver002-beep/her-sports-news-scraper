@@ -2,57 +2,52 @@
 
 Packet ID: `ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti`
 Platform: `IG Stories`
-League: ``
+League: `LPGA`
+Content family: `feature_story`
+Context quality: `rich`
 
 ## Brand Style
 
-Create a premium Her Sports Daily women’s sports graphic. Use a cinematic black/dark navy background, neon edge lighting, team-color accents, bold condensed sports typography, visible HSD watermark/logo, high contrast, and clean spacing. Avoid generic Canva templates. Avoid white panels unless explicitly used as tiny text labels.
+Premium women’s sports editorial. Dark cinematic background, high contrast, bold condensed sports typography, neon team-color edge lighting, gold accents, clean logo rows, no white content cards, no generic Canva look.
 
-## Exact On-Image Copy Options
+## Approved Athlete Assets
 
-- TONIGHT IN THE W
-- From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
-- Who controls the first run?
-- Keys: pace • glass • late-clock shot-making
+- No approved player image required for this packet.
+
+## Source Context
+
+From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | official_news_article | The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. | From the…
 
 ## Carousel Plan
 
 ### Slide 1: Cover
 On-image copy: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
-Visual direction: Premium Tonight in the W cover. Big typography, both team logos, dark arena-lighting background.
+Visual direction: Premium editorial cover.
 
-### Slide 2: Why it matters
-On-image copy: Road statement or home-court hold?
-Visual direction: Editorial text slide with subtle team-color split and one key matchup question.
+### Slide 2: Context
+On-image copy: Why it matters.
+Visual direction: Clean explainer card.
 
-### Slide 3: Players to watch
-On-image copy: Star power, pace-setters, and late-game decision makers.
-Visual direction: Use approved player headshots only when available; otherwise use team logos and silhouette placeholders marked review-only.
+### Slide 3: People
+On-image copy: Names and stakes.
+Visual direction: Use real approved imagery only if available.
 
-### Slide 4: Keys to the game
-On-image copy: Pace. Glass. Shot quality. Turnovers.
-Visual direction: Four key tiles with icon-style treatments, no tiny text.
-
-### Slide 5: Poll
-On-image copy: Who needs this one more?
-Visual direction: Big CTA with two team logo buttons and HSD branding.
+### Slide 4: CTA
+On-image copy: Are we talking about this enough?
+Visual direction: Question-first HSD slide.
 
 ## Caption
 
 From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
 
-Who needs this one more? 👀
+This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
 
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together comes into the window looking for a road statement, and this is the kind of matchup where the first run can change the whole tone of the night. They need clean possessions, pressure on the glass, and enough shot-making to keep the building from getting comfortable.
+Stories like this are how a season builds memory.
 
-the Dow Championship June 14, 2026 gets it at home, with a chance to protect the floor and turn the late window into a statement. If they control the pace, make the extra pass, and force From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together to work late in the clock, this one can get loud fast.
+Are we talking about this enough?
 
-One matchup. One tone-setter.
-
-Do you trust the road punch, or the home response? 🏀
-
-#HerSportsDaily #WomensSports #WNBA #Basketball
+#HerSportsDaily #WomensSports #LPGA #Golf
 
 ## Negative Prompt
 
-No fake players. No invented stats. No low-contrast white-on-white text. No cut-off names. No generic blank headshots. No overstuffed small text. No misspelled team names. No extra logos.
+No fake players. No invented stats. No unapproved headshots. No generic blank headshots. No low-contrast text. No cut-off names. No white panels. No extra teams. No misspelled team names.

@@ -2,105 +2,113 @@
 
 ## Last Night in the W
 
+Family: `wnba_results_roundup`
+
 ### IG Caption
-Last Night in the W
+Last Night in the W.
 
-This is the kind of women’s sports story that deserves more than a scroll-by. The context matters, the names matter, and the moment has a chance to travel if people are actually paying attention.
+The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
 
-What part of this story are you watching closest?
+This is the kind of night where one final score can shift a whole conversation.
+
+Which result mattered most to you? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball
 
 ### Threads
-Last Night in the W
+Last Night in the W. Which result mattered most?
 
 ### First comment
-What are you watching here?
+Best win of the night?
 
 ---
 
 ## Last Night in the W
 
+Family: `wnba_results_roundup`
+
 ### IG Caption
-Last Night in the W
+Last Night in the W.
 
-This is the kind of women’s sports story that deserves more than a scroll-by. The context matters, the names matter, and the moment has a chance to travel if people are actually paying attention.
+The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
 
-What part of this story are you watching closest?
+This is the kind of night where one final score can shift a whole conversation.
+
+Which result mattered most to you? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball
 
 ### Threads
-Last Night in the W
+Last Night in the W. Which result mattered most?
 
 ### First comment
-What are you watching here?
+Best win of the night?
 
 ---
 
 ## From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
 
+Family: `feature_story`
+
 ### IG Caption
 From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
 
-Who needs this one more? 👀
+This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
 
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together comes into the window looking for a road statement, and this is the kind of matchup where the first run can change the whole tone of the night. They need clean possessions, pressure on the glass, and enough shot-making to keep the building from getting comfortable.
+Stories like this are how a season builds memory.
 
-the Dow Championship June 14, 2026 gets it at home, with a chance to protect the floor and turn the late window into a statement. If they control the pace, make the extra pass, and force From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together to work late in the clock, this one can get loud fast.
+Are we talking about this enough?
 
-One matchup. One tone-setter.
-
-Do you trust the road punch, or the home response? 🏀
-
-#HerSportsDaily #WomensSports #WNBA #Basketball
+#HerSportsDaily #WomensSports #LPGA #Golf
 
 ### Threads
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Who needs this one more? Road punch or home response? 🏀
+From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Are we talking about this enough?
 
 ### First comment
-Road statement or home-court hold? Drop your pick.
+Are we giving this enough attention?
 
 ---
 
 ## Last Night in the W
 
+Family: `wnba_results_roundup`
+
 ### IG Caption
-Last Night in the W
+Last Night in the W.
 
-This is the kind of women’s sports story that deserves more than a scroll-by. The context matters, the names matter, and the moment has a chance to travel if people are actually paying attention.
+The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
 
-What part of this story are you watching closest?
+This is the kind of night where one final score can shift a whole conversation.
+
+Which result mattered most to you? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball
 
 ### Threads
-Last Night in the W
+Last Night in the W. Which result mattered most?
 
 ### First comment
-What are you watching here?
+Best win of the night?
 
 ---
 
 ## From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
 
+Family: `feature_story`
+
 ### IG Caption
 From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
 
-Who needs this one more? 👀
+This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
 
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together comes into the window looking for a road statement, and this is the kind of matchup where the first run can change the whole tone of the night. They need clean possessions, pressure on the glass, and enough shot-making to keep the building from getting comfortable.
+Stories like this are how a season builds memory.
 
-the Dow Championship June 14, 2026 gets it at home, with a chance to protect the floor and turn the late window into a statement. If they control the pace, make the extra pass, and force From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together to work late in the clock, this one can get loud fast.
+Are we talking about this enough?
 
-One matchup. One tone-setter.
-
-Do you trust the road punch, or the home response? 🏀
-
-#HerSportsDaily #WomensSports #WNBA #Basketball
+#HerSportsDaily #WomensSports #LPGA #Golf
 
 ### Threads
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Who needs this one more? Road punch or home response? 🏀
+From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Are we talking about this enough?
 
 ### First comment
-Road statement or home-court hold? Drop your pick.
+Are we giving this enough attention?

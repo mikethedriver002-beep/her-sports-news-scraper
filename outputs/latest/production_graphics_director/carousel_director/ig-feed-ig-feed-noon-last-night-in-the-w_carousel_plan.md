@@ -3,24 +3,24 @@
 ## Slide 1: Cover
 Last Night in the W
 
-Premium scoreboard cover with bold title and neon/gold accents.
+Bold scoreboard cover with cinematic dark background.
 
 ## Slide 2: Scores
 Every final, clean and readable.
 
-Team logo scoreboard rows with large final scores.
+Large score rows, team logos, no clutter.
 
 ## Slide 3: Biggest win
 Which result moved the night?
 
-One result gets a full-card spotlight.
+One result gets the spotlight.
 
 ## Slide 4: Player standout
-Use approved headshot only if verified.
+Approved headshot only if verified.
 
-Approved player headshot, stat slots, and short takeaway.
+Player headshot, stat lane, short takeaway.
 
-## Slide 5: Poll
+## Slide 5: CTA
 Best win of the night?
 
-Audience engagement frame.
+Engagement slide with HSD branding.
