@@ -50,3 +50,19 @@ def test_hsd_quality_graphics_renderer_is_wired_and_packaged() -> None:
     assert "ig_feed" in script and "threads" in script and "stories" in script
     assert "results_contract_v2.csv" in script
     assert "daily_slate_plan.csv" in script
+
+
+def test_graphics_template_factory_is_wired() -> None:
+    workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
+    script = read("scripts/generate_hsd_graphics_template_factory_v1.py")
+    assert "python scripts/generate_hsd_graphics_template_factory_v1.py" in workflow
+    assert "outputs/latest/HSD_TEMPLATE_FACTORY/**" in workflow
+    assert "v1.0-hsd-graphics-template-factory" in script
+    assert "Tonight in the W" in script
+    assert "Last Night in the W" in script
+    assert "Game Recap / Final Score" in script
+    assert "Daily Debrief" in script
+    assert "Women’s Soccer / NWSL / USWNT" in script
+    assert "LPGA / Golf" in script
+    assert "Tennis / WTA" in script
+    assert "The renderer should become a compiler for approved templates" in script
