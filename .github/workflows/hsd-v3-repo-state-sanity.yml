@@ -106,7 +106,7 @@ jobs:
           python generate_hsd_source_registry_audit_v2.py || true
           python normalize_hsd_manual_story_inbox_v1.py || true
           python ingest_hsd_discovery_sources_v1.py || true
-          if [ -f generate_hsd_results_desk_v5.py ]; then python generate_hsd_results_desk_v5.py || true; python scripts/generate_hsd_expected_games_v5.py || true; python generate_hsd_results_desk_v5.py || true; elif [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py || true; fi
+          if [ -f generate_hsd_results_desk_v5.py ]; then python generate_hsd_results_desk_v5.py || true; python scripts/generate_hsd_expected_games_v5.py || true; python scripts/verify_hsd_wnba_schedule_independent_v5.py || true; python generate_hsd_results_desk_v5.py || true; elif [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py || true; fi
           if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py || true; fi
           if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py || true; fi
           python generate_hsd_results_contract_v1.py || true
@@ -157,6 +157,9 @@ jobs:
             expected_games_v5_manifest.json
             expected_games_v5_report.md
             config/hsd_expected_games_v5.csv
+            independent_schedule_verification_v5.csv
+            independent_schedule_verification_v5.json
+            independent_schedule_verification_v5.md
             results_desk_v5_manifest.json
             results_desk_v5_report.md
             source_accuracy_v5.json
