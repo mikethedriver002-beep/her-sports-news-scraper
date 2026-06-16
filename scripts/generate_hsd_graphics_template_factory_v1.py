@@ -2,16 +2,20 @@ from __future__ import annotations
 
 import csv
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "v1.1-hsd-graphics-template-factory-public-bug-rule"
+VERSION = "v1.2-hsd-graphics-template-factory-law-snapshot"
 OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY")
 MATRIX = OUT_DIR / "template_matrix.csv"
 PROMPTS = OUT_DIR / "graphics_production_template_prompts.md"
 BRIEF = OUT_DIR / "template_factory_brief.md"
 BLUEPRINTS = OUT_DIR / "template_blueprints.json"
 PUBLIC_LOGO_RULE = OUT_DIR / "public_logo_rule.md"
+LAW_SNAPSHOT = OUT_DIR / "law/HSD_GRAPHICS_LAW_V1.md"
+MASTER_PROMPTS_SNAPSHOT = OUT_DIR / "law/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md"
+CONFIG_SNAPSHOT_DIR = OUT_DIR / "config_graphics_snapshot"
 FIELDS = ["family", "variant", "format", "priority", "purpose", "assets", "must_have", "avoid", "renderer_notes"]
 
 PUBLIC_LOGO_RULE_TEXT = """# HSD Public Logo Rule
@@ -37,8 +41,8 @@ TEMPLATES = [
     ("Last Night in the W", "A", "IG Feed / Threads", "critical", "scoreboard recap", "team logos", "3-5 results, winner emphasis, clean final score hierarchy", "plain spreadsheet tables, large HSD masthead lockups", "stacked editorial scoreboard"),
     ("Last Night in the W", "B", "IG Stories", "critical", "rolling recap", "team logos", "one result per frame or top 3 frames", "tiny team names, large HSD masthead lockups", "story sequence compatible"),
     ("Last Night in the W", "C", "Carousel", "high", "recap carousel", "team logos, approved players when available", "cover, result slides, end-question slide", "overloaded stat panels, large HSD masthead lockups", "multi-slide blueprint"),
-    ("Game Recap / Final Score", "A", "IG Feed / Threads", "critical", "single-game final", "team logos", "winner huge, score huge, loser secondary, key hook", "grey loser text too low contrast, large HSD masthead lockups", "premium final-score poster"),
-    ("Game Recap / Final Score", "B", "IG Stories", "critical", "story final", "team logos", "score first, winner first, reply CTA", "tiny captions, large HSD masthead lockups", "9:16 quick final"),
+    ("Game Recap / Final Score", "A", "IG Feed / Threads", "critical", "single-game final", "team logos", "primary team huge, score huge, secondary team clear, key hook", "grey secondary text too low contrast, large HSD masthead lockups", "premium final-score poster"),
+    ("Game Recap / Final Score", "B", "IG Stories", "critical", "story final", "team logos", "score first, primary team first, reply CTA", "tiny captions, large HSD masthead lockups", "9:16 quick final"),
     ("Game Recap / Final Score", "C", "Carousel", "high", "recap package", "team logos, approved player photos", "cover, key performer slide, context slide, end question", "invented stats, large HSD masthead lockups", "needs stat-lock fields"),
     ("Daily Debrief", "A", "IG Carousel", "critical", "multi-sport roundup", "sport/league logos, optional approved images", "3 stories max, broad women’s sports mix", "WNBA-only board, large HSD masthead lockups", "cover plus 3 story slides plus end slide"),
     ("Daily Debrief", "B", "Threads", "high", "text-led visual", "minimal logos", "one visual with 3 headlines", "dense article look, large HSD masthead lockups", "fast summary card"),
@@ -63,7 +67,7 @@ def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
 
 
 def prompt_for(row: dict[str, str]) -> str:
-    return f"""## {row['family']} — Template {row['variant']} ({row['format']})
+    return f"""## {row['family']} - Template {row['variant']} ({row['format']})
 
 Create a premium Her Sports Daily template system for **{row['purpose']}**.
 
@@ -89,6 +93,22 @@ Non-negotiables: no fake athletes, no fake jerseys, no invented stats, no websit
 """
 
 
+def copy_if_exists(src: Path, dest: Path) -> None:
+    if src.exists() and src.is_file():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+
+
+def copy_config_snapshot() -> None:
+    if CONFIG_SNAPSHOT_DIR.exists():
+        shutil.rmtree(CONFIG_SNAPSHOT_DIR)
+    root = Path("config/graphics")
+    if root.exists():
+        shutil.copytree(root, CONFIG_SNAPSHOT_DIR)
+    copy_if_exists(Path("docs/HSD_GRAPHICS_LAW_V1.md"), LAW_SNAPSHOT)
+    copy_if_exists(Path("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md"), MASTER_PROMPTS_SNAPSHOT)
+
+
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     rows = [{"family": a, "variant": b, "format": c, "priority": d, "purpose": e, "assets": f, "must_have": g, "avoid": h, "renderer_notes": i} for a,b,c,d,e,f,g,h,i in TEMPLATES]
@@ -96,6 +116,7 @@ def main() -> None:
     BLUEPRINTS.write_text(json.dumps({"version": VERSION, "generated_at_utc": datetime.now(timezone.utc).isoformat(), "public_logo_rule": PUBLIC_LOGO_RULE_TEXT, "templates": rows}, indent=2), encoding="utf-8")
     PROMPTS.write_text("# HSD Graphics Production Template Prompts\n\n" + PUBLIC_LOGO_RULE_TEXT + "\n" + "\n".join(prompt_for(r) for r in rows), encoding="utf-8")
     PUBLIC_LOGO_RULE.write_text(PUBLIC_LOGO_RULE_TEXT, encoding="utf-8")
+    copy_config_snapshot()
     BRIEF.write_text("\n".join([
         "# HSD Graphics Template Factory",
         "",
@@ -128,12 +149,15 @@ def main() -> None:
         f"- `{PROMPTS.as_posix()}`",
         f"- `{BLUEPRINTS.as_posix()}`",
         f"- `{PUBLIC_LOGO_RULE.as_posix()}`",
+        f"- `{CONFIG_SNAPSHOT_DIR.as_posix()}`",
+        f"- `{LAW_SNAPSHOT.as_posix()}`",
+        f"- `{MASTER_PROMPTS_SNAPSHOT.as_posix()}`",
         "",
         "## Rule",
         "",
         "The renderer should become a compiler for approved templates, not a designer.",
     ]) + "\n", encoding="utf-8")
-    print(json.dumps({"template_factory_rows": len(rows), "out_dir": OUT_DIR.as_posix()}, indent=2))
+    print(json.dumps({"template_factory_rows": len(rows), "out_dir": OUT_DIR.as_posix(), "law_snapshot": LAW_SNAPSHOT.exists()}, indent=2))
 
 
 if __name__ == "__main__":
