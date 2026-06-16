@@ -1,6 +1,6 @@
 # HSD Mermaid Upper Echelon Report
 
-Generated: 2026-06-16T01:56:01.468536+00:00
+Generated: 2026-06-16T02:14:27.132200+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 ## Counts
@@ -49,7 +49,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-16T01:56:01.415854+00:00
+Generated: 2026-06-16T02:14:27.068763+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -79,10 +79,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_feed_noon — IG Feed / 12:00 PM
 - Status: ready_with_review
-- Headline: Last Night in the W
+- Headline: Dallas Wings beat Las Vegas Aces
 - Type: result_or_recap
 - Freshness: fresh
-- Hook: Last Night in the W: put this result on the board.
+- Hook: Dallas Wings beat Las Vegas Aces: put this result on the board.
 
 ### ig_stories_rolling_1 — IG Stories / 10:30 AM
 - Status: ready_with_review
@@ -93,10 +93,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_stories_rolling_2 — IG Stories / 12:30 PM
 - Status: ready_with_review
-- Headline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
-- Type: official_news_article
+- Headline: Last Night in the W
+- Type: result_or_recap
 - Freshness: fresh
-- Hook: The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
+- Hook: Last Night in the W: put this result on the board.
 
 ### threads_live — Threads / 7:00-11:30 PM
 - Status: ready_with_review
@@ -107,10 +107,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review
-- Headline: Last Night in the W
+- Headline: Dallas Wings beat Las Vegas Aces
 - Type: result_or_recap
 - Freshness: nightcap_followup_angle
-- Hook: Last Night in the W: what this changes next.
+- Hook: Dallas Wings beat Las Vegas Aces: what this changes next.
 
 ## Held slots
 
@@ -122,7 +122,7 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-16T01:56:01.456432+00:00
+Generated: 2026-06-16T02:14:27.114500+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
 - slots seen: 6
@@ -132,8 +132,8 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6
 ## Packets
 
 - Threads / threads_morning: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 — `assignment_handoff_zips/threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge.zip`
-- IG Feed / ig_feed_noon: Last Night in the W — `assignment_handoff_zips/ig-feed_ig-feed-noon_last-night-in-the-w.zip`
+- IG Feed / ig_feed_noon: Dallas Wings beat Las Vegas Aces — `assignment_handoff_zips/ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces.zip`
 - IG Stories / ig_stories_rolling_1: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-1_last-night-in-the-w.zip`
-- IG Stories / ig_stories_rolling_2: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti.zip`
-- Threads / nightcap: Last Night in the W — `assignment_handoff_zips/threads_nightcap_last-night-in-the-w.zip`
+- IG Stories / ig_stories_rolling_2: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_last-night-in-the-w.zip`
+- Threads / nightcap: Dallas Wings beat Las Vegas Aces — `assignment_handoff_zips/threads_nightcap_dallas-wings-beat-las-vegas-aces.zip`
 

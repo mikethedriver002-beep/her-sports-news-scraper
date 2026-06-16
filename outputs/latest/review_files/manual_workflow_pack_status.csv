@@ -1,7 +1,7 @@
 slot_id,platform,headline,status,reason,packet_id
 threads_morning,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",packet_ready,ready,threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge
-ig_feed_noon,IG Feed,Last Night in the W,packet_ready,ready,ig-feed_ig-feed-noon_last-night-in-the-w
+ig_feed_noon,IG Feed,Dallas Wings beat Las Vegas Aces,packet_ready,ready,ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces
 ig_stories_rolling_1,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-1_last-night-in-the-w
-ig_stories_rolling_2,IG Stories,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",packet_ready,ready,ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti
+ig_stories_rolling_2,IG Stories,Last Night in the W,packet_ready,ready,ig-stories_ig-stories-rolling-2_last-night-in-the-w
 threads_live,Threads,"Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026",held,freshness=preview_blocked_replaced,
-nightcap,Threads,Last Night in the W,packet_ready,ready,threads_nightcap_last-night-in-the-w
+nightcap,Threads,Dallas Wings beat Las Vegas Aces,packet_ready,ready,threads_nightcap_dallas-wings-beat-las-vegas-aces

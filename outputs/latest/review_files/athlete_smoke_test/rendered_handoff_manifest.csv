@@ -1,2 +1,1 @@
 packet_id,platform,headline,template_family,output_path,width,height,used_watermark,used_logos,used_score_context,used_athletes
-athlete-smoke-test-approved-headshots,IG Feed,Atlanta Dream beat Chicago Sky,result_final,outputs/latest/review_files/athlete_smoke_test/rendered_graphics/athlete-smoke-test-approved-headshots/atlanta-dream-beat-chicago-sky.png,1080,1350,yes,yes,no,"atlanta_dream_rhyne_howard,atlanta_dream_angel_reese"

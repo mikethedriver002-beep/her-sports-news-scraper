@@ -1,46 +1,35 @@
-packet_id,platform,headline,content_family,caption,threads_post,first_comment,story_frame_text,poll_question,hashtags,context_sources
-ig-feed_ig-feed-noon_last-night-in-the-w,IG Feed,Last Night in the W,wnba_results_roundup,"Last Night in the W.
+package_id,packet_id,platform,headline,content_family,caption,threads_post,first_comment,story_frame_text,poll_question,hashtags,evidence
+ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces,ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces,IG Feed,Dallas Wings beat Las Vegas Aces,wnba_result_recap,"Dallas Wings beat Las Vegas Aces.
 
-The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
+This is a women’s sports story with more context than the headline can hold. The names, the moment, and what comes next all matter.
 
-This is the kind of night where one final score can shift a whole conversation.
+What are you watching closest?
 
-Which result mattered most to you? 🏀
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces",Dallas Wings beat Las Vegas Aces,What are you watching here?,Dallas Wings beat Las Vegas Aces,What stood out?,#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces,"Dallas Wings beat Las Vegas Aces | WNBA | result_or_recap | Dallas Wings beat Las Vegas Aces: put this result on the board. | Dallas Wings beat Las Vegas Aces The result matters because it changes the conversation, not just the scoreboard. | RESULT CHECK: Dallas Wings beat Las Vegas Aces What changed after this one? | What was the swing moment? | v3.3.6-mermaid-assignment-handoff-v2.6 | ig_feed_noon | IG Feed | 12:00 PM | result_or_recap | Dallas Wings beat Las Vegas Aces | WNBA | P1 | story_d5d97578488db3 | ready_with_review | score_assets_needed | 78 | strongest_feed_assignment | fresh | crosspost_story_d5d97578488db3 | Dallas Wings beat Las Vegas Aces: put this result on the board. | Dall"
+threads_nightcap_dallas-wings-beat-las-vegas-aces,threads_nightcap_dallas-wings-beat-las-vegas-aces,Threads,Dallas Wings beat Las Vegas Aces,wnba_result_recap,"Dallas Wings beat Las Vegas Aces.
 
-#HerSportsDaily #WomensSports #WNBA #Basketball",Last Night in the W. Which result mattered most?,Best win of the night?,Last Night in the W: which result moved you?,Best win?,#HerSportsDaily #WomensSports #WNBA #Basketball,"Last Night in the W | WNBA | result_or_recap | Last Night in the W: put this result on the board. | Last Night in the W The result matters because it changes the conversation, not just the scoreboard. | RESULT CHECK: Last Night in the W What changed after this one? | What was the swing moment? | v3.3.6-mermaid-assignment-handoff-v2.6 | ig_feed_noon | IG Feed…"
-ig-stories_ig-stories-rolling-1_last-night-in-the-w,IG Stories,Last Night in the W,wnba_results_roundup,"Last Night in the W.
+This is a women’s sports story with more context than the headline can hold. The names, the moment, and what comes next all matter.
 
-The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
+What are you watching closest?
 
-This is the kind of night where one final score can shift a whole conversation.
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces",Dallas Wings beat Las Vegas Aces,What are you watching here?,Dallas Wings beat Las Vegas Aces,What stood out?,#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces,Dallas Wings beat Las Vegas Aces | WNBA | result_or_recap | Dallas Wings beat Las Vegas Aces: what this changes next. | Dallas Wings beat Las Vegas Aces A result worth revisiting through what comes next. | NEXT LAYER: Dallas Wings beat Las Vegas Aces What changes after this? | What changes next because of this? | v3.3.6-mermaid-assignment-handoff-v2.6 | nightcap | Threads | 11:30 PM | result_or_recap | Dallas Wings beat Las Vegas Aces | WNBA | P1 | story_d5d97578488db3 | ready_with_review | score_assets_needed | 78 | nightcap_result_only | nightcap_followup_angle | crosspost_story_d5d97578488db3 | Dallas Wings beat Las Vegas Aces: what this changes next. | Dallas Wings beat Las Vegas Aces Di
+threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge,threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",feature_story,"Gina Kim and Yana Wilson are officially in the LPGA winner’s circle together.
 
-Which result mattered most to you? 🏀
+From the Epson Tour to a title moment at the Dow Championship, this is the kind of women’s golf story that deserves more than a line in the ticker. It is about a team format, a breakthrough, and two players turning a shared opportunity into a career marker.
 
-#HerSportsDaily #WomensSports #WNBA #Basketball",Last Night in the W. Which result mattered most?,Best win of the night?,Last Night in the W: which result moved you?,Best win?,#HerSportsDaily #WomensSports #WNBA #Basketball,"Last Night in the W | WNBA | result_or_recap | Last Night in the W: put this result on the board. | Last Night in the W The result matters because it changes the conversation, not just the scoreboard. | RESULT CHECK: Last Night in the W What changed after this one? | What was the swing moment? | v3.3.6-mermaid-assignment-handoff-v2.6 | ig_stories_rolling_1 |…"
-ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti,IG Stories,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",feature_story,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
-
-This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
-
-Stories like this are how a season builds memory.
+Women’s golf has stories with texture. This is one of them.
 
 Are we talking about this enough?
 
-#HerSportsDaily #WomensSports #LPGA #Golf","From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Are we talking about this enough?",Are we giving this enough attention?,From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the D,Enough attention?,#HerSportsDaily #WomensSports #LPGA #Golf,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | official_news_article | The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. | From the…"
-threads_nightcap_last-night-in-the-w,Threads,Last Night in the W,wnba_results_roundup,"Last Night in the W.
+#HerSportsDaily #WomensSports #LPGA #Golf",Gina Kim and Yana Wilson in the LPGA winner’s circle together. This deserves more attention.,Are we talking about this enough?,LPGA breakthrough: Kim + Wilson win together.,Enough attention?,#HerSportsDaily #WomensSports #LPGA #Golf,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | official_news_article | The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. | From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 The golf lane is giving HSD more to work with than people realize. | LPGA WATCH: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship J"
+upload-pack_still-to-come-in-the-w,upload-pack_still-to-come-in-the-w,Manual Graphics Pack,Still to Come in the W,manual_graphics_pack,"Los Angeles Sparks at Golden State Valkyries.
 
-The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
+Still to come in the W. 👀
 
-This is the kind of night where one final score can shift a whole conversation.
+This is the late-window kind of game that can give the night a real pulse. Kayla Thornton, Cameron Brink and Kelsey Plum give the matchup star power, but the bigger question is simple: who sets the terms first?
 
-Which result mattered most to you? 🏀
+The Sparks need the road edge. Golden State gets the building. And in a California matchup with real rivalry potential, the first clean run can change the whole feel.
 
-#HerSportsDaily #WomensSports #WNBA #Basketball",Last Night in the W. Which result mattered most?,Best win of the night?,Last Night in the W: which result moved you?,Best win?,#HerSportsDaily #WomensSports #WNBA #Basketball,Last Night in the W | WNBA | result_or_recap | Last Night in the W: what this changes next. | Last Night in the W A result worth revisiting through what comes next. | NEXT LAYER: Last Night in the W What changes after this? | What changes next because of this? | v3.3.6-mermaid-assignment-handoff-v2.6 | nightcap | Threads | 11:30 PM | result_or_recap | Last N…
-threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge,Threads,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026",feature_story,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
+Who needs this one more? 🏀
 
-This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
-
-Stories like this are how a season builds memory.
-
-Are we talking about this enough?
-
-#HerSportsDaily #WomensSports #LPGA #Golf","From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Are we talking about this enough?",Are we giving this enough attention?,From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the D,Enough attention?,#HerSportsDaily #WomensSports #LPGA #Golf,"From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | official_news_article | The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. | From the…"
+#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #GoldenStateValkyries",Los Angeles Sparks at Golden State Valkyries. Who needs this one more?,Road edge or home hold? Drop your pick.,Los Angeles Sparks at Golden State Valkyries. Who owns the first run?,Who needs it more?,#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #GoldenStateValkyries,"Still to Come in the W | WNBA | graphics_upload_pack | Los Angeles Sparks at Golden State Valkyries | Los Angeles Sparks at Golden State Valkyries | Why it matters | Follow Her Sports Daily for more women’s sports coverage. | Still to Come in the W | Los Angeles Sparks at Golden State Valkyries | # HSD Graphics Prompt: Still to Come in the W Use the attached files only. Use the attached logo files and attached player/person image files exactly as mapped. Do not fetch, substitute, or invent any logos, player images, bodies, jerseys, or numbers. Treat the game facts, team names, and player names as locked facts and preserve them exactly. Render only display-safe editorial language. Never rende"

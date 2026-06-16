@@ -1,18 +1,18 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-16T01:56:18.885547+00:00
+Generated: 2026-06-16T02:14:36.783774+00:00
 Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
 
-- rendered packets: 5
-- blocked packets: 0
+- rendered packets: 3
+- blocked packets: 2
 - handoff packets: 5
 - content slots: 6
-- graphics files copied: 5
-- rendered zip files copied: 5
-- verified WNBA team logos: 15
-- missing WNBA team logos: 0
+- graphics files copied: 3
+- rendered zip files copied: 3
+- verified WNBA team logos: 11
+- missing WNBA team logos: 4
 - logo sources: 10
 - logos downloaded: 0
 - logos existing: 10
@@ -48,10 +48,13 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 - Athlete image candidates are review-only and are not used in public graphics automatically.
 - Review before posting.
 
+## Blocked packets
+
+- ig-stories_ig-stories-rolling-1_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; toronto_tempo:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
+- ig-stories_ig-stories-rolling-2_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; toronto_tempo:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
+
 ## Rendered packets
 
-- ig-feed_ig-feed-noon_last-night-in-the-w: Last Night in the W
-- ig-stories_ig-stories-rolling-1_last-night-in-the-w: Last Night in the W
-- ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
-- threads_nightcap_last-night-in-the-w: Last Night in the W
+- ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces: Dallas Wings beat Las Vegas Aces
+- threads_nightcap_dallas-wings-beat-las-vegas-aces: Dallas Wings beat Las Vegas Aces
 - threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026

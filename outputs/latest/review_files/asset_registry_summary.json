@@ -1,9 +1,9 @@
 {
   "version": "hsd-wnba-asset-registry-v1.1-strict",
-  "generated_at_utc": "2026-06-16T01:56:03.266577+00:00",
+  "generated_at_utc": "2026-06-16T02:14:28.197257+00:00",
   "teams": 15,
-  "team_logos_verified": 15,
-  "missing_team_logos": 0,
+  "team_logos_verified": 11,
+  "missing_team_logos": 4,
   "team_logo_policy": "required_exact_identity_match",
   "scan_roots": [
     "assets/leagues/wnba/teams",

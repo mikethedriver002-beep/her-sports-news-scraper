@@ -1,6 +1,6 @@
 # HSD Approved Athlete Render Smoke Test v1.1
 
-Generated: 2026-06-16T01:56:44.704021+00:00
+Generated: 2026-06-16T02:14:48.738912+00:00
 
 ## Expected
 
@@ -10,9 +10,9 @@ Generated: 2026-06-16T01:56:44.704021+00:00
 
 ## Result
 
-- rendered packets: 1
-- blocked packets: 0
-- packets using approved athletes: 1
+- rendered packets: 0
+- blocked packets: 1
+- packets using approved athletes: 0
 - approved athlete images available: 196
 - needs-fix athletes blocked: 4
 - integrity status: pass

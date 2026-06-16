@@ -1,25 +1,25 @@
 # Mermaid Render Studio v3.0.2 Approved Athlete Image QA Report
 
-Generated: 2026-06-16T01:56:44.703145+00:00
+Generated: 2026-06-16T02:14:48.738386+00:00
 Version: v3.0.2-approved-athlete-image-integration
 
 ## Counts
 
 - packets seen: 1
-- rendered packets: 1
-- blocked packets: 0
-- graphics files: 1
-- zip files: 1
+- rendered packets: 0
+- blocked packets: 1
+- graphics files: 0
+- zip files: 0
 - score pairs found: 4
 - registry teams: 15
 - registry logos: 15
 - approved athlete images available: 196
 - needs-fix athletes blocked: 4
-- packets using approved athletes: 1
+- packets using approved athletes: 0
 - watermark source: assets/branding/official_hsd_watermark.png
 - integrity status: pass
 - integrity reason: ok
 
 ## Packet Status
 
-- athlete-smoke-test-approved-headshots | IG Feed | result_final | Atlanta Dream beat Chicago Sky | rendered | athletes=atlanta_dream_rhyne_howard,atlanta_dream_angel_reese | missing_athletes= | ok
+- athlete-smoke-test-approved-headshots | IG Feed | result_final | Atlanta Dream beat Chicago Sky | blocked | athletes=no | missing_athletes= | missing required registry team logo(s): atlanta_dream:missing_required_registry_logo

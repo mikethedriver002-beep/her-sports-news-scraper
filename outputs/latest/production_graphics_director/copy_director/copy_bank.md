@@ -1,48 +1,44 @@
 # HSD Copy Bank
 
-## Last Night in the W
+## Dallas Wings beat Las Vegas Aces
 
-Family: `wnba_results_roundup`
+Family: `wnba_result_recap`
 
 ### IG Caption
-Last Night in the W.
+Dallas Wings beat Las Vegas Aces.
 
-The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
+This is a women’s sports story with more context than the headline can hold. The names, the moment, and what comes next all matter.
 
-This is the kind of night where one final score can shift a whole conversation.
+What are you watching closest?
 
-Which result mattered most to you? 🏀
-
-#HerSportsDaily #WomensSports #WNBA #Basketball
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
 
 ### Threads
-Last Night in the W. Which result mattered most?
+Dallas Wings beat Las Vegas Aces
 
 ### First comment
-Best win of the night?
+What are you watching here?
 
 ---
 
-## Last Night in the W
+## Dallas Wings beat Las Vegas Aces
 
-Family: `wnba_results_roundup`
+Family: `wnba_result_recap`
 
 ### IG Caption
-Last Night in the W.
+Dallas Wings beat Las Vegas Aces.
 
-The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
+This is a women’s sports story with more context than the headline can hold. The names, the moment, and what comes next all matter.
 
-This is the kind of night where one final score can shift a whole conversation.
+What are you watching closest?
 
-Which result mattered most to you? 🏀
-
-#HerSportsDaily #WomensSports #WNBA #Basketball
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
 
 ### Threads
-Last Night in the W. Which result mattered most?
+Dallas Wings beat Las Vegas Aces
 
 ### First comment
-Best win of the night?
+What are you watching here?
 
 ---
 
@@ -51,64 +47,43 @@ Best win of the night?
 Family: `feature_story`
 
 ### IG Caption
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
+Gina Kim and Yana Wilson are officially in the LPGA winner’s circle together.
 
-This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
+From the Epson Tour to a title moment at the Dow Championship, this is the kind of women’s golf story that deserves more than a line in the ticker. It is about a team format, a breakthrough, and two players turning a shared opportunity into a career marker.
 
-Stories like this are how a season builds memory.
-
-Are we talking about this enough?
-
-#HerSportsDaily #WomensSports #LPGA #Golf
-
-### Threads
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Are we talking about this enough?
-
-### First comment
-Are we giving this enough attention?
-
----
-
-## Last Night in the W
-
-Family: `wnba_results_roundup`
-
-### IG Caption
-Last Night in the W.
-
-The scoreboard tells you who won. The bigger story is what each result changes: who found rhythm, who left with questions, and which teams gave us something worth carrying into the next slate.
-
-This is the kind of night where one final score can shift a whole conversation.
-
-Which result mattered most to you? 🏀
-
-#HerSportsDaily #WomensSports #WNBA #Basketball
-
-### Threads
-Last Night in the W. Which result mattered most?
-
-### First comment
-Best win of the night?
-
----
-
-## From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
-
-Family: `feature_story`
-
-### IG Caption
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
-
-This is why women’s sports coverage needs more room. The win, the moment, and the names attached to it all deserve context, not just a headline.
-
-Stories like this are how a season builds memory.
+Women’s golf has stories with texture. This is one of them.
 
 Are we talking about this enough?
 
 #HerSportsDaily #WomensSports #LPGA #Golf
 
 ### Threads
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. Are we talking about this enough?
+Gina Kim and Yana Wilson in the LPGA winner’s circle together. This deserves more attention.
 
 ### First comment
-Are we giving this enough attention?
+Are we talking about this enough?
+
+---
+
+## Still to Come in the W
+
+Family: `manual_graphics_pack`
+
+### IG Caption
+Los Angeles Sparks at Golden State Valkyries.
+
+Still to come in the W. 👀
+
+This is the late-window kind of game that can give the night a real pulse. Kayla Thornton, Cameron Brink and Kelsey Plum give the matchup star power, but the bigger question is simple: who sets the terms first?
+
+The Sparks need the road edge. Golden State gets the building. And in a California matchup with real rivalry potential, the first clean run can change the whole feel.
+
+Who needs this one more? 🏀
+
+#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #GoldenStateValkyries
+
+### Threads
+Los Angeles Sparks at Golden State Valkyries. Who needs this one more?
+
+### First comment
+Road edge or home hold? Drop your pick.

@@ -1,14 +1,14 @@
 # HSD WNBA Asset Registry Validation
 
-Generated: 2026-06-16T01:56:03.295156+00:00
-Status: **pass**
+Generated: 2026-06-16T02:14:28.229538+00:00
+Status: **needs_assets**
 
 ## Counts
 
 - teams: 15
 - aliases: 47
 - logo rows: 15
-- missing required team logos: 0
+- missing required team logos: 4
 
 ## Issues
 
@@ -16,4 +16,7 @@ Status: **pass**
 
 ## Missing required logos
 
-- None
+- Atlanta Dream -> `assets/leagues/wnba/teams/atlanta_dream/logo.png`
+- New York Liberty -> `assets/leagues/wnba/teams/new_york_liberty/logo.png`
+- Toronto Tempo -> `assets/leagues/wnba/teams/toronto_tempo/logo.png`
+- Washington Mystics -> `assets/leagues/wnba/teams/washington_mystics/logo.png`

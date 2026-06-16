@@ -1,12 +1,13 @@
 {
-  "version": "v4.1-context-engine",
-  "generated_at_utc": "2026-06-16T01:56:44.781087+00:00",
-  "rendered_exports": 5,
-  "copy_items": 5,
-  "carousel_plans": 5,
-  "prompt_dossiers": 5,
-  "context_rows": 5,
-  "rich_context_rows": 5,
-  "visual_gate_policy": "human_review_required_for_auto_renders",
+  "version": "v4.2-evidence-context-engine",
+  "generated_at_utc": "2026-06-16T02:14:48.820012+00:00",
+  "packages": 4,
+  "rendered_exports": 3,
+  "copy_items": 4,
+  "carousel_plans": 4,
+  "prompt_dossiers": 4,
+  "context_rows": 4,
+  "rich_context_rows": 4,
+  "manual_graphics_packs": 1,
   "postable_graphics_dir": "outputs/latest/POSTABLE_GRAPHICS"
 }

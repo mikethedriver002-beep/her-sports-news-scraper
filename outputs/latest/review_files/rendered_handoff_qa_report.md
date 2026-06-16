@@ -1,15 +1,15 @@
 # Mermaid Render Studio v3.0.2 Approved Athlete Image QA Report
 
-Generated: 2026-06-16T01:56:18.824680+00:00
+Generated: 2026-06-16T02:14:36.713589+00:00
 Version: v3.0.2-approved-athlete-image-integration
 
 ## Counts
 
 - packets seen: 5
-- rendered packets: 5
-- blocked packets: 0
-- graphics files: 5
-- zip files: 5
+- rendered packets: 3
+- blocked packets: 2
+- graphics files: 3
+- zip files: 3
 - score pairs found: 4
 - registry teams: 15
 - registry logos: 15
@@ -22,8 +22,8 @@ Version: v3.0.2-approved-athlete-image-integration
 
 ## Packet Status
 
-- ig-feed_ig-feed-noon_last-night-in-the-w | IG Feed | last_night_scoreboard | Last Night in the W | rendered | athletes=no | missing_athletes= | ok
-- ig-stories_ig-stories-rolling-1_last-night-in-the-w | IG Stories | last_night_scoreboard | Last Night in the W | rendered | athletes=no | missing_athletes= | ok
-- ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti | IG Stories | storyline_feature | From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | rendered | athletes=no | missing_athletes= | ok
-- threads_nightcap_last-night-in-the-w | Threads | last_night_scoreboard | Last Night in the W | rendered | athletes=no | missing_athletes= | ok
+- ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces | IG Feed | result_final | Dallas Wings beat Las Vegas Aces | rendered | athletes=no | missing_athletes= | ok
+- ig-stories_ig-stories-rolling-1_last-night-in-the-w | IG Stories | last_night_scoreboard | Last Night in the W | blocked | athletes=no | missing_athletes= | missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; toronto_tempo:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
+- ig-stories_ig-stories-rolling-2_last-night-in-the-w | IG Stories | last_night_scoreboard | Last Night in the W | blocked | athletes=no | missing_athletes= | missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; toronto_tempo:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
+- threads_nightcap_dallas-wings-beat-las-vegas-aces | Threads | result_final | Dallas Wings beat Las Vegas Aces | rendered | athletes=no | missing_athletes= | ok
 - threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge | Threads | storyline_feature | From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | rendered | athletes=no | missing_athletes= | ok

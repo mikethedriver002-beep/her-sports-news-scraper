@@ -1,20 +1,21 @@
-# Mermaid Production Graphics Director v4.1 Context Engine
+# Mermaid Production Graphics Director v4.2 Evidence Context Engine
 
-Generated: 2026-06-16T01:56:44.781087+00:00
+Generated: 2026-06-16T02:14:48.820012+00:00
 
 ## Counts
 
-- rendered_exports: 5
-- copy_items: 5
-- carousel_plans: 5
-- prompt_dossiers: 5
-- context_rows: 5
-- rich_context_rows: 5
-- visual_gate_policy: human_review_required_for_auto_renders
+- packages: 4
+- rendered_exports: 3
+- copy_items: 4
+- carousel_plans: 4
+- prompt_dossiers: 4
+- context_rows: 4
+- rich_context_rows: 4
+- manual_graphics_packs: 1
 - postable_graphics_dir: outputs/latest/POSTABLE_GRAPHICS
 
 ## Policy
 
-- Auto-rendered PNGs are exported for review, not auto-approved for posting.
-- Captions use packet context when available and avoid headline-only matchup assumptions.
-- Carousel plans are the preferred direction for Tonight in the W and Last Night in the W.
+- Auto-renders remain human-review only.
+- Manual graphics packs are now included as production packages.
+- Evidence from result queues and graphics packs is used before fallback copy.

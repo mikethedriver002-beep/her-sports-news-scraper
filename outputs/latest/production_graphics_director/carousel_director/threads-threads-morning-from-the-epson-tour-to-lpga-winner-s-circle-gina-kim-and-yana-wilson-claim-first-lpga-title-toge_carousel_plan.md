@@ -1,19 +1,19 @@
 # Carousel Plan
 
 ## Slide 1: Cover
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
+Kim + Wilson win together
 
-Premium editorial cover.
+Premium LPGA editorial cover, trophy/winner-circle energy, no fake player imagery.
 
-## Slide 2: Context
-Why it matters.
+## Slide 2: Why it matters
+From Epson Tour to LPGA winner’s circle
 
-Clean explainer card.
+Timeline-style context card.
 
-## Slide 3: People
-Names and stakes.
+## Slide 3: The story
+A team-format breakthrough at the Dow Championship
 
-Use real approved imagery only if available.
+Clean explainer card with event lockup.
 
 ## Slide 4: CTA
 Are we talking about this enough?
