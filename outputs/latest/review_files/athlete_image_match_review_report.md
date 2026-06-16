@@ -1,6 +1,6 @@
 # HSD Athlete Image Match Review
 
-Generated: 2026-06-15T21:16:10.350795+00:00
+Generated: 2026-06-16T01:19:25.331953+00:00
 
 ## Counts
 
@@ -26,6 +26,14 @@ Generated: 2026-06-15T21:16:10.350795+00:00
 - returncode: 0
 - folder: `outputs/latest/review_files/athlete_smoke_test/`
 
+## Production Graphics Director v4
+
+- status: ok
+- returncode: 0
+- folder: `outputs/latest/production_graphics_director/`
+- graphics folder: `outputs/latest/POSTABLE_GRAPHICS/`
+
 ## Policy
 
 - Needs-fix and rejected rows remain blocked from graphics.
+- Auto-rendered graphics require human visual review before posting.

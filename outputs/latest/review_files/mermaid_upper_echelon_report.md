@@ -1,19 +1,19 @@
 # HSD Mermaid Upper Echelon Report
 
-Generated: 2026-06-15T21:15:38.003717+00:00
+Generated: 2026-06-16T01:18:53.295201+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 ## Counts
 
-- final_slots: 7
-- held_slots: 0
-- feed_rows: 2
+- final_slots: 6
+- held_slots: 2
+- feed_rows: 1
 - story_rows: 2
 - thread_rows: 3
-- compiled_packets: 7
-- handoff_packets: 7
-- handoff_held: 0
-- player_asset_debt: 1
+- compiled_packets: 6
+- handoff_packets: 5
+- handoff_held: 1
+- player_asset_debt: 2
 
 ## Step status
 
@@ -49,7 +49,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-15T21:15:37.935302+00:00
+Generated: 2026-06-16T01:18:53.243489+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -58,13 +58,15 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ## Preview block signals
 
-- None
+- blocked_freshness_gate
+- same-day games not included
+- started/live/final
 
 ## Counts
 
-- final slots: 7
-- held slots: 0
-- packets: 7
+- final slots: 6
+- held slots: 2
+- packets: 6
 
 ## Final slots
 
@@ -96,19 +98,12 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - Freshness: fresh
 - Hook: The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026.
 
-### ig_feed_evening_preview — IG Feed / 4:45 PM
-- Status: ready_with_review
-- Headline: Los Angeles Sparks at Golden State Valkyries
-- Type: preview_event
-- Freshness: fresh
-- Hook: Los Angeles Sparks at Golden State Valkyries: the game lane to watch.
-
 ### threads_live — Threads / 7:00-11:30 PM
 - Status: ready_with_review
-- Headline: Los Angeles Sparks at Golden State Valkyries
-- Type: preview_event
-- Freshness: fresh
-- Hook: Los Angeles Sparks at Golden State Valkyries: the game lane to watch.
+- Headline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026
+- Type: official_news_article
+- Freshness: preview_blocked_replaced
+- Hook: The LPGA lane has a real storyline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026.
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review
@@ -117,18 +112,22 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - Freshness: nightcap_followup_angle
 - Hook: Last Night in the W: what this changes next.
 
+## Held slots
+
+- ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final / pending
+- threads_live: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final / replaced_with_story_d8f79330b7b89a
 
 
 ---
 
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-15T21:15:37.986625+00:00
+Generated: 2026-06-16T01:18:53.283384+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
-- slots seen: 7
-- packets ready: 7
-- held: 0
+- slots seen: 6
+- packets ready: 5
+- held: 1
 
 ## Packets
 
@@ -136,7 +135,5 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6
 - IG Feed / ig_feed_noon: Last Night in the W — `assignment_handoff_zips/ig-feed_ig-feed-noon_last-night-in-the-w.zip`
 - IG Stories / ig_stories_rolling_1: Last Night in the W — `assignment_handoff_zips/ig-stories_ig-stories-rolling-1_last-night-in-the-w.zip`
 - IG Stories / ig_stories_rolling_2: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 — `assignment_handoff_zips/ig-stories_ig-stories-rolling-2_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-ti.zip`
-- IG Feed / ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — `assignment_handoff_zips/ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-golden-state-valkyries.zip`
-- Threads / threads_live: Los Angeles Sparks at Golden State Valkyries — `assignment_handoff_zips/threads_threads-live_los-angeles-sparks-at-golden-state-valkyries.zip`
 - Threads / nightcap: Last Night in the W — `assignment_handoff_zips/threads_nightcap_last-night-in-the-w.zip`
 

@@ -1,0 +1,10 @@
+{
+  "version": "v4.0-production-graphics-director",
+  "generated_at_utc": "2026-06-16T01:19:25.327296+00:00",
+  "rendered_exports": 5,
+  "copy_items": 5,
+  "carousel_plans": 5,
+  "prompt_dossiers": 5,
+  "visual_gate_policy": "human_review_required_for_auto_renders",
+  "postable_graphics_dir": "outputs/latest/POSTABLE_GRAPHICS"
+}
