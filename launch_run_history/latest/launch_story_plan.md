@@ -1,6 +1,6 @@
 # Her Sports Daily Launch Story Plan v1
 
-Generated: 2026-06-16T18:22:08.413910+00:00
+Generated: 2026-06-16T22:00:42.989687+00:00
 
 Use stories to reinforce the feed slate without duplicating every carousel slide.
 
