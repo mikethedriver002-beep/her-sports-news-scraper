@@ -17,7 +17,7 @@ SUMMARY = Path("outputs/latest/summary.json")
 APPROVAL_SCRIPT = Path("scripts/generate_hsd_athlete_image_approval_pack_v1.py")
 APPLY_SCRIPT = Path("scripts/apply_hsd_athlete_image_approvals_v1.py")
 SMOKE_SCRIPT = Path("scripts/generate_hsd_render_athlete_smoke_test_v1.py")
-PRODUCTION_DIRECTOR_SCRIPT = Path("scripts/generate_hsd_mermaid_production_graphics_director_v4_2.py")
+PRODUCTION_DIRECTOR_SCRIPT = Path("scripts/generate_hsd_mermaid_production_graphics_director_v4_3.py")
 
 
 def now_iso() -> str:
@@ -93,7 +93,7 @@ def main() -> None:
         f"- returncode: {smoke_test.get('returncode')}",
         "- folder: `outputs/latest/review_files/athlete_smoke_test/`",
         "",
-        "## Production Graphics Director v4.2",
+        "## Production Graphics Director v4.3",
         "",
         f"- status: {production_director.get('status')}",
         f"- returncode: {production_director.get('returncode')}",
