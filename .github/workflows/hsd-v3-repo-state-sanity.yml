@@ -1,0 +1,87 @@
+name: HSD V3 Repo State Sanity
+run-name: HSD V3 Repo State Sanity • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail if repo_state_v3 strict audit finds acceptance/free-only failures?"
+        required: true
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v3-repo-state-sanity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repo-state-sanity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HSD_LOCAL_TIMEZONE: "America/New_York"
+      HSD_PAID_SOURCES_ALLOWED: "0"
+      HSD_PUBLISH_OUTPUTS: "false"
+      HSD_PUBLISH_MODE: "artifact_only"
+      HSD_REVIEW_ARTIFACT_SIZE: "lite"
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install free dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil pillow requests cairosvg pytest >/dev/null 2>&1 || true
+
+      - name: V3 first-run commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          python verify_hsd_install_v1.py
+          python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py
+          python scripts/generate_hsd_graphics_variant_packs_v1.py
+          python generate_hsd_pipeline_review_lite_v1.py
+
+      - name: Run V3 repo-state audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event.inputs.strict }}" == "true" ]]; then
+            python scripts/report_hsd_repo_state_v3.py --strict
+          else
+            python scripts/report_hsd_repo_state_v3.py
+          fi
+
+      - name: Free-only guard tests
+        shell: bash
+        run: |
+          pytest tests/test_no_paid_sources.py
+
+      - name: Upload V3 sanity artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v3-repo-state-sanity-${{ github.run_number }}
+          path: |
+            repo_state_v3.md
+            repo_state_v3.json
+            hsd_pipeline_lite_review.zip
+            hsd_pipeline_lite_review/**
+            outputs/latest/production_graphics_director/copy_director/post_ready_copy.md
+            outputs/latest/production_graphics_director/graphics_variant_packs/**
