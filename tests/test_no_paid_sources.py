@@ -92,13 +92,16 @@ def test_results_desk_v5_is_active_free_only_path() -> None:
     assert "missing_games_alert_v5" in v5
 
 
-def test_results_contract_uses_timestamp_freshness_and_excludes_box_score_context_sources() -> None:
+def test_results_contract_uses_timestamp_freshness_team_display_fields_and_excludes_context_sources() -> None:
     text = read("generate_hsd_results_contract_v1.py")
     assert "reference_dt(row, event_date)" in text
     assert "scheduled_start_utc" in text
     assert "today_box_scores.csv" not in text
     assert "Box-score enrichment files are intentionally not contract sources" in text
-    assert "hsd-results-contract-v3.3.0-v5-source-accuracy-freshness" in text
+    assert "hsd-results-contract-v3.3.1-v5-team-field-mapping" in text
+    assert "home_team_display" in text
+    assert "away_team_display" in text
+    assert "team_value(row" in text
 
 
 def test_v3_repo_state_audit_is_wired_into_lite_review() -> None:
