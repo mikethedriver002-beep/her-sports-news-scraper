@@ -1,6 +1,6 @@
 # HSD Mermaid Upper Echelon Report
 
-Generated: 2026-06-16T01:46:45.002038+00:00
+Generated: 2026-06-16T01:56:01.468536+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 ## Counts
@@ -49,7 +49,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-16T01:46:44.940553+00:00
+Generated: 2026-06-16T01:56:01.415854+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -122,7 +122,7 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-16T01:46:44.985971+00:00
+Generated: 2026-06-16T01:56:01.456432+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
 - slots seen: 6
