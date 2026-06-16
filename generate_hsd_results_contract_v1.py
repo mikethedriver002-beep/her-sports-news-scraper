@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "hsd-results-contract-v3.3.1-v5-team-field-mapping"
+VERSION = "hsd-results-contract-v3.3.2-v5-preview-zero-score-suppression"
 OUT_CSV = Path("results_contract_v2.csv")
 OUT_JSONL = Path("results_contract_v2.jsonl")
 OUT_REPORT = Path("results_contract_report.md")
@@ -282,11 +282,28 @@ def score_value(row: Dict[str, str], *keys: str) -> str:
     return ""
 
 
+def zero_zero_score(home: str, away: str) -> bool:
+    return clean(home) in {"0", "0.0"} and clean(away) in {"0", "0.0"}
+
+
+def suppress_nonfinal_zero_scores(kind: str, home: str, away: str) -> Tuple[str, str]:
+    if kind != "result" and zero_zero_score(home, away):
+        return "", ""
+    return home, away
+
+
 def normalized_score_display(row: Dict[str, str], kind: str) -> str:
     status = status_text(row).lower()
     raw = normalize_team_names_in_text(clean(row.get("final_score_display") or row.get("score_display") or row.get("score")))
-    if kind == "preview" and re.search(r"\b0\s*[·\-]\s*.*\b0\b", raw) and not is_live_status(status):
+    if kind != "result" and re.search(r"\b0\s*[·\-]\s*.*\b0\b", raw) and not is_live_status(status):
         return ""
+    return raw
+
+
+def summary_text(row: Dict[str, str], kind: str, headline: str) -> str:
+    raw = normalize_team_names_in_text(clean(row.get("caption_seed") or row.get("summary")))
+    if kind != "result" and re.search(r"\b0\s*[·\-]\s*.*\b0\b", raw):
+        return headline
     return raw
 
 
@@ -301,6 +318,7 @@ def normalize(row: Dict[str, str], source_file: str, run_id: str) -> Dict[str, s
     if kind != "result":
         winner = ""
         loser = ""
+    score_home, score_away = suppress_nonfinal_zero_scores(kind, score_value(row, "score_home", "home_score"), score_value(row, "score_away", "away_score"))
     return {
         "run_id": run_id,
         "event_id": event_id_for(dedupe),
@@ -319,15 +337,15 @@ def normalize(row: Dict[str, str], source_file: str, run_id: str) -> Dict[str, s
         "away_team_name": team_value(row, "away_team", "away_team_name", "away_team_display"),
         "winner_team_name": winner,
         "loser_team_name": loser,
-        "score_home": score_value(row, "score_home", "home_score"),
-        "score_away": score_value(row, "score_away", "away_score"),
+        "score_home": score_home,
+        "score_away": score_away,
         "score_display": normalized_score_display(row, kind),
         "event_date_local": e_date,
         "content_eligibility": eligibility,
         "freshness_reason": reason,
         "manual_review": review,
         "headline": headline,
-        "summary": normalize_team_names_in_text(clean(row.get("caption_seed") or row.get("summary"))),
+        "summary": summary_text(row, kind, headline),
         "event_age_hours": f"{age:.1f}" if isinstance(age, float) else "",
         "dedupe_key": dedupe,
     }
