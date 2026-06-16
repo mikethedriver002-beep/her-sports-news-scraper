@@ -18,6 +18,7 @@ APPROVAL_SCRIPT = Path("scripts/generate_hsd_athlete_image_approval_pack_v1.py")
 APPLY_SCRIPT = Path("scripts/apply_hsd_athlete_image_approvals_v1.py")
 SMOKE_SCRIPT = Path("scripts/generate_hsd_render_athlete_smoke_test_v1.py")
 PRODUCTION_DIRECTOR_SCRIPT = Path("scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py")
+VARIANT_PACK_SCRIPT = Path("scripts/generate_hsd_graphics_variant_packs_v1.py")
 
 
 def now_iso() -> str:
@@ -64,6 +65,7 @@ def main() -> None:
     approval_apply = run_script(APPLY_SCRIPT)
     smoke_test = run_script(SMOKE_SCRIPT)
     production_director = run_script(PRODUCTION_DIRECTOR_SCRIPT)
+    variant_packs = run_script(VARIANT_PACK_SCRIPT)
     lines = [
         "# HSD Athlete Image Match Review",
         "",
@@ -101,13 +103,21 @@ def main() -> None:
         "- graphics folder: `outputs/latest/POSTABLE_GRAPHICS/`",
         "- post-ready copy: `outputs/latest/production_graphics_director/copy_director/post_ready_copy.md`",
         "",
+        "## Graphics Variant Packs v1",
+        "",
+        f"- status: {variant_packs.get('status')}",
+        f"- returncode: {variant_packs.get('returncode')}",
+        "- folder: `outputs/latest/production_graphics_director/graphics_variant_packs/`",
+        "- zips: `outputs/latest/production_graphics_director/graphics_variant_packs/zips/`",
+        "",
         "## Policy",
         "",
         "- Needs-fix and rejected rows remain blocked from graphics.",
         "- Auto-rendered graphics require human visual review before posting.",
+        "- Every production package can now ship a logos-only and with-players variant pack when assets exist.",
     ]
     OUT_REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(json.dumps({"match_review_rows": len(rows), "approval_pack": approval_pack.get("status"), "approval_apply": approval_apply.get("status"), "smoke_test": smoke_test.get("status"), "production_director": production_director.get("status")}, indent=2))
+    print(json.dumps({"match_review_rows": len(rows), "approval_pack": approval_pack.get("status"), "approval_apply": approval_apply.get("status"), "smoke_test": smoke_test.get("status"), "production_director": production_director.get("status"), "variant_packs": variant_packs.get("status")}, indent=2))
 
 
 if __name__ == "__main__":
