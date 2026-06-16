@@ -4,17 +4,30 @@ import csv
 import json
 import os
 import shutil
+import subprocess
+import sys
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-VERSION = "hsd-pipeline-review-lite-v3.6.5-production-director-v4"
+VERSION = "hsd-pipeline-review-lite-v3.7.0-repo-state-v3-wired"
 OUT_DIR = Path("hsd_pipeline_lite_review")
 OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
 
+# V3 wiring: this review artifact is the stable final workflow chokepoint.
+# The main GitHub Actions workflow already calls this script, so keep the
+# repo-state audit, Production Graphics Director, and Variant Packs wired here
+# even when earlier workflow stages were skipped or soft-failed.
+V3_PREREQ_COMMANDS = [
+    ["scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py"],
+    ["scripts/generate_hsd_graphics_variant_packs_v1.py"],
+    ["scripts/report_hsd_repo_state_v3.py"],
+]
+
 KEY_FILES = [
+    "repo_state_v3.md", "repo_state_v3.json",
     "operator_status.md", "operator_status.json", "operator_status.csv",
     "publish_guard_report.md", "publish_guard_report.json",
     "install_report.md", "install_report.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
@@ -51,6 +64,10 @@ KEY_FILES = [
     "outputs/latest/production_graphics_director/production_graphics_director_report.md",
     "outputs/latest/production_graphics_director/production_graphics_director_manifest.json",
     "outputs/latest/production_graphics_director/postable_export_manifest.csv",
+    "outputs/latest/production_graphics_director/copy_director/post_ready_copy.md",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/variant_manifest.csv",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/variant_pack_report.md",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/variant_pack_report.json",
 ]
 
 
@@ -63,6 +80,75 @@ def row_count(path: str) -> int:
             return sum(1 for _ in csv.DictReader(f))
     except Exception:
         return 0
+
+
+def file_exists(path: str) -> bool:
+    return Path(path).is_file()
+
+
+def dir_exists(path: str) -> bool:
+    return Path(path).is_dir()
+
+
+def count_files(path: str, pattern: str = "*") -> int:
+    p = Path(path)
+    if not p.exists():
+        return 0
+    return sum(1 for item in p.glob(pattern) if item.is_file())
+
+
+def run_optional_script(script_path: str, extra_args: Optional[List[str]] = None, timeout: int = 600) -> Dict[str, Any]:
+    script = Path(script_path)
+    command = [sys.executable, script.as_posix(), *(extra_args or [])]
+    if not script.exists():
+        return {
+            "script": script_path,
+            "status": "missing",
+            "returncode": 127,
+            "stdout_tail": "",
+            "stderr_tail": "",
+        }
+    try:
+        proc = subprocess.run(
+            command,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+            check=False,
+        )
+        return {
+            "script": script_path,
+            "status": "ok" if proc.returncode == 0 else "error",
+            "returncode": proc.returncode,
+            "stdout_tail": proc.stdout[-2000:],
+            "stderr_tail": proc.stderr[-2000:],
+        }
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "script": script_path,
+            "status": "timeout",
+            "returncode": None,
+            "stdout_tail": (exc.stdout or "")[-2000:] if isinstance(exc.stdout, str) else "",
+            "stderr_tail": (exc.stderr or "")[-2000:] if isinstance(exc.stderr, str) else "",
+        }
+    except Exception as exc:
+        return {
+            "script": script_path,
+            "status": "exception",
+            "returncode": None,
+            "stdout_tail": "",
+            "stderr_tail": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def run_v3_prereqs() -> List[Dict[str, Any]]:
+    results: List[Dict[str, Any]] = []
+    for command in V3_PREREQ_COMMANDS:
+        script = command[0]
+        args = command[1:]
+        results.append(run_optional_script(script, args))
+    return results
 
 
 def copy_if_exists(name: str, files_dir: Path, manifest: List[Dict[str, Any]]) -> None:
@@ -126,19 +212,25 @@ def include_ready_upload_packs(ready_dir: Path, manifest: List[Dict[str, Any]]) 
 
 
 def main() -> None:
+    v3_prereqs = run_v3_prereqs()
+
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
     if OUT_ZIP.exists():
         OUT_ZIP.unlink()
+
     files_dir = OUT_DIR / "files"
     ready_dir = OUT_DIR / "ready_upload_packs"
     pack_dir = OUT_DIR / "graphics_chat_upload_pack"
     files_dir.mkdir(parents=True)
     ready_dir.mkdir(parents=True)
+
     manifest: List[Dict[str, Any]] = []
     for name in KEY_FILES:
         copy_if_exists(name, files_dir, manifest)
+
     ready_packs = include_ready_upload_packs(ready_dir, manifest)
+
     manual_workflow_dir = OUT_DIR / "manual_workflow_handoff_packs"
     manual_workflow_pack_count = 0
     src_manual_zips = Path("manual_workflow_handoff_packs")
@@ -150,7 +242,9 @@ def main() -> None:
                 shutil.copy2(p, dest)
                 manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
                 manual_workflow_pack_count += 1
+
     pack_file_count = safe_copy_tree_files(Path("graphics_chat_upload_pack"), pack_dir, manifest)
+
     story_ready_dir = OUT_DIR / "ig_story_results_ready_upload_packs"
     story_ready_dir.mkdir(parents=True, exist_ok=True)
     story_ready_packs = []
@@ -164,11 +258,14 @@ def main() -> None:
             shutil.copy2(p, dest)
             manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
             story_ready_packs.append({"zip": dest.as_posix(), "included": True, "size": p.stat().st_size})
+
     story_pack_file_count = safe_copy_tree_files(Path("ig_story_results_upload_pack"), OUT_DIR / "ig_story_results_upload_pack", manifest)
     athlete_approval_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_image_approval_pack"), OUT_DIR / "athlete_image_approval_pack", manifest)
     athlete_smoke_file_count = safe_copy_tree_files(Path("outputs/latest/review_files/athlete_smoke_test"), OUT_DIR / "athlete_smoke_test", manifest)
     production_director_file_count = safe_copy_tree_files(Path("outputs/latest/production_graphics_director"), OUT_DIR / "production_graphics_director", manifest)
     postable_graphics_file_count = safe_copy_tree_files(Path("outputs/latest/POSTABLE_GRAPHICS"), OUT_DIR / "POSTABLE_GRAPHICS", manifest)
+
+    variant_zip_dir = Path("outputs/latest/production_graphics_director/graphics_variant_packs/zips")
     counts = {
         "results_contract_rows": row_count("results_contract_v2.csv"),
         "manual_story_candidates": row_count("story_candidates_manual.csv"),
@@ -184,11 +281,34 @@ def main() -> None:
         "athlete_smoke_test_files_included": athlete_smoke_file_count,
         "production_director_files_included": production_director_file_count,
         "postable_graphics_files_included": postable_graphics_file_count,
+        "repo_state_v3_md_exists": file_exists("repo_state_v3.md"),
+        "repo_state_v3_json_exists": file_exists("repo_state_v3.json"),
+        "post_ready_copy_exists": file_exists("outputs/latest/production_graphics_director/copy_director/post_ready_copy.md"),
+        "graphics_variant_zip_dir_exists": dir_exists(variant_zip_dir.as_posix()),
+        "graphics_variant_zip_count": count_files(variant_zip_dir.as_posix(), "*.zip"),
+        "graphics_variant_manifest_rows": row_count("outputs/latest/production_graphics_director/graphics_variant_packs/variant_manifest.csv"),
     }
-    status_json = {"version": VERSION, "generated_at_utc": datetime.now(timezone.utc).isoformat(), "counts": counts, "ready_packs": ready_packs, "ig_story_results_ready_packs": story_ready_packs, "max_upload_pack_bytes": MAX_UPLOAD_PACK_BYTES}
+    status_json = {
+        "version": VERSION,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "counts": counts,
+        "v3_prereqs": v3_prereqs,
+        "ready_packs": ready_packs,
+        "ig_story_results_ready_packs": story_ready_packs,
+        "max_upload_pack_bytes": MAX_UPLOAD_PACK_BYTES,
+    }
     (OUT_DIR / "pipeline_status.json").write_text(json.dumps(status_json, indent=2), encoding="utf-8")
     (OUT_DIR / "lite_manifest.csv").write_text("path,included_as,size\n" + "\n".join(f"{m['path']},{m['included_as']},{m['size']}" for m in manifest) + "\n", encoding="utf-8")
-    (OUT_DIR / "README.md").write_text("# HSD Pipeline Lite Review\n\nThis lite review includes BeBe status files, graphics packs, athlete approval pack, athlete smoke test, Production Graphics Director, and POSTABLE_GRAPHICS when available.\n\n" + json.dumps(status_json, indent=2) + "\n", encoding="utf-8")
+    (OUT_DIR / "README.md").write_text(
+        "# HSD Pipeline Lite Review\n\n"
+        "This lite review includes BeBe status files, graphics packs, athlete approval pack, athlete smoke test, Production Graphics Director, Graphics Variant Packs, V3 repo-state sanity audit, and POSTABLE_GRAPHICS when available.\n\n"
+        "## V3 wiring\n\n"
+        "- `generate_hsd_pipeline_review_lite_v1.py` now runs Production Graphics Director v4.5, Graphics Variant Packs v1, and `scripts/report_hsd_repo_state_v3.py` before packaging the artifact.\n"
+        "- Auto-rendered graphics remain human-review only.\n"
+        "- Paid-source secrets are audited as optional/not allowed by default by `repo_state_v3`.\n\n"
+        + json.dumps(status_json, indent=2) + "\n",
+        encoding="utf-8",
+    )
     with zipfile.ZipFile(OUT_ZIP, "w", zipfile.ZIP_DEFLATED) as z:
         for p in OUT_DIR.rglob("*"):
             if p.is_file():
