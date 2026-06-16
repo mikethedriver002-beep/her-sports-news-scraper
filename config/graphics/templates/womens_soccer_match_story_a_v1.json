@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "womens_soccer_match_story.a.v1",
+  "family": "Women’s Soccer / NWSL / USWNT",
+  "variant": "A",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1350 },
+  "safe": { "t": 90, "r": 60, "b": 90, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 48, "y": 42, "w": 80, "lockup_allowed_public": false },
+  "zones": { "headline": [80, 190, 920, 210], "logo_or_photo_left": [80, 460, 360, 260], "logo_or_photo_right": [640, 460, 360, 260], "context": [70, 770, 940, 150], "takeaway": [70, 960, 940, 180], "question": [70, 1160, 940, 90] },
+  "modules": { "logo_lanes": { "asset_type": "approved_logo" }, "lower_lane": { "mode": "text", "allowed_modes": ["text", "approved_photo"] } },
+  "rules": { "approved_assets_only": true, "approved_images_only": true, "verified_match_context_only": true, "text_contrast_min": 4.5, "large_text_contrast_min": 3.0, "non_text_contrast_min": 3.0, "renderer_mode": "review_only" },
+  "dependentRequired": { "approved_photo": ["approved_asset_id", "rights_status", "identity_verified"] }
+}
