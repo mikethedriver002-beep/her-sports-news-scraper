@@ -113,7 +113,6 @@ jobs:
           python generate_hsd_results_contract_v1.py || true
           python validate_hsd_contracts_v1.py --soft || true
           python build_hsd_daily_slate_v1.py || true
-          if [ -f scripts/generate_hsd_quality_graphics_renderer_v1.py ]; then python scripts/generate_hsd_quality_graphics_renderer_v1.py || true; fi
           python generate_hsd_final_score_stories_v1.py || true
           python generate_hsd_story_results_brand_lock_v1.py || true
           python generate_hsd_manual_workflow_merge_v1.py || true
@@ -129,6 +128,7 @@ jobs:
           set -euo pipefail
           python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py
           python scripts/generate_hsd_graphics_variant_packs_v1.py
+          if [ -f scripts/generate_hsd_quality_graphics_renderer_v1.py ]; then python scripts/generate_hsd_quality_graphics_renderer_v1.py; fi
           python generate_hsd_pipeline_review_lite_v1.py
 
       - name: Run V3 repo-state audit
