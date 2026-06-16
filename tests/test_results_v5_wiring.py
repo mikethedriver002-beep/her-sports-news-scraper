@@ -57,7 +57,12 @@ def test_graphics_template_factory_is_wired() -> None:
     script = read("scripts/generate_hsd_graphics_template_factory_v1.py")
     assert "python scripts/generate_hsd_graphics_template_factory_v1.py" in workflow
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/**" in workflow
-    assert "v1.0-hsd-graphics-template-factory" in script
+    assert "v1.1-hsd-graphics-template-factory-public-bug-rule" in script
+    assert "public_logo_rule.md" in script
+    assert "official compact HSD watermark/bug only" in script
+    assert "Do not use the full HSD + HER SPORTS DAILY lockup" in script
+    assert "Do not add HER SPORTS DAILY beside the bug" in script
+    assert "Spec sheets and internal brand documents may show the full lockup" in script
     assert "Tonight in the W" in script
     assert "Last Night in the W" in script
     assert "Game Recap / Final Score" in script
