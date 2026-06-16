@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "hsd-results-contract-v3.3.0-v5-source-accuracy-freshness"
+VERSION = "hsd-results-contract-v3.3.1-v5-team-field-mapping"
 OUT_CSV = Path("results_contract_v2.csv")
 OUT_JSONL = Path("results_contract_v2.jsonl")
 OUT_REPORT = Path("results_contract_report.md")
@@ -18,7 +18,7 @@ FIELDS = [
     "run_id", "event_id", "row_kind", "source_id", "source_file", "source_url", "source_observed_at_utc", "source_timezone",
     "scheduled_start_utc", "completed_at_utc", "sport", "league", "status", "home_team_name", "away_team_name",
     "winner_team_name", "loser_team_name", "score_home", "score_away", "score_display", "event_date_local",
-    "content_eligibility", "freshness_reason", "manual_review", "headline", "summary", "event_age_hours", "dedupe_key"
+    "content_eligibility", "freshness_reason", "manual_review", "headline", "summary", "event_age_hours", "dedupe_key",
 ]
 
 # Box-score enrichment files are intentionally not contract sources. They are context only.
@@ -52,7 +52,7 @@ TEAM_NAME_CORRECTIONS = {
 
 LIVE_TERMS = [
     "live", "in progress", "halftime", "half time", "q1", "q2", "q3", "q4", "1st quarter", "2nd quarter",
-    "3rd quarter", "4th quarter", "end of 1st", "end of 2nd", "end of 3rd", "end of 4th", "overtime", " ot"
+    "3rd quarter", "4th quarter", "end of 1st", "end of 2nd", "end of 3rd", "end of 4th", "overtime", " ot",
 ]
 FINAL_TERMS = ["final", "completed", "full time", "ft"]
 SCHEDULE_TERMS = ["scheduled", "preview", "upcoming", "pm", "am", "edt", "est", "et", "not started"]
@@ -227,8 +227,21 @@ def headline_key(headline: str) -> str:
     return re.sub(r"\s+", " ", h).strip()
 
 
+def team_value(row: Dict[str, str], *keys: str) -> str:
+    for key in keys:
+        value = norm_team(row.get(key, ""))
+        if value:
+            return value
+    return ""
+
+
 def make_dedupe_key(row: Dict[str, str], kind: str, event_date: str, headline: str) -> str:
-    teams = [norm_words(norm_team(row.get(k, ""))) for k in ["home_team", "home_team_name", "away_team", "away_team_name", "winner", "winner_team_name", "loser", "loser_team_name"] if clean(row.get(k, ""))]
+    keys = [
+        "home_team", "home_team_name", "home_team_display",
+        "away_team", "away_team_name", "away_team_display",
+        "winner", "winner_team_name", "loser", "loser_team_name",
+    ]
+    teams = [norm_words(norm_team(row.get(k, ""))) for k in keys if clean(row.get(k, ""))]
     core = "|".join(sorted(set(teams))) if teams else headline_key(headline)
     return f"{kind}|{event_date}|{core}"
 
@@ -302,8 +315,8 @@ def normalize(row: Dict[str, str], source_file: str, run_id: str) -> Dict[str, s
         "sport": clean(row.get("sport_norm") or row.get("sport") or "basketball"),
         "league": clean(row.get("league_norm") or row.get("league") or "WNBA"),
         "status": status_text(row),
-        "home_team_name": norm_team(row.get("home_team") or row.get("home_team_name")),
-        "away_team_name": norm_team(row.get("away_team") or row.get("away_team_name")),
+        "home_team_name": team_value(row, "home_team", "home_team_name", "home_team_display"),
+        "away_team_name": team_value(row, "away_team", "away_team_name", "away_team_display"),
         "winner_team_name": winner,
         "loser_team_name": loser,
         "score_home": score_value(row, "score_home", "home_score"),
