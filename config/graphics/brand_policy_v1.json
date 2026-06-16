@@ -1,0 +1,61 @@
+{
+  "version": "hsd-graphics-brand-policy-v1",
+  "status": "active_law",
+  "public_logo_policy": {
+    "public_logo_only": true,
+    "one_watermark_only": true,
+    "public_lockup_forbidden": true,
+    "official_public_badge_asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png",
+    "current_repo_fallback_asset": "assets/branding/official_hsd_watermark.png",
+    "source_package_asset": "HSD_Brand_Identity_Package/png/HSD_Official_Current_Badge_DO_NOT_RECREATE.png",
+    "allowed_public_logo_assets": [
+      "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png",
+      "assets/branding/official_hsd_watermark.png"
+    ],
+    "forbidden_public_logo_treatments": [
+      "full HSD + HER SPORTS DAILY lockup",
+      "recreated text logo",
+      "large masthead lockup",
+      "extra HER SPORTS DAILY wordmark beside badge"
+    ],
+    "allowed_exceptions": [
+      "spec_sheet",
+      "internal_brand_doc",
+      "approval_board",
+      "pitch_deck",
+      "report"
+    ]
+  },
+  "public_logo_positions": {
+    "1080x1350": { "x": 48, "y": 42, "w": 80, "clearspace_min": 40 },
+    "1080x1920": { "x": 52, "y": 48, "w": 88, "clearspace_min": 44 }
+  },
+  "safe_zones": {
+    "1080x1350": { "top": 90, "right": 60, "bottom": 90, "left": 60 },
+    "1080x1920": { "top": 120, "right": 60, "bottom": 140, "left": 60 }
+  },
+  "readability": {
+    "normal_text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_ui_contrast_min": 3.0,
+    "metadata_min_px_1080x1350": 30,
+    "question_body_min_px_1080x1350": 44,
+    "color_only_cue_allowed": false
+  },
+  "asset_truth_rules": {
+    "approved_assets_only": true,
+    "no_fake_people": true,
+    "no_fake_jerseys": true,
+    "no_fake_kits": true,
+    "no_fake_logos": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_invented_player_names": true,
+    "no_invented_jersey_numbers": true
+  },
+  "renderer_policy": {
+    "renderer_is_compiler_not_designer": true,
+    "review_only_default": true,
+    "production_requires_template_status": "production_approved"
+  }
+}
