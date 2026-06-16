@@ -17,11 +17,11 @@ From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim Firs
 
 ### Slide 1: Cover
 On-image copy: Kim + Wilson win together
-Visual direction: Premium LPGA editorial cover. No fake player imagery.
+Visual direction: Premium LPGA editorial cover.
 
 ### Slide 2: Path
 On-image copy: From Epson Tour to LPGA winner’s circle
-Visual direction: Timeline-style card.
+Visual direction: Timeline-style context card.
 
 ### Slide 3: Why it matters
 On-image copy: A shared title moment at the Dow Championship

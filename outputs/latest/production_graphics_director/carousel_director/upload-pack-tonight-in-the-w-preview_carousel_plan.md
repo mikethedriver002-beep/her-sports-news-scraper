@@ -3,22 +3,22 @@
 ## Slide 1: Cover
 Tonight in the W
 
-Premium HSD cover in the preferred dark cinematic style with all matchup logos.
+Premium HSD cover in the preferred dark cinematic style.
 
 ## Slide 2: Slate
 Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm
 
-Clean schedule board. Large matchup rows. Official logos only.
+Clean matchup board with official logos.
 
-## Slide 3: Players to watch
-Use approved or exact attached player images only.
+## Slide 3: What to watch
+First run. Pace. Fourth-quarter answers.
 
-Player image lane. If exact player images are unavailable, use team logos and text labels.
+Three editorial watch tiles.
 
 ## Slide 4: Keys
-Pace. Glass. Shot quality. Fourth-quarter answers.
+Pace. Glass. Shot quality. Late-clock answers.
 
-Four bold key tiles, big readable type.
+Four bold key tiles.
 
 ## Slide 5: CTA
 Which matchup are you watching first?

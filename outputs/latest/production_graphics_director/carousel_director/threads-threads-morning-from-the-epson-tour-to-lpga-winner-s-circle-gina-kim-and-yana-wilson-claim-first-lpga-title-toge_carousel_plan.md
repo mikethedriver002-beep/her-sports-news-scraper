@@ -3,12 +3,12 @@
 ## Slide 1: Cover
 Kim + Wilson win together
 
-Premium LPGA editorial cover. No fake player imagery.
+Premium LPGA editorial cover.
 
 ## Slide 2: Path
 From Epson Tour to LPGA winner’s circle
 
-Timeline-style card.
+Timeline-style context card.
 
 ## Slide 3: Why it matters
 A shared title moment at the Dow Championship

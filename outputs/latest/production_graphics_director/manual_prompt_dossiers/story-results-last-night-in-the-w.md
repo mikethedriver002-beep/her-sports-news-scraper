@@ -20,20 +20,20 @@ On-image copy: Last Night in the W
 Visual direction: Premium dark scoreboard cover.
 
 ### Slide 2: Scores
-On-image copy: Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66
-Visual direction: Large final-score rows with official team logos.
+On-image copy: Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66
+Visual direction: Large score rows with official team logos.
 
 ### Slide 3: Dallas made noise
 On-image copy: Wings over Aces
-Visual direction: Spotlight Dallas result with score lock.
+Visual direction: Spotlight Dallas result.
 
 ### Slide 4: Minnesota sent a message
 On-image copy: Lynx over Fire
-Visual direction: Spotlight Minnesota result with score lock.
+Visual direction: Spotlight Minnesota result.
 
 ### Slide 5: CTA
 On-image copy: Best win of the night?
-Visual direction: Question-first end slide.
+Visual direction: Question-first HSD end slide.
 
 ## Caption
 
@@ -41,16 +41,8 @@ Last Night in the W.
 
 • Minnesota Lynx 107 · Portland Fire 74
 • Dallas Wings 96 · Las Vegas Aces 66
-• Minnesota Lynx 107 · Portland Fire 74
-• Dallas Wings 96 · Las Vegas Aces 66
-• Minnesota Lynx 107 · Portland Fire 74
-• Dallas Wings 96 · Las Vegas Aces 66
-• Minnesota Lynx 107 · Portland Fire 74
-• Dallas Wings 96 · Las Vegas Aces 66
 
-Dallas did more than win. The Wings put a number on the board that makes people look twice. Minnesota did the same with a statement result that gives the night real shape.
-
-That is the difference between a score dump and a recap: what changed after the final buzzer?
+Dallas made people look twice. Minnesota made a statement. Two finals, two very different kinds of pressure, and one night that gave us more than a box score.
 
 Which result mattered most? 🏀
 

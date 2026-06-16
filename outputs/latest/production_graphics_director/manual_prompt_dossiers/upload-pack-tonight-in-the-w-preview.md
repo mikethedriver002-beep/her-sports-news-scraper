@@ -17,19 +17,19 @@ Still to Come in the W | WNBA | graphics_upload_pack | Connecticut Sun at Toront
 
 ### Slide 1: Cover
 On-image copy: Tonight in the W
-Visual direction: Premium HSD cover in the preferred dark cinematic style with all matchup logos.
+Visual direction: Premium HSD cover in the preferred dark cinematic style.
 
 ### Slide 2: Slate
 On-image copy: Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm
-Visual direction: Clean schedule board. Large matchup rows. Official logos only.
+Visual direction: Clean matchup board with official logos.
 
-### Slide 3: Players to watch
-On-image copy: Use approved or exact attached player images only.
-Visual direction: Player image lane. If exact player images are unavailable, use team logos and text labels.
+### Slide 3: What to watch
+On-image copy: First run. Pace. Fourth-quarter answers.
+Visual direction: Three editorial watch tiles.
 
 ### Slide 4: Keys
-On-image copy: Pace. Glass. Shot quality. Fourth-quarter answers.
-Visual direction: Four bold key tiles, big readable type.
+On-image copy: Pace. Glass. Shot quality. Late-clock answers.
+Visual direction: Four bold key tiles.
 
 ### Slide 5: CTA
 On-image copy: Which matchup are you watching first?
@@ -42,13 +42,13 @@ Tonight in the W.
 • Connecticut Sun at Toronto Tempo
 • Los Angeles Sparks at Seattle Storm
 
-This slate has more than one question on the board. One game is about who sets the tone early. Another is about who can hold their nerve when the fourth quarter gets loud.
+Two games, two different questions. Connecticut and Toronto is about who sets the tone early. LA and Seattle is about who can own the late window and make the fourth quarter loud.
 
-For HSD, this is exactly the kind of night that needs a carousel: matchup, players to watch, keys to the game, and one clean debate question at the end.
+This is the kind of slate where the first run matters, but the last answer matters more.
 
 Which matchup are you watching first? 🏀
 
-#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #TorontoTempo
+#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #TorontoTempo #LASparks #SeattleStorm
 
 ## Negative Prompt
 

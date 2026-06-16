@@ -17,11 +17,11 @@ Dallas Wings beat Las Vegas Aces | WNBA | result_or_recap | Dallas Wings beat La
 
 ### Slide 1: Final
 On-image copy: Dallas Wings beat Las Vegas Aces
-Visual direction: Final-score cover with both team logos.
+Visual direction: Final-score cover with official team logos.
 
 ### Slide 2: Score
 On-image copy: Final: Dallas Wings 96, Las Vegas Aces 66.
-Visual direction: Score lock. Large winner/loser hierarchy.
+Visual direction: Large final score. Winner hierarchy clear.
 
 ### Slide 3: What changed
 On-image copy: Dallas made the night louder.
@@ -29,7 +29,7 @@ Visual direction: Editorial takeaway slide.
 
 ### Slide 4: CTA
 On-image copy: What did this one tell you?
-Visual direction: Question-first end slide.
+Visual direction: Question-first HSD end slide.
 
 ## Caption
 
@@ -37,7 +37,9 @@ Dallas Wings beat Las Vegas Aces.
 
 Final: Dallas Wings 96, Las Vegas Aces 66.
 
-That is a real result, not just a line in the box score. Dallas gets a win that changes the feel of the night, and Vegas leaves with questions that will carry into the next one.
+Dallas did more than win. The Wings put a number on the board that makes the whole night feel different, and Vegas leaves with questions that will carry into the next one.
+
+That is the kind of result that deserves more than a score graphic.
 
 What did this one tell you? 🏀
 

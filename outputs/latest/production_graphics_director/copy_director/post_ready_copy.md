@@ -1,10 +1,10 @@
-# HSD Copy Bank
+# HSD Post-Ready Copy
+
+Generated: 2026-06-16T03:52:14.267138+00:00
 
 ## Dallas Wings beat Las Vegas Aces
 
-Family: `wnba_result_recap`
-
-### IG Caption
+### Instagram caption
 Dallas Wings beat Las Vegas Aces.
 
 Final: Dallas Wings 96, Las Vegas Aces 66.
@@ -27,9 +27,7 @@ What changed after this result?
 
 ## From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026
 
-Family: `feature_story`
-
-### IG Caption
+### Instagram caption
 Gina Kim and Yana Wilson are officially in the LPGA winner’s circle together.
 
 From the Epson Tour to a title moment at the Dow Championship, this is the kind of women’s golf story that deserves more than a line in the ticker. It is a team-format breakthrough, a shared win, and a reminder that the LPGA lane has real stories with texture.
@@ -48,9 +46,7 @@ Are we talking about this enough?
 
 ## Last Night in the W
 
-Family: `wnba_results_roundup`
-
-### IG Caption
+### Instagram caption
 Last Night in the W.
 
 • Minnesota Lynx 107 · Portland Fire 74
@@ -72,9 +68,7 @@ Best win of the night?
 
 ## Still to Come in the W
 
-Family: `manual_graphics_pack`
-
-### IG Caption
+### Instagram caption
 Tonight in the W.
 
 • Connecticut Sun at Toronto Tempo
@@ -93,3 +87,5 @@ Tonight in the W: Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seatt
 
 ### First comment
 Which matchup has the most juice tonight?
+
+---
