@@ -7,7 +7,7 @@ from typing import Any
 
 import requests
 
-VERSION = "v5.0-independent-wnba-schedule-verification"
+VERSION = "v5.1-independent-wnba-schedule-verification-inconclusive-safe"
 EXPECTED = Path("config/hsd_expected_games_v5.csv")
 OUT_CSV = Path("independent_schedule_verification_v5.csv")
 OUT_JSON = Path("independent_schedule_verification_v5.json")
@@ -101,26 +101,34 @@ def verify() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     for date in dates:
         rows, h = fetch_date(date)
         independent.extend(rows); health.append(h)
+    ok_dates = {h["date"] for h in health if h.get("ok")}
+    source_available = bool(ok_dates)
     by_key = {r["independent_key"]: r for r in independent}
     expected_keys = {r.get("expected_key") for r in expected}
     out = []
     for r in expected:
-        key = clean(r.get("expected_key"))
-        found = by_key.get(key)
-        out.append({"date":r.get("date"),"home_team":r.get("home_team"),"away_team":r.get("away_team"),"expected_key":key,"independent_key":found.get("independent_key","") if found else "","status":"matched" if found else "missing_from_independent","source_event_id":found.get("source_event_id","") if found else "","notes":found.get("notes","") if found else "not found"})
+        key = clean(r.get("expected_key")); date = clean(r.get("date")); found = by_key.get(key)
+        if found:
+            status = "matched"; notes = found.get("notes", ""); indep_key = found.get("independent_key", ""); sid = found.get("source_event_id", "")
+        elif date not in ok_dates:
+            status = "independent_source_unavailable"; notes = "independent source unavailable for this date"; indep_key = ""; sid = ""
+        else:
+            status = "missing_from_independent"; notes = "not found in available independent source"; indep_key = ""; sid = ""
+        out.append({"date":r.get("date"),"home_team":r.get("home_team"),"away_team":r.get("away_team"),"expected_key":key,"independent_key":indep_key,"status":status,"source_event_id":sid,"notes":notes})
     for r in independent:
         if r["independent_key"] not in expected_keys:
             r2 = dict(r); r2["status"] = "extra_in_independent"; out.append(r2)
-    summary = {"version":VERSION,"generated_at_utc":datetime.now(timezone.utc).isoformat(),"expected_games":len(expected),"independent_games":len(independent),"matched":sum(1 for r in out if r.get("status")=="matched"),"missing_from_independent":sum(1 for r in out if r.get("status")=="missing_from_independent"),"extra_in_independent":sum(1 for r in out if r.get("status")=="extra_in_independent"),"source_available":any(h.get("ok") for h in health),"health":health}
+    summary = {"version":VERSION,"generated_at_utc":datetime.now(timezone.utc).isoformat(),"expected_games":len(expected),"independent_games":len(independent),"matched":sum(1 for r in out if r.get("status")=="matched"),"missing_from_independent":sum(1 for r in out if r.get("status")=="missing_from_independent"),"independent_source_unavailable":sum(1 for r in out if r.get("status")=="independent_source_unavailable"),"extra_in_independent":sum(1 for r in out if r.get("status")=="extra_in_independent"),"source_available":source_available,"verification_inconclusive":not source_available,"health":health}
     return out, summary
 
 
 def report(summary: dict[str, Any], rows: list[dict[str, Any]]) -> str:
-    lines = ["# Independent WNBA Schedule Verification v5", "", f"Generated: `{summary['generated_at_utc']}`", "", "## Counts", ""]
-    for k in ["expected_games","independent_games","matched","missing_from_independent","extra_in_independent","source_available"]:
+    lines = ["# Independent WNBA Schedule Verification v5", "", f"Generated: `{summary['generated_at_utc']}`", f"Version: `{summary['version']}`", "", "## Counts", ""]
+    for k in ["expected_games","independent_games","matched","missing_from_independent","independent_source_unavailable","extra_in_independent","source_available","verification_inconclusive"]:
         lines.append(f"- {k}: `{summary.get(k)}`")
     bad = [r for r in rows if r.get("status") != "matched"]
-    lines += ["", "## Mismatches", ""] + (["- None"] if not bad else [f"- {r['status']} | {r.get('date')} | {r.get('away_team')} at {r.get('home_team')}" for r in bad])
+    lines += ["", "## Mismatches / inconclusive rows", ""] + (["- None"] if not bad else [f"- {r['status']} | {r.get('date')} | {r.get('away_team')} at {r.get('home_team')}" for r in bad])
+    lines += ["", "## Source health", ""] + [f"- {h.get('date')} | ok={h.get('ok')} | http={h.get('http_status')} | events={h.get('events')} | {h.get('notes')}" for h in summary.get("health", [])]
     return "\n".join(lines) + "\n"
 
 
@@ -129,7 +137,7 @@ def main() -> None:
     write_rows(OUT_CSV, rows)
     OUT_JSON.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     OUT_MD.write_text(report(summary, rows), encoding="utf-8")
-    print(json.dumps({"matched":summary["matched"], "missing":summary["missing_from_independent"], "extra":summary["extra_in_independent"]}, indent=2))
+    print(json.dumps({"matched":summary["matched"], "missing":summary["missing_from_independent"], "inconclusive":summary["independent_source_unavailable"], "extra":summary["extra_in_independent"]}, indent=2))
 
 
 if __name__ == "__main__":
