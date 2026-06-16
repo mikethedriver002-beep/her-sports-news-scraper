@@ -182,15 +182,14 @@ def result_copy(row: Dict[str, str], rm: Dict[str, Dict[str, str]]) -> Tuple[str
     caption = (
         f"{headline}.\n\n"
         f"{detail}\n\n"
-        "Dallas did more than win. The Wings put a number on the board that makes the whole night feel different, and Vegas leaves with questions that will carry into the next one.\n\n"
-        "That is the kind of result that deserves more than a score graphic.\n\n"
+        "This was not just a box-score result. It changes the next conversation around rhythm, pressure, and who gets to carry momentum forward.\n\n"
         "What did this one tell you? 🏀\n\n"
         f"{tag_string(team_ids, 'WNBA')}"
     )
     slides = [
         {"slide": "1", "title": "Final", "copy": headline, "visual": "Final-score cover with official team logos."},
         {"slide": "2", "title": "Score", "copy": detail, "visual": "Large final score. Winner hierarchy clear."},
-        {"slide": "3", "title": "What changed", "copy": "Dallas made the night louder.", "visual": "Editorial takeaway slide."},
+        {"slide": "3", "title": "What changed", "copy": "Momentum changed after the final.", "visual": "Editorial takeaway slide."},
         {"slide": "4", "title": "CTA", "copy": "What did this one tell you?", "visual": "Question-first HSD end slide."},
     ]
     return caption, f"{headline}. What did this one tell you?", "What changed after this result?", headline[:110], "What stood out?", slides
@@ -203,16 +202,15 @@ def results_roundup_copy(row: Dict[str, str]) -> Tuple[str, str, str, str, str, 
     caption = (
         "Last Night in the W.\n\n"
         f"{score_block}\n\n"
-        "Dallas made people look twice. Minnesota made a statement. Two finals, two very different kinds of pressure, and one night that gave us more than a box score.\n\n"
+        "The scores tell you who handled business. The bigger story is what each result changes: momentum, pressure, and the next conversation around the league.\n\n"
         "Which result mattered most? 🏀\n\n"
         f"{tag_string(team_ids, 'WNBA')}"
     )
     slides = [
         {"slide": "1", "title": "Cover", "copy": "Last Night in the W", "visual": "Premium dark scoreboard cover."},
         {"slide": "2", "title": "Scores", "copy": " | ".join(scores), "visual": "Large score rows with official team logos."},
-        {"slide": "3", "title": "Dallas made noise", "copy": "Wings over Aces", "visual": "Spotlight Dallas result."},
-        {"slide": "4", "title": "Minnesota sent a message", "copy": "Lynx over Fire", "visual": "Spotlight Minnesota result."},
-        {"slide": "5", "title": "CTA", "copy": "Best win of the night?", "visual": "Question-first HSD end slide."},
+        {"slide": "3", "title": "What changed", "copy": "The scoreboard shifted the conversation.", "visual": "Editorial takeaway slide."},
+        {"slide": "4", "title": "CTA", "copy": "Best win of the night?", "visual": "Question-first HSD end slide."},
     ]
     return caption, "Last Night in the W. Which result mattered most?", "Best win of the night?", "Last Night in the W: which result mattered most?", "Best win?", slides
 
@@ -224,8 +222,7 @@ def slate_copy(row: Dict[str, str]) -> Tuple[str, str, str, str, str, List[Dict[
     caption = (
         "Tonight in the W.\n\n"
         f"{slate_block}\n\n"
-        "Two games, two different questions. Connecticut and Toronto is about who sets the tone early. LA and Seattle is about who can own the late window and make the fourth quarter loud.\n\n"
-        "This is the kind of slate where the first run matters, but the last answer matters more.\n\n"
+        "The slate has a simple question: who sets the tone early, and who has the late answer when the game tightens up?\n\n"
         "Which matchup are you watching first? 🏀\n\n"
         f"{tag_string(team_ids, 'WNBA')}"
     )
@@ -237,6 +234,25 @@ def slate_copy(row: Dict[str, str]) -> Tuple[str, str, str, str, str, List[Dict[
         {"slide": "5", "title": "CTA", "copy": "Which matchup are you watching first?", "visual": "Poll-style HSD end slide."},
     ]
     return caption, f"Tonight in the W: {' | '.join(slate)}. Which matchup are you watching first?", "Which matchup has the most juice tonight?", f"Tonight in the W: {' | '.join(slate[:2])}", "Which game first?", slides
+
+
+def preview_copy(row: Dict[str, str]) -> Tuple[str, str, str, str, str, List[Dict[str, str]]]:
+    headline = clean(row.get("headline") or "Tonight in the W")
+    team_ids = team_ids_for_row(row)
+    caption = (
+        f"{headline}.\n\n"
+        "Who needs this one more? 👀\n\n"
+        "This matchup is about pace, shot quality, and who handles the pressure possessions late. The first run matters, but the fourth-quarter answer matters more.\n\n"
+        "Road statement or home hold? Drop your pick before tip. 🏀\n\n"
+        f"{tag_string(team_ids, 'WNBA')}"
+    )
+    slides = [
+        {"slide": "1", "title": "Cover", "copy": headline, "visual": "Premium HSD matchup cover with official logos."},
+        {"slide": "2", "title": "Stakes", "copy": "Road statement vs home hold", "visual": "Two-sided stakes slide."},
+        {"slide": "3", "title": "Keys", "copy": "Pace. Shot quality. Late possessions.", "visual": "Three clean key tiles."},
+        {"slide": "4", "title": "CTA", "copy": "Who needs this one more?", "visual": "Question-first end slide."},
+    ]
+    return caption, f"{headline}. Who needs this one more? 👀", "Road statement or home hold? Drop your pick.", f"{headline}. Who owns the window?", "Who needs this one more?", slides
 
 
 def feature_copy(row: Dict[str, str]) -> Tuple[str, str, str, str, str, List[Dict[str, str]]]:
@@ -257,10 +273,14 @@ def feature_copy(row: Dict[str, str]) -> Tuple[str, str, str, str, str, List[Dic
 
 def package_copy(row: Dict[str, str], rm: Dict[str, Dict[str, str]]) -> Tuple[str, str, str, str, str, List[Dict[str, str]]]:
     family = row.get("content_family", "")
+    content_type = row.get("content_type", "")
+    league = row.get("league", "")
     if family == "wnba_result_recap":
         return result_copy(row, rm)
     if family == "wnba_results_roundup":
         return results_roundup_copy(row)
+    if family == "wnba_game_preview" or (league.upper() == "WNBA" and "preview" in content_type.lower()):
+        return preview_copy(row)
     if family == "manual_graphics_pack":
         return slate_copy(row)
     return feature_copy(row)
@@ -276,6 +296,7 @@ def main() -> None:
     rows = read_csv(CONTEXT)
     rm = result_map()
     seen: set[Tuple[str, str]] = set()
+    publish_seen: set[Tuple[str, str]] = set()
     copy_rows: List[Dict[str, Any]] = []
     carousel_rows: List[Dict[str, Any]] = []
     publish_lines = ["# HSD Post-Ready Copy", "", f"Generated: {now_iso()}", ""]
@@ -291,15 +312,17 @@ def main() -> None:
         carousel_path.write_text("# Carousel Plan\n\n" + "\n".join([f"## Slide {s['slide']}: {s['title']}\n{s['copy']}\n\n{s['visual']}\n" for s in slides]), encoding="utf-8")
         copy_rows.append({"package_id": row.get("package_id"), "packet_id": row.get("packet_id"), "platform": row.get("platform"), "headline": row.get("headline"), "content_family": row.get("content_family"), "caption": caption, "threads_post": threads, "first_comment": first, "story_frame_text": story, "poll_question": poll, "hashtags": caption.split("\n")[-1], "evidence": row.get("evidence")})
         carousel_rows.append({"package_id": row.get("package_id"), "packet_id": row.get("packet_id"), "platform": row.get("platform"), "headline": row.get("headline"), "content_family": row.get("content_family"), "slides": len(slides), "carousel_plan_path": carousel_path.as_posix(), "prompt_dossier_path": prompt_path.as_posix(), "status": "ready_for_manual_or_renderer_build"})
-        publish_lines += [f"## {row.get('headline')}", "", "### Instagram caption", caption, "", "### Threads", threads, "", "### First comment", first, "", "---", ""]
+        if key not in publish_seen:
+            publish_lines += [f"## {row.get('headline')}", "", "### Instagram caption", caption, "", "### Threads", threads, "", "### First comment", first, "", "---", ""]
+            publish_seen.add(key)
     write_csv(COPY_DIR / "copy_bank.csv", copy_rows, COPY_FIELDS)
     write_csv(CAROUSEL_DIR / "carousel_manifest.csv", carousel_rows, CAROUSEL_FIELDS)
     (COPY_DIR / "copy_bank.md").write_text("# HSD Copy Bank\n\n" + "\n\n---\n\n".join([f"## {r['headline']}\n\nFamily: `{r['content_family']}`\n\n### IG Caption\n{r['caption']}\n\n### Threads\n{r['threads_post']}\n\n### First comment\n{r['first_comment']}" for r in copy_rows]) + "\n", encoding="utf-8")
     (COPY_DIR / "post_ready_copy.md").write_text("\n".join(publish_lines), encoding="utf-8")
     report = read_json(OUT_ROOT / "production_graphics_director_manifest.json")
-    report.update({"version": VERSION, "generated_at_utc": now_iso(), "copy_gate": "deduped_scores_and_story_rows", "copy_items": len(copy_rows), "carousel_plans": len(carousel_rows), "post_ready_copy": (COPY_DIR / "post_ready_copy.md").as_posix()})
+    report.update({"version": VERSION, "generated_at_utc": now_iso(), "copy_gate": "deduped_scores_story_and_preview_rows", "copy_items": len(copy_rows), "carousel_plans": len(carousel_rows), "post_ready_copy": (COPY_DIR / "post_ready_copy.md").as_posix()})
     (OUT_ROOT / "production_graphics_director_manifest.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    (OUT_ROOT / "production_graphics_director_report.md").write_text("# Mermaid Production Graphics Director v4.5 Post-Ready Copy Gate\n\n" + f"Generated: {report['generated_at_utc']}\n\n" + "## Counts\n\n" + "\n".join([f"- {k}: {v}" for k, v in report.items() if k not in {"generated_at_utc"}]) + "\n\n## Policy\n\n- Auto-renders remain human-review only.\n- Copy bank is deduped for human publishing.\n- Score lines are deduped.\n- Slate hashtags include all detected teams.\n", encoding="utf-8")
+    (OUT_ROOT / "production_graphics_director_report.md").write_text("# Mermaid Production Graphics Director v4.5 Post-Ready Copy Gate\n\n" + f"Generated: {report['generated_at_utc']}\n\n" + "## Counts\n\n" + "\n".join([f"- {k}: {v}" for k, v in report.items() if k not in {"generated_at_utc"}]) + "\n\n## Policy\n\n- Auto-renders remain human-review only.\n- Copy bank is deduped for human publishing.\n- Score lines are deduped.\n- Preview copy stays WNBA-specific and cannot fall through to LPGA feature copy.\n- Slate hashtags include all detected teams.\n", encoding="utf-8")
     summary = read_json(SUMMARY)
     summary.update({"production_director_version": VERSION, "production_director_copy_items": len(copy_rows), "production_director_carousel_plans": len(carousel_rows), "production_director_post_ready_copy": (COPY_DIR / "post_ready_copy.md").as_posix()})
     if SUMMARY.parent.exists():
