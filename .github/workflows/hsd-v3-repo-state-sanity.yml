@@ -22,13 +22,47 @@ concurrency:
 jobs:
   repo-state-sanity:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     env:
       HSD_LOCAL_TIMEZONE: "America/New_York"
       HSD_PAID_SOURCES_ALLOWED: "0"
       HSD_PUBLISH_OUTPUTS: "false"
       HSD_PUBLISH_MODE: "artifact_only"
       HSD_REVIEW_ARTIFACT_SIZE: "lite"
+      HSD_RUN_MODE: "full_pipeline"
+      HSD_CONTENT_VOLUME: "balanced"
+      HSD_DESK_DAY_TYPE: "normal_day"
+      HSD_STRICT_FRESHNESS_GATE: "1"
+      HSD_MAX_RESULT_FRESH_HOURS: "18"
+      HSD_STUDIO_REQUIRE_EVENT_DATE: "1"
+      HSD_STUDIO_MAX_RESULT_AGE_HOURS: "18"
+      HSD_GREY_SOURCE_MODE: "review_only"
+      HSD_DAILY_CADENCE_CONFIG: "config/hsd_daily_cadence_v2.json"
+      HSD_PRIORITY_SPORTS_CONFIG: "config/hsd_priority_sports_14d_v2.json"
+      HSD_PLATFORM_POLICY_CONFIG: "config/hsd_platform_policy_v2.json"
+      HSD_EXACT_ASSET_POLICY_CONFIG: "config/hsd_exact_asset_policy_v1.json"
+      HSD_VERIFIED_LOGO_REGISTRY: "config/hsd_verified_logo_registry_v1.json"
+      HSD_REQUIRE_EXACT_TEAM_LOGOS: "1"
+      HSD_TEXT_LOGO_FALLBACK_ALLOWED: "0"
+      HSD_PREVIEW_LOOKAHEAD_HOURS: "30"
+      HSD_ALLOW_PREVIEW_PLAYER_IMAGES: "1"
+      HSD_PREVIEW_REQUIRE_COMPLETE_SLATE: "1"
+      HSD_PREVIEW_ALLOW_NEXT_DAY: "0"
+      HSD_REQUIRE_PREVIEW_PEOPLE: "0"
+      HSD_NEWS_REQUIRE_EVENT_DATE: "true"
+      HSD_NEWS_ENABLE_FETCH: "true"
+      HSD_ASSET_RIGHTS_MODE: "aggressive_public_review"
+      HSD_ASSET_DOWNLOAD: "1"
+      HSD_PLAYER_IMAGES_REQUIRED: "1"
+      HSD_PLAYER_IMAGE_FREE_SEARCH: "1"
+      HSD_PLAYER_IMAGE_MAX_CANDIDATES: "24"
+      HSD_FINAL_SCORE_STORIES_ENABLE_ESPN_FETCH: "1"
+      HSD_FINAL_SCORE_STORIES_POLICY: "config/hsd_final_score_stories_policy_v1.json"
+      HSD_FINAL_SCORE_STORIES_NETWORK: "1"
+      HSD_FINAL_SCORE_STORIES_FETCH_TIMEOUT_SECONDS: "5"
+      HSD_PLAYER_IMAGE_AUTO_APPROVE_SCORE: "45"
+      HSD_PLAYER_IMAGE_MIN_WIDTH: "240"
+      HSD_PLAYER_IMAGE_MIN_HEIGHT: "240"
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -47,13 +81,41 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-news-sync.txt ]; then pip install -r requirements-news-sync.txt; fi
+          if [ -f requirements-asset-visual-qa.txt ]; then pip install -r requirements-asset-visual-qa.txt; fi
           python -m pip install feedparser beautifulsoup4 jsonschema python-dateutil pillow requests cairosvg pytest >/dev/null 2>&1 || true
 
-      - name: V3 first-run commands
+      - name: Verify install
+        shell: bash
+        run: python verify_hsd_install_v1.py
+
+      - name: Build upstream packets for V3 sanity
         shell: bash
         run: |
           set -euo pipefail
-          python verify_hsd_install_v1.py
+          python build_hsd_run_manifest_v1.py || true
+          python generate_hsd_source_registry_audit_v2.py || true
+          python normalize_hsd_manual_story_inbox_v1.py || true
+          python ingest_hsd_discovery_sources_v1.py || true
+          if [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py || true; fi
+          if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py || true; fi
+          if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py || true; fi
+          python generate_hsd_results_contract_v1.py || true
+          python validate_hsd_contracts_v1.py --soft || true
+          python build_hsd_daily_slate_v1.py || true
+          python generate_hsd_final_score_stories_v1.py || true
+          python generate_hsd_story_results_brand_lock_v1.py || true
+          python generate_hsd_manual_workflow_merge_v1.py || true
+          python generate_hsd_multi_post_desk_v1.py || true
+          python generate_hsd_bebe_daily_ops_plan_v2.py || true
+          python generate_hsd_mermaid_upper_echelon_v2.py || true
+          if [ -f generate_hsd_mermaid_assignment_handoff_v2_6.py ]; then python generate_hsd_mermaid_assignment_handoff_v2_6.py || true; fi
+          if [ -f generate_hsd_mermaid_handoff_publisher_v2_6_1.py ]; then python generate_hsd_mermaid_handoff_publisher_v2_6_1.py || true; fi
+
+      - name: V3 first-run acceptance commands
+        shell: bash
+        run: |
+          set -euo pipefail
           python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py
           python scripts/generate_hsd_graphics_variant_packs_v1.py
           python generate_hsd_pipeline_review_lite_v1.py
