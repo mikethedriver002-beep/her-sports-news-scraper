@@ -11,7 +11,9 @@ def test_independent_wnba_schedule_verifier_is_wired() -> None:
     assert "python scripts/verify_hsd_wnba_schedule_independent_v5.py" in workflow
     assert "independent_schedule_verification_v5.json" in workflow
     assert "independent_schedule_verification_v5.md" in workflow
-    assert "v5.0-independent-wnba-schedule-verification" in script
+    assert "v5.1-independent-wnba-schedule-verification-inconclusive-safe" in script
     assert "stats.wnba.com" in script
+    assert "independent_source_unavailable" in script
+    assert "verification_inconclusive" in script
     line = next(line for line in workflow.splitlines() if "verify_hsd_wnba_schedule_independent_v5.py" in line)
     assert line.index("generate_hsd_expected_games_v5.py") < line.index("verify_hsd_wnba_schedule_independent_v5.py")
