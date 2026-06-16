@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import csv
 import re
 from pathlib import Path
@@ -49,6 +50,11 @@ def csv_rows(path: str) -> list[dict[str, str]]:
         return list(csv.DictReader(f))
 
 
+def test_python_files_compile() -> None:
+    for path in ["generate_hsd_results_desk_v5.py", "generate_hsd_results_desk_v4.py", "scripts/report_hsd_repo_state_v3.py"]:
+        ast.parse(read(path), filename=path)
+
+
 def test_requirements_do_not_add_paid_or_llm_dependencies() -> None:
     text = read("requirements.txt").lower()
     hits = sorted(token for token in PAID_DEPENDENCY_TOKENS if token in text)
@@ -69,6 +75,23 @@ def test_workflow_paid_secret_refs_are_optional_only() -> None:
             if re.search(pattern, text, re.IGNORECASE | re.DOTALL):
                 hard_required_patterns.append((secret, pattern))
     assert not hard_required_patterns, f"Paid-source secrets must stay optional/not allowed by default: {hard_required_patterns}"
+
+
+def test_results_desk_v5_is_active_free_only_path() -> None:
+    v5 = read("generate_hsd_results_desk_v5.py")
+    v4 = read("generate_hsd_results_desk_v4.py")
+    assert "VERSION = \"v5.0-free-public-source-accuracy\"" in v5
+    assert "from generate_hsd_results_desk_v5 import main" in v4
+    assert "api-sports.io" not in v5.lower()
+    assert "x-apisports-key" not in v5.lower()
+    assert "apisports_key" not in v5.lower()
+    assert "rapidapi" not in v5.lower()
+    assert "paid_sources_required": True not in []  # defensive no-op; keeps assertion style explicit
+    assert '"paid_sources_required": False' in v5
+    assert "espn_wnba_public" in v5
+    assert "duplicate_game_audit_v5.csv" in v5
+    assert "stale_source_audit_v5.csv" in v5
+    assert "missing_games_alert_v5" in v5
 
 
 def test_v3_repo_state_audit_is_wired_into_lite_review() -> None:
