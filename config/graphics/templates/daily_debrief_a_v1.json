@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "daily_debrief.a.v1",
+  "family": "The Daily Debrief",
+  "variant": "A",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1350 },
+  "safe": { "t": 90, "r": 60, "b": 90, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 48, "y": 42, "w": 80, "lockup_allowed_public": false },
+  "zones": { "headline": [80, 180, 920, 190], "story_1": [70, 420, 940, 190], "story_2": [70, 650, 940, 190], "story_3": [70, 880, 940, 190], "question": [70, 1140, 940, 110] },
+  "modules": { "stories": { "min_items": 2, "max_items": 3 }, "end_question": { "mode": "text" } },
+  "rules": { "approved_assets_only": true, "no_invented_stats": true, "text_contrast_min": 4.5, "large_text_contrast_min": 3.0, "non_text_contrast_min": 3.0, "renderer_mode": "review_only" }
+}
