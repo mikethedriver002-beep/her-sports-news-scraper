@@ -35,13 +35,17 @@ def test_multisport_review_modules_are_wired_and_review_only() -> None:
     assert "hsd-pipeline-review-lite-v3.8.0-results-v5-multisport-review" in lite
 
 
-def test_hsd_quality_graphics_renderer_is_wired() -> None:
+def test_hsd_quality_graphics_renderer_is_wired_and_packaged() -> None:
     workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
     script = read("scripts/generate_hsd_quality_graphics_renderer_v1.py")
+    zipper = read("scripts/package_hsd_quality_graphics_v1.py")
     assert "python scripts/generate_hsd_quality_graphics_renderer_v1.py" in workflow
+    assert "python scripts/package_hsd_quality_graphics_v1.py" in workflow
     assert "outputs/latest/HSD_QUALITY_GRAPHICS/**" in workflow
+    assert "hsd_quality_graphics.zip" in workflow
     assert "hsd_quality_graphics_manifest.csv" in workflow
     assert "v1.0-hsd-quality-graphics-renderer" in script
+    assert "v1.0-package-hsd-quality-graphics" in zipper
     assert "No player images, no fake athletes, no invented stats" in script
     assert "ig_feed" in script and "threads" in script and "stories" in script
     assert "results_contract_v2.csv" in script
