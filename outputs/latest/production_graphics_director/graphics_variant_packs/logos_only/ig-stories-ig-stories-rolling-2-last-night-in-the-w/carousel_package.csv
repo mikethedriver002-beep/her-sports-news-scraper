@@ -1,0 +1,2 @@
+package_id,packet_id,platform,headline,content_family,slides,carousel_plan_path,prompt_dossier_path,status
+ig-stories_ig-stories-rolling-2_last-night-in-the-w,ig-stories_ig-stories-rolling-2_last-night-in-the-w,IG Stories,Last Night in the W,wnba_results_roundup,5,outputs/latest/production_graphics_director/carousel_director/ig-stories-ig-stories-rolling-2-last-night-in-the-w_carousel_plan.md,outputs/latest/production_graphics_director/manual_prompt_dossiers/ig-stories-ig-stories-rolling-2-last-night-in-the-w.md,ready_for_manual_or_renderer_build

@@ -1,6 +1,6 @@
 # Mermaid Render Studio v3.0.2 Approved Athlete Image QA Report
 
-Generated: 2026-06-16T03:52:14.145989+00:00
+Generated: 2026-06-16T04:22:56.185396+00:00
 Version: v3.0.2-approved-athlete-image-integration
 
 ## Counts
@@ -10,7 +10,7 @@ Version: v3.0.2-approved-athlete-image-integration
 - blocked packets: 1
 - graphics files: 0
 - zip files: 0
-- score pairs found: 5
+- score pairs found: 3
 - registry teams: 15
 - registry logos: 15
 - approved athlete images available: 196

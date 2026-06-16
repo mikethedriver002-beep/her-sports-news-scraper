@@ -1,0 +1,40 @@
+{
+  "version": "v1-player-toggle-variant-packs",
+  "package_id": "upload-pack_tonight-in-the-w",
+  "headline": "Tonight in the W",
+  "variant": "with_players",
+  "teams": "indiana_fever;toronto_tempo",
+  "player_mode": "team_candidate_players_review_required",
+  "players": [
+    {
+      "athlete_id": "indiana_fever_aliyah_boston",
+      "display_name": "Aliyah Boston",
+      "team_id": "indiana_fever"
+    },
+    {
+      "athlete_id": "indiana_fever_bree_hall",
+      "display_name": "Bree Hall",
+      "team_id": "indiana_fever"
+    },
+    {
+      "athlete_id": "toronto_tempo_brittney_sykes",
+      "display_name": "Brittney Sykes",
+      "team_id": "toronto_tempo"
+    },
+    {
+      "athlete_id": "toronto_tempo_isabelle_harrison",
+      "display_name": "Isabelle Harrison",
+      "team_id": "toronto_tempo"
+    }
+  ],
+  "team_assets": [
+    "outputs/latest/production_graphics_director/graphics_variant_packs/with_players/upload-pack-tonight-in-the-w/assets/logos/indiana_fever_indiana-fever_primary-logo-v1_637776.png",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/with_players/upload-pack-tonight-in-the-w/assets/logos/toronto_tempo_toronto-tempo_primary-logo-v1_f1c4e6.png"
+  ],
+  "player_assets": [
+    "outputs/latest/production_graphics_director/graphics_variant_packs/with_players/upload-pack-tonight-in-the-w/assets/players/indiana_fever_aliyah_boston_headshot.png",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/with_players/upload-pack-tonight-in-the-w/assets/players/indiana_fever_bree_hall_headshot.png",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/with_players/upload-pack-tonight-in-the-w/assets/players/toronto_tempo_brittney_sykes_headshot.png",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/with_players/upload-pack-tonight-in-the-w/assets/players/toronto_tempo_isabelle_harrison_headshot.png"
+  ]
+}

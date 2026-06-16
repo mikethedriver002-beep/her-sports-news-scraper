@@ -6,7 +6,7 @@ Tonight in the W
 Premium HSD cover in the preferred dark cinematic style.
 
 ## Slide 2: Slate
-Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm
+Tonight in the W
 
 Clean matchup board with official logos.
 

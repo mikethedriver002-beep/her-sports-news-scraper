@@ -1,6 +1,6 @@
 {
   "version": "hsd-wnba-asset-gap-report-v1.1-logo-upload-pack",
-  "generated_at_utc": "2026-06-16T03:51:50.386007+00:00",
+  "generated_at_utc": "2026-06-16T04:22:32.240535+00:00",
   "missing_team_logos": 3,
   "validation_status": "needs_assets",
   "logo_upload_manifest": "data/asset_registry/wnba/logo_gap_upload_manifest.csv",

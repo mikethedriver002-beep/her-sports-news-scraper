@@ -1,0 +1,14 @@
+{
+  "version": "v1-player-toggle-variant-packs",
+  "package_id": "upload-pack_tonight-in-the-w",
+  "headline": "Tonight in the W",
+  "variant": "logos_only",
+  "teams": "indiana_fever;toronto_tempo",
+  "player_mode": "logos_only_forced",
+  "players": [],
+  "team_assets": [
+    "outputs/latest/production_graphics_director/graphics_variant_packs/logos_only/upload-pack-tonight-in-the-w/assets/logos/indiana_fever_indiana-fever_primary-logo-v1_637776.png",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/logos_only/upload-pack-tonight-in-the-w/assets/logos/toronto_tempo_toronto-tempo_primary-logo-v1_f1c4e6.png"
+  ],
+  "player_assets": []
+}

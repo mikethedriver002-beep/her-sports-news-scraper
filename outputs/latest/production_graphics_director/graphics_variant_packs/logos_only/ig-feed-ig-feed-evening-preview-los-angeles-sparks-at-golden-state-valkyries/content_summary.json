@@ -1,0 +1,14 @@
+{
+  "version": "v1-player-toggle-variant-packs",
+  "package_id": "ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-golden-state-valkyries",
+  "headline": "Los Angeles Sparks at Golden State Valkyries",
+  "variant": "logos_only",
+  "teams": "los_angeles_sparks;golden_state_valkyries",
+  "player_mode": "logos_only_forced",
+  "players": [],
+  "team_assets": [
+    "outputs/latest/production_graphics_director/graphics_variant_packs/logos_only/ig-feed-ig-feed-evening-preview-los-angeles-sparks-at-golden-state-valkyries/assets/logos/los_angeles_sparks_los-angeles-sparks_verified-logo-1.svg",
+    "outputs/latest/production_graphics_director/graphics_variant_packs/logos_only/ig-feed-ig-feed-evening-preview-los-angeles-sparks-at-golden-state-valkyries/assets/logos/golden_state_valkyries_logo.png"
+  ],
+  "player_assets": []
+}

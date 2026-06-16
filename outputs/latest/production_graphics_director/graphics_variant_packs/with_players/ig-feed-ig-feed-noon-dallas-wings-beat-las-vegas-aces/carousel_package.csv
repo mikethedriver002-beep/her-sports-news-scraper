@@ -1,0 +1,2 @@
+package_id,packet_id,platform,headline,content_family,slides,carousel_plan_path,prompt_dossier_path,status
+ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces,ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces,IG Feed,Dallas Wings beat Las Vegas Aces,wnba_result_recap,4,outputs/latest/production_graphics_director/carousel_director/ig-feed-ig-feed-noon-dallas-wings-beat-las-vegas-aces_carousel_plan.md,outputs/latest/production_graphics_director/manual_prompt_dossiers/ig-feed-ig-feed-noon-dallas-wings-beat-las-vegas-aces.md,ready_for_manual_or_renderer_build

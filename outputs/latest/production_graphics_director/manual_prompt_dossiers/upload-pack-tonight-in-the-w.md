@@ -1,6 +1,6 @@
-# HSD Manual Prompt Dossier — Still to Come in the W
+# HSD Manual Prompt Dossier — Tonight in the W
 
-Packet: `upload-pack_tonight-in-the-w-preview`
+Packet: `upload-pack_tonight-in-the-w`
 Platform: `Manual Graphics Pack`
 Family: `manual_graphics_pack`
 Quality: `rich`
@@ -11,7 +11,7 @@ Premium women’s sports editorial. Dark high-contrast background. Bold condense
 
 ## Evidence
 
-Still to Come in the W | WNBA | graphics_upload_pack | Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm | Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm | Games worth watching | Still to Come in the W | Games worth watching | Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm | # HSD Graphics Prompt: Tonight in the W Preview Use the attached files only. Use the attached logo files and attached player/person image files exactly as mapped. Do not fetch, substitute, or invent any logos, player images, bodies, jerseys, or numbers. Treat the game facts, team names, and player names as locked facts and preserve them exactly. Render only display-safe editorial language. Never render internal QA or prompt-control language. Create po
+Tonight in the W | graphics_upload_pack | Tonight in the W | Tonight in the W | Games worth watching | Tonight in the W | Games worth watching | Tonight in the W | # Tonight in the W — Safe Graphics Prompt v2 Version: v3.2.17-mermaid-preview-player-lock-v2 Generated: 2026-06-16T04:22:19.891066+00:00 Create a premium Her Sports Daily 4-slide 1080x1350 carousel for Tonight in the W. CRITICAL PLAYER SAFETY LOCK: - Do not generate, invent, synthesize, redraw, or approximate any player/person image. - Use only exact uploaded player files that are explicitly named in this prompt. - Do not put a player in an opponent jersey or wrong team context. - Do not use a player image for any other player name. - If the player slide is not explicitly allowed below, do not use player images at all. Slate: - 
 
 ## Carousel Plan
 
@@ -20,7 +20,7 @@ On-image copy: Tonight in the W
 Visual direction: Premium HSD cover in the preferred dark cinematic style.
 
 ### Slide 2: Slate
-On-image copy: Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm
+On-image copy: Tonight in the W
 Visual direction: Clean matchup board with official logos.
 
 ### Slide 3: What to watch
@@ -39,8 +39,7 @@ Visual direction: Poll-style HSD end slide.
 
 Tonight in the W.
 
-• Connecticut Sun at Toronto Tempo
-• Los Angeles Sparks at Seattle Storm
+• Tonight in the W
 
 Two games, two different questions. Connecticut and Toronto is about who sets the tone early. LA and Seattle is about who can own the late window and make the fourth quarter loud.
 
@@ -48,7 +47,7 @@ This is the kind of slate where the first run matters, but the last answer matte
 
 Which matchup are you watching first? 🏀
 
-#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #TorontoTempo #LASparks #SeattleStorm
+#HerSportsDaily #WomensSports #WNBA #Basketball #TorontoTempo
 
 ## Negative Prompt
 

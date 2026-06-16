@@ -1,16 +1,16 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-16T03:52:00.865331+00:00
+Generated: 2026-06-16T04:22:42.098535+00:00
 Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
 
-- rendered packets: 3
-- blocked packets: 2
-- handoff packets: 5
-- content slots: 6
-- graphics files copied: 3
-- rendered zip files copied: 3
+- rendered packets: 7
+- blocked packets: 0
+- handoff packets: 7
+- content slots: 7
+- graphics files copied: 7
+- rendered zip files copied: 7
 - verified WNBA team logos: 12
 - missing WNBA team logos: 3
 - logo sources: 10
@@ -48,13 +48,12 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 - Athlete image candidates are review-only and are not used in public graphics automatically.
 - Review before posting.
 
-## Blocked packets
-
-- ig-stories_ig-stories-rolling-1_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
-- ig-stories_ig-stories-rolling-2_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
-
 ## Rendered packets
 
+- ig-feed_ig-feed-evening-preview_los-angeles-sparks-at-golden-state-valkyries: Los Angeles Sparks at Golden State Valkyries
 - ig-feed_ig-feed-noon_dallas-wings-beat-las-vegas-aces: Dallas Wings beat Las Vegas Aces
+- ig-stories_ig-stories-rolling-1_golden-state-valkyries-beat-los-angeles-sparks: Golden State Valkyries beat Los Angeles Sparks
+- ig-stories_ig-stories-rolling-2_last-night-in-the-w: Last Night in the W
 - threads_nightcap_dallas-wings-beat-las-vegas-aces: Dallas Wings beat Las Vegas Aces
+- threads_threads-live_los-angeles-sparks-at-golden-state-valkyries: Los Angeles Sparks at Golden State Valkyries
 - threads_threads-morning_from-the-epson-tour-to-lpga-winner-s-circle-gina-kim-and-yana-wilson-claim-first-lpga-title-toge: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026

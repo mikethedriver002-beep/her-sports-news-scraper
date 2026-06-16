@@ -6,7 +6,7 @@ Last Night in the W
 Premium dark scoreboard cover.
 
 ## Slide 2: Scores
-Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66
+Minnesota Lynx 107 · Portland Fire 74 | Golden State Valkyries 78 · Los Angeles Sparks 58 | Dallas Wings 96 · Las Vegas Aces 66
 
 Large score rows with official team logos.
 

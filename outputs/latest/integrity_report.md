@@ -1,13 +1,13 @@
 # HSD Render Integrity Report
 
-Generated: 2026-06-16T03:52:14.305207+00:00
+Generated: 2026-06-16T04:22:57.304376+00:00
 Status: **pass**
 
 ## Counts
 
-- graphics_files: 3
-- rendered_packets: 3
-- zip_files: 3
+- graphics_files: 7
+- rendered_packets: 7
+- zip_files: 7
 
 ## Integrity errors
 

@@ -1,6 +1,6 @@
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-16T03:51:48.469333+00:00
+Generated: 2026-06-16T04:22:29.758018+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -9,16 +9,13 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ## Preview block signals
 
-- blocked_freshness_gate
-- same-day games not included
-- started/live/final
-- Preview games included: 0
+- None
 
 ## Counts
 
-- final slots: 6
-- held slots: 2
-- packets: 6
+- final slots: 7
+- held slots: 0
+- packets: 7
 
 ## Final slots
 
@@ -38,10 +35,10 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ### ig_stories_rolling_1 — IG Stories / 10:30 AM
 - Status: ready_with_review
-- Headline: Last Night in the W
+- Headline: Golden State Valkyries beat Los Angeles Sparks
 - Type: result_or_recap
 - Freshness: fresh
-- Hook: Last Night in the W: put this result on the board.
+- Hook: Golden State Valkyries beat Los Angeles Sparks: put this result on the board.
 
 ### ig_stories_rolling_2 — IG Stories / 12:30 PM
 - Status: ready_with_review
@@ -50,12 +47,19 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - Freshness: fresh
 - Hook: Last Night in the W: put this result on the board.
 
+### ig_feed_evening_preview — IG Feed / 4:45 PM
+- Status: ready_with_review
+- Headline: Los Angeles Sparks at Golden State Valkyries
+- Type: preview_event
+- Freshness: fresh
+- Hook: Los Angeles Sparks at Golden State Valkyries: the game lane to watch.
+
 ### threads_live — Threads / 7:00-11:30 PM
 - Status: ready_with_review
-- Headline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026
-- Type: official_news_article
-- Freshness: preview_blocked_replaced
-- Hook: The LPGA lane has a real storyline: Gina Kim and Yana Wilson Team to Win the Dow Championship For Their First LPGA Tour Titles June 14, 2026.
+- Headline: Los Angeles Sparks at Golden State Valkyries
+- Type: preview_event
+- Freshness: fresh
+- Hook: Los Angeles Sparks at Golden State Valkyries: the game lane to watch.
 
 ### nightcap — Threads / 11:30 PM
 - Status: ready_with_review
@@ -64,7 +68,3 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - Freshness: nightcap_followup_angle
 - Hook: Dallas Wings beat Las Vegas Aces: what this changes next.
 
-## Held slots
-
-- ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / pending
-- threads_live: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / replaced_with_story_d8f79330b7b89a

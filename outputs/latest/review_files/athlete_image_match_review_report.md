@@ -1,6 +1,6 @@
 # HSD Athlete Image Match Review
 
-Generated: 2026-06-16T03:52:14.275785+00:00
+Generated: 2026-06-16T04:22:57.274107+00:00
 
 ## Counts
 
@@ -34,7 +34,15 @@ Generated: 2026-06-16T03:52:14.275785+00:00
 - graphics folder: `outputs/latest/POSTABLE_GRAPHICS/`
 - post-ready copy: `outputs/latest/production_graphics_director/copy_director/post_ready_copy.md`
 
+## Graphics Variant Packs v1
+
+- status: ok
+- returncode: 0
+- folder: `outputs/latest/production_graphics_director/graphics_variant_packs/`
+- zips: `outputs/latest/production_graphics_director/graphics_variant_packs/zips/`
+
 ## Policy
 
 - Needs-fix and rejected rows remain blocked from graphics.
 - Auto-rendered graphics require human visual review before posting.
+- Every production package can now ship a logos-only and with-players variant pack when assets exist.
