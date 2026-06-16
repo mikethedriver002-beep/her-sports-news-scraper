@@ -59,8 +59,10 @@ def test_graphics_template_factory_and_law_files_are_wired() -> None:
     prompts = read("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md")
     assert "python scripts/generate_hsd_graphics_template_factory_v1.py" in workflow
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/**" in workflow
-    assert "v1.1-hsd-graphics-template-factory-public-bug-rule" in script
+    assert "v1.2-hsd-graphics-template-factory-law-snapshot" in script
     assert "public_logo_rule.md" in script
+    assert "config_graphics_snapshot" in script
+    assert "HSD_GRAPHICS_LAW_V1.md" in script
     assert "official compact HSD watermark/bug only" in script
     assert "Do not use the full HSD + HER SPORTS DAILY lockup" in script
     assert "Spec sheets and internal brand documents may show the full lockup" in script
