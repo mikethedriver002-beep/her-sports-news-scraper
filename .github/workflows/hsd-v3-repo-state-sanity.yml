@@ -106,7 +106,7 @@ jobs:
           python generate_hsd_source_registry_audit_v2.py || true
           python normalize_hsd_manual_story_inbox_v1.py || true
           python ingest_hsd_discovery_sources_v1.py || true
-          if [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py || true; fi
+          if [ -f generate_hsd_results_desk_v5.py ]; then python generate_hsd_results_desk_v5.py || true; elif [ -f generate_hsd_results_desk_v4.py ]; then python generate_hsd_results_desk_v4.py || true; fi
           if [ -f generate_results_dashboard_v4.py ]; then python generate_results_dashboard_v4.py || true; fi
           if [ -f archive_results_runs_v4.py ]; then python archive_results_runs_v4.py || true; fi
           python generate_hsd_results_contract_v1.py || true
@@ -154,6 +154,20 @@ jobs:
             repo_state_v3.json
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/**
+            results_desk_v5_manifest.json
+            results_desk_v5_report.md
+            source_accuracy_v5.json
+            source_accuracy_v5.md
+            duplicate_game_audit_v5.csv
+            stale_source_audit_v5.csv
+            missing_games_alert_v5.json
+            missing_games_alert_v5.md
+            missing_games_alert_v5.csv
+            source_observations.csv
+            reconciled_events.csv
+            today_womens_results.csv
+            today_final_results.csv
+            results_contract_v2.csv
             data/asset_registry/wnba/team_logos.csv
             data/asset_registry/wnba/missing_team_logos.csv
             data/asset_registry/wnba/logo_fetch_report.md
