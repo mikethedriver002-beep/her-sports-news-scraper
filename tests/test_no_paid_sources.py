@@ -51,7 +51,7 @@ def csv_rows(path: str) -> list[dict[str, str]]:
 
 
 def test_python_files_compile() -> None:
-    for path in ["generate_hsd_results_desk_v5.py", "generate_hsd_results_desk_v4.py", "scripts/report_hsd_repo_state_v3.py"]:
+    for path in ["generate_hsd_results_desk_v5.py", "generate_hsd_results_desk_v4.py", "generate_hsd_results_contract_v1.py", "scripts/report_hsd_repo_state_v3.py"]:
         ast.parse(read(path), filename=path)
 
 
@@ -90,6 +90,15 @@ def test_results_desk_v5_is_active_free_only_path() -> None:
     assert "duplicate_game_audit_v5.csv" in v5
     assert "stale_source_audit_v5.csv" in v5
     assert "missing_games_alert_v5" in v5
+
+
+def test_results_contract_uses_timestamp_freshness_and_excludes_box_score_context_sources() -> None:
+    text = read("generate_hsd_results_contract_v1.py")
+    assert "reference_dt(row, event_date)" in text
+    assert "scheduled_start_utc" in text
+    assert "today_box_scores.csv" not in text
+    assert "Box-score enrichment files are intentionally not contract sources" in text
+    assert "hsd-results-contract-v3.3.0-v5-source-accuracy-freshness" in text
 
 
 def test_v3_repo_state_audit_is_wired_into_lite_review() -> None:
