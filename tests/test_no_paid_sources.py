@@ -98,10 +98,11 @@ def test_results_contract_uses_timestamp_freshness_team_display_fields_and_exclu
     assert "scheduled_start_utc" in text
     assert "today_box_scores.csv" not in text
     assert "Box-score enrichment files are intentionally not contract sources" in text
-    assert "hsd-results-contract-v3.3.1-v5-team-field-mapping" in text
+    assert "hsd-results-contract-v3.3.2-v5-preview-zero-score-suppression" in text
     assert "home_team_display" in text
     assert "away_team_display" in text
     assert "team_value(row" in text
+    assert "suppress_nonfinal_zero_scores" in text
 
 
 def test_v3_repo_state_audit_is_wired_into_lite_review() -> None:
