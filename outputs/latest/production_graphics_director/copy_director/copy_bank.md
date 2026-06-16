@@ -7,17 +7,19 @@ Family: `wnba_result_recap`
 ### IG Caption
 Dallas Wings beat Las Vegas Aces.
 
-This is a women’s sports story with more context than the headline can hold. The names, the moment, and what comes next all matter.
+Dallas Wings defeated Las Vegas Aces, Las Vegas Aces 66 - Dallas Wings 96.
 
-What are you watching closest?
+This was not just a box-score result. It is the kind of win that changes the next conversation around rhythm, pressure, and who gets to carry momentum forward.
+
+What did this one tell you? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
 
 ### Threads
-Dallas Wings beat Las Vegas Aces
+Dallas Wings beat Las Vegas Aces. What did this one tell you?
 
 ### First comment
-What are you watching here?
+What changed after this result?
 
 ---
 
@@ -28,17 +30,19 @@ Family: `wnba_result_recap`
 ### IG Caption
 Dallas Wings beat Las Vegas Aces.
 
-This is a women’s sports story with more context than the headline can hold. The names, the moment, and what comes next all matter.
+Dallas Wings defeated Las Vegas Aces, Las Vegas Aces 66 - Dallas Wings 96.
 
-What are you watching closest?
+This was not just a box-score result. It is the kind of win that changes the next conversation around rhythm, pressure, and who gets to carry momentum forward.
+
+What did this one tell you? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
 
 ### Threads
-Dallas Wings beat Las Vegas Aces
+Dallas Wings beat Las Vegas Aces. What did this one tell you?
 
 ### First comment
-What are you watching here?
+What changed after this result?
 
 ---
 
@@ -49,9 +53,7 @@ Family: `feature_story`
 ### IG Caption
 Gina Kim and Yana Wilson are officially in the LPGA winner’s circle together.
 
-From the Epson Tour to a title moment at the Dow Championship, this is the kind of women’s golf story that deserves more than a line in the ticker. It is about a team format, a breakthrough, and two players turning a shared opportunity into a career marker.
-
-Women’s golf has stories with texture. This is one of them.
+From the Epson Tour to a title moment at the Dow Championship, this is the kind of women’s golf story that deserves more than a line in the ticker. It is a team-format breakthrough, a shared win, and a reminder that the LPGA lane has real stories with texture.
 
 Are we talking about this enough?
 
@@ -65,25 +67,51 @@ Are we talking about this enough?
 
 ---
 
+## Last Night in the W
+
+Family: `wnba_results_roundup`
+
+### IG Caption
+Last Night in the W.
+
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
+
+The scores tell you who handled business. The bigger story is what each result changes: Dallas making noise, Minnesota sending a message, and another night where the W gave us a real scoreboard swing.
+
+Which result mattered most? 🏀
+
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
+
+### Threads
+Last Night in the W. Dallas made noise. Minnesota sent a message. Which result mattered most?
+
+### First comment
+Best win of the night?
+
+---
+
 ## Still to Come in the W
 
 Family: `manual_graphics_pack`
 
 ### IG Caption
-Los Angeles Sparks at Golden State Valkyries.
+Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm.
 
-Still to come in the W. 👀
+Who needs this one more? 👀
 
-This is the late-window kind of game that can give the night a real pulse. Kayla Thornton, Cameron Brink and Kelsey Plum give the matchup star power, but the bigger question is simple: who sets the terms first?
+The Sparks come into the late window needing a road statement. the players who tilt the night give this matchup real star power, and this is the kind of game that can make the California basketball conversation a little louder.
 
-The Sparks need the road edge. Golden State gets the building. And in a California matchup with real rivalry potential, the first clean run can change the whole feel.
+Golden State gets it at home, with a chance to protect the Bay and turn the night into a statement. If the Valkyries control the pace and make LA chase the game, the building can tilt fast.
 
-Who needs this one more? 🏀
+One late-night California question.
 
-#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #GoldenStateValkyries
+Do the Sparks need the bounce more, or do the Valkyries need to hold home court? 🏀
+
+#HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #TorontoTempo
 
 ### Threads
-Los Angeles Sparks at Golden State Valkyries. Who needs this one more?
+Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm. Who needs this one more? 👀
 
 ### First comment
-Road edge or home hold? Drop your pick.
+Road bounce or home hold? Drop your pick.

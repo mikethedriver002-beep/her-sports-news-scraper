@@ -1,6 +1,6 @@
 # HSD Mermaid Upper Echelon Report
 
-Generated: 2026-06-16T02:14:27.132200+00:00
+Generated: 2026-06-16T02:49:28.321011+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 ## Counts
@@ -13,7 +13,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 - compiled_packets: 6
 - handoff_packets: 5
 - handoff_held: 1
-- player_asset_debt: 2
+- player_asset_debt: 0
 
 ## Step status
 
@@ -49,7 +49,7 @@ Version: v3.3.6-mermaid-assignment-handoff-v2.6-bridge
 
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-16T02:14:27.068763+00:00
+Generated: 2026-06-16T02:49:28.257416+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -61,6 +61,7 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - blocked_freshness_gate
 - same-day games not included
 - started/live/final
+- Preview games included: 0
 
 ## Counts
 
@@ -114,15 +115,15 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ## Held slots
 
-- ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final / pending
-- threads_live: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final / replaced_with_story_d8f79330b7b89a
+- ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / pending
+- threads_live: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / replaced_with_story_d8f79330b7b89a
 
 
 ---
 
 # Mermaid Assignment Handoff v2.6
 
-Generated: 2026-06-16T02:14:27.114500+00:00
+Generated: 2026-06-16T02:49:28.304496+00:00
 Version: v3.3.6-mermaid-assignment-handoff-v2.6
 
 - slots seen: 6

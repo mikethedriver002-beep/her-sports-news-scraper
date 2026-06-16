@@ -1,6 +1,6 @@
 # HSD Mermaid Latest Review
 
-Generated: 2026-06-16T02:14:36.783774+00:00
+Generated: 2026-06-16T02:49:39.444336+00:00
 Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Counts
@@ -11,8 +11,8 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 - content slots: 6
 - graphics files copied: 3
 - rendered zip files copied: 3
-- verified WNBA team logos: 11
-- missing WNBA team logos: 4
+- verified WNBA team logos: 12
+- missing WNBA team logos: 3
 - logo sources: 10
 - logos downloaded: 0
 - logos existing: 10
@@ -50,8 +50,8 @@ Version: Mermaid Render Publish Bridge v2.8.6-athlete-source-resolver-review
 
 ## Blocked packets
 
-- ig-stories_ig-stories-rolling-1_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; toronto_tempo:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
-- ig-stories_ig-stories-rolling-2_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; toronto_tempo:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
+- ig-stories_ig-stories-rolling-1_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
+- ig-stories_ig-stories-rolling-2_last-night-in-the-w: missing required registry team logo(s): atlanta_dream:missing_required_registry_logo; washington_mystics:missing_required_registry_logo; new_york_liberty:missing_required_registry_logo
 
 ## Rendered packets
 

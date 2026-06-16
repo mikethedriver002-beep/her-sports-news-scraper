@@ -8,7 +8,7 @@ Premium editorial cover.
 ## Slide 2: Context
 Why it matters.
 
-Clean explainer.
+Clean explainer slide.
 
 ## Slide 3: CTA
 What stood out?

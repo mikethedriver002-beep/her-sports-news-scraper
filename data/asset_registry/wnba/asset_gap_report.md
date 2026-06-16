@@ -1,13 +1,12 @@
 # HSD WNBA Asset Gap Report
 
-Generated: 2026-06-16T02:14:28.259587+00:00
+Generated: 2026-06-16T02:49:29.801110+00:00
 Validation status: **needs_assets**
 
 ## Missing required team logos
 
 - Atlanta Dream -> `assets/leagues/wnba/teams/atlanta_dream/logo.png`
 - New York Liberty -> `assets/leagues/wnba/teams/new_york_liberty/logo.png`
-- Toronto Tempo -> `assets/leagues/wnba/teams/toronto_tempo/logo.png`
 - Washington Mystics -> `assets/leagues/wnba/teams/washington_mystics/logo.png`
 
 ## Logo Gap Upload Pack
@@ -16,7 +15,6 @@ Upload each missing logo as `logo.png` to the exact folder below. Do not rename 
 
 - `assets/leagues/wnba/teams/atlanta_dream/logo.png`
 - `assets/leagues/wnba/teams/new_york_liberty/logo.png`
-- `assets/leagues/wnba/teams/toronto_tempo/logo.png`
 - `assets/leagues/wnba/teams/washington_mystics/logo.png`
 
 ## Next action

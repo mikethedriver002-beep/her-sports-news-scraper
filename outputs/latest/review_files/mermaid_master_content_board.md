@@ -1,6 +1,6 @@
 # Mermaid Assignment Freshness Gate v2.5
 
-Generated: 2026-06-16T02:14:27.068763+00:00
+Generated: 2026-06-16T02:49:28.257416+00:00
 Version: v3.3.5-mermaid-assignment-freshness-gate-v2.5
 
 ## Verdict
@@ -12,6 +12,7 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 - blocked_freshness_gate
 - same-day games not included
 - started/live/final
+- Preview games included: 0
 
 ## Counts
 
@@ -65,5 +66,5 @@ Freshness Gate ran after Assignment Desk. Blocked previews are held or replaced,
 
 ## Held slots
 
-- ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final / pending
-- threads_live: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final / replaced_with_story_d8f79330b7b89a
+- ig_feed_evening_preview: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / pending
+- threads_live: Los Angeles Sparks at Golden State Valkyries — preview_gate_blocked:blocked_freshness_gate|same-day games not included|started/live/final|Preview games included: 0 / replaced_with_story_d8f79330b7b89a

@@ -3,19 +3,19 @@
 ## Slide 1: Cover
 Kim + Wilson win together
 
-Premium LPGA editorial cover, trophy/winner-circle energy, no fake player imagery.
+Premium LPGA editorial cover. No fake player imagery.
 
-## Slide 2: Why it matters
+## Slide 2: Path
 From Epson Tour to LPGA winner’s circle
 
-Timeline-style context card.
+Timeline-style card.
 
-## Slide 3: The story
-A team-format breakthrough at the Dow Championship
+## Slide 3: Why it matters
+A shared title moment at the Dow Championship
 
-Clean explainer card with event lockup.
+Clean editorial context card.
 
 ## Slide 4: CTA
 Are we talking about this enough?
 
-Question-first HSD slide.
+Question-first end slide.
