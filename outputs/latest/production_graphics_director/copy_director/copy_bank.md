@@ -7,9 +7,9 @@ Family: `wnba_result_recap`
 ### IG Caption
 Dallas Wings beat Las Vegas Aces.
 
-Dallas Wings defeated Las Vegas Aces, Las Vegas Aces 66 - Dallas Wings 96.
+Final: Dallas Wings 96, Las Vegas Aces 66.
 
-This was not just a box-score result. It is the kind of win that changes the next conversation around rhythm, pressure, and who gets to carry momentum forward.
+That is a real result, not just a line in the box score. Dallas gets a win that changes the feel of the night, and Vegas leaves with questions that will carry into the next one.
 
 What did this one tell you? 🏀
 
@@ -30,9 +30,9 @@ Family: `wnba_result_recap`
 ### IG Caption
 Dallas Wings beat Las Vegas Aces.
 
-Dallas Wings defeated Las Vegas Aces, Las Vegas Aces 66 - Dallas Wings 96.
+Final: Dallas Wings 96, Las Vegas Aces 66.
 
-This was not just a box-score result. It is the kind of win that changes the next conversation around rhythm, pressure, and who gets to carry momentum forward.
+That is a real result, not just a line in the box score. Dallas gets a win that changes the feel of the night, and Vegas leaves with questions that will carry into the next one.
 
 What did this one tell you? 🏀
 
@@ -60,7 +60,7 @@ Are we talking about this enough?
 #HerSportsDaily #WomensSports #LPGA #Golf
 
 ### Threads
-Gina Kim and Yana Wilson in the LPGA winner’s circle together. This deserves more attention.
+Kim and Wilson in the LPGA winner’s circle together. This deserves more attention.
 
 ### First comment
 Are we talking about this enough?
@@ -76,15 +76,23 @@ Last Night in the W.
 
 • Minnesota Lynx 107 · Portland Fire 74
 • Dallas Wings 96 · Las Vegas Aces 66
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
 
-The scores tell you who handled business. The bigger story is what each result changes: Dallas making noise, Minnesota sending a message, and another night where the W gave us a real scoreboard swing.
+Dallas did more than win. The Wings put a number on the board that makes people look twice. Minnesota did the same with a statement result that gives the night real shape.
+
+That is the difference between a score dump and a recap: what changed after the final buzzer?
 
 Which result mattered most? 🏀
 
-#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces #MinnesotaLynx #PortlandFire
 
 ### Threads
-Last Night in the W. Dallas made noise. Minnesota sent a message. Which result mattered most?
+Last Night in the W. Which result mattered most?
 
 ### First comment
 Best win of the night?
@@ -96,22 +104,21 @@ Best win of the night?
 Family: `manual_graphics_pack`
 
 ### IG Caption
-Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm.
+Tonight in the W.
 
-Who needs this one more? 👀
+• Connecticut Sun at Toronto Tempo
+• Los Angeles Sparks at Seattle Storm
 
-The Sparks come into the late window needing a road statement. the players who tilt the night give this matchup real star power, and this is the kind of game that can make the California basketball conversation a little louder.
+This slate has more than one question on the board. One game is about who sets the tone early. Another is about who can hold their nerve when the fourth quarter gets loud.
 
-Golden State gets it at home, with a chance to protect the Bay and turn the night into a statement. If the Valkyries control the pace and make LA chase the game, the building can tilt fast.
+For HSD, this is exactly the kind of night that needs a carousel: matchup, players to watch, keys to the game, and one clean debate question at the end.
 
-One late-night California question.
-
-Do the Sparks need the bounce more, or do the Valkyries need to hold home court? 🏀
+Which matchup are you watching first? 🏀
 
 #HerSportsDaily #WomensSports #WNBA #Basketball #ConnecticutSun #TorontoTempo
 
 ### Threads
-Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm. Who needs this one more? 👀
+Tonight in the W: Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm. Which matchup are you watching first?
 
 ### First comment
-Road bounce or home hold? Drop your pick.
+Which matchup has the most juice tonight?

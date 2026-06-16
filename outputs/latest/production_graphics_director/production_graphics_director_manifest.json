@@ -1,6 +1,6 @@
 {
-  "version": "v4.3-copy-excellence-context-engine",
-  "generated_at_utc": "2026-06-16T02:49:51.432877+00:00",
+  "version": "v4.4-dynamic-slate-copy-polish",
+  "generated_at_utc": "2026-06-16T03:30:56.243174+00:00",
   "packages": 5,
   "rendered_exports": 3,
   "copy_items": 5,
@@ -10,5 +10,6 @@
   "rich_context_rows": 5,
   "manual_graphics_packs": 1,
   "story_result_packages": 1,
-  "postable_graphics_dir": "outputs/latest/POSTABLE_GRAPHICS"
+  "postable_graphics_dir": "outputs/latest/POSTABLE_GRAPHICS",
+  "copy_polish": "dynamic slate/result copy applied"
 }

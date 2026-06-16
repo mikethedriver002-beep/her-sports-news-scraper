@@ -1,6 +1,6 @@
 {
   "version": "v2.8.6-athlete-source-resolver-review",
-  "generated_at": "2026-06-16T02:49:39.444336+00:00",
+  "generated_at": "2026-06-16T03:30:40.686453+00:00",
   "graphics_files": 3,
   "zip_files": 3,
   "rendered_packets": 3,
@@ -38,7 +38,7 @@
   "athlete_smoke_test_blocked_packets": 1,
   "athlete_smoke_test_packets_using_approved_athletes": 0,
   "athlete_smoke_test_integrity_status": "pass",
-  "production_director_version": "v4.3-copy-excellence-context-engine",
+  "production_director_version": "v4.4-dynamic-slate-copy-polish",
   "production_director_packages": 5,
   "production_director_copy_items": 5,
   "production_director_carousel_plans": 5,
@@ -47,5 +47,5 @@
   "production_director_story_result_packages": 1,
   "integrity_status": "pass",
   "integrity_errors": [],
-  "integrity_checked_at": "2026-06-16T02:49:51.480727+00:00"
+  "integrity_checked_at": "2026-06-16T03:30:56.281070+00:00"
 }

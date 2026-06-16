@@ -1,26 +1,26 @@
 # Carousel Plan
 
 ## Slide 1: Cover
+Tonight in the W
+
+Premium HSD cover in the preferred dark cinematic style with all matchup logos.
+
+## Slide 2: Slate
 Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm
 
-Premium HSD cover in the attached preferred style. Dark background. Both team logos. Approved player images. Big clean title.
-
-## Slide 2: Why it matters
-Road bounce vs Bay hold
-
-Two-sided stakes slide. Sparks road statement on one side, Valkyries home-court hold on the other.
+Clean schedule board. Large matchup rows. Official logos only.
 
 ## Slide 3: Players to watch
-the players who tilt the night
+Use approved or exact attached player images only.
 
-Use approved headshots only. Names large. No fake photos. No blank headshots.
+Player image lane. If exact player images are unavailable, use team logos and text labels.
 
-## Slide 4: Keys to the game
-Pace. Glass. Shot quality. Late-clock answers.
+## Slide 4: Keys
+Pace. Glass. Shot quality. Fourth-quarter answers.
 
-Four bold key tiles with team-color accents.
+Four bold key tiles, big readable type.
 
 ## Slide 5: CTA
-Who needs this one more?
+Which matchup are you watching first?
 
-Poll-style end slide with both logos and HSD watermark.
+Poll-style HSD end slide.

@@ -9,13 +9,9 @@ Quality: `rich`
 
 Premium women’s sports editorial. Dark high-contrast background. Bold condensed sports typography. Cinematic lighting. Clean hierarchy. No white dashboard cards. No tiny text. Use the official HSD watermark exactly.
 
-## Exact Assets
-
-- Use only exact attached assets or approved registry assets. If unavailable, use logos/text only.
-
 ## Evidence
 
-From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | official_news_article | The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. | From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 The golf lane is giving HSD more to work with than people realize. | LPGA WATCH: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 This belongs on the board. | Are we underrating this LPGA moment? | v3.3.6-mermaid-assignment-handoff-v2.6 | threads_morning | Threads | 9:00 AM | official_news_article | From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | P3 | story_2e1877e5d63f79 | ready_with_review | needs_assets | 77 |
+From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 | LPGA | official_news_article | The LPGA lane has a real storyline: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026. | From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 The golf lane is giving HSD more to work with than people realize. | LPGA WATCH: From the Epson Tour to LPGA Winner's Circle: Gina Kim and Yana Wilson Claim First LPGA Title Together at the Dow Championship June 14, 2026 This belongs on the board. | Are we underrating this LPGA moment? | v3.3.6-mermaid-assi
 
 ## Carousel Plan
 

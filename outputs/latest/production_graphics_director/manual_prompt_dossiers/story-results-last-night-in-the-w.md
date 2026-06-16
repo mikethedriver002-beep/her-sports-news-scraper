@@ -9,10 +9,6 @@ Quality: `rich`
 
 Premium women’s sports editorial. Dark high-contrast background. Bold condensed sports typography. Cinematic lighting. Clean hierarchy. No white dashboard cards. No tiny text. Use the official HSD watermark exactly.
 
-## Exact Assets
-
-- Use only exact attached assets or approved registry assets. If unavailable, use logos/text only.
-
 ## Evidence
 
 Last Night in the W | WNBA | results_roundup | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | story_096e696a1db303 | last-night-in-the-w | Last Night in the W | ig_story_final_scores | 2026-06-15 | 2 | 4 | ["event_68fa88dd191fb6", "event_f4275145344771"] | Dallas Wings; Las Vegas Aces; Minnesota Lynx; Portland Fire | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | ready_with_review | ready_for_graphics_review | ig_story_results_upload_pack_zips/last-night-in-the-w_ig_story_results_upload_pack.zip | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66
@@ -21,23 +17,23 @@ Last Night in the W | WNBA | results_roundup | Minnesota Lynx 107 · Portland Fi
 
 ### Slide 1: Cover
 On-image copy: Last Night in the W
-Visual direction: Premium scoreboard cover. Dark cinematic HSD styling.
+Visual direction: Premium dark scoreboard cover.
 
 ### Slide 2: Scores
-On-image copy: Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66
-Visual direction: Large score rows with official team logos.
+On-image copy: Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66 | Minnesota Lynx 107 · Portland Fire 74 | Dallas Wings 96 · Las Vegas Aces 66
+Visual direction: Large final-score rows with official team logos.
 
 ### Slide 3: Dallas made noise
 On-image copy: Wings over Aces
-Visual direction: Spotlight Dallas result. Team logos only unless approved player image is contextually present.
+Visual direction: Spotlight Dallas result with score lock.
 
 ### Slide 4: Minnesota sent a message
 On-image copy: Lynx over Fire
-Visual direction: Spotlight Minnesota result. Big score, clean hierarchy.
+Visual direction: Spotlight Minnesota result with score lock.
 
 ### Slide 5: CTA
 On-image copy: Best win of the night?
-Visual direction: Engagement slide.
+Visual direction: Question-first end slide.
 
 ## Caption
 
@@ -45,12 +41,20 @@ Last Night in the W.
 
 • Minnesota Lynx 107 · Portland Fire 74
 • Dallas Wings 96 · Las Vegas Aces 66
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
+• Minnesota Lynx 107 · Portland Fire 74
+• Dallas Wings 96 · Las Vegas Aces 66
 
-The scores tell you who handled business. The bigger story is what each result changes: Dallas making noise, Minnesota sending a message, and another night where the W gave us a real scoreboard swing.
+Dallas did more than win. The Wings put a number on the board that makes people look twice. Minnesota did the same with a statement result that gives the night real shape.
+
+That is the difference between a score dump and a recap: what changed after the final buzzer?
 
 Which result mattered most? 🏀
 
-#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces
+#HerSportsDaily #WomensSports #WNBA #Basketball #DallasWings #LasVegasAces #MinnesotaLynx #PortlandFire
 
 ## Negative Prompt
 
