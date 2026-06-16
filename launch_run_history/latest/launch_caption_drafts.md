@@ -1,6 +1,6 @@
 # Her Sports Daily Launch Caption Drafts v1
 
-Generated: 2026-06-15T22:01:06.635679+00:00
+Generated: 2026-06-16T00:16:29.853947+00:00
 
 Use these as first-pass captions. Do not add unsupported stats, injuries, quotes, rankings, or records.
 
