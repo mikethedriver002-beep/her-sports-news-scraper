@@ -89,6 +89,15 @@ jobs:
         shell: bash
         run: python verify_hsd_install_v1.py
 
+      - name: Build and validate WNBA asset registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/fetch_hsd_wnba_logo_sources_v1.py || true
+          python scripts/build_hsd_wnba_asset_registry_v1.py
+          python scripts/validate_hsd_wnba_asset_registry_v1.py || true
+          python scripts/report_hsd_wnba_asset_gaps_v1.py || true
+
       - name: Build upstream packets for V3 sanity
         shell: bash
         run: |
@@ -145,5 +154,11 @@ jobs:
             repo_state_v3.json
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/**
+            data/asset_registry/wnba/team_logos.csv
+            data/asset_registry/wnba/missing_team_logos.csv
+            data/asset_registry/wnba/logo_fetch_report.md
+            data/asset_registry/wnba/logo_fetch_report.json
+            data/asset_registry/wnba/asset_registry_report.md
+            data/asset_registry/wnba/asset_registry_summary.json
             outputs/latest/production_graphics_director/copy_director/post_ready_copy.md
             outputs/latest/production_graphics_director/graphics_variant_packs/**
