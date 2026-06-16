@@ -113,6 +113,7 @@ jobs:
           python generate_hsd_results_contract_v1.py || true
           python validate_hsd_contracts_v1.py --soft || true
           python build_hsd_daily_slate_v1.py || true
+          if [ -f scripts/generate_hsd_quality_graphics_renderer_v1.py ]; then python scripts/generate_hsd_quality_graphics_renderer_v1.py || true; fi
           python generate_hsd_final_score_stories_v1.py || true
           python generate_hsd_story_results_brand_lock_v1.py || true
           python generate_hsd_manual_workflow_merge_v1.py || true
@@ -164,6 +165,9 @@ jobs:
             multisport_results_observations_v5.csv
             multisport_results_modules_v5.json
             multisport_results_modules_v5.md
+            hsd_quality_graphics_manifest.csv
+            hsd_quality_graphics_report.md
+            outputs/latest/HSD_QUALITY_GRAPHICS/**
             results_desk_v5_manifest.json
             results_desk_v5_report.md
             source_accuracy_v5.json
