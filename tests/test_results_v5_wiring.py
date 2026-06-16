@@ -52,22 +52,39 @@ def test_hsd_quality_graphics_renderer_is_wired_and_packaged() -> None:
     assert "daily_slate_plan.csv" in script
 
 
-def test_graphics_template_factory_is_wired() -> None:
+def test_graphics_template_factory_and_law_files_are_wired() -> None:
     workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
     script = read("scripts/generate_hsd_graphics_template_factory_v1.py")
+    law = read("docs/HSD_GRAPHICS_LAW_V1.md")
+    prompts = read("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md")
     assert "python scripts/generate_hsd_graphics_template_factory_v1.py" in workflow
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/**" in workflow
     assert "v1.1-hsd-graphics-template-factory-public-bug-rule" in script
     assert "public_logo_rule.md" in script
     assert "official compact HSD watermark/bug only" in script
     assert "Do not use the full HSD + HER SPORTS DAILY lockup" in script
-    assert "Do not add HER SPORTS DAILY beside the bug" in script
     assert "Spec sheets and internal brand documents may show the full lockup" in script
-    assert "Tonight in the W" in script
-    assert "Last Night in the W" in script
-    assert "Game Recap / Final Score" in script
-    assert "Daily Debrief" in script
-    assert "Women’s Soccer / NWSL / USWNT" in script
-    assert "LPGA / Golf" in script
-    assert "Tennis / WTA" in script
     assert "The renderer should become a compiler for approved templates" in script
+    assert "HSD Graphics Law v1" in law
+    assert "The renderer is a compiler, not a designer" in law
+    assert "official compact HSD badge only" in prompts
+    assert "GAME RECAP / FINAL SCORE" in prompts
+    assert "TONIGHT IN THE W" in prompts
+    assert "LAST NIGHT IN THE W" in prompts
+    assert "THE DAILY DEBRIEF" in prompts
+    assert "LPGA / GOLF" in prompts
+
+
+def test_template_specs_are_present_for_top_priorities() -> None:
+    for path in [
+        "config/graphics/brand_policy_v1.json",
+        "config/graphics/template_registry_v1.json",
+        "config/graphics/templates/game_recap_final_score_a_v1.json",
+        "config/graphics/templates/tonight_in_the_w_a_v1.json",
+        "config/graphics/templates/last_night_in_the_w_a_v1.json",
+        "config/graphics/templates/daily_debrief_a_v1.json",
+        "config/graphics/templates/womens_soccer_match_story_a_v1.json",
+        "config/graphics/templates/tennis_wta_result_a_v1.json",
+        "config/graphics/templates/lpga_golf_winner_leaderboard_a_v1.json",
+    ]:
+        assert Path(path).exists(), path
