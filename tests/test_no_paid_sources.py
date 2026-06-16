@@ -63,7 +63,6 @@ def test_requirements_do_not_add_paid_or_llm_dependencies() -> None:
 
 def test_workflow_paid_secret_refs_are_optional_only() -> None:
     text = read(".github/workflows/hsd-pipeline-control-v1.yml")
-    # The V2 workflow may expose optional secret names, but V3 must not hard-require them.
     hard_required_patterns = []
     for secret in PAID_SECRET_NAMES:
         patterns = [
@@ -86,7 +85,6 @@ def test_results_desk_v5_is_active_free_only_path() -> None:
     assert "x-apisports-key" not in v5.lower()
     assert "apisports_key" not in v5.lower()
     assert "rapidapi" not in v5.lower()
-    assert "paid_sources_required": True not in []  # defensive no-op; keeps assertion style explicit
     assert '"paid_sources_required": False' in v5
     assert "espn_wnba_public" in v5
     assert "duplicate_game_audit_v5.csv" in v5
