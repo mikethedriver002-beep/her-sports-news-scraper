@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import re
 from pathlib import Path
 
@@ -16,11 +17,36 @@ PAID_DEPENDENCY_TOKENS = {
     "zyte",
     "openai",
 }
+REQUIRED_WNBA_LOGO_SOURCE_TEAMS = {
+    "atlanta_dream",
+    "chicago_sky",
+    "connecticut_sun",
+    "indiana_fever",
+    "new_york_liberty",
+    "toronto_tempo",
+    "washington_mystics",
+    "dallas_wings",
+    "golden_state_valkyries",
+    "las_vegas_aces",
+    "los_angeles_sparks",
+    "minnesota_lynx",
+    "phoenix_mercury",
+    "portland_fire",
+    "seattle_storm",
+}
 
 
 def read(path: str) -> str:
     p = Path(path)
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+
+
+def csv_rows(path: str) -> list[dict[str, str]]:
+    p = Path(path)
+    if not p.exists():
+        return []
+    with p.open(newline="", encoding="utf-8", errors="replace") as f:
+        return list(csv.DictReader(f))
 
 
 def test_requirements_do_not_add_paid_or_llm_dependencies() -> None:
@@ -63,6 +89,35 @@ def test_v3_sanity_workflow_builds_upstream_before_acceptance_commands() -> None
     assert "python generate_hsd_mermaid_upper_echelon_v2.py" in workflow
     assert "V3 first-run acceptance commands" in workflow
     assert workflow.index("Build upstream packets for V3 sanity") < workflow.index("V3 first-run acceptance commands")
+
+
+def test_v3_sanity_workflow_runs_wnba_logo_registry_fix_before_packets() -> None:
+    workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
+    assert "Build and validate WNBA asset registry" in workflow
+    assert "python scripts/fetch_hsd_wnba_logo_sources_v1.py" in workflow
+    assert "python scripts/build_hsd_wnba_asset_registry_v1.py" in workflow
+    assert workflow.index("Build and validate WNBA asset registry") < workflow.index("Build upstream packets for V3 sanity")
+
+
+def test_wnba_logo_sources_cover_every_team_with_free_public_sources() -> None:
+    rows = csv_rows("data/asset_registry/wnba/logo_sources.csv")
+    teams = {row.get("team_id") for row in rows if row.get("team_id")}
+    missing = sorted(REQUIRED_WNBA_LOGO_SOURCE_TEAMS - teams)
+    assert not missing, f"logo_sources.csv missing teams: {missing}"
+    by_team = {row.get("team_id"): row for row in rows}
+    for team_id in sorted(REQUIRED_WNBA_LOGO_SOURCE_TEAMS):
+        row = by_team[team_id]
+        assert row.get("source_url", "").startswith("https://"), team_id
+        assert row.get("target_path", "").startswith(f"assets/leagues/wnba/teams/{team_id}/"), team_id
+    assert "Atlanta_Dream_logo" in by_team["atlanta_dream"].get("source_url", "")
+    assert "Toronto_Tempo_logo" in by_team["toronto_tempo"].get("source_url", "")
+
+
+def test_logo_fetcher_synthesizes_fallbacks_for_unlisted_teams() -> None:
+    text = read("scripts/fetch_hsd_wnba_logo_sources_v1.py")
+    assert "def complete_source_rows" in text
+    assert "synthesized_official_wnba_favicon_fallback" in text
+    assert "TEAMS = ROOT / \"teams.csv\"" in text
 
 
 def test_production_director_preview_copy_cannot_fall_through_to_lpga_feature_copy() -> None:
