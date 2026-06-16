@@ -129,6 +129,7 @@ jobs:
           python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py
           python scripts/generate_hsd_graphics_variant_packs_v1.py
           if [ -f scripts/generate_hsd_quality_graphics_renderer_v1.py ]; then python scripts/generate_hsd_quality_graphics_renderer_v1.py; fi
+          if [ -f scripts/package_hsd_quality_graphics_v1.py ]; then python scripts/package_hsd_quality_graphics_v1.py; fi
           python generate_hsd_pipeline_review_lite_v1.py
 
       - name: Run V3 repo-state audit
@@ -165,6 +166,8 @@ jobs:
             multisport_results_observations_v5.csv
             multisport_results_modules_v5.json
             multisport_results_modules_v5.md
+            hsd_quality_graphics.zip
+            hsd_quality_graphics_zip_manifest.json
             hsd_quality_graphics_manifest.csv
             hsd_quality_graphics_report.md
             outputs/latest/HSD_QUALITY_GRAPHICS/**
