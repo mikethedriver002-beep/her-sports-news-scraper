@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "lpga_golf_winner_leaderboard.a.v1",
+  "family": "LPGA / Golf",
+  "variant": "A",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1350 },
+  "safe": { "t": 90, "r": 60, "b": 90, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 48, "y": 42, "w": 80, "lockup_allowed_public": false },
+  "zones": { "kicker": [80, 150, 920, 54], "player_or_event": [80, 230, 920, 150], "result": [80, 400, 920, 130], "leaderboard": [70, 570, 940, 360], "context": [70, 970, 940, 130], "question": [70, 1150, 940, 100] },
+  "text_hierarchy": { "player_or_event": { "min_px": 68, "case": "uppercase" }, "result": { "min_px": 48 }, "leaderboard_row": { "min_px": 32 }, "question": { "min_px": 34 } },
+  "modules": { "leaderboard": { "min_items": 1, "max_items": 5 }, "approved_photo_lane": { "mode": "text", "allowed_modes": ["text", "approved_photo"] } },
+  "rules": { "approved_assets_only": true, "approved_images_only": true, "verified_result_only": true, "no_tiny_tables": true, "text_contrast_min": 4.5, "large_text_contrast_min": 3.0, "non_text_contrast_min": 3.0, "renderer_mode": "review_only" },
+  "dependentRequired": { "approved_photo": ["approved_asset_id", "rights_status", "identity_verified"] }
+}
