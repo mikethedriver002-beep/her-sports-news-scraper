@@ -63,3 +63,13 @@ def test_v3_sanity_workflow_builds_upstream_before_acceptance_commands() -> None
     assert "python generate_hsd_mermaid_upper_echelon_v2.py" in workflow
     assert "V3 first-run acceptance commands" in workflow
     assert workflow.index("Build upstream packets for V3 sanity") < workflow.index("V3 first-run acceptance commands")
+
+
+def test_production_director_preview_copy_cannot_fall_through_to_lpga_feature_copy() -> None:
+    text = read("scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py")
+    assert "def preview_copy" in text
+    assert "return preview_copy(row)" in text
+    assert "Preview copy stays WNBA-specific" in text
+    package_block = text[text.index("def package_copy"): text.index("def prompt_text")]
+    assert "wnba_game_preview" in package_block
+    assert package_block.index("return preview_copy(row)") < package_block.index("return feature_copy(row)")
