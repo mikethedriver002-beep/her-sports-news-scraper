@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v1.1-hsd-template-render-map-with-renderer-v2-handoff"
+VERSION = "v1.2-hsd-template-render-map-safe-renderer-v2-handoff"
 OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping")
 OUT_CSV = OUT_DIR / "hsd_template_render_map.csv"
 OUT_JSON = OUT_DIR / "hsd_template_render_map.json"
@@ -131,23 +131,8 @@ def add_batch_rows(rows: List[Dict[str, Any]], config: Dict[str, Any], index: Di
             })
 
 
-def run_template_renderer_v2() -> bool:
-    if not RENDERER_V2_SCRIPT.exists():
-        return False
-    runpy.run_path(RENDERER_V2_SCRIPT.as_posix(), run_name="__main__")
-    return True
-
-
-def main() -> None:
-    config = load_json(CONFIG)
-    registry = load_json(REGISTRY)
-    index = registry_index(registry)
-    rows: List[Dict[str, Any]] = []
-    add_event_rows(rows, config, index)
-    add_batch_rows(rows, config, index)
-    write_csv(OUT_CSV, rows)
-    renderer_v2_ran = run_template_renderer_v2()
-    payload = {
+def build_payload(rows: List[Dict[str, Any]], registry: Dict[str, Any], config: Dict[str, Any], renderer_v2_ran: bool) -> Dict[str, Any]:
+    return {
         "version": VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "review_only": True,
@@ -159,7 +144,9 @@ def main() -> None:
         "rows": rows,
         "future_mappings": config.get("future_mappings", []),
     }
-    OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def write_md(payload: Dict[str, Any]) -> None:
     md = [
         "# HSD Template Render Map v1",
         "",
@@ -177,17 +164,40 @@ def main() -> None:
         "",
         f"- Mapped rows: `{payload['mapped_count']}`",
         f"- Blocked rows: `{payload['blocked_count']}`",
-        f"- Template Renderer v2 ran: `{renderer_v2_ran}`",
+        f"- Template Renderer v2 ran: `{payload['renderer_v2_ran']}`",
         "",
         "## Mapped items",
         "",
     ]
-    for row in rows:
+    for row in payload.get("rows", []):
         md.append(f"- {row.get('status')} | {row.get('platform')} | `{row.get('template_id')}` | {row.get('headline')}")
     md += ["", "## Future mappings", ""]
-    for fm in config.get("future_mappings", []):
+    for fm in payload.get("future_mappings", []):
         md.append(f"- {fm.get('family')}: {fm.get('status')}")
     OUT_MD.write_text("\n".join(md) + "\n", encoding="utf-8")
+
+
+def run_template_renderer_v2() -> bool:
+    if not RENDERER_V2_SCRIPT.exists():
+        return False
+    runpy.run_path(RENDERER_V2_SCRIPT.as_posix(), run_name="__main__")
+    return True
+
+
+def main() -> None:
+    config = load_json(CONFIG)
+    registry = load_json(REGISTRY)
+    index = registry_index(registry)
+    rows: List[Dict[str, Any]] = []
+    add_event_rows(rows, config, index)
+    add_batch_rows(rows, config, index)
+    write_csv(OUT_CSV, rows)
+    payload = build_payload(rows, registry, config, renderer_v2_ran=False)
+    OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    renderer_v2_ran = run_template_renderer_v2()
+    payload = build_payload(rows, registry, config, renderer_v2_ran=renderer_v2_ran)
+    OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    write_md(payload)
     print(json.dumps({"version": VERSION, "mapped": payload["mapped_count"], "blocked": payload["blocked_count"], "renderer_v2_ran": renderer_v2_ran, "out_dir": OUT_DIR.as_posix()}, indent=2))
 
 
