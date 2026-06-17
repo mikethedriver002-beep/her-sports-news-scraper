@@ -1,4 +1,4 @@
-# HSD Graphics Template Master Batch Prompts v1
+# HSD Graphics Template Master Batch Prompts v1.1
 
 Use these prompts in the Her Sports Daily Graphics Production chat. Build the first six as priority. LPGA is included as the immediate seventh priority.
 
@@ -21,6 +21,10 @@ Global brand law:
 - Social-first readability only.
 - All critical text must stay inside safe zones.
 - Every template must include a real JSON layout spec file, not a screenshot of code.
+- Do not show public-facing internal labels such as VARIANT A, TEMPLATE A, or SPEC SHEET on public mockups.
+- Generic sports-logo marks are internal placeholders only. Public templates must use approved team logo slots or real approved logos.
+- Crown/winner treatments are optional, not automatic.
+- Brush-script hooks are optional, not required.
 
 Deliver for each template direction:
 1. Finished template mockup PNG.
@@ -37,9 +41,9 @@ GAME RECAP / FINAL SCORE
 Goal: Build the canonical HSD single-game result template family.
 
 Need 3 template variants:
-A. Premium logo-first final score.
-B. Final score with approved player-photo option.
-C. IG Story / vertical quick final version.
+A. Logo-first final score. No player photo required. If no approved player photo exists, use a text-only key performer strip.
+B. Approved-player-photo final score. Use only when an approved player photo exists. If no approved player photo exists, fall back to Variant A.
+C. IG Story / vertical quick-final version.
 
 Must have:
 - huge primary team emphasis
@@ -49,6 +53,12 @@ Must have:
 - optional key performer area
 - optional hook / takeaway / question
 - safe-zone compliant text
+
+Hard rules:
+- Use PRIMARY TEAM / SECONDARY TEAM or WINNING TEAM / OPPONENT language. Do not default to HOME TEAM / AWAY TEAM.
+- No demo player faces in public exports.
+- No unverified player numbers or positions.
+- No fake stat placeholders.
 
 Keep it HSD, premium, clean, and repeatable.
 
@@ -73,6 +83,10 @@ Must have:
 - fallback lower lane for KEY MATCHUP / WATCH POINT if no approved player image exists
 - one strong debate question
 
+Lower module rule:
+- Only one lower module should be active per post.
+- Do not stack Key Matchup, Watch Point, Why It Matters, and Approved Player Photo Slot together.
+
 Make it feel like a premium HSD signature franchise.
 
 ## Prompt 3: Last Night in the W
@@ -95,6 +109,16 @@ Must have:
 - compact but readable team labeling
 - no spreadsheet look
 - optional top takeaway or end-question area
+- room for 3 to 5 games on feed/Threads without clutter
+- readable score rows with strong winner/primary result emphasis
+- one clear story hook, not a dense stats dashboard
+
+Hard rules:
+- Use approved team logos only or approved team logo slots.
+- Do not invent scores, records, stats, or standings.
+- Do not use tiny schedule-table formatting.
+- Public mockups must not show internal variant/template labels.
+- Keep text inside safe zones.
 
 This should be a clean, repeatable HSD recap system.
 
