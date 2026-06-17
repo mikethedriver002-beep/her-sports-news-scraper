@@ -1,0 +1,21 @@
+event_id,league_label,matchup,game_state,winner,final_score,performer_rank,player_name,team,statline,source
+401856992,WNBA,Las Vegas Aces at Dallas Wings,Final,Dallas Wings,Las Vegas Aces 66 - Dallas Wings 96,1,Jessica Shepard,Dallas Wings,"PTS 15, REB 15, AST 9, STL 2, FG 4-6",WNBA
+401856993,WNBA,Portland Fire at Minnesota Lynx,Final,Minnesota Lynx,Portland Fire 74 - Minnesota Lynx 107,1,Nia Coffey,Minnesota Lynx,"PTS 15, REB 5, AST 4, STL 3, BLK 3",WNBA
+401856994,WNBA,Los Angeles Sparks at Golden State Valkyries,Final,Golden State Valkyries,Los Angeles Sparks 58 - Golden State Valkyries 78,1,Kaila Charles,Golden State Valkyries,"PTS 13, REB 8, AST 5, FG 5-7, 3PT 2-3",WNBA
+401856995,WNBA,Toronto Tempo at Indiana Fever,Final,Indiana Fever,Toronto Tempo 91 - Indiana Fever 113,1,Caitlin Clark,Indiana Fever,"PTS 21, REB 5, AST 14, STL 1, BLK 1",WNBA
+401856992,WNBA,Las Vegas Aces at Dallas Wings,Final,Dallas Wings,Las Vegas Aces 66 - Dallas Wings 96,2,Arike Ogunbowale,Dallas Wings,"PTS 22, REB 4, AST 7, STL 2, FG 6-16",WNBA
+401856993,WNBA,Portland Fire at Minnesota Lynx,Final,Minnesota Lynx,Portland Fire 74 - Minnesota Lynx 107,2,Natasha Howard,Minnesota Lynx,"PTS 18, REB 6, AST 1, STL 2, FG 6-11",WNBA
+401856994,WNBA,Los Angeles Sparks at Golden State Valkyries,Final,Golden State Valkyries,Los Angeles Sparks 58 - Golden State Valkyries 78,2,Veronica Burton,Golden State Valkyries,"PTS 12, REB 2, AST 3, STL 2, BLK 2",WNBA
+401856995,WNBA,Toronto Tempo at Indiana Fever,Final,Indiana Fever,Toronto Tempo 91 - Indiana Fever 113,2,Aliyah Boston,Indiana Fever,"PTS 18, REB 11, AST 4, STL 2, BLK 2",WNBA
+401856992,WNBA,Las Vegas Aces at Dallas Wings,Final,Dallas Wings,Las Vegas Aces 66 - Dallas Wings 96,3,A'ja Wilson,Las Vegas Aces,"PTS 18, REB 5, AST 2, STL 1, FG 8-15",WNBA
+401856993,WNBA,Portland Fire at Minnesota Lynx,Final,Minnesota Lynx,Portland Fire 74 - Minnesota Lynx 107,3,Kayla McBride,Minnesota Lynx,"PTS 14, REB 6, AST 4, STL 2, FG 5-14",WNBA
+401856994,WNBA,Los Angeles Sparks at Golden State Valkyries,Final,Golden State Valkyries,Los Angeles Sparks 58 - Golden State Valkyries 78,3,Dearica Hamby,Los Angeles Sparks,"PTS 6, REB 10, AST 3, STL 2, FG 3-5",WNBA
+401856995,WNBA,Toronto Tempo at Indiana Fever,Final,Indiana Fever,Toronto Tempo 91 - Indiana Fever 113,3,Marina Mabrey,Toronto Tempo,"PTS 18, REB 1, AST 7, STL 2, BLK 1",WNBA
+401856992,WNBA,Las Vegas Aces at Dallas Wings,Final,Dallas Wings,Las Vegas Aces 66 - Dallas Wings 96,4,Jewell Loyd,Las Vegas Aces,"PTS 21, REB 2, STL 1, FG 8-14, 3PT 5-9",WNBA
+401856993,WNBA,Portland Fire at Minnesota Lynx,Final,Minnesota Lynx,Portland Fire 74 - Minnesota Lynx 107,4,Olivia Miles,Minnesota Lynx,"PTS 12, REB 4, AST 5, STL 3, FG 6-8",WNBA
+401856994,WNBA,Los Angeles Sparks at Golden State Valkyries,Final,Golden State Valkyries,Los Angeles Sparks 58 - Golden State Valkyries 78,4,Gabby Williams,Golden State Valkyries,"PTS 16, REB 4, AST 1, STL 1, FG 6-12",WNBA
+401856995,WNBA,Toronto Tempo at Indiana Fever,Final,Indiana Fever,Toronto Tempo 91 - Indiana Fever 113,4,Sophie Cunningham,Indiana Fever,"PTS 24, REB 6, AST 2, FG 8-11, 3PT 6-7",WNBA
+401856992,WNBA,Las Vegas Aces at Dallas Wings,Final,Dallas Wings,Las Vegas Aces 66 - Dallas Wings 96,5,Paige Bueckers,Dallas Wings,"PTS 10, REB 5, AST 7, STL 1, FG 4-11",WNBA
+401856993,WNBA,Portland Fire at Minnesota Lynx,Final,Minnesota Lynx,Portland Fire 74 - Minnesota Lynx 107,5,Courtney Williams,Minnesota Lynx,"PTS 16, REB 5, AST 4, FG 7-10, 3PT 2-3",WNBA
+401856994,WNBA,Los Angeles Sparks at Golden State Valkyries,Final,Golden State Valkyries,Los Angeles Sparks 58 - Golden State Valkyries 78,5,Rae Burrell,Los Angeles Sparks,"PTS 13, REB 1, AST 1, BLK 3, FG 2-8",WNBA
+401856995,WNBA,Toronto Tempo at Indiana Fever,Final,Indiana Fever,Toronto Tempo 91 - Indiana Fever 113,5,Laura Juskaite,Toronto Tempo,"PTS 19, REB 2, AST 4, STL 3, FG 8-11",WNBA
