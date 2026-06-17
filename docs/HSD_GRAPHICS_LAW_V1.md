@@ -80,6 +80,8 @@ Forbidden assets:
 - invented stats
 - invented player names
 - invented jersey numbers
+- demo player faces in public exports
+- generic sports logo marks in public exports
 
 If no approved player image exists, use a text or logo fallback such as KEY MATCHUP, WATCH POINT, WHY IT MATTERS, or PLAYER SPOTLIGHT TEXT.
 
@@ -160,3 +162,40 @@ Build and approve templates in this order:
 The current repo stage is template-building and review-only rendering.
 
 Do not promote generated graphics to production automatically. Use artifacts to review templates and rendered output before promotion.
+
+## 11. Game Recap / Final Score template law
+
+The Game Recap / Final Score family has three review-approved directions:
+
+### Variant A: Logo-first final score
+
+- Default Game Recap / Final Score template.
+- No player photo required.
+- Player photo is not allowed in Variant A public output.
+- If no approved player image exists, use a text-only key performer strip.
+- Use approved team logos only.
+- Use PRIMARY TEAM / SECONDARY TEAM or WINNING TEAM / OPPONENT language so the template works even when the away team wins.
+
+### Variant B: Approved-player-photo final score
+
+- Use only when an approved player photo exists.
+- Approved player identity and rights status must be verified before use.
+- If no approved player photo exists, fall back to Variant A.
+- Do not use demo player faces, fake silhouettes, fake jersey numbers, or unverified player positions.
+
+### Variant C: Story/Reels quick final
+
+- Use for fast vertical final-score posts.
+- Export at 1080x1920.
+- Keep the bottom hook above Story/Reels UI safe area.
+- No player photo required.
+- Use text-first and logo-first hierarchy.
+
+### Shared Game Recap cuts
+
+- No public-facing internal labels such as VARIANT A, VARIANT B, TEMPLATE A, or TEMPLATE B.
+- Generic sports-logo placeholders are internal only.
+- Crown/winner treatments are optional, not automatic.
+- Brush-script hooks are optional, not required.
+- Do not show 0,000 or fake stat placeholders in public examples.
+- Do not use unnecessary metadata unless it serves the story.
