@@ -279,3 +279,43 @@ The Daily Debrief family has three review-approved directions:
 - Public mockups must not show internal variant/template/spec labels.
 - Use placeholder copy unless real details are provided.
 - Do not present real scores, records, stats, quotes, injuries, or standings unless provided and verified.
+
+## 14. Women’s Soccer / NWSL / USWNT template law
+
+The Women’s Soccer / NWSL / USWNT family has three review-approved directions:
+
+### Variant A: Match Preview / Result card
+
+- Use for women’s soccer match previews and result cards.
+- Must support preview mode and result mode.
+- Preview mode uses matchup/date/time/competition fields.
+- Result mode uses team scores and FINAL or FULL TIME fields.
+- Preview and result language must not be mixed.
+- Do not show FULL TIME on a preview card.
+- Use approved club, league, country, or federation logo slots.
+
+### Variant B: League / Roster / Callup story card
+
+- Use for roster stories, callups, league-wide news, transfers, awards, milestones, and major women’s soccer moments.
+- Headline should be clearly editable unless real details are provided.
+- Use fields such as ROSTER STORY HEADLINE, TEAM NAMES ROSTER, CALLUP STORY HEADLINE, or PLAYER / TEAM STORY for public template mockups.
+- Include short context, why it matters, and optional source note or CTA.
+
+### Variant C: Story / Vertical soccer update
+
+- Use for quick women’s soccer updates on Stories or Reels.
+- Export at 1080x1920.
+- Allowed modes: score/match update plus CTA, three quick story points plus CTA, or roster/callup note plus poll/question.
+- Only one mode should be active at a time.
+- Bottom area must stay clear for Story/Reels UI.
+
+### Shared Women’s Soccer rules
+
+- Keep a soccer-specific identity while still feeling like HSD.
+- Approved club, league, country, and federation logos only.
+- Approved player images only.
+- Abstract soccer textures are allowed as editorial design backgrounds.
+- Abstract textures must not imply real match photography or replace approved imagery.
+- Do not use fake kits, fake crests, invented scores, invented stats, or real-sounding news without provided details.
+- Public mockups must not show internal variant/template/spec labels.
+- Use placeholder copy unless real details are provided.
