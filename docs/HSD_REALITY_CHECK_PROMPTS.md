@@ -35,5 +35,5 @@ HSD REALITY CHECK. Latest artifact was v2.2. Next requested version is v2.3, not
 ## Current corrected anchor for this thread
 
 ```txt
-HSD REALITY CHECK. Latest artifact was v2.2. Next requested version is v2.33, not v2.2 again. Build Template Renderer v2.33 from the v2.2 visual findings.
+HSD REALITY CHECK. Latest artifact was v2.33. Next requested version is v2.4, not v2.34 and not v2.33 again. Build Template Renderer v2.4 from the latest visual findings and fix local WNBA SVG logo rendering.
 ```
