@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import csv
 import json
+import runpy
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "v1.2-hsd-graphics-template-factory-law-snapshot"
+VERSION = "v1.3-hsd-graphics-template-factory-with-render-map"
 OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY")
 MATRIX = OUT_DIR / "template_matrix.csv"
 PROMPTS = OUT_DIR / "graphics_production_template_prompts.md"
@@ -17,6 +18,7 @@ LAW_SNAPSHOT = OUT_DIR / "law/HSD_GRAPHICS_LAW_V1.md"
 MASTER_PROMPTS_SNAPSHOT = OUT_DIR / "law/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md"
 CONFIG_SNAPSHOT_DIR = OUT_DIR / "config_graphics_snapshot"
 LAW_DIR = OUT_DIR / "law"
+RENDER_MAP_SCRIPT = Path("scripts/generate_hsd_template_render_map_v1.py")
 FIELDS = ["family", "variant", "format", "priority", "purpose", "assets", "must_have", "avoid", "renderer_notes"]
 
 PUBLIC_LOGO_RULE_TEXT = """# HSD Public Logo Rule
@@ -52,7 +54,7 @@ TEMPLATES = [
     ("LPGA / Golf", "A", "IG Feed / Threads", "high", "winner or leaderboard story", "approved player photo if available, LPGA/event logo if available", "rank/leader/winner hierarchy", "golf score tables that are unreadable, large HSD masthead lockups", "leaderboard editorial card"),
     ("LPGA / Golf", "B", "IG Stories", "medium", "quick leaderboard/winner update", "minimal assets", "player name, event, result, why it matters", "green-on-green low contrast, large HSD masthead lockups", "9:16 golf story"),
     ("Tennis / WTA", "A", "IG Feed / Threads", "high", "match result or tournament story", "approved player photos when available", "player names huge, result/context clean", "fake court photos, large HSD masthead lockups", "tennis editorial match card"),
-    ("Tennis / WTA", "B", "IG Stories", "medium", "quick match update", "minimal assets", "winner/result/next opponent if verified", "tiny set score lines, large HSD masthead lockups", "story-first tennis card"),
+    ("Tennis / WTA", "B", "IG Stories", "medium", "quick match update", "minimal assets", "winner/result/next opponent if verified", "tiny set score lines, " "large HSD masthead lockups", "story-first tennis card"),
     ("Player Spotlight", "A", "IG Feed", "high", "star/player moment", "approved real player image required", "player cutout, one claim, one verified stat/context", "fake faces or wrong teams, large HSD masthead lockups", "photo-first hero template"),
     ("Player Spotlight", "B", "Threads", "medium", "conversation starter", "approved player image optional", "strong quote/hook, debate question", "quote without source", "fast discourse card"),
     ("Women’s Sports Business / Culture", "A", "IG Feed / Threads", "high", "growth/business story", "logos or text-only", "number/context/headline", "boring corporate chart", "premium business editorial card"),
@@ -116,6 +118,11 @@ def copy_config_snapshot() -> None:
     copy_law_docs()
 
 
+def generate_render_map_if_available() -> None:
+    if RENDER_MAP_SCRIPT.exists():
+        runpy.run_path(RENDER_MAP_SCRIPT.as_posix(), run_name="__main__")
+
+
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     rows = [{"family": a, "variant": b, "format": c, "priority": d, "purpose": e, "assets": f, "must_have": g, "avoid": h, "renderer_notes": i} for a,b,c,d,e,f,g,h,i in TEMPLATES]
@@ -124,6 +131,7 @@ def main() -> None:
     PROMPTS.write_text("# HSD Graphics Production Template Prompts\n\n" + PUBLIC_LOGO_RULE_TEXT + "\n" + "\n".join(prompt_for(r) for r in rows), encoding="utf-8")
     PUBLIC_LOGO_RULE.write_text(PUBLIC_LOGO_RULE_TEXT, encoding="utf-8")
     copy_config_snapshot()
+    generate_render_map_if_available()
     BRIEF.write_text("\n".join([
         "# HSD Graphics Template Factory",
         "",
@@ -137,6 +145,10 @@ def main() -> None:
         "## Public logo rule",
         "",
         "Public-facing HSD templates use the compact official HSD bug only, top-left. Do not use the full HSD + HER SPORTS DAILY lockup on public graphics. Spec sheets and internal brand documents may use the full lockup.",
+        "",
+        "## Render mapping",
+        "",
+        "The Template Factory also emits a review-only render map at `outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping/` when pipeline contract files are present.",
         "",
         "## Build order",
         "",
@@ -158,6 +170,7 @@ def main() -> None:
         f"- `{PUBLIC_LOGO_RULE.as_posix()}`",
         f"- `{CONFIG_SNAPSHOT_DIR.as_posix()}`",
         f"- `{LAW_DIR.as_posix()}`",
+        "- `outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping/`",
         "",
         "## Rule",
         "",
