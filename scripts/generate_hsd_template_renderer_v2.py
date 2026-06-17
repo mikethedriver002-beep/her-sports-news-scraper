@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Tuple
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-VERSION = "v2.2-core-template-polish-review-only"
+VERSION = "v2.33-hsd-quality-core-polish-review-only"
 OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2")
 IMG_DIR = OUT_DIR / "renders"
 MANIFEST_CSV = OUT_DIR / "hsd_template_renderer_v2_manifest.csv"
@@ -31,11 +31,11 @@ FIELDS = ["item_id", "template_id", "platform", "mode", "headline", "output_path
 
 BG = (4, 5, 10)
 INK = (248, 249, 252)
-MUTED = (164, 172, 186)
-GOLD = (230, 183, 78)
-ORANGE = (238, 108, 50)
+MUTED = (162, 170, 184)
+GOLD = (232, 185, 78)
+ORANGE = (239, 108, 50)
 PURPLE = (151, 80, 255)
-CARD = (8, 10, 18)
+PANEL = (8, 10, 18)
 LOGO_CACHE: Dict[str, Image.Image | None] = {}
 FONT_CACHE: Dict[Tuple[int, bool], Any] = {}
 
@@ -82,17 +82,17 @@ def font(size: int, bold: bool = False):
     if bold:
         choices += ["/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]
     choices += ["/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
-    for path in choices:
-        if Path(path).exists():
-            FONT_CACHE[key] = ImageFont.truetype(path, size)
+    for p in choices:
+        if Path(p).exists():
+            FONT_CACHE[key] = ImageFont.truetype(p, size)
             return FONT_CACHE[key]
     FONT_CACHE[key] = ImageFont.load_default()
     return FONT_CACHE[key]
 
 
 def text_w(draw: ImageDraw.ImageDraw, text: str, fnt) -> int:
-    box = draw.textbbox((0, 0), text, font=fnt)
-    return box[2] - box[0]
+    b = draw.textbbox((0, 0), text, font=fnt)
+    return b[2] - b[0]
 
 
 def fit(draw: ImageDraw.ImageDraw, text: str, max_w: int, start: int, floor: int, bold: bool = True):
@@ -109,33 +109,33 @@ def wrap(draw: ImageDraw.ImageDraw, text: str, fnt, max_w: int, max_lines: int) 
     words = clean(text).split()
     if not words:
         return []
-    out: List[str] = []
+    lines: List[str] = []
     cur = words[0]
     for word in words[1:]:
         test = cur + " " + word
         if text_w(draw, test, fnt) <= max_w:
             cur = test
         else:
-            out.append(cur)
+            lines.append(cur)
             cur = word
-            if len(out) >= max_lines - 1:
+            if len(lines) >= max_lines - 1:
                 break
-    out.append(cur)
-    if len(" ".join(out).split()) < len(words) and out:
-        out[-1] = out[-1].rstrip("., ") + "..."
-    return out[:max_lines]
+    lines.append(cur)
+    if len(" ".join(lines).split()) < len(words) and lines:
+        lines[-1] = lines[-1].rstrip("., ") + "..."
+    return lines[:max_lines]
 
 
 def center(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], text: str, size: int, fill=INK, bold: bool = True) -> None:
     x, y, w, h = box
     fnt = fit(draw, text, w, size, 18, bold)
-    bb = draw.textbbox((0, 0), text, font=fnt)
-    draw.text((x + (w - (bb[2] - bb[0])) // 2, y + (h - (bb[3] - bb[1])) // 2), text, font=fnt, fill=fill)
+    b = draw.textbbox((0, 0), text, font=fnt)
+    draw.text((x + (w - (b[2] - b[0])) // 2, y + (h - (b[3] - b[1])) // 2), text, font=fnt, fill=fill)
 
 
 def left(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], text: str, size: int, fill=INK, bold: bool = True, max_lines: int = 2) -> None:
     x, y, w, h = box
-    fnt = fit(draw, text, w, size, 24, bold)
+    fnt = fit(draw, text, w, size, 22, bold)
     lines = wrap(draw, text, fnt, w, max_lines)
     yy = y + max(0, (h - len(lines) * (fnt.size + 7)) // 2)
     for line in lines:
@@ -143,7 +143,7 @@ def left(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], text: str, s
         yy += fnt.size + 7
 
 
-def rect(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], outline=(255, 255, 255, 78), fill=(255, 255, 255, 10), width=2, radius=18) -> None:
+def rect(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], outline=(255, 255, 255, 72), fill=(255, 255, 255, 10), width=2, radius=18) -> None:
     x, y, w, h = box
     draw.rounded_rectangle((x, y, x + w, y + h), radius=radius, outline=outline, fill=fill, width=width)
 
@@ -155,7 +155,7 @@ def pill(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], text: str, f
 
 
 def background(size: Tuple[int, int], accent: Tuple[int, int, int], accent2: Tuple[int, int, int]) -> Image.Image:
-    # v2.2 removes foreground crossing beams. Lights are edge-only and cannot cross content.
+    # v2.33: no top dots and no foreground crossing lines. Background energy stays behind content.
     w, h = size
     img = Image.new("RGBA", size, BG)
     d = ImageDraw.Draw(img)
@@ -164,13 +164,11 @@ def background(size: Tuple[int, int], accent: Tuple[int, int, int], accent2: Tup
         d.line((0, y, w, y), fill=(int(4 + 10 * t), int(5 + 10 * t), int(10 + 14 * t), 255))
     glow = Image.new("RGBA", size, (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    gd.ellipse((-360, -180, int(w * .72), int(h * .55)), fill=(*accent, 54))
-    gd.ellipse((int(w * .45), int(h * .15), w + 420, int(h * .70)), fill=(*accent2, 42))
-    gd.rectangle((0, int(h * .72), w, h), fill=(0, 0, 0, 80))
-    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(42)))
-    for x in [92, 150, w - 150, w - 92]:
-        d.ellipse((x - 18, 60, x + 18, 96), fill=(255, 255, 255, 58))
-    d.rectangle((0, 0, w, h), outline=(255, 255, 255, 16), width=2)
+    gd.ellipse((-420, -220, int(w * .78), int(h * .56)), fill=(*accent, 50))
+    gd.ellipse((int(w * .45), int(h * .12), w + 460, int(h * .68)), fill=(*accent2, 38))
+    gd.rectangle((0, int(h * .72), w, h), fill=(0, 0, 0, 86))
+    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(46)))
+    d.rectangle((0, 0, w, h), outline=(255, 255, 255, 14), width=2)
     return img
 
 
@@ -219,8 +217,7 @@ def resolve(name: str, aliases: Dict[str, str]) -> str:
 
 
 def logo_for(name: str, aliases: Dict[str, str], logos: Dict[str, str]) -> Image.Image | None:
-    team_id = resolve(name, aliases)
-    path = logos.get(team_id, "")
+    path = logos.get(resolve(name, aliases), "")
     if path in LOGO_CACHE:
         return LOGO_CACHE[path]
     p = Path(clean(path))
@@ -234,6 +231,15 @@ def logo_for(name: str, aliases: Dict[str, str], logos: Dict[str, str]) -> Image
     return LOGO_CACHE[path]
 
 
+def short_team(name: str) -> str:
+    n = clean(name).upper()
+    drop = ["GOLDEN STATE ", "LOS ANGELES ", "LAS VEGAS ", "NEW YORK ", "CONNECTICUT ", "WASHINGTON ", "MINNESOTA ", "SEATTLE ", "PHOENIX ", "INDIANA ", "TORONTO "]
+    for prefix in drop:
+        if n.startswith(prefix) and len(n) > len(prefix) + 3:
+            return n[len(prefix):]
+    return n
+
+
 def team_badge(img: Image.Image, draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], team: str, logo: Image.Image | None, accent=GOLD, dim=False) -> None:
     fill = (7, 8, 13, 226 if not dim else 188)
     outline = (*accent, 210 if not dim else 95)
@@ -244,8 +250,8 @@ def team_badge(img: Image.Image, draw: ImageDraw.ImageDraw, box: Tuple[int, int,
         lg.thumbnail((w - 42, h - 42), Image.LANCZOS)
         img.alpha_composite(lg, (x + (w - lg.width) // 2, y + (h - lg.height) // 2))
     else:
-        # premium team-name badge fallback, not coded initials or placeholder labels
-        center(draw, (x + 18, y + 24, w - 36, h - 48), clean(team).upper(), 32 if w < 170 else 40, fill=(accent if not dim else MUTED), bold=True)
+        # v2.33 premium team-name badge fallback, not coded initials or placeholder labels.
+        center(draw, (x + 16, y + 20, w - 32, h - 40), short_team(team), 34 if w < 170 else 42, fill=(accent if not dim else MUTED), bold=True)
 
 
 def source_index() -> Dict[str, Dict[str, str]]:
@@ -291,34 +297,36 @@ def render_game_final(map_row: Dict[str, Any], src: Dict[str, str], badge, alias
     winner, loser, score, league, date = final_names(src)
     s1, s2 = score_parts(score)
     if story:
-        center(d, (88, 120, 904, 110), "GAME RECAP", 95, fill=(255, 255, 255, 35), bold=True)
-        center(d, (82, 235, 916, 145), "QUICK FINAL", 116, GOLD, True)
-        center(d, (120, 392, 840, 50), f"{league} • {date} • FINAL".upper(), 31, INK, True)
-        team_badge(img, d, (66, 510, 260, 260), winner, logo_for(winner, aliases, logos), GOLD)
-        left(d, (360, 520, 340, 145), winner.upper(), 64, INK, True, 2)
-        center(d, (700, 470, 305, 310), s1, 176, GOLD, True)
-        team_badge(img, d, (66, 835, 225, 225), loser, logo_for(loser, aliases, logos), MUTED, dim=True)
-        left(d, (360, 855, 330, 120), loser.upper(), 50, MUTED, True, 2)
+        center(d, (86, 105, 908, 120), "GAME RECAP", 100, fill=(255, 255, 255, 34), bold=True)
+        center(d, (82, 230, 916, 145), "QUICK FINAL", 118, GOLD, True)
+        center(d, (118, 390, 844, 52), f"{league} • {date} • FINAL".upper(), 31, INK, True)
+        team_badge(img, d, (64, 508, 262, 262), winner, logo_for(winner, aliases, logos), GOLD)
+        left(d, (360, 516, 345, 150), winner.upper(), 66, INK, True, 2)
+        center(d, (698, 468, 310, 312), s1, 180, GOLD, True)
+        team_badge(img, d, (64, 836, 225, 225), loser, logo_for(loser, aliases, logos), MUTED, dim=True)
+        left(d, (360, 852, 332, 120), loser.upper(), 52, MUTED, True, 2)
         if s2:
-            center(d, (715, 818, 270, 250), s2, 124, MUTED, True)
-        rect(d, (66, 1185, 948, 116), outline=(*GOLD, 170), fill=(0, 0, 0, 125), radius=0)
-        center(d, (90, 1195, 900, 90), "KEY PERFORMER  •  TEXT-ONLY STRIP", 40, INK, True)
-        center(d, (86, 1410, 910, 150), clean(src.get("summary") or "CLUTCH CLOSEOUT."), 60, GOLD, True)
+            center(d, (715, 816, 270, 250), s2, 126, MUTED, True)
+        rect(d, (64, 1168, 952, 118), outline=(*GOLD, 170), fill=(0, 0, 0, 128), radius=0)
+        center(d, (90, 1178, 900, 92), "KEY PERFORMER  •  TEXT-ONLY STRIP", 40, INK, True)
+        # v2.33 reduces story dead space with a stronger bottom hook panel.
+        rect(d, (70, 1358, 940, 210), outline=(*GOLD, 115), fill=(0, 0, 0, 118), radius=18)
+        center(d, (92, 1395, 896, 135), clean(src.get("summary") or "CLUTCH CLOSEOUT."), 62, GOLD, True)
     else:
-        center(d, (80, 62, 920, 205), "GAME RECAP", 130, fill=(255, 255, 255, 28), bold=True)
-        center(d, (178, 250, 724, 78), "FINAL SCORE", 62, GOLD, True)
-        center(d, (172, 352, 736, 48), f"FINAL • {league} • {date}".upper(), 30, INK, True)
-        team_badge(img, d, (55, 465, 255, 255), winner, logo_for(winner, aliases, logos), GOLD)
-        pill(d, (346, 456, 230, 54), "PRIMARY", GOLD, BG, 25)
-        left(d, (340, 522, 398, 140), winner.upper(), 80, INK, True, 2)
-        center(d, (730, 430, 305, 305), s1, 180, GOLD, True)
-        team_badge(img, d, (55, 765, 220, 220), loser, logo_for(loser, aliases, logos), MUTED, dim=True)
-        left(d, (340, 795, 380, 118), loser.upper(), 58, MUTED, True, 2)
+        center(d, (76, 56, 928, 210), "GAME RECAP", 132, fill=(255, 255, 255, 28), bold=True)
+        center(d, (178, 248, 724, 80), "FINAL SCORE", 64, GOLD, True)
+        center(d, (170, 350, 740, 48), f"FINAL • {league} • {date}".upper(), 30, INK, True)
+        team_badge(img, d, (54, 462, 258, 258), winner, logo_for(winner, aliases, logos), GOLD)
+        pill(d, (346, 454, 230, 54), "PRIMARY", GOLD, BG, 25)
+        left(d, (340, 520, 400, 142), winner.upper(), 82, INK, True, 2)
+        center(d, (728, 428, 308, 310), s1, 184, GOLD, True)
+        team_badge(img, d, (54, 764, 222, 222), loser, logo_for(loser, aliases, logos), MUTED, dim=True)
+        left(d, (340, 793, 382, 120), loser.upper(), 60, MUTED, True, 2)
         if s2:
-            center(d, (758, 750, 250, 232), s2, 112, MUTED, True)
-        rect(d, (55, 1025, 970, 92), outline=(*GOLD, 170), fill=(0, 0, 0, 132), radius=0)
+            center(d, (758, 748, 250, 232), s2, 114, MUTED, True)
+        rect(d, (54, 1025, 972, 92), outline=(*GOLD, 170), fill=(0, 0, 0, 132), radius=0)
         center(d, (78, 1034, 924, 72), "KEY PERFORMER  •  TEXT-ONLY STRIP", 36, INK, True)
-        center(d, (90, 1168, 900, 108), clean(src.get("hook") or "STATEMENT WIN."), 60, GOLD, True)
+        center(d, (88, 1168, 904, 108), clean(src.get("hook") or "STATEMENT WIN."), 62, GOLD, True)
     return img
 
 
@@ -329,23 +337,22 @@ def render_tonight(map_row: Dict[str, Any], src: Dict[str, str], badge, aliases,
     home = clean(src.get("home_team_name") or src.get("home_team_display") or "TEAM ONE")
     away = clean(src.get("away_team_name") or src.get("away_team_display") or "TEAM TWO")
     time = clean(src.get("time_et") or src.get("start_time_et") or src.get("scheduled_time_local") or src.get("status") or "TIME / TV / CONTEXT")
-    center(d, (120, 72, 840, 156), "TONIGHT", 124, GOLD, True)
-    center(d, (120, 226, 840, 78), "IN THE W", 58, INK, True)
-    rect(d, (250, 338, 580, 66), outline=(*GOLD, 150), fill=(0, 0, 0, 116), radius=0)
-    center(d, (268, 346, 544, 50), time.upper(), 32, INK, True)
-    team_badge(img, d, (55, 470, 280, 280), home, logo_for(home, aliases, logos), GOLD)
-    team_badge(img, d, (745, 470, 280, 280), away, logo_for(away, aliases, logos), PURPLE)
-    center(d, (360, 468, 360, 96), home.upper(), 52, INK, True)
-    center(d, (360, 565, 360, 64), "VS.", 44, GOLD, True)
-    center(d, (360, 632, 360, 96), away.upper(), 52, INK, True)
-    rect(d, (120, 815, 840, 124), outline=(*GOLD, 185), fill=(*GOLD, 232), radius=0)
-    center(d, (142, 825, 796, 104), "WHO NEEDS THIS ONE MORE?", 52, BG, True)
-    rect(d, (70, 1000, 940, 168), outline=(255, 255, 255, 66), fill=(0, 0, 0, 122), radius=18)
-    labels = ["KEY MATCHUP", "WATCH POINT", "WHY IT MATTERS"]
-    for i, label in enumerate(labels):
-        x = 100 + i * 300
-        center(d, (x, 1018, 250, 44), label, 28, GOLD, True)
-        center(d, (x, 1067, 250, 70), "EDITABLE FIELD", 24, INK, False)
+    center(d, (118, 70, 844, 158), "TONIGHT", 126, GOLD, True)
+    center(d, (118, 224, 844, 80), "IN THE W", 60, INK, True)
+    rect(d, (230, 335, 620, 68), outline=(*GOLD, 150), fill=(0, 0, 0, 116), radius=0)
+    center(d, (248, 344, 584, 50), time.upper(), 32, INK, True)
+    # v2.33: larger matchup area and bigger team-name hierarchy.
+    team_badge(img, d, (44, 448, 320, 320), home, logo_for(home, aliases, logos), GOLD)
+    team_badge(img, d, (716, 448, 320, 320), away, logo_for(away, aliases, logos), PURPLE)
+    center(d, (370, 455, 340, 106), short_team(home), 60, INK, True)
+    center(d, (370, 560, 340, 62), "VS.", 48, GOLD, True)
+    center(d, (370, 620, 340, 106), short_team(away), 60, INK, True)
+    rect(d, (108, 805, 864, 126), outline=(*GOLD, 185), fill=(*GOLD, 232), radius=0)
+    center(d, (135, 815, 810, 106), "WHO NEEDS THIS ONE MORE?", 54, BG, True)
+    # v2.33: simpler premium lower module, not three tiny columns.
+    rect(d, (86, 995, 908, 168), outline=(255, 255, 255, 70), fill=(0, 0, 0, 122), radius=18)
+    center(d, (115, 1014, 850, 54), "KEY MATCHUP / WATCH POINT", 36, GOLD, True)
+    center(d, (135, 1074, 810, 58), "EDITABLE CONTEXT FIELD", 30, INK, False)
     center(d, (100, 1210, 880, 62), "PREVIEW MODE • ONE LOWER MODULE ACTIVE", 25, MUTED, True)
     return img
 
@@ -361,9 +368,9 @@ def render_last_night(map_row: Dict[str, Any], badge, aliases, logos) -> Image.I
     d = ImageDraw.Draw(img)
     paste_badge(img, badge, story)
     finals = final_rows()[:5]
-    center(d, (120, 96 if not story else 135, 840, 118), "LAST NIGHT", 98 if not story else 112, INK, True)
-    center(d, (120, 210 if not story else 276, 840, 70), "IN THE W", 48 if not story else 56, GOLD, True)
-    center(d, (170, 310 if not story else 396, 740, 44), f"{len(finals)} FINALS. ONE RECAP.", 30, MUTED, True)
+    center(d, (120, 95 if not story else 132, 840, 120), "LAST NIGHT", 100 if not story else 114, INK, True)
+    center(d, (120, 210 if not story else 276, 840, 72), "IN THE W", 50 if not story else 58, GOLD, True)
+    center(d, (170, 312 if not story else 400, 740, 44), f"{len(finals)} FINALS. ONE RECAP.", 31, MUTED, True)
     if tid.endswith("c.carousel.v1"):
         rect(d, (90, 430, 900, 300), outline=(*GOLD, 150), fill=(0, 0, 0, 120), radius=24)
         center(d, (120, 462, 840, 112), "FULL RECAP PACKAGE", 58, INK, True)
@@ -372,17 +379,17 @@ def render_last_night(map_row: Dict[str, Any], badge, aliases, logos) -> Image.I
         return img
     start = 395 if not story else 505
     row_h = 150 if not story else 160
-    offset_extra = 0
+    extra = 0
     for i, r in enumerate(finals[:4 if not story else 5]):
-        y = start + offset_extra + i * (row_h + 18)
+        y = start + extra + i * (row_h + 18)
         winner, loser, score, league, date = final_names(r)
         if i == 0 and not story:
-            rect(d, (60, y, 960, 235), outline=(*GOLD, 180), fill=(0, 0, 0, 136), radius=20)
+            rect(d, (58, y, 964, 235), outline=(*GOLD, 180), fill=(0, 0, 0, 136), radius=20)
             team_badge(img, d, (92, y + 34, 150, 150), winner, logo_for(winner, aliases, logos), GOLD)
             left(d, (270, y + 38, 470, 82), winner.upper(), 48, INK, True, 2)
             center(d, (748, y + 38, 230, 86), score, 56, GOLD, True)
             left(d, (270, y + 126, 470, 58), "FEATURED FINAL", 30, MUTED, True, 1)
-            offset_extra += 95
+            extra += 95
             continue
         rect(d, (70, y, 940, row_h), outline=(*GOLD, 112), fill=(0, 0, 0, 112), radius=16)
         team_badge(img, d, (94, y + 26, 88, 88), winner, logo_for(winner, aliases, logos), GOLD)
@@ -432,10 +439,9 @@ def main() -> None:
         if row.get("status") != "mapped":
             continue
         img = render_one(row, event_data(row, index), badge, aliases, logos)
-        name = f"{i:02d}_{slug(row.get('platform'))}_{slug(row.get('template_id'))}_{slug(row.get('headline'))}.png"
-        out = IMG_DIR / name
+        out = IMG_DIR / f"{i:02d}_{slug(row.get('platform'))}_{slug(row.get('template_id'))}_{slug(row.get('headline'))}.png"
         img.convert("RGB").save(out, quality=96)
-        manifest.append({"item_id": row.get("item_id"), "template_id": row.get("template_id"), "platform": row.get("platform"), "mode": row.get("mode"), "headline": row.get("headline"), "output_path": out.as_posix(), "width": img.size[0], "height": img.size[1], "status": "rendered_review", "review_only": "true", "notes": "Template Renderer v2.2 compile proof. Human review required before publishing."})
+        manifest.append({"item_id": row.get("item_id"), "template_id": row.get("template_id"), "platform": row.get("platform"), "mode": row.get("mode"), "headline": row.get("headline"), "output_path": out.as_posix(), "width": img.size[0], "height": img.size[1], "status": "rendered_review", "review_only": "true", "notes": "Template Renderer v2.33 compile proof. Human review required before publishing."})
     write_csv(MANIFEST_CSV, manifest)
     payload = {"version": VERSION, "generated_at_utc": datetime.now(timezone.utc).isoformat(), "review_only": True, "rendered_count": len(manifest), "source_render_map": RENDER_MAP_JSON.as_posix(), "items": manifest}
     MANIFEST_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -444,7 +450,7 @@ def main() -> None:
             p = Path(item["output_path"])
             if p.exists():
                 z.write(p, p.relative_to(OUT_DIR.parent).as_posix())
-    report = ["# HSD Template Renderer v2.2", "", f"Generated: `{payload['generated_at_utc']}`", f"Version: `{VERSION}`", "", "## Policy", "", "- Review-only compile proof.", "- Removed foreground crossing lines.", "- Uses team-name badge fallback when logos are unavailable.", "- Focused on Game Recap, Tonight in the W, and Last Night in the W mappings.", "- Human review required before publishing.", "", "## Summary", "", f"- Rendered files: `{len(manifest)}`", f"- Zip: `{ZIP_PATH.as_posix()}`", ""]
+    report = ["# HSD Template Renderer v2.33", "", f"Generated: `{payload['generated_at_utc']}`", f"Version: `{VERSION}`", "", "## Policy", "", "- Review-only compile proof.", "- Removed top dots and foreground crossing lines.", "- Enlarged Tonight matchup area and simplified lower module row.", "- Uses premium team-name badge fallback when logos are unavailable.", "- Reduces Story final bottom dead space with stronger hook panel.", "- Human review required before publishing.", "", "## Summary", "", f"- Rendered files: `{len(manifest)}`", f"- Zip: `{ZIP_PATH.as_posix()}`", ""]
     for item in manifest:
         report.append(f"- `{item['template_id']}` | {item['platform']} | {item['headline']}")
     REPORT_MD.write_text("\n".join(report) + "\n", encoding="utf-8")
