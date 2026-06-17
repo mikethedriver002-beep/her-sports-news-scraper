@@ -132,5 +132,5 @@ def test_template_render_mapping_is_review_only() -> None:
     assert "last_night_in_the_w.b.story.v1" in config
     assert "last_night_in_the_w.c.carousel.v1" in config
     assert "v1.0-hsd-template-render-map-review-only" in script
-    assert "review-only render mapping" in script
+    assert "review-only render mapping" in script.lower()
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in script
