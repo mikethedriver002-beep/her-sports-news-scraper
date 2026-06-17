@@ -97,6 +97,7 @@ def test_template_specs_are_present_for_top_priorities() -> None:
         "config/graphics/template_render_mapping_v1.json",
         "scripts/generate_hsd_template_render_map_v1.py",
         "scripts/generate_hsd_template_renderer_v2.py",
+        "docs/HSD_REALITY_CHECK_PROMPTS.md",
         "config/graphics/templates/game_recap_final_score_a_v1.json",
         "config/graphics/templates/game_recap_final_score_b_v1.json",
         "config/graphics/templates/game_recap_final_score_c_story_v1.json",
@@ -124,6 +125,7 @@ def test_template_render_mapping_is_review_only() -> None:
     config = read("config/graphics/template_render_mapping_v1.json")
     map_script = read("scripts/generate_hsd_template_render_map_v1.py")
     renderer_v2 = read("scripts/generate_hsd_template_renderer_v2.py")
+    prompts = read("docs/HSD_REALITY_CHECK_PROMPTS.md")
     assert "hsd-template-render-mapping-v1" in config
     assert "production_auto_render_allowed" in config
     assert "false" in config.lower()
@@ -137,9 +139,11 @@ def test_template_render_mapping_is_review_only() -> None:
     assert "generate_hsd_template_renderer_v2.py" in map_script
     assert "review-only render mapping" in map_script.lower()
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in map_script
-    assert "v2.2-core-template-polish-review-only" in renderer_v2
+    assert "v2.33-hsd-quality-core-polish-review-only" in renderer_v2
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2" in renderer_v2
     assert "review_only" in renderer_v2
-    assert "Template Renderer v2.2 compile proof" in renderer_v2
-    assert "v2.2 removes foreground crossing beams" in renderer_v2
-    assert "premium team-name badge fallback" in renderer_v2
+    assert "Template Renderer v2.33 compile proof" in renderer_v2
+    assert "v2.33: no top dots and no foreground crossing lines" in renderer_v2
+    assert "v2.33 premium team-name badge fallback" in renderer_v2
+    assert "Latest artifact was v2.2" in prompts
+    assert "Next requested version is v2.33" in prompts
