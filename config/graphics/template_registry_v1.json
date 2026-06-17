@@ -1,5 +1,5 @@
 {
-  "version": "hsd-template-registry-v1.2-last-night-family-split",
+  "version": "hsd-template-registry-v1.3-daily-debrief-family-split",
   "status": "review_only_stage",
   "default_review_only": true,
   "production_auto_promotion_allowed": false,
@@ -101,15 +101,41 @@
     {
       "template_id": "daily_debrief.a.v1",
       "family": "The Daily Debrief",
-      "variant": "A",
+      "variant": "A Carousel System",
       "family_priority": 4,
       "variant_priority": 1,
       "status": "review_only",
       "review_only": true,
-      "canonical": false,
-      "supported_formats": ["carousel", "1080x1350", "1080x1920"],
+      "canonical": true,
+      "supported_formats": ["carousel", "1080x1350"],
       "spec_path": "config/graphics/templates/daily_debrief_a_v1.json",
-      "notes": "Flagship multi-sport editorial roundup system, 3 stories max."
+      "notes": "Full carousel system: cover slide, story slide, and end-question slide for three strong cross-sport stories."
+    },
+    {
+      "template_id": "daily_debrief.b.summary.v1",
+      "family": "The Daily Debrief",
+      "variant": "B Summary Card",
+      "family_priority": 4,
+      "variant_priority": 2,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350"],
+      "spec_path": "config/graphics/templates/daily_debrief_b_summary_v1.json",
+      "notes": "Single Feed/Threads summary card with one hero story and two supporting stories."
+    },
+    {
+      "template_id": "daily_debrief.c.story.v1",
+      "family": "The Daily Debrief",
+      "variant": "C Story",
+      "family_priority": 4,
+      "variant_priority": 3,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1920"],
+      "spec_path": "config/graphics/templates/daily_debrief_c_story_v1.json",
+      "notes": "Vertical Story/Reels Daily Debrief with three stacked story blocks and optional poll/question space."
     },
     {
       "template_id": "womens_soccer_match_story.a.v1",
