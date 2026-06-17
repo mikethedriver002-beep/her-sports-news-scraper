@@ -199,3 +199,42 @@ The Game Recap / Final Score family has three review-approved directions:
 - Brush-script hooks are optional, not required.
 - Do not show 0,000 or fake stat placeholders in public examples.
 - Do not use unnecessary metadata unless it serves the story.
+
+## 12. Last Night in the W template law
+
+The Last Night in the W family has three review-approved directions:
+
+### Variant A: Feed / Threads recap
+
+- Default Last Night in the W feed and Threads recap.
+- Best for 3 to 4 game slates.
+- Use one featured result and supporting finals underneath.
+- Use one bottom takeaway or question.
+- If the slate has 5 or more games, use the Story rolling recap or carousel package instead.
+
+### Variant B: Story/Reels rolling recap
+
+- Use for vertical rolling recaps after multiple finals.
+- Export at 1080x1920.
+- Best for fast scanning, IG Stories, and Reels slideshow frames.
+- Can hold 3 to 5 result rows.
+- Keep the bottom CTA above Story/Reels UI safe area.
+
+### Variant C: Carousel cover / recap package
+
+- Use as the carousel opener for bigger slates or recap posts that need swipeable context.
+- Bottom area must be modular.
+- Allowed bottom modes: featured finals plus swipe CTA, swipe CTA plus question, or featured finals only.
+- Do not stack all bottom modules at once.
+
+### Shared Last Night in the W cuts
+
+- Badge must stay small and secondary.
+- No repeated WIN tags on every row.
+- Winner emphasis should come from row order, accent color, and score hierarchy.
+- Slate subhead must be dynamic, not hardcoded to a fixed game count.
+- Score placeholders should use simple 00-00 or SCORE SLOT formatting.
+- Public mockups must not show internal variant/template/spec labels.
+- Approved team logos only, or approved team logo slots in blank references.
+- No invented scores, records, stats, or standings.
+- No tiny tables or spreadsheet-style layout.
