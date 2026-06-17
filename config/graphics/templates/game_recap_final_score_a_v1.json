@@ -9,27 +9,56 @@
   "safe": { "t": 90, "r": 60, "b": 90, "l": 60 },
   "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 48, "y": 42, "w": 80, "lockup_allowed_public": false },
   "zones": {
-    "kicker": [80, 150, 280, 54],
-    "primary_team_headline": [80, 230, 920, 150],
-    "score": [80, 390, 920, 210],
-    "secondary_team": [80, 610, 920, 90],
-    "logo_cluster": [690, 330, 300, 360],
-    "context_bar": [60, 760, 960, 90],
-    "takeaway": [60, 900, 960, 210],
-    "question": [60, 1160, 960, 100]
+    "title": [60, 120, 960, 170],
+    "context_bar": [60, 330, 960, 68],
+    "primary_logo_slot": [60, 430, 220, 220],
+    "primary_team": [300, 430, 300, 110],
+    "primary_score": [600, 390, 420, 360],
+    "secondary_logo_slot": [60, 680, 220, 220],
+    "secondary_team": [300, 700, 360, 100],
+    "secondary_score": [660, 690, 280, 250],
+    "key_performer_text_strip": [60, 960, 960, 150],
+    "hook_takeaway": [60, 1130, 960, 160]
   },
   "text_hierarchy": {
+    "title": { "min_px": 72, "case": "uppercase" },
     "primary_team": { "min_px": 72, "case": "uppercase" },
-    "score": { "min_px": 140, "case": "numeric" },
+    "primary_score": { "min_px": 140, "case": "numeric" },
     "secondary_team": { "min_px": 44, "case": "uppercase" },
-    "takeaway": { "min_px": 38, "max_lines": 3 },
-    "question": { "min_px": 36 }
+    "secondary_score": { "min_px": 80, "case": "numeric" },
+    "key_performer": { "min_px": 30, "mode": "text_only" },
+    "hook_takeaway": { "min_px": 44, "optional": true }
   },
   "modules": {
     "primary_team_logo": { "asset_type": "approved_team_logo", "required": true },
     "secondary_team_logo": { "asset_type": "approved_team_logo", "required": true },
-    "key_context": { "mode": "text", "allowed_modes": ["text", "approved_photo"], "fallback_modes": ["KEY PLAYER", "TURNING POINT", "WHY IT MATTERS"] }
+    "key_performer": { "mode": "text_only", "photo_allowed": false, "fallback_text": "KEY PERFORMER", "required": false },
+    "hook_takeaway": { "mode": "text", "required": false, "brush_script_allowed": true, "brush_script_required": false }
   },
-  "rules": { "logos": "approved_only", "no_fake_people": true, "no_fake_silhouettes_in_production": true, "no_invented_scores": true, "no_invented_stats": true, "text_contrast_min": 4.5, "large_text_contrast_min": 3.0, "non_text_contrast_min": 3.0, "renderer_mode": "review_only" },
-  "dependentRequired": { "approved_photo": ["approved_asset_id", "rights_status", "identity_verified"] }
+  "usage_rules": {
+    "default_template": true,
+    "player_photo_required": false,
+    "player_photo_allowed": false,
+    "if_no_approved_player_photo": "use_text_only_key_performer_strip",
+    "fallback_for": ["game_recap_final_score.b.v1"]
+  },
+  "rules": {
+    "logos": "approved_only",
+    "no_fake_people": true,
+    "no_demo_player_faces_in_public_exports": true,
+    "no_fake_silhouettes_in_production": true,
+    "no_fake_jerseys": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_internal_variant_labels_on_public_exports": true,
+    "use_primary_secondary_language": true,
+    "generic_sports_logo_marks_internal_only": true,
+    "winner_crown_optional_not_automatic": true,
+    "brush_script_hook_optional_not_required": true,
+    "text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_contrast_min": 3.0,
+    "renderer_mode": "review_only"
+  },
+  "when_to_use": "Default logo-first final score for IG Feed and Threads when no approved player photo is available."
 }
