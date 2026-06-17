@@ -16,6 +16,7 @@ PUBLIC_LOGO_RULE = OUT_DIR / "public_logo_rule.md"
 LAW_SNAPSHOT = OUT_DIR / "law/HSD_GRAPHICS_LAW_V1.md"
 MASTER_PROMPTS_SNAPSHOT = OUT_DIR / "law/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md"
 CONFIG_SNAPSHOT_DIR = OUT_DIR / "config_graphics_snapshot"
+LAW_DIR = OUT_DIR / "law"
 FIELDS = ["family", "variant", "format", "priority", "purpose", "assets", "must_have", "avoid", "renderer_notes"]
 
 PUBLIC_LOGO_RULE_TEXT = """# HSD Public Logo Rule
@@ -53,9 +54,9 @@ TEMPLATES = [
     ("Tennis / WTA", "A", "IG Feed / Threads", "high", "match result or tournament story", "approved player photos when available", "player names huge, result/context clean", "fake court photos, large HSD masthead lockups", "tennis editorial match card"),
     ("Tennis / WTA", "B", "IG Stories", "medium", "quick match update", "minimal assets", "winner/result/next opponent if verified", "tiny set score lines, large HSD masthead lockups", "story-first tennis card"),
     ("Player Spotlight", "A", "IG Feed", "high", "star/player moment", "approved real player image required", "player cutout, one claim, one verified stat/context", "fake faces or wrong teams, large HSD masthead lockups", "photo-first hero template"),
-    ("Player Spotlight", "B", "Threads", "medium", "conversation starter", "approved player image optional", "strong quote/hook, debate question", "quote without source, large HSD masthead lockups", "fast discourse card"),
-    ("Women’s Sports Business / Culture", "A", "IG Feed / Threads", "high", "growth/business story", "logos or text-only", "number/context/headline", "boring corporate chart, large HSD masthead lockups", "premium business editorial card"),
-    ("Women’s Sports Business / Culture", "B", "Carousel", "medium", "explainer", "logos, screenshots only if provided/approved", "3-point breakdown", "wall of text, large HSD masthead lockups", "explainer carousel blueprint"),
+    ("Player Spotlight", "B", "Threads", "medium", "conversation starter", "approved player image optional", "strong quote/hook, debate question", "quote without source", "fast discourse card"),
+    ("Women’s Sports Business / Culture", "A", "IG Feed / Threads", "high", "growth/business story", "logos or text-only", "number/context/headline", "boring corporate chart", "premium business editorial card"),
+    ("Women’s Sports Business / Culture", "B", "Carousel", "medium", "explainer", "logos, screenshots only if provided/approved", "3-point breakdown", "wall of text", "explainer carousel blueprint"),
 ]
 
 
@@ -99,14 +100,20 @@ def copy_if_exists(src: Path, dest: Path) -> None:
         shutil.copy2(src, dest)
 
 
+def copy_law_docs() -> None:
+    LAW_DIR.mkdir(parents=True, exist_ok=True)
+    for src in sorted(Path("docs").glob("HSD_GRAPHICS_LAW_V1*.md")):
+        copy_if_exists(src, LAW_DIR / src.name)
+    copy_if_exists(Path("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md"), MASTER_PROMPTS_SNAPSHOT)
+
+
 def copy_config_snapshot() -> None:
     if CONFIG_SNAPSHOT_DIR.exists():
         shutil.rmtree(CONFIG_SNAPSHOT_DIR)
     root = Path("config/graphics")
     if root.exists():
         shutil.copytree(root, CONFIG_SNAPSHOT_DIR)
-    copy_if_exists(Path("docs/HSD_GRAPHICS_LAW_V1.md"), LAW_SNAPSHOT)
-    copy_if_exists(Path("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md"), MASTER_PROMPTS_SNAPSHOT)
+    copy_law_docs()
 
 
 def main() -> None:
@@ -150,14 +157,13 @@ def main() -> None:
         f"- `{BLUEPRINTS.as_posix()}`",
         f"- `{PUBLIC_LOGO_RULE.as_posix()}`",
         f"- `{CONFIG_SNAPSHOT_DIR.as_posix()}`",
-        f"- `{LAW_SNAPSHOT.as_posix()}`",
-        f"- `{MASTER_PROMPTS_SNAPSHOT.as_posix()}`",
+        f"- `{LAW_DIR.as_posix()}`",
         "",
         "## Rule",
         "",
         "The renderer should become a compiler for approved templates, not a designer.",
     ]) + "\n", encoding="utf-8")
-    print(json.dumps({"template_factory_rows": len(rows), "out_dir": OUT_DIR.as_posix(), "law_snapshot": LAW_SNAPSHOT.exists()}, indent=2))
+    print(json.dumps({"template_factory_rows": len(rows), "out_dir": OUT_DIR.as_posix(), "law_docs": len(list(LAW_DIR.glob("*.md")))}, indent=2))
 
 
 if __name__ == "__main__":
