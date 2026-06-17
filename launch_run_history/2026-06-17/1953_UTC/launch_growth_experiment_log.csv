@@ -1,0 +1,4 @@
+experiment_id,start_date,end_date,status,hypothesis,content_pillar,variable,control,variant,metric_to_watch,result,decision,notes
+EXP-001,,,Proposed,Bundle-first posting will create higher saves and shares than posting every result individually.,All,Packaging,Individual result cards,Bundle carousel,Save rate and share rate,,,Run for 7 days before deciding.
+EXP-002,,,Proposed,Women’s Soccer Radar will increase reach diversity and attract non-WNBA followers.,Women's Soccer,Content pillar,WNBA-only slate,Soccer radar slot,Follows per reach,,,Watch comments and saves.
+EXP-003,,,Proposed,Stat-forward WNBA slides will increase saves compared with score-only slides.,WNBA,Slide 3 context,Score-only context,Top performer stat panel,Save rate,,,Use only verified stats.
