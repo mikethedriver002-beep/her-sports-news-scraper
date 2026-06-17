@@ -133,6 +133,16 @@ jobs:
           if [ -f scripts/package_hsd_quality_graphics_v1.py ]; then python scripts/package_hsd_quality_graphics_v1.py; fi
           python generate_hsd_pipeline_review_lite_v1.py
 
+      - name: Run V4 source truth guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event.inputs.strict }}" == "true" ]]; then
+            python scripts/report_hsd_v4_source_truth_guard.py --strict
+          else
+            python scripts/report_hsd_v4_source_truth_guard.py
+          fi
+
       - name: Run V3 repo-state audit
         shell: bash
         run: |
@@ -146,7 +156,7 @@ jobs:
       - name: Free-only guard tests
         shell: bash
         run: |
-          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py
+          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py
 
       - name: Upload V3 sanity artifact
         uses: actions/upload-artifact@v4
@@ -156,6 +166,8 @@ jobs:
           path: |
             repo_state_v3.md
             repo_state_v3.json
+            v4_source_truth_guard.md
+            v4_source_truth_guard.json
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/**
             expected_games_v5_manifest.json
