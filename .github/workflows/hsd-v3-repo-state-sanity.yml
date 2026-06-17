@@ -133,6 +133,12 @@ jobs:
           if [ -f scripts/package_hsd_quality_graphics_v1.py ]; then python scripts/package_hsd_quality_graphics_v1.py; fi
           python generate_hsd_pipeline_review_lite_v1.py
 
+      - name: Run V4 renderer logo status audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/report_hsd_template_renderer_logo_status_v1.py
+
       - name: Run V4 source truth guard
         shell: bash
         run: |
@@ -153,10 +159,16 @@ jobs:
             python scripts/report_hsd_repo_state_v3.py
           fi
 
+      - name: Merge V4 guard into repo-state audit
+        if: always()
+        shell: bash
+        run: |
+          python scripts/merge_hsd_v4_guard_into_repo_state.py || true
+
       - name: Free-only guard tests
         shell: bash
         run: |
-          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py
+          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py
 
       - name: Upload V3 sanity artifact
         uses: actions/upload-artifact@v4
