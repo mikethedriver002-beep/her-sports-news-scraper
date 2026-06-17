@@ -96,6 +96,7 @@ def test_template_specs_are_present_for_top_priorities() -> None:
         "config/graphics/template_registry_v1.json",
         "config/graphics/template_render_mapping_v1.json",
         "scripts/generate_hsd_template_render_map_v1.py",
+        "scripts/generate_hsd_template_renderer_v2.py",
         "config/graphics/templates/game_recap_final_score_a_v1.json",
         "config/graphics/templates/game_recap_final_score_b_v1.json",
         "config/graphics/templates/game_recap_final_score_c_story_v1.json",
@@ -121,7 +122,8 @@ def test_template_specs_are_present_for_top_priorities() -> None:
 
 def test_template_render_mapping_is_review_only() -> None:
     config = read("config/graphics/template_render_mapping_v1.json")
-    script = read("scripts/generate_hsd_template_render_map_v1.py")
+    map_script = read("scripts/generate_hsd_template_render_map_v1.py")
+    renderer_v2 = read("scripts/generate_hsd_template_renderer_v2.py")
     assert "hsd-template-render-mapping-v1" in config
     assert "production_auto_render_allowed" in config
     assert "false" in config.lower()
@@ -131,6 +133,11 @@ def test_template_render_mapping_is_review_only() -> None:
     assert "last_night_in_the_w.a.v1" in config
     assert "last_night_in_the_w.b.story.v1" in config
     assert "last_night_in_the_w.c.carousel.v1" in config
-    assert "v1.0-hsd-template-render-map-review-only" in script
-    assert "review-only render mapping" in script.lower()
-    assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in script
+    assert "v1.2-hsd-template-render-map-safe-renderer-v2-handoff" in map_script
+    assert "generate_hsd_template_renderer_v2.py" in map_script
+    assert "review-only render mapping" in map_script.lower()
+    assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in map_script
+    assert "v2.0-approved-template-compiler-review-only" in renderer_v2
+    assert "outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2" in renderer_v2
+    assert "review_only" in renderer_v2
+    assert "Template Renderer v2 compile proof" in renderer_v2
