@@ -60,9 +60,11 @@ def test_graphics_template_factory_and_law_files_are_wired() -> None:
     prompts = read("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md")
     assert "python scripts/generate_hsd_graphics_template_factory_v1.py" in workflow
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/**" in workflow
-    assert "v1.2-hsd-graphics-template-factory-law-snapshot" in script
+    assert "v1.3-hsd-graphics-template-factory-with-render-map" in script
     assert "public_logo_rule.md" in script
     assert "config_graphics_snapshot" in script
+    assert "render_mapping" in script
+    assert "generate_hsd_template_render_map_v1.py" in script
     assert "HSD_GRAPHICS_LAW_V1" in script
     assert "official compact HSD watermark/bug only" in script
     assert "Do not use the full HSD + HER SPORTS DAILY lockup" in script
@@ -92,6 +94,8 @@ def test_template_specs_are_present_for_top_priorities() -> None:
     for path in [
         "config/graphics/brand_policy_v1.json",
         "config/graphics/template_registry_v1.json",
+        "config/graphics/template_render_mapping_v1.json",
+        "scripts/generate_hsd_template_render_map_v1.py",
         "config/graphics/templates/game_recap_final_score_a_v1.json",
         "config/graphics/templates/game_recap_final_score_b_v1.json",
         "config/graphics/templates/game_recap_final_score_c_story_v1.json",
@@ -113,3 +117,20 @@ def test_template_specs_are_present_for_top_priorities() -> None:
         "config/graphics/templates/lpga_golf_winner_leaderboard_c_story_v1.json",
     ]:
         assert Path(path).exists(), path
+
+
+def test_template_render_mapping_is_review_only() -> None:
+    config = read("config/graphics/template_render_mapping_v1.json")
+    script = read("scripts/generate_hsd_template_render_map_v1.py")
+    assert "hsd-template-render-mapping-v1" in config
+    assert "production_auto_render_allowed" in config
+    assert "false" in config.lower()
+    assert "game_recap_final_score.a.v1" in config
+    assert "game_recap_final_score.c.story.v1" in config
+    assert "tonight_in_the_w.a.v1" in config
+    assert "last_night_in_the_w.a.v1" in config
+    assert "last_night_in_the_w.b.story.v1" in config
+    assert "last_night_in_the_w.c.carousel.v1" in config
+    assert "v1.0-hsd-template-render-map-review-only" in script
+    assert "review-only render mapping" in script
+    assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in script
