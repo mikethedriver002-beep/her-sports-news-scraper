@@ -1,0 +1,9 @@
+event_id,league_label,matchup,game_state,winner,loser,final_score,top_performer_1,top_performer_1_statline,top_performer_2,top_performer_2_statline,period_summary,confidence,manual_review_flag,source_url
+401856995,WNBA,Toronto Tempo at Indiana Fever,Final,Indiana Fever,Toronto Tempo,Toronto Tempo 91 - Indiana Fever 113,Caitlin Clark,"PTS 21, REB 5, AST 14, STL 1, BLK 1",Aliyah Boston,"PTS 18, REB 11, AST 4, STL 2, BLK 2",IND: 26 | 27 | 32 | 28 || TOR: 20 | 30 | 23 | 18,High,No,https://www.espn.com/basketball/game/_/gameId/401856995
+401856996,WNBA,Washington Mystics at Connecticut Sun,Upcoming,,,Washington Mystics 0 - Connecticut Sun 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856996
+401856997,WNBA,New York Liberty at Chicago Sky,Upcoming,,,New York Liberty 0 - Chicago Sky 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856997
+401856998,WNBA,Dallas Wings at Golden State Valkyries,Upcoming,,,Dallas Wings 0 - Golden State Valkyries 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856998
+401856999,WNBA,Minnesota Lynx at Los Angeles Sparks,Upcoming,,,Minnesota Lynx 0 - Los Angeles Sparks 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401856999
+401857000,WNBA,Las Vegas Aces at Phoenix Mercury,Upcoming,,,Las Vegas Aces 0 - Phoenix Mercury 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401857000
+401857001,WNBA,Seattle Storm at Portland Fire,Upcoming,,,Seattle Storm 0 - Portland Fire 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401857001
+401857002,WNBA,Atlanta Dream at Indiana Fever,Upcoming,,,Atlanta Dream 0 - Indiana Fever 0,,,,,,Medium,Yes,https://www.espn.com/basketball/game/_/gameId/401857002
