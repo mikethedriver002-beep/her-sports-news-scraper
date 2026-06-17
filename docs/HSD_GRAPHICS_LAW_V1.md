@@ -238,3 +238,44 @@ The Last Night in the W family has three review-approved directions:
 - Approved team logos only, or approved team logo slots in blank references.
 - No invented scores, records, stats, or standings.
 - No tiny tables or spreadsheet-style layout.
+
+## 13. Daily Debrief template law
+
+The Daily Debrief family has three review-approved directions:
+
+### Variant A: Carousel system
+
+- Use for the full Daily Debrief carousel experience.
+- Must include a cover slide, reusable story slide, and end-question slide.
+- Best for days with three strong cross-sport stories.
+- Use a 3-story max structure.
+- Each story slide needs room for story headline, sport/league label, short context, why it matters, and an approved image/logo slot or abstract editorial texture.
+- The end-question slide should drive discussion.
+
+### Variant B: Single-image summary card
+
+- Use for one fast Feed or Threads graphic summarizing the day’s top three stories.
+- Must use one hero story plus two supporting stories.
+- Must include sport/league labels and a bottom question or CTA.
+- Best when HSD needs a quick broad daily roundup without a full carousel.
+
+### Variant C: Story/Reels vertical roundup
+
+- Use for a quick vertical Daily Debrief on Stories or Reels.
+- Export at 1080x1920.
+- Must use three stacked story blocks.
+- May include optional poll/question sticker space.
+- Bottom area must stay clear for Story/Reels UI.
+
+### Shared Daily Debrief rules
+
+- Daily Debrief must feel broader than WNBA by default.
+- It can include WNBA, NWSL, USWNT, tennis, LPGA, college sports, volleyball, Olympic sports, business, culture, and major women’s sports moments.
+- Keep the system to three stories max unless explicitly approved.
+- Badge must stay small and secondary.
+- Strapline must be editable, not hardcoded.
+- Use approved image/logo slots or abstract editorial textures.
+- Do not bake platform UI icons into Story graphics.
+- Public mockups must not show internal variant/template/spec labels.
+- Use placeholder copy unless real details are provided.
+- Do not present real scores, records, stats, quotes, injuries, or standings unless provided and verified.
