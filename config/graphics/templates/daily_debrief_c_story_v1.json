@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "daily_debrief.c.story.v1",
+  "family": "The Daily Debrief",
+  "variant": "C Story",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1920, "orientation": "vertical_9x16" },
+  "safe": { "t": 120, "r": 60, "b": 140, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 52, "y": 48, "w": 88, "max_w": 104, "lockup_allowed_public": false },
+  "zones": {
+    "franchise_title": [140, 110, 830, 240],
+    "editable_strapline": [140, 370, 820, 70],
+    "story_1": [70, 520, 940, 250],
+    "story_2": [70, 810, 940, 250],
+    "story_3": [70, 1100, 940, 250],
+    "poll_question_space": [70, 1400, 940, 160],
+    "bottom_safe_clearance": [70, 1620, 940, 160]
+  },
+  "text_hierarchy": {
+    "franchise_title": { "min_px": 84, "case": "uppercase" },
+    "editable_strapline": { "min_px": 34, "examples": ["3 STORIES. WHAT MATTERS TODAY.", "3 STORIES. ONE DAILY RESET.", "THE TOP STORIES IN WOMEN’S SPORTS."] },
+    "story_headline": { "min_px": 38, "case": "uppercase" },
+    "sport_league_label": { "min_px": 24, "case": "uppercase" },
+    "short_context": { "min_px": 28, "max_lines": 2 },
+    "poll_question_space": { "min_px": 36, "optional": true }
+  },
+  "modules": {
+    "story_blocks": { "min_items": 3, "max_items": 3, "mode": "stacked_editorial_cards" },
+    "approved_image_or_logo_slot": { "mode": "approved_slot_or_abstract_texture", "required": false },
+    "poll_question_space": { "mode": "story_engagement_space", "required": false }
+  },
+  "usage_rules": {
+    "story_template": true,
+    "best_for": "Quick vertical Daily Debrief for Stories or Reels with three stacked story blocks and optional poll/question space",
+    "broad_womens_sports_required": true,
+    "story_max": 3,
+    "strapline_must_be_editable": true,
+    "bottom_area_clear_for_story_ui": true
+  },
+  "rules": {
+    "approved_assets_only": true,
+    "approved_image_or_logo_slots_only": true,
+    "abstract_editorial_textures_allowed": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_invented_quotes_injuries_or_standings": true,
+    "no_internal_variant_labels_on_public_exports": true,
+    "public_mockups_clean_and_publish_ready": true,
+    "keep_broad_womens_sports_identity": true,
+    "no_platform_ui_baked_into_story_graphics": true,
+    "bottom_cta_must_clear_story_ui": true,
+    "text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_contrast_min": 3.0,
+    "renderer_mode": "review_only"
+  },
+  "when_to_use": "Use for quick vertical Daily Debrief posting on Stories or Reels."
+}
