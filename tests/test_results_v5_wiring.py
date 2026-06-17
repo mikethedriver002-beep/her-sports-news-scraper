@@ -84,6 +84,10 @@ def test_graphics_template_factory_and_law_files_are_wired() -> None:
     assert "Variant A: Match Preview / Result card" in law
     assert "Variant B: League / Roster / Callup story card" in law
     assert "Variant C: Story / Vertical soccer update" in law
+    assert "Tennis / WTA template law" in law
+    assert "Variant A: Match Result / Preview card" in law
+    assert "Variant B: Tournament Story / Advancement card" in law
+    assert "Variant C: Story / Vertical tennis update" in law
     assert "official compact HSD badge only" in prompts
     assert "GAME RECAP / FINAL SCORE" in prompts
     assert "TONIGHT IN THE W" in prompts
@@ -110,6 +114,8 @@ def test_template_specs_are_present_for_top_priorities() -> None:
         "config/graphics/templates/womens_soccer_match_story_b_v1.json",
         "config/graphics/templates/womens_soccer_match_story_c_story_v1.json",
         "config/graphics/templates/tennis_wta_result_a_v1.json",
+        "config/graphics/templates/tennis_wta_result_b_v1.json",
+        "config/graphics/templates/tennis_wta_result_c_story_v1.json",
         "config/graphics/templates/lpga_golf_winner_leaderboard_a_v1.json",
     ]:
         assert Path(path).exists(), path
