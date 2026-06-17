@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "tennis_wta_result.c.story.v1",
+  "family": "Tennis / WTA",
+  "variant": "C Story / Vertical Tennis Update",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1920, "orientation": "vertical_9x16" },
+  "safe": { "t": 120, "r": 60, "b": 140, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 52, "y": 48, "w": 88, "max_w": 104, "lockup_allowed_public": false },
+  "zones": {
+    "story_headline": [120, 120, 840, 220],
+    "player_tournament_label": [120, 360, 840, 60],
+    "result_or_next_match": [80, 480, 920, 260],
+    "story_summary": [80, 800, 920, 210],
+    "why_it_matters": [80, 1040, 920, 180],
+    "poll_question_space": [80, 1280, 920, 170],
+    "bottom_safe_clearance": [80, 1580, 920, 180]
+  },
+  "placeholder_fields": ["PLAYER NAME", "OPPONENT NAME", "TOURNAMENT NAME", "ROUND NAME", "RESULT / SCORELINE", "NEXT MATCH", "WHY IT MATTERS", "QUESTION / CTA"],
+  "modes": {
+    "match_result_question": { "active_modules": ["story_headline", "result_or_next_match", "question_cta"] },
+    "next_match_preview_question": { "active_modules": ["story_headline", "player_tournament_label", "result_or_next_match", "question_cta"] },
+    "tournament_story_why_it_matters": { "active_modules": ["story_headline", "story_summary", "why_it_matters"] },
+    "player_spotlight_poll_question": { "active_modules": ["story_headline", "approved_player_image_slot", "poll_question_space"] }
+  },
+  "text_hierarchy": {
+    "story_headline": { "min_px": 72, "case": "uppercase" },
+    "player_tournament_label": { "min_px": 30, "case": "uppercase" },
+    "result_or_next_match": { "min_px": 46 },
+    "story_summary": { "min_px": 32 },
+    "why_it_matters": { "min_px": 34 },
+    "poll_question_space": { "min_px": 36, "optional": true }
+  },
+  "modules": {
+    "tour_event_logo_slot": { "mode": "optional", "label": "APPROVED TOUR / EVENT LOGO SLOT", "required": false },
+    "approved_player_image_slot": { "mode": "optional", "asset_type": "approved_player_image", "required": false },
+    "abstract_tennis_texture": { "mode": "design_background", "required": false },
+    "poll_question_space": { "mode": "story_engagement_space", "required": false }
+  },
+  "usage_rules": {
+    "story_template": true,
+    "best_for": "Quick WTA updates on Stories or Reels, including match results, next match previews, tournament story updates, and player spotlights.",
+    "one_mode_active_at_a_time": true,
+    "bottom_area_clear_for_story_ui": true
+  },
+  "rules": {
+    "approved_assets_only": true,
+    "approved_player_images_only": true,
+    "approved_tour_or_event_logo_slot_only": true,
+    "abstract_tennis_textures_allowed": true,
+    "abstract_textures_do_not_replace_approved_imagery": true,
+    "no_invented_results": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_real_sounding_news_without_provided_details": true,
+    "no_internal_variant_labels_on_public_exports": true,
+    "no_platform_ui_baked_into_story_graphics": true,
+    "bottom_cta_must_clear_story_ui": true,
+    "text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_contrast_min": 3.0,
+    "renderer_mode": "review_only"
+  },
+  "dependentRequired": { "approved_player_image": ["approved_asset_id", "rights_status", "identity_verified"] },
+  "when_to_use": "Use for quick vertical WTA updates on Stories or Reels."
+}
