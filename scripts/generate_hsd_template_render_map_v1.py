@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-VERSION = "v1.2-hsd-template-render-map-safe-renderer-v2-handoff"
+VERSION = "v1.3-hsd-template-render-map-v2-5-handoff"
 OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping")
 OUT_CSV = OUT_DIR / "hsd_template_render_map.csv"
 OUT_JSON = OUT_DIR / "hsd_template_render_map.json"
@@ -16,7 +16,7 @@ CONFIG = Path("config/graphics/template_render_mapping_v1.json")
 REGISTRY = Path("config/graphics/template_registry_v1.json")
 CONTRACT = Path("results_contract_v2.csv")
 FINALS = Path("today_final_results.csv")
-RENDERER_V2_SCRIPT = Path("scripts/generate_hsd_template_renderer_v2.py")
+RENDERER_V2_SCRIPT = Path("scripts/generate_hsd_template_renderer_v2_5.py")
 FIELDS = ["item_id", "source", "source_id", "row_kind", "sport", "league", "platform", "template_id", "template_family", "template_variant", "mode", "headline", "status", "review_only", "reason", "spec_path"]
 
 
@@ -137,6 +137,7 @@ def build_payload(rows: List[Dict[str, Any]], registry: Dict[str, Any], config: 
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "review_only": True,
         "renderer_v2_ran": renderer_v2_ran,
+        "renderer_script": RENDERER_V2_SCRIPT.as_posix(),
         "registry_version": registry.get("version"),
         "mapping_config_version": config.get("version"),
         "mapped_count": len([r for r in rows if r.get("status") == "mapped"]),
@@ -153,6 +154,7 @@ def write_md(payload: Dict[str, Any]) -> None:
         f"Generated: `{payload['generated_at_utc']}`",
         f"Version: `{VERSION}`",
         f"Registry: `{payload['registry_version']}`",
+        f"Renderer script: `{payload['renderer_script']}`",
         "",
         "## Policy",
         "",
@@ -198,7 +200,7 @@ def main() -> None:
     payload = build_payload(rows, registry, config, renderer_v2_ran=renderer_v2_ran)
     OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     write_md(payload)
-    print(json.dumps({"version": VERSION, "mapped": payload["mapped_count"], "blocked": payload["blocked_count"], "renderer_v2_ran": renderer_v2_ran, "out_dir": OUT_DIR.as_posix()}, indent=2))
+    print(json.dumps({"version": VERSION, "mapped": payload["mapped_count"], "blocked": payload["blocked_count"], "renderer_v2_ran": renderer_v2_ran, "renderer_script": RENDERER_V2_SCRIPT.as_posix(), "out_dir": OUT_DIR.as_posix()}, indent=2))
 
 
 if __name__ == "__main__":
