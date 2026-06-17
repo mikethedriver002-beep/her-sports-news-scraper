@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "womens_soccer_match_story.c.story.v1",
+  "family": "Women’s Soccer / NWSL / USWNT",
+  "variant": "C Story / Vertical Soccer Update",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1920, "orientation": "vertical_9x16" },
+  "safe": { "t": 120, "r": 60, "b": 140, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 52, "y": 48, "w": 88, "max_w": 104, "lockup_allowed_public": false },
+  "zones": {
+    "story_headline": [120, 120, 840, 220],
+    "team_country_league_label": [120, 360, 840, 60],
+    "score_or_story_summary": [80, 480, 920, 260],
+    "story_point_1": [80, 800, 920, 160],
+    "story_point_2": [80, 980, 920, 160],
+    "story_point_3": [80, 1160, 920, 160],
+    "poll_question_space": [80, 1380, 920, 160],
+    "bottom_safe_clearance": [80, 1620, 920, 160]
+  },
+  "placeholder_fields": ["STORY UPDATE", "MATCH CONTEXT", "WHY IT MATTERS", "KEY DETAIL", "QUESTION / CTA"],
+  "modes": {
+    "score_match_update_cta": { "active_modules": ["story_headline", "score_or_story_summary", "match_context", "question_cta"] },
+    "three_quick_story_points_cta": { "active_modules": ["story_headline", "story_point_1", "story_point_2", "story_point_3", "question_cta"] },
+    "roster_callup_note_poll_question": { "active_modules": ["story_headline", "team_country_league_label", "story_summary", "poll_question_space"] }
+  },
+  "text_hierarchy": {
+    "story_headline": { "min_px": 72, "case": "uppercase" },
+    "team_country_league_label": { "min_px": 30, "case": "uppercase" },
+    "score_or_story_summary": { "min_px": 46 },
+    "story_point": { "min_px": 32 },
+    "poll_question_space": { "min_px": 36, "optional": true }
+  },
+  "modules": {
+    "approved_logo_or_image_slot": { "mode": "approved_slot_or_abstract_soccer_texture", "required": false },
+    "poll_question_space": { "mode": "story_engagement_space", "required": false }
+  },
+  "usage_rules": {
+    "story_template": true,
+    "best_for": "Quick women’s soccer updates on Stories or Reels, including match reminders, result updates, roster notes, and short story explainers.",
+    "one_mode_active_at_a_time": true,
+    "bottom_area_clear_for_story_ui": true
+  },
+  "rules": {
+    "approved_assets_only": true,
+    "approved_club_league_or_federation_logos_only": true,
+    "approved_player_images_only": true,
+    "abstract_soccer_textures_allowed": true,
+    "abstract_textures_do_not_replace_approved_imagery": true,
+    "no_fake_kits": true,
+    "no_fake_crests": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_real_sounding_news_without_provided_details": true,
+    "no_internal_variant_labels_on_public_exports": true,
+    "no_platform_ui_baked_into_story_graphics": true,
+    "bottom_cta_must_clear_story_ui": true,
+    "text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_contrast_min": 3.0,
+    "renderer_mode": "review_only"
+  },
+  "dependentRequired": { "approved_player_image": ["approved_asset_id", "rights_status", "identity_verified"] },
+  "when_to_use": "Use for quick vertical women’s soccer updates on Stories or Reels."
+}
