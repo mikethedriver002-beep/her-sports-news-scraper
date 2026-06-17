@@ -137,8 +137,9 @@ def test_template_render_mapping_is_review_only() -> None:
     assert "generate_hsd_template_renderer_v2.py" in map_script
     assert "review-only render mapping" in map_script.lower()
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in map_script
-    assert "v2.1-template-polish-review-only" in renderer_v2
+    assert "v2.2-core-template-polish-review-only" in renderer_v2
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2" in renderer_v2
     assert "review_only" in renderer_v2
-    assert "Template Renderer v2.1 compile proof" in renderer_v2
-    assert "subtle arena-light energy, not the old loud diagonal stripe field" in renderer_v2
+    assert "Template Renderer v2.2 compile proof" in renderer_v2
+    assert "v2.2 removes foreground crossing beams" in renderer_v2
+    assert "premium team-name badge fallback" in renderer_v2
