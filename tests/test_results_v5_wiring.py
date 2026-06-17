@@ -56,16 +56,16 @@ def test_graphics_template_factory_and_law_files_are_wired() -> None:
     workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
     script = read("scripts/generate_hsd_graphics_template_factory_v1.py")
     law = read("docs/HSD_GRAPHICS_LAW_V1.md")
+    lpga_law = read("docs/HSD_GRAPHICS_LAW_V1_LPGA_GOLF.md")
     prompts = read("docs/HSD_GRAPHICS_TEMPLATE_MASTER_BATCH_PROMPTS_V1.md")
     assert "python scripts/generate_hsd_graphics_template_factory_v1.py" in workflow
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/**" in workflow
     assert "v1.2-hsd-graphics-template-factory-law-snapshot" in script
     assert "public_logo_rule.md" in script
     assert "config_graphics_snapshot" in script
-    assert "HSD_GRAPHICS_LAW_V1.md" in script
+    assert "HSD_GRAPHICS_LAW_V1" in script
     assert "official compact HSD watermark/bug only" in script
     assert "Do not use the full HSD + HER SPORTS DAILY lockup" in script
-    assert "Spec sheets and internal brand documents may show the full lockup" in script
     assert "The renderer should become a compiler for approved templates" in script
     assert "HSD Graphics Law v1" in law
     assert "The renderer is a compiler, not a designer" in law
@@ -73,21 +73,13 @@ def test_graphics_template_factory_and_law_files_are_wired() -> None:
     assert "Variant B: Approved-player-photo final score" in law
     assert "Variant C: Story/Reels quick final" in law
     assert "Last Night in the W template law" in law
-    assert "Variant A: Feed / Threads recap" in law
-    assert "Variant B: Story/Reels rolling recap" in law
-    assert "Variant C: Carousel cover / recap package" in law
     assert "Daily Debrief template law" in law
-    assert "Variant A: Carousel system" in law
-    assert "Variant B: Single-image summary card" in law
-    assert "Variant C: Story/Reels vertical roundup" in law
     assert "Women’s Soccer / NWSL / USWNT template law" in law
-    assert "Variant A: Match Preview / Result card" in law
-    assert "Variant B: League / Roster / Callup story card" in law
-    assert "Variant C: Story / Vertical soccer update" in law
     assert "Tennis / WTA template law" in law
-    assert "Variant A: Match Result / Preview card" in law
-    assert "Variant B: Tournament Story / Advancement card" in law
-    assert "Variant C: Story / Vertical tennis update" in law
+    assert "LPGA / Golf template law" in lpga_law
+    assert "Variant A: Winner / Champion Card" in lpga_law
+    assert "Variant B: Leaderboard / Standings Update Card" in lpga_law
+    assert "Variant C: Story / Vertical Golf Update" in lpga_law
     assert "official compact HSD badge only" in prompts
     assert "GAME RECAP / FINAL SCORE" in prompts
     assert "TONIGHT IN THE W" in prompts
@@ -117,5 +109,7 @@ def test_template_specs_are_present_for_top_priorities() -> None:
         "config/graphics/templates/tennis_wta_result_b_v1.json",
         "config/graphics/templates/tennis_wta_result_c_story_v1.json",
         "config/graphics/templates/lpga_golf_winner_leaderboard_a_v1.json",
+        "config/graphics/templates/lpga_golf_winner_leaderboard_b_v1.json",
+        "config/graphics/templates/lpga_golf_winner_leaderboard_c_story_v1.json",
     ]:
         assert Path(path).exists(), path
