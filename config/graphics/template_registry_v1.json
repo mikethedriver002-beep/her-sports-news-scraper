@@ -1,5 +1,5 @@
 {
-  "version": "hsd-template-registry-v1.1-game-recap-family-split",
+  "version": "hsd-template-registry-v1.2-last-night-family-split",
   "status": "review_only_stage",
   "default_review_only": true,
   "production_auto_promotion_allowed": false,
@@ -67,10 +67,36 @@
       "variant_priority": 1,
       "status": "review_only",
       "review_only": true,
-      "canonical": false,
-      "supported_formats": ["1080x1350", "1080x1920"],
+      "canonical": true,
+      "supported_formats": ["1080x1350"],
       "spec_path": "config/graphics/templates/last_night_in_the_w_a_v1.json",
-      "notes": "Multi-game recap/scoreboard family."
+      "notes": "Default feed and Threads recap for 3 to 4 game slates with one featured result and supporting finals."
+    },
+    {
+      "template_id": "last_night_in_the_w.b.story.v1",
+      "family": "Last Night in the W",
+      "variant": "B Story",
+      "family_priority": 3,
+      "variant_priority": 2,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1920"],
+      "spec_path": "config/graphics/templates/last_night_in_the_w_b_story_v1.json",
+      "notes": "Story/Reels rolling recap for multiple finals and quick scanning."
+    },
+    {
+      "template_id": "last_night_in_the_w.c.carousel.v1",
+      "family": "Last Night in the W",
+      "variant": "C Carousel",
+      "family_priority": 3,
+      "variant_priority": 3,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350"],
+      "spec_path": "config/graphics/templates/last_night_in_the_w_c_carousel_v1.json",
+      "notes": "Carousel cover and recap package opener for bigger slates or posts needing swipeable context."
     },
     {
       "template_id": "daily_debrief.a.v1",
