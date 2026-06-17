@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "last_night_in_the_w.b.story.v1",
+  "family": "Last Night in the W",
+  "variant": "B Story",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1920, "orientation": "vertical_9x16" },
+  "safe": { "t": 120, "r": 60, "b": 140, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 52, "y": 48, "w": 88, "max_w": 104, "lockup_allowed_public": false },
+  "zones": {
+    "franchise_title": [80, 150, 920, 150],
+    "dynamic_subhead": [80, 320, 920, 64],
+    "result_row_1": [70, 450, 940, 150],
+    "result_row_2": [70, 630, 940, 150],
+    "result_row_3": [70, 810, 940, 150],
+    "result_row_4": [70, 990, 940, 150],
+    "result_row_5": [70, 1170, 940, 150],
+    "question_or_cta": [70, 1400, 940, 150],
+    "utility_row": [70, 1600, 940, 80]
+  },
+  "text_hierarchy": {
+    "franchise_title": { "min_px": 84, "case": "uppercase" },
+    "dynamic_subhead": { "min_px": 34, "examples": ["[X] FINALS. ONE RECAP.", "TOP RESULTS. BIG MOMENTS."] },
+    "team_name": { "min_px": 30, "case": "uppercase" },
+    "score": { "min_px": 46, "case": "numeric" },
+    "question_or_cta": { "min_px": 40 }
+  },
+  "modules": {
+    "result_rows": { "mode": "rolling_result_rows", "min_items": 3, "max_items": 5, "asset_type": "approved_team_logo" },
+    "question_or_cta": { "mode": "text", "required": false },
+    "utility_row": { "mode": "story_engagement", "required": false }
+  },
+  "usage_rules": {
+    "story_template": true,
+    "best_for": "Multiple finals, fast scan, IG Stories, Reels slideshow frame, quick recap after games end",
+    "subhead_must_be_dynamic": true,
+    "winner_emphasis": "row order, accent color, score hierarchy"
+  },
+  "rules": {
+    "logos": "approved_only",
+    "no_fake_people": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_invented_records_or_standings": true,
+    "no_tiny_tables": true,
+    "no_spreadsheet_look": true,
+    "no_internal_variant_labels_on_public_exports": true,
+    "no_repeated_win_tags_on_every_row": true,
+    "winner_tag_featured_result_only": true,
+    "dynamic_slate_subhead_required": true,
+    "bottom_cta_must_clear_story_ui": true,
+    "score_placeholder_style": "00-00_or_SCORE_SLOT",
+    "text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_contrast_min": 3.0,
+    "renderer_mode": "review_only"
+  },
+  "when_to_use": "Vertical rolling recap for Stories and Reels when there are multiple finals to scan quickly."
+}
