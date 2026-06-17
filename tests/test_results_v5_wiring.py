@@ -126,6 +126,7 @@ def test_template_render_mapping_is_review_only() -> None:
     map_script = read("scripts/generate_hsd_template_render_map_v1.py")
     renderer_v2 = read("scripts/generate_hsd_template_renderer_v2.py")
     prompts = read("docs/HSD_REALITY_CHECK_PROMPTS.md")
+    requirements = read("requirements.txt")
     assert "hsd-template-render-mapping-v1" in config
     assert "production_auto_render_allowed" in config
     assert "false" in config.lower()
@@ -139,11 +140,13 @@ def test_template_render_mapping_is_review_only() -> None:
     assert "generate_hsd_template_renderer_v2.py" in map_script
     assert "review-only render mapping" in map_script.lower()
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping" in map_script
-    assert "v2.33-hsd-quality-core-polish-review-only" in renderer_v2
+    assert "v2.4-hsd-quality-core-polish-local-svg-logo-fix-review-only" in renderer_v2
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2" in renderer_v2
     assert "review_only" in renderer_v2
-    assert "Template Renderer v2.33 compile proof" in renderer_v2
-    assert "v2.33: no top dots and no foreground crossing lines" in renderer_v2
-    assert "v2.33 premium team-name badge fallback" in renderer_v2
-    assert "Latest artifact was v2.2" in prompts
-    assert "Next requested version is v2.33" in prompts
+    assert "Template Renderer v2.4 compile proof" in renderer_v2
+    assert "v2.4: no top dots and no foreground crossing lines" in renderer_v2
+    assert "local png/svg logo rendered" in renderer_v2
+    assert "hsd_template_renderer_v2_logo_audit" in renderer_v2
+    assert "CairoSVG" in requirements
+    assert "Latest artifact was v2.33" in prompts
+    assert "Next requested version is v2.4" in prompts
