@@ -1,6 +1,6 @@
 # Her Sports Daily Results Source Audit v3
 
-Generated: `2026-06-13T16:04:53.296976+00:00`
+Generated: `2026-06-17T19:31:59.024271+00:00`
 
 ## Purpose
 
@@ -9,7 +9,7 @@ v3 expands API-Sports testing across basketball, soccer, hockey, volleyball, han
 
 ## Date window tested
 
-2026-06-12, 2026-06-13, 2026-06-14, 2026-06-15
+2026-06-16, 2026-06-17, 2026-06-18, 2026-06-19
 
 ## Source summary
 
