@@ -72,6 +72,10 @@ def test_graphics_template_factory_and_law_files_are_wired() -> None:
     assert "Variant A: Logo-first final score" in law
     assert "Variant B: Approved-player-photo final score" in law
     assert "Variant C: Story/Reels quick final" in law
+    assert "Last Night in the W template law" in law
+    assert "Variant A: Feed / Threads recap" in law
+    assert "Variant B: Story/Reels rolling recap" in law
+    assert "Variant C: Carousel cover / recap package" in law
     assert "official compact HSD badge only" in prompts
     assert "GAME RECAP / FINAL SCORE" in prompts
     assert "TONIGHT IN THE W" in prompts
@@ -89,6 +93,8 @@ def test_template_specs_are_present_for_top_priorities() -> None:
         "config/graphics/templates/game_recap_final_score_c_story_v1.json",
         "config/graphics/templates/tonight_in_the_w_a_v1.json",
         "config/graphics/templates/last_night_in_the_w_a_v1.json",
+        "config/graphics/templates/last_night_in_the_w_b_story_v1.json",
+        "config/graphics/templates/last_night_in_the_w_c_carousel_v1.json",
         "config/graphics/templates/daily_debrief_a_v1.json",
         "config/graphics/templates/womens_soccer_match_story_a_v1.json",
         "config/graphics/templates/tennis_wta_result_a_v1.json",
