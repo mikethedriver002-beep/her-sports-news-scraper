@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import re
 import runpy
@@ -12,13 +13,20 @@ from typing import Any, Dict, List, Tuple
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-VERSION = "v2.33-hsd-quality-core-polish-review-only"
+try:
+    import cairosvg  # type: ignore
+except Exception:  # pragma: no cover
+    cairosvg = None
+
+VERSION = "v2.4-hsd-quality-core-polish-local-svg-logo-fix-review-only"
 OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2")
 IMG_DIR = OUT_DIR / "renders"
 MANIFEST_CSV = OUT_DIR / "hsd_template_renderer_v2_manifest.csv"
 MANIFEST_JSON = OUT_DIR / "hsd_template_renderer_v2_manifest.json"
 REPORT_MD = OUT_DIR / "hsd_template_renderer_v2_report.md"
 ZIP_PATH = OUT_DIR / "hsd_template_renderer_v2_renders.zip"
+LOGO_AUDIT_JSON = OUT_DIR / "hsd_template_renderer_v2_logo_audit.json"
+LOGO_AUDIT_CSV = OUT_DIR / "hsd_template_renderer_v2_logo_audit.csv"
 RENDER_MAP_JSON = Path("outputs/latest/HSD_TEMPLATE_FACTORY/render_mapping/hsd_template_render_map.json")
 RENDER_MAP_SCRIPT = Path("scripts/generate_hsd_template_render_map_v1.py")
 CONTRACT = Path("results_contract_v2.csv")
@@ -28,6 +36,7 @@ LOGOS_CSV = Path("data/asset_registry/wnba/team_logos.csv")
 TEAMS_CSV = Path("data/asset_registry/wnba/teams.csv")
 ALIASES_CSV = Path("data/asset_registry/wnba/team_aliases.csv")
 FIELDS = ["item_id", "template_id", "platform", "mode", "headline", "output_path", "width", "height", "status", "review_only", "notes"]
+LOGO_FIELDS = ["team", "team_id", "source_path", "status", "note"]
 
 BG = (4, 5, 10)
 INK = (248, 249, 252)
@@ -35,9 +44,9 @@ MUTED = (162, 170, 184)
 GOLD = (232, 185, 78)
 ORANGE = (239, 108, 50)
 PURPLE = (151, 80, 255)
-PANEL = (8, 10, 18)
 LOGO_CACHE: Dict[str, Image.Image | None] = {}
 FONT_CACHE: Dict[Tuple[int, bool], Any] = {}
+LOGO_AUDIT_ROWS: List[Dict[str, str]] = []
 
 
 def clean(v: Any) -> str:
@@ -65,13 +74,13 @@ def read_csv(path: Path) -> List[Dict[str, str]]:
         return list(csv.DictReader(f))
 
 
-def write_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
+def write_csv(path: Path, rows: List[Dict[str, Any]], fields: List[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         for row in rows:
-            writer.writerow({field: row.get(field, "") for field in FIELDS})
+            writer.writerow({field: row.get(field, "") for field in fields})
 
 
 def font(size: int, bold: bool = False):
@@ -148,14 +157,8 @@ def rect(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], outline=(255
     draw.rounded_rectangle((x, y, x + w, y + h), radius=radius, outline=outline, fill=fill, width=width)
 
 
-def pill(draw: ImageDraw.ImageDraw, box: Tuple[int, int, int, int], text: str, fill=GOLD, ink=BG, size=28) -> None:
-    x, y, w, h = box
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=h // 2, fill=fill)
-    center(draw, box, text.upper(), size, ink, True)
-
-
 def background(size: Tuple[int, int], accent: Tuple[int, int, int], accent2: Tuple[int, int, int]) -> Image.Image:
-    # v2.33: no top dots and no foreground crossing lines. Background energy stays behind content.
+    # v2.4: no top dots and no foreground crossing lines. Background energy stays behind content.
     w, h = size
     img = Image.new("RGBA", size, BG)
     d = ImageDraw.Draw(img)
@@ -164,10 +167,10 @@ def background(size: Tuple[int, int], accent: Tuple[int, int, int], accent2: Tup
         d.line((0, y, w, y), fill=(int(4 + 10 * t), int(5 + 10 * t), int(10 + 14 * t), 255))
     glow = Image.new("RGBA", size, (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    gd.ellipse((-420, -220, int(w * .78), int(h * .56)), fill=(*accent, 50))
-    gd.ellipse((int(w * .45), int(h * .12), w + 460, int(h * .68)), fill=(*accent2, 38))
+    gd.ellipse((-420, -220, int(w * .78), int(h * .56)), fill=(*accent, 48))
+    gd.ellipse((int(w * .45), int(h * .12), w + 460, int(h * .68)), fill=(*accent2, 36))
     gd.rectangle((0, int(h * .72), w, h), fill=(0, 0, 0, 86))
-    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(46)))
+    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(48)))
     d.rectangle((0, 0, w, h), outline=(255, 255, 255, 14), width=2)
     return img
 
@@ -216,25 +219,50 @@ def resolve(name: str, aliases: Dict[str, str]) -> str:
     return ""
 
 
-def logo_for(name: str, aliases: Dict[str, str], logos: Dict[str, str]) -> Image.Image | None:
-    path = logos.get(resolve(name, aliases), "")
-    if path in LOGO_CACHE:
-        return LOGO_CACHE[path]
-    p = Path(clean(path))
-    if not p.exists():
-        LOGO_CACHE[path] = None
+def audit(team: str, team_id: str, source_path: str, status: str, note: str) -> None:
+    LOGO_AUDIT_ROWS.append({"team": clean(team), "team_id": team_id, "source_path": source_path, "status": status, "note": note})
+
+
+def raster_svg(path: Path) -> Image.Image | None:
+    if cairosvg is None:
         return None
     try:
-        LOGO_CACHE[path] = Image.open(p).convert("RGBA")
+        png = cairosvg.svg2png(bytestring=path.read_bytes(), output_width=512, output_height=512)
+        return Image.open(io.BytesIO(png)).convert("RGBA")
     except Exception:
-        LOGO_CACHE[path] = None
-    return LOGO_CACHE[path]
+        return None
+
+
+def open_logo_file(path: Path) -> Image.Image | None:
+    if not path.exists():
+        return None
+    if path.suffix.lower() == ".svg":
+        return raster_svg(path)
+    try:
+        return Image.open(path).convert("RGBA")
+    except Exception:
+        return None
+
+
+def logo_for(name: str, aliases: Dict[str, str], logos: Dict[str, str]) -> Image.Image | None:
+    team_id = resolve(name, aliases)
+    path_s = clean(logos.get(team_id, ""))
+    cache_key = f"{team_id}:{path_s}"
+    if cache_key in LOGO_CACHE:
+        return LOGO_CACHE[cache_key]
+    path = Path(path_s)
+    img = open_logo_file(path) if path_s else None
+    if img:
+        audit(name, team_id, path_s, "loaded", "local png/svg logo rendered")
+    else:
+        audit(name, team_id, path_s or "", "fallback", "local logo missing or not renderable")
+    LOGO_CACHE[cache_key] = img
+    return img
 
 
 def short_team(name: str) -> str:
     n = clean(name).upper()
-    drop = ["GOLDEN STATE ", "LOS ANGELES ", "LAS VEGAS ", "NEW YORK ", "CONNECTICUT ", "WASHINGTON ", "MINNESOTA ", "SEATTLE ", "PHOENIX ", "INDIANA ", "TORONTO "]
-    for prefix in drop:
+    for prefix in ["GOLDEN STATE ", "LOS ANGELES ", "LAS VEGAS ", "NEW YORK ", "CONNECTICUT ", "WASHINGTON ", "MINNESOTA ", "SEATTLE ", "PHOENIX ", "INDIANA ", "TORONTO "]:
         if n.startswith(prefix) and len(n) > len(prefix) + 3:
             return n[len(prefix):]
     return n
@@ -250,7 +278,6 @@ def team_badge(img: Image.Image, draw: ImageDraw.ImageDraw, box: Tuple[int, int,
         lg.thumbnail((w - 42, h - 42), Image.LANCZOS)
         img.alpha_composite(lg, (x + (w - lg.width) // 2, y + (h - lg.height) // 2))
     else:
-        # v2.33 premium team-name badge fallback, not coded initials or placeholder labels.
         center(draw, (x + 16, y + 20, w - 32, h - 40), short_team(team), 34 if w < 170 else 42, fill=(accent if not dim else MUTED), bold=True)
 
 
@@ -308,8 +335,7 @@ def render_game_final(map_row: Dict[str, Any], src: Dict[str, str], badge, alias
         if s2:
             center(d, (715, 816, 270, 250), s2, 126, MUTED, True)
         rect(d, (64, 1168, 952, 118), outline=(*GOLD, 170), fill=(0, 0, 0, 128), radius=0)
-        center(d, (90, 1178, 900, 92), "KEY PERFORMER  •  TEXT-ONLY STRIP", 40, INK, True)
-        # v2.33 reduces story dead space with a stronger bottom hook panel.
+        center(d, (90, 1178, 900, 92), "KEY TAKEAWAY • FINAL SCORE STORY", 40, INK, True)
         rect(d, (70, 1358, 940, 210), outline=(*GOLD, 115), fill=(0, 0, 0, 118), radius=18)
         center(d, (92, 1395, 896, 135), clean(src.get("summary") or "CLUTCH CLOSEOUT."), 62, GOLD, True)
     else:
@@ -317,15 +343,14 @@ def render_game_final(map_row: Dict[str, Any], src: Dict[str, str], badge, alias
         center(d, (178, 248, 724, 80), "FINAL SCORE", 64, GOLD, True)
         center(d, (170, 350, 740, 48), f"FINAL • {league} • {date}".upper(), 30, INK, True)
         team_badge(img, d, (54, 462, 258, 258), winner, logo_for(winner, aliases, logos), GOLD)
-        pill(d, (346, 454, 230, 54), "PRIMARY", GOLD, BG, 25)
-        left(d, (340, 520, 400, 142), winner.upper(), 82, INK, True, 2)
-        center(d, (728, 428, 308, 310), s1, 184, GOLD, True)
+        left(d, (340, 492, 400, 168), winner.upper(), 86, INK, True, 2)
+        center(d, (728, 428, 308, 310), s1, 186, GOLD, True)
         team_badge(img, d, (54, 764, 222, 222), loser, logo_for(loser, aliases, logos), MUTED, dim=True)
         left(d, (340, 793, 382, 120), loser.upper(), 60, MUTED, True, 2)
         if s2:
             center(d, (758, 748, 250, 232), s2, 114, MUTED, True)
         rect(d, (54, 1025, 972, 92), outline=(*GOLD, 170), fill=(0, 0, 0, 132), radius=0)
-        center(d, (78, 1034, 924, 72), "KEY PERFORMER  •  TEXT-ONLY STRIP", 36, INK, True)
+        center(d, (78, 1034, 924, 72), "KEY TAKEAWAY • FINAL SCORE STORY", 36, INK, True)
         center(d, (88, 1168, 904, 108), clean(src.get("hook") or "STATEMENT WIN."), 62, GOLD, True)
     return img
 
@@ -341,7 +366,6 @@ def render_tonight(map_row: Dict[str, Any], src: Dict[str, str], badge, aliases,
     center(d, (118, 224, 844, 80), "IN THE W", 60, INK, True)
     rect(d, (230, 335, 620, 68), outline=(*GOLD, 150), fill=(0, 0, 0, 116), radius=0)
     center(d, (248, 344, 584, 50), time.upper(), 32, INK, True)
-    # v2.33: larger matchup area and bigger team-name hierarchy.
     team_badge(img, d, (44, 448, 320, 320), home, logo_for(home, aliases, logos), GOLD)
     team_badge(img, d, (716, 448, 320, 320), away, logo_for(away, aliases, logos), PURPLE)
     center(d, (370, 455, 340, 106), short_team(home), 60, INK, True)
@@ -349,11 +373,9 @@ def render_tonight(map_row: Dict[str, Any], src: Dict[str, str], badge, aliases,
     center(d, (370, 620, 340, 106), short_team(away), 60, INK, True)
     rect(d, (108, 805, 864, 126), outline=(*GOLD, 185), fill=(*GOLD, 232), radius=0)
     center(d, (135, 815, 810, 106), "WHO NEEDS THIS ONE MORE?", 54, BG, True)
-    # v2.33: simpler premium lower module, not three tiny columns.
     rect(d, (86, 995, 908, 168), outline=(255, 255, 255, 70), fill=(0, 0, 0, 122), radius=18)
     center(d, (115, 1014, 850, 54), "KEY MATCHUP / WATCH POINT", 36, GOLD, True)
-    center(d, (135, 1074, 810, 58), "EDITABLE CONTEXT FIELD", 30, INK, False)
-    center(d, (100, 1210, 880, 62), "PREVIEW MODE • ONE LOWER MODULE ACTIVE", 25, MUTED, True)
+    center(d, (135, 1074, 810, 58), "PACE • STARS • LATE-GAME EDGE", 32, INK, True)
     return img
 
 
@@ -441,20 +463,22 @@ def main() -> None:
         img = render_one(row, event_data(row, index), badge, aliases, logos)
         out = IMG_DIR / f"{i:02d}_{slug(row.get('platform'))}_{slug(row.get('template_id'))}_{slug(row.get('headline'))}.png"
         img.convert("RGB").save(out, quality=96)
-        manifest.append({"item_id": row.get("item_id"), "template_id": row.get("template_id"), "platform": row.get("platform"), "mode": row.get("mode"), "headline": row.get("headline"), "output_path": out.as_posix(), "width": img.size[0], "height": img.size[1], "status": "rendered_review", "review_only": "true", "notes": "Template Renderer v2.33 compile proof. Human review required before publishing."})
-    write_csv(MANIFEST_CSV, manifest)
-    payload = {"version": VERSION, "generated_at_utc": datetime.now(timezone.utc).isoformat(), "review_only": True, "rendered_count": len(manifest), "source_render_map": RENDER_MAP_JSON.as_posix(), "items": manifest}
+        manifest.append({"item_id": row.get("item_id"), "template_id": row.get("template_id"), "platform": row.get("platform"), "mode": row.get("mode"), "headline": row.get("headline"), "output_path": out.as_posix(), "width": img.size[0], "height": img.size[1], "status": "rendered_review", "review_only": "true", "notes": "Template Renderer v2.4 compile proof. Human review required before publishing."})
+    write_csv(MANIFEST_CSV, manifest, FIELDS)
+    write_csv(LOGO_AUDIT_CSV, LOGO_AUDIT_ROWS, LOGO_FIELDS)
+    payload = {"version": VERSION, "generated_at_utc": datetime.now(timezone.utc).isoformat(), "review_only": True, "rendered_count": len(manifest), "source_render_map": RENDER_MAP_JSON.as_posix(), "logo_audit": LOGO_AUDIT_JSON.as_posix(), "items": manifest}
     MANIFEST_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    LOGO_AUDIT_JSON.write_text(json.dumps({"version": VERSION, "generated_at_utc": payload["generated_at_utc"], "rows": LOGO_AUDIT_ROWS}, indent=2), encoding="utf-8")
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as z:
         for item in manifest:
             p = Path(item["output_path"])
             if p.exists():
                 z.write(p, p.relative_to(OUT_DIR.parent).as_posix())
-    report = ["# HSD Template Renderer v2.33", "", f"Generated: `{payload['generated_at_utc']}`", f"Version: `{VERSION}`", "", "## Policy", "", "- Review-only compile proof.", "- Removed top dots and foreground crossing lines.", "- Enlarged Tonight matchup area and simplified lower module row.", "- Uses premium team-name badge fallback when logos are unavailable.", "- Reduces Story final bottom dead space with stronger hook panel.", "- Human review required before publishing.", "", "## Summary", "", f"- Rendered files: `{len(manifest)}`", f"- Zip: `{ZIP_PATH.as_posix()}`", ""]
+    report = ["# HSD Template Renderer v2.4", "", f"Generated: `{payload['generated_at_utc']}`", f"Version: `{VERSION}`", "", "## Policy", "", "- Review-only compile proof.", "- Free local SVG/PNG logo raster support from the approved registry.", "- Removed top dots and foreground crossing lines.", "- Enlarged Tonight matchup area and simplified lower module row.", "- Uses premium team-name badge fallback only when local logo cannot be rendered.", "- Human review required before publishing.", "", "## Summary", "", f"- Rendered files: `{len(manifest)}`", f"- Logo audit rows: `{len(LOGO_AUDIT_ROWS)}`", f"- Zip: `{ZIP_PATH.as_posix()}`", ""]
     for item in manifest:
         report.append(f"- `{item['template_id']}` | {item['platform']} | {item['headline']}")
     REPORT_MD.write_text("\n".join(report) + "\n", encoding="utf-8")
-    print(json.dumps({"version": VERSION, "rendered": len(manifest), "out_dir": OUT_DIR.as_posix()}, indent=2))
+    print(json.dumps({"version": VERSION, "rendered": len(manifest), "logo_audit_rows": len(LOGO_AUDIT_ROWS), "out_dir": OUT_DIR.as_posix()}, indent=2))
 
 
 if __name__ == "__main__":
