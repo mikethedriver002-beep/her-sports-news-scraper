@@ -319,3 +319,44 @@ The Women’s Soccer / NWSL / USWNT family has three review-approved directions:
 - Do not use fake kits, fake crests, invented scores, invented stats, or real-sounding news without provided details.
 - Public mockups must not show internal variant/template/spec labels.
 - Use placeholder copy unless real details are provided.
+
+## 15. Tennis / WTA template law
+
+The Tennis / WTA family has three review-approved directions:
+
+### Variant A: Match Result / Preview card
+
+- Use for WTA match results and match previews.
+- Must support result mode and preview mode.
+- Result mode uses PLAYER NAME def. OPPONENT and SET SCORELINE fields.
+- Preview mode uses PLAYER NAME vs OPPONENT and ROUND / TIME / TOURNAMENT fields.
+- Result and preview language must not be mixed.
+- WIN / RESULT is an editable field, not a hardcoded label.
+- Approved tour/event logo slot is optional unless an approved logo is provided.
+
+### Variant B: Tournament Story / Advancement card
+
+- Use for player advancement, title runs, upset stories, seed stories, milestones, and major WTA tournament moments.
+- Headline should be clearly editable unless real details are provided.
+- Approved headline fields include PLAYER NAME ADVANCES, TOURNAMENT STORY HEADLINE, TITLE RUN CONTINUES, UPSET STORY HEADLINE, and MILESTONE STORY HEADLINE.
+- Include tournament label, round/bracket context, short context, and why it matters.
+
+### Variant C: Story / Vertical tennis update
+
+- Use for quick WTA updates on Stories or Reels.
+- Export at 1080x1920.
+- Allowed modes: match result plus question, next match preview plus question, tournament story update plus why it matters, or player spotlight plus poll/question.
+- Only one mode should be active at a time.
+- Bottom area must stay clear for Story/Reels UI.
+
+### Shared Tennis / WTA rules
+
+- Keep tennis-specific identity while still feeling like HSD.
+- Approved player images only.
+- Approved tour/event logo slots are optional unless an approved logo is provided.
+- Abstract tennis textures are allowed as editorial design backgrounds.
+- Abstract textures must not imply real match photography or replace approved imagery.
+- Use clean editable placeholder fields such as PLAYER NAME, OPPONENT NAME, TOURNAMENT NAME, ROUND NAME, RESULT / SCORELINE, NEXT MATCH, WHY IT MATTERS, and QUESTION / CTA.
+- Do not invent results, scorelines, rankings, seed lines, injuries, quotes, or tournament details.
+- Public mockups must not show internal variant/template/spec labels.
+- Use placeholder copy unless real details are provided.
