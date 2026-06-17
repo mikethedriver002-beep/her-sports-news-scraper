@@ -1,5 +1,5 @@
 {
-  "version": "hsd-template-registry-v1.3-daily-debrief-family-split",
+  "version": "hsd-template-registry-v1.4-womens-soccer-family-split",
   "status": "review_only_stage",
   "default_review_only": true,
   "production_auto_promotion_allowed": false,
@@ -140,15 +140,41 @@
     {
       "template_id": "womens_soccer_match_story.a.v1",
       "family": "Women’s Soccer / NWSL / USWNT",
-      "variant": "A",
+      "variant": "A Match Preview / Result",
       "family_priority": 5,
       "variant_priority": 1,
       "status": "review_only",
       "review_only": true,
-      "canonical": false,
-      "supported_formats": ["1080x1350", "1080x1920"],
+      "canonical": true,
+      "supported_formats": ["1080x1350"],
       "spec_path": "config/graphics/templates/womens_soccer_match_story_a_v1.json",
-      "notes": "NWSL/USWNT/women’s soccer match or league story template."
+      "notes": "Match preview/result card with preview mode and result mode that must not be mixed."
+    },
+    {
+      "template_id": "womens_soccer_match_story.b.v1",
+      "family": "Women’s Soccer / NWSL / USWNT",
+      "variant": "B League / Roster / Callup Story",
+      "family_priority": 5,
+      "variant_priority": 2,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350"],
+      "spec_path": "config/graphics/templates/womens_soccer_match_story_b_v1.json",
+      "notes": "Editorial card for roster stories, callups, league news, awards, transfers, and major soccer moments."
+    },
+    {
+      "template_id": "womens_soccer_match_story.c.story.v1",
+      "family": "Women’s Soccer / NWSL / USWNT",
+      "variant": "C Story / Vertical Soccer Update",
+      "family_priority": 5,
+      "variant_priority": 3,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1920"],
+      "spec_path": "config/graphics/templates/womens_soccer_match_story_c_story_v1.json",
+      "notes": "Vertical Story/Reels soccer update with modular modes for match update, quick story points, or roster/callup note."
     },
     {
       "template_id": "tennis_wta_result.a.v1",
