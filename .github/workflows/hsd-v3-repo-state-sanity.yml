@@ -165,10 +165,16 @@ jobs:
         run: |
           python scripts/merge_hsd_v4_guard_into_repo_state.py || true
 
+      - name: Run V4 generated output pollution audit
+        if: always()
+        shell: bash
+        run: |
+          python scripts/report_hsd_generated_output_pollution_v1.py || true
+
       - name: Free-only guard tests
         shell: bash
         run: |
-          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py
+          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py
 
       - name: Upload V3 sanity artifact
         uses: actions/upload-artifact@v4
@@ -180,6 +186,8 @@ jobs:
             repo_state_v3.json
             v4_source_truth_guard.md
             v4_source_truth_guard.json
+            generated_output_pollution_v1.md
+            generated_output_pollution_v1.json
             hsd_pipeline_lite_review.zip
             hsd_pipeline_lite_review/**
             expected_games_v5_manifest.json
