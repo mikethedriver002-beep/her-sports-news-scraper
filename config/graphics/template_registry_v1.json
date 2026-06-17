@@ -1,5 +1,5 @@
 {
-  "version": "hsd-template-registry-v1.4-womens-soccer-family-split",
+  "version": "hsd-template-registry-v1.5-tennis-family-split",
   "status": "review_only_stage",
   "default_review_only": true,
   "production_auto_promotion_allowed": false,
@@ -179,15 +179,41 @@
     {
       "template_id": "tennis_wta_result.a.v1",
       "family": "Tennis / WTA",
-      "variant": "A",
+      "variant": "A Match Result / Preview",
       "family_priority": 6,
       "variant_priority": 1,
       "status": "review_only",
       "review_only": true,
-      "canonical": false,
-      "supported_formats": ["1080x1350", "1080x1920"],
+      "canonical": true,
+      "supported_formats": ["1080x1350"],
       "spec_path": "config/graphics/templates/tennis_wta_result_a_v1.json",
-      "notes": "WTA match result/tournament story template."
+      "notes": "Match result/preview card with modular result mode and preview mode."
+    },
+    {
+      "template_id": "tennis_wta_result.b.v1",
+      "family": "Tennis / WTA",
+      "variant": "B Tournament Story / Advancement",
+      "family_priority": 6,
+      "variant_priority": 2,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1350"],
+      "spec_path": "config/graphics/templates/tennis_wta_result_b_v1.json",
+      "notes": "Tournament story, advancement, title run, upset, seed story, or milestone card."
+    },
+    {
+      "template_id": "tennis_wta_result.c.story.v1",
+      "family": "Tennis / WTA",
+      "variant": "C Story / Vertical Tennis Update",
+      "family_priority": 6,
+      "variant_priority": 3,
+      "status": "review_only",
+      "review_only": true,
+      "canonical": false,
+      "supported_formats": ["1080x1920"],
+      "spec_path": "config/graphics/templates/tennis_wta_result_c_story_v1.json",
+      "notes": "Vertical Story/Reels tennis update with modular modes for match result, next match preview, tournament story, or player spotlight."
     },
     {
       "template_id": "lpga_golf_winner_leaderboard.a.v1",
