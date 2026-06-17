@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "template_id": "last_night_in_the_w.c.carousel.v1",
+  "family": "Last Night in the W",
+  "variant": "C Carousel",
+  "status": "review_only",
+  "review_only": true,
+  "canvas": { "w": 1080, "h": 1350, "orientation": "portrait_4x5" },
+  "safe": { "t": 90, "r": 60, "b": 90, "l": 60 },
+  "brand": { "asset": "assets/branding/HSD_Official_Current_Badge_DO_NOT_RECREATE.png", "fallback_asset": "assets/branding/official_hsd_watermark.png", "x": 48, "y": 42, "w": 80, "max_w": 96, "lockup_allowed_public": false },
+  "zones": {
+    "franchise_title": [80, 130, 920, 190],
+    "dynamic_subhead": [80, 340, 920, 60],
+    "featured_finals_row": [70, 460, 940, 270],
+    "swipe_cta": [70, 790, 940, 100],
+    "question": [70, 940, 940, 140],
+    "footer": [70, 1160, 940, 80]
+  },
+  "text_hierarchy": {
+    "franchise_title": { "min_px": 82, "case": "uppercase" },
+    "dynamic_subhead": { "min_px": 34, "examples": ["[X] FINALS. ONE RECAP.", "TOP RESULTS. BIG MOMENTS."] },
+    "featured_final": { "min_px": 30 },
+    "swipe_cta": { "min_px": 42 },
+    "question": { "min_px": 42 }
+  },
+  "modules": {
+    "bottom_module": {
+      "mode": "modular",
+      "allowed_modes": ["featured_finals_plus_swipe_cta", "swipe_cta_plus_question", "featured_finals_only"],
+      "default_mode": "featured_finals_plus_swipe_cta"
+    },
+    "featured_finals": { "min_items": 1, "max_items": 3, "asset_type": "approved_team_logo" }
+  },
+  "usage_rules": {
+    "carousel_cover": true,
+    "best_for": "Bigger slates, more story context, swipeable recap, end-question post",
+    "bottom_modules_are_optional": true,
+    "do_not_stack_all_bottom_modules": true
+  },
+  "rules": {
+    "logos": "approved_only",
+    "no_fake_people": true,
+    "no_invented_scores": true,
+    "no_invented_stats": true,
+    "no_invented_records_or_standings": true,
+    "no_tiny_tables": true,
+    "no_spreadsheet_look": true,
+    "no_internal_variant_labels_on_public_exports": true,
+    "dynamic_slate_subhead_required": true,
+    "score_placeholder_style": "00-00_or_SCORE_SLOT",
+    "text_contrast_min": 4.5,
+    "large_text_contrast_min": 3.0,
+    "non_text_contrast_min": 3.0,
+    "renderer_mode": "review_only"
+  },
+  "when_to_use": "Carousel cover and recap package opener for bigger slates or recap posts that need a swipeable package."
+}
