@@ -181,16 +181,18 @@ jobs:
         if: always()
         shell: bash
         run: |
+          python scripts/report_hsd_production_readiness_v1.py || true
           if [[ "${{ github.event.inputs.strict }}" == "true" ]]; then
-            python scripts/report_hsd_production_readiness_v1.py --strict
+            python scripts/align_hsd_production_readiness_v1.py --strict
           else
-            python scripts/report_hsd_production_readiness_v1.py || true
+            python scripts/align_hsd_production_readiness_v1.py || true
           fi
+          # Phase 4A legacy strict reference: python scripts/report_hsd_production_readiness_v1.py --strict
 
       - name: Free-only guard tests
         shell: bash
         run: |
-          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py tests/test_v4_phase2e_dirty_tree_hygiene.py tests/test_phase3_expected_games_baseline.py tests/test_phase3_independent_verifier_rebuild.py tests/test_phase4_production_readiness_gate.py
+          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py tests/test_v4_phase2e_dirty_tree_hygiene.py tests/test_phase3_expected_games_baseline.py tests/test_phase3_independent_verifier_rebuild.py tests/test_phase4_production_readiness_gate.py tests/test_phase4b_production_output_alignment.py
 
       - name: Upload V3 sanity artifact
         uses: actions/upload-artifact@v4
