@@ -1,2 +1,0 @@
-bundle_slug,bundle_name,sport,league,player_name,team_name,required,status,approved_asset_id,source_url,local_path,sourcing_method,notes
-tonight-in-the-w-preview,Tonight in the W Preview,basketball,WNBA,Toronto Tempo,Los Angeles Sparks,Yes,found_downloaded,appr_d1b2ad2066c091,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricohcoliseum.jpg,data/assets/player_images/toronto-tempo_img_3dd9b150b4ef7a.jpg,wikidata_p18,

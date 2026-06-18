@@ -1,2 +1,0 @@
-candidate_id,player_name,team_name,candidate_url,page_url,source_domain,title,method,score,download_status,local_path,width_px,height_px,mime_type,approved,reject_reason
-pcand_d1b2ad2066c091,Toronto Tempo,Los Angeles Sparks,https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricohcoliseum.jpg,https://www.wikidata.org/wiki/Q125879905,commons.wikimedia.org,"Toronto Tempo women's National Basketball Association team in Toronto, Ontario",wikidata_p18,105,downloaded,data/assets/player_images/toronto-tempo_img_3dd9b150b4ef7a.jpg,1024,768,image/jpeg,Yes,

@@ -180,6 +180,7 @@ Thumbs.db
 /run_history/
 /results_run_history/
 /launch_run_history/
+/asset_run_history/
 /generated_graphics/
 /graphics_chat_upload_pack/
 /graphics_chat_upload_pack_zips/
@@ -199,3 +200,4 @@ Thumbs.db
 /rendered_handoff_graphics/
 /rendered_handoff_zips/
 /runs/
+/operator/inbox/

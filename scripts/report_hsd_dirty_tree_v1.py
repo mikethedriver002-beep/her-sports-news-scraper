@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-VERSION = "v1.0-dirty-tree-category-audit"
+VERSION = "v1.1-dirty-tree-category-audit-final-archive-hygiene"
 DEFAULT_OUTPUT_JSON = "dirty_tree_v1.json"
 DEFAULT_OUTPUT_MD = "dirty_tree_v1.md"
 
@@ -21,6 +20,7 @@ GENERATED_DIR_PREFIXES = (
     "run_history/",
     "results_run_history/",
     "launch_run_history/",
+    "asset_run_history/",
     "generated_graphics/",
     "graphics_chat_upload_pack/",
     "graphics_chat_upload_pack_zips/",
@@ -39,6 +39,7 @@ GENERATED_DIR_PREFIXES = (
     "rendered_handoff_graphics/",
     "rendered_handoff_zips/",
     "runs/",
+    "operator/inbox/",
 )
 
 ROOT_GENERATED_PREFIXES = (
