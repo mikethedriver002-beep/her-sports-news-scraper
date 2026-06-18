@@ -93,3 +93,9 @@ def test_phase2g_workflow_is_wired_for_strict_closure() -> None:
 def test_phase2g_script_self_test() -> None:
     module = load_module()
     assert module.self_test() == 0
+
+def test_phase2g_installer_does_not_patch_workflows_from_action() -> None:
+    text = SCRIPT.read_text(encoding="utf-8")
+    install_block = text[text.index("def install"): text.index("def self_test")]
+    assert "patch_sanity_workflow()" not in install_block
+    assert "installer_patches_workflows" in text

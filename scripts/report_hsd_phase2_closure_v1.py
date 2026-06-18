@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
-VERSION = "v1.0-phase2g-authoritative-closure"
+VERSION = "v1.1-phase2g-authoritative-closure-no-workflow-push"
 INSTALL_REPORT_JSON = "phase2g_install_report.json"
 INSTALL_REPORT_MD = "phase2g_install_report.md"
 CLOSURE_JSON = "phase2_closure_v1.json"
@@ -613,7 +613,11 @@ def install() -> int:
     remaining, remaining_counts, _ = scan_generated()
 
     patch_gitignore(deleted)
-    patch_sanity_workflow()
+    # IMPORTANT: Do not modify .github/workflows/* during the installer run.
+    # GitHub Actions GITHUB_TOKEN cannot push workflow changes unless it has the
+    # workflows permission. The first Phase 2G run proved this by cleaning the repo
+    # successfully, then failing only when the commit included a workflow edit.
+    # Keep workflow wiring as a separate manual/web upload after Phase 2 closes.
 
     install_report = {
         "version": VERSION,
@@ -626,6 +630,8 @@ def install() -> int:
         "remaining_sample": remaining[:200],
         "iterations_max": 4,
         "status": "ready_to_commit" if not remaining else "blocked_remaining_generated_output",
+        "installer_patches_workflows": False,
+        "workflow_patch_deferred": ".github/workflows/hsd-v3-repo-state-sanity.yml",
     }
     Path(INSTALL_REPORT_JSON).write_text(
         json.dumps(install_report, indent=2, sort_keys=True), encoding="utf-8"
