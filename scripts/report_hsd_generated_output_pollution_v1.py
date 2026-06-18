@@ -9,11 +9,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-VERSION = "v1.0-generated-output-pollution-audit"
+VERSION = "v1.1-generated-output-pollution-audit-residual-hygiene"
 DEFAULT_OUTPUT_JSON = "generated_output_pollution_v1.json"
 DEFAULT_OUTPUT_MD = "generated_output_pollution_v1.md"
 
 SAFE_DELETE_DIR_PREFIXES = {
+    "hsd_pipeline_lite_review/": "pipeline_lite_review_artifact_dir",
     "outputs/latest/": "generated_output_dir",
     "dashboard/": "legacy_dashboard_dir",
     "results_dashboard/": "legacy_results_dashboard_dir",
@@ -29,6 +30,16 @@ SAFE_DELETE_DIR_PREFIXES = {
     "ig_story_results_upload_pack/": "generated_story_upload_pack",
     "ig_story_results_upload_pack_zips/": "generated_story_upload_pack",
     "mermaid_compiled_packets/": "generated_mermaid_packets",
+    "assignment_handoff_packets/": "generated_assignment_packets",
+    "assignment_handoff_zips/": "generated_assignment_packets",
+    "mermaid_assignment_compiled_packets/": "generated_mermaid_assignment_packets",
+    "mermaid_assignment_final_packets/": "generated_mermaid_assignment_packets",
+    "mermaid_director_compiled_packets/": "generated_mermaid_director_packets",
+    "mermaid_quality_compiled_packets/": "generated_mermaid_quality_packets",
+    "mermaid_quality_compiled_packets_v2_2/": "generated_mermaid_quality_packets",
+    "rendered_handoff_graphics/": "generated_rendered_handoff",
+    "rendered_handoff_zips/": "generated_rendered_handoff",
+    "runs/": "generated_run_archive",
 }
 
 SAFE_DELETE_EXACT = {
@@ -43,6 +54,8 @@ SAFE_DELETE_EXACT = {
     "v4_source_truth_guard.md": "run_diagnostic_report",
     "generated_output_pollution_v1.json": "run_diagnostic_report",
     "generated_output_pollution_v1.md": "run_diagnostic_report",
+    "dirty_tree_v1.json": "run_diagnostic_report",
+    "dirty_tree_v1.md": "run_diagnostic_report",
     "expected_games_v5_manifest.json": "run_diagnostic_report",
     "expected_games_v5_report.md": "run_diagnostic_report",
     "independent_schedule_verification_v5.csv": "run_diagnostic_report",
@@ -67,6 +80,11 @@ SAFE_DELETE_EXACT = {
     "results_contract_v2.csv": "run_data_extract",
     "results_contract_v2.jsonl": "run_data_extract",
     "results_contract_report.md": "run_data_extract",
+    "run_manifest.json": "run_data_extract",
+    "source_health_report.csv": "run_data_extract",
+    "top_womens_results.csv": "run_data_extract",
+    "wnba_box_score_audit.csv": "run_data_extract",
+    "wnba_box_score_summary.md": "run_data_extract",
     "today_results_board.csv": "legacy_results_output",
     "today_box_scores.csv": "legacy_results_output",
     "top_performers.csv": "legacy_results_output",
@@ -99,6 +117,113 @@ SAFE_DELETE_EXACT = {
     "today_graphics_queue.md": "legacy_news_output",
     "top_3_graphic_packets.md": "legacy_news_output",
     "latest_run_summary.md": "legacy_news_output",
+    "approved_graphics_assets.csv": "generated_asset_review_output",
+    "pproved_graphics_assets.csv": "generated_asset_review_output_typo",
+    "approved_graphics_assets.json": "generated_asset_review_output",
+    "asset_candidates_review.md": "generated_asset_review_output",
+    "caption_bank.md": "generated_copy_queue",
+    "daily_results_recommendations.md": "generated_results_recommendations",
+    "first_comment_hooks.md": "generated_copy_queue",
+    "latest_news_sync_run_summary.md": "generated_news_sync_output",
+    "news_fact_packets.csv": "generated_news_sync_output",
+    "operator_status.md": "generated_operator_status",
+    "pipeline_stop_reason.md": "generated_operator_status",
+    "player_assets.csv": "generated_player_asset_output",
+    "player_assets.json": "generated_player_asset_output",
+    "player_image_candidates.csv": "generated_player_asset_output",
+    "player_image_fit_gate.csv": "generated_player_asset_output",
+    "player_image_fit_report.md": "generated_player_asset_output",
+    "player_image_requirements.csv": "generated_player_asset_output",
+    "player_image_sourcing_report.md": "generated_player_asset_output",
+    "post_slot_status.csv": "generated_queue_output",
+    "publish_guard_report.md": "generated_publish_guard",
+    "rendered_slide_qa.csv": "generated_render_qa",
+    "rendered_slide_qa_manifest.json": "generated_render_qa",
+    "rendered_slide_qa_report.md": "generated_render_qa",
+    "studio_bundle_packets.md": "generated_studio_output",
+    "studio_bundle_prompts.md": "generated_studio_output",
+    "studio_bundle_queue.csv": "generated_studio_output",
+    "studio_fresh_packet_report.md": "generated_studio_output",
+    "studio_freshness_gate.csv": "generated_studio_output",
+    "studio_freshness_report.md": "generated_studio_output",
+    "studio_graphics_queue.csv": "generated_studio_output",
+    "studio_stale_packet_queue.csv": "generated_studio_output",
+    "threads_queue.csv": "generated_queue_output",
+    "threads_queue_v2.csv": "generated_queue_output",
+    "ig_feed_queue.csv": "generated_queue_output",
+    "ig_feed_queue_v2.csv": "generated_queue_output",
+    "ig_story_queue.csv": "generated_queue_output",
+    "ig_story_queue_v2.csv": "generated_queue_output",
+    "mermaid_content_slots_v2.csv": "generated_mermaid_output",
+    "mermaid_master_content_board.md": "generated_mermaid_output",
+    "mermaid_story_graph.csv": "generated_mermaid_output",
+    "mermaid_upper_echelon_report.md": "generated_mermaid_output",
+    "multi_post_daily_board.json": "generated_queue_output",
+    "multi_post_daily_board.md": "generated_queue_output",
+}
+
+SAFE_DELETE_PATTERNS = {
+    "assignment_*.csv": "generated_assignment_output",
+    "assignment_*.json": "generated_assignment_output",
+    "assignment_*.md": "generated_assignment_output",
+    "bebe_*.csv": "generated_bebe_output",
+    "bebe_*.json": "generated_bebe_output",
+    "bebe_*.md": "generated_bebe_output",
+    "breaking_news_queue*.csv": "generated_queue_output",
+    "content_director_*.csv": "generated_content_director_output",
+    "content_director_*.json": "generated_content_director_output",
+    "content_director_*.md": "generated_content_director_output",
+    "contract_validation_*.json": "generated_contract_validation_output",
+    "contract_validation_*.md": "generated_contract_validation_output",
+    "daily_slate_*.csv": "generated_daily_slate_output",
+    "daily_slate_*.md": "generated_daily_slate_output",
+    "final_score_story_guard_report.*": "generated_story_guard_output",
+    "graphics_*.csv": "generated_graphics_output",
+    "graphics_*.json": "generated_graphics_output",
+    "graphics_*.md": "generated_graphics_output",
+    "ig_feed_*.csv": "generated_queue_output",
+    "ig_story_*.csv": "generated_queue_output",
+    "ig_story_*.json": "generated_queue_output",
+    "ig_story_*.md": "generated_queue_output",
+    "install_report.*": "generated_install_report",
+    "manual_workflow_*.csv": "generated_manual_workflow_output",
+    "manual_workflow_*.json": "generated_manual_workflow_output",
+    "manual_workflow_*.jsonl": "generated_manual_workflow_output",
+    "manual_workflow_*.md": "generated_manual_workflow_output",
+    "mermaid_*.csv": "generated_mermaid_output",
+    "mermaid_*.json": "generated_mermaid_output",
+    "mermaid_*.jsonl": "generated_mermaid_output",
+    "mermaid_*.md": "generated_mermaid_output",
+    "multisport_*.csv": "generated_multisport_output",
+    "multisport_*.json": "generated_multisport_output",
+    "multisport_*.md": "generated_multisport_output",
+    "official_player_headshot_*.csv": "generated_player_asset_output",
+    "official_player_headshot_*.md": "generated_player_asset_output",
+    "operator_*.md": "generated_operator_output",
+    "operator_*.json": "generated_operator_output",
+    "operator_*.csv": "generated_operator_output",
+    "player_asset_*.csv": "generated_player_asset_output",
+    "player_registry_*.json": "generated_player_asset_output",
+    "player_registry_*.md": "generated_player_asset_output",
+    "player_assets.*": "generated_player_asset_output",
+    "player_image_*.csv": "generated_player_asset_output",
+    "player_image_*.md": "generated_player_asset_output",
+    "publish_guard_report.*": "generated_publish_guard",
+    "rendered_handoff_*.csv": "generated_rendered_handoff",
+    "rendered_handoff_*.json": "generated_rendered_handoff",
+    "rendered_handoff_*.md": "generated_rendered_handoff",
+    "rendered_handoff_*.jpg": "generated_rendered_handoff",
+    "rendered_slide_qa.*": "generated_render_qa",
+    "rumor_watch_queue*.csv": "generated_queue_output",
+    "social_rumor_*.csv": "generated_social_rumor_output",
+    "social_rumor_*.json": "generated_social_rumor_output",
+    "social_rumor_*.md": "generated_social_rumor_output",
+    "source_registry_audit.*": "generated_source_registry_audit",
+    "story_candidates_*.csv": "generated_story_candidates",
+    "story_candidates_*.jsonl": "generated_story_candidates",
+    "studio_*.csv": "generated_studio_output",
+    "studio_*.md": "generated_studio_output",
+    "threads_*.csv": "generated_queue_output",
 }
 
 REVIEW_REQUIRED_EXACT = {
@@ -130,6 +255,7 @@ def run_git_ls_files(repo_root: Path) -> List[str]:
 
 def classify_path(path: str) -> Dict[str, Any]:
     norm = path.replace("\\", "/").lstrip("./")
+    basename = norm.split("/")[-1]
     if norm in REVIEW_REQUIRED_EXACT:
         return {
             "path": norm,
@@ -155,6 +281,15 @@ def classify_path(path: str) -> Dict[str, Any]:
                 "safe_delete_candidate": True,
                 "reason": "Generated output directory should be artifact-only, not committed to main.",
             }
+    for pattern, category in SAFE_DELETE_PATTERNS.items():
+        if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(norm, pattern):
+            return {
+                "path": norm,
+                "classification": "tracked_generated_output",
+                "category": category,
+                "safe_delete_candidate": True,
+                "reason": "Generated handoff/queue/report file should be artifact-only, not committed to main.",
+            }
     for pattern in CACHE_PATTERNS:
         if fnmatch.fnmatch(norm, pattern):
             return {
@@ -169,7 +304,7 @@ def classify_path(path: str) -> Dict[str, Any]:
         "classification": "source_or_reviewed_repo_file",
         "category": "not_generated_by_phase2c_rules",
         "safe_delete_candidate": False,
-        "reason": "No Phase 2C generated-output rule matched this path.",
+        "reason": "No Phase 2C/2E generated-output rule matched this path.",
     }
 
 
@@ -203,8 +338,8 @@ def build_report_from_paths(paths: Iterable[str], repo_root: Path | None = None)
         "generated_paths_by_category": {key: sorted(value) for key, value in sorted(by_category.items())},
         "status": "generated_output_cleanup_needed" if generated_rows else "clean_no_tracked_generated_outputs",
         "human_summary": (
-            f"{len(generated_rows)} tracked generated/cache files matched Phase 2C cleanup rules. Review the delete plan before removing files."
-            if generated_rows else "No tracked generated-output files matched Phase 2C cleanup rules."
+            f"{len(generated_rows)} tracked generated/cache files matched Phase 2C/2E cleanup rules. Review the delete plan before removing files."
+            if generated_rows else "No tracked generated-output files matched Phase 2C/2E cleanup rules."
         ),
     }
 
