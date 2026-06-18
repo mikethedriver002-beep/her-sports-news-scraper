@@ -122,22 +122,32 @@ jobs:
           if [ -f generate_hsd_mermaid_assignment_handoff_v2_6.py ]; then python generate_hsd_mermaid_assignment_handoff_v2_6.py || true; fi
           if [ -f generate_hsd_mermaid_handoff_publisher_v2_6_1.py ]; then python generate_hsd_mermaid_handoff_publisher_v2_6_1.py || true; fi
 
-      - name: V3 first-run acceptance commands
+      - name: V5B cinematic renderer and quality outputs
         shell: bash
         run: |
           set -euo pipefail
           python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py
           python scripts/generate_hsd_graphics_variant_packs_v1.py
           if [ -f scripts/generate_hsd_graphics_template_factory_v1.py ]; then python scripts/generate_hsd_graphics_template_factory_v1.py; fi
-          if [ -f scripts/generate_hsd_quality_graphics_renderer_v1.py ]; then python scripts/generate_hsd_quality_graphics_renderer_v1.py; fi
+          python scripts/run_hsd_template_renderer_v3.py
+          python scripts/build_hsd_quality_graphics_from_renderer_v3.py
           if [ -f scripts/package_hsd_quality_graphics_v1.py ]; then python scripts/package_hsd_quality_graphics_v1.py; fi
           python generate_hsd_pipeline_review_lite_v1.py
+          # Retired legacy renderer reference for regression audit only:
+          # python scripts/generate_hsd_quality_graphics_renderer_v1.py
 
-      - name: Run V4 renderer logo status audit
+      - name: Run V5B renderer logo status audit
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/report_hsd_template_renderer_logo_status_v1.py
+          python scripts/report_hsd_template_renderer_logo_status_v1.py \
+            --logo-audit-json outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/hsd_template_renderer_v3_logo_audit.json \
+            --manifest-json outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/hsd_template_renderer_v3_manifest.json \
+            --json outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/hsd_template_renderer_v3_logo_status.json \
+            --md outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/hsd_template_renderer_v3_logo_status.md
+          mkdir -p outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2
+          cp outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/hsd_template_renderer_v3_logo_status.json outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2/hsd_template_renderer_v2_logo_status.json
+          cp outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/hsd_template_renderer_v3_logo_status.md outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2/hsd_template_renderer_v2_logo_status.md
 
       - name: Run V4 source truth guard
         shell: bash
@@ -202,7 +212,7 @@ jobs:
       - name: Free-only guard tests
         shell: bash
         run: |
-          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py tests/test_v4_phase2e_dirty_tree_hygiene.py tests/test_phase3_expected_games_baseline.py tests/test_phase3_independent_verifier_rebuild.py tests/test_phase4_production_readiness_gate.py tests/test_phase4b_production_output_alignment.py tests/test_phase5_post_ready_visual_qa.py
+          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py tests/test_v4_phase2e_dirty_tree_hygiene.py tests/test_phase3_expected_games_baseline.py tests/test_phase3_independent_verifier_rebuild.py tests/test_phase4_production_readiness_gate.py tests/test_phase4b_production_output_alignment.py tests/test_phase5_post_ready_visual_qa.py tests/test_phase5b_renderer_visual_upgrade.py
 
       - name: Upload V3 sanity artifact
         uses: actions/upload-artifact@v4
@@ -239,7 +249,8 @@ jobs:
             multisport_results_observations_v5.csv
             multisport_results_modules_v5.json
             multisport_results_modules_v5.md
-            outputs/latest/HSD_TEMPLATE_FACTORY/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v2/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/**
             hsd_quality_graphics.zip
             hsd_quality_graphics_zip_manifest.json
             hsd_quality_graphics_manifest.csv

@@ -90,7 +90,7 @@ def test_template_renderer_logo_status_separates_recoverable_warning_from_active
 
 def test_phase2b_sanity_workflow_wiring() -> None:
     workflow = SANITY_WORKFLOW.read_text(encoding="utf-8")
-    assert "Run V4 renderer logo status audit" in workflow
+    assert "renderer logo status audit" in workflow
     assert "python scripts/report_hsd_template_renderer_logo_status_v1.py" in workflow
     assert "Merge V4 guard into repo-state audit" in workflow
     assert "python scripts/merge_hsd_v4_guard_into_repo_state.py" in workflow
