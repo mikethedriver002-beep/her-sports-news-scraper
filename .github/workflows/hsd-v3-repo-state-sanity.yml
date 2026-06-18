@@ -129,7 +129,7 @@ jobs:
           python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py
           python scripts/generate_hsd_graphics_variant_packs_v1.py
           if [ -f scripts/generate_hsd_graphics_template_factory_v1.py ]; then python scripts/generate_hsd_graphics_template_factory_v1.py; fi
-          python scripts/generate_hsd_template_renderer_v3.py
+          python scripts/run_hsd_template_renderer_v3.py
           python scripts/build_hsd_quality_graphics_from_renderer_v3.py
           if [ -f scripts/package_hsd_quality_graphics_v1.py ]; then python scripts/package_hsd_quality_graphics_v1.py; fi
           python generate_hsd_pipeline_review_lite_v1.py
