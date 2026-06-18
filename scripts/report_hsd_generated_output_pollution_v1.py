@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-VERSION = "v1.1-generated-output-pollution-audit-residual-hygiene"
+VERSION = "v1.2-generated-output-pollution-audit-final-archive-hygiene"
 DEFAULT_OUTPUT_JSON = "generated_output_pollution_v1.json"
 DEFAULT_OUTPUT_MD = "generated_output_pollution_v1.md"
 
@@ -21,6 +21,7 @@ SAFE_DELETE_DIR_PREFIXES = {
     "run_history/": "legacy_news_run_archive",
     "results_run_history/": "legacy_results_run_archive",
     "launch_run_history/": "legacy_launch_run_archive",
+    "asset_run_history/": "legacy_asset_run_archive",
     "generated_graphics/": "generated_graphics_dir",
     "graphics_chat_upload_pack/": "generated_upload_pack",
     "graphics_chat_upload_pack_zips/": "generated_upload_pack",
@@ -40,6 +41,7 @@ SAFE_DELETE_DIR_PREFIXES = {
     "rendered_handoff_graphics/": "generated_rendered_handoff",
     "rendered_handoff_zips/": "generated_rendered_handoff",
     "runs/": "generated_run_archive",
+    "operator/inbox/": "generated_operator_inbox",
 }
 
 SAFE_DELETE_EXACT = {
@@ -118,7 +120,6 @@ SAFE_DELETE_EXACT = {
     "top_3_graphic_packets.md": "legacy_news_output",
     "latest_run_summary.md": "legacy_news_output",
     "approved_graphics_assets.csv": "generated_asset_review_output",
-    "pproved_graphics_assets.csv": "generated_asset_review_output_typo",
     "approved_graphics_assets.json": "generated_asset_review_output",
     "asset_candidates_review.md": "generated_asset_review_output",
     "caption_bank.md": "generated_copy_queue",
@@ -279,7 +280,7 @@ def classify_path(path: str) -> Dict[str, Any]:
                 "classification": "tracked_generated_output",
                 "category": category,
                 "safe_delete_candidate": True,
-                "reason": "Generated output directory should be artifact-only, not committed to main.",
+                "reason": "Generated output/archive directory should be artifact-only, not committed to main.",
             }
     for pattern, category in SAFE_DELETE_PATTERNS.items():
         if fnmatch.fnmatch(basename, pattern) or fnmatch.fnmatch(norm, pattern):
@@ -302,9 +303,9 @@ def classify_path(path: str) -> Dict[str, Any]:
     return {
         "path": norm,
         "classification": "source_or_reviewed_repo_file",
-        "category": "not_generated_by_phase2c_rules",
+        "category": "not_generated_by_phase2_cleanup_rules",
         "safe_delete_candidate": False,
-        "reason": "No Phase 2C/2E generated-output rule matched this path.",
+        "reason": "No Phase 2 generated-output rule matched this path.",
     }
 
 
@@ -338,8 +339,8 @@ def build_report_from_paths(paths: Iterable[str], repo_root: Path | None = None)
         "generated_paths_by_category": {key: sorted(value) for key, value in sorted(by_category.items())},
         "status": "generated_output_cleanup_needed" if generated_rows else "clean_no_tracked_generated_outputs",
         "human_summary": (
-            f"{len(generated_rows)} tracked generated/cache files matched Phase 2C/2E cleanup rules. Review the delete plan before removing files."
-            if generated_rows else "No tracked generated-output files matched Phase 2C/2E cleanup rules."
+            f"{len(generated_rows)} tracked generated/cache files matched Phase 2 cleanup rules. Review the delete plan before removing files."
+            if generated_rows else "No tracked generated-output files matched Phase 2 cleanup rules."
         ),
     }
 
