@@ -269,3 +269,10 @@ Thumbs.db
 /team_assets.csv
 /team_assets.json
 /visual_upgrade_manifest.json
+
+# HSD Phase 4 production-readiness reports
+/production_readiness_v1.json
+/production_readiness_v1.md
+/post_ready_assets_v1.csv
+/review_only_assets_v1.csv
+/daily_operator_brief_v1.md
