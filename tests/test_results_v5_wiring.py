@@ -10,8 +10,9 @@ def test_independent_wnba_schedule_verifier_is_wired() -> None:
     script = read("scripts/verify_hsd_wnba_schedule_independent_v5.py")
     assert "python scripts/verify_hsd_wnba_schedule_independent_v5.py" in workflow
     assert "independent_schedule_verification_v5.json" in workflow
-    assert "v5.1-independent-wnba-schedule-verification-inconclusive-safe" in script
+    assert "v5.2-multi-source-wnba-schedule-verification" in script
     assert "stats.wnba.com" in script
+    assert "espn_wnba_public_scoreboard_verify" in script
     assert "verification_inconclusive" in script
 
 
