@@ -1,4 +1,0 @@
-team_id,team_name,required_filename,target_folder,target_path,upload_status
-atlanta_dream,Atlanta Dream,logo.png,assets/leagues/wnba/teams/atlanta_dream,assets/leagues/wnba/teams/atlanta_dream/logo.png,needed
-new_york_liberty,New York Liberty,logo.png,assets/leagues/wnba/teams/new_york_liberty,assets/leagues/wnba/teams/new_york_liberty/logo.png,needed
-washington_mystics,Washington Mystics,logo.png,assets/leagues/wnba/teams/washington_mystics,assets/leagues/wnba/teams/washington_mystics/logo.png,needed

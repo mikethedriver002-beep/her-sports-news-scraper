@@ -1,2 +1,0 @@
-packet_id,platform,headline,template_family,dimensions,watermark_status,used_logos,missing_logos,used_score_context,public_text_safe,internal_text_found,decision,reason,used_athletes,missing_athletes
-athlete-smoke-test-approved-headshots,IG Feed,Atlanta Dream beat Chicago Sky,result_final,,pass,no,atlanta_dream,no,yes,no,fail,missing required registry team logo(s): atlanta_dream:missing_required_registry_logo,no,
