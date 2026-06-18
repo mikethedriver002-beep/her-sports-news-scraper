@@ -3,6 +3,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 RENDERER = REPO / "scripts" / "generate_hsd_template_renderer_v3.py"
+RUNNER = REPO / "scripts" / "run_hsd_template_renderer_v3.py"
 QUALITY_BUILDER = REPO / "scripts" / "build_hsd_quality_graphics_from_renderer_v3.py"
 WORKFLOW = REPO / ".github" / "workflows" / "hsd-v3-repo-state-sanity.yml"
 
@@ -19,6 +20,14 @@ def test_renderer_v3_has_cinematic_dual_lanes() -> None:
     assert "hsd_template_renderer_v3_contact_sheet.jpg" in text
 
 
+def test_fast_runner_preserves_renderer_contract() -> None:
+    text = RUNNER.read_text(encoding="utf-8")
+    assert "generate_hsd_template_renderer_v3.py" in text
+    assert "fast_background" in text
+    assert "fast_player_card" in text
+    assert "module.main()" in text
+
+
 def test_quality_lane_is_built_from_renderer_v3() -> None:
     text = QUALITY_BUILDER.read_text(encoding="utf-8")
     assert "v1.0-quality-from-template-renderer-v3" in text
@@ -32,7 +41,7 @@ def test_quality_lane_is_built_from_renderer_v3() -> None:
 def test_phase5b_workflow_uses_v3_and_keeps_visual_qa() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
     assert "V5B cinematic renderer and quality outputs" in workflow
-    assert "python scripts/generate_hsd_template_renderer_v3.py" in workflow
+    assert "python scripts/run_hsd_template_renderer_v3.py" in workflow
     assert "python scripts/build_hsd_quality_graphics_from_renderer_v3.py" in workflow
     assert "outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v3/**" in workflow
     assert "Run V5 post-ready visual QA" in workflow
@@ -40,7 +49,11 @@ def test_phase5b_workflow_uses_v3_and_keeps_visual_qa() -> None:
 
 
 def test_phase5b_remains_free_only() -> None:
-    combined = RENDERER.read_text(encoding="utf-8") + QUALITY_BUILDER.read_text(encoding="utf-8")
+    combined = (
+        RENDERER.read_text(encoding="utf-8")
+        + RUNNER.read_text(encoding="utf-8")
+        + QUALITY_BUILDER.read_text(encoding="utf-8")
+    )
     banned = ["openai", "anthropic", "serpapi", "brightdata", "scrapingbee", "paid_api"]
     for token in banned:
         assert token not in combined.lower()
