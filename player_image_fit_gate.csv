@@ -1,2 +1,0 @@
-bundle_slug,player_name,team_name,approved_asset_id,fit_status,usage_mode,risk_level,risk_reasons,recommended_crop,prompt_instruction
-tonight-in-the-w-preview,Toronto Tempo,Los Angeles Sparks,appr_d1b2ad2066c091,review,tight_face_crop_only,medium,public-source image needs visual review,"Crop tightly around face/head-and-shoulders. Do not show overseas, college, or wrong-team jersey marks.",Use Toronto Tempo's image only for Toronto Tempo. Crop tightly if the jersey is not clearly Los Angeles Sparks.

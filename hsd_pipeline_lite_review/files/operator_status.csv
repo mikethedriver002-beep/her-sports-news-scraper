@@ -1,2 +1,0 @@
-run_id,bundle_id,bundle_name,readiness,publish_eligible,reason_code,reason_detail,manual_action
-20260614T170007Z_27505823379,bundle_2406cc7200b4f4,Tonight in the W,ready_with_review,Review,ready_with_review_upload_pack,graphics_chat_upload_pack_zips/tonight-in-the-w_graphics_chat_upload_pack.zip,"Open upload pack, visually verify public player images/crop rules, then send to graphics chat. Do not post until rendered-slide QA passes."

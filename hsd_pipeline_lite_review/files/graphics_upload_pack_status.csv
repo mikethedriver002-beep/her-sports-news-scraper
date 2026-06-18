@@ -1,2 +1,0 @@
-bundle_id,post_slug,bundle_name,upload_pack_status,assets_expected,assets_ready,assets_missing,missing_asset_names,missing_team_logos,missing_player_images,zip_path,notes
-bundle_2406cc7200b4f4,tonight-in-the-w,Tonight in the W,ready_with_review,10,10,0,,,,graphics_chat_upload_pack_zips/tonight-in-the-w_graphics_chat_upload_pack.zip,Ready with review or blocked. Check upload instructions. No text/logo fallback is allowed. Preview Player Lock v2 applied: storylines_to_know_no_players. Use safe prompt and rebuilt zip.

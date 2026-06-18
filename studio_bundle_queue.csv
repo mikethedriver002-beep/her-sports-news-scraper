@@ -1,8 +1,0 @@
-bundle_rank,bundle_id,bundle_name,bundle_type,production_priority,asset_type,asset_shape,slide_count,content_family,sports_mix,source_items_count,source_headlines,caption_seed,bundle_prompt,accuracy_lock,watermark_rule,source_packet_ids_json,event_date,event_datetime,result_date,freshness_label,freshness_source,source_run_timestamp,event_age_hours,freshness_status,freshness_decision,source_event_dates_json
-1,bundle_4ce84aeaf997c0,Tonight in the W Preview,wnba_preview,POST FIRST,4-slide carousel,1080x1350,4,Tonight in the W,basketball,2,Connecticut Sun at Toronto Tempo | Los Angeles Sparks at Seattle Storm,"Tonight in the W: Connecticut Sun at Toronto Tempo - wed, june 10th at 7:00 pm edt | Los Angeles Sparks at Seattle Storm - wed, june 10th at 10:00 pm edt","Create a 4-slide 1080x1350 Her Sports Daily carousel previewing tonight's women's sports slate.
-Use only exact approved team/logo assets. Do not invent player photos.
-Slide 1: strong Tonight in the W cover with the full slate.
-Slide 2: schedule board with game times.
-Slide 3: what to watch, using only matchup context, no invented stats.
-Slide 4: CTA asking which game people are watching.
-Games: Connecticut Sun at Toronto Tempo - wed, june 10th at 7:00 pm edt | Los Angeles Sparks at Seattle Storm - wed, june 10th at 10:00 pm edt","Preview schedule only. Do not invent final scores, player stats, injuries, records, or quotes.",Use one compact HSD watermark/logo bug in the top-left safe zone.,"[""eb2a4cb9d1c47fb0"", ""27c176689ea59dfe""]",2026-06-10,2026-06-10T23:00:00+00:00,,upcoming_schedule,results_desk_upcoming_fallback,2026-06-10T02:43:09.547072+00:00,0.0,fresh_upcoming_schedule,allow,"[""2026-06-10"", ""2026-06-10""]"
