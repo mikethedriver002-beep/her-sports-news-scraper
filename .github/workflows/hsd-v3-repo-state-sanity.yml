@@ -180,7 +180,7 @@ jobs:
       - name: Free-only guard tests
         shell: bash
         run: |
-          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py tests/test_v4_phase2e_dirty_tree_hygiene.py tests/test_phase3_expected_games_baseline.py
+          pytest tests/test_no_paid_sources.py tests/test_results_v5_wiring.py tests/test_v4_source_truth_guards.py tests/test_v4_phase2b_repo_state_and_logo_status.py tests/test_v4_phase2c_generated_output_control.py tests/test_v4_phase2e_dirty_tree_hygiene.py tests/test_phase3_expected_games_baseline.py tests/test_phase3_independent_verifier_rebuild.py
 
       - name: Upload V3 sanity artifact
         uses: actions/upload-artifact@v4
