@@ -1,5 +1,5 @@
-name: HSD V4 Phase 2G Installer v2
-run-name: HSD V4 Phase 2G Installer v2 • run ${{ github.run_number }}
+name: HSD V4 Phase 2G Installer v3
+run-name: HSD V4 Phase 2G Installer v3 • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -123,7 +123,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hsd-v4-phase2g-installer-v2-${{ github.run_number }}
+          name: hsd-v4-phase2g-installer-v3-${{ github.run_number }}
           path: |
             phase2g_install_report.json
             phase2g_install_report.md
