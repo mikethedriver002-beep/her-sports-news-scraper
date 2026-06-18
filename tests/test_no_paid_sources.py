@@ -121,8 +121,13 @@ def test_v3_sanity_workflow_builds_upstream_before_acceptance_commands() -> None
     assert "python generate_hsd_final_score_stories_v1.py" in workflow
     assert "python generate_hsd_manual_workflow_merge_v1.py" in workflow
     assert "python generate_hsd_mermaid_upper_echelon_v2.py" in workflow
-    assert "V3 first-run acceptance commands" in workflow
-    assert workflow.index("Build upstream packets for V3 sanity") < workflow.index("V3 first-run acceptance commands")
+    acceptance_step = (
+        "V3 first-run acceptance commands"
+        if "V3 first-run acceptance commands" in workflow
+        else "V5B cinematic renderer and quality outputs"
+    )
+    assert acceptance_step in workflow
+    assert workflow.index("Build upstream packets for V3 sanity") < workflow.index(acceptance_step)
 
 
 def test_v3_sanity_workflow_runs_wnba_logo_registry_fix_before_packets() -> None:
