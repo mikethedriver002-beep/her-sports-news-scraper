@@ -1,5 +1,5 @@
-name: HSD V4 Phase 2G Installer
-run-name: HSD V4 Phase 2G Installer • run ${{ github.run_number }}
+name: HSD V4 Phase 2G Installer v2
+run-name: HSD V4 Phase 2G Installer v2 • run ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -56,11 +56,26 @@ jobs:
           python -m py_compile scripts/report_hsd_phase2_closure_v1.py
           python scripts/report_hsd_phase2_closure_v1.py --self-test
 
-      - name: Apply Phase 2G cleanup and wiring
+      - name: Apply Phase 2G cleanup without workflow patching
         shell: bash
         run: |
           set -euo pipefail
           python scripts/report_hsd_phase2_closure_v1.py --install
+
+      - name: Confirm installer did not patch workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          data=json.load(open('phase2g_install_report.json'))
+          assert data.get('installer_patches_workflows') is False, data
+          PY
+          if git diff --name-only -- .github/workflows | grep -q .; then
+            echo "ERROR: installer must not modify workflow files from Actions token."
+            git diff -- .github/workflows
+            exit 2
+          fi
 
       - name: Run Phase 2 regression tests
         shell: bash
@@ -108,7 +123,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: hsd-v4-phase2g-installer-${{ github.run_number }}
+          name: hsd-v4-phase2g-installer-v2-${{ github.run_number }}
           path: |
             phase2g_install_report.json
             phase2g_install_report.md
