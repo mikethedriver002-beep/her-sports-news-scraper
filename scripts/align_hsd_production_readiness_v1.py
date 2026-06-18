@@ -42,7 +42,7 @@ def write_rows(path: Path, data: list[dict[str, Any]], fields: list[str]) -> Non
 def variant_logo_headlines() -> set[str]:
     out = set()
     for r in rows(VARIANTS):
-        if clean(r.get("variant")) == "logos_only" and clean(r.get("status")) == "ready" and as_int(r.get("team_assets")) >= 2 and as_int(r.get("player_assets")) == 0:
+        if clean(r.get("variant")) == "logos_only" and clean(r.get("status")) == "ready" and as_int(r.get("team_assets")) >= 2 and as_int(r.get("player_assets")) == 0 and "logos_only" in clean(r.get("player_mode")).lower():
             out.add(clean(r.get("headline")))
     return out
 
