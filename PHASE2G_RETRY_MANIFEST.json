@@ -1,6 +1,6 @@
 {
   "package": "HSD_V4_PHASE2G_RETRY_NO_WORKFLOW_PUSH",
-  "version": "v1.1",
+  "version": "v3-test-gate-fix-no-workflow-push",
   "created_for": "Retry Phase 2G after GitHub Actions refused to push workflow file changes",
   "reason": "First run cleaned 2,114 generated paths and left remaining_generated_count=0, but push failed because workflow file modifications require workflows permission.",
   "files": [
@@ -11,5 +11,6 @@
     "PHASE2G_RETRY_MANIFEST.json"
   ],
   "expected_artifact": "hsd-v4-phase2g-installer-v2-<run number>",
-  "does_not_patch_workflows_from_action": true
+  "does_not_patch_workflows_from_action": true,
+  "fix": "Update Phase 2G tests so the installer workflow owns the strict closure gate; do not require normal sanity workflow patch from Actions."
 }

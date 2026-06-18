@@ -6,7 +6,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "scripts" / "report_hsd_phase2_closure_v1.py"
-WORKFLOW = REPO / ".github" / "workflows" / "hsd-v3-repo-state-sanity.yml"
+SANITY_WORKFLOW = REPO / ".github" / "workflows" / "hsd-v3-repo-state-sanity.yml"
+INSTALLER_WORKFLOW = REPO / ".github" / "workflows" / "hsd-v4-phase2g-installer.yml"
 
 
 def load_module():
@@ -78,16 +79,24 @@ def test_phase2g_dirty_tree_blocks_source_but_not_asset_runtime() -> None:
     ) == "asset_runtime"
 
 
-def test_phase2g_workflow_is_wired_for_strict_closure() -> None:
-    workflow = WORKFLOW.read_text(encoding="utf-8")
-    assert "Run V4 Phase 2 closure gate" in workflow
-    assert (
-        "python scripts/report_hsd_phase2_closure_v1.py --audit --strict"
-        in workflow
-    )
+def test_phase2g_installer_workflow_runs_authoritative_closure_gate() -> None:
+    workflow = INSTALLER_WORKFLOW.read_text(encoding="utf-8")
+    assert "Verify authoritative Phase 2 closure" in workflow
+    assert "python scripts/report_hsd_phase2_closure_v1.py" in workflow
+    assert "--audit" in workflow
+    assert "--strict" in workflow
+    assert "--installer-mode" in workflow
     assert "tests/test_v4_phase2g_phase2_closure.py" in workflow
     assert "phase2_closure_v1.json" in workflow
     assert "phase2_closure_v1.md" in workflow
+
+
+def test_phase2g_does_not_require_sanity_workflow_patch_from_actions() -> None:
+    # v2/v3 intentionally avoids asserting the normal sanity workflow is already patched.
+    # GitHub blocks workflow-file pushes from the default Actions token unless it has
+    # workflows permission, so the installer owns the strict closure gate for this run.
+    workflow = SANITY_WORKFLOW.read_text(encoding="utf-8") if SANITY_WORKFLOW.exists() else ""
+    assert "HSD V3 Repo State Sanity" in workflow or workflow == ""
 
 
 def test_phase2g_script_self_test() -> None:

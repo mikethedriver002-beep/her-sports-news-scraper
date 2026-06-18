@@ -56,7 +56,7 @@ Commit directly to `main`.
 Go to:
 
 ```text
-Actions → HSD V4 Phase 2G Installer v2 → Run workflow
+Actions → HSD V4 Phase 2G Installer v3 → Run workflow
 ```
 
 Use:
@@ -72,7 +72,7 @@ The workflow should push successfully because it should no longer touch `.github
 Upload the artifact named like:
 
 ```text
-hsd-v4-phase2g-installer-v2-<run number>
+hsd-v4-phase2g-installer-v3-<run number>
 ```
 
 Check:
@@ -94,3 +94,8 @@ Expected:
 ## Note
 
 The permanent normal sanity workflow closure gate is intentionally deferred. We can add it manually later, but not from the installer Action.
+
+
+## v3 fix
+
+This package fixes the v2 test failure by moving the strict closure-gate assertion from the normal `hsd-v3-repo-state-sanity.yml` workflow to the installer workflow. The normal sanity workflow is not patched from inside Actions because GitHub blocks workflow-file pushes from the default token unless workflow permission is granted.
