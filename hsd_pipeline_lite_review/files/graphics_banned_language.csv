@@ -1,9 +1,0 @@
-term,severity,replacement,reason
-Verified Final,hard_ban,,Keep verification internal only.
-VERIFIED FINAL,hard_ban,,Keep verification internal only.
-Winner,soft_ban,gets the win / beats,Too generic for HSD graphics.
-Loser,hard_ban,,Harsh and uneditorial.
-BUNDLE LOCKED FACTS,hard_ban,,Internal instruction only.
-source-safe context,hard_ban,,Internal instruction only.
-graphics-safe context,hard_ban,,Internal instruction only.
-Do not alter,hard_ban,,Internal instruction only.
