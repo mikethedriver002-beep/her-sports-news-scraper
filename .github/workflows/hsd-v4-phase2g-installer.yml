@@ -1,0 +1,117 @@
+name: HSD V4 Phase 2G Installer
+run-name: HSD V4 Phase 2G Installer • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type CLOSE_PHASE_2 by selecting it below."
+        required: true
+        default: "NO"
+        type: choice
+        options:
+          - "NO"
+          - "CLOSE_PHASE_2"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: hsd-v4-phase2g-installer
+  cancel-in-progress: false
+
+jobs:
+  install-and-close:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Confirm destructive generated-output cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event.inputs.confirm }}" != "CLOSE_PHASE_2" ]]; then
+            echo "Confirmation not supplied."
+            exit 2
+          fi
+
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify installer files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/report_hsd_phase2_closure_v1.py
+          test -f tests/test_v4_phase2g_phase2_closure.py
+          python -m py_compile scripts/report_hsd_phase2_closure_v1.py
+          python scripts/report_hsd_phase2_closure_v1.py --self-test
+
+      - name: Apply Phase 2G cleanup and wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/report_hsd_phase2_closure_v1.py --install
+
+      - name: Run Phase 2 regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip >/dev/null
+          python -m pip install pytest >/dev/null
+          pytest \
+            tests/test_no_paid_sources.py \
+            tests/test_v4_phase2c_generated_output_control.py \
+            tests/test_v4_phase2e_dirty_tree_hygiene.py \
+            tests/test_v4_phase2g_phase2_closure.py
+
+      - name: Commit Phase 2G closure changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "hsd-v4-phase2g-installer"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No repository changes required."
+          else
+            git commit -m "Phase 2G: close Phase 2 repo hygiene [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Verify authoritative Phase 2 closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/report_hsd_phase2_closure_v1.py \
+            --audit \
+            --strict \
+            --installer-mode
+
+      - name: Remove temporary Phase 2 inventory branches
+        if: always()
+        shell: bash
+        run: |
+          git push origin --delete hsd-temp-phase2-inventory 2>/dev/null || true
+          git push origin --delete hsd-v4-phase2g-close-phase2 2>/dev/null || true
+
+      - name: Upload Phase 2G verification artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hsd-v4-phase2g-installer-${{ github.run_number }}
+          path: |
+            phase2g_install_report.json
+            phase2g_install_report.md
+            phase2g_deleted_paths.txt
+            phase2_closure_v1.json
+            phase2_closure_v1.md
