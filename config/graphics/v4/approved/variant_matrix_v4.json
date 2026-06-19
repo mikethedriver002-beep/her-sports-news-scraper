@@ -1,0 +1,65 @@
+{
+  "global_rules": {
+    "approved_logos_only": true,
+    "approved_player_assets_only": true,
+    "human_visual_review_required": true,
+    "invented_layouts_allowed": false,
+    "invented_scores_allowed": false,
+    "registered_templates_only": true
+  },
+  "prohibited_patterns": [
+    "player imagery outside a registered player-photo zone",
+    "player side rail on Last Night cover",
+    "feed geometry reused for Story or Reels",
+    "internal template labels on public exports",
+    "repeated result tags on every recap row"
+  ],
+  "routes": [
+    {
+      "active_module": "WATCH POINT",
+      "asset_state": "logos_only",
+      "template_id": "hsd_tonight_in_the_w_a",
+      "use_case": "wnba_preview_feed_threads"
+    },
+    {
+      "active_module": "APPROVED PLAYER PHOTO SLOT",
+      "asset_state": "approved_player_photo",
+      "fallback": "WATCH POINT",
+      "template_id": "hsd_tonight_in_the_w_a",
+      "use_case": "wnba_preview_feed_threads"
+    },
+    {
+      "asset_state": "logos_only",
+      "template_id": "hsd_game_recap_final_score_a",
+      "use_case": "wnba_single_final_feed_threads"
+    },
+    {
+      "asset_state": "approved_player_photo",
+      "fallback_template_id": "hsd_game_recap_final_score_a",
+      "template_id": "hsd_game_recap_final_score_b",
+      "use_case": "wnba_single_final_feed_threads"
+    },
+    {
+      "asset_state": "any",
+      "template_id": "hsd_game_recap_final_score_c_story",
+      "use_case": "wnba_single_final_story_reels"
+    },
+    {
+      "asset_state": "any",
+      "template_id": "hsd_last_night_in_the_w_variant_a_multi_game_feed",
+      "use_case": "wnba_multi_game_recap_feed_threads"
+    },
+    {
+      "asset_state": "any",
+      "template_id": "hsd_last_night_in_the_w_variant_b_story_rolling_recap",
+      "use_case": "wnba_multi_game_recap_story_reels"
+    },
+    {
+      "asset_state": "any",
+      "template_id": "hsd_last_night_in_the_w_variant_c_carousel_cover_recap_package",
+      "use_case": "wnba_multi_game_recap_carousel"
+    }
+  ],
+  "status": "canonical_frozen",
+  "version": "hsd-variant-matrix-v4.0-wnba"
+}

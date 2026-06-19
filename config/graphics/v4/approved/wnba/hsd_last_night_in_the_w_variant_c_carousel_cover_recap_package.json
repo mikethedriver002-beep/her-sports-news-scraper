@@ -1,0 +1,82 @@
+{
+  "template_id": "hsd_last_night_in_the_w_variant_c_carousel_cover_recap_package",
+  "family": "last_night_in_the_w",
+  "variant": "C",
+  "template_name": "Carousel cover / recap package",
+  "format": "ig_carousel",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "w_min": 80,
+    "w_max": 96,
+    "rules": [
+      "Use the official compact HSD badge exactly as provided.",
+      "Use one badge only, top-left.",
+      "Do not recreate the logo as text.",
+      "Keep the badge small and secondary to the content."
+    ]
+  },
+  "cover_slide": {
+    "headline": {
+      "x": 80,
+      "y": 80,
+      "w": 920,
+      "h": 250,
+      "text_role": "LAST NIGHT IN THE W"
+    },
+    "slate_subhead": {
+      "x": 190,
+      "y": 360,
+      "w": 700,
+      "h": 60,
+      "text_role": "dynamic_editable_subhead",
+      "examples": [
+        "[X] GAMES. ALL THE FINALS.",
+        "[X] FINALS. ONE RECAP.",
+        "TOP RESULTS. BIG MOMENTS."
+      ]
+    },
+    "modular_bottom_area": {
+      "mode_1": "Featured finals row + swipe CTA",
+      "mode_2": "Swipe CTA + question",
+      "mode_3": "Featured finals only"
+    },
+    "featured_finals_row": {
+      "x": 40,
+      "y": 860,
+      "w": 1000,
+      "h": 230,
+      "placeholders": "APPROVED TEAM LOGO SLOT + 00\u201300"
+    },
+    "swipe_cta": {
+      "x": 140,
+      "y": 1180,
+      "w": 800,
+      "h": 70,
+      "optional": true
+    }
+  },
+  "package_slides": {
+    "slide_2_featured_final": "Single-game featured final slide with one final score and optional top performer.",
+    "slide_3_multi_game_recap": "Multi-game recap slide for additional results.",
+    "final_slide_question": "End-question slide to drive engagement."
+  },
+  "renderer_notes": [
+    "Public mockup should show one clean example of the modular cover, not all bottom modes at once.",
+    "Internal layout reference may show all three allowed bottom-area modes.",
+    "Use approved team logo slots only for blank layouts.",
+    "Keep public mockups clean: no internal labels, notes, or guides."
+  ],
+  "when_to_use": "Use when you want a swipeable Instagram recap package with a strong cover, a featured final, a multi-game recap slide, and an end-question slide."
+}

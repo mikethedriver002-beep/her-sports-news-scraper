@@ -1,0 +1,72 @@
+{
+  "license_policy": "OFL-1.1 or another explicitly approved free/open license only",
+  "renderer_cutover_allowed": false,
+  "roles": {
+    "body_copy": {
+      "candidate_families": [
+        "Inter",
+        "Source Sans 3"
+      ],
+      "reference_characteristics": [
+        "neutral sans",
+        "high readability"
+      ],
+      "required": true
+    },
+    "context_condensed": {
+      "candidate_families": [
+        "Oswald"
+      ],
+      "reference_characteristics": [
+        "compact",
+        "uppercase",
+        "clear at small sizes"
+      ],
+      "required": true
+    },
+    "display_condensed_headline": {
+      "candidate_families": [
+        "Bebas Neue",
+        "League Gothic",
+        "Oswald"
+      ],
+      "reference_characteristics": [
+        "tall condensed",
+        "high-impact editorial",
+        "tight tracking",
+        "supports textured fill"
+      ],
+      "required": true
+    },
+    "optional_brush_script": {
+      "candidate_families": [],
+      "reference_characteristics": [
+        "accent only",
+        "never required for layout"
+      ],
+      "required": false
+    },
+    "score_numeric": {
+      "candidate_families": [
+        "Bebas Neue",
+        "Oswald"
+      ],
+      "reference_characteristics": [
+        "condensed",
+        "high legibility at large sizes"
+      ],
+      "required": true
+    }
+  },
+  "selected_fonts": {},
+  "silent_fallback_allowed": false,
+  "source_pages": {
+    "Bebas Neue": "https://fonts.google.com/specimen/Bebas+Neue",
+    "Inter": "https://fonts.google.com/specimen/Inter",
+    "League Gothic": "https://fonts.google.com/specimen/League+Gothic",
+    "Oswald": "https://fonts.google.com/specimen/Oswald",
+    "Source Sans 3": "https://fonts.google.com/specimen/Source+Sans+3"
+  },
+  "status": "declared_reference_match_required",
+  "version": "hsd-font-contract-v4.0"
+}

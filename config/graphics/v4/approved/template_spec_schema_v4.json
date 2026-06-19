@@ -1,0 +1,121 @@
+{
+  "$id": "https://hersportsdaily.local/schemas/hsd-template-spec-v4.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "anyOf": [
+    {
+      "required": [
+        "zones"
+      ]
+    },
+    {
+      "required": [
+        "cover_slide",
+        "package_slides"
+      ]
+    }
+  ],
+  "properties": {
+    "badge": {
+      "required": [
+        "asset",
+        "x",
+        "y",
+        "rules"
+      ],
+      "type": "object"
+    },
+    "canvas": {
+      "properties": {
+        "height": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "width": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "type": "object"
+    },
+    "cover_slide": {
+      "type": "object"
+    },
+    "family": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "format": {
+      "enum": [
+        "ig_feed_threads",
+        "ig_story_reels",
+        "ig_carousel"
+      ]
+    },
+    "package_slides": {
+      "type": "object"
+    },
+    "renderer_notes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "safe_zones": {
+      "properties": {
+        "bottom": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "left": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "right": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "top": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "type": "object"
+    },
+    "template_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "variant": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "when_to_use": {
+      "type": "string"
+    },
+    "zones": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "template_id",
+    "family",
+    "variant",
+    "format",
+    "canvas",
+    "safe_zones",
+    "badge"
+  ],
+  "title": "HSD Canonical Template Specification v4",
+  "type": "object"
+}
