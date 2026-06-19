@@ -3,28 +3,58 @@
   "renderer_cutover_allowed": false,
   "roles": {
     "body_copy": {
-      "candidate_families": ["Inter", "Source Sans 3"],
-      "reference_characteristics": ["neutral sans", "high readability"],
+      "candidate_families": [
+        "Inter",
+        "Source Sans 3"
+      ],
+      "reference_characteristics": [
+        "neutral sans",
+        "high readability"
+      ],
       "required": true
     },
     "context_condensed": {
-      "candidate_families": ["Oswald"],
-      "reference_characteristics": ["compact", "uppercase", "clear at small sizes"],
+      "candidate_families": [
+        "Oswald"
+      ],
+      "reference_characteristics": [
+        "compact",
+        "uppercase",
+        "clear at small sizes"
+      ],
       "required": true
     },
     "display_condensed_headline": {
-      "candidate_families": ["Bebas Neue", "League Gothic", "Oswald"],
-      "reference_characteristics": ["tall condensed", "high-impact editorial", "tight tracking", "supports textured fill"],
+      "candidate_families": [
+        "Bebas Neue",
+        "League Gothic",
+        "Oswald"
+      ],
+      "reference_characteristics": [
+        "tall condensed",
+        "high-impact editorial",
+        "tight tracking",
+        "supports textured fill"
+      ],
       "required": true
     },
     "optional_brush_script": {
       "candidate_families": [],
-      "reference_characteristics": ["accent only", "never required for layout"],
+      "reference_characteristics": [
+        "accent only",
+        "never required for layout"
+      ],
       "required": false
     },
     "score_numeric": {
-      "candidate_families": ["Bebas Neue", "Oswald"],
-      "reference_characteristics": ["condensed", "tabular-looking numerals", "high legibility at large sizes"],
+      "candidate_families": [
+        "Bebas Neue",
+        "Oswald"
+      ],
+      "reference_characteristics": [
+        "condensed",
+        "high legibility at large sizes"
+      ],
       "required": true
     }
   },

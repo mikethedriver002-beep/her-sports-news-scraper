@@ -1,5 +1,19 @@
 {
-  "registered_templates_only": true,
+  "global_rules": {
+    "approved_logos_only": true,
+    "approved_player_assets_only": true,
+    "human_visual_review_required": true,
+    "invented_layouts_allowed": false,
+    "invented_scores_allowed": false,
+    "registered_templates_only": true
+  },
+  "prohibited_patterns": [
+    "player imagery outside a registered player-photo zone",
+    "player side rail on Last Night cover",
+    "feed geometry reused for Story or Reels",
+    "internal template labels on public exports",
+    "repeated result tags on every recap row"
+  ],
   "routes": [
     {
       "active_module": "WATCH POINT",

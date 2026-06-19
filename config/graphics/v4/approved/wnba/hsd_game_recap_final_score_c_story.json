@@ -3,21 +3,108 @@
   "family": "game_recap_final_score",
   "variant": "C",
   "format": "ig_story_reels",
-  "canvas": {"width": 1080, "height": 1920},
-  "safe_zones": {"top": 120, "right": 60, "bottom": 140, "left": 60},
-  "badge": {"asset": "official_hsd_badge_reference.png", "x": 48, "y": 42, "w": 80, "h": 80, "rules": ["Use official compact HSD badge asset only", "Do not recreate as text", "Do not redesign the badge", "One badge only, top-left"]},
-  "zones": {
-    "title": {"x": 80, "y": 160, "w": 920, "h": 180, "text_role": "quick_final_title"},
-    "context_row": {"x": 80, "y": 380, "w": 920, "h": 70, "text_role": "game_context"},
-    "primary_logo_slot": {"x": 80, "y": 500, "w": 260, "h": 260, "asset_role": "approved_team_logo_slot"},
-    "primary_team": {"x": 380, "y": 520, "w": 300, "h": 120, "text_role": "primary_team_name"},
-    "primary_score": {"x": 680, "y": 470, "w": 320, "h": 360, "text_role": "primary_score"},
-    "secondary_logo_slot": {"x": 80, "y": 840, "w": 260, "h": 260, "asset_role": "approved_team_logo_slot"},
-    "secondary_team": {"x": 380, "y": 870, "w": 320, "h": 120, "text_role": "secondary_team_name"},
-    "secondary_score": {"x": 700, "y": 820, "w": 260, "h": 320, "text_role": "secondary_score"},
-    "key_performer": {"x": 80, "y": 1220, "w": 920, "h": 140, "text_role": "optional_key_performer"},
-    "hook_question": {"x": 80, "y": 1390, "w": 920, "h": 200, "text_role": "optional_hook_or_question"}
+  "canvas": {
+    "width": 1080,
+    "height": 1920
   },
-  "renderer_notes": ["Public mockup must not show internal variant labels.", "Built for exact-size Stories/Reels.", "No player photo lane in this version.", "Approved team logo slots only. Do not invent logos.", "Winner/crown treatment is optional and not automatic.", "Brush-script hook is optional, not required."],
+  "safe_zones": {
+    "top": 120,
+    "right": 60,
+    "bottom": 140,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "w": 80,
+    "h": 80,
+    "rules": [
+      "Use official compact HSD badge asset only",
+      "Do not recreate as text",
+      "Do not redesign the badge",
+      "One badge only, top-left"
+    ]
+  },
+  "zones": {
+    "title": {
+      "x": 80,
+      "y": 160,
+      "w": 920,
+      "h": 180,
+      "text_role": "quick_final_title"
+    },
+    "context_row": {
+      "x": 80,
+      "y": 380,
+      "w": 920,
+      "h": 70,
+      "text_role": "game_context"
+    },
+    "primary_logo_slot": {
+      "x": 80,
+      "y": 500,
+      "w": 260,
+      "h": 260,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "primary_team": {
+      "x": 380,
+      "y": 520,
+      "w": 300,
+      "h": 120,
+      "text_role": "primary_team_name"
+    },
+    "primary_score": {
+      "x": 680,
+      "y": 470,
+      "w": 320,
+      "h": 360,
+      "text_role": "primary_score"
+    },
+    "secondary_logo_slot": {
+      "x": 80,
+      "y": 840,
+      "w": 260,
+      "h": 260,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "secondary_team": {
+      "x": 380,
+      "y": 870,
+      "w": 320,
+      "h": 120,
+      "text_role": "secondary_team_name"
+    },
+    "secondary_score": {
+      "x": 700,
+      "y": 820,
+      "w": 260,
+      "h": 320,
+      "text_role": "secondary_score"
+    },
+    "key_performer": {
+      "x": 80,
+      "y": 1220,
+      "w": 920,
+      "h": 140,
+      "text_role": "optional_key_performer"
+    },
+    "hook_question": {
+      "x": 80,
+      "y": 1390,
+      "w": 920,
+      "h": 200,
+      "text_role": "optional_hook_or_question"
+    }
+  },
+  "renderer_notes": [
+    "Public mockup must not show internal variant labels.",
+    "Built for exact-size Stories/Reels.",
+    "No player photo lane in this version.",
+    "Approved team logo slots only. Do not invent logos.",
+    "Winner/crown treatment is optional and not automatic.",
+    "Brush-script hook is optional, not required."
+  ],
   "when_to_use": "Fast vertical final-score post for Stories and Reels when speed and readability matter most."
 }
