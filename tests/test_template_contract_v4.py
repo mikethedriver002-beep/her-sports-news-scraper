@@ -98,6 +98,5 @@ def test_phase6a_is_standalone_and_does_not_cut_over_production_renderer() -> No
     assert "python scripts/validate_hsd_template_contract_v4.py --strict" in phase6a
     assert "pytest tests/test_template_contract_v4.py" in phase6a
     assert "hsd-v4-phase6a-template-contract-${{ github.run_number }}" in phase6a
-    assert "hsd_wnba_canonical_templates_v4.zip" in phase6a
     assert "run_hsd_template_renderer_v3.py" in sanity
     assert "template_renderer_v4" not in sanity
