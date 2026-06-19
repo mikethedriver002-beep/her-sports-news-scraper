@@ -1,8 +1,12 @@
 {
   "version": "hsd-routing-contract-v4.0-wnba",
   "status": "canonical_frozen",
+  "registered_templates_only": true,
   "routes": [
     {"use_case": "preview_base", "template_id": "hsd_tonight_in_the_w_a"},
-    {"use_case": "final_base", "template_id": "hsd_game_recap_final_score_a"}
+    {"use_case": "preview_asset", "template_id": "hsd_tonight_in_the_w_a", "fallback_code": "preview_base"},
+    {"use_case": "final_base", "template_id": "hsd_game_recap_final_score_a"},
+    {"use_case": "final_asset", "template_id": "hsd_game_recap_final_score_b", "fallback_template_id": "hsd_game_recap_final_score_a"},
+    {"use_case": "final_vertical", "template_id": "hsd_game_recap_final_score_c_story"}
   ]
 }
