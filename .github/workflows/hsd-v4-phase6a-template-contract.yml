@@ -1,0 +1,64 @@
+name: HSD V4 Phase 6A Template Contract
+run-name: HSD V4 Phase 6A Template Contract • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v4-phase6a-template-contract-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-template-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install free validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install pillow pytest
+
+      - name: Run Phase 6A canonical template contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_contract_v4.py --strict
+
+      - name: Run Phase 6A contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/test_template_contract_v4.py
+
+      - name: Upload Phase 6A verification artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v4-phase6a-template-contract-${{ github.run_number }}
+          path: |
+            template_contract_v4_report.json
+            template_contract_v4_report.md
+            config/graphics/v4/approved/template_registry_v4.json
+            config/graphics/v4/approved/variant_matrix_v4.json
+            config/graphics/v4/approved/font_contract_v4.json
+            config/graphics/v4/approved/source_manifest_v4.json
+            config/graphics/v4/approved/template_spec_schema_v4.json
+            config/graphics/v4/approved/wnba/*.json
+          if-no-files-found: warn
