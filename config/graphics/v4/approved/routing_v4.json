@@ -1,1 +1,8 @@
-{"version":"v4"}
+{
+  "version": "hsd-routing-contract-v4.0-wnba",
+  "status": "canonical_frozen",
+  "routes": [
+    {"use_case": "preview_base", "template_id": "hsd_tonight_in_the_w_a"},
+    {"use_case": "final_base", "template_id": "hsd_game_recap_final_score_a"}
+  ]
+}
