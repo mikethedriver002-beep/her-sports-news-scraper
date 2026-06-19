@@ -1,0 +1,80 @@
+name: HSD V4 Phase 6D Renderer Visual Correction
+run-name: HSD V4 Phase 6D Renderer Visual Correction • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v4-phase6d-visual-correction-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  visual-correction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install free validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install pillow pytest
+
+      - name: Run Phase 6A contract guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_contract_v4.py --strict
+
+      - name: Run Phase 6D corrected Renderer v4 lane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/generate_hsd_template_renderer_v4.py --strict
+          python scripts/validate_hsd_template_renderer_v4.py --strict
+
+      - name: Run Phase 6D fidelity gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_fidelity_v4.py --strict
+
+      - name: Run Phase 6D tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/test_template_renderer_v4_phase6d.py
+
+      - name: Upload Phase 6D artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v4-phase6d-visual-correction-${{ github.run_number }}
+          path: |
+            template_contract_v4_report.json
+            template_contract_v4_report.md
+            template_renderer_v4_validation_report.json
+            template_renderer_v4_validation_report.md
+            template_fidelity_v4_report.json
+            template_fidelity_v4_report.md
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.csv
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_contact_sheet.jpg
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_renders.zip
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/fidelity/**
+          if-no-files-found: warn

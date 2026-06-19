@@ -1,20 +1,21 @@
 {
-  "version": "hsd-template-fidelity-matrix-v4.0-phase6c",
-  "status": "review_only_gate",
+  "version": "hsd-template-fidelity-matrix-v4.1-phase6d",
+  "status": "visual_correction_gate",
   "cutover_allowed": false,
   "policy": {
     "human_visual_review_required": true,
     "fidelity_gate_required_before_quality_cutover": true,
     "baseline_source": "Phase 6A approved public mockups and layout references",
-    "renderer_source": "Phase 6B Template Renderer v4 proof lane"
+    "renderer_source": "Phase 6D Template Renderer v4.1 visual correction pass",
+    "production_cutover_requires_phase6e": true
   },
   "thresholds": {
-    "minimum_structure_score": 0.38,
-    "minimum_tone_score": 0.4,
-    "minimum_edge_similarity": 0.3,
-    "maximum_dark_ratio_delta": 0.38,
-    "maximum_palette_distance": 150.0,
-    "production_cutover_minimum_overall_score": 0.72
+    "minimum_structure_score": 0.60,
+    "minimum_tone_score": 0.60,
+    "minimum_edge_similarity": 0.45,
+    "maximum_dark_ratio_delta": 0.25,
+    "maximum_palette_distance": 120.0,
+    "production_cutover_minimum_overall_score": 0.84
   },
   "templates": {
     "hsd_tonight_in_the_w_a": {
