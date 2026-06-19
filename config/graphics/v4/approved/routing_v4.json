@@ -7,6 +7,9 @@
     {"use_case": "preview_asset", "template_id": "hsd_tonight_in_the_w_a", "fallback_code": "preview_base"},
     {"use_case": "final_base", "template_id": "hsd_game_recap_final_score_a"},
     {"use_case": "final_asset", "template_id": "hsd_game_recap_final_score_b", "fallback_template_id": "hsd_game_recap_final_score_a"},
-    {"use_case": "final_vertical", "template_id": "hsd_game_recap_final_score_c_story"}
+    {"use_case": "final_vertical", "template_id": "hsd_game_recap_final_score_c_story"},
+    {"use_case": "recap_feed", "template_id": "hsd_last_night_in_the_w_variant_a_multi_game_feed"},
+    {"use_case": "recap_vertical", "template_id": "hsd_last_night_in_the_w_variant_b_story_rolling_recap"},
+    {"use_case": "recap_carousel", "template_id": "hsd_last_night_in_the_w_variant_c_carousel_cover_recap_package"}
   ]
 }
