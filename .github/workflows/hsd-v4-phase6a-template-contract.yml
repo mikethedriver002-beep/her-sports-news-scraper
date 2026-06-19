@@ -17,11 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Check out main
+      - name: Check out selected ref
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -53,10 +52,11 @@ jobs:
         with:
           name: hsd-v4-phase6a-template-contract-${{ github.run_number }}
           path: |
-            template_contract_v4_report.json
-            template_contract_v4_report.md
+            outputs/latest/HSD_TEMPLATE_CONTRACT/template_contract_v4_report.json
+            outputs/latest/HSD_TEMPLATE_CONTRACT/template_contract_v4_report.md
             config/graphics/v4/approved/template_registry_v4.json
             config/graphics/v4/approved/variant_matrix_v4.json
+            config/graphics/v4/approved/routing_v4.json
             config/graphics/v4/approved/font_contract_v4.json
             config/graphics/v4/approved/source_manifest_v4.json
             config/graphics/v4/approved/template_spec_schema_v4.json
