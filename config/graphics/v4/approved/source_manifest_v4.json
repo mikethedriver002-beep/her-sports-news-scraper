@@ -1,0 +1,16 @@
+{
+  "badge_sha256": "2b58e41836539a918cccdc06f1776d6a4b2dc539553319c61c8e2a14c12ec444",
+  "canonical_package_ids": [
+    "tonight_final_corrected_json_markdown",
+    "last_night_final_clean_json_markdown"
+  ],
+  "canonical_source_pack_sha256": "1bd7bddec9f1103694c5c001129f842f4059e8a0739378359dd78c89772278c7",
+  "excluded_package_ids": [
+    "tonight_older_corrected",
+    "tonight_older_library_bundle",
+    "last_night_older_package"
+  ],
+  "outer_archive_name": "Templates-hsd.zip",
+  "template_count": 7,
+  "version": "hsd-template-source-manifest-v4.0"
+}
