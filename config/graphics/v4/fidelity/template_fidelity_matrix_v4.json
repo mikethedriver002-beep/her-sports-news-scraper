@@ -1,0 +1,45 @@
+{
+  "version": "hsd-template-fidelity-matrix-v4.0-phase6c",
+  "status": "review_only_gate",
+  "cutover_allowed": false,
+  "policy": {
+    "human_visual_review_required": true,
+    "fidelity_gate_required_before_quality_cutover": true,
+    "baseline_source": "Phase 6A approved public mockups and layout references",
+    "renderer_source": "Phase 6B Template Renderer v4 proof lane"
+  },
+  "thresholds": {
+    "minimum_structure_score": 0.38,
+    "minimum_tone_score": 0.4,
+    "minimum_edge_similarity": 0.3,
+    "maximum_dark_ratio_delta": 0.38,
+    "maximum_palette_distance": 150.0,
+    "production_cutover_minimum_overall_score": 0.72
+  },
+  "templates": {
+    "hsd_tonight_in_the_w_a": {
+      "baseline": "assets/graphics/v4/approved/public_mockups/wnba/07_tonight_in_the_w_template_A_public.png",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/08_tonight_in_the_w_template_A_layout_reference.png",
+      "family": "Tonight in the W",
+      "phase6b_required": true
+    },
+    "hsd_game_recap_final_score_a": {
+      "baseline": "assets/graphics/v4/approved/public_mockups/wnba/01_game_recap_final_score_variant_A_public.png",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/02_game_recap_final_score_variant_A_layout_reference.png",
+      "family": "Game Recap / Final Score",
+      "phase6b_required": true
+    },
+    "hsd_game_recap_final_score_b": {
+      "baseline": "assets/graphics/v4/approved/public_mockups/wnba/03_game_recap_final_score_variant_B_public.png",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/04_game_recap_final_score_variant_B_layout_reference.png",
+      "family": "Game Recap / Final Score",
+      "phase6b_required": true
+    },
+    "hsd_game_recap_final_score_c_story": {
+      "baseline": "assets/graphics/v4/approved/public_mockups/wnba/05_game_recap_final_score_variant_C_story_public.png",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/06_game_recap_final_score_variant_C_story_layout_reference.png",
+      "family": "Game Recap / Final Score",
+      "phase6b_required": true
+    }
+  }
+}
