@@ -14,7 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 
-VERSION = "v4.2-phase6e-clean-plate-near-post-ready"
+VERSION = "v4.3-phase6h-targeted-fidelity-lift"
 ROOT = Path(".")
 CONTRACT_ROOT = Path("config/graphics/v4/approved")
 SPECS = CONTRACT_ROOT / "wnba"
@@ -526,13 +526,111 @@ def fixture_rows() -> List[Dict[str, Any]]:
     ]
 
 
+def first_value(row: Dict[str, Any], keys: Iterable[str]) -> str:
+    for key in keys:
+        value = clean(row.get(key))
+        if value:
+            return value
+    return ""
+
+
+def final_teams(row: Dict[str, Any]) -> Tuple[str, str]:
+    winner = first_value(row, ["winner_team_name", "winner", "winning_team", "winning_team_name"])
+    loser = first_value(row, ["loser_team_name", "loser", "losing_team", "losing_team_name"])
+    home = first_value(row, ["home_team_name", "home_team_display", "home_team", "team_home"])
+    away = first_value(row, ["away_team_name", "away_team_display", "away_team", "team_away"])
+    if not winner and home and away:
+        home_score = first_value(row, ["home_score", "score_home"])
+        away_score = first_value(row, ["away_score", "score_away"])
+        try:
+            if int(float(home_score or 0)) >= int(float(away_score or 0)):
+                winner, loser = home, away
+            else:
+                winner, loser = away, home
+        except Exception:
+            winner, loser = home, away
+    if not loser:
+        if home and home != winner:
+            loser = home
+        elif away and away != winner:
+            loser = away
+    return winner, loser
+
+
+def event_date(row: Dict[str, Any]) -> str:
+    return first_value(row, ["date", "event_date_local", "scheduled_date_local", "game_date", "local_date"])
+
+
+def event_league(row: Dict[str, Any]) -> str:
+    return first_value(row, ["league", "league_norm", "competition", "sport_league"]) or "WNBA"
+
+
+def event_location(row: Dict[str, Any]) -> str:
+    return first_value(row, ["location", "venue", "site", "arena", "city_state"])
+
+
+def headline_for(row: Dict[str, Any], template_id: str = "") -> str:
+    explicit = first_value(row, ["headline", "graphics_headline", "story_headline", "caption_headline", "title"])
+    if explicit:
+        return explicit
+    if clean(row.get("kind")) == "final" or "final_score" in template_id:
+        winner, loser = final_teams(row)
+        score_winner, score_loser = score_parts(row)
+        if winner and loser and score_winner and score_loser:
+            return f"{winner} {score_winner}, {loser} {score_loser}"
+        if winner and loser:
+            return f"{winner} beat {loser}"
+    home = first_value(row, ["home_team_name", "home_team_display", "home_team"])
+    away = first_value(row, ["away_team_name", "away_team_display", "away_team"])
+    if away and home:
+        return f"{away} at {home}"
+    return first_value(row, ["event_id", "event_uid", "canonical_key"]) or "HSD graphic"
+
+
+def summary_for(row: Dict[str, Any]) -> str:
+    return first_value(row, ["summary", "graphics_subhead", "caption_seed", "story_summary", "hook", "confidence_reason"])
+
+
+def render_slug(row: Dict[str, Any], suffix: str) -> str:
+    base = first_value(row, ["event_id", "event_uid", "source_event_id", "canonical_key"])
+    label = headline_for(row)
+    return slug(f"{base} {label} {suffix}")
+
+
 def score_parts(row: Dict[str, Any]) -> Tuple[str, str]:
+    winner, loser = final_teams(row)
+    winner_score = first_value(row, ["winner_score", "winning_score", "score_winner"])
+    loser_score = first_value(row, ["loser_score", "losing_score", "score_loser"])
+    if winner_score and loser_score:
+        return winner_score, loser_score
+    home = first_value(row, ["home_team_name", "home_team_display", "home_team"])
+    away = first_value(row, ["away_team_name", "away_team_display", "away_team"])
+    home_score = first_value(row, ["home_score", "score_home", "home_points"])
+    away_score = first_value(row, ["away_score", "score_away", "away_points"])
+    if home_score and away_score and winner:
+        if norm(winner) == norm(home):
+            return home_score, away_score
+        if norm(winner) == norm(away):
+            return away_score, home_score
     display = clean(row.get("score_display") or row.get("final_score_display"))
     if display:
+        # Handles both simple scores like 88-82 and scoreboard strings like
+        # "Washington Mystics 88 · Connecticut Sun 81".
         parts = re.split(r"[-–—]", display)
-        if len(parts) >= 2:
-            return parts[0].strip(), parts[1].strip()
-    return clean(row.get("winner_score") or row.get("score_home")), clean(row.get("loser_score") or row.get("score_away"))
+        if len(parts) >= 2 and all(re.search(r"\d", part) for part in parts[:2]):
+            left_num = re.findall(r"\d+", parts[0])
+            right_num = re.findall(r"\d+", parts[1])
+            if left_num and right_num:
+                return left_num[-1], right_num[-1]
+        if winner and loser:
+            winner_match = re.search(re.escape(winner) + r"\D+(\d+)", display, re.I)
+            loser_match = re.search(re.escape(loser) + r"\D+(\d+)", display, re.I)
+            if winner_match and loser_match:
+                return winner_match.group(1), loser_match.group(1)
+        nums = re.findall(r"\d+", display)
+        if len(nums) >= 2:
+            return nums[0], nums[1]
+    return home_score, away_score
 
 
 def content_has_placeholder(row: Dict[str, Any]) -> List[str]:
@@ -613,11 +711,11 @@ def render_tonight(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
 def draw_context_final(image: Image.Image, row: Dict[str, Any], story: bool = False) -> int:
     if story:
         box = (38, 352, 854, 82)
-        segments = [clean(row.get("date") or row.get("event_date_local") or "DATE TBA"), clean(row.get("location") or "LOCATION TBA"), clean(row.get("competition") or row.get("league") or "WNBA")]
+        segments = [event_date(row) or "DATE TBA", event_location(row) or "LOCATION TBA", event_league(row) or "WNBA"]
         widths = [230, 270, 260]
     else:
         box = (80, 308, 920, 66)
-        segments = [clean(row.get("date") or row.get("event_date_local") or "DATE TBA"), clean(row.get("location") or "LOCATION TBA"), clean(row.get("competition") or row.get("league") or "WNBA")]
+        segments = [event_date(row) or "DATE TBA", event_location(row) or "LOCATION TBA", event_league(row) or "WNBA"]
         widths = [240, 310, 270]
     panel(image, box, GOLD, 8, (1, 2, 5, 224), 2)
     overflow = 0
@@ -643,13 +741,12 @@ def stats_values(row: Dict[str, Any]) -> List[Tuple[str, str]]:
 def render_final_a(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str, str]) -> Tuple[Image.Image, Dict[str, Any]]:
     template_id = "hsd_game_recap_final_score_a"
     image = Image.open(clean_plate_path(template_id)).convert("RGBA")
-    winner = clean(row.get("winner_team_name") or row.get("winner") or row.get("home_team_name"))
-    loser = clean(row.get("loser_team_name") or row.get("loser") or row.get("away_team_name"))
+    winner, loser = final_teams(row)
     score_winner, score_loser = score_parts(row)
     overflow = 0
     context = (24, 184, 1032, 68)
     panel(image, context, GOLD, 8, (1, 2, 5, 222), 2)
-    overflow += draw_textured_text(image, (70, 194, 940, 48), f"FINAL • {clean(row.get('league') or 'WNBA')} • {clean(row.get('date') or row.get('event_date_local') or '')}", "context", 24, 15, INK, 1, "center")
+    overflow += draw_textured_text(image, (70, 194, 940, 48), f"FINAL • {event_league(row)} • {event_date(row)}", "context", 24, 15, INK, 1, "center")
     logo_modes = [
         draw_team_asset(image, winner, (92, 302, 260, 300), aliases, logos, GOLD),
         draw_team_asset(image, loser, (92, 692, 260, 270), aliases, logos, MUTED),
@@ -680,7 +777,7 @@ def render_final_a(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     panel(image, takeaway, GOLD, 0, (2, 3, 6, 232), 2)
     draw.rectangle((0, 1198, 205, 1350), fill=(7, 7, 8, 235))
     overflow += draw_textured_text(image, (38, 1220, 145, 110), "THE TAKEAWAY", "context", 31, 18, GOLD_LIGHT, 2, "left")
-    overflow += draw_textured_text(image, (235, 1215, 805, 118), clean(row.get("summary") or row.get("hook")), "body", 29, 17, INK, 3, "left", uppercase=False)
+    overflow += draw_textured_text(image, (235, 1215, 805, 118), summary_for(row), "body", 29, 17, INK, 3, "left", uppercase=False)
     return image, {
         "player_assets_used": 0,
         "player_names": "",
@@ -694,12 +791,12 @@ def render_final_a(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
 
 def render_final_b(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str, str], players: Dict[str, List[Dict[str, str]]], fixtures: bool) -> Tuple[Optional[Image.Image], Dict[str, Any]]:
     template_id = "hsd_game_recap_final_score_b"
-    winner = clean(row.get("winner_team_name") or row.get("winner") or row.get("home_team_name"))
+    winner, _loser_for_player = final_teams(row)
     player = select_player(winner, aliases, players, fixtures)
     if player is None:
         return None, {"route_decision": "downgraded_to_final_a_missing_player"}
     image = Image.open(clean_plate_path(template_id)).convert("RGBA")
-    loser = clean(row.get("loser_team_name") or row.get("loser") or row.get("away_team_name"))
+    winner, loser = final_teams(row)
     score_winner, score_loser = score_parts(row)
     overflow = draw_context_final(image, row, False)
     logo_modes = [
@@ -726,8 +823,8 @@ def render_final_b(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     panel(image, takeaway, GOLD, 7, (2, 3, 6, 236), 2)
     draw = ImageDraw.Draw(image, "RGBA")
     draw.polygon([(65, 1168), (105, 1168), (135, 1193), (105, 1218), (65, 1218), (95, 1193)], fill=(*GOLD_LIGHT, 255))
-    overflow += draw_textured_text(image, (160, 1135, 840, 65), clean(row.get("headline")), "display", 42, 24, INK, 2, "left")
-    overflow += draw_textured_text(image, (160, 1200, 840, 80), clean(row.get("summary")), "body", 27, 16, INK, 3, "left", uppercase=False)
+    overflow += draw_textured_text(image, (160, 1135, 840, 65), headline_for(row, template_id), "display", 42, 24, INK, 2, "left")
+    overflow += draw_textured_text(image, (160, 1200, 840, 80), summary_for(row), "body", 27, 16, INK, 3, "left", uppercase=False)
     return image, {
         "route_decision": "rendered_final_b_with_player",
         "player_assets_used": 1,
@@ -744,16 +841,15 @@ def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     template_id = "hsd_game_recap_final_score_c_story"
     template_spec = spec(template_id)
     image = Image.open(clean_plate_path(template_id)).convert("RGBA")
-    winner = clean(row.get("winner_team_name") or row.get("winner") or row.get("home_team_name"))
-    loser = clean(row.get("loser_team_name") or row.get("loser") or row.get("away_team_name"))
+    winner, loser = final_teams(row)
     score_winner, score_loser = score_parts(row)
     overflow = 0
     context = zone(template_spec, "context_row")
     panel(image, context, GOLD, 8, (1, 2, 5, 228), 2)
     segments = [
-        clean(row.get("date") or row.get("event_date_local") or "DATE TBA"),
-        clean(row.get("location") or "LOCATION TBA"),
-        clean(row.get("competition") or row.get("league") or "WNBA"),
+        event_date(row) or "DATE TBA",
+        event_location(row) or "LOCATION TBA",
+        event_league(row) or "WNBA",
     ]
     segment_width = (context[2] - 80) // 3
     x_cursor = context[0] + 20
@@ -800,7 +896,7 @@ def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     hook = (56, 1410, 968, 230)
     panel(image, hook, GOLD, 8, (2, 3, 6, 235), 2)
     overflow += draw_textured_text(image, (75, 1420, 175, 200), "?", "score", 160, 85, GOLD_LIGHT, 1, "center")
-    overflow += draw_textured_text(image, (270, 1430, 710, 105), clean(row.get("hook") or "WHAT CHANGED THE GAME?"), "display", 50, 24, INK, 2, "left")
+    overflow += draw_textured_text(image, (270, 1430, 710, 105), first_value(row, ["hook", "graphics_subhead"]) or "WHAT CHANGED THE GAME?", "display", 50, 24, INK, 2, "left")
     overflow += draw_textured_text(image, (270, 1540, 710, 55), "DROP YOUR TAKE IN THE COMMENTS.", "context", 26, 14, INK, 1, "left")
     overflow += draw_textured_text(image, (100, 1810, 880, 55), "WOMEN'S SPORTS. ALL DAY. EVERY DAY.", "context", 27, 15, GOLD_LIGHT, 1, "center")
     return image, {
@@ -824,7 +920,7 @@ def make_manifest_item(row: Dict[str, Any], template_id: str, platform: str, var
         "source_id": clean(row.get("event_id") or row.get("event_uid")),
         "template_id": template_id,
         "platform": platform,
-        "headline": clean(row.get("headline")),
+        "headline": headline_for(row, template_id),
         "output_path": output.as_posix(),
         "width": image.width,
         "height": image.height,
@@ -906,22 +1002,22 @@ def main(argv: Optional[List[str]] = None) -> int:
                         continue
                     for platform in ["ig_feed", "threads"]:
                         image, meta = render_tonight(row, aliases, logos, players, module_mode, args.fixtures)
-                        output = RENDERS / platform / f"{slug(row.get('headline'))}__tonight_a__{module_mode}.png"
+                        output = RENDERS / platform / f"{render_slug(row, 'tonight_a')}__tonight_a__{module_mode}.png"
                         save_render(image, output)
                         manifest.append(make_manifest_item(row, "hsd_tonight_in_the_w_a", platform, "A", module_mode, output, image, meta))
             elif clean(row.get("kind")) == "final":
                 for platform in ["ig_feed", "threads"]:
                     image_a, meta_a = render_final_a(row, aliases, logos)
-                    output_a = RENDERS / platform / f"{slug(row.get('headline'))}__final_a.png"
+                    output_a = RENDERS / platform / f"{render_slug(row, 'final_a')}__final_a.png"
                     save_render(image_a, output_a)
                     manifest.append(make_manifest_item(row, "hsd_game_recap_final_score_a", platform, "A", "logos_only", output_a, image_a, meta_a))
                 image_b, meta_b = render_final_b(row, aliases, logos, players, args.fixtures)
                 if image_b is not None:
-                    output_b = RENDERS / "ig_feed" / f"{slug(row.get('headline'))}__final_b__with_player.png"
+                    output_b = RENDERS / "ig_feed" / f"{render_slug(row, 'final_b')}__final_b__with_player.png"
                     save_render(image_b, output_b)
                     manifest.append(make_manifest_item(row, "hsd_game_recap_final_score_b", "ig_feed", "B", "with_player", output_b, image_b, meta_b))
                 image_c, meta_c = render_final_c(row, aliases, logos)
-                output_c = RENDERS / "stories" / f"{slug(row.get('headline'))}__final_c_story.png"
+                output_c = RENDERS / "stories" / f"{render_slug(row, 'final_c_story')}__final_c_story.png"
                 save_render(image_c, output_c)
                 manifest.append(make_manifest_item(row, "hsd_game_recap_final_score_c_story", "stories", "C", "vertical_quick_final", output_c, image_c, meta_c))
         except Exception as exc:
@@ -951,14 +1047,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 archive.write(path, path.relative_to(OUT.parent).as_posix())
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     REPORT_MD.write_text("\n".join([
-        "# HSD Template Renderer v4.2 Phase 6E",
+        "# HSD Template Renderer v4.3 Phase 6H",
         "",
         f"Version: `{VERSION}`",
         f"Rendered: `{len(manifest)}`",
         f"Near-post-ready candidates: `{payload['near_post_ready_candidates']}`",
         f"Errors: `{len(errors)}`",
         "",
-        "Renderer v4.2 uses generated clean plates and dynamic masks. Flattened mockup placeholders are not rendering layers.",
+        "Renderer v4.3 fixes live-data score parsing, unique event output names, and derived headlines before live post-ready evaluation.",
         "All outputs remain review-only and require human visual approval before any production cutover.",
         "",
     ]), encoding="utf-8")
