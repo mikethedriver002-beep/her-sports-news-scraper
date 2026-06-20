@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "v1.2-phase6h-renderer-v4-validator"
+VERSION = "v1.3-phase6i-renderer-v4-validator"
 MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 OUT_JSON = Path("template_renderer_v4_validation_report.json")
 OUT_MD = Path("template_renderer_v4_validation_report.md")
@@ -36,8 +36,8 @@ def main(argv: List[str] | None = None) -> int:
 
     if not manifest:
         blockers.append("renderer_v4_manifest_missing")
-    if manifest.get("version") not in {"v4.2-phase6e-clean-plate-near-post-ready", "v4.3-phase6h-targeted-fidelity-lift"}:
-        blockers.append("renderer_v4_version_not_phase6e_or_phase6h")
+    if manifest.get("version") not in {"v4.2-phase6e-clean-plate-near-post-ready", "v4.3-phase6h-targeted-fidelity-lift", "v4.4-phase6i-final-score-template-polish"}:
+        blockers.append("renderer_v4_version_not_phase6e_or_later")
     if manifest.get("renderer_cutover_allowed") is not False:
         blockers.append("renderer_cutover_must_remain_blocked")
     if manifest.get("clean_plate_mode") is not True:
@@ -109,7 +109,7 @@ def main(argv: List[str] | None = None) -> int:
     }
     OUT_JSON.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     lines = [
-        "# HSD Renderer v4 Phase 6H Validation",
+        "# HSD Renderer v4 Phase 6I Validation",
         "",
         f"Status: `{report['status']}`",
         f"Rendered: `{report['rendered_count']}`",
