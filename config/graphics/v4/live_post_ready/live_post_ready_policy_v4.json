@@ -1,0 +1,47 @@
+{
+  "version": "v1.0-phase6g-live-post-ready-policy",
+  "status": "production_polish_gate_active",
+  "free_only": true,
+  "auto_publish_allowed": false,
+  "production_cutover_allowed": false,
+  "human_visual_approval_required": true,
+  "source_truth_required_for_live_data": true,
+  "source_truth_pass_status": "passed_source_truth_guard",
+  "fixture_source_prefixes": ["fixture", "test", "sample", "demo"],
+  "required_team_logo_count": 2,
+  "allowed_team_logo_modes": ["approved_logo"],
+  "text_logo_fallback_allowed_for_live": false,
+  "player_modes": ["player", "with_player", "with_players", "player_feature"],
+  "fixture_player_assets_allowed_for_live": false,
+  "required_mask_status": "passed_mask_compliance",
+  "maximum_placeholder_layer_count": 0,
+  "maximum_zone_overflow_count": 0,
+  "minimum_fidelity_by_template": {
+    "hsd_tonight_in_the_w_a": 0.93,
+    "hsd_game_recap_final_score_a": 0.89,
+    "hsd_game_recap_final_score_b": 0.90,
+    "hsd_game_recap_final_score_c_story": 0.88
+  },
+  "forbidden_live_copy_tokens": [
+    "TIME TBA",
+    "TV TBA",
+    "DATE TBA",
+    "LOCATION TBA",
+    "PRIMARY TEAM",
+    "SECONDARY TEAM",
+    "TEAM LOGO SLOT",
+    "PLAYER NAME",
+    "SCORE SLOT",
+    "FEATURED PLAYER"
+  ],
+  "live_decisions_path": "config/graphics/v4/live_post_ready/live_visual_approval_decisions_v4.csv",
+  "live_output_root": "outputs/latest/HSD_LIVE_POST_READY",
+  "rules": [
+    "Fixture approvals are proof-only and can never authorize live operator handoff.",
+    "Live approval is bound to the exact render SHA-256, template, platform, and source event.",
+    "Every live WNBA team position must use an approved exact logo; text fallbacks are review-only.",
+    "Player layouts require a real non-fixture player asset.",
+    "No placeholder layers, zone overflow, or mask-compliance failure may enter the live lane.",
+    "Live post-ready permits a limited operator handoff only; it does not auto-publish or enable automatic production cutover."
+  ]
+}
