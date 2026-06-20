@@ -212,13 +212,13 @@ def wrap_text(draw: ImageDraw.ImageDraw, text: str, width: int, typeface: ImageF
     return output[:max_lines]
 
 
-def fit_font(draw: ImageDraw.ImageDraw, text: str, box: Tuple[int, int, int, int], role: str, start: int, floor: int, max_lines: int = 1, line_gap: int = 4) -> Tuple[ImageFont.ImageFont, List[str]]:
+def fit_font(draw: ImageDraw.ImageDraw, text: str, box: Tuple[int, int, int, int], role: str, start: int, floor: int, max_lines: int = 1, line_gap: int = 4, stroke: int = 1) -> Tuple[ImageFont.ImageFont, List[str]]:
     _, _, width, height = box
     for size in range(start, floor - 1, -2):
         typeface = font(role, size)
         lines = wrap_text(draw, text, width, typeface, max_lines)
         line_height = size + line_gap
-        if lines and all(text_width(draw, line, typeface, 1) <= width for line in lines) and line_height * len(lines) <= height:
+        if lines and all(text_width(draw, line, typeface, stroke) <= width for line in lines) and line_height * len(lines) <= height:
             return typeface, lines
     typeface = font(role, floor)
     return typeface, wrap_text(draw, text, width, typeface, max_lines)
@@ -257,7 +257,7 @@ def draw_textured_text(
         return 0
     x, y, width, height = box
     draw = ImageDraw.Draw(image, "RGBA")
-    typeface, lines = fit_font(draw, text, box, role, start, floor, max_lines)
+    typeface, lines = fit_font(draw, text, box, role, start, floor, max_lines, stroke=stroke)
     line_height = typeface.size + 4
     total_height = line_height * len(lines)
     y_cursor = y + max(0, (height - total_height) // 2)
@@ -788,7 +788,8 @@ def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     panel(image, performer, GOLD, 8, (2, 3, 6, 235), 2)
     draw = ImageDraw.Draw(image, "RGBA")
     draw.rectangle((56, 1184, 160, 1394), fill=(*GOLD_LIGHT, 244))
-    overflow += draw_textured_text(image, (66, 1195, 84, 188), "KEY PERFORMER", "context", 26, 14, DARK, 2, "center")
+    overflow += draw_textured_text(image, (62, 1208, 96, 58), "KEY", "context", 24, 12, DARK, 1, "center")
+    overflow += draw_textured_text(image, (62, 1298, 96, 58), "PLAYER", "context", 22, 11, DARK, 1, "center")
     overflow += draw_textured_text(image, (190, 1195, 790, 54), clean(row.get("key_performer")), "display", 44, 23, INK, 1, "left")
     stat_list = [(value, label) for value, label in stats_values(row) if value]
     for index, (value, label_text) in enumerate(stat_list):

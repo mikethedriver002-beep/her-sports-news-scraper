@@ -116,3 +116,12 @@ def test_phase6e_is_free_only() -> None:
     for token in ["openai", "anthropic", "serpapi", "rapidapi", "brightdata", "scrapingbee", "paid_api"]:
         assert token not in combined.lower()
     assert "free" in DOC.read_text(encoding="utf-8").lower()
+
+
+
+def test_phase6e_hotfix_vertical_story_label_is_width_safe() -> None:
+    source = RENDERER.read_text(encoding="utf-8")
+    assert "stroke=stroke" in source
+    assert '"KEY PERFORMER", "context", 26, 14, DARK, 2, "center"' not in source
+    assert '"KEY", "context", 24, 12, DARK, 1, "center"' in source
+    assert '"PLAYER", "context", 22, 11, DARK, 1, "center"' in source
