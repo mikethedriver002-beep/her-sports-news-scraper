@@ -1,0 +1,271 @@
+{
+  "version": "hsd-clean-plate-recipes-v4.2-phase6e",
+  "status": "near_post_ready_clean_plate_contract",
+  "output_root": "assets/graphics/v4/approved/clean_plates/wnba",
+  "mask_root": "assets/graphics/v4/approved/dynamic_masks/wnba",
+  "templates": {
+    "hsd_tonight_in_the_w_a": {
+      "source": "assets/graphics/v4/approved/public_mockups/wnba/07_tonight_in_the_w_template_A_public.png",
+      "regions": [
+        {
+          "name": "context_row",
+          "rect": [
+            78,
+            532,
+            925,
+            78
+          ]
+        },
+        {
+          "name": "left_logo_slot",
+          "rect": [
+            105,
+            612,
+            337,
+            304
+          ]
+        },
+        {
+          "name": "right_logo_slot",
+          "rect": [
+            638,
+            612,
+            337,
+            304
+          ]
+        },
+        {
+          "name": "debate_panel",
+          "rect": [
+            74,
+            918,
+            932,
+            144
+          ]
+        },
+        {
+          "name": "lower_module",
+          "rect": [
+            74,
+            1064,
+            932,
+            239
+          ]
+        }
+      ]
+    },
+    "hsd_game_recap_final_score_a": {
+      "source": "assets/graphics/v4/approved/public_mockups/wnba/01_game_recap_final_score_variant_A_public.png",
+      "regions": [
+        {
+          "name": "context_row",
+          "rect": [
+            24,
+            180,
+            1032,
+            76
+          ]
+        },
+        {
+          "name": "primary_logo",
+          "rect": [
+            88,
+            297,
+            269,
+            310
+          ]
+        },
+        {
+          "name": "primary_team",
+          "rect": [
+            375,
+            280,
+            580,
+            160
+          ]
+        },
+        {
+          "name": "primary_score",
+          "rect": [
+            360,
+            425,
+            620,
+            315
+          ]
+        },
+        {
+          "name": "secondary_logo",
+          "rect": [
+            88,
+            686,
+            269,
+            282
+          ]
+        },
+        {
+          "name": "secondary_team",
+          "rect": [
+            375,
+            736,
+            440,
+            112
+          ]
+        },
+        {
+          "name": "secondary_score",
+          "rect": [
+            375,
+            820,
+            295,
+            165
+          ]
+        },
+        {
+          "name": "key_performer_band",
+          "rect": [
+            0,
+            998,
+            1080,
+            202
+          ]
+        },
+        {
+          "name": "takeaway_band",
+          "rect": [
+            0,
+            1196,
+            1080,
+            154
+          ]
+        }
+      ]
+    },
+    "hsd_game_recap_final_score_b": {
+      "source": "assets/graphics/v4/approved/public_mockups/wnba/03_game_recap_final_score_variant_B_public.png",
+      "regions": [
+        {
+          "name": "context_row",
+          "rect": [
+            72,
+            302,
+            938,
+            82
+          ]
+        },
+        {
+          "name": "primary_logo",
+          "rect": [
+            24,
+            378,
+            190,
+            186
+          ]
+        },
+        {
+          "name": "primary_team",
+          "rect": [
+            208,
+            378,
+            478,
+            182
+          ]
+        },
+        {
+          "name": "primary_score",
+          "rect": [
+            24,
+            552,
+            654,
+            350
+          ]
+        },
+        {
+          "name": "secondary_logo",
+          "rect": [
+            24,
+            908,
+            190,
+            184
+          ]
+        },
+        {
+          "name": "secondary_team_score",
+          "rect": [
+            208,
+            898,
+            452,
+            205
+          ]
+        },
+        {
+          "name": "player_panel",
+          "rect": [
+            694,
+            382,
+            354,
+            720
+          ]
+        },
+        {
+          "name": "takeaway_panel",
+          "rect": [
+            24,
+            1108,
+            1028,
+            208
+          ]
+        }
+      ]
+    },
+    "hsd_game_recap_final_score_c_story": {
+      "source": "assets/graphics/v4/approved/public_mockups/wnba/05_game_recap_final_score_variant_C_story_public.png",
+      "regions": [
+        {
+          "name": "context_row",
+          "rect": [
+            30,
+            340,
+            1020,
+            120
+          ]
+        },
+        {
+          "name": "primary_result",
+          "rect": [
+            30,
+            450,
+            1020,
+            390
+          ]
+        },
+        {
+          "name": "secondary_result",
+          "rect": [
+            30,
+            790,
+            1020,
+            370
+          ]
+        },
+        {
+          "name": "key_performer_panel",
+          "rect": [
+            30,
+            1080,
+            1020,
+            280
+          ]
+        },
+        {
+          "name": "hook_panel",
+          "rect": [
+            30,
+            1340,
+            1020,
+            530
+          ]
+        }
+      ]
+    }
+  }
+}
