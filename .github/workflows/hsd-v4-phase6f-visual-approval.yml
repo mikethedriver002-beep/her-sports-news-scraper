@@ -1,0 +1,88 @@
+name: HSD V4 Phase 6F Visual Approval Gate
+run-name: HSD V4 Phase 6F Visual Approval Gate • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v4-phase6f-visual-approval-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  visual-approval-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install free validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install pillow pytest cairosvg
+
+      - name: Rebuild Renderer v4.2 near-post-ready proof lane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_contract_v4.py --strict
+          python scripts/build_hsd_template_clean_plates_v4.py --strict
+          python scripts/generate_hsd_template_renderer_v4.py --fixtures --strict
+          python scripts/validate_hsd_template_renderer_v4.py --strict
+          python scripts/validate_hsd_template_fidelity_v4.py --strict
+          python scripts/validate_hsd_near_post_ready_v4.py --strict
+
+      - name: Build human visual approval packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prepare_hsd_visual_approval_packet_v4.py --strict
+
+      - name: Validate approval decisions if present
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_visual_approval_v4.py --strict
+
+      - name: Run Phase 6F tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/test_visual_approval_v4_phase6f.py
+
+      - name: Upload Phase 6F visual approval artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v4-phase6f-visual-approval-${{ github.run_number }}
+          path: |
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/approval/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/near_post_ready/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/fidelity/template_fidelity_v4_contact_sheet.jpg
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/fidelity/template_fidelity_v4_diff_sheet.jpg
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_contact_sheet.jpg
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.csv
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_report.json
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_report.md
+            near_post_ready_v4_report.json
+            near_post_ready_v4_report.md
+            template_fidelity_v4_report.json
+            template_fidelity_v4_report.md
+            template_renderer_v4_validation_report.json
+            template_renderer_v4_validation_report.md
+          if-no-files-found: warn
