@@ -1,63 +1,131 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Tuple
 
-VERSION = "v1.0-phase6b-renderer-v4-validator"
+VERSION = "v1.1-phase6e-renderer-v4-validator"
 MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 OUT_JSON = Path("template_renderer_v4_validation_report.json")
 OUT_MD = Path("template_renderer_v4_validation_report.md")
-EXPECTED = {
+EXPECTED: Dict[str, Tuple[int, int]] = {
     "hsd_tonight_in_the_w_a": (1080, 1350),
     "hsd_game_recap_final_score_a": (1080, 1350),
     "hsd_game_recap_final_score_b": (1080, 1350),
     "hsd_game_recap_final_score_c_story": (1080, 1920),
 }
 
-def read_json(path: Path) -> dict[str, Any]:
-    if not path.exists(): return {}
-    return json.loads(path.read_text(encoding="utf-8"))
 
-def main(argv: list[str] | None = None) -> int:
+def read_json(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else {}
+
+
+def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--strict", action="store_true")
     args = parser.parse_args(argv)
     manifest = read_json(MANIFEST)
-    blockers: list[str] = []
-    warnings: list[str] = []
+    blockers: List[str] = []
+    warnings: List[str] = []
     items = manifest.get("items") if isinstance(manifest.get("items"), list) else []
-    if not manifest: blockers.append("renderer_v4_manifest_missing")
-    if manifest.get("renderer_cutover_allowed") is not False: blockers.append("renderer_cutover_must_remain_blocked")
-    if not items: blockers.append("no_renderer_v4_items")
-    templates = {item.get("template_id") for item in items}
-    for tid in EXPECTED:
-        if tid not in templates: blockers.append(f"missing_template:{tid}")
+    fixture_mode = bool(manifest.get("fixture_mode"))
+
+    if not manifest:
+        blockers.append("renderer_v4_manifest_missing")
+    if manifest.get("version") != "v4.2-phase6e-clean-plate-near-post-ready":
+        blockers.append("renderer_v4_version_not_phase6e")
+    if manifest.get("renderer_cutover_allowed") is not False:
+        blockers.append("renderer_cutover_must_remain_blocked")
+    if manifest.get("clean_plate_mode") is not True:
+        blockers.append("clean_plate_mode_not_enabled")
+    if manifest.get("near_post_ready_gate_required") is not True:
+        blockers.append("near_post_ready_gate_not_required")
+    if not items:
+        blockers.append("no_renderer_v4_items")
+
+    templates = {str(item.get("template_id") or "") for item in items}
+    for template_id in EXPECTED:
+        if template_id not in templates:
+            blockers.append(f"missing_template:{template_id}")
+
     for item in items:
-        tid = str(item.get("template_id"))
-        expected = EXPECTED.get(tid)
-        path = Path(str(item.get("output_path") or ""))
-        if not expected:
-            blockers.append(f"unknown_template:{tid}")
+        template_id = str(item.get("template_id") or "")
+        expected = EXPECTED.get(template_id)
+        output = Path(str(item.get("output_path") or ""))
+        plate = Path(str(item.get("clean_plate_path") or ""))
+        mask = Path(str(item.get("dynamic_mask_path") or ""))
+        if expected is None:
+            blockers.append(f"unknown_template:{template_id}")
             continue
         if (int(item.get("width") or 0), int(item.get("height") or 0)) != expected:
-            blockers.append(f"bad_dimensions:{tid}:{item.get('width')}x{item.get('height')}")
-        if not path.exists(): blockers.append(f"missing_output:{path}")
-        if item.get("review_only") != "true": blockers.append(f"not_review_only:{tid}")
-        if int(item.get("team_logo_count") or 0) < 0: blockers.append(f"bad_logo_count:{tid}")
-    if any(str(item.get("template_id")) == "hsd_game_recap_final_score_b" and int(item.get("player_assets_used") or 0) == 0 for item in items):
-        warnings.append("final_score_b_rendered_without_real_player_asset_placeholder_only")
-    report = {"version":VERSION, "status":"passed_renderer_v4_validation" if not blockers else "blocked_renderer_v4_validation", "strict_exit_code": 2 if blockers else 0, "rendered_count":len(items), "templates":sorted(t for t in templates if t), "blockers":blockers, "warnings":warnings, "renderer_version":manifest.get("version")}
+            blockers.append(f"bad_dimensions:{template_id}:{item.get('width')}x{item.get('height')}")
+        if not output.exists():
+            blockers.append(f"missing_output:{output}")
+        if not plate.exists():
+            blockers.append(f"missing_clean_plate:{plate}")
+        if not mask.exists():
+            blockers.append(f"missing_dynamic_mask:{mask}")
+        if str(item.get("review_only")) != "true":
+            blockers.append(f"not_review_only:{template_id}")
+        if int(item.get("placeholder_layer_count") or 0) != 0:
+            blockers.append(f"placeholder_layer_present:{template_id}:{item.get('module_mode')}")
+        if int(item.get("zone_overflow_count") or 0) != 0:
+            blockers.append(f"zone_overflow:{template_id}:{item.get('module_mode')}")
+        if int(item.get("team_logo_count") or 0) < 0:
+            blockers.append(f"bad_logo_count:{template_id}")
+        if not str(item.get("team_logo_modes") or ""):
+            blockers.append(f"missing_logo_mode:{template_id}")
+        if not str(item.get("clean_plate_sha256") or ""):
+            blockers.append(f"missing_clean_plate_hash:{template_id}")
+        if not str(item.get("dynamic_mask_sha256") or ""):
+            blockers.append(f"missing_dynamic_mask_hash:{template_id}")
+        if template_id == "hsd_game_recap_final_score_b":
+            if int(item.get("player_assets_used") or 0) < 1:
+                blockers.append("final_score_b_missing_player_asset")
+            if str(item.get("fixture_only_player_asset")) == "true":
+                if fixture_mode:
+                    warnings.append("final_score_b_uses_fixture_only_reference_asset")
+                else:
+                    blockers.append("production_final_score_b_uses_fixture_asset")
+        if str(item.get("module_mode")) == "player" and int(item.get("player_assets_used") or 0) < 1:
+            blockers.append("tonight_player_module_missing_player_asset")
+
+    status = "passed_renderer_v4_validation" if not blockers else "blocked_renderer_v4_validation"
+    report = {
+        "version": VERSION,
+        "status": status,
+        "strict_exit_code": 0 if not blockers else 2,
+        "renderer_version": manifest.get("version"),
+        "fixture_mode": fixture_mode,
+        "rendered_count": len(items),
+        "near_post_ready_candidates": sum(str(item.get("near_post_ready_candidate")) == "true" for item in items),
+        "templates": sorted(template for template in templates if template),
+        "blockers": sorted(set(blockers)),
+        "warnings": sorted(set(warnings)),
+    }
     OUT_JSON.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
-    lines = ["# HSD Renderer v4 Phase 6B Validation", "", f"Status: `{report['status']}`", f"Rendered: `{len(items)}`", "", "## Blockers", ""]
-    lines += [f"- `{b}`" for b in blockers] or ["- None"]
+    lines = [
+        "# HSD Renderer v4 Phase 6E Validation",
+        "",
+        f"Status: `{report['status']}`",
+        f"Rendered: `{report['rendered_count']}`",
+        f"Near-post-ready candidates: `{report['near_post_ready_candidates']}`",
+        f"Fixture mode: `{fixture_mode}`",
+        "",
+        "## Blockers",
+        "",
+    ]
+    lines += [f"- `{blocker}`" for blocker in report["blockers"]] or ["- None"]
     lines += ["", "## Warnings", ""]
-    lines += [f"- `{w}`" for w in warnings] or ["- None"]
+    lines += [f"- `{warning}`" for warning in report["warnings"]] or ["- None"]
     OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
     return 2 if args.strict and blockers else 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

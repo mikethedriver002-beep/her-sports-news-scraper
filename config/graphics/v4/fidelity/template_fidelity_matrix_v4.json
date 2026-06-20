@@ -1,46 +1,47 @@
 {
-  "version": "hsd-template-fidelity-matrix-v4.1-phase6d",
-  "status": "visual_correction_gate",
   "cutover_allowed": false,
   "policy": {
-    "human_visual_review_required": true,
-    "fidelity_gate_required_before_quality_cutover": true,
     "baseline_source": "Phase 6A approved public mockups and layout references",
-    "renderer_source": "Phase 6D Template Renderer v4.1 visual correction pass",
-    "production_cutover_requires_phase6e": true
+    "fidelity_gate_required_before_quality_cutover": true,
+    "human_visual_review_required": true,
+    "production_cutover_requires_human_approval": true,
+    "production_cutover_requires_phase6e": false,
+    "renderer_source": "Phase 6E Template Renderer v4.2 clean-plate pass"
   },
-  "thresholds": {
-    "minimum_structure_score": 0.60,
-    "minimum_tone_score": 0.60,
-    "minimum_edge_similarity": 0.45,
-    "maximum_dark_ratio_delta": 0.25,
-    "maximum_palette_distance": 120.0,
-    "production_cutover_minimum_overall_score": 0.84
-  },
+  "status": "clean_plate_near_post_ready_gate",
   "templates": {
-    "hsd_tonight_in_the_w_a": {
-      "baseline": "assets/graphics/v4/approved/public_mockups/wnba/07_tonight_in_the_w_template_A_public.png",
-      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/08_tonight_in_the_w_template_A_layout_reference.png",
-      "family": "Tonight in the W",
-      "phase6b_required": true
-    },
     "hsd_game_recap_final_score_a": {
       "baseline": "assets/graphics/v4/approved/public_mockups/wnba/01_game_recap_final_score_variant_A_public.png",
-      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/02_game_recap_final_score_variant_A_layout_reference.png",
       "family": "Game Recap / Final Score",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/02_game_recap_final_score_variant_A_layout_reference.png",
       "phase6b_required": true
     },
     "hsd_game_recap_final_score_b": {
       "baseline": "assets/graphics/v4/approved/public_mockups/wnba/03_game_recap_final_score_variant_B_public.png",
-      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/04_game_recap_final_score_variant_B_layout_reference.png",
       "family": "Game Recap / Final Score",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/04_game_recap_final_score_variant_B_layout_reference.png",
       "phase6b_required": true
     },
     "hsd_game_recap_final_score_c_story": {
       "baseline": "assets/graphics/v4/approved/public_mockups/wnba/05_game_recap_final_score_variant_C_story_public.png",
-      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/06_game_recap_final_score_variant_C_story_layout_reference.png",
       "family": "Game Recap / Final Score",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/06_game_recap_final_score_variant_C_story_layout_reference.png",
+      "phase6b_required": true
+    },
+    "hsd_tonight_in_the_w_a": {
+      "baseline": "assets/graphics/v4/approved/public_mockups/wnba/07_tonight_in_the_w_template_A_public.png",
+      "family": "Tonight in the W",
+      "layout_reference": "assets/graphics/v4/approved/layout_references/wnba/08_tonight_in_the_w_template_A_layout_reference.png",
       "phase6b_required": true
     }
-  }
+  },
+  "thresholds": {
+    "maximum_dark_ratio_delta": 0.25,
+    "maximum_palette_distance": 120.0,
+    "minimum_edge_similarity": 0.46,
+    "minimum_structure_score": 0.62,
+    "minimum_tone_score": 0.62,
+    "production_cutover_minimum_overall_score": 0.84
+  },
+  "version": "hsd-template-fidelity-matrix-v4.2-phase6e-clean-plate"
 }

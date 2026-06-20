@@ -1,0 +1,105 @@
+name: HSD V4 Phase 6E Clean Plate Near Post Ready
+run-name: HSD V4 Phase 6E Clean Plate Near Post Ready • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v4-phase6e-clean-plate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  clean-plate-near-post-ready:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install free renderer dependencies and selected fonts
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core
+          python -m pip install --upgrade pip
+          python -m pip install pillow cairosvg pytest
+          fc-match "Noto Sans Display"
+
+      - name: Build free WNBA logo registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/fetch_hsd_wnba_logo_sources_v1.py || true
+          python scripts/build_hsd_wnba_asset_registry_v1.py || true
+
+      - name: Run Phase 6A contract guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_contract_v4.py --strict
+
+      - name: Build Phase 6E clean plates and masks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_hsd_template_clean_plates_v4.py --strict
+
+      - name: Run Phase 6E Renderer v4.2 fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/generate_hsd_template_renderer_v4.py --fixtures --strict
+          python scripts/validate_hsd_template_renderer_v4.py --strict
+
+      - name: Run Phase 6C fidelity comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_fidelity_v4.py --strict
+
+      - name: Run Phase 6E near-post-ready gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_near_post_ready_v4.py --strict
+
+      - name: Run Phase 6E tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/test_template_renderer_v4_phase6e.py
+
+      - name: Upload Phase 6E artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v4-phase6e-clean-plate-near-post-ready-${{ github.run_number }}
+          path: |
+            outputs/latest/HSD_TEMPLATE_CONTRACT/template_contract_v4_report.json
+            outputs/latest/HSD_TEMPLATE_CONTRACT/template_contract_v4_report.md
+            clean_plate_v4_report.json
+            clean_plate_v4_report.md
+            clean_plate_v4_contact_sheet.jpg
+            template_renderer_v4_validation_report.json
+            template_renderer_v4_validation_report.md
+            template_fidelity_v4_report.json
+            template_fidelity_v4_report.md
+            near_post_ready_v4_report.json
+            near_post_ready_v4_report.md
+            assets/graphics/v4/approved/clean_plates/wnba/**
+            assets/graphics/v4/approved/dynamic_masks/wnba/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/**
+          if-no-files-found: warn

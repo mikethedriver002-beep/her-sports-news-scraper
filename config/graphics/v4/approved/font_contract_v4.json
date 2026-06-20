@@ -58,7 +58,28 @@
       "required": true
     }
   },
-  "selected_fonts": {},
+  "selected_fonts": {
+    "body_copy": {
+      "family": "Noto Sans Display",
+      "style": "Medium",
+      "system_package": "fonts-noto-core"
+    },
+    "context_condensed": {
+      "family": "Noto Sans Display",
+      "style": "SemiCondensed Bold",
+      "system_package": "fonts-noto-core"
+    },
+    "display_condensed_headline": {
+      "family": "Noto Sans Display",
+      "style": "ExtraCondensed Black",
+      "system_package": "fonts-noto-core"
+    },
+    "score_numeric": {
+      "family": "Noto Sans Display",
+      "style": "ExtraCondensed Black",
+      "system_package": "fonts-noto-core"
+    }
+  },
   "silent_fallback_allowed": false,
   "source_pages": {
     "Bebas Neue": "https://fonts.google.com/specimen/Bebas+Neue",
@@ -67,6 +88,6 @@
     "Oswald": "https://fonts.google.com/specimen/Oswald",
     "Source Sans 3": "https://fonts.google.com/specimen/Source+Sans+3"
   },
-  "status": "declared_reference_match_required",
-  "version": "hsd-font-contract-v4.0"
+  "status": "selected_phase6e_system_fonts",
+  "version": "hsd-font-contract-v4.2-phase6e"
 }
