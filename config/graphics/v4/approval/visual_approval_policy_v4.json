@@ -1,0 +1,26 @@
+{
+  "allowed_decisions": [
+    "approved",
+    "rejected",
+    "needs_fix",
+    "hold"
+  ],
+  "approval_scope": "render_hash_template_platform",
+  "cutover_prep_outputs": [
+    "visual_approval_approved_assets_v4.csv",
+    "operator_handoff_v4_approved_assets.csv",
+    "production_cutover_prep_v4.md"
+  ],
+  "limited_operator_handoff_allowed_after_approval": true,
+  "production_cutover_allowed": false,
+  "required_candidate_status": "approval_candidate",
+  "rules": [
+    "Approve by approval_id and render_sha256, not filename alone.",
+    "Fixture-only player reference rows cannot be approved.",
+    "Rows with placeholder layers cannot be approved.",
+    "Rows with zone overflow cannot be approved.",
+    "Approved outputs remain review-only until an explicit production cutover PR."
+  ],
+  "status": "human_visual_approval_required",
+  "version": "v1.0-phase6f-visual-approval-policy"
+}
