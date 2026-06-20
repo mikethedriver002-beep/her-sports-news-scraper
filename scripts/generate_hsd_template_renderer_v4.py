@@ -14,7 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 
-VERSION = "v4.3-phase6h-targeted-fidelity-lift"
+VERSION = "v4.4-phase6i-final-score-template-polish"
 ROOT = Path(".")
 CONTRACT_ROOT = Path("config/graphics/v4/approved")
 SPECS = CONTRACT_ROOT / "wnba"
@@ -61,7 +61,7 @@ MANIFEST_FIELDS = [
     "variant", "module_mode", "player_assets_used", "player_names", "player_asset_kind", "fixture_only_player_asset",
     "team_logo_count", "team_logo_modes", "clean_plate_path", "clean_plate_sha256", "dynamic_mask_path",
     "dynamic_mask_sha256", "placeholder_layer_count", "zone_overflow_count", "review_only", "near_post_ready_candidate",
-    "status", "notes",
+    "status", "notes", "final_score_polish_status", "final_score_polish_score", "final_score_polish_reasons",
 ]
 
 INK = (241, 238, 229)
@@ -588,7 +588,68 @@ def headline_for(row: Dict[str, Any], template_id: str = "") -> str:
 
 
 def summary_for(row: Dict[str, Any]) -> str:
-    return first_value(row, ["summary", "graphics_subhead", "caption_seed", "story_summary", "hook", "confidence_reason"])
+    explicit = first_value(row, ["summary", "graphics_subhead", "caption_seed", "story_summary", "hook", "confidence_reason"])
+    if explicit:
+        return explicit
+    if clean(row.get("kind")) == "final":
+        winner, loser = final_teams(row)
+        score_winner, score_loser = score_parts(row)
+        if winner and loser and score_winner and score_loser:
+            return f"Final score confirmed: {winner} {score_winner}, {loser} {score_loser}."
+        if winner and loser:
+            return f"Final score confirmed: {winner} over {loser}."
+    return "Final score confirmed. Full box score review pending."
+
+
+def key_performer_for(row: Dict[str, Any], fallback_team: str = "") -> str:
+    explicit = first_value(row, [
+        "key_performer", "top_performer", "player_name", "leader_name", "stat_leader",
+        "winning_player", "featured_player",
+    ])
+    if explicit:
+        return explicit
+    return first_value(row, ["winner_team_name", "winner", "winning_team", "home_team_name"]) or fallback_team
+
+
+def final_score_polish_reasons(row: Dict[str, Any], meta: Dict[str, Any], template_id: str, score_winner: str, score_loser: str) -> List[str]:
+    reasons: List[str] = []
+    winner, loser = final_teams(row)
+    if not winner or not loser:
+        reasons.append("missing_winner_or_loser_team")
+    if not re.search(r"\d", clean(score_winner)) or not re.search(r"\d", clean(score_loser)):
+        reasons.append("missing_numeric_final_score")
+    if clean(meta.get("team_logo_modes")) and "text_fallback" in clean(meta.get("team_logo_modes")):
+        reasons.append("team_logo_text_fallback")
+    if int(meta.get("team_logo_count") or 0) < 2:
+        reasons.append("less_than_two_approved_team_logos")
+    if int(meta.get("zone_overflow_count") or 0) > 0:
+        reasons.append("zone_overflow_present")
+    if not headline_for(row, template_id):
+        reasons.append("missing_final_score_headline")
+    if not summary_for(row):
+        reasons.append("missing_takeaway_summary")
+    return sorted(set(reasons))
+
+
+def final_score_polish_meta(row: Dict[str, Any], meta: Dict[str, Any], template_id: str, score_winner: str, score_loser: str) -> Dict[str, Any]:
+    reasons = final_score_polish_reasons(row, meta, template_id, score_winner, score_loser)
+    score = 1.0
+    penalties = {
+        "missing_winner_or_loser_team": 0.28,
+        "missing_numeric_final_score": 0.30,
+        "team_logo_text_fallback": 0.24,
+        "less_than_two_approved_team_logos": 0.24,
+        "zone_overflow_present": 0.20,
+        "missing_final_score_headline": 0.12,
+        "missing_takeaway_summary": 0.08,
+    }
+    for reason in reasons:
+        score -= penalties.get(reason, 0.10)
+    score = max(0.0, round(score, 3))
+    meta["final_score_polish_status"] = "passed_final_score_template_polish" if not reasons else "needs_final_score_template_polish"
+    meta["final_score_polish_score"] = f"{score:.3f}"
+    meta["final_score_polish_reasons"] = ";".join(reasons)
+    return meta
 
 
 def render_slug(row: Dict[str, Any], suffix: str) -> str:
@@ -762,7 +823,7 @@ def render_final_a(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     draw = ImageDraw.Draw(image, "RGBA")
     draw.rectangle((0, 1000, 205, 1196), fill=(7, 7, 8, 235))
     overflow += draw_textured_text(image, (38, 1025, 145, 140), "KEY PERFORMER", "context", 31, 18, GOLD_LIGHT, 2, "left")
-    name = clean(row.get("key_performer"))
+    name = key_performer_for(row, winner)
     overflow += draw_textured_text(image, (235, 1015, 420, 60), name, "display", 42, 23, INK, 1, "left") if name else 0
     stat_list = [(value, label) for value, label in stats_values(row)[:3] if value]
     if stat_list:
@@ -778,7 +839,8 @@ def render_final_a(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     draw.rectangle((0, 1198, 205, 1350), fill=(7, 7, 8, 235))
     overflow += draw_textured_text(image, (38, 1220, 145, 110), "THE TAKEAWAY", "context", 31, 18, GOLD_LIGHT, 2, "left")
     overflow += draw_textured_text(image, (235, 1215, 805, 118), summary_for(row), "body", 29, 17, INK, 3, "left", uppercase=False)
-    return image, {
+    meta = {
+        "route_decision": "rendered_final_a_phase6i_polished",
         "player_assets_used": 0,
         "player_names": "",
         "player_asset_kind": "",
@@ -787,6 +849,7 @@ def render_final_a(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
         "team_logo_modes": ";".join(logo_modes),
         "zone_overflow_count": overflow,
     }
+    return image, final_score_polish_meta(row, meta, template_id, score_winner, score_loser)
 
 
 def render_final_b(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str, str], players: Dict[str, List[Dict[str, str]]], fixtures: bool) -> Tuple[Optional[Image.Image], Dict[str, Any]]:
@@ -813,7 +876,7 @@ def render_final_b(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
         return None, {"route_decision": "downgraded_to_final_a_unreadable_player"}
     stats_panel = (700, 900, 342, 192)
     panel(image, stats_panel, GOLD, 0, (2, 3, 6, 236), 2)
-    overflow += draw_textured_text(image, (710, 908, 322, 45), clean(row.get("key_performer") or player.get("name")), "context", 25, 15, INK, 1, "center")
+    overflow += draw_textured_text(image, (710, 908, 322, 45), key_performer_for(row, winner) or clean(player.get("name")), "context", 25, 15, INK, 1, "center")
     stat_list = [(value, label) for value, label in stats_values(row)[:3] if value]
     for index, (value, label_text) in enumerate(stat_list):
         x = 712 + index * 104
@@ -825,8 +888,8 @@ def render_final_b(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     draw.polygon([(65, 1168), (105, 1168), (135, 1193), (105, 1218), (65, 1218), (95, 1193)], fill=(*GOLD_LIGHT, 255))
     overflow += draw_textured_text(image, (160, 1135, 840, 65), headline_for(row, template_id), "display", 42, 24, INK, 2, "left")
     overflow += draw_textured_text(image, (160, 1200, 840, 80), summary_for(row), "body", 27, 16, INK, 3, "left", uppercase=False)
-    return image, {
-        "route_decision": "rendered_final_b_with_player",
+    meta = {
+        "route_decision": "rendered_final_b_with_player_phase6i_polished",
         "player_assets_used": 1,
         "player_names": clean(player.get("name")),
         "player_asset_kind": clean(player.get("asset_kind")),
@@ -835,6 +898,7 @@ def render_final_b(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
         "team_logo_modes": ";".join(logo_modes),
         "zone_overflow_count": overflow,
     }
+    return image, final_score_polish_meta(row, meta, template_id, score_winner, score_loser)
 
 
 def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str, str]) -> Tuple[Image.Image, Dict[str, Any]]:
@@ -884,9 +948,12 @@ def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     panel(image, performer, GOLD, 8, (2, 3, 6, 235), 2)
     draw = ImageDraw.Draw(image, "RGBA")
     draw.rectangle((56, 1184, 160, 1394), fill=(*GOLD_LIGHT, 244))
-    overflow += draw_textured_text(image, (62, 1208, 96, 58), "KEY", "context", 24, 12, DARK, 1, "center")
-    overflow += draw_textured_text(image, (62, 1298, 96, 58), "PLAYER", "context", 22, 11, DARK, 1, "center")
-    overflow += draw_textured_text(image, (190, 1195, 790, 54), clean(row.get("key_performer")), "display", 44, 23, INK, 1, "left")
+    performer_name = key_performer_for(row, winner)
+    side_label_top = "KEY" if clean(row.get("key_performer")) else "FINAL"
+    side_label_bottom = "PLAYER" if clean(row.get("key_performer")) else "NOTE"
+    overflow += draw_textured_text(image, (62, 1208, 96, 58), side_label_top, "context", 24, 12, DARK, 1, "center")
+    overflow += draw_textured_text(image, (62, 1298, 96, 58), side_label_bottom, "context", 22, 11, DARK, 1, "center")
+    overflow += draw_textured_text(image, (190, 1195, 790, 54), performer_name, "display", 44, 23, INK, 1, "left")
     stat_list = [(value, label) for value, label in stats_values(row) if value]
     for index, (value, label_text) in enumerate(stat_list):
         x = 190 + index * 190
@@ -899,7 +966,8 @@ def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
     overflow += draw_textured_text(image, (270, 1430, 710, 105), first_value(row, ["hook", "graphics_subhead"]) or "WHAT CHANGED THE GAME?", "display", 50, 24, INK, 2, "left")
     overflow += draw_textured_text(image, (270, 1540, 710, 55), "DROP YOUR TAKE IN THE COMMENTS.", "context", 26, 14, INK, 1, "left")
     overflow += draw_textured_text(image, (100, 1810, 880, 55), "WOMEN'S SPORTS. ALL DAY. EVERY DAY.", "context", 27, 15, GOLD_LIGHT, 1, "center")
-    return image, {
+    meta = {
+        "route_decision": "rendered_final_c_story_phase6i_polished",
         "player_assets_used": 0,
         "player_names": "",
         "player_asset_kind": "",
@@ -908,6 +976,7 @@ def render_final_c(row: Dict[str, Any], aliases: Dict[str, str], logos: Dict[str
         "team_logo_modes": ";".join(logo_modes),
         "zone_overflow_count": overflow,
     }
+    return image, final_score_polish_meta(row, meta, template_id, score_winner, score_loser)
 
 
 def make_manifest_item(row: Dict[str, Any], template_id: str, platform: str, variant: str, module_mode: str, output: Path, image: Image.Image, meta: Dict[str, Any]) -> Dict[str, Any]:
@@ -941,7 +1010,10 @@ def make_manifest_item(row: Dict[str, Any], template_id: str, platform: str, var
         "review_only": "true",
         "near_post_ready_candidate": "true" if placeholder_count == 0 and int(meta.get("zone_overflow_count") or 0) == 0 and clean(meta.get("fixture_only_player_asset") or "false") != "true" else "false",
         "status": "rendered_near_post_ready_review",
-        "notes": clean(meta.get("route_decision") or "Phase 6E clean-plate render. Human visual approval required."),
+        "notes": clean(meta.get("route_decision") or "Phase 6I clean-plate render. Human visual approval required."),
+        "final_score_polish_status": clean(meta.get("final_score_polish_status")),
+        "final_score_polish_score": clean(meta.get("final_score_polish_score")),
+        "final_score_polish_reasons": clean(meta.get("final_score_polish_reasons")),
     }
 
 
@@ -959,7 +1031,7 @@ def build_contact(items: List[Dict[str, Any]]) -> None:
     rows = math.ceil(len(items) / columns)
     sheet = Image.new("RGB", (columns * cell_width + 40, rows * cell_height + 85), (242, 242, 242))
     draw = ImageDraw.Draw(sheet)
-    draw.text((24, 22), "HSD Template Renderer v4.2 Phase 6E — Clean Plate Near-Post-Ready Proof", fill=(20, 20, 20))
+    draw.text((24, 22), "HSD Template Renderer v4.4 Phase 6I — Final Score Polish Proof", fill=(20, 20, 20))
     for index, item in enumerate(items):
         path = Path(clean(item.get("output_path")))
         if not path.exists():
@@ -1047,14 +1119,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 archive.write(path, path.relative_to(OUT.parent).as_posix())
     REPORT_JSON.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     REPORT_MD.write_text("\n".join([
-        "# HSD Template Renderer v4.3 Phase 6H",
+        "# HSD Template Renderer v4.4 Phase 6I",
         "",
         f"Version: `{VERSION}`",
         f"Rendered: `{len(manifest)}`",
         f"Near-post-ready candidates: `{payload['near_post_ready_candidates']}`",
         f"Errors: `{len(errors)}`",
         "",
-        "Renderer v4.3 fixes live-data score parsing, unique event output names, and derived headlines before live post-ready evaluation.",
+        "Renderer v4.4 adds final-score polish metadata, safer final-score fallback copy, and Final Score A/B/C release-review preparation.",
         "All outputs remain review-only and require human visual approval before any production cutover.",
         "",
     ]), encoding="utf-8")

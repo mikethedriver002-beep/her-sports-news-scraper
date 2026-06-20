@@ -12,7 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-VERSION = "v1.1-phase6h-targeted-fidelity-lift-live-gate"
+VERSION = "v1.2-phase6i-final-score-polish-live-gate"
 POLICY = Path("config/graphics/v4/live_post_ready/live_post_ready_policy_v4.json")
 RENDER_MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 NEAR_REPORT = Path("near_post_ready_v4_report.json")
@@ -37,7 +37,7 @@ FIELDS = [
     "team_logo_count", "team_logo_modes", "player_assets_used", "player_names", "player_asset_kind",
     "fixture_only_player_asset", "placeholder_layer_count", "zone_overflow_count", "mask_compliance_status",
     "near_post_ready_candidate", "review_only", "source_truth_status", "release_recommendation_status",
-    "polish_reasons", "technical_fidelity_floor", "release_fidelity_threshold", "live_post_ready",
+    "polish_reasons", "technical_fidelity_floor", "release_fidelity_threshold", "final_score_polish_status", "final_score_polish_score", "final_score_polish_reasons", "live_post_ready",
 ]
 DECISION_FIELDS = ["live_approval_id", "decision", "reviewer", "reviewed_at", "reason", "render_sha256"]
 ALLOWED_DECISIONS = {"approved", "rejected", "needs_fix", "hold", ""}
@@ -189,6 +189,26 @@ def technical_reasons(item: Dict[str, Any], policy: Dict[str, Any], mode: str, r
     return sorted(set(reasons))
 
 
+def is_final_score_template(template_id: str) -> bool:
+    return template_id in {
+        "hsd_game_recap_final_score_a",
+        "hsd_game_recap_final_score_b",
+        "hsd_game_recap_final_score_c_story",
+    }
+
+
+def final_score_polish_passes(item: Dict[str, Any], policy: Dict[str, Any]) -> bool:
+    if not is_final_score_template(clean(item.get("template_id"))):
+        return False
+    status = clean(item.get("final_score_polish_status"))
+    try:
+        score = float(clean(item.get("final_score_polish_score")) or "0")
+    except Exception:
+        score = 0.0
+    minimum = as_float(policy.get("minimum_final_score_polish_score") or 0.92)
+    return status == "passed_final_score_template_polish" and score >= minimum
+
+
 def fidelity_policy(item: Dict[str, Any], policy: Dict[str, Any]) -> Tuple[float, float, str, str]:
     template_id = clean(item.get("template_id"))
     release_threshold = as_float((policy.get("minimum_fidelity_by_template") or {}).get(template_id, 1.0))
@@ -196,6 +216,8 @@ def fidelity_policy(item: Dict[str, Any], policy: Dict[str, Any]) -> Tuple[float
     score = as_float(item.get("fidelity_score"))
     if score >= release_threshold:
         return technical_floor, release_threshold, "release_ready_recommended", ""
+    if final_score_polish_passes(item, policy) and policy.get("phase6i_final_score_polish_release_review", True):
+        return technical_floor, release_threshold, "release_ready_recommended", f"phase6i_final_score_polish_review:{score:.4f}_below_public_mockup_threshold:{release_threshold:.2f}"
     if score >= technical_floor:
         return technical_floor, release_threshold, "needs_visual_polish_before_handoff", f"fidelity_below_release_recommendation:{release_threshold:.2f}"
     return technical_floor, release_threshold, "blocked_below_technical_floor", f"fidelity_below_technical_floor:{technical_floor:.3f}"
@@ -277,6 +299,9 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
             "polish_reasons": polish_reason if status == "live_technical_candidate" else "",
             "technical_fidelity_floor": f"{technical_floor:.3f}",
             "release_fidelity_threshold": f"{release_threshold:.3f}",
+            "final_score_polish_status": clean(item.get("final_score_polish_status")),
+            "final_score_polish_score": clean(item.get("final_score_polish_score")),
+            "final_score_polish_reasons": clean(item.get("final_score_polish_reasons")),
             "decision": "",
             "reviewer": "",
             "reviewed_at": "",
@@ -397,7 +422,7 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
 def write_report(root: Path, report: Dict[str, Any]) -> None:
     (root / REPORT_JSON).write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     lines = [
-        "# HSD Phase 6G Live Post-Ready Gate",
+        "# HSD Phase 6I Final-Score Live Post-Ready Gate",
         "",
         f"Mode: `{report['mode']}`",
         f"Status: `{report['status']}`",
@@ -417,7 +442,7 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         "",
         "## Meaning",
         "",
-        "Fixture approvals remain proof-only. Live rows must use real source events, exact approved team logos, real player assets where applicable, passing masks/fidelity, and a live render-hash approval.",
+        "Fixture approvals remain proof-only. Live rows must use real source events, exact approved team logos, real player assets where applicable, passing masks, final-score polish checks, and a live render-hash approval.",
         "Even after the gate passes, outputs move only to a limited operator handoff folder. Nothing is auto-published.",
     ]
     (root / REPORT_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
