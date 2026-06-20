@@ -12,7 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-VERSION = "v1.0-phase6g-live-post-ready-gate"
+VERSION = "v1.1-phase6h-targeted-fidelity-lift-live-gate"
 POLICY = Path("config/graphics/v4/live_post_ready/live_post_ready_policy_v4.json")
 RENDER_MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 NEAR_REPORT = Path("near_post_ready_v4_report.json")
@@ -36,7 +36,8 @@ FIELDS = [
     "output_path", "live_output_path", "technical_status", "technical_reasons", "fidelity_score",
     "team_logo_count", "team_logo_modes", "player_assets_used", "player_names", "player_asset_kind",
     "fixture_only_player_asset", "placeholder_layer_count", "zone_overflow_count", "mask_compliance_status",
-    "near_post_ready_candidate", "review_only", "source_truth_status", "live_post_ready",
+    "near_post_ready_candidate", "review_only", "source_truth_status", "release_recommendation_status",
+    "polish_reasons", "technical_fidelity_floor", "release_fidelity_threshold", "live_post_ready",
 ]
 DECISION_FIELDS = ["live_approval_id", "decision", "reviewer", "reviewed_at", "reason", "render_sha256"]
 ALLOWED_DECISIONS = {"approved", "rejected", "needs_fix", "hold", ""}
@@ -174,9 +175,10 @@ def technical_reasons(item: Dict[str, Any], policy: Dict[str, Any], mode: str, r
         if as_bool(item.get("fixture_only_player_asset")):
             reasons.append("player_mode_uses_fixture_asset")
     template_id = clean(item.get("template_id"))
-    threshold = as_float((policy.get("minimum_fidelity_by_template") or {}).get(template_id, 1.0))
-    if as_float(item.get("fidelity_score")) < threshold:
-        reasons.append(f"fidelity_below_live_threshold:{threshold:.2f}")
+    release_threshold = as_float((policy.get("minimum_fidelity_by_template") or {}).get(template_id, 1.0))
+    technical_floor = as_float((policy.get("technical_fidelity_floor_by_template") or {}).get(template_id, release_threshold))
+    if as_float(item.get("fidelity_score")) < technical_floor:
+        reasons.append(f"fidelity_below_technical_floor:{technical_floor:.3f}")
     combined_copy = " ".join([
         clean(item.get("headline")), clean(item.get("player_names")), clean(item.get("notes")),
     ]).upper()
@@ -185,6 +187,18 @@ def technical_reasons(item: Dict[str, Any], policy: Dict[str, Any], mode: str, r
         if token_upper and token_upper in combined_copy:
             reasons.append(f"forbidden_live_copy:{token_upper}")
     return sorted(set(reasons))
+
+
+def fidelity_policy(item: Dict[str, Any], policy: Dict[str, Any]) -> Tuple[float, float, str, str]:
+    template_id = clean(item.get("template_id"))
+    release_threshold = as_float((policy.get("minimum_fidelity_by_template") or {}).get(template_id, 1.0))
+    technical_floor = as_float((policy.get("technical_fidelity_floor_by_template") or {}).get(template_id, release_threshold))
+    score = as_float(item.get("fidelity_score"))
+    if score >= release_threshold:
+        return technical_floor, release_threshold, "release_ready_recommended", ""
+    if score >= technical_floor:
+        return technical_floor, release_threshold, "needs_visual_polish_before_handoff", f"fidelity_below_release_recommendation:{release_threshold:.2f}"
+    return technical_floor, release_threshold, "blocked_below_technical_floor", f"fidelity_below_technical_floor:{technical_floor:.3f}"
 
 
 def locate_decisions(root: Path, policy: Dict[str, Any]) -> Path:
@@ -250,6 +264,7 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
         output = root / clean(item.get("output_path"))
         render_hash = sha256(output) if output.exists() else ""
         reasons = technical_reasons(item, policy, mode, root, source_truth)
+        technical_floor, release_threshold, release_status, polish_reason = fidelity_policy(item, policy)
         status = "live_technical_candidate" if not reasons else "blocked_live_candidate"
         row = {
             **item,
@@ -258,6 +273,10 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
             "technical_status": status,
             "technical_reasons": ";".join(reasons),
             "source_truth_status": clean(source_truth.get("status")),
+            "release_recommendation_status": release_status if status == "live_technical_candidate" else "not_release_ready",
+            "polish_reasons": polish_reason if status == "live_technical_candidate" else "",
+            "technical_fidelity_floor": f"{technical_floor:.3f}",
+            "release_fidelity_threshold": f"{release_threshold:.3f}",
             "decision": "",
             "reviewer": "",
             "reviewed_at": "",
@@ -285,6 +304,9 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
             decision_blockers.append(f"render_sha_mismatch:{row['live_approval_id']}")
             continue
         if value == "approved":
+            if policy.get("release_recommendation_required_for_handoff", True) and clean(row.get("release_recommendation_status")) != "release_ready_recommended":
+                decision_blockers.append(f"cannot_handoff_needs_visual_polish:{row['live_approval_id']}")
+                continue
             merged = {**row, **decision, "decision": value, "live_post_ready": "true"}
             approved.append(merged)
         elif value in {"rejected", "needs_fix", "hold"}:
@@ -347,6 +369,8 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
         "asset_preparation_status": clean(asset_report.get("status")),
         "rendered_rows": len(rows),
         "technical_candidate_count": len(candidates),
+        "release_ready_recommended_count": len([row for row in candidates if clean(row.get("release_recommendation_status")) == "release_ready_recommended"]),
+        "needs_visual_polish_count": len([row for row in candidates if clean(row.get("release_recommendation_status")) == "needs_visual_polish_before_handoff"]),
         "technical_blocked_count": len(blocked),
         "decision_rows": len(decision_rows),
         "approved_live_count": len(approved),
