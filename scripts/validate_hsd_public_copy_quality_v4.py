@@ -86,8 +86,10 @@ def evaluate(root: Path) -> Dict[str, Any]:
     blockers: List[str] = []
     if not manifest:
         blockers.append("renderer_manifest_missing")
-    if manifest.get("version") != "v4.7-phase6l-editorial-language-polish":
-        blockers.append("renderer_not_phase6l")
+    if manifest.get("phase6l_editorial_language") is not True:
+        blockers.append("phase6l_editorial_language_flag_missing")
+    if clean(manifest.get("editorial_language_version")) != LANGUAGE_VERSION:
+        blockers.append("phase6l_editorial_language_version_missing")
     if not rows:
         blockers.append("no_final_score_rows")
     failed = [row for row in rows if row.get("validation_status") != "passed_public_copy_validation"]
