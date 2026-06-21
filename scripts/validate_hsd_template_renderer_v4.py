@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-VERSION = "v1.3-phase6i-renderer-v4-validator"
+VERSION = "v1.4-phase6j-renderer-v4-validator"
 MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 OUT_JSON = Path("template_renderer_v4_validation_report.json")
 OUT_MD = Path("template_renderer_v4_validation_report.md")
@@ -36,7 +36,7 @@ def main(argv: List[str] | None = None) -> int:
 
     if not manifest:
         blockers.append("renderer_v4_manifest_missing")
-    if manifest.get("version") not in {"v4.2-phase6e-clean-plate-near-post-ready", "v4.3-phase6h-targeted-fidelity-lift", "v4.4-phase6i-final-score-template-polish"}:
+    if manifest.get("version") not in {"v4.2-phase6e-clean-plate-near-post-ready", "v4.3-phase6h-targeted-fidelity-lift", "v4.4-phase6i-final-score-template-polish", "v4.5-phase6j-final-score-content-modules"}:
         blockers.append("renderer_v4_version_not_phase6e_or_later")
     if manifest.get("renderer_cutover_allowed") is not False:
         blockers.append("renderer_cutover_must_remain_blocked")
@@ -91,6 +91,17 @@ def main(argv: List[str] | None = None) -> int:
                     warnings.append("final_score_b_uses_fixture_only_reference_asset")
                 else:
                     blockers.append("production_final_score_b_uses_fixture_asset")
+        if template_id.startswith("hsd_game_recap_final_score"):
+            if str(item.get("content_module_status") or "") != "passed_final_score_content_modules":
+                blockers.append(f"final_score_content_module_not_passed:{template_id}:{item.get('module_mode')}")
+            if not str(item.get("content_module_mode") or ""):
+                blockers.append(f"final_score_content_module_mode_missing:{template_id}")
+            if not str(item.get("content_module_title") or ""):
+                blockers.append(f"final_score_content_module_title_missing:{template_id}")
+            if not str(item.get("content_module_body") or ""):
+                blockers.append(f"final_score_content_module_body_missing:{template_id}")
+        if template_id == "hsd_game_recap_final_score_b" and int(item.get("content_module_stat_count") or 0) < 1:
+            blockers.append("final_score_b_missing_verified_stat_module")
         if str(item.get("module_mode")) == "player" and int(item.get("player_assets_used") or 0) < 1:
             blockers.append("tonight_player_module_missing_player_asset")
 
@@ -109,7 +120,7 @@ def main(argv: List[str] | None = None) -> int:
     }
     OUT_JSON.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     lines = [
-        "# HSD Renderer v4 Phase 6I Validation",
+        "# HSD Renderer v4 Phase 6J Validation",
         "",
         f"Status: `{report['status']}`",
         f"Rendered: `{report['rendered_count']}`",

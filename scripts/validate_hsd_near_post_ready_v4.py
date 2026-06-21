@@ -12,7 +12,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps, ImageStat
 
-VERSION = "v1.0-phase6e-near-post-ready-gate"
+VERSION = "v1.1-phase6j-near-post-ready-gate"
 CLEAN_REPORT = Path("clean_plate_v4_report.json")
 RENDER_MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 FIDELITY_REPORT = Path("template_fidelity_v4_report.json")
@@ -182,8 +182,14 @@ def main(argv: List[str] | None = None) -> int:
     warnings: List[str] = []
     if clean_report.get("status") != "passed_clean_plate_build":
         blockers.append("clean_plate_build_not_passed")
-    if manifest.get("version") != "v4.2-phase6e-clean-plate-near-post-ready":
-        blockers.append("renderer_not_phase6e_v4_2")
+    accepted_renderer_versions = {
+        "v4.2-phase6e-clean-plate-near-post-ready",
+        "v4.3-phase6h-targeted-fidelity-lift",
+        "v4.4-phase6i-final-score-template-polish",
+        "v4.5-phase6j-final-score-content-modules",
+    }
+    if manifest.get("version") not in accepted_renderer_versions:
+        blockers.append("renderer_not_supported_phase6e_or_later")
     if fidelity and fidelity.get("status") != "passed_fidelity_setup":
         blockers.append("fidelity_setup_not_passed")
     rows = [evaluate_item(item) for item in (manifest.get("items") or [])]
@@ -228,7 +234,7 @@ def main(argv: List[str] | None = None) -> int:
     build_sheet(rows, CONTACT, False)
     build_sheet(rows, MASK_SHEET, True)
     lines = [
-        "# HSD Phase 6E Near-Post-Ready Gate",
+        "# HSD Phase 6J Near-Post-Ready Gate",
         "",
         f"Status: `{status}`",
         f"Rendered rows: `{len(rows)}`",
