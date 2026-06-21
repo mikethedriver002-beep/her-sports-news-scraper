@@ -12,7 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-VERSION = "v1.2-phase6i-final-score-polish-live-gate"
+VERSION = "v1.3-phase6j-final-score-content-module-live-gate"
 POLICY = Path("config/graphics/v4/live_post_ready/live_post_ready_policy_v4.json")
 RENDER_MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 NEAR_REPORT = Path("near_post_ready_v4_report.json")
@@ -37,7 +37,9 @@ FIELDS = [
     "team_logo_count", "team_logo_modes", "player_assets_used", "player_names", "player_asset_kind",
     "fixture_only_player_asset", "placeholder_layer_count", "zone_overflow_count", "mask_compliance_status",
     "near_post_ready_candidate", "review_only", "source_truth_status", "release_recommendation_status",
-    "polish_reasons", "technical_fidelity_floor", "release_fidelity_threshold", "final_score_polish_status", "final_score_polish_score", "final_score_polish_reasons", "live_post_ready",
+    "polish_reasons", "technical_fidelity_floor", "release_fidelity_threshold", "final_score_polish_status", "final_score_polish_score", "final_score_polish_reasons",
+    "content_module_status", "content_module_score", "content_module_reasons", "content_module_mode",
+    "content_module_title", "content_module_body", "content_module_stat_count", "content_module_prompt", "live_post_ready",
 ]
 DECISION_FIELDS = ["live_approval_id", "decision", "reviewer", "reviewed_at", "reason", "render_sha256"]
 ALLOWED_DECISIONS = {"approved", "rejected", "needs_fix", "hold", ""}
@@ -175,6 +177,13 @@ def technical_reasons(item: Dict[str, Any], policy: Dict[str, Any], mode: str, r
         if as_bool(item.get("fixture_only_player_asset")):
             reasons.append("player_mode_uses_fixture_asset")
     template_id = clean(item.get("template_id"))
+    if is_final_score_template(template_id) and policy.get("phase6j_final_score_content_modules_required", True):
+        if clean(item.get("content_module_status")) != "passed_final_score_content_modules":
+            reasons.append("final_score_content_module_not_passed")
+        if as_float(item.get("content_module_score")) < as_float(policy.get("minimum_final_score_content_module_score") or 0.95):
+            reasons.append("final_score_content_module_score_below_minimum")
+        if template_id == "hsd_game_recap_final_score_b" and as_int(item.get("content_module_stat_count")) < 1:
+            reasons.append("final_score_b_missing_verified_player_stats")
     release_threshold = as_float((policy.get("minimum_fidelity_by_template") or {}).get(template_id, 1.0))
     technical_floor = as_float((policy.get("technical_fidelity_floor_by_template") or {}).get(template_id, release_threshold))
     if as_float(item.get("fidelity_score")) < technical_floor:
@@ -216,8 +225,12 @@ def fidelity_policy(item: Dict[str, Any], policy: Dict[str, Any]) -> Tuple[float
     score = as_float(item.get("fidelity_score"))
     if score >= release_threshold:
         return technical_floor, release_threshold, "release_ready_recommended", ""
-    if final_score_polish_passes(item, policy) and policy.get("phase6i_final_score_polish_release_review", True):
-        return technical_floor, release_threshold, "release_ready_recommended", f"phase6i_final_score_polish_review:{score:.4f}_below_public_mockup_threshold:{release_threshold:.2f}"
+    content_pass = (
+        clean(item.get("content_module_status")) == "passed_final_score_content_modules"
+        and as_float(item.get("content_module_score")) >= as_float(policy.get("minimum_final_score_content_module_score") or 0.95)
+    )
+    if final_score_polish_passes(item, policy) and content_pass and policy.get("phase6j_final_score_content_modules_release_review", True):
+        return technical_floor, release_threshold, "release_ready_recommended", f"phase6j_content_module_review:{score:.4f}_below_public_mockup_threshold:{release_threshold:.2f}"
     if score >= technical_floor:
         return technical_floor, release_threshold, "needs_visual_polish_before_handoff", f"fidelity_below_release_recommendation:{release_threshold:.2f}"
     return technical_floor, release_threshold, "blocked_below_technical_floor", f"fidelity_below_technical_floor:{technical_floor:.3f}"
@@ -302,6 +315,14 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
             "final_score_polish_status": clean(item.get("final_score_polish_status")),
             "final_score_polish_score": clean(item.get("final_score_polish_score")),
             "final_score_polish_reasons": clean(item.get("final_score_polish_reasons")),
+            "content_module_status": clean(item.get("content_module_status")),
+            "content_module_score": clean(item.get("content_module_score")),
+            "content_module_reasons": clean(item.get("content_module_reasons")),
+            "content_module_mode": clean(item.get("content_module_mode")),
+            "content_module_title": clean(item.get("content_module_title")),
+            "content_module_body": clean(item.get("content_module_body")),
+            "content_module_stat_count": as_int(item.get("content_module_stat_count")),
+            "content_module_prompt": clean(item.get("content_module_prompt")),
             "decision": "",
             "reviewer": "",
             "reviewed_at": "",
@@ -422,7 +443,7 @@ def evaluate(root: Path, mode: str) -> Dict[str, Any]:
 def write_report(root: Path, report: Dict[str, Any]) -> None:
     (root / REPORT_JSON).write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     lines = [
-        "# HSD Phase 6I Final-Score Live Post-Ready Gate",
+        "# HSD Phase 6J Final-Score Content Module Live Gate",
         "",
         f"Mode: `{report['mode']}`",
         f"Status: `{report['status']}`",
@@ -442,7 +463,7 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         "",
         "## Meaning",
         "",
-        "Fixture approvals remain proof-only. Live rows must use real source events, exact approved team logos, real player assets where applicable, passing masks, final-score polish checks, and a live render-hash approval.",
+        "Fixture approvals remain proof-only. Live rows must use real source events, exact approved team logos, real player assets where applicable, passing masks, final-score structural polish, passing content modules, and a live render-hash approval.",
         "Even after the gate passes, outputs move only to a limited operator handoff folder. Nothing is auto-published.",
     ]
     (root / REPORT_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")

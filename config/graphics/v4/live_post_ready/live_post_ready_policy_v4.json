@@ -3,6 +3,12 @@
     "approved_logo"
   ],
   "auto_publish_allowed": false,
+  "final_score_b_requires_verified_stat_count": 1,
+  "final_score_content_forbidden_tokens": [
+    "FINAL SCORE CONFIRMED",
+    "FULL BOX SCORE REVIEW PENDING",
+    "WHAT CHANGED THE GAME?"
+  ],
   "final_score_templates_targeted": [
     "hsd_game_recap_final_score_a",
     "hsd_game_recap_final_score_b",
@@ -39,8 +45,11 @@
     "hsd_game_recap_final_score_c_story": 0.88,
     "hsd_tonight_in_the_w_a": 0.93
   },
+  "minimum_final_score_content_module_score": 0.95,
   "minimum_final_score_polish_score": 0.92,
-  "phase6i_final_score_polish_release_review": true,
+  "phase6i_final_score_polish_release_review": false,
+  "phase6j_final_score_content_modules_release_review": true,
+  "phase6j_final_score_content_modules_required": true,
   "player_modes": [
     "player",
     "with_player",
@@ -61,11 +70,15 @@
     "Phase 6H separates technical live candidacy from release-grade handoff; final-score renders below release threshold are visible for review but cannot enter live handoff.",
     "Live-data render filenames must include event identifiers or derived headlines to prevent same-name overwrites.",
     "Phase 6I can mark Final Score A/B/C as release-ready-recommended only when final_score_polish_status passes and the render still satisfies source truth, exact-logo, mask, overflow, and placeholder rules.",
-    "Phase 6I does not approve final-score assets automatically; render-hash visual approval is still required before limited handoff."
+    "Phase 6I does not approve final-score assets automatically; render-hash visual approval is still required before limited handoff.",
+    "Phase 6J blocks empty performer bands and score-only takeaway copy from final-score handoff.",
+    "Final Score B renders only when a matching real player asset and at least one verified stat value are both available; otherwise the lane downgrades to Final Score A.",
+    "Final Score A and C use a factual game-edge module when no verified player-stat module exists.",
+    "Final Score C requires a dynamic, matchup-specific audience prompt instead of a generic fixed question."
   ],
   "source_truth_pass_status": "passed_source_truth_guard",
   "source_truth_required_for_live_data": true,
-  "status": "final_score_template_polish_gate_active",
+  "status": "final_score_content_module_gate_active",
   "technical_fidelity_floor_by_template": {
     "hsd_game_recap_final_score_a": 0.83,
     "hsd_game_recap_final_score_b": 0.82,
@@ -73,5 +86,5 @@
     "hsd_tonight_in_the_w_a": 0.928
   },
   "text_logo_fallback_allowed_for_live": false,
-  "version": "v1.2-phase6i-final-score-template-polish-policy"
+  "version": "v1.3-phase6j-final-score-content-module-policy"
 }
