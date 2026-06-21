@@ -69,3 +69,10 @@ def test_phase6l_wrappers_exist_and_reference_public_copy_quality():
     assert "phase6k.configure" in renderer
     assert "public_copy_quality" in live_gate
     assert copy_gate.VERSION == "v1.0-phase6l-public-copy-quality-gate"
+
+
+def test_phase6l_recomputes_near_post_ready_after_public_copy_metadata():
+    renderer = (ROOT / "scripts" / "generate_hsd_template_renderer_v4_phase6l.py").read_text(encoding="utf-8")
+    assert "phase6l_near_candidate_recomputed" in renderer
+    assert "_phase6l_near_ready" in renderer
+    assert "phase6l_story_near_candidates" in renderer
