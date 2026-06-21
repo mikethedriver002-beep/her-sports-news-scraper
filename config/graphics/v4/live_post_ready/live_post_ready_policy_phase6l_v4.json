@@ -1,0 +1,102 @@
+{
+  "allowed_team_logo_modes": [
+    "approved_logo"
+  ],
+  "auto_publish_allowed": false,
+  "final_score_story_forbidden_tokens": [
+    "DATE TBA",
+    "LOCATION TBA",
+    "VENUE TBA",
+    "TIME TBA",
+    "TV TBA",
+    "TBD",
+    "UNKNOWN",
+    "TO BE ANNOUNCED",
+    "TO BE DETERMINED"
+  ],
+  "final_score_story_generic_prompts": [
+    "WHAT CHANGED THE GAME?",
+    "WHAT STOOD OUT?",
+    "WHO MADE THE DIFFERENCE LATE?",
+    "WHERE DID THE GAME TURN?",
+    "TELL US WHAT YOU SAW."
+  ],
+  "fixture_player_assets_allowed_for_live": false,
+  "fixture_source_prefixes": [
+    "fixture",
+    "test",
+    "sample",
+    "demo"
+  ],
+  "forbidden_live_copy_tokens": [
+    "TIME TBA",
+    "TV TBA",
+    "DATE TBA",
+    "LOCATION TBA",
+    "VENUE TBA",
+    "PRIMARY TEAM",
+    "SECONDARY TEAM",
+    "TEAM LOGO SLOT",
+    "PLAYER NAME",
+    "SCORE SLOT",
+    "FEATURED PLAYER"
+  ],
+  "free_only": true,
+  "human_visual_approval_required": true,
+  "live_decisions_path": "config/graphics/v4/live_post_ready/live_visual_approval_decisions_v4.csv",
+  "live_output_root": "outputs/latest/HSD_LIVE_POST_READY",
+  "maximum_placeholder_layer_count": 0,
+  "maximum_zone_overflow_count": 0,
+  "minimum_fidelity_by_template": {
+    "hsd_game_recap_final_score_a": 0.89,
+    "hsd_game_recap_final_score_b": 0.9,
+    "hsd_game_recap_final_score_c_story": 0.88,
+    "hsd_tonight_in_the_w_a": 0.93
+  },
+  "minimum_final_score_content_module_score": 0.95,
+  "minimum_final_score_polish_score": 0.92,
+  "minimum_final_score_story_context_score": 0.95,
+  "minimum_final_score_story_cta_score": 0.95,
+  "minimum_public_copy_quality_score": 0.95,
+  "phase6j_final_score_content_modules_required": true,
+  "phase6k_final_score_story_handoff_required": true,
+  "phase6l_public_copy_forbidden_patterns": [
+    "\\bclosed with a\\b",
+    "\\bpoints? victory\\b",
+    "\\bpoints? clear\\b",
+    "\\bfinal margin\\b",
+    "\\bmargin\\b",
+    "\\bwhat fueled\\b",
+    "\\bseparation\\b",
+    "\\bsurvived the finish\\b"
+  ],
+  "phase6l_public_copy_quality_required": true,
+  "player_modes": [
+    "player",
+    "with_player",
+    "with_players",
+    "player_feature"
+  ],
+  "production_cutover_allowed": false,
+  "release_recommendation_required_for_handoff": true,
+  "required_mask_status": "passed_mask_compliance",
+  "required_team_logo_count": 2,
+  "rules": [
+    "Final-score graphics must pass public copy quality before limited handoff.",
+    "Use short HSD-style editorial language such as Dallas Survives, Phoenix Rolls, and Atlanta Pulls Away.",
+    "Do not approve public fallback copy like closed with a 20-point victory, points clear, final margin, or what fueled separation.",
+    "Production cutover and auto-publish remain disabled.",
+    "Human visual approval remains required and bound to exact render SHA."
+  ],
+  "source_truth_pass_status": "passed_source_truth_guard",
+  "source_truth_required_for_live_data": true,
+  "status": "editorial_language_gate_active",
+  "technical_fidelity_floor_by_template": {
+    "hsd_game_recap_final_score_a": 0.83,
+    "hsd_game_recap_final_score_b": 0.82,
+    "hsd_game_recap_final_score_c_story": 0.83,
+    "hsd_tonight_in_the_w_a": 0.928
+  },
+  "text_logo_fallback_allowed_for_live": false,
+  "version": "v1.5-phase6l-editorial-language-policy"
+}
