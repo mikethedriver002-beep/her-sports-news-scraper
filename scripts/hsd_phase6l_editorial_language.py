@@ -168,14 +168,13 @@ def hsd_result_language(winner: Any, loser: Any, score_winner: Any, score_loser:
         cta = f"{headline}. Biggest takeaway?"
     elif margin <= 3:
         cta = f"{headline}. What swung it?"
-    elif margin >= 20:
-        cta = f"{headline}. Biggest reason?"
     else:
-        cta = f"{headline}. What stood out?"
+        cta = f"{headline}. Biggest reason?"
     public_copy = " | ".join(part for part in [headline, body, cta] if part)
     hits = banned_public_hits(public_copy)
     return {
         "editorial_headline": headline,
+        "editorial_team_label": city,
         "editorial_body": body,
         "editorial_scoreline": line,
         "editorial_cta_prompt": cta.upper(),
