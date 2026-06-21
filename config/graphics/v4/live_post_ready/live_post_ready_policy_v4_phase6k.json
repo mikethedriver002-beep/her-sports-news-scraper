@@ -1,0 +1,112 @@
+{
+  "allowed_team_logo_modes": [
+    "approved_logo"
+  ],
+  "auto_publish_allowed": false,
+  "final_score_b_live_optional_without_verified_stats": true,
+  "final_score_b_requires_verified_stat_count": 1,
+  "final_score_content_forbidden_tokens": [
+    "FINAL SCORE CONFIRMED",
+    "FULL BOX SCORE REVIEW PENDING",
+    "WHAT CHANGED THE GAME?"
+  ],
+  "final_score_templates_targeted": [
+    "hsd_game_recap_final_score_a",
+    "hsd_game_recap_final_score_b",
+    "hsd_game_recap_final_score_c_story"
+  ],
+  "fixture_player_assets_allowed_for_live": false,
+  "fixture_source_prefixes": [
+    "fixture",
+    "test",
+    "sample",
+    "demo"
+  ],
+  "forbidden_live_copy_tokens": [
+    "TIME TBA",
+    "TV TBA",
+    "DATE TBA",
+    "LOCATION TBA",
+    "VENUE TBA",
+    "VENUE NAME",
+    "CITY, STATE",
+    "UNKNOWN LOCATION",
+    "PRIMARY TEAM",
+    "SECONDARY TEAM",
+    "TEAM LOGO SLOT",
+    "PLAYER NAME",
+    "SCORE SLOT",
+    "FEATURED PLAYER",
+    "PLAYER FEATURE",
+    "TIME TBD",
+    "TV TBD",
+    "DATE TBD",
+    "LOCATION TBD",
+    "VENUE TBD",
+    "COMPETITION NAME",
+    "NOT AVAILABLE"
+  ],
+  "free_only": true,
+  "human_visual_approval_required": true,
+  "live_decisions_path": "config/graphics/v4/live_post_ready/live_visual_approval_decisions_v4.csv",
+  "live_output_root": "outputs/latest/HSD_LIVE_POST_READY",
+  "maximum_placeholder_layer_count": 0,
+  "maximum_zone_overflow_count": 0,
+  "minimum_fidelity_by_template": {
+    "hsd_game_recap_final_score_a": 0.89,
+    "hsd_game_recap_final_score_b": 0.9,
+    "hsd_game_recap_final_score_c_story": 0.88,
+    "hsd_tonight_in_the_w_a": 0.93
+  },
+  "minimum_final_score_content_module_score": 0.95,
+  "minimum_final_score_polish_score": 0.92,
+  "minimum_story_cta_score": 0.95,
+  "phase6j_final_score_content_modules_required": true,
+  "phase6k_story_context_cta_required": true,
+  "player_modes": [
+    "player",
+    "with_player",
+    "with_players",
+    "player_feature"
+  ],
+  "prerequisite_reports_required": {
+    "clean_plate_v4_report.json": "passed_clean_plate_build",
+    "final_score_content_modules_v4_report.json": "passed_final_score_content_modules",
+    "live_asset_preparation_v4_report.json": "passed_live_asset_preparation",
+    "near_post_ready_v4_report.json": "passed_near_post_ready_setup",
+    "story_context_cta_v4_report.json": "passed_story_context_cta",
+    "template_fidelity_v4_report.json": "passed_fidelity_setup",
+    "template_renderer_v4_validation_report.json": "passed_renderer_v4_validation"
+  },
+  "production_cutover_allowed": false,
+  "release_recommendation_required_for_handoff": true,
+  "rendered_copy_metadata_required": true,
+  "required_mask_status": "passed_mask_compliance",
+  "required_team_logo_count": 2,
+  "rules": [
+    "Fixture approvals are proof-only and can never authorize live operator handoff.",
+    "Live approval is bound to the exact render SHA-256, template, platform, and source event.",
+    "Every live WNBA team position must use an approved exact logo; text fallbacks are review-only.",
+    "Player layouts require a real non-fixture player asset.",
+    "No placeholder layers, rendered placeholder copy, zone overflow, or mask-compliance failure may enter the live lane.",
+    "Unknown date, location, time, or network context is omitted rather than printed as TBA copy.",
+    "Every Final Score C Story prompt must include the winning team short name and pass the Story CTA gate.",
+    "Final Score B renders only when a matching real player asset, a real player name, and at least one verified stat are available.",
+    "A missing live Final Score B render is non-blocking only when Renderer v4.6 records an intentional downgrade to Final Score A.",
+    "Renderer, fidelity, near-post-ready, content-module, and Story context/CTA prerequisite reports must all pass before live candidacy.",
+    "Any changed render invalidates its prior render-hash approval and requires fresh human review.",
+    "Limited handoff is deferred until every current technical candidate has a completed decision bound to its current render SHA-256.",
+    "Live post-ready permits a limited operator handoff only; it does not auto-publish or enable automatic production cutover."
+  ],
+  "source_truth_pass_status": "passed_source_truth_guard",
+  "source_truth_required_for_live_data": true,
+  "status": "story_context_cta_fail_closed_gate_active",
+  "technical_fidelity_floor_by_template": {
+    "hsd_game_recap_final_score_a": 0.83,
+    "hsd_game_recap_final_score_b": 0.82,
+    "hsd_game_recap_final_score_c_story": 0.83,
+    "hsd_tonight_in_the_w_a": 0.928
+  },
+  "text_logo_fallback_allowed_for_live": false,
+  "version": "v1.4-phase6k-story-context-cta-policy"
+}
