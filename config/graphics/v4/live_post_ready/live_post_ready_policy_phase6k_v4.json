@@ -1,0 +1,112 @@
+{
+  "allowed_team_logo_modes": [
+    "approved_logo"
+  ],
+  "auto_publish_allowed": false,
+  "final_score_b_requires_verified_stat_count": 1,
+  "final_score_content_forbidden_tokens": [
+    "FINAL SCORE CONFIRMED",
+    "FULL BOX SCORE REVIEW PENDING",
+    "WHAT CHANGED THE GAME?"
+  ],
+  "final_score_story_forbidden_tokens": [
+    "DATE TBA",
+    "LOCATION TBA",
+    "VENUE TBA",
+    "TIME TBA",
+    "TV TBA",
+    "TBD",
+    "UNKNOWN",
+    "TO BE ANNOUNCED",
+    "TO BE DETERMINED"
+  ],
+  "final_score_story_generic_prompts": [
+    "WHAT CHANGED THE GAME?",
+    "WHAT STOOD OUT?",
+    "WHO MADE THE DIFFERENCE LATE?",
+    "WHERE DID THE GAME TURN?",
+    "TELL US WHAT YOU SAW."
+  ],
+  "final_score_templates_targeted": [
+    "hsd_game_recap_final_score_a",
+    "hsd_game_recap_final_score_b",
+    "hsd_game_recap_final_score_c_story"
+  ],
+  "fixture_player_assets_allowed_for_live": false,
+  "fixture_source_prefixes": [
+    "fixture",
+    "test",
+    "sample",
+    "demo"
+  ],
+  "forbidden_live_copy_tokens": [
+    "TIME TBA",
+    "TV TBA",
+    "DATE TBA",
+    "LOCATION TBA",
+    "VENUE TBA",
+    "PRIMARY TEAM",
+    "SECONDARY TEAM",
+    "TEAM LOGO SLOT",
+    "PLAYER NAME",
+    "SCORE SLOT",
+    "FEATURED PLAYER"
+  ],
+  "free_only": true,
+  "human_visual_approval_required": true,
+  "live_decisions_path": "config/graphics/v4/live_post_ready/live_visual_approval_decisions_v4.csv",
+  "live_output_root": "outputs/latest/HSD_LIVE_POST_READY",
+  "maximum_placeholder_layer_count": 0,
+  "maximum_zone_overflow_count": 0,
+  "minimum_fidelity_by_template": {
+    "hsd_game_recap_final_score_a": 0.89,
+    "hsd_game_recap_final_score_b": 0.9,
+    "hsd_game_recap_final_score_c_story": 0.88,
+    "hsd_tonight_in_the_w_a": 0.93
+  },
+  "minimum_final_score_content_module_score": 0.95,
+  "minimum_final_score_polish_score": 0.92,
+  "minimum_final_score_story_context_score": 0.95,
+  "minimum_final_score_story_cta_score": 0.95,
+  "phase6i_final_score_polish_release_review": false,
+  "phase6j_final_score_content_modules_release_review": true,
+  "phase6j_final_score_content_modules_required": true,
+  "phase6k_final_score_story_handoff_release_review": true,
+  "phase6k_final_score_story_handoff_required": true,
+  "player_modes": [
+    "player",
+    "with_player",
+    "with_players",
+    "player_feature"
+  ],
+  "production_cutover_allowed": false,
+  "release_recommendation_required_for_handoff": true,
+  "required_mask_status": "passed_mask_compliance",
+  "required_team_logo_count": 2,
+  "rules": [
+    "Fixture approvals are proof-only and can never authorize live operator handoff.",
+    "Live approval is bound to the exact render SHA-256, template, platform, and source event.",
+    "Every live WNBA team position must use an approved exact logo; text fallbacks are review-only.",
+    "Player layouts require a real non-fixture player asset.",
+    "No placeholder layers, zone overflow, or mask-compliance failure may enter the live lane.",
+    "Live post-ready permits a limited operator handoff only; it does not auto-publish or enable automatic production cutover.",
+    "Phase 6H separates technical live candidacy from release-grade handoff; final-score renders below release threshold are visible for review but cannot enter live handoff.",
+    "Live-data render filenames must include event identifiers or derived headlines to prevent same-name overwrites.",
+    "Phase 6J requires passing final-score content modules before release review.",
+    "Phase 6K omits unknown date or venue values instead of drawing TBA copy in Final Score Story context rows.",
+    "Phase 6K requires a matchup-specific Final Score Story prompt and stronger CTA hierarchy.",
+    "Every Story changed by Phase 6K requires a fresh human decision bound to the new render hash.",
+    "Existing feed and Threads approvals remain valid only when their render hashes are unchanged."
+  ],
+  "source_truth_pass_status": "passed_source_truth_guard",
+  "source_truth_required_for_live_data": true,
+  "status": "final_score_story_handoff_gate_active",
+  "technical_fidelity_floor_by_template": {
+    "hsd_game_recap_final_score_a": 0.83,
+    "hsd_game_recap_final_score_b": 0.82,
+    "hsd_game_recap_final_score_c_story": 0.83,
+    "hsd_tonight_in_the_w_a": 0.928
+  },
+  "text_logo_fallback_allowed_for_live": false,
+  "version": "v1.4-phase6k-final-score-story-handoff-policy"
+}
