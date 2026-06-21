@@ -1,0 +1,178 @@
+name: HSD V4 Phase 6K Story Handoff Polish
+run-name: HSD V4 Phase 6K Story Handoff Polish • ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'fixture_audit' }} • run ${{ github.run_number }}
+
+on:
+  pull_request:
+    paths:
+      - "scripts/hsd_phase6k_story_handoff.py"
+      - "scripts/generate_hsd_template_renderer_v4_phase6k.py"
+      - "scripts/validate_hsd_final_score_story_handoff_v4.py"
+      - "scripts/validate_hsd_live_post_ready_v4_phase6k.py"
+      - "config/graphics/v4/live_post_ready/live_post_ready_policy_phase6k_v4.json"
+      - "tests/test_renderer_v4_phase6k_story_handoff.py"
+      - ".github/workflows/hsd-v4-phase6k-story-handoff-polish.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "fixture_audit or live_data"
+        required: true
+        default: "fixture_audit"
+        type: choice
+        options:
+          - fixture_audit
+          - live_data
+      strict:
+        description: "Fail on real hard blockers?"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v4-phase6k-story-handoff-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  story-handoff-polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      HSD_PHASE6K_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'fixture_audit' }}
+      HSD_PHASE6K_STRICT: ${{ github.event_name == 'workflow_dispatch' && inputs.strict || 'true' }}
+      HSD_PAID_SOURCES_ALLOWED: "0"
+      HSD_PUBLISH_OUTPUTS: "false"
+      HSD_PUBLISH_MODE: "artifact_only"
+      HSD_ASSET_DOWNLOAD: "1"
+      HSD_REQUIRE_EXACT_TEAM_LOGOS: "1"
+      HSD_TEXT_LOGO_FALLBACK_ALLOWED: "0"
+      HSD_PLAYER_IMAGES_REQUIRED: "1"
+      HSD_GREY_SOURCE_MODE: "review_only"
+      HSD_TIMEZONE: "America/New_York"
+    steps:
+      - name: Check out selected ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install free renderer dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install pillow cairosvg pytest requests
+          fc-match "Noto Sans Display"
+
+      - name: Prepare free exact WNBA assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prepare_hsd_renderer_v4_live_assets.py
+
+      - name: Build live source packets
+        if: ${{ env.HSD_PHASE6K_MODE == 'live_data' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python build_hsd_run_manifest_v1.py || true
+          python generate_hsd_results_desk_v5.py || true
+          python scripts/generate_hsd_expected_games_v5.py || true
+          python scripts/verify_hsd_wnba_schedule_independent_v5.py || true
+          python generate_hsd_results_desk_v5.py || true
+          python generate_hsd_results_contract_v1.py || true
+          python build_hsd_daily_slate_v1.py || true
+          python generate_hsd_final_score_stories_v1.py || true
+          python generate_hsd_story_results_brand_lock_v1.py || true
+          python generate_hsd_manual_workflow_merge_v1.py || true
+          python generate_hsd_multi_post_desk_v1.py || true
+          python generate_hsd_mermaid_upper_echelon_v2.py || true
+          python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py || true
+          python scripts/generate_hsd_graphics_variant_packs_v1.py || true
+          python scripts/report_hsd_v4_source_truth_guard.py
+
+      - name: Build Phase 6K Story renders and gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_contract_v4.py --strict
+          python scripts/build_hsd_template_clean_plates_v4.py --strict
+          if [[ "${HSD_PHASE6K_MODE}" == "fixture_audit" ]]; then
+            python scripts/generate_hsd_template_renderer_v4_phase6k.py --fixtures --strict
+            python scripts/validate_hsd_template_renderer_v4.py --strict
+            python scripts/validate_hsd_template_fidelity_v4.py --strict
+            python scripts/validate_hsd_near_post_ready_v4.py --strict
+            python scripts/validate_hsd_final_score_content_modules_v4.py --strict
+            python scripts/validate_hsd_final_score_story_handoff_v4.py --strict
+          else
+            python scripts/generate_hsd_template_renderer_v4_phase6k.py || true
+            python scripts/validate_hsd_template_renderer_v4.py || true
+            python scripts/validate_hsd_template_fidelity_v4.py || true
+            python scripts/validate_hsd_near_post_ready_v4.py || true
+            python scripts/validate_hsd_final_score_content_modules_v4.py || true
+            if [[ "${HSD_PHASE6K_STRICT}" == "true" ]]; then
+              python scripts/validate_hsd_final_score_story_handoff_v4.py --strict
+            else
+              python scripts/validate_hsd_final_score_story_handoff_v4.py
+            fi
+          fi
+
+      - name: Run Phase 6K limited handoff gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${HSD_PHASE6K_STRICT}" == "true" ]]; then
+            python scripts/validate_hsd_live_post_ready_v4_phase6k.py --mode "${HSD_PHASE6K_MODE}" --strict
+          else
+            python scripts/validate_hsd_live_post_ready_v4_phase6k.py --mode "${HSD_PHASE6K_MODE}"
+          fi
+
+      - name: Run regression and Phase 6K tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest tests/test_renderer_v4_phase6j_content_modules.py tests/test_renderer_v4_phase6k_story_handoff.py
+
+      - name: Upload Phase 6K artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v4-phase6k-story-handoff-${{ env.HSD_PHASE6K_MODE }}-${{ github.run_number }}
+          path: |
+            live_asset_preparation_v4_report.json
+            live_asset_preparation_v4_report.md
+            live_post_ready_v4_report.json
+            live_post_ready_v4_report.md
+            v4_source_truth_guard.json
+            v4_source_truth_guard.md
+            template_renderer_v4_validation_report.json
+            template_renderer_v4_validation_report.md
+            template_fidelity_v4_report.json
+            template_fidelity_v4_report.md
+            near_post_ready_v4_report.json
+            near_post_ready_v4_report.md
+            final_score_content_modules_v4_report.json
+            final_score_content_modules_v4_report.md
+            final_score_story_handoff_v4_report.json
+            final_score_story_handoff_v4_report.md
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/story_handoff/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/live_post_ready/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_contact_sheet.jpg
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.csv
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/near_post_ready/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/fidelity/**
+            outputs/latest/HSD_LIVE_POST_READY/**
+          if-no-files-found: warn
