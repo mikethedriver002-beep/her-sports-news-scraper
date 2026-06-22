@@ -13,7 +13,7 @@ if str(SCRIPT_DIR) not in sys.path:
 import validate_hsd_template_renderer_v4_phase6k as phase6k
 from hsd_asset_assurance_core import clean
 
-VERSION = "v1.6-phase6m-render-safe-renderer-validator"
+VERSION = "v1.7-phase6m-render-safe-renderer-validator"
 MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 OUT_JSON = Path("template_renderer_v4_validation_report.json")
 OUT_MD = Path("template_renderer_v4_validation_report.md")
@@ -29,10 +29,15 @@ def read_json(path: Path) -> Dict[str, Any]:
         return {}
 
 
+def _final_b_intentional_asset_downgrade(manifest: Dict[str, Any]) -> bool:
+    return phase6k.intentional_final_b_downgrade(manifest)
+
+
 def validate(manifest: Dict[str, Any]) -> Dict[str, Any]:
     base_report = phase6k.validate(manifest)
     items = [dict(item) for item in manifest.get("items") or [] if isinstance(item, dict)]
     assurance_safe = all(clean(item.get("asset_render_safe")) == "true" for item in items) if items else False
+    final_b_asset_downgrade = _final_b_intentional_asset_downgrade(manifest)
 
     # Phase 6K's exact-logo blockers are replaced by Phase 6M's stronger
     # render-safe contract. We only suppress them when every item passed the
@@ -44,10 +49,16 @@ def validate(manifest: Dict[str, Any]) -> Dict[str, Any]:
             or blocker.startswith("unapproved_team_logo_mode:")
         ):
             continue
+        if blocker == "fixture_audit_missing_template:hsd_game_recap_final_score_b" and final_b_asset_downgrade:
+            continue
+        if blocker == "missing_template_without_recorded_downgrade:hsd_game_recap_final_score_b" and final_b_asset_downgrade:
+            continue
         filtered.append(blocker)
 
     blockers = list(filtered)
     warnings = list(base_report.get("warnings") or [])
+    if final_b_asset_downgrade:
+        warnings.append("final_score_b_downgraded_no_approved_player_asset")
     if not manifest:
         blockers.append("renderer_manifest_missing")
     if manifest.get("phase6m_asset_assurance") is not True:
@@ -72,10 +83,14 @@ def validate(manifest: Dict[str, Any]) -> Dict[str, Any]:
             blockers.append(f"asset_render_safe_false:{ident}")
         if int(item.get("team_asset_count") or 0) < 2:
             blockers.append(f"insufficient_render_safe_team_assets:{ident}")
+        if clean(item.get("fixture_only_player_asset")).lower() == "true":
+            blockers.append(f"fixture_player_asset_escaped_phase6m:{ident}")
         if clean(item.get("requested_module_mode")).lower() == "player":
             mode = clean(item.get("asset_assurance_player_mode"))
-            if mode not in {"approved_player_asset", "fixture_reference_asset", "team_spotlight_fallback"}:
+            if mode not in {"approved_player_asset", "team_spotlight_fallback"}:
                 blockers.append(f"player_request_has_no_safe_route:{ident}")
+        if clean(item.get("asset_assurance_player_mode")) == "fixture_reference_asset":
+            blockers.append(f"fixture_reference_player_not_downgraded:{ident}")
         if clean(item.get("asset_release_lane")) in {"hsd_badge_review", "team_spotlight_review"}:
             warnings.append(f"asset_fallback_requires_human_review:{ident}")
 
@@ -92,6 +107,7 @@ def validate(manifest: Dict[str, Any]) -> Dict[str, Any]:
         "asset_exact_rows": sum(clean(item.get("asset_release_lane")) == "exact_assets" for item in items),
         "asset_hsd_badge_review_rows": sum(clean(item.get("asset_release_lane")) == "hsd_badge_review" for item in items),
         "asset_team_spotlight_rows": sum(clean(item.get("asset_release_lane")) == "team_spotlight_review" for item in items),
+        "final_score_b_asset_downgrade": final_b_asset_downgrade,
         "blockers": sorted(set(blockers)),
         "warnings": sorted(set(warnings)),
     }
@@ -109,6 +125,7 @@ def write_report(report: Dict[str, Any]) -> None:
         f"Exact-asset rows: `{report['asset_exact_rows']}`",
         f"HSD badge review rows: `{report['asset_hsd_badge_review_rows']}`",
         f"Team spotlight rows: `{report['asset_team_spotlight_rows']}`",
+        f"Final Score B asset downgrade: `{report['final_score_b_asset_downgrade']}`",
         "Production cutover allowed: `false`",
         "Auto-publish allowed: `false`",
         "",
