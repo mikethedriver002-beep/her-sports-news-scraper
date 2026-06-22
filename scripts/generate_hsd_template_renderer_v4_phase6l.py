@@ -4,6 +4,13 @@ from __future__ import annotations
 
 This wrapper keeps Phase 6K's safety gates and visual structure, but replaces the
 remaining fallback-style public language with short HSD editorial language.
+
+Hotfix 5 notes:
+- Keep the compatibility renderer version at the Phase 6K value expected by the
+  existing strict validators.
+- Recompute the near-post-ready flag after Phase 6L public-copy metadata is
+  written. The main-branch live_data run after Hotfix 4 rewrote the Story metadata correctly but
+  still preserved a stale Story near-post-ready=false value from the intermediate item.
 """
 
 import json
@@ -16,10 +23,16 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import generate_hsd_template_renderer_v4_phase6k as phase6k
+from hsd_phase6l_editorial_language import PUBLIC_COPY_PASS
 from hsd_phase6l_editorial_language import VERSION as LANGUAGE_VERSION
 from hsd_phase6l_editorial_language import hsd_result_language, public_date, validate_public_copy_fields
 
-VERSION = "v4.7-phase6l-editorial-language-polish"
+# Compatibility stays on Phase 6K because the existing strict validation stack
+# is built around this renderer version. Phase 6L is exposed through additive
+# metadata and the public-copy quality gate.
+VERSION = "v4.6-phase6k-story-context-cta-polish"
+PHASE6L_EFFECTIVE_VERSION = "v4.7-phase6l-editorial-language-polish-hotfix5"
+
 EXTRA_FIELDS = [
     "editorial_language_version",
     "editorial_headline",
@@ -29,6 +42,8 @@ EXTRA_FIELDS = [
     "editorial_cta_prompt",
     "editorial_margin_band",
     "editorial_margin",
+    "phase6l_effective_renderer_version",
+    "phase6l_near_candidate_recomputed",
     "public_copy",
     "public_copy_quality_status",
     "public_copy_quality_score",
@@ -44,6 +59,13 @@ def clean(value: Any) -> str:
     return phase6k.clean(value)
 
 
+def _as_int(value: Any) -> int:
+    try:
+        return int(float(clean(value) or "0"))
+    except Exception:
+        return 0
+
+
 def _language_for(row: Dict[str, Any], score_winner: Any = "", score_loser: Any = "") -> Dict[str, Any]:
     winner, loser = phase6k.base.final_teams(row)
     if not score_winner or not score_loser:
@@ -54,7 +76,6 @@ def _language_for(row: Dict[str, Any], score_winner: Any = "", score_loser: Any 
 def _editorial_game_edge(row: Dict[str, Any], score_winner: Any, score_loser: Any) -> Dict[str, Any]:
     language = _language_for(row, score_winner, score_loser)
     return {
-        # Replaces the weak GAME EDGE/MARGIN copy path with a public-facing read.
         "title": "FINAL READ",
         "headline": language["editorial_headline"],
         "body": language["editorial_body"],
@@ -72,12 +93,32 @@ def _public_event_date(row: Dict[str, Any]) -> str:
     return public_date(raw)
 
 
+def _phase6l_near_ready(item: Dict[str, Any], template_id: str) -> bool:
+    if _as_int(item.get("placeholder_layer_count")) != 0:
+        return False
+    if _as_int(item.get("context_placeholder_count")) != 0:
+        return False
+    if _as_int(item.get("rendered_copy_placeholder_count")) != 0:
+        return False
+    if _as_int(item.get("zone_overflow_count")) != 0:
+        return False
+    if clean(item.get("fixture_only_player_asset") or "false").lower() == "true":
+        return False
+    if clean(item.get("public_copy_quality_status")) != PUBLIC_COPY_PASS:
+        return False
+    if _as_int(item.get("public_copy_banned_count")) != 0:
+        return False
+    if template_id == "hsd_game_recap_final_score_c_story":
+        if clean(item.get("story_cta_status")) != "passed_story_context_cta":
+            return False
+        if not clean(item.get("story_prompt")):
+            return False
+    return True
+
+
 def _patch_manifest_item(original_make_manifest_item):
     def wrapped_make_manifest_item(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         item = original_make_manifest_item(*args, **kwargs)
-        meta = kwargs.get("meta")
-        if meta is None and len(args) >= 8:
-            meta = args[7]
         row = args[0] if args else kwargs.get("row", {})
         template_id = clean(item.get("template_id"))
         if template_id.startswith("hsd_game_recap_final_score"):
@@ -85,6 +126,7 @@ def _patch_manifest_item(original_make_manifest_item):
             language = _language_for(row, score_winner, score_loser)
             item.update({
                 "editorial_language_version": LANGUAGE_VERSION,
+                "phase6l_effective_renderer_version": PHASE6L_EFFECTIVE_VERSION,
                 **language,
             })
             # Make the manifest content-module fields match what the public should read.
@@ -102,10 +144,8 @@ def _patch_manifest_item(original_make_manifest_item):
                 item["story_cta_score"] = "1.000"
                 item["story_cta_reasons"] = ""
             item.update(validate_public_copy_fields(item))
-            item["near_post_ready_candidate"] = "true" if (
-                clean(item.get("near_post_ready_candidate")) == "true"
-                and int(item.get("public_copy_banned_count") or 0) == 0
-            ) else "false"
+            item["phase6l_near_candidate_recomputed"] = "true"
+            item["near_post_ready_candidate"] = "true" if _phase6l_near_ready(item, template_id) else "false"
         else:
             # Tonight lanes are not rewritten, but we still expose copy-quality metadata for audit.
             item.update({
@@ -117,6 +157,8 @@ def _patch_manifest_item(original_make_manifest_item):
                 "editorial_cta_prompt": "",
                 "editorial_margin_band": "",
                 "editorial_margin": "",
+                "phase6l_effective_renderer_version": PHASE6L_EFFECTIVE_VERSION,
+                "phase6l_near_candidate_recomputed": "false",
             })
             item.update(validate_public_copy_fields(item))
         return item
@@ -137,23 +179,30 @@ def _patch_reports() -> None:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             continue
-        payload["phase6l_effective_renderer_version"] = VERSION
+        payload["phase6l_effective_renderer_version"] = PHASE6L_EFFECTIVE_VERSION
         payload["phase6l_editorial_language"] = True
+        payload["phase6l_near_candidate_hotfix"] = True
         payload["editorial_language_version"] = LANGUAGE_VERSION
         payload["public_copy_quality_required"] = True
         items = [item for item in payload.get("items") or [] if isinstance(item, dict)]
-        payload["public_copy_blocked_rows"] = sum(int(item.get("public_copy_banned_count") or 0) > 0 for item in items)
+        payload["public_copy_blocked_rows"] = sum(_as_int(item.get("public_copy_banned_count")) > 0 for item in items)
+        payload["phase6l_story_near_candidates"] = sum(
+            clean(item.get("template_id")) == "hsd_game_recap_final_score_c_story"
+            and clean(item.get("near_post_ready_candidate")) == "true"
+            for item in items
+        )
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     if phase6k.base.REPORT_MD.exists():
         phase6k.base.REPORT_MD.write_text(
             "\n".join([
                 "# HSD Template Renderer v4.7 Phase 6L",
                 "",
-                f"Version: `{VERSION}`",
+                f"Compatibility renderer: `{VERSION}`",
+                f"Phase 6L effective renderer: `{PHASE6L_EFFECTIVE_VERSION}`",
                 f"Editorial language helper: `{LANGUAGE_VERSION}`",
                 "",
                 "Phase 6L replaces weak score-fallback language with short HSD editorial copy such as `Dallas Survives` and `Phoenix Rolls`.",
-                "It also blocks public fallback phrases like `closed with a 20-point victory`, `points clear`, and `MARGIN` as an editorial punchline.",
+                "Hotfix 2 recomputes near-post-ready status after Phase 6L public-copy metadata is written, preventing clean Story renders from being held by a stale intermediate flag.",
                 "All outputs remain review-only; production cutover and auto-publish remain disabled.",
                 "",
             ]),
@@ -169,9 +218,6 @@ def configure() -> None:
     base = phase6k.base
     _ORIGINALS["phase6k_original_event_date"] = phase6k._ORIGINAL_EVENT_DATE
     phase6k._ORIGINAL_EVENT_DATE = _public_event_date
-    # Keep the underlying renderer version at Phase 6K for compatibility with
-    # the established Phase 6K validators. Phase 6L is exposed via explicit
-    # manifest flags and editorial-language metadata instead.
     base.game_edge_module = _editorial_game_edge
     base.story_prompt_for = _story_prompt_for
     phase6k.story_prompt_for = _story_prompt_for
