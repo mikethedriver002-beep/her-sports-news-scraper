@@ -4,7 +4,7 @@ from __future__ import annotations
 
 The Phase 6L editorial renderer remains the compatibility lane. Phase 6M restores
 all source rows, resolves every team asset through the shared assurance core, and
-routes missing player images to a truthful TEAM SPOTLIGHT layout.
+routes missing or fixture-only player images to truthful non-player layouts.
 """
 
 import json
@@ -147,18 +147,13 @@ def _original_player_candidate(
     return _ORIGINALS["select_player"](team, aliases, index, fixtures)
 
 
-def _assured_select_player(
-    team: str,
-    aliases: Dict[str, str],
-    index: Dict[str, List[Dict[str, str]]],
-    fixtures: bool = False,
-) -> Optional[Dict[str, str]]:
-    candidate = _original_player_candidate(team, aliases, index, fixtures)
-    resolution = resolve_player_asset(candidate, requested=True, team_name=team)
-    if resolution["resolution_mode"] in {"approved_player_asset", "fixture_reference_asset"}:
-        return candidate
-    # A truthfully-labelled sentinel keeps the player variant in the render loop.
-    # render_tonight intercepts it and draws a non-player TEAM SPOTLIGHT card.
+def _is_approved_player_resolution(resolution: Dict[str, Any]) -> bool:
+    # Phase 6M law: fixture/reference crops are not player-safe. They must render
+    # as non-player TEAM SPOTLIGHT cards, never as player imagery.
+    return clean(resolution.get("resolution_mode")) == "approved_player_asset"
+
+
+def _team_spotlight_sentinel(team: str, aliases: Dict[str, str]) -> Dict[str, str]:
     return {
         "name": "",
         "team_id": _safe_team_id(team, aliases),
@@ -167,6 +162,44 @@ def _assured_select_player(
         "fixture_only": "false",
         "asset_assurance_fallback": "true",
     }
+
+
+def _assured_select_player(
+    team: str,
+    aliases: Dict[str, str],
+    index: Dict[str, List[Dict[str, str]]],
+    fixtures: bool = False,
+) -> Optional[Dict[str, str]]:
+    candidate = _original_player_candidate(team, aliases, index, fixtures)
+    resolution = resolve_player_asset(candidate, requested=True, team_name=team)
+    if _is_approved_player_resolution(resolution):
+        return candidate
+    # A truthfully-labelled sentinel keeps the player variant in the render loop.
+    # render_tonight intercepts it and draws a non-player TEAM SPOTLIGHT card.
+    return _team_spotlight_sentinel(team, aliases)
+
+
+def _assured_select_player_for_final(
+    team: str,
+    row: Dict[str, Any],
+    aliases: Dict[str, str],
+    index: Dict[str, List[Dict[str, str]]],
+    fixtures: bool,
+) -> Optional[Dict[str, str]]:
+    base = _base()
+    candidate = _ORIGINALS["select_player_for_final"](team, row, aliases, index, fixtures)
+    resolution = resolve_player_asset(candidate, requested=True, team_name=team)
+    if _is_approved_player_resolution(resolution):
+        return candidate
+    _PLAYER_ROUTES.append({
+        "source_id": clean(row.get("event_id") or row.get("event_uid") or row.get("canonical_key")),
+        "headline": base.headline_for(row, "hsd_game_recap_final_score_b"),
+        "requested_module_mode": "with_player",
+        "effective_module_mode": "logos_only_downgrade",
+        "route_decision": "downgraded_final_b_missing_approved_player_asset",
+        **resolution,
+    })
+    return None
 
 
 def _assured_render_tonight(
@@ -185,7 +218,7 @@ def _assured_render_tonight(
     away = base.first_value(row, ["away_team_name", "away_team_display", "away_team", "team_away"])
     candidate = _original_player_candidate(away, aliases, players, fixtures)
     resolution = resolve_player_asset(candidate, requested=True, team_name=away)
-    if resolution["resolution_mode"] in {"approved_player_asset", "fixture_reference_asset"}:
+    if _is_approved_player_resolution(resolution):
         image, meta = _ORIGINALS["render_tonight"](row, aliases, logos, players, module_mode, fixtures)
         meta.update({
             "requested_module_mode": "player",
@@ -306,7 +339,7 @@ def _patch_reports() -> None:
                 f"Asset assurance core: `{ASSET_CORE_VERSION}`",
                 "",
                 "Every source row remains renderable when a logo or verified player image is unavailable.",
-                "Missing logos use clearly labelled HSD team badges; missing players route to non-player TEAM SPOTLIGHT cards.",
+                "Missing logos use clearly labelled HSD team badges; missing or fixture-only players route to non-player TEAM SPOTLIGHT cards.",
                 "Render-safe and live-ready remain separate. Human visual approval, production-cutover blocks, and auto-publish blocks remain active.",
                 "",
             ]),
@@ -324,6 +357,7 @@ def configure() -> None:
     base = _base()
     _ORIGINALS["draw_team_asset"] = base.draw_team_asset
     _ORIGINALS["select_player"] = phase6l._ORIGINALS.get("base_select_player", base.select_player)
+    _ORIGINALS["select_player_for_final"] = base.select_player_for_final
     _ORIGINALS["render_tonight"] = base.render_tonight
 
     # Phase 6L Hotfix 7 skipped preview rows with missing logos. Phase 6M restores
@@ -334,6 +368,7 @@ def configure() -> None:
 
     base.draw_team_asset = _assured_draw_team_asset
     base.select_player = _assured_select_player
+    base.select_player_for_final = _assured_select_player_for_final
     base.render_tonight = _assured_render_tonight
     for field in EXTRA_FIELDS:
         if field not in base.MANIFEST_FIELDS:
