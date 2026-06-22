@@ -1,0 +1,41 @@
+{
+  "version": "v1.0-phase6m-asset-assurance-policy",
+  "free_only": true,
+  "render_must_not_fail_for_missing_logo": true,
+  "render_must_not_fail_for_missing_player": true,
+  "human_visual_approval_required": true,
+  "production_cutover_allowed": false,
+  "auto_publish_allowed": false,
+  "render_safe_team_modes": [
+    "approved_logo",
+    "official_fallback_logo",
+    "hsd_team_badge"
+  ],
+  "live_ready_team_modes": [
+    "approved_logo",
+    "official_fallback_logo"
+  ],
+  "render_safe_player_modes": [
+    "not_requested",
+    "approved_player_asset",
+    "fixture_reference_asset",
+    "team_spotlight_fallback"
+  ],
+  "live_ready_player_modes": [
+    "not_requested",
+    "approved_player_asset",
+    "team_spotlight_fallback"
+  ],
+  "hsd_team_badge_requires_hash_bound_human_approval": true,
+  "team_spotlight_fallback_must_not_claim_player_identity": true,
+  "individual_sport_nameplate_must_state_no_photo": true,
+  "minimum_team_asset_count_per_team_graphic": 2,
+  "rules": [
+    "Missing or undecodable exact logos route to an HSD-owned team badge instead of crashing or dropping the event.",
+    "A missing verified player image routes to a non-player TEAM SPOTLIGHT layout instead of a fake athlete image.",
+    "Render-safe and live-ready are separate states.",
+    "HSD fallback badges may enter human review but never bypass exact-hash visual approval.",
+    "Fixture images, invented faces, fake jerseys, and fabricated player identities remain prohibited.",
+    "Production cutover and auto-publish remain disabled."
+  ]
+}
