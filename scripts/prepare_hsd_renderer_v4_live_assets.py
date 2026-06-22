@@ -9,7 +9,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-VERSION = "v1.0-phase6g-live-asset-preparation"
+from PIL import Image, UnidentifiedImageError
+
+VERSION = "v1.1-phase6l-decodable-live-asset-preparation"
 TEAM_LOGOS = Path("data/asset_registry/wnba/team_logos.csv")
 TEAMS = Path("data/asset_registry/wnba/teams.csv")
 REPORT_JSON = Path("live_asset_preparation_v4_report.json")
@@ -25,6 +27,34 @@ def read_csv(path: Path) -> List[Dict[str, str]]:
         return []
     with path.open(newline="", encoding="utf-8", errors="replace") as handle:
         return list(csv.DictReader(handle))
+
+
+def asset_decodable(path: Path) -> bool:
+    if not path.exists() or not path.is_file() or path.stat().st_size <= 100:
+        return False
+    if path.suffix.lower() == ".svg":
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        except Exception:
+            return False
+        if "<svg" not in text:
+            return False
+        try:
+            import cairosvg
+            cairosvg.svg2png(url=path.as_posix(), bytestring=None, output_width=64, output_height=64)
+        except TypeError:
+            pass
+        except Exception:
+            return False
+        return True
+    try:
+        with Image.open(path) as image:
+            image.verify()
+        with Image.open(path) as image:
+            image.convert("RGBA")
+        return True
+    except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
+        return False
 
 
 def run_script(path: str) -> Dict[str, Any]:
@@ -66,21 +96,23 @@ def build_report(root: Path) -> Dict[str, Any]:
             path = Path(clean(row.get("file_path"))) if clean(row.get("file_path")) else Path("__missing__")
             approved = clean(row.get("approved")).lower() in {"true", "1", "yes"}
             exists = path.exists() and path.is_file() and path.stat().st_size > 100
-            ok = approved and exists
+            decodable = asset_decodable(path)
+            ok = approved and exists and decodable
             (verified if ok else missing).append(team_id)
             details.append({
                 "team_id": team_id,
                 "file_path": clean(row.get("file_path")),
                 "approved": approved,
                 "exists": exists,
+                "image_decodable": decodable,
                 "bytes": path.stat().st_size if exists else 0,
-                "status": "verified_exact_logo" if ok else "missing_or_unapproved_logo",
+                "status": "verified_exact_decodable_logo" if ok else "missing_unapproved_or_undecodable_logo",
             })
         report = {
             "version": VERSION,
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-            "status": "passed_live_asset_preparation" if verified else "blocked_live_asset_preparation",
-            "strict_exit_code": 0 if verified else 2,
+            "status": "passed_live_asset_preparation" if active_teams and not missing else "blocked_live_asset_preparation",
+            "strict_exit_code": 0 if active_teams and not missing else 2,
             "active_team_count": len(active_teams),
             "verified_logo_count": len(verified),
             "missing_logo_count": len(missing),
@@ -90,7 +122,7 @@ def build_report(root: Path) -> Dict[str, Any]:
             "network_fetch_runs": runs,
             "rows": details,
             "free_only": True,
-            "notes": "Missing unrelated teams are reported. The live post-ready gate separately requires exact logos for every team used in each candidate render.",
+            "notes": "Phase 6L requires every approved exact logo to be image-decodable, not just present on disk.",
         }
         return report
     finally:
@@ -101,12 +133,12 @@ def build_report(root: Path) -> Dict[str, Any]:
 def write_report(root: Path, report: Dict[str, Any]) -> None:
     (root / REPORT_JSON).write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     lines = [
-        "# HSD Phase 6G Live Asset Preparation",
+        "# HSD Phase 6L Live Asset Preparation",
         "",
         f"Status: `{report['status']}`",
         f"Active teams: `{report['active_team_count']}`",
-        f"Verified exact logos: `{report['verified_logo_count']}`",
-        f"Missing/unapproved logos: `{report['missing_logo_count']}`",
+        f"Verified exact decodable logos: `{report['verified_logo_count']}`",
+        f"Missing/unapproved/undecodable logos: `{report['missing_logo_count']}`",
         f"All active logos ready: `{report['all_active_logos_ready']}`",
         "",
         "## Missing teams",
@@ -119,7 +151,7 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         "",
         "- Free public logo sources only.",
         "- The live gate requires approved exact logos for the teams actually used in a render.",
-        "- Missing logos remain review-only and cannot enter the live post-ready lane.",
+        "- Phase 6L also requires every approved logo file to decode as an image before it can be treated as ready.",
     ]
     (root / REPORT_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
 

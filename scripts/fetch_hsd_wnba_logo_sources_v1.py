@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from PIL import Image, UnidentifiedImageError
 
 ROOT = Path("data/asset_registry/wnba")
 TEAMS = ROOT / "teams.csv"
@@ -37,6 +40,10 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def clean(value: Any) -> str:
+    return "" if value is None else str(value).strip()
+
+
 def read_csv(path: Path) -> List[Dict[str, str]]:
     if not path.exists():
         return []
@@ -44,17 +51,76 @@ def read_csv(path: Path) -> List[Dict[str, str]]:
         return list(csv.DictReader(f))
 
 
+def looks_like_svg(data: bytes) -> bool:
+    head = data[:500].lstrip().lower()
+    return head.startswith(b"<svg") or head.startswith(b"<?xml") and b"<svg" in head
+
+
+def asset_decodable(path: Path) -> bool:
+    if not path.exists() or not path.is_file() or path.stat().st_size <= 100:
+        return False
+    suffix = path.suffix.lower()
+    try:
+        if suffix == ".svg":
+            text = path.read_text(encoding="utf-8", errors="ignore").lower()
+            if "<svg" not in text:
+                return False
+            try:
+                import cairosvg
+                cairosvg.svg2png(url=path.as_posix(), bytestring=None, output_width=64, output_height=64)
+            except TypeError:
+                # Older cairosvg versions may not support this invocation. A real SVG
+                # payload is still acceptable; renderer will convert it later.
+                pass
+            except Exception:
+                return False
+            return True
+        with Image.open(path) as image:
+            image.verify()
+        with Image.open(path) as image:
+            image.convert("RGBA")
+        return True
+    except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
+        return False
+
+
+def write_payload(data: bytes, target_path: Path) -> Dict[str, Any]:
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if looks_like_svg(data) and target_path.suffix.lower() != ".svg":
+            try:
+                import cairosvg
+                cairosvg.svg2png(bytestring=data, write_to=target_path.as_posix(), output_width=500, output_height=500)
+            except Exception as exc:
+                return {"status": "failed", "bytes": 0, "reason": f"svg conversion failed: {type(exc).__name__}: {exc}"}
+        else:
+            target_path.write_bytes(data)
+        if not asset_decodable(target_path):
+            try:
+                target_path.unlink()
+            except Exception:
+                pass
+            return {"status": "failed", "bytes": 0, "reason": "downloaded asset was not image-decodable"}
+        return {"status": "downloaded", "bytes": target_path.stat().st_size, "reason": ""}
+    except Exception as exc:
+        return {"status": "failed", "bytes": 0, "reason": f"write failed: {type(exc).__name__}: {exc}"}
+
+
 def download(url: str, target_path: Path, attempts: int = 2) -> Dict[str, Any]:
     for attempt in range(1, attempts + 1):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "HerSportsDailyAssetRegistry/1.2"})
+            req = urllib.request.Request(url, headers={"User-Agent": "HerSportsDailyAssetRegistry/1.3"})
             with urllib.request.urlopen(req, timeout=24) as resp:
                 data = resp.read()
             if len(data) < 100:
                 return {"status": "failed", "bytes": 0, "reason": "download too small"}
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-            target_path.write_bytes(data)
-            return {"status": "downloaded", "bytes": len(data), "reason": ""}
+            result = write_payload(data, target_path)
+            if result["status"] == "downloaded":
+                return result
+            if attempt < attempts:
+                time.sleep(1.0 * attempt)
+                continue
+            return result
         except Exception as exc:
             reason = f"{type(exc).__name__}: {exc}"
             if attempt < attempts and ("429" in reason or "Too many" in reason):
@@ -72,12 +138,6 @@ def fallback_url(team_id: str) -> Optional[str]:
 
 
 def complete_source_rows() -> List[Dict[str, str]]:
-    """Return explicit logo sources plus synthesized official WNBA favicon fallbacks.
-
-    V2 had only a partial logo_sources.csv, so missing teams could drift in/out based
-    on ephemeral graphics upload packs. V3 keeps explicit source rows when available
-    and synthesizes a free official WNBA favicon row for any team not listed.
-    """
     rows = read_csv(SOURCES)
     by_team = {row.get("team_id", ""): row for row in rows if row.get("team_id")}
     for team in read_csv(TEAMS):
@@ -124,32 +184,43 @@ def fetch_one(row: Dict[str, str]) -> Dict[str, Any]:
         "status": "unknown",
         "bytes": 0,
         "reason": "",
+        "image_decodable": False,
     }
     if not source_url or not target_path.as_posix():
         result.update({"status": "skipped", "reason": "missing source_url or target_path"})
         return result
-    if target_path.exists() and target_path.stat().st_size > 100:
-        result.update({"status": "exists", "bytes": target_path.stat().st_size})
+    if asset_decodable(target_path):
+        result.update({"status": "exists", "bytes": target_path.stat().st_size, "image_decodable": True})
         return result
+    if target_path.exists():
+        result["reason"] = "existing target was not image-decodable; redownloading"
+        try:
+            target_path.unlink()
+        except Exception:
+            pass
 
     primary = download(source_url, target_path)
-    if primary["status"] in {"downloaded", "exists"}:
+    if primary["status"] == "downloaded" and asset_decodable(target_path):
         result.update(primary)
+        result["image_decodable"] = True
         return result
 
-    # Fallback to official WNBA CDN team favicon. This is used only after the explicit
-    # source fails and is written to the canonical team folder as logo.png.
     fb = fallback_url(team_id)
     if fb:
         fallback_path = Path(f"assets/leagues/wnba/teams/{team_id}/logo.png")
         result["fallback_url"] = fb
         result["fallback_target_path"] = fallback_path.as_posix()
-        if fallback_path.exists() and fallback_path.stat().st_size > 100:
-            result.update({"status": "exists_fallback", "bytes": fallback_path.stat().st_size, "reason": primary.get("reason", "")})
+        if asset_decodable(fallback_path):
+            result.update({"status": "exists_fallback", "bytes": fallback_path.stat().st_size, "reason": primary.get("reason", ""), "image_decodable": True})
             return result
+        if fallback_path.exists():
+            try:
+                fallback_path.unlink()
+            except Exception:
+                pass
         fallback = download(fb, fallback_path, attempts=1)
-        if fallback["status"] == "downloaded":
-            result.update({"status": "downloaded_fallback", "bytes": fallback["bytes"], "reason": f"primary failed: {primary.get('reason', '')}"})
+        if fallback["status"] == "downloaded" and asset_decodable(fallback_path):
+            result.update({"status": "downloaded_fallback", "bytes": fallback_path.stat().st_size, "reason": f"primary failed: {primary.get('reason', '')}", "image_decodable": True})
             return result
         result.update({"status": "failed", "reason": f"primary failed: {primary.get('reason', '')}; fallback failed: {fallback.get('reason', '')}"})
         return result
@@ -166,8 +237,9 @@ def main() -> None:
     failed = len([r for r in results if r["status"] == "failed"])
     fallback_downloaded = len([r for r in results if r["status"] == "downloaded_fallback"])
     synthesized = len([r for r in rows if r.get("source_note") == "synthesized_official_wnba_favicon_fallback"])
+    undecodable = len([r for r in results if not r.get("image_decodable")])
     report = {
-        "version": "hsd-wnba-logo-source-fetcher-v1.2-complete-source-rows",
+        "version": "hsd-wnba-logo-source-fetcher-v1.3-decodable-assets",
         "generated_at_utc": now_iso(),
         "sources": len(rows),
         "synthesized_fallback_sources": synthesized,
@@ -175,6 +247,7 @@ def main() -> None:
         "existing": existing,
         "failed": failed,
         "fallback_downloaded": fallback_downloaded,
+        "undecodable": undecodable,
         "results": results,
     }
     REPORT_JSON.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -192,6 +265,7 @@ def main() -> None:
         f"- existing: {existing}",
         f"- failed: {failed}",
         f"- fallback downloaded: {fallback_downloaded}",
+        f"- undecodable after fetch: {undecodable}",
         "",
         "## Results",
         "",
@@ -200,9 +274,9 @@ def main() -> None:
         suffix = f" - {item['reason']}" if item.get("reason") else ""
         if item.get("fallback_url"):
             suffix += f" | fallback: {item.get('fallback_url')}"
-        lines.append(f"- {item['team_name']}: {item['status']} -> `{item['target_path']}`{suffix}")
+        lines.append(f"- {item['team_name']}: {item['status']} decodable={item.get('image_decodable')} -> `{item['target_path']}`{suffix}")
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(json.dumps({"sources": len(rows), "downloaded": downloaded, "existing": existing, "failed": failed, "fallback_downloaded": fallback_downloaded}, indent=2))
+    print(json.dumps({"sources": len(rows), "downloaded": downloaded, "existing": existing, "failed": failed, "fallback_downloaded": fallback_downloaded, "undecodable": undecodable}, indent=2))
 
 
 if __name__ == "__main__":
