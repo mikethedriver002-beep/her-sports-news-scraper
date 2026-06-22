@@ -6,7 +6,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -14,9 +14,10 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from hsd_phase6l_editorial_language import PUBLIC_COPY_PASS, clean
 
-VERSION = "v1.6-phase6l-fixture-safe-editorial-language-live-gate"
+VERSION = "v1.7-phase6l-live-gate-import-and-prereq-fail-closed"
 ROOT = Path(__file__).resolve().parents[1]
-BASE_PATH = ROOT / "scripts" / "validate_hsd_live_post_ready_v4_phase6k.py"
+PHASE6K_GATE_PATH = ROOT / "scripts" / "validate_hsd_live_post_ready_v4_phase6k.py"
+RAW_GATE_PATH = ROOT / "scripts" / "validate_hsd_live_post_ready_v4.py"
 PHASE6L_POLICY = Path("config/graphics/v4/live_post_ready/live_post_ready_policy_phase6l_v4.json")
 MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 REPORT_JSON = Path("live_post_ready_v4_report.json")
@@ -46,6 +47,16 @@ REQUIRED_FIXTURE_REPORTS = {
     "story_context_cta_v4_report.json": "passed_story_context_cta",
     "public_copy_quality_v4_report.json": "passed_public_copy_quality",
 }
+REQUIRED_LIVE_REPORTS = {
+    "v4_source_truth_guard.json": "passed_source_truth_guard",
+    "live_asset_preparation_v4_report.json": "passed_live_asset_preparation",
+    "template_renderer_v4_validation_report.json": "passed_renderer_v4_validation",
+    "template_fidelity_v4_report.json": "passed_fidelity_setup",
+    "near_post_ready_v4_report.json": "passed_near_post_ready_setup",
+    "final_score_content_modules_v4_report.json": "passed_final_score_content_modules",
+    "story_context_cta_v4_report.json": "passed_story_context_cta",
+    "public_copy_quality_v4_report.json": "passed_public_copy_quality",
+}
 
 
 def read_json(path: Path) -> Dict[str, Any]:
@@ -58,24 +69,42 @@ def read_json(path: Path) -> Dict[str, Any]:
         return {}
 
 
-def load_base() -> Any:
-    spec = importlib.util.spec_from_file_location("hsd_live_post_ready_phase6l_base", BASE_PATH)
+def load_module(path: Path, name: str) -> Any:
+    spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
-        raise RuntimeError(f"Unable to load Phase 6K live gate: {BASE_PATH}")
+        raise RuntimeError(f"Unable to load module: {path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
+def phase6k_live_gate() -> Any:
+    """Return the installed Phase 6K live gate module.
+
+    Hotfix 3 exposed that the wrapper was fragile: in some workflow contexts the
+    loaded module behaved like the raw gate and did not expose install_phase6k_gate.
+    This loader accepts either shape and fails closed only when neither shape has
+    the expected evaluate/write_report API.
+    """
+    phase6k = load_module(PHASE6K_GATE_PATH, "hsd_phase6k_live_gate_for_phase6l")
+    if hasattr(phase6k, "install_phase6k_gate") and hasattr(phase6k, "load_base"):
+        return phase6k.install_phase6k_gate(phase6k.load_base())
+    if hasattr(phase6k, "evaluate") and hasattr(phase6k, "write_report"):
+        return phase6k
+    raw = load_module(RAW_GATE_PATH, "hsd_raw_live_gate_for_phase6l")
+    if hasattr(raw, "evaluate") and hasattr(raw, "write_report"):
+        return raw
+    raise RuntimeError("Unable to resolve a compatible live-post-ready gate module")
+
+
 def install_phase6l_gate(base: Any) -> Any:
     if getattr(base, "_HSD_PHASE6L_INSTALLED", False):
         return base
-    phase6k_base = base.install_phase6k_gate(base.load_base())
-    original_technical_reasons = phase6k_base.technical_reasons
-    phase6k_base.POLICY = PHASE6L_POLICY
+    original_technical_reasons = base.technical_reasons
+    base.POLICY = PHASE6L_POLICY
     for field in EXTRA_FIELDS:
-        if field not in phase6k_base.FIELDS:
-            phase6k_base.FIELDS.append(field)
+        if field not in base.FIELDS:
+            base.FIELDS.append(field)
 
     def technical_reasons(item: Dict[str, Any], policy: Dict[str, Any], mode: str, root: Path, source_truth: Dict[str, Any]) -> List[str]:
         reasons = list(original_technical_reasons(item, policy, mode, root, source_truth))
@@ -88,12 +117,34 @@ def install_phase6l_gate(base: Any) -> Any:
                 reasons.append("phase6l_editorial_headline_missing")
         return sorted(set(reasons))
 
-    phase6k_base.technical_reasons = technical_reasons
-    phase6k_base._HSD_PHASE6L_INSTALLED = True
-    return phase6k_base
+    base.technical_reasons = technical_reasons
+    base._HSD_PHASE6L_INSTALLED = True
+    return base
 
 
-def _manifest_checks(root: Path) -> tuple[List[str], Dict[str, Any]]:
+def _report_status_blockers(root: Path, required: Dict[str, str]) -> Tuple[List[str], Dict[str, str], Dict[str, Any]]:
+    blockers: List[str] = []
+    statuses: Dict[str, str] = {}
+    detail: Dict[str, Any] = {}
+    for name, expected in required.items():
+        payload = read_json(root / name)
+        status = clean(payload.get("status"))
+        statuses[name] = status
+        detail[name] = {
+            "status": status,
+            "blockers": payload.get("blockers") or [],
+            "warnings": payload.get("warnings") or [],
+        }
+        if not payload:
+            blockers.append(f"missing_report:{name}")
+        elif status != expected:
+            blockers.append(f"report_not_passed:{name}:{status or 'missing_status'}")
+            for blocker in payload.get("blockers") or []:
+                blockers.append(f"{name}:{blocker}")
+    return blockers, statuses, detail
+
+
+def _manifest_checks(root: Path) -> Tuple[List[str], Dict[str, Any]]:
     blockers: List[str] = []
     manifest = read_json(root / MANIFEST)
     items = [item for item in manifest.get("items") or [] if isinstance(item, dict)]
@@ -120,40 +171,55 @@ def _manifest_checks(root: Path) -> tuple[List[str], Dict[str, Any]]:
     return blockers, manifest
 
 
-def evaluate_fixture_audit(root: Path) -> Dict[str, Any]:
-    blockers: List[str] = []
-    report_statuses: Dict[str, str] = {}
-    for name, expected in REQUIRED_FIXTURE_REPORTS.items():
-        payload = read_json(root / name)
-        status = clean(payload.get("status"))
-        report_statuses[name] = status
-        if not payload:
-            blockers.append(f"missing_report:{name}")
-        elif status != expected:
-            blockers.append(f"report_not_passed:{name}:{status or 'missing_status'}")
-    manifest_blockers, manifest = _manifest_checks(root)
-    blockers.extend(manifest_blockers)
-    rendered_rows = len(manifest.get("items") or []) if isinstance(manifest.get("items"), list) else 0
-    report = {
+def _base_report(root: Path, mode: str, status: str, blockers: List[str], rendered_rows: int, statuses: Dict[str, str], details: Dict[str, Any]) -> Dict[str, Any]:
+    return {
         "version": VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "mode": "fixture_audit",
-        "status": "passed_phase6l_fixture_quality_audit" if not blockers else "blocked_phase6l_fixture_quality_audit",
+        "mode": mode,
+        "status": status,
         "strict_exit_code": 0 if not blockers else 2,
         "rendered_rows": rendered_rows,
         "technical_candidate_count": 0,
         "technical_blocked_count": rendered_rows,
         "approved_live_count": 0,
         "blockers": sorted(set(blockers)),
-        "warnings": ["fixture_audit_skips_live_handoff_export; live_data still uses the hardened Phase 6K/6L handoff gate"],
+        "warnings": [],
         "phase6l_public_copy_gate_active": True,
         "limited_live_operator_handoff_allowed": False,
         "production_cutover_allowed": False,
         "auto_publish_allowed": False,
         "human_visual_approval_required": True,
-        "report_statuses": report_statuses,
+        "report_statuses": statuses,
+        "report_details": details,
     }
+
+
+def evaluate_fixture_audit(root: Path) -> Dict[str, Any]:
+    report_blockers, statuses, details = _report_status_blockers(root, REQUIRED_FIXTURE_REPORTS)
+    manifest_blockers, manifest = _manifest_checks(root)
+    blockers = report_blockers + manifest_blockers
+    rendered_rows = len(manifest.get("items") or []) if isinstance(manifest.get("items"), list) else 0
+    report = _base_report(
+        root,
+        "fixture_audit",
+        "passed_phase6l_fixture_quality_audit" if not blockers else "blocked_phase6l_fixture_quality_audit",
+        blockers,
+        rendered_rows,
+        statuses,
+        details,
+    )
+    report["warnings"] = ["fixture_audit_skips_live_handoff_export; live_data still uses the hardened Phase 6K/6L handoff gate"]
     return report
+
+
+def evaluate_live_prereqs(root: Path) -> Optional[Dict[str, Any]]:
+    report_blockers, statuses, details = _report_status_blockers(root, REQUIRED_LIVE_REPORTS)
+    manifest_blockers, manifest = _manifest_checks(root)
+    blockers = report_blockers + manifest_blockers
+    if not blockers:
+        return None
+    rendered_rows = len(manifest.get("items") or []) if isinstance(manifest.get("items"), list) else 0
+    return _base_report(root, "live_data", "blocked_phase6l_live_prerequisites", blockers, rendered_rows, statuses, details)
 
 
 def write_report(root: Path, report: Dict[str, Any]) -> None:
@@ -178,12 +244,15 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
     lines += [f"- `{value}`" for value in report.get("blockers", [])] or ["- None"]
     lines += ["", "## Warnings", ""]
     lines += [f"- `{value}`" for value in report.get("warnings", [])] or ["- None"]
-    lines += ["", "Phase 6L blocks final-score graphics with weak fallback public language. Fixture audit does not export live handoff assets.", ""]
+    lines += ["", "Phase 6L blocks final-score graphics with weak fallback public language and fails closed when upstream reports are blocked.", ""]
     (root / REPORT_MD).write_text("\n".join(lines), encoding="utf-8")
 
 
 def run_live_data(root: Path, mode: str) -> Dict[str, Any]:
-    base = install_phase6l_gate(load_base())
+    prereq_report = evaluate_live_prereqs(root)
+    if prereq_report is not None:
+        return prereq_report
+    base = install_phase6l_gate(phase6k_live_gate())
     report = base.evaluate(root, mode)
     report["version"] = VERSION
     report["phase6l_public_copy_gate_active"] = True
