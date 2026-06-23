@@ -1,0 +1,805 @@
+{
+  "version": "v1.0-phase8a-sport-specific-fit-safe-phrase-library",
+  "global_banned_patterns": [
+    "TEAM IDENTITY",
+    "MATCHUP IMPACT",
+    "KEY EDGE",
+    "PACE \u2022 STARS",
+    "PACE | STARS",
+    "WHO HAS THE EDGE TONIGHT",
+    "SOUND OFF IN THE COMMENTS",
+    "PLAYER FEATURE",
+    "PLAYER SPOTLIGHT",
+    "WHAT STOOD OUT",
+    "WHICH ANGLE MATTERS MOST",
+    "TAP IN WITH HSD",
+    "WHAT HAS TO CLICK",
+    "WHO WANTS IT MORE",
+    "CONTROL TEST",
+    "BIGGEST REASON",
+    "STATEMENT GAME",
+    "TBA",
+    "TBD",
+    "UNKNOWN",
+    "PENDING"
+  ],
+  "mechanic_terms_by_sport": {
+    "wnba": [
+      "PACE",
+      "PAINT",
+      "GLASS",
+      "SPACING",
+      "TURNOVERS",
+      "FREE THROWS",
+      "RIM",
+      "CORNERS",
+      "SHOT PROFILE",
+      "SECOND CHANCES",
+      "TURNOVER",
+      "BALL",
+      "LIVE-BALL"
+    ],
+    "nwsl": [
+      "PRESS",
+      "WIDTH",
+      "SET PIECES",
+      "REST DEFENSE",
+      "SECOND BALL",
+      "HALF-SPACES",
+      "COUNTERPRESS",
+      "CHANNELS"
+    ],
+    "uswnt": [
+      "PRESS",
+      "WIDE CHANNELS",
+      "COUNTERPRESS",
+      "LINE BREAK",
+      "BOX RUNS",
+      "FULLBACK",
+      "SET PIECES",
+      "TERRITORY"
+    ],
+    "tennis": [
+      "FIRST STRIKE",
+      "SECOND SERVE",
+      "RETURN",
+      "DEUCE",
+      "BREAK POINTS",
+      "BACKHAND",
+      "SERVE-PLUS-ONE",
+      "RALLY"
+    ],
+    "lpga": [
+      "PAR 5S",
+      "APPROACH",
+      "BOGEY",
+      "CLOSING STRETCH",
+      "SCORING WINDOW",
+      "PUTTER",
+      "WIND",
+      "GREENS"
+    ],
+    "ncaa_softball": [
+      "CIRCLE",
+      "TRAFFIC",
+      "FIRST PITCH",
+      "TWO-OUT",
+      "RUNNERS",
+      "EXTRA BASES",
+      "FREE PASSES",
+      "CONTACT"
+    ],
+    "volleyball": [
+      "SERVE-PASS",
+      "SIDEOUT",
+      "BLOCK TOUCH",
+      "TRANSITION",
+      "PIN",
+      "SETTER",
+      "MIDDLE",
+      "END-SET",
+      "FIRST CONTACT",
+      "PASS QUALITY",
+      "CONTACT"
+    ]
+  },
+  "fit_limits": {
+    "renderer_tonight": {
+      "debate_question": 28,
+      "watch_title": 24,
+      "watch_body": 54,
+      "cta": 32,
+      "editorial_headline": 42
+    },
+    "review_card": {
+      "debate_question": 58,
+      "watch_title": 32,
+      "watch_body": 88,
+      "cta": 52,
+      "editorial_headline": 56
+    }
+  },
+  "duplicate_similarity_threshold": 0.62,
+  "sports": {
+    "wnba": {
+      "preview": [
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question_variants": [
+            "WHO OWNS THE PACE?",
+            "PACE OR PAINT?",
+            "WHO BLINKS FIRST?"
+          ],
+          "watch_title_variants": [
+            "PACE WINDOW",
+            "PAINT CHECK",
+            "GLASS WATCH"
+          ],
+          "watch_body_variants": [
+            "CAN {away_short} GET STOPS BEFORE {home_short} RUNS?",
+            "TRACK THE PAINT TOUCHES AND LIVE-BALL GIVEAWAYS.",
+            "THE FIRST RUN WILL TELL US PLENTY."
+          ],
+          "cta_variants": [
+            "CALL THE FIRST RUN.",
+            "WHO SETS THE TERMS?",
+            "WHAT TRAVELS?"
+          ]
+        },
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question_variants": [
+            "WHO WINS THE GLASS?",
+            "WHO GETS SECOND CHANCES?",
+            "WHO OWNS THE RIM?"
+          ],
+          "watch_title_variants": [
+            "GLASS GAME",
+            "RIM PRESSURE",
+            "EXTRA POSSESSIONS"
+          ],
+          "watch_body_variants": [
+            "SECOND CHANCES CAN BREAK THIS OPEN.",
+            "WATCH WHO FINISHES DEFENSIVE STOPS.",
+            "THE REBOUND BATTLE IS THE LEVER."
+          ],
+          "cta_variants": [
+            "COUNT THE SECOND CHANCES.",
+            "WHO FINISHES STOPS?",
+            "WHERE'S THE EDGE?"
+          ]
+        },
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question_variants": [
+            "CAN {away_short} TURN {home_short} OVER?",
+            "WHO VALUES THE BALL?",
+            "WHO STAYS ORGANIZED?"
+          ],
+          "watch_title_variants": [
+            "TURNOVER WINDOW",
+            "PRESSURE POINT",
+            "HALF-COURT TEST"
+          ],
+          "watch_body_variants": [
+            "LIVE-BALL MISTAKES CAN FLIP THE WHOLE NIGHT.",
+            "THE CLEANER TEAM GETS THE BETTER SHOTS.",
+            "THIS IS ABOUT SHOT QUALITY, NOT NOISE."
+          ],
+          "cta_variants": [
+            "WATCH THE FIRST SIX.",
+            "VALUE EVERY ENTRY.",
+            "CALL THE CLEANER SIDE."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "{primary_short} PRESSURE POINT",
+          "debate_question_variants": [
+            "WHERE DOES {primary_short} CREATE EASY TWOS?",
+            "CAN {primary_short} BEND THE FLOOR?",
+            "WHO FEELS THE PAINT FIRST?"
+          ],
+          "watch_title_variants": [
+            "PAINT WINDOW",
+            "SPACING LEVER",
+            "RIM TEST"
+          ],
+          "watch_body_variants": [
+            "FOLLOW THE FIRST ROTATION AND THE LOW-HELP CHOICES.",
+            "THE GAME SWINGS WHEN THE PAINT TOUCHES ARRIVE.",
+            "WATCH THE CORNER LIFT AFTER THE FIRST DRIVE."
+          ],
+          "cta_variants": [
+            "TRACK THE ROTATION.",
+            "WHO PROTECTS THE RIM?",
+            "CALL THE LOW-HELP READ."
+          ]
+        },
+        {
+          "editorial_headline": "{primary_short} SHAPE CHECK",
+          "debate_question_variants": [
+            "CAN {primary_short} CONTROL THE FIRST RUN?",
+            "WHERE DOES {primary_short} FIND FLOW?",
+            "CAN {primary_short} KEEP THE BALL MOVING?"
+          ],
+          "watch_title_variants": [
+            "EARLY FLOW",
+            "FIRST RUN",
+            "SPACING READ"
+          ],
+          "watch_body_variants": [
+            "THE OPENING STRETCH SHOULD SHOW THE WHOLE PLAN.",
+            "WATCH THE TOUCHES BEFORE THE SHOT.",
+            "THE CLEAN LOOKS WILL COME FROM THE EXTRA PASS."
+          ],
+          "cta_variants": [
+            "WATCH THE OPENING RUN.",
+            "WHO CREATES FLOW?",
+            "CALL THE EXTRA PASS."
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} WINS IT",
+          "debate_question_variants": [
+            "WHAT DECIDED IT?",
+            "WHERE DID IT TURN?",
+            "WHO MADE THE PUSH?"
+          ],
+          "watch_title_variants": [
+            "FINAL READ",
+            "GAME SWING",
+            "THE DECIDER"
+          ],
+          "watch_body_variants": [
+            "{scoreline}",
+            "THE RESULT CAME DOWN TO THE GAME'S CLEANEST STRETCH.",
+            "THE SEPARATION SHOWED UP WHEN THE POSSESSIONS GOT TIGHT."
+          ],
+          "cta_variants": [
+            "YOUR FINAL READ?",
+            "WHAT WAS THE TURN?",
+            "WHO SET THE TONE?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT CHANGES NEXT?",
+            "WHERE DOES THIS POINT?"
+          ],
+          "watch_title_variants": [
+            "THE NEXT READ",
+            "THE BIGGER PIECE"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    },
+    "nwsl": {
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} AT {secondary_short}",
+          "debate_question_variants": [
+            "WHO BREAKS THE PRESS?",
+            "WHO OWNS THE WIDTH?",
+            "WHO WINS THE SECOND BALL?"
+          ],
+          "watch_title_variants": [
+            "PRESS RELEASE",
+            "WIDTH BATTLE",
+            "SECOND BALLS"
+          ],
+          "watch_body_variants": [
+            "THE FIRST CLEAN OUTLET COULD OPEN THE GAME.",
+            "WATCH THE WIDE CHANNELS BEFORE THE FINAL BALL.",
+            "MIDFIELD SCRAPS MAY DECIDE THE TEMPO."
+          ],
+          "cta_variants": [
+            "WATCH THE RELEASE PASS.",
+            "TRACK THE WIDE CHANNELS.",
+            "COUNT THE SECOND BALLS."
+          ]
+        },
+        {
+          "editorial_headline": "{primary_short} AT {secondary_short}",
+          "debate_question_variants": [
+            "WHO PROTECTS REST DEFENSE?",
+            "WHO FINDS THE HALF-SPACE?",
+            "WHO WINS SET PIECES?"
+          ],
+          "watch_title_variants": [
+            "REST DEFENSE",
+            "HALF-SPACE WINDOW",
+            "DEAD-BALL EDGE"
+          ],
+          "watch_body_variants": [
+            "TRANSITION COVERAGE WILL MATTER AFTER EVERY LOSS.",
+            "THE FREE PLAYER BETWEEN LINES IS THE TELL.",
+            "ONE DEAD BALL CAN CHANGE THE NIGHT."
+          ],
+          "cta_variants": [
+            "WATCH THE RECOVERY RUNS.",
+            "FOLLOW THE FREE PLAYER.",
+            "CIRCLE EVERY DEAD BALL."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "{primary_short} PRESSURE POINT",
+          "debate_question_variants": [
+            "CAN {primary_short} PIN THE FULLBACK?",
+            "WHERE DOES {primary_short} WIN WIDTH?"
+          ],
+          "watch_title_variants": [
+            "WIDE CHANNEL",
+            "PRESSURE SIDE"
+          ],
+          "watch_body_variants": [
+            "THE GAME OPENS IF THE OUTSIDE LANE STAYS HIGH.",
+            "WATCH WHO FORCES THE BACK LINE TO TURN."
+          ],
+          "cta_variants": [
+            "TRACK THE FULLBACK HEIGHT.",
+            "WHO OWNS THE CHANNEL?"
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} TAKES IT",
+          "debate_question_variants": [
+            "WHERE DID IT TURN?"
+          ],
+          "watch_title_variants": [
+            "MATCH READ"
+          ],
+          "watch_body_variants": [
+            "{scoreline}"
+          ],
+          "cta_variants": [
+            "YOUR MATCH READ?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT DOES THIS CHANGE?"
+          ],
+          "watch_title_variants": [
+            "SOCCER READ"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    },
+    "uswnt": {
+      "preview": [
+        {
+          "editorial_headline": "USWNT VS {secondary_short}",
+          "debate_question_variants": [
+            "CAN THE U.S. PIN THE BACK LINE?",
+            "WHO OWNS THE WIDE LANES?",
+            "CAN THE PRESS CREATE SHORT FIELDS?"
+          ],
+          "watch_title_variants": [
+            "WIDE LANES",
+            "PRESS WINDOW",
+            "BOX RUNS"
+          ],
+          "watch_body_variants": [
+            "FULLBACK HEIGHT AND QUICK COUNTERPRESS WILL TELL THE STORY.",
+            "THE U.S. NEEDS TERRITORY BEFORE THE FINAL BALL.",
+            "WATCH THE FIRST LINE-BREAKER IN MIDFIELD."
+          ],
+          "cta_variants": [
+            "TRACK THE WIDE LANES.",
+            "WATCH THE PRESS LAND.",
+            "FOLLOW THE LINE BREAK."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "U.S. SHAPE CHECK",
+          "debate_question_variants": [
+            "WHERE IS THE FREE PLAYER?",
+            "CAN THE U.S. LOCK THE HALF?"
+          ],
+          "watch_title_variants": [
+            "FREE PLAYER",
+            "TERRITORY CHECK"
+          ],
+          "watch_body_variants": [
+            "FOLLOW THE THIRD-MAN RUN AND THE SECOND PHASE.",
+            "THE GAME CHANGES IF THE PRESS TRAPS THE EXIT."
+          ],
+          "cta_variants": [
+            "FOLLOW THE THIRD RUN.",
+            "WATCH THE PRESS TRAP."
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "USWNT RESULT",
+          "debate_question_variants": [
+            "WHAT CHANGED IT?"
+          ],
+          "watch_title_variants": [
+            "MATCH READ"
+          ],
+          "watch_body_variants": [
+            "{scoreline}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT DOES THIS MEAN?"
+          ],
+          "watch_title_variants": [
+            "USWNT READ"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    },
+    "tennis": {
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} VS {secondary_short}",
+          "debate_question_variants": [
+            "WHO OWNS FIRST STRIKE?",
+            "WHO ATTACKS SECOND SERVE?",
+            "WHO HOLDS AT 30-30?"
+          ],
+          "watch_title_variants": [
+            "FIRST STRIKE",
+            "SECOND SERVE",
+            "PRESSURE GAMES"
+          ],
+          "watch_body_variants": [
+            "THE RETURN DEPTH WILL DECIDE WHO GETS THE FIRST LOOK.",
+            "WATCH THE FIRST FOUR SHOTS, NOT THE HIGHLIGHTS.",
+            "THE DEUCE GAMES SHOULD TELL US WHO IS SAFE."
+          ],
+          "cta_variants": [
+            "TRACK RETURN DEPTH.",
+            "WATCH THE FIRST FOUR.",
+            "CALL THE PRESSURE HOLD."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "MATCH SPOTLIGHT",
+          "debate_question_variants": [
+            "CAN {primary_short} OWN THE FIRST STRIKE?",
+            "WHERE DOES {primary_short} ATTACK?"
+          ],
+          "watch_title_variants": [
+            "SERVE-PLUS-ONE",
+            "RETURN DEPTH"
+          ],
+          "watch_body_variants": [
+            "THE SHORT BALL IS THE WHOLE QUESTION.",
+            "SECOND-SERVE PRESSURE CAN OPEN THE MATCH."
+          ],
+          "cta_variants": [
+            "WATCH THE SHORT BALL.",
+            "ATTACK THE SECOND SERVE?"
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} MOVES THROUGH",
+          "debate_question_variants": [
+            "WHICH PATTERN HELD?"
+          ],
+          "watch_title_variants": [
+            "MATCH READ"
+          ],
+          "watch_body_variants": [
+            "{scoreline}"
+          ],
+          "cta_variants": [
+            "YOUR MATCH READ?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT PATTERN MATTERS?"
+          ],
+          "watch_title_variants": [
+            "TENNIS READ"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    },
+    "lpga": {
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} AT {secondary_short}",
+          "debate_question_variants": [
+            "WHERE IS THE SCORING WINDOW?",
+            "WHO PROTECTS PAR?",
+            "WHO ATTACKS THE PAR 5S?"
+          ],
+          "watch_title_variants": [
+            "SCORING WINDOW",
+            "BOGEY AVOIDANCE",
+            "PAR-5 CHANCES"
+          ],
+          "watch_body_variants": [
+            "THE APPROACH WINDOWS WILL SEPARATE THE FIELD.",
+            "A CLEAN CARD MATTERS WHEN THE GREENS FIRM UP.",
+            "THE CLOSING STRETCH CAN FLIP THE BOARD FAST."
+          ],
+          "cta_variants": [
+            "TRACK THE APPROACHES.",
+            "WATCH BOGEY AVOIDANCE.",
+            "FOLLOW THE PAR 5S."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "ROUND SPOTLIGHT",
+          "debate_question_variants": [
+            "WHO OWNS THE CLOSING STRETCH?",
+            "WHO CAN TURN PAR INTO PRESSURE?"
+          ],
+          "watch_title_variants": [
+            "CLOSING STRETCH",
+            "APPROACH WINDOW"
+          ],
+          "watch_body_variants": [
+            "WATCH THE SHOTS THAT LEAVE REAL BIRDIE LOOKS.",
+            "THE ROUND CAN MOVE ON BOGEY AVOIDANCE."
+          ],
+          "cta_variants": [
+            "FOLLOW THE FINAL FOUR.",
+            "COUNT THE REAL LOOKS."
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} LEADS THE WAY",
+          "debate_question_variants": [
+            "WHERE DID THE ROUND TURN?"
+          ],
+          "watch_title_variants": [
+            "ROUND READ"
+          ],
+          "watch_body_variants": [
+            "{scoreline}"
+          ],
+          "cta_variants": [
+            "YOUR ROUND READ?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT DOES THE BOARD SAY?"
+          ],
+          "watch_title_variants": [
+            "LPGA READ"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    },
+    "ncaa_softball": {
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} AT {secondary_short}",
+          "debate_question_variants": [
+            "WHO OWNS THE CIRCLE?",
+            "WHO CREATES TRAFFIC?",
+            "WHO CASHES RUNNERS?"
+          ],
+          "watch_title_variants": [
+            "CIRCLE COMMAND",
+            "TRAFFIC GAME",
+            "RUNNERS IN"
+          ],
+          "watch_body_variants": [
+            "FIRST-PITCH STRIKES WILL SET THE WHOLE NIGHT.",
+            "THE OFFENSE THAT GETS TRAFFIC CAN FORCE THE MISTAKE.",
+            "TWO-OUT SWINGS MAY DECIDE THE GAME."
+          ],
+          "cta_variants": [
+            "TRACK FIRST-PITCH STRIKES.",
+            "WATCH THE LEADOFF BATTERS.",
+            "COUNT THE TWO-OUT SWINGS."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "CIRCLE CHECK",
+          "debate_question_variants": [
+            "CAN {primary_short} GET AHEAD EARLY?",
+            "WHO LIMITS FREE PASSES?"
+          ],
+          "watch_title_variants": [
+            "FIRST PITCH",
+            "FREE PASSES"
+          ],
+          "watch_body_variants": [
+            "CONTROL IN THE CIRCLE CHANGES THE ENTIRE CARD.",
+            "Traffic starts when the count gets away."
+          ],
+          "cta_variants": [
+            "WATCH THE COUNT.",
+            "TRACK THE FREE PASSES."
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} TAKES IT",
+          "debate_question_variants": [
+            "WHERE DID IT BREAK?"
+          ],
+          "watch_title_variants": [
+            "GAME READ"
+          ],
+          "watch_body_variants": [
+            "{scoreline}"
+          ],
+          "cta_variants": [
+            "YOUR GAME READ?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT CHANGED IT?"
+          ],
+          "watch_title_variants": [
+            "SOFTBALL READ"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    },
+    "volleyball": {
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} AT {secondary_short}",
+          "debate_question_variants": [
+            "WHO WINS SERVE-PASS?",
+            "WHO OWNS SIDEOUT?",
+            "WHO GETS BLOCK TOUCHES?"
+          ],
+          "watch_title_variants": [
+            "SERVE-PASS",
+            "SIDEOUT WINDOW",
+            "BLOCK TOUCH"
+          ],
+          "watch_body_variants": [
+            "FIRST-BALL SIDEOUT WILL SHOW WHO IS IN SYSTEM.",
+            "TRANSITION KILLS COME from THE BETTER FIRST CONTACT.",
+            "THE PIN TEMPO WILL SHOW WHERE THE BLOCK IS LATE."
+          ],
+          "cta_variants": [
+            "TRACK PASS QUALITY.",
+            "WATCH FIRST-BALL SIDEOUT.",
+            "COUNT BLOCK TOUCHES."
+          ]
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "SERVE-PASS CHECK",
+          "debate_question_variants": [
+            "CAN {primary_short} STAY IN SYSTEM?",
+            "WHO WINS 22-ALL?"
+          ],
+          "watch_title_variants": [
+            "FIRST CONTACT",
+            "END-SET EXECUTION"
+          ],
+          "watch_body_variants": [
+            "PASS QUALITY WILL SET THE WHOLE OFFENSE.",
+            "THE LAST THREE POINTS OF EACH SET ARE THE TELL."
+          ],
+          "cta_variants": [
+            "WATCH FIRST CONTACT.",
+            "TRACK END-SET EXECUTION."
+          ]
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} TAKES IT",
+          "debate_question_variants": [
+            "WHERE DID THE SETS TURN?"
+          ],
+          "watch_title_variants": [
+            "MATCH READ"
+          ],
+          "watch_body_variants": [
+            "{scoreline}"
+          ],
+          "cta_variants": [
+            "YOUR MATCH READ?"
+          ]
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "debate_question_variants": [
+            "WHAT CHANGED THE SETS?"
+          ],
+          "watch_title_variants": [
+            "VOLLEYBALL READ"
+          ],
+          "watch_body_variants": [
+            "{verified_angle}"
+          ],
+          "cta_variants": [
+            "YOUR READ?"
+          ]
+        }
+      ]
+    }
+  }
+}

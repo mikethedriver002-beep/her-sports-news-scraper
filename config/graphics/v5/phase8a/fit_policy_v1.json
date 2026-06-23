@@ -1,0 +1,69 @@
+{
+  "version": "v1.0-phase8a-fit-safe-editorial-policy",
+  "pixel_fit_targets": {
+    "tonight_debate_question": {
+      "box": [
+        255,
+        938,
+        705,
+        68
+      ],
+      "font_start": 48,
+      "font_floor": 31,
+      "max_lines": 1
+    },
+    "tonight_watch_title": {
+      "box": [
+        345,
+        1090,
+        600,
+        62
+      ],
+      "font_start": 52,
+      "font_floor": 31,
+      "max_lines": 1
+    },
+    "tonight_watch_body": {
+      "box": [
+        345,
+        1155,
+        600,
+        105
+      ],
+      "font_start": 31,
+      "font_floor": 20,
+      "max_lines": 3
+    },
+    "review_card_cta": {
+      "box": [
+        88,
+        1115,
+        904,
+        82
+      ],
+      "font_start": 40,
+      "font_floor": 24,
+      "max_lines": 2
+    }
+  },
+  "char_caps": {
+    "renderer_tonight": {
+      "debate_question": 28,
+      "watch_title": 24,
+      "watch_body": 54,
+      "cta": 32,
+      "editorial_headline": 42
+    },
+    "review_card": {
+      "debate_question": 58,
+      "watch_title": 32,
+      "watch_body": 88,
+      "cta": 52,
+      "editorial_headline": 56
+    }
+  },
+  "duplicate_similarity_threshold": 0.62,
+  "hard_fail_on_fit_escape": true,
+  "hard_fail_on_duplicate_clause": true,
+  "hard_fail_on_generic_language": true
+}
