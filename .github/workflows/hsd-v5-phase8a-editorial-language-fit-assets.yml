@@ -1,0 +1,216 @@
+name: HSD V5 Phase 8A Editorial Language Fit Assets
+run-name: HSD V5 Phase 8A Editorial Language Fit Assets • ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'fixture_audit' }} • run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "fixture_audit or live_data"
+        required: true
+        default: "fixture_audit"
+        type: choice
+        options: [fixture_audit, live_data]
+      strict:
+        description: "Fail on hard editorial, fit, or asset blockers?"
+        required: true
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+  pull_request:
+    paths:
+      - "scripts/hsd_phase8a_editorial_engine.py"
+      - "scripts/generate_hsd_template_renderer_v5_phase8a.py"
+      - "scripts/generate_hsd_phase8a_multisport_cards.py"
+      - "scripts/validate_hsd_phase8a_editorial_quality.py"
+      - "scripts/repair_hsd_phase8a_wnba_logo_registry.py"
+      - "scripts/validate_hsd_phase8a_asset_registry.py"
+      - "config/graphics/v5/phase8a/**"
+      - "data/asset_registry/wnba/phase8a_exact_logo_sources.csv"
+      - "tests/test_phase8a_*.py"
+      - ".github/workflows/hsd-v5-phase8a-editorial-language-fit-assets.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hsd-v5-phase8a-editorial-fit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  phase8a-editorial-fit-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      HSD_PHASE8A_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'fixture_audit' }}
+      HSD_PHASE8A_STRICT: ${{ github.event_name == 'workflow_dispatch' && inputs.strict || 'true' }}
+      HSD_PAID_SOURCES_ALLOWED: "0"
+      HSD_PUBLISH_OUTPUTS: "false"
+      HSD_PUBLISH_MODE: "artifact_only"
+      HSD_ASSET_DOWNLOAD: "1"
+      HSD_REQUIRE_EXACT_TEAM_LOGOS: "0"
+      HSD_TEXT_LOGO_FALLBACK_ALLOWED: "0"
+      HSD_PLAYER_IMAGES_REQUIRED: "0"
+      HSD_GREY_SOURCE_MODE: "review_only"
+      HSD_TIMEZONE: "America/New_York"
+    steps:
+      - name: Check out selected ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install renderer dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-core
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install pillow cairosvg pytest requests pyyaml
+          fc-match "Noto Sans Display"
+      - name: Prepare and repair WNBA exact logo registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prepare_hsd_renderer_v4_live_assets.py
+          python scripts/repair_hsd_phase8a_wnba_logo_registry.py
+          if [[ "${HSD_PHASE8A_STRICT}" == "true" ]]; then
+            python scripts/build_hsd_asset_assurance_v1.py --strict
+          else
+            python scripts/build_hsd_asset_assurance_v1.py
+          fi
+      - name: Build existing live source packets
+        if: ${{ env.HSD_PHASE8A_MODE == 'live_data' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python build_hsd_run_manifest_v1.py || true
+          python generate_hsd_results_desk_v5.py || true
+          python scripts/generate_hsd_expected_games_v5.py || true
+          python scripts/verify_hsd_wnba_schedule_independent_v5.py || true
+          python generate_hsd_results_desk_v5.py || true
+          python generate_hsd_results_contract_v1.py || true
+          python build_hsd_daily_slate_v1.py || true
+          python generate_hsd_final_score_stories_v1.py || true
+          python generate_hsd_story_results_brand_lock_v1.py || true
+          python generate_hsd_manual_workflow_merge_v1.py || true
+          python generate_hsd_multi_post_desk_v1.py || true
+          python generate_hsd_mermaid_upper_echelon_v2.py || true
+          python scripts/generate_hsd_mermaid_production_graphics_director_v4_5.py || true
+          python scripts/generate_hsd_graphics_variant_packs_v1.py || true
+          python scripts/report_hsd_v4_source_truth_guard.py
+      - name: Build Phase 8A WNBA renderer and inherited quality reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_hsd_template_contract_v4.py --strict
+          python scripts/build_hsd_template_clean_plates_v4.py --strict
+          if [[ "${HSD_PHASE8A_MODE}" == "fixture_audit" ]]; then RENDER_ARGS=(--fixtures); else RENDER_ARGS=(); fi
+          if [[ "${HSD_PHASE8A_STRICT}" == "true" ]]; then
+            python scripts/generate_hsd_template_renderer_v5_phase8a.py "${RENDER_ARGS[@]}" --strict
+            python scripts/validate_hsd_template_renderer_v4_phase6m.py --strict
+            python scripts/validate_hsd_template_fidelity_v4_phase6k.py --strict
+            python scripts/validate_hsd_near_post_ready_v4_phase6k.py --strict
+            python scripts/validate_hsd_final_score_content_modules_v4_phase6k.py --strict
+            python scripts/validate_hsd_story_context_cta_v4.py --strict
+            python scripts/validate_hsd_public_copy_quality_v4.py --strict
+            python scripts/validate_hsd_asset_assurance_v1.py --strict
+          else
+            python scripts/generate_hsd_template_renderer_v5_phase8a.py "${RENDER_ARGS[@]}" || true
+            python scripts/validate_hsd_template_renderer_v4_phase6m.py || true
+            python scripts/validate_hsd_template_fidelity_v4_phase6k.py || true
+            python scripts/validate_hsd_near_post_ready_v4_phase6k.py || true
+            python scripts/validate_hsd_final_score_content_modules_v4_phase6k.py || true
+            python scripts/validate_hsd_story_context_cta_v4.py || true
+            python scripts/validate_hsd_public_copy_quality_v4.py || true
+            python scripts/validate_hsd_asset_assurance_v1.py || true
+          fi
+      - name: Build Phase 8A multi-sport review cards
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${HSD_PHASE8A_MODE}" == "fixture_audit" ]]; then EXTRA_ARGS=(--include-wnba); else EXTRA_ARGS=(); fi
+          python scripts/build_hsd_phase7_event_packets.py --mode "${HSD_PHASE8A_MODE}" $([[ "${HSD_PHASE8A_STRICT}" == "true" ]] && echo "--strict" || true)
+          python scripts/generate_hsd_phase8a_multisport_cards.py --mode "${HSD_PHASE8A_MODE}" "${EXTRA_ARGS[@]}" $([[ "${HSD_PHASE8A_STRICT}" == "true" ]] && echo "--strict" || true)
+      - name: Validate Phase 8A editorial and asset gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${HSD_PHASE8A_STRICT}" == "true" ]]; then
+            python scripts/validate_hsd_phase8a_editorial_quality.py --mode "${HSD_PHASE8A_MODE}" --strict
+            python scripts/validate_hsd_phase8a_asset_registry.py --mode "${HSD_PHASE8A_MODE}" --strict
+          else
+            python scripts/validate_hsd_phase8a_editorial_quality.py --mode "${HSD_PHASE8A_MODE}"
+            python scripts/validate_hsd_phase8a_asset_registry.py --mode "${HSD_PHASE8A_MODE}"
+          fi
+      - name: Run Phase 8A limited handoff gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${HSD_PHASE8A_STRICT}" == "true" ]]; then
+            python scripts/validate_hsd_live_post_ready_v5_phase7.py --mode "${HSD_PHASE8A_MODE}" --strict
+          else
+            python scripts/validate_hsd_live_post_ready_v5_phase7.py --mode "${HSD_PHASE8A_MODE}"
+          fi
+      - name: Run Phase 8A tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pytest -q \
+            tests/test_phase8a_editorial_engine.py \
+            tests/test_phase8a_fit_and_duplicates.py \
+            tests/test_phase8a_asset_registry.py
+      - name: Upload Phase 8A artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hsd-v5-phase8a-editorial-language-fit-assets-${{ env.HSD_PHASE8A_MODE }}-${{ github.run_number }}
+          path: |
+            clean_plate_v4_report.json
+            clean_plate_v4_report.md
+            live_asset_preparation_v4_report.json
+            live_asset_preparation_v4_report.md
+            asset_assurance_preflight_v1_report.json
+            asset_assurance_preflight_v1_report.md
+            asset_assurance_v1_report.json
+            asset_assurance_v1_report.md
+            phase8a_asset_registry_repair_report.json
+            phase8a_asset_registry_repair_report.md
+            phase8a_asset_registry_report.json
+            phase8a_asset_registry_report.md
+            phase8a_editorial_quality_report.json
+            phase8a_editorial_quality_report.md
+            phase7_event_packets_report.json
+            phase7_event_packets_report.md
+            phase8a_multisport_renderer_report.json
+            phase8a_multisport_renderer_report.md
+            live_post_ready_v4_report.json
+            live_post_ready_v4_report.md
+            v4_source_truth_guard.json
+            v4_source_truth_guard.md
+            template_renderer_v4_validation_report.json
+            template_renderer_v4_validation_report.md
+            template_fidelity_v4_report.json
+            template_fidelity_v4_report.md
+            near_post_ready_v4_report.json
+            near_post_ready_v4_report.md
+            final_score_content_modules_v4_report.json
+            final_score_content_modules_v4_report.md
+            story_context_cta_v4_report.json
+            story_context_cta_v4_report.md
+            public_copy_quality_v4_report.json
+            public_copy_quality_v4_report.md
+            outputs/latest/HSD_ASSET_ASSURANCE/**
+            outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/**
+            outputs/latest/HSD_PHASE8A/**
+            outputs/latest/HSD_PHASE8A_MULTISPORT/**
+            outputs/latest/HSD_LIVE_POST_READY/**
+            data/asset_registry/wnba/team_logos.csv
+            data/asset_registry/wnba/missing_team_logos.csv
+            data/asset_registry/wnba/logo_fetch_report.json
+            data/asset_registry/wnba/asset_registry_summary.json
+          if-no-files-found: warn
