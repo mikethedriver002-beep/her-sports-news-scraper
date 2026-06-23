@@ -1,0 +1,31 @@
+{
+  "version": "v1.0-phase8a-exact-logo-asset-registry-policy",
+  "exact_logo_required_for_release": true,
+  "fallback_badge_review_only": true,
+  "required_wnba_team_ids": [
+    "atlanta_dream",
+    "chicago_sky",
+    "connecticut_sun",
+    "dallas_wings",
+    "golden_state_valkyries",
+    "indiana_fever",
+    "las_vegas_aces",
+    "los_angeles_sparks",
+    "minnesota_lynx",
+    "new_york_liberty",
+    "phoenix_mercury",
+    "portland_fire",
+    "seattle_storm",
+    "toronto_tempo",
+    "washington_mystics"
+  ],
+  "priority_repairs": [
+    {
+      "team_id": "los_angeles_sparks",
+      "team_name": "Los Angeles Sparks",
+      "required_path": "assets/leagues/wnba/teams/los_angeles_sparks/logo.png",
+      "source_note": "phase8a_required_exact_logo_row"
+    }
+  ],
+  "human_override_required_when_fallback_badge_count_gt_zero": true
+}

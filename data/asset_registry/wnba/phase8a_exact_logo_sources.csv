@@ -1,0 +1,2 @@
+team_id,team_name,asset_type,preferred_path,primary_source_url,fallback_source_url,required,approved_source_note
+los_angeles_sparks,Los Angeles Sparks,primary_logo,assets/leagues/wnba/teams/los_angeles_sparks/logo.png,https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Los_Angeles_Sparks_logo.svg/250px-Los_Angeles_Sparks_logo.svg.png,https://cdn.wnba.com/static/next/teams/favicons/LAS/apple-touch-icon.png,true,phase8a_sparks_exact_logo_repair_source
