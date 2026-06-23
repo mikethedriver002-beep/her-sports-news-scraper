@@ -1,0 +1,189 @@
+{
+  "version": "v1.0-phase8b-final-score-result-language",
+  "global_banned_patterns": [
+    "FINAL READ | FINAL READ",
+    "BIGGEST REASON",
+    "THE CLEANEST STRETCH DECIDED THE FINISH",
+    "WHAT DECIDED IT",
+    "WHAT WAS THE TURN",
+    "YOUR FINAL READ",
+    "GENERIC RESULT",
+    "STATEMENT GAME"
+  ],
+  "fit_limits": {
+    "headline": 42,
+    "result_label": 28,
+    "body": 72,
+    "cta": 50,
+    "scoreline": 46
+  },
+  "sports": {
+    "wnba": {
+      "close": {
+        "label_variants": [
+          "LATE-GAME EDGE",
+          "CLOSING POSSESSION",
+          "FOURTH-QUARTER LEVER"
+        ],
+        "body_variants": [
+          "{winner_short} got the last clean stretch and made {loser_short} chase.",
+          "The swing came in the possessions where {winner_short} turned stops into control.",
+          "{winner_short} protected the ball late and made the margin hold."
+        ],
+        "cta_variants": [
+          "Was it the glass, pace, or late-shot making?",
+          "Where did this one flip?",
+          "Who owned the last real run?"
+        ]
+      },
+      "blowout": {
+        "label_variants": [
+          "NO CHASE GAME",
+          "SEPARATION RUN",
+          "RUNAWAY WINDOW"
+        ],
+        "body_variants": [
+          "{winner_short} created the gap early enough that {loser_short} never found the counter.",
+          "Once {winner_short} got to its shot profile, the game stopped feeling reachable.",
+          "The margin was about control: clean looks, extra possessions, and no real answer."
+        ],
+        "cta_variants": [
+          "What separated them first?",
+          "Was it pace, paint, or pressure?",
+          "Which stretch broke it open?"
+        ]
+      },
+      "standard": {
+        "label_variants": [
+          "SEPARATION READ",
+          "GAME LEVER",
+          "RESULT SHAPE"
+        ],
+        "body_variants": [
+          "{winner_short} won the stretch that made {loser_short} chase the rest of the night.",
+          "The clean possessions stacked up for {winner_short} when the game needed direction.",
+          "This turned on the stretch where {winner_short} got stops and better looks."
+        ],
+        "cta_variants": [
+          "Which stretch decided it?",
+          "What was the real game lever?",
+          "Who controlled the shape?"
+        ]
+      }
+    },
+    "nwsl": {
+      "standard": {
+        "label_variants": [
+          "MATCH LEVER",
+          "PRESS BREAK",
+          "WIDE CHANNEL"
+        ],
+        "body_variants": [
+          "{winner_short} found the cleaner release valve and made {loser_short} defend longer spells.",
+          "The match tilted when {winner_short} won territory and second balls.",
+          "Set pieces and transition cover shaped the result more than the scoreline shows."
+        ],
+        "cta_variants": [
+          "Was it press, width, or set pieces?",
+          "Where did the match tilt?",
+          "Who owned the second balls?"
+        ]
+      }
+    },
+    "uswnt": {
+      "standard": {
+        "label_variants": [
+          "MATCH LEVER",
+          "PRESS WINDOW",
+          "BOX RUNS"
+        ],
+        "body_variants": [
+          "The U.S. result turned on territory, wide-lane pressure, and the first line break.",
+          "The game opened when the press made the next pass predictable.",
+          "The cleanest chances came when the wide channel stayed high."
+        ],
+        "cta_variants": [
+          "Was it the press or the wide lane?",
+          "Who changed the match shape?",
+          "Where did the U.S. find space?"
+        ]
+      }
+    },
+    "tennis": {
+      "standard": {
+        "label_variants": [
+          "FIRST-STRIKE EDGE",
+          "RETURN PRESSURE",
+          "BREAK-POINT SWING"
+        ],
+        "body_variants": [
+          "{winner_short} owned enough first-strike points to keep {loser_short} defending from behind.",
+          "The return depth changed the match and put pressure on every service game.",
+          "The match turned when {winner_short} made the second serve feel unsafe."
+        ],
+        "cta_variants": [
+          "Was it return depth or first strike?",
+          "Where did the match turn?",
+          "Who owned the second serve?"
+        ]
+      }
+    },
+    "lpga": {
+      "standard": {
+        "label_variants": [
+          "SCORING WINDOW",
+          "APPROACH EDGE",
+          "CLOSING STRETCH"
+        ],
+        "body_variants": [
+          "{winner_short} managed the scoring holes and kept trouble off the card late.",
+          "The round separated on approach control and the chances converted inside the window.",
+          "The closing stretch rewarded patience, clean targets, and the putter holding up."
+        ],
+        "cta_variants": [
+          "Was it approach, putter, or course management?",
+          "Where did the card separate?",
+          "Who handled the scoring window?"
+        ]
+      }
+    },
+    "ncaa_softball": {
+      "standard": {
+        "label_variants": [
+          "CIRCLE CONTROL",
+          "TRAFFIC GAME",
+          "TWO-OUT SWING"
+        ],
+        "body_variants": [
+          "{winner_short} controlled traffic and made {loser_short} earn every baserunner.",
+          "The game turned when the circle limited free passes and forced weaker contact.",
+          "The result came from the innings where {winner_short} converted traffic into damage."
+        ],
+        "cta_variants": [
+          "Was it the circle or the two-out swing?",
+          "Who controlled traffic?",
+          "Where did the inning turn?"
+        ]
+      }
+    },
+    "volleyball": {
+      "standard": {
+        "label_variants": [
+          "SERVE-PASS EDGE",
+          "SIDEOUT PRESSURE",
+          "TRANSITION SWING"
+        ],
+        "body_variants": [
+          "{winner_short} won the serve-pass battle long enough to control the sideout math.",
+          "The match shifted when first contact gave {winner_short} more clean swings.",
+          "Transition chances became the separator when the sets tightened."
+        ],
+        "cta_variants": [
+          "Was it serve-pass or transition?",
+          "Who owned first contact?",
+          "Where did the sideout math turn?"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "version": "v1.0-phase8b-daily-multisport-packet-policy",
+  "supported_sports": [
+    "wnba",
+    "nwsl",
+    "uswnt",
+    "tennis",
+    "lpga",
+    "ncaa_softball",
+    "volleyball"
+  ],
+  "live_data_requires_verified_manual_packets": false,
+  "manual_packet_globs": [
+    "data/phase8b/manual_packets/*.json",
+    "data/phase8b/manual_packets/*.csv",
+    "data/phase8b/daily_events.json",
+    "data/phase8b/daily_events.csv"
+  ],
+  "required_fields": [
+    "sport_id",
+    "kind",
+    "primary_name"
+  ],
+  "result_required_any": [
+    "scoreline",
+    "winner_name",
+    "primary_score"
+  ],
+  "preview_required_any": [
+    "secondary_name",
+    "event_title",
+    "source_headline"
+  ]
+}

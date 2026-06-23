@@ -1,0 +1,81 @@
+{
+  "version": "phase8b_fixture_events",
+  "events": [
+    {
+      "sport_id": "nwsl",
+      "kind": "preview",
+      "primary_name": "Orlando Pride",
+      "secondary_name": "Washington Spirit",
+      "primary_short": "Orlando",
+      "secondary_short": "Washington",
+      "event_title": "Orlando Pride at Washington Spirit",
+      "verified_angle": "The wide channel and press release decide the first half."
+    },
+    {
+      "sport_id": "nwsl",
+      "kind": "result",
+      "winner_name": "Kansas City Current",
+      "loser_name": "Portland Thorns",
+      "winner_score": "2",
+      "loser_score": "1",
+      "scoreline": "Kansas City Current 2, Portland Thorns 1.",
+      "primary_name": "Kansas City Current",
+      "secondary_name": "Portland Thorns",
+      "winner_short": "Kansas City",
+      "loser_short": "Portland"
+    },
+    {
+      "sport_id": "uswnt",
+      "kind": "preview",
+      "primary_name": "USWNT",
+      "secondary_name": "Brazil",
+      "primary_short": "USWNT",
+      "secondary_short": "Brazil",
+      "event_title": "USWNT vs Brazil",
+      "verified_angle": "Fullback height and counterpress shape the whole match."
+    },
+    {
+      "sport_id": "tennis",
+      "kind": "result",
+      "winner_name": "Coco Gauff",
+      "loser_name": "Iga Swiatek",
+      "winner_short": "Gauff",
+      "loser_short": "Swiatek",
+      "scoreline": "Gauff def. Swiatek, 6-4, 3-6, 6-3.",
+      "primary_name": "Coco Gauff",
+      "secondary_name": "Iga Swiatek"
+    },
+    {
+      "sport_id": "lpga",
+      "kind": "result",
+      "winner_name": "Nelly Korda",
+      "loser_name": "Field",
+      "winner_short": "Korda",
+      "loser_short": "Field",
+      "scoreline": "Korda wins at 14-under.",
+      "primary_name": "Nelly Korda",
+      "secondary_name": "Field"
+    },
+    {
+      "sport_id": "ncaa_softball",
+      "kind": "preview",
+      "primary_name": "Oklahoma Sooners",
+      "secondary_name": "Texas Longhorns",
+      "primary_short": "Oklahoma",
+      "secondary_short": "Texas",
+      "event_title": "Oklahoma vs Texas",
+      "verified_angle": "The circle and first-pitch contact set the tone."
+    },
+    {
+      "sport_id": "volleyball",
+      "kind": "result",
+      "winner_name": "Nebraska",
+      "loser_name": "Wisconsin",
+      "winner_short": "Nebraska",
+      "loser_short": "Wisconsin",
+      "scoreline": "Nebraska def. Wisconsin, 3-1.",
+      "primary_name": "Nebraska",
+      "secondary_name": "Wisconsin"
+    }
+  ]
+}
