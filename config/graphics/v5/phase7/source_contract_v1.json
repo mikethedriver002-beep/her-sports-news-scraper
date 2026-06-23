@@ -1,0 +1,41 @@
+{
+  "schema": "hsd.phase7.editorial_event.v1",
+  "required_fields": [
+    "event_id",
+    "sport_id",
+    "kind",
+    "primary_name"
+  ],
+  "supported_kinds": [
+    "preview",
+    "spotlight",
+    "result",
+    "story"
+  ],
+  "fields": {
+    "event_id": "Stable source or packet identifier.",
+    "sport_id": "wnba, nwsl, uswnt, tennis, lpga, ncaa_softball, or volleyball.",
+    "kind": "preview, spotlight, result, or story.",
+    "primary_name": "Away team, featured team, athlete, or winner.",
+    "secondary_name": "Home team, opponent, field, or loser.",
+    "primary_short": "Optional preferred public short name.",
+    "secondary_short": "Optional preferred public short name.",
+    "winner_name": "Verified winner for result events.",
+    "loser_name": "Verified loser for result events.",
+    "scoreline": "Verified public score or result line.",
+    "source_headline": "Verified source headline.",
+    "verified_angle": "Verified editorial angle from a ready manual packet.",
+    "event_date": "Public event date when verified.",
+    "source_type": "Originating system or manual packet.",
+    "source_ref": "Source identifier or evidence reference.",
+    "fixture_only": "True only for test fixtures."
+  },
+  "safety": {
+    "invented_stats_allowed": false,
+    "invented_player_identity_allowed": false,
+    "fixture_events_allowed_in_live_handoff": false,
+    "human_visual_approval_required": true,
+    "auto_publish_allowed": false,
+    "production_cutover_allowed": false
+  }
+}

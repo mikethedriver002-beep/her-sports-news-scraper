@@ -1,0 +1,17 @@
+{
+  "schema": "hsd.phase7.editorial_event.v1",
+  "events": [
+    {
+      "event_id": "replace-with-stable-source-id",
+      "sport_id": "nwsl",
+      "kind": "preview",
+      "primary_name": "Away Team",
+      "secondary_name": "Home Team",
+      "source_headline": "Away Team at Home Team",
+      "verified_angle": "",
+      "source_type": "manual_verified_packet",
+      "source_ref": "replace-with-source-reference",
+      "fixture_only": false
+    }
+  ]
+}

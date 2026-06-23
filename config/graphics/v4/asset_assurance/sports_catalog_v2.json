@@ -1,0 +1,82 @@
+{
+  "version": "v2.0-phase7-multisport-editorial-catalog",
+  "sports": [
+    {
+      "sport_id": "wnba",
+      "display_name": "WNBA",
+      "entity_model": "team_and_player",
+      "integration_status": "live_renderer_active",
+      "source_status": "automated_live_pipeline",
+      "entity_registry": "data/asset_registry/wnba/teams.csv",
+      "logo_registry": "data/asset_registry/wnba/team_logos.csv",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    },
+    {
+      "sport_id": "nwsl",
+      "display_name": "NWSL",
+      "entity_model": "team_and_player",
+      "integration_status": "editorial_renderer_active",
+      "source_status": "manual_packet_and_normalized_event_ready",
+      "entity_registry": "data/asset_registry/nwsl/entities.csv",
+      "logo_registry": "data/asset_registry/nwsl/team_logos.csv",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    },
+    {
+      "sport_id": "uswnt",
+      "display_name": "USWNT",
+      "entity_model": "national_team_and_player",
+      "integration_status": "editorial_renderer_active",
+      "source_status": "manual_packet_and_normalized_event_ready",
+      "entity_registry": "data/asset_registry/uswnt/entities.csv",
+      "logo_registry": "data/asset_registry/uswnt/team_logos.csv",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    },
+    {
+      "sport_id": "tennis",
+      "display_name": "Women's Tennis",
+      "entity_model": "individual",
+      "integration_status": "editorial_renderer_active",
+      "source_status": "manual_packet_and_normalized_event_ready",
+      "entity_registry": "data/asset_registry/tennis/entities.csv",
+      "logo_registry": "",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    },
+    {
+      "sport_id": "lpga",
+      "display_name": "LPGA",
+      "entity_model": "individual",
+      "integration_status": "editorial_renderer_active",
+      "source_status": "manual_packet_and_normalized_event_ready",
+      "entity_registry": "data/asset_registry/lpga/entities.csv",
+      "logo_registry": "",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    },
+    {
+      "sport_id": "ncaa_softball",
+      "display_name": "NCAA Softball",
+      "entity_model": "team_and_player",
+      "integration_status": "editorial_renderer_active",
+      "source_status": "manual_packet_and_normalized_event_ready",
+      "entity_registry": "data/asset_registry/ncaa_softball/entities.csv",
+      "logo_registry": "data/asset_registry/ncaa_softball/team_logos.csv",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    },
+    {
+      "sport_id": "volleyball",
+      "display_name": "Women's Volleyball",
+      "entity_model": "team_and_player",
+      "integration_status": "editorial_renderer_active",
+      "source_status": "manual_packet_and_normalized_event_ready",
+      "entity_registry": "data/asset_registry/volleyball/entities.csv",
+      "logo_registry": "data/asset_registry/volleyball/team_logos.csv",
+      "fallback_primary_hex": "#DFA126",
+      "fallback_secondary_hex": "#080A10"
+    }
+  ]
+}
