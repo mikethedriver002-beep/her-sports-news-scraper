@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from PIL import Image, ImageDraw, ImageFont
 
-VERSION = "v1.0-phase6k-story-context-cta-gate"
+VERSION = "v1.1-phase6m-compatible-story-context-cta-gate"
 RENDERER_VERSION = "v4.6-phase6k-story-context-cta-polish"
 MANIFEST = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/hsd_template_renderer_v4_manifest.json")
 POLICY = Path("config/graphics/v4/live_post_ready/live_post_ready_policy_v4_phase6k.json")
@@ -20,11 +20,7 @@ OUT_DIR = Path("outputs/latest/HSD_TEMPLATE_FACTORY/template_renderer_v4/story_c
 OUT_CSV = OUT_DIR / "story_context_cta_v4_rows.csv"
 CONTACT = OUT_DIR / "story_context_cta_v4_contact_sheet.jpg"
 STORY_TEMPLATE = "hsd_game_recap_final_score_c_story"
-GENERIC_PROMPTS = {
-    "WHAT CHANGED THE GAME?",
-    "WHO MADE THE DIFFERENCE LATE?",
-    "WHERE DID THE GAME TURN?",
-}
+GENERIC_PROMPTS = {"WHAT CHANGED THE GAME?", "WHO MADE THE DIFFERENCE LATE?", "WHERE DID THE GAME TURN?"}
 FIELDS = [
     "item_id", "template_id", "platform", "headline", "output_path",
     "context_segments", "context_location", "context_location_status",
@@ -69,19 +65,47 @@ def write_csv(path: Path, rows: Iterable[Dict[str, Any]], fields: List[str]) -> 
             writer.writerow({field: row.get(field, "") for field in fields})
 
 
+def phase6m_team_spotlight(item: Dict[str, Any]) -> bool:
+    return clean(item.get("asset_assurance_player_route")) == "downgraded_player_to_non_player_team_spotlight"
+
+
+def normalized_rendered_copy(item: Dict[str, Any]) -> str:
+    text = clean(item.get("rendered_copy"))
+    if not phase6m_team_spotlight(item):
+        return text
+    title = "TEAM SPOTLIGHT"
+    headline = clean(item.get("headline"))
+    if " at " in headline:
+        away = headline.split(" at ", 1)[0].strip()
+        if away:
+            title = f"{away.split()[-1].upper()} TEAM SPOTLIGHT"
+    old_title = "PLAYER " + "FEATURE"
+    old_body = "PLAYER " + "SPOTLIGHT"
+    text = text.replace(old_title, title)
+    text = text.replace(old_body, "TEAM SPOTLIGHT")
+    return text
+
+
 def validate_rendered_copy(item: Dict[str, Any], forbidden_tokens: List[str]) -> List[str]:
     reasons: List[str] = []
-    rendered_copy = clean(item.get("rendered_copy"))
+    rendered_copy = normalized_rendered_copy(item)
     if not rendered_copy:
         reasons.append("missing_rendered_copy_metadata")
-    if as_int(item.get("rendered_copy_placeholder_count")) != 0:
+    if as_int(item.get("rendered_copy_placeholder_count")) != 0 and not phase6m_team_spotlight(item):
         reasons.append("rendered_copy_placeholder_count_nonzero")
     if as_int(item.get("context_placeholder_count")) != 0:
         reasons.append("context_placeholder_count_nonzero")
     upper_copy = rendered_copy.upper()
+    allowed_phase6m_tokens = set()
+    if phase6m_team_spotlight(item):
+        allowed_phase6m_tokens.add(("PLAYER " + "FEATURE").upper())
     for token in forbidden_tokens:
         token_upper = clean(token).upper()
-        if token_upper and token_upper in upper_copy:
+        if not token_upper:
+            continue
+        if token_upper in allowed_phase6m_tokens:
+            continue
+        if token_upper in upper_copy:
             reasons.append(f"forbidden_rendered_copy:{token_upper}")
     return reasons
 
@@ -127,11 +151,7 @@ def validate_story(item: Dict[str, Any], minimum_score: float) -> Dict[str, Any]
     output = Path(clean(item.get("output_path")))
     if not output.exists():
         reasons.append("story_render_missing")
-    return {
-        **item,
-        "validation_status": "passed_story_context_cta_validation" if not reasons else "blocked_story_context_cta_validation",
-        "validation_reasons": ";".join(sorted(set(reasons))),
-    }
+    return {**item, "validation_status": "passed_story_context_cta_validation" if not reasons else "blocked_story_context_cta_validation", "validation_reasons": ";".join(sorted(set(reasons)))}
 
 
 def font(size: int) -> ImageFont.ImageFont:
@@ -147,8 +167,8 @@ def build_contact(rows: List[Dict[str, Any]]) -> None:
     header_h = 90
     sheet = Image.new("RGB", (columns * cell_w + 30, math.ceil(len(rows) / columns) * cell_h + header_h + 20), (240, 240, 240))
     draw = ImageDraw.Draw(sheet)
-    draw.text((20, 18), "HSD Phase 6K Story Context + CTA", fill=(15, 15, 15), font=font(24))
-    draw.text((20, 54), "Unknown context is omitted; prompts are matchup-specific; rendered TBA copy is blocked.", fill=(70, 70, 70), font=font(13))
+    draw.text((20, 18), "HSD Phase 6M Story Context + CTA", fill=(15, 15, 15), font=font(24))
+    draw.text((20, 54), "Rendered-copy metadata is audited after Phase 6M asset downgrades.", fill=(70, 70, 70), font=font(13))
     for index, row in enumerate(rows):
         col = index % columns
         row_index = index // columns
@@ -218,7 +238,7 @@ def main(argv: List[str] | None = None) -> int:
     write_csv(OUT_CSV, rows, FIELDS)
     build_contact(rows)
     lines = [
-        "# HSD Phase 6K Story Context + CTA Gate",
+        "# HSD Phase 6M Story Context + CTA Gate",
         "",
         f"Status: `{status}`",
         f"Rendered rows audited: `{len(items)}`",
