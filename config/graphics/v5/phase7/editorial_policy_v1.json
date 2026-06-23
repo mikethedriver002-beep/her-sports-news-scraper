@@ -1,0 +1,387 @@
+{
+  "version": "v1.0-phase7-multisport-editorial-policy",
+  "supported_sports": [
+    "wnba",
+    "nwsl",
+    "uswnt",
+    "tennis",
+    "lpga",
+    "ncaa_softball",
+    "volleyball"
+  ],
+  "global_banned_patterns": [
+    "TEAM IDENTITY",
+    "MATCHUP IMPACT",
+    "KEY EDGE",
+    "PACE \u2022 STARS",
+    "PACE | STARS",
+    "WHO HAS THE EDGE TONIGHT",
+    "SOUND OFF IN THE COMMENTS",
+    "PLAYER FEATURE",
+    "PLAYER SPOTLIGHT",
+    "WHAT STOOD OUT",
+    "WHICH ANGLE MATTERS MOST",
+    "TAP IN WITH HSD",
+    "TBA",
+    "TBD"
+  ],
+  "max_field_characters": {
+    "debate_question": 74,
+    "watch_title": 34,
+    "watch_body": 76,
+    "cta": 62,
+    "editorial_headline": 52
+  },
+  "sports": {
+    "wnba": {
+      "display_name": "WNBA",
+      "entity_model": "team",
+      "preview": [
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question": "{away_short} OR {home_short}: WHO SETS THE PACE?",
+          "watch_title": "THE TEMPO TEST",
+          "watch_body": "CAN {away_short} MAKE {home_short} PLAY THEIR GAME?",
+          "cta": "WHO CONTROLS THE FIRST FIVE?"
+        },
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question": "CAN {away_short} FORCE {home_short} TO ADJUST?",
+          "watch_title": "THE FIRST PUNCH",
+          "watch_body": "WHICH SIDE GETS TO ITS GAME FIRST?",
+          "cta": "CALL THE OPENING SWING."
+        },
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question": "{away_short} AT {home_short}: WHO DICTATES?",
+          "watch_title": "THE HALF-COURT TEST",
+          "watch_body": "WHO CREATES THE CLEANER LOOKS?",
+          "cta": "WHAT DECIDES IT?"
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "{primary_short} UNDER THE LIGHTS",
+          "debate_question": "CAN {primary_short} FORCE {secondary_short} TO ADJUST?",
+          "watch_title": "{primary_possessive} TEST",
+          "watch_body": "WHAT HAS TO TRAVEL TONIGHT?",
+          "cta": "WHAT DOES {primary_short} NEED FIRST?"
+        },
+        {
+          "editorial_headline": "THE {primary_short} TEST",
+          "debate_question": "CAN {primary_short} SET THE TERMS AGAINST {secondary_short}?",
+          "watch_title": "THE ROAD QUESTION",
+          "watch_body": "CAN {primary_short} WIN THE OPENING FIVE?",
+          "cta": "NAME THE SWING FACTOR."
+        },
+        {
+          "editorial_headline": "{primary_short} HAS A QUESTION",
+          "debate_question": "CAN {primary_short} TAKE {secondary_short} OUT OF RHYTHM?",
+          "watch_title": "THE CONTROL TEST",
+          "watch_body": "CAN {primary_short} TAKE {secondary_short} OUT OF RHYTHM?",
+          "cta": "WHAT HAS TO CLICK?"
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} TAKES IT",
+          "watch_title": "FINAL READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHAT SWUNG IT FOR {winner_short}?",
+          "cta": "YOUR READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "WHY IT MATTERS",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT IS YOUR READ ON {primary_short}?",
+          "cta": "YOUR TAKE."
+        }
+      ]
+    },
+    "nwsl": {
+      "display_name": "NWSL",
+      "entity_model": "team",
+      "preview": [
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question": "WHO BREAKS THE PRESS FIRST: {away_short} OR {home_short}?",
+          "watch_title": "THE WIDE-AREA TEST",
+          "watch_body": "CAN {away_short} PLAY THROUGH {home_short} PRESSURE?",
+          "cta": "WHERE DOES THE MATCH OPEN UP?"
+        },
+        {
+          "editorial_headline": "{away_short} AT {home_short}",
+          "debate_question": "CAN {away_short} WIN THE SECOND BALLS?",
+          "watch_title": "THE PRESSURE POINT",
+          "watch_body": "{away_short} BUILD VS {home_short} PRESS.",
+          "cta": "WHO OWNS THE MIDDLE THIRD?"
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "THE {primary_short} PATH",
+          "debate_question": "CAN {primary_short} BREAK THE FIRST LINE?",
+          "watch_title": "{primary_possessive} ROUTE",
+          "watch_body": "WHERE CAN {primary_short} CREATE THE EXTRA PLAYER?",
+          "cta": "NAME THE SPACE TO WATCH."
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} FINDS A WAY",
+          "watch_title": "FINAL READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHERE DID {winner_short} FIND THE BREAK?",
+          "cta": "YOUR MATCH READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "THE BIG QUESTION",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT CHANGES NEXT FOR {primary_short}?",
+          "cta": "YOUR READ."
+        }
+      ]
+    },
+    "uswnt": {
+      "display_name": "USWNT",
+      "entity_model": "team",
+      "preview": [
+        {
+          "editorial_headline": "{away_short} VS {home_short}",
+          "debate_question": "WHO BREAKS THE SHAPE FIRST?",
+          "watch_title": "THE MIDFIELD TEST",
+          "watch_body": "CAN {away_short} TURN PRESSURE INTO CLEAN CHANCES?",
+          "cta": "WHO CONTROLS THE CENTRAL CHANNEL?"
+        },
+        {
+          "editorial_headline": "{away_short} VS {home_short}",
+          "debate_question": "CAN {home_short} PLAY THROUGH {away_short} PRESSURE?",
+          "watch_title": "THE FIRST-LINE TEST",
+          "watch_body": "WHO FINDS THE FREE PLAYER FIRST?",
+          "cta": "CALL THE TACTICAL SWING."
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "{primary_short} UNDER THE MICROSCOPE",
+          "debate_question": "WHERE CAN {primary_short} CREATE THE OVERLOAD?",
+          "watch_title": "THE SHAPE QUESTION",
+          "watch_body": "CAN {primary_short} TURN CONTROL INTO CHANCES?",
+          "cta": "WHAT HAS TO CONNECT?"
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} BREAKS THROUGH",
+          "watch_title": "FINAL READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHAT UNLOCKED IT FOR {winner_short}?",
+          "cta": "YOUR TACTICAL READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "WHY IT MATTERS",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT DOES THIS CHANGE FOR {primary_short}?",
+          "cta": "YOUR READ."
+        }
+      ]
+    },
+    "tennis": {
+      "display_name": "WOMEN'S TENNIS",
+      "entity_model": "individual",
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} VS {secondary_short}",
+          "debate_question": "WHO OWNS THE FIRST-STRIKE POINTS?",
+          "watch_title": "THE SECOND-SERVE TEST",
+          "watch_body": "CAN {primary_short} GET THE FIRST LOOK AT ATTACK?",
+          "cta": "WHICH PATTERN WINS?"
+        },
+        {
+          "editorial_headline": "{primary_short} VS {secondary_short}",
+          "debate_question": "CAN {secondary_short} TAKE TIME AWAY FROM {primary_short}?",
+          "watch_title": "THE RETURN TEST",
+          "watch_body": "WHO CONTROLS THE FIRST FOUR SHOTS?",
+          "cta": "CALL THE KEY PATTERN."
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "THE {primary_short} TEST",
+          "debate_question": "CAN {primary_short} OWN THE FIRST STRIKE?",
+          "watch_title": "THE SERVE-PLUS-ONE",
+          "watch_body": "WHERE DOES {primary_short} FIND THE SHORT BALL?",
+          "cta": "WHAT HAS TO LAND?"
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} MOVES THROUGH",
+          "watch_title": "MATCH READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHICH PATTERN CARRIED {winner_short}?",
+          "cta": "YOUR MATCH READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "THE TENNIS QUESTION",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT DOES THIS MEAN FOR {primary_short}?",
+          "cta": "YOUR READ."
+        }
+      ]
+    },
+    "lpga": {
+      "display_name": "LPGA",
+      "entity_model": "individual",
+      "preview": [
+        {
+          "editorial_headline": "{primary_short} VS {secondary_short}",
+          "debate_question": "WHO HANDLES THE SCORING STRETCH?",
+          "watch_title": "THE APPROACH-SHOT TEST",
+          "watch_body": "CAN {primary_short} GIVE HERSELF THE CLEANER LOOKS?",
+          "cta": "WHERE IS THE ROUND WON?"
+        },
+        {
+          "editorial_headline": "{primary_short} VS {secondary_short}",
+          "debate_question": "CAN {primary_short} STAY AGGRESSIVE WITHOUT CHASING?",
+          "watch_title": "THE POSITIONING TEST",
+          "watch_body": "WHO OWNS THE PAR-5 OPPORTUNITIES?",
+          "cta": "NAME THE SWING HOLE."
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "THE {primary_short} ROUND",
+          "debate_question": "CAN {primary_short} OWN THE SCORING STRETCH?",
+          "watch_title": "THE APPROACH QUESTION",
+          "watch_body": "WHERE CAN {primary_short} CREATE BIRDIE LOOKS?",
+          "cta": "WHAT HAS TO TRAVEL?"
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} CLOSES IT OUT",
+          "watch_title": "FINAL-ROUND READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHERE DID {winner_short} WIN THE ROUND?",
+          "cta": "YOUR COURSE READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "WHY IT MATTERS",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT CHANGES FOR {primary_short}?",
+          "cta": "YOUR READ."
+        }
+      ]
+    },
+    "ncaa_softball": {
+      "display_name": "NCAA SOFTBALL",
+      "entity_model": "team",
+      "preview": [
+        {
+          "editorial_headline": "{away_short} VS {home_short}",
+          "debate_question": "WHO WINS THE CIRCLE?",
+          "watch_title": "THE FIRST THREE",
+          "watch_body": "CAN {away_short} PRESSURE {home_short} EARLY?",
+          "cta": "WHICH LINEUP SETS THE TONE?"
+        },
+        {
+          "editorial_headline": "{away_short} VS {home_short}",
+          "debate_question": "CAN {home_short} KEEP {away_short} OFF THE BASES?",
+          "watch_title": "THE COUNT BATTLE",
+          "watch_body": "WHO CONTROLS THE STRIKE ZONE?",
+          "cta": "CALL THE FIRST SWING."
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "THE {primary_short} TEST",
+          "debate_question": "CAN {primary_short} WIN THE FIRST THREE INNINGS?",
+          "watch_title": "THE CIRCLE QUESTION",
+          "watch_body": "WHERE DOES {primary_short} CREATE PRESSURE?",
+          "cta": "WHAT HAS TO START EARLY?"
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} ADVANCES",
+          "watch_title": "FINAL READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHERE DID {winner_short} TAKE CONTROL?",
+          "cta": "YOUR GAME READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "THE SOFTBALL QUESTION",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT DOES THIS CHANGE FOR {primary_short}?",
+          "cta": "YOUR READ."
+        }
+      ]
+    },
+    "volleyball": {
+      "display_name": "WOMEN'S VOLLEYBALL",
+      "entity_model": "team",
+      "preview": [
+        {
+          "editorial_headline": "{away_short} VS {home_short}",
+          "debate_question": "WHO WINS FIRST CONTACT?",
+          "watch_title": "THE SERVE-PASS TEST",
+          "watch_body": "CAN {away_short} KEEP {home_short} OUT OF SYSTEM?",
+          "cta": "WHICH SIDE CONTROLS THE NET?"
+        },
+        {
+          "editorial_headline": "{away_short} VS {home_short}",
+          "debate_question": "CAN {home_short} SLOW {away_short} IN TRANSITION?",
+          "watch_title": "THE FIRST-BALL TEST",
+          "watch_body": "WHO EARNS THE CLEANER SWINGS?",
+          "cta": "CALL THE SERVE-PASS EDGE."
+        }
+      ],
+      "spotlight": [
+        {
+          "editorial_headline": "THE {primary_short} TEST",
+          "debate_question": "CAN {primary_short} WIN FIRST CONTACT?",
+          "watch_title": "THE TRANSITION QUESTION",
+          "watch_body": "WHERE DOES {primary_short} FIND THE CLEAN SWING?",
+          "cta": "WHAT HAS TO HOLD UP?"
+        }
+      ],
+      "result": [
+        {
+          "editorial_headline": "{winner_short} GETS IT DONE",
+          "watch_title": "MATCH READ",
+          "watch_body": "{scoreline}",
+          "debate_question": "WHAT CARRIED {winner_short} THROUGH?",
+          "cta": "YOUR MATCH READ?"
+        }
+      ],
+      "story": [
+        {
+          "editorial_headline": "{source_headline}",
+          "watch_title": "THE VOLLEYBALL QUESTION",
+          "watch_body": "{verified_angle}",
+          "debate_question": "WHAT CHANGES FOR {primary_short}?",
+          "cta": "YOUR READ."
+        }
+      ]
+    }
+  }
+}
