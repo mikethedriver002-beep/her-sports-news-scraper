@@ -4,8 +4,9 @@ from __future__ import annotations
 
 WNBA candidates continue through the Phase 6M live gate. Multi-sport review
 cards remain review-only until each sport receives a dedicated source-truth and
-handoff lane. Phase 8A may emit newer report names, so this gate accepts either
-Phase 7 or Phase 8A report contracts without weakening validation.
+handoff lane. Phase 8A may emit newer report names and hotfix renderer versions,
+so this gate accepts Phase 7 and Phase 8A report contracts without weakening
+generic-copy, duplicate-clause, or asset-safety validation.
 """
 
 import argparse
@@ -21,7 +22,7 @@ if str(SCRIPT_DIR) not in sys.path:
 import validate_hsd_live_post_ready_v4_phase6m as phase6m
 from hsd_phase7_editorial_engine import clean
 
-VERSION = "v2.1-phase8a-compatible-multisport-editorial-live-gate"
+VERSION = "v2.2-phase8a-hotfix2-compatible-multisport-editorial-live-gate"
 REPORT_JSON = Path("live_post_ready_v4_report.json")
 REPORT_MD = Path("live_post_ready_v4_report.md")
 
@@ -149,7 +150,10 @@ def _phase8a_duplicate_count(item: Dict[str, Any]) -> int:
 
 
 def _renderer_version_ok(item: Dict[str, Any]) -> bool:
-    return clean(item.get("phase8a_effective_renderer_version")) == "v5.1-phase8a-editorial-language-fit-assets" or clean(item.get("phase7_effective_renderer_version")) == "v5.0-phase7-multisport-editorial-engine"
+    phase8a_version = clean(item.get("phase8a_effective_renderer_version"))
+    if phase8a_version and "phase8a" in phase8a_version and "editorial-language-fit-assets" in phase8a_version:
+        return True
+    return clean(item.get("phase7_effective_renderer_version")) == "v5.0-phase7-multisport-editorial-engine"
 
 
 def installed_base() -> Any:

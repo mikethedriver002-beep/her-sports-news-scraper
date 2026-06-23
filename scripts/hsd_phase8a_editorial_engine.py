@@ -169,17 +169,73 @@ def has_mechanic(copy: Mapping[str, Any], sport_id: str, library: Mapping[str, A
     return any(term and term in combined for term in terms)
 
 
+def _trim_at_word_boundary(value: str, limit: int) -> str:
+    value = clean(value)
+    if len(value) <= limit:
+        return value
+    # Keep punctuation only when it remains attached to a complete word.
+    trimmed = value[:limit].rstrip(" ,.;:!?-")
+    if " " in trimmed:
+        trimmed = trimmed.rsplit(" ", 1)[0].rstrip(" ,.;:!?-")
+    return trimmed
+
+
+def _compressed_fit_candidates(value: str) -> List[str]:
+    upper = clean(value).upper()
+    candidates: List[str] = []
+    if "FIND FLOW" in upper or "EARLY FLOW" in upper:
+        candidates.extend(["WHO FINDS FLOW?", "FLOW CHECK", "FIRST RUN?"])
+    if "CONTROL THE FIRST RUN" in upper:
+        candidates.extend(["FIRST RUN?", "WHO STARTS CLEAN?"])
+    if "KEEP THE BALL MOVING" in upper:
+        candidates.extend(["WHO MOVES IT?", "EXTRA PASS?"])
+    if "BEND THE FLOOR" in upper:
+        candidates.extend(["WHO BENDS THE FLOOR?", "FLOOR BEND?"])
+    if "CREATE EASY TWOS" in upper:
+        candidates.extend(["EASY TWOS?", "WHO GETS EASY TWOS?"])
+    if "FEELS THE PAINT" in upper or "PAINT" in upper:
+        candidates.extend(["WHO FEELS THE PAINT?", "PAINT TOUCHES?"])
+    if "ROTATION" in upper:
+        candidates.extend(["TRACK THE ROTATION.", "ROTATION WATCH."])
+    if "LOW-HELP" in upper:
+        candidates.extend(["LOW-HELP READ.", "WATCH LOW HELP."])
+    if "SECOND CHANCES" in upper:
+        candidates.extend(["SECOND CHANCES?", "COUNT THE GLASS."])
+    if "PORTLAND FIRE" in upper:
+        candidates.extend([value.replace("PORTLAND FIRE", "PORTLAND")])
+    return candidates
+
+
 def fit_select(values: Sequence[str], event: Mapping[str, Any], limit: int, banned: Sequence[str], fallback: str = "") -> str:
     formatted = [format_value(value, event) for value in values if clean(value)]
-    if fallback and fallback not in formatted:
-        formatted.append(fallback)
+    expanded: List[str] = []
     for value in formatted:
+        expanded.append(value)
+        expanded.extend(_compressed_fit_candidates(value))
+    if fallback:
+        expanded.append(fallback)
+        expanded.extend(_compressed_fit_candidates(fallback))
+    seen: Set[str] = set()
+    candidates = []
+    for value in expanded:
+        key = clean(value).upper()
+        if key and key not in seen:
+            seen.add(key)
+            candidates.append(clean(value))
+    for value in candidates:
         if len(value) <= limit and not phrase_hits({"debate_question": value, "watch_title": value, "watch_body": value, "cta": value}, banned):
             return value
-    for value in sorted(formatted, key=len):
+    for value in sorted(candidates, key=len):
         if not phrase_hits({"debate_question": value, "watch_title": value, "watch_body": value, "cta": value}, banned):
-            return value[:limit].rstrip(" ,.;:!?-")
-    return (fallback or "WATCH THE SPORT-SPECIFIC EDGE.")[:limit]
+            trimmed = _trim_at_word_boundary(value, limit)
+            if trimmed and len(trimmed) <= limit:
+                # Preserve question intent when the source was a question.
+                if value.endswith("?") and not trimmed.endswith("?") and len(trimmed) + 1 <= limit:
+                    trimmed += "?"
+                return trimmed
+    generic_fallback = fallback or "WATCH THE SPORT EDGE."
+    trimmed = _trim_at_word_boundary(generic_fallback, limit)
+    return trimmed or "WATCH THE SPORT."
 
 
 def choose_pattern(event: Mapping[str, Any], library: Mapping[str, Any], kind: str) -> Mapping[str, Any]:
