@@ -46,7 +46,7 @@ except Exception:  # pragma: no cover
         event.setdefault("event_id", slug("-".join([event.get("sport_id", ""), event.get("primary_name", ""), event.get("secondary_name", ""), event.get("kind", "preview")])) )
         return event
 
-VERSION = "v1.0-phase8a-sport-specific-fit-safe-editorial-engine"
+VERSION = "v1.1-phase8a-hotfix1-editorial-engine"
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LIBRARY = ROOT / "config/graphics/v5/phase8a/phrase_library_v1.json"
 SUPPORTED_SPORTS = {"wnba", "nwsl", "uswnt", "tennis", "lpga", "ncaa_softball", "volleyball"}
@@ -105,10 +105,10 @@ def normalize_event(raw: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 def format_value(raw: str, event: Mapping[str, Any]) -> str:
-    primary = clean(event.get("primary_short") or entity_short(event.get("primary_name"), clean(event.get("sport_id"))))
-    secondary = clean(event.get("secondary_short") or entity_short(event.get("secondary_name"), clean(event.get("sport_id"))))
-    winner = clean(event.get("winner_short") or primary)
-    loser = clean(event.get("loser_short") or secondary)
+    primary = clean(event.get("primary_short") or entity_short(event.get("primary_name"), clean(event.get("sport_id")))).upper()
+    secondary = clean(event.get("secondary_short") or entity_short(event.get("secondary_name"), clean(event.get("sport_id")))).upper()
+    winner = clean(event.get("winner_short") or primary).upper()
+    loser = clean(event.get("loser_short") or secondary).upper()
     scoreline = clean(event.get("scoreline") or event.get("score_display")) or (f"{winner} over {loser}." if winner and loser else "FINAL.")
     values = {
         "primary_short": primary,
@@ -149,6 +149,22 @@ def phrase_hits(copy: Mapping[str, Any], banned: Sequence[str]) -> List[str]:
 
 def has_mechanic(copy: Mapping[str, Any], sport_id: str, library: Mapping[str, Any]) -> bool:
     terms = [clean(term).upper() for term in ((library.get("mechanic_terms_by_sport") or {}).get(sport_id) or [])]
+    # Phase 8A Hotfix 1: WNBA language can be basketball-specific without
+    # using only the original static mechanic list. The first audit correctly
+    # caught generic phrases, but it also over-blocked legitimate basketball
+    # action words like FLOW, EXTRA PASS, TOUCHES, and ROTATION.
+    if clean(sport_id) == "wnba":
+        terms.extend([
+            "FLOW",
+            "EXTRA PASS",
+            "TOUCHES",
+            "ROTATION",
+            "LOW-HELP",
+            "LOW HELP",
+            "DRIVE",
+            "CLEAN LOOKS",
+            "FIRST RUN",
+        ])
     combined = " | ".join(clean(copy.get(field)).upper() for field in ["debate_question", "watch_title", "watch_body", "cta"])
     return any(term and term in combined for term in terms)
 
