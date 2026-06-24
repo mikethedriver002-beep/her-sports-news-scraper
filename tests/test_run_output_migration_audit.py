@@ -67,12 +67,28 @@ def test_run_output_migration_audit_keeps_migrated_daily_chain_out_of_legacy_bat
     assert migrated.isdisjoint(legacy)
 
 
+def test_run_output_migration_audit_records_results_news_support_as_run_aware() -> None:
+    module = load_module()
+    report = module.build_audit(REPO)
+    support_scripts = {
+        "scripts/generate_hsd_expected_games_v5.py",
+        "scripts/verify_hsd_wnba_schedule_independent_v5.py",
+        "generate_news_dashboard_v1.py",
+    }
+    pending_batch = {row["script"] for row in report["prioritized_batches"]["batch_2_support_dashboards"]}
+    run_aware = {row["script"] for row in report["prioritized_batches"]["already_run_scoped"]}
+
+    assert pending_batch.isdisjoint(support_scripts)
+    assert support_scripts <= run_aware
+
+
 def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     text = DOC.read_text(encoding="utf-8")
 
-    assert "Batch 1 asset and graphics generator migration is complete." in text
+    assert "Batch 1 asset/graphics and Batch 2 Results/News support migrations are complete." in text
     assert "generate_hsd_graphics_upload_pack_v1.py" in text
-    assert "Move Batch 2 next" in text
+    assert "scripts/generate_hsd_expected_games_v5.py" in text
+    assert "Move Batch 3 next" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text
     assert "HSD_RUN_OUTPUT_DIR" in text

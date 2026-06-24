@@ -193,11 +193,20 @@ def render_md(report: Dict[str, Any]) -> str:
             f"Asset-stage caution: {report['asset_stage_caution']}",
             "",
         ]
-    else:
+    elif report["prioritized_batches"].get("batch_2_support_dashboards"):
         lines += [
             "## Recommendation",
             "",
             "Batch 1 asset and graphics generators are now run-aware. Move Batch 2 next: the remaining results/news support scripts that still write root files.",
+            "",
+            f"Asset-stage caution remains: {report['asset_stage_caution']}",
+            "",
+        ]
+    else:
+        lines += [
+            "## Recommendation",
+            "",
+            "Batch 1 and Batch 2 runner-called support scripts are now run-aware. Move Batch 3 next: the legacy scraper output path.",
             "",
             f"Asset-stage caution remains: {report['asset_stage_caution']}",
             "",

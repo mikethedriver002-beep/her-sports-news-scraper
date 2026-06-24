@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import csv
 import html
-import json
 import re
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Dict, List
+
+from hsd_run_io import input_path, output_path, write_text
 
 PACKETS_CSV = "news_fact_packets.csv"
 OBS_CSV = "news_source_observations.csv"
 HUB_MD = "news_sync_hub.md"
 QUEUE_MD = "news_brief_queue.md"
 DAILY_PLAN_MD = "news_daily_plan.md"
-OUTPUT_DIR = Path("news_dashboard")
+OUTPUT_DIR = output_path("news_dashboard")
 OUTPUT_FILE = OUTPUT_DIR / "index.html"
 INPUT_STATUS_CSV = "news_input_status_report.csv"
 
@@ -27,7 +27,7 @@ def esc(value) -> str:
 
 
 def load_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8") as f:
@@ -35,7 +35,7 @@ def load_csv(path: str) -> List[Dict[str, str]]:
 
 
 def load_text(path: str) -> str:
-    p = Path(path)
+    p = input_path(path)
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
 
@@ -168,8 +168,8 @@ a {{ color:var(--accent2); }}
 </body>
 </html>"""
 
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    OUTPUT_FILE.write_text(html_doc, encoding="utf-8")
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    write_text(OUTPUT_FILE, html_doc)
     print(f"Created {OUTPUT_FILE}")
 
 

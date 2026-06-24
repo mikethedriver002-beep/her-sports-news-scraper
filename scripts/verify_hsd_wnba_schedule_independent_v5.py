@@ -4,12 +4,17 @@ import csv
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hsd_run_io import input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
 try:
     from zoneinfo import ZoneInfo
@@ -18,9 +23,9 @@ except Exception:  # pragma: no cover
 
 VERSION = "v5.2-multi-source-wnba-schedule-verification"
 EXPECTED = Path("config/hsd_expected_games_v5.csv")
-OUT_CSV = Path("independent_schedule_verification_v5.csv")
-OUT_JSON = Path("independent_schedule_verification_v5.json")
-OUT_MD = Path("independent_schedule_verification_v5.md")
+OUT_CSV = output_path("independent_schedule_verification_v5.csv")
+OUT_JSON = output_path("independent_schedule_verification_v5.json")
+OUT_MD = output_path("independent_schedule_verification_v5.md")
 RESULTS_TIMEZONE = os.environ.get("HSD_TIMEZONE", "America/New_York")
 REQUEST_SLEEP_SECONDS = float(os.environ.get("HSD_INDEPENDENT_VERIFY_SLEEP_SECONDS", "0.15"))
 REQUEST_TIMEOUT_SECONDS = float(os.environ.get("HSD_INDEPENDENT_VERIFY_TIMEOUT_SECONDS", "12"))
@@ -91,18 +96,15 @@ def key_for(date: str, home: str, away: str) -> str:
 
 
 def read_rows(path: Path) -> List[Dict[str, str]]:
-    if not path.exists():
+    p = input_path(path)
+    if not p.exists():
         return []
-    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+    with p.open(newline="", encoding="utf-8", errors="replace") as f:
         return list(csv.DictReader(f))
 
 
 def write_rows(path: Path, rows: Iterable[Dict[str, Any]]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        for row in rows:
-            writer.writerow({field: row.get(field, "") for field in FIELDS})
+    write_run_csv(path, ({field: row.get(field, "") for field in FIELDS} for row in rows), FIELDS)
 
 
 def mmddyyyy(date: str) -> str:
@@ -300,6 +302,8 @@ def verify_expected_against_sources(expected: List[Dict[str, str]], independent:
     summary = {
         "version": VERSION,
         "generated_at_utc": now_iso(),
+        "output_scope": "run_scoped" if run_output_dir() else "legacy_root",
+        "run_output_dir": run_output_dir().as_posix() if run_output_dir() else "",
         "expected_games": expected_games,
         "independent_games": len({clean(row.get("independent_key") or row.get("expected_key")) for row in independent if clean(row.get("independent_key") or row.get("expected_key"))}),
         "matched": matched,
@@ -369,8 +373,8 @@ def report(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
 def main() -> None:
     rows, summary = verify()
     write_rows(OUT_CSV, rows)
-    OUT_JSON.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
-    OUT_MD.write_text(report(summary, rows), encoding="utf-8")
+    write_json(OUT_JSON, summary, sort_keys=True)
+    write_text(OUT_MD, report(summary, rows))
     print(
         json.dumps(
             {
