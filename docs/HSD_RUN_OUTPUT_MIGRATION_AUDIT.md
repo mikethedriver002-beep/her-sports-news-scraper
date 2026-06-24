@@ -8,7 +8,7 @@ The asset-stage generators now read run-folder review copies first and write gen
 
 The remaining Results/News support scripts now write generated reports, dashboards, and expected-games review copies into `HSD_RUN_OUTPUT_DIR` during local runs.
 
-Move Batch 3 next: the legacy scraper output path.
+Batch 3 is retired from the active local workflow instead of migrated. The old `womens_sports_scraper.py` path duplicated the current News Sync lane, wrote legacy root files, and did not add enough daily operator value to justify modernizing it right now.
 
 Guardrails stay unchanged:
 
@@ -54,14 +54,15 @@ What changed:
 
 ## Batch 3: Legacy Scraper
 
-Recommended after the normal runner path is clean:
+Retired from the active local workflow:
 
 - `womens_sports_scraper.py`
 
-Why third:
+Decision:
 
-- It is still callable through `-Mode scraper`.
-- It is legacy and lower priority than the active daily operator path.
+- It is no longer callable through a local runner mode.
+- Keep it as a standalone legacy reference for now.
+- Only reintroduce it if it is rebuilt as run-aware through `HSD_RUN_OUTPUT_DIR` and adds value beyond the current News Sync path.
 
 ## Already Run-Scoped Or Run-Aware
 

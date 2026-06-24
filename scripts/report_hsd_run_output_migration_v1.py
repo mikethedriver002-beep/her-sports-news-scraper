@@ -143,9 +143,11 @@ def scan_large_legacy_generators(root: Path, runner_scripts: set[str]) -> List[D
 
 def build_audit(root: Path) -> Dict[str, Any]:
     runner = root / "scripts/hsd_local.ps1"
-    stage_rows = runner_stage_scripts(read_text(runner))
+    runner_text = read_text(runner)
+    stage_rows = runner_stage_scripts(runner_text)
     runner_scripts = {row["script"] for row in stage_rows}
     script_rows = [scan_script(root, row["stage"], row["script"]) for row in stage_rows]
+    legacy_scraper_active = any(row["script"] == "womens_sports_scraper.py" for row in stage_rows)
 
     batches: Dict[str, List[Dict[str, Any]]] = {key: [] for key in BATCH_LABELS}
     for row in script_rows:
@@ -162,6 +164,12 @@ def build_audit(root: Path) -> Dict[str, Any]:
             "paid_api_changes_required": False,
         },
         "asset_stage_caution": ASSET_STAGE_CAUTION,
+        "legacy_scraper_retirement": {
+            "script": "womens_sports_scraper.py",
+            "active_local_mode": legacy_scraper_active,
+            "decision": "migration_pending" if legacy_scraper_active else "retired_from_active_local_workflow",
+            "future_rule": "Only reintroduce this path if it is rebuilt as run-aware and adds value beyond the active news sync path.",
+        },
         "runner_scripts": script_rows,
         "prioritized_batches": batches,
         "large_non_runner_legacy_writers": scan_large_legacy_generators(root, runner_scripts),
@@ -202,13 +210,34 @@ def render_md(report: Dict[str, Any]) -> str:
             f"Asset-stage caution remains: {report['asset_stage_caution']}",
             "",
         ]
-    else:
+    elif report["prioritized_batches"].get("batch_3_legacy_scraper"):
         lines += [
             "## Recommendation",
             "",
             "Batch 1 and Batch 2 runner-called support scripts are now run-aware. Move Batch 3 next: the legacy scraper output path.",
             "",
             f"Asset-stage caution remains: {report['asset_stage_caution']}",
+            "",
+        ]
+    else:
+        lines += [
+            "## Recommendation",
+            "",
+            "Runner-called run-output migration batches are complete. Keep the legacy scraper retired from active local modes unless it is rebuilt as a run-aware replacement that adds value beyond the current news sync path.",
+            "",
+            f"Asset-stage caution remains: {report['asset_stage_caution']}",
+            "",
+        ]
+
+    retirement = report.get("legacy_scraper_retirement", {})
+    if retirement:
+        active_state = "active" if retirement.get("active_local_mode") else "retired"
+        lines += [
+            "## Legacy Scraper Decision",
+            "",
+            f"- `{retirement.get('script', 'womens_sports_scraper.py')}` is `{active_state}` in the local runner.",
+            f"- Decision: `{retirement.get('decision', 'unknown')}`.",
+            f"- Future rule: {retirement.get('future_rule', '')}",
             "",
         ]
 

@@ -115,8 +115,9 @@ It does not publish, push to Git, call paid APIs, or run hidden handoff refresh 
 - `studio`: Studio bridge and preview quality gates.
 - `review`: operator status, publish guard, command center, lite review pack.
 - `full`: results, news, studio, then review.
-- `scraper`: legacy RSS/news scraper.
 - `asset`: asset desk and visual QA support scripts.
+
+The old `womens_sports_scraper.py` file remains as a standalone legacy reference, but it is no longer an active local runner mode. If that path is revived later, it should be rebuilt to write through `HSD_RUN_OUTPUT_DIR` before returning to the daily workflow.
 
 ## Guardrails
 

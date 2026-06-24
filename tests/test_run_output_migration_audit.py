@@ -82,13 +82,27 @@ def test_run_output_migration_audit_records_results_news_support_as_run_aware() 
     assert support_scripts <= run_aware
 
 
+def test_run_output_migration_audit_records_legacy_scraper_retirement() -> None:
+    module = load_module()
+    report = module.build_audit(REPO)
+    runner_scripts = {row["script"] for row in report["runner_scripts"]}
+    md = module.render_md(report)
+
+    assert report["prioritized_batches"]["batch_3_legacy_scraper"] == []
+    assert report["legacy_scraper_retirement"]["active_local_mode"] is False
+    assert report["legacy_scraper_retirement"]["decision"] == "retired_from_active_local_workflow"
+    assert "womens_sports_scraper.py" not in runner_scripts
+    assert "legacy scraper retired from active local modes" in md
+
+
 def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     text = DOC.read_text(encoding="utf-8")
 
     assert "Batch 1 asset/graphics and Batch 2 Results/News support migrations are complete." in text
     assert "generate_hsd_graphics_upload_pack_v1.py" in text
     assert "scripts/generate_hsd_expected_games_v5.py" in text
-    assert "Move Batch 3 next" in text
+    assert "Batch 3 is retired from the active local workflow instead of migrated." in text
+    assert "womens_sports_scraper.py" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text
     assert "HSD_RUN_OUTPUT_DIR" in text

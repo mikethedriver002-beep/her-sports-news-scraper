@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "review", "scraper")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -667,7 +667,6 @@ function Invoke-HsdRun {
             "studio" { Invoke-StudioStage $python }
             "asset" { Invoke-AssetStage $python }
             "review" { Invoke-ReviewStage $python }
-            "scraper" { Write-Section "Legacy scraper stage"; Invoke-ScriptIfPresent $python "womens_sports_scraper.py" }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }
     } catch {
