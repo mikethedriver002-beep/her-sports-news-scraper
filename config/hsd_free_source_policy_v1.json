@@ -1,0 +1,109 @@
+{
+  "policy_version": "hsd-free-source-policy-v1",
+  "updated_local_date": "2026-06-24",
+  "default_mode": "free_first_review_safe",
+  "paid_sources_required": false,
+  "paid_api_policy": {
+    "status": "disabled_for_current_phase",
+    "reason": "Free sources are the operating constraint. Paid APIs are not a product dependency right now.",
+    "blocked_secret_names_for_local_runs": [
+      "APISPORTS_KEY",
+      "SERPAPI_KEY",
+      "BING_SEARCH_API_KEY"
+    ]
+  },
+  "source_bands": [
+    {
+      "band": "green",
+      "label": "official_or_primary_free",
+      "examples": [
+        "league sites",
+        "team sites",
+        "official press releases",
+        "official scoreboards",
+        "AP or Reuters when freely reachable"
+      ],
+      "allowed_use": [
+        "publish_ready_fact_source",
+        "score_or_schedule_source",
+        "cross_check",
+        "asset_identity_confirmation"
+      ],
+      "human_review_required": false
+    },
+    {
+      "band": "green_cross_check",
+      "label": "free_public_scoreboard_or_major_media",
+      "examples": [
+        "ESPN public scoreboard endpoints",
+        "CBS/Yahoo/NCAA public pages",
+        "free public stat pages"
+      ],
+      "allowed_use": [
+        "cross_check",
+        "results_reconciliation",
+        "publish_ready_when_multiple_sources_agree"
+      ],
+      "human_review_required": false
+    },
+    {
+      "band": "yellow",
+      "label": "gray_area_public_or_social",
+      "examples": [
+        "public social posts",
+        "public embeds",
+        "public posts from athletes, teams, reporters, schools, or event accounts",
+        "public fan/media accounts used only as discovery leads"
+      ],
+      "allowed_use": [
+        "discovery",
+        "lead_generation",
+        "manual_review_context",
+        "operator_verified_fact_after_capture"
+      ],
+      "not_allowed_use": [
+        "sole_publish_source_without_operator_verification",
+        "private_or_login_required_scraping",
+        "bypassing platform limits",
+        "copying full posts or articles into outputs"
+      ],
+      "human_review_required": true
+    },
+    {
+      "band": "red",
+      "label": "paid_private_or_restricted",
+      "examples": [
+        "paid sports data APIs",
+        "paywalled article text",
+        "login-only social scraping",
+        "private feeds",
+        "credentialed endpoints not meant for public use"
+      ],
+      "allowed_use": [],
+      "not_allowed_use": [
+        "automation",
+        "publish_ready_fact_source",
+        "asset_download",
+        "scraping",
+        "circumvention"
+      ],
+      "human_review_required": true
+    }
+  ],
+  "publish_rules": [
+    "A publish-ready factual claim needs an official, primary, wire, or free public cross-check source.",
+    "Gray-area or social sources can trigger coverage but stay review-only until confirmed or operator verified.",
+    "Never invent scores, injuries, transactions, quotes, stats, rankings, milestones, or player identity.",
+    "Store summaries, facts, links, and evidence notes. Do not store full article text or copied social post bodies.",
+    "When sources conflict, hold for manual review."
+  ],
+  "local_run_defaults": {
+    "HSD_SOURCE_COST_MODE": "free_first",
+    "HSD_PAID_APIS_DISABLED": "1",
+    "HSD_GREY_SOURCE_MODE": "review_only",
+    "HSD_RESULTS_SOURCE_MODE": "free_public",
+    "HSD_NEWS_ENABLE_FETCH": "true",
+    "HSD_ASSET_RIGHTS_MODE": "aggressive_public_review",
+    "HSD_PLAYER_IMAGE_FREE_SEARCH": "1"
+  }
+}
