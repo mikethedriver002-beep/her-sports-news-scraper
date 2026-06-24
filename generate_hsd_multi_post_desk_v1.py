@@ -1,18 +1,19 @@
 from __future__ import annotations
 import csv, json, re
-from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from hsd_run_io import input_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 VERSION = "hsd-multi-post-desk-mermaid-v1.0"
-OUT_BOARD_MD = Path("multi_post_daily_board.md")
-OUT_STATUS_CSV = Path("post_slot_status.csv")
-OUT_FEED_CSV = Path("ig_feed_queue.csv")
-OUT_STORY_CSV = Path("ig_story_queue.csv")
-OUT_THREADS_CSV = Path("threads_queue.csv")
-OUT_CAPTION_MD = Path("caption_bank.md")
-OUT_COMMENT_MD = Path("first_comment_hooks.md")
-OUT_MANIFEST_JSON = Path("multi_post_daily_board.json")
+OUT_BOARD_MD = "multi_post_daily_board.md"
+OUT_STATUS_CSV = "post_slot_status.csv"
+OUT_FEED_CSV = "ig_feed_queue.csv"
+OUT_STORY_CSV = "ig_story_queue.csv"
+OUT_THREADS_CSV = "threads_queue.csv"
+OUT_CAPTION_MD = "caption_bank.md"
+OUT_COMMENT_MD = "first_comment_hooks.md"
+OUT_MANIFEST_JSON = "multi_post_daily_board.json"
 
 SLOT_FIELDS = [
     "slot_id","slot_name","platform","window_et","status","content_type","headline","content_family",
@@ -24,7 +25,7 @@ def clean(v: Any) -> str:
     return re.sub(r"\s+", " ", str(v or "")).strip()
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     try:
@@ -33,15 +34,11 @@ def read_csv(path: str) -> List[Dict[str, str]]:
     except Exception:
         return []
 
-def write_csv(path: Path, rows: List[Dict[str, str]], fields: List[str]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        if rows:
-            w.writerows(rows)
+def write_csv(path: str, rows: List[Dict[str, str]], fields: List[str]) -> None:
+    write_run_csv(path, rows, fields)
 
 def load_cfg() -> Dict[str, Any]:
-    p = Path("config/hsd_multi_post_slots_v1.json")
+    p = input_path("config/hsd_multi_post_slots_v1.json")
     if p.exists():
         return json.loads(p.read_text(encoding="utf-8"))
     return {"slots": []}
@@ -246,7 +243,7 @@ def main() -> None:
             f"- Notes: {s['notes'] or '—'}",
             "",
         ]
-    OUT_BOARD_MD.write_text("\n".join(board) + "\n", encoding="utf-8")
+    write_text(OUT_BOARD_MD, "\n".join(board) + "\n")
 
     captions = [
         "# HSD Caption Bank",
@@ -264,7 +261,7 @@ def main() -> None:
             "- CTA: Tap in with HSD.",
             "",
         ]
-    OUT_CAPTION_MD.write_text("\n".join(captions) + "\n", encoding="utf-8")
+    write_text(OUT_CAPTION_MD, "\n".join(captions) + "\n")
 
     comments = [
         "# HSD First Comment Hooks",
@@ -280,22 +277,24 @@ def main() -> None:
             "What stood out first to you?",
             "",
         ]
-    OUT_COMMENT_MD.write_text("\n".join(comments) + "\n", encoding="utf-8")
+    write_text(OUT_COMMENT_MD, "\n".join(comments) + "\n")
 
-    OUT_MANIFEST_JSON.write_text(json.dumps({
+    write_json(OUT_MANIFEST_JSON, {
         "generated_at": now.isoformat(),
         "version": VERSION,
+        "output_scope": "run_scoped" if run_output_dir() else "legacy_root",
         "slots": slots,
         "ig_feed_queue_count": len(feed_queue),
         "ig_story_queue_count": len(story_queue),
         "threads_queue_count": len(threads_queue),
-    }, indent=2), encoding="utf-8")
+    })
 
     print(json.dumps({
         "slot_count": len(slots),
         "ig_feed_queue_count": len(feed_queue),
         "ig_story_queue_count": len(story_queue),
         "threads_queue_count": len(threads_queue),
+        "output_scope": "run_scoped" if run_output_dir() else "legacy_root",
         "version": VERSION,
     }, indent=2))
 

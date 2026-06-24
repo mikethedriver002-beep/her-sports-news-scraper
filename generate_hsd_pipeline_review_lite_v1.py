@@ -36,6 +36,8 @@ KEY_FILES = [
     "results_contract_report.md", "results_contract_v2.csv", "manual_story_inbox_report.md", "story_candidates_manual.csv",
     "discovery_sources_report.md", "story_candidates_discovery.csv", "daily_slate_plan.md", "daily_slate_plan.csv", "daily_slate_guard_report.md",
     "latest_results_run_summary.md", "news_fact_packets.csv", "latest_news_sync_run_summary.md",
+    "multi_post_daily_board.md", "multi_post_daily_board.json", "post_slot_status.csv",
+    "ig_feed_queue.csv", "ig_story_queue.csv", "threads_queue.csv", "caption_bank.md", "first_comment_hooks.md",
     "studio_bundle_queue.csv", "studio_bundle_packets.md", "studio_bundle_prompts.md", "studio_fresh_packet_report.md",
     "studio_preview_build_v2_report.md", "studio_preview_build_v2.json", "preview_player_focus.csv",
     "preview_bundle_quality.csv", "preview_bundle_quality.md", "preview_bundle_quality_summary.csv",

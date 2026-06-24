@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "review")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -562,6 +562,11 @@ function Invoke-StoriesStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_final_score_stories_v1.py" -Optional
 }
 
+function Invoke-PostsStage($Python) {
+    Write-Section "Multi-post desk stage"
+    Invoke-ScriptIfPresent $Python "generate_hsd_multi_post_desk_v1.py" -Optional
+}
+
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
@@ -634,6 +639,14 @@ function Collect-HsdArtifacts($RunContext) {
         "ig_story_results_queue.csv",
         "ig_story_results_upload_pack_status.csv",
         "final_score_story_guard_report.md",
+        "multi_post_daily_board.md",
+        "multi_post_daily_board.json",
+        "post_slot_status.csv",
+        "ig_feed_queue.csv",
+        "ig_story_queue.csv",
+        "threads_queue.csv",
+        "caption_bank.md",
+        "first_comment_hooks.md",
         "hsd_pipeline_lite_review.zip"
     )
     foreach ($file in $reviewFiles) {
@@ -681,6 +694,7 @@ function Invoke-HsdRun {
             "asset" { Invoke-AssetStage $python }
             "stories" { Invoke-StoriesStage $python; Invoke-ReviewStage $python }
             "handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }
+            "posts" { Invoke-PostsStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }

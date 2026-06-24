@@ -100,6 +100,23 @@ What changed:
 - The local runner now exposes an explicit `stories` mode for this path, then refreshes the review command center.
 - This does not add the generator to `full`; the operator still chooses when to build result-story packs.
 
+Third selected cleanup:
+
+- `generate_hsd_multi_post_desk_v1.py`
+
+Why this was next:
+
+- It is operator-facing: it turns handoff, story, and slate artifacts into a platform-by-platform daily posting board.
+- The outputs answer a practical daily question: what should go to IG Feed, IG Stories, and Threads today.
+- It improves the daily operator workflow without adding a paid source, workflow trigger, or publishing action.
+
+What changed:
+
+- Multi-post board files, post-slot status, platform queues, caption bank, and first-comment hooks now write into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- The local runner now exposes an explicit `posts` mode for this path, then refreshes the review command center.
+- This does not add the generator to `full`; the operator still chooses when to build the multi-post board.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:
@@ -115,6 +132,7 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_graphics_qa_v1.py`
 - `generate_hsd_manual_workflow_merge_v1.py`
 - `generate_hsd_final_score_stories_v1.py`
+- `generate_hsd_multi_post_desk_v1.py`
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`
