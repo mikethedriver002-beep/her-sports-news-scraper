@@ -125,11 +125,15 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
             """,
             "https://www.wnba.com/news/liberty-announce-roster-move": """
                 <html><head>
+                  <meta property="og:title" content="Official Liberty roster move before Aces matchup" />
+                  <meta name="description" content="The Liberty announced a roster move before their Aces game." />
                   <meta property="article:published_time" content="2026-06-24T09:00:00Z" />
                 </head><body>Roster move story.</body></html>
             """,
             "https://www.wnba.com/news/all-time-wnba-record-leaders": """
                 <html><head>
+                  <meta property="og:title" content="All-time WNBA record leaders" />
+                  <meta name="description" content="A historical reference page for WNBA record leaders." />
                   <time datetime="2025-06-01T12:00:00Z">June 1, 2025</time>
                 </head><body>Evergreen record leaders.</body></html>
             """,
@@ -141,7 +145,7 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
             """,
             "https://apnews.com/article/womens-basketball-final-score": """
                 <html><head>
-                  <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-06-23T18:30:00Z"}</script>
+                  <script type="application/ld+json">{"@type":"NewsArticle","headline":"AP final score: Sky beat Storm","description":"Chicago beat Seattle in a final score thriller with late-game shotmaking.","datePublished":"2026-06-23T18:30:00Z"}</script>
                 </head><body>Final score story.</body></html>
             """,
         }
@@ -157,11 +161,19 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     assert by_title["Liberty announce roster move before Aces game"]["lead_source"] == "free_public_page"
     assert by_title["Liberty announce roster move before Aces game"]["promotion_hint"] == "news_packet"
     assert by_title["Liberty announce roster move before Aces game"]["published_at"] == "2026-06-24T09:00:00+00:00"
+    assert by_title["Liberty announce roster move before Aces game"]["summary"] == "The Liberty announced a roster move before their Aces game."
+    assert by_title["Liberty announce roster move before Aces game"]["evidence_title"] == "Official Liberty roster move before Aces matchup"
+    assert by_title["Liberty announce roster move before Aces game"]["evidence_published_at"] == "2026-06-24T09:00:00+00:00"
+    assert by_title["Liberty announce roster move before Aces game"]["evidence_description"] == "The Liberty announced a roster move before their Aces game."
+    assert by_title["Liberty announce roster move before Aces game"]["evidence_source"] == "article_metadata"
+    assert "Official Liberty roster move before Aces matchup" in by_title["Liberty announce roster move before Aces game"]["evidence_preview"]
     assert by_title["Liberty announce roster move before Aces game"]["freshness_label"] == "today"
     assert by_title["Liberty announce roster move before Aces game"]["freshness_source"] == "article_metadata"
     assert int(by_title["Liberty announce roster move before Aces game"]["quality_score"]) >= 70
     assert by_title["Sky beat Storm in final score thriller"]["promotion_hint"] == "studio_brief"
     assert by_title["Sky beat Storm in final score thriller"]["published_at"] == "2026-06-23T18:30:00+00:00"
+    assert by_title["Sky beat Storm in final score thriller"]["summary"] == "Chicago beat Seattle in a final score thriller with late-game shotmaking."
+    assert by_title["Sky beat Storm in final score thriller"]["evidence_title"] == "AP final score: Sky beat Storm"
     assert by_title["Sky beat Storm in final score thriller"]["freshness_label"] == "last_48_hours"
     assert by_title["Sky beat Storm in final score thriller"]["freshness_source"] == "article_metadata"
     assert by_title["All-time WNBA record leaders"]["freshness_label"].endswith("evergreen_angle")
@@ -174,6 +186,7 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
 
     report = (run_dir / "discovery_sources_report.md").read_text(encoding="utf-8")
     assert "- Article metadata dates found: 3" in report
+    assert "- Article metadata previews found: 3" in report
 
     board = load_module(BOARD_SCRIPT, "morning_board_intake_test")
     payload = board.build_payload()
@@ -181,6 +194,8 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     promotions = {row["title"]: row["promotion_recommendation"] for row in payload["promotion_recommendations"]}
 
     assert board_rows["Liberty announce roster move before Aces game"]["freshness_source"] == "article_metadata"
+    assert board_rows["Liberty announce roster move before Aces game"]["evidence_source"] == "article_metadata"
+    assert "The Liberty announced a roster move" in board_rows["Liberty announce roster move before Aces game"]["evidence_preview"]
     assert promotions["Liberty announce roster move before Aces game"] == "news_packet"
     assert promotions["Sky beat Storm in final score thriller"] == "studio_brief"
     assert promotions["Team account hints at injury update"] == "manual_story_candidate"
@@ -189,10 +204,31 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
 def test_article_date_from_public_metadata_formats() -> None:
     discovery = load_module(DISCOVERY_SCRIPT, "discovery_metadata_test")
 
+    metadata = discovery.article_metadata_from_html(
+        """
+        <html><head>
+          <meta property="og:title" content="Official result story" />
+          <meta property="og:description" content="A concise public metadata description." />
+          <meta property="article:published_time" content="2026-06-24T09:30:00Z" />
+        </head></html>
+        """
+    )
+    assert metadata == {
+        "title": "Official result story",
+        "published_at": "2026-06-24T09:30:00+00:00",
+        "description": "A concise public metadata description.",
+    }
+    assert discovery.article_evidence_preview(metadata) == "Official result story | 2026-06-24 | A concise public metadata description."
     assert (
         discovery.article_date_from_html('<meta property="article:published_time" content="2026-06-24T09:30:00Z">')
         == "2026-06-24T09:30:00+00:00"
     )
+    json_ld = discovery.article_metadata_from_html(
+        '<script type="application/ld+json">{"@type":"NewsArticle","headline":"JSON title","description":"JSON description","datePublished":"2026-06-23T18:00:00Z"}</script>'
+    )
+    assert json_ld["title"] == "JSON title"
+    assert json_ld["description"] == "JSON description"
+    assert json_ld["published_at"] == "2026-06-23T18:00:00+00:00"
     assert (
         discovery.article_date_from_html(
             '<script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-06-23T18:00:00Z"}</script>'

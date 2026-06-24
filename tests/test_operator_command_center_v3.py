@@ -121,6 +121,11 @@ def seed_daily_ops_files() -> None:
                 "title": "Public team social lead",
                 "summary": "A public team account has a possible lead.",
                 "source_url": "https://www.instagram.com/example",
+                "evidence_title": "Official metadata title for public team lead",
+                "evidence_published_at": "2026-06-10T12:00:00+00:00",
+                "evidence_description": "A concise public metadata description for operator review.",
+                "evidence_preview": "Official metadata title for public team lead | 2026-06-10 | A concise public metadata description for operator review.",
+                "evidence_source": "article_metadata",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -154,6 +159,11 @@ def seed_daily_ops_files() -> None:
                 "title": "Public team social lead",
                 "summary": "A public team account has a possible lead.",
                 "source_url": "https://www.instagram.com/example",
+                "evidence_title": "Official metadata title for public team lead",
+                "evidence_published_at": "2026-06-10T12:00:00+00:00",
+                "evidence_description": "A concise public metadata description for operator review.",
+                "evidence_preview": "Official metadata title for public team lead | 2026-06-10 | A concise public metadata description for operator review.",
+                "evidence_source": "article_metadata",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -182,7 +192,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.5.0-article-freshness"
+    assert payload["version"] == "hsd-operator-command-center-v3.6.0-evidence-previews"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -211,8 +221,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
+    assert "Official metadata title for public team lead" in payload["source_discovery_board"][0]["detail"]
+    assert payload["source_discovery_board"][0]["evidence_source"] == "article_metadata"
     assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
     assert payload["lead_promotion_recommendations"][0]["freshness_source"] == "article_metadata"
+    assert "A concise public metadata description" in payload["lead_promotion_recommendations"][0]["detail"]
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -233,6 +246,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Next step" in html
     assert "publish_grade" in html
     assert "Public team social lead" in html
+    assert "Official metadata title for public team lead" in html
+    assert "A concise public metadata description for operator review." in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
     assert "Next actions" in markdown
@@ -240,6 +255,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown
 

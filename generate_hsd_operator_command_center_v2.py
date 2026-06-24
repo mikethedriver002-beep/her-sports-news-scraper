@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.5.0-article-freshness"
+VERSION = "hsd-operator-command-center-v3.6.0-evidence-previews"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -331,10 +331,15 @@ def source_discovery_board() -> List[Dict[str, str]]:
                 "band": first_present(row.get("source_band"), default="yellow"),
                 "source": first_present(row.get("source_name"), row.get("source_type"), default="Unknown source"),
                 "title": first_present(row.get("title"), row.get("source_url"), default="Untitled source lead"),
-                "detail": short(first_present(row.get("summary"), row.get("reason"), row.get("next_action")), 220),
+                "detail": short(first_present(row.get("evidence_preview"), row.get("summary"), row.get("reason"), row.get("next_action")), 260),
                 "next_action": short(clean(row.get("next_action")), 180),
                 "artifact": first_present(row.get("source_artifact"), default="morning_source_discovery_board.csv"),
                 "url": clean(row.get("source_url")),
+                "evidence_title": clean(row.get("evidence_title")),
+                "evidence_published_at": clean(row.get("evidence_published_at")),
+                "evidence_description": short(clean(row.get("evidence_description")), 260),
+                "evidence_preview": short(clean(row.get("evidence_preview")), 260),
+                "evidence_source": clean(row.get("evidence_source")),
                 "promotion": first_present(row.get("promotion_recommendation"), default="monitor_only"),
                 "promotion_priority": first_present(row.get("promotion_priority"), default="P4"),
                 "promotion_target": clean(row.get("promotion_target")),
@@ -361,8 +366,14 @@ def lead_promotion_recommendations() -> List[Dict[str, str]]:
                 "status": first_present(row.get("review_status"), default="review"),
                 "lane": first_present(row.get("lane"), default="source_review"),
                 "target": first_present(row.get("promotion_target"), default="morning_source_discovery_board.csv"),
+                "detail": short(first_present(row.get("evidence_preview"), row.get("summary"), row.get("reason")), 260),
                 "reason": short(clean(row.get("promotion_reason")), 190),
                 "next_step": short(clean(row.get("promotion_next_step")), 190),
+                "evidence_title": clean(row.get("evidence_title")),
+                "evidence_published_at": clean(row.get("evidence_published_at")),
+                "evidence_description": short(clean(row.get("evidence_description")), 260),
+                "evidence_preview": short(clean(row.get("evidence_preview")), 260),
+                "evidence_source": clean(row.get("evidence_source")),
                 "quality_score": clean(row.get("quality_score")),
                 "freshness_label": clean(row.get("freshness_label")),
                 "freshness_source": clean(row.get("freshness_source")),
@@ -472,11 +483,12 @@ def build_next_actions(
         freshness_note = f"{promo.get('freshness_label') or 'undated'}"
         if promo.get("freshness_source"):
             freshness_note += f" via {promo['freshness_source']}"
+        evidence_note = f"{promo.get('detail')}. " if promo.get("detail") else ""
         add_action(
             "Lead promotion",
             "Editor",
             f"Promote source lead toward {promo['recommendation']}: {promo['title']}",
-            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {promo.get('next_step') or promo.get('reason')}",
+            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {evidence_note}{promo.get('next_step') or promo.get('reason')}",
             promo["artifact"],
         )
 
@@ -492,7 +504,7 @@ def build_next_actions(
             "Source review",
             "Research",
             f"Review morning source lead: {lead['title']}",
-            f"{lead['lane']} / {lead['posture']}. {lead.get('next_action') or lead.get('detail')}",
+            f"{lead['lane']} / {lead['posture']}. {lead.get('detail') or ''} {lead.get('next_action') or ''}".strip(),
             lead["artifact"],
         )
     elif source_board:
@@ -501,7 +513,7 @@ def build_next_actions(
             "Research scan",
             "Research",
             "Scan the morning source board",
-            f"Start with {lead['source']}: {lead.get('next_action') or lead.get('detail')}",
+            f"Start with {lead['source']}: {lead.get('detail') or lead.get('next_action')}",
             "morning_source_discovery_board.md",
         )
 
@@ -843,13 +855,18 @@ def render_studio(rows: Iterable[Dict[str, str]]) -> str:
 def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
     cards = []
     for row in rows:
+        detail = html.escape(row.get("detail") or "")
+        next_action = html.escape(row.get("next_action") or "")
+        detail_html = f"<p>{detail}</p>" if detail else ""
+        next_html = f"<p>Next: {next_action}</p>" if next_action and next_action != detail else ""
         cards.append(
             f"""
             <article class="content-row">
               <div>
                 <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['lane'])} {pill(row['status'])} {pill(row['posture'])}</div>
                 <h3>{html.escape(row['title'])}</h3>
-                <p>{html.escape(row.get('next_action') or row.get('detail') or '')}</p>
+                {detail_html}
+                {next_html}
                 <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
@@ -862,13 +879,18 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
 def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
     cards = []
     for row in rows:
+        detail = html.escape(row.get("detail") or "")
+        next_step = html.escape(row.get("next_step") or row.get("reason") or "")
+        detail_html = f"<p>{detail}</p>" if detail else ""
+        next_html = f"<p>Next: {next_step}</p>" if next_step and next_step != detail else ""
         cards.append(
             f"""
             <article class="content-row">
               <div>
                 <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['priority'])} {pill(row['recommendation'])}</div>
                 <h3>{html.escape(row['title'])}</h3>
-                <p>{html.escape(row.get('next_step') or row.get('reason') or '')}</p>
+                {detail_html}
+                {next_html}
                 <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
@@ -1241,12 +1263,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Lead promotion recommendations", ""]
     lines.extend(
-        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
+        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
         for item in payload["lead_promotion_recommendations"]
     )
     lines += ["", "## Morning source discovery", ""]
     lines.extend(
-        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
+        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
     )
     lines += ["", "## Studio queue", ""]
