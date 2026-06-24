@@ -158,3 +158,7 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "post_slot_status.csv" in runner
     assert "ig_feed_queue.csv" in runner
     assert "threads_queue.csv" in runner
+    assert "launch_command_center.md" in runner
+    assert "launch_instagram_publish_queue.csv" in runner
+    assert "launch_quality_gate.csv" in runner
+    assert "launch_manifest.json" in runner

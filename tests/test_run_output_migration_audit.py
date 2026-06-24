@@ -134,6 +134,20 @@ def test_run_output_migration_audit_records_multi_post_desk_as_run_aware() -> No
     assert 'OUT_BOARD_MD = "multi_post_daily_board.md"' in text
 
 
+def test_run_output_migration_audit_records_launch_control_as_run_aware() -> None:
+    module = load_module()
+    report = module.build_audit(REPO)
+    large_legacy = {row["script"] for row in report["large_non_runner_legacy_writers"]}
+    run_aware = {row["script"] for row in report["prioritized_batches"]["already_run_scoped"]}
+    text = (REPO / "generate_hsd_launch_control_v1.py").read_text(encoding="utf-8")
+
+    assert "generate_hsd_launch_control_v1.py" not in large_legacy
+    assert "generate_hsd_launch_control_v1.py" in run_aware
+    assert "from hsd_run_io import" in text
+    assert 'OUT_COMMAND_CENTER = "launch_command_center.md"' in text
+    assert '"output_scope": "run_scoped" if run_dir else "legacy_root"' in text
+
+
 def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     text = DOC.read_text(encoding="utf-8")
 
@@ -147,6 +161,8 @@ def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     assert "explicit `stories` mode" in text
     assert "generate_hsd_multi_post_desk_v1.py" in text
     assert "explicit `posts` mode" in text
+    assert "generate_hsd_launch_control_v1.py" in text
+    assert "explicit `launch` mode" in text
     assert "womens_sports_scraper.py" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text

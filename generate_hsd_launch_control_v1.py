@@ -8,7 +8,15 @@ import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+from hsd_run_io import (
+    input_candidates,
+    run_output_dir,
+    write_csv as write_run_csv,
+    write_json,
+    write_text,
+)
 
 
 VERSION = "hsd-launch-control-v1.1.2"
@@ -97,7 +105,7 @@ def stable_id(*parts: Any) -> str:
 
 def find_input(path: str) -> Path:
     candidates = [
-        Path(path),
+        *input_candidates(path),
         Path("studio_run_history") / "latest" / path,
         Path("news_run_history") / "latest" / path,
         Path("launch_run_history") / "latest" / path,
@@ -135,7 +143,7 @@ def resolve_nonempty_csv(path: str, roots: Optional[List[str]] = None) -> Tuple[
     filename = Path(path).name
 
     candidates = [
-        Path(path),
+        *input_candidates(path),
         Path("studio_run_history") / "latest" / filename,
         Path("launch_run_history") / "latest" / filename,
         Path("news_run_history") / "latest" / filename,
@@ -197,11 +205,7 @@ def load_json(path: str) -> Dict[str, Any]:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        for row in rows:
-            writer.writerow({k: row.get(k, "") for k in fields})
+    write_run_csv(path, rows, fields, extrasaction="ignore")
 
 
 def recommended_window(priority: str, rank: int) -> str:
@@ -368,7 +372,7 @@ def rate(numerator: float, denominator: float) -> float:
 
 
 def read_existing_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = find_input(path)
     if not p.exists() or not p.is_file():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -1137,7 +1141,8 @@ def main() -> None:
         setup_notes.append("No non-empty Studio Bundle queue found.")
 
     if not bundles:
-        Path("launch_setup_error.md").write_text(
+        write_text(
+            "launch_setup_error.md",
             "# Launch Control Setup Error\n\nNo non-empty bundle rows found. Run Studio Bridge Bundle Mode with valid bundle output first. Existing metrics/tracker files may still be preserved, but the launch slate cannot be rebuilt safely.\n",
             encoding="utf-8",
         )
@@ -1165,26 +1170,31 @@ def main() -> None:
     write_csv(OUT_PILLAR_BALANCE, pillar_rows, PILLAR_FIELDS)
     write_csv(OUT_GROWTH_EXPERIMENT_LOG, experiments, EXPERIMENT_FIELDS)
 
-    Path(OUT_COMMAND_CENTER).write_text(command, encoding="utf-8")
-    Path(OUT_DAILY_RUNBOOK).write_text(runbook, encoding="utf-8")
-    Path(OUT_GRAPHICS_CHAT_BRIEF).write_text(markdown_graphics_chat_brief(bundles, bundle_packets), encoding="utf-8")
-    Path(OUT_CAPTION_DRAFTS).write_text(markdown_caption_drafts(publish_queue), encoding="utf-8")
-    Path(OUT_STORY_PLAN).write_text(markdown_story_plan(publish_queue), encoding="utf-8")
-    Path(OUT_ACCOUNT_SETUP).write_text(markdown_account_setup(), encoding="utf-8")
-    Path(OUT_CONTENT_CALENDAR).write_text(markdown_content_calendar(publish_queue), encoding="utf-8")
-    Path(OUT_OPERATING_SOP).write_text(markdown_operating_sop(), encoding="utf-8")
-    Path(OUT_DAILY_OPERATOR_CHECKLIST).write_text(markdown_daily_operator_checklist(publish_queue), encoding="utf-8")
-    Path(OUT_PERFORMANCE_DASHBOARD).write_text(markdown_performance_dashboard(metrics_input, pillar_rows), encoding="utf-8")
-    Path(OUT_DOUBLE_DOWN_REPORT).write_text(double_down_report, encoding="utf-8")
+    write_text(OUT_COMMAND_CENTER, command, encoding="utf-8")
+    write_text(OUT_DAILY_RUNBOOK, runbook, encoding="utf-8")
+    write_text(OUT_GRAPHICS_CHAT_BRIEF, markdown_graphics_chat_brief(bundles, bundle_packets), encoding="utf-8")
+    write_text(OUT_CAPTION_DRAFTS, markdown_caption_drafts(publish_queue), encoding="utf-8")
+    write_text(OUT_STORY_PLAN, markdown_story_plan(publish_queue), encoding="utf-8")
+    write_text(OUT_ACCOUNT_SETUP, markdown_account_setup(), encoding="utf-8")
+    write_text(OUT_CONTENT_CALENDAR, markdown_content_calendar(publish_queue), encoding="utf-8")
+    write_text(OUT_OPERATING_SOP, markdown_operating_sop(), encoding="utf-8")
+    write_text(OUT_DAILY_OPERATOR_CHECKLIST, markdown_daily_operator_checklist(publish_queue), encoding="utf-8")
+    write_text(OUT_PERFORMANCE_DASHBOARD, markdown_performance_dashboard(metrics_input, pillar_rows), encoding="utf-8")
+    write_text(OUT_DOUBLE_DOWN_REPORT, double_down_report, encoding="utf-8")
 
-    Path("launch_dashboard").mkdir(exist_ok=True)
-    Path(OUT_DASHBOARD).write_text(make_dashboard(publish_queue, command, runbook), encoding="utf-8")
-    Path("launch_analytics_dashboard").mkdir(exist_ok=True)
-    Path(OUT_ANALYTICS_DASHBOARD).write_text(make_analytics_dashboard(metrics_input, pillar_rows, experiments, double_down_report), encoding="utf-8")
+    write_text(OUT_DASHBOARD, make_dashboard(publish_queue, command, runbook), encoding="utf-8")
+    write_text(
+        OUT_ANALYTICS_DASHBOARD,
+        make_analytics_dashboard(metrics_input, pillar_rows, experiments, double_down_report),
+        encoding="utf-8",
+    )
 
+    run_dir = run_output_dir()
     manifest = {
         "version": VERSION,
         "generated_at_utc": utc_now(),
+        "output_scope": "run_scoped" if run_dir else "legacy_root",
+        "output_dir": run_dir.as_posix() if run_dir else ".",
         "inputs": {
             "studio_bundle_queue": INPUT_BUNDLE_QUEUE,
             "resolved_bundle_queue_path": bundle_queue_path.as_posix(),
@@ -1232,10 +1242,10 @@ def main() -> None:
             "brand_name": brand.get("brand_name", ""),
         }
     }
-    Path(OUT_MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    write_json(OUT_MANIFEST, manifest, indent=2)
 
     print("Created HSD Launch Control outputs")
-    print(json.dumps(manifest["counts"], indent=2))
+    print(json.dumps({"output_scope": manifest["output_scope"], **manifest["counts"]}, indent=2))
 
 
 if __name__ == "__main__":

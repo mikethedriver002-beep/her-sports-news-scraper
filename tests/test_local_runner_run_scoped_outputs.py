@@ -119,6 +119,21 @@ def test_multi_post_mode_is_explicit_and_run_scoped() -> None:
     assert "multi-post daily board" in doc
 
 
+def test_launch_mode_is_explicit_and_run_scoped() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"launch"' in wrapper
+    assert '"launch"' in runner
+    assert "function Invoke-LaunchStage" in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_launch_control_v1.py" -Optional' in runner
+    assert '"launch" { Invoke-LaunchStage $python; Invoke-ReviewStage $python }' in runner
+    assert "launch_command_center.md" in runner
+    assert "launch_instagram_publish_queue.csv" in runner
+    assert "Launch Control runbook" in doc
+
+
 def test_local_development_docs_describe_run_scoped_outputs() -> None:
     doc = DOC.read_text(encoding="utf-8")
 

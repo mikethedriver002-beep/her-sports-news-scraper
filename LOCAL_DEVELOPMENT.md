@@ -119,6 +119,7 @@ It does not publish, push to Git, call paid APIs, or run hidden handoff refresh 
 - `stories`: final-score IG Story packs, then review command center.
 - `handoff`: manual inbox to handoff packs, then review command center.
 - `posts`: multi-post daily board and platform queues, then review command center.
+- `launch`: Launch Control runbook, publish queue, quality gates, dashboards, and review command center.
 
 The old `womens_sports_scraper.py` file remains as a standalone legacy reference, but it is no longer an active local runner mode. If that path is revived later, it should be rebuilt to write through `HSD_RUN_OUTPUT_DIR` before returning to the daily workflow.
 
