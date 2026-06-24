@@ -30,7 +30,7 @@ try:
 except Exception:
     BeautifulSoup = None
 
-VERSION = "hsd-discovery-ingest-v3.5.0-article-freshness"
+VERSION = "hsd-discovery-ingest-v3.6.0-evidence-previews"
 
 REGISTRY = "config/source_registry.json"
 OUT_CSV = "story_candidates_discovery.csv"
@@ -47,12 +47,14 @@ USER_AGENT = "HSDDiscovery/3.5 FreeSource"
 FIELDS = [
     "story_id", "source_id", "source_type", "source_tier", "source_trust_band", "title", "source_url",
     "canonical_url", "published_at", "summary", "risk_tier", "publish_eligible", "reason",
+    "evidence_title", "evidence_published_at", "evidence_description", "evidence_preview", "evidence_source",
     "lead_source", "lead_score", "freshness_date", "freshness_label", "freshness_source", "freshness_score",
     "urgency_score", "quality_score", "quality_reason", "promotion_hint", "review_next_step",
 ]
 
 ARTICLE_DATE_FETCHES = 0
 ARTICLE_DATES_FOUND = 0
+ARTICLE_PREVIEWS_FOUND = 0
 
 GREEN_TIERS = {"official", "operator", "wire", "primary_media", "stats_provider"}
 YELLOW_TIERS = {"social", "social_manual", "community", "discovery", "media_review"}
@@ -142,67 +144,160 @@ ARTICLE_DATE_META_KEYS = {
     "lastmod",
 }
 
+ARTICLE_TITLE_META_KEYS = {
+    "og:title",
+    "twitter:title",
+    "parsely-title",
+    "sailthru.title",
+    "headline",
+    "name",
+    "title",
+}
 
-def article_date_from_json_ld(value: Any) -> str:
+ARTICLE_DESCRIPTION_META_KEYS = {
+    "description",
+    "og:description",
+    "twitter:description",
+    "sailthru.description",
+    "parsely-metadata",
+}
+
+
+def short_text(value: Any, limit: int = 320) -> str:
+    text = clean(html.unescape(str(value or "")))
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "..."
+
+
+def json_ld_text(value: Any) -> str:
+    if isinstance(value, str):
+        return short_text(value, 500)
     if isinstance(value, list):
-        for item in value:
-            found = article_date_from_json_ld(item)
-            if found:
-                return found
-    if isinstance(value, dict):
-        graph = value.get("@graph")
-        if isinstance(graph, list):
-            found = article_date_from_json_ld(graph)
-            if found:
-                return found
-        for key in ["datePublished", "dateCreated", "uploadDate", "dateModified"]:
-            found = iso_date_hint(value.get(key))
-            if found:
-                return found
-        for nested in value.values():
-            if isinstance(nested, (dict, list)):
-                found = article_date_from_json_ld(nested)
-                if found:
-                    return found
+        parts = [json_ld_text(item) for item in value]
+        return short_text(" ".join(part for part in parts if part), 500)
+    if isinstance(value, (int, float)):
+        return clean(value)
     return ""
 
 
-def article_date_from_html(text: str) -> str:
+def merge_article_metadata(target: Dict[str, str], source: Dict[str, str]) -> Dict[str, str]:
+    for key in ["title", "published_at", "description"]:
+        if not clean(target.get(key)) and clean(source.get(key)):
+            target[key] = clean(source.get(key))
+    return target
+
+
+def article_metadata_from_json_ld(value: Any) -> Dict[str, str]:
+    metadata = {"title": "", "published_at": "", "description": ""}
+    if isinstance(value, list):
+        for item in value:
+            merge_article_metadata(metadata, article_metadata_from_json_ld(item))
+            if all(metadata.values()):
+                return metadata
+    if isinstance(value, dict):
+        graph = value.get("@graph")
+        if isinstance(graph, list):
+            merge_article_metadata(metadata, article_metadata_from_json_ld(graph))
+            if all(metadata.values()):
+                return metadata
+        for key in ["headline", "name"]:
+            if not metadata["title"]:
+                metadata["title"] = json_ld_text(value.get(key))
+        for key in ["datePublished", "dateCreated", "uploadDate", "dateModified"]:
+            if not metadata["published_at"]:
+                metadata["published_at"] = iso_date_hint(value.get(key))
+        if not metadata["description"]:
+            metadata["description"] = json_ld_text(value.get("description"))
+        for nested in value.values():
+            if isinstance(nested, (dict, list)):
+                merge_article_metadata(metadata, article_metadata_from_json_ld(nested))
+                if all(metadata.values()):
+                    return metadata
+    return metadata
+
+
+def article_date_from_json_ld(value: Any) -> str:
+    return article_metadata_from_json_ld(value).get("published_at", "")
+
+
+def article_evidence_preview(metadata: Dict[str, str]) -> str:
+    parts = []
+    title = clean(metadata.get("title"))
+    published = iso_date_hint(metadata.get("published_at"))
+    description = clean(metadata.get("description"))
+    if title:
+        parts.append(title)
+    if published:
+        parts.append(published[:10])
+    if description:
+        parts.append(description)
+    return short_text(" | ".join(parts), 360)
+
+
+def article_metadata_from_html(text: str) -> Dict[str, str]:
+    metadata = {"title": "", "published_at": "", "description": ""}
     if BeautifulSoup is not None:
         soup = BeautifulSoup(text or "", "html.parser")
         for tag in soup.find_all("meta"):
             key = clean(tag.get("property") or tag.get("name") or tag.get("itemprop") or tag.get("http-equiv")).lower()
-            if key not in ARTICLE_DATE_META_KEYS and not key.endswith(":published_time"):
-                continue
-            found = iso_date_hint(tag.get("content") or tag.get("value"))
-            if found:
-                return found
+            content = tag.get("content") or tag.get("value")
+            if not metadata["published_at"] and (key in ARTICLE_DATE_META_KEYS or key.endswith(":published_time")):
+                metadata["published_at"] = iso_date_hint(content)
+            elif not metadata["title"] and key in ARTICLE_TITLE_META_KEYS:
+                metadata["title"] = short_text(content, 220)
+            elif not metadata["description"] and key in ARTICLE_DESCRIPTION_META_KEYS:
+                metadata["description"] = short_text(content, 320)
         for script in soup.find_all("script", attrs={"type": re.compile(r"ld\+json", re.I)}):
             raw = script.string or script.get_text(" ")
             try:
-                found = article_date_from_json_ld(json.loads(raw))
-                if found:
-                    return found
+                merge_article_metadata(metadata, article_metadata_from_json_ld(json.loads(raw)))
+                if all(metadata.values()):
+                    return metadata
             except Exception:
                 pass
-        for tag in soup.find_all("time"):
-            found = iso_date_hint(tag.get("datetime"), tag.get("content"), tag.get_text(" "))
-            if found:
-                return found
-    patterns = [
-        r'"datePublished"\s*:\s*"([^"]+)"',
-        r'"dateCreated"\s*:\s*"([^"]+)"',
-        r'"uploadDate"\s*:\s*"([^"]+)"',
-        r'<time[^>]+datetime=["\']([^"\']+)["\']',
-        r'<meta[^>]+(?:property|name|itemprop)=["\'](?:article:published_time|og:published_time|datePublished|datepublished|pubdate)["\'][^>]+content=["\']([^"\']+)["\']',
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text or "", flags=re.I | re.S)
-        if match:
-            found = iso_date_hint(html.unescape(match.group(1)))
-            if found:
-                return found
-    return ""
+        if not metadata["title"] and soup.title:
+            metadata["title"] = short_text(soup.title.get_text(" "), 220)
+        if not metadata["published_at"]:
+            for tag in soup.find_all("time"):
+                metadata["published_at"] = iso_date_hint(tag.get("datetime"), tag.get("content"), tag.get_text(" "))
+                if metadata["published_at"]:
+                    break
+
+    patterns = {
+        "published_at": [
+            r'"datePublished"\s*:\s*"([^"]+)"',
+            r'"dateCreated"\s*:\s*"([^"]+)"',
+            r'"uploadDate"\s*:\s*"([^"]+)"',
+            r'<time[^>]+datetime=["\']([^"\']+)["\']',
+            r'<meta[^>]+(?:property|name|itemprop)=["\'](?:article:published_time|og:published_time|datePublished|datepublished|pubdate)["\'][^>]+content=["\']([^"\']+)["\']',
+        ],
+        "title": [
+            r'"headline"\s*:\s*"([^"]+)"',
+            r'<meta[^>]+(?:property|name)=["\'](?:og:title|twitter:title)["\'][^>]+content=["\']([^"\']+)["\']',
+            r"<title[^>]*>(.*?)</title>",
+        ],
+        "description": [
+            r'"description"\s*:\s*"([^"]+)"',
+            r'<meta[^>]+(?:property|name)=["\'](?:og:description|twitter:description|description)["\'][^>]+content=["\']([^"\']+)["\']',
+        ],
+    }
+    for key, key_patterns in patterns.items():
+        if metadata[key]:
+            continue
+        for pattern in key_patterns:
+            match = re.search(pattern, text or "", flags=re.I | re.S)
+            if not match:
+                continue
+            value = html.unescape(match.group(1))
+            metadata[key] = iso_date_hint(value) if key == "published_at" else short_text(re.sub(r"<[^>]+>", " ", value), 320)
+            if metadata[key]:
+                break
+    return metadata
+
+
+def article_date_from_html(text: str) -> str:
+    return article_metadata_from_html(text).get("published_at", "")
 
 
 def load_registry() -> Dict[str, Any]:
@@ -450,12 +545,19 @@ def quality_payload(
 
 def candidate_row(src: Dict[str, Any], row: Dict[str, str], *, lead_source: str, band: str) -> Dict[str, str]:
     policy = row_policy(src, band)
-    title = normalized_link_title(row.get("title", ""))
+    evidence_title = clean(row.get("evidence_title"))
+    evidence_published_at = clean(row.get("evidence_published_at"))
+    evidence_description = clean(row.get("evidence_description"))
+    evidence_preview = clean(row.get("evidence_preview"))
+    evidence_source = clean(row.get("evidence_source"))
+    title = normalized_link_title(row.get("title") or evidence_title)
     summary = clean(row.get("summary"))
+    if evidence_description and summary.startswith("Free public source link captured from "):
+        summary = evidence_description
     source_url = clean(row.get("source_url"))
     score = clean(row.get("lead_score")) or str(lead_score(title, source_url, summary))
-    published_at = clean(row.get("published_at"))
-    published_at_source = clean(row.get("published_at_source"))
+    published_at = clean(row.get("published_at")) or evidence_published_at
+    published_at_source = clean(row.get("published_at_source")) or (evidence_source if evidence_published_at else "")
     quality = quality_payload(src, title, source_url, summary, int(score or 0), published_at, published_at_source)
     return {
         "story_id": story_id(row.get("canonical_url", ""), title),
@@ -471,6 +573,11 @@ def candidate_row(src: Dict[str, Any], row: Dict[str, str], *, lead_source: str,
         "risk_tier": policy["risk_tier"],
         "publish_eligible": policy["publish_eligible"],
         "reason": clean(row.get("reason")) or policy["reason"],
+        "evidence_title": evidence_title,
+        "evidence_published_at": evidence_published_at or (published_at if evidence_source == "article_metadata" else ""),
+        "evidence_description": evidence_description,
+        "evidence_preview": evidence_preview,
+        "evidence_source": evidence_source,
         "lead_source": lead_source,
         "lead_score": score,
         **quality,
@@ -572,22 +679,34 @@ def enrich_article_dates(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
     if requests is None or not ENABLE_FETCH or not ENABLE_ARTICLE_DATE_FETCH or MAX_ARTICLE_DATE_FETCHES_PER_SOURCE <= 0:
         return rows
 
-    global ARTICLE_DATE_FETCHES, ARTICLE_DATES_FOUND
+    global ARTICLE_DATE_FETCHES, ARTICLE_DATES_FOUND, ARTICLE_PREVIEWS_FOUND
     for row in rows[:MAX_ARTICLE_DATE_FETCHES_PER_SOURCE]:
         url = clean(row.get("source_url"))
-        if not url or clean(row.get("published_at")):
+        if not url:
             continue
         try:
             ARTICLE_DATE_FETCHES += 1
             response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=FETCH_TIMEOUT)
             if response.status_code >= 400:
                 continue
-            published = article_date_from_html(response.text)
-            if not published:
-                continue
-            row["published_at"] = published
-            row["published_at_source"] = "article_metadata"
-            ARTICLE_DATES_FOUND += 1
+            metadata = article_metadata_from_html(response.text)
+            published = clean(metadata.get("published_at"))
+            title = clean(metadata.get("title"))
+            description = clean(metadata.get("description"))
+            preview = article_evidence_preview(metadata)
+            if published and not clean(row.get("published_at")):
+                row["published_at"] = published
+                row["published_at_source"] = "article_metadata"
+                ARTICLE_DATES_FOUND += 1
+            if title or description or preview:
+                row["evidence_title"] = title
+                row["evidence_published_at"] = published
+                row["evidence_description"] = description
+                row["evidence_preview"] = preview
+                row["evidence_source"] = "article_metadata"
+                if description and clean(row.get("summary")).startswith("Free public source link captured from "):
+                    row["summary"] = description
+                ARTICLE_PREVIEWS_FOUND += 1
         except Exception:
             continue
     return rows
@@ -672,9 +791,10 @@ def social_manual_rows() -> List[Dict[str, str]]:
 
 
 def main() -> None:
-    global ARTICLE_DATE_FETCHES, ARTICLE_DATES_FOUND
+    global ARTICLE_DATE_FETCHES, ARTICLE_DATES_FOUND, ARTICLE_PREVIEWS_FOUND
     ARTICLE_DATE_FETCHES = 0
     ARTICLE_DATES_FOUND = 0
+    ARTICLE_PREVIEWS_FOUND = 0
 
     registry = load_registry()
     candidates: List[Dict[str, str]] = []
@@ -746,12 +866,13 @@ def main() -> None:
         f"- Free public page leads: {counts_by_lead_source.get('free_public_page', 0)}",
         f"- Article metadata date fetches: {ARTICLE_DATE_FETCHES}",
         f"- Article metadata dates found: {ARTICLE_DATES_FOUND}",
+        f"- Article metadata previews found: {ARTICLE_PREVIEWS_FOUND}",
         f"- Reddit public JSON leads: {counts_by_lead_source.get('reddit_public_json', 0)}",
         f"- Manual social leads: {counts_by_lead_source.get('manual_social_inbox', 0)}",
         f"- enabled source types skipped by review-safe policy: {skipped_uncrawled_policy}",
         f"- enabled unknown source types skipped: {skipped_enabled_unknown}",
         "",
-        "Official and wire pages are sampled only for free public story links. Top story links may be fetched once for public article metadata dates when available. Social rows come from manual inbox files only; no login, credentialed scraping, paid APIs, auto-publishing, or automatic promotion is used.",
+        "Official and wire pages are sampled only for free public story links. Top story links may be fetched once for public article metadata titles, dates, and short descriptions when available. Social rows come from manual inbox files only; no login, credentialed scraping, paid APIs, auto-publishing, or automatic promotion is used.",
         "",
         "## Top Leads",
         "",
@@ -760,7 +881,7 @@ def main() -> None:
         lines.append(
             f"- `{row['quality_score']}` quality | `{row['freshness_label']}` | `{row['promotion_hint']}` | "
             f"`{row['source_trust_band']}` | freshness via `{row.get('freshness_source') or 'unknown'}` | "
-            f"{row['title']} | {row['review_next_step']}"
+            f"{row['title']} | {short_text(row.get('evidence_preview') or row.get('summary'), 160)} | {row['review_next_step']}"
         )
     if not candidates:
         lines.append("No discovery candidates found.")
@@ -772,6 +893,7 @@ def main() -> None:
         "free_public_page_leads": counts_by_lead_source.get("free_public_page", 0),
         "article_date_fetches": ARTICLE_DATE_FETCHES,
         "article_dates_found": ARTICLE_DATES_FOUND,
+        "article_previews_found": ARTICLE_PREVIEWS_FOUND,
         "manual_social_leads": counts_by_lead_source.get("manual_social_inbox", 0),
         "fresh_today_or_48h": sum(1 for r in candidates if r["freshness_label"] in {"today", "last_48_hours"}),
         "stale_or_evergreen": sum(1 for r in candidates if "stale" in r["freshness_label"] or "evergreen" in r["freshness_label"]),

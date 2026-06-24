@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.3-article-freshness"
+VERSION = "hsd-morning-source-discovery-board-v1.4-evidence-previews"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -32,6 +32,11 @@ FIELDS = [
     "title",
     "summary",
     "source_url",
+    "evidence_title",
+    "evidence_published_at",
+    "evidence_description",
+    "evidence_preview",
+    "evidence_source",
     "source_artifact",
     "next_action",
     "reason",
@@ -356,6 +361,11 @@ def make_row(
     source_url: str,
     source_artifact: str,
     reason: str,
+    evidence_title: str = "",
+    evidence_published_at: str = "",
+    evidence_description: str = "",
+    evidence_preview: str = "",
+    evidence_source: str = "",
     candidate_id: str = "",
     evidence: str = "0",
     eligible: Any = "",
@@ -387,6 +397,11 @@ def make_row(
         "title": title or source_name or source_url,
         "summary": summary,
         "source_url": source_url,
+        "evidence_title": clean(evidence_title),
+        "evidence_published_at": clean(evidence_published_at),
+        "evidence_description": clean(evidence_description),
+        "evidence_preview": clean(evidence_preview),
+        "evidence_source": clean(evidence_source),
         "source_artifact": source_artifact,
         "next_action": next_action_for(lane, posture, reason),
         "reason": reason,
@@ -478,6 +493,11 @@ def rows_from_discovery_candidates() -> List[Dict[str, Any]]:
                 title=clean(row.get("title") or row.get("source_url")),
                 summary=clean(row.get("summary")),
                 source_url=clean(row.get("source_url") or row.get("canonical_url")),
+                evidence_title=clean(row.get("evidence_title")),
+                evidence_published_at=clean(row.get("evidence_published_at")),
+                evidence_description=clean(row.get("evidence_description")),
+                evidence_preview=clean(row.get("evidence_preview")),
+                evidence_source=clean(row.get("evidence_source")),
                 source_artifact="story_candidates_discovery.csv",
                 reason=clean(row.get("review_next_step") or row.get("reason")),
                 eligible=eligible,

@@ -37,12 +37,12 @@ Review runs now refresh the intake layer first:
 
 - Manual story inbox rows become run-scoped manual candidates.
 - Free official and wire pages are sampled for public story links, not crawled as a publishing feed.
-- Top official and wire story links can be sampled once for public article metadata dates such as `article:published_time`, JSON-LD `datePublished`, or `<time datetime>`.
+- Top official and wire story links can be sampled once for public article metadata titles, dates, and short descriptions from signals such as OpenGraph, JSON-LD, or `<time datetime>`.
 - Manual social inbox rows become discovery-only leads.
 - Generic source scans remain `monitor_only` until a concrete lead appears.
-- Discovery leads carry `quality_score`, `freshness_label`, `freshness_source`, `freshness_score`, `urgency_score`, and `quality_reason` so current high-signal leads outrank stale or evergreen items.
+- Discovery leads carry `quality_score`, `freshness_label`, `freshness_source`, `evidence_preview`, `freshness_score`, `urgency_score`, and `quality_reason` so current high-signal leads outrank stale or evergreen items.
 
-Article metadata date sampling is capped by `HSD_DISCOVERY_MAX_ARTICLE_DATE_FETCHES_PER_SOURCE` and can be disabled with `HSD_DISCOVERY_ENABLE_ARTICLE_DATE_FETCH=false`. It uses free public pages only and does not publish, promote, or call paid APIs.
+Article metadata sampling is capped by `HSD_DISCOVERY_MAX_ARTICLE_DATE_FETCHES_PER_SOURCE` and can be disabled with `HSD_DISCOVERY_ENABLE_ARTICLE_DATE_FETCH=false`. It uses free public page metadata only and does not publish, promote, or call paid APIs.
 
 ## Promotion Recommendations
 
@@ -66,7 +66,7 @@ The daily command center now shows:
 - Lead promotion count and News/manual/Studio split.
 - High-quality lead count and fresh lead count.
 - A Sources tab with the morning board.
-- Lead promotion recommendations with target artifacts and next steps.
+- Lead promotion recommendations with metadata evidence previews, target artifacts, and next steps.
 - A next-action item when a manual, social, discovery, or News Sync source lead needs review.
 
 This makes the morning workflow less scattered: leads can come from free official sources, wire context, public gray-area/social discovery, or manual intake, but they all land in one review-safe place.
