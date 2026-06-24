@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from hsd_run_io import input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 try:
     from PIL import Image
 except Exception:
@@ -47,7 +49,7 @@ def clean(v: Any) -> str:
 
 
 def read_csv_any(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -55,15 +57,11 @@ def read_csv_any(path: str) -> List[Dict[str, str]]:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k, "") for k in fields})
+    write_run_csv(path, ({k: r.get(k, "") for k in fields} for r in rows), fields)
 
 
 def read_json(path: str) -> Dict[str, Any]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return {}
     try:
@@ -73,7 +71,7 @@ def read_json(path: str) -> Dict[str, Any]:
 
 
 def ocr_text(image_path: str) -> Tuple[str, str]:
-    p = Path(image_path)
+    p = input_path(image_path)
     if not p.exists():
         return "", "missing"
     if pytesseract and Image:
@@ -157,7 +155,7 @@ def preview_prompt_has_display_result_language(prompt_text: str, preview_status:
 
 
 def main() -> None:
-    Path("graphics_qa_dashboard").mkdir(exist_ok=True)
+    output_path("graphics_qa_dashboard").mkdir(parents=True, exist_ok=True)
     player_reqs = read_csv_any("player_image_requirements.csv")
     missing_required_players = [r for r in player_reqs if r.get("required") == "Yes" and not r.get("approved_asset_id")]
     manifest = read_json(INPUT_RENDER_MANIFEST)
@@ -237,7 +235,7 @@ def main() -> None:
             issue(issues, "PLAYER_IMAGE_FIT_REVIEW", "review", "Use tight crop rules for: " + ", ".join(r.get("player_name", "") for r in review_fit))
             score -= 3
 
-        prompt_pack_path = Path("graphics_chat_upload_pack") / post_slug / "00_PROMPT_TO_PASTE.md"
+        prompt_pack_path = input_path(Path("graphics_chat_upload_pack") / post_slug / "00_PROMPT_TO_PASTE.md")
         render_path = clean(b.get("render_path"))
         if prompt_pack_path.exists():
             prompt_text = prompt_pack_path.read_text(encoding="utf-8", errors="replace")
@@ -254,16 +252,17 @@ def main() -> None:
             issue(issues, "UPLOAD_PROMPT_MISSING", "major", str(prompt_pack_path))
             score -= 10
 
-        if render_path and Path(render_path).exists():
+        resolved_render_path = input_path(render_path) if render_path else Path("")
+        if render_path and resolved_render_path.exists():
             if Image:
                 try:
-                    width, height = Image.open(render_path).size
+                    width, height = Image.open(resolved_render_path).size
                     if (width, height) != (1080, 1350):
                         issue(issues, "DIMENSION_MISMATCH", "major", f"Expected 1080x1350, got {width}x{height}")
                         score -= 10
                 except Exception:
                     pass
-            ocr, ocr_method = ocr_text(render_path)
+            ocr, ocr_method = ocr_text(resolved_render_path.as_posix())
             ocr_clean = clean(ocr).lower()
             if ocr_method == "unavailable":
                 issue(issues, "OCR_UNAVAILABLE", "review", "No OCR engine available. Render QA partially skipped.")
@@ -335,10 +334,13 @@ def main() -> None:
             f"- Remediation: {r['remediation_suggestions']}",
             "",
         ]
-    Path("graphics_qa_report.md").write_text("\n".join(report), encoding="utf-8")
-    Path("graphics_qa_manifest.json").write_text(json.dumps({
+    write_text("graphics_qa_report.md", "\n".join(report))
+    run_root = run_output_dir()
+    write_json("graphics_qa_manifest.json", {
         "version": VERSION,
         "generated_at_utc": now(),
+        "output_scope": "run_scoped" if run_root else "legacy_root",
+        "run_output_dir": run_root.as_posix() if run_root else "",
         "counts": {
             "bundles_scored": len(rows),
             "upload_status_rows": len(upload_status_rows),
@@ -348,10 +350,10 @@ def main() -> None:
             "pass_with_review": sum(1 for r in rows if r.get("decision") == "pass_with_review"),
             "pass": sum(1 for r in rows if r.get("decision") == "pass"),
         },
-    }, indent=2), encoding="utf-8")
-    Path("graphics_qa_dashboard/index.html").write_text(
+    })
+    write_text(
+        "graphics_qa_dashboard/index.html",
         f"<html><body><h1>Graphics QA v1.10</h1><p>Bundles scored: {len(rows)}</p></body></html>",
-        encoding="utf-8",
     )
     print("Created HSD Graphics QA v1.10 BeBe outputs")
 

@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
 
+from hsd_run_io import input_candidates, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 try:
     import requests
 except Exception:
@@ -29,8 +31,8 @@ DOWNLOAD_ASSETS = os.environ.get("HSD_ASSET_DOWNLOAD", "1").strip().lower() not 
 BING_API_KEY = os.environ.get("BING_SEARCH_API_KEY", "").strip()
 MAX_BING = int(os.environ.get("HSD_ASSET_BING_MAX", "4"))
 
-OUT_RAW = Path("data/assets/raw")
-OUT_APPROVED = Path("data/assets/approved")
+OUT_RAW = output_path("data/assets/raw")
+OUT_APPROVED = output_path("data/assets/approved")
 
 ASSET_FIELDS = [
     "asset_id","asset_type","entity_type","sport","league","entity_name","source_url","page_url",
@@ -127,15 +129,15 @@ def sid(prefix: str, *parts: Any) -> str:
 
 
 def find_file(filename: str) -> Path:
-    candidates = [Path(filename)]
+    candidates = input_candidates(filename)
     for root in ["studio_run_history", "launch_run_history", "asset_run_history", "news_run_history"]:
-        r = Path(root)
-        if r.exists():
-            candidates += sorted(r.rglob(Path(filename).name), key=lambda p: p.stat().st_mtime, reverse=True)
+        for r in input_candidates(root):
+            if r.exists():
+                candidates += sorted(r.rglob(Path(filename).name), key=lambda p: p.stat().st_mtime, reverse=True)
     for p in candidates:
         if p.exists() and p.is_file() and p.stat().st_size > 0:
             return p
-    return Path(filename)
+    return candidates[0]
 
 
 def read_csv_any(filename: str) -> List[Dict[str, str]]:
@@ -155,11 +157,7 @@ def read_text_any(filename: str) -> str:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k, "") for k in fields})
+    write_run_csv(path, ({k: r.get(k, "") for k in fields} for r in rows), fields)
 
 
 def parse_bundle_text(text: str) -> List[Dict[str, str]]:
@@ -584,14 +582,14 @@ def main() -> None:
     integration_rows = build_integration(bundles, team_rows, player_rows, warnings)
 
     write_csv("asset_manifest.csv", asset_rows, ASSET_FIELDS)
-    Path("asset_manifest.json").write_text(json.dumps(asset_rows, indent=2), encoding="utf-8")
+    write_json("asset_manifest.json", asset_rows)
     write_csv("asset_source_seed_list.csv", seeds, SEED_FIELDS)
     write_csv("approved_graphics_assets.csv", approved, APPROVED_FIELDS)
-    Path("approved_graphics_assets.json").write_text(json.dumps(approved, indent=2), encoding="utf-8")
+    write_json("approved_graphics_assets.json", approved)
     write_csv("team_assets.csv", team_rows, TEAM_FIELDS)
-    Path("team_assets.json").write_text(json.dumps(team_rows, indent=2), encoding="utf-8")
+    write_json("team_assets.json", team_rows)
     write_csv("player_assets.csv", player_rows, PLAYER_FIELDS)
-    Path("player_assets.json").write_text(json.dumps(player_rows, indent=2), encoding="utf-8")
+    write_json("player_assets.json", player_rows)
     write_csv("launch_integration_points.csv", integration_rows, INTEGRATION_FIELDS)
     write_csv("asset_rights_review.csv", [
         {"asset_id": r["asset_id"], "review_status": r["approval_status"], "decision_reason": r["rights_notes"]}
@@ -599,13 +597,17 @@ def main() -> None:
     ], ["asset_id","review_status","decision_reason"])
     write_csv("fact_warning_queue.csv", warnings, WARNING_FIELDS)
 
-    Path("asset_candidates_review.md").write_text(review_md(teams, players, asset_rows, approved_asset_candidates, warnings), encoding="utf-8")
+    write_text("asset_candidates_review.md", review_md(teams, players, asset_rows, approved_asset_candidates, warnings))
 
-    Path("asset_desk_manifest.json").write_text(json.dumps({
+    run_root = run_output_dir()
+    write_json("asset_desk_manifest.json", {
         "version": VERSION,
         "generated_at_utc": now(),
         "rights_mode": RIGHTS_MODE,
         "download": DOWNLOAD_ASSETS,
+        "output_scope": "run_scoped" if run_root else "legacy_root",
+        "run_output_dir": run_root.as_posix() if run_root else "",
+        "canonical_asset_registry_note": "When HSD_RUN_OUTPUT_DIR is set, approved/team/player asset files are generated as review copies in the run folder. Promote them to canonical project files only after manual review.",
         "inputs": {
             "bundle_queue": str(find_file(INPUT_BUNDLE_QUEUE)),
             "bundle_packets": str(find_file(INPUT_BUNDLE_PACKETS)),
@@ -629,7 +631,7 @@ def main() -> None:
             "If exact asset cannot be verified, output remains text-forward.",
             "Player-team mismatches are written to fact_warning_queue.csv.",
         ],
-    }, indent=2), encoding="utf-8")
+    })
 
     print("Created HSD Asset Desk v1.2 outputs")
 

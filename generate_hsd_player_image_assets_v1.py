@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import quote, unquote, urljoin, urlparse
 
+from hsd_run_io import input_candidates, input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 try:
     import requests
 except Exception:  # pragma: no cover
@@ -61,7 +63,7 @@ OUT_REPORT = "player_image_sourcing_report.md"
 OUT_CANDIDATES = "player_image_candidates.csv"
 OUT_UPDATED_APPROVED = "approved_graphics_assets.csv"
 OUT_UPDATED_PLAYER_ASSETS = "player_assets.csv"
-OUT_DIR = Path("data/assets/player_images")
+OUT_DIR = output_path("data/assets/player_images")
 
 APPROVED_FIELDS = [
     "approved_asset_id", "asset_id", "approved_variant", "entity_type", "entity_name", "source_url", "page_url",
@@ -162,7 +164,7 @@ def sid(prefix: str, *parts: Any) -> str:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -170,15 +172,11 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for row in rows:
-            w.writerow({k: row.get(k, "") for k in fields})
+    write_run_csv(path, ({k: row.get(k, "") for k in fields} for row in rows), fields)
 
 
 def read_text(path: str) -> str:
-    p = Path(path)
+    p = input_path(path)
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
 
 
@@ -378,12 +376,13 @@ def file_ext_from_url_or_type(url: str, ctype: str = "") -> str:
 def copy_manual_file(player_name: str) -> Tuple[str, str, str]:
     slug = slugify(player_name)
     for ext in [".png", ".jpg", ".jpeg", ".webp"]:
-        for p in [PLAYER_IMAGE_DIR / f"{slug}{ext}", PLAYER_IMAGE_DIR / player_name / f"{slug}{ext}", PLAYER_IMAGE_DIR / slug / f"{slug}{ext}"]:
-            if p.exists():
-                OUT_DIR.mkdir(parents=True, exist_ok=True)
-                dest = OUT_DIR / f"{slug}_manual{p.suffix.lower()}"
-                shutil.copy2(p, dest)
-                return dest.as_posix(), "manual_file", p.as_posix()
+        for candidate in [PLAYER_IMAGE_DIR / f"{slug}{ext}", PLAYER_IMAGE_DIR / player_name / f"{slug}{ext}", PLAYER_IMAGE_DIR / slug / f"{slug}{ext}"]:
+            for p in input_candidates(candidate):
+                if p.exists():
+                    OUT_DIR.mkdir(parents=True, exist_ok=True)
+                    dest = OUT_DIR / f"{slug}_manual{p.suffix.lower()}"
+                    shutil.copy2(p, dest)
+                    return dest.as_posix(), "manual_file", p.as_posix()
     return "", "", ""
 
 
@@ -856,9 +855,9 @@ def main() -> None:
     merged_players = list(by_player.values())
 
     write_csv(OUT_UPDATED_APPROVED, merged_approved, APPROVED_FIELDS)
-    Path("approved_graphics_assets.json").write_text(json.dumps(merged_approved, indent=2), encoding="utf-8")
+    write_json("approved_graphics_assets.json", merged_approved)
     write_csv(OUT_UPDATED_PLAYER_ASSETS, merged_players, PLAYER_FIELDS)
-    Path("player_assets.json").write_text(json.dumps(merged_players, indent=2), encoding="utf-8")
+    write_json("player_assets.json", merged_players)
     write_csv(OUT_REQUIREMENTS, requirements, REQ_FIELDS)
     write_csv(OUT_CANDIDATES, candidate_rows, CANDIDATE_FIELDS)
 
@@ -877,6 +876,9 @@ def main() -> None:
         f"Free search enabled: {'Yes' if FREE_SEARCH_ENABLED else 'No'}",
         f"DuckDuckGo package available: {'Yes' if DDGS is not None else 'No'}",
         f"Candidate rows inspected: {len(candidate_rows)}",
+        f"Output scope: {'run-scoped review copy' if run_output_dir() else 'legacy project root'}",
+        "",
+        "When a run output folder is active, updated approved/player asset tables are review copies. Promote them to canonical project files only after manual review.",
         "",
         "## Required people and players",
         "",
@@ -890,7 +892,7 @@ def main() -> None:
             "For any remaining misses, add a file such as `player_image_assets/paige-bueckers.png` or add `manual_player_assets.csv` with `player_name,source_url`. This works for non-WNBA athletes too.",
             "",
         ]
-    Path(OUT_REPORT).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text(OUT_REPORT, "\n".join(lines) + "\n")
 
     print("Created HSD people/player image asset outputs")
     print(json.dumps({
