@@ -106,6 +106,30 @@ def seed_daily_ops_files() -> None:
         },
     )
     Path("source_registry_audit.md").write_text("# Source registry audit\n", encoding="utf-8")
+    write_csv(
+        "morning_source_discovery_board.csv",
+        [
+            {
+                "rank": "1",
+                "lane": "social_discovery",
+                "review_status": "needs_green_confirmation",
+                "source_band": "yellow",
+                "publish_posture": "discovery_only",
+                "source_name": "team_social_manual_only",
+                "source_type": "social_manual_only",
+                "sport_league": "all",
+                "title": "Public team social lead",
+                "summary": "A public team account has a possible lead.",
+                "source_url": "https://www.instagram.com/example",
+                "source_artifact": "morning_source_discovery_board.csv",
+                "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
+                "reason": "requires official confirmation",
+                "candidate_id": "",
+                "evidence_count": "0",
+            }
+        ],
+    )
+    Path("morning_source_discovery_board.md").write_text("# Morning source discovery\n", encoding="utf-8")
     Path("studio_bundle_queue.csv").touch()
 
 
@@ -117,7 +141,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.1.0-source-confidence"
+    assert payload["version"] == "hsd-operator-command-center-v3.2.0-morning-source-discovery"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -130,11 +154,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert build_action["status"] == "Build next"
     assert build_action["command"] == ".\\hsd.cmd run -Mode asset"
     assert any(action["title"] == "Create Results and Studio drill-down dashboards" for action in payload["next_actions"])
+    assert any(action["title"] == "Review morning source lead: Public team social lead" for action in payload["next_actions"])
     assert all(action["title"] != "no_content_ready" for action in payload["next_actions"])
     assert any(item["label"] == "Source registry" and item["value"] == "REVIEW" for item in payload["metrics"])
     assert any(item["label"] == "Publish-grade packets" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Discovery-only packets" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Morning source rows" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
+    assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
+    assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -145,6 +174,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "HSD Daily Operator Command Center" in html
     assert 'data-tab-target="today"' in html
     assert 'data-tab-target="content"' in html
+    assert 'data-tab-target="sources"' in html
     assert 'data-tab-target="safety"' in html
     assert 'data-tab-target="artifacts"' in html
     assert 'id="artifactSearch"' in html
@@ -153,10 +183,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert ".\\hsd.cmd run -Mode asset" in html
     assert "Next step" in html
     assert "publish_grade" in html
+    assert "Public team social lead" in html
     assert "Next actions" in markdown
     assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
+    assert "Morning source discovery" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -212,6 +244,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "publish_guard_report.json" in runner
     assert "source_registry_audit.md" in runner
     assert "source_registry_audit.json" in runner
+    assert "morning_source_discovery_board.md" in runner
+    assert "morning_source_discovery_board.csv" in runner
+    assert "morning_source_discovery_board.json" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
     assert "ig_story_results_queue.csv" in runner

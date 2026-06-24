@@ -48,6 +48,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "bebe_*",
         "manual_workflow_*",
         "source_registry_audit.*",
+        "morning_source_discovery_board.*",
         "hsd_pipeline_lite_review/**",
         "outputs/latest/**",
         "assets/leagues/wnba/athletes/*/headshot.png",
@@ -76,10 +77,15 @@ def test_review_stage_refreshes_source_registry_audit_for_command_center() -> No
 
     review_stage = runner[runner.index("function Invoke-ReviewStage") : runner.index("function Resolve-HsdArtifactSource")]
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_source_registry_audit_v2.py" -Optional' in review_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_morning_source_discovery_board_v1.py" -Optional' in review_stage
     assert "source_registry_audit.csv" in runner
     assert "source_registry_audit.md" in runner
     assert "source_registry_audit.json" in runner
+    assert "morning_source_discovery_board.csv" in runner
+    assert "morning_source_discovery_board.md" in runner
+    assert "morning_source_discovery_board.json" in runner
     assert "source registry audit, operator status" in doc
+    assert "morning source discovery board" in doc
 
 
 def test_legacy_scraper_is_retired_from_active_local_runner() -> None:

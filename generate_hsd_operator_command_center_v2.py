@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.1.0-source-confidence"
+VERSION = "hsd-operator-command-center-v3.2.0-morning-source-discovery"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -23,6 +23,9 @@ ARTIFACTS = [
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
+    ("Sources", "Morning source discovery board", "morning_source_discovery_board.md"),
+    ("Sources", "Morning source discovery data", "morning_source_discovery_board.csv"),
+    ("Sources", "Morning source discovery manifest", "morning_source_discovery_board.json"),
     ("Results", "Results manifest", "results_desk_v5_manifest.json"),
     ("Results", "Results report", "results_desk_v5_report.md"),
     ("Results", "Source accuracy", "source_accuracy_v5.md"),
@@ -83,6 +86,9 @@ RUN_COMMANDS = {
     "threads_queue.csv": ".\\hsd.cmd run -Mode posts",
     "caption_bank.md": ".\\hsd.cmd run -Mode posts",
     "first_comment_hooks.md": ".\\hsd.cmd run -Mode posts",
+    "morning_source_discovery_board.md": ".\\hsd.cmd run -Mode review",
+    "morning_source_discovery_board.csv": ".\\hsd.cmd run -Mode review",
+    "morning_source_discovery_board.json": ".\\hsd.cmd run -Mode review",
     "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
     "launch_graphics_chat_brief.md": ".\\hsd.cmd run -Mode launch",
     "launch_daily_operator_checklist.md": ".\\hsd.cmd run -Mode launch",
@@ -299,6 +305,27 @@ def content_candidates() -> List[Dict[str, str]]:
     return candidates
 
 
+def source_discovery_board() -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for row in read_csv("morning_source_discovery_board.csv"):
+        rows.append(
+            {
+                "rank": clean(row.get("rank")),
+                "lane": first_present(row.get("lane"), default="source_review"),
+                "status": first_present(row.get("review_status"), default="review"),
+                "posture": first_present(row.get("publish_posture"), default="discovery_only"),
+                "band": first_present(row.get("source_band"), default="yellow"),
+                "source": first_present(row.get("source_name"), row.get("source_type"), default="Unknown source"),
+                "title": first_present(row.get("title"), row.get("source_url"), default="Untitled source lead"),
+                "detail": short(first_present(row.get("summary"), row.get("reason"), row.get("next_action")), 220),
+                "next_action": short(clean(row.get("next_action")), 180),
+                "artifact": first_present(row.get("source_artifact"), default="morning_source_discovery_board.csv"),
+                "url": clean(row.get("source_url")),
+            }
+        )
+    return rows
+
+
 def studio_queue() -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for row in read_csv("studio_bundle_queue.csv")[:8]:
@@ -338,6 +365,7 @@ def build_next_actions(
     guard: Dict[str, Any],
     candidates: List[Dict[str, str]],
     studio: List[Dict[str, str]],
+    source_board: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
     artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
@@ -388,6 +416,31 @@ def build_next_actions(
             f"Review top candidate: {item['headline']}",
             f"{item['detail']} Confirm facts, headline, and source posture before it becomes a manual post. {source_note}. {grade_note}.",
             item["artifact"],
+        )
+
+    source_leads = [
+        row
+        for row in source_board
+        if row.get("status") in {"editor_review", "needs_green_confirmation", "verify_with_primary"}
+        and row.get("artifact") != "config/source_registry.json"
+    ]
+    if source_leads:
+        lead = source_leads[0]
+        add_action(
+            "Source review",
+            "Research",
+            f"Review morning source lead: {lead['title']}",
+            f"{lead['lane']} / {lead['posture']}. {lead.get('next_action') or lead.get('detail')}",
+            lead["artifact"],
+        )
+    elif source_board:
+        lead = source_board[0]
+        add_action(
+            "Research scan",
+            "Research",
+            "Scan the morning source board",
+            f"Start with {lead['source']}: {lead.get('next_action') or lead.get('detail')}",
+            "morning_source_discovery_board.md",
         )
 
     if (candidates or studio) and (
@@ -504,7 +557,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 6) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 7) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Optional drill-down", "Plan slots"]:
         if len(trimmed) <= limit:
@@ -535,6 +588,7 @@ def build_payload() -> Dict[str, Any]:
     artifacts = artifact_entries()
     candidates = content_candidates()
     news_packets = read_csv("news_fact_packets.csv")
+    source_board = source_discovery_board()
     studio = studio_queue()
     schedule = schedule_rows()
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
@@ -563,12 +617,14 @@ def build_payload() -> Dict[str, Any]:
         metric("News packets", len(news_packets)),
         metric("Publish-grade packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "publish_grade")),
         metric("Discovery-only packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "discovery_only")),
+        metric("Morning source rows", len(source_board)),
+        metric("Gray/social leads", sum(1 for row in source_board if row.get("lane") in {"gray_area_review", "social_discovery"})),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
         metric("Day type", first_present(ops.get("day_type"), default="normal_day")),
     ]
-    next_actions = build_next_actions(operator, guard, candidates, studio, artifacts)
+    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, artifacts)
     if as_int(source_registry_counts.get("fail")) or as_int(source_registry_counts.get("review")):
         next_actions.insert(
             0,
@@ -600,6 +656,7 @@ def build_payload() -> Dict[str, Any]:
         "next_actions": next_actions,
         "schedule": schedule,
         "content_candidates": candidates,
+        "source_discovery_board": source_board,
         "studio_queue": studio,
         "source_health": source_rows,
         "issues": operator.get("issues") or guard.get("issues") or [],
@@ -709,6 +766,25 @@ def render_studio(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(cards) or '<p class="empty">No studio bundles found.</p>'
+
+
+def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
+    cards = []
+    for row in rows:
+        cards.append(
+            f"""
+            <article class="content-row">
+              <div>
+                <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['lane'])} {pill(row['status'])} {pill(row['posture'])}</div>
+                <h3>{html.escape(row['title'])}</h3>
+                <p>{html.escape(row.get('next_action') or row.get('detail') or '')}</p>
+                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')}</small>
+              </div>
+              <div>{open_link(row['artifact'])}</div>
+            </article>
+            """
+        )
+    return "".join(cards) or '<p class="empty">No morning source rows found.</p>'
 
 
 def render_sources(rows: Iterable[Dict[str, str]]) -> str:
@@ -910,6 +986,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     <nav class="tabs" aria-label="Command center views">
       <button class="tab-button" type="button" data-tab-target="today" aria-selected="true">Today</button>
       <button class="tab-button" type="button" data-tab-target="content" aria-selected="false">Content</button>
+      <button class="tab-button" type="button" data-tab-target="sources" aria-selected="false">Sources</button>
       <button class="tab-button" type="button" data-tab-target="safety" aria-selected="false">Safety</button>
       <button class="tab-button" type="button" data-tab-target="artifacts" aria-selected="false">Artifacts</button>
     </nav>
@@ -941,6 +1018,24 @@ def render_html(payload: Dict[str, Any]) -> str:
         <div class="panel">
           <h2>Studio queue</h2>
           <div class="content-list">{render_studio(payload['studio_queue'])}</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources" class="tab-panel">
+      <div class="two-col">
+        <div class="panel">
+          <h2>Morning source discovery</h2>
+          <div class="content-list">{render_source_discovery(payload['source_discovery_board'])}</div>
+        </div>
+        <div class="panel">
+          <h2>Source health</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Source</th><th>League</th><th>Date</th><th>OK</th><th>Events</th><th>Notes</th></tr></thead>
+              <tbody>{render_sources(payload['source_health'])}</tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -1048,6 +1143,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'}"
         for item in payload["content_candidates"]
+    )
+    lines += ["", "## Morning source discovery", ""]
+    lines.extend(
+        f"- {item['rank']} | {item['lane']} | {item['title']} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
+        for item in payload["source_discovery_board"]
     )
     lines += ["", "## Studio queue", ""]
     lines.extend(f"- {item['priority']} | {item['name']} | {item['status']} | {item['detail']}" for item in payload["studio_queue"])
