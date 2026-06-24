@@ -11,11 +11,14 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.0"
+VERSION = "hsd-morning-source-discovery-board-v1.1-promotion-recommendations"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
 OUT_MD = output_path("morning_source_discovery_board.md")
+PROMOTION_CSV = output_path("morning_lead_promotion_recommendations.csv")
+PROMOTION_JSON = output_path("morning_lead_promotion_recommendations.json")
+PROMOTION_MD = output_path("morning_lead_promotion_recommendations.md")
 
 FIELDS = [
     "rank",
@@ -34,7 +37,14 @@ FIELDS = [
     "reason",
     "candidate_id",
     "evidence_count",
+    "promotion_recommendation",
+    "promotion_priority",
+    "promotion_target",
+    "promotion_reason",
+    "promotion_next_step",
 ]
+
+PROMOTION_FIELDS = ["promotion_rank"] + FIELDS
 
 STRIP_PARAMS = {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"}
 
@@ -143,6 +153,133 @@ def next_action_for(lane: str, posture: str, reason: str = "") -> str:
     if posture == "source_scan":
         return "Morning scan source; add a lead only when a relevant fact appears."
     return reason or "Review source evidence before any manual post."
+
+
+def has_any(text: str, terms: Iterable[str]) -> bool:
+    low = norm(text)
+    return any(term in low for term in terms)
+
+
+def visual_story_signal(row: Dict[str, Any]) -> bool:
+    text = " ".join([clean(row.get("title")), clean(row.get("summary")), clean(row.get("reason"))])
+    return has_any(
+        text,
+        [
+            "beat",
+            "beats",
+            "defeat",
+            "defeats",
+            "final",
+            "score",
+            "winner",
+            "wins",
+            "preview",
+            " vs ",
+            " at ",
+            "leaderboard",
+            "top performer",
+            "graphic",
+            "highlight",
+        ],
+    )
+
+
+def news_story_signal(row: Dict[str, Any]) -> bool:
+    text = " ".join([clean(row.get("title")), clean(row.get("summary")), clean(row.get("reason"))])
+    return has_any(
+        text,
+        [
+            "announce",
+            "announces",
+            "sign",
+            "signs",
+            "trade",
+            "trades",
+            "waive",
+            "waives",
+            "injury",
+            "roster",
+            "award",
+            "record",
+            "expansion",
+            "coach",
+            "press release",
+            "partnership",
+            "launch",
+            "news",
+        ],
+    )
+
+
+def promotion_for(row: Dict[str, Any]) -> Dict[str, str]:
+    lane = clean(row.get("lane"))
+    posture = clean(row.get("publish_posture"))
+    status = clean(row.get("review_status"))
+    artifact = clean(row.get("source_artifact"))
+    band = clean(row.get("source_band"))
+
+    if posture == "blocked" or band == "red":
+        return {
+            "promotion_recommendation": "no_promotion",
+            "promotion_priority": "P0",
+            "promotion_target": "",
+            "promotion_reason": "Blocked or prohibited source posture.",
+            "promotion_next_step": "Do not promote this lead.",
+        }
+
+    if artifact == "config/source_registry.json" or status == "source_scan" or posture == "source_scan":
+        return {
+            "promotion_recommendation": "monitor_only",
+            "promotion_priority": "P4",
+            "promotion_target": "morning_source_discovery_board.md",
+            "promotion_reason": "Source scan row; no concrete story lead has been captured yet.",
+            "promotion_next_step": "Open the source manually and add a concrete lead only when a relevant fact appears.",
+        }
+
+    if lane in {"social_discovery", "gray_area_review"} or posture == "discovery_only":
+        return {
+            "promotion_recommendation": "manual_story_candidate",
+            "promotion_priority": "P3",
+            "promotion_target": "story_candidates_manual.csv",
+            "promotion_reason": "Discovery-only lead needs official, wire, primary, or operator-verified evidence before it can become a fact.",
+            "promotion_next_step": "Add or verify the lead in the manual story inbox with evidence URLs and locked facts.",
+        }
+
+    if lane == "free_cross_check" or posture == "cross_check":
+        return {
+            "promotion_recommendation": "cross_check_existing",
+            "promotion_priority": "P3",
+            "promotion_target": "news_source_observations.csv",
+            "promotion_reason": "Free cross-check source should support another lead, not carry the story alone.",
+            "promotion_next_step": "Pair this with an official, wire, or operator-verified source before promotion.",
+        }
+
+    if visual_story_signal(row):
+        return {
+            "promotion_recommendation": "studio_brief",
+            "promotion_priority": "P1",
+            "promotion_target": "studio_bundle_queue.csv",
+            "promotion_reason": "The lead has a visual/result/preview signal and enough source posture for editor review.",
+            "promotion_next_step": "Draft a Studio brief manually after confirming facts and asset readiness.",
+        }
+
+    if news_story_signal(row) or lane in {"official_free", "wire", "manual_lead"}:
+        priority = "P1" if posture in {"publish_grade_review", "operator_verified_review"} else "P2"
+        return {
+            "promotion_recommendation": "news_packet",
+            "promotion_priority": priority,
+            "promotion_target": "news_fact_packets.csv",
+            "promotion_reason": "The lead has official, wire, or operator-verified posture and reads like a factual news item.",
+            "promotion_next_step": "Draft or refresh a News packet manually; keep quotes, claims, and stats source-backed.",
+        }
+
+    return {
+        "promotion_recommendation": "monitor_only",
+        "promotion_priority": "P4",
+        "promotion_target": "morning_source_discovery_board.md",
+        "promotion_reason": "No clear News, manual-story, or Studio promotion signal yet.",
+        "promotion_next_step": "Keep in the morning board until a stronger story angle appears.",
+    }
 
 
 def evidence_count(value: Any) -> str:
@@ -363,9 +500,33 @@ def dedupe_and_rank(rows: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     ranked = sorted(by_key.values(), key=lambda item: (int(item.get("_priority_score", 99)), clean(item.get("lane")), clean(item.get("title"))))
     out: List[Dict[str, str]] = []
     for index, row in enumerate(ranked, 1):
+        row.update(promotion_for(row))
         cleaned = {field: clean(row.get(field)) for field in FIELDS}
         cleaned["rank"] = str(index)
         out.append(cleaned)
+    return out
+
+
+def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    promotable = [
+        row
+        for row in rows
+        if row.get("promotion_recommendation") in {"news_packet", "manual_story_candidate", "studio_brief"}
+    ]
+    priority_order = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
+    ranked = sorted(
+        promotable,
+        key=lambda row: (
+            priority_order.get(row.get("promotion_priority"), 9),
+            int(row.get("rank") or 9999),
+            row.get("title", ""),
+        ),
+    )
+    out: List[Dict[str, str]] = []
+    for index, row in enumerate(ranked, 1):
+        promoted = {field: clean(row.get(field)) for field in PROMOTION_FIELDS}
+        promoted["promotion_rank"] = str(index)
+        out.append(promoted)
     return out
 
 
@@ -388,7 +549,11 @@ def build_payload() -> Dict[str, Any]:
         "discovery_only": sum(1 for row in rows if row["publish_posture"] == "discovery_only"),
         "publish_grade_review": sum(1 for row in rows if row["publish_posture"] == "publish_grade_review"),
         "blocked": sum(1 for row in rows if row["publish_posture"] == "blocked"),
+        "promote_to_news_packets": sum(1 for row in rows if row["promotion_recommendation"] == "news_packet"),
+        "promote_to_manual_story_candidates": sum(1 for row in rows if row["promotion_recommendation"] == "manual_story_candidate"),
+        "promote_to_studio_briefs": sum(1 for row in rows if row["promotion_recommendation"] == "studio_brief"),
     }
+    promotions = promotion_rows(rows)
     return {
         "version": VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -397,9 +562,11 @@ def build_payload() -> Dict[str, Any]:
             "manual_only": True,
             "auto_publish_allowed": False,
             "paid_apis_required": False,
+            "promotion_mode": "manual_recommendation_only",
         },
         "counts": counts,
         "rows": rows,
+        "promotion_recommendations": promotions,
     }
 
 
@@ -420,6 +587,21 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Gray-area review rows: `{counts['gray_area_review']}`",
         f"- Social discovery rows: `{counts['social_discovery']}`",
         f"- Discovery-only rows: `{counts['discovery_only']}`",
+        f"- Promote to News packets: `{counts['promote_to_news_packets']}`",
+        f"- Promote to manual story candidates: `{counts['promote_to_manual_story_candidates']}`",
+        f"- Promote to Studio briefs: `{counts['promote_to_studio_briefs']}`",
+        "",
+        "## Promotion Recommendations",
+        "",
+    ]
+    for row in payload["promotion_recommendations"][:25]:
+        lines.append(
+            f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
+            f"{row['title']} | {row['promotion_next_step']}"
+        )
+    if not payload["promotion_recommendations"]:
+        lines.append("No lead promotion recommendations found.")
+    lines += [
         "",
         "## Queue",
         "",
@@ -437,6 +619,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "",
         "- Free sources only.",
         "- Gray-area and social rows are discovery or review inputs until confirmed.",
+        "- Lead promotion is advisory only; the board does not write into News packets, manual story candidates, or Studio briefs.",
         "- Nothing in this board auto-publishes or auto-runs outside the local manual runner.",
     ]
     return "\n".join(lines).rstrip() + "\n"
@@ -446,12 +629,54 @@ def write_outputs(payload: Dict[str, Any]) -> None:
     write_csv(OUT_CSV, payload["rows"], FIELDS)
     write_json(OUT_JSON, payload)
     write_text(OUT_MD, render_markdown(payload))
+    write_csv(PROMOTION_CSV, payload["promotion_recommendations"], PROMOTION_FIELDS)
+    write_json(PROMOTION_JSON, {
+        "version": payload["version"],
+        "generated_at_utc": payload["generated_at_utc"],
+        "policy": payload["policy"],
+        "counts": payload["counts"],
+        "promotion_recommendations": payload["promotion_recommendations"],
+    })
+    write_text(PROMOTION_MD, render_promotion_markdown(payload))
+
+
+def render_promotion_markdown(payload: Dict[str, Any]) -> str:
+    lines = [
+        "# HSD Morning Lead Promotion Recommendations",
+        "",
+        f"Generated: {payload['generated_at_utc']}",
+        f"Version: {payload['version']}",
+        "",
+        "## Recommendations",
+        "",
+    ]
+    for row in payload["promotion_recommendations"]:
+        lines.append(
+            f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
+            f"{row['title']} | target: `{row['promotion_target']}` | {row['promotion_reason']}"
+        )
+    if not payload["promotion_recommendations"]:
+        lines.append("No lead promotion recommendations found.")
+    lines += [
+        "",
+        "## Policy",
+        "",
+        "- Manual recommendation only.",
+        "- No automatic writes to News, manual story, or Studio artifacts.",
+        "- No paid APIs, auto-runs, or auto-publishing.",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def main() -> None:
     payload = build_payload()
     write_outputs(payload)
-    print(json.dumps({"version": VERSION, "rows": payload["counts"]["total"], "output": OUT_CSV.as_posix()}, indent=2))
+    print(json.dumps({
+        "version": VERSION,
+        "rows": payload["counts"]["total"],
+        "promotion_recommendations": len(payload["promotion_recommendations"]),
+        "output": OUT_CSV.as_posix(),
+    }, indent=2))
 
 
 if __name__ == "__main__":

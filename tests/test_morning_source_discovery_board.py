@@ -86,8 +86,8 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
             {
                 "input_type": "url",
                 "source_url": "https://www.wnba.com/news/example",
-                "title": "Official manual lead",
-                "summary": "Manual official lead.",
+                "title": "Liberty beat Aces final score graphic",
+                "summary": "Manual official lead with a visual result angle.",
                 "league": "WNBA",
                 "risk_tier": "green_official_or_primary",
                 "source_trust_band": "green",
@@ -126,7 +126,7 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
                 "title": "WNBA",
                 "description": "Official source",
                 "usable_context": "Yes",
-                "context_signal": "Official source matched WNBA",
+                "context_signal": "WNBA announces a new broadcast partnership",
                 "source_trust_band": "green",
                 "publish_use": "publish_grade",
             },
@@ -144,6 +144,20 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
                 "source_trust_band": "green_cross_check",
                 "publish_use": "cross_check",
             },
+            {
+                "candidate_id": "cand-2",
+                "source_id": "team_site",
+                "source_name": "Team official site",
+                "source_type": "official_team",
+                "url": "https://example.wnba.com/",
+                "fetch_status": "ok",
+                "title": "Team site",
+                "description": "Official team homepage",
+                "usable_context": "Yes",
+                "context_signal": "Team site home page",
+                "source_trust_band": "green",
+                "publish_use": "",
+            },
         ],
     )
 
@@ -153,12 +167,26 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
 
     lanes = {row["lane"] for row in payload["rows"]}
     postures = {row["title"]: row["publish_posture"] for row in payload["rows"]}
+    promotions = {row["title"]: row["promotion_recommendation"] for row in payload["rows"]}
+    promotion_targets = {row["promotion_recommendation"] for row in payload["promotion_recommendations"]}
     assert {"manual_lead", "official_free", "wire", "free_cross_check", "social_discovery"} <= lanes
     assert postures["Fan community lead"] == "discovery_only"
+    assert promotions["Fan community lead"] == "manual_story_candidate"
+    assert promotions["Liberty beat Aces final score graphic"] == "studio_brief"
+    assert promotions["WNBA announces a new broadcast partnership"] == "news_packet"
+    assert promotions["Team site home page"] == "monitor_only"
+    assert promotions["Scan team_social_manual_only"] == "monitor_only"
+    assert {"manual_story_candidate", "studio_brief", "news_packet"} <= promotion_targets
+    assert "monitor_only" not in promotion_targets
+    assert payload["policy"]["promotion_mode"] == "manual_recommendation_only"
     assert all(row["publish_posture"] != "auto_publish" for row in payload["rows"])
     assert payload["policy"]["auto_publish_allowed"] is False
     assert payload["policy"]["paid_apis_required"] is False
     assert (run_dir / "morning_source_discovery_board.csv").exists()
     assert (run_dir / "morning_source_discovery_board.md").exists()
     assert (run_dir / "morning_source_discovery_board.json").exists()
+    assert (run_dir / "morning_lead_promotion_recommendations.csv").exists()
+    assert (run_dir / "morning_lead_promotion_recommendations.md").exists()
+    assert (run_dir / "morning_lead_promotion_recommendations.json").exists()
     assert not (tmp_path / "morning_source_discovery_board.csv").exists()
+    assert not (tmp_path / "morning_lead_promotion_recommendations.csv").exists()

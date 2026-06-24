@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.2.0-morning-source-discovery"
+VERSION = "hsd-operator-command-center-v3.3.0-lead-promotion-recommendations"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -26,6 +26,9 @@ ARTIFACTS = [
     ("Sources", "Morning source discovery board", "morning_source_discovery_board.md"),
     ("Sources", "Morning source discovery data", "morning_source_discovery_board.csv"),
     ("Sources", "Morning source discovery manifest", "morning_source_discovery_board.json"),
+    ("Sources", "Lead promotion recommendations", "morning_lead_promotion_recommendations.md"),
+    ("Sources", "Lead promotion recommendation data", "morning_lead_promotion_recommendations.csv"),
+    ("Sources", "Lead promotion recommendation manifest", "morning_lead_promotion_recommendations.json"),
     ("Results", "Results manifest", "results_desk_v5_manifest.json"),
     ("Results", "Results report", "results_desk_v5_report.md"),
     ("Results", "Source accuracy", "source_accuracy_v5.md"),
@@ -89,6 +92,9 @@ RUN_COMMANDS = {
     "morning_source_discovery_board.md": ".\\hsd.cmd run -Mode review",
     "morning_source_discovery_board.csv": ".\\hsd.cmd run -Mode review",
     "morning_source_discovery_board.json": ".\\hsd.cmd run -Mode review",
+    "morning_lead_promotion_recommendations.md": ".\\hsd.cmd run -Mode review",
+    "morning_lead_promotion_recommendations.csv": ".\\hsd.cmd run -Mode review",
+    "morning_lead_promotion_recommendations.json": ".\\hsd.cmd run -Mode review",
     "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
     "launch_graphics_chat_brief.md": ".\\hsd.cmd run -Mode launch",
     "launch_daily_operator_checklist.md": ".\\hsd.cmd run -Mode launch",
@@ -321,6 +327,30 @@ def source_discovery_board() -> List[Dict[str, str]]:
                 "next_action": short(clean(row.get("next_action")), 180),
                 "artifact": first_present(row.get("source_artifact"), default="morning_source_discovery_board.csv"),
                 "url": clean(row.get("source_url")),
+                "promotion": first_present(row.get("promotion_recommendation"), default="monitor_only"),
+                "promotion_priority": first_present(row.get("promotion_priority"), default="P4"),
+                "promotion_target": clean(row.get("promotion_target")),
+                "promotion_next_step": short(clean(row.get("promotion_next_step")), 180),
+            }
+        )
+    return rows
+
+
+def lead_promotion_recommendations() -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for row in read_csv("morning_lead_promotion_recommendations.csv"):
+        rows.append(
+            {
+                "rank": clean(row.get("promotion_rank")),
+                "priority": first_present(row.get("promotion_priority"), default="P?"),
+                "recommendation": first_present(row.get("promotion_recommendation"), default="review"),
+                "title": first_present(row.get("title"), row.get("source_url"), default="Untitled lead"),
+                "status": first_present(row.get("review_status"), default="review"),
+                "lane": first_present(row.get("lane"), default="source_review"),
+                "target": first_present(row.get("promotion_target"), default="morning_source_discovery_board.csv"),
+                "reason": short(clean(row.get("promotion_reason")), 190),
+                "next_step": short(clean(row.get("promotion_next_step")), 190),
+                "artifact": "morning_lead_promotion_recommendations.csv",
             }
         )
     return rows
@@ -366,6 +396,7 @@ def build_next_actions(
     candidates: List[Dict[str, str]],
     studio: List[Dict[str, str]],
     source_board: List[Dict[str, str]],
+    promotions: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
     artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
@@ -416,6 +447,16 @@ def build_next_actions(
             f"Review top candidate: {item['headline']}",
             f"{item['detail']} Confirm facts, headline, and source posture before it becomes a manual post. {source_note}. {grade_note}.",
             item["artifact"],
+        )
+
+    if promotions:
+        promo = promotions[0]
+        add_action(
+            "Lead promotion",
+            "Editor",
+            f"Promote source lead toward {promo['recommendation']}: {promo['title']}",
+            f"{promo['priority']} / {promo['lane']}. {promo.get('next_step') or promo.get('reason')}",
+            promo["artifact"],
         )
 
     source_leads = [
@@ -559,7 +600,7 @@ def decision_callout(
 
 def trim_actions(actions: List[Dict[str, str]], limit: int = 7) -> List[Dict[str, str]]:
     trimmed = list(actions)
-    for status in ["Waiting", "Optional drill-down", "Plan slots"]:
+    for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
             break
         for index, action in enumerate(trimmed):
@@ -589,6 +630,7 @@ def build_payload() -> Dict[str, Any]:
     candidates = content_candidates()
     news_packets = read_csv("news_fact_packets.csv")
     source_board = source_discovery_board()
+    promotions = lead_promotion_recommendations()
     studio = studio_queue()
     schedule = schedule_rows()
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
@@ -619,12 +661,18 @@ def build_payload() -> Dict[str, Any]:
         metric("Discovery-only packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "discovery_only")),
         metric("Morning source rows", len(source_board)),
         metric("Gray/social leads", sum(1 for row in source_board if row.get("lane") in {"gray_area_review", "social_discovery"})),
+        metric("Lead promotions", len(promotions)),
+        metric("News/Manual/Studio", "/".join([
+            str(sum(1 for row in promotions if row.get("recommendation") == "news_packet")),
+            str(sum(1 for row in promotions if row.get("recommendation") == "manual_story_candidate")),
+            str(sum(1 for row in promotions if row.get("recommendation") == "studio_brief")),
+        ])),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
         metric("Day type", first_present(ops.get("day_type"), default="normal_day")),
     ]
-    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, artifacts)
+    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, promotions, artifacts)
     if as_int(source_registry_counts.get("fail")) or as_int(source_registry_counts.get("review")):
         next_actions.insert(
             0,
@@ -657,6 +705,7 @@ def build_payload() -> Dict[str, Any]:
         "schedule": schedule,
         "content_candidates": candidates,
         "source_discovery_board": source_board,
+        "lead_promotion_recommendations": promotions,
         "studio_queue": studio,
         "source_health": source_rows,
         "issues": operator.get("issues") or guard.get("issues") or [],
@@ -778,13 +827,32 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['lane'])} {pill(row['status'])} {pill(row['posture'])}</div>
                 <h3>{html.escape(row['title'])}</h3>
                 <p>{html.escape(row.get('next_action') or row.get('detail') or '')}</p>
-                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')}</small>
+                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
             """
         )
     return "".join(cards) or '<p class="empty">No morning source rows found.</p>'
+
+
+def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
+    cards = []
+    for row in rows:
+        cards.append(
+            f"""
+            <article class="content-row">
+              <div>
+                <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['priority'])} {pill(row['recommendation'])}</div>
+                <h3>{html.escape(row['title'])}</h3>
+                <p>{html.escape(row.get('next_step') or row.get('reason') or '')}</p>
+                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')}</small>
+              </div>
+              <div>{open_link(row['artifact'])}</div>
+            </article>
+            """
+        )
+    return "".join(cards) or '<p class="empty">No lead promotion recommendations found.</p>'
 
 
 def render_sources(rows: Iterable[Dict[str, str]]) -> str:
@@ -1025,17 +1093,21 @@ def render_html(payload: Dict[str, Any]) -> str:
     <section id="sources" class="tab-panel">
       <div class="two-col">
         <div class="panel">
+          <h2>Lead promotion recommendations</h2>
+          <div class="content-list">{render_lead_promotions(payload['lead_promotion_recommendations'])}</div>
+        </div>
+        <div class="panel">
           <h2>Morning source discovery</h2>
           <div class="content-list">{render_source_discovery(payload['source_discovery_board'])}</div>
         </div>
-        <div class="panel">
-          <h2>Source health</h2>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Source</th><th>League</th><th>Date</th><th>OK</th><th>Events</th><th>Notes</th></tr></thead>
-              <tbody>{render_sources(payload['source_health'])}</tbody>
-            </table>
-          </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Source health</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>League</th><th>Date</th><th>OK</th><th>Events</th><th>Notes</th></tr></thead>
+            <tbody>{render_sources(payload['source_health'])}</tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1143,6 +1215,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'}"
         for item in payload["content_candidates"]
+    )
+    lines += ["", "## Lead promotion recommendations", ""]
+    lines.extend(
+        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | {item['title']} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
+        for item in payload["lead_promotion_recommendations"]
     )
     lines += ["", "## Morning source discovery", ""]
     lines.extend(
