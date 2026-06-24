@@ -589,6 +589,8 @@ function Invoke-DrilldownDashboardsStage($Python) {
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
     Invoke-ScriptIfPresent $Python "generate_hsd_source_registry_audit_v2.py" -Optional
+    Invoke-ScriptIfPresent $Python "normalize_hsd_manual_story_inbox_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "ingest_hsd_discovery_sources_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_operator_status_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_bebe_daily_ops_plan_v2.py" -Optional
@@ -640,6 +642,12 @@ function Collect-HsdArtifacts($RunContext) {
         "source_registry_audit.csv",
         "source_registry_audit.md",
         "source_registry_audit.json",
+        "manual_story_inbox_report.md",
+        "story_candidates_manual.csv",
+        "story_candidates_manual.jsonl",
+        "discovery_sources_report.md",
+        "story_candidates_discovery.csv",
+        "story_candidates_discovery.jsonl",
         "morning_source_discovery_board.csv",
         "morning_source_discovery_board.md",
         "morning_source_discovery_board.json",

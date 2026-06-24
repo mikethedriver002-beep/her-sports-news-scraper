@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import hashlib
 import json
 import re
@@ -9,14 +8,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-VERSION = "hsd-manual-story-inbox-v3.2.5-bebe-ops-v2.4"
+from hsd_run_io import input_path, output_path, read_csv, write_csv, write_text
 
-CSV_PATH = Path("operator/inbox/story_inbox.csv")
-JSONL_PATH = Path("operator/inbox/story_inbox.jsonl")
-OUT_JSONL = Path("story_candidates_manual.jsonl")
-OUT_CSV = Path("story_candidates_manual.csv")
-OUT_REPORT = Path("manual_story_inbox_report.md")
-REGISTRY_PATH = Path("config/source_registry.json")
+VERSION = "hsd-manual-story-inbox-v3.3.0-run-scoped-intake"
+
+CSV_PATH = "operator/inbox/story_inbox.csv"
+JSONL_PATH = "operator/inbox/story_inbox.jsonl"
+OUT_JSONL = "story_candidates_manual.jsonl"
+OUT_CSV = "story_candidates_manual.csv"
+OUT_REPORT = "manual_story_inbox_report.md"
+REGISTRY_PATH = "config/source_registry.json"
 
 FIELDS = [
     "story_id", "input_type", "source_url", "canonical_url", "title", "summary", "sport", "league", "story_kind",
@@ -66,9 +67,10 @@ def load_registry_domains() -> Tuple[List[str], List[str], List[str]]:
     green: List[str] = []
     yellow: List[str] = []
     red: List[str] = []
-    if REGISTRY_PATH.exists():
+    registry_path = input_path(REGISTRY_PATH)
+    if registry_path.exists():
         try:
-            raw = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+            raw = json.loads(registry_path.read_text(encoding="utf-8"))
             for src in raw.get("sources", []):
                 domains = [clean(d).lower().removeprefix("www.") for d in src.get("domains", []) if clean(d)]
                 band = clean(src.get("trust_band") or src.get("tier")).lower()
@@ -141,17 +143,15 @@ def eligible(row: Dict[str, Any]) -> Tuple[str, str]:
 
 
 def read_csv_rows() -> List[Dict[str, Any]]:
-    if not CSV_PATH.exists():
-        return []
-    with CSV_PATH.open(newline="", encoding="utf-8", errors="replace") as f:
-        return list(csv.DictReader(f))
+    return read_csv(CSV_PATH)
 
 
 def read_jsonl_rows() -> List[Dict[str, Any]]:
-    if not JSONL_PATH.exists():
+    jsonl_path = input_path(JSONL_PATH)
+    if not jsonl_path.exists():
         return []
     rows: List[Dict[str, Any]] = []
-    for line in JSONL_PATH.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in jsonl_path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -215,11 +215,8 @@ def main() -> None:
         by_key[r["idempotency_key"]] = r
     rows = list(by_key.values())
 
-    with OUT_CSV.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
-        w.writeheader()
-        w.writerows(rows)
-    OUT_JSONL.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + ("\n" if rows else ""), encoding="utf-8")
+    write_csv(OUT_CSV, rows, FIELDS)
+    write_text(OUT_JSONL, "\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + ("\n" if rows else ""))
 
     eligible_count = sum(1 for r in rows if r["publish_eligible"] == "Yes")
     lines = [
@@ -242,8 +239,13 @@ def main() -> None:
             "",
             "Use `operator/inbox/story_inbox_template_v2.csv` as the template. Copy it to `operator/inbox/story_inbox.csv` and delete the example row.",
         ]
-    OUT_REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(json.dumps({"manual_candidates": len(rows), "publish_eligible": eligible_count}, indent=2))
+    write_text(OUT_REPORT, "\n".join(lines) + "\n")
+    print(json.dumps({
+        "version": VERSION,
+        "output_scope": "run_scoped" if output_path(OUT_CSV) != Path(OUT_CSV) else "legacy_root",
+        "manual_candidates": len(rows),
+        "publish_eligible": eligible_count,
+    }, indent=2))
 
 
 if __name__ == "__main__":

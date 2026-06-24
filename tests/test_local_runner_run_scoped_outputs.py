@@ -78,10 +78,18 @@ def test_review_stage_refreshes_source_registry_audit_for_command_center() -> No
 
     review_stage = runner[runner.index("function Invoke-ReviewStage") : runner.index("function Resolve-HsdArtifactSource")]
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_source_registry_audit_v2.py" -Optional' in review_stage
+    assert 'Invoke-ScriptIfPresent $Python "normalize_hsd_manual_story_inbox_v1.py" -Optional' in review_stage
+    assert 'Invoke-ScriptIfPresent $Python "ingest_hsd_discovery_sources_v1.py" -Optional' in review_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_morning_source_discovery_board_v1.py" -Optional' in review_stage
     assert "source_registry_audit.csv" in runner
     assert "source_registry_audit.md" in runner
     assert "source_registry_audit.json" in runner
+    assert "manual_story_inbox_report.md" in runner
+    assert "story_candidates_manual.csv" in runner
+    assert "story_candidates_manual.jsonl" in runner
+    assert "discovery_sources_report.md" in runner
+    assert "story_candidates_discovery.csv" in runner
+    assert "story_candidates_discovery.jsonl" in runner
     assert "morning_source_discovery_board.csv" in runner
     assert "morning_source_discovery_board.md" in runner
     assert "morning_source_discovery_board.json" in runner
