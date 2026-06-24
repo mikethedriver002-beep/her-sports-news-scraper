@@ -132,6 +132,9 @@ def seed_daily_ops_files() -> None:
                 "story_opportunity_sources": "wnba_official_news; ap_womens_sports_wire",
                 "story_opportunity_urls": "https://www.wnba.com/news/example; https://apnews.com/article/example",
                 "story_opportunity_reason": "Grouped 2 related official/wire discovery leads from wnba_official_news, ap_womens_sports_wire.",
+                "story_opportunity_angle": "Roster or transaction update",
+                "story_opportunity_recommended_path": "news_packet",
+                "story_opportunity_path_reason": "Factual roster, transaction, personnel, or league-structure signal belongs in a source-backed News packet.",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -176,6 +179,9 @@ def seed_daily_ops_files() -> None:
                 "story_opportunity_sources": "wnba_official_news; ap_womens_sports_wire",
                 "story_opportunity_urls": "https://www.wnba.com/news/example; https://apnews.com/article/example",
                 "story_opportunity_reason": "Grouped 2 related official/wire discovery leads from wnba_official_news, ap_womens_sports_wire.",
+                "story_opportunity_angle": "Roster or transaction update",
+                "story_opportunity_recommended_path": "news_packet",
+                "story_opportunity_path_reason": "Factual roster, transaction, personnel, or league-structure signal belongs in a source-backed News packet.",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -204,7 +210,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.7.0-story-opportunities"
+    assert payload["version"] == "hsd-operator-command-center-v3.8.0-opportunity-angles"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -238,10 +244,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Official metadata title for public team lead" in payload["source_discovery_board"][0]["detail"]
     assert payload["source_discovery_board"][0]["evidence_source"] == "article_metadata"
     assert payload["source_discovery_board"][0]["story_opportunity_size"] == "2"
+    assert payload["source_discovery_board"][0]["story_opportunity_angle"] == "Roster or transaction update"
+    assert payload["source_discovery_board"][0]["story_opportunity_recommended_path"] == "news_packet"
     assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
     assert payload["lead_promotion_recommendations"][0]["freshness_source"] == "article_metadata"
     assert "A concise public metadata description" in payload["lead_promotion_recommendations"][0]["detail"]
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_sources"] == "wnba_official_news; ap_womens_sports_wire"
+    assert payload["lead_promotion_recommendations"][0]["story_opportunity_angle"] == "Roster or transaction update"
+    assert payload["lead_promotion_recommendations"][0]["story_opportunity_recommended_path"] == "news_packet"
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -265,6 +275,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Official metadata title for public team lead" in html
     assert "A concise public metadata description for operator review." in html
     assert "opportunity: 2 source(s)" in html
+    assert "angle: Roster or transaction update" in html
+    assert "path: news_packet" in html
     assert "wnba_official_news; ap_womens_sports_wire" in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
@@ -274,6 +286,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
     assert "opportunity: 2 source(s)" in markdown
+    assert "angle: Roster or transaction update" in markdown
+    assert "path: news_packet" in markdown
     assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown

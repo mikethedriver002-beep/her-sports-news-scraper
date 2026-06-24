@@ -196,8 +196,12 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     assert board_rows["Liberty announce roster move before Aces game"]["freshness_source"] == "article_metadata"
     assert board_rows["Liberty announce roster move before Aces game"]["evidence_source"] == "article_metadata"
     assert "The Liberty announced a roster move" in board_rows["Liberty announce roster move before Aces game"]["evidence_preview"]
-    assert promotions["Liberty announce roster move before Aces game"] == "news_packet"
-    assert promotions["Sky beat Storm in final score thriller"] == "studio_brief"
+    assert board_rows["Liberty announce roster move before Aces game"]["story_opportunity_title"] == "Official Liberty roster move before Aces matchup"
+    assert board_rows["Liberty announce roster move before Aces game"]["story_opportunity_angle"] == "Roster or transaction update"
+    assert board_rows["Sky beat Storm in final score thriller"]["story_opportunity_angle"] == "Result or performance angle"
+    assert promotions["Official Liberty roster move before Aces matchup"] == "news_packet"
+    sky_promotion_title = next(title for title in promotions if "Sky" in title and "Storm" in title)
+    assert promotions[sky_promotion_title] == "studio_brief"
     assert promotions["Team account hints at injury update"] == "manual_story_candidate"
 
 

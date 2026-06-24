@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.5-story-opportunities"
+VERSION = "hsd-morning-source-discovery-board-v1.6-opportunity-angles"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -43,6 +43,9 @@ FIELDS = [
     "story_opportunity_sources",
     "story_opportunity_urls",
     "story_opportunity_reason",
+    "story_opportunity_angle",
+    "story_opportunity_recommended_path",
+    "story_opportunity_path_reason",
     "source_artifact",
     "next_action",
     "reason",
@@ -109,6 +112,13 @@ def lead_id(parts: Iterable[Any]) -> str:
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:14]
 
 
+PATH_TARGETS = {
+    "news_packet": "news_fact_packets.csv",
+    "studio_brief": "studio_bundle_queue.csv",
+    "manual_story_candidate": "story_candidates_manual.csv",
+}
+
+
 CLUSTER_STOPWORDS = {
     "about",
     "after",
@@ -171,6 +181,92 @@ def token_overlap(left: set[str], right: set[str]) -> float:
     if not left or not right:
         return 0.0
     return len(left & right) / max(1, min(len(left), len(right)))
+
+
+def opportunity_text(rows: List[Dict[str, str]]) -> str:
+    return " ".join(
+        clean(row.get(key))
+        for row in rows
+        for key in ["title", "summary", "evidence_title", "evidence_description", "promotion_hint"]
+        if clean(row.get(key))
+    )
+
+
+def title_candidate_score(title: str) -> tuple[int, int, str]:
+    text = clean(re.sub(r"^(ap|official|wta|wnba|ncaa)\s*[:|-]\s*", "", title, flags=re.I))
+    if not text:
+        return (999, 999, "")
+    penalty = 0
+    low = norm(text)
+    if any(token in low for token in ["homepage", "schedule", "standings", "newsletter"]):
+        penalty += 20
+    if len(text) > 95:
+        penalty += 5
+    return (penalty, abs(len(text) - 68), text)
+
+
+def opportunity_headline(rows: List[Dict[str, str]]) -> str:
+    candidates = []
+    for row in rows:
+        for key in ["evidence_title", "story_opportunity_title", "title"]:
+            title = clean(row.get(key))
+            if title:
+                candidates.append(title)
+    if not candidates:
+        return "Review grouped source opportunity"
+    scored = sorted(title_candidate_score(title) for title in candidates)
+    return scored[0][2] or clean(candidates[0])
+
+
+def story_path_payload(rows: List[Dict[str, str]]) -> Dict[str, str]:
+    text = norm(opportunity_text(rows))
+    if has_any(text, ["record", "milestone", "all-time", "historic"]):
+        return {
+            "angle": "Milestone or record update",
+            "recommended_path": "news_packet",
+            "path_reason": "Milestone claims need precise source-backed facts before any creative treatment.",
+        }
+    if has_any(text, ["all-star", "fan voting", "voting", "award", "honor", "honour"]):
+        return {
+            "angle": "Voting or award update",
+            "recommended_path": "news_packet",
+            "path_reason": "Award and voting updates are best handled first as factual News packets with exact source context.",
+        }
+    if has_any(text, ["final score", "beat", "beats", "defeat", "defeats", "wins", "won", "knocks out", "upset", "top seed", "leaderboard"]):
+        return {
+            "angle": "Result or performance angle",
+            "recommended_path": "studio_brief",
+            "path_reason": "Results and performance moments are visually useful after facts are checked.",
+        }
+    if has_any(text, ["injury", "injured", "waive", "waives", "waived", "trade", "trades", "traded", "sign", "signs", "signed", "contract", "roster", "expansion", "coach", "hired", "named", "retires"]):
+        return {
+            "angle": "Roster or transaction update",
+            "recommended_path": "news_packet",
+            "path_reason": "Factual roster, transaction, personnel, or league-structure signal belongs in a source-backed News packet.",
+        }
+    if has_any(text, ["preview", " vs ", " at ", "matchup", "watch guide"]):
+        return {
+            "angle": "Preview or matchup angle",
+            "recommended_path": "studio_brief",
+            "path_reason": "Preview and matchup leads are better shaped as Studio briefs once schedule/context is verified.",
+        }
+    if news_story_signal({"title": text, "summary": "", "reason": "", "promotion_hint": ""}):
+        return {
+            "angle": "Factual news update",
+            "recommended_path": "news_packet",
+            "path_reason": "The lead reads like a factual news item and should become a source-backed News packet first.",
+        }
+    if visual_story_signal({"title": text, "summary": "", "reason": "", "promotion_hint": ""}):
+        return {
+            "angle": "Visual story angle",
+            "recommended_path": "studio_brief",
+            "path_reason": "The lead has visual/storytelling signals and should be shaped as a Studio brief after fact review.",
+        }
+    return {
+        "angle": "Monitor or factual update",
+        "recommended_path": "news_packet",
+        "path_reason": "Official/wire leads default to News packet review when no stronger Studio signal is present.",
+    }
 
 
 def clusterable_story_row(row: Dict[str, str]) -> bool:
@@ -497,6 +593,9 @@ def make_row(
         "story_opportunity_sources": "",
         "story_opportunity_urls": "",
         "story_opportunity_reason": "",
+        "story_opportunity_angle": "",
+        "story_opportunity_recommended_path": "",
+        "story_opportunity_path_reason": "",
         "source_artifact": source_artifact,
         "next_action": next_action_for(lane, posture, reason),
         "reason": reason,
@@ -726,7 +825,8 @@ def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str
                 urls.append(url)
                 seen_urls.add(url)
         opportunity_id = "opp_" + lead_id([representative.get("title"), *sources, *urls])[:12]
-        opportunity_title = representative.get("title", "")
+        opportunity_title = opportunity_headline(ranked)
+        path_payload = story_path_payload(ranked)
         opportunity_reason = (
             f"Grouped {len(cluster)} related official/wire discovery leads from {', '.join(sources)}."
             if len(cluster) > 1
@@ -739,6 +839,9 @@ def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str
             row["story_opportunity_sources"] = "; ".join(sources)
             row["story_opportunity_urls"] = "; ".join(urls[:6])
             row["story_opportunity_reason"] = opportunity_reason
+            row["story_opportunity_angle"] = path_payload["angle"]
+            row["story_opportunity_recommended_path"] = path_payload["recommended_path"]
+            row["story_opportunity_path_reason"] = path_payload["path_reason"]
     return clusters
 
 
@@ -759,13 +862,23 @@ def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
     for index, row in enumerate(ranked, 1):
         promoted = {field: clean(row.get(field)) for field in PROMOTION_FIELDS}
         promoted["promotion_rank"] = str(index)
+        recommended_path = clean(promoted.get("story_opportunity_recommended_path"))
+        if recommended_path:
+            promoted["title"] = clean(promoted.get("story_opportunity_title")) or promoted["title"]
+            promoted["promotion_recommendation"] = recommended_path
+            promoted["promotion_target"] = PATH_TARGETS.get(recommended_path, promoted["promotion_target"])
+            promoted["promotion_reason"] = clean(promoted.get("story_opportunity_path_reason")) or promoted["promotion_reason"]
+            if recommended_path == "studio_brief":
+                promoted["promotion_next_step"] = "Review the source facts and asset readiness, then draft a Studio brief manually."
+            elif recommended_path == "news_packet":
+                promoted["promotion_next_step"] = "Draft or refresh a News packet manually with source-backed facts and the chosen angle."
         size = as_int(promoted.get("story_opportunity_size"), 0)
         if size > 1:
             promoted["promotion_reason"] = (
-                f"{promoted['story_opportunity_reason']} Review the grouped evidence before choosing the final angle."
+                f"{promoted['story_opportunity_reason']} {promoted.get('story_opportunity_path_reason') or 'Review the grouped evidence before choosing the final angle.'}"
             )
             promoted["promotion_next_step"] = (
-                "Review the grouped official/wire links, pick the strongest source-backed angle, then draft or refresh the target artifact manually."
+                "Review the grouped official/wire links, confirm the opportunity angle, then draft or refresh the target artifact manually."
             )
         out.append(promoted)
     return out
@@ -850,7 +963,8 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         lines.append(
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
-            f"{row['title']} | opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | {row['promotion_next_step']}"
+            f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'review'}` | "
+            f"opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | {row['promotion_next_step']}"
         )
     if not payload["promotion_recommendations"]:
         lines.append("No lead promotion recommendations found.")
@@ -863,7 +977,8 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         lines.append(
             f"{row['rank']}. `{row['lane']}` | `{row['review_status']}` | `{row['publish_posture']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
-            f"{row['title']} | opportunity `{row.get('story_opportunity_size') or 'n/a'}` | {row['next_action']}"
+            f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'n/a'}` | "
+            f"opportunity `{row.get('story_opportunity_size') or 'n/a'}` | {row['next_action']}"
         )
     if not payload["rows"]:
         lines.append("No source discovery rows found.")
@@ -909,7 +1024,8 @@ def render_promotion_markdown(payload: Dict[str, Any]) -> str:
         lines.append(
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
-            f"{row['title']} | opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | "
+            f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'review'}` | "
+            f"opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | "
             f"target: `{row['promotion_target']}` | {row['promotion_reason']}"
         )
     if not payload["promotion_recommendations"]:
