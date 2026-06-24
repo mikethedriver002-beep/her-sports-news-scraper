@@ -49,6 +49,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "manual_workflow_*",
         "source_registry_audit.*",
         "morning_source_discovery_board.*",
+        "morning_lead_promotion_recommendations.*",
         "hsd_pipeline_lite_review/**",
         "outputs/latest/**",
         "assets/leagues/wnba/athletes/*/headshot.png",
@@ -84,6 +85,9 @@ def test_review_stage_refreshes_source_registry_audit_for_command_center() -> No
     assert "morning_source_discovery_board.csv" in runner
     assert "morning_source_discovery_board.md" in runner
     assert "morning_source_discovery_board.json" in runner
+    assert "morning_lead_promotion_recommendations.csv" in runner
+    assert "morning_lead_promotion_recommendations.md" in runner
+    assert "morning_lead_promotion_recommendations.json" in runner
     assert "source registry audit, operator status" in doc
     assert "morning source discovery board" in doc
 

@@ -62,6 +62,7 @@ KEY_FILES = [
     "manual_workflow_copy_desk.md", "manual_workflow_threads_copy.md", "manual_workflow_first_comments.md",
     "manual_workflow_priority_report.md", "manual_workflow_pack_status.csv", "manual_workflow_pack_status.json", "manual_workflow_handoff.md",
     "morning_source_discovery_board.csv", "morning_source_discovery_board.md", "morning_source_discovery_board.json",
+    "morning_lead_promotion_recommendations.csv", "morning_lead_promotion_recommendations.md", "morning_lead_promotion_recommendations.json",
     "ig_story_results_queue.csv", "ig_story_results_frames.md", "ig_story_results_graphics_prompt.md",
     "ig_story_results_upload_pack_status.csv", "ig_story_results_upload_pack_status.json", "ig_story_results_upload_manifest.csv",
     "final_score_story_guard_report.md", "final_score_story_guard_report.json",

@@ -126,10 +126,45 @@ def seed_daily_ops_files() -> None:
                 "reason": "requires official confirmation",
                 "candidate_id": "",
                 "evidence_count": "0",
+                "promotion_recommendation": "manual_story_candidate",
+                "promotion_priority": "P3",
+                "promotion_target": "story_candidates_manual.csv",
+                "promotion_reason": "Discovery-only lead needs official confirmation.",
+                "promotion_next_step": "Add or verify the lead in the manual story inbox with evidence URLs and locked facts.",
             }
         ],
     )
     Path("morning_source_discovery_board.md").write_text("# Morning source discovery\n", encoding="utf-8")
+    write_csv(
+        "morning_lead_promotion_recommendations.csv",
+        [
+            {
+                "promotion_rank": "1",
+                "rank": "1",
+                "lane": "social_discovery",
+                "review_status": "needs_green_confirmation",
+                "source_band": "yellow",
+                "publish_posture": "discovery_only",
+                "source_name": "team_social_manual_only",
+                "source_type": "social_manual_only",
+                "sport_league": "all",
+                "title": "Public team social lead",
+                "summary": "A public team account has a possible lead.",
+                "source_url": "https://www.instagram.com/example",
+                "source_artifact": "morning_source_discovery_board.csv",
+                "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
+                "reason": "requires official confirmation",
+                "candidate_id": "",
+                "evidence_count": "0",
+                "promotion_recommendation": "manual_story_candidate",
+                "promotion_priority": "P3",
+                "promotion_target": "story_candidates_manual.csv",
+                "promotion_reason": "Discovery-only lead needs official confirmation.",
+                "promotion_next_step": "Add or verify the lead in the manual story inbox with evidence URLs and locked facts.",
+            }
+        ],
+    )
+    Path("morning_lead_promotion_recommendations.md").write_text("# Lead promotion recommendations\n", encoding="utf-8")
     Path("studio_bundle_queue.csv").touch()
 
 
@@ -141,7 +176,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.2.0-morning-source-discovery"
+    assert payload["version"] == "hsd-operator-command-center-v3.3.0-lead-promotion-recommendations"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -154,6 +189,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert build_action["status"] == "Build next"
     assert build_action["command"] == ".\\hsd.cmd run -Mode asset"
     assert any(action["title"] == "Create Results and Studio drill-down dashboards" for action in payload["next_actions"])
+    assert any(action["title"] == "Promote source lead toward manual_story_candidate: Public team social lead" for action in payload["next_actions"])
     assert any(action["title"] == "Review morning source lead: Public team social lead" for action in payload["next_actions"])
     assert all(action["title"] != "no_content_ready" for action in payload["next_actions"])
     assert any(item["label"] == "Source registry" and item["value"] == "REVIEW" for item in payload["metrics"])
@@ -161,9 +197,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Discovery-only packets" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Morning source rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "News/Manual/Studio" and item["value"] == "0/1/0" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
+    assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -184,11 +223,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Next step" in html
     assert "publish_grade" in html
     assert "Public team social lead" in html
+    assert "Lead promotion recommendations" in html
     assert "Next actions" in markdown
     assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "Lead promotion recommendations" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -247,6 +288,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "morning_source_discovery_board.md" in runner
     assert "morning_source_discovery_board.csv" in runner
     assert "morning_source_discovery_board.json" in runner
+    assert "morning_lead_promotion_recommendations.md" in runner
+    assert "morning_lead_promotion_recommendations.csv" in runner
+    assert "morning_lead_promotion_recommendations.json" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
     assert "ig_story_results_queue.csv" in runner

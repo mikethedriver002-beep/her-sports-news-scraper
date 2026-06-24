@@ -110,7 +110,9 @@ The command center is a local/manual cockpit. It summarizes:
 
 It does not publish, push to Git, call paid APIs, or run hidden handoff refresh scripts. It reads the current local artifacts and turns them into a daily operating view.
 
-The morning source discovery board writes `morning_source_discovery_board.csv`, `.md`, and `.json` during review runs. It combines official/free source scans, wire sources, reputable gray-area/social discovery inputs, News Sync source observations, and manual inbox leads into one review-safe queue. Social and gray-area rows remain discovery-only until confirmed by official, wire, primary, or operator-verified evidence.
+The morning source discovery board writes `morning_source_discovery_board.csv`, `.md`, and `.json` during review runs. It also writes `morning_lead_promotion_recommendations.csv`, `.md`, and `.json`. It combines official/free source scans, wire sources, reputable gray-area/social discovery inputs, News Sync source observations, and manual inbox leads into one review-safe queue. Social and gray-area rows remain discovery-only until confirmed by official, wire, primary, or operator-verified evidence.
+
+Promotion recommendations are advisory only. They can suggest that a lead should become a News packet, manual story candidate, or Studio brief, but the local runner does not write those target artifacts automatically.
 
 The old generic `generate_hsd_dashboard.py` path has been replaced by the command center. If it is run directly, it only creates a compatibility page that points back to `operator_command_center.html`.
 
