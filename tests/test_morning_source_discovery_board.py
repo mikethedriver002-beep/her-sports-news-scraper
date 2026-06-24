@@ -266,12 +266,21 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
     assert cluster_promotions[0]["story_opportunity_title"] == "Official Liberty roster move before Aces matchup"
     assert cluster_promotions[0]["story_opportunity_angle"] == "Roster or transaction update"
     assert cluster_promotions[0]["story_opportunity_recommended_path"] == "news_packet"
+    assert cluster_promotions[0]["story_opportunity_confidence_tier"] == "publish_grade_candidate"
+    assert cluster_promotions[0]["story_opportunity_source_coverage"] == "official_plus_wire"
+    assert cluster_promotions[0]["story_opportunity_confirmation_cue"] == "official_and_wire_confirmed"
+    assert cluster_promotions[0]["story_opportunity_asset_cue"] == "asset_not_required_for_news_packet"
+    assert "strong enough for a News packet draft" in cluster_promotions[0]["story_opportunity_readiness_note"]
     assert cluster_promotions[0]["promotion_recommendation"] == "news_packet"
     assert cluster_promotions[0]["promotion_target"] == "news_fact_packets.csv"
     assert "Grouped 2 related official/wire discovery leads" in cluster_promotions[0]["promotion_reason"]
     assert "Roster or transaction update" in (run_dir / "morning_lead_promotion_recommendations.md").read_text(encoding="utf-8")
+    assert "publish_grade_candidate" in (run_dir / "morning_lead_promotion_recommendations.md").read_text(encoding="utf-8")
     assert payload["counts"]["story_opportunities"] >= 1
     assert payload["counts"]["grouped_story_opportunities"] == 1
+    assert payload["counts"]["publish_grade_story_opportunities"] == 1
+    assert payload["counts"]["story_opportunities_need_second_source"] == 0
+    assert payload["counts"]["story_opportunities_need_asset_check"] == 0
     assert payload["policy"]["promotion_mode"] == "manual_recommendation_only"
     assert all(row["publish_posture"] != "auto_publish" for row in payload["rows"])
     assert payload["policy"]["auto_publish_allowed"] is False
@@ -337,3 +346,75 @@ def test_story_opportunity_angle_selects_news_vs_studio_paths() -> None:
     assert tennis_payload["recommended_path"] == "studio_brief"
     assert voting_payload["angle"] == "Voting or award update"
     assert voting_payload["recommended_path"] == "news_packet"
+
+
+def test_story_opportunity_readiness_cues_identify_source_and_asset_needs() -> None:
+    module = load_module()
+    single_official_path = module.story_path_payload(
+        [
+            {
+                "title": "Sky beat Storm in final score thriller",
+                "summary": "Chicago wins after late-game shotmaking.",
+                "promotion_hint": "studio_brief",
+            }
+        ]
+    )
+    single_official = module.story_readiness_payload(
+        [
+            {
+                "lane": "official_free",
+                "source_name": "wnba_official_news",
+                "source_type": "official_site",
+                "source_band": "green",
+                "publish_posture": "publish_grade_review",
+                "source_url": "https://www.wnba.com/news/sky-storm",
+                "quality_score": "82",
+                "freshness_label": "today",
+            }
+        ],
+        single_official_path,
+    )
+    studio_path = module.story_path_payload(
+        [
+            {
+                "title": "Sky beat Storm in final score thriller",
+                "summary": "Chicago wins after late-game shotmaking.",
+                "promotion_hint": "studio_brief",
+            }
+        ]
+    )
+    official_wire_studio = module.story_readiness_payload(
+        [
+            {
+                "lane": "official_free",
+                "source_name": "wnba_official_news",
+                "source_type": "official_site",
+                "source_band": "green",
+                "publish_posture": "publish_grade_review",
+                "source_url": "https://www.wnba.com/news/sky-storm",
+                "quality_score": "82",
+                "freshness_label": "today",
+            },
+            {
+                "lane": "wire",
+                "source_name": "ap_womens_sports_wire",
+                "source_type": "wire",
+                "source_band": "green",
+                "publish_posture": "publish_grade_review",
+                "source_url": "https://apnews.com/article/sky-storm",
+                "quality_score": "78",
+                "freshness_label": "last_48_hours",
+            },
+        ],
+        studio_path,
+    )
+
+    assert single_official["source_coverage"] == "single_official_source"
+    assert single_official["confirmation_cue"] == "needs_second_source"
+    assert single_official["confidence_tier"] == "needs_second_source"
+    assert single_official["asset_cue"] == "asset_check_required_before_studio"
+    assert "second free source" in single_official["readiness_note"]
+    assert official_wire_studio["source_coverage"] == "official_plus_wire"
+    assert official_wire_studio["confirmation_cue"] == "official_and_wire_confirmed"
+    assert official_wire_studio["confidence_tier"] == "source_backed_studio_candidate"
+    assert official_wire_studio["asset_cue"] == "asset_check_required_before_studio"

@@ -135,6 +135,11 @@ def seed_daily_ops_files() -> None:
                 "story_opportunity_angle": "Roster or transaction update",
                 "story_opportunity_recommended_path": "news_packet",
                 "story_opportunity_path_reason": "Factual roster, transaction, personnel, or league-structure signal belongs in a source-backed News packet.",
+                "story_opportunity_confidence_tier": "needs_official_confirmation",
+                "story_opportunity_source_coverage": "discovery_source_only",
+                "story_opportunity_confirmation_cue": "needs_official_confirmation",
+                "story_opportunity_asset_cue": "asset_not_required_for_news_packet",
+                "story_opportunity_readiness_note": "Confirm this with an official, wire, primary, or operator-verified source before News or Studio work.",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -182,6 +187,11 @@ def seed_daily_ops_files() -> None:
                 "story_opportunity_angle": "Roster or transaction update",
                 "story_opportunity_recommended_path": "news_packet",
                 "story_opportunity_path_reason": "Factual roster, transaction, personnel, or league-structure signal belongs in a source-backed News packet.",
+                "story_opportunity_confidence_tier": "needs_official_confirmation",
+                "story_opportunity_source_coverage": "discovery_source_only",
+                "story_opportunity_confirmation_cue": "needs_official_confirmation",
+                "story_opportunity_asset_cue": "asset_not_required_for_news_packet",
+                "story_opportunity_readiness_note": "Confirm this with an official, wire, primary, or operator-verified source before News or Studio work.",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -210,7 +220,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.8.0-opportunity-angles"
+    assert payload["version"] == "hsd-operator-command-center-v3.9.0-readiness-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -232,6 +242,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Morning source rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Story opportunities" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Grouped opportunities" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Publish-grade opportunities" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Needs source check" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Studio asset checks" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "High-quality leads" and item["value"] == "0" for item in payload["metrics"])
@@ -246,12 +259,19 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_discovery_board"][0]["story_opportunity_size"] == "2"
     assert payload["source_discovery_board"][0]["story_opportunity_angle"] == "Roster or transaction update"
     assert payload["source_discovery_board"][0]["story_opportunity_recommended_path"] == "news_packet"
+    assert payload["source_discovery_board"][0]["story_opportunity_confidence_tier"] == "needs_official_confirmation"
+    assert payload["source_discovery_board"][0]["story_opportunity_source_coverage"] == "discovery_source_only"
+    assert payload["source_discovery_board"][0]["story_opportunity_confirmation_cue"] == "needs_official_confirmation"
+    assert payload["source_discovery_board"][0]["story_opportunity_asset_cue"] == "asset_not_required_for_news_packet"
     assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
     assert payload["lead_promotion_recommendations"][0]["freshness_source"] == "article_metadata"
     assert "A concise public metadata description" in payload["lead_promotion_recommendations"][0]["detail"]
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_sources"] == "wnba_official_news; ap_womens_sports_wire"
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_angle"] == "Roster or transaction update"
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_recommended_path"] == "news_packet"
+    assert payload["lead_promotion_recommendations"][0]["story_opportunity_confidence_tier"] == "needs_official_confirmation"
+    promote_action = next(action for action in payload["next_actions"] if action["title"] == "Promote source lead toward manual_story_candidate: Public team social lead")
+    assert "needs_official_confirmation" in promote_action["detail"]
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -277,6 +297,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "opportunity: 2 source(s)" in html
     assert "angle: Roster or transaction update" in html
     assert "path: news_packet" in html
+    assert "confidence: needs_official_confirmation" in html
+    assert "coverage: discovery_source_only" in html
+    assert "cue: needs_official_confirmation" in html
+    assert "assets: asset_not_required_for_news_packet" in html
     assert "wnba_official_news; ap_womens_sports_wire" in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
@@ -288,6 +312,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "opportunity: 2 source(s)" in markdown
     assert "angle: Roster or transaction update" in markdown
     assert "path: news_packet" in markdown
+    assert "confidence: needs_official_confirmation" in markdown
+    assert "coverage: discovery_source_only" in markdown
+    assert "assets: asset_not_required_for_news_packet" in markdown
     assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown
