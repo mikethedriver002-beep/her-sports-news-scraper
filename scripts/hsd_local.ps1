@@ -77,6 +77,7 @@ $GeneratedStatePathspecs = @(
     "install_report.*",
     "latest_news_sync_run_summary.md",
     "launch_*",
+    "legacy_dashboard_replacement.*",
     "manual_story_inbox_report.md",
     "manual_workflow_*",
     "mermaid_*",
