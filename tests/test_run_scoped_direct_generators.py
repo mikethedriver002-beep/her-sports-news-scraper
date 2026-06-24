@@ -38,6 +38,7 @@ def test_direct_run_generators_are_wired_to_shared_run_io() -> None:
         "publish_hsd_guard_v1.py": ["from hsd_run_io import", "OUT_JSON = output_path("],
         "generate_hsd_operator_status_v1.py": ["from hsd_run_io import", 'output_path("operator_status.csv")'],
         "generate_hsd_bebe_daily_ops_plan_v2.py": ["from hsd_run_io import", "OUT_MD = output_path("],
+        "generate_hsd_source_registry_audit_v2.py": ["from hsd_run_io import", 'OUT_CSV = "source_registry_audit.csv"', "write_json(OUT_JSON"],
         "generate_hsd_operator_command_center_v2.py": ["from hsd_run_io import", "OUT_HTML = output_path("],
         "generate_hsd_pipeline_review_lite_v1.py": ["from hsd_run_io import", "OUT_DIR = output_path("],
     }

@@ -163,6 +163,8 @@ def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     assert "explicit `posts` mode" in text
     assert "generate_hsd_launch_control_v1.py" in text
     assert "explicit `launch` mode" in text
+    assert "generate_hsd_source_registry_audit_v2.py" in text
+    assert "source registry status" in text
     assert "womens_sports_scraper.py" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text

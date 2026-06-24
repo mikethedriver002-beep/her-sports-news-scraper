@@ -44,6 +44,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "studio_bundle_*",
         "bebe_*",
         "manual_workflow_*",
+        "source_registry_audit.*",
         "hsd_pipeline_lite_review/**",
         "outputs/latest/**",
         "assets/leagues/wnba/athletes/*/headshot.png",
@@ -64,6 +65,18 @@ def test_local_run_manifest_preserves_free_manual_policy() -> None:
     assert "paid_apis_disabled = $true" in text
     assert '$env:HSD_PAID_APIS_DISABLED = "1"' in text
     assert '$env:HSD_SOURCE_COST_MODE = "free_first"' in text
+
+
+def test_review_stage_refreshes_source_registry_audit_for_command_center() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    review_stage = runner[runner.index("function Invoke-ReviewStage") : runner.index("function Resolve-HsdArtifactSource")]
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_source_registry_audit_v2.py" -Optional' in review_stage
+    assert "source_registry_audit.csv" in runner
+    assert "source_registry_audit.md" in runner
+    assert "source_registry_audit.json" in runner
+    assert "source registry audit, operator status" in doc
 
 
 def test_legacy_scraper_is_retired_from_active_local_runner() -> None:

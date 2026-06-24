@@ -577,6 +577,7 @@ function Invoke-LaunchStage($Python) {
 
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
+    Invoke-ScriptIfPresent $Python "generate_hsd_source_registry_audit_v2.py" -Optional
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_operator_status_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_bebe_daily_ops_plan_v2.py" -Optional
@@ -622,6 +623,9 @@ function Collect-HsdArtifacts($RunContext) {
         "results_desk_v5_report.md",
         "source_accuracy_v5.md",
         "missing_games_alert_v5.md",
+        "source_registry_audit.csv",
+        "source_registry_audit.md",
+        "source_registry_audit.json",
         "top_womens_results.csv",
         "today_final_results.csv",
         "news_fact_packets.csv",
