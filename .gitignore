@@ -12,6 +12,8 @@ __pycache__/
 .venv/
 venv/
 .env
+.pip-cache/
+.tmp/
 .DS_Store
 Thumbs.db
 
