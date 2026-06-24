@@ -84,6 +84,7 @@ $GeneratedStatePathspecs = @(
     "manual_workflow_*",
     "mermaid_*",
     "missing_games_alert_v5.*",
+    "morning_source_discovery_board.*",
     "multi_post_daily_board.*",
     "multisport_*",
     "news_brief_queue.md",
@@ -590,6 +591,7 @@ function Invoke-ReviewStage($Python) {
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_operator_status_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_bebe_daily_ops_plan_v2.py" -Optional
+    Invoke-ScriptIfPresent $Python "generate_hsd_morning_source_discovery_board_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_pipeline_review_lite_v1.py" -Optional
 }
@@ -637,6 +639,9 @@ function Collect-HsdArtifacts($RunContext) {
         "source_registry_audit.csv",
         "source_registry_audit.md",
         "source_registry_audit.json",
+        "morning_source_discovery_board.csv",
+        "morning_source_discovery_board.md",
+        "morning_source_discovery_board.json",
         "top_womens_results.csv",
         "today_final_results.csv",
         "results_dashboard/index.html",

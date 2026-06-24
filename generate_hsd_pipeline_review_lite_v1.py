@@ -26,6 +26,7 @@ V3_PREREQ_COMMANDS = [
 
 KEY_FILES = [
     "repo_state_v3.md", "repo_state_v3.json",
+    "docs/HSD_MORNING_SOURCE_DISCOVERY_BOARD.md",
     "results_desk_v5_manifest.json", "results_desk_v5_report.md", "source_accuracy_v5.json", "source_accuracy_v5.md",
     "expected_games_v5_manifest.json", "expected_games_v5_report.md", "config/hsd_expected_games_v5.csv",
     "independent_schedule_verification_v5.csv", "independent_schedule_verification_v5.json", "independent_schedule_verification_v5.md",
@@ -60,6 +61,7 @@ KEY_FILES = [
     "manual_workflow_content_packets.jsonl", "manual_workflow_content_packets.csv", "manual_workflow_render_plans.json",
     "manual_workflow_copy_desk.md", "manual_workflow_threads_copy.md", "manual_workflow_first_comments.md",
     "manual_workflow_priority_report.md", "manual_workflow_pack_status.csv", "manual_workflow_pack_status.json", "manual_workflow_handoff.md",
+    "morning_source_discovery_board.csv", "morning_source_discovery_board.md", "morning_source_discovery_board.json",
     "ig_story_results_queue.csv", "ig_story_results_frames.md", "ig_story_results_graphics_prompt.md",
     "ig_story_results_upload_pack_status.csv", "ig_story_results_upload_pack_status.json", "ig_story_results_upload_manifest.csv",
     "final_score_story_guard_report.md", "final_score_story_guard_report.json",
