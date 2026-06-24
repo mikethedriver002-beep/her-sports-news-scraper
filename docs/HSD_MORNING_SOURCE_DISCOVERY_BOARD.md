@@ -39,6 +39,7 @@ Review runs now refresh the intake layer first:
 - Free official and wire pages are sampled for public story links, not crawled as a publishing feed.
 - Manual social inbox rows become discovery-only leads.
 - Generic source scans remain `monitor_only` until a concrete lead appears.
+- Discovery leads carry `quality_score`, `freshness_label`, `freshness_score`, `urgency_score`, and `quality_reason` so current high-signal leads outrank stale or evergreen items.
 
 ## Promotion Recommendations
 
@@ -60,6 +61,7 @@ The daily command center now shows:
 - Morning source row count.
 - Gray/social lead count.
 - Lead promotion count and News/manual/Studio split.
+- High-quality lead count and fresh lead count.
 - A Sources tab with the morning board.
 - Lead promotion recommendations with target artifacts and next steps.
 - A next-action item when a manual, social, discovery, or News Sync source lead needs review.

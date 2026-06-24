@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.1-promotion-recommendations"
+VERSION = "hsd-morning-source-discovery-board-v1.2-quality-freshness"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -37,6 +37,14 @@ FIELDS = [
     "reason",
     "candidate_id",
     "evidence_count",
+    "lead_score",
+    "freshness_date",
+    "freshness_label",
+    "freshness_score",
+    "urgency_score",
+    "quality_score",
+    "quality_reason",
+    "promotion_hint",
     "promotion_recommendation",
     "promotion_priority",
     "promotion_target",
@@ -61,6 +69,13 @@ def norm(value: Any) -> str:
 
 def yes(value: Any) -> bool:
     return norm(value) in {"1", "true", "yes", "y", "pass", "ready", "approved"}
+
+
+def as_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(float(clean(value)))
+    except Exception:
+        return default
 
 
 def canonicalize(url: str) -> str:
@@ -345,6 +360,13 @@ def make_row(
     eligible: Any = "",
     publish_use: str = "",
     promotion_hint: str = "",
+    lead_score: str = "",
+    freshness_date: str = "",
+    freshness_label: str = "",
+    freshness_score: str = "",
+    urgency_score: str = "",
+    quality_score: str = "",
+    quality_reason: str = "",
     priority_score: int = 99,
 ) -> Dict[str, Any]:
     posture = publish_posture_for(source_band, lane, eligible, publish_use)
@@ -368,6 +390,13 @@ def make_row(
         "reason": reason,
         "candidate_id": candidate_id,
         "evidence_count": evidence,
+        "lead_score": clean(lead_score),
+        "freshness_date": clean(freshness_date),
+        "freshness_label": clean(freshness_label),
+        "freshness_score": clean(freshness_score),
+        "urgency_score": clean(urgency_score),
+        "quality_score": clean(quality_score),
+        "quality_reason": clean(quality_reason),
         "promotion_hint": clean(promotion_hint),
     }
 
@@ -435,6 +464,7 @@ def rows_from_discovery_candidates() -> List[Dict[str, Any]]:
         band = trust_band_from_values(row.get("source_trust_band"), row.get("risk_tier"), row.get("source_tier"))
         lane = lane_for(row.get("source_type"), band, "story_candidates_discovery.csv")
         eligible = row.get("publish_eligible")
+        quality = as_int(row.get("quality_score"), 0)
         rows.append(
             make_row(
                 lane=lane,
@@ -449,7 +479,14 @@ def rows_from_discovery_candidates() -> List[Dict[str, Any]]:
                 reason=clean(row.get("review_next_step") or row.get("reason")),
                 eligible=eligible,
                 promotion_hint=clean(row.get("promotion_hint")),
-                priority_score=18 if yes(eligible) else 42,
+                lead_score=clean(row.get("lead_score")),
+                freshness_date=clean(row.get("freshness_date")),
+                freshness_label=clean(row.get("freshness_label")),
+                freshness_score=clean(row.get("freshness_score")),
+                urgency_score=clean(row.get("urgency_score")),
+                quality_score=clean(row.get("quality_score")),
+                quality_reason=clean(row.get("quality_reason")),
+                priority_score=(12 if yes(eligible) else 36) + max(0, 100 - quality) // 8,
             )
         )
     return rows
@@ -543,6 +580,9 @@ def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
         promotable,
         key=lambda row: (
             priority_order.get(row.get("promotion_priority"), 9),
+            -as_int(row.get("quality_score"), 0),
+            -as_int(row.get("freshness_score"), 0),
+            -as_int(row.get("urgency_score"), 0),
             int(row.get("rank") or 9999),
             row.get("title", ""),
         ),
@@ -577,6 +617,9 @@ def build_payload() -> Dict[str, Any]:
         "promote_to_news_packets": sum(1 for row in rows if row["promotion_recommendation"] == "news_packet"),
         "promote_to_manual_story_candidates": sum(1 for row in rows if row["promotion_recommendation"] == "manual_story_candidate"),
         "promote_to_studio_briefs": sum(1 for row in rows if row["promotion_recommendation"] == "studio_brief"),
+        "fresh_today_or_48h": sum(1 for row in rows if row["freshness_label"] in {"today", "last_48_hours"}),
+        "stale_or_evergreen": sum(1 for row in rows if "stale" in row["freshness_label"] or "evergreen" in row["freshness_label"]),
+        "quality_70_plus": sum(1 for row in rows if as_int(row["quality_score"]) >= 70),
     }
     promotions = promotion_rows(rows)
     return {
@@ -615,6 +658,9 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Promote to News packets: `{counts['promote_to_news_packets']}`",
         f"- Promote to manual story candidates: `{counts['promote_to_manual_story_candidates']}`",
         f"- Promote to Studio briefs: `{counts['promote_to_studio_briefs']}`",
+        f"- Fresh today / last 48 hours: `{counts['fresh_today_or_48h']}`",
+        f"- Stale or evergreen: `{counts['stale_or_evergreen']}`",
+        f"- Quality 70+: `{counts['quality_70_plus']}`",
         "",
         "## Promotion Recommendations",
         "",
@@ -622,6 +668,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     for row in payload["promotion_recommendations"][:25]:
         lines.append(
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
+            f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
             f"{row['title']} | {row['promotion_next_step']}"
         )
     if not payload["promotion_recommendations"]:
@@ -634,6 +681,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     for row in payload["rows"][:40]:
         lines.append(
             f"{row['rank']}. `{row['lane']}` | `{row['review_status']}` | `{row['publish_posture']}` | "
+            f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
             f"{row['title']} | {row['next_action']}"
         )
     if not payload["rows"]:
@@ -678,6 +726,7 @@ def render_promotion_markdown(payload: Dict[str, Any]) -> str:
     for row in payload["promotion_recommendations"]:
         lines.append(
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
+            f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
             f"{row['title']} | target: `{row['promotion_target']}` | {row['promotion_reason']}"
         )
     if not payload["promotion_recommendations"]:

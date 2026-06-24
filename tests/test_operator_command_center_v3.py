@@ -176,7 +176,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.3.0-lead-promotion-recommendations"
+    assert payload["version"] == "hsd-operator-command-center-v3.4.0-quality-freshness-leads"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -198,6 +198,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Morning source rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "High-quality leads" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Fresh leads" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "News/Manual/Studio" and item["value"] == "0/1/0" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"

@@ -93,6 +93,7 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     run_dir = tmp_path / "run" / "files"
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
     monkeypatch.setenv("HSD_DISCOVERY_ENABLE_FETCH", "true")
+    monkeypatch.setenv("HSD_DISCOVERY_NOW_UTC", "2026-06-24T12:00:00+00:00")
     write_registry(tmp_path / "config" / "source_registry.json")
     write_csv(
         tmp_path / "operator" / "inbox" / "social_rumor_inbox.csv",
@@ -115,13 +116,14 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
         {
             "https://www.wnba.com/news": """
                 <html><body>
-                  <a href="/news/liberty-announce-roster-move">Liberty announce roster move before Aces game</a>
+                  <a href="/news/2026-06-24/liberty-announce-roster-move">Liberty announce roster move before Aces game</a>
+                  <a href="/news/2025-06-01/all-time-wnba-record-leaders">All-time WNBA record leaders</a>
                   <a href="/schedule">Schedule</a>
                 </body></html>
             """,
             "https://apnews.com/hub/womens-sports": """
                 <html><body>
-                  <a href="/article/womens-basketball-final-score">Sky beat Storm in final score thriller</a>
+                  <a href="/article/2026-06-23/womens-basketball-final-score">Sky beat Storm in final score thriller</a>
                   <a href="/about">About AP</a>
                 </body></html>
             """,
@@ -136,7 +138,12 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     assert by_title["Liberty announce roster move before Aces game"]["publish_eligible"] == "Yes"
     assert by_title["Liberty announce roster move before Aces game"]["lead_source"] == "free_public_page"
     assert by_title["Liberty announce roster move before Aces game"]["promotion_hint"] == "news_packet"
+    assert by_title["Liberty announce roster move before Aces game"]["freshness_label"] == "today"
+    assert int(by_title["Liberty announce roster move before Aces game"]["quality_score"]) >= 70
     assert by_title["Sky beat Storm in final score thriller"]["promotion_hint"] == "studio_brief"
+    assert by_title["Sky beat Storm in final score thriller"]["freshness_label"] == "last_48_hours"
+    assert by_title["All-time WNBA record leaders"]["freshness_label"].endswith("evergreen_angle")
+    assert int(by_title["Liberty announce roster move before Aces game"]["quality_score"]) > int(by_title["All-time WNBA record leaders"]["quality_score"])
     assert by_title["Team account hints at injury update"]["publish_eligible"] == "No"
     assert by_title["Team account hints at injury update"]["lead_source"] == "manual_social_inbox"
     assert not (tmp_path / "story_candidates_discovery.csv").exists()
