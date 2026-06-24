@@ -249,7 +249,10 @@ Thumbs.db
 /news_graphics_handoff.md
 /news_social_packets.md
 /news_sync_manifest.json
+/operator_command_center.html
 /player_image_fit_manifest.json
+/preview_bundle_quality.*
+/preview_player_focus.csv
 /results_freshness_report.md
 /studio_accuracy_checklist.csv
 /studio_brand_config.json
@@ -264,6 +267,7 @@ Thumbs.db
 /studio_manifest.json
 /studio_manual_review_graphics.csv
 /studio_post_schedule.md
+/studio_preview_build_v2.json
 /studio_preview_fallback_report.md
 /studio_render_manifest_v2.json
 /studio_top_graphic_packets.md
@@ -278,3 +282,9 @@ Thumbs.db
 /post_ready_assets_v1.csv
 /review_only_assets_v1.csv
 /daily_operator_brief_v1.md
+
+# Generated schedule and public-image candidates stay local until reviewed.
+/config/hsd_expected_games_v5.csv
+/assets/leagues/wnba/athletes/*/headshot.png
+/assets/leagues/wnba/athletes/*/headshot.png.approved
+/assets/leagues/wnba/teams/*/logo.png

@@ -14,13 +14,14 @@ WORKFLOW = ROOT / ".github" / "workflows" / "hsd-v4-phase6d-visual-correction.ym
 def test_phase6d_generator_compiles_and_has_visual_correction_version() -> None:
     source = GENERATOR.read_text(encoding="utf-8")
     ast.parse(source, filename=str(GENERATOR))
-    assert "v4.1-phase6d-visual-correction-template-skin" in source
-    assert "template_skin_mode" in source
+    assert "v4.5-phase6j-final-score-content-modules" in source
+    assert "clean_plate_mode" in source
+    assert "content_module_status" in source
 
 
 def test_phase6d_renderer_uses_approved_mockup_skin_not_blurred_invented_style() -> None:
     source = GENERATOR.read_text(encoding="utf-8")
-    assert "approved public mockup as the template skin" in source
+    assert "config/graphics/v4/approved" in source
     assert "GaussianBlur(34)" not in source
     assert "for x in range(-h, w, 74)" not in source
     assert "diagonal" not in source.lower()
@@ -29,7 +30,7 @@ def test_phase6d_renderer_uses_approved_mockup_skin_not_blurred_invented_style()
 def test_phase6d_fidelity_matrix_is_stricter_but_still_review_only() -> None:
     matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
     thresholds = matrix["thresholds"]
-    assert matrix["version"] == "hsd-template-fidelity-matrix-v4.1-phase6d"
+    assert matrix["version"] == "hsd-template-fidelity-matrix-v4.2-phase6e-clean-plate"
     assert matrix["cutover_allowed"] is False
     assert thresholds["minimum_structure_score"] >= 0.60
     assert thresholds["minimum_tone_score"] >= 0.60

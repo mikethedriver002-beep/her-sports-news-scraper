@@ -8,13 +8,32 @@ param(
 
     [switch]$UseNetwork,
     [switch]$NoInstall,
-    [switch]$ContinueOnError
+    [switch]$ContinueOnError,
+    [switch]$KeepGeneratedState
 )
 
 $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $PolicyPath = Join-Path $Root "config\hsd_free_source_policy_v1.json"
 $script:HsdExitCode = 0
+$GeneratedStatePathspecs = @(
+    "assets/leagues/wnba/athletes/*/headshot.png",
+    "assets/leagues/wnba/athletes/*/headshot.png.approved",
+    "assets/leagues/wnba/teams/*/logo.png",
+    "data/asset_registry/wnba/*",
+    "news_candidate_queue.csv",
+    "news_daily_plan.md",
+    "news_input_status_report.csv",
+    "news_source_observations.csv",
+    "news_sync_hub.md",
+    "config/hsd_expected_games_v5.csv",
+    "operator_command_center.html",
+    "preview_bundle_quality.csv",
+    "preview_bundle_quality.md",
+    "preview_bundle_quality_summary.csv",
+    "preview_player_focus.csv",
+    "studio_preview_build_v2.json"
+)
 
 function Write-Section([string]$Text) {
     Write-Host ""
@@ -112,6 +131,83 @@ function Set-FreeSourceEnv {
     $env:APISPORTS_KEY = ""
     $env:SERPAPI_KEY = ""
     $env:BING_SEARCH_API_KEY = ""
+}
+
+function Test-GitAvailable {
+    if (-not (Test-Path -LiteralPath (Join-Path $Root ".git"))) { return $false }
+    return [bool](Get-Command git -ErrorAction SilentlyContinue)
+}
+
+function Invoke-GitList([string[]]$GitArgs) {
+    if (-not (Test-GitAvailable)) { return @() }
+    try {
+        $out = @(& git @GitArgs 2>$null)
+        if ($LASTEXITCODE -ne 0) { return @() }
+        return @($out | Where-Object { $_ })
+    } catch {
+        return @()
+    }
+}
+
+function Get-GeneratedGitState {
+    if (-not (Test-GitAvailable)) {
+        return [pscustomobject]@{ enabled = $false; tracked_dirty = @(); untracked = @() }
+    }
+
+    $trackedArgs = @("diff", "--name-only", "--") + $GeneratedStatePathspecs
+    $untrackedArgs = @("ls-files", "--others", "--exclude-standard", "--") + $GeneratedStatePathspecs
+    return [pscustomobject]@{
+        enabled = $true
+        tracked_dirty = @(Invoke-GitList $trackedArgs)
+        untracked = @(Invoke-GitList $untrackedArgs)
+    }
+}
+
+function Remove-GeneratedUntrackedFiles([string[]]$Paths) {
+    if (-not $Paths -or $Paths.Count -eq 0) { return 0 }
+
+    $rootFull = [IO.Path]::GetFullPath($Root.Path).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $rootPrefix = $rootFull + [IO.Path]::DirectorySeparatorChar
+    $removed = 0
+    foreach ($rel in $Paths) {
+        if (-not $rel) { continue }
+        $full = [IO.Path]::GetFullPath((Join-Path $Root $rel))
+        if (-not $full.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            Write-Warning "Skipping generated path outside repo: $rel"
+            continue
+        }
+        if (Test-Path -LiteralPath $full -PathType Leaf) {
+            Remove-Item -LiteralPath $full -Force
+            $removed += 1
+        }
+    }
+    return $removed
+}
+
+function Restore-GeneratedGitState($Baseline) {
+    if ($KeepGeneratedState -or -not $Baseline -or -not $Baseline.enabled) { return }
+
+    $current = Get-GeneratedGitState
+    if (-not $current.enabled) { return }
+
+    $trackedToRestore = @($current.tracked_dirty | Where-Object { $Baseline.tracked_dirty -notcontains $_ })
+    $untrackedToRemove = @($current.untracked | Where-Object { $Baseline.untracked -notcontains $_ })
+
+    if ($trackedToRestore.Count -gt 0) {
+        $restoreArgs = @("restore", "--") + $trackedToRestore
+        & git @restoreArgs
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Generated-state quarantine could not restore tracked generated files."
+        }
+    }
+
+    $removed = Remove-GeneratedUntrackedFiles $untrackedToRemove
+    if ($trackedToRestore.Count -gt 0 -or $removed -gt 0) {
+        Write-Section "Generated-state quarantine"
+        Write-Host "Restored tracked generated files: $($trackedToRestore.Count)"
+        Write-Host "Removed untracked generated files: $removed"
+        Write-Host "Use -KeepGeneratedState when you intentionally want to review generated asset or registry file changes in Git."
+    }
 }
 
 function Show-InstallHint {
@@ -252,6 +348,7 @@ function Collect-HsdArtifacts {
 function Invoke-HsdRun {
     $python = Find-HsdPython
     if (-not $python) { Show-InstallHint; Stop-Hsd "Python 3.11 is required before the HSD pipeline can run." }
+    $generatedBaseline = Get-GeneratedGitState
     Set-FreeSourceEnv
     Write-Section "Free-first local run"
     Write-Host "Mode: $Mode"
@@ -272,6 +369,7 @@ function Invoke-HsdRun {
         Write-Warning $_.Exception.Message
     } finally {
         Collect-HsdArtifacts
+        Restore-GeneratedGitState $generatedBaseline
     }
 }
 

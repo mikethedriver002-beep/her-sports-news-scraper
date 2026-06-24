@@ -20,9 +20,9 @@ def test_phase6e_scripts_compile_and_versions_are_frozen() -> None:
     for path in [BUILDER, RENDERER, RENDER_VALIDATOR, NEAR_GATE]:
         ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     assert "v1.0-phase6e-clean-plate-builder" in BUILDER.read_text(encoding="utf-8")
-    assert "v4.2-phase6e-clean-plate-near-post-ready" in RENDERER.read_text(encoding="utf-8")
-    assert "v1.1-phase6e-renderer-v4-validator" in RENDER_VALIDATOR.read_text(encoding="utf-8")
-    assert "v1.0-phase6e-near-post-ready-gate" in NEAR_GATE.read_text(encoding="utf-8")
+    assert "v4.5-phase6j-final-score-content-modules" in RENDERER.read_text(encoding="utf-8")
+    assert "v1.4-phase6j-renderer-v4-validator" in RENDER_VALIDATOR.read_text(encoding="utf-8")
+    assert "v1.1-phase6j-near-post-ready-gate" in NEAR_GATE.read_text(encoding="utf-8")
 
 
 def test_phase6e_clean_plate_recipes_cover_four_required_templates() -> None:
@@ -47,10 +47,11 @@ def test_phase6e_renderer_uses_clean_plates_and_strict_player_fallbacks() -> Non
     assert "clean_plate_mode" in source
     assert "placeholder_layer_policy" in source
     assert "zero_allowed" in source
-    assert "downgraded_to_final_a_missing_player" in source
+    assert "downgraded_to_final_a_missing_matching_player" in source
     assert "fixture_only_player_asset" in source
     assert "dynamic_mask_sha256" in source
     assert "approved_text_fallback" in source
+    assert "content_module_status" in source
     assert "PRIMARY TEAM" in source  # token appears only in the blocklist, never as rendered copy
     assert '"PRIMARY TEAM"' in source
 

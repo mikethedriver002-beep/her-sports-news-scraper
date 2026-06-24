@@ -7,9 +7,10 @@ def read(path: str) -> str:
 
 def test_renderer_v4_contract_first_and_review_only() -> None:
     text = read("scripts/generate_hsd_template_renderer_v4.py")
-    assert "v4.0-phase6b-template-contract-compiler" in text
+    assert "v4.5-phase6j-final-score-content-modules" in text
     assert "config/graphics/v4/approved" in text
     assert "renderer_cutover_allowed" in text
+    assert "content_module_status" in text
     assert "hsd_tonight_in_the_w_a" in text
     assert "hsd_game_recap_final_score_a" in text
     assert "hsd_game_recap_final_score_b" in text
@@ -18,9 +19,10 @@ def test_renderer_v4_contract_first_and_review_only() -> None:
 
 def test_renderer_v4_validator_contract() -> None:
     text = read("scripts/validate_hsd_template_renderer_v4.py")
-    assert "v1.0-phase6b-renderer-v4-validator" in text
+    assert "v1.4-phase6j-renderer-v4-validator" in text
     assert "missing_template" in text
     assert "renderer_cutover_must_remain_blocked" in text
+    assert "final_score_content_module_not_passed" in text
     assert "passed_renderer_v4_validation" in text
 
 

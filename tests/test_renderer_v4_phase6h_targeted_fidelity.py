@@ -46,8 +46,9 @@ def test_phase6h_derived_headline_prevents_blank_final_headlines() -> None:
 
 def test_phase6h_live_policy_has_separate_technical_floor() -> None:
     policy = json.loads((ROOT / "config" / "graphics" / "v4" / "live_post_ready" / "live_post_ready_policy_v4.json").read_text())
-    assert policy["version"] == "v1.1-phase6h-live-post-ready-policy"
+    assert policy["version"] == "v1.3-phase6j-final-score-content-module-policy"
     assert policy["release_recommendation_required_for_handoff"] is True
+    assert policy["phase6j_final_score_content_modules_required"] is True
     assert policy["technical_fidelity_floor_by_template"]["hsd_game_recap_final_score_a"] < policy["minimum_fidelity_by_template"]["hsd_game_recap_final_score_a"]
     assert policy["technical_fidelity_floor_by_template"]["hsd_tonight_in_the_w_a"] <= 0.928
 

@@ -62,6 +62,14 @@ outputs/local/latest/
 outputs/local/<timestamp>/
 ```
 
+After each local `run`, the runner quarantines known generated state so Git does not show hundreds of daily asset, registry, and review-file changes. It still keeps the review bundle in `outputs/local/latest/`.
+
+Use this only when you intentionally want to inspect or commit generated asset/registry changes:
+
+```powershell
+.\hsd.cmd run -Mode full -KeepGeneratedState
+```
+
 This is a bridge step. The next architecture move is to teach the pipeline to write directly into run-scoped folders instead of producing root-level artifacts first.
 
 ## Useful Modes
