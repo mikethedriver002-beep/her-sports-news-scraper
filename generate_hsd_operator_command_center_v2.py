@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.0.0-daily-ops"
+VERSION = "hsd-operator-command-center-v3.1.0-source-confidence"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -94,7 +94,9 @@ RUN_COMMANDS = {
 
 
 def clean(value: Any) -> str:
-    return re.sub(r"\s+", " ", str(value or "")).strip()
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", str(value)).strip()
 
 
 def yes(value: Any) -> bool:
@@ -169,6 +171,33 @@ def as_int(value: Any) -> int:
         return 0
 
 
+def packet_source_confidence(row: Dict[str, Any]) -> Dict[str, str]:
+    explicit_grade = first_present(row.get("source_publish_grade"), row.get("source_confidence_tier"))
+    if explicit_grade:
+        return {
+            "source_grade": explicit_grade,
+            "source_score": clean(row.get("source_confidence_score")),
+            "source_reason": short(clean(row.get("source_confidence_reason")), 160),
+        }
+
+    source_count = as_int(row.get("source_count"))
+    primary_count = as_int(row.get("primary_source_count"))
+    if yes(row.get("production_ready")) and primary_count:
+        grade = "publish_grade"
+        reason = "Legacy packet inferred from production-ready status and primary source count"
+    elif yes(row.get("production_ready")) and source_count >= 2:
+        grade = "review_before_publish"
+        reason = "Legacy packet inferred from production-ready status and multiple sources"
+    elif source_count:
+        grade = "discovery_only"
+        reason = "Legacy packet has source depth but no confidence fields"
+    else:
+        grade = "not_scored"
+        reason = "No source confidence fields found"
+
+    return {"source_grade": grade, "source_score": "", "source_reason": reason}
+
+
 def parse_markdown_table(path: str) -> List[Dict[str, str]]:
     text = read_text(path)
     rows: List[Dict[str, str]] = []
@@ -239,6 +268,7 @@ def source_health(manifest: Dict[str, Any]) -> List[Dict[str, str]]:
 def content_candidates() -> List[Dict[str, str]]:
     candidates: List[Dict[str, str]] = []
     for row in read_csv("news_fact_packets.csv")[:8]:
+        source_confidence = packet_source_confidence(row)
         candidates.append(
             {
                 "type": "News packet",
@@ -248,6 +278,7 @@ def content_candidates() -> List[Dict[str, str]]:
                 "detail": short(first_present(row.get("caption_hard_fact"), row.get("brief_120w"), row.get("dek")), 210),
                 "artifact": "news_fact_packets.csv",
                 "source_count": clean(row.get("source_count")),
+                **source_confidence,
             }
         )
     for row in read_csv("today_final_results.csv")[:6]:
@@ -260,6 +291,9 @@ def content_candidates() -> List[Dict[str, str]]:
                 "detail": short(first_present(row.get("graphics_subhead"), row.get("final_score_display"), row.get("caption_seed")), 210),
                 "artifact": "today_final_results.csv",
                 "source_count": clean(row.get("source_count")),
+                "source_grade": "publish_grade" if clean(row.get("manual_review")).lower() != "true" and clean(row.get("manual_review")).lower() != "yes" else "review_before_publish",
+                "source_score": clean(row.get("confidence")),
+                "source_reason": short(clean(row.get("confidence_reason_json")), 160),
             }
         )
     return candidates
@@ -345,11 +379,14 @@ def build_next_actions(
     if ready_candidates:
         item = ready_candidates[0]
         source_note = f"{item.get('source_count') or '0'} source(s)" if item.get("source_count") else "source count not reported"
+        grade_note = f"Source grade: {item.get('source_grade') or 'not_scored'}"
+        if item.get("source_score"):
+            grade_note += f" ({item['source_score']})"
         add_action(
             "Editorial check",
             "Editor",
             f"Review top candidate: {item['headline']}",
-            f"{item['detail']} Confirm facts, headline, and source posture before it becomes a manual post. {source_note}.",
+            f"{item['detail']} Confirm facts, headline, and source posture before it becomes a manual post. {source_note}. {grade_note}.",
             item["artifact"],
         )
 
@@ -497,6 +534,7 @@ def build_payload() -> Dict[str, Any]:
     render = read_json("rendered_slide_qa_manifest.json")
     artifacts = artifact_entries()
     candidates = content_candidates()
+    news_packets = read_csv("news_fact_packets.csv")
     studio = studio_queue()
     schedule = schedule_rows()
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
@@ -522,7 +560,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Rendered QA", first_present(guard.get("rendered_qa_status"), render_counts.get("decision"), default="not_run")),
         metric("Women's events", counts.get("women_events", "0")),
         metric("Graphics-ready results", counts.get("graphics_ready", "0")),
-        metric("News packets", len(read_csv("news_fact_packets.csv"))),
+        metric("News packets", len(news_packets)),
+        metric("Publish-grade packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "publish_grade")),
+        metric("Discovery-only packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "discovery_only")),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -643,7 +683,7 @@ def render_content(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row['type'])} {pill(row['priority'])} {pill(row['status'])}</div>
                 <h3>{html.escape(row['headline'])}</h3>
                 <p>{html.escape(row['detail'])}</p>
-                <small>{html.escape(row.get('source_count') or '0')} source(s)</small>
+                <small>{html.escape(row.get('source_count') or '0')} source(s) / {html.escape(row.get('source_grade') or 'not_scored')} {f"({html.escape(row.get('source_score') or '')})" if row.get('source_score') else ""}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -1005,7 +1045,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         for action in payload["next_actions"]
     )
     lines += ["", "## Content candidates", ""]
-    lines.extend(f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']}" for item in payload["content_candidates"])
+    lines.extend(
+        f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'}"
+        for item in payload["content_candidates"]
+    )
     lines += ["", "## Studio queue", ""]
     lines.extend(f"- {item['priority']} | {item['name']} | {item['status']} | {item['detail']}" for item in payload["studio_queue"])
     lines += ["", "## Artifacts", ""]

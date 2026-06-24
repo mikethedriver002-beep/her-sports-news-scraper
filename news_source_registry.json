@@ -52,6 +52,131 @@
       "notes": "Use for wire-style context, never copied prose."
     },
     {
+      "source_id": "ap_womens_sports",
+      "name": "AP women's sports hub",
+      "priority": 70,
+      "type": "wire_context",
+      "sports": [
+        "basketball",
+        "soccer",
+        "tennis",
+        "golf",
+        "softball",
+        "volleyball"
+      ],
+      "leagues_contains": [
+        "Women",
+        "WNBA",
+        "NWSL",
+        "WTA",
+        "LPGA",
+        "Softball",
+        "Volleyball"
+      ],
+      "urls": [
+        "https://apnews.com/hub/womens-sports"
+      ],
+      "notes": "Free AP women's sports context. Use facts, links, and evidence notes only."
+    },
+    {
+      "source_id": "reuters_sports",
+      "name": "Reuters sports",
+      "priority": 68,
+      "type": "wire_context",
+      "sports": [
+        "basketball",
+        "soccer",
+        "tennis",
+        "golf",
+        "softball",
+        "volleyball"
+      ],
+      "leagues_contains": [
+        "Women",
+        "WNBA",
+        "NWSL",
+        "WTA",
+        "LPGA",
+        "World Cup",
+        "Olympics"
+      ],
+      "urls": [
+        "https://www.reuters.com/sports/"
+      ],
+      "notes": "Free public Reuters sports context when reachable. Never copy article prose."
+    },
+    {
+      "source_id": "wta_official",
+      "name": "WTA official",
+      "priority": 95,
+      "type": "official_league",
+      "sports": [
+        "tennis"
+      ],
+      "leagues_contains": [
+        "WTA",
+        "Tennis"
+      ],
+      "urls": [
+        "https://www.wtatennis.com/"
+      ],
+      "notes": "Official WTA source for tournaments, draws, results, rankings, and player context."
+    },
+    {
+      "source_id": "lpga_official",
+      "name": "LPGA official",
+      "priority": 92,
+      "type": "official_league",
+      "sports": [
+        "golf"
+      ],
+      "leagues_contains": [
+        "LPGA",
+        "Golf"
+      ],
+      "urls": [
+        "https://www.lpga.com/"
+      ],
+      "notes": "Official LPGA source for tournament, leaderboard, and player context."
+    },
+    {
+      "source_id": "ncaa_softball_official",
+      "name": "NCAA softball official",
+      "priority": 88,
+      "type": "official_competition",
+      "sports": [
+        "softball"
+      ],
+      "leagues_contains": [
+        "NCAA",
+        "Softball",
+        "College World Series"
+      ],
+      "urls": [
+        "https://www.ncaa.com/sports/softball/d1"
+      ],
+      "notes": "Official NCAA softball source for championship, schedule, and recap context."
+    },
+    {
+      "source_id": "us_soccer_uswnt",
+      "name": "US Soccer USWNT official",
+      "priority": 88,
+      "type": "official_team",
+      "sports": [
+        "soccer"
+      ],
+      "leagues_contains": [
+        "USWNT",
+        "United States",
+        "USA",
+        "Soccer"
+      ],
+      "urls": [
+        "https://www.ussoccer.com/teams/uswnt"
+      ],
+      "notes": "Official USWNT source for roster, match, and national-team context."
+    },
+    {
       "source_id": "volleyball_world",
       "name": "Volleyball World",
       "priority": 95,
@@ -105,32 +230,50 @@
     }
   ],
   "team_sources": {
-    "dallas wings": [
-      "https://wings.wnba.com/"
-    ],
-    "los angeles sparks": [
-      "https://sparks.wnba.com/"
-    ],
-    "phoenix mercury": [
-      "https://mercury.wnba.com/"
-    ],
-    "minnesota lynx": [
-      "https://lynx.wnba.com/"
-    ],
-    "seattle storm": [
-      "https://storm.wnba.com/"
-    ],
-    "las vegas aces": [
-      "https://aces.wnba.com/"
-    ],
-    "golden state valkyries": [
-      "https://valkyries.wnba.com/"
+    "atlanta dream": [
+      "https://dream.wnba.com/"
     ],
     "chicago sky": [
       "https://sky.wnba.com/"
     ],
     "connecticut sun": [
       "https://sun.wnba.com/"
+    ],
+    "dallas wings": [
+      "https://wings.wnba.com/"
+    ],
+    "golden state valkyries": [
+      "https://valkyries.wnba.com/"
+    ],
+    "indiana fever": [
+      "https://fever.wnba.com/"
+    ],
+    "las vegas aces": [
+      "https://aces.wnba.com/"
+    ],
+    "los angeles sparks": [
+      "https://sparks.wnba.com/"
+    ],
+    "minnesota lynx": [
+      "https://lynx.wnba.com/"
+    ],
+    "new york liberty": [
+      "https://liberty.wnba.com/"
+    ],
+    "phoenix mercury": [
+      "https://mercury.wnba.com/"
+    ],
+    "portland fire": [
+      "https://fire.wnba.com/"
+    ],
+    "seattle storm": [
+      "https://storm.wnba.com/"
+    ],
+    "toronto tempo": [
+      "https://tempo.wnba.com/"
+    ],
+    "washington mystics": [
+      "https://mystics.wnba.com/"
     ]
   }
 }
