@@ -334,7 +334,34 @@ function Collect-HsdArtifacts {
     $filesDir = Join-Path $outRoot "files"
     New-Item -ItemType Directory -Path $filesDir -Force | Out-Null
     $manifest = New-Object System.Collections.ArrayList
-    foreach ($file in @("results_desk_v5_manifest.json", "results_desk_v5_report.md", "source_accuracy_v5.md", "missing_games_alert_v5.md", "top_womens_results.csv", "today_final_results.csv", "news_fact_packets.csv", "news_daily_plan.md", "news_sync_hub.md", "studio_bundle_queue.csv", "studio_bundle_packets.md", "operator_status.md", "operator_status.json", "publish_guard_report.md", "operator_command_center.html", "operator_command_center.md", "bebe_daily_ops_plan.md", "hsd_pipeline_lite_review.zip")) {
+    $reviewFiles = @(
+        "results_desk_v5_manifest.json",
+        "results_desk_v5_report.md",
+        "source_accuracy_v5.md",
+        "missing_games_alert_v5.md",
+        "top_womens_results.csv",
+        "today_final_results.csv",
+        "news_fact_packets.csv",
+        "news_daily_plan.md",
+        "news_sync_hub.md",
+        "studio_bundle_queue.csv",
+        "studio_bundle_packets.md",
+        "preview_bundle_quality.md",
+        "preview_player_focus.csv",
+        "operator_status.md",
+        "operator_status.json",
+        "publish_guard_report.md",
+        "publish_guard_report.json",
+        "operator_command_center.html",
+        "operator_command_center.md",
+        "operator_command_center.json",
+        "bebe_daily_ops_plan.md",
+        "bebe_posting_schedule_today.md",
+        "manual_workflow_handoff.md",
+        "manual_workflow_pack_status.csv",
+        "hsd_pipeline_lite_review.zip"
+    )
+    foreach ($file in $reviewFiles) {
         Copy-IfPresent $file $filesDir $manifest
     }
     [pscustomobject]@{ generated_at_local = (Get-Date).ToString("s"); root = $Root.Path; free_source_policy = $PolicyPath; files = $manifest } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $outRoot "local_run_manifest.json") -Encoding UTF8
