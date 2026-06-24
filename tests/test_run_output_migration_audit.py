@@ -95,6 +95,19 @@ def test_run_output_migration_audit_records_legacy_scraper_retirement() -> None:
     assert "legacy scraper retired from active local modes" in md
 
 
+def test_run_output_migration_audit_drops_manual_workflow_merge_from_legacy_writers() -> None:
+    module = load_module()
+    report = module.build_audit(REPO)
+    large_legacy = {row["script"] for row in report["large_non_runner_legacy_writers"]}
+    run_aware = {row["script"] for row in report["prioritized_batches"]["already_run_scoped"]}
+    text = (REPO / "generate_hsd_manual_workflow_merge_v1.py").read_text(encoding="utf-8")
+
+    assert "generate_hsd_manual_workflow_merge_v1.py" not in large_legacy
+    assert "generate_hsd_manual_workflow_merge_v1.py" in run_aware
+    assert "from hsd_run_io import" in text
+    assert 'OUT_DIR = output_path("manual_workflow_packets")' in text
+
+
 def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     text = DOC.read_text(encoding="utf-8")
 
@@ -102,6 +115,8 @@ def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     assert "generate_hsd_graphics_upload_pack_v1.py" in text
     assert "scripts/generate_hsd_expected_games_v5.py" in text
     assert "Batch 3 is retired from the active local workflow instead of migrated." in text
+    assert "generate_hsd_manual_workflow_merge_v1.py" in text
+    assert "explicit `handoff` mode" in text
     assert "womens_sports_scraper.py" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text

@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "review")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "handoff", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -552,6 +552,11 @@ function Invoke-AssetStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_graphics_qa_v1.py" -Optional
 }
 
+function Invoke-HandoffStage($Python) {
+    Write-Section "Manual handoff stage"
+    Invoke-ScriptIfPresent $Python "generate_hsd_manual_workflow_merge_v1.py" -Optional
+}
+
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
@@ -666,6 +671,7 @@ function Invoke-HsdRun {
             "news" { Invoke-NewsStage $python }
             "studio" { Invoke-StudioStage $python }
             "asset" { Invoke-AssetStage $python }
+            "handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }

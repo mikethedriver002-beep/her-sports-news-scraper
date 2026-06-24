@@ -77,6 +77,19 @@ def test_legacy_scraper_is_retired_from_active_local_runner() -> None:
     assert "no longer an active local runner mode" in doc
 
 
+def test_manual_handoff_mode_is_explicit_and_run_scoped() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"handoff"' in wrapper
+    assert '"handoff"' in runner
+    assert "function Invoke-HandoffStage" in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_workflow_merge_v1.py" -Optional' in runner
+    assert '"handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }' in runner
+    assert "manual inbox to handoff packs" in doc
+
+
 def test_local_development_docs_describe_run_scoped_outputs() -> None:
     doc = DOC.read_text(encoding="utf-8")
 

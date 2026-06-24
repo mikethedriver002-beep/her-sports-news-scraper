@@ -64,6 +64,25 @@ Decision:
 - Keep it as a standalone legacy reference for now.
 - Only reintroduce it if it is rebuilt as run-aware through `HSD_RUN_OUTPUT_DIR` and adds value beyond the current News Sync path.
 
+## Non-Runner Cleanup Pass
+
+First selected cleanup:
+
+- `generate_hsd_manual_workflow_merge_v1.py`
+
+Why this was first:
+
+- It is operator-facing: it turns manual editorial inbox rows into copy, render, and handoff packs.
+- The local review bundle and command center already know about `manual_workflow_handoff.md` and `manual_workflow_pack_status.csv`.
+- It improves the daily operator workflow without adding a source, paid API, workflow trigger, or publishing action.
+
+What changed:
+
+- Manual workflow packets, handoff ZIPs, copy desk files, status files, and handoff markdown now write into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- The local runner now exposes an explicit `handoff` mode for this path, then refreshes the review command center.
+- This does not add the generator to `full`; the operator still chooses when to run this manual handoff layer.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:
@@ -77,6 +96,7 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_player_image_assets_v1.py`
 - `generate_hsd_graphics_upload_pack_v1.py`
 - `generate_hsd_graphics_qa_v1.py`
+- `generate_hsd_manual_workflow_merge_v1.py`
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`
