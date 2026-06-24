@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
+from hsd_run_io import input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 try:
     import requests
 except Exception:  # pragma: no cover
@@ -21,24 +23,24 @@ except Exception:  # pragma: no cover
 
 VERSION = "hsd-final-score-stories-v3.2.13-bebe-ops-v2.11"
 
-INPUT_RESULTS_CONTRACT = Path(os.environ.get("HSD_RESULTS_CONTRACT", "results_contract_v2.csv"))
-POLICY_PATH = Path(os.environ.get("HSD_FINAL_SCORE_STORIES_POLICY", "config/hsd_final_score_stories_policy_v1.json"))
-LOGO_REGISTRY_PATH = Path(os.environ.get("HSD_VERIFIED_LOGO_REGISTRY", "config/hsd_verified_logo_registry_v1.json"))
-LOCAL_LOGO_DIR = Path(os.environ.get("HSD_OPERATOR_BRAND_LOGOS_DIR", "operator/assets/brand_logos"))
+INPUT_RESULTS_CONTRACT = os.environ.get("HSD_RESULTS_CONTRACT", "results_contract_v2.csv")
+POLICY_PATH = os.environ.get("HSD_FINAL_SCORE_STORIES_POLICY", "config/hsd_final_score_stories_policy_v1.json")
+LOGO_REGISTRY_PATH = os.environ.get("HSD_VERIFIED_LOGO_REGISTRY", "config/hsd_verified_logo_registry_v1.json")
+LOCAL_LOGO_DIR = input_path(os.environ.get("HSD_OPERATOR_BRAND_LOGOS_DIR", "operator/assets/brand_logos"))
 
-OUT_QUEUE = Path("ig_story_results_queue.csv")
-OUT_FRAMES = Path("ig_story_results_frames.md")
-OUT_PROMPT = Path("ig_story_results_graphics_prompt.md")
-OUT_STATUS_CSV = Path("ig_story_results_upload_pack_status.csv")
-OUT_STATUS_JSON = Path("ig_story_results_upload_pack_status.json")
-OUT_MANIFEST_CSV = Path("ig_story_results_upload_manifest.csv")
-OUT_GUARD_MD = Path("final_score_story_guard_report.md")
-OUT_GUARD_JSON = Path("final_score_story_guard_report.json")
-OUT_CAPTIONS = Path("ig_story_caption_bank.md")
-OUT_POLLS = Path("ig_story_poll_stickers.md")
-OUT_PLAYER_CANDIDATES = Path("ig_story_player_image_candidates.csv")
-OUT_PACK_DIR = Path("ig_story_results_upload_pack")
-OUT_ZIP_DIR = Path("ig_story_results_upload_pack_zips")
+OUT_QUEUE = "ig_story_results_queue.csv"
+OUT_FRAMES = "ig_story_results_frames.md"
+OUT_PROMPT = "ig_story_results_graphics_prompt.md"
+OUT_STATUS_CSV = "ig_story_results_upload_pack_status.csv"
+OUT_STATUS_JSON = "ig_story_results_upload_pack_status.json"
+OUT_MANIFEST_CSV = "ig_story_results_upload_manifest.csv"
+OUT_GUARD_MD = "final_score_story_guard_report.md"
+OUT_GUARD_JSON = "final_score_story_guard_report.json"
+OUT_CAPTIONS = "ig_story_caption_bank.md"
+OUT_POLLS = "ig_story_poll_stickers.md"
+OUT_PLAYER_CANDIDATES = "ig_story_player_image_candidates.csv"
+OUT_PACK_DIR = output_path("ig_story_results_upload_pack")
+OUT_ZIP_DIR = output_path("ig_story_results_upload_pack_zips")
 
 QUEUE_FIELDS = ["story_id", "story_slug", "story_title", "story_type", "event_date_local", "games_count", "frames_count", "source_event_ids", "teams_required", "score_summary", "status", "decision", "block_reason", "zip_path"]
 STATUS_FIELDS = ["story_id", "story_slug", "upload_pack_status", "assets_expected", "assets_ready", "assets_missing", "missing_asset_names", "zip_path", "notes"]
@@ -72,28 +74,26 @@ def sha_id(prefix: str, *parts: Any) -> str:
     return prefix + "_" + hashlib.sha1("|".join(clean(p) for p in parts).encode("utf-8")).hexdigest()[:14]
 
 def read_json(path: Path) -> Dict[str, Any]:
-    if not path.exists():
+    p = input_path(path)
+    if not p.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(p.read_text(encoding="utf-8", errors="replace"))
     except Exception:
         return {}
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
-    if not path.exists():
+    p = input_path(path)
+    if not p.exists():
         return []
     try:
-        with path.open(newline="", encoding="utf-8", errors="replace") as f:
+        with p.open(newline="", encoding="utf-8", errors="replace") as f:
             return list(csv.DictReader(f))
     except Exception:
         return []
 
 def write_csv(path: Path, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for row in rows:
-            w.writerow({k: row.get(k, "") for k in fields})
+    write_run_csv(path, ({k: row.get(k, "") for k in fields} for row in rows), fields)
 
 def safe_unlink_tree(path: Path) -> None:
     if path.exists():
@@ -550,20 +550,21 @@ def write_all_outputs(cfg: Dict[str, Any], registry: Dict[str, Any], games: List
         frame_lines.append("No recent verified final-score frames were created.")
     for f in frames:
         frame_lines += [f"## Frame {f['frame']} — {f['role']}", "", f"- Headline: {f['headline']}", f"- Subhead: {f['subhead']}", f"- Body: {f['body']}", f"- Sticker: {f['sticker'] or 'none'}", ""]
-    OUT_FRAMES.write_text("\n".join(frame_lines) + "\n", encoding="utf-8")
-    OUT_PROMPT.write_text("# HSD IG Story Results Graphics Prompt\n\n```text\n" + prompt + "```\n", encoding="utf-8")
-    OUT_CAPTIONS.write_text("# HSD IG Story Caption Bank\n\n" + (f"Final scores from the W: {score_summary}\n\n" if score_summary else "No caption generated because no final-score story pack was ready.\n") + "Suggested story caption: Which result stood out most?\n", encoding="utf-8")
-    OUT_POLLS.write_text("# HSD IG Story Poll / Sticker Ideas\n\n- Poll: Best win of the night?\n- Question: What stood out?\n- Slider: How big was this result?\n", encoding="utf-8")
-    guard = {"version": VERSION, "generated_at_utc": now_utc().isoformat(), "runtime_seconds": round(time.monotonic() - START, 2), "upload_pack_status": upload_status, "games_from_results_contract": contract_count, "games_from_espn_fetch": espn_count, "games_selected": len(games), "frame_coverage_missing": frame_coverage_missing, "required_team_logos": len(required_teams), "logos_ready": ready, "logos_missing": missing, "issues": guard_issues + ([block_reason] if block_reason else []), "contract_guard_notes": contract_notes[:60], "espn_fetch_notes": espn_notes[:30], "outputs": [OUT_QUEUE.as_posix(), OUT_FRAMES.as_posix(), OUT_PROMPT.as_posix(), OUT_STATUS_CSV.as_posix(), OUT_MANIFEST_CSV.as_posix(), OUT_CAPTIONS.as_posix(), OUT_POLLS.as_posix(), OUT_PLAYER_CANDIDATES.as_posix()]}
-    OUT_GUARD_JSON.write_text(json.dumps(guard, indent=2), encoding="utf-8")
+    write_text(OUT_FRAMES, "\n".join(frame_lines) + "\n")
+    write_text(OUT_PROMPT, "# HSD IG Story Results Graphics Prompt\n\n```text\n" + prompt + "```\n")
+    write_text(OUT_CAPTIONS, "# HSD IG Story Caption Bank\n\n" + (f"Final scores from the W: {score_summary}\n\n" if score_summary else "No caption generated because no final-score story pack was ready.\n") + "Suggested story caption: Which result stood out most?\n")
+    write_text(OUT_POLLS, "# HSD IG Story Poll / Sticker Ideas\n\n- Poll: Best win of the night?\n- Question: What stood out?\n- Slider: How big was this result?\n")
+    output_files = [OUT_QUEUE, OUT_FRAMES, OUT_PROMPT, OUT_STATUS_CSV, OUT_MANIFEST_CSV, OUT_CAPTIONS, OUT_POLLS, OUT_PLAYER_CANDIDATES]
+    guard = {"version": VERSION, "generated_at_utc": now_utc().isoformat(), "runtime_seconds": round(time.monotonic() - START, 2), "upload_pack_status": upload_status, "output_scope": "run_scoped" if run_output_dir() else "legacy_root", "games_from_results_contract": contract_count, "games_from_espn_fetch": espn_count, "games_selected": len(games), "frame_coverage_missing": frame_coverage_missing, "required_team_logos": len(required_teams), "logos_ready": ready, "logos_missing": missing, "issues": guard_issues + ([block_reason] if block_reason else []), "contract_guard_notes": contract_notes[:60], "espn_fetch_notes": espn_notes[:30], "outputs": [output_path(name).as_posix() for name in output_files]}
+    write_json(OUT_GUARD_JSON, guard)
     guard_lines = ["# HSD Final Score Story Guard Report", "", f"Generated: {guard['generated_at_utc']}", f"Version: {VERSION}", "", f"- upload_pack_status: {upload_status}", f"- runtime_seconds: {guard['runtime_seconds']}", f"- games from results_contract_v2.csv: {contract_count}", f"- games from ESPN scoreboard fetch: {espn_count}", f"- games selected: {len(games)}", f"- frame coverage missing: {len(frame_coverage_missing)}", f"- required team logos: {len(required_teams)}", f"- logos ready: {ready}", f"- logos missing: {len(missing)}", f"- zip: {zip_path or 'none'}", ""]
     if missing:
         guard_lines += ["## Missing exact team logos", "", *[f"- {x}" for x in missing], ""]
     guard_lines += ["## Selected finals", ""] + ([f"- {game_line(g)}" for g in games] if games else ["- none"]) + [""]
     guard_lines += ["## Contract final-only guard", ""] + [f"- {x}" for x in contract_notes[:35]] + [""]
     guard_lines += ["## ESPN/backfill notes", ""] + [f"- {x}" for x in (espn_notes[:20] or ["none"])] + [""]
-    OUT_GUARD_MD.write_text("\n".join(guard_lines), encoding="utf-8")
-    OUT_STATUS_JSON.write_text(json.dumps({"version": VERSION, "generated_at_utc": now_utc().isoformat(), "stories": status_rows}, indent=2), encoding="utf-8")
+    write_text(OUT_GUARD_MD, "\n".join(guard_lines))
+    write_json(OUT_STATUS_JSON, {"version": VERSION, "generated_at_utc": now_utc().isoformat(), "output_scope": "run_scoped" if run_output_dir() else "legacy_root", "stories": status_rows})
 
 def main() -> None:
     cfg = policy()
@@ -577,8 +578,8 @@ def main() -> None:
         espn_games, espn_notes = collect_espn_finals(cfg, len(contract_games))
         games = choose_games(contract_games, espn_games, cfg)
         write_all_outputs(cfg, registry, games, len(contract_games), len(espn_games), contract_notes, espn_notes)
-        status = json.loads(OUT_GUARD_JSON.read_text(encoding="utf-8")).get("upload_pack_status")
-        print(json.dumps({"final_score_story_status": status, "games_selected": len(games), "runtime_seconds": round(time.monotonic() - START, 2)}, indent=2))
+        status = read_json(OUT_GUARD_JSON).get("upload_pack_status")
+        print(json.dumps({"final_score_story_status": status, "games_selected": len(games), "runtime_seconds": round(time.monotonic() - START, 2), "output_scope": "run_scoped" if run_output_dir() else "legacy_root"}, indent=2))
     except Exception as exc:
         try:
             write_all_outputs(cfg, registry, [], 0, 0, [], [], fatal=f"{type(exc).__name__}: {exc}")

@@ -83,6 +83,23 @@ What changed:
 - The local runner now exposes an explicit `handoff` mode for this path, then refreshes the review command center.
 - This does not add the generator to `full`; the operator still chooses when to run this manual handoff layer.
 
+Second selected cleanup:
+
+- `generate_hsd_final_score_stories_v1.py`
+
+Why this was next:
+
+- It is operator-facing: it turns recent verified final scores into IG Story graphics upload packs.
+- The lite review pack, manual workflow merge, multi-post desk, and command center already know about `ig_story_results_*` artifacts.
+- It improves the daily operator workflow without adding a paid source, workflow trigger, or publishing action.
+
+What changed:
+
+- Final-score story queue files, guard reports, upload-pack folders, and ZIPs now write into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- The local runner now exposes an explicit `stories` mode for this path, then refreshes the review command center.
+- This does not add the generator to `full`; the operator still chooses when to build result-story packs.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:
@@ -97,6 +114,7 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_graphics_upload_pack_v1.py`
 - `generate_hsd_graphics_qa_v1.py`
 - `generate_hsd_manual_workflow_merge_v1.py`
+- `generate_hsd_final_score_stories_v1.py`
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`

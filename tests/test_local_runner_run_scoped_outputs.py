@@ -90,6 +90,20 @@ def test_manual_handoff_mode_is_explicit_and_run_scoped() -> None:
     assert "manual inbox to handoff packs" in doc
 
 
+def test_final_score_stories_mode_is_explicit_and_run_scoped() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"stories"' in wrapper
+    assert '"stories"' in runner
+    assert "function Invoke-StoriesStage" in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_final_score_stories_v1.py" -Optional' in runner
+    assert '"stories" { Invoke-StoriesStage $python; Invoke-ReviewStage $python }' in runner
+    assert "ig_story_results_queue.csv" in runner
+    assert "final-score IG Story packs" in doc
+
+
 def test_local_development_docs_describe_run_scoped_outputs() -> None:
     doc = DOC.read_text(encoding="utf-8")
 

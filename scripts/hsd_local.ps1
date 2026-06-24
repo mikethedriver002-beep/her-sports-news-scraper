@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "handoff", "review")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -557,6 +557,11 @@ function Invoke-HandoffStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_workflow_merge_v1.py" -Optional
 }
 
+function Invoke-StoriesStage($Python) {
+    Write-Section "Final score stories stage"
+    Invoke-ScriptIfPresent $Python "generate_hsd_final_score_stories_v1.py" -Optional
+}
+
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
@@ -626,6 +631,9 @@ function Collect-HsdArtifacts($RunContext) {
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
         "manual_workflow_pack_status.csv",
+        "ig_story_results_queue.csv",
+        "ig_story_results_upload_pack_status.csv",
+        "final_score_story_guard_report.md",
         "hsd_pipeline_lite_review.zip"
     )
     foreach ($file in $reviewFiles) {
@@ -671,6 +679,7 @@ function Invoke-HsdRun {
             "news" { Invoke-NewsStage $python }
             "studio" { Invoke-StudioStage $python }
             "asset" { Invoke-AssetStage $python }
+            "stories" { Invoke-StoriesStage $python; Invoke-ReviewStage $python }
             "handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
