@@ -37,6 +37,7 @@ Review runs now refresh the intake layer first:
 
 - Manual story inbox rows become run-scoped manual candidates.
 - Free official and wire pages are sampled for public story links, not crawled as a publishing feed.
+- The source registry audit writes `source_coverage_map.csv` and a coverage map in `source_registry_audit.json` so sport/league gaps such as missing PWHL official/team sources are visible for manual follow-up.
 - Top official and wire story links can be sampled once for public article metadata titles, dates, and short descriptions from signals such as OpenGraph, JSON-LD, or `<time datetime>`.
 - Manual social inbox rows become discovery-only leads.
 - Generic source scans remain `monitor_only` until a concrete lead appears.
@@ -68,9 +69,11 @@ The daily command center now shows:
 - Lead promotion count and News/manual/Studio split.
 - Story opportunity count and grouped opportunity count.
 - Publish-grade opportunity, source-check, and Studio asset-check counts.
+- Source coverage gap and watch counts from the registry coverage map.
 - Second-source suggestion counts for opportunities that need another official, wire, or reputable cross-check source.
 - High-quality lead count and fresh lead count.
 - A Sources tab with the morning board.
+- A source coverage map showing official, team, wire, and cross-check coverage by sport/league.
 - Lead promotion recommendations with metadata evidence previews, story angle, source coverage, readiness cues, suggested second-source checks, target artifacts, and next steps.
 - A next-action item when a manual, social, discovery, or News Sync source lead needs review.
 

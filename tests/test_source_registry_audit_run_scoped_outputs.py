@@ -79,6 +79,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert payload["review"] == 1
     assert payload["fail"] == 0
     assert (run_dir / "source_registry_audit.csv").exists()
+    assert (run_dir / "source_coverage_map.csv").exists()
     assert (run_dir / "source_registry_audit.md").exists()
     assert (run_dir / "source_registry_audit.json").exists()
     assert not (work_dir / "source_registry_audit.csv").exists()
@@ -87,6 +88,11 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     manifest = json.loads((run_dir / "source_registry_audit.json").read_text(encoding="utf-8"))
     assert manifest["output_scope"] == "run_scoped"
     assert manifest["registry_version"] == "test-registry"
+    assert manifest["counts"]["coverage_total"] >= 1
+    assert any(row["coverage_key"] == "pwhl" and row["coverage_status"] == "gap" for row in manifest["coverage_map"])
+    report = (run_dir / "source_registry_audit.md").read_text(encoding="utf-8")
+    assert "## Coverage map" in report
+    assert "PWHL" in report
 
 
 def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_path: Path) -> None:
@@ -112,5 +118,6 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     payload = stdout_json(proc)
     assert payload["output_scope"] == "legacy_root"
     assert (work_dir / "source_registry_audit.csv").exists()
+    assert (work_dir / "source_coverage_map.csv").exists()
     assert (work_dir / "source_registry_audit.md").exists()
     assert (work_dir / "source_registry_audit.json").exists()

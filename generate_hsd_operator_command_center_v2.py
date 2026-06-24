@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.10.0-second-source-pairing"
+VERSION = "hsd-operator-command-center-v3.11.0-source-coverage-map"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -23,6 +23,7 @@ ARTIFACTS = [
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
+    ("Sources", "Source coverage map", "source_coverage_map.csv"),
     ("Sources", "Manual story intake report", "manual_story_inbox_report.md"),
     ("Sources", "Manual story intake data", "story_candidates_manual.csv"),
     ("Sources", "Discovery intake report", "discovery_sources_report.md"),
@@ -285,6 +286,30 @@ def source_health(manifest: Dict[str, Any]) -> List[Dict[str, str]]:
     return out
 
 
+def source_coverage_map(source_registry: Dict[str, Any]) -> List[Dict[str, str]]:
+    coverage = source_registry.get("coverage_map", [])
+    if not isinstance(coverage, list):
+        return []
+    out: List[Dict[str, str]] = []
+    for row in coverage:
+        if not isinstance(row, dict):
+            continue
+        out.append(
+            {
+                "key": clean(row.get("coverage_key")),
+                "name": clean(row.get("display_name")),
+                "status": clean(row.get("coverage_status")) or "review",
+                "official": clean(row.get("official_sources")),
+                "team": clean(row.get("team_sources")),
+                "wire": clean(row.get("wire_sources")),
+                "cross_check": clean(row.get("cross_check_sources")),
+                "gap": clean(row.get("coverage_gap")),
+                "next_step": clean(row.get("operator_next_step")),
+            }
+        )
+    return out
+
+
 def content_candidates() -> List[Dict[str, str]]:
     candidates: List[Dict[str, str]] = []
     for row in read_csv("news_fact_packets.csv")[:8]:
@@ -464,6 +489,7 @@ def build_next_actions(
     studio: List[Dict[str, str]],
     source_board: List[Dict[str, str]],
     promotions: List[Dict[str, str]],
+    coverage_map: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
     artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
@@ -559,6 +585,17 @@ def build_next_actions(
             f"Promote source lead toward {promo['recommendation']}: {promo['title']}",
             f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {opportunity_note}{angle_note}{readiness_note}{second_source_note}{evidence_note}{promo.get('next_step') or promo.get('reason')}",
             promo["artifact"],
+        )
+
+    coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
+    if coverage_gaps:
+        gap = coverage_gaps[0]
+        add_action(
+            "Source gap",
+            "Research",
+            f"Add or monitor free source coverage for {gap['name']}",
+            f"{gap.get('gap') or 'coverage gap'}; {gap.get('next_step') or 'Add a free official, team, wire, or reputable cross-check source manually.'}",
+            "source_coverage_map.csv",
         )
 
     source_leads = [
@@ -742,6 +779,7 @@ def build_payload() -> Dict[str, Any]:
     promotions = lead_promotion_recommendations()
     studio = studio_queue()
     schedule = schedule_rows()
+    coverage_map = source_coverage_map(source_registry)
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
     source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
@@ -798,6 +836,8 @@ def build_payload() -> Dict[str, Any]:
             "Second-source suggestions",
             sum(1 for row in opportunity_representatives.values() if row.get("story_opportunity_second_source_id")),
         ),
+        metric("Source coverage gaps", sum(1 for row in coverage_map if row.get("status") == "gap")),
+        metric("Source coverage watch", sum(1 for row in coverage_map if row.get("status") == "watch")),
         metric(
             "Studio asset checks",
             sum(1 for row in opportunity_representatives.values() if row.get("story_opportunity_asset_cue") == "asset_check_required_before_studio"),
@@ -816,7 +856,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
         metric("Day type", first_present(ops.get("day_type"), default="normal_day")),
     ]
-    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, promotions, artifacts)
+    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, promotions, coverage_map, artifacts)
     if as_int(source_registry_counts.get("fail")) or as_int(source_registry_counts.get("review")):
         next_actions.insert(
             0,
@@ -850,6 +890,7 @@ def build_payload() -> Dict[str, Any]:
         "content_candidates": candidates,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
+        "source_coverage_map": coverage_map,
         "studio_queue": studio,
         "source_health": source_rows,
         "issues": operator.get("issues") or guard.get("issues") or [],
@@ -1057,6 +1098,26 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(cards) or '<p class="empty">No lead promotion recommendations found.</p>'
+
+
+def render_source_coverage(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{html.escape(row['name'])}</td>
+              <td>{pill(row['status'])}</td>
+              <td>{html.escape(row.get('official') or '-')}</td>
+              <td>{html.escape(row.get('team') or '-')}</td>
+              <td>{html.escape(row.get('wire') or '-')}</td>
+              <td>{html.escape(row.get('cross_check') or '-')}</td>
+              <td>{html.escape(row.get('gap') or 'none')}</td>
+              <td>{html.escape(row.get('next_step') or '')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="8" class="empty">No source coverage map found.</td></tr>'
 
 
 def render_sources(rows: Iterable[Dict[str, str]]) -> str:
@@ -1306,6 +1367,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source coverage map</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>League</th><th>Status</th><th>Official</th><th>Team</th><th>Wire</th><th>Cross-check</th><th>Gap</th><th>Next step</th></tr></thead>
+            <tbody>{render_source_coverage(payload['source_coverage_map'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source health</h2>
         <div class="table-wrap">
           <table>
@@ -1429,6 +1499,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | angle: {item.get('story_opportunity_angle') or 'n/a'} | path: {item.get('story_opportunity_recommended_path') or item.get('promotion') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'n/a'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
+    )
+    lines += ["", "## Source coverage map", ""]
+    lines.extend(
+        f"- {item['name']} | {item['status']} | official: {item.get('official') or 'none'} | team: {item.get('team') or 'none'} | wire: {item.get('wire') or 'none'} | cross-check: {item.get('cross_check') or 'none'} | gap: {item.get('gap') or 'none'} | {item.get('next_step') or ''}"
+        for item in payload["source_coverage_map"]
     )
     lines += ["", "## Studio queue", ""]
     lines.extend(f"- {item['priority']} | {item['name']} | {item['status']} | {item['detail']}" for item in payload["studio_queue"])
