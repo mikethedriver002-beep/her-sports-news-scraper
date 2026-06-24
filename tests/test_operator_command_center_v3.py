@@ -151,3 +151,6 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "publish_guard_report.json" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
+    assert "ig_story_results_queue.csv" in runner
+    assert "ig_story_results_upload_pack_status.csv" in runner
+    assert "final_score_story_guard_report.md" in runner

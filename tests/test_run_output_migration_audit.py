@@ -108,6 +108,19 @@ def test_run_output_migration_audit_drops_manual_workflow_merge_from_legacy_writ
     assert 'OUT_DIR = output_path("manual_workflow_packets")' in text
 
 
+def test_run_output_migration_audit_drops_final_score_stories_from_legacy_writers() -> None:
+    module = load_module()
+    report = module.build_audit(REPO)
+    large_legacy = {row["script"] for row in report["large_non_runner_legacy_writers"]}
+    run_aware = {row["script"] for row in report["prioritized_batches"]["already_run_scoped"]}
+    text = (REPO / "generate_hsd_final_score_stories_v1.py").read_text(encoding="utf-8")
+
+    assert "generate_hsd_final_score_stories_v1.py" not in large_legacy
+    assert "generate_hsd_final_score_stories_v1.py" in run_aware
+    assert "from hsd_run_io import" in text
+    assert 'OUT_PACK_DIR = output_path("ig_story_results_upload_pack")' in text
+
+
 def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     text = DOC.read_text(encoding="utf-8")
 
@@ -117,6 +130,8 @@ def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     assert "Batch 3 is retired from the active local workflow instead of migrated." in text
     assert "generate_hsd_manual_workflow_merge_v1.py" in text
     assert "explicit `handoff` mode" in text
+    assert "generate_hsd_final_score_stories_v1.py" in text
+    assert "explicit `stories` mode" in text
     assert "womens_sports_scraper.py" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text
