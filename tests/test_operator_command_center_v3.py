@@ -116,13 +116,22 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["version"] == "hsd-operator-command-center-v3.0.0-daily-ops"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
+    assert "no graphics upload pack is ready" in payload["decision"]["callout"]
     assert payload["briefing"]["best_candidate"] == "New York Liberty beat Las Vegas Aces"
     assert payload["briefing"]["studio_lane"] == "Tonight in the W"
     assert any(action["status"] == "Manual only" for action in payload["next_actions"])
     assert any(action["title"] == "Review source registry audit" for action in payload["next_actions"])
     assert any(action["title"] == "Build graphics pack for Tonight in the W" for action in payload["next_actions"])
+    build_action = next(action for action in payload["next_actions"] if action["title"] == "Build graphics pack for Tonight in the W")
+    assert build_action["status"] == "Build next"
+    assert build_action["command"] == ".\\hsd.cmd run -Mode asset"
+    assert any(action["title"] == "Create Results and Studio drill-down dashboards" for action in payload["next_actions"])
+    assert all(action["title"] != "no_content_ready" for action in payload["next_actions"])
     assert any(item["label"] == "Source registry" and item["value"] == "REVIEW" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
+    artifact_by_path = {item["path"]: item for item in payload["artifacts"]}
+    assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
+    assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
 
     assert "HSD Daily Operator Command Center" in html
     assert 'data-tab-target="today"' in html
@@ -131,7 +140,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert 'data-tab-target="artifacts"' in html
     assert 'id="artifactSearch"' in html
     assert "Paid APIs and auto-publishing are off" in html
+    assert "Run next" in html
+    assert ".\\hsd.cmd run -Mode asset" in html
+    assert "Next step" in html
     assert "Next actions" in markdown
+    assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
+    assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
