@@ -104,6 +104,21 @@ def test_final_score_stories_mode_is_explicit_and_run_scoped() -> None:
     assert "final-score IG Story packs" in doc
 
 
+def test_multi_post_mode_is_explicit_and_run_scoped() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"posts"' in wrapper
+    assert '"posts"' in runner
+    assert "function Invoke-PostsStage" in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_multi_post_desk_v1.py" -Optional' in runner
+    assert '"posts" { Invoke-PostsStage $python; Invoke-ReviewStage $python }' in runner
+    assert "multi_post_daily_board.md" in runner
+    assert "post_slot_status.csv" in runner
+    assert "multi-post daily board" in doc
+
+
 def test_local_development_docs_describe_run_scoped_outputs() -> None:
     doc = DOC.read_text(encoding="utf-8")
 

@@ -154,3 +154,7 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "ig_story_results_queue.csv" in runner
     assert "ig_story_results_upload_pack_status.csv" in runner
     assert "final_score_story_guard_report.md" in runner
+    assert "multi_post_daily_board.md" in runner
+    assert "post_slot_status.csv" in runner
+    assert "ig_feed_queue.csv" in runner
+    assert "threads_queue.csv" in runner
