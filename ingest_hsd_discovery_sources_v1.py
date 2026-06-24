@@ -7,6 +7,7 @@ import os
 import re
 import time
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Dict, List
 from xml.etree import ElementTree
@@ -29,7 +30,7 @@ try:
 except Exception:
     BeautifulSoup = None
 
-VERSION = "hsd-discovery-ingest-v3.4.0-quality-freshness"
+VERSION = "hsd-discovery-ingest-v3.5.0-article-freshness"
 
 REGISTRY = "config/source_registry.json"
 OUT_CSV = "story_candidates_discovery.csv"
@@ -38,14 +39,20 @@ OUT_REPORT = "discovery_sources_report.md"
 SOCIAL_INBOX = "operator/inbox/social_rumor_inbox.csv"
 FETCH_TIMEOUT = int(os.environ.get("HSD_DISCOVERY_FETCH_TIMEOUT", "15"))
 MAX_PAGE_LEADS_PER_SOURCE = 10
+MAX_ARTICLE_DATE_FETCHES_PER_SOURCE = int(os.environ.get("HSD_DISCOVERY_MAX_ARTICLE_DATE_FETCHES_PER_SOURCE", "6"))
 ENABLE_FETCH = os.environ.get("HSD_DISCOVERY_ENABLE_FETCH", os.environ.get("HSD_NEWS_ENABLE_FETCH", "true")).lower() != "false"
+ENABLE_ARTICLE_DATE_FETCH = os.environ.get("HSD_DISCOVERY_ENABLE_ARTICLE_DATE_FETCH", "true").lower() != "false"
+USER_AGENT = "HSDDiscovery/3.5 FreeSource"
 
 FIELDS = [
     "story_id", "source_id", "source_type", "source_tier", "source_trust_band", "title", "source_url",
     "canonical_url", "published_at", "summary", "risk_tier", "publish_eligible", "reason",
-    "lead_source", "lead_score", "freshness_date", "freshness_label", "freshness_score",
+    "lead_source", "lead_score", "freshness_date", "freshness_label", "freshness_source", "freshness_score",
     "urgency_score", "quality_score", "quality_reason", "promotion_hint", "review_next_step",
 ]
+
+ARTICLE_DATE_FETCHES = 0
+ARTICLE_DATES_FOUND = 0
 
 GREEN_TIERS = {"official", "operator", "wire", "primary_media", "stats_provider"}
 YELLOW_TIERS = {"social", "social_manual", "community", "discovery", "media_review"}
@@ -94,6 +101,11 @@ def parse_date_hint(*values: Any) -> datetime | None:
             return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
         except Exception:
             pass
+        try:
+            parsed = parsedate_to_datetime(text)
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
         patterns = [
             r"\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b",
             r"/(20\d{2})/(\d{1,2})/(\d{1,2})(?:/|-)",
@@ -107,6 +119,90 @@ def parse_date_hint(*values: Any) -> datetime | None:
             except Exception:
                 continue
     return None
+
+
+def iso_date_hint(*values: Any) -> str:
+    parsed = parse_date_hint(*values)
+    return parsed.isoformat() if parsed else ""
+
+
+ARTICLE_DATE_META_KEYS = {
+    "article:published_time",
+    "og:published_time",
+    "published_time",
+    "datepublished",
+    "date published",
+    "publishdate",
+    "pubdate",
+    "parsely-pub-date",
+    "sailthru.date",
+    "dc.date",
+    "dc.date.issued",
+    "date",
+    "lastmod",
+}
+
+
+def article_date_from_json_ld(value: Any) -> str:
+    if isinstance(value, list):
+        for item in value:
+            found = article_date_from_json_ld(item)
+            if found:
+                return found
+    if isinstance(value, dict):
+        graph = value.get("@graph")
+        if isinstance(graph, list):
+            found = article_date_from_json_ld(graph)
+            if found:
+                return found
+        for key in ["datePublished", "dateCreated", "uploadDate", "dateModified"]:
+            found = iso_date_hint(value.get(key))
+            if found:
+                return found
+        for nested in value.values():
+            if isinstance(nested, (dict, list)):
+                found = article_date_from_json_ld(nested)
+                if found:
+                    return found
+    return ""
+
+
+def article_date_from_html(text: str) -> str:
+    if BeautifulSoup is not None:
+        soup = BeautifulSoup(text or "", "html.parser")
+        for tag in soup.find_all("meta"):
+            key = clean(tag.get("property") or tag.get("name") or tag.get("itemprop") or tag.get("http-equiv")).lower()
+            if key not in ARTICLE_DATE_META_KEYS and not key.endswith(":published_time"):
+                continue
+            found = iso_date_hint(tag.get("content") or tag.get("value"))
+            if found:
+                return found
+        for script in soup.find_all("script", attrs={"type": re.compile(r"ld\+json", re.I)}):
+            raw = script.string or script.get_text(" ")
+            try:
+                found = article_date_from_json_ld(json.loads(raw))
+                if found:
+                    return found
+            except Exception:
+                pass
+        for tag in soup.find_all("time"):
+            found = iso_date_hint(tag.get("datetime"), tag.get("content"), tag.get_text(" "))
+            if found:
+                return found
+    patterns = [
+        r'"datePublished"\s*:\s*"([^"]+)"',
+        r'"dateCreated"\s*:\s*"([^"]+)"',
+        r'"uploadDate"\s*:\s*"([^"]+)"',
+        r'<time[^>]+datetime=["\']([^"\']+)["\']',
+        r'<meta[^>]+(?:property|name|itemprop)=["\'](?:article:published_time|og:published_time|datePublished|datepublished|pubdate)["\'][^>]+content=["\']([^"\']+)["\']',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text or "", flags=re.I | re.S)
+        if match:
+            found = iso_date_hint(html.unescape(match.group(1)))
+            if found:
+                return found
+    return ""
 
 
 def load_registry() -> Dict[str, Any]:
@@ -274,9 +370,16 @@ def is_evergreen(title: str, summary: str = "", url: str = "") -> bool:
     return any(term in text for term in EVERGREEN_TERMS)
 
 
-def freshness_payload(title: str, url: str, published_at: str, summary: str = "") -> Dict[str, str]:
+def freshness_payload(title: str, url: str, published_at: str, summary: str = "", published_at_source: str = "") -> Dict[str, str]:
     now = now_utc()
-    date_hint = parse_date_hint(published_at, url, title)
+    date_hint = parse_date_hint(published_at)
+    source = clean(published_at_source) or ("published_at" if date_hint else "")
+    if not date_hint:
+        date_hint = parse_date_hint(url)
+        source = "url_hint" if date_hint else ""
+    if not date_hint:
+        date_hint = parse_date_hint(title)
+        source = "title_hint" if date_hint else ""
     evergreen = is_evergreen(title, summary, url)
     if date_hint:
         days = (now.date() - date_hint.date()).days
@@ -298,17 +401,26 @@ def freshness_payload(title: str, url: str, published_at: str, summary: str = ""
         return {
             "freshness_date": date_hint.date().isoformat(),
             "freshness_label": label,
+            "freshness_source": source,
             "freshness_score": str(score),
         }
     if evergreen:
-        return {"freshness_date": "", "freshness_label": "evergreen_undated", "freshness_score": "6"}
+        return {"freshness_date": "", "freshness_label": "evergreen_undated", "freshness_source": "evergreen_keyword", "freshness_score": "6"}
     if str(now.year) in f"{title} {url}":
-        return {"freshness_date": "", "freshness_label": "current_year_undated", "freshness_score": "16"}
-    return {"freshness_date": "", "freshness_label": "undated", "freshness_score": "10"}
+        return {"freshness_date": "", "freshness_label": "current_year_undated", "freshness_source": "current_year_text", "freshness_score": "16"}
+    return {"freshness_date": "", "freshness_label": "undated", "freshness_source": "", "freshness_score": "10"}
 
 
-def quality_payload(src: Dict[str, Any], title: str, url: str, summary: str, lead_score_value: int, published_at: str) -> Dict[str, str]:
-    freshness = freshness_payload(title, url, published_at, summary)
+def quality_payload(
+    src: Dict[str, Any],
+    title: str,
+    url: str,
+    summary: str,
+    lead_score_value: int,
+    published_at: str,
+    published_at_source: str = "",
+) -> Dict[str, str]:
+    freshness = freshness_payload(title, url, published_at, summary, published_at_source)
     urgent = urgency_score(title, summary)
     source_bonus = 16 if trust_band(src) == "green" else 7
     evergreen_penalty = 12 if is_evergreen(title, summary, url) else 0
@@ -324,7 +436,8 @@ def quality_payload(src: Dict[str, Any], title: str, url: str, summary: str, lea
         ),
     )
     reason = (
-        f"lead={lead_score_value}; freshness={freshness['freshness_label']}:{freshness['freshness_score']}; "
+        f"lead={lead_score_value}; freshness={freshness['freshness_label']}:{freshness['freshness_score']}"
+        f" via {freshness.get('freshness_source') or 'unknown'}; "
         f"urgency={urgent}; source={trust_band(src)}; evergreen_penalty={evergreen_penalty}"
     )
     return {
@@ -342,7 +455,8 @@ def candidate_row(src: Dict[str, Any], row: Dict[str, str], *, lead_source: str,
     source_url = clean(row.get("source_url"))
     score = clean(row.get("lead_score")) or str(lead_score(title, source_url, summary))
     published_at = clean(row.get("published_at"))
-    quality = quality_payload(src, title, source_url, summary, int(score or 0), published_at)
+    published_at_source = clean(row.get("published_at_source"))
+    quality = quality_payload(src, title, source_url, summary, int(score or 0), published_at, published_at_source)
     return {
         "story_id": story_id(row.get("canonical_url", ""), title),
         "source_id": clean(src.get("source_id", "")),
@@ -389,7 +503,7 @@ def feed_entries(src: Dict[str, Any]) -> List[Dict[str, str]]:
                         "summary": clean(e.get("summary", "")),
                     })
             elif requests is not None and ENABLE_FETCH:
-                response = requests.get(url, headers={"User-Agent": "HSDDiscovery/3.3 FreeSource"}, timeout=FETCH_TIMEOUT)
+                response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=FETCH_TIMEOUT)
                 if response.status_code >= 400:
                     continue
                 root = ElementTree.fromstring(response.text.encode("utf-8"))
@@ -454,20 +568,45 @@ def links_from_html(url: str, text: str, src: Dict[str, Any]) -> List[Dict[str, 
     return rows
 
 
+def enrich_article_dates(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    if requests is None or not ENABLE_FETCH or not ENABLE_ARTICLE_DATE_FETCH or MAX_ARTICLE_DATE_FETCHES_PER_SOURCE <= 0:
+        return rows
+
+    global ARTICLE_DATE_FETCHES, ARTICLE_DATES_FOUND
+    for row in rows[:MAX_ARTICLE_DATE_FETCHES_PER_SOURCE]:
+        url = clean(row.get("source_url"))
+        if not url or clean(row.get("published_at")):
+            continue
+        try:
+            ARTICLE_DATE_FETCHES += 1
+            response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=FETCH_TIMEOUT)
+            if response.status_code >= 400:
+                continue
+            published = article_date_from_html(response.text)
+            if not published:
+                continue
+            row["published_at"] = published
+            row["published_at_source"] = "article_metadata"
+            ARTICLE_DATES_FOUND += 1
+        except Exception:
+            continue
+    return rows
+
+
 def public_page_leads(src: Dict[str, Any]) -> List[Dict[str, str]]:
     if requests is None or not ENABLE_FETCH:
         return []
     rows: List[Dict[str, str]] = []
     for url in src.get("urls", [])[:4]:
         try:
-            response = requests.get(url, headers={"User-Agent": "HSDDiscovery/3.3 FreeSource"}, timeout=FETCH_TIMEOUT)
+            response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=FETCH_TIMEOUT)
             if response.status_code >= 400:
                 continue
             rows.extend(links_from_html(url, response.text, src))
         except Exception:
             continue
     rows = sorted(rows, key=lambda row: (-int(row.get("lead_score") or 0), row.get("title", "")))
-    return rows[:MAX_PAGE_LEADS_PER_SOURCE]
+    return enrich_article_dates(rows[:MAX_PAGE_LEADS_PER_SOURCE])
 
 
 def reddit_public_json(src: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -477,7 +616,7 @@ def reddit_public_json(src: Dict[str, Any]) -> List[Dict[str, str]]:
     for sub in src.get("subreddits", []):
         url = f"https://www.reddit.com/r/{sub}/hot.json?limit={int(src.get('limit', 25))}"
         try:
-            r = requests.get(url, headers={"User-Agent": "HSDDiscovery/3.2.1 BeBeOps"}, timeout=20)
+            r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=20)
             if r.status_code >= 400:
                 continue
             for child in r.json().get("data", {}).get("children", []):
@@ -533,6 +672,10 @@ def social_manual_rows() -> List[Dict[str, str]]:
 
 
 def main() -> None:
+    global ARTICLE_DATE_FETCHES, ARTICLE_DATES_FOUND
+    ARTICLE_DATE_FETCHES = 0
+    ARTICLE_DATES_FOUND = 0
+
     registry = load_registry()
     candidates: List[Dict[str, str]] = []
     counts_by_lead_source: Dict[str, int] = {}
@@ -601,12 +744,14 @@ def main() -> None:
         f"- stale or evergreen: {sum(1 for r in candidates if 'stale' in r['freshness_label'] or 'evergreen' in r['freshness_label'])}",
         f"- RSS/feed leads: {counts_by_lead_source.get('rss_feed', 0)}",
         f"- Free public page leads: {counts_by_lead_source.get('free_public_page', 0)}",
+        f"- Article metadata date fetches: {ARTICLE_DATE_FETCHES}",
+        f"- Article metadata dates found: {ARTICLE_DATES_FOUND}",
         f"- Reddit public JSON leads: {counts_by_lead_source.get('reddit_public_json', 0)}",
         f"- Manual social leads: {counts_by_lead_source.get('manual_social_inbox', 0)}",
         f"- enabled source types skipped by review-safe policy: {skipped_uncrawled_policy}",
         f"- enabled unknown source types skipped: {skipped_enabled_unknown}",
         "",
-        "Official and wire pages are sampled only for free public story links. Social rows come from manual inbox files only; no login, credentialed scraping, paid APIs, auto-publishing, or automatic promotion is used.",
+        "Official and wire pages are sampled only for free public story links. Top story links may be fetched once for public article metadata dates when available. Social rows come from manual inbox files only; no login, credentialed scraping, paid APIs, auto-publishing, or automatic promotion is used.",
         "",
         "## Top Leads",
         "",
@@ -614,7 +759,8 @@ def main() -> None:
     for row in candidates[:25]:
         lines.append(
             f"- `{row['quality_score']}` quality | `{row['freshness_label']}` | `{row['promotion_hint']}` | "
-            f"`{row['source_trust_band']}` | {row['title']} | {row['review_next_step']}"
+            f"`{row['source_trust_band']}` | freshness via `{row.get('freshness_source') or 'unknown'}` | "
+            f"{row['title']} | {row['review_next_step']}"
         )
     if not candidates:
         lines.append("No discovery candidates found.")
@@ -624,6 +770,8 @@ def main() -> None:
         "output_scope": "run_scoped" if output_path(OUT_CSV) != Path(OUT_CSV) else "legacy_root",
         "discovery_candidates": len(candidates),
         "free_public_page_leads": counts_by_lead_source.get("free_public_page", 0),
+        "article_date_fetches": ARTICLE_DATE_FETCHES,
+        "article_dates_found": ARTICLE_DATES_FOUND,
         "manual_social_leads": counts_by_lead_source.get("manual_social_inbox", 0),
         "fresh_today_or_48h": sum(1 for r in candidates if r["freshness_label"] in {"today", "last_48_hours"}),
         "stale_or_evergreen": sum(1 for r in candidates if "stale" in r["freshness_label"] or "evergreen" in r["freshness_label"]),

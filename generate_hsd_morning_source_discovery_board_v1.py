@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.2-quality-freshness"
+VERSION = "hsd-morning-source-discovery-board-v1.3-article-freshness"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -40,6 +40,7 @@ FIELDS = [
     "lead_score",
     "freshness_date",
     "freshness_label",
+    "freshness_source",
     "freshness_score",
     "urgency_score",
     "quality_score",
@@ -363,6 +364,7 @@ def make_row(
     lead_score: str = "",
     freshness_date: str = "",
     freshness_label: str = "",
+    freshness_source: str = "",
     freshness_score: str = "",
     urgency_score: str = "",
     quality_score: str = "",
@@ -393,6 +395,7 @@ def make_row(
         "lead_score": clean(lead_score),
         "freshness_date": clean(freshness_date),
         "freshness_label": clean(freshness_label),
+        "freshness_source": clean(freshness_source),
         "freshness_score": clean(freshness_score),
         "urgency_score": clean(urgency_score),
         "quality_score": clean(quality_score),
@@ -482,6 +485,7 @@ def rows_from_discovery_candidates() -> List[Dict[str, Any]]:
                 lead_score=clean(row.get("lead_score")),
                 freshness_date=clean(row.get("freshness_date")),
                 freshness_label=clean(row.get("freshness_label")),
+                freshness_source=clean(row.get("freshness_source")),
                 freshness_score=clean(row.get("freshness_score")),
                 urgency_score=clean(row.get("urgency_score")),
                 quality_score=clean(row.get("quality_score")),

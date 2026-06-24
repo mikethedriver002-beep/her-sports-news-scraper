@@ -43,8 +43,10 @@ class FakeResponse:
 class FakeRequests:
     def __init__(self, pages: dict[str, str]) -> None:
         self.pages = pages
+        self.calls: list[str] = []
 
     def get(self, url: str, **_: Any) -> FakeResponse:
+        self.calls.append(url)
         return FakeResponse(self.pages.get(url, "<html></html>"))
 
 
@@ -112,23 +114,39 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     )
 
     discovery = load_module(DISCOVERY_SCRIPT, "discovery_intake_test")
-    discovery.requests = FakeRequests(
+    fake_requests = FakeRequests(
         {
             "https://www.wnba.com/news": """
                 <html><body>
-                  <a href="/news/2026-06-24/liberty-announce-roster-move">Liberty announce roster move before Aces game</a>
-                  <a href="/news/2025-06-01/all-time-wnba-record-leaders">All-time WNBA record leaders</a>
+                  <a href="/news/liberty-announce-roster-move">Liberty announce roster move before Aces game</a>
+                  <a href="/news/all-time-wnba-record-leaders">All-time WNBA record leaders</a>
                   <a href="/schedule">Schedule</a>
                 </body></html>
             """,
+            "https://www.wnba.com/news/liberty-announce-roster-move": """
+                <html><head>
+                  <meta property="article:published_time" content="2026-06-24T09:00:00Z" />
+                </head><body>Roster move story.</body></html>
+            """,
+            "https://www.wnba.com/news/all-time-wnba-record-leaders": """
+                <html><head>
+                  <time datetime="2025-06-01T12:00:00Z">June 1, 2025</time>
+                </head><body>Evergreen record leaders.</body></html>
+            """,
             "https://apnews.com/hub/womens-sports": """
                 <html><body>
-                  <a href="/article/2026-06-23/womens-basketball-final-score">Sky beat Storm in final score thriller</a>
+                  <a href="/article/womens-basketball-final-score">Sky beat Storm in final score thriller</a>
                   <a href="/about">About AP</a>
                 </body></html>
             """,
+            "https://apnews.com/article/womens-basketball-final-score": """
+                <html><head>
+                  <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-06-23T18:30:00Z"}</script>
+                </head><body>Final score story.</body></html>
+            """,
         }
     )
+    discovery.requests = fake_requests
 
     discovery.main()
 
@@ -138,23 +156,50 @@ def test_discovery_ingest_captures_free_public_and_social_leads(tmp_path, monkey
     assert by_title["Liberty announce roster move before Aces game"]["publish_eligible"] == "Yes"
     assert by_title["Liberty announce roster move before Aces game"]["lead_source"] == "free_public_page"
     assert by_title["Liberty announce roster move before Aces game"]["promotion_hint"] == "news_packet"
+    assert by_title["Liberty announce roster move before Aces game"]["published_at"] == "2026-06-24T09:00:00+00:00"
     assert by_title["Liberty announce roster move before Aces game"]["freshness_label"] == "today"
+    assert by_title["Liberty announce roster move before Aces game"]["freshness_source"] == "article_metadata"
     assert int(by_title["Liberty announce roster move before Aces game"]["quality_score"]) >= 70
     assert by_title["Sky beat Storm in final score thriller"]["promotion_hint"] == "studio_brief"
+    assert by_title["Sky beat Storm in final score thriller"]["published_at"] == "2026-06-23T18:30:00+00:00"
     assert by_title["Sky beat Storm in final score thriller"]["freshness_label"] == "last_48_hours"
+    assert by_title["Sky beat Storm in final score thriller"]["freshness_source"] == "article_metadata"
     assert by_title["All-time WNBA record leaders"]["freshness_label"].endswith("evergreen_angle")
     assert int(by_title["Liberty announce roster move before Aces game"]["quality_score"]) > int(by_title["All-time WNBA record leaders"]["quality_score"])
     assert by_title["Team account hints at injury update"]["publish_eligible"] == "No"
     assert by_title["Team account hints at injury update"]["lead_source"] == "manual_social_inbox"
     assert not (tmp_path / "story_candidates_discovery.csv").exists()
+    assert "https://www.wnba.com/news/liberty-announce-roster-move" in fake_requests.calls
+    assert "https://apnews.com/article/womens-basketball-final-score" in fake_requests.calls
+
+    report = (run_dir / "discovery_sources_report.md").read_text(encoding="utf-8")
+    assert "- Article metadata dates found: 3" in report
 
     board = load_module(BOARD_SCRIPT, "morning_board_intake_test")
     payload = board.build_payload()
+    board_rows = {row["title"]: row for row in payload["rows"]}
     promotions = {row["title"]: row["promotion_recommendation"] for row in payload["promotion_recommendations"]}
 
+    assert board_rows["Liberty announce roster move before Aces game"]["freshness_source"] == "article_metadata"
     assert promotions["Liberty announce roster move before Aces game"] == "news_packet"
     assert promotions["Sky beat Storm in final score thriller"] == "studio_brief"
     assert promotions["Team account hints at injury update"] == "manual_story_candidate"
+
+
+def test_article_date_from_public_metadata_formats() -> None:
+    discovery = load_module(DISCOVERY_SCRIPT, "discovery_metadata_test")
+
+    assert (
+        discovery.article_date_from_html('<meta property="article:published_time" content="2026-06-24T09:30:00Z">')
+        == "2026-06-24T09:30:00+00:00"
+    )
+    assert (
+        discovery.article_date_from_html(
+            '<script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-06-23T18:00:00Z"}</script>'
+        )
+        == "2026-06-23T18:00:00+00:00"
+    )
+    assert discovery.article_date_from_html('<time datetime="2026-06-22T10:15:00Z">June 22</time>') == "2026-06-22T10:15:00+00:00"
 
 
 def test_manual_story_normalizer_writes_run_scoped_intake(tmp_path, monkeypatch) -> None:

@@ -131,6 +131,9 @@ def seed_daily_ops_files() -> None:
                 "promotion_target": "story_candidates_manual.csv",
                 "promotion_reason": "Discovery-only lead needs official confirmation.",
                 "promotion_next_step": "Add or verify the lead in the manual story inbox with evidence URLs and locked facts.",
+                "quality_score": "40",
+                "freshness_label": "recent_30_days",
+                "freshness_source": "article_metadata",
             }
         ],
     )
@@ -161,6 +164,9 @@ def seed_daily_ops_files() -> None:
                 "promotion_target": "story_candidates_manual.csv",
                 "promotion_reason": "Discovery-only lead needs official confirmation.",
                 "promotion_next_step": "Add or verify the lead in the manual story inbox with evidence URLs and locked facts.",
+                "quality_score": "40",
+                "freshness_label": "recent_30_days",
+                "freshness_source": "article_metadata",
             }
         ],
     )
@@ -176,7 +182,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.4.0-quality-freshness-leads"
+    assert payload["version"] == "hsd-operator-command-center-v3.5.0-article-freshness"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -204,7 +210,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
+    assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
     assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
+    assert payload["lead_promotion_recommendations"][0]["freshness_source"] == "article_metadata"
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -225,12 +233,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Next step" in html
     assert "publish_grade" in html
     assert "Public team social lead" in html
+    assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
     assert "Next actions" in markdown
     assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown
 
     command_center.write_outputs(payload)
