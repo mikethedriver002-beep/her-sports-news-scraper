@@ -12,6 +12,7 @@ def test_local_runner_creates_run_scoped_output_context() -> None:
     text = RUNNER.read_text(encoding="utf-8")
 
     assert "function New-HsdRunContext" in text
+    assert "function Resolve-HsdArtifactSource" in text
     assert "outputs\\local\\$stamp" in text
     assert "generated_state" in text
     assert "generated_state_manifest.json" in text
@@ -56,6 +57,8 @@ def test_local_run_manifest_preserves_free_manual_policy() -> None:
     text = RUNNER.read_text(encoding="utf-8")
 
     assert 'output_mode = "run_scoped_local"' in text
+    assert "Resolve-HsdArtifactSource $Relative $DestinationDir" in text
+    assert "$env:HSD_RUN_OUTPUT_DIR" in text
     assert "manual_only = $true" in text
     assert "paid_apis_disabled = $true" in text
     assert '$env:HSD_PAID_APIS_DISABLED = "1"' in text

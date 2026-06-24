@@ -561,12 +561,32 @@ function Invoke-ReviewStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_pipeline_review_lite_v1.py" -Optional
 }
 
+function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
+    $candidates = @()
+    if ($env:HSD_RUN_OUTPUT_DIR) {
+        $candidates += Resolve-HsdChildPath $env:HSD_RUN_OUTPUT_DIR $Relative
+    }
+    if ($RunFilesDir -and $RunFilesDir -ne $env:HSD_RUN_OUTPUT_DIR) {
+        $candidates += Resolve-HsdChildPath $RunFilesDir $Relative
+    }
+    $candidates += Resolve-HsdChildPath $Root.Path $Relative
+
+    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    }
+    return $null
+}
+
 function Copy-IfPresent([string]$Relative, [string]$DestinationDir, [System.Collections.ArrayList]$Manifest) {
-    $src = Join-Path $Root $Relative
-    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) { return }
+    $src = Resolve-HsdArtifactSource $Relative $DestinationDir
+    if (-not $src) { return }
     $dest = Join-Path $DestinationDir ([IO.Path]::GetFileName($Relative))
-    Copy-Item -LiteralPath $src -Destination $dest -Force
-    [void]$Manifest.Add([pscustomobject]@{ path = $Relative; included_as = $dest; size = (Get-Item -LiteralPath $src).Length })
+    $srcFull = [IO.Path]::GetFullPath($src)
+    $destFull = [IO.Path]::GetFullPath($dest)
+    if (-not $srcFull.Equals($destFull, [StringComparison]::OrdinalIgnoreCase)) {
+        Copy-Item -LiteralPath $src -Destination $dest -Force
+    }
+    [void]$Manifest.Add([pscustomobject]@{ path = $Relative; source = $src; included_as = $dest; size = (Get-Item -LiteralPath $src).Length })
 }
 
 function Collect-HsdArtifacts($RunContext) {
@@ -586,7 +606,9 @@ function Collect-HsdArtifacts($RunContext) {
         "news_sync_hub.md",
         "studio_bundle_queue.csv",
         "studio_bundle_packets.md",
+        "preview_bundle_quality.csv",
         "preview_bundle_quality.md",
+        "preview_bundle_quality_summary.csv",
         "preview_player_focus.csv",
         "operator_status.md",
         "operator_status.json",

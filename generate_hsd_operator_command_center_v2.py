@@ -8,10 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
+from hsd_run_io import input_path, output_path, write_json, write_text
+
 VERSION = "hsd-operator-command-center-v3.0.0-daily-ops"
-OUT_HTML = Path("operator_command_center.html")
-OUT_MD = Path("operator_command_center.md")
-OUT_JSON = Path("operator_command_center.json")
+OUT_HTML = output_path("operator_command_center.html")
+OUT_MD = output_path("operator_command_center.md")
+OUT_JSON = output_path("operator_command_center.json")
 
 ARTIFACTS = [
     ("Decision", "Operator status", "operator_status.md"),
@@ -48,7 +50,7 @@ def yes(value: Any) -> bool:
 
 
 def read_text(path: str, max_chars: int | None = None) -> str:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return ""
     text = p.read_text(encoding="utf-8", errors="replace")
@@ -56,7 +58,7 @@ def read_text(path: str, max_chars: int | None = None) -> str:
 
 
 def read_json(path: str) -> Dict[str, Any]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return {}
     try:
@@ -66,7 +68,7 @@ def read_json(path: str) -> Dict[str, Any]:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     try:
@@ -126,7 +128,7 @@ def parse_markdown_table(path: str) -> List[Dict[str, str]]:
 def artifact_entries() -> List[Dict[str, Any]]:
     entries: List[Dict[str, Any]] = []
     for group, title, path in ARTIFACTS:
-        p = Path(path)
+        p = input_path(path)
         snippet = ""
         if p.suffix.lower() in {".csv", ".json", ".md", ".txt"}:
             snippet = short(read_text(path, 480), 260)
@@ -344,7 +346,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Publish allowed", display_bool(decision["publish_allowed"])),
         metric("Graphics handoff", display_bool(decision["graphics_handoff_allowed"])),
         metric("Preview gate", first_present(guard.get("preview_gate_status"), default="not_run")),
-        metric("Graphics pack", "ready" if Path("graphics_upload_pack_status.csv").exists() else "not_created"),
+        metric("Graphics pack", "ready" if input_path("graphics_upload_pack_status.csv").exists() else "not_created"),
         metric("Rendered QA", first_present(guard.get("rendered_qa_status"), render_counts.get("decision"), default="not_run")),
         metric("Women's events", counts.get("women_events", "0")),
         metric("Graphics-ready results", counts.get("graphics_ready", "0")),
@@ -385,7 +387,7 @@ def pill(value: Any, tone: str | None = None) -> str:
 
 
 def open_link(path: str, label: str = "Open") -> str:
-    if not path or not Path(path).exists():
+    if not path or not input_path(path).exists():
         return '<span class="muted">Missing</span>'
     return f'<a class="tool-link" href="{html.escape(path)}">{html.escape(label)}</a>'
 
@@ -800,9 +802,9 @@ def render_markdown(payload: Dict[str, Any]) -> str:
 
 
 def write_outputs(payload: Dict[str, Any]) -> None:
-    OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    OUT_MD.write_text(render_markdown(payload), encoding="utf-8")
-    OUT_HTML.write_text(render_html(payload), encoding="utf-8")
+    write_json(OUT_JSON, payload)
+    write_text(OUT_MD, render_markdown(payload))
+    write_text(OUT_HTML, render_html(payload))
 
 
 def main() -> None:

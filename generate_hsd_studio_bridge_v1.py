@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
+
 
 VERSION = "hsd-studio-bridge-v1.4-results-ready"
 
@@ -208,14 +210,11 @@ def apply_freshness(packet: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def load_text(path: str) -> str:
-    p = Path(path)
-    if p.exists():
-        return p.read_text(encoding="utf-8", errors="replace")
     latest_paths = [
         Path("news_run_history") / "latest" / path,
         Path("results_run_history") / "latest" / path,
     ]
-    for candidate in latest_paths:
+    for candidate in [*input_candidates(path), *latest_paths]:
         if candidate.exists():
             return candidate.read_text(encoding="utf-8", errors="replace")
     return ""
@@ -223,7 +222,7 @@ def load_text(path: str) -> str:
 
 def load_csv(path: str) -> List[Dict[str, str]]:
     candidates = [
-        Path(path),
+        *input_candidates(path),
         Path("news_run_history") / "latest" / path,
         Path("results_run_history") / "latest" / path,
     ]
@@ -235,7 +234,7 @@ def load_csv(path: str) -> List[Dict[str, str]]:
 
 
 def load_json(path: str, default: Any) -> Any:
-    p = Path(path)
+    p = input_path(path)
     if p.exists():
         try:
             return json.loads(p.read_text(encoding="utf-8"))
@@ -245,7 +244,9 @@ def load_json(path: str, default: Any) -> Any:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fieldnames: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
+    out = output_path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         for row in rows:
@@ -320,7 +321,6 @@ def default_sop() -> Dict[str, Any]:
 
 
 def ensure_brand_files(brand: Dict[str, Any], sop: Dict[str, Any]) -> None:
-    Path("brand_assets").mkdir(exist_ok=True)
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Her Sports Daily logo bug">
   <defs>
     <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
@@ -335,9 +335,9 @@ def ensure_brand_files(brand: Dict[str, Any], sop: Dict[str, Any]) -> None:
   <text x="256" y="360" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-size="70" font-weight="900" fill="{brand["colors"]["electric_cyan"]}" letter-spacing="-2">DAILY</text>
 </svg>
 """
-    Path(OUT_WATERMARK_SVG).write_text(svg, encoding="utf-8")
-    Path(OUT_BRAND_CONFIG).write_text(json.dumps(brand, indent=2), encoding="utf-8")
-    Path(OUT_SOP).write_text(json.dumps(sop, indent=2), encoding="utf-8")
+    write_run_text(OUT_WATERMARK_SVG, svg)
+    write_run_json(OUT_BRAND_CONFIG, brand)
+    write_run_json(OUT_SOP, sop)
 
 
 def parse_source_urls(packet: Dict[str, str]) -> List[str]:
@@ -1408,15 +1408,15 @@ def main() -> None:
     write_csv(OUT_ACCURACY_CHECKLIST_CSV, checklist, CHECKLIST_FIELDS)
     write_csv(OUT_MANUAL_REVIEW_CSV, manual_rows, MANUAL_FIELDS)
 
-    Path(OUT_COMMAND_CENTER).write_text(markdown_command_center(rows, bundles, brand, news_hub), encoding="utf-8")
-    Path(OUT_FRESH_PACKET_REPORT).write_text(markdown_fresh_packet_report(packet_gates, bundles, len(packets)), encoding="utf-8")
-    Path(OUT_TOP_PACKETS).write_text(markdown_top_packets(rows), encoding="utf-8")
-    Path(OUT_IMAGE_PROMPTS).write_text(markdown_image_prompts(rows), encoding="utf-8")
-    Path(OUT_CAPTION_BANK).write_text(markdown_caption_bank(rows), encoding="utf-8")
-    Path(OUT_BUNDLE_PACKETS).write_text(markdown_bundle_packets(bundles), encoding="utf-8")
-    Path(OUT_BUNDLE_PROMPTS).write_text(markdown_bundle_prompts(bundles), encoding="utf-8")
-    Path(OUT_BUNDLE_CAPTION_BANK).write_text(markdown_bundle_caption_bank(bundles), encoding="utf-8")
-    Path(OUT_POST_SCHEDULE).write_text(markdown_post_schedule(rows, bundles), encoding="utf-8")
+    write_run_text(OUT_COMMAND_CENTER, markdown_command_center(rows, bundles, brand, news_hub))
+    write_run_text(OUT_FRESH_PACKET_REPORT, markdown_fresh_packet_report(packet_gates, bundles, len(packets)))
+    write_run_text(OUT_TOP_PACKETS, markdown_top_packets(rows))
+    write_run_text(OUT_IMAGE_PROMPTS, markdown_image_prompts(rows))
+    write_run_text(OUT_CAPTION_BANK, markdown_caption_bank(rows))
+    write_run_text(OUT_BUNDLE_PACKETS, markdown_bundle_packets(bundles))
+    write_run_text(OUT_BUNDLE_PROMPTS, markdown_bundle_prompts(bundles))
+    write_run_text(OUT_BUNDLE_CAPTION_BANK, markdown_bundle_caption_bank(bundles))
+    write_run_text(OUT_POST_SCHEDULE, markdown_post_schedule(rows, bundles))
 
     manifest = {
         "version": VERSION,
@@ -1460,7 +1460,7 @@ def main() -> None:
         },
         "rules": sop.get("non_negotiables", []),
     }
-    Path(OUT_MANIFEST).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    write_run_json(OUT_MANIFEST, manifest)
 
     print("Created HSD Studio Bridge outputs")
     print(json.dumps(manifest["counts"], indent=2))

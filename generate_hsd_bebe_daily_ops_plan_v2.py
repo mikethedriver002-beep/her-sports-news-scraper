@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from hsd_run_io import input_path, output_path, write_json, write_text
+
 try:
     from zoneinfo import ZoneInfo
 except Exception:
@@ -19,11 +21,11 @@ DAY_TYPE = os.environ.get("HSD_DESK_DAY_TYPE", "normal_day").strip() or "normal_
 CADENCE_PATH = Path(os.environ.get("HSD_DAILY_CADENCE_CONFIG", "config/hsd_daily_cadence_v2.json"))
 PRIORITY_PATH = Path(os.environ.get("HSD_PRIORITY_SPORTS_CONFIG", "config/hsd_priority_sports_14d_v2.json"))
 
-OUT_MD = Path("bebe_daily_ops_plan.md")
-OUT_CSV = Path("bebe_daily_ops_plan.csv")
-OUT_JSON = Path("bebe_daily_ops_status.json")
-OUT_PRIORITY_MD = Path("bebe_priority_board.md")
-OUT_SCHEDULE_MD = Path("bebe_posting_schedule_today.md")
+OUT_MD = output_path("bebe_daily_ops_plan.md")
+OUT_CSV = output_path("bebe_daily_ops_plan.csv")
+OUT_JSON = output_path("bebe_daily_ops_status.json")
+OUT_PRIORITY_MD = output_path("bebe_priority_board.md")
+OUT_SCHEDULE_MD = output_path("bebe_posting_schedule_today.md")
 
 FIELDS = [
     "time_et", "platform", "post_type", "purpose", "recommended_action", "status", "source_artifact", "notes",
@@ -48,6 +50,7 @@ def now_local() -> datetime:
 
 
 def read_json(path: Path) -> Dict[str, Any]:
+    path = input_path(path)
     if not path.exists():
         return {}
     try:
@@ -57,7 +60,7 @@ def read_json(path: Path) -> Dict[str, Any]:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     try:
@@ -68,6 +71,8 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 
 
 def write_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
+    path = output_path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
         w.writeheader()
@@ -258,7 +263,7 @@ def main() -> None:
         "noon_story_recommendation": noon_story,
         "outputs": [OUT_MD.as_posix(), OUT_CSV.as_posix(), OUT_PRIORITY_MD.as_posix(), OUT_SCHEDULE_MD.as_posix()],
     }
-    OUT_JSON.write_text(json.dumps(status, indent=2, ensure_ascii=False), encoding="utf-8")
+    write_json(OUT_JSON, status, ensure_ascii=False)
 
     lines = [
         "# BeBe Daily Ops Plan",
@@ -312,9 +317,9 @@ def main() -> None:
         f"- Noon recommendation: {noon_story}",
         "",
     ]
-    OUT_MD.write_text("\n".join(lines), encoding="utf-8")
-    OUT_SCHEDULE_MD.write_text("\n".join(lines[lines.index("## Posting schedule"):]) if "## Posting schedule" in lines else "", encoding="utf-8")
-    OUT_PRIORITY_MD.write_text("\n".join(priority_lines(priority)), encoding="utf-8")
+    write_text(OUT_MD, "\n".join(lines))
+    write_text(OUT_SCHEDULE_MD, "\n".join(lines[lines.index("## Posting schedule"):]) if "## Posting schedule" in lines else "")
+    write_text(OUT_PRIORITY_MD, "\n".join(priority_lines(priority)))
     print(json.dumps({"rows": len(schedule_rows), "preview_gate": preview.get("gate_status", "NOT_RUN"), "pack_status": pack_status}, indent=2))
 
 

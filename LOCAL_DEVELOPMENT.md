@@ -70,6 +70,7 @@ outputs/local/<timestamp>/generated_state/
 ```
 
 - `files/` is the operator-friendly review bundle with the command center, guard reports, schedules, source reports, and handoff files.
+- The biggest daily generators now write directly to `files/` when `HSD_RUN_OUTPUT_DIR` is set, and read same-run artifacts before falling back to legacy root files.
 - `generated_state/` preserves generated root-level files and directories that changed during the run, using their repo-relative paths.
 - `generated_state_manifest.json` records what was archived and whether root cleanup was applied.
 
@@ -91,7 +92,7 @@ HSD_GENERATED_STATE_DIR
 HSD_OUTPUT_MODE=run_scoped_local
 ```
 
-Legacy scripts can still write root-level files, but local operation now treats the run folder as the durable output location.
+Legacy scripts can still write root-level files, but local operation now treats the run folder as the durable output location and collects run-scoped artifacts before looking in the repo root.
 
 ## Daily Operator Command Center
 
