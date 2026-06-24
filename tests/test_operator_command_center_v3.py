@@ -126,6 +126,12 @@ def seed_daily_ops_files() -> None:
                 "evidence_description": "A concise public metadata description for operator review.",
                 "evidence_preview": "Official metadata title for public team lead | 2026-06-10 | A concise public metadata description for operator review.",
                 "evidence_source": "article_metadata",
+                "story_opportunity_id": "opp_fixture_cluster",
+                "story_opportunity_title": "Public team social lead",
+                "story_opportunity_size": "2",
+                "story_opportunity_sources": "wnba_official_news; ap_womens_sports_wire",
+                "story_opportunity_urls": "https://www.wnba.com/news/example; https://apnews.com/article/example",
+                "story_opportunity_reason": "Grouped 2 related official/wire discovery leads from wnba_official_news, ap_womens_sports_wire.",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -164,6 +170,12 @@ def seed_daily_ops_files() -> None:
                 "evidence_description": "A concise public metadata description for operator review.",
                 "evidence_preview": "Official metadata title for public team lead | 2026-06-10 | A concise public metadata description for operator review.",
                 "evidence_source": "article_metadata",
+                "story_opportunity_id": "opp_fixture_cluster",
+                "story_opportunity_title": "Public team social lead",
+                "story_opportunity_size": "2",
+                "story_opportunity_sources": "wnba_official_news; ap_womens_sports_wire",
+                "story_opportunity_urls": "https://www.wnba.com/news/example; https://apnews.com/article/example",
+                "story_opportunity_reason": "Grouped 2 related official/wire discovery leads from wnba_official_news, ap_womens_sports_wire.",
                 "source_artifact": "morning_source_discovery_board.csv",
                 "next_action": "Use as a lead only; find official, wire, or primary confirmation before publishing.",
                 "reason": "requires official confirmation",
@@ -192,7 +204,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.6.0-evidence-previews"
+    assert payload["version"] == "hsd-operator-command-center-v3.7.0-story-opportunities"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -212,6 +224,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Publish-grade packets" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Discovery-only packets" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Morning source rows" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Story opportunities" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Grouped opportunities" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "High-quality leads" and item["value"] == "0" for item in payload["metrics"])
@@ -223,9 +237,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
     assert "Official metadata title for public team lead" in payload["source_discovery_board"][0]["detail"]
     assert payload["source_discovery_board"][0]["evidence_source"] == "article_metadata"
+    assert payload["source_discovery_board"][0]["story_opportunity_size"] == "2"
     assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
     assert payload["lead_promotion_recommendations"][0]["freshness_source"] == "article_metadata"
     assert "A concise public metadata description" in payload["lead_promotion_recommendations"][0]["detail"]
+    assert payload["lead_promotion_recommendations"][0]["story_opportunity_sources"] == "wnba_official_news; ap_womens_sports_wire"
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
@@ -248,6 +264,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Public team social lead" in html
     assert "Official metadata title for public team lead" in html
     assert "A concise public metadata description for operator review." in html
+    assert "opportunity: 2 source(s)" in html
+    assert "wnba_official_news; ap_womens_sports_wire" in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
     assert "Next actions" in markdown
@@ -255,6 +273,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "opportunity: 2 source(s)" in markdown
     assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown
