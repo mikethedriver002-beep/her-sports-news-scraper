@@ -72,6 +72,20 @@ Use this only when you intentionally want to inspect or commit generated asset/r
 
 This is a bridge step. The next architecture move is to teach the pipeline to write directly into run-scoped folders instead of producing root-level artifacts first.
 
+## Daily Operator Command Center
+
+The review stage builds `operator_command_center.html`, `operator_command_center.md`, and `operator_command_center.json`.
+
+The command center is a local/manual cockpit. It summarizes:
+
+- the current publish decision and safety posture
+- next operator actions
+- the daily posting schedule
+- content candidates and studio bundles
+- source health, blockers, and artifact links
+
+It does not publish, push to Git, call paid APIs, or run hidden handoff refresh scripts. It reads the current local artifacts and turns them into a daily operating view.
+
 ## Useful Modes
 
 - `results`: free/public Results Desk v5 path.
