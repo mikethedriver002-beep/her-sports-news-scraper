@@ -14,7 +14,7 @@ on:
           - "CLOSE_PHASE_2"
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -40,7 +40,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -89,19 +89,12 @@ jobs:
             tests/test_v4_phase2e_dirty_tree_hygiene.py \
             tests/test_v4_phase2g_phase2_closure.py
 
-      - name: Commit Phase 2G closure changes
+      - name: Confirm artifact-only Phase 2G closure run
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "hsd-v4-phase2g-installer"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No repository changes required."
-          else
-            git commit -m "Phase 2G: close Phase 2 repo hygiene [skip ci]"
-            git push origin HEAD:main
-          fi
+          echo "Phase 2G installer outputs are artifact-only from GitHub Actions."
+          echo "This workflow does not commit, push, publish, delete branches, or update main."
 
       - name: Verify authoritative Phase 2 closure
         shell: bash
@@ -112,12 +105,11 @@ jobs:
             --strict \
             --installer-mode
 
-      - name: Remove temporary Phase 2 inventory branches
+      - name: Skip remote branch cleanup from Actions
         if: always()
         shell: bash
         run: |
-          git push origin --delete hsd-temp-phase2-inventory 2>/dev/null || true
-          git push origin --delete hsd-v4-phase2g-close-phase2 2>/dev/null || true
+          echo "Remote branch cleanup is intentionally manual/local only."
 
       - name: Upload Phase 2G verification artifact
         if: always()

@@ -20,18 +20,6 @@ on:
         options:
           - "true"
           - "false"
-  pull_request:
-    paths:
-      - "scripts/hsd_asset_assurance_core.py"
-      - "scripts/build_hsd_asset_assurance_v1.py"
-      - "scripts/generate_hsd_template_renderer_v4_phase6m.py"
-      - "scripts/validate_hsd_asset_assurance_v1.py"
-      - "scripts/validate_hsd_template_renderer_v4_phase6m.py"
-      - "scripts/validate_hsd_live_post_ready_v4_phase6m.py"
-      - "config/graphics/v4/asset_assurance/**"
-      - "config/graphics/v4/live_post_ready/live_post_ready_policy_phase6m_v4.json"
-      - "tests/test_phase6m_*.py"
-      - ".github/workflows/hsd-v4-phase6m-asset-assurance-core.yml"
 
 permissions:
   contents: read

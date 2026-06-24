@@ -20,19 +20,6 @@ on:
         options:
           - "true"
           - "false"
-  pull_request:
-    paths:
-      - "scripts/hsd_phase7_editorial_engine.py"
-      - "scripts/build_hsd_phase7_event_packets.py"
-      - "scripts/generate_hsd_phase7_multisport_cards.py"
-      - "scripts/generate_hsd_template_renderer_v5_phase7.py"
-      - "scripts/validate_hsd_phase7_editorial_quality.py"
-      - "scripts/validate_hsd_live_post_ready_v5_phase7.py"
-      - "config/graphics/v5/phase7/**"
-      - "config/graphics/v4/asset_assurance/sports_catalog_v2.json"
-      - "data/phase7/**"
-      - "tests/test_phase7_*.py"
-      - ".github/workflows/hsd-v5-phase7-multisport-editorial-engine.yml"
 
 permissions:
   contents: read

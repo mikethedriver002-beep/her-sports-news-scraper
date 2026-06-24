@@ -11,11 +11,11 @@ on:
         type: choice
         options: [full_pipeline, discovery_only, results_only, news_only, studio_only, asset_only, review_only]
       publish:
-        description: "Commit generated lightweight outputs? Keep false unless intentionally archiving a reviewed run."
+        description: "Disabled: GitHub runs are artifact-only; commit reviewed outputs locally."
         required: true
         default: "false"
         type: choice
-        options: ["false", "true"]
+        options: ["false"]
       publish_mode:
         description: "Publish guard mode"
         required: true
@@ -76,7 +76,7 @@ on:
         options: [disabled, review_only, operator_verified]
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -131,9 +131,9 @@ jobs:
       HSD_PLAYER_IMAGE_AUTO_APPROVE_SCORE: "45"
       HSD_PLAYER_IMAGE_MIN_WIDTH: "240"
       HSD_PLAYER_IMAGE_MIN_HEIGHT: "240"
-      APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
-      BING_SEARCH_API_KEY: ${{ secrets.BING_SEARCH_API_KEY }}
-      SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+      APISPORTS_KEY: ""
+      BING_SEARCH_API_KEY: ""
+      SERPAPI_KEY: ""
 
     steps:
       - name: Check out repo
@@ -396,16 +396,8 @@ jobs:
             manual_workflow_handoff.md
             manual_workflow_handoff_packs/*.zip
 
-      - name: Commit lightweight generated outputs
-        if: env.HSD_PUBLISH_OUTPUTS == 'true'
+      - name: Confirm artifact-only GitHub run
+        if: always()
         shell: bash
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add --ignore-errors multi_post_daily_board.md multi_post_daily_board.json post_slot_status.csv ig_feed_queue.csv ig_story_queue.csv threads_queue.csv caption_bank.md first_comment_hooks.md || true
-          git add --ignore-errors mermaid_upper_echelon_report.md mermaid_story_graph.csv mermaid_master_content_board.md mermaid_content_slots_v2.csv ig_feed_queue_v2.csv ig_story_queue_v2.csv threads_queue_v2.csv breaking_news_queue.csv rumor_watch_queue.csv || true
-          git add --ignore-errors hsd_pipeline_lite_review.zip hsd_pipeline_lite_review operator_status.md publish_guard_report.md || true
-          if git diff --cached --quiet; then echo "No generated output changes to commit."; exit 0; fi
-          git commit -m "Run HSD Mermaid Ops v1"
-          git pull --rebase origin main || true
-          git push origin HEAD:main || echo "Push failed; artifact still uploaded."
+          echo "GitHub pipeline runs are artifact-only. This workflow does not commit, push, publish, or update main."
