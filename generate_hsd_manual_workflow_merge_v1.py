@@ -10,24 +10,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
+from hsd_run_io import input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 VERSION = "hsd-manual-workflow-merge-v3.2.13-bebe-ops-v2.11"
 
 INBOX_CSV = Path("operator/inbox/manual_workflow_inbox.csv")
 INBOX_JSONL = Path("operator/inbox/manual_workflow_inbox.jsonl")
 TEMPLATE_CSV = Path("operator/inbox/manual_workflow_inbox_template_v1.csv")
 
-OUT_DIR = Path("manual_workflow_packets")
-OUT_ZIP_DIR = Path("manual_workflow_handoff_packs")
-OUT_PACKETS_JSONL = Path("manual_workflow_content_packets.jsonl")
-OUT_PACKETS_CSV = Path("manual_workflow_content_packets.csv")
-OUT_RENDER_PLAN_JSON = Path("manual_workflow_render_plans.json")
-OUT_COPY_DESK = Path("manual_workflow_copy_desk.md")
-OUT_THREADS = Path("manual_workflow_threads_copy.md")
-OUT_FIRST_COMMENTS = Path("manual_workflow_first_comments.md")
-OUT_PRIORITY = Path("manual_workflow_priority_report.md")
-OUT_STATUS_CSV = Path("manual_workflow_pack_status.csv")
-OUT_STATUS_JSON = Path("manual_workflow_pack_status.json")
-OUT_HANDOFF = Path("manual_workflow_handoff.md")
+OUT_DIR = output_path("manual_workflow_packets")
+OUT_ZIP_DIR = output_path("manual_workflow_handoff_packs")
+OUT_PACKETS_JSONL = "manual_workflow_content_packets.jsonl"
+OUT_PACKETS_CSV = "manual_workflow_content_packets.csv"
+OUT_RENDER_PLAN_JSON = "manual_workflow_render_plans.json"
+OUT_COPY_DESK = "manual_workflow_copy_desk.md"
+OUT_THREADS = "manual_workflow_threads_copy.md"
+OUT_FIRST_COMMENTS = "manual_workflow_first_comments.md"
+OUT_PRIORITY = "manual_workflow_priority_report.md"
+OUT_STATUS_CSV = "manual_workflow_pack_status.csv"
+OUT_STATUS_JSON = "manual_workflow_pack_status.json"
+OUT_HANDOFF = "manual_workflow_handoff.md"
 
 PACKET_FIELDS = [
     "packet_id", "source_type", "status", "priority", "platform_targets", "content_family",
@@ -57,19 +59,21 @@ def sha_id(prefix: str, *parts: Any) -> str:
     return prefix + "_" + hashlib.sha1("|".join(clean(p) for p in parts).encode("utf-8")).hexdigest()[:14]
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
-    if not path.exists():
+    p = input_path(path)
+    if not p.exists():
         return []
     try:
-        with path.open(newline="", encoding="utf-8", errors="replace") as f:
+        with p.open(newline="", encoding="utf-8", errors="replace") as f:
             return list(csv.DictReader(f))
     except Exception:
         return []
 
 def read_jsonl(path: Path) -> List[Dict[str, Any]]:
-    if not path.exists():
+    p = input_path(path)
+    if not p.exists():
         return []
     rows: List[Dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -80,11 +84,7 @@ def read_jsonl(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 def write_csv(path: Path, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k, "") for k in fields})
+    write_run_csv(path, ({k: r.get(k, "") for k in fields} for r in rows), fields)
 
 def split_list(v: Any) -> List[str]:
     if isinstance(v, list):
@@ -421,7 +421,7 @@ def main() -> None:
             "",
         ]
 
-    OUT_PACKETS_JSONL.write_text("\n".join(json.dumps(p, ensure_ascii=False) for p in packets) + ("\n" if packets else ""), encoding="utf-8")
+    write_text(OUT_PACKETS_JSONL, "\n".join(json.dumps(p, ensure_ascii=False) for p in packets) + ("\n" if packets else ""))
     write_csv(OUT_PACKETS_CSV, [
         {
             "packet_id": p["packet_id"],
@@ -446,23 +446,27 @@ def main() -> None:
             "reason": p["readiness"]["reason"],
         } for p in packets
     ], PACKET_FIELDS)
-    OUT_RENDER_PLAN_JSON.write_text(json.dumps({"version": VERSION, "generated_at_utc": now(), "plans": plans}, indent=2), encoding="utf-8")
-    OUT_COPY_DESK.write_text("\n".join(copy_lines) + "\n", encoding="utf-8")
-    OUT_THREADS.write_text("\n".join(thread_lines) + "\n", encoding="utf-8")
-    OUT_FIRST_COMMENTS.write_text("\n".join(comment_lines) + "\n", encoding="utf-8")
-    OUT_PRIORITY.write_text("\n".join(priority_lines) + "\n", encoding="utf-8")
+    write_json(OUT_RENDER_PLAN_JSON, {"version": VERSION, "generated_at_utc": now(), "plans": plans})
+    write_text(OUT_COPY_DESK, "\n".join(copy_lines) + "\n")
+    write_text(OUT_THREADS, "\n".join(thread_lines) + "\n")
+    write_text(OUT_FIRST_COMMENTS, "\n".join(comment_lines) + "\n")
+    write_text(OUT_PRIORITY, "\n".join(priority_lines) + "\n")
     write_csv(OUT_STATUS_CSV, status_rows, STATUS_FIELDS)
-    OUT_STATUS_JSON.write_text(json.dumps({"version": VERSION, "generated_at_utc": now(), "packs": status_rows}, indent=2), encoding="utf-8")
-    OUT_HANDOFF.write_text(
+    write_json(OUT_STATUS_JSON, {"version": VERSION, "generated_at_utc": now(), "packs": status_rows})
+    write_text(
+        OUT_HANDOFF,
         "# HSD Manual Workflow Merge Handoff\n\n"
         f"Generated: {now()}\nVersion: {VERSION}\n\n"
         f"- packets created: {len(packets)}\n"
         f"- handoff pack zips: {len(status_rows)}\n\n"
         "Use this layer to bring manual editorial decisions into BeBe before Multi-Post Desk v1. "
         "Each packet contains `content_packet.json`, `render_plan.json`, copy desk, Threads copy, first comment, asset index stub, and checksums.\n",
-        encoding="utf-8",
     )
-    print(json.dumps({"manual_workflow_packets": len(packets), "handoff_packs": len(status_rows)}, indent=2))
+    print(json.dumps({
+        "manual_workflow_packets": len(packets),
+        "handoff_packs": len(status_rows),
+        "output_scope": "run_scoped" if run_output_dir() else "legacy_root",
+    }, indent=2))
 
 if __name__ == "__main__":
     main()
