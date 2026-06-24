@@ -29,7 +29,7 @@ try:
 except Exception:
     BeautifulSoup = None
 
-VERSION = "hsd-discovery-ingest-v3.3.0-free-public-leads"
+VERSION = "hsd-discovery-ingest-v3.4.0-quality-freshness"
 
 REGISTRY = "config/source_registry.json"
 OUT_CSV = "story_candidates_discovery.csv"
@@ -43,7 +43,8 @@ ENABLE_FETCH = os.environ.get("HSD_DISCOVERY_ENABLE_FETCH", os.environ.get("HSD_
 FIELDS = [
     "story_id", "source_id", "source_type", "source_tier", "source_trust_band", "title", "source_url",
     "canonical_url", "published_at", "summary", "risk_tier", "publish_eligible", "reason",
-    "lead_source", "lead_score", "promotion_hint", "review_next_step",
+    "lead_source", "lead_score", "freshness_date", "freshness_label", "freshness_score",
+    "urgency_score", "quality_score", "quality_reason", "promotion_hint", "review_next_step",
 ]
 
 GREEN_TIERS = {"official", "operator", "wire", "primary_media", "stats_provider"}
@@ -70,6 +71,42 @@ def canonicalize(url: str) -> str:
 
 def story_id(url: str, title: str) -> str:
     return "disc_" + hashlib.sha1((canonicalize(url) or clean(title)).encode()).hexdigest()[:14]
+
+
+def now_utc() -> datetime:
+    raw = clean(os.environ.get("HSD_DISCOVERY_NOW_UTC"))
+    if raw:
+        try:
+            parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+    return datetime.now(timezone.utc)
+
+
+def parse_date_hint(*values: Any) -> datetime | None:
+    for value in values:
+        text = clean(value)
+        if not text:
+            continue
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+        patterns = [
+            r"\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b",
+            r"/(20\d{2})/(\d{1,2})/(\d{1,2})(?:/|-)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if not match:
+                continue
+            try:
+                return datetime(int(match.group(1)), int(match.group(2)), int(match.group(3)), tzinfo=timezone.utc)
+            except Exception:
+                continue
+    return None
 
 
 def load_registry() -> Dict[str, Any]:
@@ -128,6 +165,16 @@ LOW_VALUE_PATH_PARTS = {
 }
 
 BETTING_TERMS = {"odds", "sportsbook", "draftkings", "betting", "wager"}
+URGENT_TERMS = {
+    "announce", "announces", "announced", "breaking", "sign", "signs", "signed", "trade",
+    "trades", "traded", "injury", "injured", "roster", "expansion", "named", "hired",
+    "returns", "retires", "fined", "waive", "waives", "waived", "final", "score", "beat",
+    "beats", "defeat", "defeats", "wins", "won",
+}
+EVERGREEN_TERMS = {
+    "all-time", "history", "historic", "best places", "most outstanding", "single-season",
+    "power rankings", "rankings", "things i like", "near", "nears", "watch guide",
+}
 
 
 def row_policy(src: Dict[str, Any], band: str) -> Dict[str, str]:
@@ -214,12 +261,88 @@ def lead_score(title: str, url: str, summary: str = "") -> int:
     return max(score, 0)
 
 
+def urgency_score(title: str, summary: str = "") -> int:
+    text = norm(f"{title} {summary}")
+    score = min(20, sum(1 for term in URGENT_TERMS if term in text) * 4)
+    if any(term in text for term in ["today", "tonight", "this week", "week 6", "all-star"]):
+        score += 4
+    return min(score, 24)
+
+
+def is_evergreen(title: str, summary: str = "", url: str = "") -> bool:
+    text = norm(f"{title} {summary} {url}")
+    return any(term in text for term in EVERGREEN_TERMS)
+
+
+def freshness_payload(title: str, url: str, published_at: str, summary: str = "") -> Dict[str, str]:
+    now = now_utc()
+    date_hint = parse_date_hint(published_at, url, title)
+    evergreen = is_evergreen(title, summary, url)
+    if date_hint:
+        days = (now.date() - date_hint.date()).days
+        if days < 0:
+            label, score = "future_dated", 18
+        elif days == 0:
+            label, score = "today", 36
+        elif days <= 2:
+            label, score = "last_48_hours", 32
+        elif days <= 7:
+            label, score = "this_week", 26
+        elif days <= 30:
+            label, score = "recent_30_days", 14
+        else:
+            label, score = "stale_over_30_days", 3
+        if evergreen:
+            label = f"{label}_evergreen_angle"
+            score = max(3, score - 10)
+        return {
+            "freshness_date": date_hint.date().isoformat(),
+            "freshness_label": label,
+            "freshness_score": str(score),
+        }
+    if evergreen:
+        return {"freshness_date": "", "freshness_label": "evergreen_undated", "freshness_score": "6"}
+    if str(now.year) in f"{title} {url}":
+        return {"freshness_date": "", "freshness_label": "current_year_undated", "freshness_score": "16"}
+    return {"freshness_date": "", "freshness_label": "undated", "freshness_score": "10"}
+
+
+def quality_payload(src: Dict[str, Any], title: str, url: str, summary: str, lead_score_value: int, published_at: str) -> Dict[str, str]:
+    freshness = freshness_payload(title, url, published_at, summary)
+    urgent = urgency_score(title, summary)
+    source_bonus = 16 if trust_band(src) == "green" else 7
+    evergreen_penalty = 12 if is_evergreen(title, summary, url) else 0
+    score = min(
+        100,
+        max(
+            0,
+            (lead_score_value * 6)
+            + int(freshness["freshness_score"])
+            + urgent
+            + source_bonus
+            - evergreen_penalty,
+        ),
+    )
+    reason = (
+        f"lead={lead_score_value}; freshness={freshness['freshness_label']}:{freshness['freshness_score']}; "
+        f"urgency={urgent}; source={trust_band(src)}; evergreen_penalty={evergreen_penalty}"
+    )
+    return {
+        **freshness,
+        "urgency_score": str(urgent),
+        "quality_score": str(score),
+        "quality_reason": reason,
+    }
+
+
 def candidate_row(src: Dict[str, Any], row: Dict[str, str], *, lead_source: str, band: str) -> Dict[str, str]:
     policy = row_policy(src, band)
     title = normalized_link_title(row.get("title", ""))
     summary = clean(row.get("summary"))
     source_url = clean(row.get("source_url"))
     score = clean(row.get("lead_score")) or str(lead_score(title, source_url, summary))
+    published_at = clean(row.get("published_at"))
+    quality = quality_payload(src, title, source_url, summary, int(score or 0), published_at)
     return {
         "story_id": story_id(row.get("canonical_url", ""), title),
         "source_id": clean(src.get("source_id", "")),
@@ -229,13 +352,14 @@ def candidate_row(src: Dict[str, Any], row: Dict[str, str], *, lead_source: str,
         "title": title,
         "source_url": source_url,
         "canonical_url": clean(row.get("canonical_url")) or canonicalize(source_url),
-        "published_at": clean(row.get("published_at")),
+        "published_at": published_at,
         "summary": summary,
         "risk_tier": policy["risk_tier"],
         "publish_eligible": policy["publish_eligible"],
         "reason": clean(row.get("reason")) or policy["reason"],
         "lead_source": lead_source,
         "lead_score": score,
+        **quality,
         "promotion_hint": clean(row.get("promotion_hint")) or promotion_hint(title, summary),
         "review_next_step": clean(row.get("review_next_step")) or policy["review_next_step"],
     }
@@ -453,7 +577,13 @@ def main() -> None:
     by_id = {r["story_id"]: r for r in candidates}
     candidates = sorted(
         by_id.values(),
-        key=lambda row: (-int(row.get("lead_score") or 0), row.get("publish_eligible") != "Yes", row.get("title", "")),
+        key=lambda row: (
+            -int(row.get("quality_score") or 0),
+            -int(row.get("freshness_score") or 0),
+            -int(row.get("lead_score") or 0),
+            row.get("publish_eligible") != "Yes",
+            row.get("title", ""),
+        ),
     )
 
     write_csv(OUT_CSV, candidates, FIELDS)
@@ -467,6 +597,8 @@ def main() -> None:
         f"- candidates: {len(candidates)}",
         f"- publish eligible: {sum(1 for r in candidates if r['publish_eligible'] == 'Yes')}",
         f"- discovery only: {sum(1 for r in candidates if r['publish_eligible'] != 'Yes')}",
+        f"- today / last 48 hours: {sum(1 for r in candidates if r['freshness_label'] in {'today', 'last_48_hours'})}",
+        f"- stale or evergreen: {sum(1 for r in candidates if 'stale' in r['freshness_label'] or 'evergreen' in r['freshness_label'])}",
         f"- RSS/feed leads: {counts_by_lead_source.get('rss_feed', 0)}",
         f"- Free public page leads: {counts_by_lead_source.get('free_public_page', 0)}",
         f"- Reddit public JSON leads: {counts_by_lead_source.get('reddit_public_json', 0)}",
@@ -481,8 +613,8 @@ def main() -> None:
     ]
     for row in candidates[:25]:
         lines.append(
-            f"- `{row['lead_score']}` | `{row['promotion_hint']}` | `{row['source_trust_band']}` | "
-            f"{row['title']} | {row['review_next_step']}"
+            f"- `{row['quality_score']}` quality | `{row['freshness_label']}` | `{row['promotion_hint']}` | "
+            f"`{row['source_trust_band']}` | {row['title']} | {row['review_next_step']}"
         )
     if not candidates:
         lines.append("No discovery candidates found.")
@@ -493,6 +625,8 @@ def main() -> None:
         "discovery_candidates": len(candidates),
         "free_public_page_leads": counts_by_lead_source.get("free_public_page", 0),
         "manual_social_leads": counts_by_lead_source.get("manual_social_inbox", 0),
+        "fresh_today_or_48h": sum(1 for r in candidates if r["freshness_label"] in {"today", "last_48_hours"}),
+        "stale_or_evergreen": sum(1 for r in candidates if "stale" in r["freshness_label"] or "evergreen" in r["freshness_label"]),
         "skipped_enabled_unknown": skipped_enabled_unknown,
     }, indent=2))
 
