@@ -161,7 +161,7 @@ def has_any(text: str, terms: Iterable[str]) -> bool:
 
 
 def visual_story_signal(row: Dict[str, Any]) -> bool:
-    text = " ".join([clean(row.get("title")), clean(row.get("summary")), clean(row.get("reason"))])
+    text = " ".join([clean(row.get("title")), clean(row.get("summary")), clean(row.get("reason")), clean(row.get("promotion_hint"))])
     return has_any(
         text,
         [
@@ -180,12 +180,13 @@ def visual_story_signal(row: Dict[str, Any]) -> bool:
             "top performer",
             "graphic",
             "highlight",
+            "studio_brief",
         ],
     )
 
 
 def news_story_signal(row: Dict[str, Any]) -> bool:
-    text = " ".join([clean(row.get("title")), clean(row.get("summary")), clean(row.get("reason"))])
+    text = " ".join([clean(row.get("title")), clean(row.get("summary")), clean(row.get("reason")), clean(row.get("promotion_hint"))])
     return has_any(
         text,
         [
@@ -206,6 +207,14 @@ def news_story_signal(row: Dict[str, Any]) -> bool:
             "press release",
             "partnership",
             "launch",
+            "hires",
+            "hired",
+            "named",
+            "fined",
+            "fines",
+            "retires",
+            "returns",
+            "commits",
             "news",
         ],
     )
@@ -217,6 +226,7 @@ def promotion_for(row: Dict[str, Any]) -> Dict[str, str]:
     status = clean(row.get("review_status"))
     artifact = clean(row.get("source_artifact"))
     band = clean(row.get("source_band"))
+    hint = clean(row.get("promotion_hint"))
 
     if posture == "blocked" or band == "red":
         return {
@@ -252,6 +262,16 @@ def promotion_for(row: Dict[str, Any]) -> Dict[str, str]:
             "promotion_target": "news_source_observations.csv",
             "promotion_reason": "Free cross-check source should support another lead, not carry the story alone.",
             "promotion_next_step": "Pair this with an official, wire, or operator-verified source before promotion.",
+        }
+
+    if hint == "manual_story_candidate":
+        priority = "P2" if band == "green" else "P3"
+        return {
+            "promotion_recommendation": "manual_story_candidate",
+            "promotion_priority": priority,
+            "promotion_target": "story_candidates_manual.csv",
+            "promotion_reason": "The lead is concrete but needs operator fact-locking before it becomes a News packet or Studio brief.",
+            "promotion_next_step": "Add the lead to the manual story inbox with evidence URLs, locked facts, and the intended angle.",
         }
 
     if visual_story_signal(row):
@@ -324,6 +344,7 @@ def make_row(
     evidence: str = "0",
     eligible: Any = "",
     publish_use: str = "",
+    promotion_hint: str = "",
     priority_score: int = 99,
 ) -> Dict[str, Any]:
     posture = publish_posture_for(source_band, lane, eligible, publish_use)
@@ -347,6 +368,7 @@ def make_row(
         "reason": reason,
         "candidate_id": candidate_id,
         "evidence_count": evidence,
+        "promotion_hint": clean(promotion_hint),
     }
 
 
@@ -370,6 +392,7 @@ def rows_from_manual_candidates() -> List[Dict[str, Any]]:
                 reason=clean(row.get("reason")) or clean(row.get("verification_status")),
                 evidence=evidence_count(row.get("evidence_urls_json")),
                 eligible=eligible,
+                promotion_hint=clean(row.get("promotion_hint")),
                 priority_score=10 if yes(eligible) else 28,
             )
         )
@@ -399,6 +422,7 @@ def rows_from_raw_manual_inbox() -> List[Dict[str, Any]]:
                 reason="raw manual inbox item; normalize or verify before publish",
                 evidence=evidence_count(row.get("evidence_urls_json")),
                 eligible=row.get("publish_eligible"),
+                promotion_hint=clean(row.get("promotion_hint")),
                 priority_score=32,
             )
         )
@@ -422,8 +446,9 @@ def rows_from_discovery_candidates() -> List[Dict[str, Any]]:
                 summary=clean(row.get("summary")),
                 source_url=clean(row.get("source_url") or row.get("canonical_url")),
                 source_artifact="story_candidates_discovery.csv",
-                reason=clean(row.get("reason")),
+                reason=clean(row.get("review_next_step") or row.get("reason")),
                 eligible=eligible,
+                promotion_hint=clean(row.get("promotion_hint")),
                 priority_score=18 if yes(eligible) else 42,
             )
         )

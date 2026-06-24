@@ -110,6 +110,8 @@ The command center is a local/manual cockpit. It summarizes:
 
 It does not publish, push to Git, call paid APIs, or run hidden handoff refresh scripts. It reads the current local artifacts and turns them into a daily operating view.
 
+The review stage refreshes manual intake and discovery intake before the morning source board runs. Manual intake writes `story_candidates_manual.csv/.jsonl` and `manual_story_inbox_report.md`. Discovery intake writes `story_candidates_discovery.csv/.jsonl` and `discovery_sources_report.md`, using free public RSS/page links, wire/official pages, Reddit public JSON where registered, and manual social inbox rows.
+
 The morning source discovery board writes `morning_source_discovery_board.csv`, `.md`, and `.json` during review runs. It also writes `morning_lead_promotion_recommendations.csv`, `.md`, and `.json`. It combines official/free source scans, wire sources, reputable gray-area/social discovery inputs, News Sync source observations, and manual inbox leads into one review-safe queue. Social and gray-area rows remain discovery-only until confirmed by official, wire, primary, or operator-verified evidence.
 
 Promotion recommendations are advisory only. They can suggest that a lead should become a News packet, manual story candidate, or Studio brief, but the local runner does not write those target artifacts automatically.

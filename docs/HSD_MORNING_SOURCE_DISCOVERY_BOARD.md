@@ -14,6 +14,12 @@ The command center now has one morning source discovery queue:
 
 The board is generated during local `review` and `full` runs as:
 
+- `story_candidates_manual.csv`
+- `story_candidates_manual.jsonl`
+- `manual_story_inbox_report.md`
+- `story_candidates_discovery.csv`
+- `story_candidates_discovery.jsonl`
+- `discovery_sources_report.md`
 - `morning_source_discovery_board.csv`
 - `morning_source_discovery_board.md`
 - `morning_source_discovery_board.json`
@@ -26,6 +32,13 @@ The board is generated during local `review` and `full` runs as:
 Green official, wire, primary, and operator-verified rows can move into editor review. Free cross-check rows can support confidence, but official or wire sources win on conflict. Gray-area and social rows stay discovery-only until confirmed by official, wire, primary, or operator-verified evidence.
 
 The board does not fetch private sources, bypass paywalls, use paid APIs, auto-run in GitHub, or auto-publish. It is a local/manual operator queue.
+
+Review runs now refresh the intake layer first:
+
+- Manual story inbox rows become run-scoped manual candidates.
+- Free official and wire pages are sampled for public story links, not crawled as a publishing feed.
+- Manual social inbox rows become discovery-only leads.
+- Generic source scans remain `monitor_only` until a concrete lead appears.
 
 ## Promotion Recommendations
 
