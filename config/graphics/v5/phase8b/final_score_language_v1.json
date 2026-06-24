@@ -28,7 +28,7 @@
         "body_variants": [
           "{winner_short} got the last clean stretch and made {loser_short} chase.",
           "The swing came in the possessions where {winner_short} turned stops into control.",
-          "{winner_short} protected the ball late and made the margin hold."
+          "{winner_short} protected the ball late and made the lead hold."
         ],
         "cta_variants": [
           "Was it the glass, pace, or late-shot making?",
@@ -39,23 +39,23 @@
       "blowout": {
         "label_variants": [
           "NO CHASE GAME",
-          "SEPARATION RUN",
+          "CONTROL RUN",
           "RUNAWAY WINDOW"
         ],
         "body_variants": [
           "{winner_short} created the gap early enough that {loser_short} never found the counter.",
           "Once {winner_short} got to its shot profile, the game stopped feeling reachable.",
-          "The margin was about control: clean looks, extra possessions, and no real answer."
+          "The result was about control: clean looks, extra possessions, and no real answer."
         ],
         "cta_variants": [
-          "What separated them first?",
+          "Where did they take control first?",
           "Was it pace, paint, or pressure?",
           "Which stretch broke it open?"
         ]
       },
       "standard": {
         "label_variants": [
-          "SEPARATION READ",
+          "CONTROL READ",
           "GAME LEVER",
           "RESULT SHAPE"
         ],
@@ -137,12 +137,12 @@
         ],
         "body_variants": [
           "{winner_short} managed the scoring holes and kept trouble off the card late.",
-          "The round separated on approach control and the chances converted inside the window.",
+          "The round swung on approach control and the chances converted inside the window.",
           "The closing stretch rewarded patience, clean targets, and the putter holding up."
         ],
         "cta_variants": [
           "Was it approach, putter, or course management?",
-          "Where did the card separate?",
+          "Where did the card turn?",
           "Who handled the scoring window?"
         ]
       }
@@ -176,7 +176,7 @@
         "body_variants": [
           "{winner_short} won the serve-pass battle long enough to control the sideout math.",
           "The match shifted when first contact gave {winner_short} more clean swings.",
-          "Transition chances became the separator when the sets tightened."
+          "Transition chances became the hinge when the sets tightened."
         ],
         "cta_variants": [
           "Was it serve-pass or transition?",
