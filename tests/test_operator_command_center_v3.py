@@ -64,6 +64,10 @@ def seed_daily_ops_files() -> None:
                 "production_ready": "Yes",
                 "caption_hard_fact": "Verified final: New York Liberty 87, Las Vegas Aces 76.",
                 "source_count": "4",
+                "source_confidence_score": "92",
+                "source_confidence_tier": "publish_grade",
+                "source_publish_grade": "publish_grade",
+                "source_confidence_reason": "Results Desk final score; multiple usable free sources",
             }
         ],
     )
@@ -113,7 +117,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.0.0-daily-ops"
+    assert payload["version"] == "hsd-operator-command-center-v3.1.0-source-confidence"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -128,7 +132,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(action["title"] == "Create Results and Studio drill-down dashboards" for action in payload["next_actions"])
     assert all(action["title"] != "no_content_ready" for action in payload["next_actions"])
     assert any(item["label"] == "Source registry" and item["value"] == "REVIEW" for item in payload["metrics"])
+    assert any(item["label"] == "Publish-grade packets" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Discovery-only packets" and item["value"] == "0" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
+    news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
+    assert news_candidate["source_grade"] == "publish_grade"
+    assert news_candidate["source_score"] == "92"
     artifact_by_path = {item["path"]: item for item in payload["artifacts"]}
     assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
@@ -143,9 +152,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Run next" in html
     assert ".\\hsd.cmd run -Mode asset" in html
     assert "Next step" in html
+    assert "publish_grade" in html
     assert "Next actions" in markdown
     assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
+    assert "source: publish_grade" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -164,6 +175,31 @@ def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_pat
     command_center.write_outputs(command_center.build_payload())
 
     assert not Path("unexpected_refresh_marker.txt").exists()
+
+
+def test_operator_command_center_infers_legacy_packet_source_grade(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    write_csv(
+        "news_fact_packets.csv",
+        [
+            {
+                "urgency": "P1",
+                "headline": "New York Liberty beat Las Vegas Aces",
+                "production_ready": "Yes",
+                "caption_hard_fact": "Verified final: New York Liberty 87, Las Vegas Aces 76.",
+                "source_count": "4",
+                "primary_source_count": "2",
+            }
+        ],
+    )
+
+    payload = command_center.build_payload()
+
+    assert any(item["label"] == "Publish-grade packets" and item["value"] == "1" for item in payload["metrics"])
+    news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
+    assert news_candidate["source_grade"] == "publish_grade"
+    assert news_candidate["source_reason"] == "Legacy packet inferred from production-ready status and primary source count"
 
 
 def test_local_runner_collects_daily_command_center_artifacts() -> None:

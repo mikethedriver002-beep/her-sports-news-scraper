@@ -162,6 +162,10 @@ def test_news_dashboard_reads_run_inputs_and_writes_run_dashboard(tmp_path: Path
                 "league": "WNBA",
                 "source_count": "2",
                 "primary_source_count": "1",
+                "source_confidence_score": "88",
+                "source_confidence_tier": "publish_grade",
+                "source_publish_grade": "publish_grade",
+                "source_confidence_reason": "official source plus free cross-check",
                 "context_quality": "strong",
                 "quality_score": "91",
                 "production_ready": "Yes",
@@ -182,6 +186,10 @@ def test_news_dashboard_reads_run_inputs_and_writes_run_dashboard(tmp_path: Path
             "league",
             "source_count",
             "primary_source_count",
+            "source_confidence_score",
+            "source_confidence_tier",
+            "source_publish_grade",
+            "source_confidence_reason",
             "context_quality",
             "quality_score",
             "production_ready",
@@ -203,5 +211,8 @@ def test_news_dashboard_reads_run_inputs_and_writes_run_dashboard(tmp_path: Path
 
     dashboard = run_dir / "news_dashboard" / "index.html"
     assert dashboard.exists()
-    assert "Run scoped headline" in dashboard.read_text(encoding="utf-8")
+    dashboard_text = dashboard.read_text(encoding="utf-8")
+    assert "Run scoped headline" in dashboard_text
+    assert "publish_grade" in dashboard_text
+    assert "official source plus free cross-check" in dashboard_text
     assert not (tmp_path / "news_dashboard" / "index.html").exists()

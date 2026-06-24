@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.8.3-csv-intake-fix"
+VERSION = "news-sync-v1.8.4-source-confidence"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -76,7 +76,7 @@ SOURCE_OBS_FIELDS = [
     "run_id", "candidate_id", "source_id", "source_name", "source_priority",
     "source_type", "url", "domain", "fetch_status", "http_status", "title",
     "description", "matched_terms", "published_hint", "usable_context",
-    "context_signal", "fetched_at_utc", "review_flag", "notes",
+    "context_signal", "source_trust_band", "publish_use", "fetched_at_utc", "review_flag", "notes",
 ]
 
 PACKET_FIELDS = [
@@ -84,6 +84,8 @@ PACKET_FIELDS = [
     "content_family", "publish_recommendation", "urgency", "headline", "dek",
     "brief_120w", "caption_hard_fact", "caption_voice", "story_text",
     "slide3_context", "graphics_handoff", "source_count", "primary_source_count",
+    "source_confidence_score", "source_confidence_tier", "source_publish_grade",
+    "source_confidence_reason",
     "source_urls_json", "context_signal", "top_performers", "review_flags",
     "context_quality", "quality_score", "production_ready",
     "content_format_recommendation", "result_record_source",
@@ -1342,6 +1344,66 @@ def source_registry_defaults() -> Dict[str, Any]:
                 "notes": "Use for wire-style context, never copied prose."
             },
             {
+                "source_id": "ap_womens_sports",
+                "name": "AP women's sports hub",
+                "priority": 70,
+                "type": "wire_context",
+                "sports": ["basketball", "soccer", "tennis", "golf", "softball", "volleyball"],
+                "leagues_contains": ["Women", "WNBA", "NWSL", "WTA", "LPGA", "Softball", "Volleyball"],
+                "urls": ["https://apnews.com/hub/womens-sports"],
+                "notes": "Free AP women's sports context. Use facts, links, and evidence notes only."
+            },
+            {
+                "source_id": "reuters_sports",
+                "name": "Reuters sports",
+                "priority": 68,
+                "type": "wire_context",
+                "sports": ["basketball", "soccer", "tennis", "golf", "softball", "volleyball"],
+                "leagues_contains": ["Women", "WNBA", "NWSL", "WTA", "LPGA", "World Cup", "Olympics"],
+                "urls": ["https://www.reuters.com/sports/"],
+                "notes": "Free public Reuters sports context when reachable. Never copy article prose."
+            },
+            {
+                "source_id": "wta_official",
+                "name": "WTA official",
+                "priority": 95,
+                "type": "official_league",
+                "sports": ["tennis"],
+                "leagues_contains": ["WTA", "Tennis"],
+                "urls": ["https://www.wtatennis.com/"],
+                "notes": "Official WTA source for tournaments, draws, results, rankings, and player context."
+            },
+            {
+                "source_id": "lpga_official",
+                "name": "LPGA official",
+                "priority": 92,
+                "type": "official_league",
+                "sports": ["golf"],
+                "leagues_contains": ["LPGA", "Golf"],
+                "urls": ["https://www.lpga.com/"],
+                "notes": "Official LPGA source for tournament, leaderboard, and player context."
+            },
+            {
+                "source_id": "ncaa_softball_official",
+                "name": "NCAA softball official",
+                "priority": 88,
+                "type": "official_competition",
+                "sports": ["softball"],
+                "leagues_contains": ["NCAA", "Softball", "College World Series"],
+                "urls": ["https://www.ncaa.com/sports/softball/d1"],
+                "notes": "Official NCAA softball source for championship, schedule, and recap context."
+            },
+            {
+                "source_id": "us_soccer_uswnt",
+                "name": "US Soccer USWNT official",
+                "priority": 88,
+                "type": "official_team",
+                "sports": ["soccer"],
+                "leagues_contains": ["USWNT", "United States", "USA", "Soccer"],
+                "urls": ["https://www.ussoccer.com/teams/uswnt"],
+                "notes": "Official USWNT source for roster, match, and national-team context."
+            },
+            {
                 "source_id": "fifa_womens_football",
                 "name": "FIFA Women's Football",
                 "priority": 95,
@@ -1433,15 +1495,21 @@ def source_registry_defaults() -> Dict[str, Any]:
             }
         ],
         "team_sources": {
-            "dallas wings": ["https://wings.wnba.com/"],
-            "los angeles sparks": ["https://sparks.wnba.com/"],
-            "phoenix mercury": ["https://mercury.wnba.com/"],
-            "minnesota lynx": ["https://lynx.wnba.com/"],
-            "seattle storm": ["https://storm.wnba.com/"],
-            "las vegas aces": ["https://aces.wnba.com/"],
-            "golden state valkyries": ["https://valkyries.wnba.com/"],
+            "atlanta dream": ["https://dream.wnba.com/"],
             "chicago sky": ["https://sky.wnba.com/"],
-            "connecticut sun": ["https://sun.wnba.com/"]
+            "connecticut sun": ["https://sun.wnba.com/"],
+            "dallas wings": ["https://wings.wnba.com/"],
+            "golden state valkyries": ["https://valkyries.wnba.com/"],
+            "indiana fever": ["https://fever.wnba.com/"],
+            "las vegas aces": ["https://aces.wnba.com/"],
+            "los angeles sparks": ["https://sparks.wnba.com/"],
+            "minnesota lynx": ["https://lynx.wnba.com/"],
+            "new york liberty": ["https://liberty.wnba.com/"],
+            "phoenix mercury": ["https://mercury.wnba.com/"],
+            "portland fire": ["https://fire.wnba.com/"],
+            "seattle storm": ["https://storm.wnba.com/"],
+            "toronto tempo": ["https://tempo.wnba.com/"],
+            "washington mystics": ["https://mystics.wnba.com/"]
         }
     }
 
@@ -1643,6 +1711,8 @@ def source_observations_for_candidate(candidate: Dict[str, Any], registry: Dict[
 
     for source in sources:
         for url in source.get("urls", []):
+            trust_band = source_trust_band(source.get("type"))
+            publish_use = publish_use_for_source(source.get("type"))
             meta = fetch_page_metadata(url)
             hay = norm(" ".join([meta.get("title", ""), meta.get("description", ""), meta.get("url", "")]))
             matched = [t for t in terms if t and t in hay]
@@ -1680,6 +1750,8 @@ def source_observations_for_candidate(candidate: Dict[str, Any], registry: Dict[
                 "published_hint": meta.get("published_hint", ""),
                 "usable_context": usable_context,
                 "context_signal": context_signal,
+                "source_trust_band": trust_band,
+                "publish_use": publish_use,
                 "fetched_at_utc": utc_now(),
                 "review_flag": review_flag,
                 "notes": meta.get("notes", "") or source.get("notes", ""),
@@ -1687,6 +1759,112 @@ def source_observations_for_candidate(candidate: Dict[str, Any], registry: Dict[
             time.sleep(REQUEST_SLEEP_SECONDS)
 
     return observations
+
+
+def source_trust_band(source_type: Any) -> str:
+    text = norm(source_type)
+    if any(token in text for token in ["prohibited", "paid", "private", "paywall", "restricted"]):
+        return "red"
+    if any(token in text for token in ["social", "community", "discovery", "fan"]):
+        return "yellow"
+    if any(token in text for token in ["official", "wire", "primary"]):
+        return "green"
+    if any(token in text for token in ["scoreboard", "mainstream", "context", "backup", "cross_check"]):
+        return "green_cross_check"
+    return "yellow"
+
+
+def publish_use_for_source(source_type: Any) -> str:
+    band = source_trust_band(source_type)
+    if band == "green":
+        return "publish_grade"
+    if band == "green_cross_check":
+        return "cross_check"
+    if band == "yellow":
+        return "discovery_only"
+    return "blocked"
+
+
+def source_confidence_summary(
+    candidate: Dict[str, Any],
+    observations: List[Dict[str, Any]],
+    src_count: int,
+    primary_count: int,
+    final_score: str,
+    top_performers: str,
+    results_desk_final: bool,
+    event_date_confidence: str,
+    review_flags: List[str],
+) -> Dict[str, Any]:
+    usable = [o for o in observations if o.get("usable_context") in {"Yes", "Partial"}]
+    use_for = lambda observation: clean(observation.get("publish_use")) or publish_use_for_source(observation.get("source_type"))
+    publish_grade = [o for o in usable if use_for(o) == "publish_grade"]
+    cross_checks = [o for o in usable if use_for(o) == "cross_check"]
+    discovery = [o for o in usable if use_for(o) == "discovery_only"]
+    blocked = [o for o in usable if use_for(o) == "blocked"]
+
+    score = 0
+    reasons: List[str] = []
+    if results_desk_final:
+        score += 55
+        reasons.append("Results Desk final score")
+    if final_score:
+        score += 20
+        reasons.append("final score present")
+    if publish_grade:
+        score += 40
+        reasons.append(f"{len(publish_grade)} publish-grade source(s)")
+    if primary_count:
+        score += 15
+        reasons.append(f"{primary_count} primary source(s)")
+    if cross_checks:
+        score += min(15, 8 + len(cross_checks) * 2)
+        reasons.append(f"{len(cross_checks)} free cross-check source(s)")
+    if src_count >= 2:
+        score += 8
+        reasons.append("multiple usable free sources")
+    if top_performers:
+        score += 5
+        reasons.append("sourced player context")
+    if event_date_confidence == "missing":
+        score -= 25
+        reasons.append("event date missing")
+    if "source_fetch_failed" in review_flags and src_count == 0:
+        score -= 20
+        reasons.append("source fetch failed with no usable context")
+    if discovery and not (publish_grade or results_desk_final):
+        score -= 15
+        reasons.append("discovery-only source requires confirmation")
+    if blocked:
+        score -= 40
+        reasons.append("blocked source present")
+
+    score = max(0, min(100, score))
+    if blocked:
+        tier = "blocked"
+        grade = "blocked"
+    elif (
+        (score >= 75 and publish_grade and event_date_confidence != "missing")
+        or (results_desk_final and final_score and event_date_confidence != "missing" and score >= 70)
+    ):
+        tier = "publish_grade"
+        grade = "publish_grade"
+    elif score >= 60 and (publish_grade or results_desk_final or cross_checks):
+        tier = "review_grade"
+        grade = "review_before_publish"
+    elif discovery or src_count:
+        tier = "discovery_only"
+        grade = "discovery_only"
+    else:
+        tier = "insufficient"
+        grade = "discovery_only"
+
+    return {
+        "score": score,
+        "tier": tier,
+        "publish_grade": grade,
+        "reason": "; ".join(reasons) if reasons else "No usable free-source confidence signal",
+    }
 
 
 def parse_score(candidate: Dict[str, Any]) -> Tuple[Optional[int], Optional[int]]:
@@ -1930,10 +2108,9 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         clean(candidate.get("result_record_source")),
         clean(candidate.get("status_norm")),
         clean(candidate.get("game_status")),
-        clean(candidate.get("queue_section")),
     ]).lower()
     results_desk_final = bool(clean(candidate.get("final_score"))) and any(
-        token in source_hint for token in ["top_womens", "today_final", "reconciled", "result", "final", "must post"]
+        token in source_hint for token in ["top_womens", "today_final", "reconciled", "result", "final"]
     )
     if results_desk_final and event_payload.get("event_date_confidence") != "missing":
         review_flags = [
@@ -1947,6 +2124,31 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         packet_quality_score = max(int(packet_quality_score or 0), 70)
         if not packet_format_reco or packet_format_reco.startswith("Hold"):
             packet_format_reco = "Graphics-ready result from Results Desk"
+
+    source_confidence = source_confidence_summary(
+        candidate,
+        observations,
+        src_count,
+        primary_count,
+        clean(candidate.get("final_score")),
+        top_performers,
+        results_desk_final,
+        event_payload.get("event_date_confidence", ""),
+        review_flags,
+    )
+    if source_confidence["publish_grade"] in {"discovery_only", "blocked"}:
+        manual_review = "Yes"
+        production_ready = "No"
+        publish_reco = "Hold for editor"
+        if source_confidence["publish_grade"] == "discovery_only":
+            review_flags.append("source_confidence_discovery_only")
+        else:
+            review_flags.append("source_confidence_blocked")
+    elif source_confidence["publish_grade"] == "review_before_publish" and production_ready == "Yes":
+        manual_review = "Yes"
+        production_ready = "No"
+        publish_reco = "Hold for editor"
+        review_flags.append("source_confidence_review_before_publish")
 
     return {
         "run_id": run_id,
@@ -1968,6 +2170,10 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
         "graphics_handoff": graphics_handoff,
         "source_count": src_count,
         "primary_source_count": primary_count,
+        "source_confidence_score": source_confidence["score"],
+        "source_confidence_tier": source_confidence["tier"],
+        "source_publish_grade": source_confidence["publish_grade"],
+        "source_confidence_reason": source_confidence["reason"],
         "source_urls_json": json.dumps(urls, ensure_ascii=False),
         "context_signal": context_signal,
         "top_performers": top_performers,
@@ -2388,7 +2594,7 @@ def main() -> None:
             "Open `news_input_status_report.csv` first.\\n"
         )
 
-    print("Created Her Sports Daily News Sync v1.8.3 CSV intake outputs")
+    print(f"Created Her Sports Daily News Sync {VERSION} outputs")
     print(json.dumps(manifest["counts"], indent=2))
 
 
