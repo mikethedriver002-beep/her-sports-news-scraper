@@ -9,9 +9,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from hsd_run_io import input_path, output_path, write_json, write_text
+
 VERSION = "hsd-publish-guard-v3.2.5-bebe-ops-v2.4"
-OUT_JSON = Path("publish_guard_report.json")
-OUT_MD = Path("publish_guard_report.md")
+OUT_JSON = output_path("publish_guard_report.json")
+OUT_MD = output_path("publish_guard_report.md")
 LEDGER = Path("audit/publish_ledger.jsonl")
 
 
@@ -20,7 +22,7 @@ def clean(v: Any) -> str:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -28,7 +30,7 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 
 
 def read_json(path: str) -> Dict[str, Any]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return {}
     try:
@@ -175,7 +177,7 @@ def main() -> None:
         "issues": issues,
         "decisions": decisions,
     }
-    OUT_JSON.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    write_json(OUT_JSON, report)
 
     lines = [
         "# HSD Publish Guard",
@@ -207,7 +209,7 @@ def main() -> None:
             "A graphics handoff is allowed, but manual review is still required for any `ready_with_review` pack and for rendered slides after generation.",
             "",
         ]
-    OUT_MD.write_text("\n".join(lines), encoding="utf-8")
+    write_text(OUT_MD, "\n".join(lines))
     print(json.dumps({"publish_allowed": publish_allowed, "graphics_handoff_allowed": graphics_handoff_allowed, "issues": len(issues)}, indent=2))
 
 

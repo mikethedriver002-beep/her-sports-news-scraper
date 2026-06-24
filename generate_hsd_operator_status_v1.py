@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
+from hsd_run_io import input_path, output_path, write_json, write_text
+
 VERSION = "hsd-operator-status-v3.2.5-bebe-ops-v2.4"
 FIELDS = ["run_id", "bundle_id", "bundle_name", "readiness", "publish_eligible", "reason_code", "reason_detail", "manual_action"]
 
@@ -16,7 +18,7 @@ def clean(v: Any) -> str:
 
 
 def read_json(path: str) -> Dict[str, Any]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return {}
     try:
@@ -26,7 +28,7 @@ def read_json(path: str) -> Dict[str, Any]:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -110,7 +112,9 @@ def main() -> None:
             "manual_action": "Check results_contract_report.md, studio_bundle_queue.csv, preview_bundle_quality.md, and graphics_upload_pack_status.csv.",
         })
 
-    with Path("operator_status.csv").open("w", newline="", encoding="utf-8") as f:
+    out_csv = output_path("operator_status.csv")
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    with out_csv.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         w.writeheader()
         w.writerows(rows)
@@ -130,7 +134,7 @@ def main() -> None:
         "issues": issues,
         "manual_actions": [r["manual_action"] for r in rows],
     }
-    Path("operator_status.json").write_text(json.dumps(status, indent=2), encoding="utf-8")
+    write_json("operator_status.json", status)
 
     md = [
         "# HSD Operator Status",
@@ -155,7 +159,7 @@ def main() -> None:
     if issues:
         md += ["", "## Issues / review notes", ""]
         md += [f"- {clean(i.get('severity'))} | {clean(i.get('code'))} | {clean(i.get('headline')) or clean(i.get('detail'))}" for i in issues]
-    Path("operator_status.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    write_text("operator_status.md", "\n".join(md) + "\n")
     print(json.dumps({"overall": overall, "ready": len(ready_clean), "ready_with_review": len(ready_review)}, indent=2))
 
 

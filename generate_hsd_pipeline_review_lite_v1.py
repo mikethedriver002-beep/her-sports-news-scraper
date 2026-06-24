@@ -11,9 +11,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from hsd_run_io import input_path, output_path
+
 VERSION = "hsd-pipeline-review-lite-v3.8.0-results-v5-multisport-review"
-OUT_DIR = Path("hsd_pipeline_lite_review")
-OUT_ZIP = Path("hsd_pipeline_lite_review.zip")
+OUT_DIR = output_path("hsd_pipeline_lite_review")
+OUT_ZIP = output_path("hsd_pipeline_lite_review.zip")
 MAX_UPLOAD_PACK_BYTES = int(os.environ.get("HSD_LITE_REVIEW_MAX_UPLOAD_PACK_BYTES", "100000000"))
 
 V3_PREREQ_COMMANDS = [
@@ -72,7 +74,7 @@ KEY_FILES = [
 
 
 def row_count(path: str) -> int:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return 0
     try:
@@ -83,15 +85,15 @@ def row_count(path: str) -> int:
 
 
 def file_exists(path: str) -> bool:
-    return Path(path).is_file()
+    return input_path(path).is_file()
 
 
 def dir_exists(path: str) -> bool:
-    return Path(path).is_dir()
+    return input_path(path).is_dir()
 
 
 def count_files(path: str, pattern: str = "*") -> int:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return 0
     return sum(1 for item in p.glob(pattern) if item.is_file())
@@ -116,7 +118,7 @@ def run_v3_prereqs() -> List[Dict[str, Any]]:
 
 
 def copy_if_exists(name: str, files_dir: Path, manifest: List[Dict[str, Any]]) -> None:
-    p = Path(name)
+    p = input_path(name)
     if not p.exists() or not p.is_file():
         return
     dest = files_dir / p.name
@@ -125,6 +127,7 @@ def copy_if_exists(name: str, files_dir: Path, manifest: List[Dict[str, Any]]) -
 
 
 def safe_copy_tree_files(src_dir: Path, dest_dir: Path, manifest: List[Dict[str, Any]], max_file_bytes: int = MAX_UPLOAD_PACK_BYTES) -> int:
+    src_dir = input_path(src_dir)
     if not src_dir.exists():
         return 0
     count = 0
@@ -144,13 +147,17 @@ def include_ready_upload_packs(ready_dir: Path, manifest: List[Dict[str, Any]]) 
     ready_dir.mkdir(parents=True, exist_ok=True)
     ready_packs: List[Dict[str, Any]] = []
     seen: set[str] = set()
-    status = Path("graphics_upload_pack_status.csv")
+    status = input_path("graphics_upload_pack_status.csv")
     if status.exists():
         with status.open(newline="", encoding="utf-8", errors="replace") as f:
             for r in csv.DictReader(f):
                 if r.get("upload_pack_status") not in {"ready", "ready_with_review"}:
                     continue
-                p = Path(r.get("zip_path", ""))
+                zip_path = r.get("zip_path", "")
+                if not zip_path:
+                    ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": "", "status": r.get("upload_pack_status"), "included": False, "reason": "zip path not found"})
+                    continue
+                p = input_path(zip_path)
                 if not p.exists():
                     ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": p.as_posix(), "status": r.get("upload_pack_status"), "included": False, "reason": "zip path not found"})
                     continue
@@ -163,7 +170,7 @@ def include_ready_upload_packs(ready_dir: Path, manifest: List[Dict[str, Any]]) 
                 seen.add(p.resolve().as_posix())
                 manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": size})
                 ready_packs.append({"bundle_name": r.get("bundle_name"), "zip": dest.as_posix(), "status": r.get("upload_pack_status"), "included": True, "size": size})
-    zip_dir = Path("graphics_chat_upload_pack_zips")
+    zip_dir = input_path("graphics_chat_upload_pack_zips")
     if zip_dir.exists():
         for p in zip_dir.glob("*.zip"):
             if p.resolve().as_posix() in seen or p.stat().st_size > MAX_UPLOAD_PACK_BYTES:
@@ -192,7 +199,7 @@ def main() -> None:
     ready_packs = include_ready_upload_packs(ready_dir, manifest)
     manual_workflow_dir = OUT_DIR / "manual_workflow_handoff_packs"
     manual_workflow_pack_count = 0
-    src_manual_zips = Path("manual_workflow_handoff_packs")
+    src_manual_zips = input_path("manual_workflow_handoff_packs")
     if src_manual_zips.exists():
         manual_workflow_dir.mkdir(parents=True, exist_ok=True)
         for p in src_manual_zips.glob("*.zip"):
@@ -205,7 +212,7 @@ def main() -> None:
     story_ready_dir = OUT_DIR / "ig_story_results_ready_upload_packs"
     story_ready_dir.mkdir(parents=True, exist_ok=True)
     story_ready_packs = []
-    story_zip_dir = Path("ig_story_results_upload_pack_zips")
+    story_zip_dir = input_path("ig_story_results_upload_pack_zips")
     if story_zip_dir.exists():
         for p in sorted(story_zip_dir.glob("*.zip")):
             if p.stat().st_size > MAX_UPLOAD_PACK_BYTES:

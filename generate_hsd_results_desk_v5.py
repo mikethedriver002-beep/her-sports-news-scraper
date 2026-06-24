@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Tuple
 
 import requests
 
+from hsd_run_io import input_path, output_path, write_json, write_text
+
 try:
     from zoneinfo import ZoneInfo
 except Exception:  # pragma: no cover
@@ -39,14 +41,14 @@ RECOMMENDATIONS_FILE = "daily_results_recommendations.md"
 HUB_FILE = "results_system_hub.md"
 MANIFEST_FILE = "run_manifest.json"
 
-V5_MANIFEST = Path("results_desk_v5_manifest.json")
-V5_REPORT = Path("results_desk_v5_report.md")
-SOURCE_ACCURACY_JSON = Path("source_accuracy_v5.json")
-SOURCE_ACCURACY_MD = Path("source_accuracy_v5.md")
-DUPLICATE_AUDIT = Path("duplicate_game_audit_v5.csv")
-STALE_AUDIT = Path("stale_source_audit_v5.csv")
-MISSING_ALERT_JSON = Path("missing_games_alert_v5.json")
-MISSING_ALERT_MD = Path("missing_games_alert_v5.md")
+V5_MANIFEST = output_path("results_desk_v5_manifest.json")
+V5_REPORT = output_path("results_desk_v5_report.md")
+SOURCE_ACCURACY_JSON = output_path("source_accuracy_v5.json")
+SOURCE_ACCURACY_MD = output_path("source_accuracy_v5.md")
+DUPLICATE_AUDIT = output_path("duplicate_game_audit_v5.csv")
+STALE_AUDIT = output_path("stale_source_audit_v5.csv")
+MISSING_ALERT_JSON = output_path("missing_games_alert_v5.json")
+MISSING_ALERT_MD = output_path("missing_games_alert_v5.md")
 EXPECTED_GAMES = [Path("config/hsd_expected_games_v5.csv"), Path("data/expected_games/wnba_expected_games.csv"), Path("expected_games.csv")]
 
 WNBA_TEAM_ROOTS = {
@@ -282,6 +284,7 @@ def fetch_espn_wnba(run_id: str, compact_dates: List[str]) -> Tuple[List[Dict[st
 
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
+    path = input_path(path)
     if not path.exists():
         return []
     try:
@@ -440,7 +443,9 @@ def stale_audit(observations: List[Dict[str, str]], iso_dates: List[str]) -> Lis
 
 
 def write_csv(path: str | Path, rows: List[Dict[str, Any]], fieldnames: List[str]) -> None:
-    with Path(path).open("w", newline="", encoding="utf-8") as f:
+    out = output_path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore"); writer.writeheader()
         for row in rows:
             out: Dict[str, Any] = {}
@@ -587,10 +592,10 @@ def main() -> None:
     expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary)
     write_csv(OBSERVATIONS_FILE, observations, OBS_FIELDS); write_csv(RECONCILED_FILE, events, EVENT_FIELDS); write_csv(RESULTS_BOARD_FILE, all_events, EVENT_FIELDS); write_csv(WOMENS_RESULTS_FILE, womens, EVENT_FIELDS); write_csv(FINAL_RESULTS_FILE, finals, EVENT_FIELDS); write_csv(TOP_RESULTS_FILE, top, EVENT_FIELDS); write_csv(MANUAL_REVIEW_FILE, review, EVENT_FIELDS)
     write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS)
-    Path(BOX_SCORE_SUMMARY_FILE).write_text(box_score_summary_md(box_audit_rows), encoding="utf-8"); Path(GRAPHICS_QUEUE_FILE).write_text(graphics_queue(events), encoding="utf-8"); Path(RECOMMENDATIONS_FILE).write_text(recommendations_md(events), encoding="utf-8"); Path(HUB_FILE).write_text(v5_hub_md(run_id, events, observations, health, iso_dates), encoding="utf-8")
-    SOURCE_ACCURACY_JSON.write_text(json.dumps(accuracy, indent=2), encoding="utf-8"); SOURCE_ACCURACY_MD.write_text(write_source_accuracy_md(accuracy), encoding="utf-8"); MISSING_ALERT_JSON.write_text(json.dumps({"summary": expected_summary, "rows": expected_rows}, indent=2), encoding="utf-8"); MISSING_ALERT_MD.write_text(missing_games_md(expected_summary, expected_rows), encoding="utf-8")
+    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates))
+    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows))
     manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix()}}
-    Path(MANIFEST_FILE).write_text(json.dumps(manifest, indent=2), encoding="utf-8"); V5_MANIFEST.write_text(json.dumps(manifest, indent=2), encoding="utf-8"); V5_REPORT.write_text(report_md(run_id, manifest), encoding="utf-8")
+    write_json(MANIFEST_FILE, manifest); write_json(V5_MANIFEST, manifest); write_text(V5_REPORT, report_md(run_id, manifest))
     print("Created Results Desk v5 outputs"); print(json.dumps(manifest["counts"], indent=2))
 
 

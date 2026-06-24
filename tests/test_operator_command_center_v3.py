@@ -147,6 +147,7 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "operator_command_center.md" in runner
     assert "operator_command_center.json" in runner
     assert "bebe_posting_schedule_today.md" in runner
+    assert "preview_bundle_quality_summary.csv" in runner
     assert "publish_guard_report.json" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner

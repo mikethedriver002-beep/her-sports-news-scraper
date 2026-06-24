@@ -16,6 +16,8 @@ from urllib.parse import quote_plus, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
+
 
 VERSION = "news-sync-v1.8.3-csv-intake-fix"
 
@@ -228,7 +230,7 @@ def apply_event_date_payload(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def load_json(path: str, default: Any) -> Any:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return default
     try:
@@ -245,7 +247,7 @@ def candidate_input_paths(path: str) -> List[Path]:
     but found 0 candidates because it did not locate Results Desk files.
     """
     p = Path(path)
-    names = [p]
+    names = input_candidates(path)
     if not p.is_absolute():
         names.extend([
             Path("results_run_history") / "latest" / path,
@@ -263,7 +265,7 @@ def resolve_input(path: str) -> Tuple[Path, str]:
             except Exception:
                 text = p.read_text(encoding="utf-8", errors="replace")
             return p, text
-    return Path(path), ""
+    return input_path(path), ""
 
 
 def read_text(path: str) -> str:
@@ -287,7 +289,9 @@ def input_status_row(input_name: str, path: str, text_value: str, resolved_path:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fieldnames: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
+    out = output_path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         w.writeheader()
         for row in rows:
@@ -407,7 +411,7 @@ def resolve_csv_input(path: str) -> Tuple[Path, List[Dict[str, str]]]:
         rows = load_csv_rows_from_path(p)
         if rows:
             return p, rows
-    return Path(path), []
+    return input_path(path), []
 
 
 def input_status_row_csv(input_name: str, path: str, rows: List[Dict[str, str]], resolved_path: Path) -> Dict[str, Any]:
@@ -2320,11 +2324,11 @@ def main() -> None:
     write_csv(NEWS_FACT_PACKETS_CSV, packets, PACKET_FIELDS)
     write_csv(NEWS_MANUAL_REVIEW_CSV, manual_packets, PACKET_FIELDS)
 
-    Path(NEWS_BRIEF_QUEUE_MD).write_text(markdown_brief_queue(packets, observations_by_candidate), encoding="utf-8")
-    Path(NEWS_SOCIAL_PACKETS_MD).write_text(markdown_social_packets(packets), encoding="utf-8")
-    Path(NEWS_GRAPHICS_HANDOFF_MD).write_text(markdown_graphics_handoff(packets), encoding="utf-8")
-    Path(NEWS_DAILY_PLAN_MD).write_text(markdown_daily_plan(packets), encoding="utf-8")
-    Path(NEWS_SYNC_HUB_MD).write_text(markdown_hub(run_id, candidates, all_observations, packets), encoding="utf-8")
+    write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
+    write_run_text(NEWS_SOCIAL_PACKETS_MD, markdown_social_packets(packets))
+    write_run_text(NEWS_GRAPHICS_HANDOFF_MD, markdown_graphics_handoff(packets))
+    write_run_text(NEWS_DAILY_PLAN_MD, markdown_daily_plan(packets))
+    write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
 
     manifest = {
         "version": VERSION,
@@ -2369,10 +2373,11 @@ def main() -> None:
             "enable_fetch": ENABLE_FETCH,
         }
     }
-    Path(NEWS_MANIFEST_JSON).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    write_run_json(NEWS_MANIFEST_JSON, manifest)
 
     if not candidates:
-        Path(NEWS_SETUP_ERROR_MD).write_text(
+        write_run_text(
+            NEWS_SETUP_ERROR_MD,
             "# Her Sports Daily News Sync Setup Error\\n\\n"
             "News Sync ran, but found 0 candidates.\\n\\n"
             "Most likely causes:\\n\\n"
@@ -2380,8 +2385,7 @@ def main() -> None:
             "2. Results Desk has not committed its latest outputs yet.\\n"
             "3. The file exists only in `results_run_history/latest/`, but the workflow did not include it.\\n"
             "4. The Results Desk queue format changed.\\n\\n"
-            "Open `news_input_status_report.csv` first.\\n",
-            encoding="utf-8"
+            "Open `news_input_status_report.csv` first.\\n"
         )
 
     print("Created Her Sports Daily News Sync v1.8.3 CSV intake outputs")

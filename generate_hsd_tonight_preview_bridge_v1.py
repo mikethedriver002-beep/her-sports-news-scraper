@@ -9,6 +9,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from hsd_run_io import input_path, output_path, write_json, write_text
+
 try:
     from zoneinfo import ZoneInfo
 except Exception:
@@ -71,7 +73,7 @@ def sid(*parts: Any) -> str:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     try:
@@ -82,7 +84,9 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
+    out = output_path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
         for row in rows:
@@ -260,10 +264,11 @@ def time_label(row: Dict[str, str]) -> str:
 
 
 def load_focus_map() -> Dict[str, List[str]]:
-    if not FOCUS_MAP_PATH.exists():
+    focus_map_path = input_path(FOCUS_MAP_PATH)
+    if not focus_map_path.exists():
         return {}
     try:
-        raw = json.loads(FOCUS_MAP_PATH.read_text(encoding="utf-8"))
+        raw = json.loads(focus_map_path.read_text(encoding="utf-8"))
     except Exception:
         return {}
     source = raw.get("WNBA", raw) if isinstance(raw, dict) else {}
@@ -353,9 +358,9 @@ def main() -> None:
     if existing and not FORCE_REBUILD:
         has_preview = any(clean(r.get("bundle_name") or r.get("content_family")).lower().startswith("tonight in the w") for r in existing)
         if has_preview:
-            Path("studio_preview_build_v2_report.md").write_text(
+            write_text(
+                "studio_preview_build_v2_report.md",
                 f"# HSD Tonight Preview Bridge v2.8\n\nExisting preview bundle already present for {tgt}. No rebuild performed.\n",
-                encoding="utf-8",
             )
             print("Existing Tonight in the W preview bundle detected. Skipping rebuild.")
             return
@@ -398,8 +403,8 @@ def main() -> None:
         report += ["", "## Same-day games not included in preview because they appear started/live/final", *(f"- {line}" for line in started_lines)]
     if missing:
         report += ["", "## Missing games", *(f"- {m}" for m in missing)]
-    Path("studio_preview_build_v2_report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
-    Path("studio_preview_build_v2.json").write_text(json.dumps({
+    write_text("studio_preview_build_v2_report.md", "\n".join(report) + "\n")
+    write_json("studio_preview_build_v2.json", {
         "version": VERSION,
         "target_date_local": tgt,
         "full_target_date_count": full_count,
@@ -415,7 +420,7 @@ def main() -> None:
         "games": [{"matchup": matchup(r), "event_date": row_local_date(r), "time_label": time_label(r)} for r in schedule],
         "all_target_date_games": [{"matchup": matchup(r), "event_date": row_local_date(r), "time_label": time_label(r), "state": row_state(r)} for r in full_same_day],
         "started_or_excluded_games": [{"matchup": matchup(r), "event_date": row_local_date(r), "time_label": time_label(r), "state": row_state(r)} for r in started_or_excluded],
-    }, indent=2), encoding="utf-8")
+    })
 
     if not schedule:
         print("No WNBA preview games found for target date.")
@@ -517,7 +522,8 @@ def main() -> None:
     }], GRAPHICS_FIELDS)
 
     player_focus_md = "\n".join(f"- {r['team_name']}: {r['player_name']}" for r in focus_rows) or "- Use approved player images if available."
-    Path("studio_bundle_packets.md").write_text(
+    write_text(
+        "studio_bundle_packets.md",
         f"""# HSD Studio Bundle Packets
 
 ## BUNDLE 1: {scope_headline}
@@ -540,9 +546,9 @@ Source items: {source_headlines}
 ### Player focus
 {player_focus_md}
 """,
-        encoding="utf-8",
     )
-    Path("studio_bundle_prompts.md").write_text(
+    write_text(
+        "studio_bundle_prompts.md",
         f"""# HSD Studio Bundle Prompts
 
 ## {scope_headline}
@@ -551,7 +557,6 @@ Source items: {source_headlines}
 {prompt}
 ```
 """,
-        encoding="utf-8",
     )
     print(f"Created {scope_headline} bundle for {tgt} with {included_count} game(s); scope={preview_scope}.")
 

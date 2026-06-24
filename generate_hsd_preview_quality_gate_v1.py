@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from hsd_run_io import input_path, output_path, write_text
+
 VERSION = "hsd-preview-quality-gate-v3.2.5-bebe-ops-v2.4"
 
 REQUIRE_PEOPLE = os.environ.get("HSD_REQUIRE_PREVIEW_PEOPLE", "0").strip().lower() in {"1", "true", "yes"}
@@ -33,7 +35,7 @@ def clean(v: Any) -> str:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -41,7 +43,9 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 
 
 def write_csv(path: str, rows: List[Dict[str, str]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
+    out = output_path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
         for r in rows:
@@ -49,7 +53,7 @@ def write_csv(path: str, rows: List[Dict[str, str]], fields: List[str]) -> None:
 
 
 def read_json(path: str) -> Dict[str, Any]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return {}
     try:
@@ -184,7 +188,7 @@ def main() -> None:
         "",
         "See `preview_bundle_quality_summary.csv` for the hard gate status used by BeBe Ops.",
     ]
-    Path("preview_bundle_quality.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    write_text("preview_bundle_quality.md", "\n".join(md) + "\n")
     print(json.dumps({"gate_status": gate_status, "failures": len(fail_rows), "warnings": len(warn_rows)}, indent=2))
 
 
