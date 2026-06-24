@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "review")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -25,6 +25,8 @@ $GeneratedStatePathspecs = @(
     "run_history/**",
     "results_run_history/**",
     "launch_run_history/**",
+    "launch_dashboard/**",
+    "launch_analytics_dashboard/**",
     "asset_run_history/**",
     "generated_graphics/**",
     "graphics_chat_upload_pack/**",
@@ -74,6 +76,7 @@ $GeneratedStatePathspecs = @(
     "independent_schedule_verification_v5.*",
     "install_report.*",
     "latest_news_sync_run_summary.md",
+    "launch_*",
     "manual_story_inbox_report.md",
     "manual_workflow_*",
     "mermaid_*",
@@ -567,6 +570,11 @@ function Invoke-PostsStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_multi_post_desk_v1.py" -Optional
 }
 
+function Invoke-LaunchStage($Python) {
+    Write-Section "Launch control stage"
+    Invoke-ScriptIfPresent $Python "generate_hsd_launch_control_v1.py" -Optional
+}
+
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
@@ -647,6 +655,19 @@ function Collect-HsdArtifacts($RunContext) {
         "threads_queue.csv",
         "caption_bank.md",
         "first_comment_hooks.md",
+        "launch_command_center.md",
+        "launch_daily_runbook.md",
+        "launch_graphics_chat_brief.md",
+        "launch_instagram_publish_queue.csv",
+        "launch_caption_drafts.md",
+        "launch_story_plan.md",
+        "launch_quality_gate.csv",
+        "launch_daily_operator_checklist.md",
+        "launch_post_publish_tracker.csv",
+        "launch_metrics_manual_input.csv",
+        "launch_7_day_performance_dashboard.md",
+        "launch_what_to_double_down_on.md",
+        "launch_manifest.json",
         "hsd_pipeline_lite_review.zip"
     )
     foreach ($file in $reviewFiles) {
@@ -695,6 +716,7 @@ function Invoke-HsdRun {
             "stories" { Invoke-StoriesStage $python; Invoke-ReviewStage $python }
             "handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }
             "posts" { Invoke-PostsStage $python; Invoke-ReviewStage $python }
+            "launch" { Invoke-LaunchStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }

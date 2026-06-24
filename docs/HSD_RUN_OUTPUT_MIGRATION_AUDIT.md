@@ -117,6 +117,23 @@ What changed:
 - The local runner now exposes an explicit `posts` mode for this path, then refreshes the review command center.
 - This does not add the generator to `full`; the operator still chooses when to build the multi-post board.
 
+Fourth selected cleanup:
+
+- `generate_hsd_launch_control_v1.py`
+
+Why this was next:
+
+- It is operator-facing: it turns Studio bundle output into a launch command center, runbook, publish queue, quality gates, and performance trackers.
+- It answers a distinct daily question: what is ready to package, review, and manually publish.
+- It improves the daily operator workflow without adding a paid source, workflow trigger, or publishing action.
+
+What changed:
+
+- Launch Control markdown, CSV, manifest, and local dashboard outputs now write into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- The local runner now exposes an explicit `launch` mode for this path, then refreshes the review command center.
+- This does not add the generator to `full`; the operator still chooses when to build the launch slate.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:
@@ -133,6 +150,7 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_manual_workflow_merge_v1.py`
 - `generate_hsd_final_score_stories_v1.py`
 - `generate_hsd_multi_post_desk_v1.py`
+- `generate_hsd_launch_control_v1.py`
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`
