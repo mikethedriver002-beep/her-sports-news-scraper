@@ -134,6 +134,23 @@ What changed:
 - The local runner now exposes an explicit `launch` mode for this path, then refreshes the review command center.
 - This does not add the generator to `full`; the operator still chooses when to build the launch slate.
 
+Fifth selected cleanup:
+
+- `generate_hsd_source_registry_audit_v2.py`
+
+Why this was next:
+
+- It is operator-facing: it summarizes whether configured sources are green, yellow/review, or red/failing.
+- It improves the daily command center's trust posture without adding a network fetch, paid API, workflow trigger, or publishing action.
+- The lite review pack already expected source registry audit artifacts, so the missing piece was run-scoped generation before the command center reads them.
+
+What changed:
+
+- Source registry audit CSV, markdown, and JSON outputs now write into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- The manual review stage now refreshes this config-only audit before building the command center.
+- The command center now includes a source registry status and next action when review/fail rows exist.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:
@@ -151,6 +168,7 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_final_score_stories_v1.py`
 - `generate_hsd_multi_post_desk_v1.py`
 - `generate_hsd_launch_control_v1.py`
+- `generate_hsd_source_registry_audit_v2.py`
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`

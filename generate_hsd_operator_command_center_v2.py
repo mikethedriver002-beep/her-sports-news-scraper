@@ -20,6 +20,9 @@ ARTIFACTS = [
     ("Decision", "Publish guard", "publish_guard_report.md"),
     ("Decision", "BeBe daily ops plan", "bebe_daily_ops_plan.md"),
     ("Decision", "BeBe posting schedule", "bebe_posting_schedule_today.md"),
+    ("Sources", "Source registry audit", "source_registry_audit.md"),
+    ("Sources", "Source registry audit data", "source_registry_audit.json"),
+    ("Sources", "Source registry audit table", "source_registry_audit.csv"),
     ("Results", "Results manifest", "results_desk_v5_manifest.json"),
     ("Results", "Results report", "results_desk_v5_report.md"),
     ("Results", "Source accuracy", "source_accuracy_v5.md"),
@@ -129,6 +132,13 @@ def status_tone(value: Any) -> str:
 
 def display_bool(value: Any) -> str:
     return "Yes" if yes(value) else "No"
+
+
+def as_int(value: Any) -> int:
+    try:
+        return int(str(value).strip())
+    except Exception:
+        return 0
 
 
 def parse_markdown_table(path: str) -> List[Dict[str, str]]:
@@ -337,11 +347,36 @@ def metric(label: str, value: Any, detail: str = "") -> Dict[str, str]:
     return {"label": label, "value": text, "detail": clean(detail), "tone": status_tone(text)}
 
 
+def source_registry_status(counts: Dict[str, Any]) -> str:
+    total = as_int(counts.get("sources"))
+    if not total:
+        return "not_run"
+    fail = as_int(counts.get("fail"))
+    review = as_int(counts.get("review"))
+    if fail:
+        return "FAIL"
+    if review:
+        return "REVIEW"
+    return "PASS"
+
+
+def source_registry_detail(counts: Dict[str, Any]) -> str:
+    total = as_int(counts.get("sources"))
+    if not total:
+        return "No source registry audit found."
+    return (
+        f"{as_int(counts.get('pass'))} pass, "
+        f"{as_int(counts.get('review'))} review, "
+        f"{as_int(counts.get('fail'))} fail across {total} sources."
+    )
+
+
 def build_payload() -> Dict[str, Any]:
     generated_at = datetime.now(timezone.utc).isoformat()
     operator = read_json("operator_status.json")
     guard = read_json("publish_guard_report.json")
     manifest = read_json("results_desk_v5_manifest.json")
+    source_registry = read_json("source_registry_audit.json")
     ops = read_json("bebe_daily_ops_status.json")
     handoff = read_json("assignment_handoff_publisher_manifest.json")
     render = read_json("rendered_slide_qa_manifest.json")
@@ -350,6 +385,7 @@ def build_payload() -> Dict[str, Any]:
     studio = studio_queue()
     schedule = schedule_rows()
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
+    source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
     render_counts = render.get("counts", {}) if isinstance(render.get("counts"), dict) else {}
 
@@ -374,14 +410,31 @@ def build_payload() -> Dict[str, Any]:
         metric("News packets", len(read_csv("news_fact_packets.csv"))),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
+        metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
         metric("Day type", first_present(ops.get("day_type"), default="normal_day")),
     ]
     next_actions = build_next_actions(operator, guard, candidates, studio, artifacts)
+    if as_int(source_registry_counts.get("fail")) or as_int(source_registry_counts.get("review")):
+        next_actions.insert(
+            0,
+            {
+                "rank": "1",
+                "status": "Source review",
+                "owner": "Operator",
+                "title": "Review source registry audit",
+                "detail": source_registry_detail(source_registry_counts),
+                "artifact": "source_registry_audit.md",
+            },
+        )
+        for index, action in enumerate(next_actions, 1):
+            action["rank"] = str(index)
+        next_actions = next_actions[:6]
     source_rows = source_health(manifest)
+    source_state = source_registry_detail(source_registry_counts) if source_registry_counts else f"{sum(1 for row in source_rows if clean(row.get('ok')).lower() == 'yes')} source check(s) OK"
     briefing = {
         "best_candidate": candidates[0]["headline"] if candidates else "No content candidate found",
         "studio_lane": studio[0]["name"] if studio else "No studio bundle found",
-        "source_state": f"{sum(1 for row in source_rows if clean(row.get('ok')).lower() == 'yes')} source check(s) OK",
+        "source_state": source_state,
         "next_manual_move": next_actions[0]["title"] if next_actions else "Review local artifacts",
     }
 

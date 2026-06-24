@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import csv
 import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
+from hsd_run_io import input_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 VERSION = "hsd-source-registry-audit-bebe-v2.4"
-REGISTRY = Path("config/source_registry.json")
-OUT_CSV = Path("source_registry_audit.csv")
-OUT_MD = Path("source_registry_audit.md")
-OUT_JSON = Path("source_registry_audit.json")
+REGISTRY = "config/source_registry.json"
+OUT_CSV = "source_registry_audit.csv"
+OUT_MD = "source_registry_audit.md"
+OUT_JSON = "source_registry_audit.json"
 
 FIELDS = [
     "source_id", "source_type", "tier", "trust_band", "enabled", "sport_league", "automation_status",
@@ -28,21 +29,18 @@ def clean(v: Any) -> str:
     return re.sub(r"\s+", " ", str(v or "")).strip()
 
 
-def read_json(path: Path) -> Dict[str, Any]:
-    if not path.exists():
+def read_json(path: str | Path) -> Dict[str, Any]:
+    p = input_path(path)
+    if not p.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return {}
 
 
-def write_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k, "") for k in FIELDS})
+def write_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, FIELDS, extrasaction="ignore")
 
 
 def canonical_band(src: Dict[str, Any]) -> str:
@@ -135,12 +133,16 @@ def main() -> None:
         "review": sum(1 for r in rows if r["status"] == "REVIEW"),
         "fail": sum(1 for r in rows if r["status"] == "FAIL"),
     }
-    OUT_JSON.write_text(json.dumps({
+    run_dir = run_output_dir()
+    manifest = {
         "version": VERSION,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "output_scope": "run_scoped" if run_dir else "legacy_root",
+        "output_dir": run_dir.as_posix() if run_dir else ".",
         "counts": counts,
         "registry_version": raw.get("registry_version", ""),
-    }, indent=2), encoding="utf-8")
+    }
+    write_json(OUT_JSON, manifest, indent=2)
 
     lines = [
         "# HSD Source Registry Audit",
@@ -170,8 +172,8 @@ def main() -> None:
     else:
         lines.append("No source registry issues detected.")
     lines += ["", "## Full registry audit", "", "See `source_registry_audit.csv` for every source.", ""]
-    OUT_MD.write_text("\n".join(lines), encoding="utf-8")
-    print(json.dumps(counts, indent=2))
+    write_text(OUT_MD, "\n".join(lines), encoding="utf-8")
+    print(json.dumps({"output_scope": manifest["output_scope"], **counts}, indent=2))
 
 
 if __name__ == "__main__":

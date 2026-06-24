@@ -113,7 +113,7 @@ It does not publish, push to Git, call paid APIs, or run hidden handoff refresh 
 - `results`: free/public Results Desk v5 path.
 - `news`: News Sync from result outputs and source registry.
 - `studio`: Studio bridge and preview quality gates.
-- `review`: operator status, publish guard, command center, lite review pack.
+- `review`: source registry audit, operator status, publish guard, command center, lite review pack.
 - `full`: results, news, studio, then review.
 - `asset`: asset desk and visual QA support scripts.
 - `stories`: final-score IG Story packs, then review command center.

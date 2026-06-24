@@ -94,6 +94,14 @@ def seed_daily_ops_files() -> None:
     )
     Path("operator_status.md").write_text("# Operator status\n", encoding="utf-8")
     Path("publish_guard_report.md").write_text("# Publish guard\n", encoding="utf-8")
+    write_json(
+        "source_registry_audit.json",
+        {
+            "counts": {"sources": 3, "pass": 2, "review": 1, "fail": 0},
+            "output_scope": "run_scoped",
+        },
+    )
+    Path("source_registry_audit.md").write_text("# Source registry audit\n", encoding="utf-8")
     Path("studio_bundle_queue.csv").touch()
 
 
@@ -111,7 +119,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["briefing"]["best_candidate"] == "New York Liberty beat Las Vegas Aces"
     assert payload["briefing"]["studio_lane"] == "Tonight in the W"
     assert any(action["status"] == "Manual only" for action in payload["next_actions"])
+    assert any(action["title"] == "Review source registry audit" for action in payload["next_actions"])
     assert any(action["title"] == "Build graphics pack for Tonight in the W" for action in payload["next_actions"])
+    assert any(item["label"] == "Source registry" and item["value"] == "REVIEW" for item in payload["metrics"])
+    assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
 
     assert "HSD Daily Operator Command Center" in html
     assert 'data-tab-target="today"' in html
@@ -149,6 +160,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "bebe_posting_schedule_today.md" in runner
     assert "preview_bundle_quality_summary.csv" in runner
     assert "publish_guard_report.json" in runner
+    assert "source_registry_audit.md" in runner
+    assert "source_registry_audit.json" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
     assert "ig_story_results_queue.csv" in runner
