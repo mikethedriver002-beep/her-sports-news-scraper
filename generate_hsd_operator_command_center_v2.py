@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.6.0-evidence-previews"
+VERSION = "hsd-operator-command-center-v3.7.0-story-opportunities"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -340,6 +340,12 @@ def source_discovery_board() -> List[Dict[str, str]]:
                 "evidence_description": short(clean(row.get("evidence_description")), 260),
                 "evidence_preview": short(clean(row.get("evidence_preview")), 260),
                 "evidence_source": clean(row.get("evidence_source")),
+                "story_opportunity_id": clean(row.get("story_opportunity_id")),
+                "story_opportunity_title": clean(row.get("story_opportunity_title")),
+                "story_opportunity_size": clean(row.get("story_opportunity_size")),
+                "story_opportunity_sources": clean(row.get("story_opportunity_sources")),
+                "story_opportunity_urls": clean(row.get("story_opportunity_urls")),
+                "story_opportunity_reason": short(clean(row.get("story_opportunity_reason")), 220),
                 "promotion": first_present(row.get("promotion_recommendation"), default="monitor_only"),
                 "promotion_priority": first_present(row.get("promotion_priority"), default="P4"),
                 "promotion_target": clean(row.get("promotion_target")),
@@ -374,6 +380,12 @@ def lead_promotion_recommendations() -> List[Dict[str, str]]:
                 "evidence_description": short(clean(row.get("evidence_description")), 260),
                 "evidence_preview": short(clean(row.get("evidence_preview")), 260),
                 "evidence_source": clean(row.get("evidence_source")),
+                "story_opportunity_id": clean(row.get("story_opportunity_id")),
+                "story_opportunity_title": clean(row.get("story_opportunity_title")),
+                "story_opportunity_size": clean(row.get("story_opportunity_size")),
+                "story_opportunity_sources": clean(row.get("story_opportunity_sources")),
+                "story_opportunity_urls": clean(row.get("story_opportunity_urls")),
+                "story_opportunity_reason": short(clean(row.get("story_opportunity_reason")), 220),
                 "quality_score": clean(row.get("quality_score")),
                 "freshness_label": clean(row.get("freshness_label")),
                 "freshness_source": clean(row.get("freshness_source")),
@@ -484,11 +496,17 @@ def build_next_actions(
         if promo.get("freshness_source"):
             freshness_note += f" via {promo['freshness_source']}"
         evidence_note = f"{promo.get('detail')}. " if promo.get("detail") else ""
+        opportunity_note = ""
+        if as_int(promo.get("story_opportunity_size")) > 1:
+            opportunity_note = (
+                f"Grouped opportunity with {promo.get('story_opportunity_size')} related official/wire leads "
+                f"from {promo.get('story_opportunity_sources')}. "
+            )
         add_action(
             "Lead promotion",
             "Editor",
             f"Promote source lead toward {promo['recommendation']}: {promo['title']}",
-            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {evidence_note}{promo.get('next_step') or promo.get('reason')}",
+            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {opportunity_note}{evidence_note}{promo.get('next_step') or promo.get('reason')}",
             promo["artifact"],
         )
 
@@ -504,7 +522,11 @@ def build_next_actions(
             "Source review",
             "Research",
             f"Review morning source lead: {lead['title']}",
-            f"{lead['lane']} / {lead['posture']}. {lead.get('detail') or ''} {lead.get('next_action') or ''}".strip(),
+            (
+                f"{lead['lane']} / {lead['posture']}. "
+                f"{lead.get('story_opportunity_reason') + ' ' if lead.get('story_opportunity_reason') else ''}"
+                f"{lead.get('detail') or ''} {lead.get('next_action') or ''}"
+            ).strip(),
             lead["artifact"],
         )
     elif source_board:
@@ -680,6 +702,12 @@ def build_payload() -> Dict[str, Any]:
         "free_source_mode": "Free public sources only",
     }
     decision["callout"] = decision_callout(decision["overall"], guard, candidates, studio, artifacts, source_registry_counts)
+    story_opportunity_ids = {row.get("story_opportunity_id") for row in source_board if row.get("story_opportunity_id")}
+    grouped_story_opportunities = {
+        row.get("story_opportunity_id")
+        for row in source_board
+        if row.get("story_opportunity_id") and as_int(row.get("story_opportunity_size")) > 1
+    }
     metrics = [
         metric("Current call", decision["overall"]),
         metric("Publish allowed", display_bool(decision["publish_allowed"])),
@@ -693,6 +721,8 @@ def build_payload() -> Dict[str, Any]:
         metric("Publish-grade packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "publish_grade")),
         metric("Discovery-only packets", sum(1 for row in news_packets if packet_source_confidence(row)["source_grade"] == "discovery_only")),
         metric("Morning source rows", len(source_board)),
+        metric("Story opportunities", len(story_opportunity_ids)),
+        metric("Grouped opportunities", len(grouped_story_opportunities)),
         metric("Gray/social leads", sum(1 for row in source_board if row.get("lane") in {"gray_area_review", "social_discovery"})),
         metric("Lead promotions", len(promotions)),
         metric("High-quality leads", sum(1 for row in promotions if as_int(row.get("quality_score")) >= 70)),
@@ -859,6 +889,12 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
         next_action = html.escape(row.get("next_action") or "")
         detail_html = f"<p>{detail}</p>" if detail else ""
         next_html = f"<p>Next: {next_action}</p>" if next_action and next_action != detail else ""
+        opportunity_note = ""
+        if row.get("story_opportunity_id"):
+            opportunity_note = (
+                f" / opportunity: {html.escape(row.get('story_opportunity_size') or '1')} source(s)"
+                f" from {html.escape(row.get('story_opportunity_sources') or row.get('source') or '')}"
+            )
         cards.append(
             f"""
             <article class="content-row">
@@ -867,7 +903,7 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
                 <h3>{html.escape(row['title'])}</h3>
                 {detail_html}
                 {next_html}
-                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}</small>
+                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -883,6 +919,12 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
         next_step = html.escape(row.get("next_step") or row.get("reason") or "")
         detail_html = f"<p>{detail}</p>" if detail else ""
         next_html = f"<p>Next: {next_step}</p>" if next_step and next_step != detail else ""
+        opportunity_note = ""
+        if row.get("story_opportunity_id"):
+            opportunity_note = (
+                f" / opportunity: {html.escape(row.get('story_opportunity_size') or '1')} source(s)"
+                f" from {html.escape(row.get('story_opportunity_sources') or '')}"
+            )
         cards.append(
             f"""
             <article class="content-row">
@@ -891,7 +933,7 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
                 <h3>{html.escape(row['title'])}</h3>
                 {detail_html}
                 {next_html}
-                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}</small>
+                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -1263,12 +1305,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Lead promotion recommendations", ""]
     lines.extend(
-        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
+        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or '1'} source(s) | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
         for item in payload["lead_promotion_recommendations"]
     )
     lines += ["", "## Morning source discovery", ""]
     lines.extend(
-        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
+        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
     )
     lines += ["", "## Studio queue", ""]

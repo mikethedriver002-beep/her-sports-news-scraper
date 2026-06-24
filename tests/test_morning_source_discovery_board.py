@@ -101,15 +101,85 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
         run_dir / "story_candidates_discovery.csv",
         [
             {
+                "source_id": "wnba_official_news",
+                "source_type": "official_site",
+                "source_tier": "official",
+                "source_trust_band": "green",
+                "title": "Liberty announce roster move before Aces game",
+                "source_url": "https://www.wnba.com/news/liberty-roster-move",
+                "canonical_url": "https://www.wnba.com/news/liberty-roster-move",
+                "summary": "The Liberty announced a roster move before facing the Aces.",
+                "publish_eligible": "Yes",
+                "reason": "official source",
+                "evidence_title": "Official Liberty roster move before Aces matchup",
+                "evidence_published_at": "2026-06-24T09:00:00+00:00",
+                "evidence_description": "The Liberty announced a roster move before facing the Aces.",
+                "evidence_preview": "Official Liberty roster move before Aces matchup | 2026-06-24 | The Liberty announced a roster move before facing the Aces.",
+                "evidence_source": "article_metadata",
+                "lead_score": "6",
+                "freshness_date": "2026-06-24",
+                "freshness_label": "today",
+                "freshness_source": "article_metadata",
+                "freshness_score": "36",
+                "urgency_score": "12",
+                "quality_score": "88",
+                "quality_reason": "fixture",
+                "promotion_hint": "news_packet",
+                "review_next_step": "Review the official article before drafting.",
+            },
+            {
+                "source_id": "ap_womens_sports_wire",
+                "source_type": "wire",
+                "source_tier": "wire",
+                "source_trust_band": "green",
+                "title": "AP: Liberty roster move ahead of Aces matchup",
+                "source_url": "https://apnews.com/article/liberty-aces-roster-move",
+                "canonical_url": "https://apnews.com/article/liberty-aces-roster-move",
+                "summary": "The Liberty made a roster move ahead of the Aces matchup.",
+                "publish_eligible": "Yes",
+                "reason": "wire source",
+                "evidence_title": "Liberty roster move ahead of Aces matchup",
+                "evidence_published_at": "2026-06-24T09:30:00+00:00",
+                "evidence_description": "The Liberty made a roster move ahead of the Aces matchup.",
+                "evidence_preview": "Liberty roster move ahead of Aces matchup | 2026-06-24 | The Liberty made a roster move ahead of the Aces matchup.",
+                "evidence_source": "article_metadata",
+                "lead_score": "6",
+                "freshness_date": "2026-06-24",
+                "freshness_label": "today",
+                "freshness_source": "article_metadata",
+                "freshness_score": "36",
+                "urgency_score": "12",
+                "quality_score": "84",
+                "quality_reason": "fixture",
+                "promotion_hint": "news_packet",
+                "review_next_step": "Review the wire article before drafting.",
+            },
+            {
                 "source_id": "reddit_womens_sports_discovery",
                 "source_type": "reddit_public_json",
                 "source_tier": "community",
                 "source_trust_band": "yellow",
                 "title": "Fan community lead",
                 "source_url": "https://www.reddit.com/r/wnba/comments/example",
+                "canonical_url": "https://www.reddit.com/r/wnba/comments/example",
                 "summary": "Interesting lead.",
                 "publish_eligible": "No",
                 "reason": "discovery only; needs green confirmation",
+                "evidence_title": "",
+                "evidence_published_at": "",
+                "evidence_description": "",
+                "evidence_preview": "",
+                "evidence_source": "",
+                "lead_score": "",
+                "freshness_date": "",
+                "freshness_label": "",
+                "freshness_source": "",
+                "freshness_score": "",
+                "urgency_score": "",
+                "quality_score": "",
+                "quality_reason": "",
+                "promotion_hint": "",
+                "review_next_step": "",
             }
         ],
     )
@@ -172,12 +242,29 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
     assert {"manual_lead", "official_free", "wire", "free_cross_check", "social_discovery"} <= lanes
     assert postures["Fan community lead"] == "discovery_only"
     assert promotions["Fan community lead"] == "manual_story_candidate"
+    assert promotions["Liberty announce roster move before Aces game"] == "news_packet"
     assert promotions["Liberty beat Aces final score graphic"] == "studio_brief"
     assert promotions["WNBA announces a new broadcast partnership"] == "news_packet"
     assert promotions["Team site home page"] == "monitor_only"
     assert promotions["Scan team_social_manual_only"] == "monitor_only"
     assert {"manual_story_candidate", "studio_brief", "news_packet"} <= promotion_targets
     assert "monitor_only" not in promotion_targets
+    official_row = next(row for row in payload["rows"] if row["title"] == "Liberty announce roster move before Aces game")
+    wire_row = next(row for row in payload["rows"] if row["title"] == "AP: Liberty roster move ahead of Aces matchup")
+    assert official_row["story_opportunity_id"] == wire_row["story_opportunity_id"]
+    assert official_row["story_opportunity_size"] == "2"
+    assert "wnba_official_news" in official_row["story_opportunity_sources"]
+    assert "ap_womens_sports_wire" in official_row["story_opportunity_sources"]
+    cluster_promotions = [
+        row
+        for row in payload["promotion_recommendations"]
+        if row["story_opportunity_id"] == official_row["story_opportunity_id"]
+    ]
+    assert len(cluster_promotions) == 1
+    assert cluster_promotions[0]["story_opportunity_size"] == "2"
+    assert "Grouped 2 related official/wire discovery leads" in cluster_promotions[0]["promotion_reason"]
+    assert payload["counts"]["story_opportunities"] >= 1
+    assert payload["counts"]["grouped_story_opportunities"] == 1
     assert payload["policy"]["promotion_mode"] == "manual_recommendation_only"
     assert all(row["publish_posture"] != "auto_publish" for row in payload["rows"])
     assert payload["policy"]["auto_publish_allowed"] is False

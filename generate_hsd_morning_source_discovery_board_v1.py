@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.4-evidence-previews"
+VERSION = "hsd-morning-source-discovery-board-v1.5-story-opportunities"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -37,6 +37,12 @@ FIELDS = [
     "evidence_description",
     "evidence_preview",
     "evidence_source",
+    "story_opportunity_id",
+    "story_opportunity_title",
+    "story_opportunity_size",
+    "story_opportunity_sources",
+    "story_opportunity_urls",
+    "story_opportunity_reason",
     "source_artifact",
     "next_action",
     "reason",
@@ -101,6 +107,89 @@ def lead_id(parts: Iterable[Any]) -> str:
     if not raw:
         raw = datetime.now(timezone.utc).isoformat()
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:14]
+
+
+CLUSTER_STOPWORDS = {
+    "about",
+    "after",
+    "again",
+    "ahead",
+    "also",
+    "amid",
+    "announce",
+    "announced",
+    "announces",
+    "article",
+    "before",
+    "during",
+    "final",
+    "first",
+    "from",
+    "game",
+    "games",
+    "league",
+    "match",
+    "matchup",
+    "news",
+    "official",
+    "over",
+    "preview",
+    "result",
+    "results",
+    "says",
+    "score",
+    "season",
+    "sports",
+    "story",
+    "that",
+    "their",
+    "this",
+    "today",
+    "with",
+    "wnba",
+    "women",
+    "womens",
+    "wire",
+}
+
+
+def cluster_tokens(row: Dict[str, Any]) -> set[str]:
+    text = " ".join(
+        clean(row.get(key))
+        for key in ["title", "evidence_title", "summary", "evidence_description"]
+        if clean(row.get(key))
+    )
+    tokens = set()
+    for token in re.findall(r"[a-z0-9]+", text.lower()):
+        if len(token) < 3 or token in CLUSTER_STOPWORDS:
+            continue
+        tokens.add(token)
+    return tokens
+
+
+def token_overlap(left: set[str], right: set[str]) -> float:
+    if not left or not right:
+        return 0.0
+    return len(left & right) / max(1, min(len(left), len(right)))
+
+
+def clusterable_story_row(row: Dict[str, str]) -> bool:
+    return (
+        row.get("source_artifact") == "story_candidates_discovery.csv"
+        and row.get("lane") in {"official_free", "wire"}
+        and row.get("promotion_recommendation") in {"news_packet", "studio_brief"}
+    )
+
+
+def related_story_rows(left: Dict[str, str], right: Dict[str, str]) -> bool:
+    if canonicalize(left.get("source_url", "")) and canonicalize(left.get("source_url", "")) == canonicalize(right.get("source_url", "")):
+        return True
+    left_tokens = cluster_tokens(left)
+    right_tokens = cluster_tokens(right)
+    shared = left_tokens & right_tokens
+    if len(shared) < 2:
+        return False
+    return token_overlap(left_tokens, right_tokens) >= 0.5
 
 
 def trust_band_from_values(*values: Any) -> str:
@@ -402,6 +491,12 @@ def make_row(
         "evidence_description": clean(evidence_description),
         "evidence_preview": clean(evidence_preview),
         "evidence_source": clean(evidence_source),
+        "story_opportunity_id": "",
+        "story_opportunity_title": "",
+        "story_opportunity_size": "",
+        "story_opportunity_sources": "",
+        "story_opportunity_urls": "",
+        "story_opportunity_reason": "",
         "source_artifact": source_artifact,
         "next_action": next_action_for(lane, posture, reason),
         "reason": reason,
@@ -593,28 +688,85 @@ def dedupe_and_rank(rows: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return out
 
 
+def opportunity_sort_key(row: Dict[str, str]) -> tuple[int, int, int, int, str]:
+    priority_order = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
+    return (
+        priority_order.get(row.get("promotion_priority"), 9),
+        -as_int(row.get("quality_score"), 0),
+        -as_int(row.get("freshness_score"), 0),
+        int(row.get("rank") or 9999),
+        row.get("title", ""),
+    )
+
+
+def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str, str]]]:
+    clusters: List[List[Dict[str, str]]] = []
+    for row in rows:
+        if not clusterable_story_row(row):
+            continue
+        matched: List[Dict[str, str]] | None = None
+        for cluster in clusters:
+            if any(related_story_rows(row, existing) for existing in cluster):
+                matched = cluster
+                break
+        if matched is None:
+            clusters.append([row])
+        else:
+            matched.append(row)
+
+    for cluster in clusters:
+        ranked = sorted(cluster, key=opportunity_sort_key)
+        representative = ranked[0]
+        sources = sorted({clean(row.get("source_name")) for row in cluster if clean(row.get("source_name"))})
+        urls = []
+        seen_urls = set()
+        for row in ranked:
+            url = canonicalize(row.get("source_url", ""))
+            if url and url not in seen_urls:
+                urls.append(url)
+                seen_urls.add(url)
+        opportunity_id = "opp_" + lead_id([representative.get("title"), *sources, *urls])[:12]
+        opportunity_title = representative.get("title", "")
+        opportunity_reason = (
+            f"Grouped {len(cluster)} related official/wire discovery leads from {', '.join(sources)}."
+            if len(cluster) > 1
+            else f"Single official/wire discovery lead from {sources[0] if sources else representative.get('source_name', 'source')}."
+        )
+        for row in cluster:
+            row["story_opportunity_id"] = opportunity_id
+            row["story_opportunity_title"] = opportunity_title
+            row["story_opportunity_size"] = str(len(cluster))
+            row["story_opportunity_sources"] = "; ".join(sources)
+            row["story_opportunity_urls"] = "; ".join(urls[:6])
+            row["story_opportunity_reason"] = opportunity_reason
+    return clusters
+
+
 def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
     promotable = [
         row
         for row in rows
         if row.get("promotion_recommendation") in {"news_packet", "manual_story_candidate", "studio_brief"}
     ]
-    priority_order = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
-    ranked = sorted(
-        promotable,
-        key=lambda row: (
-            priority_order.get(row.get("promotion_priority"), 9),
-            -as_int(row.get("quality_score"), 0),
-            -as_int(row.get("freshness_score"), 0),
-            -as_int(row.get("urgency_score"), 0),
-            int(row.get("rank") or 9999),
-            row.get("title", ""),
-        ),
-    )
+    grouped: Dict[str, List[Dict[str, str]]] = {}
+    for row in promotable:
+        opportunity_id = clean(row.get("story_opportunity_id"))
+        key = f"opportunity:{opportunity_id}" if opportunity_id and clusterable_story_row(row) else f"row:{row.get('rank') or row.get('title')}"
+        grouped.setdefault(key, []).append(row)
+    ranked = [sorted(group, key=opportunity_sort_key)[0] for group in grouped.values()]
+    ranked = sorted(ranked, key=opportunity_sort_key)
     out: List[Dict[str, str]] = []
     for index, row in enumerate(ranked, 1):
         promoted = {field: clean(row.get(field)) for field in PROMOTION_FIELDS}
         promoted["promotion_rank"] = str(index)
+        size = as_int(promoted.get("story_opportunity_size"), 0)
+        if size > 1:
+            promoted["promotion_reason"] = (
+                f"{promoted['story_opportunity_reason']} Review the grouped evidence before choosing the final angle."
+            )
+            promoted["promotion_next_step"] = (
+                "Review the grouped official/wire links, pick the strongest source-backed angle, then draft or refresh the target artifact manually."
+            )
         out.append(promoted)
     return out
 
@@ -628,6 +780,7 @@ def build_payload() -> Dict[str, Any]:
         + rows_from_news_observations()
         + rows_from_registry_scans(registry)
     )
+    story_opportunities = assign_story_opportunities(rows)
     counts = {
         "total": len(rows),
         "manual_leads": sum(1 for row in rows if row["lane"] == "manual_lead"),
@@ -644,6 +797,8 @@ def build_payload() -> Dict[str, Any]:
         "fresh_today_or_48h": sum(1 for row in rows if row["freshness_label"] in {"today", "last_48_hours"}),
         "stale_or_evergreen": sum(1 for row in rows if "stale" in row["freshness_label"] or "evergreen" in row["freshness_label"]),
         "quality_70_plus": sum(1 for row in rows if as_int(row["quality_score"]) >= 70),
+        "story_opportunities": len(story_opportunities),
+        "grouped_story_opportunities": sum(1 for cluster in story_opportunities if len(cluster) > 1),
     }
     promotions = promotion_rows(rows)
     return {
@@ -685,6 +840,8 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Fresh today / last 48 hours: `{counts['fresh_today_or_48h']}`",
         f"- Stale or evergreen: `{counts['stale_or_evergreen']}`",
         f"- Quality 70+: `{counts['quality_70_plus']}`",
+        f"- Story opportunities: `{counts['story_opportunities']}`",
+        f"- Grouped story opportunities: `{counts['grouped_story_opportunities']}`",
         "",
         "## Promotion Recommendations",
         "",
@@ -693,7 +850,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         lines.append(
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
-            f"{row['title']} | {row['promotion_next_step']}"
+            f"{row['title']} | opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | {row['promotion_next_step']}"
         )
     if not payload["promotion_recommendations"]:
         lines.append("No lead promotion recommendations found.")
@@ -706,7 +863,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         lines.append(
             f"{row['rank']}. `{row['lane']}` | `{row['review_status']}` | `{row['publish_posture']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
-            f"{row['title']} | {row['next_action']}"
+            f"{row['title']} | opportunity `{row.get('story_opportunity_size') or 'n/a'}` | {row['next_action']}"
         )
     if not payload["rows"]:
         lines.append("No source discovery rows found.")
@@ -716,6 +873,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "",
         "- Free sources only.",
         "- Gray-area and social rows are discovery or review inputs until confirmed.",
+        "- Official/wire story opportunities group related leads for review; original source rows remain visible.",
         "- Lead promotion is advisory only; the board does not write into News packets, manual story candidates, or Studio briefs.",
         "- Nothing in this board auto-publishes or auto-runs outside the local manual runner.",
     ]
@@ -751,7 +909,8 @@ def render_promotion_markdown(payload: Dict[str, Any]) -> str:
         lines.append(
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
-            f"{row['title']} | target: `{row['promotion_target']}` | {row['promotion_reason']}"
+            f"{row['title']} | opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | "
+            f"target: `{row['promotion_target']}` | {row['promotion_reason']}"
         )
     if not payload["promotion_recommendations"]:
         lines.append("No lead promotion recommendations found.")
@@ -760,6 +919,7 @@ def render_promotion_markdown(payload: Dict[str, Any]) -> str:
         "## Policy",
         "",
         "- Manual recommendation only.",
+        "- Related official/wire leads are grouped into one story opportunity before promotion ranking.",
         "- No automatic writes to News, manual story, or Studio artifacts.",
         "- No paid APIs, auto-runs, or auto-publishing.",
     ]
