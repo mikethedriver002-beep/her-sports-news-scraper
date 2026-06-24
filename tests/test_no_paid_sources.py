@@ -18,6 +18,23 @@ PAID_DEPENDENCY_TOKENS = {
     "zyte",
     "openai",
 }
+WORKFLOW_DIR = Path(".github/workflows")
+AUTOMATIC_WORKFLOW_TRIGGERS = {
+    "push",
+    "pull_request",
+    "pull_request_target",
+    "schedule",
+    "workflow_run",
+    "repository_dispatch",
+    "release",
+    "deployment",
+    "page_build",
+}
+PUBLISH_COMMAND_PATTERNS = (
+    r"\bgit\s+add\b",
+    r"\bgit\s+commit\b",
+    r"\bgit\s+push\b",
+)
 REQUIRED_WNBA_LOGO_SOURCE_TEAMS = {
     "atlanta_dream",
     "chicago_sky",
@@ -50,6 +67,10 @@ def csv_rows(path: str) -> list[dict[str, str]]:
         return list(csv.DictReader(f))
 
 
+def workflow_files() -> list[Path]:
+    return sorted(WORKFLOW_DIR.glob("*.yml"))
+
+
 def test_python_files_compile() -> None:
     for path in ["generate_hsd_results_desk_v5.py", "generate_hsd_results_desk_v4.py", "generate_hsd_results_contract_v1.py", "scripts/report_hsd_repo_state_v3.py"]:
         ast.parse(read(path), filename=path)
@@ -62,18 +83,29 @@ def test_requirements_do_not_add_paid_or_llm_dependencies() -> None:
 
 
 def test_workflow_paid_secret_refs_are_optional_only() -> None:
-    text = read(".github/workflows/hsd-pipeline-control-v1.yml")
     hard_required_patterns = []
-    for secret in PAID_SECRET_NAMES:
-        patterns = [
-            rf"if\s*\[\s*-z\s+['\"]?\$\{{?{secret}\}}?",
-            rf"exit\s+1.*{secret}",
-            rf"{secret}.*required",
-        ]
-        for pattern in patterns:
-            if re.search(pattern, text, re.IGNORECASE | re.DOTALL):
-                hard_required_patterns.append((secret, pattern))
+    for path in workflow_files():
+        for line_number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            for secret in PAID_SECRET_NAMES:
+                if secret not in line:
+                    continue
+                if re.search(rf"secrets\.{secret}|required|exit\s+1", line, re.IGNORECASE):
+                    hard_required_patterns.append((str(path), line_number, secret, line.strip()))
     assert not hard_required_patterns, f"Paid-source secrets must stay optional/not allowed by default: {hard_required_patterns}"
+
+
+def test_github_workflows_are_manual_read_only_and_artifact_only() -> None:
+    workflows = workflow_files()
+    assert workflows, "Expected GitHub workflow files to audit"
+    for path in workflows:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        assert re.search(r"(?m)^on:\s*\n\s+workflow_dispatch:\s*$", text), path
+        assert re.search(r"(?m)^permissions:\s*\n\s+contents:\s+read\s*$", text), path
+        assert "contents: write" not in text, path
+        for trigger in AUTOMATIC_WORKFLOW_TRIGGERS:
+            assert not re.search(rf"(?m)^\s{{2}}{trigger}:\s*$", text), (path, trigger)
+        for pattern in PUBLISH_COMMAND_PATTERNS:
+            assert not re.search(pattern, text, re.IGNORECASE), (path, pattern)
 
 
 def test_results_desk_v5_is_active_free_only_path() -> None:
