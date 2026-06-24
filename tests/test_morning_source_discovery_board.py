@@ -271,6 +271,8 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
     assert cluster_promotions[0]["story_opportunity_confirmation_cue"] == "official_and_wire_confirmed"
     assert cluster_promotions[0]["story_opportunity_asset_cue"] == "asset_not_required_for_news_packet"
     assert "strong enough for a News packet draft" in cluster_promotions[0]["story_opportunity_readiness_note"]
+    assert cluster_promotions[0]["story_opportunity_second_source_lane"] == "already_covered"
+    assert cluster_promotions[0]["story_opportunity_second_source_id"] == ""
     assert cluster_promotions[0]["promotion_recommendation"] == "news_packet"
     assert cluster_promotions[0]["promotion_target"] == "news_fact_packets.csv"
     assert "Grouped 2 related official/wire discovery leads" in cluster_promotions[0]["promotion_reason"]
@@ -281,6 +283,7 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
     assert payload["counts"]["publish_grade_story_opportunities"] == 1
     assert payload["counts"]["story_opportunities_need_second_source"] == 0
     assert payload["counts"]["story_opportunities_need_asset_check"] == 0
+    assert payload["counts"]["story_opportunities_with_second_source_suggestion"] == 0
     assert payload["policy"]["promotion_mode"] == "manual_recommendation_only"
     assert all(row["publish_posture"] != "auto_publish" for row in payload["rows"])
     assert payload["policy"]["auto_publish_allowed"] is False
@@ -418,3 +421,121 @@ def test_story_opportunity_readiness_cues_identify_source_and_asset_needs() -> N
     assert official_wire_studio["confirmation_cue"] == "official_and_wire_confirmed"
     assert official_wire_studio["confidence_tier"] == "source_backed_studio_candidate"
     assert official_wire_studio["asset_cue"] == "asset_check_required_before_studio"
+
+
+def test_story_opportunity_second_source_pairing_suggests_distinct_free_source() -> None:
+    module = load_module()
+    registry = {
+        "sources": [
+            {
+                "source_id": "wnba_official_news",
+                "source_type": "official_site",
+                "enabled": True,
+                "tier": "official",
+                "trust_band": "green",
+                "sport_league": "WNBA",
+                "urls": ["https://www.wnba.com/news"],
+                "allowed_use": ["official_news", "transaction"],
+            },
+            {
+                "source_id": "ap_womens_sports_wire",
+                "source_type": "wire",
+                "enabled": True,
+                "tier": "wire",
+                "trust_band": "green",
+                "sport_league": "all",
+                "urls": ["https://apnews.com/hub/womens-sports"],
+                "allowed_use": ["wire_report", "breaking_news_confirmation"],
+            },
+            {
+                "source_id": "espn_wnba_scoreboard_cross_check",
+                "source_type": "scoreboard_site",
+                "enabled": True,
+                "tier": "primary_media",
+                "trust_band": "green_cross_check",
+                "sport_league": "WNBA",
+                "urls": ["https://www.espn.com/wnba/scoreboard"],
+                "allowed_use": ["score_cross_check", "schedule_cross_check"],
+            },
+        ]
+    }
+    rows = [
+        {
+            "lane": "official_free",
+            "source_name": "wnba_official_news",
+            "source_type": "official_site",
+            "source_url": "https://www.wnba.com/news/liberty-roster-move",
+            "sport_league": "WNBA",
+            "title": "Liberty announce roster move before Aces game",
+            "summary": "The team announced a roster move.",
+            "quality_score": "82",
+            "freshness_label": "today",
+        }
+    ]
+    path_payload = module.story_path_payload(rows)
+    readiness_payload = module.story_readiness_payload(rows, path_payload)
+    second_source = module.second_source_payload(rows, registry, path_payload, readiness_payload)
+
+    assert second_source["source_id"] == "ap_womens_sports_wire"
+    assert second_source["source_lane"] == "wire"
+    assert second_source["source_url"] == "https://apnews.com/hub/womens-sports"
+    assert "wire confirmation" in second_source["source_reason"]
+    assert "Open ap_womens_sports_wire" in second_source["source_action"]
+
+
+def test_story_opportunity_second_source_pairing_avoids_unrelated_official_source() -> None:
+    module = load_module()
+    registry = {
+        "sources": [
+            {
+                "source_id": "ap_womens_sports_wire",
+                "source_type": "wire",
+                "enabled": True,
+                "tier": "wire",
+                "trust_band": "green",
+                "sport_league": "all",
+                "urls": ["https://apnews.com/hub/womens-sports"],
+                "allowed_use": ["wire_report"],
+            },
+            {
+                "source_id": "reuters_sports_wire",
+                "source_type": "wire",
+                "enabled": True,
+                "tier": "wire",
+                "trust_band": "green",
+                "sport_league": "all",
+                "urls": ["https://www.reuters.com/sports/"],
+                "allowed_use": ["wire_report", "breaking_news_confirmation"],
+            },
+            {
+                "source_id": "nwsl_official_news",
+                "source_type": "official_site",
+                "enabled": True,
+                "tier": "official",
+                "trust_band": "green",
+                "sport_league": "NWSL",
+                "urls": ["https://www.nwslsoccer.com/news"],
+                "allowed_use": ["official_news", "club_news"],
+            },
+        ]
+    }
+    rows = [
+        {
+            "lane": "wire",
+            "source_name": "ap_womens_sports_wire",
+            "source_type": "wire",
+            "source_url": "https://apnews.com/article/pwhl-expansion-signing",
+            "sport_league": "PWHL",
+            "title": "Hilary Knight signs with PWHL expansion Detroit",
+            "summary": "AP reports a PWHL expansion signing.",
+            "quality_score": "82",
+            "freshness_label": "today",
+        }
+    ]
+    path_payload = module.story_path_payload(rows)
+    readiness_payload = module.story_readiness_payload(rows, path_payload)
+    second_source = module.second_source_payload(rows, registry, path_payload, readiness_payload)
+
+    assert second_source["source_id"] == "reuters_sports_wire"
+    assert second_source["source_lane"] == "wire"
+    assert second_source["source_id"] != "nwsl_official_news"

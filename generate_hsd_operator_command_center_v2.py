@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.9.0-readiness-cues"
+VERSION = "hsd-operator-command-center-v3.10.0-second-source-pairing"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -354,6 +354,11 @@ def source_discovery_board() -> List[Dict[str, str]]:
                 "story_opportunity_confirmation_cue": clean(row.get("story_opportunity_confirmation_cue")),
                 "story_opportunity_asset_cue": clean(row.get("story_opportunity_asset_cue")),
                 "story_opportunity_readiness_note": short(clean(row.get("story_opportunity_readiness_note")), 220),
+                "story_opportunity_second_source_id": clean(row.get("story_opportunity_second_source_id")),
+                "story_opportunity_second_source_url": clean(row.get("story_opportunity_second_source_url")),
+                "story_opportunity_second_source_lane": clean(row.get("story_opportunity_second_source_lane")),
+                "story_opportunity_second_source_reason": short(clean(row.get("story_opportunity_second_source_reason")), 220),
+                "story_opportunity_second_source_action": short(clean(row.get("story_opportunity_second_source_action")), 220),
                 "promotion": first_present(row.get("promotion_recommendation"), default="monitor_only"),
                 "promotion_priority": first_present(row.get("promotion_priority"), default="P4"),
                 "promotion_target": clean(row.get("promotion_target")),
@@ -402,6 +407,11 @@ def lead_promotion_recommendations() -> List[Dict[str, str]]:
                 "story_opportunity_confirmation_cue": clean(row.get("story_opportunity_confirmation_cue")),
                 "story_opportunity_asset_cue": clean(row.get("story_opportunity_asset_cue")),
                 "story_opportunity_readiness_note": short(clean(row.get("story_opportunity_readiness_note")), 220),
+                "story_opportunity_second_source_id": clean(row.get("story_opportunity_second_source_id")),
+                "story_opportunity_second_source_url": clean(row.get("story_opportunity_second_source_url")),
+                "story_opportunity_second_source_lane": clean(row.get("story_opportunity_second_source_lane")),
+                "story_opportunity_second_source_reason": short(clean(row.get("story_opportunity_second_source_reason")), 220),
+                "story_opportunity_second_source_action": short(clean(row.get("story_opportunity_second_source_action")), 220),
                 "quality_score": clean(row.get("quality_score")),
                 "freshness_label": clean(row.get("freshness_label")),
                 "freshness_source": clean(row.get("freshness_source")),
@@ -535,11 +545,19 @@ def build_next_actions(
             readiness_note = f"Readiness: {readiness_note}. "
         if promo.get("story_opportunity_readiness_note"):
             readiness_note += f"{promo['story_opportunity_readiness_note']} "
+        second_source_note = ""
+        if promo.get("story_opportunity_second_source_id"):
+            second_source_note = (
+                f"Suggested second source: {promo['story_opportunity_second_source_id']} "
+                f"({promo.get('story_opportunity_second_source_lane') or 'source_review'}). "
+            )
+        elif promo.get("story_opportunity_second_source_lane") == "already_covered":
+            second_source_note = "Second-source status: already covered by distinct free sources. "
         add_action(
             "Lead promotion",
             "Editor",
             f"Promote source lead toward {promo['recommendation']}: {promo['title']}",
-            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {opportunity_note}{angle_note}{readiness_note}{evidence_note}{promo.get('next_step') or promo.get('reason')}",
+            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {opportunity_note}{angle_note}{readiness_note}{second_source_note}{evidence_note}{promo.get('next_step') or promo.get('reason')}",
             promo["artifact"],
         )
 
@@ -560,6 +578,7 @@ def build_next_actions(
                 f"{lead.get('story_opportunity_reason') + ' ' if lead.get('story_opportunity_reason') else ''}"
                 f"{'Angle: ' + lead.get('story_opportunity_angle') + '. ' if lead.get('story_opportunity_angle') else ''}"
                 f"{'Readiness: ' + lead.get('story_opportunity_confidence_tier') + ' / ' + lead.get('story_opportunity_source_coverage') + ' / ' + lead.get('story_opportunity_confirmation_cue') + '. ' if lead.get('story_opportunity_confidence_tier') else ''}"
+                f"{'Suggested second source: ' + lead.get('story_opportunity_second_source_id') + '. ' if lead.get('story_opportunity_second_source_id') else ''}"
                 f"{lead.get('detail') or ''} {lead.get('next_action') or ''}"
             ).strip(),
             lead["artifact"],
@@ -776,6 +795,10 @@ def build_payload() -> Dict[str, Any]:
             ),
         ),
         metric(
+            "Second-source suggestions",
+            sum(1 for row in opportunity_representatives.values() if row.get("story_opportunity_second_source_id")),
+        ),
+        metric(
             "Studio asset checks",
             sum(1 for row in opportunity_representatives.values() if row.get("story_opportunity_asset_cue") == "asset_check_required_before_studio"),
         ),
@@ -965,6 +988,11 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
                 f" / cue: {html.escape(row.get('story_opportunity_confirmation_cue') or 'n/a')}"
                 f" / assets: {html.escape(row.get('story_opportunity_asset_cue') or 'n/a')}"
             )
+        second_source_note = ""
+        if row.get("story_opportunity_second_source_id") or row.get("story_opportunity_second_source_lane"):
+            second_source_note = (
+                f" / second source: {html.escape(row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a')}"
+            )
         cards.append(
             f"""
             <article class="content-row">
@@ -973,7 +1001,7 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
                 <h3>{html.escape(row['title'])}</h3>
                 {detail_html}
                 {next_html}
-                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}</small>
+                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}{second_source_note}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -1009,6 +1037,11 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
                 f" / cue: {html.escape(row.get('story_opportunity_confirmation_cue') or 'n/a')}"
                 f" / assets: {html.escape(row.get('story_opportunity_asset_cue') or 'n/a')}"
             )
+        second_source_note = ""
+        if row.get("story_opportunity_second_source_id") or row.get("story_opportunity_second_source_lane"):
+            second_source_note = (
+                f" / second source: {html.escape(row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a')}"
+            )
         cards.append(
             f"""
             <article class="content-row">
@@ -1017,7 +1050,7 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
                 <h3>{html.escape(row['title'])}</h3>
                 {detail_html}
                 {next_html}
-                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}</small>
+                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}{second_source_note}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -1389,12 +1422,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Lead promotion recommendations", ""]
     lines.extend(
-        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or '1'} source(s) | angle: {item.get('story_opportunity_angle') or 'review'} | path: {item.get('story_opportunity_recommended_path') or item.get('recommendation') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'review'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
+        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or '1'} source(s) | angle: {item.get('story_opportunity_angle') or 'review'} | path: {item.get('story_opportunity_recommended_path') or item.get('recommendation') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'review'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
         for item in payload["lead_promotion_recommendations"]
     )
     lines += ["", "## Morning source discovery", ""]
     lines.extend(
-        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | angle: {item.get('story_opportunity_angle') or 'n/a'} | path: {item.get('story_opportunity_recommended_path') or item.get('promotion') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'n/a'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
+        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | angle: {item.get('story_opportunity_angle') or 'n/a'} | path: {item.get('story_opportunity_recommended_path') or item.get('promotion') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'n/a'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
     )
     lines += ["", "## Studio queue", ""]

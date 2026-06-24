@@ -42,7 +42,7 @@ Review runs now refresh the intake layer first:
 - Generic source scans remain `monitor_only` until a concrete lead appears.
 - Discovery leads carry `quality_score`, `freshness_label`, `freshness_source`, `evidence_preview`, `freshness_score`, `urgency_score`, and `quality_reason` so current high-signal leads outrank stale or evergreen items.
 - Related official and wire leads are grouped into `story_opportunity_*` fields so duplicate coverage becomes one operator-ready promotion recommendation while the original source rows stay reviewable.
-- Story opportunities include a cleaner headline, an editorial angle, an advisory News-vs-Studio path, source coverage, confidence, confirmation, and asset-readiness cues for manual follow-up.
+- Story opportunities include a cleaner headline, an editorial angle, an advisory News-vs-Studio path, source coverage, confidence, confirmation, asset-readiness cues, and a suggested free second source for manual follow-up when the opportunity is not fully covered.
 
 Article metadata sampling is capped by `HSD_DISCOVERY_MAX_ARTICLE_DATE_FETCHES_PER_SOURCE` and can be disabled with `HSD_DISCOVERY_ENABLE_ARTICLE_DATE_FETCH=false`. It uses free public page metadata only and does not publish, promote, or call paid APIs.
 
@@ -68,9 +68,10 @@ The daily command center now shows:
 - Lead promotion count and News/manual/Studio split.
 - Story opportunity count and grouped opportunity count.
 - Publish-grade opportunity, source-check, and Studio asset-check counts.
+- Second-source suggestion counts for opportunities that need another official, wire, or reputable cross-check source.
 - High-quality lead count and fresh lead count.
 - A Sources tab with the morning board.
-- Lead promotion recommendations with metadata evidence previews, story angle, source coverage, readiness cues, target artifacts, and next steps.
+- Lead promotion recommendations with metadata evidence previews, story angle, source coverage, readiness cues, suggested second-source checks, target artifacts, and next steps.
 - A next-action item when a manual, social, discovery, or News Sync source lead needs review.
 
 This makes the morning workflow less scattered: leads can come from free official sources, wire context, public gray-area/social discovery, or manual intake, but they all land in one review-safe place.

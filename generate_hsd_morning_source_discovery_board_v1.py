@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.7-readiness-cues"
+VERSION = "hsd-morning-source-discovery-board-v1.8-second-source-pairing"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -51,6 +51,11 @@ FIELDS = [
     "story_opportunity_confirmation_cue",
     "story_opportunity_asset_cue",
     "story_opportunity_readiness_note",
+    "story_opportunity_second_source_id",
+    "story_opportunity_second_source_url",
+    "story_opportunity_second_source_lane",
+    "story_opportunity_second_source_reason",
+    "story_opportunity_second_source_action",
     "source_artifact",
     "next_action",
     "reason",
@@ -358,6 +363,177 @@ def story_readiness_payload(rows: List[Dict[str, str]], path_payload: Dict[str, 
         "confirmation_cue": confirmation_cue,
         "asset_cue": asset_cue,
         "readiness_note": readiness_note,
+    }
+
+
+def source_domain(source: Dict[str, Any]) -> str:
+    domains = source.get("domains") or []
+    if domains:
+        return norm(domains[0])
+    url = source_url_from_registry(source)
+    if not url:
+        return ""
+    try:
+        return norm(urlsplit(url).netloc).removeprefix("www.")
+    except Exception:
+        return ""
+
+
+def url_domain(url: str) -> str:
+    try:
+        return norm(urlsplit(canonicalize(url)).netloc).removeprefix("www.")
+    except Exception:
+        return ""
+
+
+def normalized_source_candidates(registry: Dict[str, Any]) -> List[Dict[str, str]]:
+    candidates: List[Dict[str, str]] = []
+    for source in registry.get("sources", []):
+        if not source.get("enabled"):
+            continue
+        band = trust_band_from_values(source.get("trust_band"), source.get("tier"), source.get("source_type"))
+        if band == "red":
+            continue
+        lane = lane_for(source.get("source_type"), band, "config/source_registry.json")
+        if lane not in {"official_free", "wire", "free_cross_check"}:
+            continue
+        url = source_url_from_registry(source)
+        candidates.append(
+            {
+                "source_id": clean(source.get("source_id")),
+                "source_type": clean(source.get("source_type")),
+                "lane": lane,
+                "trust_band": band,
+                "sport_league": clean(source.get("sport_league") or "all"),
+                "url": url,
+                "domain": source_domain(source),
+                "allowed_use": " ".join(clean(item) for item in source.get("allowed_use", [])),
+                "publish_policy": clean(source.get("publish_policy")),
+            }
+        )
+    return candidates
+
+
+def league_signal(rows: List[Dict[str, str]]) -> str:
+    text = " ".join(
+        clean(value)
+        for row in rows
+        for value in [row.get("sport_league"), row.get("title"), row.get("summary"), row.get("source_name"), row.get("evidence_title")]
+        if clean(value)
+    )
+    low = norm(text)
+    if "wnba" in low or "liberty" in low or "aces" in low or "sky" in low or "storm" in low:
+        return "wnba"
+    if "wta" in low or "tennis" in low or "wimbledon" in low or "swiatek" in low:
+        return "wta"
+    if "nwsl" in low or "soccer" in low or "uswnt" in low:
+        return "nwsl"
+    if "lpga" in low or "golf" in low or "korda" in low:
+        return "lpga"
+    if "pwhl" in low or "phwl" in low or "sceptres" in low or "frost" in low:
+        return "pwhl"
+    if "ncaa" in low or "softball" in low:
+        return "ncaa"
+    if "volleyball" in low or "vnl" in low:
+        return "volleyball"
+    return ""
+
+
+def source_matches_league(candidate: Dict[str, str], league: str) -> bool:
+    if not league:
+        return False
+    text = norm(" ".join([candidate.get("source_id", ""), candidate.get("sport_league", ""), candidate.get("allowed_use", "")]))
+    if league == "volleyball":
+        return "volleyball" in text or "vnl" in text
+    return league in text
+
+
+def second_source_payload(
+    rows: List[Dict[str, str]],
+    registry: Dict[str, Any],
+    path_payload: Dict[str, str],
+    readiness_payload: Dict[str, str],
+) -> Dict[str, str]:
+    existing_sources = {norm(row.get("source_name")) for row in rows if clean(row.get("source_name"))}
+    existing_domains = {url_domain(row.get("source_url", "")) for row in rows if url_domain(row.get("source_url", ""))}
+    if readiness_payload["confirmation_cue"] in {"official_and_wire_confirmed", "source_backed"} and len(existing_sources) >= 2:
+        return {
+            "source_id": "",
+            "source_url": "",
+            "source_lane": "already_covered",
+            "source_reason": "Opportunity already has distinct free source coverage.",
+            "source_action": "Fact-lock the existing grouped links before drafting.",
+        }
+
+    text = norm(opportunity_text(rows))
+    league = league_signal(rows)
+    existing_has_official = any(row.get("lane") == "official_free" or "official" in norm(row.get("source_type")) for row in rows)
+    existing_has_wire = any(row.get("lane") == "wire" or "wire" in norm(row.get("source_type")) for row in rows)
+    result_like = path_payload["recommended_path"] == "studio_brief" or has_any(text, ["final score", "beat", "beats", "wins", "leaderboard", "preview", "matchup"])
+    news_like = path_payload["recommended_path"] == "news_packet"
+
+    scored: List[tuple[int, str, Dict[str, str], str]] = []
+    for candidate in normalized_source_candidates(registry):
+        candidate_id = norm(candidate.get("source_id"))
+        candidate_domain = norm(candidate.get("domain"))
+        if not candidate_id or candidate_id in existing_sources:
+            continue
+        if candidate_domain and candidate_domain in existing_domains:
+            continue
+        if candidate.get("lane") == "official_free" and league and not source_matches_league(candidate, league):
+            continue
+
+        score = 0
+        reasons: List[str] = []
+        if source_matches_league(candidate, league):
+            score += 30
+            reasons.append("same league/sport lane")
+        elif candidate.get("sport_league", "").lower() == "all":
+            score += 8
+            reasons.append("all-sport free source")
+
+        lane = candidate.get("lane")
+        allowed = norm(candidate.get("allowed_use"))
+        if existing_has_official and lane == "wire":
+            score += 28
+            reasons.append("adds wire confirmation to official lead")
+        if existing_has_wire and lane == "official_free":
+            score += 28
+            reasons.append("adds official confirmation to wire lead")
+        if result_like and (lane == "free_cross_check" or has_any(allowed, ["score", "result", "schedule", "leaderboard", "stats"])):
+            score += 20
+            reasons.append("good result/schedule cross-check")
+        if news_like and lane == "official_free" and has_any(allowed, ["official_news", "press_release", "transaction", "roster", "team_news"]):
+            score += 18
+            reasons.append("official news/roster confirmation")
+        if lane == "wire" and not existing_has_wire:
+            score += 14
+        if lane == "official_free" and not existing_has_official:
+            score += 14
+        if lane == "free_cross_check":
+            score += 6
+
+        if score <= 0:
+            continue
+        reason = "; ".join(reasons[:3]) or "free source can support manual verification"
+        scored.append((score, candidate.get("source_id", ""), candidate, reason))
+
+    if not scored:
+        return {
+            "source_id": "",
+            "source_url": "",
+            "source_lane": "operator_pick",
+            "source_reason": "No configured distinct free source matched this opportunity strongly.",
+            "source_action": "Pick a free official, wire, or reputable cross-check source manually before promotion.",
+        }
+
+    _, _, winner, reason = sorted(scored, key=lambda item: (-item[0], item[1]))[0]
+    return {
+        "source_id": winner["source_id"],
+        "source_url": winner["url"],
+        "source_lane": winner["lane"],
+        "source_reason": reason,
+        "source_action": f"Open {winner['source_id']} and confirm the same fact before drafting.",
     }
 
 
@@ -693,6 +869,11 @@ def make_row(
         "story_opportunity_confirmation_cue": "",
         "story_opportunity_asset_cue": "",
         "story_opportunity_readiness_note": "",
+        "story_opportunity_second_source_id": "",
+        "story_opportunity_second_source_url": "",
+        "story_opportunity_second_source_lane": "",
+        "story_opportunity_second_source_reason": "",
+        "story_opportunity_second_source_action": "",
         "source_artifact": source_artifact,
         "next_action": next_action_for(lane, posture, reason),
         "reason": reason,
@@ -895,7 +1076,7 @@ def opportunity_sort_key(row: Dict[str, str]) -> tuple[int, int, int, int, str]:
     )
 
 
-def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str, str]]]:
+def assign_story_opportunities(rows: List[Dict[str, str]], registry: Dict[str, Any]) -> List[List[Dict[str, str]]]:
     clusters: List[List[Dict[str, str]]] = []
     for row in rows:
         if not clusterable_story_row(row):
@@ -925,6 +1106,7 @@ def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str
         opportunity_title = opportunity_headline(ranked)
         path_payload = story_path_payload(ranked)
         readiness_payload = story_readiness_payload(ranked, path_payload)
+        second_source = second_source_payload(ranked, registry, path_payload, readiness_payload)
         opportunity_reason = (
             f"Grouped {len(cluster)} related official/wire discovery leads from {', '.join(sources)}."
             if len(cluster) > 1
@@ -945,6 +1127,11 @@ def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str
             row["story_opportunity_confirmation_cue"] = readiness_payload["confirmation_cue"]
             row["story_opportunity_asset_cue"] = readiness_payload["asset_cue"]
             row["story_opportunity_readiness_note"] = readiness_payload["readiness_note"]
+            row["story_opportunity_second_source_id"] = second_source["source_id"]
+            row["story_opportunity_second_source_url"] = second_source["source_url"]
+            row["story_opportunity_second_source_lane"] = second_source["source_lane"]
+            row["story_opportunity_second_source_reason"] = second_source["source_reason"]
+            row["story_opportunity_second_source_action"] = second_source["source_action"]
     return clusters
 
 
@@ -972,6 +1159,9 @@ def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
             promoted["promotion_target"] = PATH_TARGETS.get(recommended_path, promoted["promotion_target"])
             promoted["promotion_reason"] = clean(promoted.get("story_opportunity_path_reason")) or promoted["promotion_reason"]
             readiness_note = clean(promoted.get("story_opportunity_readiness_note"))
+            second_source_action = clean(promoted.get("story_opportunity_second_source_action"))
+            if clean(promoted.get("story_opportunity_confirmation_cue")) == "needs_second_source" and second_source_action:
+                readiness_note = f"{readiness_note} {second_source_action}".strip()
             if recommended_path == "studio_brief":
                 promoted["promotion_next_step"] = readiness_note or "Review the source facts and asset readiness, then draft a Studio brief manually."
             elif recommended_path == "news_packet":
@@ -981,10 +1171,11 @@ def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
             promoted["promotion_reason"] = (
                 f"{promoted['story_opportunity_reason']} "
                 f"{promoted.get('story_opportunity_path_reason') or 'Review the grouped evidence before choosing the final angle.'} "
-                f"{promoted.get('story_opportunity_readiness_note') or ''}"
+                f"{promoted.get('story_opportunity_readiness_note') or ''} "
+                f"{promoted.get('story_opportunity_second_source_reason') or ''}"
             )
             promoted["promotion_next_step"] = (
-                promoted.get("story_opportunity_readiness_note")
+                promoted.get("promotion_next_step")
                 or "Review the grouped official/wire links, confirm the opportunity angle, then draft or refresh the target artifact manually."
             )
         out.append(promoted)
@@ -1000,7 +1191,7 @@ def build_payload() -> Dict[str, Any]:
         + rows_from_news_observations()
         + rows_from_registry_scans(registry)
     )
-    story_opportunities = assign_story_opportunities(rows)
+    story_opportunities = assign_story_opportunities(rows, registry)
     counts = {
         "total": len(rows),
         "manual_leads": sum(1 for row in rows if row["lane"] == "manual_lead"),
@@ -1030,6 +1221,9 @@ def build_payload() -> Dict[str, Any]:
         ),
         "story_opportunities_need_asset_check": sum(
             1 for cluster in story_opportunities if cluster and cluster[0].get("story_opportunity_asset_cue") == "asset_check_required_before_studio"
+        ),
+        "story_opportunities_with_second_source_suggestion": sum(
+            1 for cluster in story_opportunities if cluster and clean(cluster[0].get("story_opportunity_second_source_id"))
         ),
     }
     promotions = promotion_rows(rows)
@@ -1078,6 +1272,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Story opportunities needing second source: `{counts['story_opportunities_need_second_source']}`",
         f"- Story opportunities needing official confirmation: `{counts['story_opportunities_need_official_confirmation']}`",
         f"- Story opportunities needing asset check: `{counts['story_opportunities_need_asset_check']}`",
+        f"- Story opportunities with second-source suggestion: `{counts['story_opportunities_with_second_source_suggestion']}`",
         "",
         "## Promotion Recommendations",
         "",
@@ -1091,6 +1286,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
             f"coverage `{row.get('story_opportunity_source_coverage') or 'n/a'}` | "
             f"cue `{row.get('story_opportunity_confirmation_cue') or 'n/a'}` | "
             f"assets `{row.get('story_opportunity_asset_cue') or 'n/a'}` | "
+            f"second source `{row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a'}` | "
             f"opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | {row['promotion_next_step']}"
         )
     if not payload["promotion_recommendations"]:
@@ -1107,6 +1303,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
             f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'n/a'}` | "
             f"confidence `{row.get('story_opportunity_confidence_tier') or 'n/a'}` | "
             f"coverage `{row.get('story_opportunity_source_coverage') or 'n/a'}` | "
+            f"second source `{row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a'}` | "
             f"opportunity `{row.get('story_opportunity_size') or 'n/a'}` | {row['next_action']}"
         )
     if not payload["rows"]:
@@ -1158,6 +1355,7 @@ def render_promotion_markdown(payload: Dict[str, Any]) -> str:
             f"coverage `{row.get('story_opportunity_source_coverage') or 'n/a'}` | "
             f"cue `{row.get('story_opportunity_confirmation_cue') or 'n/a'}` | "
             f"assets `{row.get('story_opportunity_asset_cue') or 'n/a'}` | "
+            f"second source `{row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a'}` | "
             f"opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | "
             f"target: `{row['promotion_target']}` | {row['promotion_reason']}"
         )
