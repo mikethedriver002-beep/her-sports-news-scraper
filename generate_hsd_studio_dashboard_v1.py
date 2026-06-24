@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import csv
 import html
 import re
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Dict, List
+
+from hsd_run_io import output_path, read_csv as read_run_csv, read_text as read_run_text, write_text
 
 QUEUE = "studio_graphics_queue.csv"
 BUNDLES = "studio_bundle_queue.csv"
@@ -13,7 +13,7 @@ CENTER = "studio_command_center.md"
 TOP = "studio_top_graphic_packets.md"
 SCHEDULE = "studio_post_schedule.md"
 CHECKLIST = "studio_accuracy_checklist.csv"
-OUT_DIR = Path("studio_dashboard")
+OUT_DIR = output_path("studio_dashboard")
 OUT_FILE = OUT_DIR / "index.html"
 
 
@@ -26,16 +26,11 @@ def esc(value) -> str:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
-    if not p.exists():
-        return []
-    with p.open(newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+    return read_run_csv(path)
 
 
 def read_text(path: str) -> str:
-    p = Path(path)
-    return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+    return read_run_text(path)
 
 
 def bundle_cards(rows: List[Dict[str, str]]) -> str:
@@ -152,8 +147,7 @@ th {{ color:var(--text); }}
 </main>
 </body>
 </html>"""
-    OUT_DIR.mkdir(exist_ok=True)
-    OUT_FILE.write_text(doc, encoding="utf-8")
+    write_text(OUT_FILE, doc, encoding="utf-8")
     print(f"Created {OUT_FILE}")
 
 

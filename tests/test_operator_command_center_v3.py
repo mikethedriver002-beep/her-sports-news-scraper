@@ -175,3 +175,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "launch_instagram_publish_queue.csv" in runner
     assert "launch_quality_gate.csv" in runner
     assert "launch_manifest.json" in runner
+    assert "results_dashboard/index.html" in runner
+    assert "studio_dashboard/index.html" in runner
+    command_center = (REPO / "generate_hsd_operator_command_center_v2.py").read_text(encoding="utf-8")
+    assert "Results drill-down dashboard" in command_center
+    assert "Studio drill-down dashboard" in command_center

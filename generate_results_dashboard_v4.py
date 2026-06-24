@@ -1,18 +1,18 @@
 
 from __future__ import annotations
 
-import csv
 import html
 import re
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Dict, List
+
+from hsd_run_io import output_path, read_csv as read_run_csv, read_text as read_run_text, write_text
 
 RECONCILED_FILE = "reconciled_events.csv"
 SOURCE_HEALTH_FILE = "source_health_report.csv"
 HUB_FILE = "results_system_hub.md"
 GRAPHICS_QUEUE_FILE = "results_graphics_queue.md"
-OUTPUT_DIR = Path("results_dashboard")
+OUTPUT_DIR = output_path("results_dashboard")
 OUTPUT_FILE = OUTPUT_DIR / "index.html"
 
 
@@ -25,16 +25,11 @@ def esc(value) -> str:
 
 
 def load_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
-    if not p.exists():
-        return []
-    with p.open(newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+    return read_run_csv(path)
 
 
 def load_text(path: str) -> str:
-    p = Path(path)
-    return p.read_text(encoding="utf-8") if p.exists() else ""
+    return read_run_text(path)
 
 
 def card_grid(rows: List[Dict[str, str]], empty: str = "Nothing to show.") -> str:
@@ -147,8 +142,7 @@ th {{ color:var(--text); }}
 </main>
 </body></html>"""
 
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    OUTPUT_FILE.write_text(doc, encoding="utf-8")
+    write_text(OUTPUT_FILE, doc, encoding="utf-8")
     print(f"Created {OUTPUT_FILE}")
 
 

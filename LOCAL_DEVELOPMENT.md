@@ -8,6 +8,7 @@ This repo now has a local control command:
 .\hsd.ps1 test
 .\hsd.ps1 run -Mode results
 .\hsd.ps1 run -Mode full
+.\hsd.ps1 run -Mode dashboards
 .\hsd.ps1 dashboard
 ```
 
@@ -110,6 +111,14 @@ It does not publish, push to Git, call paid APIs, or run hidden handoff refresh 
 
 The old generic `generate_hsd_dashboard.py` path has been replaced by the command center. If it is run directly, it only creates a compatibility page that points back to `operator_command_center.html`.
 
+Results and Studio drill-down dashboards are still available when you deliberately want a close-up view:
+
+```powershell
+.\hsd.cmd run -Mode dashboards
+```
+
+That mode creates `results_dashboard/index.html` and `studio_dashboard/index.html` inside the run folder, then refreshes the command center. It does not publish, call paid APIs, or run as part of `full`.
+
 ## Useful Modes
 
 - `results`: free/public Results Desk v5 path.
@@ -122,6 +131,7 @@ The old generic `generate_hsd_dashboard.py` path has been replaced by the comman
 - `handoff`: manual inbox to handoff packs, then review command center.
 - `posts`: multi-post daily board and platform queues, then review command center.
 - `launch`: Launch Control runbook, publish queue, quality gates, dashboards, and review command center.
+- `dashboards`: optional Results and Studio drill-down dashboards, then review command center.
 
 The old `womens_sports_scraper.py` file remains as a standalone legacy reference, but it is no longer an active local runner mode. If that path is revived later, it should be rebuilt to write through `HSD_RUN_OUTPUT_DIR` before returning to the daily workflow.
 

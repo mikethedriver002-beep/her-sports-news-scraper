@@ -32,6 +32,8 @@ def test_direct_run_generators_are_wired_to_shared_run_io() -> None:
         "scripts/generate_hsd_expected_games_v5.py": ["from hsd_run_io import", 'OUTPUT_FILE = output_path("config/hsd_expected_games_v5.csv")', "canonical_config_note"],
         "scripts/verify_hsd_wnba_schedule_independent_v5.py": ["from hsd_run_io import", 'OUT_JSON = output_path("independent_schedule_verification_v5.json")', "write_json(OUT_JSON"],
         "generate_news_dashboard_v1.py": ["from hsd_run_io import", 'OUTPUT_DIR = output_path("news_dashboard")', "write_text(OUTPUT_FILE"],
+        "generate_results_dashboard_v4.py": ["from hsd_run_io import", 'OUTPUT_DIR = output_path("results_dashboard")', "write_text(OUTPUT_FILE"],
+        "generate_hsd_studio_dashboard_v1.py": ["from hsd_run_io import", 'OUT_DIR = output_path("studio_dashboard")', "write_text(OUT_FILE"],
         "generate_hsd_studio_bridge_v1.py": ["from hsd_run_io import", "input_candidates(path)", "write_run_json(OUT_MANIFEST"],
         "generate_hsd_tonight_preview_bridge_v1.py": ["from hsd_run_io import", 'write_json("studio_preview_build_v2.json"', 'write_csv("studio_bundle_queue.csv"'],
         "generate_hsd_preview_quality_gate_v1.py": ["from hsd_run_io import", "write_text(\"preview_bundle_quality.md\""],
