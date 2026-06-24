@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[1]
+WRAPPER = REPO / "hsd.ps1"
 RUNNER = REPO / "scripts" / "hsd_local.ps1"
 DOC = REPO / "LOCAL_DEVELOPMENT.md"
 
@@ -63,6 +64,17 @@ def test_local_run_manifest_preserves_free_manual_policy() -> None:
     assert "paid_apis_disabled = $true" in text
     assert '$env:HSD_PAID_APIS_DISABLED = "1"' in text
     assert '$env:HSD_SOURCE_COST_MODE = "free_first"' in text
+
+
+def test_legacy_scraper_is_retired_from_active_local_runner() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"scraper"' not in runner
+    assert "womens_sports_scraper.py" not in runner
+    assert '"scraper"' not in wrapper
+    assert "no longer an active local runner mode" in doc
 
 
 def test_local_development_docs_describe_run_scoped_outputs() -> None:

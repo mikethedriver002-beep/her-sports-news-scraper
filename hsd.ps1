@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "review", "scraper")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
