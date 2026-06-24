@@ -27,22 +27,45 @@ function Stop-Hsd([string]$Message, [int]$Code = 2) {
     throw [System.OperationCanceledException]::new("__HSD_STOP__")
 }
 
-function Test-Python([string]$Exe, [string[]]$PrefixArgs = @()) {
-    if ([IO.Path]::IsPathRooted($Exe)) {
-        if (-not (Test-Path -LiteralPath $Exe -PathType Leaf)) { return $null }
+function New-PythonCandidate([string]$Exe, [string[]]$PrefixArgs = @()) {
+    return [pscustomobject]@{
+        Exe = $Exe
+        PrefixArgs = $PrefixArgs
+    }
+}
+
+function Test-Python($Candidate) {
+    if (-not $Candidate -or -not $Candidate.Exe) {
+        return $null
+    }
+
+    $exe = [string]$Candidate.Exe
+    $prefix = @($Candidate.PrefixArgs)
+
+    if ([IO.Path]::IsPathRooted($exe)) {
+        if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { return $null }
     } else {
-        $cmd = Get-Command $Exe -ErrorAction SilentlyContinue
+        $cmd = Get-Command $exe -ErrorAction SilentlyContinue
         if (-not $cmd -or $cmd.Source -like "*\WindowsApps\python*.exe") { return $null }
     }
 
     $probe = "import json,sys; print(json.dumps({'executable':sys.executable,'version':'.'.join(str(x) for x in sys.version_info[:3]),'ok':sys.version_info[:2] >= (3, 11)})); raise SystemExit(0 if sys.version_info[:2] >= (3, 11) else 9)"
     try {
-        $args = @($PrefixArgs) + @("-c", $probe)
-        $out = & $Exe @args 2>$null
+        $args = @()
+        $args += $prefix
+        $args += "-c"
+        $args += $probe
+        $out = & $exe @args 2>$null
         if ($LASTEXITCODE -ne 0 -or -not $out) { return $null }
         $payload = $out | Select-Object -First 1 | ConvertFrom-Json
         if (-not $payload.ok) { return $null }
-        return [pscustomobject]@{ Exe = $Exe; PrefixArgs = @($PrefixArgs); Executable = [string]$payload.executable; Version = [string]$payload.version; Display = (($Exe, $PrefixArgs | Where-Object { $_ }) -join " ") }
+        return [pscustomobject]@{
+            Exe = $exe
+            PrefixArgs = $prefix
+            Executable = [string]$payload.executable
+            Version = [string]$payload.version
+            Display = (($exe, $prefix | Where-Object { $_ }) -join " ")
+        }
     } catch {
         return $null
     }
@@ -51,17 +74,17 @@ function Test-Python([string]$Exe, [string[]]$PrefixArgs = @()) {
 function Find-HsdPython {
     $candidates = @()
     $venvPython = Join-Path $Root ".venv\Scripts\python.exe"
-    if (Test-Path -LiteralPath $venvPython) { $candidates += ,@($venvPython, @()) }
-    $candidates += ,@("py", @("-3.11"))
-    $candidates += ,@("python", @())
-    $candidates += ,@("python3", @())
+    if (Test-Path -LiteralPath $venvPython) { $candidates += New-PythonCandidate -Exe $venvPython }
+    $candidates += New-PythonCandidate -Exe "py" -PrefixArgs @("-3.11")
+    $candidates += New-PythonCandidate -Exe "python"
+    $candidates += New-PythonCandidate -Exe "python3"
     if ($env:LOCALAPPDATA) {
-        $candidates += ,@(Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\python.exe", @())
-        $candidates += ,@(Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe", @())
+        $candidates += New-PythonCandidate -Exe (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\python.exe")
+        $candidates += New-PythonCandidate -Exe (Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe")
     }
 
     foreach ($candidate in $candidates) {
-        $found = Test-Python -Exe $candidate[0] -PrefixArgs @($candidate[1])
+        $found = Test-Python $candidate
         if ($found) { return $found }
     }
     return $null
@@ -133,7 +156,7 @@ function Invoke-Setup {
     Write-Section "Create virtual environment"
     $venvPython = Join-Path $Root ".venv\Scripts\python.exe"
     if (-not (Test-Path -LiteralPath $venvPython)) { Invoke-HsdPython -Python $python -CommandArgs @("-m", "venv", ".venv") } else { Write-Host ".venv already exists" }
-    $venv = Test-Python -Exe $venvPython
+    $venv = Test-Python (New-PythonCandidate -Exe $venvPython)
     if (-not $venv) { throw "Virtual environment was created but did not pass the Python 3.11 check." }
     if ($NoInstall) { Write-Host "Skipping dependency install because -NoInstall was provided."; return }
     if (-not $UseNetwork) { Write-Host "Dependency install uses the public Python package index. Rerun with -UseNetwork to install."; return }
