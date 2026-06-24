@@ -4,6 +4,7 @@ import csv
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,15 +12,19 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hsd_run_io import input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 try:
     from zoneinfo import ZoneInfo
 except Exception:  # pragma: no cover
     ZoneInfo = None
 
 VERSION = "v5.2-free-public-expected-games-baseline"
-OUTPUT_FILE = Path("config/hsd_expected_games_v5.csv")
-REPORT = Path("expected_games_v5_report.md")
-MANIFEST = Path("expected_games_v5_manifest.json")
+OUTPUT_FILE = output_path("config/hsd_expected_games_v5.csv")
+REPORT = output_path("expected_games_v5_report.md")
+MANIFEST = output_path("expected_games_v5_manifest.json")
 
 RESULTS_TIMEZONE = os.environ.get("HSD_TIMEZONE", "America/New_York")
 LOOKBACK_DAYS = int(os.environ.get("HSD_LOOKBACK_DAYS", "1"))
@@ -90,19 +95,15 @@ def key_for(sport: str, date: str, home: str, away: str) -> str:
 
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
-    if not path.exists() or not path.is_file():
+    p = input_path(path)
+    if not p.exists() or not p.is_file():
         return []
-    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+    with p.open(newline="", encoding="utf-8", errors="replace") as f:
         return list(csv.DictReader(f))
 
 
 def write_csv(path: Path, rows: Iterable[Dict[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        for row in rows:
-            writer.writerow({field: row.get(field, "") for field in FIELDS})
+    write_run_csv(path, ({field: row.get(field, "") for field in FIELDS} for row in rows), FIELDS)
 
 
 def row_from_game(date: str, home: str, away: str, source_name: str, source_event_id: str = "", source_url: str = "") -> Dict[str, str]:
@@ -189,8 +190,9 @@ def fetch_espn_expected(compact_dates: List[str]) -> Tuple[List[Dict[str, str]],
 def manual_seed_rows() -> Tuple[List[Dict[str, str]], List[str]]:
     rows: List[Dict[str, str]] = []
     files_used: List[str] = []
-    for path in MANUAL_SEED_FILES:
-        raw_rows = read_csv(path)
+    for configured_path in MANUAL_SEED_FILES:
+        path = input_path(configured_path)
+        raw_rows = read_csv(configured_path)
         if not raw_rows:
             continue
         files_used.append(path.as_posix())
@@ -237,6 +239,8 @@ def build_expected_games() -> Tuple[List[Dict[str, str]], Dict[str, Any]]:
     manifest = {
         "version": VERSION,
         "generated_at_utc": now_iso(),
+        "output_scope": "run_scoped" if run_output_dir() else "legacy_root",
+        "run_output_dir": run_output_dir().as_posix() if run_output_dir() else "",
         "input_file": "free_public_espn_wnba_scoreboard",
         "input_source_type": "free_public_external_schedule_baseline",
         "observation_derived": False,
@@ -253,6 +257,7 @@ def build_expected_games() -> Tuple[List[Dict[str, str]], Dict[str, Any]]:
         "free_only": True,
         "paid_sources_required": False,
         "network_used": True,
+        "canonical_config_note": "When HSD_RUN_OUTPUT_DIR is set, config/hsd_expected_games_v5.csv is a run-folder review copy. Promote it to canonical config only after manual review.",
         "notes": "Expected games are generated from a free public schedule endpoint plus optional local manual reviewed seeds. They are not derived from source_observations.csv.",
     }
     return rows, manifest
@@ -291,13 +296,13 @@ def write_report(rows: List[Dict[str, str]], manifest: Dict[str, Any]) -> None:
         f"- {row['date']} | {row['away_team']} at {row['home_team']} | `{row['expected_key']}` | {row.get('source_name')}"
         for row in rows
     ] or ["No expected games were generated for the configured date window."]
-    REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text(REPORT, "\n".join(lines) + "\n")
 
 
 def main() -> None:
     rows, manifest = build_expected_games()
     write_csv(OUTPUT_FILE, rows)
-    MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    write_json(MANIFEST, manifest, sort_keys=True)
     write_report(rows, manifest)
     print(json.dumps({"expected_games": len(rows), "source_available": manifest.get("source_available")}, indent=2))
 

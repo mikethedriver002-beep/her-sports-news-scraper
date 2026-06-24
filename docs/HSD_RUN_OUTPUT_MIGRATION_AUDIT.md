@@ -2,11 +2,13 @@
 
 ## Decision
 
-Batch 1 asset and graphics generator migration is complete.
+Batch 1 asset/graphics and Batch 2 Results/News support migrations are complete.
 
 The asset-stage generators now read run-folder review copies first and write generated review/upload artifacts into `HSD_RUN_OUTPUT_DIR` during local runs. Legacy root compatibility remains when `HSD_RUN_OUTPUT_DIR` is unset.
 
-Move Batch 2 next: the remaining Results/News support scripts that still write root files.
+The remaining Results/News support scripts now write generated reports, dashboards, and expected-games review copies into `HSD_RUN_OUTPUT_DIR` during local runs.
+
+Move Batch 3 next: the legacy scraper output path.
 
 Guardrails stay unchanged:
 
@@ -38,17 +40,17 @@ Separate generated review/upload artifacts from canonical asset registry or appr
 
 ## Batch 2: Results And News Support Outputs
 
-Recommended after Batch 1:
+Completed run-aware migration:
 
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`
 
-Why second:
+What changed:
 
-- These still write root support reports during the Results and News path.
-- They have fewer output surfaces than the asset/graphics stage.
-- They should be easier to route through `hsd_run_io`.
+- `scripts/generate_hsd_expected_games_v5.py` writes `config/hsd_expected_games_v5.csv`, its manifest, and its report into the active run folder as review copies.
+- `scripts/verify_hsd_wnba_schedule_independent_v5.py` reads the run-folder expected-games copy first and writes verifier CSV/JSON/MD reports into the run folder.
+- `generate_news_dashboard_v1.py` reads run-folder news inputs first and writes `news_dashboard/index.html` into the run folder.
 
 ## Batch 3: Legacy Scraper
 
@@ -74,6 +76,9 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_player_image_assets_v1.py`
 - `generate_hsd_graphics_upload_pack_v1.py`
 - `generate_hsd_graphics_qa_v1.py`
+- `scripts/generate_hsd_expected_games_v5.py`
+- `scripts/verify_hsd_wnba_schedule_independent_v5.py`
+- `generate_news_dashboard_v1.py`
 - `publish_hsd_guard_v1.py`
 - `generate_hsd_operator_status_v1.py`
 - `generate_hsd_bebe_daily_ops_plan_v2.py`
