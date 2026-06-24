@@ -108,6 +108,8 @@ The command center is a local/manual cockpit. It summarizes:
 
 It does not publish, push to Git, call paid APIs, or run hidden handoff refresh scripts. It reads the current local artifacts and turns them into a daily operating view.
 
+The old generic `generate_hsd_dashboard.py` path has been replaced by the command center. If it is run directly, it only creates a compatibility page that points back to `operator_command_center.html`.
+
 ## Useful Modes
 
 - `results`: free/public Results Desk v5 path.

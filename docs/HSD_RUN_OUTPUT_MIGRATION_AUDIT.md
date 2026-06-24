@@ -151,6 +151,23 @@ What changed:
 - The manual review stage now refreshes this config-only audit before building the command center.
 - The command center now includes a source registry status and next action when review/fail rows exist.
 
+Sixth selected cleanup:
+
+- `generate_hsd_dashboard.py`
+
+Why this was next:
+
+- It was the old generic dashboard for pre-command-center graphics files.
+- The daily command center now owns the operator home base, so keeping a second generic dashboard would create confusion.
+- Lane-specific dashboards can remain focused support views, but the generic dashboard should point operators back to the command center.
+
+What changed:
+
+- `generate_hsd_dashboard.py` now acts as a compatibility entrypoint that writes a replacement notice and `dashboard/index.html` pointer to `operator_command_center.html`.
+- The compatibility outputs write into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- No local runner mode, workflow trigger, paid source, or publishing action was added.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:

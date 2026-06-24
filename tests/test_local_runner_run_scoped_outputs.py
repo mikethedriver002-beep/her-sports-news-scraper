@@ -86,6 +86,7 @@ def test_legacy_scraper_is_retired_from_active_local_runner() -> None:
 
     assert '"scraper"' not in runner
     assert "womens_sports_scraper.py" not in runner
+    assert "generate_hsd_dashboard.py" not in runner
     assert '"scraper"' not in wrapper
     assert "no longer an active local runner mode" in doc
 
