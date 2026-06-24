@@ -262,7 +262,14 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
     ]
     assert len(cluster_promotions) == 1
     assert cluster_promotions[0]["story_opportunity_size"] == "2"
+    assert cluster_promotions[0]["title"] == "Official Liberty roster move before Aces matchup"
+    assert cluster_promotions[0]["story_opportunity_title"] == "Official Liberty roster move before Aces matchup"
+    assert cluster_promotions[0]["story_opportunity_angle"] == "Roster or transaction update"
+    assert cluster_promotions[0]["story_opportunity_recommended_path"] == "news_packet"
+    assert cluster_promotions[0]["promotion_recommendation"] == "news_packet"
+    assert cluster_promotions[0]["promotion_target"] == "news_fact_packets.csv"
     assert "Grouped 2 related official/wire discovery leads" in cluster_promotions[0]["promotion_reason"]
+    assert "Roster or transaction update" in (run_dir / "morning_lead_promotion_recommendations.md").read_text(encoding="utf-8")
     assert payload["counts"]["story_opportunities"] >= 1
     assert payload["counts"]["grouped_story_opportunities"] == 1
     assert payload["policy"]["promotion_mode"] == "manual_recommendation_only"
@@ -277,3 +284,56 @@ def test_morning_source_discovery_board_merges_review_safe_lanes(tmp_path, monke
     assert (run_dir / "morning_lead_promotion_recommendations.json").exists()
     assert not (tmp_path / "morning_source_discovery_board.csv").exists()
     assert not (tmp_path / "morning_lead_promotion_recommendations.csv").exists()
+
+
+def test_story_opportunity_angle_selects_news_vs_studio_paths() -> None:
+    module = load_module()
+    roster_payload = module.story_path_payload(
+        [
+            {
+                "title": "Liberty announce roster move before Aces game",
+                "summary": "The team announced a roster move.",
+                "evidence_title": "Official Liberty roster move",
+                "promotion_hint": "news_packet",
+            }
+        ]
+    )
+    score_payload = module.story_path_payload(
+        [
+            {
+                "title": "Sky beat Storm in final score thriller",
+                "summary": "Chicago wins after late-game shotmaking.",
+                "evidence_title": "Sky beat Storm final score",
+                "promotion_hint": "studio_brief",
+            }
+        ]
+    )
+    tennis_payload = module.story_path_payload(
+        [
+            {
+                "title": "Navarro knocks out top seed Swiatek in Bad Homburg",
+                "summary": "Navarro won in three sets.",
+                "evidence_title": "Navarro knocks out top seed Swiatek",
+                "promotion_hint": "studio_brief",
+            }
+        ]
+    )
+    voting_payload = module.story_path_payload(
+        [
+            {
+                "title": "Boston, Clark Lead After Second Returns of Fan Voting",
+                "summary": "WNBA All-Star fan voting returns are in.",
+                "evidence_title": "Second returns of WNBA All-Star voting",
+                "promotion_hint": "news_packet",
+            }
+        ]
+    )
+
+    assert roster_payload["angle"] == "Roster or transaction update"
+    assert roster_payload["recommended_path"] == "news_packet"
+    assert score_payload["angle"] == "Result or performance angle"
+    assert score_payload["recommended_path"] == "studio_brief"
+    assert tennis_payload["angle"] == "Result or performance angle"
+    assert tennis_payload["recommended_path"] == "studio_brief"
+    assert voting_payload["angle"] == "Voting or award update"
+    assert voting_payload["recommended_path"] == "news_packet"
