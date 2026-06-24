@@ -66,6 +66,32 @@ ARTIFACTS = [
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
 ]
 
+RUN_COMMANDS = {
+    "results_dashboard/index.html": ".\\hsd.cmd run -Mode dashboards",
+    "studio_dashboard/index.html": ".\\hsd.cmd run -Mode dashboards",
+    "graphics_upload_pack_status.csv": ".\\hsd.cmd run -Mode asset",
+    "rendered_slide_qa_report.md": ".\\hsd.cmd run -Mode asset",
+    "ig_story_results_queue.csv": ".\\hsd.cmd run -Mode stories",
+    "ig_story_results_upload_pack_status.csv": ".\\hsd.cmd run -Mode stories",
+    "final_score_story_guard_report.md": ".\\hsd.cmd run -Mode stories",
+    "manual_workflow_handoff.md": ".\\hsd.cmd run -Mode handoff",
+    "manual_workflow_pack_status.csv": ".\\hsd.cmd run -Mode handoff",
+    "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
+    "post_slot_status.csv": ".\\hsd.cmd run -Mode posts",
+    "ig_feed_queue.csv": ".\\hsd.cmd run -Mode posts",
+    "ig_story_queue.csv": ".\\hsd.cmd run -Mode posts",
+    "threads_queue.csv": ".\\hsd.cmd run -Mode posts",
+    "caption_bank.md": ".\\hsd.cmd run -Mode posts",
+    "first_comment_hooks.md": ".\\hsd.cmd run -Mode posts",
+    "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
+    "launch_graphics_chat_brief.md": ".\\hsd.cmd run -Mode launch",
+    "launch_daily_operator_checklist.md": ".\\hsd.cmd run -Mode launch",
+    "launch_7_day_performance_dashboard.md": ".\\hsd.cmd run -Mode launch",
+    "launch_manifest.json": ".\\hsd.cmd run -Mode launch",
+    "launch_dashboard/index.html": ".\\hsd.cmd run -Mode launch",
+    "launch_analytics_dashboard/index.html": ".\\hsd.cmd run -Mode launch",
+}
+
 
 def clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
@@ -175,9 +201,18 @@ def artifact_entries() -> List[Dict[str, Any]]:
                 "exists": p.exists(),
                 "size": p.stat().st_size if p.exists() and p.is_file() else 0,
                 "snippet": snippet,
+                "run_command": "" if p.exists() else RUN_COMMANDS.get(path, ""),
+                "status_detail": "Ready to open" if p.exists() else missing_artifact_detail(path),
             }
         )
     return entries
+
+
+def missing_artifact_detail(path: str) -> str:
+    command = RUN_COMMANDS.get(path, "")
+    if command:
+        return f"Create with `{command}`"
+    return "Not created in this run"
 
 
 def source_health(manifest: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -272,76 +307,114 @@ def build_next_actions(
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
     artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
+    artifact_commands = {row["path"]: clean(row.get("run_command")) for row in artifacts}
     actions: List[Dict[str, str]] = []
     issues = operator.get("issues") or guard.get("issues") or []
     critical = [issue for issue in issues if clean(issue.get("severity")).lower() == "critical"] if isinstance(issues, list) else []
 
-    if critical:
-        issue = critical[0]
+    def add_action(status: str, owner: str, title: str, detail: str, artifact: str, command: str = "") -> None:
+        if not title or any(existing.get("title") == title for existing in actions):
+            return
         actions.append(
             {
-                "rank": "1",
-                "status": "Blocked",
-                "owner": "Operator",
-                "title": first_present(issue.get("code"), default="Resolve blocking issue"),
-                "detail": first_present(issue.get("detail"), issue.get("headline")),
-                "artifact": "operator_status.md",
+                "rank": str(len(actions) + 1),
+                "status": status,
+                "owner": owner,
+                "title": title,
+                "detail": detail,
+                "artifact": artifact,
+                "command": command,
             }
         )
 
     if studio and not artifact_exists.get("graphics_upload_pack_status.csv"):
-        actions.append(
-            {
-                "rank": str(len(actions) + 1),
-                "status": "Needs assets",
-                "owner": "Graphics",
-                "title": f"Build graphics pack for {studio[0]['name']}",
-                "detail": studio[0]["detail"],
-                "artifact": "studio_bundle_queue.csv",
-            }
+        command = artifact_commands.get("graphics_upload_pack_status.csv") or RUN_COMMANDS["graphics_upload_pack_status.csv"]
+        add_action(
+            "Build next",
+            "Graphics",
+            f"Build graphics pack for {studio[0]['name']}",
+            (
+                "This is the fastest unblocker: the publish guard has no ready graphics upload pack. "
+                f"Use the top Studio bundle: {studio[0]['detail']}"
+            ),
+            "studio_bundle_queue.csv",
+            command,
         )
 
     ready_candidates = [item for item in candidates if item.get("status") in {"Ready", "Graphics ready"}]
     if ready_candidates:
         item = ready_candidates[0]
-        actions.append(
-            {
-                "rank": str(len(actions) + 1),
-                "status": "Review ready",
-                "owner": "Editor",
-                "title": item["headline"],
-                "detail": item["detail"],
-                "artifact": item["artifact"],
-            }
+        source_note = f"{item.get('source_count') or '0'} source(s)" if item.get("source_count") else "source count not reported"
+        add_action(
+            "Editorial check",
+            "Editor",
+            f"Review top candidate: {item['headline']}",
+            f"{item['detail']} Confirm facts, headline, and source posture before it becomes a manual post. {source_note}.",
+            item["artifact"],
         )
 
-    if clean(guard.get("rendered_qa_status")).lower() in {"", "not_run"}:
-        actions.append(
-            {
-                "rank": str(len(actions) + 1),
-                "status": "QA pending",
-                "owner": "Operator",
-                "title": "Run rendered-slide QA after graphics exist",
-                "detail": "Do not post until rendered graphics are checked against the source packet and public-facing copy.",
-                "artifact": "rendered_slide_qa_report.md",
-            }
+    if (candidates or studio) and (
+        not artifact_exists.get("results_dashboard/index.html") or not artifact_exists.get("studio_dashboard/index.html")
+    ):
+        add_action(
+            "Optional drill-down",
+            "Operator",
+            "Create Results and Studio drill-down dashboards",
+            "Use this when you want the close-up Results/Studio pages behind the daily command center.",
+            "results_desk_v5_report.md",
+            RUN_COMMANDS["results_dashboard/index.html"],
         )
+
+    if ready_candidates and not artifact_exists.get("multi_post_daily_board.md"):
+        add_action(
+            "Plan slots",
+            "Operator",
+            "Build the multi-post board after content is chosen",
+            "Turns reviewed candidates and handoff/story artifacts into IG Feed, IG Stories, and Threads queues.",
+            "news_fact_packets.csv",
+            RUN_COMMANDS["multi_post_daily_board.md"],
+        )
+
+    handled_issue_codes = {"no_content_ready"} if studio or ready_candidates else set()
+    for issue in critical:
+        code = clean(issue.get("code"))
+        if code in handled_issue_codes:
+            continue
+        detail = first_present(issue.get("detail"), issue.get("headline"), default="Open the operator status report and resolve the blocker.")
+        title = "Create or refresh content inputs" if code == "no_content_ready" else first_present(code, default="Resolve blocking issue")
+        command = ".\\hsd.cmd run -Mode full" if code == "no_content_ready" else ""
+        add_action("Blocked", "Operator", title, detail, "operator_status.md", command)
+
+    rendered_status = clean(guard.get("rendered_qa_status")).lower()
+    if rendered_status in {"", "not_run"}:
+        if artifact_exists.get("graphics_upload_pack_status.csv"):
+            add_action(
+                "QA pending",
+                "Operator",
+                "Run rendered-slide QA before posting",
+                "Rendered graphics need source, crop, and copy checks before any manual post.",
+                "rendered_slide_qa_report.md",
+                artifact_commands.get("rendered_slide_qa_report.md"),
+            )
+        else:
+            add_action(
+                "Waiting",
+                "Operator",
+                "Run rendered-slide QA after graphics exist",
+                "This is not runnable yet; first build or review the graphics pack.",
+                "rendered_slide_qa_report.md",
+            )
 
     if not yes(guard.get("publish_allowed")):
-        actions.append(
-            {
-                "rank": str(len(actions) + 1),
-                "status": "Manual only",
-                "owner": "Publisher",
-                "title": "Keep publishing off",
-                "detail": "Use artifacts for review and manual posting only. No auto-publishing path is enabled.",
-                "artifact": "publish_guard_report.md",
-            }
+        add_action(
+            "Manual only",
+            "Publisher",
+            "Keep publishing off",
+            "Use artifacts for review and manual posting only. No auto-publishing path is enabled.",
+            "publish_guard_report.md",
         )
 
-    for index, action in enumerate(actions, 1):
-        action["rank"] = str(index)
-    return actions[:6]
+    return trim_actions(actions)
 
 
 def metric(label: str, value: Any, detail: str = "") -> Dict[str, str]:
@@ -373,6 +446,46 @@ def source_registry_detail(counts: Dict[str, Any]) -> str:
     )
 
 
+def decision_callout(
+    overall: str,
+    guard: Dict[str, Any],
+    candidates: List[Dict[str, str]],
+    studio: List[Dict[str, str]],
+    artifacts: List[Dict[str, Any]],
+    source_registry_counts: Dict[str, Any],
+) -> str:
+    artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
+    source_status = source_registry_status(source_registry_counts)
+    if as_int(source_registry_counts.get("fail")):
+        return "Hold: source registry has failing sources. Review source health before choosing a post."
+    if not artifact_exists.get("graphics_upload_pack_status.csv") and studio:
+        return f"{overall}: source registry is {source_status}, but no graphics upload pack is ready. Build the top Studio pack before handoff or posting."
+    if candidates and not yes(guard.get("publish_allowed")):
+        return f"{overall}: content candidates exist, but publishing remains artifact-only and manual review is still required."
+    if yes(guard.get("graphics_handoff_allowed")):
+        return "Graphics handoff is allowed for review, but publishing stays manual until rendered QA and operator approval."
+    return "Manual review required before any post leaves the system."
+
+
+def trim_actions(actions: List[Dict[str, str]], limit: int = 6) -> List[Dict[str, str]]:
+    trimmed = list(actions)
+    for status in ["Waiting", "Optional drill-down", "Plan slots"]:
+        if len(trimmed) <= limit:
+            break
+        for index, action in enumerate(trimmed):
+            if action.get("status") == status:
+                del trimmed[index]
+                break
+    if len(trimmed) > limit:
+        manual = [action for action in trimmed if action.get("status") == "Manual only"]
+        trimmed = trimmed[:limit]
+        if manual and all(action.get("status") != "Manual only" for action in trimmed):
+            trimmed[-1] = manual[0]
+    for index, action in enumerate(trimmed, 1):
+        action["rank"] = str(index)
+    return trimmed
+
+
 def build_payload() -> Dict[str, Any]:
     generated_at = datetime.now(timezone.utc).isoformat()
     operator = read_json("operator_status.json")
@@ -398,8 +511,8 @@ def build_payload() -> Dict[str, Any]:
         "publish_mode": first_present(guard.get("publish_mode"), default="artifact_only"),
         "automation": "OFF / artifact-only",
         "free_source_mode": "Free public sources only",
-        "callout": "Manual review required before any post leaves the system.",
     }
+    decision["callout"] = decision_callout(decision["overall"], guard, candidates, studio, artifacts, source_registry_counts)
     metrics = [
         metric("Current call", decision["overall"]),
         metric("Publish allowed", display_bool(decision["publish_allowed"])),
@@ -428,9 +541,7 @@ def build_payload() -> Dict[str, Any]:
                 "artifact": "source_registry_audit.md",
             },
         )
-        for index, action in enumerate(next_actions, 1):
-            action["rank"] = str(index)
-        next_actions = next_actions[:6]
+        next_actions = trim_actions(next_actions)
     source_rows = source_health(manifest)
     source_state = source_registry_detail(source_registry_counts) if source_registry_counts else f"{sum(1 for row in source_rows if clean(row.get('ok')).lower() == 'yes')} source check(s) OK"
     briefing = {
@@ -468,6 +579,22 @@ def open_link(path: str, label: str = "Open") -> str:
     return f'<a class="tool-link" href="{html.escape(path)}">{html.escape(label)}</a>'
 
 
+def command_hint(command: str) -> str:
+    command = clean(command)
+    if not command:
+        return ""
+    return f'<div class="command-line"><span>Run next</span><code>{html.escape(command)}</code></div>'
+
+
+def artifact_tool(row: Dict[str, Any]) -> str:
+    if row.get("exists"):
+        return open_link(row["path"])
+    command = clean(row.get("run_command"))
+    if command:
+        return f'<code>{html.escape(command)}</code>'
+    return '<span class="muted">Missing</span>'
+
+
 def render_action_rows(actions: Iterable[Dict[str, str]]) -> str:
     rows = []
     for action in actions:
@@ -479,6 +606,7 @@ def render_action_rows(actions: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(action['owner'])} {pill(action['status'])}</div>
                 <h3>{html.escape(action['title'])}</h3>
                 <p>{html.escape(action['detail'])}</p>
+                {command_hint(action.get('command', ''))}
               </div>
               <div class="row-tool">{open_link(action.get('artifact', ''))}</div>
             </article>
@@ -581,14 +709,16 @@ def render_issues(rows: Iterable[Dict[str, Any]]) -> str:
 def render_artifacts(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for row in rows:
+        search_text = " ".join([row["group"], row["title"], row["path"], clean(row.get("run_command")), clean(row.get("status_detail"))])
         body.append(
             f"""
-            <tr data-artifact-row data-group="{html.escape(row['group'].lower())}" data-search="{html.escape((row['group'] + ' ' + row['title'] + ' ' + row['path']).lower())}">
+            <tr data-artifact-row data-group="{html.escape(row['group'].lower())}" data-search="{html.escape(search_text.lower())}">
               <td>{html.escape(row['group'])}</td>
               <td>{html.escape(row['title'])}</td>
               <td><code>{html.escape(row['path'])}</code></td>
               <td>{pill('found' if row['exists'] else 'missing')}</td>
-              <td>{open_link(row['path'])}</td>
+              <td>{html.escape(clean(row.get('status_detail')))}</td>
+              <td>{artifact_tool(row)}</td>
             </tr>
             """
         )
@@ -671,6 +801,8 @@ def render_html(payload: Dict[str, Any]) -> str:
     .rank {{ width:32px; height:32px; border-radius:50%; background:#171719; color:#fff; display:grid; place-items:center; font-weight:800; }}
     .row-kicker {{ color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }}
     .row-tool {{ align-self:center; }}
+    .command-line {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:9px; color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; }}
+    .command-line code {{ text-transform:none; font-weight:700; overflow-wrap:anywhere; }}
     .pill {{ display:inline-block; border-radius:999px; padding:3px 8px; font-size:12px; font-weight:800; background:#eceef4; color:#333640; }}
     .pill.good {{ background:var(--green-bg); color:var(--green); }}
     .pill.bad {{ background:var(--red-bg); color:var(--red); }}
@@ -808,7 +940,7 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Group</th><th>Artifact</th><th>Path</th><th>Status</th><th>Open</th></tr></thead>
+            <thead><tr><th>Group</th><th>Artifact</th><th>Path</th><th>Status</th><th>Next step</th><th>Open</th></tr></thead>
             <tbody>{render_artifacts(payload['artifacts'])}</tbody>
           </table>
         </div>
@@ -865,7 +997,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "",
     ]
     lines.extend(
-        f"{action['rank']}. [{action['status']}] {action['title']} - {action['detail']} ({action['artifact']})"
+        (
+            f"{action['rank']}. [{action['status']}] {action['title']} - {action['detail']} "
+            f"({action['artifact']})"
+            f"{' Run: `' + action['command'] + '`.' if action.get('command') else ''}"
+        )
         for action in payload["next_actions"]
     )
     lines += ["", "## Content candidates", ""]
@@ -873,7 +1009,13 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines += ["", "## Studio queue", ""]
     lines.extend(f"- {item['priority']} | {item['name']} | {item['status']} | {item['detail']}" for item in payload["studio_queue"])
     lines += ["", "## Artifacts", ""]
-    lines.extend(f"- [{'found' if item['exists'] else 'missing'}] `{item['path']}` - {item['title']}" for item in payload["artifacts"])
+    lines.extend(
+        (
+            f"- [{'found' if item['exists'] else 'missing'}] `{item['path']}` - {item['title']}"
+            f"{' - ' + item['status_detail'] if item.get('status_detail') else ''}"
+        )
+        for item in payload["artifacts"]
+    )
     return "\n".join(lines).rstrip() + "\n"
 
 
