@@ -17,27 +17,179 @@ $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $PolicyPath = Join-Path $Root "config\hsd_free_source_policy_v1.json"
 $script:HsdExitCode = 0
 $GeneratedStatePathspecs = @(
+    "hsd_pipeline_lite_review/**",
+    "hsd_pipeline_lite_review.zip",
+    "outputs/latest/**",
+    "dashboard/**",
+    "results_dashboard/**",
+    "run_history/**",
+    "results_run_history/**",
+    "launch_run_history/**",
+    "asset_run_history/**",
+    "generated_graphics/**",
+    "graphics_chat_upload_pack/**",
+    "graphics_chat_upload_pack_zips/**",
+    "graphics_clean_prompts/**",
+    "manual_workflow_packets/**",
+    "manual_workflow_handoff_packs/**",
+    "ig_story_results_upload_pack/**",
+    "ig_story_results_upload_pack_zips/**",
+    "mermaid_compiled_packets/**",
+    "assignment_handoff_packets/**",
+    "assignment_handoff_zips/**",
+    "mermaid_assignment_compiled_packets/**",
+    "mermaid_assignment_final_packets/**",
+    "mermaid_director_compiled_packets/**",
+    "mermaid_quality_compiled_packets/**",
+    "mermaid_quality_compiled_packets_v2_2/**",
+    "rendered_handoff_graphics/**",
+    "rendered_handoff_zips/**",
+    "runs/**",
+    "operator/inbox/**",
     "assets/leagues/wnba/athletes/*/headshot.png",
     "assets/leagues/wnba/athletes/*/headshot.png.approved",
     "assets/leagues/wnba/teams/*/logo.png",
     "data/asset_registry/wnba/*",
+    "approved_graphics_assets.*",
+    "asset_candidates_review.md",
+    "assignment_*",
+    "bebe_*",
+    "breaking_news_queue*.csv",
+    "caption_bank.md",
+    "content_director_*",
+    "contract_validation_*",
+    "daily_results_recommendations.md",
+    "daily_slate_*",
+    "dirty_tree_v1.*",
+    "discovery_sources_report.md",
+    "duplicate_game_audit_v5.csv",
+    "expected_games_v5_manifest.json",
+    "expected_games_v5_report.md",
+    "final_score_story_guard_report.*",
+    "first_comment_hooks.md",
+    "generated_output_pollution_v1.*",
+    "graphics_*",
+    "ig_feed_*",
+    "ig_story_*",
+    "independent_schedule_verification_v5.*",
+    "install_report.*",
+    "latest_news_sync_run_summary.md",
+    "manual_story_inbox_report.md",
+    "manual_workflow_*",
+    "mermaid_*",
+    "missing_games_alert_v5.*",
+    "multi_post_daily_board.*",
+    "multisport_*",
+    "news_brief_queue.md",
     "news_candidate_queue.csv",
     "news_daily_plan.md",
+    "news_fact_packets.csv",
+    "news_graphics_handoff.md",
     "news_input_status_report.csv",
+    "news_manual_review_queue.csv",
+    "news_social_packets.md",
     "news_source_observations.csv",
+    "news_sync_manifest.json",
     "news_sync_hub.md",
-    "config/hsd_expected_games_v5.csv",
-    "operator_command_center.html",
-    "preview_bundle_quality.csv",
-    "preview_bundle_quality.md",
-    "preview_bundle_quality_summary.csv",
+    "official_player_headshot_*",
+    "operator_*",
+    "operator_command_center.*",
+    "phase2_closure_v1.*",
+    "phase2g_install_report.*",
+    "pipeline_stop_reason.md",
+    "player_asset_*",
+    "player_assets.*",
+    "player_image_*",
+    "player_image_fit_manifest.json",
+    "player_registry_*",
+    "post_slot_status.csv",
+    "preview_bundle_quality.*",
     "preview_player_focus.csv",
-    "studio_preview_build_v2.json"
+    "publish_guard_report.*",
+    "reconciled_events.csv",
+    "render_integrity_report.md",
+    "rendered_handoff_*",
+    "rendered_slide_qa.*",
+    "repo_state_v3.*",
+    "results_contract_v2.*",
+    "results_contract_report.md",
+    "results_desk_v5_manifest.json",
+    "results_desk_v5_report.md",
+    "results_graphics_queue.md",
+    "results_system_hub.md",
+    "rumor_watch_queue*.csv",
+    "run_manifest.json",
+    "social_rumor_*",
+    "source_accuracy_v5.*",
+    "source_health_report.csv",
+    "source_observations.csv",
+    "source_registry_audit.*",
+    "stale_source_audit_v5.csv",
+    "story_candidates_*",
+    "config/hsd_expected_games_v5.csv",
+    "studio_accuracy_checklist.csv",
+    "studio_brand_config.json",
+    "studio_bundle_*",
+    "studio_caption_bank.md",
+    "studio_command_center.md",
+    "studio_fresh_packet_gate.csv",
+    "studio_fresh_packet_report.md",
+    "studio_freshness_*",
+    "studio_graphics_*",
+    "studio_image_prompts.md",
+    "studio_manifest.json",
+    "studio_manual_review_graphics.csv",
+    "studio_post_schedule.md",
+    "studio_preview_*",
+    "studio_render_manifest_v2.json",
+    "studio_top_graphic_packets.md",
+    "studio_visual_upgrade_v2.md",
+    "threads_*",
+    "today_final_results.csv",
+    "today_results_board.csv",
+    "today_womens_results.csv",
+    "top_womens_results.csv",
+    "v4_source_truth_guard.*",
+    "wnba_box_score_audit.csv",
+    "wnba_box_score_summary.md"
 )
 
 function Write-Section([string]$Text) {
     Write-Host ""
     Write-Host "== $Text =="
+}
+
+function Resolve-HsdChildPath([string]$Base, [string]$Relative) {
+    $baseFull = [IO.Path]::GetFullPath($Base).TrimEnd('\', '/')
+    $candidate = [IO.Path]::GetFullPath((Join-Path $baseFull $Relative))
+    $prefix = $baseFull + [IO.Path]::DirectorySeparatorChar
+    if ($candidate -ne $baseFull -and -not $candidate.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing path outside target folder: $Relative"
+    }
+    return $candidate
+}
+
+function New-HsdRunContext {
+    $baseStamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $stamp = $baseStamp
+    $index = 1
+    $outRoot = Join-Path $Root "outputs\local\$stamp"
+    while (Test-Path -LiteralPath $outRoot) {
+        $index += 1
+        $stamp = "$baseStamp-$index"
+        $outRoot = Join-Path $Root "outputs\local\$stamp"
+    }
+    $filesDir = Join-Path $outRoot "files"
+    $generatedStateDir = Join-Path $outRoot "generated_state"
+    New-Item -ItemType Directory -Path $filesDir,$generatedStateDir -Force | Out-Null
+    return [pscustomobject]@{
+        Id = $stamp
+        OutRoot = $outRoot
+        FilesDir = $filesDir
+        GeneratedStateDir = $generatedStateDir
+        GeneratedStateManifest = (Join-Path $outRoot "generated_state_manifest.json")
+        LocalRunManifest = (Join-Path $outRoot "local_run_manifest.json")
+    }
 }
 
 function Stop-Hsd([string]$Message, [int]$Code = 2) {
@@ -133,6 +285,14 @@ function Set-FreeSourceEnv {
     $env:BING_SEARCH_API_KEY = ""
 }
 
+function Set-RunScopedEnv($RunContext) {
+    $env:HSD_LOCAL_RUN_ID = $RunContext.Id
+    $env:HSD_LOCAL_RUN_ROOT = $RunContext.OutRoot
+    $env:HSD_RUN_OUTPUT_DIR = $RunContext.FilesDir
+    $env:HSD_GENERATED_STATE_DIR = $RunContext.GeneratedStateDir
+    $env:HSD_OUTPUT_MODE = "run_scoped_local"
+}
+
 function Test-GitAvailable {
     if (-not (Test-Path -LiteralPath (Join-Path $Root ".git"))) { return $false }
     return [bool](Get-Command git -ErrorAction SilentlyContinue)
@@ -156,10 +316,12 @@ function Get-GeneratedGitState {
 
     $trackedArgs = @("diff", "--name-only", "--") + $GeneratedStatePathspecs
     $untrackedArgs = @("ls-files", "--others", "--exclude-standard", "--") + $GeneratedStatePathspecs
+    $ignoredArgs = @("ls-files", "--others", "--ignored", "--exclude-standard", "--") + $GeneratedStatePathspecs
+    $untracked = @((Invoke-GitList $untrackedArgs) + (Invoke-GitList $ignoredArgs) | Sort-Object -Unique)
     return [pscustomobject]@{
         enabled = $true
         tracked_dirty = @(Invoke-GitList $trackedArgs)
-        untracked = @(Invoke-GitList $untrackedArgs)
+        untracked = $untracked
     }
 }
 
@@ -208,6 +370,85 @@ function Restore-GeneratedGitState($Baseline) {
         Write-Host "Removed untracked generated files: $removed"
         Write-Host "Use -KeepGeneratedState when you intentionally want to review generated asset or registry file changes in Git."
     }
+}
+
+function Copy-HsdGeneratedRunState($RunContext, $Baseline) {
+    $rows = New-Object System.Collections.ArrayList
+    if (-not $Baseline -or -not $Baseline.enabled) {
+        [pscustomobject]@{
+            version = "hsd-local-generated-state-v1"
+            run_id = $RunContext.Id
+            generated_at_local = (Get-Date).ToString("s")
+            enabled = $false
+            root_cleanup = "disabled_no_git"
+            files = $rows
+        } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $RunContext.GeneratedStateManifest -Encoding UTF8
+        return
+    }
+
+    $current = Get-GeneratedGitState
+    $trackedToArchive = @($current.tracked_dirty | Where-Object { $Baseline.tracked_dirty -notcontains $_ })
+    $untrackedToArchive = @($current.untracked | Where-Object { $Baseline.untracked -notcontains $_ })
+    $byPath = @{}
+    foreach ($path in $trackedToArchive) {
+        if ($path) { $byPath[$path] = "tracked_modified_generated" }
+    }
+    foreach ($path in $untrackedToArchive) {
+        if ($path -and -not $byPath.ContainsKey($path)) { $byPath[$path] = "untracked_generated" }
+    }
+
+    foreach ($path in ($byPath.Keys | Sort-Object)) {
+        $normalized = ($path -replace "\\", "/").TrimStart("/")
+        if (-not $normalized -or $normalized.StartsWith("outputs/local/", [StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        $src = Resolve-HsdChildPath $Root.Path $normalized
+        $dest = Resolve-HsdChildPath $RunContext.GeneratedStateDir $normalized
+        $destParent = Split-Path -Parent $dest
+        if ($destParent) { New-Item -ItemType Directory -Path $destParent -Force | Out-Null }
+
+        $action = "missing_at_archive_time"
+        $size = 0
+        $archivedAs = ""
+        if (Test-Path -LiteralPath $src -PathType Leaf) {
+            Copy-Item -LiteralPath $src -Destination $dest -Force
+            $item = Get-Item -LiteralPath $src
+            $size = $item.Length
+            $action = "copied_file"
+            $archivedAs = "generated_state/$normalized"
+        } elseif (Test-Path -LiteralPath $src -PathType Container) {
+            Copy-Item -LiteralPath $src -Destination $dest -Recurse -Force
+            $action = "copied_directory"
+            $archivedAs = "generated_state/$normalized"
+        }
+
+        [void]$rows.Add([pscustomobject]@{
+            path = $normalized
+            state = $byPath[$path]
+            action = $action
+            archived_as = $archivedAs
+            size = $size
+        })
+    }
+
+    $archivedCount = @($rows | Where-Object { $_.action -like "copied*" }).Count
+    [pscustomobject]@{
+        version = "hsd-local-generated-state-v1"
+        run_id = $RunContext.Id
+        generated_at_local = (Get-Date).ToString("s")
+        enabled = $true
+        keep_generated_state = [bool]$KeepGeneratedState
+        root_cleanup = $(if ($KeepGeneratedState) { "skipped_keep_generated_state" } else { "restore_after_archive" })
+        tracked_modified_count = $trackedToArchive.Count
+        untracked_generated_count = $untrackedToArchive.Count
+        archived_count = $archivedCount
+        generated_state_dir = $RunContext.GeneratedStateDir
+        files = $rows
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $RunContext.GeneratedStateManifest -Encoding UTF8
+
+    Write-Section "Run-scoped generated outputs"
+    Write-Host "Archived generated root changes: $archivedCount"
+    Write-Host "Generated state folder: $($RunContext.GeneratedStateDir)"
 }
 
 function Show-InstallHint {
@@ -328,10 +569,9 @@ function Copy-IfPresent([string]$Relative, [string]$DestinationDir, [System.Coll
     [void]$Manifest.Add([pscustomobject]@{ path = $Relative; included_as = $dest; size = (Get-Item -LiteralPath $src).Length })
 }
 
-function Collect-HsdArtifacts {
-    $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    $outRoot = Join-Path $Root "outputs\local\$stamp"
-    $filesDir = Join-Path $outRoot "files"
+function Collect-HsdArtifacts($RunContext) {
+    $outRoot = $RunContext.OutRoot
+    $filesDir = $RunContext.FilesDir
     New-Item -ItemType Directory -Path $filesDir -Force | Out-Null
     $manifest = New-Object System.Collections.ArrayList
     $reviewFiles = @(
@@ -364,7 +604,21 @@ function Collect-HsdArtifacts {
     foreach ($file in $reviewFiles) {
         Copy-IfPresent $file $filesDir $manifest
     }
-    [pscustomobject]@{ generated_at_local = (Get-Date).ToString("s"); root = $Root.Path; free_source_policy = $PolicyPath; files = $manifest } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $outRoot "local_run_manifest.json") -Encoding UTF8
+    [pscustomobject]@{
+        version = "hsd-local-run-manifest-v2"
+        run_id = $RunContext.Id
+        generated_at_local = (Get-Date).ToString("s")
+        root = $Root.Path
+        output_root = $RunContext.OutRoot
+        files_dir = $RunContext.FilesDir
+        generated_state_dir = $RunContext.GeneratedStateDir
+        generated_state_manifest = $RunContext.GeneratedStateManifest
+        output_mode = "run_scoped_local"
+        free_source_policy = $PolicyPath
+        manual_only = $true
+        paid_apis_disabled = $true
+        files = $manifest
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $RunContext.LocalRunManifest -Encoding UTF8
     $latest = Join-Path $Root "outputs\local\latest"
     if (Test-Path -LiteralPath $latest) { Remove-Item -LiteralPath $latest -Recurse -Force }
     Copy-Item -LiteralPath $outRoot -Destination $latest -Recurse -Force
@@ -375,11 +629,14 @@ function Collect-HsdArtifacts {
 function Invoke-HsdRun {
     $python = Find-HsdPython
     if (-not $python) { Show-InstallHint; Stop-Hsd "Python 3.11 is required before the HSD pipeline can run." }
+    $runContext = New-HsdRunContext
     $generatedBaseline = Get-GeneratedGitState
     Set-FreeSourceEnv
+    Set-RunScopedEnv $runContext
     Write-Section "Free-first local run"
     Write-Host "Mode: $Mode"
     Write-Host "Python: $($python.Version) at $($python.Executable)"
+    Write-Host "Run output: $($runContext.OutRoot)"
     Write-Host "Paid API keys are blanked for this process."
     try {
         switch ($Mode) {
@@ -395,7 +652,8 @@ function Invoke-HsdRun {
         if (-not $ContinueOnError) { throw }
         Write-Warning $_.Exception.Message
     } finally {
-        Collect-HsdArtifacts
+        Copy-HsdGeneratedRunState $runContext $generatedBaseline
+        Collect-HsdArtifacts $runContext
         Restore-GeneratedGitState $generatedBaseline
     }
 }

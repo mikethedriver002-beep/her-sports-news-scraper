@@ -55,14 +55,25 @@ Use `-NoInstall` if dependencies are already installed or if you only want to cr
 
 ## Local Run Outputs
 
-Existing pipeline scripts still write their normal CSV, JSON, Markdown, and HTML outputs in the repo root. The local runner also collects the most useful review files into:
+Every local `run` creates one timestamped run folder before the pipeline starts:
 
 ```text
 outputs/local/latest/
 outputs/local/<timestamp>/
 ```
 
-After each local `run`, the runner quarantines known generated state so Git does not show hundreds of daily asset, registry, and review-file changes. It still keeps the review bundle in `outputs/local/latest/`.
+Each run folder has two useful surfaces:
+
+```text
+outputs/local/<timestamp>/files/
+outputs/local/<timestamp>/generated_state/
+```
+
+- `files/` is the operator-friendly review bundle with the command center, guard reports, schedules, source reports, and handoff files.
+- `generated_state/` preserves generated root-level files and directories that changed during the run, using their repo-relative paths.
+- `generated_state_manifest.json` records what was archived and whether root cleanup was applied.
+
+After the archive is captured, the runner restores tracked generated files and removes new generated files from the repo root. That keeps Git clean while preserving the run output under `outputs/local/<timestamp>/` and `outputs/local/latest/`.
 
 Use this only when you intentionally want to inspect or commit generated asset/registry changes:
 
@@ -70,7 +81,17 @@ Use this only when you intentionally want to inspect or commit generated asset/r
 .\hsd.cmd run -Mode full -KeepGeneratedState
 ```
 
-This is a bridge step. The next architecture move is to teach the pipeline to write directly into run-scoped folders instead of producing root-level artifacts first.
+The runner also exposes run-scoped environment variables for newer generators:
+
+```text
+HSD_LOCAL_RUN_ID
+HSD_LOCAL_RUN_ROOT
+HSD_RUN_OUTPUT_DIR
+HSD_GENERATED_STATE_DIR
+HSD_OUTPUT_MODE=run_scoped_local
+```
+
+Legacy scripts can still write root-level files, but local operation now treats the run folder as the durable output location.
 
 ## Daily Operator Command Center
 
