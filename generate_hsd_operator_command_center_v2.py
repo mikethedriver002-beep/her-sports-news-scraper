@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.4.0-quality-freshness-leads"
+VERSION = "hsd-operator-command-center-v3.5.0-article-freshness"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -341,6 +341,7 @@ def source_discovery_board() -> List[Dict[str, str]]:
                 "promotion_next_step": short(clean(row.get("promotion_next_step")), 180),
                 "quality_score": clean(row.get("quality_score")),
                 "freshness_label": clean(row.get("freshness_label")),
+                "freshness_source": clean(row.get("freshness_source")),
                 "freshness_score": clean(row.get("freshness_score")),
                 "quality_reason": short(clean(row.get("quality_reason")), 190),
             }
@@ -364,6 +365,7 @@ def lead_promotion_recommendations() -> List[Dict[str, str]]:
                 "next_step": short(clean(row.get("promotion_next_step")), 190),
                 "quality_score": clean(row.get("quality_score")),
                 "freshness_label": clean(row.get("freshness_label")),
+                "freshness_source": clean(row.get("freshness_source")),
                 "freshness_score": clean(row.get("freshness_score")),
                 "quality_reason": short(clean(row.get("quality_reason")), 190),
                 "artifact": "morning_lead_promotion_recommendations.csv",
@@ -467,11 +469,14 @@ def build_next_actions(
 
     if promotions:
         promo = promotions[0]
+        freshness_note = f"{promo.get('freshness_label') or 'undated'}"
+        if promo.get("freshness_source"):
+            freshness_note += f" via {promo['freshness_source']}"
         add_action(
             "Lead promotion",
             "Editor",
             f"Promote source lead toward {promo['recommendation']}: {promo['title']}",
-            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {promo.get('freshness_label') or 'undated'}. {promo.get('next_step') or promo.get('reason')}",
+            f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {promo.get('next_step') or promo.get('reason')}",
             promo["artifact"],
         )
 
@@ -845,7 +850,7 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['lane'])} {pill(row['status'])} {pill(row['posture'])}</div>
                 <h3>{html.escape(row['title'])}</h3>
                 <p>{html.escape(row.get('next_action') or row.get('detail') or '')}</p>
-                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}</small>
+                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -864,7 +869,7 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row.get('rank') or '-')} {pill(row['priority'])} {pill(row['recommendation'])}</div>
                 <h3>{html.escape(row['title'])}</h3>
                 <p>{html.escape(row.get('next_step') or row.get('reason') or '')}</p>
-                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}</small>
+                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -1236,12 +1241,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Lead promotion recommendations", ""]
     lines.extend(
-        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'} | {item['title']} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
+        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
         for item in payload["lead_promotion_recommendations"]
     )
     lines += ["", "## Morning source discovery", ""]
     lines.extend(
-        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'} | {item['title']} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
+        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | {item['title']} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
     )
     lines += ["", "## Studio queue", ""]
