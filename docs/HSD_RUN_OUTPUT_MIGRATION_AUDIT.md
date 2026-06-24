@@ -2,9 +2,11 @@
 
 ## Decision
 
-Move the asset and graphics generators next.
+Batch 1 asset and graphics generator migration is complete.
 
-They are the remaining normal local-run stage with the highest root-output risk after the daily Results, News, Studio, Preview, and Operator scripts were moved to `HSD_RUN_OUTPUT_DIR`.
+The asset-stage generators now read run-folder review copies first and write generated review/upload artifacts into `HSD_RUN_OUTPUT_DIR` during local runs. Legacy root compatibility remains when `HSD_RUN_OUTPUT_DIR` is unset.
+
+Move Batch 2 next: the remaining Results/News support scripts that still write root files.
 
 Guardrails stay unchanged:
 
@@ -16,25 +18,23 @@ Guardrails stay unchanged:
 
 ## Batch 1: Asset And Graphics Generators
 
-Recommended next implementation batch:
+Completed run-aware migration:
 
 - `generate_hsd_asset_desk_v1.py`
 - `generate_hsd_player_image_assets_v1.py`
 - `generate_hsd_graphics_upload_pack_v1.py`
 - `generate_hsd_graphics_qa_v1.py`
 
-Why this batch is first:
+What changed:
 
-- These scripts are called by local `-Mode asset`.
-- They create the most remaining root files and generated folders in the normal local runner path.
-- `generate_hsd_graphics_upload_pack_v1.py` creates upload-pack directories, zip files, status reports, and direct handoff files.
-- `generate_hsd_player_image_assets_v1.py` copies image assets and writes player/approved-asset outputs.
-- `generate_hsd_asset_desk_v1.py` writes asset manifests, team/player asset files, and review reports.
-- `generate_hsd_graphics_qa_v1.py` writes QA reports and dashboard output.
+- `generate_hsd_asset_desk_v1.py` writes asset manifests, team/player asset files, and review reports into the active run folder.
+- `generate_hsd_player_image_assets_v1.py` stages player image files and approved/player asset table updates as run-folder review copies.
+- `generate_hsd_graphics_upload_pack_v1.py` creates upload-pack directories, zip files, status reports, and direct handoff files in the run folder.
+- `generate_hsd_graphics_qa_v1.py` reads run-scoped upload packs first and writes QA reports/dashboard output into the run folder.
 
 Important caution:
 
-Separate generated review/upload artifacts from canonical asset registry or approved-asset data. Generated packs should move into the run folder first; source-like asset registry updates should remain explicit review decisions.
+Separate generated review/upload artifacts from canonical asset registry or approved-asset data. Generated packs now move into the run folder first; source-like asset registry updates remain explicit review decisions.
 
 ## Batch 2: Results And News Support Outputs
 
@@ -70,6 +70,10 @@ Current local runner scripts already moved or made run-aware:
 - `generate_hsd_studio_bridge_v1.py`
 - `generate_hsd_tonight_preview_bridge_v1.py`
 - `generate_hsd_preview_quality_gate_v1.py`
+- `generate_hsd_asset_desk_v1.py`
+- `generate_hsd_player_image_assets_v1.py`
+- `generate_hsd_graphics_upload_pack_v1.py`
+- `generate_hsd_graphics_qa_v1.py`
 - `publish_hsd_guard_v1.py`
 - `generate_hsd_operator_status_v1.py`
 - `generate_hsd_bebe_daily_ops_plan_v2.py`

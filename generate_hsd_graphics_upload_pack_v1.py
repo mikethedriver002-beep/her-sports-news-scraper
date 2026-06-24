@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import quote, unquote, urljoin, urlparse
 
+from hsd_run_io import input_candidates, input_path, output_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+
 try:
     import requests
 except Exception:
@@ -27,11 +29,11 @@ VERSION = "hsd-graphics-upload-pack-v3.2.9-bebe-ops-v2.8-current-logo-lock"
 INPUT_PROMPTS = os.environ.get("HSD_STUDIO_BUNDLE_PROMPTS", "studio_bundle_prompts_v2.md")
 INPUT_APPROVED_ASSETS = os.environ.get("HSD_APPROVED_GRAPHICS_ASSETS", "approved_graphics_assets.csv")
 INPUT_RENDER_MANIFEST = os.environ.get("HSD_RENDER_MANIFEST", "studio_render_manifest_v2.json")
-INPUT_CLEAN_PROMPTS_DIR = Path(os.environ.get("HSD_CLEAN_PROMPTS_DIR", "graphics_clean_prompts"))
-INPUT_LOGO_REGISTRY = Path(os.environ.get("HSD_VERIFIED_LOGO_REGISTRY", "config/hsd_verified_logo_registry_v1.json"))
+INPUT_CLEAN_PROMPTS_DIR = input_path(os.environ.get("HSD_CLEAN_PROMPTS_DIR", "graphics_clean_prompts"))
+INPUT_LOGO_REGISTRY = input_path(os.environ.get("HSD_VERIFIED_LOGO_REGISTRY", "config/hsd_verified_logo_registry_v1.json"))
 
-OUT_DIR = Path("graphics_chat_upload_pack")
-OUT_ZIP_DIR = Path("graphics_chat_upload_pack_zips")
+OUT_DIR = output_path("graphics_chat_upload_pack")
+OUT_ZIP_DIR = output_path("graphics_chat_upload_pack_zips")
 OUT_MANIFEST_CSV = "graphics_chat_upload_manifest.csv"
 OUT_MANIFEST_JSON = "graphics_chat_upload_manifest.json"
 OUT_STATUS_CSV = "graphics_upload_pack_status.csv"
@@ -78,7 +80,7 @@ def slugify(value: str) -> str:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return []
     with p.open(newline="", encoding="utf-8", errors="replace") as f:
@@ -86,15 +88,11 @@ def read_csv(path: str) -> List[Dict[str, str]]:
 
 
 def write_csv(path: str, rows: List[Dict[str, Any]], fields: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k, "") for k in fields})
+    write_run_csv(path, ({k: r.get(k, "") for k in fields} for r in rows), fields)
 
 
 def read_json(path: str | Path) -> Dict[str, Any]:
-    p = Path(path)
+    p = input_path(path)
     if not p.exists():
         return {}
     try:
@@ -104,7 +102,7 @@ def read_json(path: str | Path) -> Dict[str, Any]:
 
 
 def read_text(path: str | Path) -> str:
-    p = Path(path)
+    p = input_path(path)
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
 
 
@@ -219,16 +217,31 @@ def local_exact_files(entity: str, dirs: List[Path]) -> List[Path]:
     slug = slugify(entity)
     patterns = [slug, slug.replace("-", "_"), clean(entity).replace(" ", "_").lower(), clean(entity).lower().replace(" ", "-")]
     found: List[Path] = []
-    for base in dirs:
-        if not base.exists():
-            continue
-        for p in base.rglob("*"):
-            if not p.is_file() or p.suffix.lower() not in ASSET_EXTS:
+    seen_bases = set()
+    for configured_base in dirs:
+        for base in input_candidates(configured_base):
+            base_key = base.resolve().as_posix() if base.exists() else base.as_posix()
+            if base_key in seen_bases:
                 continue
-            stem = p.stem.lower()
-            if any(stem == pat or stem.startswith(pat + "_") or stem.startswith(pat + "-") for pat in patterns):
-                found.append(p)
+            seen_bases.add(base_key)
+            if not base.exists():
+                continue
+            for p in base.rglob("*"):
+                if not p.is_file() or p.suffix.lower() not in ASSET_EXTS:
+                    continue
+                stem = p.stem.lower()
+                if any(stem == pat or stem.startswith(pat + "_") or stem.startswith(pat + "-") for pat in patterns):
+                    found.append(p)
     return sorted(found, key=lambda p: (len(p.name), p.as_posix()))
+
+
+def local_asset_path(path: str) -> Path:
+    return input_path(path) if path else Path("")
+
+
+def local_asset_exists(path: str) -> bool:
+    p = local_asset_path(path)
+    return bool(path) and p.exists()
 
 
 def copy_first_local(entity: str, dirs: List[Path], dest_dir: Path, base_name: str) -> Tuple[str, str]:
@@ -484,10 +497,11 @@ def copy_or_download(asset: Dict[str, str], dest_dir: Path) -> Tuple[str, str]:
 
     for field in ["master_path", "web_path"]:
         src = clean(asset.get(field))
-        if src and Path(src).exists():
-            ext = Path(src).suffix or ".asset"
+        src_path = local_asset_path(src)
+        if src and src_path.exists():
+            ext = src_path.suffix or ".asset"
             dest = dest_dir / f"{base_name}{ext}"
-            shutil.copy2(src, dest)
+            shutil.copy2(src_path, dest)
             return dest.as_posix(), "copied_local_approved_asset"
 
     return download_candidates(asset, dest_dir, base_name)
@@ -496,7 +510,7 @@ def copy_or_download(asset: Dict[str, str], dest_dir: Path) -> Tuple[str, str]:
 def convert_to_png(local_path: str, dest_dir: Path) -> Tuple[str, str]:
     if not local_path:
         return "", "no_local_asset"
-    p = Path(local_path)
+    p = local_asset_path(local_path)
     if not p.exists():
         return "", "local_asset_missing"
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -579,7 +593,7 @@ def main() -> None:
             "exact_asset_audit.csv", "exact_asset_audit_report.md", "exact_asset_audit_manifest.json",
             "rendered_slide_qa.csv", "rendered_slide_qa_report.md",
         ]:
-            extra = Path(extra_name)
+            extra = input_path(extra_name)
             if extra.exists():
                 shutil.copy2(extra, folder / extra_name)
 
@@ -608,7 +622,7 @@ def main() -> None:
             local_path, status = copy_or_download(asset, asset_folder)
             png_path, conversion_status = convert_to_png(local_path, png_folder)
             upload_path = png_path or local_path
-            asset_ready = bool(upload_path and Path(upload_path).exists())
+            asset_ready = local_asset_exists(upload_path)
             exact_status = "exact_file_ready" if asset_ready else "missing_exact_file"
 
             if asset_ready:
@@ -757,25 +771,38 @@ def main() -> None:
         "upload_packs_blocked": sum(1 for r in status_rows if r.get("upload_pack_status") not in {"ready", "ready_with_review"}),
     }
 
-    Path(OUT_MANIFEST_JSON).write_text(json.dumps({
+    run_root = run_output_dir()
+    write_json(OUT_MANIFEST_JSON, {
         "version": VERSION,
         "generated_at_utc": now(),
         "input_prompts": INPUT_PROMPTS,
         "input_approved_assets": INPUT_APPROVED_ASSETS,
         "input_render_manifest": INPUT_RENDER_MANIFEST,
         "input_logo_registry": INPUT_LOGO_REGISTRY.as_posix(),
+        "output_scope": "run_scoped" if run_root else "legacy_root",
+        "run_output_dir": run_root.as_posix() if run_root else "",
+        "canonical_asset_registry_note": "Reads run-folder approved asset review copies first when HSD_RUN_OUTPUT_DIR is set; canonical asset registry promotion remains manual.",
         "rule": "Exact real logos/images required. No text fallback.",
         "counts": counts,
-        "outputs": [OUT_DIR.as_posix(), OUT_ZIP_DIR.as_posix(), OUT_MANIFEST_CSV, OUT_MANIFEST_JSON, OUT_STATUS_CSV, OUT_STATUS_JSON, OUT_INSTRUCTIONS, OUT_DIRECT_HANDOFF],
-    }, indent=2), encoding="utf-8")
+        "outputs": [
+            OUT_DIR.as_posix(),
+            OUT_ZIP_DIR.as_posix(),
+            output_path(OUT_MANIFEST_CSV).as_posix(),
+            output_path(OUT_MANIFEST_JSON).as_posix(),
+            output_path(OUT_STATUS_CSV).as_posix(),
+            output_path(OUT_STATUS_JSON).as_posix(),
+            output_path(OUT_INSTRUCTIONS).as_posix(),
+            output_path(OUT_DIRECT_HANDOFF).as_posix(),
+        ],
+    })
 
-    Path(OUT_STATUS_JSON).write_text(json.dumps({
+    write_json(OUT_STATUS_JSON, {
         "version": VERSION,
         "generated_at_utc": now(),
         "rule": "Exact real logos/images required. No text fallback.",
         "counts": counts,
         "bundles": status_rows,
-    }, indent=2), encoding="utf-8")
+    })
 
     instructions = [
         "# HSD Graphics Chat Upload Instructions",
@@ -794,7 +821,7 @@ def main() -> None:
         "Upload pack status is in `graphics_upload_pack_status.csv`.",
         "",
     ]
-    Path(OUT_INSTRUCTIONS).write_text("\n".join(instructions), encoding="utf-8")
+    write_text(OUT_INSTRUCTIONS, "\n".join(instructions))
 
     direct = [
         "# HSD Graphics Chat Direct Handoff",
@@ -838,7 +865,7 @@ def main() -> None:
             "Check `graphics_upload_pack_status.csv`. If the reason is missing exact team logos or player images, acquire those exact files and rerun. Do not use text fallback.",
             "",
         ]
-    Path(OUT_DIRECT_HANDOFF).write_text("\n".join(direct), encoding="utf-8")
+    write_text(OUT_DIRECT_HANDOFF, "\n".join(direct))
 
     print("Created HSD exact-asset graphics upload pack")
     print(json.dumps(counts, indent=2))

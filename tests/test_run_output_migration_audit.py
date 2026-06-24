@@ -21,17 +21,20 @@ def load_module():
     return module
 
 
-def test_run_output_migration_audit_prioritizes_asset_graphics_batch() -> None:
+def test_run_output_migration_audit_records_asset_graphics_batch_as_run_aware() -> None:
     module = load_module()
     report = module.build_audit(REPO)
-    batch = {row["script"] for row in report["prioritized_batches"]["batch_1_asset_graphics"]}
-
-    assert batch == {
+    asset_scripts = {
         "generate_hsd_asset_desk_v1.py",
         "generate_hsd_player_image_assets_v1.py",
         "generate_hsd_graphics_upload_pack_v1.py",
         "generate_hsd_graphics_qa_v1.py",
     }
+    pending_batch = {row["script"] for row in report["prioritized_batches"]["batch_1_asset_graphics"]}
+    run_aware = {row["script"] for row in report["prioritized_batches"]["already_run_scoped"]}
+
+    assert pending_batch.isdisjoint(asset_scripts)
+    assert asset_scripts <= run_aware
     assert report["policy"]["free_source_policy_unchanged"] is True
     assert report["policy"]["manual_only_default"] is True
     assert report["policy"]["workflow_changes_required"] is False
@@ -67,8 +70,9 @@ def test_run_output_migration_audit_keeps_migrated_daily_chain_out_of_legacy_bat
 def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     text = DOC.read_text(encoding="utf-8")
 
-    assert "Move the asset and graphics generators next." in text
+    assert "Batch 1 asset and graphics generator migration is complete." in text
     assert "generate_hsd_graphics_upload_pack_v1.py" in text
+    assert "Move Batch 2 next" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text
     assert "HSD_RUN_OUTPUT_DIR" in text
