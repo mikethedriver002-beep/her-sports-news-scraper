@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from hsd_run_io import input_path, output_path, read_csv, read_json, write_csv, write_json, write_text
 
-VERSION = "hsd-morning-source-discovery-board-v1.6-opportunity-angles"
+VERSION = "hsd-morning-source-discovery-board-v1.7-readiness-cues"
 
 OUT_CSV = output_path("morning_source_discovery_board.csv")
 OUT_JSON = output_path("morning_source_discovery_board.json")
@@ -46,6 +46,11 @@ FIELDS = [
     "story_opportunity_angle",
     "story_opportunity_recommended_path",
     "story_opportunity_path_reason",
+    "story_opportunity_confidence_tier",
+    "story_opportunity_source_coverage",
+    "story_opportunity_confirmation_cue",
+    "story_opportunity_asset_cue",
+    "story_opportunity_readiness_note",
     "source_artifact",
     "next_action",
     "reason",
@@ -266,6 +271,93 @@ def story_path_payload(rows: List[Dict[str, str]]) -> Dict[str, str]:
         "angle": "Monitor or factual update",
         "recommended_path": "news_packet",
         "path_reason": "Official/wire leads default to News packet review when no stronger Studio signal is present.",
+    }
+
+
+def story_readiness_payload(rows: List[Dict[str, str]], path_payload: Dict[str, str]) -> Dict[str, str]:
+    source_names = sorted({clean(row.get("source_name")) for row in rows if clean(row.get("source_name"))})
+    urls = sorted({canonicalize(row.get("source_url", "")) for row in rows if canonicalize(row.get("source_url", ""))})
+    source_count = len(source_names) if source_names else (1 if urls or rows else 0)
+    source_text = " ".join(
+        norm(value)
+        for row in rows
+        for value in [
+            row.get("lane"),
+            row.get("source_name"),
+            row.get("source_type"),
+            row.get("source_band"),
+            row.get("publish_posture"),
+            row.get("reason"),
+        ]
+        if clean(value)
+    )
+    has_official = "official" in source_text or "primary" in source_text
+    has_wire = "wire" in source_text or "ap_" in source_text or "apnews" in " ".join(urls)
+    discovery_only = any(
+        row.get("lane") in {"social_discovery", "gray_area_review"} or row.get("publish_posture") == "discovery_only"
+        for row in rows
+    )
+
+    if discovery_only:
+        source_coverage = "discovery_source_only"
+    elif has_official and has_wire:
+        source_coverage = "official_plus_wire"
+    elif source_count >= 2:
+        source_coverage = "multi_source_free"
+    elif has_official:
+        source_coverage = "single_official_source"
+    elif has_wire:
+        source_coverage = "single_wire_source"
+    else:
+        source_coverage = "source_review_needed"
+
+    if discovery_only:
+        confirmation_cue = "needs_official_confirmation"
+    elif source_coverage == "official_plus_wire":
+        confirmation_cue = "official_and_wire_confirmed"
+    elif source_count < 2 and path_payload["recommended_path"] in {"news_packet", "studio_brief"}:
+        confirmation_cue = "needs_second_source"
+    elif source_coverage in {"multi_source_free", "single_official_source", "single_wire_source"}:
+        confirmation_cue = "source_backed"
+    else:
+        confirmation_cue = "operator_fact_lock_needed"
+
+    if path_payload["recommended_path"] == "studio_brief":
+        asset_cue = "asset_check_required_before_studio"
+    elif path_payload["recommended_path"] == "news_packet":
+        asset_cue = "asset_not_required_for_news_packet"
+    else:
+        asset_cue = "manual_asset_review_if_visual"
+
+    quality_scores = [as_int(row.get("quality_score"), 0) for row in rows if clean(row.get("quality_score"))]
+    max_quality = max(quality_scores) if quality_scores else 0
+    fresh = any(row.get("freshness_label") in {"today", "last_48_hours"} for row in rows)
+
+    if confirmation_cue == "needs_official_confirmation":
+        confidence_tier = "needs_official_confirmation"
+        readiness_note = "Confirm this with an official, wire, primary, or operator-verified source before News or Studio work."
+    elif confirmation_cue == "needs_second_source":
+        confidence_tier = "needs_second_source"
+        readiness_note = "Pair this single official/wire lead with a second free source before drafting."
+    elif asset_cue == "asset_check_required_before_studio":
+        confidence_tier = "source_backed_studio_candidate" if max_quality >= 70 and fresh else "studio_candidate_review"
+        readiness_note = "Confirm team/player asset readiness before drafting the Studio brief."
+    elif source_coverage in {"official_plus_wire", "multi_source_free"} and max_quality >= 70 and fresh:
+        confidence_tier = "publish_grade_candidate"
+        readiness_note = "Source coverage is strong enough for a News packet draft after human fact-lock."
+    elif source_coverage in {"official_plus_wire", "multi_source_free", "single_official_source", "single_wire_source"}:
+        confidence_tier = "source_backed_review"
+        readiness_note = "Review the source facts and freshness before promotion."
+    else:
+        confidence_tier = "operator_review"
+        readiness_note = "Operator should verify source posture, facts, and intended path before promotion."
+
+    return {
+        "confidence_tier": confidence_tier,
+        "source_coverage": source_coverage,
+        "confirmation_cue": confirmation_cue,
+        "asset_cue": asset_cue,
+        "readiness_note": readiness_note,
     }
 
 
@@ -596,6 +688,11 @@ def make_row(
         "story_opportunity_angle": "",
         "story_opportunity_recommended_path": "",
         "story_opportunity_path_reason": "",
+        "story_opportunity_confidence_tier": "",
+        "story_opportunity_source_coverage": "",
+        "story_opportunity_confirmation_cue": "",
+        "story_opportunity_asset_cue": "",
+        "story_opportunity_readiness_note": "",
         "source_artifact": source_artifact,
         "next_action": next_action_for(lane, posture, reason),
         "reason": reason,
@@ -827,6 +924,7 @@ def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str
         opportunity_id = "opp_" + lead_id([representative.get("title"), *sources, *urls])[:12]
         opportunity_title = opportunity_headline(ranked)
         path_payload = story_path_payload(ranked)
+        readiness_payload = story_readiness_payload(ranked, path_payload)
         opportunity_reason = (
             f"Grouped {len(cluster)} related official/wire discovery leads from {', '.join(sources)}."
             if len(cluster) > 1
@@ -842,6 +940,11 @@ def assign_story_opportunities(rows: List[Dict[str, str]]) -> List[List[Dict[str
             row["story_opportunity_angle"] = path_payload["angle"]
             row["story_opportunity_recommended_path"] = path_payload["recommended_path"]
             row["story_opportunity_path_reason"] = path_payload["path_reason"]
+            row["story_opportunity_confidence_tier"] = readiness_payload["confidence_tier"]
+            row["story_opportunity_source_coverage"] = readiness_payload["source_coverage"]
+            row["story_opportunity_confirmation_cue"] = readiness_payload["confirmation_cue"]
+            row["story_opportunity_asset_cue"] = readiness_payload["asset_cue"]
+            row["story_opportunity_readiness_note"] = readiness_payload["readiness_note"]
     return clusters
 
 
@@ -868,17 +971,21 @@ def promotion_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
             promoted["promotion_recommendation"] = recommended_path
             promoted["promotion_target"] = PATH_TARGETS.get(recommended_path, promoted["promotion_target"])
             promoted["promotion_reason"] = clean(promoted.get("story_opportunity_path_reason")) or promoted["promotion_reason"]
+            readiness_note = clean(promoted.get("story_opportunity_readiness_note"))
             if recommended_path == "studio_brief":
-                promoted["promotion_next_step"] = "Review the source facts and asset readiness, then draft a Studio brief manually."
+                promoted["promotion_next_step"] = readiness_note or "Review the source facts and asset readiness, then draft a Studio brief manually."
             elif recommended_path == "news_packet":
-                promoted["promotion_next_step"] = "Draft or refresh a News packet manually with source-backed facts and the chosen angle."
+                promoted["promotion_next_step"] = readiness_note or "Draft or refresh a News packet manually with source-backed facts and the chosen angle."
         size = as_int(promoted.get("story_opportunity_size"), 0)
         if size > 1:
             promoted["promotion_reason"] = (
-                f"{promoted['story_opportunity_reason']} {promoted.get('story_opportunity_path_reason') or 'Review the grouped evidence before choosing the final angle.'}"
+                f"{promoted['story_opportunity_reason']} "
+                f"{promoted.get('story_opportunity_path_reason') or 'Review the grouped evidence before choosing the final angle.'} "
+                f"{promoted.get('story_opportunity_readiness_note') or ''}"
             )
             promoted["promotion_next_step"] = (
-                "Review the grouped official/wire links, confirm the opportunity angle, then draft or refresh the target artifact manually."
+                promoted.get("story_opportunity_readiness_note")
+                or "Review the grouped official/wire links, confirm the opportunity angle, then draft or refresh the target artifact manually."
             )
         out.append(promoted)
     return out
@@ -912,6 +1019,18 @@ def build_payload() -> Dict[str, Any]:
         "quality_70_plus": sum(1 for row in rows if as_int(row["quality_score"]) >= 70),
         "story_opportunities": len(story_opportunities),
         "grouped_story_opportunities": sum(1 for cluster in story_opportunities if len(cluster) > 1),
+        "publish_grade_story_opportunities": sum(
+            1 for cluster in story_opportunities if cluster and cluster[0].get("story_opportunity_confidence_tier") == "publish_grade_candidate"
+        ),
+        "story_opportunities_need_second_source": sum(
+            1 for cluster in story_opportunities if cluster and cluster[0].get("story_opportunity_confirmation_cue") == "needs_second_source"
+        ),
+        "story_opportunities_need_official_confirmation": sum(
+            1 for cluster in story_opportunities if cluster and cluster[0].get("story_opportunity_confirmation_cue") == "needs_official_confirmation"
+        ),
+        "story_opportunities_need_asset_check": sum(
+            1 for cluster in story_opportunities if cluster and cluster[0].get("story_opportunity_asset_cue") == "asset_check_required_before_studio"
+        ),
     }
     promotions = promotion_rows(rows)
     return {
@@ -955,6 +1074,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Quality 70+: `{counts['quality_70_plus']}`",
         f"- Story opportunities: `{counts['story_opportunities']}`",
         f"- Grouped story opportunities: `{counts['grouped_story_opportunities']}`",
+        f"- Publish-grade story opportunities: `{counts['publish_grade_story_opportunities']}`",
+        f"- Story opportunities needing second source: `{counts['story_opportunities_need_second_source']}`",
+        f"- Story opportunities needing official confirmation: `{counts['story_opportunities_need_official_confirmation']}`",
+        f"- Story opportunities needing asset check: `{counts['story_opportunities_need_asset_check']}`",
         "",
         "## Promotion Recommendations",
         "",
@@ -964,6 +1087,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
             f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'review'}` | "
+            f"confidence `{row.get('story_opportunity_confidence_tier') or 'review'}` | "
+            f"coverage `{row.get('story_opportunity_source_coverage') or 'n/a'}` | "
+            f"cue `{row.get('story_opportunity_confirmation_cue') or 'n/a'}` | "
+            f"assets `{row.get('story_opportunity_asset_cue') or 'n/a'}` | "
             f"opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | {row['promotion_next_step']}"
         )
     if not payload["promotion_recommendations"]:
@@ -978,6 +1105,8 @@ def render_markdown(payload: Dict[str, Any]) -> str:
             f"{row['rank']}. `{row['lane']}` | `{row['review_status']}` | `{row['publish_posture']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
             f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'n/a'}` | "
+            f"confidence `{row.get('story_opportunity_confidence_tier') or 'n/a'}` | "
+            f"coverage `{row.get('story_opportunity_source_coverage') or 'n/a'}` | "
             f"opportunity `{row.get('story_opportunity_size') or 'n/a'}` | {row['next_action']}"
         )
     if not payload["rows"]:
@@ -1025,6 +1154,10 @@ def render_promotion_markdown(payload: Dict[str, Any]) -> str:
             f"{row['promotion_rank']}. `{row['promotion_priority']}` | `{row['promotion_recommendation']}` | "
             f"quality `{row.get('quality_score') or 'n/a'}` | `{row.get('freshness_label') or 'undated'}` | "
             f"{row['title']} | angle `{row.get('story_opportunity_angle') or 'review'}` | "
+            f"confidence `{row.get('story_opportunity_confidence_tier') or 'review'}` | "
+            f"coverage `{row.get('story_opportunity_source_coverage') or 'n/a'}` | "
+            f"cue `{row.get('story_opportunity_confirmation_cue') or 'n/a'}` | "
+            f"assets `{row.get('story_opportunity_asset_cue') or 'n/a'}` | "
             f"opportunity `{row.get('story_opportunity_size') or '1'}` source(s) | "
             f"target: `{row['promotion_target']}` | {row['promotion_reason']}"
         )
