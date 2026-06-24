@@ -82,6 +82,24 @@ def test_run_output_migration_audit_records_results_news_support_as_run_aware() 
     assert support_scripts <= run_aware
 
 
+def test_run_output_migration_audit_records_drilldown_dashboards_as_run_aware() -> None:
+    module = load_module()
+    report = module.build_audit(REPO)
+    drilldowns = {
+        "generate_results_dashboard_v4.py",
+        "generate_hsd_studio_dashboard_v1.py",
+    }
+    legacy = {
+        row["script"]
+        for key in ["batch_1_asset_graphics", "batch_2_support_dashboards", "batch_3_legacy_scraper"]
+        for row in report["prioritized_batches"][key]
+    }
+    run_aware = {row["script"] for row in report["prioritized_batches"]["already_run_scoped"]}
+
+    assert drilldowns.isdisjoint(legacy)
+    assert drilldowns <= run_aware
+
+
 def test_run_output_migration_audit_records_legacy_scraper_retirement() -> None:
     module = load_module()
     report = module.build_audit(REPO)
@@ -167,6 +185,9 @@ def test_run_output_migration_doc_records_priority_and_guardrails() -> None:
     assert "source registry status" in text
     assert "generate_hsd_dashboard.py" in text
     assert "compatibility entrypoint" in text
+    assert "generate_results_dashboard_v4.py" in text
+    assert "explicit `dashboards` mode" in text
+    assert "generate_hsd_studio_dashboard_v1.py" in text
     assert "womens_sports_scraper.py" in text
     assert "Paid APIs are not part of this migration." in text
     assert "No auto-publishing or workflow automation should be added." in text

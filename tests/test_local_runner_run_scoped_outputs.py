@@ -40,6 +40,9 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "operator_command_center.*",
         "publish_guard_report.*",
         "results_desk_v5_manifest.json",
+        "results_dashboard/**",
+        "studio_dashboard/**",
+        "news_dashboard/**",
         "news_fact_packets.csv",
         "studio_bundle_*",
         "bebe_*",
@@ -146,6 +149,23 @@ def test_launch_mode_is_explicit_and_run_scoped() -> None:
     assert "launch_command_center.md" in runner
     assert "launch_instagram_publish_queue.csv" in runner
     assert "Launch Control runbook" in doc
+
+
+def test_drilldown_dashboards_mode_is_explicit_and_run_scoped() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"dashboards"' in wrapper
+    assert '"dashboards"' in runner
+    assert "function Invoke-DrilldownDashboardsStage" in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_results_dashboard_v4.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_studio_dashboard_v1.py" -Optional' in runner
+    assert '"dashboards" { Invoke-DrilldownDashboardsStage $python; Invoke-ReviewStage $python }' in runner
+    assert '"results_dashboard/index.html"' in runner
+    assert '"studio_dashboard/index.html"' in runner
+    assert "run -Mode dashboards" in doc
+    assert "It does not publish, call paid APIs, or run as part of `full`." in doc
 
 
 def test_local_development_docs_describe_run_scoped_outputs() -> None:

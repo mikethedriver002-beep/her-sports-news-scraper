@@ -168,6 +168,25 @@ What changed:
 - Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
 - No local runner mode, workflow trigger, paid source, or publishing action was added.
 
+Seventh selected cleanup:
+
+- `generate_results_dashboard_v4.py`
+- `generate_hsd_studio_dashboard_v1.py`
+
+Why this was next:
+
+- These were the last manual workflow-era Results/Studio dashboards still writing root dashboard folders.
+- Their inputs are still created by the modern Results and Studio stages, so they are useful as focused drill-down views.
+- The daily command center should remain the operator home base, so these dashboards should be explicit, not part of `full`.
+
+What changed:
+
+- `generate_results_dashboard_v4.py` reads run-folder Results inputs first and writes `results_dashboard/index.html` into `HSD_RUN_OUTPUT_DIR` when set.
+- `generate_hsd_studio_dashboard_v1.py` reads run-folder Studio inputs first and writes `studio_dashboard/index.html` into `HSD_RUN_OUTPUT_DIR` when set.
+- Legacy root output remains available when `HSD_RUN_OUTPUT_DIR` is unset.
+- The local runner now exposes an explicit `dashboards` mode, then refreshes the review command center.
+- No paid source, workflow trigger, default full-run step, or publishing action was added.
+
 ## Already Run-Scoped Or Run-Aware
 
 Current local runner scripts already moved or made run-aware:
@@ -189,6 +208,8 @@ Current local runner scripts already moved or made run-aware:
 - `scripts/generate_hsd_expected_games_v5.py`
 - `scripts/verify_hsd_wnba_schedule_independent_v5.py`
 - `generate_news_dashboard_v1.py`
+- `generate_results_dashboard_v4.py`
+- `generate_hsd_studio_dashboard_v1.py`
 - `publish_hsd_guard_v1.py`
 - `generate_hsd_operator_status_v1.py`
 - `generate_hsd_bebe_daily_ops_plan_v2.py`

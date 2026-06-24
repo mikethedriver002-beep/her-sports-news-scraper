@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "review")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -22,6 +22,8 @@ $GeneratedStatePathspecs = @(
     "outputs/latest/**",
     "dashboard/**",
     "results_dashboard/**",
+    "studio_dashboard/**",
+    "news_dashboard/**",
     "run_history/**",
     "results_run_history/**",
     "launch_run_history/**",
@@ -576,6 +578,12 @@ function Invoke-LaunchStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_launch_control_v1.py" -Optional
 }
 
+function Invoke-DrilldownDashboardsStage($Python) {
+    Write-Section "Drill-down dashboards stage"
+    Invoke-ScriptIfPresent $Python "generate_results_dashboard_v4.py" -Optional
+    Invoke-ScriptIfPresent $Python "generate_hsd_studio_dashboard_v1.py" -Optional
+}
+
 function Invoke-ReviewStage($Python) {
     Write-Section "Review stage"
     Invoke-ScriptIfPresent $Python "generate_hsd_source_registry_audit_v2.py" -Optional
@@ -605,7 +613,9 @@ function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
 function Copy-IfPresent([string]$Relative, [string]$DestinationDir, [System.Collections.ArrayList]$Manifest) {
     $src = Resolve-HsdArtifactSource $Relative $DestinationDir
     if (-not $src) { return }
-    $dest = Join-Path $DestinationDir ([IO.Path]::GetFileName($Relative))
+    $dest = Resolve-HsdChildPath $DestinationDir $Relative
+    $destParent = Split-Path -Parent $dest
+    if ($destParent) { New-Item -ItemType Directory -Path $destParent -Force | Out-Null }
     $srcFull = [IO.Path]::GetFullPath($src)
     $destFull = [IO.Path]::GetFullPath($dest)
     if (-not $srcFull.Equals($destFull, [StringComparison]::OrdinalIgnoreCase)) {
@@ -629,11 +639,13 @@ function Collect-HsdArtifacts($RunContext) {
         "source_registry_audit.json",
         "top_womens_results.csv",
         "today_final_results.csv",
+        "results_dashboard/index.html",
         "news_fact_packets.csv",
         "news_daily_plan.md",
         "news_sync_hub.md",
         "studio_bundle_queue.csv",
         "studio_bundle_packets.md",
+        "studio_dashboard/index.html",
         "preview_bundle_quality.csv",
         "preview_bundle_quality.md",
         "preview_bundle_quality_summary.csv",
@@ -722,6 +734,7 @@ function Invoke-HsdRun {
             "handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }
             "posts" { Invoke-PostsStage $python; Invoke-ReviewStage $python }
             "launch" { Invoke-LaunchStage $python; Invoke-ReviewStage $python }
+            "dashboards" { Invoke-DrilldownDashboardsStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }

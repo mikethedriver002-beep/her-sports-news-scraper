@@ -26,10 +26,9 @@ Keep as focused run-scoped support views:
 - `generate_news_dashboard_v1.py`
 - `generate_hsd_launch_control_v1.py` launch dashboards
 - `generate_hsd_graphics_qa_v1.py` graphics QA dashboard
-
-Keep out of the local default unless explicitly modernized:
-
 - `generate_results_dashboard_v4.py`
 - `generate_hsd_studio_dashboard_v1.py`
 
-These are manual workflow-era drill-down dashboards. The local operator workflow should prefer `results_desk_v5_report.md`, `studio_command_center.md`, and the daily command center unless a future pass makes these dashboards run-aware and proves they add value beyond the command center.
+Results and Studio dashboard decision:
+
+These are manual workflow-era drill-down dashboards, but their inputs are still produced by the current Results and Studio stages. They now read same-run artifacts first, write into `HSD_RUN_OUTPUT_DIR` when set, and are exposed only through the explicit local `dashboards` mode. They are not part of `full`; the local operator workflow should still treat `operator_command_center.html` as the home base.
