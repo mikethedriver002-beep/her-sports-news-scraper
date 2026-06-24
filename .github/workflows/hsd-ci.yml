@@ -1,21 +1,7 @@
 name: HSD CI - Code and Config Only
 
 on:
-  pull_request:
-    paths:
-      - "*.py"
-      - "config/**"
-      - "contracts/**"
-      - ".github/workflows/**"
-      - "requirements*.txt"
-  push:
-    branches: [main]
-    paths:
-      - "*.py"
-      - "config/**"
-      - "contracts/**"
-      - ".github/workflows/**"
-      - "requirements*.txt"
+  workflow_dispatch:
 
 permissions:
   contents: read

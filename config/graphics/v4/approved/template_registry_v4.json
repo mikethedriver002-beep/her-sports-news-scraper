@@ -26,7 +26,7 @@
       "public_mockup_sha256": "27ee89911806905816a1d2a164475468b9152e199a59803ae043b3f7e51323ff",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_game_recap_final_score_a.json",
-      "spec_sha256": "1c0dffebfd4ef591173be83d3c9f4e5befa7bc79e381514903aa45996b1c74ca",
+      "spec_sha256": "d111ac6976694bdb01a91bfd2453b49fa5600c8c605526f6d5a05cb725d9a223",
       "status": "canonical_frozen",
       "template_id": "hsd_game_recap_final_score_a",
       "variant": "A"
@@ -54,7 +54,7 @@
       "public_mockup_sha256": "2d5d1960a784c1b48fb9349782ad32f86be830cd7e668371de0eb4eacc1ba482",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_game_recap_final_score_b.json",
-      "spec_sha256": "3ae9475eae1b8c53825fb71bdaad99ed2b6ac17614517c4632804bda0fc547dc",
+      "spec_sha256": "22e1394e8a1e62c813726ced34484ea4af8c9b609c096faa51fee5706f4623ca",
       "status": "canonical_frozen",
       "template_id": "hsd_game_recap_final_score_b",
       "variant": "B"
@@ -82,7 +82,7 @@
       "public_mockup_sha256": "09d7f8cb34140a666fbdc451eabd4bf6986647c3cc188bba1e8cbe31239d2d87",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_game_recap_final_score_c_story.json",
-      "spec_sha256": "bac6a57600e1f82b3053f75fe8020028ead776d4d4bd4b59972e58a1d0c538f7",
+      "spec_sha256": "d99fd5e529b68efaad5f96635458f8fd8f60f4f2b0ecd040f433adc723afc2c0",
       "status": "canonical_frozen",
       "template_id": "hsd_game_recap_final_score_c_story",
       "variant": "C"
@@ -110,7 +110,7 @@
       "public_mockup_sha256": "04159e63765bcb454763c8de443987954fd867d88f34d97c0313bc292b1e73c6",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_tonight_in_the_w_a.json",
-      "spec_sha256": "a106203fe8b9bf635266569c00cb21104f0f839c6e0308aa78d01418e31c01dd",
+      "spec_sha256": "fe4ef485d0e96dfed78ce32e2c879ca273a45a7b63177a76340a132997f6e393",
       "status": "canonical_frozen",
       "template_id": "hsd_tonight_in_the_w_a",
       "variant": "A"
@@ -138,7 +138,7 @@
       "public_mockup_sha256": "fe85ec83c4f33b29a004ca1bdc6e512b09935b7d871aabb4f4825795464508ce",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_last_night_in_the_w_variant_a_multi_game_feed.json",
-      "spec_sha256": "e659104b19225d0ec88c4c7d6b7724cf4fda9b8cdd31ce11da9f9db6f7e55642",
+      "spec_sha256": "18fce5d37d753c42f028192be9e59756bfbed1a04d620c9e275f6c4eab9cc7af",
       "status": "canonical_frozen",
       "template_id": "hsd_last_night_in_the_w_variant_a_multi_game_feed",
       "variant": "A"
@@ -166,7 +166,7 @@
       "public_mockup_sha256": "df8181070054bd7547c28772a9d4d6bd5e045e36770bcd5d2a9f0c3ecad0fa3d",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_last_night_in_the_w_variant_b_story_rolling_recap.json",
-      "spec_sha256": "c6191674893efa3240393c4e694193781518a8e897a90c94ae8cab6b5f1b5d81",
+      "spec_sha256": "1e0699661b34781b7b8da1c495826d148574592c4e7152809b2e13ec7ea46005",
       "status": "canonical_frozen",
       "template_id": "hsd_last_night_in_the_w_variant_b_story_rolling_recap",
       "variant": "B"
@@ -194,7 +194,7 @@
       "public_mockup_sha256": "0a123f046d9523fa755b3be5c1ee971dba8d0cf15fe8829d3fb98ab766264c49",
       "review_only": true,
       "spec_path": "config/graphics/v4/approved/wnba/hsd_last_night_in_the_w_variant_c_carousel_cover_recap_package.json",
-      "spec_sha256": "f6eec7d2fda604c58ca033111eee0e9ac17220a136ce7e83edb81c150ce5563b",
+      "spec_sha256": "5755d523715bc0eae6119b7fb3f017144c7da71a11a5a43c8e0e0cf317c550cf",
       "status": "canonical_frozen",
       "template_id": "hsd_last_night_in_the_w_variant_c_carousel_cover_recap_package",
       "variant": "C"

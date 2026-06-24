@@ -16,18 +16,6 @@ on:
         default: "true"
         type: choice
         options: ["true", "false"]
-  pull_request:
-    paths:
-      - "scripts/hsd_phase8a_editorial_engine.py"
-      - "scripts/generate_hsd_template_renderer_v5_phase8a.py"
-      - "scripts/generate_hsd_phase8a_multisport_cards.py"
-      - "scripts/validate_hsd_phase8a_editorial_quality.py"
-      - "scripts/repair_hsd_phase8a_wnba_logo_registry.py"
-      - "scripts/validate_hsd_phase8a_asset_registry.py"
-      - "config/graphics/v5/phase8a/**"
-      - "data/asset_registry/wnba/phase8a_exact_logo_sources.csv"
-      - "tests/test_phase8a_*.py"
-      - ".github/workflows/hsd-v5-phase8a-editorial-language-fit-assets.yml"
 
 permissions:
   contents: read

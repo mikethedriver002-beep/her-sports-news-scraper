@@ -42,7 +42,7 @@ def test_phase6a_contract_passes_strict_validation() -> None:
     assert report["template_count"] == 7
     assert set(report["template_ids"]) == EXPECTED_IDS
     assert report["badge_hash_valid"] is True
-    assert report["font_contract_status"] == "declared"
+    assert report["font_contract_status"] == "selected"
     assert report["blockers"] == []
     assert report["missing_assets"] == []
     assert report["hash_mismatches"] == []
@@ -81,7 +81,8 @@ def test_font_contract_blocks_silent_fallback_and_cutover() -> None:
     contract = json.loads((APPROVED / "font_contract_v4.json").read_text(encoding="utf-8"))
     assert contract["silent_fallback_allowed"] is False
     assert contract["renderer_cutover_allowed"] is False
-    assert contract["selected_fonts"] == {}
+    assert contract["status"] == "selected_phase6e_system_fonts"
+    assert contract["selected_fonts"]["display_condensed_headline"]["system_package"] == "fonts-noto-core"
     assert "Bebas Neue" in contract["roles"]["display_condensed_headline"]["candidate_families"]
 
 

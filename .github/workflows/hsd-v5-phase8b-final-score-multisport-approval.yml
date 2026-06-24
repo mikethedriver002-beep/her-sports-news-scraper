@@ -19,11 +19,6 @@ on:
         options:
           - "true"
           - "false"
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/hsd-v5-phase8b-final-score-multisport-approval.yml
 
 permissions:
   contents: read
