@@ -96,6 +96,12 @@ def _draw_result_overlay(path: Path, editorial: Dict[str, Any]) -> None:
         label_font = _font(34, True)
         title_font = _font(48, True)
         cta_font = _font(34, True)
+        # Story C's approved hook-panel mask is inset from the canvas edges.
+        # Keep the Phase 8B repaint inside that mask so near-post-ready can
+        # distinguish intended dynamic copy from unintended template changes.
+        paint_left = 30
+        paint_right = w - 31
+        paint_bottom = h - 51
     else:
         top = int(h * 0.74)
         pad_x = 34
@@ -106,12 +112,15 @@ def _draw_result_overlay(path: Path, editorial: Dict[str, Any]) -> None:
         label_font = _font(30, True)
         title_font = _font(45, True)
         cta_font = _font(30, True)
+        paint_left = 0
+        paint_right = w
+        paint_bottom = h
     # Cover old Final Read / Your Take modules completely.
-    draw.rectangle((0, top, w, h), fill=(1, 2, 6, 246))
-    draw.line((0, top + 1, w, top + 1), fill=(223, 161, 38, 255), width=3)
+    draw.rectangle((paint_left, top, paint_right, paint_bottom), fill=(1, 2, 6, 246))
+    draw.line((paint_left, top + 1, paint_right, top + 1), fill=(223, 161, 38, 255), width=3)
     mid = top + int((h - top) * 0.55)
-    draw.line((body_x - 26, top, body_x - 26, h), fill=(223, 161, 38, 170), width=2)
-    draw.line((0, mid, w, mid), fill=(223, 161, 38, 155), width=2)
+    draw.line((body_x - 26, top, body_x - 26, paint_bottom), fill=(223, 161, 38, 170), width=2)
+    draw.line((paint_left, mid, paint_right, mid), fill=(223, 161, 38, 155), width=2)
     gold = (223, 161, 38, 255)
     ink = (238, 236, 226, 255)
     muted = (205, 201, 190, 255)
