@@ -195,6 +195,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_proposal_draft.md").exists()
     assert (run_dir / "source_registry_proposal_promotion_checklist.csv").exists()
     assert (run_dir / "source_registry_proposal_promotion_checklist.md").exists()
+    assert (run_dir / "source_registry_update_worksheet.csv").exists()
+    assert (run_dir / "source_registry_update_worksheet.md").exists()
     assert (run_dir / "source_proposal_pack_readiness.csv").exists()
     assert (run_dir / "source_proposal_pack_readiness.md").exists()
     assert (run_dir / "source_proposal_packs.csv").exists()
@@ -230,6 +232,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["proposal_promotion_verify_then_copy"] == 20
     assert manifest["counts"]["proposal_promotion_hold"] == 0
     assert manifest["counts"]["proposal_promotion_discard"] == 0
+    assert manifest["counts"]["registry_update_worksheet_rows"] == 20
+    assert manifest["counts"]["registry_update_worksheet_disabled"] == 20
     assert manifest["counts"]["proposal_pack_leagues"] == 4
     assert manifest["counts"]["proposal_pack_rows"] == 57
     assert manifest["counts"]["proposal_pack_official"] == 39
@@ -286,6 +290,20 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     promotion_checklist_md = (run_dir / "source_registry_proposal_promotion_checklist.md").read_text(encoding="utf-8")
     assert "Promotion Checklist" in promotion_checklist_md
     assert "verify then copy: 20" in promotion_checklist_md
+    registry_update_worksheet = read_csv(run_dir / "source_registry_update_worksheet.csv")
+    assert len(registry_update_worksheet) == 20
+    assert registry_update_worksheet[0]["worksheet_decision"] == "manual_registry_plan_after_verification"
+    assert registry_update_worksheet[0]["manual_edit_target"] == "config/source_registry.json"
+    assert registry_update_worksheet[0]["manual_edit_allowed"] == "Yes_only_after_operator_verification"
+    assert registry_update_worksheet[0]["auto_edit_status"] == "not_performed_by_generator"
+    assert registry_update_worksheet[0]["proposed_enabled"] == "False"
+    assert registry_update_worksheet[0]["proposed_automation_status"] == "disabled_manual_review_only"
+    assert "wnba_official_home_review" in registry_update_worksheet[0]["proposed_source_json"]
+    assert "Before: no manual change from this generator" in registry_update_worksheet[0]["before_after_diff"]
+    assert "remove the manually added" in registry_update_worksheet[0]["rollback_note"]
+    registry_update_worksheet_md = (run_dir / "source_registry_update_worksheet.md").read_text(encoding="utf-8")
+    assert "Source Registry Update Worksheet" in registry_update_worksheet_md
+    assert "does not edit `config/source_registry.json`" in registry_update_worksheet_md
     pack_readiness = read_csv(run_dir / "source_proposal_pack_readiness.csv")
     assert len(pack_readiness) == 4
     readiness_by_key = {row["pack_key"]: row for row in pack_readiness}
@@ -357,6 +375,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["source_registry_proposal_draft"][0]["draft_action"] == "manual_copy_to_inbox_after_freshness_check"
     assert manifest["source_registry_proposal_promotion_checklist"][0]["candidate_source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_proposal_promotion_checklist"][0]["checklist_decision"] == "verify_then_copy"
+    assert manifest["source_registry_update_worksheet"][0]["source_id"] == "wnba_official_home_review"
+    assert manifest["source_registry_update_worksheet"][0]["auto_edit_status"] == "not_performed_by_generator"
     assert manifest["source_proposal_pack_readiness"][0]["pack_key"] == "wnba"
     assert manifest["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert [row["pack_key"] for row in manifest["source_proposal_pack_index"]] == ["wnba", "nwsl", "lpga", "pwhl"]
@@ -381,6 +401,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "## Guided source proposal packs" in report
     assert "source_registry_proposal_draft.csv" in report
     assert "source_registry_proposal_promotion_checklist.csv" in report
+    assert "source_registry_update_worksheet.csv" in report
     assert "source_proposal_pack_readiness.csv" in report
     assert "PWHL" in report
 
@@ -417,6 +438,8 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_proposal_draft.md").exists()
     assert (work_dir / "source_registry_proposal_promotion_checklist.csv").exists()
     assert (work_dir / "source_registry_proposal_promotion_checklist.md").exists()
+    assert (work_dir / "source_registry_update_worksheet.csv").exists()
+    assert (work_dir / "source_registry_update_worksheet.md").exists()
     assert (work_dir / "source_proposal_pack_readiness.csv").exists()
     assert (work_dir / "source_proposal_pack_readiness.md").exists()
     assert (work_dir / "source_proposal_packs.csv").exists()

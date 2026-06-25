@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.12-proposal-promotion-checklist"
+VERSION = "hsd-source-registry-audit-bebe-v2.13-registry-update-worksheet"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -22,6 +22,8 @@ OUT_PROPOSAL_DRAFT_CSV = "source_registry_proposal_draft.csv"
 OUT_PROPOSAL_DRAFT_MD = "source_registry_proposal_draft.md"
 OUT_PROPOSAL_PROMOTION_CHECKLIST_CSV = "source_registry_proposal_promotion_checklist.csv"
 OUT_PROPOSAL_PROMOTION_CHECKLIST_MD = "source_registry_proposal_promotion_checklist.md"
+OUT_REGISTRY_UPDATE_WORKSHEET_CSV = "source_registry_update_worksheet.csv"
+OUT_REGISTRY_UPDATE_WORKSHEET_MD = "source_registry_update_worksheet.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -177,6 +179,37 @@ SOURCE_REGISTRY_PROPOSAL_PROMOTION_CHECKLIST_FIELDS = [
     "registry_action",
     "automation_status",
     "publish_policy",
+]
+
+SOURCE_REGISTRY_UPDATE_WORKSHEET_FIELDS = [
+    "worksheet_decision",
+    "operator_step",
+    "manual_edit_target",
+    "manual_edit_allowed",
+    "auto_edit_status",
+    "pack_key",
+    "pack_name",
+    "source_id",
+    "source_name",
+    "candidate_url",
+    "candidate_domain",
+    "source_type",
+    "tier",
+    "trust_band",
+    "sport_league",
+    "allowed_use",
+    "registry_presence",
+    "checklist_decision",
+    "checklist_copy_target",
+    "verification_gate",
+    "current_registry_state",
+    "proposed_enabled",
+    "proposed_automation_status",
+    "proposed_publish_policy",
+    "proposed_source_json",
+    "before_after_diff",
+    "rollback_note",
+    "review_notes",
 ]
 
 PWHL_SOURCE_CANDIDATES = [
@@ -1085,6 +1118,10 @@ def write_source_registry_proposal_promotion_checklist_csv(path: str | Path, row
     write_run_csv(path, rows, SOURCE_REGISTRY_PROPOSAL_PROMOTION_CHECKLIST_FIELDS, extrasaction="ignore")
 
 
+def write_source_registry_update_worksheet_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_UPDATE_WORKSHEET_FIELDS, extrasaction="ignore")
+
+
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
 
@@ -1935,6 +1972,131 @@ def write_source_registry_proposal_promotion_checklist_markdown(path: str | Path
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def proposed_trust_band(row: Dict[str, str]) -> str:
+    tier = lower(row.get("tier"))
+    source_type = lower(row.get("source_type"))
+    if tier in GREEN_TIERS or source_type in {"official_site", "official_site_collection", "scoreboard_site", "wire"}:
+        return "green_after_operator_verification"
+    return "yellow_manual_review"
+
+
+def proposed_registry_source_json(row: Dict[str, str]) -> str:
+    url = clean(row.get("candidate_url"))
+    domain = clean(row.get("candidate_domain")) or domain_from_url(url)
+    source = {
+        "source_id": clean(row.get("candidate_source_id")),
+        "source_type": clean(row.get("source_type")),
+        "enabled": False,
+        "tier": clean(row.get("tier")),
+        "trust_band": proposed_trust_band(row),
+        "sport_league": clean(row.get("sport_league")),
+        "urls": [url] if url else [],
+        "domains": [domain] if domain else [],
+        "allowed_use": split_semicolon_ids(clean(row.get("allowed_use"))),
+        "publish_policy": "not_publish_ready_until_operator_verifies_and_enables",
+        "automation_status": "disabled_manual_review_only",
+    }
+    return json.dumps(source, sort_keys=True, separators=(",", ":"))
+
+
+def build_source_registry_update_worksheet(checklist_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    worksheet_rows: List[Dict[str, str]] = []
+    for row in checklist_rows:
+        if clean(row.get("checklist_decision")) != "verify_then_copy":
+            continue
+        source_id = clean(row.get("candidate_source_id"))
+        registry_presence = clean(row.get("registry_presence")) or "not_checked"
+        proposed_json = proposed_registry_source_json(row)
+        worksheet_rows.append(
+            {
+                "worksheet_decision": "manual_registry_plan_after_verification",
+                "operator_step": "1_open_url_2_confirm_free_public_current_3_compare_json_4_edit_registry_manually_if_approved",
+                "manual_edit_target": REGISTRY,
+                "manual_edit_allowed": "Yes_only_after_operator_verification",
+                "auto_edit_status": "not_performed_by_generator",
+                "pack_key": clean(row.get("pack_key")),
+                "pack_name": clean(row.get("pack_name")),
+                "source_id": source_id,
+                "source_name": clean(row.get("candidate_source_name")),
+                "candidate_url": clean(row.get("candidate_url")),
+                "candidate_domain": clean(row.get("candidate_domain")),
+                "source_type": clean(row.get("source_type")),
+                "tier": clean(row.get("tier")),
+                "trust_band": proposed_trust_band(row),
+                "sport_league": clean(row.get("sport_league")),
+                "allowed_use": clean(row.get("allowed_use")),
+                "registry_presence": registry_presence,
+                "checklist_decision": clean(row.get("checklist_decision")),
+                "checklist_copy_target": clean(row.get("copy_target")),
+                "verification_gate": (
+                    "Operator must open the public URL, confirm it is free/login-free/current, "
+                    "confirm it is not duplicate registry coverage, and confirm allowed_use before editing."
+                ),
+                "current_registry_state": (
+                    f"Before: no approved trusted-registry object should be added for {source_id} until "
+                    f"manual verification is complete. Current registry signal: {registry_presence}."
+                ),
+                "proposed_enabled": "False",
+                "proposed_automation_status": "disabled_manual_review_only",
+                "proposed_publish_policy": "not_publish_ready_until_operator_verifies_and_enables",
+                "proposed_source_json": proposed_json,
+                "before_after_diff": (
+                    f"Before: no manual change from this generator. After manual approval only: append the disabled "
+                    f"source object for {source_id} to config/source_registry.json sources[]."
+                ),
+                "rollback_note": (
+                    f"If verification fails or the manual registry edit is wrong, remove the manually added "
+                    f"sources[] object with source_id={source_id} and rerun review."
+                ),
+                "review_notes": (
+                    "Review-only worksheet row. It does not edit the trusted registry, enable sources, run automation, "
+                    "call paid APIs, or publish."
+                ),
+            }
+        )
+    return worksheet_rows
+
+
+def write_source_registry_update_worksheet_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Update Worksheet",
+        "",
+        "Review-only registry change plan for checklist rows that are candidates for manual verification.",
+        "This worksheet does not edit `config/source_registry.json`, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- worksheet rows: {len(rows)}",
+        f"- manual edit target: `{REGISTRY}`",
+        "- default proposed state: disabled/manual-review-only/not publish-ready",
+        "",
+        "## Operator Gates",
+        "",
+        "- Open each candidate URL manually.",
+        "- Confirm the page is free, public, current, and login-free.",
+        "- Confirm the row is not duplicate trusted-registry coverage.",
+        "- Compare the proposed JSON before any hand edit.",
+        "- Keep the proposed source disabled unless a later human review intentionally changes that.",
+        "- Use the rollback note if the manual edit fails review.",
+        "",
+        "## Worksheet Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No registry update worksheet rows were generated. Work the promotion checklist first.")
+    else:
+        for row in rows:
+            lines += [
+                f"- **{row['source_id']}** | {row['source_name']} | {row['candidate_url']}",
+                f"  - decision: {row['worksheet_decision']}",
+                f"  - target: `{row['manual_edit_target']}` | edit: {row['manual_edit_allowed']} | auto: {row['auto_edit_status']}",
+                f"  - before/after: {row['before_after_diff']}",
+                f"  - rollback: {row['rollback_note']}",
+            ]
+    lines += ["", "Use `source_registry_update_worksheet.csv` for proposed JSON and field-level review.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
     issues: List[str] = []
     flags: List[str] = []
@@ -2102,6 +2264,7 @@ def main() -> None:
     proposal_pack_readiness_rows = build_source_proposal_pack_readiness(proposal_pack_rows_by_key, coverage_rows)
     proposal_draft_rows = build_source_registry_proposal_draft(proposal_pack_rows_by_key, proposal_pack_readiness_rows)
     proposal_promotion_checklist_rows = build_source_registry_proposal_promotion_checklist(proposal_draft_rows)
+    registry_update_worksheet_rows = build_source_registry_update_worksheet(proposal_promotion_checklist_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -2116,6 +2279,8 @@ def main() -> None:
     write_source_registry_proposal_draft_markdown(OUT_PROPOSAL_DRAFT_MD, proposal_draft_rows)
     write_source_registry_proposal_promotion_checklist_csv(OUT_PROPOSAL_PROMOTION_CHECKLIST_CSV, proposal_promotion_checklist_rows)
     write_source_registry_proposal_promotion_checklist_markdown(OUT_PROPOSAL_PROMOTION_CHECKLIST_MD, proposal_promotion_checklist_rows)
+    write_source_registry_update_worksheet_csv(OUT_REGISTRY_UPDATE_WORKSHEET_CSV, registry_update_worksheet_rows)
+    write_source_registry_update_worksheet_markdown(OUT_REGISTRY_UPDATE_WORKSHEET_MD, registry_update_worksheet_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -2155,6 +2320,8 @@ def main() -> None:
         "proposal_promotion_verify_then_copy": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "verify_then_copy"),
         "proposal_promotion_hold": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "hold"),
         "proposal_promotion_discard": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "discard"),
+        "registry_update_worksheet_rows": len(registry_update_worksheet_rows),
+        "registry_update_worksheet_disabled": sum(1 for r in registry_update_worksheet_rows if r["proposed_enabled"] == "False"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -2179,6 +2346,7 @@ def main() -> None:
         "source_registry_proposal_review": proposal_review_rows,
         "source_registry_proposal_draft": proposal_draft_rows,
         "source_registry_proposal_promotion_checklist": proposal_promotion_checklist_rows,
+        "source_registry_update_worksheet": registry_update_worksheet_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -2227,6 +2395,7 @@ def main() -> None:
         f"- source proposal checklist verify/copy rows: {counts['proposal_promotion_verify_then_copy']}",
         f"- source proposal checklist hold rows: {counts['proposal_promotion_hold']}",
         f"- source proposal checklist discard rows: {counts['proposal_promotion_discard']}",
+        f"- source registry update worksheet rows: {counts['registry_update_worksheet_rows']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -2274,7 +2443,19 @@ def main() -> None:
     lines.append("Pack-level readiness cues were created in `source_proposal_pack_readiness.csv` and `.md`.")
     lines.append("A manual proposal draft was created in `source_registry_proposal_draft.csv` and `.md`.")
     lines.append("A promotion checklist was created in `source_registry_proposal_promotion_checklist.csv` and `.md`.")
+    lines.append("A review-only registry update worksheet was created in `source_registry_update_worksheet.csv` and `.md`.")
     lines.append("")
+    if registry_update_worksheet_rows:
+        lines.append("### Manual registry update worksheet")
+        lines.append("")
+        for row in registry_update_worksheet_rows[:8]:
+            lines.append(
+                f"- **{row['worksheet_decision']}** | {row['source_id']} | "
+                f"target: {row['manual_edit_target']} | enabled: {row['proposed_enabled']} | auto: {row['auto_edit_status']}"
+            )
+        if len(registry_update_worksheet_rows) > 8:
+            lines.append(f"- ... {len(registry_update_worksheet_rows) - 8} more worksheet rows in the CSV.")
+        lines.append("")
     if proposal_promotion_checklist_rows:
         lines.append("### Manual proposal promotion checklist")
         lines.append("")

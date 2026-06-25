@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.18.0-source-promotion-checklist"
+VERSION = "hsd-operator-command-center-v3.19.0-source-update-worksheet"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -32,6 +32,8 @@ ARTIFACTS = [
     ("Sources", "Source proposal draft data", "source_registry_proposal_draft.csv"),
     ("Sources", "Source proposal promotion checklist", "source_registry_proposal_promotion_checklist.md"),
     ("Sources", "Source proposal promotion checklist data", "source_registry_proposal_promotion_checklist.csv"),
+    ("Sources", "Source registry update worksheet", "source_registry_update_worksheet.md"),
+    ("Sources", "Source registry update worksheet data", "source_registry_update_worksheet.csv"),
     ("Sources", "Guided source pack readiness", "source_proposal_pack_readiness.md"),
     ("Sources", "Guided source pack readiness data", "source_proposal_pack_readiness.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
@@ -132,6 +134,8 @@ RUN_COMMANDS = {
     "source_registry_proposal_draft.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_promotion_checklist.md": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_promotion_checklist.csv": ".\\hsd.cmd run -Mode review",
+    "source_registry_update_worksheet.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_update_worksheet.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
@@ -533,6 +537,7 @@ def build_next_actions(
     proposal_review: List[Dict[str, str]],
     source_proposal_draft: List[Dict[str, str]],
     source_proposal_promotion_checklist: List[Dict[str, str]],
+    source_registry_update_worksheet: List[Dict[str, str]],
     source_proposal_pack_readiness: List[Dict[str, str]],
     source_proposal_packs: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
@@ -637,6 +642,7 @@ def build_next_actions(
     checklist_verify_rows = [row for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "verify_then_copy"]
     checklist_hold_rows = [row for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "hold"]
     checklist_discard_rows = [row for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "discard"]
+    registry_update_rows = [row for row in source_registry_update_worksheet if row.get("worksheet_decision") == "manual_registry_plan_after_verification"]
     ready_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status") == "ready_to_copy_after_freshness_check"]
     blocked_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status", "").startswith("blocked_")]
     duplicate_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review"]
@@ -677,6 +683,20 @@ def build_next_actions(
                 f"First item: {row.get('candidate_source_id')} / {row.get('checklist_decision')}."
             ),
             "source_registry_proposal_promotion_checklist.md",
+        )
+
+    if registry_update_rows:
+        row = registry_update_rows[0]
+        add_action(
+            "Registry worksheet",
+            "Research",
+            "Review trusted-registry update worksheet",
+            (
+                f"{len(registry_update_rows)} review-only registry plan row(s). "
+                f"Start with {row.get('source_id')}: compare proposed JSON, verify the public URL, "
+                "and hand-edit config/source_registry.json only after approval."
+            ),
+            "source_registry_update_worksheet.md",
         )
 
     if ready_draft_rows:
@@ -919,7 +939,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 11) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 12) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -959,6 +979,7 @@ def build_payload() -> Dict[str, Any]:
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
     source_proposal_draft = read_csv("source_registry_proposal_draft.csv")
     source_proposal_promotion_checklist = read_csv("source_registry_proposal_promotion_checklist.csv")
+    source_registry_update_worksheet = read_csv("source_registry_update_worksheet.csv")
     source_proposal_pack_readiness = read_csv("source_proposal_pack_readiness.csv")
     source_proposal_packs = read_csv("source_proposal_packs.csv")
     wnba_source_proposal_pack = read_csv("wnba_source_proposal_pack.csv")
@@ -1039,6 +1060,8 @@ def build_payload() -> Dict[str, Any]:
         metric("Checklist verify/copy", sum(1 for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "verify_then_copy")),
         metric("Checklist hold", sum(1 for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "hold")),
         metric("Checklist discard", sum(1 for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "discard")),
+        metric("Registry worksheet rows", len(source_registry_update_worksheet)),
+        metric("Worksheet disabled plans", sum(1 for row in source_registry_update_worksheet if row.get("proposed_enabled") == "False")),
         metric("Source packs ready", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal")),
         metric("Source packs duplicate review", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review")),
         metric("Source packs freshness check", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check")),
@@ -1076,6 +1099,7 @@ def build_payload() -> Dict[str, Any]:
         source_proposal_review,
         source_proposal_draft,
         source_proposal_promotion_checklist,
+        source_registry_update_worksheet,
         source_proposal_pack_readiness,
         source_proposal_packs,
         artifacts,
@@ -1118,6 +1142,7 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_proposal_review": source_proposal_review,
         "source_registry_proposal_draft": source_proposal_draft,
         "source_registry_proposal_promotion_checklist": source_proposal_promotion_checklist,
+        "source_registry_update_worksheet": source_registry_update_worksheet,
         "source_proposal_pack_readiness": source_proposal_pack_readiness,
         "source_proposal_packs": source_proposal_packs,
         "wnba_source_proposal_pack": wnba_source_proposal_pack,
@@ -1457,6 +1482,27 @@ def render_source_proposal_promotion_checklist(rows: Iterable[Dict[str, str]]) -
     return "".join(body) or '<tr><td colspan="9" class="empty">No source proposal promotion checklist rows found.</td></tr>'
 
 
+def render_source_registry_update_worksheet(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{pill(clean(row.get('worksheet_decision')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
+              <td>{html.escape(clean(row.get('candidate_url')) or '-')}</td>
+              <td>{html.escape(clean(row.get('manual_edit_target')) or 'config/source_registry.json')}</td>
+              <td>{html.escape(clean(row.get('manual_edit_allowed')) or 'manual review only')}</td>
+              <td>{html.escape(clean(row.get('proposed_enabled')) or 'False')}</td>
+              <td>{html.escape(clean(row.get('auto_edit_status')) or 'not_performed_by_generator')}</td>
+              <td>{html.escape(clean(row.get('before_after_diff')) or '-')}</td>
+              <td>{html.escape(clean(row.get('rollback_note')) or '-')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="9" class="empty">No source registry update worksheet rows found.</td></tr>'
+
+
 def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
@@ -1740,6 +1786,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry update worksheet</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Decision</th><th>Source ID</th><th>URL</th><th>Manual target</th><th>Edit allowed</th><th>Enabled</th><th>Auto edit</th><th>Before/after</th><th>Rollback</th></tr></thead>
+            <tbody>{render_source_registry_update_worksheet(payload['source_registry_update_worksheet'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source proposal promotion checklist</h2>
         <div class="table-wrap">
           <table>
@@ -1918,6 +1973,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('display_name'))} | {clean(item.get('needed_source_type'))} | {clean(item.get('coverage_gap'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action'))}"
         for item in payload["source_registry_intake_template"]
+    )
+    lines += ["", "## Source registry update worksheet", ""]
+    lines.extend(
+        f"- {clean(item.get('worksheet_decision')) or 'review'} | {clean(item.get('source_id'))} | target: {clean(item.get('manual_edit_target')) or 'config/source_registry.json'} | edit: {clean(item.get('manual_edit_allowed')) or 'manual review only'} | enabled: {clean(item.get('proposed_enabled')) or 'False'} | auto: {clean(item.get('auto_edit_status')) or 'not_performed_by_generator'} | rollback: {clean(item.get('rollback_note')) or 'remove manual source object if review fails'}"
+        for item in payload["source_registry_update_worksheet"]
     )
     lines += ["", "## Source proposal promotion checklist", ""]
     lines.extend(
