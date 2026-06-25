@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.5.0-title-square-fit"
+VERSION = "hsd-manual-review-renderer-v1.6.0-final-score-polish"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -843,15 +843,39 @@ def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str
     }
 
 
-def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], aliases: Dict[str, str], logos: Dict[str, Dict[str, str]], accent: tuple[int, int, int]) -> Dict[str, Any]:
-    draw_reference_panel(image, box, accent, fill=(1, 2, 7, 232), radius=16, width=2)
+def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], aliases: Dict[str, str], logos: Dict[str, Dict[str, str]], accent: tuple[int, int, int], *, winner: bool = False) -> Dict[str, Any]:
+    draw_reference_panel(image, box, accent, fill=(1, 2, 7, 226), radius=16, width=2)
     x, y, w, h = box
+    draw = ImageDraw.Draw(image, "RGBA")
+    sheen = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    sheen_draw = ImageDraw.Draw(sheen, "RGBA")
+    glow_alpha = 42 if winner else 26
+    sheen_draw.ellipse(
+        (x - int(w * 0.25), y - int(h * 0.30), x + int(w * 1.25), y + int(h * 1.20)),
+        fill=(*accent, glow_alpha),
+    )
+    if ImageFilter is not None:
+        sheen = sheen.filter(ImageFilter.GaussianBlur(max(18, min(w, h) // 6)))
+    image.alpha_composite(sheen)
+    draw.rounded_rectangle((x + 12, y + 12, x + w - 12, y + h - 12), radius=12, outline=(*accent, 72), width=1)
+    draw.line((x + 22, y + h - 18, x + w - 22, y + h - 18), fill=(*accent, 150), width=2)
     result = load_team_logo(team, aliases, logos)
     logo = result.get("image")
     if logo is not None:
         logo = logo.copy()
-        logo.thumbnail((w - 36, h - 36), resample_filter())
-        image.alpha_composite(logo, (x + (w - logo.width) // 2, y + (h - logo.height) // 2))
+        pad = max(26, min(w, h) // (5 if winner else 4))
+        logo.thumbnail((w - pad, h - pad), resample_filter())
+        logo_x = x + (w - logo.width) // 2
+        logo_y = y + (h - logo.height) // 2
+        shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        shadow.alpha_composite(logo, (logo_x + 4, logo_y + 6))
+        shadow_alpha = shadow.split()[-1].point(lambda value: min(96, int(value * 0.48)))
+        shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        shadow.putalpha(shadow_alpha)
+        if ImageFilter is not None:
+            shadow = shadow.filter(ImageFilter.GaussianBlur(5))
+        image.alpha_composite(shadow)
+        image.alpha_composite(logo, (logo_x, logo_y))
     else:
         draw_reference_text(image, (x + 18, y + 26, w - 36, h - 70), short_team(team), "context", 34, 18, accent, max_lines=2, align="center")
         draw_reference_text(image, (x + 18, y + h - 58, w - 36, 38), "LOGO REVIEW", "context", 18, 12, PALETTE["ink"], max_lines=1, align="center")
@@ -1052,9 +1076,14 @@ def draw_score_lanes(image: Any, template_spec: Dict[str, Any]) -> None:
         y1 = max(0, min(ly, sy) + 12)
         x2 = min(image.size[0] - 30, max(lx + lw, sx + sw) + 10)
         y2 = min(image.size[1], max(ly + lh, sy + sh) - 10)
-        draw.rounded_rectangle((x1 + 8, y1 + 10, x2 + 8, y2 + 10), radius=22, fill=(0, 0, 0, 82))
-        draw.rounded_rectangle((x1, y1, x2, y2), radius=22, fill=fill, outline=accent, width=2)
-        draw.line((x1 + 22, y2 - 10, x2 - 22, y2 - 10), fill=accent, width=2)
+        lane_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        lane_draw = ImageDraw.Draw(lane_layer, "RGBA")
+        lane_draw.rounded_rectangle((x1 + 8, y1 + 10, x2 + 8, y2 + 10), radius=22, fill=(0, 0, 0, 94))
+        lane_draw.rounded_rectangle((x1, y1, x2, y2), radius=22, fill=fill, outline=accent, width=2)
+        lane_draw.rounded_rectangle((x1 + 6, y1 + 6, x2 - 6, y1 + 42), radius=17, fill=(255, 255, 255, 10))
+        lane_draw.line((x1 + max(190, lw + 28), y1 + 26, x1 + max(190, lw + 28), y2 - 24), fill=(255, 255, 255, 36), width=1)
+        lane_draw.line((x1 + 22, y2 - 11, x2 - 22, y2 - 11), fill=accent, width=2)
+        image.alpha_composite(lane_layer)
 
 
 def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], format_spec: Dict[str, Any], score: Dict[str, str], reference: Dict[str, Any]) -> None:
@@ -1071,13 +1100,18 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
     draw_score_lanes(image, template_spec)
 
-    draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, (247, 203, 84))
-    draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, (37, 99, 163))
+    draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, (247, 203, 84), winner=True)
+    draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, (37, 99, 163), winner=False)
 
-    draw_reference_text(image, zone_box(template_spec, "primary_team"), short_team(score["winner"]), "context", 58, 24, PALETTE["ink"], max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
-    draw_reference_text(image, zone_box(template_spec, "secondary_team"), short_team(score["loser"]), "context", 46, 22, (204, 210, 222), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
-    draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", 238 if height <= 1350 else 254, 88, PALETTE["ink"], max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
-    draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", 176 if height <= 1350 else 188, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
+    format_id = clean(format_spec.get("format_id"))
+    primary_team_size = 54 if format_id == "square_feed_1x1" else 58
+    secondary_team_size = 42 if format_id == "square_feed_1x1" else 46
+    primary_score_size = 220 if format_id == "square_feed_1x1" else (238 if height <= 1350 else 254)
+    secondary_score_size = 158 if format_id == "square_feed_1x1" else (176 if height <= 1350 else 188)
+    draw_reference_text(image, zone_box(template_spec, "primary_team"), short_team(score["winner"]), "context", primary_team_size, 24, PALETTE["ink"], max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "secondary_team"), short_team(score["loser"]), "context", secondary_team_size, 22, (204, 210, 222), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", primary_score_size, 88, PALETTE["ink"], max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", secondary_score_size, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
     context = clean(packet.get("copy_context")) or clean(packet.get("source_detail")) or "Free-source evidence ready for human review."
     edge = game_edge_module(score)
