@@ -106,6 +106,8 @@ $GeneratedStatePathspecs = @(
     "render_prep_packets.*",
     "render_handoff_top_packet/**",
     "manual_review_renderer_*",
+    "render_visual_delta.*",
+    "render_visual_delta_*",
     "manual_visual_qa_*",
     "manual_visual_qa_approval_intake.*",
     "manual_post_approval_render_staging.*",
@@ -644,6 +646,7 @@ function Invoke-ReviewStage($Python) {
 function Invoke-RenderStage($Python) {
     Write-Section "Manual review renderer stage"
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "generate_hsd_render_visual_delta_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_draft_v1.py" -Optional
@@ -791,6 +794,9 @@ function Collect-HsdArtifacts($RunContext) {
         "render_handoff_top_packet/handoff_manifest.json",
         "manual_review_renderer_report.md",
         "manual_review_renderer_manifest.json",
+        "render_visual_delta_report.md",
+        "render_visual_delta.csv",
+        "render_visual_delta_manifest.json",
         "manual_visual_qa_report.md",
         "manual_visual_qa_manifest.json",
         "manual_visual_qa_checklist.csv",
