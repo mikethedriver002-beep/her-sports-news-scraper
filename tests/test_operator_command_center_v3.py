@@ -1086,7 +1086,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.41.0-manual-visual-qa-decision-ui"
+    assert payload["version"] == "hsd-operator-command-center-v3.42.0-manual-visual-qa-review-desk"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1330,6 +1330,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["preview_exists"] is True
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
+    assert payload["operator_decision_panel"]["history_issue_count"] == 0
+    assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
+    assert any(item["label"] == "Decision inbox" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert payload["operator_decision_panel"]["guardrails"]["auto_approval"] is False
     assert payload["operator_decision_panel"]["guardrails"]["auto_publish"] is False
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
@@ -1479,6 +1482,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Render readiness" in html
     assert "Manual visual QA decision" in html
     assert "decisionCsvOutput" in html
+    assert "decisionFieldWarnings" in html
+    assert "Decision history" in html
+    assert "Open before deciding" in html
+    assert "QA report" in html
+    assert "Source proof" in html
     assert "operatorDecision" in html
     assert "approve_for_manual_next_step" in html
     assert "Copy row" in html
@@ -1505,6 +1513,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Manual Visual QA Decision UI" in markdown
     assert "file-backed manual approval" in markdown
     assert "awaiting_operator_decision" in markdown
+    assert "History issues: 0" in markdown
+    assert "Open: QA report" in markdown
     assert "Morning source discovery" in markdown
     assert "Source registry diff review" in markdown
     assert "cue: HOLD" in markdown
@@ -1603,6 +1613,34 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_handoff_manifest["guardrails"]["auto_render"] is False
     assert render_handoff_manifest["guardrails"]["auto_publish"] is False
     assert render_handoff_manifest["packet"]["packet_id"] == payload["render_prep_packets"][0]["packet_id"]
+
+
+def test_operator_decision_review_desk_flags_malformed_paste(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    seed_manual_visual_qa_decision_files()
+    draft_lines = Path("manual_visual_qa_operator_decision_draft.csv").read_text(encoding="utf-8").splitlines()
+    malformed_row = '"' + draft_lines[1].replace('"', '""') + '",' + ",".join([""] * (len(DECISION_FIELDS) - 1))
+    Path("operator/inbox/manual_visual_qa_operator_decisions.csv").write_text(
+        draft_lines[0] + "\n" + malformed_row + "\n",
+        encoding="utf-8",
+    )
+
+    payload = command_center.build_payload()
+    html = command_center.render_html(payload)
+    markdown = command_center.render_markdown(payload)
+    history = payload["operator_decision_panel"]["decision_history"]
+
+    assert payload["operator_decision_panel"]["inbox_rows"] == 1
+    assert payload["operator_decision_panel"]["history_issue_count"] == 1
+    assert history[0]["row_status"] == "replace_row"
+    assert history[0]["cue"] == "replace"
+    assert "pasted as one quoted cell" in history[0]["validation_issue"]
+    assert "copy a fresh row" in payload["operator_decision_panel"]["next_step"].lower()
+    assert "replace_row" in html
+    assert "Decision history" in html
+    assert "Do not paste the header row" in html
+    assert "History row 1: replace_row" in markdown
 
 
 def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_path, monkeypatch) -> None:
