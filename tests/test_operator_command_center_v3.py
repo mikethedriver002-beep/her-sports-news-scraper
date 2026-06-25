@@ -752,6 +752,10 @@ def seed_daily_ops_files() -> None:
             },
         ],
     )
+    Path("trusted_registry_operator_playbook.md").write_text(
+        "# HSD Trusted Registry Operator Playbook\n\nStep-by-step human workflow with stop/go decisions and rollback steps.\n",
+        encoding="utf-8",
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -881,7 +885,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.24.0-post-edit-validation"
+    assert payload["version"] == "hsd-operator-command-center-v3.25.0-trusted-registry-playbook"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1011,6 +1015,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     checklist_action = next(action for action in payload["next_actions"] if action["title"] == "Work source proposal promotion checklist")
     assert checklist_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 row(s) are verify-then-copy candidates" in checklist_action["detail"]
+    playbook_action = next(action for action in payload["next_actions"] if action["title"] == "Open trusted-registry operator playbook")
+    assert playbook_action["artifact"] == "trusted_registry_operator_playbook.md"
+    assert "step-by-step stop/go workflow" in playbook_action["detail"]
+    assert "rollback steps" in playbook_action["detail"]
     worksheet_action = next(action for action in payload["next_actions"] if action["title"] == "Review trusted-registry update worksheet")
     assert worksheet_action["artifact"] == "source_registry_update_worksheet.md"
     assert "1 review-only registry plan row(s)" in worksheet_action["detail"]
@@ -1071,6 +1079,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
+    assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"
 
     assert "HSD Daily Operator Command Center" in html
     assert 'data-tab-target="today"' in html
@@ -1113,6 +1122,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "validated_exact_match" in html
     assert "unsafe_hold" in html
     assert "enabled_not_false" in html
+    assert "Trusted registry operator playbook" in html
     assert "Source registry update worksheet" in html
     assert "manual_registry_plan_after_verification" in html
     assert "not_performed_by_generator" in html
@@ -1164,6 +1174,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "validated_exact_match" in markdown
     assert "unsafe_hold" in markdown
     assert "enabled_not_false" in markdown
+    assert "trusted_registry_operator_playbook.md" in markdown
     assert "Source registry update worksheet" in markdown
     assert "manual_registry_plan_after_verification" in markdown
     assert "not_performed_by_generator" in markdown
@@ -1279,6 +1290,7 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_patch_preview.csv" in runner
     assert "source_registry_post_edit_validation.md" in runner
     assert "source_registry_post_edit_validation.csv" in runner
+    assert "trusted_registry_operator_playbook.md" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner

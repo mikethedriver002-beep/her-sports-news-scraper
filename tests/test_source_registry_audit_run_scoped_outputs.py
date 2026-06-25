@@ -363,6 +363,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_patch_preview.md").exists()
     assert (run_dir / "source_registry_post_edit_validation.csv").exists()
     assert (run_dir / "source_registry_post_edit_validation.md").exists()
+    assert (run_dir / "trusted_registry_operator_playbook.md").exists()
     assert (run_dir / "source_proposal_pack_readiness.csv").exists()
     assert (run_dir / "source_proposal_pack_readiness.md").exists()
     assert (run_dir / "source_proposal_packs.csv").exists()
@@ -556,6 +557,18 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     post_edit_validation_md = (run_dir / "source_registry_post_edit_validation.md").read_text(encoding="utf-8")
     assert "Source Registry Post-Edit Validation" in post_edit_validation_md
     assert "missing manual edits: 1" in post_edit_validation_md
+    playbook = (run_dir / "trusted_registry_operator_playbook.md").read_text(encoding="utf-8")
+    assert "Trusted Registry Operator Playbook" in playbook
+    assert "Step-by-step human workflow" in playbook
+    assert "## Current State" in playbook
+    assert "## Operator Workflow" in playbook
+    assert "## Rollback Steps" in playbook
+    assert "## Stop/Go Summary" in playbook
+    assert "`source_registry_verification_log.csv`" in playbook
+    assert "`source_registry_patch_preview.md`" in playbook
+    assert "`config/source_registry.json`" in playbook
+    assert "free public source" in playbook
+    assert "Stop: paid/API" in playbook
     pack_readiness = read_csv(run_dir / "source_proposal_pack_readiness.csv")
     assert len(pack_readiness) == 4
     readiness_by_key = {row["pack_key"]: row for row in pack_readiness}
@@ -639,6 +652,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["source_registry_patch_preview"][0]["patch_preview_status"] == "ready_for_manual_copy_paste"
     assert manifest["source_registry_post_edit_validation"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_post_edit_validation"][0]["post_edit_validation_status"] == "missing_manual_edit"
+    assert manifest["trusted_registry_operator_playbook"] == "trusted_registry_operator_playbook.md"
     assert manifest["source_proposal_pack_readiness"][0]["pack_key"] == "wnba"
     assert manifest["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert [row["pack_key"] for row in manifest["source_proposal_pack_index"]] == ["wnba", "nwsl", "lpga", "pwhl"]
@@ -669,6 +683,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "source_registry_approval_packet.csv" in report
     assert "source_registry_patch_preview.csv" in report
     assert "source_registry_post_edit_validation.csv" in report
+    assert "trusted_registry_operator_playbook.md" in report
     assert "source_proposal_pack_readiness.csv" in report
     assert "PWHL" in report
 
@@ -773,6 +788,7 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_patch_preview.md").exists()
     assert (work_dir / "source_registry_post_edit_validation.csv").exists()
     assert (work_dir / "source_registry_post_edit_validation.md").exists()
+    assert (work_dir / "trusted_registry_operator_playbook.md").exists()
     assert (work_dir / "source_proposal_pack_readiness.csv").exists()
     assert (work_dir / "source_proposal_pack_readiness.md").exists()
     assert (work_dir / "source_proposal_packs.csv").exists()
