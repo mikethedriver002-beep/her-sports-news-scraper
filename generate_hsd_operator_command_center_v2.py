@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.31.0-render-handoff-folder"
+VERSION = "hsd-operator-command-center-v3.32.0-manual-review-renderer"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -69,7 +69,10 @@ ARTIFACTS = [
     ("Decision", "Top render asset checklist", "render_handoff_top_packet/asset_checklist.md"),
     ("Decision", "Top render source proof", "render_handoff_top_packet/source_proof.md"),
     ("Decision", "Top render manual prompt", "render_handoff_top_packet/manual_renderer_prompt.md"),
+    ("Decision", "Top render draft preview", "render_handoff_top_packet/draft_preview.png"),
     ("Decision", "Top render handoff manifest", "render_handoff_top_packet/handoff_manifest.json"),
+    ("Decision", "Manual review renderer report", "manual_review_renderer_report.md"),
+    ("Decision", "Manual review renderer manifest", "manual_review_renderer_manifest.json"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -189,6 +192,9 @@ RUN_COMMANDS = {
     "morning_lead_promotion_recommendations.md": ".\\hsd.cmd run -Mode review",
     "morning_lead_promotion_recommendations.csv": ".\\hsd.cmd run -Mode review",
     "morning_lead_promotion_recommendations.json": ".\\hsd.cmd run -Mode review",
+    "render_handoff_top_packet/draft_preview.png": ".\\hsd.cmd run -Mode render",
+    "manual_review_renderer_report.md": ".\\hsd.cmd run -Mode render",
+    "manual_review_renderer_manifest.json": ".\\hsd.cmd run -Mode render",
     "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",

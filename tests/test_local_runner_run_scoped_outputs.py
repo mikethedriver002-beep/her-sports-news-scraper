@@ -48,6 +48,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "operator_command_center.*",
         "render_prep_packets.*",
         "render_handoff_top_packet/**",
+        "manual_review_renderer_*",
         "publish_guard_report.*",
         "results_desk_v5_manifest.json",
         "results_dashboard/**",
@@ -161,6 +162,21 @@ def test_review_stage_refreshes_source_registry_audit_for_command_center() -> No
     assert "morning_lead_promotion_recommendations.json" in runner
     assert "source registry audit, operator status" in doc
     assert "morning source discovery board" in doc
+
+
+def test_manual_render_mode_is_explicit_review_only() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    wrapper = WRAPPER.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8")
+
+    assert '"render"' in wrapper
+    assert "function Invoke-RenderStage" in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in runner
+    assert '"render" { Invoke-RenderStage $python }' in runner
+    assert "render_handoff_top_packet/draft_preview.png" in runner
+    assert "manual_review_renderer_report.md" in runner
+    assert "manual_review_renderer_manifest.json" in runner
+    assert ".\\hsd.cmd run -Mode render" in doc
 
 
 def test_legacy_scraper_is_retired_from_active_local_runner() -> None:

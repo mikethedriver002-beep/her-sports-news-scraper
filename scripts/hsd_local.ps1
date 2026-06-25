@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -104,6 +104,7 @@ $GeneratedStatePathspecs = @(
     "operator_command_center.*",
     "render_prep_packets.*",
     "render_handoff_top_packet/**",
+    "manual_review_renderer_*",
     "phase2_closure_v1.*",
     "phase2g_install_report.*",
     "pipeline_stop_reason.md",
@@ -622,6 +623,11 @@ function Invoke-ReviewStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_pipeline_review_lite_v1.py" -Optional
 }
 
+function Invoke-RenderStage($Python) {
+    Write-Section "Manual review renderer stage"
+    Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional
+}
+
 function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
     $candidates = @()
     if ($env:HSD_RUN_OUTPUT_DIR) {
@@ -743,7 +749,10 @@ function Collect-HsdArtifacts($RunContext) {
         "render_handoff_top_packet/asset_checklist.csv",
         "render_handoff_top_packet/source_proof.md",
         "render_handoff_top_packet/manual_renderer_prompt.md",
+        "render_handoff_top_packet/draft_preview.png",
         "render_handoff_top_packet/handoff_manifest.json",
+        "manual_review_renderer_report.md",
+        "manual_review_renderer_manifest.json",
         "bebe_daily_ops_plan.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
@@ -823,6 +832,7 @@ function Invoke-HsdRun {
             "launch" { Invoke-LaunchStage $python; Invoke-ReviewStage $python }
             "dashboards" { Invoke-DrilldownDashboardsStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
+            "render" { Invoke-RenderStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }
     } catch {
