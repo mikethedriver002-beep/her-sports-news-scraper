@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +18,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.1.0-template-draft-system"
+VERSION = "hsd-manual-review-renderer-v1.2.0-mobile-score-review-drafts"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -229,6 +230,39 @@ def score_parts(packet: Dict[str, Any]) -> tuple[str, str]:
     return headline, dek or "Verified update ready for operator review."
 
 
+def parse_final_score(packet: Dict[str, Any]) -> Dict[str, str]:
+    headline = clean(packet.get("copy_headline")) or clean(packet.get("title"))
+    dek = clean(packet.get("copy_dek"))
+    combined = f"{headline}. {dek}"
+    score_match = re.search(r"([A-Z][A-Za-z .'-]+?)\s+(\d{2,3})\s*,\s*([A-Z][A-Za-z .'-]+?)\s+(\d{2,3})", combined)
+    if not score_match:
+        return {}
+    team_a = clean(score_match.group(1))
+    score_a = clean(score_match.group(2))
+    team_b = clean(score_match.group(3))
+    score_b = clean(score_match.group(4))
+    try:
+        winner = team_a if int(score_a) >= int(score_b) else team_b
+        loser = team_b if winner == team_a else team_a
+        winner_score = score_a if winner == team_a else score_b
+        loser_score = score_b if winner == team_a else score_a
+    except Exception:
+        winner, loser, winner_score, loser_score = team_a, team_b, score_a, score_b
+    verb = "beat"
+    headline_match = re.search(r"(.+?)\s+(beat|defeated|tops|over)\s+(.+)", headline, re.IGNORECASE)
+    if headline_match:
+        winner = clean(headline_match.group(1))
+        loser = clean(headline_match.group(3))
+        verb = clean(headline_match.group(2)).lower()
+    return {
+        "winner": winner,
+        "loser": loser,
+        "winner_score": winner_score,
+        "loser_score": loser_score,
+        "verb": verb,
+    }
+
+
 def draw_review_chrome(draw: Any, width: int, height: int, template: Dict[str, str], format_label: str) -> None:
     red = PALETTE["red"]
     gold = PALETTE["gold"]
@@ -260,10 +294,109 @@ def draw_brand_pattern(draw: Any, width: int, height: int, tone: str) -> None:
         draw.ellipse((x, height - 310, x + 9, height - 301), fill=(255, 255, 255))
 
 
+def draw_center_text(draw: Any, center_x: int, y: int, text: str, fnt: Any, fill: tuple[int, int, int]) -> None:
+    width, _ = text_size(draw, text, fnt)
+    draw.text((center_x - width // 2, y), text, font=fnt, fill=fill)
+
+
+def fit_text_font(draw: Any, text: str, max_width: int, start_size: int, min_size: int = 28, bold: bool = True) -> Any:
+    size = start_size
+    while size > min_size:
+        fnt = font(size, bold)
+        if text_size(draw, text, fnt)[0] <= max_width:
+            return fnt
+        size -= 3
+    return font(min_size, bold)
+
+
+def draw_score_panel(draw: Any, x: int, y: int, w: int, h: int, team: str, score: str, *, winner: bool) -> None:
+    fill = PALETTE["deep"] if winner else (255, 255, 255)
+    outline = PALETTE["gold"] if winner else PALETTE["line"]
+    text_fill = PALETTE["ink"] if winner else (23, 27, 36)
+    muted_fill = PALETTE["gold"] if winner else PALETTE["muted"]
+    draw_rounded(draw, (x, y, x + w, y + h), 18, fill, outline, 3)
+    draw.text((x + 30, y + 28), "WINNER" if winner else "FINAL", font=font(23, True), fill=muted_fill)
+    team_font = fit_text_font(draw, team.upper(), w - 240, 42, 28, True)
+    draw.text((x + 30, y + 76), team.upper(), font=team_font, fill=text_fill)
+    score_font = font(96 if h >= 180 else 78, True)
+    draw_right_text(draw, x + w - 30, y + 48, score, score_font, text_fill)
+
+
+def draw_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any], score: Dict[str, str]) -> None:
+    width, height = spec["width"], spec["height"]
+    draw = ImageDraw.Draw(image)
+    draw_brand_pattern(draw, width, height, "result")
+    draw_review_chrome(draw, width, height, template, clean(spec["format_id"]).replace("_", " "))
+
+    source = clean(packet.get("source_artifact")) or "source proof required"
+    confidence = clean(packet.get("source_cue")) or "source review required"
+    context = clean(packet.get("copy_context")) or clean(packet.get("source_detail")) or "Verified source review required."
+    is_story = height > 1500
+    is_square = height <= 1100
+
+    content_top = 228
+    content_bottom = height - 104
+    left = 54
+    right = width - 54
+    card_h = content_bottom - content_top
+    draw_rounded(draw, (left, content_top, right, content_bottom), 22, PALETTE["paper"], (255, 255, 255), 2)
+    draw.rectangle((left, content_top, left + 22, content_bottom), fill=PALETTE["gold"])
+
+    text_left = 92
+    text_right = right - 48
+    y = content_top + (58 if not is_square else 44)
+    draw.text((text_left, y), "FINAL SCORE", font=font(32, True), fill=PALETTE["blue"])
+    draw_right_text(draw, text_right, y, "VERIFIED", font(24, True), PALETTE["muted"])
+    y += 60
+
+    hero_font = font(64 if not is_square else 56, True)
+    y = draw_text_block(draw, (text_left, y), f"{score['winner']} {score['verb']} {score['loser']}", hero_font, (22, 26, 36), text_right - text_left, 3, 10)
+    y += 34
+
+    panel_h = 178 if not is_square else 145
+    gap = 18
+    draw_score_panel(draw, text_left, y, text_right - text_left, panel_h, score["winner"], score["winner_score"], winner=True)
+    y += panel_h + gap
+    draw_score_panel(draw, text_left, y, text_right - text_left, panel_h, score["loser"], score["loser_score"], winner=False)
+    y += panel_h + (42 if is_story else 30)
+
+    if not is_square:
+        note_h = min(260, content_bottom - y - 34)
+        if note_h >= 110:
+            draw_rounded(draw, (text_left, y, text_right, y + note_h), 0, (255, 255, 255), PALETTE["line"], 2)
+            draw.text((text_left + 24, y + 24), "Review evidence", font=font(25, True), fill=(24, 28, 36))
+            note_y = y + 70
+            evidence = [
+                f"Source: {source}",
+                f"Confidence: {confidence}",
+                f"Context: {context}",
+            ]
+            for item in evidence:
+                note_y = draw_text_block(draw, (text_left + 24, note_y), item, font(22, False), PALETTE["muted"], text_right - text_left - 48, 1, 7)
+                note_y += 2
+            if is_story:
+                callout_top = y + note_h + 56
+                callout_bottom = min(content_bottom - 54, callout_top + 300)
+                if callout_bottom - callout_top >= 220:
+                    draw_rounded(draw, (text_left, callout_top, text_right, callout_bottom), 18, PALETTE["deep"], PALETTE["gold"], 3)
+                    draw_center_text(draw, (text_left + text_right) // 2, callout_top + 34, "FINAL", font(34, True), PALETTE["gold"])
+                    draw_center_text(draw, (text_left + text_right) // 2, callout_top + 86, f"{score['winner_score']} - {score['loser_score']}", font(124, True), PALETTE["ink"])
+                    draw_center_text(draw, (text_left + text_right) // 2, callout_top + 226, "REVIEW ONLY DRAFT", font(25, True), PALETTE["gold"])
+    else:
+        chip_y = min(y, content_bottom - 74)
+        draw_chip(draw, text_left, chip_y, f"SOURCE: {source}".upper(), (232, 239, 249), PALETTE["blue"], 19)
+        draw_chip(draw, text_left + 320, chip_y, "REVIEW ONLY", PALETTE["gold"], (19, 31, 49), 19)
+
+
 def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any]) -> None:
     width, height = spec["width"], spec["height"]
     draw = ImageDraw.Draw(image)
     tone = template["tone"]
+    parsed_score = parse_final_score(packet) if tone == "result" else {}
+    if parsed_score:
+        draw_final_score_template(image, packet, template, spec, parsed_score)
+        return
+
     draw_brand_pattern(draw, width, height, tone)
     draw_review_chrome(draw, width, height, template, clean(spec["format_id"]).replace("_", " "))
 
