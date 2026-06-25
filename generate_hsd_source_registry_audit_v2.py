@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.7-proposal-review"
+VERSION = "hsd-source-registry-audit-bebe-v2.8-pwhl-proposal-pack"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -18,6 +18,8 @@ OUT_INTAKE_CSV = "source_registry_intake_template.csv"
 OUT_INTAKE_MD = "source_registry_intake_template.md"
 OUT_PROPOSAL_CSV = "source_registry_proposal_review.csv"
 OUT_PROPOSAL_MD = "source_registry_proposal_review.md"
+OUT_PWHL_PACK_CSV = "pwhl_source_proposal_pack.csv"
+OUT_PWHL_PACK_MD = "pwhl_source_proposal_pack.md"
 OUT_MD = "source_registry_audit.md"
 OUT_JSON = "source_registry_audit.json"
 
@@ -79,6 +81,265 @@ PROPOSAL_REVIEW_FIELDS = [
     "safety_flags",
     "recommendation",
     "registry_action",
+]
+
+PWHL_PROPOSAL_PACK_FIELDS = [
+    "candidate_group",
+    "suggested_priority",
+    *INTAKE_FIELDS,
+    "source_basis",
+    "registry_presence",
+    "manual_review_note",
+]
+
+PWHL_SOURCE_CANDIDATES = [
+    {
+        "candidate_group": "league_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "official_or_team",
+        "coverage_gap": "missing official league/team source",
+        "candidate_source_id": "pwhl_official_home",
+        "candidate_source_name": "PWHL official site",
+        "candidate_url": "https://www.thepwhl.com/en/",
+        "source_type": "official_site",
+        "tier": "official",
+        "allowed_use": "official_news; league_context; source_confirmation",
+        "source_basis": "Free public league official site with team, schedule, standings, stats, and news navigation.",
+    },
+    {
+        "candidate_group": "league_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "official_or_team",
+        "coverage_gap": "missing official league/team source",
+        "candidate_source_id": "pwhl_official_news",
+        "candidate_source_name": "PWHL official news",
+        "candidate_url": "https://www.thepwhl.com/en/news",
+        "source_type": "official_site",
+        "tier": "official",
+        "allowed_use": "official_news; source_confirmation; transaction_confirmation",
+        "source_basis": "Free public official league news page for announcements and source confirmation.",
+    },
+    {
+        "candidate_group": "league_cross_check",
+        "suggested_priority": "P1",
+        "needed_source_type": "scoreboard_or_stats_cross_check",
+        "coverage_gap": "missing scoreboard/stat/cross-check source",
+        "candidate_source_id": "pwhl_official_scores",
+        "candidate_source_name": "PWHL official scores",
+        "candidate_url": "https://www.thepwhl.com/en/scores",
+        "source_type": "scoreboard_site",
+        "tier": "stats_provider",
+        "allowed_use": "cross_check; scores; schedules; game_summaries",
+        "source_basis": "Free public official scores page for manual final-score and schedule checks.",
+    },
+    {
+        "candidate_group": "league_cross_check",
+        "suggested_priority": "P1",
+        "needed_source_type": "scoreboard_or_stats_cross_check",
+        "coverage_gap": "missing scoreboard/stat/cross-check source",
+        "candidate_source_id": "pwhl_official_standings",
+        "candidate_source_name": "PWHL official standings",
+        "candidate_url": "https://www.thepwhl.com/en/stats/standings",
+        "source_type": "scoreboard_site",
+        "tier": "stats_provider",
+        "allowed_use": "cross_check; standings; league_context",
+        "source_basis": "Free public official standings page for table and context checks.",
+    },
+    {
+        "candidate_group": "league_cross_check",
+        "suggested_priority": "P2",
+        "needed_source_type": "scoreboard_or_stats_cross_check",
+        "coverage_gap": "missing scoreboard/stat/cross-check source",
+        "candidate_source_id": "pwhl_official_player_stats",
+        "candidate_source_name": "PWHL official player stats",
+        "candidate_url": "https://www.thepwhl.com/en/stats/player-stats",
+        "source_type": "scoreboard_site",
+        "tier": "stats_provider",
+        "allowed_use": "cross_check; player_stats; league_context",
+        "source_basis": "Free public official player stats page for context and stat checks.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_boston_fleet_team",
+        "candidate_source_name": "Boston Fleet official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/boston-fleet",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        "source_basis": "Free public official team page with team news and roster context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_detroit_team",
+        "candidate_source_name": "PWHL Detroit official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/detroit",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; expansion_team_context; source_confirmation",
+        "source_basis": "Free public official expansion team page for Detroit team news and launch context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_hamilton_team",
+        "candidate_source_name": "PWHL Hamilton official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/hamilton",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; expansion_team_context; source_confirmation",
+        "source_basis": "Free public official expansion team page for Hamilton team news and launch context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_las_vegas_team",
+        "candidate_source_name": "PWHL Las Vegas official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/las-vegas",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; expansion_team_context; source_confirmation",
+        "source_basis": "Free public official expansion team page for Las Vegas team news and launch context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_minnesota_frost_team",
+        "candidate_source_name": "Minnesota Frost official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/minnesota-frost",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        "source_basis": "Free public official team page with team news and roster context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_montreal_victoire_team",
+        "candidate_source_name": "Montreal Victoire official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/montreal-victoire",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        "source_basis": "Free public official team page with team news and roster context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_new_york_sirens_team",
+        "candidate_source_name": "New York Sirens official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/new-york-sirens",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        "source_basis": "Free public official team page with team news and roster context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_ottawa_charge_team",
+        "candidate_source_name": "Ottawa Charge official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/ottawa-charge",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        "source_basis": "Free public official team page with team news and roster context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_san_jose_team",
+        "candidate_source_name": "PWHL San Jose official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/san-jose",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; expansion_team_context; source_confirmation",
+        "source_basis": "Free public official expansion team page for San Jose team news and launch context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_seattle_torrent_team",
+        "candidate_source_name": "Seattle Torrent official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/seattle-torrent",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; expansion_team_context; source_confirmation",
+        "source_basis": "Free public official expansion team page for Seattle team news and launch context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_toronto_sceptres_team",
+        "candidate_source_name": "Toronto Sceptres official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/toronto-sceptres",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        "source_basis": "Free public official team page with team news and roster context.",
+    },
+    {
+        "candidate_group": "team_official",
+        "suggested_priority": "P1",
+        "needed_source_type": "team_or_club",
+        "coverage_gap": "missing team/club source",
+        "candidate_source_id": "pwhl_vancouver_goldeneyes_team",
+        "candidate_source_name": "Vancouver Goldeneyes official team page",
+        "candidate_url": "https://www.thepwhl.com/en/teams/vancouver-goldeneyes",
+        "source_type": "official_site_collection",
+        "tier": "official",
+        "allowed_use": "team_news; roster_confirmation; expansion_team_context; source_confirmation",
+        "source_basis": "Free public official expansion team page for Vancouver team news and launch context.",
+    },
+    {
+        "candidate_group": "reputable_cross_check",
+        "suggested_priority": "P2",
+        "needed_source_type": "scoreboard_or_stats_cross_check",
+        "coverage_gap": "missing scoreboard/stat/cross-check source",
+        "candidate_source_id": "eliteprospects_pwhl_cross_check",
+        "candidate_source_name": "Elite Prospects PWHL page",
+        "candidate_url": "https://www.eliteprospects.com/league/pwhl-w",
+        "source_type": "scoreboard_site",
+        "tier": "stats_provider",
+        "allowed_use": "cross_check; roster_context; standings_context",
+        "source_basis": "Free public hockey database page for manual roster/stat cross-checking; not an official source.",
+    },
+    {
+        "candidate_group": "reputable_cross_check",
+        "suggested_priority": "P2",
+        "needed_source_type": "scoreboard_or_stats_cross_check",
+        "coverage_gap": "missing scoreboard/stat/cross-check source",
+        "candidate_source_id": "hockeydb_pwhl_cross_check",
+        "candidate_source_name": "HockeyDB PWHL season page",
+        "candidate_url": "https://www.hockeydb.com/ihdb/stats/leagues/seasons/pwhl20242026.html",
+        "source_type": "scoreboard_site",
+        "tier": "stats_provider",
+        "allowed_use": "cross_check; historical_scores; standings_context",
+        "source_basis": "Free public hockey database season page for manual historical/stat cross-checking; not an official source.",
+    },
 ]
 
 COVERAGE_TARGETS = [
@@ -173,6 +434,10 @@ def write_intake_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
 
 def write_proposal_review_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, PROPOSAL_REVIEW_FIELDS, extrasaction="ignore")
+
+
+def write_pwhl_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, PWHL_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
 
 
 def canonical_band(src: Dict[str, Any]) -> str:
@@ -480,6 +745,124 @@ def existing_registry_indexes(sources: List[Dict[str, Any]]) -> Dict[str, set[st
     return {"source_ids": source_ids, "urls": urls, "domains": domains}
 
 
+def registry_presence_for_candidate(candidate: Dict[str, str], registry_indexes: Dict[str, set[str]]) -> str:
+    sid = lower(candidate.get("candidate_source_id"))
+    url = clean(candidate.get("candidate_url"))
+    normalized_url = url.lower().rstrip("/")
+    domain = domain_from_url(url)
+    if sid and sid in registry_indexes["source_ids"]:
+        return "source_id_already_exists"
+    if normalized_url and normalized_url in registry_indexes["urls"]:
+        return "url_already_exists"
+    if domain and domain in registry_indexes["domains"]:
+        return "domain_already_exists_check_duplicate"
+    return "not_in_registry"
+
+
+def pwhl_coverage_context(coverage_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    for row in coverage_rows:
+        if row.get("coverage_key") == "pwhl":
+            return row
+    return {
+        "coverage_key": "pwhl",
+        "display_name": "PWHL",
+        "coverage_status": "gap",
+        "coverage_gap": "missing official league/team source; missing scoreboard/stat/cross-check source",
+        "operator_next_step": "Add or monitor free PWHL league/team official pages before relying on wire-only hockey leads.",
+    }
+
+
+def build_pwhl_source_proposal_pack(sources: List[Dict[str, Any]], coverage_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    registry_indexes = existing_registry_indexes(sources)
+    coverage = pwhl_coverage_context(coverage_rows)
+    current_gap = clean(coverage.get("coverage_gap")) or "review current PWHL coverage"
+    current_status = clean(coverage.get("coverage_status")) or "review"
+    rows: List[Dict[str, str]] = []
+    for candidate in PWHL_SOURCE_CANDIDATES:
+        url = clean(candidate.get("candidate_url"))
+        presence = registry_presence_for_candidate(candidate, registry_indexes)
+        note = (
+            "Open and verify this free public page manually before copying it into "
+            "`operator/inbox/source_registry_proposals.csv`. Keep proposed_enabled=No; "
+            "this pack never updates config/source_registry.json."
+        )
+        if presence != "not_in_registry":
+            note += f" Registry check: {presence}."
+        rows.append(
+            {
+                "candidate_group": clean(candidate.get("candidate_group")),
+                "suggested_priority": clean(candidate.get("suggested_priority")),
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": clean(candidate.get("needed_source_type")),
+                "coverage_gap": clean(candidate.get("coverage_gap")) or current_gap,
+                "candidate_source_id": clean(candidate.get("candidate_source_id")),
+                "candidate_source_name": clean(candidate.get("candidate_source_name")),
+                "candidate_url": url,
+                "candidate_domain": domain_from_url(url),
+                "source_type": clean(candidate.get("source_type")),
+                "tier": clean(candidate.get("tier")),
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": clean(candidate.get("allowed_use")),
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": f"Guided PWHL pack candidate. Current coverage status: {current_status}; current gap: {current_gap}.",
+                "source_basis": clean(candidate.get("source_basis")),
+                "registry_presence": presence,
+                "manual_review_note": note,
+            }
+        )
+    return rows
+
+
+def write_pwhl_source_proposal_pack_markdown(path: str | Path, rows: List[Dict[str, str]], coverage_rows: List[Dict[str, str]]) -> None:
+    coverage = pwhl_coverage_context(coverage_rows)
+    lines = [
+        "# PWHL Source Proposal Pack",
+        "",
+        "Guided free-source candidates for manual review of PWHL coverage gaps.",
+        "No rows are imported automatically, no sources are auto-enabled, and this pack does not publish anything.",
+        "",
+        "## Current Coverage",
+        "",
+        f"- status: {coverage.get('coverage_status') or 'review'}",
+        f"- gap: {coverage.get('coverage_gap') or 'review current PWHL coverage'}",
+        f"- operator next step: {coverage.get('operator_next_step') or 'Review free official/team/cross-check coverage manually.'}",
+        "",
+        "## Guardrails",
+        "",
+        "- Free public pages only.",
+        "- Open each candidate manually before proposing it.",
+        "- Keep `proposed_enabled` as `No`.",
+        "- Keep `registry_action` as `proposal_only_do_not_import`.",
+        "- Do not use paid APIs, paywalled pages, login-only pages, private pages, auto-runs, or auto-publishing.",
+        "",
+        "## Candidate Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No PWHL proposal candidates were generated.")
+    else:
+        for group in ["league_official", "team_official", "league_cross_check", "reputable_cross_check"]:
+            grouped = [row for row in rows if row.get("candidate_group") == group]
+            if not grouped:
+                continue
+            lines += [f"### {group.replace('_', ' ').title()}", ""]
+            for row in grouped:
+                lines.append(
+                    f"- {row['suggested_priority']} | {row['candidate_source_id']} | {row['candidate_source_name']} | "
+                    f"{row['candidate_url']} | enabled: {row['proposed_enabled']} | action: {row['registry_action']} | "
+                    f"registry: {row['registry_presence']}"
+                )
+            lines.append("")
+    lines += ["See `pwhl_source_proposal_pack.csv` for copy-ready proposal rows.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
     issues: List[str] = []
     flags: List[str] = []
@@ -642,12 +1025,15 @@ def main() -> None:
     coverage_rows = build_coverage_map(sources)
     intake_rows = build_intake_template(coverage_rows)
     proposal_review_rows = build_proposal_review(sources)
+    pwhl_proposal_pack_rows = build_pwhl_source_proposal_pack(sources, coverage_rows)
     write_csv(OUT_CSV, rows)
     write_coverage_csv(OUT_COVERAGE_CSV, coverage_rows)
     write_intake_csv(OUT_INTAKE_CSV, intake_rows)
     write_intake_markdown(OUT_INTAKE_MD, intake_rows)
     write_proposal_review_csv(OUT_PROPOSAL_CSV, proposal_review_rows)
     write_proposal_review_markdown(OUT_PROPOSAL_MD, proposal_review_rows)
+    write_pwhl_source_proposal_pack_csv(OUT_PWHL_PACK_CSV, pwhl_proposal_pack_rows)
+    write_pwhl_source_proposal_pack_markdown(OUT_PWHL_PACK_MD, pwhl_proposal_pack_rows, coverage_rows)
 
     counts = {
         "sources": len(rows),
@@ -666,6 +1052,9 @@ def main() -> None:
         "proposal_hold": sum(1 for r in proposal_review_rows if r["review_status"] == "hold"),
         "proposal_review": sum(1 for r in proposal_review_rows if r["review_status"] == "review"),
         "proposal_ready": sum(1 for r in proposal_review_rows if r["review_status"] == "ready_for_registry_review"),
+        "pwhl_proposal_pack_rows": len(pwhl_proposal_pack_rows),
+        "pwhl_proposal_pack_official": sum(1 for r in pwhl_proposal_pack_rows if r["candidate_group"] in {"league_official", "team_official"}),
+        "pwhl_proposal_pack_cross_check": sum(1 for r in pwhl_proposal_pack_rows if "cross_check" in r["candidate_group"]),
     }
     run_dir = run_output_dir()
     manifest = {
@@ -678,6 +1067,7 @@ def main() -> None:
         "coverage_map": coverage_rows,
         "source_registry_intake_template": intake_rows,
         "source_registry_proposal_review": proposal_review_rows,
+        "pwhl_source_proposal_pack": pwhl_proposal_pack_rows,
     }
     write_json(OUT_JSON, manifest, indent=2)
 
@@ -701,6 +1091,7 @@ def main() -> None:
         f"- source intake template rows: {counts['intake_template_rows']}",
         f"- source proposals reviewed: {counts['proposal_review_rows']}",
         f"- source proposals on hold: {counts['proposal_hold']}",
+        f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
         "",
         "## Green source decision",
         "",
@@ -740,6 +1131,15 @@ def main() -> None:
             )
     else:
         lines.append("No manual source proposals found in `operator/inbox/source_registry_proposals.csv`.")
+    lines += ["", "## PWHL guided source proposal pack", ""]
+    lines.append("Guided free-source PWHL proposal candidates were created in `pwhl_source_proposal_pack.csv` and `.md`.")
+    for row in pwhl_proposal_pack_rows[:8]:
+        lines.append(
+            f"- {row['suggested_priority']} | {row['candidate_group']} | {row['candidate_source_id']} | "
+            f"{row['registry_action']} | enabled: {row['proposed_enabled']}"
+        )
+    if len(pwhl_proposal_pack_rows) > 8:
+        lines.append(f"- ... {len(pwhl_proposal_pack_rows) - 8} more candidates in the CSV.")
     lines += ["", "## Full registry audit", "", "See `source_registry_audit.csv` for every source.", ""]
     write_text(OUT_MD, "\n".join(lines), encoding="utf-8")
     print(json.dumps({"output_scope": manifest["output_scope"], **counts}, indent=2))

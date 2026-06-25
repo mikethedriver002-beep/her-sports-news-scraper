@@ -4,6 +4,8 @@ Use `source_registry_intake_template.csv` as the field guide for proposing new f
 
 Daily review runs also generate `source_registry_intake_template.csv` from the current coverage gaps. Those generated rows are proposal-only, disabled by default, and never update `config/source_registry.json` automatically.
 
+When PWHL coverage is a gap, review runs also generate `pwhl_source_proposal_pack.csv/.md` with specific free official league, team, and public cross-check candidates. Treat it as a copy-ready review guide only; it does not enable sources, update the trusted registry, scrape private pages, call paid APIs, or publish.
+
 Copy the shape from `source_registry_proposals_template.csv` into `operator/inbox/source_registry_proposals.csv` when you want the review run to check real proposed sources. The proposal review report flags duplicate, paid, login-only, social-only, and unsafe rows before any trusted registry update.
 
 Keep live drafts in `operator/inbox/` or the latest run folder. The trusted registry should only change after a deliberate human review.
