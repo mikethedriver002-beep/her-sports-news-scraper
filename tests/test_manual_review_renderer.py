@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.9.0-stat-confidence-cues"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.10.0-premium-stat-module"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -218,7 +218,9 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     selected = module.select_verified_stat_module(packet, score)
     assert selected["status"] == "verified_player_stat_module"
     assert selected["player_name"] == "Breanna Stewart"
-    assert selected["headline"] == "STEWART: 20 PTS"
+    assert selected["headline"] == "STEWART LED LIBERTY"
+    assert selected["matchup_note"] == "LIBERTY +11 vs ACES"
+    assert "20 PTS / 6 REB / 4 AST" in selected["editorial_line"]
     assert selected["callouts"][:3] == [
         {"label": "PTS", "value": "20"},
         {"label": "REB", "value": "6"},
@@ -234,6 +236,8 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     )
     assert summary["content_module_mode"] == "verified_player_stats"
     assert summary["content_module_player"] == "Breanna Stewart"
+    assert summary["content_module_title"] == "STEWART LED LIBERTY"
+    assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
     assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Confirm the named performer" in summary["stat_review_cue"]
 

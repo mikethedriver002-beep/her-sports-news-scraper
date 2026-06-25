@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.9.0-stat-confidence-cues"
+VERSION = "hsd-manual-review-renderer-v1.10.0-premium-stat-module"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -782,14 +782,23 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
     player = clean(selected.get("name"))
     team = clean(selected.get("team"))
     pts = stat_number(stats, "PTS")
-    headline = f"{last_name(player)}: {pts} PTS" if pts else player.upper()
+    winner_short = short_team(score.get("winner", ""))
+    loser_short = short_team(score.get("loser", ""))
+    margin = score_margin(score)
+    headline = f"{last_name(player)} LED {winner_short}" if player and winner_short else (f"{last_name(player)}: {pts} PTS" if pts else player.upper())
     stat_text = ", ".join(f"{item['value']} {item['label']}" for item in stats[:3])
+    stat_line = " / ".join(f"{item['value']} {item['label']}" for item in stats[:3])
     team_text = f" ({short_team(team)})" if team else ""
+    matchup_note = f"{winner_short} {score.get('winner_score')} - {loser_short} {score.get('loser_score')}"
+    if margin is not None:
+        matchup_note = f"{winner_short} +{margin} vs {loser_short}"
     return {
         "status": "verified_player_stat_module",
         "eyebrow": "PLAYER LEDGER",
         "headline": headline,
         "body": f"{player}{team_text}: {stat_text}.",
+        "editorial_line": f"{stat_line} in the {matchup_note} final.",
+        "matchup_note": matchup_note,
         "callouts": stats[:3],
         "player_name": player,
         "team": team,
@@ -1198,6 +1207,70 @@ def draw_module_callouts(image: Any, box: Tuple[int, int, int, int], callouts: L
     return callout_w
 
 
+def draw_premium_stat_chips(image: Any, chip_box: Tuple[int, int, int, int], callouts: List[Dict[str, str]], accent: tuple[int, int, int], *, compact: bool = False) -> int:
+    if not callouts:
+        return 0
+    x, y, w, h = chip_box
+    draw = ImageDraw.Draw(image, "RGBA")
+    count = min(3, len(callouts))
+    gap = 8 if compact else 10
+    chip_w = max(66 if compact else 82, (w - gap * (count - 1)) // count)
+    chip_h = max(42 if compact else 68, min(h - 8, 48 if compact else 76))
+    top = y + max(3, (h - chip_h) // 2)
+    for index, item in enumerate(callouts[:count]):
+        cx = x + index * (chip_w + gap)
+        value = clean(item.get("value"))
+        label = clean(item.get("label"))
+        is_primary = index == 0
+        fill = (232, 186, 72, 234) if is_primary else (2, 4, 9, 196)
+        outline = (248, 250, 255, 210) if is_primary else (*accent, 172)
+        value_fill = (3, 5, 10) if is_primary else PALETTE["ink"]
+        label_fill = (3, 5, 10) if is_primary else accent
+        draw.rounded_rectangle((cx + 3, top + 5, cx + chip_w + 3, top + chip_h + 5), radius=10, fill=(0, 0, 0, 90))
+        draw.rounded_rectangle((cx, top, cx + chip_w, top + chip_h), radius=10, fill=fill, outline=outline, width=1)
+        value_font = reference_font("score", 26 if compact else (38 if is_primary else 32))
+        label_font = reference_font("context", 9 if compact else 12)
+        value_w, _ = text_size(draw, value, value_font)
+        label_w, _ = text_size(draw, label, label_font)
+        value_y = top + (2 if compact else 3)
+        label_y = top + chip_h - (17 if compact else 21)
+        draw.text((cx + (chip_w - value_w) // 2, value_y), value, font=value_font, fill=value_fill)
+        draw.text((cx + (chip_w - label_w) // 2, label_y), label, font=label_font, fill=label_fill)
+    return w
+
+
+def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
+    x, y, w, h = box
+    compact = h < 112
+    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16 if not compact else 12, width=2)
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((x + 2, y + 2, x + 10, y + h - 2), fill=(*accent, 235))
+    draw.line((x + 24, y + 38, x + w - 24, y + 38), fill=(*accent, 96), width=1)
+    player = clean(module.get("player_name"))
+    matchup = clean(module.get("matchup_note"))
+    source_label = "VERIFIED STAT TEXT"
+    if compact:
+        chip_w = min(210, max(148, w // 4))
+        text_w = max(320, w - chip_w - 62)
+        draw_premium_stat_chips(image, (x + w - chip_w - 20, y + 8, chip_w, h - 16), module.get("callouts") or [], accent, compact=True)
+        draw_reference_text(image, (x + 24, y + 8, text_w, 22), f"{clean(module.get('eyebrow'))} / {source_label}", "context", 15, 10, accent, max_lines=1)
+        draw_reference_text(image, (x + 24, y + 30, text_w, 32), clean(module.get("headline")), "display", 28, 17, PALETTE["ink"], max_lines=1)
+        draw_reference_text(image, (x + 24, y + 58, text_w, max(18, h - 60)), matchup or clean(module.get("body")), "body", 15, 10, (218, 226, 238), max_lines=1, uppercase=False)
+        return
+
+    chip_w = min(310, max(250, w // 3))
+    text_w = max(420, w - chip_w - 72)
+    pill_text = f"{source_label} / {matchup}" if matchup else source_label
+    draw_reference_text(image, (x + 28, y + 14, text_w, 24), clean(module.get("eyebrow")), "context", 22, 12, accent, max_lines=1)
+    draw_reference_text(image, (x + 210, y + 15, text_w - 190, 22), pill_text, "context", 14, 9, (218, 226, 238), max_lines=1)
+    draw_reference_text(image, (x + 28, y + 46, text_w, 48), clean(module.get("headline")), "display", 42, 24, PALETTE["ink"], max_lines=1)
+    editorial = clean(module.get("editorial_line")) or clean(module.get("body"))
+    draw_reference_text(image, (x + 28, y + 94, text_w, max(34, h - 98)), editorial, "body", 24, 13, (235, 239, 247), max_lines=2, uppercase=False)
+    draw_premium_stat_chips(image, (x + w - chip_w - 22, y + 48, chip_w, h - 62), module.get("callouts") or [], accent, compact=False)
+    if player:
+        draw_reference_text(image, (x + w - chip_w - 22, y + 15, chip_w, 24), player, "context", 16, 10, accent, max_lines=1, align="center", uppercase=False)
+
+
 def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "", callouts: List[Dict[str, str]] | None = None) -> None:
     x, y, w, h = box
     compact = h < 112
@@ -1290,15 +1363,18 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     module = stat_module if clean(stat_module.get("status")) == "verified_player_stat_module" else edge
     callouts = stat_module.get("callouts") if clean(stat_module.get("status")) == "verified_player_stat_module" else final_score_callouts(packet, score)
     key_box = zone_box(template_spec, "key_performer")
-    draw_lower_reference_module(
-        image,
-        key_box,
-        clean(module.get("eyebrow")) or "GAME EDGE",
-        clean(module.get("body")),
-        (247, 203, 84),
-        headline=clean(module.get("headline")),
-        callouts=callouts,
-    )
+    if clean(stat_module.get("status")) == "verified_player_stat_module":
+        draw_verified_stat_reference_module(image, key_box, stat_module, (247, 203, 84))
+    else:
+        draw_lower_reference_module(
+            image,
+            key_box,
+            clean(module.get("eyebrow")) or "GAME EDGE",
+            clean(module.get("body")),
+            (247, 203, 84),
+            headline=clean(module.get("headline")),
+            callouts=callouts,
+        )
 
     hook_name = "hook_question" if zone_box(template_spec, "hook_question") != (0, 0, 0, 0) else "hook_takeaway"
     hook_box = zone_box(template_spec, hook_name)
@@ -1403,6 +1479,8 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "content_module_status": "verified_player_stat_module",
             "content_module_title": clean(stat_module.get("headline")),
             "content_module_body": clean(stat_module.get("body")),
+            "content_module_editorial_line": clean(stat_module.get("editorial_line")),
+            "content_module_matchup_note": clean(stat_module.get("matchup_note")),
             "content_module_stat_count": str(len(stat_module.get("callouts") or [])),
             "content_module_player": clean(stat_module.get("player_name")),
             "content_module_source_text": clean(stat_module.get("source_text")),
