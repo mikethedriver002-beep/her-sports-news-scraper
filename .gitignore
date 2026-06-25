@@ -64,6 +64,7 @@ Thumbs.db
 /source_registry_diff_review.*
 /source_registry_verification_log.*
 /source_registry_approval_packet.*
+/source_registry_patch_preview.*
 /source_proposal_pack_readiness.*
 /source_proposal_packs.*
 /pwhl_source_proposal_pack.*

@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.16-registry-approval-packet"
+VERSION = "hsd-source-registry-audit-bebe-v2.17-registry-patch-preview"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 VERIFICATION_LOG_INPUT = "operator/inbox/source_registry_verification_log.csv"
@@ -31,6 +31,8 @@ OUT_SOURCE_VERIFICATION_LOG_CSV = "source_registry_verification_log.csv"
 OUT_SOURCE_VERIFICATION_LOG_MD = "source_registry_verification_log.md"
 OUT_REGISTRY_APPROVAL_PACKET_CSV = "source_registry_approval_packet.csv"
 OUT_REGISTRY_APPROVAL_PACKET_MD = "source_registry_approval_packet.md"
+OUT_REGISTRY_PATCH_PREVIEW_CSV = "source_registry_patch_preview.csv"
+OUT_REGISTRY_PATCH_PREVIEW_MD = "source_registry_patch_preview.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -294,6 +296,30 @@ SOURCE_REGISTRY_APPROVAL_PACKET_FIELDS = [
     "diff_issues",
     "hold_reason",
     "approval_guardrails",
+    "auto_edit_status",
+    "publish_policy",
+    "paid_api_policy",
+    "registry_edit_status",
+]
+
+SOURCE_REGISTRY_PATCH_PREVIEW_FIELDS = [
+    "patch_preview_status",
+    "source_id",
+    "source_name",
+    "manual_edit_target",
+    "registry_before_summary",
+    "side_by_side_before",
+    "side_by_side_after",
+    "copy_paste_source_json",
+    "copy_paste_patch_instructions",
+    "rollback_instructions",
+    "url_checked",
+    "evidence_url",
+    "freshness_result",
+    "duplicate_decision",
+    "approval_packet_status",
+    "hold_reason",
+    "preview_guardrails",
     "auto_edit_status",
     "publish_policy",
     "paid_api_policy",
@@ -1220,6 +1246,10 @@ def write_source_registry_verification_log_csv(path: str | Path, rows: List[Dict
 
 def write_source_registry_approval_packet_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_REGISTRY_APPROVAL_PACKET_FIELDS, extrasaction="ignore")
+
+
+def write_source_registry_patch_preview_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_PATCH_PREVIEW_FIELDS, extrasaction="ignore")
 
 
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
@@ -2541,6 +2571,138 @@ def write_source_registry_approval_packet_markdown(path: str | Path, rows: List[
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def registry_source_by_id(sources: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    return {clean(src.get("source_id")): src for src in sources if isinstance(src, dict) and clean(src.get("source_id"))}
+
+
+def compact_json(value: Dict[str, Any]) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def pretty_json(value: Dict[str, Any]) -> str:
+    return json.dumps(value, sort_keys=True, indent=2)
+
+
+def build_source_registry_patch_preview(
+    approval_packet_rows: List[Dict[str, str]],
+    sources: List[Dict[str, Any]],
+) -> List[Dict[str, str]]:
+    registry_by_id = registry_source_by_id(sources)
+    source_count = len([src for src in sources if isinstance(src, dict)])
+    preview_rows: List[Dict[str, str]] = []
+    for row in approval_packet_rows:
+        if clean(row.get("approval_packet_status")) != "ready_for_final_manual_review":
+            continue
+        source_id = clean(row.get("source_id"))
+        proposed, json_status = parse_proposed_source_json(clean(row.get("exact_proposed_source_json")))
+        existing = registry_by_id.get(source_id)
+        status = "ready_for_manual_copy_paste" if json_status == "valid_json" and not existing else "hold_before_manual_patch"
+        existing_state = compact_json(existing) if existing else ""
+        proposed_json = pretty_json(proposed) if json_status == "valid_json" else clean(row.get("exact_proposed_source_json"))
+        before = (
+            f"Existing sources[] object with source_id={source_id}: {existing_state}"
+            if existing
+            else f"No sources[] object with source_id={source_id} is present in the current trusted registry."
+        )
+        after = (
+            f"Append this disabled source object to sources[] for source_id={source_id}: {compact_json(proposed)}"
+            if json_status == "valid_json"
+            else f"Cannot build after preview because exact_proposed_source_json is {json_status}."
+        )
+        hold_reason = "none"
+        if json_status != "valid_json":
+            hold_reason = "exact_proposed_source_json is invalid"
+        elif existing:
+            hold_reason = "source_id already exists in current registry"
+        preview_rows.append(
+            {
+                "patch_preview_status": status,
+                "source_id": source_id,
+                "source_name": clean(row.get("source_name")),
+                "manual_edit_target": clean(row.get("manual_edit_target")) or REGISTRY,
+                "registry_before_summary": (
+                    f"Current registry has {source_count} sources[] object(s). "
+                    f"source_id={source_id} present: {'Yes' if existing else 'No'}."
+                ),
+                "side_by_side_before": before,
+                "side_by_side_after": after,
+                "copy_paste_source_json": proposed_json,
+                "copy_paste_patch_instructions": (
+                    f"Manual only: open {REGISTRY}, append the copy_paste_source_json object to sources[], "
+                    "keep enabled=false and automation_status=disabled_manual_review_only, save, then rerun review."
+                ),
+                "rollback_instructions": (
+                    f"If final review fails, manually remove the sources[] object with source_id={source_id} and rerun review."
+                ),
+                "url_checked": clean(row.get("url_checked")),
+                "evidence_url": clean(row.get("evidence_url")),
+                "freshness_result": clean(row.get("freshness_result")),
+                "duplicate_decision": clean(row.get("duplicate_decision")),
+                "approval_packet_status": clean(row.get("approval_packet_status")),
+                "hold_reason": hold_reason,
+                "preview_guardrails": "manual_copy_paste_preview_only_no_auto_edit_keep_disabled_until_human_registry_review",
+                "auto_edit_status": "not_performed_by_generator",
+                "publish_policy": "patch_preview_only_not_publish_ready",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        )
+    return preview_rows
+
+
+def write_source_registry_patch_preview_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Patch Preview",
+        "",
+        "Manual copy/paste preview for ready approval-packet rows only.",
+        "This preview does not edit `config/source_registry.json`, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- patch preview rows: {len(rows)}",
+        f"- ready for manual copy/paste: {sum(1 for row in rows if row['patch_preview_status'] == 'ready_for_manual_copy_paste')}",
+        f"- held before manual patch: {sum(1 for row in rows if row['patch_preview_status'] == 'hold_before_manual_patch')}",
+        "",
+        "## Guardrails",
+        "",
+        "- Include only approval-packet rows marked `ready_for_final_manual_review`.",
+        "- Treat this as copy/paste guidance for a human; this generator never applies the patch.",
+        "- Keep every previewed source disabled until a deliberate human registry review changes that.",
+        "- Rerun review after any human edit and use the rollback instruction if the edit fails review.",
+        "",
+        "## Patch Preview Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No ready approval-packet rows were found. Complete the verification log and approval packet first.")
+    else:
+        for row in rows:
+            lines += [
+                f"### {row['source_id']}",
+                "",
+                f"- status: {row['patch_preview_status']}",
+                f"- target: `{row['manual_edit_target']}`",
+                f"- evidence: {row['evidence_url'] or 'missing'}",
+                f"- hold reason: {row['hold_reason']}",
+                "",
+                "| Before | After |",
+                "| --- | --- |",
+                f"| {row['side_by_side_before']} | {row['side_by_side_after']} |",
+                "",
+                "Copy/paste source JSON:",
+                "",
+                "```json",
+                row["copy_paste_source_json"],
+                "```",
+                "",
+                f"Instructions: {row['copy_paste_patch_instructions']}",
+                f"Rollback: {row['rollback_instructions']}",
+                "",
+            ]
+    lines += ["", "Use `source_registry_patch_preview.csv` for field-level final review.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def write_source_registry_verification_log_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
     lines = [
         "# HSD Source Registry Verification Log",
@@ -2757,6 +2919,7 @@ def main() -> None:
     manual_verification_log_rows = read_run_csv(VERIFICATION_LOG_INPUT)
     source_verification_log_rows = build_source_registry_verification_log(registry_diff_review_rows, manual_verification_log_rows)
     registry_approval_packet_rows = build_source_registry_approval_packet(source_verification_log_rows, registry_update_worksheet_rows)
+    registry_patch_preview_rows = build_source_registry_patch_preview(registry_approval_packet_rows, sources)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -2779,6 +2942,8 @@ def main() -> None:
     write_source_registry_verification_log_markdown(OUT_SOURCE_VERIFICATION_LOG_MD, source_verification_log_rows)
     write_source_registry_approval_packet_csv(OUT_REGISTRY_APPROVAL_PACKET_CSV, registry_approval_packet_rows)
     write_source_registry_approval_packet_markdown(OUT_REGISTRY_APPROVAL_PACKET_MD, registry_approval_packet_rows)
+    write_source_registry_patch_preview_csv(OUT_REGISTRY_PATCH_PREVIEW_CSV, registry_patch_preview_rows)
+    write_source_registry_patch_preview_markdown(OUT_REGISTRY_PATCH_PREVIEW_MD, registry_patch_preview_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -2830,6 +2995,9 @@ def main() -> None:
         "registry_approval_packet_rows": len(registry_approval_packet_rows),
         "registry_approval_packet_ready": sum(1 for r in registry_approval_packet_rows if r["approval_packet_status"] == "ready_for_final_manual_review"),
         "registry_approval_packet_hold": sum(1 for r in registry_approval_packet_rows if r["approval_packet_status"] == "hold_before_manual_registry_edit"),
+        "registry_patch_preview_rows": len(registry_patch_preview_rows),
+        "registry_patch_preview_ready": sum(1 for r in registry_patch_preview_rows if r["patch_preview_status"] == "ready_for_manual_copy_paste"),
+        "registry_patch_preview_hold": sum(1 for r in registry_patch_preview_rows if r["patch_preview_status"] == "hold_before_manual_patch"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -2858,6 +3026,7 @@ def main() -> None:
         "source_registry_diff_review": registry_diff_review_rows,
         "source_registry_verification_log": source_verification_log_rows,
         "source_registry_approval_packet": registry_approval_packet_rows,
+        "source_registry_patch_preview": registry_patch_preview_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -2910,6 +3079,7 @@ def main() -> None:
         f"- source registry diff review hold rows: {counts['registry_diff_review_hold']}",
         f"- source verification log rows: {counts['source_verification_log_rows']}",
         f"- source approval packet rows: {counts['registry_approval_packet_rows']}",
+        f"- source registry patch preview rows: {counts['registry_patch_preview_rows']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -2961,7 +3131,19 @@ def main() -> None:
     lines.append("A read-only registry diff review was created in `source_registry_diff_review.csv` and `.md`.")
     lines.append("A manual source verification log was created in `source_registry_verification_log.csv` and `.md`.")
     lines.append("A manual registry approval packet was created in `source_registry_approval_packet.csv` and `.md`.")
+    lines.append("A manual registry patch preview was created in `source_registry_patch_preview.csv` and `.md`.")
     lines.append("")
+    if registry_patch_preview_rows:
+        lines.append("### Manual registry patch preview")
+        lines.append("")
+        for row in registry_patch_preview_rows[:8]:
+            lines.append(
+                f"- **{row['patch_preview_status']}** | {row['source_id']} | "
+                f"target: {row['manual_edit_target']} | hold: {row['hold_reason']}"
+            )
+        if len(registry_patch_preview_rows) > 8:
+            lines.append(f"- ... {len(registry_patch_preview_rows) - 8} more patch preview rows in the CSV.")
+        lines.append("")
     if registry_approval_packet_rows:
         lines.append("### Manual registry approval packet")
         lines.append("")

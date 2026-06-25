@@ -661,6 +661,38 @@ def seed_daily_ops_files() -> None:
             }
         ],
     )
+    Path("source_registry_patch_preview.md").write_text(
+        "# HSD Source Registry Patch Preview\n\nManual copy/paste preview.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_patch_preview.csv",
+        [
+            {
+                "patch_preview_status": "ready_for_manual_copy_paste",
+                "source_id": "wnba_official_home_review",
+                "source_name": "WNBA official site",
+                "manual_edit_target": "config/source_registry.json",
+                "registry_before_summary": "Current registry has 3 sources[] object(s). source_id=wnba_official_home_review present: No.",
+                "side_by_side_before": "No sources[] object with source_id=wnba_official_home_review is present in the current trusted registry.",
+                "side_by_side_after": "Append this disabled source object to sources[] for source_id=wnba_official_home_review: {\"enabled\":false,\"source_id\":\"wnba_official_home_review\"}",
+                "copy_paste_source_json": "{\n  \"enabled\": false,\n  \"source_id\": \"wnba_official_home_review\"\n}",
+                "copy_paste_patch_instructions": "Manual only: open config/source_registry.json, append the copy_paste_source_json object to sources[], keep enabled=false and automation_status=disabled_manual_review_only, save, then rerun review.",
+                "rollback_instructions": "If final review fails, manually remove the sources[] object with source_id=wnba_official_home_review and rerun review.",
+                "url_checked": "https://www.wnba.com/",
+                "evidence_url": "https://www.wnba.com/",
+                "freshness_result": "current",
+                "duplicate_decision": "not_duplicate",
+                "approval_packet_status": "ready_for_final_manual_review",
+                "hold_reason": "none",
+                "preview_guardrails": "manual_copy_paste_preview_only_no_auto_edit_keep_disabled_until_human_registry_review",
+                "auto_edit_status": "not_performed_by_generator",
+                "publish_policy": "patch_preview_only_not_publish_ready",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -790,7 +822,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.22.0-source-approval-packet"
+    assert payload["version"] == "hsd-operator-command-center-v3.23.0-registry-patch-preview"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -836,6 +868,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Approval packet rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Approval packet ready" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Approval packet held" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Patch preview rows" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Patch preview ready" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Patch preview held" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -886,6 +921,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "diff review is HOLD" in payload["source_registry_approval_packet"][0]["hold_reason"]
     assert "pwhl_official_news" in payload["source_registry_approval_packet"][0]["exact_proposed_source_json"]
     assert payload["source_registry_approval_packet"][0]["registry_edit_status"] == "not_edited_by_generator"
+    assert payload["source_registry_patch_preview"][0]["patch_preview_status"] == "ready_for_manual_copy_paste"
+    assert payload["source_registry_patch_preview"][0]["source_id"] == "wnba_official_home_review"
+    assert "source_id=wnba_official_home_review present: No" in payload["source_registry_patch_preview"][0]["registry_before_summary"]
+    assert "append the copy_paste_source_json object to sources[]" in payload["source_registry_patch_preview"][0]["copy_paste_patch_instructions"]
+    assert payload["source_registry_patch_preview"][0]["registry_edit_status"] == "not_edited_by_generator"
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -919,6 +959,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert approval_action["artifact"] == "source_registry_approval_packet.md"
     assert "0 ready row(s), 1 held row(s)" in approval_action["detail"]
     assert "review-only" in approval_action["detail"]
+    patch_preview_action = next(action for action in payload["next_actions"] if action["title"] == "Review manual registry patch preview")
+    assert patch_preview_action["artifact"] == "source_registry_patch_preview.md"
+    assert "1 ready copy/paste row(s), 0 held row(s)" in patch_preview_action["detail"]
+    assert "does not edit the trusted registry" in patch_preview_action["detail"]
     checklist_hold_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve held or discarded source checklist rows")
     assert checklist_hold_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 discard row(s)" in checklist_hold_action["detail"]
@@ -955,6 +999,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     artifact_by_path = {item["path"]: item for item in payload["artifacts"]}
     assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
+    assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
 
     assert "HSD Daily Operator Command Center" in html
     assert 'data-tab-target="today"' in html
@@ -990,6 +1035,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry approval packet" in html
     assert "hold_before_manual_registry_edit" in html
     assert "diff review is HOLD" in html
+    assert "Source registry patch preview" in html
+    assert "ready_for_manual_copy_paste" in html
+    assert "wnba_official_home_review" in html
     assert "Source registry update worksheet" in html
     assert "manual_registry_plan_after_verification" in html
     assert "not_performed_by_generator" in html
@@ -1034,6 +1082,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry approval packet" in markdown
     assert "hold_before_manual_registry_edit" in markdown
     assert "diff review is HOLD" in markdown
+    assert "Source registry patch preview" in markdown
+    assert "ready_for_manual_copy_paste" in markdown
+    assert "wnba_official_home_review" in markdown
     assert "Source registry update worksheet" in markdown
     assert "manual_registry_plan_after_verification" in markdown
     assert "not_performed_by_generator" in markdown
@@ -1145,6 +1196,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_verification_log.csv" in runner
     assert "source_registry_approval_packet.md" in runner
     assert "source_registry_approval_packet.csv" in runner
+    assert "source_registry_patch_preview.md" in runner
+    assert "source_registry_patch_preview.csv" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner
