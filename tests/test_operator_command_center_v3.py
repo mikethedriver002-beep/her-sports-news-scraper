@@ -294,6 +294,36 @@ def seed_manual_visual_qa_decision_files() -> None:
             "approval_status": "not_approved_human_review_required",
             "dimensions": {"width": 1080, "height": 1350},
             "summary": {"check_count": 8, "pass_count": 8, "hold_count": 0, "human_decision_required": True},
+            "checks": [
+                {
+                    "check_id": "headline_text_zone",
+                    "check_label": "Title readable contrast and safe-zone fit",
+                    "qa_result": "pass",
+                    "passed": True,
+                    "evidence": "Style=reference_white_gold_title; title ink ratio 0.127; edge contrast 0.073; fit margins top=43px bottom=70px.",
+                },
+                {
+                    "check_id": "score_team_text_zone",
+                    "check_label": "Readable text zone signal",
+                    "qa_result": "pass",
+                    "passed": True,
+                    "evidence": "Score/team text zone has enough contrast for manual review.",
+                },
+                {
+                    "check_id": "team_logo_review_status",
+                    "check_label": "Team logo registry status",
+                    "qa_result": "pass_human_review_required",
+                    "passed": True,
+                    "evidence": "New York Liberty: registry_logo_review_required; Las Vegas Aces: approved_logo",
+                },
+                {
+                    "check_id": "approval_guardrails",
+                    "check_label": "Approval and publishing guardrails",
+                    "qa_result": "pass",
+                    "passed": True,
+                    "evidence": "manual_only=True; auto_publish_off=True; paid_apis_off=True",
+                },
+            ],
         },
     )
     write_json(
@@ -1554,6 +1584,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
+    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:2] == [
+        "Title contrast and fit",
+        "Score/team readability",
+    ]
+    assert payload["operator_decision_panel"]["qa_cues"][0]["tone"] == "good"
+    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])
     assert payload["operator_decision_panel"]["render_gallery"][1]["shape"] == "1080x1920"
@@ -1740,6 +1776,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Replacement row builder" in html
     assert "Decision history" in html
     assert "Open before deciding" in html
+    assert "Visual QA cues" in html
+    assert "Title contrast and fit" in html
+    assert "title ink ratio" in html
+    assert "Logo readiness" in html
     assert "Render gallery" in html
     assert "Public mockup" in html
     assert "Layout reference" in html

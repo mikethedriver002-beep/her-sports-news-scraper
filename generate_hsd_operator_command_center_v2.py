@@ -1144,6 +1144,44 @@ def build_decision_history(
     return history
 
 
+def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
+    checks = qa.get("checks") if isinstance(qa.get("checks"), list) else []
+    wanted = [
+        "headline_text_zone",
+        "score_team_text_zone",
+        "context_text_zone",
+        "lower_module_text_zone",
+        "team_logo_review_status",
+        "approval_guardrails",
+    ]
+    labels = {
+        "headline_text_zone": "Title contrast and fit",
+        "score_team_text_zone": "Score/team readability",
+        "context_text_zone": "Context row readability",
+        "lower_module_text_zone": "Lower-module readability",
+        "team_logo_review_status": "Logo readiness",
+        "approval_guardrails": "Approval guardrails",
+    }
+    by_id = {clean(row.get("check_id")): row for row in checks if isinstance(row, dict)}
+    cues: List[Dict[str, str]] = []
+    for check_id in wanted:
+        row = by_id.get(check_id)
+        if not row:
+            continue
+        result = clean(row.get("qa_result")) or ("pass" if row.get("passed") else "hold")
+        passed = row.get("passed") is True or result.startswith("pass")
+        cues.append(
+            {
+                "check_id": check_id,
+                "label": labels.get(check_id, clean(row.get("check_label")) or check_id),
+                "result": result,
+                "tone": "good" if passed else "warn",
+                "evidence": short(clean(row.get("evidence")), 260),
+            }
+        )
+    return cues
+
+
 def operator_decision_ui_panel() -> Dict[str, Any]:
     renderer = read_json("manual_review_renderer_manifest.json")
     delta = read_json("render_visual_delta_manifest.json")
@@ -1198,6 +1236,7 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         "automated_hold_count": clean(first_present(draft.get("automated_hold_count"), intake_row.get("automated_hold_count"), qa_summary.get("hold_count"), default="0")),
         "qa_pass_count": clean(qa_summary.get("pass_count")),
         "qa_check_count": clean(qa_summary.get("check_count")),
+        "qa_cues": build_visual_qa_cues(qa),
         "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
         "decision_draft": draft,
         "render_gallery": build_render_gallery(renderer, qa, delta, revision_plan, draft),
@@ -3929,6 +3968,23 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
     return "".join(body) or '<p class="empty">No render draft formats found yet.</p>'
 
 
+def render_visual_qa_cues(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <article class="qa-cue-card">
+              <div>
+                <strong>{html.escape(clean(row.get('label')))}</strong>
+                <p>{html.escape(clean(row.get('evidence')))}</p>
+              </div>
+              {pill(clean(row.get('result')) or 'review', clean(row.get('tone')) or 'neutral')}
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No visual QA cues found yet. Open the QA report from the file links.</p>'
+
+
 def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
@@ -3983,6 +4039,12 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             <strong>{html.escape(clean(panel.get('panel_status')) or 'not_ready')}</strong>
             <p>{html.escape(clean(panel.get('validation_issue')) or clean(panel.get('next_step')) or 'Manual review required.')}</p>
             <small>{html.escape(clean(panel.get('next_step')))}</small>
+          </div>
+          <div class="decision-desk-section">
+            <div class="row-kicker">Visual QA cues {pill((clean(panel.get('qa_pass_count')) or '0') + '/' + (clean(panel.get('qa_check_count')) or '0') + ' passed', 'good' if clean(panel.get('automated_hold_count')) == '0' else 'warn')} {pill('manual review still required')}</div>
+            <div class="qa-cue-grid">
+              {render_visual_qa_cues(panel.get('qa_cues', []))}
+            </div>
           </div>
           <div class="decision-desk-section">
             <div class="row-kicker">Render gallery {pill('review-only drafts')} {pill('no publish-ready lane')}</div>
@@ -4211,6 +4273,10 @@ def render_html(payload: Dict[str, Any]) -> str:
     .render-cue-bad {{ border-left-color:#c02637; background:#fff1f2; }}
     .render-cue-neutral {{ border-left-color:#6b7280; background:#f7f8fb; }}
     .render-gallery-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+    .qa-cue-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }}
+    .qa-cue-card {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; min-width:0; }}
+    .qa-cue-card strong {{ display:block; font-size:13px; }}
+    .qa-cue-card p {{ color:#5e616a; font-size:12px; line-height:1.3; margin-top:4px; overflow-wrap:anywhere; }}
     .decision-warning-list {{ margin:0; padding:0; display:grid; gap:6px; list-style:none; }}
     .decision-warning-list li {{ border:1px solid #ecd58a; background:#fff7d7; border-radius:6px; padding:8px 10px; color:#5d4800; font-weight:700; }}
     .decision-warning-list li.good {{ border-color:#b9dfc8; background:var(--green-bg); color:var(--green); }}
@@ -4232,6 +4298,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
       .render-gallery-grid {{ grid-template-columns:1fr; }}
       .render-comparison-grid {{ grid-template-columns:1fr; }}
+      .qa-cue-grid {{ grid-template-columns:1fr; }}
       .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
       .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
