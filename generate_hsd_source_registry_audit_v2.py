@@ -9,10 +9,12 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.5-coverage-map"
+VERSION = "hsd-source-registry-audit-bebe-v2.6-manual-source-intake"
 REGISTRY = "config/source_registry.json"
 OUT_CSV = "source_registry_audit.csv"
 OUT_COVERAGE_CSV = "source_coverage_map.csv"
+OUT_INTAKE_CSV = "source_registry_intake_template.csv"
+OUT_INTAKE_MD = "source_registry_intake_template.md"
 OUT_MD = "source_registry_audit.md"
 OUT_JSON = "source_registry_audit.json"
 
@@ -35,6 +37,28 @@ COVERAGE_FIELDS = [
     "coverage_status",
     "coverage_gap",
     "operator_next_step",
+]
+
+INTAKE_FIELDS = [
+    "coverage_key",
+    "display_name",
+    "needed_source_type",
+    "coverage_gap",
+    "candidate_source_id",
+    "candidate_source_name",
+    "candidate_url",
+    "candidate_domain",
+    "source_type",
+    "tier",
+    "trust_band",
+    "sport_league",
+    "proposed_enabled",
+    "automation_status",
+    "publish_policy",
+    "allowed_use",
+    "operator_verification_status",
+    "registry_action",
+    "review_notes",
 ]
 
 COVERAGE_TARGETS = [
@@ -117,6 +141,10 @@ def write_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
 
 def write_coverage_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, COVERAGE_FIELDS, extrasaction="ignore")
+
+
+def write_intake_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, INTAKE_FIELDS, extrasaction="ignore")
 
 
 def canonical_band(src: Dict[str, Any]) -> str:
@@ -278,14 +306,114 @@ def build_coverage_map(sources: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return rows
 
 
+def intake_need_for_gap(gap: str) -> Dict[str, str] | None:
+    if gap == "missing official league/team source":
+        return {
+            "needed_source_type": "official_or_team",
+            "source_type": "official_site",
+            "tier": "official",
+            "allowed_use": "official_news; team_news; source_confirmation",
+        }
+    if gap == "missing team/club source":
+        return {
+            "needed_source_type": "team_or_club",
+            "source_type": "official_site_collection",
+            "tier": "official",
+            "allowed_use": "team_news; roster_confirmation; source_confirmation",
+        }
+    if gap == "missing scoreboard/stat/cross-check source":
+        return {
+            "needed_source_type": "scoreboard_or_stats_cross_check",
+            "source_type": "scoreboard_site",
+            "tier": "stats_provider",
+            "allowed_use": "cross_check; scores; schedules; standings",
+        }
+    if gap == "missing wire source":
+        return {
+            "needed_source_type": "free_wire_or_reputable_media",
+            "source_type": "wire",
+            "tier": "wire",
+            "allowed_use": "second_source; context; source_confirmation",
+        }
+    return None
+
+
+def build_intake_template(coverage_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for coverage in coverage_rows:
+        if coverage.get("coverage_status") == "covered":
+            continue
+        gaps = [clean(gap) for gap in coverage.get("coverage_gap", "").split(";") if clean(gap) and clean(gap) != "none"]
+        for gap in gaps:
+            need = intake_need_for_gap(gap)
+            if not need:
+                continue
+            rows.append(
+                {
+                    "coverage_key": coverage["coverage_key"],
+                    "display_name": coverage["display_name"],
+                    "needed_source_type": need["needed_source_type"],
+                    "coverage_gap": gap,
+                    "candidate_source_id": "",
+                    "candidate_source_name": "",
+                    "candidate_url": "",
+                    "candidate_domain": "",
+                    "source_type": need["source_type"],
+                    "tier": need["tier"],
+                    "trust_band": "green_candidate_after_operator_review",
+                    "sport_league": coverage["display_name"],
+                    "proposed_enabled": "No",
+                    "automation_status": "disabled_manual_review_only",
+                    "publish_policy": "proposal_only_not_publish_ready",
+                    "allowed_use": need["allowed_use"],
+                    "operator_verification_status": "unverified",
+                    "registry_action": "proposal_only_do_not_import",
+                    "review_notes": "Fill candidate fields only after checking the free public source manually.",
+                }
+            )
+    return rows
+
+
+def write_intake_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Intake Template",
+        "",
+        "Use this worksheet to propose free official, team, wire, or cross-check sources from coverage gaps.",
+        "Rows are proposal-only and disabled by default. They do not update `config/source_registry.json`.",
+        "",
+        "## Guardrails",
+        "",
+        "- Free public sources only.",
+        "- Keep `proposed_enabled` as `No` until a human review deliberately updates the source registry.",
+        "- Social or gray-area sources remain discovery-only unless separately verified.",
+        "- Do not add paywalled, login-only, private, or paid API sources.",
+        "",
+        "## Suggested rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No open coverage gaps found.")
+    else:
+        for row in rows:
+            lines.append(
+                f"- {row['display_name']} | {row['needed_source_type']} | {row['coverage_gap']} | "
+                f"{row['source_type']} | enabled: {row['proposed_enabled']} | action: {row['registry_action']}"
+            )
+    lines += ["", "See `source_registry_intake_template.csv` for the fillable worksheet.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def main() -> None:
     raw = read_json(REGISTRY)
     sources = raw.get("sources", []) if isinstance(raw.get("sources", []), list) else []
     seen: set[str] = set()
     rows = [audit_source(src, seen) for src in sources if isinstance(src, dict)]
     coverage_rows = build_coverage_map(sources)
+    intake_rows = build_intake_template(coverage_rows)
     write_csv(OUT_CSV, rows)
     write_coverage_csv(OUT_COVERAGE_CSV, coverage_rows)
+    write_intake_csv(OUT_INTAKE_CSV, intake_rows)
+    write_intake_markdown(OUT_INTAKE_MD, intake_rows)
 
     counts = {
         "sources": len(rows),
@@ -299,6 +427,7 @@ def main() -> None:
         "coverage_gap": sum(1 for r in coverage_rows if r["coverage_status"] == "gap"),
         "coverage_watch": sum(1 for r in coverage_rows if r["coverage_status"] == "watch"),
         "coverage_covered": sum(1 for r in coverage_rows if r["coverage_status"] == "covered"),
+        "intake_template_rows": len(intake_rows),
     }
     run_dir = run_output_dir()
     manifest = {
@@ -309,6 +438,7 @@ def main() -> None:
         "counts": counts,
         "registry_version": raw.get("registry_version", ""),
         "coverage_map": coverage_rows,
+        "source_registry_intake_template": intake_rows,
     }
     write_json(OUT_JSON, manifest, indent=2)
 
@@ -329,6 +459,7 @@ def main() -> None:
         f"- coverage gaps: {counts['coverage_gap']}",
         f"- coverage watch: {counts['coverage_watch']}",
         f"- coverage covered: {counts['coverage_covered']}",
+        f"- source intake template rows: {counts['intake_template_rows']}",
         "",
         "## Green source decision",
         "",
@@ -348,6 +479,16 @@ def main() -> None:
             f"- **{row['coverage_status'].upper()}** | {row['display_name']} | "
             f"{row['coverage_gap']} | {row['operator_next_step']}"
         )
+    lines += ["", "## Manual source intake template", ""]
+    if intake_rows:
+        lines.append("Proposal rows were created in `source_registry_intake_template.csv`.")
+        for row in intake_rows:
+            lines.append(
+                f"- {row['display_name']} | {row['needed_source_type']} | {row['coverage_gap']} | "
+                f"{row['registry_action']}"
+            )
+    else:
+        lines.append("No source intake proposal rows were needed.")
     lines += ["", "## Full registry audit", "", "See `source_registry_audit.csv` for every source.", ""]
     write_text(OUT_MD, "\n".join(lines), encoding="utf-8")
     print(json.dumps({"output_scope": manifest["output_scope"], **counts}, indent=2))

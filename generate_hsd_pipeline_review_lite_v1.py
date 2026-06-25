@@ -48,6 +48,7 @@ KEY_FILES = [
     "studio_preview_build_v2_report.md", "studio_preview_build_v2.json", "preview_player_focus.csv",
     "preview_bundle_quality.csv", "preview_bundle_quality.md", "preview_bundle_quality_summary.csv",
     "source_registry_audit.csv", "source_registry_audit.md", "source_registry_audit.json",
+    "source_coverage_map.csv", "source_registry_intake_template.md", "source_registry_intake_template.csv",
     "bebe_daily_ops_plan.md", "bebe_daily_ops_plan.csv", "bebe_daily_ops_status.json", "bebe_priority_board.md", "bebe_posting_schedule_today.md",
     "operator_command_center.html", "operator_command_center.md", "operator_command_center.json",
     "graphics_upload_pack_status.csv", "graphics_upload_pack_status.json", "graphics_chat_direct_handoff.md", "graphics_chat_upload_instructions.md",
