@@ -66,6 +66,7 @@ Thumbs.db
 /source_registry_approval_packet.*
 /source_registry_patch_preview.*
 /source_registry_post_edit_validation.*
+/trusted_registry_operator_playbook.md
 /source_proposal_pack_readiness.*
 /source_proposal_packs.*
 /pwhl_source_proposal_pack.*

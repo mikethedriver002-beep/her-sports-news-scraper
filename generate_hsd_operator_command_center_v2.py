@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.24.0-post-edit-validation"
+VERSION = "hsd-operator-command-center-v3.25.0-trusted-registry-playbook"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -44,6 +44,7 @@ ARTIFACTS = [
     ("Sources", "Source registry patch preview data", "source_registry_patch_preview.csv"),
     ("Sources", "Source registry post-edit validation", "source_registry_post_edit_validation.md"),
     ("Sources", "Source registry post-edit validation data", "source_registry_post_edit_validation.csv"),
+    ("Sources", "Trusted registry operator playbook", "trusted_registry_operator_playbook.md"),
     ("Sources", "Guided source pack readiness", "source_proposal_pack_readiness.md"),
     ("Sources", "Guided source pack readiness data", "source_proposal_pack_readiness.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
@@ -156,6 +157,7 @@ RUN_COMMANDS = {
     "source_registry_patch_preview.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_post_edit_validation.md": ".\\hsd.cmd run -Mode review",
     "source_registry_post_edit_validation.csv": ".\\hsd.cmd run -Mode review",
+    "trusted_registry_operator_playbook.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
@@ -723,6 +725,18 @@ def build_next_actions(
             "source_registry_proposal_promotion_checklist.md",
         )
 
+    if registry_update_rows or approval_packet_ready_rows or patch_preview_ready_rows or post_edit_issue_rows:
+        add_action(
+            "Playbook",
+            "Research",
+            "Open trusted-registry operator playbook",
+            (
+                "Use the step-by-step stop/go workflow before any manual registry edit. "
+                "It lists exact files to open, approval gates, and rollback steps."
+            ),
+            "trusted_registry_operator_playbook.md",
+        )
+
     if registry_update_rows:
         row = registry_update_rows[0]
         add_action(
@@ -1047,7 +1061,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 17) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 18) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:

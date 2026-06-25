@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.18-post-edit-validation"
+VERSION = "hsd-source-registry-audit-bebe-v2.19-trusted-registry-playbook"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 VERIFICATION_LOG_INPUT = "operator/inbox/source_registry_verification_log.csv"
@@ -37,6 +37,7 @@ OUT_REGISTRY_PATCH_PREVIEW_CSV = "source_registry_patch_preview.csv"
 OUT_REGISTRY_PATCH_PREVIEW_MD = "source_registry_patch_preview.md"
 OUT_REGISTRY_POST_EDIT_VALIDATION_CSV = "source_registry_post_edit_validation.csv"
 OUT_REGISTRY_POST_EDIT_VALIDATION_MD = "source_registry_post_edit_validation.md"
+OUT_TRUSTED_REGISTRY_OPERATOR_PLAYBOOK_MD = "trusted_registry_operator_playbook.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -2930,6 +2931,177 @@ def write_source_registry_post_edit_validation_markdown(path: str | Path, rows: 
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def first_source_id(rows: List[Dict[str, str]], key: str = "source_id") -> str:
+    for row in rows:
+        value = clean(row.get(key))
+        if value:
+            return value
+    return "none"
+
+
+def write_trusted_registry_operator_playbook_markdown(
+    path: str | Path,
+    *,
+    coverage_rows: List[Dict[str, str]],
+    proposal_draft_rows: List[Dict[str, str]],
+    checklist_rows: List[Dict[str, str]],
+    worksheet_rows: List[Dict[str, str]],
+    diff_review_rows: List[Dict[str, str]],
+    verification_log_rows: List[Dict[str, str]],
+    approval_packet_rows: List[Dict[str, str]],
+    patch_preview_rows: List[Dict[str, str]],
+    post_edit_validation_rows: List[Dict[str, str]],
+) -> None:
+    coverage_gap_rows = [row for row in coverage_rows if row.get("coverage_status") == "gap"]
+    ready_draft_rows = [row for row in proposal_draft_rows if row.get("draft_selection_status") == "ready_to_copy_after_freshness_check"]
+    checklist_verify_rows = [row for row in checklist_rows if row.get("checklist_decision") == "verify_then_copy"]
+    checklist_hold_rows = [row for row in checklist_rows if row.get("checklist_decision") == "hold"]
+    worksheet_plan_rows = [row for row in worksheet_rows if row.get("worksheet_decision") == "manual_registry_plan_after_verification"]
+    diff_hold_rows = [row for row in diff_review_rows if row.get("diff_review_status") == "HOLD"]
+    diff_review_only_rows = [row for row in diff_review_rows if row.get("diff_review_status") == "REVIEW"]
+    verification_input_rows = [row for row in verification_log_rows if row.get("verification_log_status") == "operator_input_required"]
+    approval_ready_rows = [row for row in approval_packet_rows if row.get("approval_packet_status") == "ready_for_final_manual_review"]
+    approval_hold_rows = [row for row in approval_packet_rows if row.get("approval_packet_status") == "hold_before_manual_registry_edit"]
+    patch_ready_rows = [row for row in patch_preview_rows if row.get("patch_preview_status") == "ready_for_manual_copy_paste"]
+    post_edit_issue_rows = [
+        row
+        for row in post_edit_validation_rows
+        if row.get("post_edit_validation_status") in {"missing_manual_edit", "drift_review_required", "unsafe_hold"}
+    ]
+    post_edit_exact_rows = [row for row in post_edit_validation_rows if row.get("post_edit_validation_status") == "validated_exact_match"]
+
+    lines = [
+        "# HSD Trusted Registry Operator Playbook",
+        "",
+        "Step-by-step human workflow for reviewing free public source candidates and validating any manual trusted-registry edits.",
+        "This playbook does not edit `config/source_registry.json`, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Current State",
+        "",
+        f"- coverage gaps: {len(coverage_gap_rows)}",
+        f"- draft rows ready to verify/copy: {len(ready_draft_rows)}",
+        f"- checklist verify/copy rows: {len(checklist_verify_rows)}",
+        f"- checklist hold rows: {len(checklist_hold_rows)}",
+        f"- worksheet manual plan rows: {len(worksheet_plan_rows)}",
+        f"- diff review hold rows: {len(diff_hold_rows)}",
+        f"- diff review rows needing human review: {len(diff_review_only_rows)}",
+        f"- verification rows needing evidence: {len(verification_input_rows)}",
+        f"- approval rows ready: {len(approval_ready_rows)}",
+        f"- approval rows held: {len(approval_hold_rows)}",
+        f"- patch-preview rows ready for copy/paste: {len(patch_ready_rows)}",
+        f"- post-edit exact matches: {len(post_edit_exact_rows)}",
+        f"- post-edit issue rows: {len(post_edit_issue_rows)}",
+        "",
+        "## Guardrails",
+        "",
+        "- Use free public sources only.",
+        "- Stop on paid APIs, login-only pages, private pages, or scraping private content.",
+        "- Do not enable a new source during this workflow.",
+        "- Do not mark any new source publish-ready during this workflow.",
+        "- Do not run automation or publishing from this workflow.",
+        "- Make registry edits by hand only after the approval packet and patch preview say the row is ready.",
+        "",
+        "## Operator Workflow",
+        "",
+        "### 1. Find coverage gaps",
+        "",
+        "- Open `source_coverage_map.csv`.",
+        "- Go if a gap is real and needs a free official, team, tournament, wire, or reputable cross-check source.",
+        "- Stop if the candidate is paid, login-only, social-only, or already covered by a trusted source.",
+        f"- First gap to review: {first_source_id(coverage_gap_rows, 'coverage_key')}.",
+        "",
+        "### 2. Review guided source packs",
+        "",
+        "- Open `source_proposal_pack_readiness.md` and `source_proposal_packs.csv`.",
+        "- Go on rows marked ready with free public source candidates and no duplicate warnings.",
+        "- Stop on duplicate, freshness, paid/API, login-only, social-only, or unsafe cues.",
+        f"- First ready draft row: {first_source_id(ready_draft_rows, 'candidate_source_id')}.",
+        "",
+        "### 3. Work the promotion checklist",
+        "",
+        "- Open `source_registry_proposal_promotion_checklist.csv`.",
+        "- Go only on `verify_then_copy` rows after manually opening the URL and confirming it is free, public, current, and login-free.",
+        "- Stop on `hold` or `discard` rows until the reason is resolved.",
+        f"- Verify/copy candidates: {len(checklist_verify_rows)}.",
+        "",
+        "### 4. Compare the worksheet JSON",
+        "",
+        "- Open `source_registry_update_worksheet.csv`.",
+        "- Confirm `proposed_enabled` is `False`, `proposed_automation_status` is `disabled_manual_review_only`, and rollback notes exist.",
+        "- Stop if the proposed JSON is missing, enables a source, has paid/API signals, or lacks rollback coverage.",
+        f"- First worksheet source: {first_source_id(worksheet_plan_rows)}.",
+        "",
+        "### 5. Resolve the diff review",
+        "",
+        "- Open `source_registry_diff_review.md` and `source_registry_diff_review.csv`.",
+        "- Go only when the row is not `HOLD` and duplicate/domain/trust issues are resolved.",
+        "- Stop before editing the registry if any row is `HOLD`.",
+        f"- Hold rows: {len(diff_hold_rows)}. Review rows: {len(diff_review_only_rows)}.",
+        "",
+        "### 6. Fill the verification log",
+        "",
+        "- Open `source_registry_verification_log.csv`.",
+        "- Record `url_checked`, `checked_at_local`, `freshness_result`, `duplicate_decision`, `approval_outcome`, `registry_edit_decision`, `operator_name`, `evidence_url`, and `operator_notes`.",
+        "- Go only when `freshness_result=current`, duplicate decision is approved, and `approval_outcome=approved_for_manual_registry_edit`.",
+        "- Stop if evidence is missing, stale, unclear, duplicate, paid/API, login-only, or social-only.",
+        f"- Rows still needing evidence: {len(verification_input_rows)}.",
+        "",
+        "### 7. Review the approval packet",
+        "",
+        "- Open `source_registry_approval_packet.md` and `source_registry_approval_packet.csv`.",
+        "- Go only on `ready_for_final_manual_review` rows with `hold_reason=none`.",
+        "- Stop on `hold_before_manual_registry_edit` rows until every hold reason is resolved.",
+        f"- Ready approval rows: {len(approval_ready_rows)}. Held approval rows: {len(approval_hold_rows)}.",
+        "",
+        "### 8. Use the patch preview for the manual edit",
+        "",
+        "- Open `source_registry_patch_preview.md`.",
+        "- Copy only from `copy_paste_source_json` for rows marked `ready_for_manual_copy_paste`.",
+        "- Paste by hand into `config/source_registry.json` under `sources[]`.",
+        "- Keep `enabled=false`, `automation_status=disabled_manual_review_only`, and `publish_policy=not_publish_ready_until_operator_verifies_and_enables`.",
+        "- Stop if the row is held, missing JSON, already exists, or differs from the approval packet.",
+        f"- Patch rows ready for manual copy/paste: {len(patch_ready_rows)}.",
+        "",
+        "### 9. Rerun review and validate the edit",
+        "",
+        "- Run the local review mode manually after any hand edit.",
+        "- Open `source_registry_post_edit_validation.md`.",
+        "- Go only when the row is `validated_exact_match` and remains disabled/manual-review-only/not publish-ready.",
+        "- Stop on `missing_manual_edit`, `drift_review_required`, or `unsafe_hold`.",
+        f"- Post-edit exact matches: {len(post_edit_exact_rows)}. Post-edit issue rows: {len(post_edit_issue_rows)}.",
+        "",
+        "## Rollback Steps",
+        "",
+        "1. Open `source_registry_post_edit_validation.csv`.",
+        "2. Find any row marked `drift_review_required` or `unsafe_hold`.",
+        "3. Follow `rollback_instructions`, usually removing the manually added `sources[]` object by `source_id`.",
+        "4. Save `config/source_registry.json` manually.",
+        "5. Rerun local review mode.",
+        "6. Confirm the validation report no longer shows unsafe drift.",
+        "",
+        "## Stop/Go Summary",
+        "",
+        "- Go: free public source, operator evidence recorded, approval packet ready, patch preview ready, post-edit exact match.",
+        "- Stop: paid/API, login-only, private, social-only as trusted source, duplicate unresolved, stale/unclear, HOLD, unsafe enablement, automation enabled, publish-ready policy, JSON drift.",
+        "",
+        "## File Order",
+        "",
+        "1. `source_coverage_map.csv`",
+        "2. `source_proposal_pack_readiness.md`",
+        "3. `source_proposal_packs.csv`",
+        "4. `source_registry_proposal_promotion_checklist.csv`",
+        "5. `source_registry_update_worksheet.csv`",
+        "6. `source_registry_diff_review.md`",
+        "7. `source_registry_verification_log.csv`",
+        "8. `source_registry_approval_packet.md`",
+        "9. `source_registry_patch_preview.md`",
+        "10. `config/source_registry.json`",
+        "11. `source_registry_post_edit_validation.md`",
+        "",
+    ]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def write_source_registry_verification_log_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
     lines = [
         "# HSD Source Registry Verification Log",
@@ -3179,6 +3351,18 @@ def main() -> None:
     write_source_registry_patch_preview_markdown(OUT_REGISTRY_PATCH_PREVIEW_MD, registry_patch_preview_rows)
     write_source_registry_post_edit_validation_csv(OUT_REGISTRY_POST_EDIT_VALIDATION_CSV, registry_post_edit_validation_rows)
     write_source_registry_post_edit_validation_markdown(OUT_REGISTRY_POST_EDIT_VALIDATION_MD, registry_post_edit_validation_rows)
+    write_trusted_registry_operator_playbook_markdown(
+        OUT_TRUSTED_REGISTRY_OPERATOR_PLAYBOOK_MD,
+        coverage_rows=coverage_rows,
+        proposal_draft_rows=proposal_draft_rows,
+        checklist_rows=proposal_promotion_checklist_rows,
+        worksheet_rows=registry_update_worksheet_rows,
+        diff_review_rows=registry_diff_review_rows,
+        verification_log_rows=source_verification_log_rows,
+        approval_packet_rows=registry_approval_packet_rows,
+        patch_preview_rows=registry_patch_preview_rows,
+        post_edit_validation_rows=registry_post_edit_validation_rows,
+    )
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -3268,6 +3452,7 @@ def main() -> None:
         "source_registry_approval_packet": registry_approval_packet_rows,
         "source_registry_patch_preview": registry_patch_preview_rows,
         "source_registry_post_edit_validation": registry_post_edit_validation_rows,
+        "trusted_registry_operator_playbook": OUT_TRUSTED_REGISTRY_OPERATOR_PLAYBOOK_MD,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -3375,6 +3560,7 @@ def main() -> None:
     lines.append("A manual registry approval packet was created in `source_registry_approval_packet.csv` and `.md`.")
     lines.append("A manual registry patch preview was created in `source_registry_patch_preview.csv` and `.md`.")
     lines.append("A read-only post-edit registry validation report was created in `source_registry_post_edit_validation.csv` and `.md`.")
+    lines.append("A trusted-registry operator playbook was created in `trusted_registry_operator_playbook.md`.")
     lines.append("")
     if registry_post_edit_validation_rows:
         lines.append("### Post-edit registry validation")
