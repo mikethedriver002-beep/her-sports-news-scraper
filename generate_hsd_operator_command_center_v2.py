@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.12.0-source-intake-template"
+VERSION = "hsd-operator-command-center-v3.13.0-source-proposal-review"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -26,6 +26,8 @@ ARTIFACTS = [
     ("Sources", "Source coverage map", "source_coverage_map.csv"),
     ("Sources", "Source registry intake guide", "source_registry_intake_template.md"),
     ("Sources", "Source registry intake template", "source_registry_intake_template.csv"),
+    ("Sources", "Source proposal review", "source_registry_proposal_review.md"),
+    ("Sources", "Source proposal review data", "source_registry_proposal_review.csv"),
     ("Sources", "Manual story intake report", "manual_story_inbox_report.md"),
     ("Sources", "Manual story intake data", "story_candidates_manual.csv"),
     ("Sources", "Discovery intake report", "discovery_sources_report.md"),
@@ -108,6 +110,8 @@ RUN_COMMANDS = {
     "morning_lead_promotion_recommendations.json": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
+    "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_proposal_review.csv": ".\\hsd.cmd run -Mode review",
     "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
     "launch_graphics_chat_brief.md": ".\\hsd.cmd run -Mode launch",
     "launch_daily_operator_checklist.md": ".\\hsd.cmd run -Mode launch",
@@ -494,6 +498,7 @@ def build_next_actions(
     source_board: List[Dict[str, str]],
     promotions: List[Dict[str, str]],
     coverage_map: List[Dict[str, str]],
+    proposal_review: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
     artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
@@ -592,6 +597,17 @@ def build_next_actions(
         )
 
     coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
+    proposal_holds = [row for row in proposal_review if row.get("review_status") == "hold"]
+    if proposal_holds:
+        held = proposal_holds[0]
+        add_action(
+            "Source hold",
+            "Research",
+            f"Resolve unsafe source proposal: {held.get('candidate_source_id') or 'missing source id'}",
+            f"{held.get('safety_flags') or 'proposal issue'}; {held.get('issues') or 'Review before registry update.'}",
+            "source_registry_proposal_review.md",
+        )
+
     if coverage_gaps:
         gap = coverage_gaps[0]
         add_action(
@@ -789,6 +805,7 @@ def build_payload() -> Dict[str, Any]:
     schedule = schedule_rows()
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
+    source_proposal_review = read_csv("source_registry_proposal_review.csv")
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
     source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
@@ -848,6 +865,8 @@ def build_payload() -> Dict[str, Any]:
         metric("Source coverage gaps", sum(1 for row in coverage_map if row.get("status") == "gap")),
         metric("Source coverage watch", sum(1 for row in coverage_map if row.get("status") == "watch")),
         metric("Source intake proposals", len(source_intake_rows)),
+        metric("Source proposal holds", sum(1 for row in source_proposal_review if row.get("review_status") == "hold")),
+        metric("Source proposals ready", sum(1 for row in source_proposal_review if row.get("review_status") == "ready_for_registry_review")),
         metric(
             "Studio asset checks",
             sum(1 for row in opportunity_representatives.values() if row.get("story_opportunity_asset_cue") == "asset_check_required_before_studio"),
@@ -866,7 +885,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
         metric("Day type", first_present(ops.get("day_type"), default="normal_day")),
     ]
-    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, promotions, coverage_map, artifacts)
+    next_actions = build_next_actions(operator, guard, candidates, studio, source_board, promotions, coverage_map, source_proposal_review, artifacts)
     if as_int(source_registry_counts.get("fail")) or as_int(source_registry_counts.get("review")):
         next_actions.insert(
             0,
@@ -902,6 +921,7 @@ def build_payload() -> Dict[str, Any]:
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
         "source_registry_intake_template": source_intake_rows,
+        "source_registry_proposal_review": source_proposal_review,
         "studio_queue": studio,
         "source_health": source_rows,
         "issues": operator.get("issues") or guard.get("issues") or [],
@@ -1148,6 +1168,24 @@ def render_source_intake(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(body) or '<tr><td colspan="7" class="empty">No source intake proposals found.</td></tr>'
+
+
+def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{html.escape(clean(row.get('candidate_source_id')) or '-')}</td>
+              <td>{html.escape(clean(row.get('candidate_url')) or '-')}</td>
+              <td>{pill(clean(row.get('review_status')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('safety_flags')) or 'none')}</td>
+              <td>{html.escape(clean(row.get('issues')) or 'none')}</td>
+              <td>{html.escape(clean(row.get('recommendation')))}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="6" class="empty">No manual source proposal rows found.</td></tr>'
 
 
 def render_sources(rows: Iterable[Dict[str, str]]) -> str:
@@ -1415,6 +1453,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source proposal review</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Candidate</th><th>URL</th><th>Status</th><th>Flags</th><th>Issues</th><th>Recommendation</th></tr></thead>
+            <tbody>{render_source_proposal_review(payload['source_registry_proposal_review'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source health</h2>
         <div class="table-wrap">
           <table>
@@ -1548,6 +1595,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('display_name'))} | {clean(item.get('needed_source_type'))} | {clean(item.get('coverage_gap'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action'))}"
         for item in payload["source_registry_intake_template"]
+    )
+    lines += ["", "## Source proposal review", ""]
+    lines.extend(
+        f"- {clean(item.get('candidate_source_id')) or 'missing_id'} | {clean(item.get('review_status')) or 'review'} | flags: {clean(item.get('safety_flags')) or 'none'} | {clean(item.get('issues')) or 'none'}"
+        for item in payload["source_registry_proposal_review"]
     )
     lines += ["", "## Studio queue", ""]
     lines.extend(f"- {item['priority']} | {item['name']} | {item['status']} | {item['detail']}" for item in payload["studio_queue"])
