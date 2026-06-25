@@ -631,6 +631,7 @@ function Invoke-RenderStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_draft_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_post_approval_render_staging_v1.py" -Optional
 }
 
@@ -765,6 +766,9 @@ function Collect-HsdArtifacts($RunContext) {
         "manual_visual_qa_approval_intake.md",
         "manual_visual_qa_approval_intake.csv",
         "manual_visual_qa_approval_intake.json",
+        "manual_visual_qa_operator_decision_draft.md",
+        "manual_visual_qa_operator_decision_draft.csv",
+        "manual_visual_qa_operator_decision_draft.json",
         "manual_post_approval_render_staging.md",
         "manual_post_approval_render_staging.csv",
         "manual_post_approval_render_staging.json",
