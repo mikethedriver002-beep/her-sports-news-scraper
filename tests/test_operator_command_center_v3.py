@@ -472,6 +472,7 @@ def seed_daily_ops_files() -> None:
                 "source_confidence_tier": "publish_grade",
                 "source_publish_grade": "publish_grade",
                 "source_confidence_reason": "Results Desk final score; multiple usable free sources",
+                "top_performers": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4; A'ja Wilson (Las Vegas Aces): PTS 16, REB 9, AST 5",
             }
         ],
     )
@@ -1336,7 +1337,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.49.0-render-revision-guidance"
+    assert payload["version"] == "hsd-operator-command-center-v3.50.0-verified-stat-render-handoff"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1568,6 +1569,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_prep_packets"][0]["template_shape"] == "IG feed 1080x1350 primary; story 1080x1920 and square review derivatives"
     assert payload["render_prep_packets"][0]["copy_headline"] == "New York Liberty beat Las Vegas Aces"
     assert "Verified final" in payload["render_prep_packets"][0]["copy_dek"]
+    assert "Breanna Stewart" in payload["render_prep_packets"][0]["top_performers"]
+    assert payload["render_prep_packets"][0]["stat_module_status"] == "verified_stat_text_available"
     assert "exact local WNBA team logos" in payload["render_prep_packets"][0]["asset_requirement"]
     assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"

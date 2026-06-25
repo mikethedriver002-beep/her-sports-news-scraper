@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.49.0-render-revision-guidance"
+VERSION = "hsd-operator-command-center-v3.50.0-verified-stat-render-handoff"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -44,6 +44,8 @@ RENDER_PREP_FIELDS = [
     "copy_headline",
     "copy_dek",
     "copy_context",
+    "top_performers",
+    "stat_module_status",
     "source_artifact",
     "source_cue",
     "source_detail",
@@ -1650,8 +1652,24 @@ def final_score_template_fit() -> Dict[str, str]:
 
 def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str, str]:
     title = clean(row.get("title"))
+    for packet in payload.get("news_fact_packets", []):
+        if clean(packet.get("headline")) == title:
+            top_performers = clean(packet.get("top_performers"))
+            return {
+                "copy_headline": title,
+                "copy_dek": clean(packet.get("caption_hard_fact")) or clean(packet.get("dek")),
+                "copy_context": (
+                    f"{clean(packet.get('source_count')) or '0'} source(s); "
+                    f"{clean(packet.get('source_publish_grade')) or clean(packet.get('source_confidence_tier')) or 'not_scored'}"
+                    f"{' score ' + clean(packet.get('source_confidence_score')) if clean(packet.get('source_confidence_score')) else ''}."
+                ),
+                "source_detail": clean(packet.get("source_confidence_reason")) or clean(packet.get("rights_safe_note")),
+                "top_performers": top_performers,
+                "stat_module_status": "verified_stat_text_available" if top_performers else "no_verified_stat_text",
+            }
     for candidate in payload.get("content_candidates", []):
         if clean(candidate.get("headline")) == title:
+            top_performers = clean(candidate.get("top_performers"))
             return {
                 "copy_headline": title,
                 "copy_dek": clean(candidate.get("detail")),
@@ -1661,6 +1679,8 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                     f"{' score ' + clean(candidate.get('source_score')) if clean(candidate.get('source_score')) else ''}."
                 ),
                 "source_detail": clean(candidate.get("source_reason")),
+                "top_performers": top_performers,
+                "stat_module_status": "verified_stat_text_available" if top_performers else "no_verified_stat_text",
             }
     for lead in payload.get("lead_promotion_recommendations", []):
         if clean(lead.get("title")) == title:
@@ -1672,6 +1692,8 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                     f"sources: {clean(lead.get('story_opportunity_sources')) or 'review'}."
                 ),
                 "source_detail": clean(lead.get("story_opportunity_reason")),
+                "top_performers": "",
+                "stat_module_status": "no_verified_stat_text",
             }
     for lead in payload.get("source_discovery_board", []):
         if clean(lead.get("title")) == title:
@@ -1683,8 +1705,10 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                     f"posture: {clean(lead.get('posture')) or 'review'}."
                 ),
                 "source_detail": clean(lead.get("story_opportunity_reason")),
+                "top_performers": "",
+                "stat_module_status": "no_verified_stat_text",
             }
-    return {"copy_headline": title, "copy_dek": "", "copy_context": "", "source_detail": ""}
+    return {"copy_headline": title, "copy_dek": "", "copy_context": "", "source_detail": "", "top_performers": "", "stat_module_status": "no_verified_stat_text"}
 
 
 def manual_renderer_steps(packet: Dict[str, str]) -> str:
@@ -1729,6 +1753,8 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "copy_headline": enriched["copy_headline"],
             "copy_dek": enriched["copy_dek"],
             "copy_context": enriched["copy_context"],
+            "top_performers": clean(enriched.get("top_performers")),
+            "stat_module_status": clean(enriched.get("stat_module_status")) or "no_verified_stat_text",
             "source_detail": enriched["source_detail"],
             "selected_template_id": "",
             "template_family": "",
@@ -1842,6 +1868,8 @@ def render_handoff_copy_sheet(packet: Dict[str, str]) -> str:
             f"- Headline: {clean(packet.get('copy_headline'))}",
             f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
             f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
+            f"- Verified performer/stat text: {clean(packet.get('top_performers')) or 'none provided'}",
+            f"- Stat module status: `{clean(packet.get('stat_module_status')) or 'no_verified_stat_text'}`",
             f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
             f"- Template fit: `{clean(packet.get('template_fit'))}`",
             f"- Selected template: `{clean(packet.get('selected_template_id')) or 'operator_review'}`",
@@ -1885,6 +1913,7 @@ def render_handoff_source_proof(packet: Dict[str, str]) -> str:
             f"- Source cue: `{clean(packet.get('source_cue'))}`",
             f"- Source detail: {clean(packet.get('source_detail')) or 'n/a'}",
             f"- Source/copy context: {clean(packet.get('copy_context')) or 'n/a'}",
+            f"- Performer/stat evidence: {clean(packet.get('top_performers')) or 'none provided'}",
             f"- Paid API policy: `{clean(packet.get('paid_api_policy'))}`",
             "",
             "## Required Human Check",
@@ -1913,6 +1942,7 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         f"- Headline: {clean(packet.get('copy_headline'))}",
         f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
         f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
+        f"- Verified performer/stat text: {clean(packet.get('top_performers')) or 'none provided'}",
         "",
         "## Format",
         "",
@@ -1978,6 +2008,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "headline": packet.get("copy_headline"),
                     "dek": packet.get("copy_dek"),
                     "context": packet.get("copy_context"),
+                    "top_performers": packet.get("top_performers"),
+                    "stat_module_status": packet.get("stat_module_status"),
                     "template_fit": packet.get("template_fit"),
                     "selected_template_id": packet.get("selected_template_id"),
                     "template_family": packet.get("template_family"),
@@ -1986,7 +2018,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "approval_gate": packet.get("approval_gate"),
                 }
             ],
-            ["packet_id", "headline", "dek", "context", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
+            ["packet_id", "headline", "dek", "context", "top_performers", "stat_module_status", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
         )
         write_text(OUT_RENDER_HANDOFF_ASSETS, render_handoff_asset_checklist(packet))
         write_csv(
@@ -2896,6 +2928,7 @@ def build_payload() -> Dict[str, Any]:
             "lead_promotion_recommendations": promotions,
             "source_discovery_board": source_board,
             "render_readiness_queue": render_queue,
+            "news_fact_packets": news_packets,
         }
     )
     render_handoff_summary = build_render_handoff_summary(render_prep_packets)
