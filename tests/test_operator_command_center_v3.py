@@ -200,6 +200,93 @@ def seed_daily_ops_files() -> None:
             },
         ],
     )
+    Path("pwhl_source_proposal_pack.md").write_text(
+        "# PWHL Source Proposal Pack\n\nNo rows are imported automatically.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "pwhl_source_proposal_pack.csv",
+        [
+            {
+                "candidate_group": "league_official",
+                "suggested_priority": "P1",
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "official_or_team",
+                "coverage_gap": "missing official league/team source",
+                "candidate_source_id": "pwhl_official_news",
+                "candidate_source_name": "PWHL official news",
+                "candidate_url": "https://www.thepwhl.com/en/news",
+                "candidate_domain": "thepwhl.com",
+                "source_type": "official_site",
+                "tier": "official",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "official_news; source_confirmation",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Guided PWHL pack candidate.",
+                "source_basis": "Free public official league news page.",
+                "registry_presence": "not_in_registry",
+                "manual_review_note": "Open and verify manually before copying into proposals.",
+            },
+            {
+                "candidate_group": "team_official",
+                "suggested_priority": "P1",
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "team_or_club",
+                "coverage_gap": "missing team/club source",
+                "candidate_source_id": "pwhl_boston_fleet_team",
+                "candidate_source_name": "Boston Fleet official team page",
+                "candidate_url": "https://www.thepwhl.com/en/teams/boston-fleet",
+                "candidate_domain": "thepwhl.com",
+                "source_type": "official_site_collection",
+                "tier": "official",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "team_news; roster_confirmation",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Guided PWHL pack candidate.",
+                "source_basis": "Free public official team page.",
+                "registry_presence": "not_in_registry",
+                "manual_review_note": "Open and verify manually before copying into proposals.",
+            },
+            {
+                "candidate_group": "league_cross_check",
+                "suggested_priority": "P1",
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "scoreboard_or_stats_cross_check",
+                "coverage_gap": "missing scoreboard/stat/cross-check source",
+                "candidate_source_id": "pwhl_official_scores",
+                "candidate_source_name": "PWHL official scores",
+                "candidate_url": "https://www.thepwhl.com/en/scores",
+                "candidate_domain": "thepwhl.com",
+                "source_type": "scoreboard_site",
+                "tier": "stats_provider",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "cross_check; scores; schedules",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Guided PWHL pack candidate.",
+                "source_basis": "Free public official scores page.",
+                "registry_presence": "not_in_registry",
+                "manual_review_note": "Open and verify manually before copying into proposals.",
+            },
+        ],
+    )
     Path("source_registry_audit.md").write_text("# Source registry audit\n", encoding="utf-8")
     write_csv(
         "morning_source_discovery_board.csv",
@@ -325,7 +412,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.13.0-source-proposal-review"
+    assert payload["version"] == "hsd-operator-command-center-v3.14.0-pwhl-proposal-pack"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -355,6 +442,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Source intake proposals" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source proposal holds" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source proposals ready" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "PWHL proposal pack" and item["value"] == "3" for item in payload["metrics"])
     assert any(item["label"] == "Studio asset checks" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
@@ -371,7 +459,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_proposal_review"][0]["candidate_source_id"] == "pwhl_instagram"
     assert payload["source_registry_proposal_review"][0]["review_status"] == "hold"
     assert payload["source_registry_proposal_review"][1]["review_status"] == "ready_for_registry_review"
-    assert any(action["title"] == "Propose free source coverage for PWHL" for action in payload["next_actions"])
+    assert payload["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_news"
+    assert payload["pwhl_source_proposal_pack"][1]["candidate_source_id"] == "pwhl_boston_fleet_team"
+    assert payload["pwhl_source_proposal_pack"][2]["candidate_source_id"] == "pwhl_official_scores"
+    pwhl_action = next(action for action in payload["next_actions"] if action["title"] == "Propose free source coverage for PWHL")
+    assert pwhl_action["artifact"] == "pwhl_source_proposal_pack.csv"
+    assert "guided PWHL proposal pack with 3 free official/team/cross-check candidates" in pwhl_action["detail"]
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -428,8 +521,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
+    assert "PWHL source proposal pack" in html
     assert "Source proposal review" in html
     assert "PWHL" in html
+    assert "pwhl_official_scores" in html
+    assert "pwhl_boston_fleet_team" in html
     assert "missing official league/team source" in html
     assert "proposal_only_do_not_import" in html
     assert "social-only source cannot be added" in html
@@ -450,8 +546,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in markdown
     assert "Source coverage map" in markdown
     assert "Source registry intake template" in markdown
+    assert "PWHL source proposal pack" in markdown
     assert "Source proposal review" in markdown
     assert "PWHL | gap" in markdown
+    assert "pwhl_official_news" in markdown
+    assert "pwhl_official_scores" in markdown
     assert "enabled: No | action: proposal_only_do_not_import" in markdown
     assert "pwhl_instagram | hold | flags: social_only" in markdown
     assert "PWHL league/team official pages" in markdown
@@ -524,6 +623,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_intake_template.csv" in runner
     assert "source_registry_proposal_review.md" in runner
     assert "source_registry_proposal_review.csv" in runner
+    assert "pwhl_source_proposal_pack.md" in runner
+    assert "pwhl_source_proposal_pack.csv" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
     assert "ig_story_results_queue.csv" in runner
