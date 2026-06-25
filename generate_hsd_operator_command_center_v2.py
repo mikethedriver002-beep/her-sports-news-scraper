@@ -8,9 +8,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
+from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.40.0-manual-operator-decision-inbox-starter"
+VERSION = "hsd-operator-command-center-v3.41.0-manual-visual-qa-decision-ui"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -294,12 +294,36 @@ def clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value)).strip()
 
 
+def local_latest_path(path: str | Path) -> Path:
+    return Path.cwd() / "outputs" / "local" / "latest" / "files" / Path(path)
+
+
+def find_existing_input(path: str | Path) -> Path:
+    candidates = input_candidates(path)
+    latest = local_latest_path(path)
+    if latest not in candidates:
+        candidates.append(latest)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+def href_for_path(path: str) -> str:
+    found = find_existing_input(path)
+    current_output = output_path(".").resolve()
+    try:
+        return found.resolve().relative_to(current_output).as_posix()
+    except Exception:
+        return found.as_posix()
+
+
 def yes(value: Any) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y", "pass", "ready"}
 
 
 def read_text(path: str, max_chars: int | None = None) -> str:
-    p = input_path(path)
+    p = find_existing_input(path)
     if not p.exists():
         return ""
     text = p.read_text(encoding="utf-8", errors="replace")
@@ -307,7 +331,7 @@ def read_text(path: str, max_chars: int | None = None) -> str:
 
 
 def read_json(path: str) -> Dict[str, Any]:
-    p = input_path(path)
+    p = find_existing_input(path)
     if not p.exists():
         return {}
     try:
@@ -317,7 +341,7 @@ def read_json(path: str) -> Dict[str, Any]:
 
 
 def read_csv(path: str) -> List[Dict[str, str]]:
-    p = input_path(path)
+    p = find_existing_input(path)
     if not p.exists():
         return []
     try:
@@ -555,7 +579,7 @@ def parse_markdown_table(path: str) -> List[Dict[str, str]]:
 def artifact_entries() -> List[Dict[str, Any]]:
     entries: List[Dict[str, Any]] = []
     for group, title, path in ARTIFACTS:
-        p = input_path(path)
+        p = find_existing_input(path)
         snippet = ""
         if p.suffix.lower() in {".csv", ".json", ".md", ".txt"}:
             snippet = short(read_text(path, 480), 260)
@@ -569,11 +593,85 @@ def artifact_entries() -> List[Dict[str, Any]]:
                 "exists": p.exists(),
                 "size": p.stat().st_size if p.exists() and p.is_file() else 0,
                 "snippet": snippet,
-                "run_command": "" if p.exists() else RUN_COMMANDS.get(path, ""),
+                "run_command": RUN_COMMANDS.get(path, ""),
                 "status_detail": "Ready to open" if p.exists() else missing_artifact_detail(path),
+                "source_path": p.as_posix() if p.exists() else "",
             }
         )
     return entries
+
+
+def operator_decision_ui_panel() -> Dict[str, Any]:
+    renderer = read_json("manual_review_renderer_manifest.json")
+    qa = read_json("manual_visual_qa_manifest.json")
+    approval = read_json("manual_visual_qa_approval_intake.json")
+    draft_rows = read_csv("manual_visual_qa_operator_decision_draft.csv")
+    template_rows = read_csv("manual_visual_qa_operator_decision_template.csv")
+    intake = read_json("manual_visual_qa_operator_decision_intake.json")
+    intake_rows = read_csv("manual_visual_qa_operator_decision_intake.csv")
+    staging_rows = read_csv("manual_post_approval_render_staging.csv")
+    starter = read_json("manual_visual_qa_operator_decision_inbox_starter.json")
+    inbox_rows = read_csv("operator/inbox/manual_visual_qa_operator_decisions.csv")
+    draft = draft_rows[0] if draft_rows else {}
+    intake_row = intake_rows[0] if intake_rows else {}
+    staging = staging_rows[0] if staging_rows else {}
+    preview_relative = "render_handoff_top_packet/draft_preview.png"
+    preview_file = find_existing_input(preview_relative)
+    preview_src = href_for_path(preview_relative) if preview_file.exists() else clean(first_present(draft.get("preview_path"), renderer.get("preview_path")))
+    qa_summary = qa.get("summary", {}) if isinstance(qa.get("summary"), dict) else {}
+    dimensions = qa.get("dimensions", {}) if isinstance(qa.get("dimensions"), dict) else {}
+    template_choices = [
+        {
+            "decision": clean(row.get("operator_decision")),
+            "row_type": clean(row.get("template_row_type")),
+            "copy_status": clean(row.get("copy_status")),
+        }
+        for row in template_rows
+    ]
+    status = clean(first_present(intake.get("status"), intake_row.get("validation_status"), draft.get("copy_status"), default="not_ready"))
+    if not draft_rows:
+        next_step = "Run .\\hsd.cmd run -Mode render to create the draft and QA reports."
+    elif not find_existing_input("operator/inbox/manual_visual_qa_operator_decisions.csv").exists():
+        next_step = "Run .\\hsd.cmd run -Mode decision-inbox to create the local inbox shell."
+    elif not inbox_rows:
+        next_step = "Use the panel controls to build one row, copy it into the local inbox, then rerun render."
+    else:
+        next_step = clean(staging.get("next_safe_action")) or "Rerun .\\hsd.cmd run -Mode render to validate the local inbox."
+    return {
+        "panel_status": status,
+        "preview_src": preview_src,
+        "preview_exists": preview_file.exists(),
+        "preview_path": preview_file.as_posix() if preview_file.exists() else clean(first_present(draft.get("preview_path"), renderer.get("preview_path"))),
+        "renderer_status": clean(renderer.get("status")),
+        "qa_status": clean(first_present(qa.get("status"), draft.get("qa_status"), intake_row.get("qa_status"))),
+        "approval_status": clean(first_present(qa.get("approval_status"), approval.get("approval_status"), intake.get("approval_status"), default="not_approved")),
+        "automated_hold_count": clean(first_present(draft.get("automated_hold_count"), intake_row.get("automated_hold_count"), qa_summary.get("hold_count"), default="0")),
+        "qa_pass_count": clean(qa_summary.get("pass_count")),
+        "qa_check_count": clean(qa_summary.get("check_count")),
+        "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
+        "decision_draft": draft,
+        "template_choices": template_choices,
+        "intake_status": clean(intake.get("status")),
+        "validation_status": clean(intake_row.get("validation_status")),
+        "validation_issue": clean(intake_row.get("validation_issue")),
+        "staging_lane": clean(staging.get("staging_lane")),
+        "staging_next_safe_action": clean(staging.get("next_safe_action")),
+        "inbox_path": "operator/inbox/manual_visual_qa_operator_decisions.csv",
+        "inbox_exists": find_existing_input("operator/inbox/manual_visual_qa_operator_decisions.csv").exists(),
+        "inbox_rows": len(inbox_rows),
+        "starter_status": clean(starter.get("status")),
+        "next_step": next_step,
+        "guardrails": {
+            "file_backed_manual_approval": True,
+            "writes_in_browser": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "copy_to_publish_lane": False,
+            "publish_ready": False,
+            "paid_apis": False,
+        },
+    }
 
 
 def missing_artifact_detail(path: str) -> str:
@@ -2145,6 +2243,7 @@ def build_payload() -> Dict[str, Any]:
         }
     )
     render_handoff_summary = build_render_handoff_summary(render_prep_packets)
+    operator_decision_panel = operator_decision_ui_panel()
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
@@ -2308,6 +2407,8 @@ def build_payload() -> Dict[str, Any]:
         metric("Render prep packets", len(render_prep_packets)),
         metric("Render packets ready", sum(1 for row in render_prep_packets if row.get("packet_status") == "ready_for_manual_render_review")),
         metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
+        metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
+        metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -2372,6 +2473,7 @@ def build_payload() -> Dict[str, Any]:
         "render_readiness_queue": render_queue,
         "render_prep_packets": render_prep_packets,
         "render_handoff_summary": render_handoff_summary,
+        "operator_decision_panel": operator_decision_panel,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
@@ -3019,6 +3121,122 @@ def render_sources(rows: Iterable[Dict[str, str]]) -> str:
     return "".join(body) or '<tr><td colspan="6" class="empty">No source health rows found.</td></tr>'
 
 
+DECISION_UI_FIELDS = [
+    "decision_draft_id",
+    "source_intake_id",
+    "preview_path",
+    "qa_status",
+    "automated_hold_count",
+    "allowed_decisions",
+    "operator_decision",
+    "operator_notes",
+    "hold_reason",
+    "revision_request",
+    "operator_name",
+    "reviewed_at_local",
+    "required_evidence",
+    "copy_target",
+    "copy_instructions",
+    "copy_status",
+    "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+
+def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
+    draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
+    draft_json = html.escape(json.dumps(draft), quote=True)
+    fields_json = html.escape(json.dumps(DECISION_UI_FIELDS), quote=True)
+    preview = clean(panel.get("preview_src"))
+    preview_html = (
+        f'<img class="decision-preview-img" src="{html.escape(preview)}" alt="Draft preview for manual visual QA decision">'
+        if preview
+        else '<div class="decision-preview-missing">Preview missing</div>'
+    )
+    choices = panel.get("template_choices", [])
+    if not choices:
+        choices = [
+            {"decision": "approve_for_manual_next_step", "row_type": "approve", "copy_status": "copy_safe"},
+            {"decision": "hold", "row_type": "hold", "copy_status": "copy_safe"},
+            {"decision": "revise", "row_type": "revise", "copy_status": "copy_safe"},
+        ]
+    choice_html = []
+    for index, choice in enumerate(choices):
+        decision = clean(choice.get("decision"))
+        if decision not in {"approve_for_manual_next_step", "hold", "revise"}:
+            continue
+        label = {
+            "approve_for_manual_next_step": "Approve",
+            "hold": "Hold",
+            "revise": "Revise",
+        }[decision]
+        choice_html.append(
+            f"""
+            <label class="decision-option">
+              <input type="radio" name="operatorDecision" value="{html.escape(decision)}" {'checked' if index == 0 else ''}>
+              <span>{html.escape(label)}</span>
+            </label>
+            """
+        )
+    inbox_command = command_hint(".\\hsd.cmd run -Mode decision-inbox") if not panel.get("inbox_exists") else ""
+    render_command = command_hint(".\\hsd.cmd run -Mode render")
+    return f"""
+      <div class="decision-ui" data-decision-draft="{draft_json}" data-decision-fields="{fields_json}">
+        <div class="decision-preview">
+          {preview_html}
+        </div>
+        <div class="decision-workbench">
+          <div class="decision-status-grid">
+            <div><span>QA status</span>{pill(panel.get('qa_status') or 'not_ready')}</div>
+            <div><span>Validation</span>{pill(panel.get('validation_status') or panel.get('intake_status') or 'awaiting')}</div>
+            <div><span>Automated holds</span><strong>{html.escape(clean(panel.get('automated_hold_count')) or '0')}</strong></div>
+            <div><span>Inbox rows</span><strong>{html.escape(str(panel.get('inbox_rows', 0)))}</strong></div>
+          </div>
+          <div class="decision-feedback">
+            <strong>{html.escape(clean(panel.get('panel_status')) or 'not_ready')}</strong>
+            <p>{html.escape(clean(panel.get('validation_issue')) or clean(panel.get('next_step')) or 'Manual review required.')}</p>
+          </div>
+          <form class="decision-form">
+            <fieldset class="decision-options">
+              <legend>Decision</legend>
+              {''.join(choice_html)}
+            </fieldset>
+            <label>Operator notes<textarea id="operatorNotes" rows="3" required placeholder="What did you verify by eye?"></textarea></label>
+            <div class="decision-form-grid">
+              <label>Hold reason<input id="holdReason" type="text" placeholder="Required for hold"></label>
+              <label>Revision request<input id="revisionRequest" type="text" placeholder="Required for revise"></label>
+            </div>
+            <div class="decision-form-grid">
+              <label>Operator name<input id="operatorName" type="text" required placeholder="Your name"></label>
+              <label>Reviewed at<input id="reviewedAtLocal" type="text" required></label>
+            </div>
+          </form>
+          <div class="decision-copy-box">
+            <div class="row-kicker">Copy-safe CSV row</div>
+            <textarea id="decisionCsvOutput" rows="5" readonly></textarea>
+            <div class="decision-button-row">
+              <button class="tool-link" type="button" id="copyDecisionRow">Copy row</button>
+              <span class="muted" id="decisionCopyStatus">Paste into {html.escape(panel.get('inbox_path'))}</span>
+            </div>
+          </div>
+          <div class="safety-strip">
+            {pill('file-backed manual approval', 'good')}
+            {pill('auto-approval off')}
+            {pill('publishing off')}
+            {pill('no file movement')}
+            {pill('paid APIs off', 'good')}
+          </div>
+          {inbox_command}
+          {render_command}
+        </div>
+      </div>
+    """
+
+
 def render_issues(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for issue in rows:
@@ -3146,18 +3364,38 @@ def render_html(payload: Dict[str, Any]) -> str:
     .artifact-toolbar input {{ min-width:280px; flex:1; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; }}
     .artifact-toolbar select {{ border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; background:#fff; }}
     .table-wrap {{ overflow:auto; background:#fff; border:1px solid var(--line); border-radius:8px; max-width:100%; }}
+    .decision-ui {{ display:grid; grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr); gap:16px; align-items:start; }}
+    .decision-preview {{ background:#111; border:1px solid var(--line); border-radius:8px; overflow:hidden; min-height:360px; display:grid; place-items:center; }}
+    .decision-preview-img {{ width:100%; max-height:720px; object-fit:contain; display:block; background:#111; }}
+    .decision-preview-missing {{ color:#fff; font-weight:800; }}
+    .decision-workbench {{ display:grid; gap:12px; min-width:0; }}
+    .decision-status-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }}
+    .decision-status-grid div {{ border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff; min-width:0; }}
+    .decision-status-grid span {{ display:block; color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:5px; }}
+    .decision-status-grid strong {{ display:block; font-size:18px; overflow-wrap:anywhere; }}
+    .decision-feedback {{ border-left:5px solid #d7a900; background:#fff7d7; padding:12px; border-radius:8px; }}
+    .decision-form {{ display:grid; gap:10px; }}
+    .decision-form label {{ display:grid; gap:5px; color:#3f424b; font-size:13px; font-weight:800; }}
+    .decision-form textarea,.decision-form input,.decision-copy-box textarea {{ width:100%; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; background:#fff; color:var(--ink); resize:vertical; }}
+    .decision-form-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }}
+    .decision-options {{ border:0; padding:0; margin:0; display:flex; gap:8px; flex-wrap:wrap; }}
+    .decision-options legend {{ color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:6px; }}
+    .decision-option {{ display:inline-flex !important; grid-template-columns:auto auto; align-items:center; gap:6px !important; border:1px solid var(--line); border-radius:6px; padding:8px 10px; background:#fff; cursor:pointer; }}
+    .decision-option input {{ width:auto; }}
+    .decision-copy-box {{ display:grid; gap:8px; border-top:1px solid var(--line); padding-top:12px; }}
+    .decision-button-row {{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }}
     @media (max-width: 900px) {{
       header {{ padding:20px; }}
       main {{ padding:16px; }}
-      .top-grid,.two-col {{ grid-template-columns:1fr; }}
+      .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
-      .metric-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
+      .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       .brief-list {{ grid-template-columns:1fr; }}
       .action-row,.content-row,.issue-row {{ grid-template-columns:1fr; }}
       .rank {{ width:28px; height:28px; }}
     }}
     @media (max-width: 560px) {{
-      .metric-grid {{ grid-template-columns:1fr; }}
+      .metric-grid,.decision-status-grid,.decision-form-grid {{ grid-template-columns:1fr; }}
       header h1 {{ font-size:23px; }}
     }}
   </style>
@@ -3199,6 +3437,7 @@ def render_html(payload: Dict[str, Any]) -> str:
 
     <nav class="tabs" aria-label="Command center views">
       <button class="tab-button" type="button" data-tab-target="today" aria-selected="true">Today</button>
+      <button class="tab-button" type="button" data-tab-target="decision-panel" aria-selected="false">Decision</button>
       <button class="tab-button" type="button" data-tab-target="content" aria-selected="false">Content</button>
       <button class="tab-button" type="button" data-tab-target="sources" aria-selected="false">Sources</button>
       <button class="tab-button" type="button" data-tab-target="safety" aria-selected="false">Safety</button>
@@ -3220,6 +3459,13 @@ def render_html(payload: Dict[str, Any]) -> str:
             </table>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="decision-panel" class="tab-panel">
+      <div class="panel">
+        <h2>Manual visual QA decision</h2>
+        {render_operator_decision_panel(payload['operator_decision_panel'])}
       </div>
     </section>
 
@@ -3476,6 +3722,68 @@ def render_html(payload: Dict[str, Any]) -> str:
     }}
     search.addEventListener("input", filterArtifacts);
     group.addEventListener("change", filterArtifacts);
+    const decisionPanel = document.querySelector(".decision-ui");
+    if (decisionPanel) {{
+      const draft = JSON.parse(decisionPanel.getAttribute("data-decision-draft") || "{{}}");
+      const fields = JSON.parse(decisionPanel.getAttribute("data-decision-fields") || "[]");
+      const output = document.getElementById("decisionCsvOutput");
+      const notes = document.getElementById("operatorNotes");
+      const holdReason = document.getElementById("holdReason");
+      const revisionRequest = document.getElementById("revisionRequest");
+      const operatorName = document.getElementById("operatorName");
+      const reviewedAt = document.getElementById("reviewedAtLocal");
+      const copyButton = document.getElementById("copyDecisionRow");
+      const copyStatus = document.getElementById("decisionCopyStatus");
+      if (reviewedAt && !reviewedAt.value) {{
+        reviewedAt.value = new Date().toLocaleString();
+      }}
+      function csvCell(value) {{
+        const text = String(value || "");
+        return /[",\\n\\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+      }}
+      function selectedDecision() {{
+        const checked = document.querySelector('input[name="operatorDecision"]:checked');
+        return checked ? checked.value : "hold";
+      }}
+      function buildDecisionRow() {{
+        const decision = selectedDecision();
+        const row = Object.assign({{}}, draft);
+        row.operator_decision = decision;
+        row.operator_notes = notes.value.trim();
+        row.hold_reason = decision === "hold" ? holdReason.value.trim() : "";
+        row.revision_request = decision === "revise" ? revisionRequest.value.trim() : "";
+        row.operator_name = operatorName.value.trim();
+        row.reviewed_at_local = reviewedAt.value.trim();
+        row.copy_target = "operator/inbox/manual_visual_qa_operator_decisions.csv";
+        row.approval_scope = "manual_next_step_only_not_publish_ready";
+        row.publish_ready = "false";
+        row.auto_approval = "false";
+        row.auto_publish = "false";
+        row.move_files = "false";
+        row.paid_apis = "false";
+        const header = fields.join(",");
+        const values = fields.map((field) => csvCell(row[field]));
+        output.value = header + "\\n" + values.join(",");
+      }}
+      [notes, holdReason, revisionRequest, operatorName, reviewedAt].forEach((el) => {{
+        if (el) el.addEventListener("input", buildDecisionRow);
+      }});
+      document.querySelectorAll('input[name="operatorDecision"]').forEach((el) => el.addEventListener("change", buildDecisionRow));
+      if (copyButton) {{
+        copyButton.addEventListener("click", async () => {{
+          buildDecisionRow();
+          try {{
+            await navigator.clipboard.writeText(output.value.split("\\n").slice(1).join("\\n"));
+            copyStatus.textContent = "Row copied. Paste below the header in operator/inbox/manual_visual_qa_operator_decisions.csv";
+          }} catch (err) {{
+            output.focus();
+            output.select();
+            copyStatus.textContent = "Copy from the text box, then paste below the inbox header.";
+          }}
+        }});
+      }}
+      buildDecisionRow();
+    }}
   </script>
 </body>
 </html>
@@ -3519,6 +3827,19 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
+    decision_panel = payload["operator_decision_panel"]
+    lines += [
+        "",
+        "## Manual Visual QA Decision UI",
+        "",
+        f"- Panel status: {decision_panel.get('panel_status') or 'not_ready'}",
+        f"- QA status: {decision_panel.get('qa_status') or 'not_ready'}",
+        f"- Validation: {decision_panel.get('validation_status') or decision_panel.get('intake_status') or 'awaiting'}",
+        f"- Preview: {decision_panel.get('preview_path') or 'missing'}",
+        f"- Inbox: {decision_panel.get('inbox_path')} ({decision_panel.get('inbox_rows')} row(s))",
+        f"- Next safe action: {decision_panel.get('next_step')}",
+        "- Guardrails: file-backed manual approval, no auto-approval, no publishing, no file movement, no paid APIs.",
+    ]
     handoff = payload["render_handoff_summary"]
     lines += ["", "## Top render handoff", ""]
     lines.extend(
