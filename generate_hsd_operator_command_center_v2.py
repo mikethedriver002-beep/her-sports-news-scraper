@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.38.0-manual-operator-decision-template"
+VERSION = "hsd-operator-command-center-v3.39.0-manual-operator-decision-walkthrough"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -91,6 +91,9 @@ ARTIFACTS = [
     ("Decision", "Manual post-approval render staging", "manual_post_approval_render_staging.md"),
     ("Decision", "Manual post-approval render staging data", "manual_post_approval_render_staging.csv"),
     ("Decision", "Manual post-approval render staging manifest", "manual_post_approval_render_staging.json"),
+    ("Decision", "Manual operator decision walkthrough", "manual_visual_qa_operator_decision_walkthrough.md"),
+    ("Decision", "Manual operator decision walkthrough data", "manual_visual_qa_operator_decision_walkthrough.csv"),
+    ("Decision", "Manual operator decision walkthrough manifest", "manual_visual_qa_operator_decision_walkthrough.json"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -231,6 +234,9 @@ RUN_COMMANDS = {
     "manual_post_approval_render_staging.md": ".\\hsd.cmd run -Mode render",
     "manual_post_approval_render_staging.csv": ".\\hsd.cmd run -Mode render",
     "manual_post_approval_render_staging.json": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_walkthrough.md": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_walkthrough.csv": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_walkthrough.json": ".\\hsd.cmd run -Mode render",
     "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
