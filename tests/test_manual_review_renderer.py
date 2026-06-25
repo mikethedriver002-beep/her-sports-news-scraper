@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.6.0-final-score-polish"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.7.0-final-score-content-polish"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -154,3 +154,37 @@ def test_manual_review_renderer_parses_final_score_for_mobile_first_card() -> No
     assert parsed["loser"] == "Las Vegas Aces"
     assert parsed["winner_score"] == "87"
     assert parsed["loser_score"] == "76"
+
+
+def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    packet = {
+        "copy_context": "4 source(s); publish_grade.",
+        "source_cue": "source_confidence_ready",
+    }
+    score = {
+        "winner": "New York Liberty",
+        "loser": "Las Vegas Aces",
+        "winner_score": "87",
+        "loser_score": "76",
+    }
+
+    assert module.score_margin(score) == 11
+    assert module.score_total(score) == 163
+    assert module.source_count(packet) == "4"
+    assert module.source_quality_label(packet) == "PUBLISH-GRADE"
+    assert module.final_score_callouts(packet, score) == [
+        {"label": "MARGIN", "value": "+11"},
+        {"label": "TOTAL", "value": "163"},
+        {"label": "SOURCES", "value": "4"},
+    ]
+    edge = module.game_edge_module(score)
+    assert edge["headline"] == "CLEAR EDGE"
+    assert "11-point advantage" in edge["body"]
+    assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
