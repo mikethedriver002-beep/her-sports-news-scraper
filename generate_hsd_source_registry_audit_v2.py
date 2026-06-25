@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.11-proposal-draft-workflow"
+VERSION = "hsd-source-registry-audit-bebe-v2.12-proposal-promotion-checklist"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -20,6 +20,8 @@ OUT_PROPOSAL_CSV = "source_registry_proposal_review.csv"
 OUT_PROPOSAL_MD = "source_registry_proposal_review.md"
 OUT_PROPOSAL_DRAFT_CSV = "source_registry_proposal_draft.csv"
 OUT_PROPOSAL_DRAFT_MD = "source_registry_proposal_draft.md"
+OUT_PROPOSAL_PROMOTION_CHECKLIST_CSV = "source_registry_proposal_promotion_checklist.csv"
+OUT_PROPOSAL_PROMOTION_CHECKLIST_MD = "source_registry_proposal_promotion_checklist.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -144,6 +146,37 @@ SOURCE_REGISTRY_PROPOSAL_DRAFT_FIELDS = [
     "duplicate_warning",
     "freshness_warning",
     "manual_review_note",
+]
+
+SOURCE_REGISTRY_PROPOSAL_PROMOTION_CHECKLIST_FIELDS = [
+    "checklist_decision",
+    "operator_step",
+    "copy_allowed",
+    "copy_target",
+    "pack_key",
+    "pack_name",
+    "candidate_source_id",
+    "candidate_source_name",
+    "candidate_url",
+    "candidate_domain",
+    "source_type",
+    "tier",
+    "sport_league",
+    "allowed_use",
+    "registry_presence",
+    "draft_selection_status",
+    "draft_action",
+    "duplicate_warning",
+    "freshness_warning",
+    "readiness_warning",
+    "verification_checklist",
+    "copy_instructions",
+    "hold_reason",
+    "discard_reason",
+    "proposed_enabled",
+    "registry_action",
+    "automation_status",
+    "publish_policy",
 ]
 
 PWHL_SOURCE_CANDIDATES = [
@@ -1048,6 +1081,10 @@ def write_source_registry_proposal_draft_csv(path: str | Path, rows: List[Dict[s
     write_run_csv(path, rows, SOURCE_REGISTRY_PROPOSAL_DRAFT_FIELDS, extrasaction="ignore")
 
 
+def write_source_registry_proposal_promotion_checklist_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_PROPOSAL_PROMOTION_CHECKLIST_FIELDS, extrasaction="ignore")
+
+
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
 
@@ -1781,6 +1818,123 @@ def write_source_registry_proposal_draft_markdown(path: str | Path, rows: List[D
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def proposal_draft_row_directly_duplicates(row: Dict[str, str]) -> bool:
+    presence = clean(row.get("registry_presence"))
+    return presence not in {"", "not_in_registry", "not_checked"}
+
+
+def build_source_registry_proposal_promotion_checklist(draft_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    checklist_rows: List[Dict[str, str]] = []
+    for row in draft_rows:
+        direct_duplicate = proposal_draft_row_directly_duplicates(row)
+        status = clean(row.get("draft_selection_status"))
+        if status == "ready_to_copy_after_freshness_check":
+            decision = "verify_then_copy"
+            operator_step = "1_verify_public_page_then_2_copy_to_manual_inbox"
+            copy_allowed = "Yes_after_manual_freshness_check"
+            hold_reason = ""
+            discard_reason = ""
+            copy_instructions = (
+                "After opening the public URL and confirming it is current/free/login-free, copy this row into "
+                "`operator/inbox/source_registry_proposals.csv`; keep proposed_enabled=No and registry_action=proposal_only_do_not_import."
+            )
+        elif direct_duplicate:
+            decision = "discard"
+            operator_step = "discard_duplicate_candidate_do_not_copy"
+            copy_allowed = "No"
+            hold_reason = ""
+            discard_reason = f"Candidate already resembles trusted registry coverage: {clean(row.get('registry_presence'))}."
+            copy_instructions = "Do not copy this row into the manual proposal inbox unless the registry duplicate is proven false."
+        else:
+            decision = "hold"
+            operator_step = "hold_until_warning_resolved"
+            copy_allowed = "No"
+            hold_reason = clean(row.get("duplicate_warning")) or clean(row.get("readiness_warning")) or "Resolve draft warning before copying."
+            discard_reason = ""
+            copy_instructions = "Hold this row in the draft until duplicate and freshness warnings are resolved."
+
+        verification_checklist = " | ".join(
+            [
+                "open candidate_url manually",
+                "confirm source is free public and does not require login",
+                "confirm page is current enough for the intended use",
+                "confirm source is not paid/API/private/social-only unless explicitly operator-verified",
+                "keep proposed_enabled=No",
+                "keep registry_action=proposal_only_do_not_import",
+            ]
+        )
+        checklist_rows.append(
+            {
+                "checklist_decision": decision,
+                "operator_step": operator_step,
+                "copy_allowed": copy_allowed,
+                "copy_target": "operator/inbox/source_registry_proposals.csv" if decision == "verify_then_copy" else "",
+                "pack_key": clean(row.get("pack_key")),
+                "pack_name": clean(row.get("pack_name")),
+                "candidate_source_id": clean(row.get("candidate_source_id")),
+                "candidate_source_name": clean(row.get("candidate_source_name")),
+                "candidate_url": clean(row.get("candidate_url")),
+                "candidate_domain": clean(row.get("candidate_domain")),
+                "source_type": clean(row.get("source_type")),
+                "tier": clean(row.get("tier")),
+                "sport_league": clean(row.get("sport_league")),
+                "allowed_use": clean(row.get("allowed_use")),
+                "registry_presence": clean(row.get("registry_presence")) or "not_checked",
+                "draft_selection_status": status,
+                "draft_action": clean(row.get("draft_action")),
+                "duplicate_warning": clean(row.get("duplicate_warning")),
+                "freshness_warning": clean(row.get("freshness_warning")),
+                "readiness_warning": clean(row.get("readiness_warning")),
+                "verification_checklist": verification_checklist,
+                "copy_instructions": copy_instructions,
+                "hold_reason": hold_reason,
+                "discard_reason": discard_reason,
+                "proposed_enabled": "No",
+                "registry_action": "proposal_only_do_not_import",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+            }
+        )
+    return checklist_rows
+
+
+def write_source_registry_proposal_promotion_checklist_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Proposal Promotion Checklist",
+        "",
+        "Manual operator checklist for draft source proposal rows before any trusted registry edit.",
+        "This report does not copy rows, enable sources, update the registry, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- verify then copy: {sum(1 for row in rows if row['checklist_decision'] == 'verify_then_copy')}",
+        f"- hold: {sum(1 for row in rows if row['checklist_decision'] == 'hold')}",
+        f"- discard: {sum(1 for row in rows if row['checklist_decision'] == 'discard')}",
+        "",
+        "## Guardrails",
+        "",
+        "- Copy only rows marked `verify_then_copy`, and only after manually opening the URL.",
+        "- Hold rows marked `hold` until their duplicate or freshness warnings are resolved.",
+        "- Discard rows marked `discard` unless a human proves the duplicate signal is wrong.",
+        "- Keep `proposed_enabled=No` and `registry_action=proposal_only_do_not_import`.",
+        "",
+        "## Checklist Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No promotion checklist rows were generated.")
+    else:
+        for row in rows:
+            reason = row.get("hold_reason") or row.get("discard_reason") or row.get("freshness_warning")
+            lines.append(
+                f"- **{row['checklist_decision']}** | {row['candidate_source_id']} | "
+                f"{row['operator_step']} | copy: {row['copy_allowed']} | target: {row['copy_target'] or 'none'} | "
+                f"reason: {reason}"
+            )
+    lines += ["", "Use `source_registry_proposal_promotion_checklist.csv` for the full field-level checklist.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
     issues: List[str] = []
     flags: List[str] = []
@@ -1947,6 +2101,7 @@ def main() -> None:
     proposal_pack_rows = source_proposal_pack_rows(proposal_pack_rows_by_key)
     proposal_pack_readiness_rows = build_source_proposal_pack_readiness(proposal_pack_rows_by_key, coverage_rows)
     proposal_draft_rows = build_source_registry_proposal_draft(proposal_pack_rows_by_key, proposal_pack_readiness_rows)
+    proposal_promotion_checklist_rows = build_source_registry_proposal_promotion_checklist(proposal_draft_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -1959,6 +2114,8 @@ def main() -> None:
     write_proposal_review_markdown(OUT_PROPOSAL_MD, proposal_review_rows)
     write_source_registry_proposal_draft_csv(OUT_PROPOSAL_DRAFT_CSV, proposal_draft_rows)
     write_source_registry_proposal_draft_markdown(OUT_PROPOSAL_DRAFT_MD, proposal_draft_rows)
+    write_source_registry_proposal_promotion_checklist_csv(OUT_PROPOSAL_PROMOTION_CHECKLIST_CSV, proposal_promotion_checklist_rows)
+    write_source_registry_proposal_promotion_checklist_markdown(OUT_PROPOSAL_PROMOTION_CHECKLIST_MD, proposal_promotion_checklist_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -1994,6 +2151,10 @@ def main() -> None:
         "proposal_draft_rows": len(proposal_draft_rows),
         "proposal_draft_ready_to_copy": sum(1 for r in proposal_draft_rows if r["draft_selection_status"] == "ready_to_copy_after_freshness_check"),
         "proposal_draft_blocked": sum(1 for r in proposal_draft_rows if r["draft_selection_status"].startswith("blocked_")),
+        "proposal_promotion_checklist_rows": len(proposal_promotion_checklist_rows),
+        "proposal_promotion_verify_then_copy": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "verify_then_copy"),
+        "proposal_promotion_hold": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "hold"),
+        "proposal_promotion_discard": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "discard"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -2017,6 +2178,7 @@ def main() -> None:
         "source_registry_intake_template": intake_rows,
         "source_registry_proposal_review": proposal_review_rows,
         "source_registry_proposal_draft": proposal_draft_rows,
+        "source_registry_proposal_promotion_checklist": proposal_promotion_checklist_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -2062,6 +2224,9 @@ def main() -> None:
         f"- source proposal draft rows: {counts['proposal_draft_rows']}",
         f"- source proposal draft ready-to-copy rows: {counts['proposal_draft_ready_to_copy']}",
         f"- source proposal draft blocked rows: {counts['proposal_draft_blocked']}",
+        f"- source proposal checklist verify/copy rows: {counts['proposal_promotion_verify_then_copy']}",
+        f"- source proposal checklist hold rows: {counts['proposal_promotion_hold']}",
+        f"- source proposal checklist discard rows: {counts['proposal_promotion_discard']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -2108,7 +2273,19 @@ def main() -> None:
     lines.append("Guided free-source proposal candidates were created in `source_proposal_packs.csv` and `.md`.")
     lines.append("Pack-level readiness cues were created in `source_proposal_pack_readiness.csv` and `.md`.")
     lines.append("A manual proposal draft was created in `source_registry_proposal_draft.csv` and `.md`.")
+    lines.append("A promotion checklist was created in `source_registry_proposal_promotion_checklist.csv` and `.md`.")
     lines.append("")
+    if proposal_promotion_checklist_rows:
+        lines.append("### Manual proposal promotion checklist")
+        lines.append("")
+        for row in proposal_promotion_checklist_rows[:8]:
+            lines.append(
+                f"- **{row['checklist_decision']}** | {row['candidate_source_id']} | "
+                f"{row['operator_step']} | copy: {row['copy_allowed']}"
+            )
+        if len(proposal_promotion_checklist_rows) > 8:
+            lines.append(f"- ... {len(proposal_promotion_checklist_rows) - 8} more checklist rows in the CSV.")
+        lines.append("")
     if proposal_draft_rows:
         lines.append("### Manual proposal draft")
         lines.append("")

@@ -448,6 +448,75 @@ def seed_daily_ops_files() -> None:
             },
         ],
     )
+    Path("source_registry_proposal_promotion_checklist.md").write_text(
+        "# HSD Source Registry Proposal Promotion Checklist\n\nManual checklist.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_proposal_promotion_checklist.csv",
+        [
+            {
+                "checklist_decision": "verify_then_copy",
+                "operator_step": "1_verify_public_page_then_2_copy_to_manual_inbox",
+                "copy_allowed": "Yes_after_manual_freshness_check",
+                "copy_target": "operator/inbox/source_registry_proposals.csv",
+                "pack_key": "pwhl",
+                "pack_name": "PWHL Source Proposal Pack",
+                "candidate_source_id": "pwhl_official_news",
+                "candidate_source_name": "PWHL official news",
+                "candidate_url": "https://www.thepwhl.com/en/news",
+                "candidate_domain": "thepwhl.com",
+                "source_type": "official_site",
+                "tier": "official",
+                "sport_league": "PWHL",
+                "allowed_use": "official_news; source_confirmation",
+                "registry_presence": "not_in_registry",
+                "draft_selection_status": "ready_to_copy_after_freshness_check",
+                "draft_action": "manual_copy_to_inbox_after_freshness_check",
+                "duplicate_warning": "No duplicate candidates detected in this pack.",
+                "freshness_warning": "Open this public page manually and confirm it is current before copying to the inbox.",
+                "readiness_warning": "Balanced free official/team/tournament and cross-check candidates; no registry duplicates detected.",
+                "verification_checklist": "open candidate_url manually | keep proposed_enabled=No",
+                "copy_instructions": "After opening the URL, copy this row into operator/inbox/source_registry_proposals.csv.",
+                "hold_reason": "",
+                "discard_reason": "",
+                "proposed_enabled": "No",
+                "registry_action": "proposal_only_do_not_import",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+            },
+            {
+                "checklist_decision": "discard",
+                "operator_step": "discard_duplicate_candidate_do_not_copy",
+                "copy_allowed": "No",
+                "copy_target": "",
+                "pack_key": "wnba",
+                "pack_name": "WNBA Source Proposal Pack",
+                "candidate_source_id": "espn_wnba_scoreboard_pack_review",
+                "candidate_source_name": "ESPN WNBA scoreboard",
+                "candidate_url": "https://www.espn.com/wnba/scoreboard",
+                "candidate_domain": "espn.com",
+                "source_type": "scoreboard_site",
+                "tier": "primary_media",
+                "sport_league": "WNBA",
+                "allowed_use": "cross_check; scores",
+                "registry_presence": "domain_already_exists_check_duplicate",
+                "draft_selection_status": "blocked_duplicate_review",
+                "draft_action": "hold_do_not_copy_until_duplicate_review",
+                "duplicate_warning": "Duplicate review required for pack; duplicate candidate IDs: espn_wnba_scoreboard_pack_review.",
+                "freshness_warning": "Open this public page manually and confirm it is current before copying to the inbox.",
+                "readiness_warning": "1 candidate already resembles trusted registry coverage.",
+                "verification_checklist": "open candidate_url manually | keep proposed_enabled=No",
+                "copy_instructions": "Do not copy this row into the manual proposal inbox unless the registry duplicate is proven false.",
+                "hold_reason": "",
+                "discard_reason": "Candidate already resembles trusted registry coverage: domain_already_exists_check_duplicate.",
+                "proposed_enabled": "No",
+                "registry_action": "proposal_only_do_not_import",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+            },
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -577,7 +646,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.17.0-source-proposal-draft"
+    assert payload["version"] == "hsd-operator-command-center-v3.18.0-source-promotion-checklist"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -610,6 +679,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Proposal draft rows" and item["value"] == "2" for item in payload["metrics"])
     assert any(item["label"] == "Proposal draft ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Proposal draft blocked" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Checklist verify/copy" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Checklist hold" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Checklist discard" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -636,6 +708,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_proposal_draft"][0]["proposed_enabled"] == "No"
     assert payload["source_registry_proposal_draft"][1]["draft_selection_status"] == "blocked_duplicate_review"
     assert "Duplicate review required" in payload["source_registry_proposal_draft"][1]["duplicate_warning"]
+    assert payload["source_registry_proposal_promotion_checklist"][0]["checklist_decision"] == "verify_then_copy"
+    assert payload["source_registry_proposal_promotion_checklist"][0]["copy_allowed"] == "Yes_after_manual_freshness_check"
+    assert payload["source_registry_proposal_promotion_checklist"][1]["checklist_decision"] == "discard"
+    assert "trusted registry coverage" in payload["source_registry_proposal_promotion_checklist"][1]["discard_reason"]
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -651,6 +727,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     draft_action = next(action for action in payload["next_actions"] if action["title"] == "Review manual source proposal draft")
     assert draft_action["artifact"] == "source_registry_proposal_draft.md"
     assert "1 draft row(s) are ready to copy" in draft_action["detail"]
+    checklist_action = next(action for action in payload["next_actions"] if action["title"] == "Work source proposal promotion checklist")
+    assert checklist_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
+    assert "1 row(s) are verify-then-copy candidates" in checklist_action["detail"]
+    checklist_hold_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve held or discarded source checklist rows")
+    assert checklist_hold_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
+    assert "1 discard row(s)" in checklist_hold_action["detail"]
     duplicate_pack_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve duplicate cues in WNBA Source Proposal Pack")
     assert duplicate_pack_action["artifact"] == "source_proposal_pack_readiness.md"
     assert "espn_wnba_scoreboard_pack_review" in duplicate_pack_action["detail"]
@@ -710,6 +792,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
+    assert "Source proposal promotion checklist" in html
+    assert "verify_then_copy" in html
+    assert "discard_duplicate_candidate_do_not_copy" in html
+    assert "Yes_after_manual_freshness_check" in html
     assert "Source proposal draft" in html
     assert "ready_to_copy_after_freshness_check" in html
     assert "blocked_duplicate_review" in html
@@ -737,6 +823,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "Source proposal promotion checklist" in markdown
+    assert "verify_then_copy" in markdown
+    assert "discard" in markdown
     assert "Source proposal draft" in markdown
     assert "ready_to_copy_after_freshness_check" in markdown
     assert "Duplicate review required" in markdown
@@ -832,6 +921,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_proposal_review.csv" in runner
     assert "source_registry_proposal_draft.md" in runner
     assert "source_registry_proposal_draft.csv" in runner
+    assert "source_registry_proposal_promotion_checklist.md" in runner
+    assert "source_registry_proposal_promotion_checklist.csv" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner
