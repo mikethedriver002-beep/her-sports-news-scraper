@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.10.0-premium-stat-module"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.11.0-team-color-logo-cues"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -108,10 +108,26 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert by_format["square_feed_1x1"]["reference_derivation"] == "square_review_draft_derived_from_imported_4x5_layout"
     assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
     assert any(slot["slot_id"] == "primary_team_logo" for slot in manifest["asset_slots"])
+    primary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "primary_team_logo")
+    assert primary_logo["status"] == "registry_logo_review_required"
+    assert primary_logo["logo_approval_cue"] == "LOGO REVIEW"
+    assert primary_logo["logo_review_required"] == "true"
+    assert primary_logo["team_accent_hex"]
+    assert primary_logo["team_accent_source"] == "sampled_from_local_logo_review_asset"
     secondary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "secondary_team_logo")
     assert secondary_logo["status"] == "approved_logo"
     assert secondary_logo["asset_path"] == "assets/leagues/wnba/teams/las_vegas_aces/logo.png"
     assert secondary_logo["render_method"] == "source_png"
+    assert secondary_logo["logo_approval_cue"] == "APPROVED LOGO"
+    assert secondary_logo["logo_review_required"] == "false"
+    assert secondary_logo["team_accent_hex"] == "#c41e3a"
+    assert secondary_logo["team_accent_source"] == "local_wnba_team_registry_primary_color_logo_no_distinct_color"
+    team_profiles = {item["role"]: item for item in manifest["team_visual_profiles"]}
+    assert team_profiles["winner"]["logo_approval_cue"] == "LOGO REVIEW"
+    assert team_profiles["winner"]["logo_review_required"] is True
+    assert team_profiles["winner"]["team_accent_source"] == "sampled_from_local_logo_review_asset"
+    assert team_profiles["opponent"]["logo_approval_cue"] == "APPROVED LOGO"
+    assert team_profiles["opponent"]["logo_review_required"] is False
     assert manifest["guardrails"]["manual_only"] is True
     assert manifest["guardrails"]["auto_render"] is False
     assert manifest["guardrails"]["auto_publish"] is False
@@ -135,6 +151,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "## Review Draft Formats" in report
     assert "templates_hsd_20260625" in report
     assert "hsd_game_recap_final_score_a" in report
+    assert "## Team Color And Logo Review Cues" in report
+    assert "LOGO REVIEW" in report
     assert "publish_ready=`false`" in report
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
 

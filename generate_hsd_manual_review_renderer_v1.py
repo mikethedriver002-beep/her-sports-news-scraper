@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.10.0-premium-stat-module"
+VERSION = "hsd-manual-review-renderer-v1.11.0-team-color-logo-cues"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -38,6 +38,7 @@ REFERENCE_LAYOUT_ROOT = PROJECT_ROOT / "assets" / "graphics" / "v4" / "approved"
 REFERENCE_BRAND_ROOT = PROJECT_ROOT / "assets" / "graphics" / "v4" / "approved" / "brand"
 TEAM_ALIASES_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_aliases.csv"
 TEAM_LOGOS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_logos.csv"
+TEAM_COLORS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "teams.csv"
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -237,6 +238,66 @@ def texture_patch(base: tuple[int, int, int], size: tuple[int, int], seed: int) 
     return patch.convert("RGBA")
 
 
+def rgb_to_hex(color: tuple[int, int, int]) -> str:
+    return "#{:02x}{:02x}{:02x}".format(
+        max(0, min(255, int(color[0]))),
+        max(0, min(255, int(color[1]))),
+        max(0, min(255, int(color[2]))),
+    )
+
+
+def hex_to_rgb(value: Any) -> tuple[int, int, int] | None:
+    text = clean(value).lstrip("#")
+    if not re.fullmatch(r"[0-9a-fA-F]{6}", text):
+        return None
+    return tuple(int(text[index : index + 2], 16) for index in (0, 2, 4))
+
+
+def logo_sampled_accent(logo: Any, fallback: tuple[int, int, int], fallback_source: str = "") -> tuple[tuple[int, int, int], str]:
+    fallback_label = clean(fallback_source) or "fallback_hsd_accent"
+    if logo is None:
+        return fallback, f"{fallback_label}_no_logo_image"
+    try:
+        sample = logo.convert("RGBA")
+        sample.thumbnail((96, 96), resample_filter())
+        buckets: Dict[tuple[int, int, int], int] = {}
+        for r, g, b, a in sample.getdata():
+            if a < 64:
+                continue
+            luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            saturation = max(r, g, b) - min(r, g, b)
+            if luma < 45 or luma > 238 or saturation < 24:
+                continue
+            bucket = (int(round(r / 24) * 24), int(round(g / 24) * 24), int(round(b / 24) * 24))
+            score = 1 + int(saturation * 1.8) + (28 if 72 <= luma <= 205 else 0)
+            buckets[bucket] = buckets.get(bucket, 0) + score
+        if not buckets:
+            return fallback, f"{fallback_label}_logo_no_distinct_color"
+        color = max(buckets.items(), key=lambda item: item[1])[0]
+        return tuple(max(35, min(232, channel)) for channel in color), "sampled_from_local_logo_review_asset"
+    except Exception:
+        return fallback, f"{fallback_label}_logo_sample_failed"
+
+
+def logo_approval_cue(result: Dict[str, Any]) -> str:
+    status = clean(result.get("status"))
+    if status == "approved_logo":
+        return "APPROVED LOGO"
+    if "missing" in status:
+        return "LOGO MISSING"
+    return "LOGO REVIEW"
+
+
+def enrich_logo_result(result: Dict[str, Any], fallback: tuple[int, int, int], fallback_source: str = "") -> Dict[str, Any]:
+    accent, source = logo_sampled_accent(result.get("image"), fallback, fallback_source)
+    result["team_accent_rgb"] = accent
+    result["team_accent_hex"] = rgb_to_hex(accent)
+    result["team_accent_source"] = source
+    result["logo_approval_cue"] = logo_approval_cue(result)
+    result["logo_review_required"] = result.get("approved") is not True
+    return result
+
+
 def draw_right_text(draw: Any, right: int, y: int, text: str, fnt: Any, fill: tuple[int, int, int]) -> None:
     width, _ = text_size(draw, text, fnt)
     draw.text((right - width, y), text, font=fnt, fill=fill)
@@ -349,7 +410,13 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
     if score and clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID:
         aliases, logos = team_registry()
         for slot_id, team_name in [("primary_team_logo", score.get("winner")), ("secondary_team_logo", score.get("loser"))]:
+            fallback, fallback_source = team_registry_accent(
+                clean(team_name),
+                aliases,
+                (247, 203, 84) if slot_id == "primary_team_logo" else (37, 99, 163),
+            )
             result = load_team_logo(clean(team_name), aliases, logos)
+            enriched = enrich_logo_result(result, fallback, fallback_source)
             status = clean(result.get("status")) or "logo_review_required"
             requirement_note = "Approved WNBA logo slot from Templates-hsd reference pack; do not invent or replace identity."
             if status != "approved_logo":
@@ -363,6 +430,10 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
                     "blocker": clean(result.get("blocker")),
                     "render_method": clean(result.get("render_method")),
                     "team": clean(team_name),
+                    "team_accent_hex": clean(enriched.get("team_accent_hex")),
+                    "team_accent_source": clean(enriched.get("team_accent_source")),
+                    "logo_approval_cue": clean(enriched.get("logo_approval_cue")),
+                    "logo_review_required": str(bool(enriched.get("logo_review_required"))).lower(),
                 }
             )
     return slots
@@ -628,6 +699,22 @@ def team_registry() -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
     return aliases, logos
 
 
+def team_color_registry() -> Dict[str, Dict[str, Any]]:
+    colors: Dict[str, Dict[str, Any]] = {}
+    for row in read_csv(TEAM_COLORS_CSV):
+        team_id = clean(row.get("team_id"))
+        primary = hex_to_rgb(row.get("primary_hex") or row.get("primary_color_hex"))
+        secondary = hex_to_rgb(row.get("secondary_hex") or row.get("secondary_color_hex"))
+        if team_id and primary:
+            colors[team_id] = {
+                "primary_rgb": primary,
+                "secondary_rgb": secondary,
+                "primary_hex": rgb_to_hex(primary),
+                "secondary_hex": rgb_to_hex(secondary) if secondary else "",
+            }
+    return colors
+
+
 def resolve_team_id(team: str, aliases: Dict[str, str]) -> str:
     normalized = norm(team)
     if normalized in aliases:
@@ -636,6 +723,15 @@ def resolve_team_id(team: str, aliases: Dict[str, str]) -> str:
         if alias and (alias in normalized or normalized in alias):
             return team_id
     return ""
+
+
+def team_registry_accent(team: str, aliases: Dict[str, str], fallback: tuple[int, int, int]) -> tuple[tuple[int, int, int], str]:
+    team_id = resolve_team_id(team, aliases)
+    colors = team_color_registry().get(team_id, {})
+    accent = colors.get("primary_rgb")
+    if isinstance(accent, tuple):
+        return accent, "local_wnba_team_registry_primary_color"
+    return fallback, "fallback_hsd_accent_no_team_color_registry"
 
 
 def short_team(team: str) -> str:
@@ -988,22 +1084,25 @@ def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str
 
 
 def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], aliases: Dict[str, str], logos: Dict[str, Dict[str, str]], accent: tuple[int, int, int], *, winner: bool = False) -> Dict[str, Any]:
-    draw_reference_panel(image, box, accent, fill=(1, 2, 7, 226), radius=16, width=2)
+    registry_accent, registry_accent_source = team_registry_accent(team, aliases, accent)
+    result = enrich_logo_result(load_team_logo(team, aliases, logos), registry_accent, registry_accent_source)
+    team_accent = result.get("team_accent_rgb") if isinstance(result.get("team_accent_rgb"), tuple) else accent
+    approval_cue = clean(result.get("logo_approval_cue")) or "LOGO REVIEW"
+    draw_reference_panel(image, box, team_accent, fill=(1, 2, 7, 226), radius=16, width=2)
     x, y, w, h = box
     draw = ImageDraw.Draw(image, "RGBA")
     sheen = Image.new("RGBA", image.size, (0, 0, 0, 0))
     sheen_draw = ImageDraw.Draw(sheen, "RGBA")
-    glow_alpha = 42 if winner else 26
+    glow_alpha = 56 if winner else 32
     sheen_draw.ellipse(
         (x - int(w * 0.25), y - int(h * 0.30), x + int(w * 1.25), y + int(h * 1.20)),
-        fill=(*accent, glow_alpha),
+        fill=(*team_accent, glow_alpha),
     )
     if ImageFilter is not None:
         sheen = sheen.filter(ImageFilter.GaussianBlur(max(18, min(w, h) // 6)))
     image.alpha_composite(sheen)
-    draw.rounded_rectangle((x + 12, y + 12, x + w - 12, y + h - 12), radius=12, outline=(*accent, 72), width=1)
-    draw.line((x + 22, y + h - 18, x + w - 22, y + h - 18), fill=(*accent, 150), width=2)
-    result = load_team_logo(team, aliases, logos)
+    draw.rounded_rectangle((x + 12, y + 12, x + w - 12, y + h - 12), radius=12, outline=(*team_accent, 88), width=1)
+    draw.line((x + 22, y + h - 18, x + w - 22, y + h - 18), fill=(*team_accent, 172), width=2)
     logo = result.get("image")
     if logo is not None:
         logo = logo.copy()
@@ -1021,8 +1120,16 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
         image.alpha_composite(shadow)
         image.alpha_composite(logo, (logo_x, logo_y))
     else:
-        draw_reference_text(image, (x + 18, y + 26, w - 36, h - 70), short_team(team), "context", 34, 18, accent, max_lines=2, align="center")
+        draw_reference_text(image, (x + 18, y + 26, w - 36, h - 70), short_team(team), "context", 34, 18, team_accent, max_lines=2, align="center")
         draw_reference_text(image, (x + 18, y + h - 58, w - 36, 38), "LOGO REVIEW", "context", 18, 12, PALETTE["ink"], max_lines=1, align="center")
+    cue_fill = (18, 26, 40, 224) if result.get("approved") else (190, 39, 54, 232)
+    cue_outline = (*team_accent, 186) if result.get("approved") else (255, 255, 255, 135)
+    cue_w = min(w - 28, max(108, int(w * 0.62)))
+    cue_h = 22
+    cue_x = x + (w - cue_w) // 2
+    cue_y = y + h - cue_h - 18
+    draw.rounded_rectangle((cue_x, cue_y, cue_x + cue_w, cue_y + cue_h), radius=6, fill=cue_fill, outline=cue_outline, width=1)
+    draw_reference_text(image, (cue_x + 8, cue_y + 3, cue_w - 16, cue_h - 4), approval_cue, "context", 10, 8, PALETTE["ink"], max_lines=1, align="center")
     return {
         "team": clean(team),
         "team_id": clean(result.get("team_id")),
@@ -1030,6 +1137,26 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
         "approved": bool(result.get("approved")),
         "asset_path": clean(result.get("path")),
         "render_method": clean(result.get("render_method")),
+        "team_accent_hex": clean(result.get("team_accent_hex")),
+        "team_accent_source": clean(result.get("team_accent_source")),
+        "logo_approval_cue": approval_cue,
+        "logo_review_required": bool(result.get("logo_review_required")),
+    }
+
+
+def team_visual_profile(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str, str]], fallback: tuple[int, int, int]) -> Dict[str, Any]:
+    registry_accent, registry_accent_source = team_registry_accent(team, aliases, fallback)
+    result = enrich_logo_result(load_team_logo(team, aliases, logos), registry_accent, registry_accent_source)
+    accent = result.get("team_accent_rgb") if isinstance(result.get("team_accent_rgb"), tuple) else fallback
+    return {
+        "team": clean(team),
+        "team_id": clean(result.get("team_id")),
+        "accent_rgb": accent,
+        "accent_hex": clean(result.get("team_accent_hex")) or rgb_to_hex(accent),
+        "accent_source": clean(result.get("team_accent_source")),
+        "logo_status": clean(result.get("status")),
+        "logo_approval_cue": clean(result.get("logo_approval_cue")),
+        "logo_review_required": bool(result.get("logo_review_required")),
     }
 
 
@@ -1306,11 +1433,11 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
     )
 
 
-def draw_score_lanes(image: Any, template_spec: Dict[str, Any]) -> None:
+def draw_score_lanes(image: Any, template_spec: Dict[str, Any], primary_accent: tuple[int, int, int], secondary_accent: tuple[int, int, int]) -> None:
     draw = ImageDraw.Draw(image, "RGBA")
     lane_pairs = [
-        ("primary_logo_slot", "primary_score", (3, 5, 10, 176), (247, 203, 84, 190)),
-        ("secondary_logo_slot", "secondary_score", (3, 5, 10, 168), (206, 214, 226, 175)),
+        ("primary_logo_slot", "primary_score", (3, 5, 10, 176), (*primary_accent, 198)),
+        ("secondary_logo_slot", "secondary_score", (3, 5, 10, 168), (*secondary_accent, 185)),
     ]
     for logo_name, score_name, fill, accent in lane_pairs:
         lx, ly, lw, lh = zone_box(template_spec, logo_name)
@@ -1325,6 +1452,7 @@ def draw_score_lanes(image: Any, template_spec: Dict[str, Any]) -> None:
         lane_draw = ImageDraw.Draw(lane_layer, "RGBA")
         lane_draw.rounded_rectangle((x1 + 8, y1 + 10, x2 + 8, y2 + 10), radius=22, fill=(0, 0, 0, 94))
         lane_draw.rounded_rectangle((x1, y1, x2, y2), radius=22, fill=fill, outline=accent, width=2)
+        lane_draw.rectangle((x1, y1 + 4, x1 + 12, y2 - 4), fill=accent)
         lane_draw.rounded_rectangle((x1 + 6, y1 + 6, x2 - 6, y1 + 42), radius=17, fill=(255, 255, 255, 10))
         lane_draw.line((x1 + max(190, lw + 28), y1 + 26, x1 + max(190, lw + 28), y2 - 24), fill=(255, 255, 255, 36), width=1)
         lane_draw.line((x1 + 22, y2 - 11, x2 - 22, y2 - 11), fill=accent, width=2)
@@ -1335,6 +1463,10 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     template_spec = format_reference_spec(format_spec, reference)
     width, height = int(format_spec["width"]), int(format_spec["height"])
     aliases, logos = team_registry()
+    winner_profile = team_visual_profile(score["winner"], aliases, logos, (247, 203, 84))
+    loser_profile = team_visual_profile(score["loser"], aliases, logos, (37, 99, 163))
+    winner_accent = winner_profile["accent_rgb"]
+    loser_accent = loser_profile["accent_rgb"]
 
     draw_reference_background(image, "final")
     draw_reference_badge(image, template_spec)
@@ -1343,10 +1475,10 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
 
     context_box = zone_box(template_spec, "context_row")
     draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
-    draw_score_lanes(image, template_spec)
+    draw_score_lanes(image, template_spec, winner_accent, loser_accent)
 
-    draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, (247, 203, 84), winner=True)
-    draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, (37, 99, 163), winner=False)
+    draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, winner_accent, winner=True)
+    draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, loser_accent, winner=False)
 
     format_id = clean(format_spec.get("format_id"))
     primary_team_size = 54 if format_id == "square_feed_1x1" else 58
@@ -1505,6 +1637,34 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
     }
 
 
+def team_visual_profiles(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[str, Any]]:
+    score = parse_final_score(packet) if clean(template.get("tone")) == "result" else {}
+    if not score:
+        return []
+    aliases, logos = team_registry()
+    pairs = [
+        ("winner", score.get("winner"), (247, 203, 84)),
+        ("opponent", score.get("loser"), (37, 99, 163)),
+    ]
+    profiles: List[Dict[str, Any]] = []
+    for role, team, fallback in pairs:
+        profile = team_visual_profile(clean(team), aliases, logos, fallback)
+        profiles.append(
+            {
+                "role": role,
+                "team": profile["team"],
+                "team_id": profile["team_id"],
+                "team_accent_hex": profile["accent_hex"],
+                "team_accent_source": profile["accent_source"],
+                "logo_status": profile["logo_status"],
+                "logo_approval_cue": profile["logo_approval_cue"],
+                "logo_review_required": profile["logo_review_required"],
+                "approval_policy": "team-color accent comes from local logo sampling or local team registry; does not approve logo, asset, or publish readiness",
+            }
+        )
+    return profiles
+
+
 def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any]) -> None:
     width, height = spec["width"], spec["height"]
     draw = ImageDraw.Draw(image)
@@ -1602,6 +1762,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         "format_options": outputs,
         "asset_slots": asset_slots(packet, template),
         "content_module": content_module_summary(packet, template),
+        "team_visual_profiles": team_visual_profiles(packet, template),
     }
 
 
@@ -1613,6 +1774,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
     formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
     slots = render_result.get("asset_slots") if isinstance(render_result.get("asset_slots"), list) else []
     content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
+    team_profiles = render_result.get("team_visual_profiles") if isinstance(render_result.get("team_visual_profiles"), list) else []
     lines = [
         "# HSD Manual Review Renderer",
         "",
@@ -1669,6 +1831,14 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         )
     else:
         lines.append("- none")
+    lines += ["", "## Team Color And Logo Review Cues", ""]
+    if team_profiles:
+        for profile in team_profiles:
+            lines.append(
+                f"- `{clean(profile.get('role'))}` {clean(profile.get('team'))}: accent=`{clean(profile.get('team_accent_hex'))}` source=`{clean(profile.get('team_accent_source'))}` logo=`{clean(profile.get('logo_status'))}` cue=`{clean(profile.get('logo_approval_cue'))}` review_required=`{clean(profile.get('logo_review_required'))}`"
+            )
+    else:
+        lines.append("- none")
     return [
         *lines,
     ]
@@ -1721,6 +1891,7 @@ def main() -> None:
         "format_options": render_result.get("format_options", []),
         "asset_slots": render_result.get("asset_slots", []),
         "content_module": render_result.get("content_module", {}),
+        "team_visual_profiles": render_result.get("team_visual_profiles", []),
         "guardrails": {
             "manual_only": True,
             "review_only": True,

@@ -152,12 +152,20 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "slot_id": "primary_team_logo",
                     "status": "registry_logo_review_required",
                     "team": "New York Liberty",
+                    "team_accent_hex": "#247CA8",
+                    "team_accent_source": "sampled_from_local_logo_review_asset",
+                    "logo_approval_cue": "LOGO REVIEW",
+                    "logo_review_required": "true",
                     "requirement": "Human review must confirm this logo asset before later production use.",
                 },
                 {
                     "slot_id": "secondary_team_logo",
                     "status": "approved_logo",
                     "team": "Las Vegas Aces",
+                    "team_accent_hex": "#C62838",
+                    "team_accent_source": "sampled_from_local_logo_review_asset",
+                    "logo_approval_cue": "APPROVED LOGO",
+                    "logo_review_required": "false",
                     "requirement": "Approved WNBA logo slot.",
                 },
             ],
@@ -1628,6 +1636,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "01_game_recap_final_score_variant_A_public.png" in feed_gallery["reference_public_href"]
     assert "02_game_recap_final_score_variant_A_layout_reference.png" in feed_gallery["reference_layout_href"]
     assert feed_gallery["logo_status"] == "logo_review_required"
+    assert "New York Liberty: LOGO REVIEW" in feed_gallery["logo_detail"]
+    assert "accent #247CA8" in feed_gallery["logo_detail"]
+    assert "Las Vegas Aces: APPROVED LOGO" in feed_gallery["logo_detail"]
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
     assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"
