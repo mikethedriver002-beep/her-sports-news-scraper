@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.26.0-source-registry-readiness-summary"
+VERSION = "hsd-operator-command-center-v3.27.0-diff-resolution-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -1154,13 +1154,22 @@ def build_source_registry_readiness_summary(
         )
     if diff_hold_rows or diff_review_rows:
         rows = diff_hold_rows + diff_review_rows
+        resolution_counts = {
+            action: sum(1 for row in rows if clean(row.get("resolution_action")) == action)
+            for action in ["VERIFY", "REVISE", "HOLD", "DISCARD"]
+        }
+        resolution_rollup = ", ".join(
+            f"{action.lower()} {count}"
+            for action, count in resolution_counts.items()
+            if count
+        ) or "resolution cues not available"
         return set_summary(
             "blocked_diff_review",
-            "Open source_registry_diff_review.md and resolve duplicate ID, duplicate domain, trust-band, or rollback warnings.",
+            "Open source_registry_diff_review.md and follow VERIFY, REVISE, HOLD, or DISCARD cues before filling the verification log.",
             f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s): {summarize_source_ids(rows)}",
             "source_registry_diff_review.md",
             rows,
-            f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s) before verification can be trusted.",
+            f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s) before verification can be trusted; {resolution_rollup}.",
         )
     if verification_rows:
         return set_summary(
@@ -1413,6 +1422,10 @@ def build_payload() -> Dict[str, Any]:
         metric("Registry diff hold", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD")),
         metric("Registry diff review", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW")),
         metric("Registry diff pass", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "PASS")),
+        metric("Diff cues verify", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "VERIFY")),
+        metric("Diff cues revise", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "REVISE")),
+        metric("Diff cues hold", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "HOLD")),
+        metric("Diff cues discard", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "DISCARD")),
         metric("Verification log rows", len(source_registry_verification_log)),
         metric("Verification input needed", sum(1 for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required")),
         metric("Approval packet rows", len(source_registry_approval_packet)),
@@ -1900,10 +1913,14 @@ def render_source_registry_update_worksheet(rows: Iterable[Dict[str, str]]) -> s
 def render_source_registry_diff_review(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
+        instruction = clean(row.get("verification_log_instruction")) or clean(row.get("recommendation")) or "-"
+        label = clean(row.get("resolution_label"))
+        instruction_text = f"{label}: {instruction}" if label else instruction
         body.append(
             f"""
             <tr>
               <td>{pill(clean(row.get('diff_review_status')) or 'review')}</td>
+              <td>{pill(clean(row.get('resolution_action')) or 'review')}</td>
               <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
               <td>{html.escape(clean(row.get('candidate_domain')) or '-')}</td>
               <td>{html.escape(clean(row.get('flags')) or 'none')}</td>
@@ -1911,11 +1928,11 @@ def render_source_registry_diff_review(rows: Iterable[Dict[str, str]]) -> str:
               <td>{html.escape(clean(row.get('registry_source_id_match')) or 'No')}</td>
               <td>{html.escape(clean(row.get('registry_domain_match')) or 'No')}</td>
               <td>{html.escape(clean(row.get('rollback_status')) or '-')}</td>
-              <td>{html.escape(clean(row.get('recommendation')) or '-')}</td>
+              <td>{html.escape(instruction_text)}</td>
             </tr>
             """
         )
-    return "".join(body) or '<tr><td colspan="9" class="empty">No source registry diff review rows found.</td></tr>'
+    return "".join(body) or '<tr><td colspan="10" class="empty">No source registry diff review rows found.</td></tr>'
 
 
 def render_source_registry_verification_log(rows: Iterable[Dict[str, str]]) -> str:
@@ -1925,9 +1942,11 @@ def render_source_registry_verification_log(rows: Iterable[Dict[str, str]]) -> s
             f"""
             <tr>
               <td>{pill(clean(row.get('verification_log_status')) or 'operator_input_required')}</td>
+              <td>{pill(clean(row.get('diff_resolution_action')) or 'review')}</td>
               <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
               <td>{html.escape(clean(row.get('candidate_url')) or '-')}</td>
               <td>{html.escape(clean(row.get('diff_review_status')) or '-')}</td>
+              <td>{html.escape(clean(row.get('diff_resolution_instruction')) or 'follow diff review cue')}</td>
               <td>{html.escape(clean(row.get('url_checked')) or 'operator fill-in')}</td>
               <td>{html.escape(clean(row.get('freshness_result')) or 'operator fill-in')}</td>
               <td>{html.escape(clean(row.get('duplicate_decision')) or 'operator fill-in')}</td>
@@ -1936,7 +1955,7 @@ def render_source_registry_verification_log(rows: Iterable[Dict[str, str]]) -> s
             </tr>
             """
         )
-    return "".join(body) or '<tr><td colspan="9" class="empty">No source verification log rows found.</td></tr>'
+    return "".join(body) or '<tr><td colspan="11" class="empty">No source verification log rows found.</td></tr>'
 
 
 def render_source_registry_approval_packet(rows: Iterable[Dict[str, str]]) -> str:
@@ -2293,7 +2312,7 @@ def render_html(payload: Dict[str, Any]) -> str:
         <h2>Source registry diff review</h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Status</th><th>Source ID</th><th>Domain</th><th>Flags</th><th>Issues</th><th>ID match</th><th>Domain match</th><th>Rollback</th><th>Recommendation</th></tr></thead>
+            <thead><tr><th>Status</th><th>Cue</th><th>Source ID</th><th>Domain</th><th>Flags</th><th>Issues</th><th>ID match</th><th>Domain match</th><th>Rollback</th><th>Before verification log</th></tr></thead>
             <tbody>{render_source_registry_diff_review(payload['source_registry_diff_review'])}</tbody>
           </table>
         </div>
@@ -2302,7 +2321,7 @@ def render_html(payload: Dict[str, Any]) -> str:
         <h2>Source verification log</h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Status</th><th>Source ID</th><th>URL</th><th>Diff</th><th>URL checked</th><th>Freshness</th><th>Duplicate decision</th><th>Approval outcome</th><th>Registry edit</th></tr></thead>
+            <thead><tr><th>Status</th><th>Cue</th><th>Source ID</th><th>URL</th><th>Diff</th><th>Instruction</th><th>URL checked</th><th>Freshness</th><th>Duplicate decision</th><th>Approval outcome</th><th>Registry edit</th></tr></thead>
             <tbody>{render_source_registry_verification_log(payload['source_registry_verification_log'])}</tbody>
           </table>
         </div>
@@ -2538,12 +2557,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Source registry diff review", ""]
     lines.extend(
-        f"- {clean(item.get('diff_review_status')) or 'review'} | {clean(item.get('source_id'))} | flags: {clean(item.get('flags')) or 'none'} | issues: {clean(item.get('issues')) or 'none'} | registry domain: {clean(item.get('registry_domain_match')) or 'No'} | worksheet domain: {clean(item.get('worksheet_domain_match')) or 'No'} | rollback: {clean(item.get('rollback_status')) or 'missing'} | {clean(item.get('recommendation')) or 'review before edit'}"
+        f"- {clean(item.get('diff_review_status')) or 'review'} | cue: {clean(item.get('resolution_action')) or 'review'} | {clean(item.get('resolution_label')) or 'Review'} | {clean(item.get('source_id'))} | flags: {clean(item.get('flags')) or 'none'} | issues: {clean(item.get('issues')) or 'none'} | registry domain: {clean(item.get('registry_domain_match')) or 'No'} | worksheet domain: {clean(item.get('worksheet_domain_match')) or 'No'} | rollback: {clean(item.get('rollback_status')) or 'missing'} | before log: {clean(item.get('verification_log_instruction')) or clean(item.get('recommendation')) or 'review before edit'}"
         for item in payload["source_registry_diff_review"]
     )
     lines += ["", "## Source verification log", ""]
     lines.extend(
-        f"- {clean(item.get('verification_log_status')) or 'operator_input_required'} | {clean(item.get('source_id'))} | diff: {clean(item.get('diff_review_status')) or 'review'} | url_checked: {clean(item.get('url_checked')) or 'operator fill-in'} | freshness: {clean(item.get('freshness_result')) or 'operator fill-in'} | duplicate: {clean(item.get('duplicate_decision')) or 'operator fill-in'} | outcome: {clean(item.get('approval_outcome')) or 'operator fill-in'} | registry: {clean(item.get('registry_edit_status')) or 'not_edited_by_generator'}"
+        f"- {clean(item.get('verification_log_status')) or 'operator_input_required'} | cue: {clean(item.get('diff_resolution_action')) or 'review'} | {clean(item.get('source_id'))} | diff: {clean(item.get('diff_review_status')) or 'review'} | instruction: {clean(item.get('diff_resolution_instruction')) or 'follow diff review cue'} | url_checked: {clean(item.get('url_checked')) or 'operator fill-in'} | freshness: {clean(item.get('freshness_result')) or 'operator fill-in'} | duplicate: {clean(item.get('duplicate_decision')) or 'operator fill-in'} | outcome: {clean(item.get('approval_outcome')) or 'operator fill-in'} | registry: {clean(item.get('registry_edit_status')) or 'not_edited_by_generator'}"
         for item in payload["source_registry_verification_log"]
     )
     lines += ["", "## Source registry approval packet", ""]

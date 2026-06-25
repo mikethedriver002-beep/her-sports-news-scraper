@@ -228,6 +228,10 @@ SOURCE_REGISTRY_UPDATE_WORKSHEET_FIELDS = [
 
 SOURCE_REGISTRY_DIFF_REVIEW_FIELDS = [
     "diff_review_status",
+    "resolution_action",
+    "resolution_label",
+    "resolution_reason",
+    "verification_log_instruction",
     "issue_count",
     "issues",
     "flags",
@@ -255,6 +259,8 @@ SOURCE_REGISTRY_DIFF_REVIEW_FIELDS = [
 SOURCE_REGISTRY_VERIFICATION_LOG_FIELDS = [
     "verification_log_status",
     "operator_step",
+    "diff_resolution_action",
+    "diff_resolution_instruction",
     "source_id",
     "source_name",
     "candidate_url",
@@ -2292,6 +2298,56 @@ def proposed_source_urls(row: Dict[str, str], proposed: Dict[str, Any]) -> List[
     return sorted(set(urls))
 
 
+def diff_resolution_cue(flags: List[str], issues: List[str], status: str) -> Dict[str, str]:
+    flag_set = set(flags)
+    if flag_set.intersection({"duplicate_source_id", "duplicate_url"}):
+        return {
+            "resolution_action": "DISCARD",
+            "resolution_label": "Discard duplicate",
+            "resolution_reason": "A matching source ID or URL already exists; do not verify this row for a new registry addition.",
+            "verification_log_instruction": "Do not fill approval fields for this row. Mark it duplicate/held in operator notes if you keep a verification-log record.",
+        }
+    if flag_set.intersection(
+        {
+            "invalid_json",
+            "missing_source_id",
+            "enabled_risk",
+            "risky_trust_band",
+            "automation_risk",
+            "publish_risk",
+            "missing_rollback",
+            "missing_diff_note",
+            "auto_edit_risk",
+        }
+    ):
+        return {
+            "resolution_action": "REVISE",
+            "resolution_label": "Revise worksheet",
+            "resolution_reason": "The proposed row has structural or guardrail issues; fix the worksheet/proposed JSON and rerun review before verification.",
+            "verification_log_instruction": "Do not fill approval fields yet. Return to the worksheet, fix the row, rerun review, then verify only after it clears.",
+        }
+    if flag_set.intersection({"duplicate_domain", "worksheet_domain_repeat"}):
+        return {
+            "resolution_action": "HOLD",
+            "resolution_label": "Hold for duplicate review",
+            "resolution_reason": "The domain overlaps the trusted registry or another worksheet row; decide whether it is distinct coverage before verification.",
+            "verification_log_instruction": "Before filling approval fields, compare the existing/domain-matched source and record same_domain_ok, hold, or discard in operator notes.",
+        }
+    if status == "PASS":
+        return {
+            "resolution_action": "VERIFY",
+            "resolution_label": "Verify URL",
+            "resolution_reason": "The row is structurally clean and ready for human URL, freshness, duplicate, and approval evidence.",
+            "verification_log_instruction": "Open the public URL, record url_checked, freshness_result, duplicate_decision, evidence_url, and approval_outcome manually.",
+        }
+    return {
+        "resolution_action": "HOLD",
+        "resolution_label": "Hold for operator review",
+        "resolution_reason": "; ".join(issues) if issues else "Review this row before verification.",
+        "verification_log_instruction": "Do not approve this row until the review cue is resolved by the operator.",
+    }
+
+
 def build_source_registry_diff_review(
     sources: List[Dict[str, Any]],
     worksheet_rows: List[Dict[str, str]],
@@ -2391,10 +2447,15 @@ def build_source_registry_diff_review(
         else:
             status = "PASS"
             recommendation = "Structurally clean for human verification; still do not edit until the operator approves."
+        resolution = diff_resolution_cue(flags, issues, status)
 
         review_rows.append(
             {
                 "diff_review_status": status,
+                "resolution_action": resolution["resolution_action"],
+                "resolution_label": resolution["resolution_label"],
+                "resolution_reason": resolution["resolution_reason"],
+                "verification_log_instruction": resolution["verification_log_instruction"],
                 "issue_count": str(len(issues)),
                 "issues": "; ".join(issues) if issues else "none",
                 "flags": "; ".join(sorted(set(flags))) if flags else "none",
@@ -2434,12 +2495,17 @@ def write_source_registry_diff_review_markdown(path: str | Path, rows: List[Dict
         f"- pass: {sum(1 for row in rows if row['diff_review_status'] == 'PASS')}",
         f"- review: {sum(1 for row in rows if row['diff_review_status'] == 'REVIEW')}",
         f"- hold: {sum(1 for row in rows if row['diff_review_status'] == 'HOLD')}",
+        f"- verify: {sum(1 for row in rows if row.get('resolution_action') == 'VERIFY')}",
+        f"- revise: {sum(1 for row in rows if row.get('resolution_action') == 'REVISE')}",
+        f"- hold before verification: {sum(1 for row in rows if row.get('resolution_action') == 'HOLD')}",
+        f"- discard: {sum(1 for row in rows if row.get('resolution_action') == 'DISCARD')}",
         "",
         "## Guardrails",
         "",
         "- HOLD rows must not be manually added to `config/source_registry.json`.",
         "- REVIEW rows need a human duplicate-domain judgment before any manual edit.",
         "- PASS rows still require manual URL verification and operator approval.",
+        "- Only VERIFY rows should move straight into normal verification-log evidence entry.",
         "- Keep proposed sources disabled/manual-review-only/not publish-ready.",
         "",
         "## Diff Rows",
@@ -2450,8 +2516,10 @@ def write_source_registry_diff_review_markdown(path: str | Path, rows: List[Dict
     else:
         for row in rows:
             lines.append(
-                f"- **{row['diff_review_status']}** | {row['source_id']} | flags: {row['flags']} | "
-                f"issues: {row['issues']} | recommendation: {row['recommendation']}"
+                f"- **{row['diff_review_status']} / {row.get('resolution_action', 'HOLD')}** | "
+                f"{row['source_id']} | flags: {row['flags']} | issues: {row['issues']} | "
+                f"cue: {row.get('resolution_label', 'Review')} | "
+                f"instruction: {row.get('verification_log_instruction', row['recommendation'])}"
             )
     lines += ["", "Use `source_registry_diff_review.csv` for field-level duplicate, trust, and rollback checks.", ""]
     write_text(path, "\n".join(lines), encoding="utf-8")
@@ -2475,6 +2543,8 @@ def build_source_registry_verification_log(
             {
                 "verification_log_status": "operator_review_recorded" if manual_has_outcome else "operator_input_required",
                 "operator_step": "open_url_record_freshness_duplicate_decision_and_approval_outcome",
+                "diff_resolution_action": clean(row.get("resolution_action")),
+                "diff_resolution_instruction": clean(row.get("verification_log_instruction")),
                 "source_id": source_id,
                 "source_name": clean(row.get("source_name")),
                 "candidate_url": clean(row.get("candidate_url")),
@@ -3034,8 +3104,11 @@ def write_trusted_registry_operator_playbook_markdown(
         "### 5. Resolve the diff review",
         "",
         "- Open `source_registry_diff_review.md` and `source_registry_diff_review.csv`.",
-        "- Go only when the row is not `HOLD` and duplicate/domain/trust issues are resolved.",
-        "- Stop before editing the registry if any row is `HOLD`.",
+        "- Follow each row's resolution cue before the verification log: `VERIFY`, `REVISE`, `HOLD`, or `DISCARD`.",
+        "- Go only on `VERIFY` rows after duplicate/domain/trust issues are resolved.",
+        "- Revise worksheet/proposed JSON rows marked `REVISE`, and do not verify them until review is rerun.",
+        "- Hold duplicate-domain rows marked `HOLD` until the operator decides same-domain coverage is valid.",
+        "- Discard true duplicate rows marked `DISCARD`; do not approve them for a new registry addition.",
         f"- Hold rows: {len(diff_hold_rows)}. Review rows: {len(diff_review_only_rows)}.",
         "",
         "### 6. Fill the verification log",
@@ -3139,8 +3212,10 @@ def write_source_registry_verification_log_markdown(path: str | Path, rows: List
         for row in rows:
             lines.append(
                 f"- **{row['verification_log_status']}** | {row['source_id']} | "
-                f"diff: {row['diff_review_status']} | flags: {row['diff_flags']} | "
-                f"record URL/freshness/duplicate/approval outcome in the CSV."
+                f"diff: {row['diff_review_status']} | cue: {row.get('diff_resolution_action', 'review')} | "
+                f"flags: {row['diff_flags']} | "
+                f"instruction: {row.get('diff_resolution_instruction', 'follow diff review cue')} | "
+                f"record URL/freshness/duplicate/approval outcome in the CSV only after the cue is cleared."
             )
     lines += ["", "Use `source_registry_verification_log.csv` as the manual fill-in log.", ""]
     write_text(path, "\n".join(lines), encoding="utf-8")
@@ -3408,6 +3483,10 @@ def main() -> None:
         "registry_diff_review_pass": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "PASS"),
         "registry_diff_review_review": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "REVIEW"),
         "registry_diff_review_hold": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "HOLD"),
+        "registry_diff_resolution_verify": sum(1 for r in registry_diff_review_rows if r.get("resolution_action") == "VERIFY"),
+        "registry_diff_resolution_revise": sum(1 for r in registry_diff_review_rows if r.get("resolution_action") == "REVISE"),
+        "registry_diff_resolution_hold": sum(1 for r in registry_diff_review_rows if r.get("resolution_action") == "HOLD"),
+        "registry_diff_resolution_discard": sum(1 for r in registry_diff_review_rows if r.get("resolution_action") == "DISCARD"),
         "source_verification_log_rows": len(source_verification_log_rows),
         "source_verification_log_input_required": sum(1 for r in source_verification_log_rows if r["verification_log_status"] == "operator_input_required"),
         "source_verification_log_recorded": sum(1 for r in source_verification_log_rows if r["verification_log_status"] == "operator_review_recorded"),
@@ -3503,6 +3582,10 @@ def main() -> None:
         f"- source proposal checklist discard rows: {counts['proposal_promotion_discard']}",
         f"- source registry update worksheet rows: {counts['registry_update_worksheet_rows']}",
         f"- source registry diff review hold rows: {counts['registry_diff_review_hold']}",
+        f"- source registry diff cue verify rows: {counts['registry_diff_resolution_verify']}",
+        f"- source registry diff cue revise rows: {counts['registry_diff_resolution_revise']}",
+        f"- source registry diff cue hold rows: {counts['registry_diff_resolution_hold']}",
+        f"- source registry diff cue discard rows: {counts['registry_diff_resolution_discard']}",
         f"- source verification log rows: {counts['source_verification_log_rows']}",
         f"- source approval packet rows: {counts['registry_approval_packet_rows']}",
         f"- source registry patch preview rows: {counts['registry_patch_preview_rows']}",
