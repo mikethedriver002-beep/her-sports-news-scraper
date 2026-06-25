@@ -661,7 +661,12 @@ def render_slot_summary(asset_slots: List[Dict[str, Any]]) -> Dict[str, str]:
     for slot in logo_slots:
         team = clean(slot.get("team")) or clean(slot.get("slot_id"))
         status = clean(slot.get("status")) or "review"
-        detail_parts.append(f"{team}: {status}")
+        cue = clean(slot.get("logo_approval_cue")) or ("APPROVED LOGO" if status == "approved_logo" else "LOGO REVIEW")
+        accent = clean(slot.get("team_accent_hex"))
+        accent_source = clean(slot.get("team_accent_source"))
+        accent_note = f", accent {accent}" if accent else ""
+        source_note = f" from {accent_source}" if accent_source else ""
+        detail_parts.append(f"{team}: {cue} ({status}{accent_note}{source_note})")
     if review:
         status = "logo_review_required"
         tone = "warn"
