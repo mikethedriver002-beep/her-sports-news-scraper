@@ -79,12 +79,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.7.0-final-score-content-polish"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.8.0-verified-stat-modules"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
     assert manifest["copy_context"] == "4 source(s); publish_grade score 92."
     assert manifest["renderer_mode"] == "template_driven_review_drafts"
+    assert manifest["content_module"]["content_module_mode"] == "game_edge_fallback"
+    assert manifest["content_module"]["content_module_status"] == "fallback_game_edge_no_verified_stat_text"
     assert manifest["selected_template"]["template_id"] == "hsd_game_recap_final_score_a"
     assert manifest["selected_template"]["template_family"] == "game_recap_final_score"
     assert manifest["selected_template"]["reference_pack_id"] == "templates_hsd_20260625"
@@ -188,3 +190,60 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     assert edge["headline"] == "CLEAR EDGE"
     assert "11-point advantage" in edge["body"]
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
+
+
+def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    packet = {
+        "top_performers": "A'ja Wilson (Las Vegas Aces): PTS 16, REB 9, AST 5; Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4"
+    }
+    score = {
+        "winner": "New York Liberty",
+        "loser": "Las Vegas Aces",
+        "winner_score": "87",
+        "loser_score": "76",
+    }
+
+    performers = module.parse_verified_stat_performers(packet)
+    assert len(performers) == 2
+    selected = module.select_verified_stat_module(packet, score)
+    assert selected["status"] == "verified_player_stat_module"
+    assert selected["player_name"] == "Breanna Stewart"
+    assert selected["headline"] == "STEWART: 20 PTS"
+    assert selected["callouts"][:3] == [
+        {"label": "PTS", "value": "20"},
+        {"label": "REB", "value": "6"},
+        {"label": "AST", "value": "4"},
+    ]
+    summary = module.content_module_summary(
+        {
+            **packet,
+            "copy_headline": "New York Liberty beat Las Vegas Aces",
+            "copy_dek": "New York Liberty beat Las Vegas Aces. Verified final: New York Liberty 87, Las Vegas Aces 76.",
+        },
+        {"tone": "result"},
+    )
+    assert summary["content_module_mode"] == "verified_player_stats"
+    assert summary["content_module_player"] == "Breanna Stewart"
+
+
+def test_manual_review_renderer_falls_back_when_stat_text_is_not_parseable() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    selected = module.select_verified_stat_module(
+        {"top_performers": "Top performers pending manual review"},
+        {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "87", "loser_score": "76"},
+    )
+
+    assert selected["status"] == "fallback_game_edge_no_verified_stat_text"

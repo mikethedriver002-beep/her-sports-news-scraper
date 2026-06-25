@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.7.0-final-score-content-polish"
+VERSION = "hsd-manual-review-renderer-v1.8.0-verified-stat-modules"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -704,6 +704,99 @@ def final_score_callouts(packet: Dict[str, Any], score: Dict[str, str]) -> List[
     return callouts[:3]
 
 
+def verified_stat_text(packet: Dict[str, Any]) -> str:
+    return clean(
+        packet.get("top_performers")
+        or packet.get("verified_top_performers")
+        or packet.get("player_stats")
+        or packet.get("box_score_stats")
+        or packet.get("stat_line")
+    )
+
+
+def parse_stat_pairs(value: str) -> List[Dict[str, str]]:
+    stats: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    for part in re.split(r",|\|", clean(value)):
+        token = clean(part)
+        match = re.search(r"\b(PTS|REB|AST|STL|BLK|MIN)\s+(\d+(?:\.\d+)?)\b", token, re.IGNORECASE)
+        if not match:
+            match = re.search(r"\b(\d+(?:\.\d+)?)\s+(PTS|REB|AST|STL|BLK|MIN)\b", token, re.IGNORECASE)
+            if match:
+                label, number = match.group(2).upper(), match.group(1)
+            else:
+                continue
+        else:
+            label, number = match.group(1).upper(), match.group(2)
+        if label not in seen:
+            seen.add(label)
+            stats.append({"label": label, "value": number})
+    return stats
+
+
+def parse_verified_stat_performers(packet: Dict[str, Any]) -> List[Dict[str, Any]]:
+    raw = verified_stat_text(packet)
+    if not raw:
+        return []
+    performers: List[Dict[str, Any]] = []
+    for entry in [clean(item) for item in raw.split(";") if clean(item)]:
+        match = re.match(r"(.+?)(?:\s+\(([^)]+)\))?\s*:\s*(.+)$", entry)
+        if not match:
+            continue
+        name = clean(match.group(1))
+        team = clean(match.group(2))
+        stats = parse_stat_pairs(match.group(3))
+        if name and stats:
+            performers.append({"name": name, "team": team, "stats": stats, "source_text": entry})
+    return performers
+
+
+def stat_number(stats: List[Dict[str, str]], label: str) -> int:
+    for item in stats:
+        if clean(item.get("label")).upper() == label:
+            try:
+                return int(float(clean(item.get("value"))))
+            except Exception:
+                return 0
+    return 0
+
+
+def last_name(name: str) -> str:
+    parts = clean(name).replace(".", "").split()
+    return parts[-1].upper() if parts else ""
+
+
+def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -> Dict[str, Any]:
+    performers = parse_verified_stat_performers(packet)
+    if not performers:
+        return {"status": "fallback_game_edge_no_verified_stat_text"}
+    winner_norm = norm(score.get("winner"))
+    winner_short_norm = norm(short_team(score.get("winner", "")))
+    preferred = [
+        item for item in performers
+        if norm(item.get("team")) and (norm(item.get("team")) in winner_norm or winner_short_norm in norm(item.get("team")))
+    ]
+    pool = preferred or performers
+    selected = sorted(pool, key=lambda item: stat_number(item.get("stats", []), "PTS"), reverse=True)[0]
+    stats = selected.get("stats", [])[:4]
+    player = clean(selected.get("name"))
+    team = clean(selected.get("team"))
+    pts = stat_number(stats, "PTS")
+    headline = f"{last_name(player)}: {pts} PTS" if pts else player.upper()
+    stat_text = ", ".join(f"{item['value']} {item['label']}" for item in stats[:3])
+    team_text = f" ({short_team(team)})" if team else ""
+    return {
+        "status": "verified_player_stat_module",
+        "eyebrow": "PLAYER LEDGER",
+        "headline": headline,
+        "body": f"{player}{team_text}: {stat_text}.",
+        "callouts": stats[:3],
+        "player_name": player,
+        "team": team,
+        "source_text": clean(selected.get("source_text")),
+    }
+
+
 def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     winner = clean(score.get("winner"))
     loser = clean(score.get("loser"))
@@ -1189,10 +1282,20 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", primary_score_size, 88, PALETTE["ink"], max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
     draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", secondary_score_size, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
+    stat_module = select_verified_stat_module(packet, score)
     edge = game_edge_module(score)
-    callouts = final_score_callouts(packet, score)
+    module = stat_module if clean(stat_module.get("status")) == "verified_player_stat_module" else edge
+    callouts = stat_module.get("callouts") if clean(stat_module.get("status")) == "verified_player_stat_module" else final_score_callouts(packet, score)
     key_box = zone_box(template_spec, "key_performer")
-    draw_lower_reference_module(image, key_box, edge["eyebrow"], edge["body"], (247, 203, 84), headline=edge["headline"], callouts=callouts)
+    draw_lower_reference_module(
+        image,
+        key_box,
+        clean(module.get("eyebrow")) or "GAME EDGE",
+        clean(module.get("body")),
+        (247, 203, 84),
+        headline=clean(module.get("headline")),
+        callouts=callouts,
+    )
 
     hook_name = "hook_question" if zone_box(template_spec, "hook_question") != (0, 0, 0, 0) else "hook_takeaway"
     hook_box = zone_box(template_spec, hook_name)
@@ -1284,6 +1387,33 @@ def draw_final_score_template(image: Any, packet: Dict[str, Any], template: Dict
         chip_y = min(y, content_bottom - 74)
         draw_chip(draw, text_left, chip_y, f"SOURCE: {source}".upper(), (232, 239, 249), PALETTE["blue"], 19)
         draw_chip(draw, text_left + 320, chip_y, "REVIEW ONLY", PALETTE["gold"], (19, 31, 49), 19)
+
+
+def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> Dict[str, Any]:
+    score = parse_final_score(packet) if clean(template.get("tone")) == "result" else {}
+    if not score:
+        return {"content_module_mode": "not_final_score", "content_module_status": "not_applicable"}
+    stat_module = select_verified_stat_module(packet, score)
+    if clean(stat_module.get("status")) == "verified_player_stat_module":
+        return {
+            "content_module_mode": "verified_player_stats",
+            "content_module_status": "verified_player_stat_module",
+            "content_module_title": clean(stat_module.get("headline")),
+            "content_module_body": clean(stat_module.get("body")),
+            "content_module_stat_count": str(len(stat_module.get("callouts") or [])),
+            "content_module_player": clean(stat_module.get("player_name")),
+            "content_module_source_text": clean(stat_module.get("source_text")),
+        }
+    edge = game_edge_module(score)
+    return {
+        "content_module_mode": "game_edge_fallback",
+        "content_module_status": clean(stat_module.get("status")) or "fallback_game_edge_no_verified_stat_text",
+        "content_module_title": clean(edge.get("headline")),
+        "content_module_body": clean(edge.get("body")),
+        "content_module_stat_count": "0",
+        "content_module_player": "",
+        "content_module_source_text": "",
+    }
 
 
 def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any]) -> None:
@@ -1382,6 +1512,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         "reference_pack": reference_pack_summary() if clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID else {},
         "format_options": outputs,
         "asset_slots": asset_slots(packet, template),
+        "content_module": content_module_summary(packet, template),
     }
 
 
@@ -1392,6 +1523,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
     reference_pack = render_result.get("reference_pack") if isinstance(render_result.get("reference_pack"), dict) else {}
     formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
     slots = render_result.get("asset_slots") if isinstance(render_result.get("asset_slots"), list) else []
+    content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
     lines = [
         "# HSD Manual Review Renderer",
         "",
@@ -1415,6 +1547,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Template: `{clean(template.get('template_id')) or 'not_selected'}`",
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
+        f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Reason: {reason or 'n/a'}",
         "",
         "## Review Draft Formats",
@@ -1496,6 +1629,7 @@ def main() -> None:
         "reference_pack": render_result.get("reference_pack", {}),
         "format_options": render_result.get("format_options", []),
         "asset_slots": render_result.get("asset_slots", []),
+        "content_module": render_result.get("content_module", {}),
         "guardrails": {
             "manual_only": True,
             "review_only": True,
