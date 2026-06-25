@@ -71,6 +71,9 @@ def seed_manual_visual_qa_decision_files() -> None:
         {
             "status": "draft_preview_created",
             "preview_path": preview.as_posix(),
+            "source_artifact": "news_fact_packets.csv",
+            "source_cue": "source_confidence_ready",
+            "copy_context": "4 source(s); publish_grade.",
             "format_options": [
                 {
                     "format_id": "ig_feed_4x5",
@@ -80,6 +83,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "primary": True,
                     "review_only": True,
                     "publish_ready": False,
+                    "reference_template_id": "hsd_game_recap_final_score_a",
+                    "reference_exact_format_match": True,
+                    "reference_derivation": "exact_imported_reference_spec",
                 },
                 {
                     "format_id": "ig_story_9x16",
@@ -89,6 +95,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "primary": False,
                     "review_only": True,
                     "publish_ready": False,
+                    "reference_template_id": "hsd_game_recap_final_score_c_story",
+                    "reference_exact_format_match": True,
+                    "reference_derivation": "exact_imported_reference_spec",
                 },
                 {
                     "format_id": "square_feed_1x1",
@@ -98,6 +107,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "primary": False,
                     "review_only": True,
                     "publish_ready": False,
+                    "reference_template_id": "hsd_game_recap_final_score_a",
+                    "reference_exact_format_match": False,
+                    "reference_derivation": "square_review_draft_derived_from_imported_4x5_layout",
                 },
             ],
             "asset_slots": [
@@ -110,6 +122,18 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "slot_id": "source_evidence",
                     "status": "manual_review_required",
                     "requirement": "news_fact_packets.csv",
+                },
+                {
+                    "slot_id": "primary_team_logo",
+                    "status": "registry_logo_review_required",
+                    "team": "New York Liberty",
+                    "requirement": "Human review must confirm this logo asset before later production use.",
+                },
+                {
+                    "slot_id": "secondary_team_logo",
+                    "status": "approved_logo",
+                    "team": "Las Vegas Aces",
+                    "requirement": "Approved WNBA logo slot.",
                 },
             ],
             "guardrails": {"manual_only": True, "review_only": True, "auto_publish": False, "approved": False, "paid_apis": False},
@@ -1134,7 +1158,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.45.0-decision-render-gallery"
+    assert payload["version"] == "hsd-operator-command-center-v3.46.0-render-gallery-qa-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1343,7 +1367,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     packet_action = next(action for action in payload["next_actions"] if action["title"] == "Open render prep packet: New York Liberty beat Las Vegas Aces")
     assert packet_action["status"] == "Render packet"
     assert packet_action["artifact"] == "render_prep_packets.md"
-    assert "news_fact_card_review" in packet_action["detail"]
+    assert "hsd_game_recap_final_score_a" in packet_action["detail"]
     handoff_action = next(action for action in payload["next_actions"] if action["title"] == "Open render handoff folder: New York Liberty beat Las Vegas Aces")
     assert handoff_action["status"] == "Render handoff"
     assert handoff_action["artifact"] == "render_handoff_top_packet/README.md"
@@ -1359,11 +1383,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_readiness_queue"][1]["band"] == "hold_for_source_confirmation"
     assert payload["render_readiness_queue"][1]["blockers"] == "source confirmation required"
     assert payload["render_prep_packets"][0]["packet_status"] == "ready_for_manual_render_review"
-    assert payload["render_prep_packets"][0]["template_fit"] == "news_fact_card_review"
-    assert payload["render_prep_packets"][0]["template_shape"] == "IG feed 1080x1350; Threads crop-safe summary"
+    assert payload["render_prep_packets"][0]["template_fit"] == "hsd_game_recap_final_score_review"
+    assert payload["render_prep_packets"][0]["selected_template_id"] == "hsd_game_recap_final_score_a"
+    assert payload["render_prep_packets"][0]["template_family"] == "game_recap_final_score"
+    assert payload["render_prep_packets"][0]["reference_pack_id"] == "templates_hsd_20260625"
+    assert payload["render_prep_packets"][0]["template_shape"] == "IG feed 1080x1350 primary; story 1080x1920 and square review derivatives"
     assert payload["render_prep_packets"][0]["copy_headline"] == "New York Liberty beat Las Vegas Aces"
     assert "Verified final" in payload["render_prep_packets"][0]["copy_dek"]
-    assert payload["render_prep_packets"][0]["asset_requirement"] == "No player asset required; use HSD brand treatment and verified source text only."
+    assert "exact local WNBA team logos" in payload["render_prep_packets"][0]["asset_requirement"]
     assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"
     assert payload["render_prep_packets"][0]["publish_policy"] == "review_only_not_publish_ready"
@@ -1384,6 +1411,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["render_gallery"][1]["shape"] == "1080x1920"
     assert all(item["publish_ready"] == "false" for item in payload["operator_decision_panel"]["render_gallery"])
     assert all(item["auto_publish"] == "false" for item in payload["operator_decision_panel"]["render_gallery"])
+    feed_gallery = payload["operator_decision_panel"]["render_gallery"][0]
+    assert feed_gallery["template_status"] == "exact_reference_match"
+    assert feed_gallery["logo_status"] == "logo_review_required"
+    assert feed_gallery["source_status"] == "source_confidence_ready"
+    assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
+    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "QA"]
+    assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
     assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert any(item["label"] == "Decision inbox" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert payload["operator_decision_panel"]["guardrails"]["auto_approval"] is False
@@ -1561,7 +1595,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Top render handoff" in html
     assert "render_ready_review" in html
     assert "ready_for_manual_render_review" in html
-    assert "news_fact_card_review" in html
+    assert "hsd_game_recap_final_score_review" in html
     assert "human_visual_review_required_before_any_post" in html
     assert "render_handoff_top_packet/README.md" in html
     assert "Top render story draft" in html
@@ -1646,7 +1680,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Top render handoff" in markdown
     assert "render_ready_review" in markdown
     assert "ready_for_manual_render_review" in markdown
-    assert "news_fact_card_review" in markdown
+    assert "hsd_game_recap_final_score_review" in markdown
     assert "render_handoff_top_packet/README.md" in markdown
     assert "hold_for_source_confirmation" in markdown
     assert "manual_review_artifact_ready:news_fact_packets.csv" in markdown
@@ -1669,7 +1703,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
     assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
-    assert "No player asset required" in Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
+    assert "exact local WNBA team logos" in Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
     assert "Open news_fact_packets.csv" in Path("render_handoff_top_packet/source_proof.md").read_text(encoding="utf-8")
     assert "Use this prompt manually only" in Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))

@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.45.0-decision-render-gallery"
+VERSION = "hsd-operator-command-center-v3.46.0-render-gallery-qa-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -36,6 +36,9 @@ RENDER_PREP_FIELDS = [
     "title",
     "recommended_path",
     "template_fit",
+    "selected_template_id",
+    "template_family",
+    "reference_pack_id",
     "template_shape",
     "renderer_family",
     "copy_headline",
@@ -622,6 +625,114 @@ def file_shortcut(label: str, path: str, purpose: str) -> Dict[str, Any]:
     }
 
 
+def render_slot_summary(asset_slots: List[Dict[str, Any]]) -> Dict[str, str]:
+    logo_slots = [
+        slot
+        for slot in asset_slots
+        if isinstance(slot, dict) and "team_logo" in clean(slot.get("slot_id"))
+    ]
+    if not logo_slots:
+        return {
+            "status": "logo_not_required",
+            "summary": "Logos: not required",
+            "detail": "No team logo slots found for this draft.",
+            "tone": "neutral",
+        }
+    approved = [slot for slot in logo_slots if clean(slot.get("status")) == "approved_logo"]
+    review = [slot for slot in logo_slots if clean(slot.get("status")) != "approved_logo"]
+    detail_parts = []
+    for slot in logo_slots:
+        team = clean(slot.get("team")) or clean(slot.get("slot_id"))
+        status = clean(slot.get("status")) or "review"
+        detail_parts.append(f"{team}: {status}")
+    if review:
+        status = "logo_review_required"
+        tone = "warn"
+    else:
+        status = "logos_ready"
+        tone = "good"
+    return {
+        "status": status,
+        "summary": f"Logos: {len(approved)} approved / {len(review)} review",
+        "detail": short("; ".join(detail_parts), 180),
+        "tone": tone,
+    }
+
+
+def source_review_summary(renderer: Dict[str, Any], asset_slots: List[Dict[str, Any]]) -> Dict[str, str]:
+    source_cue = clean(renderer.get("source_cue"))
+    artifact = clean(renderer.get("source_artifact"))
+    detail = clean(renderer.get("copy_context")) or clean(renderer.get("source_detail"))
+    source_slot = next(
+        (
+            slot
+            for slot in asset_slots
+            if isinstance(slot, dict) and clean(slot.get("slot_id")) == "source_evidence"
+        ),
+        {},
+    )
+    if not artifact:
+        artifact = clean(source_slot.get("requirement")) or "source proof required"
+    if source_cue in {"source_confidence_ready", "source_ready", "publish_grade"}:
+        status = "source_confidence_ready"
+        tone = "good"
+        summary = "Source: confidence ready"
+    elif artifact:
+        status = "source_review_required"
+        tone = "warn"
+        summary = "Source: proof review required"
+    else:
+        status = "source_missing"
+        tone = "bad"
+        summary = "Source: missing"
+    return {
+        "status": status,
+        "summary": summary,
+        "detail": short(f"{artifact}. {detail}".strip(), 180),
+        "tone": tone,
+    }
+
+
+def qa_review_summary(qa: Dict[str, Any], draft: Dict[str, str]) -> Dict[str, str]:
+    qa_summary = qa.get("summary", {}) if isinstance(qa.get("summary"), dict) else {}
+    pass_count = clean(qa_summary.get("pass_count")) or "0"
+    check_count = clean(qa_summary.get("check_count")) or "0"
+    hold_count = clean(first_present(draft.get("automated_hold_count"), qa_summary.get("hold_count"), default="0"))
+    status = "qa_passed_manual_review_required" if hold_count in {"", "0"} and check_count != "0" else "qa_hold_or_not_run"
+    tone = "good" if status == "qa_passed_manual_review_required" else "warn"
+    return {
+        "status": status,
+        "summary": f"QA: {pass_count}/{check_count} checks",
+        "detail": f"{hold_count or '0'} automated hold(s); human review still required.",
+        "tone": tone,
+    }
+
+
+def reference_review_summary(option: Dict[str, Any]) -> Dict[str, str]:
+    template = clean(option.get("reference_template_id"))
+    exact = option.get("reference_exact_format_match") is True
+    if template and exact:
+        return {
+            "status": "exact_reference_match",
+            "summary": "Template: exact reference",
+            "detail": template,
+            "tone": "good",
+        }
+    if template:
+        return {
+            "status": "derived_reference_review",
+            "summary": "Template: derived review crop",
+            "detail": clean(option.get("reference_derivation")) or template,
+            "tone": "warn",
+        }
+    return {
+        "status": "reference_not_linked",
+        "summary": "Template: not linked",
+        "detail": "No reference-pack template metadata found.",
+        "tone": "bad",
+    }
+
+
 def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Dict[str, str]) -> List[Dict[str, Any]]:
     format_options = renderer.get("format_options", [])
     if not isinstance(format_options, list):
@@ -661,6 +772,9 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
     asset_slots = renderer.get("asset_slots", [])
     if not isinstance(asset_slots, list):
         asset_slots = []
+    logo_summary = render_slot_summary(asset_slots)
+    source_summary = source_review_summary(renderer, asset_slots)
+    qa_summary_cue = qa_review_summary(qa, draft)
     asset_note = "Review asset checklist before approval."
     if asset_slots:
         slot_summaries = [
@@ -689,6 +803,7 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
             reference_note = f"Reference: {reference_template} ({reference_derivation or 'reference linked'})"
         else:
             reference_note = "Reference: not linked"
+        reference_summary = reference_review_summary(option)
         out.append(
             {
                 "format_id": spec["format_id"],
@@ -708,6 +823,24 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
                 "reference_public_mockup_path": clean(option.get("reference_public_mockup_path")),
                 "reference_layout_path": clean(option.get("reference_layout_path")),
                 "reference_exact_format_match": "true" if option.get("reference_exact_format_match") is True else "false",
+                "logo_status": logo_summary["status"],
+                "logo_summary": logo_summary["summary"],
+                "logo_detail": logo_summary["detail"],
+                "source_status": source_summary["status"],
+                "source_summary": source_summary["summary"],
+                "source_detail": source_summary["detail"],
+                "qa_cue_status": qa_summary_cue["status"],
+                "qa_cue_summary": qa_summary_cue["summary"],
+                "qa_cue_detail": qa_summary_cue["detail"],
+                "template_status": reference_summary["status"],
+                "template_summary": reference_summary["summary"],
+                "template_detail": reference_summary["detail"],
+                "cue_rows": [
+                    {"label": "Template", **reference_summary},
+                    {"label": "Logos", **logo_summary},
+                    {"label": "Source", **source_summary},
+                    {"label": "QA", **qa_summary_cue},
+                ],
                 "approval_scope": "manual_next_step_only_not_publish_ready",
                 "publish_ready": "false",
                 "auto_approval": "false",
@@ -1250,6 +1383,36 @@ def template_fit_for_path(path: str, source: str) -> Dict[str, str]:
     }
 
 
+def looks_like_final_score(enriched: Dict[str, str], row: Dict[str, str]) -> bool:
+    combined = " ".join(
+        clean(value)
+        for value in [
+            row.get("title"),
+            row.get("recommended_path"),
+            row.get("source"),
+            enriched.get("copy_headline"),
+            enriched.get("copy_dek"),
+            enriched.get("copy_context"),
+        ]
+    ).lower()
+    return bool(
+        re.search(r"\b(final|beat|beats|defeat|defeats|top|tops)\b", combined)
+        and re.search(r"\b\d{2,3}\b.*\b\d{2,3}\b", combined)
+    )
+
+
+def final_score_template_fit() -> Dict[str, str]:
+    return {
+        "template_fit": "hsd_game_recap_final_score_review",
+        "selected_template_id": "hsd_game_recap_final_score_a",
+        "template_family": "game_recap_final_score",
+        "reference_pack_id": "templates_hsd_20260625",
+        "template_shape": "IG feed 1080x1350 primary; story 1080x1920 and square review derivatives",
+        "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
+        "renderer_family": "templates_hsd_final_score_manual_review",
+    }
+
+
 def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str, str]:
     title = clean(row.get("title"))
     for candidate in payload.get("content_candidates", []):
@@ -1290,11 +1453,13 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
 
 
 def manual_renderer_steps(packet: Dict[str, str]) -> str:
+    template_label = clean(packet.get("selected_template_id")) or clean(packet.get("template_fit"))
     steps = [
         f"Open {packet.get('source_artifact')} and confirm the source/copy fields match this packet.",
         "Open operator_command_center.html and confirm the candidate is still not held by source, asset, or format blockers.",
-        f"Use template fit {packet.get('template_fit')} at {packet.get('template_shape')}.",
+        f"Use {template_label} at {packet.get('template_shape')}.",
         f"Confirm asset requirement: {packet.get('asset_requirement')}",
+        "Compare the draft against the linked Templates-hsd reference mockup/layout before recording any decision.",
         "Prepare the graphic manually in the renderer or design tool; do not auto-post or auto-publish.",
         "After visual review, record the decision in the normal manual QA or approval artifact before any human posting.",
     ]
@@ -1308,8 +1473,10 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
         blockers = clean(row.get("blockers"))
         if band.startswith("hold_") or blockers not in {"", "none"}:
             continue
-        fit = template_fit_for_path(row.get("recommended_path", ""), row.get("source", ""))
         enriched = enrich_render_row(row, payload)
+        fit = template_fit_for_path(row.get("recommended_path", ""), row.get("source", ""))
+        if looks_like_final_score(enriched, row):
+            fit = final_score_template_fit()
         packet = {
             "packet_id": f"render_prep_{clean(row.get('rank')) or len(packets) + 1}_{packet_slug(row.get('title'))}",
             "packet_status": "ready_for_manual_render_review" if band == "render_ready_review" else "review_before_manual_render",
@@ -1328,6 +1495,9 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "copy_dek": enriched["copy_dek"],
             "copy_context": enriched["copy_context"],
             "source_detail": enriched["source_detail"],
+            "selected_template_id": "",
+            "template_family": "",
+            "reference_pack_id": "",
             **fit,
             "manual_renderer_steps": "",
             "approval_gate": "human_visual_review_required_before_any_post",
@@ -1439,6 +1609,9 @@ def render_handoff_copy_sheet(packet: Dict[str, str]) -> str:
             f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
             f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
             f"- Template fit: `{clean(packet.get('template_fit'))}`",
+            f"- Selected template: `{clean(packet.get('selected_template_id')) or 'operator_review'}`",
+            f"- Template family: `{clean(packet.get('template_family')) or 'manual_review'}`",
+            f"- Reference pack: `{clean(packet.get('reference_pack_id')) or 'none'}`",
             f"- Template shape: `{clean(packet.get('template_shape'))}`",
             f"- Approval gate: `{clean(packet.get('approval_gate'))}`",
             "",
@@ -1509,6 +1682,9 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         "## Format",
         "",
         f"- Template fit: {clean(packet.get('template_fit'))}",
+        f"- Selected template: {clean(packet.get('selected_template_id')) or 'operator_review'}",
+        f"- Template family: {clean(packet.get('template_family')) or 'manual_review'}",
+        f"- Reference pack: {clean(packet.get('reference_pack_id')) or 'none'}",
         f"- Shape: {clean(packet.get('template_shape'))}",
         f"- Renderer family: {clean(packet.get('renderer_family'))}",
         "",
@@ -1568,11 +1744,14 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "dek": packet.get("copy_dek"),
                     "context": packet.get("copy_context"),
                     "template_fit": packet.get("template_fit"),
+                    "selected_template_id": packet.get("selected_template_id"),
+                    "template_family": packet.get("template_family"),
+                    "reference_pack_id": packet.get("reference_pack_id"),
                     "template_shape": packet.get("template_shape"),
                     "approval_gate": packet.get("approval_gate"),
                 }
             ],
-            ["packet_id", "headline", "dek", "context", "template_fit", "template_shape", "approval_gate"],
+            ["packet_id", "headline", "dek", "context", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
         )
         write_text(OUT_RENDER_HANDOFF_ASSETS, render_handoff_asset_checklist(packet))
         write_csv(
@@ -1774,7 +1953,7 @@ def build_next_actions(
             f"Open render prep packet: {packet['title']}",
             (
                 f"{packet.get('packet_status')} at score {packet.get('render_readiness_score')}/100. "
-                f"Template: {packet.get('template_fit')} / {packet.get('template_shape')}. "
+                f"Template: {packet.get('selected_template_id') or packet.get('template_fit')} / {packet.get('template_shape')}. "
                 "Use the packet steps for manual render prep only; publishing remains off."
             ),
             "render_prep_packets.md",
@@ -2884,13 +3063,22 @@ def render_render_readiness(rows: Iterable[Dict[str, str]]) -> str:
 def render_render_prep_packets(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
+        selected_template = clean(row.get("selected_template_id")) or clean(row.get("template_fit")) or "operator_review"
+        template_meta = " / ".join(
+            part
+            for part in [
+                f"fit: {clean(row.get('template_fit'))}" if clean(row.get("template_fit")) else "",
+                f"pack: {clean(row.get('reference_pack_id'))}" if clean(row.get("reference_pack_id")) else "",
+            ]
+            if part
+        )
         body.append(
             f"""
             <tr>
               <td>{pill(row.get('packet_status') or 'review')}</td>
               <td>{html.escape(clean(row.get('render_readiness_score')) or '0')}</td>
               <td>{html.escape(clean(row.get('title')))}</td>
-              <td>{html.escape(clean(row.get('template_fit')))}</td>
+              <td><strong>{html.escape(selected_template)}</strong>{f'<small class="cell-detail">{html.escape(template_meta)}</small>' if template_meta else ''}</td>
               <td>{html.escape(clean(row.get('template_shape')))}</td>
               <td>{html.escape(clean(row.get('copy_headline')))}</td>
               <td>{html.escape(clean(row.get('asset_requirement')))}</td>
@@ -3459,6 +3647,20 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for row in rows:
         exists = bool(row.get("exists"))
+        cue_rows = row.get("cue_rows") if isinstance(row.get("cue_rows"), list) else []
+        cue_html = []
+        for cue in cue_rows:
+            if not isinstance(cue, dict):
+                continue
+            cue_html.append(
+                f"""
+                <div class="render-cue render-cue-{html.escape(clean(cue.get('tone')) or 'neutral')}">
+                  <span>{html.escape(clean(cue.get('label')))}</span>
+                  <strong>{html.escape(clean(cue.get('summary')))}</strong>
+                  <p>{html.escape(short(clean(cue.get('detail')), 110))}</p>
+                </div>
+                """
+            )
         preview = (
             f'<a href="{html.escape(clean(row.get("href")))}"><img src="{html.escape(clean(row.get("href")))}" alt="{html.escape(clean(row.get("label")))} render draft"></a>'
             if exists
@@ -3486,6 +3688,7 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
                 {pill('reference exact: ' + (clean(row.get('reference_exact_format_match')) or 'false'))}
                 {pill('publish ready: false')}
               </div>
+              <div class="render-cue-grid">{''.join(cue_html)}</div>
               <p class="render-gallery-note">{html.escape(clean(row.get('reference_note')))}</p>
               <p class="render-gallery-note">{html.escape(clean(row.get('qa_summary')))}. {html.escape(short(clean(row.get('asset_note')), 150))}</p>
               <code>{html.escape(clean(row.get('path')))}</code>
@@ -3729,6 +3932,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     .tool-link {{ display:inline-block; border:1px solid #c8cbd4; border-radius:6px; padding:7px 10px; color:#171719; text-decoration:none; font-weight:800; background:#fff; }}
     .tool-link:hover {{ border-color:#171719; }}
     .muted,.empty {{ color:var(--muted); }}
+    .cell-detail {{ color:var(--muted); display:block; font-size:11px; font-weight:700; line-height:1.25; margin-top:3px; }}
     .two-col {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
     .artifact-toolbar {{ display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }}
     .artifact-toolbar input {{ min-width:280px; flex:1; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; }}
@@ -3762,6 +3966,15 @@ def render_html(payload: Dict[str, Any]) -> str:
     .render-gallery-meta strong {{ display:block; font-size:14px; }}
     .render-gallery-meta p,.render-gallery-note {{ color:#5e616a; font-size:12px; margin-top:3px; }}
     .render-gallery-facts {{ display:flex; gap:6px; flex-wrap:wrap; }}
+    .render-cue-grid {{ display:grid; gap:6px; grid-template-columns:1fr; }}
+    .render-cue {{ border:1px solid var(--line); border-left-width:4px; border-radius:7px; padding:7px 8px; background:#fff; min-width:0; }}
+    .render-cue span {{ color:#5e616a; display:block; font-size:10px; font-weight:900; text-transform:uppercase; }}
+    .render-cue strong {{ color:#151922; display:block; font-size:12px; line-height:1.2; margin-top:2px; }}
+    .render-cue p {{ color:#5e616a; font-size:11px; line-height:1.25; margin-top:3px; }}
+    .render-cue-good {{ border-left-color:#16a34a; background:#f4fbf7; }}
+    .render-cue-warn {{ border-left-color:#d39c08; background:#fff9df; }}
+    .render-cue-bad {{ border-left-color:#c02637; background:#fff1f2; }}
+    .render-cue-neutral {{ border-left-color:#6b7280; background:#f7f8fb; }}
     .render-gallery-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
     .decision-warning-list {{ margin:0; padding:0; display:grid; gap:6px; list-style:none; }}
     .decision-warning-list li {{ border:1px solid #ecd58a; background:#fff7d7; border-radius:6px; padding:8px 10px; color:#5d4800; font-weight:700; }}
@@ -4287,7 +4500,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Render prep packets", ""]
     lines.extend(
-        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
+        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
     decision_panel = payload["operator_decision_panel"]
@@ -4479,6 +4692,9 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
             f"- Source artifact: `{clean(packet.get('source_artifact'))}`",
             f"- Template fit: `{clean(packet.get('template_fit'))}`",
+            f"- Selected template: `{clean(packet.get('selected_template_id')) or 'operator_review'}`",
+            f"- Template family: `{clean(packet.get('template_family')) or 'manual_review'}`",
+            f"- Reference pack: `{clean(packet.get('reference_pack_id')) or 'none'}`",
             f"- Template shape: `{clean(packet.get('template_shape'))}`",
             f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",

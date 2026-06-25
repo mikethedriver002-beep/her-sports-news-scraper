@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import csv
+import random
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
@@ -21,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.3.0-template-reference-pack-drafts"
+VERSION = "hsd-manual-review-renderer-v1.4.1-hsd-final-score-readable-polish"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -220,6 +221,20 @@ def resample_filter() -> Any:
 def text_size(draw: Any, text: str, fnt: Any) -> tuple[int, int]:
     bbox = draw.textbbox((0, 0), clean(text), font=fnt)
     return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+
+def texture_patch(base: tuple[int, int, int], size: tuple[int, int], seed: int) -> Any:
+    width, height = max(1, size[0]), max(1, size[1])
+    randomizer = random.Random(seed)
+    small = Image.new("RGB", (max(8, width // 7), max(8, height // 7)))
+    pixels = []
+    for _ in range(small.width * small.height):
+        delta = randomizer.randint(-24, 24)
+        pixels.append(tuple(max(0, min(255, channel + delta)) for channel in base))
+    patch = small.resize((width, height), resample_filter())
+    if ImageFilter is not None:
+        patch = patch.filter(ImageFilter.GaussianBlur(0.35))
+    return patch.convert("RGBA")
 
 
 def draw_right_text(draw: Any, right: int, y: int, text: str, fnt: Any, fill: tuple[int, int, int]) -> None:
@@ -495,6 +510,18 @@ def draw_reference_text(
             draw.text((x_cursor, y_cursor), line, font=chosen, fill=fill, stroke_width=stroke, stroke_fill=stroke_fill)
         else:
             draw.text((x_cursor + 2, y_cursor + 3), line, font=chosen, fill=(0, 0, 0))
+        if role in {"display", "score", "context"} and Image is not None:
+            mask = Image.new("L", image.size, 0)
+            mask_draw = ImageDraw.Draw(mask)
+            mask_draw.text((x_cursor, y_cursor), line, font=chosen, fill=255)
+            patch = texture_patch(fill, image.size, sum(ord(character) for character in f"{line}:{role}:{getattr(chosen, 'size', min_size)}"))
+            image.alpha_composite(Image.composite(patch, Image.new("RGBA", image.size, (0, 0, 0, 0)), mask))
+            draw = ImageDraw.Draw(image)
+            if stroke:
+                draw.text((x_cursor, y_cursor), line, font=chosen, fill=fill, stroke_width=stroke, stroke_fill=stroke_fill)
+            else:
+                draw.text((x_cursor, y_cursor), line, font=chosen, fill=fill)
+        elif not stroke:
             draw.text((x_cursor, y_cursor), line, font=chosen, fill=fill)
         y_cursor += line_height
     return overflow
@@ -519,9 +546,19 @@ def draw_reference_background(image: Any, tone: str = "final") -> None:
         draw.line((x, height + 80, x + int(height * 0.72), -60), fill=(222, 161, 38, 120), width=3)
     for x in range(-height, width + height, 340):
         draw.line((x, height + 160, x + int(height * 0.58), -30), fill=(37, 99, 163, 90), width=2)
+    for y in [int(height * 0.14), int(height * 0.74), int(height * 0.88)]:
+        draw.line((30, y, width - 30, y), fill=(222, 161, 38, 105), width=2)
+    randomizer = random.Random(width * 17 + height * 31)
+    for _ in range(420 if height > 1500 else 290):
+        x = randomizer.randrange(0, width)
+        y = randomizer.randrange(0, height)
+        alpha = randomizer.randrange(18, 76)
+        color = (245, 204, 88, alpha) if randomizer.random() < 0.38 else (245, 245, 245, alpha)
+        draw.rectangle((x, y, x + randomizer.randrange(1, 3), y + randomizer.randrange(1, 3)), fill=color)
     for cx, cy, rx, ry, alpha in [
         (int(width * 0.20), int(height * 0.16), int(width * 0.55), int(height * 0.25), 38),
         (int(width * 0.90), int(height * 0.72), int(width * 0.46), int(height * 0.24), 26),
+        (int(width * 0.72), int(height * 0.08), int(width * 0.24), int(height * 0.10), 34),
     ]:
         layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
         layer_draw = ImageDraw.Draw(layer, "RGBA")
@@ -534,13 +571,25 @@ def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
     badge = template_spec.get("badge") if isinstance(template_spec.get("badge"), dict) else {}
     x = int(badge.get("x", 48))
     y = int(badge.get("y", 42))
-    w = int(badge.get("w", 80))
-    h = int(badge.get("h", 80))
+    spec_w = int(badge.get("w", 80))
+    spec_h = int(badge.get("h", 80))
+    canvas_w, canvas_h = image.size
+    target = max(spec_w, min(124, int(min(canvas_w, canvas_h) * 0.115)))
+    w = h = target
     badge_path = REFERENCE_BRAND_ROOT / clean(badge.get("asset") or "official_hsd_badge_reference.png")
     if badge_path.exists():
         try:
             logo = Image.open(badge_path).convert("RGBA")
+            bbox = logo.getbbox()
+            if bbox:
+                logo = logo.crop(bbox)
             logo.thumbnail((w, h), resample_filter())
+            shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            shadow_draw = ImageDraw.Draw(shadow, "RGBA")
+            shadow_draw.rounded_rectangle((x + 4, y + 6, x + w + 4, y + h + 6), radius=10, fill=(0, 0, 0, 80))
+            if ImageFilter is not None:
+                shadow = shadow.filter(ImageFilter.GaussianBlur(3))
+            image.alpha_composite(shadow)
             image.alpha_composite(logo, (x + (w - logo.width) // 2, y + (h - logo.height) // 2))
             return badge_path.relative_to(PROJECT_ROOT).as_posix()
         except Exception:
@@ -610,6 +659,46 @@ def short_team(team: str) -> str:
         if text.startswith(prefix) and len(text) > len(prefix) + 3:
             return text[len(prefix):]
     return text
+
+
+def score_margin(score: Dict[str, str]) -> int | None:
+    try:
+        return max(0, int(score.get("winner_score", "0")) - int(score.get("loser_score", "0")))
+    except Exception:
+        return None
+
+
+def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
+    winner = clean(score.get("winner"))
+    loser = clean(score.get("loser"))
+    margin = score_margin(score)
+    if margin is None:
+        return {
+            "eyebrow": "GAME EDGE",
+            "headline": "FINAL RESULT",
+            "body": f"{winner} finished ahead of {loser}.",
+        }
+    if margin <= 4:
+        headline = f"{short_team(winner)} SURVIVES"
+        body = f"{winner} closed out a one-possession final over {loser}."
+    elif margin <= 11:
+        headline = f"{short_team(winner)} SEPARATES"
+        body = f"{winner} created enough late cushion to hold off {loser}."
+    else:
+        headline = f"{short_team(winner)} CONTROLS IT"
+        body = f"{winner} owned the scoreboard by {margin} and kept {loser} chasing."
+    return {"eyebrow": "GAME EDGE", "headline": headline, "body": body}
+
+
+def review_prompt(score: Dict[str, str]) -> str:
+    winner = short_team(clean(score.get("winner")))
+    loser = short_team(clean(score.get("loser")))
+    margin = score_margin(score)
+    if margin is not None and margin <= 4:
+        return f"WHAT DECIDED {winner}'S CLOSE?"
+    if margin is not None and margin >= 12:
+        return f"WHERE DID {winner} TAKE CONTROL?"
+    return f"WHAT SWUNG {winner} VS {loser}?"
 
 
 def logo_candidates(team_id: str, row: Dict[str, str]) -> List[Path]:
@@ -876,17 +965,29 @@ def draw_context_divider(image: Any, box: Tuple[int, int, int, int], text: str) 
     draw_reference_text(image, (x, y, w, h - 12), "REVIEW DRAFT", "context", 24, 14, (241, 238, 229), max_lines=1, align="right")
 
 
-def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int]) -> None:
+def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "") -> None:
     x, y, w, h = box
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 218), radius=14, width=2)
     draw_reference_text(image, (x + 24, y + 12, w - 48, min(34, h - 16)), eyebrow, "context", 24, 14, accent, max_lines=1)
     body_top = y + 48 if h >= 92 else y + 34
+    if headline:
+        draw_reference_text(
+            image,
+            (x + 24, body_top, w - 48, min(44, h - 46)),
+            headline,
+            "display",
+            38 if h >= 110 else 28,
+            16,
+            PALETTE["ink"],
+            max_lines=1,
+        )
+        body_top += 48 if h >= 110 else 34
     draw_reference_text(
         image,
         (x + 24, body_top, w - 48, max(28, y + h - body_top - 14)),
         body,
         "body",
-        31 if h >= 100 else 22,
+        27 if h >= 100 else 20,
         14,
         PALETTE["ink"],
         max_lines=2,
@@ -920,15 +1021,20 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", 176 if height <= 1350 else 188, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
     context = clean(packet.get("copy_context")) or clean(packet.get("source_detail")) or "Free-source evidence ready for human review."
+    edge = game_edge_module(score)
     key_box = zone_box(template_spec, "key_performer")
-    draw_lower_reference_module(image, key_box, "SOURCE CONFIDENCE", context, (247, 203, 84))
+    draw_lower_reference_module(image, key_box, edge["eyebrow"], edge["body"], (247, 203, 84), headline=edge["headline"])
 
     hook_name = "hook_question" if zone_box(template_spec, "hook_question") != (0, 0, 0, 0) else "hook_takeaway"
     hook_box = zone_box(template_spec, hook_name)
     dek = clean(packet.get("copy_dek"))
     if not dek:
         dek = f"Verified final: {score['winner']} {score['winner_score']}, {score['loser']} {score['loser_score']}."
-    draw_lower_reference_module(image, hook_box, "MANUAL CAPTION ANGLE", dek, (37, 99, 163))
+    prompt = review_prompt(score)
+    prompt_body = dek
+    if hook_name == "hook_question":
+        prompt_body = "Tell us what you saw after reviewing the final."
+    draw_lower_reference_module(image, hook_box, "YOUR TAKE", prompt_body, (37, 99, 163), headline=prompt)
 
     draw_reference_guardrail(image)
 
@@ -1204,6 +1310,10 @@ def main() -> None:
         "preview_path": preview,
         "packet_id": clean(packet.get("packet_id")),
         "title": clean(packet.get("title")),
+        "source_artifact": clean(packet.get("source_artifact")),
+        "source_cue": clean(packet.get("source_cue")),
+        "source_detail": clean(packet.get("source_detail")),
+        "copy_context": clean(packet.get("copy_context")),
         "renderer_mode": "template_driven_review_drafts",
         "selected_template": render_result.get("template", {}),
         "reference_pack": render_result.get("reference_pack", {}),
