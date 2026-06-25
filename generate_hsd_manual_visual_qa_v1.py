@@ -134,6 +134,118 @@ def guardrail_checks(renderer_manifest: Dict[str, Any], handoff_manifest: Dict[s
     }
 
 
+def manifest_path_exists(raw_path: Any) -> bool:
+    text = clean(raw_path)
+    if not text:
+        return False
+    path = Path(text)
+    if path.is_absolute():
+        return path.exists()
+    return first_existing(text) is not None
+
+
+def add_renderer_metadata_checks(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any]) -> None:
+    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
+    reference_pack = renderer_manifest.get("reference_pack") if isinstance(renderer_manifest.get("reference_pack"), dict) else {}
+    format_options = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
+    asset_slots = renderer_manifest.get("asset_slots") if isinstance(renderer_manifest.get("asset_slots"), list) else []
+    if not selected_template and not format_options and not asset_slots:
+        add_check(
+            checks,
+            "renderer_metadata_available",
+            "Renderer metadata available",
+            True,
+            "No template/format/asset metadata found; older or minimal review preview, so human review remains required.",
+            result="pass_human_review_required",
+        )
+        return
+    template_id = clean(selected_template.get("template_id"))
+    family = clean(selected_template.get("template_family"))
+    pack_id = clean(reference_pack.get("pack_id"))
+    add_check(
+        checks,
+        "template_reference_metadata",
+        "Template reference metadata",
+        True,
+        f"template={template_id or 'missing'}; family={family or 'missing'}; reference_pack={pack_id or 'missing'}.",
+        result="pass_human_review_required",
+    )
+
+    if format_options:
+        required_formats = {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
+        found_formats = {clean(row.get("format_id")) for row in format_options if isinstance(row, dict)}
+        missing_formats = sorted(required_formats - found_formats)
+        add_check(
+            checks,
+            "social_format_drafts_present",
+            "Review draft social formats",
+            not missing_formats,
+            f"formats={','.join(sorted(found_formats)) or 'none'}; missing={','.join(missing_formats) or 'none'}.",
+        )
+    for row in format_options:
+        if not isinstance(row, dict):
+            continue
+        format_id = clean(row.get("format_id")) or "unknown_format"
+        render_exists = manifest_path_exists(row.get("path"))
+        reference_ok = all(
+            row.get(key) is True
+            for key in [
+                "reference_spec_path_exists",
+                "reference_public_mockup_path_exists",
+                "reference_layout_path_exists",
+            ]
+        )
+        exact = row.get("reference_exact_format_match") is True
+        result = "pass" if render_exists and reference_ok else "hold"
+        if render_exists and reference_ok and not exact:
+            result = "pass_human_review_required"
+        add_check(
+            checks,
+            f"format_reference_{format_id}",
+            f"{format_id} render/reference link",
+            render_exists and reference_ok,
+            (
+                f"render_exists={render_exists}; reference_files={reference_ok}; "
+                f"exact_reference_match={exact}; derivation={clean(row.get('reference_derivation')) or 'none'}."
+            ),
+            result=result,
+        )
+
+    logo_slots = [
+        slot for slot in asset_slots
+        if isinstance(slot, dict) and "team_logo" in clean(slot.get("slot_id"))
+    ]
+    missing = [slot for slot in logo_slots if "missing" in clean(slot.get("status")) or not clean(slot.get("asset_path"))]
+    review = [slot for slot in logo_slots if clean(slot.get("status")) != "approved_logo"]
+    detail = "; ".join(
+        f"{clean(slot.get('team')) or clean(slot.get('slot_id'))}: {clean(slot.get('status')) or 'review'}"
+        for slot in logo_slots
+    )
+    add_check(
+        checks,
+        "team_logo_review_status",
+        "Team logo registry status",
+        not missing,
+        detail or "No team logo slots found.",
+        result="pass_human_review_required" if review and not missing else ("pass" if logo_slots else "pass_human_review_required"),
+    )
+
+    final_score_template = family == "game_recap_final_score" or "final_score" in template_id
+    add_check(
+        checks,
+        "final_score_content_module_review",
+        "Final-score content module cue",
+        True,
+        (
+            "Final-score draft should use GAME EDGE, verified player-stat module, or matchup-specific YOUR TAKE copy; "
+            "hold by eye if it falls back to internal source-confidence language."
+            if final_score_template
+            else "Non-final-score template; human copy review still required."
+        ),
+        result="pass_human_review_required",
+    )
+
+
 def checklist_rows(checks: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for check in checks:
@@ -272,6 +384,7 @@ def main() -> None:
         )
 
     guardrails = guardrail_checks(renderer_manifest, handoff_manifest)
+    add_renderer_metadata_checks(checks, renderer_manifest)
     add_check(
         checks,
         "approval_guardrails",

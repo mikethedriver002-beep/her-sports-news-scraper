@@ -79,8 +79,11 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.3.0-template-reference-pack-drafts"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.4.1-hsd-final-score-readable-polish"
     assert manifest["title"] == "Test Liberty result"
+    assert manifest["source_artifact"] == "news_fact_packets.csv"
+    assert manifest["source_cue"] == "source_confidence_ready"
+    assert manifest["copy_context"] == "4 source(s); publish_grade score 92."
     assert manifest["renderer_mode"] == "template_driven_review_drafts"
     assert manifest["selected_template"]["template_id"] == "hsd_game_recap_final_score_a"
     assert manifest["selected_template"]["template_family"] == "game_recap_final_score"
@@ -115,6 +118,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     image = Image.open(preview)
     assert image.size == (1080, 1350)
+    title_crop = image.convert("L").crop((40, 150, 1040, 280))
+    title_histogram = title_crop.histogram()
+    bright_title_ratio = sum(title_histogram[200:]) / sum(title_histogram)
+    assert bright_title_ratio > 0.03
     story = Image.open(review_drafts / "draft_preview_story.png")
     square = Image.open(review_drafts / "draft_preview_square.png")
     assert story.size == (1080, 1920)
