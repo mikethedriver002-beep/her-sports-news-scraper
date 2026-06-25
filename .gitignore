@@ -58,6 +58,8 @@ Thumbs.db
 /source_coverage_map.csv
 /source_registry_intake_template.*
 /source_registry_proposal_review.*
+/source_registry_proposal_draft.*
+/source_proposal_pack_readiness.*
 /source_proposal_packs.*
 /pwhl_source_proposal_pack.*
 /*_source_proposal_pack.*

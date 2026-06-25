@@ -191,6 +191,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_intake_template.md").exists()
     assert (run_dir / "source_registry_proposal_review.csv").exists()
     assert (run_dir / "source_registry_proposal_review.md").exists()
+    assert (run_dir / "source_registry_proposal_draft.csv").exists()
+    assert (run_dir / "source_registry_proposal_draft.md").exists()
     assert (run_dir / "source_proposal_pack_readiness.csv").exists()
     assert (run_dir / "source_proposal_pack_readiness.md").exists()
     assert (run_dir / "source_proposal_packs.csv").exists()
@@ -219,6 +221,9 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["proposal_pack_ready"] == 4
     assert manifest["counts"]["proposal_pack_duplicate_review"] == 0
     assert manifest["counts"]["proposal_pack_freshness_check"] == 0
+    assert manifest["counts"]["proposal_draft_rows"] == 20
+    assert manifest["counts"]["proposal_draft_ready_to_copy"] == 20
+    assert manifest["counts"]["proposal_draft_blocked"] == 0
     assert manifest["counts"]["proposal_pack_leagues"] == 4
     assert manifest["counts"]["proposal_pack_rows"] == 57
     assert manifest["counts"]["proposal_pack_official"] == 39
@@ -251,6 +256,18 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     proposal_md = (run_dir / "source_registry_proposal_review.md").read_text(encoding="utf-8")
     assert "paid/API sources" in proposal_md
     assert "No rows are imported automatically" in proposal_md
+    proposal_draft = read_csv(run_dir / "source_registry_proposal_draft.csv")
+    assert len(proposal_draft) == 20
+    assert proposal_draft[0]["draft_selection_status"] == "ready_to_copy_after_freshness_check"
+    assert proposal_draft[0]["draft_action"] == "manual_copy_to_inbox_after_freshness_check"
+    assert proposal_draft[0]["proposed_enabled"] == "No"
+    assert proposal_draft[0]["registry_action"] == "proposal_only_do_not_import"
+    assert "Open this public page manually" in proposal_draft[0]["freshness_warning"]
+    assert "No duplicate candidates detected" in proposal_draft[0]["duplicate_warning"]
+    assert all(row["operator_verification_status"] == "unverified" for row in proposal_draft)
+    proposal_draft_md = (run_dir / "source_registry_proposal_draft.md").read_text(encoding="utf-8")
+    assert "Source Registry Proposal Draft" in proposal_draft_md
+    assert "not the live proposal inbox" in proposal_draft_md
     pack_readiness = read_csv(run_dir / "source_proposal_pack_readiness.csv")
     assert len(pack_readiness) == 4
     readiness_by_key = {row["pack_key"]: row for row in pack_readiness}
@@ -318,6 +335,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["lpga_source_proposal_pack"][0]["candidate_source_id"] == "lpga_official_home_review"
     assert manifest["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_home"
     assert manifest["source_proposal_packs"][0]["candidate_source_id"] == "wnba_official_home_review"
+    assert manifest["source_registry_proposal_draft"][0]["candidate_source_id"] == "wnba_official_home_review"
+    assert manifest["source_registry_proposal_draft"][0]["draft_action"] == "manual_copy_to_inbox_after_freshness_check"
     assert manifest["source_proposal_pack_readiness"][0]["pack_key"] == "wnba"
     assert manifest["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert [row["pack_key"] for row in manifest["source_proposal_pack_index"]] == ["wnba", "nwsl", "lpga", "pwhl"]
@@ -340,6 +359,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "## Manual source intake template" in report
     assert "## Manual source proposal review" in report
     assert "## Guided source proposal packs" in report
+    assert "source_registry_proposal_draft.csv" in report
     assert "source_proposal_pack_readiness.csv" in report
     assert "PWHL" in report
 
@@ -372,6 +392,8 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_intake_template.md").exists()
     assert (work_dir / "source_registry_proposal_review.csv").exists()
     assert (work_dir / "source_registry_proposal_review.md").exists()
+    assert (work_dir / "source_registry_proposal_draft.csv").exists()
+    assert (work_dir / "source_registry_proposal_draft.md").exists()
     assert (work_dir / "source_proposal_pack_readiness.csv").exists()
     assert (work_dir / "source_proposal_pack_readiness.md").exists()
     assert (work_dir / "source_proposal_packs.csv").exists()
