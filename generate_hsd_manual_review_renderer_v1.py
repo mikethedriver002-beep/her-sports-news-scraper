@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.12.0-editorial-microcopy"
+VERSION = "hsd-manual-review-renderer-v1.13.0-adaptive-final-score-modules"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -771,6 +771,44 @@ def score_total(score: Dict[str, str]) -> int | None:
         return None
 
 
+def game_shape(score: Dict[str, str]) -> Dict[str, str]:
+    margin = score_margin(score)
+    if margin is None:
+        return {
+            "game_shape": "final_result",
+            "game_shape_label": "FINAL RESULT",
+            "angle_label": "SCOREBOARD FINAL",
+            "prompt": "WHAT STOOD OUT FROM THE FINAL?",
+        }
+    if margin <= 3:
+        return {
+            "game_shape": "close_finish",
+            "game_shape_label": "CLOSE FINISH",
+            "angle_label": f"{short_team(score.get('winner'))} CLOSE FINISH",
+            "prompt": "WHO MADE THE DIFFERENCE LATE?",
+        }
+    if margin <= 7:
+        return {
+            "game_shape": "late_separation",
+            "game_shape_label": "LATE SEPARATION",
+            "angle_label": f"{short_team(score.get('winner'))} +{margin} FINAL",
+            "prompt": "WHERE DID THE GAME TURN?",
+        }
+    if margin <= 14:
+        return {
+            "game_shape": "clear_separation",
+            "game_shape_label": "CLEAR SEPARATION",
+            "angle_label": f"{short_team(score.get('winner'))} +{margin} FINAL",
+            "prompt": f"WHAT FUELED {short_team(score.get('winner'))}'S SEPARATION?",
+        }
+    return {
+        "game_shape": "statement_margin",
+        "game_shape_label": "STATEMENT MARGIN",
+        "angle_label": f"{short_team(score.get('winner'))} +{margin} FINAL",
+        "prompt": f"HOW DID {short_team(score.get('winner'))} BUILD THE GAP?",
+    }
+
+
 def source_count(packet: Dict[str, Any]) -> str:
     text = " ".join(clean(packet.get(key)) for key in ["copy_context", "source_detail", "source_cue"])
     match = re.search(r"\b(\d+)\s+source", text, re.IGNORECASE)
@@ -857,6 +895,18 @@ def stat_number(stats: List[Dict[str, str]], label: str) -> int:
     return 0
 
 
+def stat_module_strength(stats: List[Dict[str, str]]) -> str:
+    pts = stat_number(stats, "PTS")
+    reb = stat_number(stats, "REB")
+    ast = stat_number(stats, "AST")
+    stocks = stat_number(stats, "STL") + stat_number(stats, "BLK")
+    if pts >= 15 or reb >= 8 or ast >= 7 or stocks >= 4:
+        return "lead_ledger"
+    if pts >= 10 or reb >= 6 or ast >= 5 or stocks >= 3:
+        return "supporting_stat"
+    return "low_stat_context"
+
+
 def last_name(name: str) -> str:
     parts = clean(name).replace(".", "").split()
     return parts[-1].upper() if parts else ""
@@ -875,6 +925,7 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
     pool = preferred or performers
     selected = sorted(pool, key=lambda item: stat_number(item.get("stats", []), "PTS"), reverse=True)[0]
     stats = selected.get("stats", [])[:4]
+    strength = stat_module_strength(stats)
     player = clean(selected.get("name"))
     team = clean(selected.get("team"))
     pts = stat_number(stats, "PTS")
@@ -886,22 +937,32 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
     stat_line = " / ".join(f"{item['value']} {item['label']}" for item in stats[:3])
     team_text = f" ({short_team(team)})" if team else ""
     matchup_note = f"{winner_short} {score.get('winner_score')} - {loser_short} {score.get('loser_score')}"
+    shape = game_shape(score)
     if margin is not None:
         matchup_note = f"{winner_short} +{margin} vs {loser_short}"
+    if clean(shape.get("game_shape")) == "close_finish":
+        headline = f"{last_name(player)} + CLOSE FINISH" if player else clean(shape.get("game_shape_label"))
+    elif clean(shape.get("game_shape")) == "statement_margin":
+        headline = f"{last_name(player)} + STATEMENT MARGIN" if player else clean(shape.get("game_shape_label"))
+    if strength != "lead_ledger":
+        headline = f"{last_name(player)} STAT NOTE" if player else "VERIFIED STAT NOTE"
     return {
-        "status": "verified_player_stat_module",
-        "eyebrow": "PLAYER LEDGER",
+        "status": "verified_player_stat_module" if strength == "lead_ledger" else "verified_supporting_stat_module",
+        "eyebrow": "PLAYER LEDGER" if strength == "lead_ledger" else "STAT NOTE",
         "headline": headline,
         "body": f"{player}{team_text}: {stat_text}.",
-        "editorial_line": f"{stat_line} in the {matchup_note} final.",
+        "editorial_line": f"{stat_line} in the {matchup_note} final." if strength == "lead_ledger" else f"Supporting stat context for the {matchup_note} final.",
         "matchup_note": matchup_note,
+        "game_shape": clean(shape.get("game_shape")),
+        "game_shape_label": clean(shape.get("game_shape_label")),
+        "stat_strength": strength,
         "callouts": stats[:3],
         "player_name": player,
         "team": team,
         "source_text": clean(selected.get("source_text")),
-        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
-        "stat_source_label": "Verified player/stat text available",
-        "stat_review_cue": "Confirm the named performer and stat line against source proof before approval.",
+        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required" if strength == "lead_ledger" else "verified_low_stat_context_manual_crosscheck_required",
+        "stat_source_label": "Verified player/stat text available" if strength == "lead_ledger" else "Verified stat context available",
+        "stat_review_cue": "Confirm the named performer and stat line against source proof before approval." if strength == "lead_ledger" else "Use this as supporting context only; do not make the player the lead unless source proof supports a stronger angle.",
     }
 
 
@@ -909,11 +970,14 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     winner = clean(score.get("winner"))
     loser = clean(score.get("loser"))
     margin = score_margin(score)
+    shape = game_shape(score)
     if margin is None:
         return {
             "eyebrow": "SCORE-DERIVED EDGE",
             "headline": "FINAL RESULT",
             "body": f"{winner} finished ahead of {loser}.",
+            "game_shape": clean(shape.get("game_shape")),
+            "game_shape_label": clean(shape.get("game_shape_label")),
         }
     if margin <= 3:
         headline = "DOWN TO THE WIRE"
@@ -927,18 +991,11 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     else:
         headline = "STATEMENT WIN"
         body = f"{short_team(winner)} closed with a {margin}-point victory over {short_team(loser)}."
-    return {"eyebrow": "SCORE-DERIVED EDGE", "headline": headline, "body": body}
+    return {"eyebrow": "SCORE-DERIVED EDGE", "headline": headline, "body": body, "game_shape": clean(shape.get("game_shape")), "game_shape_label": clean(shape.get("game_shape_label"))}
 
 
 def review_prompt(score: Dict[str, str]) -> str:
-    winner = short_team(clean(score.get("winner")))
-    loser = short_team(clean(score.get("loser")))
-    margin = score_margin(score)
-    if margin is not None and margin <= 3:
-        return "WHO MADE THE DIFFERENCE LATE?"
-    if margin is not None and margin <= 7:
-        return "WHERE DID THE GAME TURN?"
-    return f"WHAT FUELED {winner}'S SEPARATION?"
+    return clean(game_shape(score).get("prompt")) or "WHAT STOOD OUT FROM THE FINAL?"
 
 
 def scoreline_context(score: Dict[str, str]) -> str:
@@ -970,6 +1027,8 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
     margin = score_margin(score)
     total = score_total(score)
     source_label = source_quality_label(packet)
+    shape = game_shape(score)
+    shape_label = clean(shape.get("game_shape_label")) or "FINAL RESULT"
     variants: List[Dict[str, str]] = []
     margin_text = f"+{margin}" if margin is not None else "final-score"
     total_text = f"{total}-point total" if total is not None else "verified final"
@@ -977,28 +1036,38 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
         {
             "variant_id": "scoreline_spine",
             "label": "Scoreline spine",
-            "headline": f"{winner} {margin_text} FINAL",
-            "body": f"{winner} finished ahead of {loser}; anchor the angle to the {margin_text} margin and {total_text}.",
+            "headline": clean(shape.get("angle_label")) or f"{winner} {margin_text} FINAL",
+            "body": f"{shape_label}: {winner} over {loser}; anchor the angle to the {margin_text} margin and {total_text}.",
         }
     )
-    if clean(stat_module.get("status")) == "verified_player_stat_module":
+    if clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}:
         player = clean(stat_module.get("player_name"))
         stat_line = stat_line_for_microcopy(stat_module)
-        variants.append(
-            {
-                "variant_id": "verified_player_ledger",
-                "label": "Verified player ledger",
-                "headline": f"{last_name(player)} + {winner}",
-                "body": f"{last_name(player).title()}'s verified {stat_line.replace(' / ', ', ')} gives this recap the named lead.",
-            }
-        )
+        if clean(stat_module.get("status")) == "verified_player_stat_module":
+            variants.append(
+                {
+                    "variant_id": "verified_player_ledger",
+                    "label": "Verified player ledger",
+                    "headline": f"{last_name(player)} + {shape_label}" if player else shape_label,
+                    "body": f"{last_name(player).title()}'s verified {stat_line.replace(' / ', ', ')} frames the {shape_label.lower()}.",
+                }
+            )
+        else:
+            variants.append(
+                {
+                    "variant_id": "verified_supporting_stat_note",
+                    "label": "Verified supporting stat note",
+                    "headline": clean(shape.get("angle_label")) or f"{winner} {margin_text} FINAL",
+                    "body": f"{last_name(player).title()}'s verified {stat_line.replace(' / ', ', ')} is supporting context; keep the main angle on the {shape_label.lower()}.",
+                }
+            )
     else:
         variants.append(
             {
                 "variant_id": "score_only_hold",
                 "label": "Score-only fallback",
-                "headline": f"{winner} SCOREBOARD EDGE",
-                "body": "No verified player stat line is available; hold player-led framing until source proof supports it.",
+                "headline": clean(shape.get("angle_label")) or f"{winner} SCOREBOARD EDGE",
+                "body": f"No verified player stat line is available; keep this as a {shape_label.lower()} scoreline until source proof supports a named lead.",
             }
         )
     variants.append(
@@ -1014,8 +1083,16 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
 
 def selected_editorial_microcopy(packet: Dict[str, Any], score: Dict[str, str], stat_module: Dict[str, Any]) -> Dict[str, Any]:
     variants = editorial_microcopy_variants(packet, score, stat_module)
-    preferred = next((item for item in variants if item["variant_id"] == "verified_player_ledger"), variants[0] if variants else {})
+    status = clean(stat_module.get("status"))
+    if status == "verified_player_stat_module":
+        preferred_id = "verified_player_ledger"
+    elif status == "verified_supporting_stat_module":
+        preferred_id = "verified_supporting_stat_note"
+    else:
+        preferred_id = "score_only_hold"
+    preferred = next((item for item in variants if item["variant_id"] == preferred_id), variants[0] if variants else {})
     context = scoreline_context(score)
+    shape = game_shape(score)
     return {
         "status": "source_safe_editorial_microcopy_ready",
         "selected_variant_id": clean(preferred.get("variant_id")),
@@ -1023,6 +1100,8 @@ def selected_editorial_microcopy(packet: Dict[str, Any], score: Dict[str, str], 
         "headline": clean(preferred.get("headline")),
         "body": clean(preferred.get("body")),
         "context": context,
+        "game_shape": clean(shape.get("game_shape")),
+        "game_shape_label": clean(shape.get("game_shape_label")),
         "review_cue": "Copy is score/stat-derived only; verify source proof before adding why/how claims.",
         "variants": variants,
     }
@@ -1579,10 +1658,11 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
 
     stat_module = select_verified_stat_module(packet, score)
     edge = game_edge_module(score)
-    module = stat_module if clean(stat_module.get("status")) == "verified_player_stat_module" else edge
-    callouts = stat_module.get("callouts") if clean(stat_module.get("status")) == "verified_player_stat_module" else final_score_callouts(packet, score)
+    stat_status = clean(stat_module.get("status"))
+    module = stat_module if stat_status in {"verified_player_stat_module", "verified_supporting_stat_module"} else edge
+    callouts = stat_module.get("callouts") if stat_status in {"verified_player_stat_module", "verified_supporting_stat_module"} else final_score_callouts(packet, score)
     key_box = zone_box(template_spec, "key_performer")
-    if clean(stat_module.get("status")) == "verified_player_stat_module":
+    if stat_status in {"verified_player_stat_module", "verified_supporting_stat_module"}:
         draw_verified_stat_reference_module(image, key_box, stat_module, (247, 203, 84))
     else:
         draw_lower_reference_module(
@@ -1692,14 +1772,17 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         return {"content_module_mode": "not_final_score", "content_module_status": "not_applicable"}
     stat_module = select_verified_stat_module(packet, score)
     microcopy = selected_editorial_microcopy(packet, score, stat_module)
-    if clean(stat_module.get("status")) == "verified_player_stat_module":
+    if clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}:
         return {
             "content_module_mode": "verified_player_stats",
-            "content_module_status": "verified_player_stat_module",
+            "content_module_status": clean(stat_module.get("status")),
             "content_module_title": clean(stat_module.get("headline")),
             "content_module_body": clean(stat_module.get("body")),
             "content_module_editorial_line": clean(stat_module.get("editorial_line")),
             "content_module_matchup_note": clean(stat_module.get("matchup_note")),
+            "content_module_game_shape": clean(stat_module.get("game_shape")),
+            "content_module_game_shape_label": clean(stat_module.get("game_shape_label")),
+            "content_module_stat_strength": clean(stat_module.get("stat_strength")),
             "content_module_stat_count": str(len(stat_module.get("callouts") or [])),
             "content_module_player": clean(stat_module.get("player_name")),
             "content_module_source_text": clean(stat_module.get("source_text")),
@@ -1712,6 +1795,8 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "editorial_microcopy_headline": clean(microcopy.get("headline")),
             "editorial_microcopy_body": clean(microcopy.get("body")),
             "editorial_microcopy_context": clean(microcopy.get("context")),
+            "editorial_microcopy_game_shape": clean(microcopy.get("game_shape")),
+            "editorial_microcopy_game_shape_label": clean(microcopy.get("game_shape_label")),
             "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
             "editorial_microcopy_variants": microcopy.get("variants") or [],
         }
@@ -1721,6 +1806,8 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "content_module_status": clean(stat_module.get("status")) or "fallback_game_edge_no_verified_stat_text",
         "content_module_title": clean(edge.get("headline")),
         "content_module_body": clean(edge.get("body")),
+        "content_module_game_shape": clean(edge.get("game_shape")),
+        "content_module_game_shape_label": clean(edge.get("game_shape_label")),
         "content_module_stat_count": "0",
         "content_module_player": "",
         "content_module_source_text": "",
@@ -1733,6 +1820,8 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "editorial_microcopy_headline": clean(microcopy.get("headline")),
         "editorial_microcopy_body": clean(microcopy.get("body")),
         "editorial_microcopy_context": clean(microcopy.get("context")),
+        "editorial_microcopy_game_shape": clean(microcopy.get("game_shape")),
+        "editorial_microcopy_game_shape_label": clean(microcopy.get("game_shape_label")),
         "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
         "editorial_microcopy_variants": microcopy.get("variants") or [],
     }
@@ -1900,6 +1989,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
+        f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
         f"- Stat source confidence: `{clean(content_module.get('stat_source_confidence')) or 'not_applicable'}`",
         f"- Stat review cue: {clean(content_module.get('stat_review_cue')) or 'n/a'}",
         f"- Editorial microcopy: `{clean(content_module.get('editorial_microcopy_variant')) or 'not_selected'}` / {clean(content_module.get('editorial_microcopy_headline')) or 'n/a'}",
