@@ -120,6 +120,85 @@ def test_manual_post_approval_render_staging_allows_only_next_manual_step(tmp_pa
     assert manifest["guardrails"]["publish_ready"] is False
 
 
+def test_manual_post_approval_render_staging_prefers_validated_operator_decision(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    write_intake(run_dir)
+    with (run_dir / "manual_visual_qa_operator_decision_intake.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "intake_id",
+                "decision_draft_id",
+                "source_intake_id",
+                "preview_path",
+                "qa_status",
+                "automated_hold_count",
+                "operator_decision",
+                "validation_status",
+                "validation_issue",
+                "operator_notes",
+                "hold_reason",
+                "revision_request",
+                "operator_name",
+                "reviewed_at_local",
+                "approval_scope",
+                "source_decision_path",
+                "source_draft_path",
+                "source_qa_report_path",
+                "copy_to_publish_lane",
+                "publish_ready",
+                "auto_approval",
+                "auto_publish",
+                "move_files",
+                "paid_apis",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "intake_id": "manual_visual_qa_preview_1",
+                "decision_draft_id": "decision_draft_manual_visual_qa_preview_1",
+                "source_intake_id": "manual_visual_qa_preview_1",
+                "preview_path": (run_dir / "render_handoff_top_packet" / "draft_preview.png").as_posix(),
+                "qa_status": "human_review_required",
+                "automated_hold_count": "0",
+                "operator_decision": "approve_for_manual_next_step",
+                "validation_status": "valid_operator_decision",
+                "validation_issue": "",
+                "operator_notes": "Human checked.",
+                "hold_reason": "",
+                "revision_request": "",
+                "operator_name": "Test Operator",
+                "reviewed_at_local": "2026-06-25 10:15",
+                "approval_scope": "manual_next_step_only_not_publish_ready",
+                "source_decision_path": "operator/inbox/manual_visual_qa_operator_decisions.csv",
+                "source_draft_path": "manual_visual_qa_operator_decision_draft.csv",
+                "source_qa_report_path": "manual_visual_qa_report.md",
+                "copy_to_publish_lane": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    (run_dir / "manual_visual_qa_operator_decision_intake.json").write_text(
+        json.dumps({"status": "valid_operator_decision_ready_for_staging"}),
+        encoding="utf-8",
+    )
+
+    proc = run_staging(tmp_path, run_dir)
+
+    assert proc.returncode == 0, proc.stderr
+    manifest, row, _ = read_outputs(run_dir)
+    assert manifest["inputs"]["source_type"] == "validated_operator_decision_intake"
+    assert manifest["status"] == "review_only_staging_ready"
+    assert row["staging_lane"] == "approved_for_next_manual_step"
+    assert row["operator_decision"] == "approve_for_manual_next_step"
+    assert row["publish_ready"] == "false"
+    assert row["copy_to_publish_lane"] == "false"
+
+
 def test_manual_post_approval_render_staging_separates_hold_and_revise(tmp_path: Path) -> None:
     for decision, expected_lane in [("hold", "hold_for_operator_review"), ("revise", "revise_required")]:
         run_dir = tmp_path / decision / "files"

@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 from hsd_run_io import output_path, write_csv, write_json, write_text
 
 
-VERSION = "hsd-manual-post-approval-render-staging-v1.0.0-review-only"
+VERSION = "hsd-manual-post-approval-render-staging-v1.1.0-validated-operator-decisions"
 OUT_MD = output_path("manual_post_approval_render_staging.md")
 OUT_CSV = output_path("manual_post_approval_render_staging.csv")
 OUT_JSON = output_path("manual_post_approval_render_staging.json")
@@ -92,15 +92,29 @@ def parse_int(value: Any, default: int = 0) -> int:
 
 
 def lane_for_row(row: Dict[str, str]) -> tuple[str, str, str]:
+    validation_status = clean(row.get("validation_status"))
+    validation_issue = clean(row.get("validation_issue"))
     decision = clean(row.get("operator_decision"))
     qa_status = clean(row.get("qa_status"))
     hold_count = parse_int(row.get("automated_hold_count"))
     approval_scope = clean(row.get("approval_scope"))
 
+    if validation_status == "awaiting_operator_decision":
+        return (
+            "awaiting_operator_decision",
+            "Open manual_visual_qa_operator_decision_draft.csv, copy the row to operator/inbox/manual_visual_qa_operator_decisions.csv, and fill the decision with notes.",
+            validation_issue or "validated operator decision is not filled",
+        )
+    if validation_status and validation_status != "valid_operator_decision":
+        return (
+            "invalid_operator_decision",
+            "Fix the operator decision inbox row, then rerun manual render staging.",
+            validation_issue or f"validation_status={validation_status}",
+        )
     if decision in {"", "operator_fill_required"}:
         return (
             "awaiting_operator_decision",
-            "Open manual_visual_qa_approval_intake.csv and record approve_for_manual_next_step, hold, or revise with notes.",
+            "Open manual_visual_qa_operator_decision_draft.csv and record approve_for_manual_next_step, hold, or revise with notes.",
             "operator_decision is not filled",
         )
     if decision not in ALLOWED_DECISIONS:
@@ -220,7 +234,7 @@ def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, str]]) -> List[s
         "",
         "## Purpose",
         "",
-        "This report reads the manual visual QA approval intake and separates draft previews into review-only staging lanes.",
+        "This report reads validated operator decisions when present and separates draft previews into review-only staging lanes.",
         "It does not move files, approve publishing, auto-publish, or create a publish-ready lane.",
         "",
         "## Lane Counts",
@@ -278,8 +292,10 @@ def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, str]]) -> List[s
 
 
 def main() -> None:
-    intake_path = first_existing("manual_visual_qa_approval_intake.csv")
+    decision_intake_path = first_existing("manual_visual_qa_operator_decision_intake.csv")
+    intake_path = decision_intake_path or first_existing("manual_visual_qa_approval_intake.csv")
     intake_manifest_path = first_existing("manual_visual_qa_approval_intake.json")
+    decision_intake_manifest_path = first_existing("manual_visual_qa_operator_decision_intake.json")
     intake_rows = read_csv_rows(intake_path)
     staging_rows = build_staging_rows(intake_rows, intake_path)
     lane_counts = counts_by_lane(staging_rows)
@@ -295,6 +311,9 @@ def main() -> None:
         "status": status,
         "approval_status": "not_approved_review_only_staging",
         "inputs": {
+            "source_type": "validated_operator_decision_intake" if decision_intake_path else "generated_visual_qa_approval_intake",
+            "operator_decision_intake_path": decision_intake_path.as_posix() if decision_intake_path else "",
+            "operator_decision_intake_manifest_path": decision_intake_manifest_path.as_posix() if decision_intake_manifest_path else "",
             "approval_intake_path": intake_path.as_posix() if intake_path else "",
             "approval_intake_manifest_path": intake_manifest_path.as_posix() if intake_manifest_path else "",
             "intake_row_count": len(intake_rows),
