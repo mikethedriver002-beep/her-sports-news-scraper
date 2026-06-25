@@ -644,6 +644,12 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_proposal_review.csv" in runner
     assert "source_proposal_packs.md" in runner
     assert "source_proposal_packs.csv" in runner
+    assert "wnba_source_proposal_pack.md" in runner
+    assert "wnba_source_proposal_pack.csv" in runner
+    assert "nwsl_source_proposal_pack.md" in runner
+    assert "nwsl_source_proposal_pack.csv" in runner
+    assert "lpga_source_proposal_pack.md" in runner
+    assert "lpga_source_proposal_pack.csv" in runner
     assert "pwhl_source_proposal_pack.md" in runner
     assert "pwhl_source_proposal_pack.csv" in runner
     assert "manual_workflow_handoff.md" in runner

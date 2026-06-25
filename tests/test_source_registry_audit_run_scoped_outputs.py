@@ -193,6 +193,12 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_proposal_review.md").exists()
     assert (run_dir / "source_proposal_packs.csv").exists()
     assert (run_dir / "source_proposal_packs.md").exists()
+    assert (run_dir / "wnba_source_proposal_pack.csv").exists()
+    assert (run_dir / "wnba_source_proposal_pack.md").exists()
+    assert (run_dir / "nwsl_source_proposal_pack.csv").exists()
+    assert (run_dir / "nwsl_source_proposal_pack.md").exists()
+    assert (run_dir / "lpga_source_proposal_pack.csv").exists()
+    assert (run_dir / "lpga_source_proposal_pack.md").exists()
     assert (run_dir / "pwhl_source_proposal_pack.csv").exists()
     assert (run_dir / "pwhl_source_proposal_pack.md").exists()
     assert (run_dir / "source_registry_audit.md").exists()
@@ -208,10 +214,13 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["proposal_review_rows"] == 4
     assert manifest["counts"]["proposal_hold"] == 3
     assert manifest["counts"]["proposal_ready"] == 1
-    assert manifest["counts"]["proposal_pack_leagues"] == 1
-    assert manifest["counts"]["proposal_pack_rows"] == 19
-    assert manifest["counts"]["proposal_pack_official"] == 14
-    assert manifest["counts"]["proposal_pack_cross_check"] == 5
+    assert manifest["counts"]["proposal_pack_leagues"] == 4
+    assert manifest["counts"]["proposal_pack_rows"] == 57
+    assert manifest["counts"]["proposal_pack_official"] == 39
+    assert manifest["counts"]["proposal_pack_cross_check"] == 18
+    assert manifest["counts"]["wnba_proposal_pack_rows"] == 13
+    assert manifest["counts"]["nwsl_proposal_pack_rows"] == 15
+    assert manifest["counts"]["lpga_proposal_pack_rows"] == 10
     assert manifest["counts"]["pwhl_proposal_pack_rows"] == 19
     assert manifest["counts"]["pwhl_proposal_pack_official"] == 14
     assert manifest["counts"]["pwhl_proposal_pack_cross_check"] == 5
@@ -238,12 +247,41 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "paid/API sources" in proposal_md
     assert "No rows are imported automatically" in proposal_md
     proposal_packs = read_csv(run_dir / "source_proposal_packs.csv")
-    assert len(proposal_packs) == 19
-    assert proposal_packs[0]["pack_key"] == "pwhl"
-    assert proposal_packs[0]["pack_name"] == "PWHL Source Proposal Pack"
+    assert len(proposal_packs) == 57
+    assert proposal_packs[0]["pack_key"] == "wnba"
+    assert proposal_packs[0]["pack_name"] == "WNBA Source Proposal Pack"
+    proposal_pack_ids = {row["candidate_source_id"] for row in proposal_packs}
+    assert "wnba_official_teams_index_review" in proposal_pack_ids
+    assert "nwsl_official_teams_index_review" in proposal_pack_ids
+    assert "lpga_official_tournaments_review" in proposal_pack_ids
+    assert "pwhl_official_home" in proposal_pack_ids
     proposal_packs_md = (run_dir / "source_proposal_packs.md").read_text(encoding="utf-8")
     assert "HSD Guided Source Proposal Packs" in proposal_packs_md
+    assert "WNBA Source Proposal Pack" in proposal_packs_md
+    assert "NWSL Source Proposal Pack" in proposal_packs_md
+    assert "LPGA Source Proposal Pack" in proposal_packs_md
     assert "PWHL Source Proposal Pack" in proposal_packs_md
+    wnba_pack = read_csv(run_dir / "wnba_source_proposal_pack.csv")
+    assert len(wnba_pack) == 13
+    wnba_by_id = {row["candidate_source_id"]: row for row in wnba_pack}
+    assert wnba_by_id["wnba_toronto_tempo_team_review"]["candidate_url"] == "https://tempo.wnba.com/"
+    assert wnba_by_id["espn_wnba_scoreboard_pack_review"]["candidate_domain"] == "espn.com"
+    assert all(row["pack_key"] == "wnba" for row in wnba_pack)
+    assert all(row["proposed_enabled"] == "No" for row in wnba_pack)
+    nwsl_pack = read_csv(run_dir / "nwsl_source_proposal_pack.csv")
+    assert len(nwsl_pack) == 15
+    nwsl_by_id = {row["candidate_source_id"]: row for row in nwsl_pack}
+    assert nwsl_by_id["nwsl_boston_legacy_team_review"]["candidate_url"] == "https://bostonlegacyfc.com/"
+    assert nwsl_by_id["espn_nwsl_standings_cross_check"]["candidate_domain"] == "espn.com"
+    assert all(row["pack_key"] == "nwsl" for row in nwsl_pack)
+    assert all(row["registry_action"] == "proposal_only_do_not_import" for row in nwsl_pack)
+    lpga_pack = read_csv(run_dir / "lpga_source_proposal_pack.csv")
+    assert len(lpga_pack) == 10
+    lpga_by_id = {row["candidate_source_id"]: row for row in lpga_pack}
+    assert lpga_by_id["lpga_official_tournaments_review"]["candidate_url"] == "https://www.lpga.com/tournaments"
+    assert lpga_by_id["kpmg_womens_pga_leaderboard_review"]["candidate_domain"] == "lpga.com"
+    assert all(row["pack_key"] == "lpga" for row in lpga_pack)
+    assert all(row["publish_policy"] == "proposal_only_not_publish_ready" for row in lpga_pack)
     pwhl_pack = read_csv(run_dir / "pwhl_source_proposal_pack.csv")
     assert len(pwhl_pack) == 19
     pwhl_by_id = {row["candidate_source_id"]: row for row in pwhl_pack}
@@ -256,9 +294,22 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert all(row["registry_action"] == "proposal_only_do_not_import" for row in pwhl_pack)
     assert all(row["publish_policy"] == "proposal_only_not_publish_ready" for row in pwhl_pack)
     assert all(row["pack_key"] == "pwhl" for row in pwhl_pack)
+    assert manifest["wnba_source_proposal_pack"][0]["candidate_source_id"] == "wnba_official_home_review"
+    assert manifest["nwsl_source_proposal_pack"][0]["candidate_source_id"] == "nwsl_official_home_review"
+    assert manifest["lpga_source_proposal_pack"][0]["candidate_source_id"] == "lpga_official_home_review"
     assert manifest["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_home"
-    assert manifest["source_proposal_packs"][0]["candidate_source_id"] == "pwhl_official_home"
-    assert manifest["source_proposal_pack_index"][0]["pack_key"] == "pwhl"
+    assert manifest["source_proposal_packs"][0]["candidate_source_id"] == "wnba_official_home_review"
+    assert [row["pack_key"] for row in manifest["source_proposal_pack_index"]] == ["wnba", "nwsl", "lpga", "pwhl"]
+    assert [row["rows"] for row in manifest["source_proposal_pack_index"]] == [13, 15, 10, 19]
+    wnba_pack_md = (run_dir / "wnba_source_proposal_pack.md").read_text(encoding="utf-8")
+    assert "WNBA Source Proposal Pack" in wnba_pack_md
+    assert "wnba_toronto_tempo_team_review" in wnba_pack_md
+    nwsl_pack_md = (run_dir / "nwsl_source_proposal_pack.md").read_text(encoding="utf-8")
+    assert "NWSL Source Proposal Pack" in nwsl_pack_md
+    assert "nwsl_boston_legacy_team_review" in nwsl_pack_md
+    lpga_pack_md = (run_dir / "lpga_source_proposal_pack.md").read_text(encoding="utf-8")
+    assert "LPGA Source Proposal Pack" in lpga_pack_md
+    assert "kpmg_womens_pga_leaderboard_review" in lpga_pack_md
     pwhl_pack_md = (run_dir / "pwhl_source_proposal_pack.md").read_text(encoding="utf-8")
     assert "PWHL Source Proposal Pack" in pwhl_pack_md
     assert "No rows are imported automatically" in pwhl_pack_md
@@ -301,6 +352,12 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_proposal_review.md").exists()
     assert (work_dir / "source_proposal_packs.csv").exists()
     assert (work_dir / "source_proposal_packs.md").exists()
+    assert (work_dir / "wnba_source_proposal_pack.csv").exists()
+    assert (work_dir / "wnba_source_proposal_pack.md").exists()
+    assert (work_dir / "nwsl_source_proposal_pack.csv").exists()
+    assert (work_dir / "nwsl_source_proposal_pack.md").exists()
+    assert (work_dir / "lpga_source_proposal_pack.csv").exists()
+    assert (work_dir / "lpga_source_proposal_pack.md").exists()
     assert (work_dir / "pwhl_source_proposal_pack.csv").exists()
     assert (work_dir / "pwhl_source_proposal_pack.md").exists()
     assert (work_dir / "source_registry_audit.md").exists()
