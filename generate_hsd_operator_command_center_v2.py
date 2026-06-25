@@ -683,6 +683,12 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
         width = clean(option.get("width")) or spec["shape"].split("x")[0]
         height = clean(option.get("height")) or spec["shape"].split("x")[-1]
         exists = found.exists()
+        reference_template = clean(option.get("reference_template_id"))
+        reference_derivation = clean(option.get("reference_derivation"))
+        if reference_template:
+            reference_note = f"Reference: {reference_template} ({reference_derivation or 'reference linked'})"
+        else:
+            reference_note = "Reference: not linked"
         out.append(
             {
                 "format_id": spec["format_id"],
@@ -696,6 +702,12 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
                 "qa_status": clean(first_present(qa.get("status"), draft.get("qa_status"), default="not_run")),
                 "qa_summary": f"{clean(qa_summary.get('pass_count')) or '0'}/{clean(qa_summary.get('check_count')) or '0'} QA checks passed",
                 "asset_note": asset_note,
+                "reference_template": reference_template,
+                "reference_note": reference_note,
+                "reference_spec_path": clean(option.get("reference_spec_path")),
+                "reference_public_mockup_path": clean(option.get("reference_public_mockup_path")),
+                "reference_layout_path": clean(option.get("reference_layout_path")),
+                "reference_exact_format_match": "true" if option.get("reference_exact_format_match") is True else "false",
                 "approval_scope": "manual_next_step_only_not_publish_ready",
                 "publish_ready": "false",
                 "auto_approval": "false",
@@ -3471,8 +3483,10 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
               <div class="render-gallery-facts">
                 {pill(clean(row.get('review_status')) or 'review')}
                 {pill(clean(row.get('shape')))}
+                {pill('reference exact: ' + (clean(row.get('reference_exact_format_match')) or 'false'))}
                 {pill('publish ready: false')}
               </div>
+              <p class="render-gallery-note">{html.escape(clean(row.get('reference_note')))}</p>
               <p class="render-gallery-note">{html.escape(clean(row.get('qa_summary')))}. {html.escape(short(clean(row.get('asset_note')), 150))}</p>
               <code>{html.escape(clean(row.get('path')))}</code>
             </article>

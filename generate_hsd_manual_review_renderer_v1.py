@@ -4,33 +4,74 @@ import json
 import os
 import re
 import shutil
+import csv
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Tuple
 
 from hsd_run_io import output_path, write_json, write_text
 
 try:
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont
 except Exception:  # pragma: no cover - validated by runtime status report
     Image = None
     ImageDraw = None
+    ImageFilter = None
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.2.0-mobile-score-review-drafts"
+VERSION = "hsd-manual-review-renderer-v1.3.0-template-reference-pack-drafts"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
 OUT_REVIEW_DRAFTS = OUT_DIR / "review_drafts"
 OUT_REPORT = output_path("manual_review_renderer_report.md")
 OUT_MANIFEST = output_path("manual_review_renderer_manifest.json")
+PROJECT_ROOT = Path(__file__).resolve().parent
+REFERENCE_PACK_ID = "templates_hsd_20260625"
+REFERENCE_PACK_MANIFEST = PROJECT_ROOT / "config" / "graphics" / "v4" / "template_reference_packs_v1.json"
+REFERENCE_SPEC_ROOT = PROJECT_ROOT / "config" / "graphics" / "v4" / "reference_specs" / REFERENCE_PACK_ID
+REFERENCE_PUBLIC_ROOT = PROJECT_ROOT / "assets" / "graphics" / "v4" / "approved" / "public_mockups"
+REFERENCE_LAYOUT_ROOT = PROJECT_ROOT / "assets" / "graphics" / "v4" / "approved" / "layout_references"
+REFERENCE_BRAND_ROOT = PROJECT_ROOT / "assets" / "graphics" / "v4" / "approved" / "brand"
+TEAM_ALIASES_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_aliases.csv"
+TEAM_LOGOS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_logos.csv"
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
     {"format_id": "ig_story_9x16", "filename": "draft_preview_story.png", "width": 1080, "height": 1920, "primary": False},
     {"format_id": "square_feed_1x1", "filename": "draft_preview_square.png", "width": 1080, "height": 1080, "primary": False},
 ]
+
+REFERENCE_FINAL_SCORE_FORMATS = {
+    "ig_feed_4x5": {
+        "reference_family_key": "wnba_final_score_tonight",
+        "reference_template_id": "hsd_game_recap_final_score_a",
+        "reference_spec_path": "config/graphics/v4/reference_specs/templates_hsd_20260625/wnba_final_score_tonight/hsd_game_recap_final_score_a.json",
+        "reference_public_mockup_path": "assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight/01_game_recap_final_score_variant_A_public.png",
+        "reference_layout_path": "assets/graphics/v4/approved/layout_references/wnba_final_score_tonight/02_game_recap_final_score_variant_A_layout_reference.png",
+        "reference_exact_format_match": True,
+        "reference_derivation": "exact_imported_reference_spec",
+    },
+    "ig_story_9x16": {
+        "reference_family_key": "wnba_final_score_tonight",
+        "reference_template_id": "hsd_game_recap_final_score_c_story",
+        "reference_spec_path": "config/graphics/v4/reference_specs/templates_hsd_20260625/wnba_final_score_tonight/hsd_game_recap_final_score_c_story.json",
+        "reference_public_mockup_path": "assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight/05_game_recap_final_score_variant_C_story_public.png",
+        "reference_layout_path": "assets/graphics/v4/approved/layout_references/wnba_final_score_tonight/06_game_recap_final_score_variant_C_story_layout_reference.png",
+        "reference_exact_format_match": True,
+        "reference_derivation": "exact_imported_reference_spec",
+    },
+    "square_feed_1x1": {
+        "reference_family_key": "wnba_final_score_tonight",
+        "reference_template_id": "hsd_game_recap_final_score_a",
+        "reference_spec_path": "config/graphics/v4/reference_specs/templates_hsd_20260625/wnba_final_score_tonight/hsd_game_recap_final_score_a.json",
+        "reference_public_mockup_path": "assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight/01_game_recap_final_score_variant_A_public.png",
+        "reference_layout_path": "assets/graphics/v4/approved/layout_references/wnba_final_score_tonight/02_game_recap_final_score_variant_A_layout_reference.png",
+        "reference_exact_format_match": False,
+        "reference_derivation": "square_review_draft_derived_from_imported_4x5_layout",
+    },
+}
 
 PALETTE = {
     "ink": (248, 250, 255),
@@ -51,8 +92,19 @@ def clean(value: Any) -> str:
     return " ".join(str(value or "").replace("\n", " ").split()).strip()
 
 
+def norm(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "", clean(value).lower())
+
+
 def repo_root() -> Path:
     return Path.cwd().resolve()
+
+
+def project_path(raw: Any) -> Path:
+    path = Path(clean(raw))
+    if path.is_absolute():
+        return path
+    return PROJECT_ROOT / path
 
 
 def input_handoff_candidates() -> List[Path]:
@@ -79,6 +131,14 @@ def read_json(path: Path) -> Dict[str, Any]:
         return {}
 
 
+def read_csv(path: Path) -> List[Dict[str, str]]:
+    try:
+        with path.open(newline="", encoding="utf-8", errors="replace") as handle:
+            return list(csv.DictReader(handle))
+    except Exception:
+        return []
+
+
 def copy_handoff_to_output(src: Path) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for item in src.iterdir():
@@ -91,6 +151,9 @@ def copy_handoff_to_output(src: Path) -> None:
             shutil.copytree(item, dest)
         else:
             shutil.copy2(item, dest)
+
+
+REFERENCE_FONT_CACHE: Dict[Tuple[str, int], Any] = {}
 
 
 def font(size: int, bold: bool = False):
@@ -106,6 +169,51 @@ def font(size: int, bold: bool = False):
         except Exception:
             continue
     return ImageFont.load_default()
+
+
+def reference_font(role: str, size: int):
+    if ImageFont is None:
+        return None
+    key = (role, size)
+    if key in REFERENCE_FONT_CACHE:
+        return REFERENCE_FONT_CACHE[key]
+    candidates = {
+        "display": [
+            "C:/Windows/Fonts/impact.ttf",
+            "C:/Windows/Fonts/arialnb.ttf",
+            "C:/Windows/Fonts/bahnschrift.ttf",
+            "C:/Windows/Fonts/segoeuib.ttf",
+        ],
+        "score": [
+            "C:/Windows/Fonts/impact.ttf",
+            "C:/Windows/Fonts/arialnb.ttf",
+            "C:/Windows/Fonts/seguisb.ttf",
+            "C:/Windows/Fonts/arialbd.ttf",
+        ],
+        "context": [
+            "C:/Windows/Fonts/arialbd.ttf",
+            "C:/Windows/Fonts/segoeuib.ttf",
+            "C:/Windows/Fonts/bahnschrift.ttf",
+        ],
+        "body": [
+            "C:/Windows/Fonts/segoeui.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+        ],
+    }
+    for raw in candidates.get(role, candidates["body"]):
+        try:
+            path = Path(raw)
+            if path.exists():
+                REFERENCE_FONT_CACHE[key] = ImageFont.truetype(path.as_posix(), size)
+                return REFERENCE_FONT_CACHE[key]
+        except Exception:
+            continue
+    REFERENCE_FONT_CACHE[key] = font(size, role != "body")
+    return REFERENCE_FONT_CACHE[key]
+
+
+def resample_filter() -> Any:
+    return getattr(getattr(Image, "Resampling", Image), "LANCZOS", 1)
 
 
 def text_size(draw: Any, text: str, fnt: Any) -> tuple[int, int]:
@@ -174,8 +282,10 @@ def choose_template(packet: Dict[str, Any]) -> Dict[str, str]:
     ).lower()
     if any(token in text for token in ["beat", "defeat", "final", "score", "result"]):
         return {
-            "template_id": "hsd_final_score_review_v1",
-            "template_family": "final_score_editorial_card",
+            "template_id": "hsd_game_recap_final_score_a",
+            "template_family": "game_recap_final_score",
+            "reference_pack_id": REFERENCE_PACK_ID,
+            "reference_family_key": "wnba_final_score_tonight",
             "angle_label": "FINAL",
             "tone": "result",
         }
@@ -197,7 +307,7 @@ def choose_template(packet: Dict[str, Any]) -> Dict[str, str]:
 def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[str, str]]:
     requirement = clean(packet.get("asset_requirement")) or "No player asset required; use HSD brand treatment and verified source text only."
     asset_cue = clean(packet.get("asset_cue")) or "asset_review_not_required"
-    return [
+    slots = [
         {
             "slot_id": "primary_photo",
             "status": "not_required_for_review_draft" if "no player asset" in requirement.lower() else "operator_asset_review_required",
@@ -219,6 +329,26 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
             "requirement": "Asset readiness cue copied into the renderer manifest for operator review.",
         },
     ]
+    score = parse_final_score(packet)
+    if score and clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID:
+        aliases, logos = team_registry()
+        for slot_id, team_name in [("primary_team_logo", score.get("winner")), ("secondary_team_logo", score.get("loser"))]:
+            result = load_team_logo(clean(team_name), aliases, logos)
+            status = clean(result.get("status")) or "logo_review_required"
+            requirement_note = "Approved WNBA logo slot from Templates-hsd reference pack; do not invent or replace identity."
+            if status != "approved_logo":
+                requirement_note += " Human review must confirm this logo asset before any later production use."
+            slots.append(
+                {
+                    "slot_id": slot_id,
+                    "status": status,
+                    "requirement": requirement_note,
+                    "asset_path": clean(result.get("path")),
+                    "blocker": clean(result.get("blocker")),
+                    "team": clean(team_name),
+                }
+            )
+    return slots
 
 
 def score_parts(packet: Dict[str, Any]) -> tuple[str, str]:
@@ -260,6 +390,316 @@ def parse_final_score(packet: Dict[str, Any]) -> Dict[str, str]:
         "winner_score": winner_score,
         "loser_score": loser_score,
         "verb": verb,
+    }
+
+
+def reference_pack_summary() -> Dict[str, Any]:
+    manifest = read_json(REFERENCE_PACK_MANIFEST)
+    packs = manifest.get("packs") if isinstance(manifest.get("packs"), list) else []
+    pack = next((item for item in packs if isinstance(item, dict) and clean(item.get("pack_id")) == REFERENCE_PACK_ID), {})
+    guardrails = pack.get("guardrails") if isinstance(pack.get("guardrails"), dict) else {}
+    return {
+        "pack_id": REFERENCE_PACK_ID,
+        "status": clean(pack.get("status")) or clean(manifest.get("status")) or "reference_only",
+        "purpose": clean(pack.get("purpose")) or "Canonical HSD visual quality references.",
+        "renderer_cutover_allowed": bool(manifest.get("renderer_cutover_allowed")),
+        "auto_render_allowed": bool(manifest.get("auto_render_allowed")),
+        "auto_publish_allowed": bool(manifest.get("auto_publish_allowed")),
+        "paid_api_required": bool(manifest.get("paid_api_required")),
+        "guardrails": {
+            "reference_only": guardrails.get("reference_only") is not False,
+            "publish_ready": guardrails.get("publish_ready") is True,
+            "auto_approval": guardrails.get("auto_approval") is True,
+            "auto_render": guardrails.get("auto_render") is True,
+            "auto_publish": guardrails.get("auto_publish") is True,
+            "paid_apis": guardrails.get("paid_apis") is True,
+        },
+    }
+
+
+def reference_for_format(format_spec: Dict[str, Any], template: Dict[str, str]) -> Dict[str, Any]:
+    if clean(template.get("reference_pack_id")) != REFERENCE_PACK_ID:
+        return {}
+    reference = dict(REFERENCE_FINAL_SCORE_FORMATS.get(clean(format_spec.get("format_id")), {}))
+    if not reference:
+        return {}
+    reference["reference_pack_id"] = REFERENCE_PACK_ID
+    for key in ["reference_spec_path", "reference_public_mockup_path", "reference_layout_path"]:
+        path = project_path(reference.get(key))
+        reference[f"{key}_exists"] = path.exists()
+    return reference
+
+
+def load_reference_spec(reference: Dict[str, Any]) -> Dict[str, Any]:
+    path = project_path(reference.get("reference_spec_path"))
+    payload = read_json(path)
+    return payload if isinstance(payload, dict) else {}
+
+
+def zone_box(template_spec: Dict[str, Any], name: str) -> Tuple[int, int, int, int]:
+    zones = template_spec.get("zones") if isinstance(template_spec.get("zones"), dict) else {}
+    zone = zones.get(name) if isinstance(zones.get(name), dict) else {}
+    return int(zone.get("x", 0)), int(zone.get("y", 0)), int(zone.get("w", 0)), int(zone.get("h", 0))
+
+
+def draw_reference_text(
+    image: Any,
+    box: Tuple[int, int, int, int],
+    text: str,
+    role: str,
+    start_size: int,
+    min_size: int,
+    fill: tuple[int, int, int],
+    *,
+    max_lines: int = 1,
+    align: str = "left",
+    uppercase: bool = True,
+    stroke: int = 0,
+    stroke_fill: tuple[int, int, int] = (0, 0, 0),
+    line_gap: int = 5,
+) -> int:
+    if ImageDraw is None:
+        return 0
+    draw = ImageDraw.Draw(image)
+    x, y, w, h = box
+    prepared = clean(text).upper() if uppercase else clean(text)
+    if not prepared:
+        return 0
+    chosen = reference_font(role, min_size)
+    lines: List[str] = [prepared]
+    for size in range(start_size, min_size - 1, -2):
+        candidate = reference_font(role, size)
+        candidate_lines = wrap_text(draw, prepared, candidate, w, max_lines)
+        line_height = size + line_gap
+        if candidate_lines and line_height * len(candidate_lines) <= h and all(text_size(draw, line, candidate)[0] <= w for line in candidate_lines):
+            chosen = candidate
+            lines = candidate_lines
+            break
+    line_height = getattr(chosen, "size", min_size) + line_gap
+    total_h = line_height * len(lines)
+    y_cursor = y + max(0, (h - total_h) // 2)
+    overflow = 0
+    for line in lines:
+        line_w, _ = text_size(draw, line, chosen)
+        if align == "center":
+            x_cursor = x + (w - line_w) // 2
+        elif align == "right":
+            x_cursor = x + w - line_w
+        else:
+            x_cursor = x
+        if x_cursor < x or x_cursor + line_w > x + w or y_cursor + line_height > y + h:
+            overflow += 1
+        if stroke:
+            draw.text((x_cursor, y_cursor), line, font=chosen, fill=fill, stroke_width=stroke, stroke_fill=stroke_fill)
+        else:
+            draw.text((x_cursor + 2, y_cursor + 3), line, font=chosen, fill=(0, 0, 0))
+            draw.text((x_cursor, y_cursor), line, font=chosen, fill=fill)
+        y_cursor += line_height
+    return overflow
+
+
+def draw_reference_panel(image: Any, box: Tuple[int, int, int, int], outline: tuple[int, int, int], *, fill: tuple[int, int, int, int] = (2, 4, 9, 220), radius: int = 12, width: int = 2) -> None:
+    x, y, w, h = box
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    draw.rounded_rectangle((x + 7, y + 10, x + w + 7, y + h + 10), radius=radius, fill=(0, 0, 0, 110))
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=radius, fill=fill, outline=(*outline, 235), width=width)
+    image.alpha_composite(layer)
+
+
+def draw_reference_background(image: Any, tone: str = "final") -> None:
+    width, height = image.size
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((0, 0, width, height), fill=(3, 5, 10, 255))
+    draw.polygon([(int(width * 0.52), 0), (width, 0), (width, int(height * 0.54)), (int(width * 0.35), int(height * 0.22))], fill=(14, 24, 43, 238))
+    draw.polygon([(0, int(height * 0.58)), (int(width * 0.28), int(height * 0.31)), (int(width * 0.58), height), (0, height)], fill=(10, 20, 38, 235))
+    for x in range(-height, width + height, 185):
+        draw.line((x, height + 80, x + int(height * 0.72), -60), fill=(222, 161, 38, 120), width=3)
+    for x in range(-height, width + height, 340):
+        draw.line((x, height + 160, x + int(height * 0.58), -30), fill=(37, 99, 163, 90), width=2)
+    for cx, cy, rx, ry, alpha in [
+        (int(width * 0.20), int(height * 0.16), int(width * 0.55), int(height * 0.25), 38),
+        (int(width * 0.90), int(height * 0.72), int(width * 0.46), int(height * 0.24), 26),
+    ]:
+        layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        layer_draw = ImageDraw.Draw(layer, "RGBA")
+        layer_draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=(245, 204, 88, alpha))
+        if ImageFilter is not None:
+            layer = layer.filter(ImageFilter.GaussianBlur(42))
+        image.alpha_composite(layer)
+
+def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
+    badge = template_spec.get("badge") if isinstance(template_spec.get("badge"), dict) else {}
+    x = int(badge.get("x", 48))
+    y = int(badge.get("y", 42))
+    w = int(badge.get("w", 80))
+    h = int(badge.get("h", 80))
+    badge_path = REFERENCE_BRAND_ROOT / clean(badge.get("asset") or "official_hsd_badge_reference.png")
+    if badge_path.exists():
+        try:
+            logo = Image.open(badge_path).convert("RGBA")
+            logo.thumbnail((w, h), resample_filter())
+            image.alpha_composite(logo, (x + (w - logo.width) // 2, y + (h - logo.height) // 2))
+            return badge_path.relative_to(PROJECT_ROOT).as_posix()
+        except Exception:
+            pass
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((x, y, x + w, y + h), outline=(222, 161, 38, 255), width=3)
+    draw_reference_text(image, (x + 8, y + 8, w - 16, h - 16), "HSD", "context", 28, 16, PALETTE["ink"], max_lines=1, align="center")
+    return "badge_missing_text_fallback"
+
+
+def draw_reference_guardrail(image: Any) -> None:
+    width, height = image.size
+    draw = ImageDraw.Draw(image, "RGBA")
+    label = "DRAFT REVIEW ONLY - NOT APPROVED - NO AUTO-PUBLISH"
+    pill_w = min(326, width - 760)
+    if pill_w > 180:
+        draw.rounded_rectangle((width - pill_w - 50, 76, width - 50, 122), radius=8, fill=(190, 39, 54, 232), outline=(241, 238, 229, 180), width=1)
+        draw_reference_text(image, (width - pill_w - 38, 80, pill_w - 24, 36), "DRAFT REVIEW ONLY", "context", 19, 12, PALETTE["ink"], max_lines=1, align="center")
+    strip_h = 64
+    draw.rectangle((0, height - strip_h, width, height), fill=(190, 39, 54, 244))
+    draw_reference_text(image, (24, height - strip_h + 12, width - 48, strip_h - 18), label, "context", 24, 14, PALETTE["ink"], max_lines=1, align="center")
+
+
+def team_registry() -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
+    aliases: Dict[str, str] = {}
+    for row in read_csv(TEAM_ALIASES_CSV):
+        alias = clean(row.get("alias"))
+        team_id = clean(row.get("team_id"))
+        if alias and team_id:
+            aliases[norm(alias)] = team_id
+    logos: Dict[str, Dict[str, str]] = {}
+    for row in read_csv(TEAM_LOGOS_CSV):
+        team_id = clean(row.get("team_id"))
+        if team_id:
+            logos[team_id] = row
+    return aliases, logos
+
+
+def resolve_team_id(team: str, aliases: Dict[str, str]) -> str:
+    normalized = norm(team)
+    if normalized in aliases:
+        return aliases[normalized]
+    for alias, team_id in aliases.items():
+        if alias and (alias in normalized or normalized in alias):
+            return team_id
+    return ""
+
+
+def short_team(team: str) -> str:
+    text = clean(team).upper()
+    prefixes = [
+        "GOLDEN STATE ",
+        "LOS ANGELES ",
+        "LAS VEGAS ",
+        "NEW YORK ",
+        "CONNECTICUT ",
+        "WASHINGTON ",
+        "MINNESOTA ",
+        "SEATTLE ",
+        "PHOENIX ",
+        "INDIANA ",
+        "ATLANTA ",
+        "DALLAS ",
+        "CHICAGO ",
+    ]
+    for prefix in prefixes:
+        if text.startswith(prefix) and len(text) > len(prefix) + 3:
+            return text[len(prefix):]
+    return text
+
+
+def logo_candidates(team_id: str, row: Dict[str, str]) -> List[Path]:
+    candidates: List[Path] = []
+    raw = clean(row.get("file_path"))
+    if raw:
+        candidates.append(project_path(raw))
+    if team_id:
+        base = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "teams" / team_id
+        candidates.extend([base / "logo.png", base / "logo.svg"])
+    seen: set[str] = set()
+    unique: List[Path] = []
+    for path in candidates:
+        key = path.as_posix().lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(path)
+    return unique
+
+
+def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
+    team_id = resolve_team_id(team, aliases)
+    row = logos.get(team_id, {})
+    approved = clean(row.get("approved")).lower() == "true"
+    found_svg_path = ""
+    svg_blocker = ""
+    for path in logo_candidates(team_id, row):
+        if not path.exists():
+            continue
+        try:
+            if path.suffix.lower() == ".svg":
+                found_svg_path = path.relative_to(PROJECT_ROOT).as_posix() if path.is_relative_to(PROJECT_ROOT) else path.as_posix()
+                import cairosvg
+
+                cache = OUT_DIR / "logo_cache" / f"{team_id or norm(team)}.png"
+                cache.parent.mkdir(parents=True, exist_ok=True)
+                cairosvg.svg2png(url=path.as_posix(), write_to=cache.as_posix(), output_width=700, output_height=700)
+                image = Image.open(cache).convert("RGBA")
+                render_path = cache
+            else:
+                image = Image.open(path).convert("RGBA")
+                render_path = path
+            return {
+                "image": image,
+                "team_id": team_id,
+                "path": path.relative_to(PROJECT_ROOT).as_posix() if path.is_relative_to(PROJECT_ROOT) else path.as_posix(),
+                "render_path": render_path.as_posix(),
+                "status": "approved_logo" if approved else "registry_logo_review_required",
+                "approved": approved,
+            }
+        except Exception as exc:
+            if path.suffix.lower() == ".svg":
+                svg_blocker = clean(exc)[:220]
+            continue
+    if found_svg_path:
+        return {
+            "image": None,
+            "team_id": team_id,
+            "path": found_svg_path,
+            "render_path": "",
+            "status": "approved_svg_logo_converter_unavailable" if approved else "svg_logo_converter_unavailable_review_required",
+            "approved": approved,
+            "blocker": svg_blocker or "SVG converter unavailable in local Python runtime.",
+        }
+    return {
+        "image": None,
+        "team_id": team_id,
+        "path": "",
+        "render_path": "",
+        "status": "logo_missing_team_name_placeholder",
+        "approved": False,
+    }
+
+
+def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], aliases: Dict[str, str], logos: Dict[str, Dict[str, str]], accent: tuple[int, int, int]) -> Dict[str, Any]:
+    draw_reference_panel(image, box, accent, fill=(1, 2, 7, 232), radius=16, width=2)
+    x, y, w, h = box
+    result = load_team_logo(team, aliases, logos)
+    logo = result.get("image")
+    if logo is not None:
+        logo = logo.copy()
+        logo.thumbnail((w - 36, h - 36), resample_filter())
+        image.alpha_composite(logo, (x + (w - logo.width) // 2, y + (h - logo.height) // 2))
+    else:
+        draw_reference_text(image, (x + 18, y + 26, w - 36, h - 70), short_team(team), "context", 34, 18, accent, max_lines=2, align="center")
+        draw_reference_text(image, (x + 18, y + h - 58, w - 36, 38), "LOGO REVIEW", "context", 18, 12, PALETTE["ink"], max_lines=1, align="center")
+    return {
+        "team": clean(team),
+        "team_id": clean(result.get("team_id")),
+        "status": clean(result.get("status")),
+        "approved": bool(result.get("approved")),
+        "asset_path": clean(result.get("path")),
     }
 
 
@@ -322,8 +762,110 @@ def draw_score_panel(draw: Any, x: int, y: int, w: int, h: int, team: str, score
     draw_right_text(draw, x + w - 30, y + 48, score, score_font, text_fill)
 
 
+def square_reference_spec() -> Dict[str, Any]:
+    return {
+        "template_id": "hsd_game_recap_final_score_a_square_review_derivative",
+        "family": "game_recap_final_score",
+        "variant": "A-square-review-derivative",
+        "format": "square_review",
+        "canvas": {"width": 1080, "height": 1080},
+        "badge": {"asset": "official_hsd_badge_reference.png", "x": 48, "y": 42, "w": 80, "h": 80},
+        "zones": {
+            "title": {"x": 60, "y": 108, "w": 960, "h": 150},
+            "context_row": {"x": 60, "y": 282, "w": 960, "h": 58},
+            "primary_logo_slot": {"x": 70, "y": 376, "w": 190, "h": 190},
+            "primary_team": {"x": 292, "y": 386, "w": 330, "h": 92},
+            "primary_score": {"x": 642, "y": 350, "w": 360, "h": 235},
+            "secondary_logo_slot": {"x": 70, "y": 612, "w": 190, "h": 190},
+            "secondary_team": {"x": 292, "y": 636, "w": 330, "h": 86},
+            "secondary_score": {"x": 692, "y": 602, "w": 260, "h": 190},
+            "key_performer": {"x": 60, "y": 806, "w": 960, "h": 88},
+            "hook_takeaway": {"x": 60, "y": 914, "w": 960, "h": 88},
+        },
+    }
+
+
+def format_reference_spec(format_spec: Dict[str, Any], reference: Dict[str, Any]) -> Dict[str, Any]:
+    if clean(format_spec.get("format_id")) == "square_feed_1x1":
+        return square_reference_spec()
+    loaded = load_reference_spec(reference)
+    canvas = loaded.get("canvas") if isinstance(loaded.get("canvas"), dict) else {}
+    if int(canvas.get("width", 0)) == int(format_spec.get("width", 0)) and int(canvas.get("height", 0)) == int(format_spec.get("height", 0)):
+        return loaded
+    return loaded or square_reference_spec()
+
+
+def draw_context_divider(image: Any, box: Tuple[int, int, int, int], text: str) -> None:
+    x, y, w, h = box
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.line((x, y + h - 6, x + w, y + h - 6), fill=(222, 161, 38, 210), width=3)
+    draw_reference_text(image, (x, y, w, h - 12), text, "context", 34, 18, (247, 203, 84), max_lines=1, align="left")
+    draw_reference_text(image, (x, y, w, h - 12), "REVIEW DRAFT", "context", 24, 14, (241, 238, 229), max_lines=1, align="right")
+
+
+def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int]) -> None:
+    x, y, w, h = box
+    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 218), radius=14, width=2)
+    draw_reference_text(image, (x + 24, y + 12, w - 48, min(34, h - 16)), eyebrow, "context", 24, 14, accent, max_lines=1)
+    body_top = y + 48 if h >= 92 else y + 34
+    draw_reference_text(
+        image,
+        (x + 24, body_top, w - 48, max(28, y + h - body_top - 14)),
+        body,
+        "body",
+        31 if h >= 100 else 22,
+        14,
+        PALETTE["ink"],
+        max_lines=2,
+        uppercase=False,
+    )
+
+
+def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], format_spec: Dict[str, Any], score: Dict[str, str], reference: Dict[str, Any]) -> None:
+    template_spec = format_reference_spec(format_spec, reference)
+    width, height = int(format_spec["width"]), int(format_spec["height"])
+    aliases, logos = team_registry()
+
+    draw_reference_background(image, "final")
+    draw_reference_badge(image, template_spec)
+
+    title_box = zone_box(template_spec, "title")
+    title = "GAME RECAP FINAL SCORE"
+    if clean(format_spec.get("format_id")) == "ig_story_9x16":
+        title = "QUICK FINAL SCORE"
+    draw_reference_text(image, title_box, title, "display", 94 if height <= 1350 else 100, 40, PALETTE["ink"], max_lines=2, stroke=2, stroke_fill=(0, 0, 0))
+
+    context_box = zone_box(template_spec, "context_row")
+    draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
+
+    draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, (247, 203, 84))
+    draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, (37, 99, 163))
+
+    draw_reference_text(image, zone_box(template_spec, "primary_team"), short_team(score["winner"]), "context", 58, 24, PALETTE["ink"], max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "secondary_team"), short_team(score["loser"]), "context", 46, 22, (204, 210, 222), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", 238 if height <= 1350 else 254, 88, (247, 203, 84), max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", 176 if height <= 1350 else 188, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
+
+    context = clean(packet.get("copy_context")) or clean(packet.get("source_detail")) or "Free-source evidence ready for human review."
+    key_box = zone_box(template_spec, "key_performer")
+    draw_lower_reference_module(image, key_box, "SOURCE CONFIDENCE", context, (247, 203, 84))
+
+    hook_name = "hook_question" if zone_box(template_spec, "hook_question") != (0, 0, 0, 0) else "hook_takeaway"
+    hook_box = zone_box(template_spec, hook_name)
+    dek = clean(packet.get("copy_dek"))
+    if not dek:
+        dek = f"Verified final: {score['winner']} {score['winner_score']}, {score['loser']} {score['loser_score']}."
+    draw_lower_reference_module(image, hook_box, "MANUAL CAPTION ANGLE", dek, (37, 99, 163))
+
+    draw_reference_guardrail(image)
+
+
 def draw_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any], score: Dict[str, str]) -> None:
     width, height = spec["width"], spec["height"]
+    reference = reference_for_format(spec, template)
+    if reference:
+        draw_reference_final_score_template(image, packet, template, spec, score, reference)
+        return
     draw = ImageDraw.Draw(image)
     draw_brand_pattern(draw, width, height, "result")
     draw_review_chrome(draw, width, height, template, clean(spec["format_id"]).replace("_", " "))
@@ -450,7 +992,7 @@ def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str
 def render_format(packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any]) -> Path:
     if Image is None or ImageDraw is None:
         raise RuntimeError("Pillow is required for manual review rendering.")
-    image = Image.new("RGB", (spec["width"], spec["height"]), PALETTE["deep"])
+    image = Image.new("RGBA", (spec["width"], spec["height"]), (*PALETTE["deep"], 255))
     draw_primary_template(image, packet, template, spec)
     OUT_REVIEW_DRAFTS.mkdir(parents=True, exist_ok=True)
     output = OUT_REVIEW_DRAFTS / spec["filename"]
@@ -466,19 +1008,22 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
     outputs = []
     for spec in FORMAT_SPECS:
         output = render_format(packet, template, spec)
-        outputs.append(
-            {
-                "format_id": spec["format_id"],
-                "path": output.as_posix(),
-                "width": spec["width"],
-                "height": spec["height"],
-                "primary": bool(spec.get("primary")),
-                "review_only": True,
-                "publish_ready": False,
-            }
-        )
+        reference = reference_for_format(spec, template)
+        row = {
+            "format_id": spec["format_id"],
+            "path": output.as_posix(),
+            "width": spec["width"],
+            "height": spec["height"],
+            "primary": bool(spec.get("primary")),
+            "review_only": True,
+            "publish_ready": False,
+        }
+        if reference:
+            row.update(reference)
+        outputs.append(row)
     return {
         "template": template,
+        "reference_pack": reference_pack_summary() if clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID else {},
         "format_options": outputs,
         "asset_slots": asset_slots(packet, template),
     }
@@ -488,6 +1033,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
     packet = manifest.get("packet") if isinstance(manifest.get("packet"), dict) else {}
     render_result = render_result or {}
     template = render_result.get("template") if isinstance(render_result.get("template"), dict) else {}
+    reference_pack = render_result.get("reference_pack") if isinstance(render_result.get("reference_pack"), dict) else {}
     formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
     slots = render_result.get("asset_slots") if isinstance(render_result.get("asset_slots"), list) else []
     lines = [
@@ -512,18 +1058,29 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Story: `{clean(packet.get('title')) or 'none'}`",
         f"- Template: `{clean(template.get('template_id')) or 'not_selected'}`",
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
+        f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Reason: {reason or 'n/a'}",
         "",
         "## Review Draft Formats",
         "",
     ]
     if formats:
-        lines.extend(
-            f"- `{item.get('format_id')}` | `{item.get('width')}x{item.get('height')}` | `{item.get('path')}` | publish_ready=`false`"
-            for item in formats
-        )
+        for item in formats:
+            ref = clean(item.get("reference_template_id")) or "none"
+            derivation = clean(item.get("reference_derivation")) or "not_reference_packed"
+            lines.append(
+                f"- `{item.get('format_id')}` | `{item.get('width')}x{item.get('height')}` | `{item.get('path')}` | reference=`{ref}` | derivation=`{derivation}` | publish_ready=`false`"
+            )
     else:
         lines.append("- none")
+    if formats:
+        lines += ["", "## Reference Assets", ""]
+        for item in formats:
+            if not clean(item.get("reference_template_id")):
+                continue
+            lines.append(f"- `{item.get('format_id')}` spec: `{clean(item.get('reference_spec_path'))}`")
+            lines.append(f"- `{item.get('format_id')}` public mockup: `{clean(item.get('reference_public_mockup_path'))}`")
+            lines.append(f"- `{item.get('format_id')}` layout reference: `{clean(item.get('reference_layout_path'))}`")
     lines += ["", "## Asset Slots", ""]
     if slots:
         lines.extend(
@@ -576,6 +1133,7 @@ def main() -> None:
         "title": clean(packet.get("title")),
         "renderer_mode": "template_driven_review_drafts",
         "selected_template": render_result.get("template", {}),
+        "reference_pack": render_result.get("reference_pack", {}),
         "format_options": render_result.get("format_options", []),
         "asset_slots": render_result.get("asset_slots", []),
         "guardrails": {
