@@ -9,10 +9,12 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.17-registry-patch-preview"
+VERSION = "hsd-source-registry-audit-bebe-v2.18-post-edit-validation"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 VERIFICATION_LOG_INPUT = "operator/inbox/source_registry_verification_log.csv"
+PATCH_PREVIEW_INPUT = "operator/inbox/source_registry_patch_preview.csv"
+LATEST_PATCH_PREVIEW_INPUT = "outputs/local/latest/files/source_registry_patch_preview.csv"
 OUT_CSV = "source_registry_audit.csv"
 OUT_COVERAGE_CSV = "source_coverage_map.csv"
 OUT_INTAKE_CSV = "source_registry_intake_template.csv"
@@ -33,6 +35,8 @@ OUT_REGISTRY_APPROVAL_PACKET_CSV = "source_registry_approval_packet.csv"
 OUT_REGISTRY_APPROVAL_PACKET_MD = "source_registry_approval_packet.md"
 OUT_REGISTRY_PATCH_PREVIEW_CSV = "source_registry_patch_preview.csv"
 OUT_REGISTRY_PATCH_PREVIEW_MD = "source_registry_patch_preview.md"
+OUT_REGISTRY_POST_EDIT_VALIDATION_CSV = "source_registry_post_edit_validation.csv"
+OUT_REGISTRY_POST_EDIT_VALIDATION_MD = "source_registry_post_edit_validation.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -323,6 +327,32 @@ SOURCE_REGISTRY_PATCH_PREVIEW_FIELDS = [
     "auto_edit_status",
     "publish_policy",
     "paid_api_policy",
+    "registry_edit_status",
+]
+
+SOURCE_REGISTRY_POST_EDIT_VALIDATION_FIELDS = [
+    "post_edit_validation_status",
+    "source_id",
+    "source_name",
+    "manual_edit_target",
+    "expected_source_json",
+    "actual_source_json",
+    "exact_match",
+    "drift_fields",
+    "unsafe_flags",
+    "enabled_status",
+    "automation_status_check",
+    "publish_policy_check",
+    "free_source_check",
+    "approval_packet_status",
+    "patch_preview_status",
+    "evidence_url",
+    "rollback_instructions",
+    "recommendation",
+    "validation_guardrails",
+    "auto_edit_status",
+    "paid_api_policy",
+    "publish_policy",
     "registry_edit_status",
 ]
 
@@ -1250,6 +1280,10 @@ def write_source_registry_approval_packet_csv(path: str | Path, rows: List[Dict[
 
 def write_source_registry_patch_preview_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_REGISTRY_PATCH_PREVIEW_FIELDS, extrasaction="ignore")
+
+
+def write_source_registry_post_edit_validation_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_POST_EDIT_VALIDATION_FIELDS, extrasaction="ignore")
 
 
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
@@ -2703,6 +2737,199 @@ def write_source_registry_patch_preview_markdown(path: str | Path, rows: List[Di
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def canonical_for_registry_validation(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(k): canonical_for_registry_validation(v) for k, v in sorted(value.items())}
+    if isinstance(value, list):
+        return [canonical_for_registry_validation(v) for v in value]
+    return value
+
+
+def source_has_paid_or_login_signals(source: Dict[str, Any]) -> bool:
+    text = lower(
+        " ".join(
+            [
+                str(source.get("source_id", "")),
+                str(source.get("source_type", "")),
+                str(source.get("tier", "")),
+                str(source.get("trust_band", "")),
+                str(source.get("publish_policy", "")),
+                str(source.get("automation_status", "")),
+                " ".join(str(item) for item in source.get("urls", []) if item),
+                " ".join(str(item) for item in source.get("domains", []) if item),
+                " ".join(str(item) for item in source.get("allowed_use", []) if item),
+            ]
+        )
+    )
+    paid_terms = ["paid", "api_key", "apikey", "subscription", "login", "credential", "paywall", "private"]
+    return any(term in text for term in paid_terms)
+
+
+def build_source_registry_post_edit_validation(
+    patch_preview_rows: List[Dict[str, str]],
+    sources: List[Dict[str, Any]],
+) -> List[Dict[str, str]]:
+    registry_by_id = registry_source_by_id(sources)
+    validation_rows: List[Dict[str, str]] = []
+    compare_keys = [
+        "source_id",
+        "source_type",
+        "enabled",
+        "tier",
+        "trust_band",
+        "sport_league",
+        "urls",
+        "domains",
+        "allowed_use",
+        "publish_policy",
+        "automation_status",
+    ]
+    for row in patch_preview_rows:
+        source_id = clean(row.get("source_id"))
+        expected, expected_status = parse_proposed_source_json(clean(row.get("copy_paste_source_json")))
+        actual = registry_by_id.get(source_id)
+        issues: List[str] = []
+        drift_fields: List[str] = []
+        unsafe_flags: List[str] = []
+
+        if expected_status != "valid_json":
+            issues.append("expected JSON is invalid")
+        if actual is None:
+            issues.append("source_id missing from current registry")
+        if actual is not None and expected_status == "valid_json":
+            for key in compare_keys:
+                if canonical_for_registry_validation(actual.get(key)) != canonical_for_registry_validation(expected.get(key)):
+                    drift_fields.append(key)
+            extra_keys = sorted(set(actual.keys()) - set(expected.keys()))
+            if extra_keys:
+                drift_fields.extend(f"extra:{key}" for key in extra_keys)
+            if actual.get("enabled") is not False:
+                unsafe_flags.append("enabled_not_false")
+            if clean(actual.get("automation_status")) != "disabled_manual_review_only":
+                unsafe_flags.append("automation_not_disabled_manual_review_only")
+            if clean(actual.get("publish_policy")) != "not_publish_ready_until_operator_verifies_and_enables":
+                unsafe_flags.append("publish_policy_not_review_only")
+            if source_has_paid_or_login_signals(actual):
+                unsafe_flags.append("paid_or_login_signal")
+
+        if unsafe_flags:
+            status = "unsafe_hold"
+        elif issues:
+            status = "missing_manual_edit"
+        elif drift_fields:
+            status = "drift_review_required"
+        else:
+            status = "validated_exact_match"
+
+        actual_json = pretty_json(actual) if isinstance(actual, dict) else ""
+        expected_json = pretty_json(expected) if expected_status == "valid_json" else clean(row.get("copy_paste_source_json"))
+        validation_rows.append(
+            {
+                "post_edit_validation_status": status,
+                "source_id": source_id,
+                "source_name": clean(row.get("source_name")),
+                "manual_edit_target": clean(row.get("manual_edit_target")) or REGISTRY,
+                "expected_source_json": expected_json,
+                "actual_source_json": actual_json,
+                "exact_match": "Yes" if status == "validated_exact_match" else "No",
+                "drift_fields": "; ".join(drift_fields) if drift_fields else "none",
+                "unsafe_flags": "; ".join(unsafe_flags) if unsafe_flags else "none",
+                "enabled_status": (
+                    "missing"
+                    if actual is None
+                    else ("disabled" if actual.get("enabled") is False else f"unsafe_enabled_value={actual.get('enabled')}")
+                ),
+                "automation_status_check": (
+                    "missing"
+                    if actual is None
+                    else ("pass" if clean(actual.get("automation_status")) == "disabled_manual_review_only" else "review")
+                ),
+                "publish_policy_check": (
+                    "missing"
+                    if actual is None
+                    else ("pass" if clean(actual.get("publish_policy")) == "not_publish_ready_until_operator_verifies_and_enables" else "review")
+                ),
+                "free_source_check": (
+                    "missing"
+                    if actual is None
+                    else ("review" if source_has_paid_or_login_signals(actual) else "pass")
+                ),
+                "approval_packet_status": clean(row.get("approval_packet_status")),
+                "patch_preview_status": clean(row.get("patch_preview_status")),
+                "evidence_url": clean(row.get("evidence_url")),
+                "rollback_instructions": clean(row.get("rollback_instructions"))
+                or f"If validation fails, manually remove source_id={source_id} and rerun review.",
+                "recommendation": {
+                    "validated_exact_match": "Registry row matches the approved preview and remains disabled/manual-review-only.",
+                    "missing_manual_edit": "No matching trusted-registry row found yet; no action unless the human intended to add it.",
+                    "drift_review_required": "Compare expected and actual JSON before trusting this registry row.",
+                    "unsafe_hold": "Hold this registry row until unsafe enablement, automation, paid/login, or publish-policy issue is fixed manually.",
+                }[status],
+                "validation_guardrails": "read_only_post_edit_validation_no_auto_fix_no_enable_no_publish",
+                "auto_edit_status": "not_performed_by_generator",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "publish_policy": "validation_only_not_publish_ready",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        )
+    return validation_rows
+
+
+def merge_patch_preview_rows_for_validation(
+    current_rows: List[Dict[str, str]],
+    inbox_rows: List[Dict[str, str]],
+    latest_rows: List[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    merged: Dict[str, Dict[str, str]] = {}
+    for rows in [latest_rows, inbox_rows, current_rows]:
+        for row in rows:
+            source_id = clean(row.get("source_id"))
+            if source_id:
+                merged[source_id] = row
+    return list(merged.values())
+
+
+def write_source_registry_post_edit_validation_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Post-Edit Validation",
+        "",
+        "Read-only validation for human registry edits after a patch preview.",
+        "This report does not edit `config/source_registry.json`, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- validation rows: {len(rows)}",
+        f"- exact matches: {sum(1 for row in rows if row['post_edit_validation_status'] == 'validated_exact_match')}",
+        f"- missing manual edits: {sum(1 for row in rows if row['post_edit_validation_status'] == 'missing_manual_edit')}",
+        f"- drift review required: {sum(1 for row in rows if row['post_edit_validation_status'] == 'drift_review_required')}",
+        f"- unsafe holds: {sum(1 for row in rows if row['post_edit_validation_status'] == 'unsafe_hold')}",
+        "",
+        "## Guardrails",
+        "",
+        "- Validate only against rows generated by the manual patch preview.",
+        "- Current-run preview rows are preferred; operator inbox and previous local-run previews can be used for after-edit validation.",
+        "- Hold any row that is enabled, auto-runnable, publish-ready, paid/API-like, login-only, or different from the approved JSON.",
+        "- This report is evidence for a human review; it never fixes or applies registry changes.",
+        "- Keep new sources disabled until a later deliberate human review changes that.",
+        "",
+        "## Validation Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No patch preview rows were available for post-edit validation.")
+    else:
+        for row in rows:
+            lines += [
+                f"- **{row['post_edit_validation_status']}** | {row['source_id']}",
+                f"  - exact match: {row['exact_match']} | enabled: {row['enabled_status']} | automation: {row['automation_status_check']} | publish: {row['publish_policy_check']} | free: {row['free_source_check']}",
+                f"  - drift: {row['drift_fields']} | unsafe: {row['unsafe_flags']}",
+                f"  - recommendation: {row['recommendation']}",
+                f"  - rollback: {row['rollback_instructions']}",
+            ]
+    lines += ["", "Use `source_registry_post_edit_validation.csv` for expected-vs-actual JSON review.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def write_source_registry_verification_log_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
     lines = [
         "# HSD Source Registry Verification Log",
@@ -2920,6 +3147,12 @@ def main() -> None:
     source_verification_log_rows = build_source_registry_verification_log(registry_diff_review_rows, manual_verification_log_rows)
     registry_approval_packet_rows = build_source_registry_approval_packet(source_verification_log_rows, registry_update_worksheet_rows)
     registry_patch_preview_rows = build_source_registry_patch_preview(registry_approval_packet_rows, sources)
+    validation_patch_preview_rows = merge_patch_preview_rows_for_validation(
+        registry_patch_preview_rows,
+        read_run_csv(PATCH_PREVIEW_INPUT),
+        read_run_csv(LATEST_PATCH_PREVIEW_INPUT),
+    )
+    registry_post_edit_validation_rows = build_source_registry_post_edit_validation(validation_patch_preview_rows, sources)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -2944,6 +3177,8 @@ def main() -> None:
     write_source_registry_approval_packet_markdown(OUT_REGISTRY_APPROVAL_PACKET_MD, registry_approval_packet_rows)
     write_source_registry_patch_preview_csv(OUT_REGISTRY_PATCH_PREVIEW_CSV, registry_patch_preview_rows)
     write_source_registry_patch_preview_markdown(OUT_REGISTRY_PATCH_PREVIEW_MD, registry_patch_preview_rows)
+    write_source_registry_post_edit_validation_csv(OUT_REGISTRY_POST_EDIT_VALIDATION_CSV, registry_post_edit_validation_rows)
+    write_source_registry_post_edit_validation_markdown(OUT_REGISTRY_POST_EDIT_VALIDATION_MD, registry_post_edit_validation_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -2998,6 +3233,11 @@ def main() -> None:
         "registry_patch_preview_rows": len(registry_patch_preview_rows),
         "registry_patch_preview_ready": sum(1 for r in registry_patch_preview_rows if r["patch_preview_status"] == "ready_for_manual_copy_paste"),
         "registry_patch_preview_hold": sum(1 for r in registry_patch_preview_rows if r["patch_preview_status"] == "hold_before_manual_patch"),
+        "registry_post_edit_validation_rows": len(registry_post_edit_validation_rows),
+        "registry_post_edit_validation_exact": sum(1 for r in registry_post_edit_validation_rows if r["post_edit_validation_status"] == "validated_exact_match"),
+        "registry_post_edit_validation_missing": sum(1 for r in registry_post_edit_validation_rows if r["post_edit_validation_status"] == "missing_manual_edit"),
+        "registry_post_edit_validation_drift": sum(1 for r in registry_post_edit_validation_rows if r["post_edit_validation_status"] == "drift_review_required"),
+        "registry_post_edit_validation_unsafe": sum(1 for r in registry_post_edit_validation_rows if r["post_edit_validation_status"] == "unsafe_hold"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -3027,6 +3267,7 @@ def main() -> None:
         "source_registry_verification_log": source_verification_log_rows,
         "source_registry_approval_packet": registry_approval_packet_rows,
         "source_registry_patch_preview": registry_patch_preview_rows,
+        "source_registry_post_edit_validation": registry_post_edit_validation_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -3080,6 +3321,7 @@ def main() -> None:
         f"- source verification log rows: {counts['source_verification_log_rows']}",
         f"- source approval packet rows: {counts['registry_approval_packet_rows']}",
         f"- source registry patch preview rows: {counts['registry_patch_preview_rows']}",
+        f"- source registry post-edit validation rows: {counts['registry_post_edit_validation_rows']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -3132,7 +3374,19 @@ def main() -> None:
     lines.append("A manual source verification log was created in `source_registry_verification_log.csv` and `.md`.")
     lines.append("A manual registry approval packet was created in `source_registry_approval_packet.csv` and `.md`.")
     lines.append("A manual registry patch preview was created in `source_registry_patch_preview.csv` and `.md`.")
+    lines.append("A read-only post-edit registry validation report was created in `source_registry_post_edit_validation.csv` and `.md`.")
     lines.append("")
+    if registry_post_edit_validation_rows:
+        lines.append("### Post-edit registry validation")
+        lines.append("")
+        for row in registry_post_edit_validation_rows[:8]:
+            lines.append(
+                f"- **{row['post_edit_validation_status']}** | {row['source_id']} | "
+                f"exact: {row['exact_match']} | unsafe: {row['unsafe_flags']}"
+            )
+        if len(registry_post_edit_validation_rows) > 8:
+            lines.append(f"- ... {len(registry_post_edit_validation_rows) - 8} more validation rows in the CSV.")
+        lines.append("")
     if registry_patch_preview_rows:
         lines.append("### Manual registry patch preview")
         lines.append("")
