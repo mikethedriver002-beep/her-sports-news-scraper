@@ -590,6 +590,41 @@ def seed_daily_ops_files() -> None:
             }
         ],
     )
+    Path("source_registry_verification_log.md").write_text(
+        "# HSD Source Registry Verification Log\n\nManual fill-in log.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_verification_log.csv",
+        [
+            {
+                "verification_log_status": "operator_input_required",
+                "operator_step": "open_url_record_freshness_duplicate_decision_and_approval_outcome",
+                "source_id": "pwhl_official_news",
+                "source_name": "PWHL official news",
+                "candidate_url": "https://www.thepwhl.com/en/news",
+                "candidate_domain": "thepwhl.com",
+                "diff_review_status": "HOLD",
+                "diff_flags": "duplicate_domain",
+                "diff_issues": "candidate domain already exists in trusted registry: thepwhl.com",
+                "registry_domain_match": "thepwhl.com",
+                "worksheet_domain_match": "No",
+                "url_checked": "",
+                "checked_at_local": "",
+                "freshness_result": "",
+                "duplicate_decision": "",
+                "approval_outcome": "",
+                "registry_edit_decision": "",
+                "operator_name": "",
+                "evidence_url": "",
+                "operator_notes": "",
+                "auto_edit_status": "not_performed_by_generator",
+                "publish_policy": "verification_log_only_not_publish_ready",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -719,7 +754,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.20.0-source-diff-review"
+    assert payload["version"] == "hsd-operator-command-center-v3.21.0-source-verification-log"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -760,6 +795,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Registry diff hold" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Registry diff review" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Registry diff pass" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Verification log rows" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Verification input needed" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -799,6 +836,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_diff_review"][0]["flags"] == "duplicate_domain"
     assert payload["source_registry_diff_review"][0]["registry_domain_match"] == "thepwhl.com"
     assert payload["source_registry_diff_review"][0]["rollback_status"] == "present"
+    assert payload["source_registry_verification_log"][0]["verification_log_status"] == "operator_input_required"
+    assert payload["source_registry_verification_log"][0]["url_checked"] == ""
+    assert payload["source_registry_verification_log"][0]["freshness_result"] == ""
+    assert payload["source_registry_verification_log"][0]["duplicate_decision"] == ""
+    assert payload["source_registry_verification_log"][0]["approval_outcome"] == ""
+    assert payload["source_registry_verification_log"][0]["registry_edit_status"] == "not_edited_by_generator"
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -824,6 +867,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert diff_action["artifact"] == "source_registry_diff_review.md"
     assert "1 hold row(s)" in diff_action["detail"]
     assert "Do not hand-edit the registry" in diff_action["detail"]
+    verification_action = next(action for action in payload["next_actions"] if action["title"] == "Fill manual source verification log")
+    assert verification_action["artifact"] == "source_registry_verification_log.md"
+    assert "1 source row(s) need operator evidence" in verification_action["detail"]
+    assert "URL checked, freshness result, duplicate decision" in verification_action["detail"]
     checklist_hold_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve held or discarded source checklist rows")
     assert checklist_hold_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 discard row(s)" in checklist_hold_action["detail"]
@@ -889,6 +936,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry diff review" in html
     assert "duplicate_domain" in html
     assert "candidate domain already exists" in html
+    assert "Source verification log" in html
+    assert "operator_input_required" in html
+    assert "operator fill-in" in html
     assert "Source registry update worksheet" in html
     assert "manual_registry_plan_after_verification" in html
     assert "not_performed_by_generator" in html
@@ -927,6 +977,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry diff review" in markdown
     assert "duplicate_domain" in markdown
     assert "candidate domain already exists" in markdown
+    assert "Source verification log" in markdown
+    assert "operator_input_required" in markdown
+    assert "url_checked: operator fill-in" in markdown
     assert "Source registry update worksheet" in markdown
     assert "manual_registry_plan_after_verification" in markdown
     assert "not_performed_by_generator" in markdown
@@ -1034,6 +1087,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_update_worksheet.csv" in runner
     assert "source_registry_diff_review.md" in runner
     assert "source_registry_diff_review.csv" in runner
+    assert "source_registry_verification_log.md" in runner
+    assert "source_registry_verification_log.csv" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner

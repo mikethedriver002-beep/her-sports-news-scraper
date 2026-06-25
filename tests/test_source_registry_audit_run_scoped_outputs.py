@@ -199,6 +199,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_update_worksheet.md").exists()
     assert (run_dir / "source_registry_diff_review.csv").exists()
     assert (run_dir / "source_registry_diff_review.md").exists()
+    assert (run_dir / "source_registry_verification_log.csv").exists()
+    assert (run_dir / "source_registry_verification_log.md").exists()
     assert (run_dir / "source_proposal_pack_readiness.csv").exists()
     assert (run_dir / "source_proposal_pack_readiness.md").exists()
     assert (run_dir / "source_proposal_packs.csv").exists()
@@ -240,6 +242,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["registry_diff_review_hold"] == 0
     assert manifest["counts"]["registry_diff_review_review"] >= 1
     assert manifest["counts"]["registry_diff_review_pass"] >= 1
+    assert manifest["counts"]["source_verification_log_rows"] == 20
+    assert manifest["counts"]["source_verification_log_input_required"] == 20
     assert manifest["counts"]["proposal_pack_leagues"] == 4
     assert manifest["counts"]["proposal_pack_rows"] == 57
     assert manifest["counts"]["proposal_pack_official"] == 39
@@ -323,6 +327,20 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     registry_diff_review_md = (run_dir / "source_registry_diff_review.md").read_text(encoding="utf-8")
     assert "Source Registry Diff Review" in registry_diff_review_md
     assert "does not edit files" in registry_diff_review_md
+    verification_log = read_csv(run_dir / "source_registry_verification_log.csv")
+    assert len(verification_log) == 20
+    assert verification_log[0]["verification_log_status"] == "operator_input_required"
+    assert verification_log[0]["source_id"] == "wnba_official_home_review"
+    assert verification_log[0]["diff_review_status"] == "PASS"
+    assert verification_log[0]["url_checked"] == ""
+    assert verification_log[0]["freshness_result"] == ""
+    assert verification_log[0]["duplicate_decision"] == ""
+    assert verification_log[0]["approval_outcome"] == ""
+    assert verification_log[0]["auto_edit_status"] == "not_performed_by_generator"
+    assert verification_log[0]["registry_edit_status"] == "not_edited_by_generator"
+    verification_log_md = (run_dir / "source_registry_verification_log.md").read_text(encoding="utf-8")
+    assert "Source Registry Verification Log" in verification_log_md
+    assert "url_checked" in verification_log_md
     pack_readiness = read_csv(run_dir / "source_proposal_pack_readiness.csv")
     assert len(pack_readiness) == 4
     readiness_by_key = {row["pack_key"]: row for row in pack_readiness}
@@ -398,6 +416,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["source_registry_update_worksheet"][0]["auto_edit_status"] == "not_performed_by_generator"
     assert manifest["source_registry_diff_review"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_diff_review"][0]["diff_review_status"] == "PASS"
+    assert manifest["source_registry_verification_log"][0]["source_id"] == "wnba_official_home_review"
+    assert manifest["source_registry_verification_log"][0]["verification_log_status"] == "operator_input_required"
     assert manifest["source_proposal_pack_readiness"][0]["pack_key"] == "wnba"
     assert manifest["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert [row["pack_key"] for row in manifest["source_proposal_pack_index"]] == ["wnba", "nwsl", "lpga", "pwhl"]
@@ -424,6 +444,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "source_registry_proposal_promotion_checklist.csv" in report
     assert "source_registry_update_worksheet.csv" in report
     assert "source_registry_diff_review.csv" in report
+    assert "source_registry_verification_log.csv" in report
     assert "source_proposal_pack_readiness.csv" in report
     assert "PWHL" in report
 
@@ -464,6 +485,8 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_update_worksheet.md").exists()
     assert (work_dir / "source_registry_diff_review.csv").exists()
     assert (work_dir / "source_registry_diff_review.md").exists()
+    assert (work_dir / "source_registry_verification_log.csv").exists()
+    assert (work_dir / "source_registry_verification_log.md").exists()
     assert (work_dir / "source_proposal_pack_readiness.csv").exists()
     assert (work_dir / "source_proposal_pack_readiness.md").exists()
     assert (work_dir / "source_proposal_packs.csv").exists()

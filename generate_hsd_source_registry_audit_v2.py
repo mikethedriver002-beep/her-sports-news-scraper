@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.14-registry-diff-reviewer"
+VERSION = "hsd-source-registry-audit-bebe-v2.15-source-verification-log"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -26,6 +26,8 @@ OUT_REGISTRY_UPDATE_WORKSHEET_CSV = "source_registry_update_worksheet.csv"
 OUT_REGISTRY_UPDATE_WORKSHEET_MD = "source_registry_update_worksheet.md"
 OUT_REGISTRY_DIFF_REVIEW_CSV = "source_registry_diff_review.csv"
 OUT_REGISTRY_DIFF_REVIEW_MD = "source_registry_diff_review.md"
+OUT_SOURCE_VERIFICATION_LOG_CSV = "source_registry_verification_log.csv"
+OUT_SOURCE_VERIFICATION_LOG_MD = "source_registry_verification_log.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -238,6 +240,33 @@ SOURCE_REGISTRY_DIFF_REVIEW_FIELDS = [
     "before_after_status",
     "auto_edit_status",
     "recommendation",
+]
+
+SOURCE_REGISTRY_VERIFICATION_LOG_FIELDS = [
+    "verification_log_status",
+    "operator_step",
+    "source_id",
+    "source_name",
+    "candidate_url",
+    "candidate_domain",
+    "diff_review_status",
+    "diff_flags",
+    "diff_issues",
+    "registry_domain_match",
+    "worksheet_domain_match",
+    "url_checked",
+    "checked_at_local",
+    "freshness_result",
+    "duplicate_decision",
+    "approval_outcome",
+    "registry_edit_decision",
+    "operator_name",
+    "evidence_url",
+    "operator_notes",
+    "auto_edit_status",
+    "publish_policy",
+    "paid_api_policy",
+    "registry_edit_status",
 ]
 
 PWHL_SOURCE_CANDIDATES = [
@@ -1152,6 +1181,10 @@ def write_source_registry_update_worksheet_csv(path: str | Path, rows: List[Dict
 
 def write_source_registry_diff_review_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_REGISTRY_DIFF_REVIEW_FIELDS, extrasaction="ignore")
+
+
+def write_source_registry_verification_log_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_VERIFICATION_LOG_FIELDS, extrasaction="ignore")
 
 
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
@@ -2324,6 +2357,84 @@ def write_source_registry_diff_review_markdown(path: str | Path, rows: List[Dict
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def build_source_registry_verification_log(diff_review_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    log_rows: List[Dict[str, str]] = []
+    for row in diff_review_rows:
+        log_rows.append(
+            {
+                "verification_log_status": "operator_input_required",
+                "operator_step": "open_url_record_freshness_duplicate_decision_and_approval_outcome",
+                "source_id": clean(row.get("source_id")),
+                "source_name": clean(row.get("source_name")),
+                "candidate_url": clean(row.get("candidate_url")),
+                "candidate_domain": clean(row.get("candidate_domain")),
+                "diff_review_status": clean(row.get("diff_review_status")),
+                "diff_flags": clean(row.get("flags")),
+                "diff_issues": clean(row.get("issues")),
+                "registry_domain_match": clean(row.get("registry_domain_match")),
+                "worksheet_domain_match": clean(row.get("worksheet_domain_match")),
+                "url_checked": "",
+                "checked_at_local": "",
+                "freshness_result": "",
+                "duplicate_decision": "",
+                "approval_outcome": "",
+                "registry_edit_decision": "",
+                "operator_name": "",
+                "evidence_url": "",
+                "operator_notes": "",
+                "auto_edit_status": "not_performed_by_generator",
+                "publish_policy": "verification_log_only_not_publish_ready",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        )
+    return log_rows
+
+
+def write_source_registry_verification_log_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Verification Log",
+        "",
+        "Manual operator log for recording checks after the registry diff review and before any human registry edit.",
+        "This log does not edit `config/source_registry.json`, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- log rows: {len(rows)}",
+        f"- operator input required: {sum(1 for row in rows if row['verification_log_status'] == 'operator_input_required')}",
+        "",
+        "## Fill-In Fields",
+        "",
+        "- `url_checked`: paste the exact public URL opened.",
+        "- `checked_at_local`: record the local date/time you checked it.",
+        "- `freshness_result`: use `current`, `stale`, `unclear`, or `not_accessible`.",
+        "- `duplicate_decision`: use `not_duplicate`, `same_domain_ok`, `duplicate_hold`, or `needs_review`.",
+        "- `approval_outcome`: use `approved_for_manual_registry_edit`, `hold`, `discard`, or `needs_more_review`.",
+        "- `registry_edit_decision`: use `no_edit_yet`, `manual_edit_planned`, or `manual_edit_completed_by_operator`.",
+        "",
+        "## Guardrails",
+        "",
+        "- Do not mark a row approved until the URL is free, public, current, and login-free.",
+        "- Rows with diff-review HOLD should remain held until the blocking issue is resolved.",
+        "- This log is evidence for a human decision; it is not imported into the trusted registry.",
+        "- Keep paid APIs, private pages, auto-runs, and publishing out of this workflow.",
+        "",
+        "## Log Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No verification log rows were generated. Work the diff review first.")
+    else:
+        for row in rows:
+            lines.append(
+                f"- **{row['verification_log_status']}** | {row['source_id']} | "
+                f"diff: {row['diff_review_status']} | flags: {row['diff_flags']} | "
+                f"record URL/freshness/duplicate/approval outcome in the CSV."
+            )
+    lines += ["", "Use `source_registry_verification_log.csv` as the manual fill-in log.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
     issues: List[str] = []
     flags: List[str] = []
@@ -2493,6 +2604,7 @@ def main() -> None:
     proposal_promotion_checklist_rows = build_source_registry_proposal_promotion_checklist(proposal_draft_rows)
     registry_update_worksheet_rows = build_source_registry_update_worksheet(proposal_promotion_checklist_rows)
     registry_diff_review_rows = build_source_registry_diff_review(sources, registry_update_worksheet_rows)
+    source_verification_log_rows = build_source_registry_verification_log(registry_diff_review_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -2511,6 +2623,8 @@ def main() -> None:
     write_source_registry_update_worksheet_markdown(OUT_REGISTRY_UPDATE_WORKSHEET_MD, registry_update_worksheet_rows)
     write_source_registry_diff_review_csv(OUT_REGISTRY_DIFF_REVIEW_CSV, registry_diff_review_rows)
     write_source_registry_diff_review_markdown(OUT_REGISTRY_DIFF_REVIEW_MD, registry_diff_review_rows)
+    write_source_registry_verification_log_csv(OUT_SOURCE_VERIFICATION_LOG_CSV, source_verification_log_rows)
+    write_source_registry_verification_log_markdown(OUT_SOURCE_VERIFICATION_LOG_MD, source_verification_log_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -2556,6 +2670,8 @@ def main() -> None:
         "registry_diff_review_pass": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "PASS"),
         "registry_diff_review_review": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "REVIEW"),
         "registry_diff_review_hold": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "HOLD"),
+        "source_verification_log_rows": len(source_verification_log_rows),
+        "source_verification_log_input_required": sum(1 for r in source_verification_log_rows if r["verification_log_status"] == "operator_input_required"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -2582,6 +2698,7 @@ def main() -> None:
         "source_registry_proposal_promotion_checklist": proposal_promotion_checklist_rows,
         "source_registry_update_worksheet": registry_update_worksheet_rows,
         "source_registry_diff_review": registry_diff_review_rows,
+        "source_registry_verification_log": source_verification_log_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -2632,6 +2749,7 @@ def main() -> None:
         f"- source proposal checklist discard rows: {counts['proposal_promotion_discard']}",
         f"- source registry update worksheet rows: {counts['registry_update_worksheet_rows']}",
         f"- source registry diff review hold rows: {counts['registry_diff_review_hold']}",
+        f"- source verification log rows: {counts['source_verification_log_rows']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -2681,7 +2799,19 @@ def main() -> None:
     lines.append("A promotion checklist was created in `source_registry_proposal_promotion_checklist.csv` and `.md`.")
     lines.append("A review-only registry update worksheet was created in `source_registry_update_worksheet.csv` and `.md`.")
     lines.append("A read-only registry diff review was created in `source_registry_diff_review.csv` and `.md`.")
+    lines.append("A manual source verification log was created in `source_registry_verification_log.csv` and `.md`.")
     lines.append("")
+    if source_verification_log_rows:
+        lines.append("### Manual source verification log")
+        lines.append("")
+        for row in source_verification_log_rows[:8]:
+            lines.append(
+                f"- **{row['verification_log_status']}** | {row['source_id']} | "
+                f"diff: {row['diff_review_status']} | record URL/freshness/duplicate/approval outcome"
+            )
+        if len(source_verification_log_rows) > 8:
+            lines.append(f"- ... {len(source_verification_log_rows) - 8} more verification log rows in the CSV.")
+        lines.append("")
     if registry_diff_review_rows:
         lines.append("### Manual registry diff review")
         lines.append("")
