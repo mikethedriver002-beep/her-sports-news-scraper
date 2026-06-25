@@ -51,6 +51,7 @@ KEY_FILES = [
     "source_coverage_map.csv", "source_registry_intake_template.md", "source_registry_intake_template.csv",
     "source_registry_proposal_review.md", "source_registry_proposal_review.csv",
     "source_registry_proposal_draft.md", "source_registry_proposal_draft.csv",
+    "source_registry_proposal_promotion_checklist.md", "source_registry_proposal_promotion_checklist.csv",
     "source_proposal_pack_readiness.md", "source_proposal_pack_readiness.csv",
     "source_proposal_packs.md", "source_proposal_packs.csv",
     "wnba_source_proposal_pack.md", "wnba_source_proposal_pack.csv",
