@@ -9,9 +9,10 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.15-source-verification-log"
+VERSION = "hsd-source-registry-audit-bebe-v2.16-registry-approval-packet"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
+VERIFICATION_LOG_INPUT = "operator/inbox/source_registry_verification_log.csv"
 OUT_CSV = "source_registry_audit.csv"
 OUT_COVERAGE_CSV = "source_coverage_map.csv"
 OUT_INTAKE_CSV = "source_registry_intake_template.csv"
@@ -28,6 +29,8 @@ OUT_REGISTRY_DIFF_REVIEW_CSV = "source_registry_diff_review.csv"
 OUT_REGISTRY_DIFF_REVIEW_MD = "source_registry_diff_review.md"
 OUT_SOURCE_VERIFICATION_LOG_CSV = "source_registry_verification_log.csv"
 OUT_SOURCE_VERIFICATION_LOG_MD = "source_registry_verification_log.md"
+OUT_REGISTRY_APPROVAL_PACKET_CSV = "source_registry_approval_packet.csv"
+OUT_REGISTRY_APPROVAL_PACKET_MD = "source_registry_approval_packet.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -263,6 +266,34 @@ SOURCE_REGISTRY_VERIFICATION_LOG_FIELDS = [
     "operator_name",
     "evidence_url",
     "operator_notes",
+    "auto_edit_status",
+    "publish_policy",
+    "paid_api_policy",
+    "registry_edit_status",
+]
+
+SOURCE_REGISTRY_APPROVAL_PACKET_FIELDS = [
+    "approval_packet_status",
+    "source_id",
+    "source_name",
+    "candidate_url",
+    "candidate_domain",
+    "manual_edit_target",
+    "exact_proposed_source_json",
+    "url_checked",
+    "checked_at_local",
+    "freshness_result",
+    "duplicate_decision",
+    "approval_outcome",
+    "registry_edit_decision",
+    "evidence_url",
+    "operator_name",
+    "operator_notes",
+    "diff_review_status",
+    "diff_flags",
+    "diff_issues",
+    "hold_reason",
+    "approval_guardrails",
     "auto_edit_status",
     "publish_policy",
     "paid_api_policy",
@@ -1185,6 +1216,10 @@ def write_source_registry_diff_review_csv(path: str | Path, rows: List[Dict[str,
 
 def write_source_registry_verification_log_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_REGISTRY_VERIFICATION_LOG_FIELDS, extrasaction="ignore")
+
+
+def write_source_registry_approval_packet_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_APPROVAL_PACKET_FIELDS, extrasaction="ignore")
 
 
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
@@ -2357,14 +2392,25 @@ def write_source_registry_diff_review_markdown(path: str | Path, rows: List[Dict
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
-def build_source_registry_verification_log(diff_review_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+def manual_verification_rows_by_source_id(rows: List[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
+    return {clean(row.get("source_id")): row for row in rows if clean(row.get("source_id"))}
+
+
+def build_source_registry_verification_log(
+    diff_review_rows: List[Dict[str, str]],
+    manual_rows: List[Dict[str, str]] | None = None,
+) -> List[Dict[str, str]]:
+    manual_by_id = manual_verification_rows_by_source_id(manual_rows or [])
     log_rows: List[Dict[str, str]] = []
     for row in diff_review_rows:
+        source_id = clean(row.get("source_id"))
+        manual = manual_by_id.get(source_id, {})
+        manual_has_outcome = bool(clean(manual.get("approval_outcome")) or clean(manual.get("freshness_result")) or clean(manual.get("duplicate_decision")))
         log_rows.append(
             {
-                "verification_log_status": "operator_input_required",
+                "verification_log_status": "operator_review_recorded" if manual_has_outcome else "operator_input_required",
                 "operator_step": "open_url_record_freshness_duplicate_decision_and_approval_outcome",
-                "source_id": clean(row.get("source_id")),
+                "source_id": source_id,
                 "source_name": clean(row.get("source_name")),
                 "candidate_url": clean(row.get("candidate_url")),
                 "candidate_domain": clean(row.get("candidate_domain")),
@@ -2373,15 +2419,15 @@ def build_source_registry_verification_log(diff_review_rows: List[Dict[str, str]
                 "diff_issues": clean(row.get("issues")),
                 "registry_domain_match": clean(row.get("registry_domain_match")),
                 "worksheet_domain_match": clean(row.get("worksheet_domain_match")),
-                "url_checked": "",
-                "checked_at_local": "",
-                "freshness_result": "",
-                "duplicate_decision": "",
-                "approval_outcome": "",
-                "registry_edit_decision": "",
-                "operator_name": "",
-                "evidence_url": "",
-                "operator_notes": "",
+                "url_checked": clean(manual.get("url_checked")),
+                "checked_at_local": clean(manual.get("checked_at_local")),
+                "freshness_result": clean(manual.get("freshness_result")),
+                "duplicate_decision": clean(manual.get("duplicate_decision")),
+                "approval_outcome": clean(manual.get("approval_outcome")),
+                "registry_edit_decision": clean(manual.get("registry_edit_decision")),
+                "operator_name": clean(manual.get("operator_name")),
+                "evidence_url": clean(manual.get("evidence_url")),
+                "operator_notes": clean(manual.get("operator_notes")),
                 "auto_edit_status": "not_performed_by_generator",
                 "publish_policy": "verification_log_only_not_publish_ready",
                 "paid_api_policy": "free_public_sources_only_no_paid_api",
@@ -2389,6 +2435,110 @@ def build_source_registry_verification_log(diff_review_rows: List[Dict[str, str]
             }
         )
     return log_rows
+
+
+def source_id_index(rows: List[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
+    return {clean(row.get("source_id")): row for row in rows if clean(row.get("source_id"))}
+
+
+def approval_packet_hold_reason(row: Dict[str, str]) -> str:
+    reasons: List[str] = []
+    if clean(row.get("diff_review_status")) == "HOLD":
+        reasons.append("diff review is HOLD")
+    if not clean(row.get("url_checked")):
+        reasons.append("missing url_checked")
+    if clean(row.get("freshness_result")) != "current":
+        reasons.append("freshness_result is not current")
+    if clean(row.get("duplicate_decision")) not in {"not_duplicate", "same_domain_ok"}:
+        reasons.append("duplicate_decision is not approved")
+    if not clean(row.get("evidence_url")):
+        reasons.append("missing evidence_url")
+    if clean(row.get("registry_edit_decision")) not in {"manual_edit_planned", "manual_edit_completed_by_operator"}:
+        reasons.append("registry_edit_decision is not manual_edit_planned or manual_edit_completed_by_operator")
+    return "; ".join(reasons) if reasons else "none"
+
+
+def build_source_registry_approval_packet(
+    verification_log_rows: List[Dict[str, str]],
+    worksheet_rows: List[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    worksheet_by_id = source_id_index(worksheet_rows)
+    packet_rows: List[Dict[str, str]] = []
+    for row in verification_log_rows:
+        if clean(row.get("approval_outcome")) != "approved_for_manual_registry_edit":
+            continue
+        source_id = clean(row.get("source_id"))
+        worksheet = worksheet_by_id.get(source_id, {})
+        exact_json = clean(worksheet.get("proposed_source_json"))
+        hold_reason = approval_packet_hold_reason(row)
+        packet_rows.append(
+            {
+                "approval_packet_status": "ready_for_final_manual_review" if hold_reason == "none" else "hold_before_manual_registry_edit",
+                "source_id": source_id,
+                "source_name": clean(row.get("source_name")),
+                "candidate_url": clean(row.get("candidate_url")),
+                "candidate_domain": clean(row.get("candidate_domain")),
+                "manual_edit_target": clean(worksheet.get("manual_edit_target")) or REGISTRY,
+                "exact_proposed_source_json": exact_json,
+                "url_checked": clean(row.get("url_checked")),
+                "checked_at_local": clean(row.get("checked_at_local")),
+                "freshness_result": clean(row.get("freshness_result")),
+                "duplicate_decision": clean(row.get("duplicate_decision")),
+                "approval_outcome": clean(row.get("approval_outcome")),
+                "registry_edit_decision": clean(row.get("registry_edit_decision")),
+                "evidence_url": clean(row.get("evidence_url")),
+                "operator_name": clean(row.get("operator_name")),
+                "operator_notes": clean(row.get("operator_notes")),
+                "diff_review_status": clean(row.get("diff_review_status")),
+                "diff_flags": clean(row.get("diff_flags")),
+                "diff_issues": clean(row.get("diff_issues")),
+                "hold_reason": hold_reason,
+                "approval_guardrails": "final_review_only_no_auto_edit_keep_disabled_until_manual_registry_review",
+                "auto_edit_status": "not_performed_by_generator",
+                "publish_policy": "approval_packet_only_not_publish_ready",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        )
+    return packet_rows
+
+
+def write_source_registry_approval_packet_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Approval Packet",
+        "",
+        "Final review packet for verification-log rows explicitly marked `approved_for_manual_registry_edit`.",
+        "This packet does not edit `config/source_registry.json`, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- approved rows summarized: {len(rows)}",
+        f"- ready for final manual review: {sum(1 for row in rows if row['approval_packet_status'] == 'ready_for_final_manual_review')}",
+        f"- held before manual edit: {sum(1 for row in rows if row['approval_packet_status'] == 'hold_before_manual_registry_edit')}",
+        "",
+        "## Guardrails",
+        "",
+        "- Include only rows the operator marked `approved_for_manual_registry_edit`.",
+        "- Treat `hold_before_manual_registry_edit` rows as blocked until the hold reason is resolved.",
+        "- Use the exact JSON for final human comparison only; this generator never applies it.",
+        "- Keep sources disabled until a deliberate human registry review changes that.",
+        "",
+        "## Approved Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No approved verification-log rows were found. Fill `operator/inbox/source_registry_verification_log.csv` before building an approval packet.")
+    else:
+        for row in rows:
+            lines += [
+                f"- **{row['approval_packet_status']}** | {row['source_id']} | {row['candidate_url']}",
+                f"  - evidence: {row['evidence_url'] or 'missing'} | checked: {row['checked_at_local'] or 'missing'}",
+                f"  - freshness: {row['freshness_result'] or 'missing'} | duplicate: {row['duplicate_decision'] or 'missing'}",
+                f"  - hold reason: {row['hold_reason']}",
+                f"  - exact JSON: `{row['exact_proposed_source_json']}`",
+            ]
+    lines += ["", "Use `source_registry_approval_packet.csv` for field-level final review.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
 
 
 def write_source_registry_verification_log_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
@@ -2604,7 +2754,9 @@ def main() -> None:
     proposal_promotion_checklist_rows = build_source_registry_proposal_promotion_checklist(proposal_draft_rows)
     registry_update_worksheet_rows = build_source_registry_update_worksheet(proposal_promotion_checklist_rows)
     registry_diff_review_rows = build_source_registry_diff_review(sources, registry_update_worksheet_rows)
-    source_verification_log_rows = build_source_registry_verification_log(registry_diff_review_rows)
+    manual_verification_log_rows = read_run_csv(VERIFICATION_LOG_INPUT)
+    source_verification_log_rows = build_source_registry_verification_log(registry_diff_review_rows, manual_verification_log_rows)
+    registry_approval_packet_rows = build_source_registry_approval_packet(source_verification_log_rows, registry_update_worksheet_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -2625,6 +2777,8 @@ def main() -> None:
     write_source_registry_diff_review_markdown(OUT_REGISTRY_DIFF_REVIEW_MD, registry_diff_review_rows)
     write_source_registry_verification_log_csv(OUT_SOURCE_VERIFICATION_LOG_CSV, source_verification_log_rows)
     write_source_registry_verification_log_markdown(OUT_SOURCE_VERIFICATION_LOG_MD, source_verification_log_rows)
+    write_source_registry_approval_packet_csv(OUT_REGISTRY_APPROVAL_PACKET_CSV, registry_approval_packet_rows)
+    write_source_registry_approval_packet_markdown(OUT_REGISTRY_APPROVAL_PACKET_MD, registry_approval_packet_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -2672,6 +2826,10 @@ def main() -> None:
         "registry_diff_review_hold": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "HOLD"),
         "source_verification_log_rows": len(source_verification_log_rows),
         "source_verification_log_input_required": sum(1 for r in source_verification_log_rows if r["verification_log_status"] == "operator_input_required"),
+        "source_verification_log_recorded": sum(1 for r in source_verification_log_rows if r["verification_log_status"] == "operator_review_recorded"),
+        "registry_approval_packet_rows": len(registry_approval_packet_rows),
+        "registry_approval_packet_ready": sum(1 for r in registry_approval_packet_rows if r["approval_packet_status"] == "ready_for_final_manual_review"),
+        "registry_approval_packet_hold": sum(1 for r in registry_approval_packet_rows if r["approval_packet_status"] == "hold_before_manual_registry_edit"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -2699,6 +2857,7 @@ def main() -> None:
         "source_registry_update_worksheet": registry_update_worksheet_rows,
         "source_registry_diff_review": registry_diff_review_rows,
         "source_registry_verification_log": source_verification_log_rows,
+        "source_registry_approval_packet": registry_approval_packet_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -2750,6 +2909,7 @@ def main() -> None:
         f"- source registry update worksheet rows: {counts['registry_update_worksheet_rows']}",
         f"- source registry diff review hold rows: {counts['registry_diff_review_hold']}",
         f"- source verification log rows: {counts['source_verification_log_rows']}",
+        f"- source approval packet rows: {counts['registry_approval_packet_rows']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -2800,7 +2960,19 @@ def main() -> None:
     lines.append("A review-only registry update worksheet was created in `source_registry_update_worksheet.csv` and `.md`.")
     lines.append("A read-only registry diff review was created in `source_registry_diff_review.csv` and `.md`.")
     lines.append("A manual source verification log was created in `source_registry_verification_log.csv` and `.md`.")
+    lines.append("A manual registry approval packet was created in `source_registry_approval_packet.csv` and `.md`.")
     lines.append("")
+    if registry_approval_packet_rows:
+        lines.append("### Manual registry approval packet")
+        lines.append("")
+        for row in registry_approval_packet_rows[:8]:
+            lines.append(
+                f"- **{row['approval_packet_status']}** | {row['source_id']} | "
+                f"evidence: {row['evidence_url'] or 'missing'} | hold: {row['hold_reason']}"
+            )
+        if len(registry_approval_packet_rows) > 8:
+            lines.append(f"- ... {len(registry_approval_packet_rows) - 8} more approval packet rows in the CSV.")
+        lines.append("")
     if source_verification_log_rows:
         lines.append("### Manual source verification log")
         lines.append("")
