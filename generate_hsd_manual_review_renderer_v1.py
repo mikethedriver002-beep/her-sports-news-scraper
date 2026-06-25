@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
@@ -345,6 +346,7 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
                     "requirement": requirement_note,
                     "asset_path": clean(result.get("path")),
                     "blocker": clean(result.get("blocker")),
+                    "render_method": clean(result.get("render_method")),
                     "team": clean(team_name),
                 }
             )
@@ -628,6 +630,55 @@ def logo_candidates(team_id: str, row: Dict[str, str]) -> List[Path]:
     return unique
 
 
+def rasterize_svg_with_local_browser(svg_path: Path, output_path: Path, size: int = 700) -> Dict[str, Any]:
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as exc:
+        return {"status": "blocked", "reason": f"playwright unavailable: {clean(exc)}"}
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        svg_payload = base64.b64encode(svg_path.read_bytes()).decode("ascii")
+        svg_uri = f"data:image/svg+xml;base64,{svg_payload}"
+        html_doc = f"""
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              html, body {{
+                margin: 0;
+                width: {size}px;
+                height: {size}px;
+                background: transparent;
+                overflow: hidden;
+              }}
+              img {{
+                width: {size}px;
+                height: {size}px;
+                object-fit: contain;
+                display: block;
+              }}
+            </style>
+          </head>
+          <body><img alt="team logo" src={json.dumps(svg_uri)}></body>
+        </html>
+        """
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(executable_path=playwright.chromium.executable_path)
+            page = browser.new_page(viewport={"width": size, "height": size}, device_scale_factor=1)
+            page.set_content(html_doc, wait_until="load")
+            page.locator("img").wait_for(state="visible", timeout=5000)
+            page.screenshot(path=output_path.as_posix(), omit_background=True)
+            browser.close()
+        image = Image.open(output_path).convert("RGBA")
+        if not image.getbbox():
+            return {"status": "blocked", "reason": "local browser produced a blank SVG raster."}
+        image.save(output_path)
+        return {"status": "ok", "path": output_path.as_posix()}
+    except Exception as exc:
+        return {"status": "blocked", "reason": clean(exc)[:240]}
+
+
 def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
     team_id = resolve_team_id(team, aliases)
     row = logos.get(team_id, {})
@@ -647,9 +698,11 @@ def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str
                 cairosvg.svg2png(url=path.as_posix(), write_to=cache.as_posix(), output_width=700, output_height=700)
                 image = Image.open(cache).convert("RGBA")
                 render_path = cache
+                render_method = "cairosvg"
             else:
                 image = Image.open(path).convert("RGBA")
                 render_path = path
+                render_method = "source_png"
             return {
                 "image": image,
                 "team_id": team_id,
@@ -657,12 +710,31 @@ def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str
                 "render_path": render_path.as_posix(),
                 "status": "approved_logo" if approved else "registry_logo_review_required",
                 "approved": approved,
+                "render_method": render_method,
             }
         except Exception as exc:
             if path.suffix.lower() == ".svg":
                 svg_blocker = clean(exc)[:220]
             continue
     if found_svg_path:
+        svg_path = project_path(found_svg_path)
+        cache = OUT_DIR / "logo_cache" / f"{team_id or norm(team)}_browser.png"
+        browser_result = rasterize_svg_with_local_browser(svg_path, cache)
+        if browser_result.get("status") == "ok":
+            try:
+                return {
+                    "image": Image.open(cache).convert("RGBA"),
+                    "team_id": team_id,
+                    "path": found_svg_path,
+                    "render_path": cache.as_posix(),
+                    "status": "approved_svg_logo_rasterized_for_review" if approved else "svg_logo_rasterized_review_required",
+                    "approved": approved,
+                    "render_method": "local_browser_svg_to_png",
+                }
+            except Exception as exc:
+                svg_blocker = clean(exc)[:220]
+        else:
+            svg_blocker = clean(browser_result.get("reason")) or svg_blocker
         return {
             "image": None,
             "team_id": team_id,
@@ -700,6 +772,7 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
         "status": clean(result.get("status")),
         "approved": bool(result.get("approved")),
         "asset_path": clean(result.get("path")),
+        "render_method": clean(result.get("render_method")),
     }
 
 
