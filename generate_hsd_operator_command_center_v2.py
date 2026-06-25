@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.25.0-trusted-registry-playbook"
+VERSION = "hsd-operator-command-center-v3.26.0-source-registry-readiness-summary"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -1040,6 +1040,215 @@ def source_registry_detail(counts: Dict[str, Any]) -> str:
     )
 
 
+def summarize_source_ids(rows: Iterable[Dict[str, str]], key: str = "source_id", limit: int = 4) -> str:
+    values = [clean(row.get(key)) for row in rows if clean(row.get(key))]
+    if not values:
+        return "none"
+    shown = values[:limit]
+    suffix = f" +{len(values) - limit} more" if len(values) > limit else ""
+    return ", ".join(shown) + suffix
+
+
+def build_source_registry_readiness_summary(
+    coverage_map: List[Dict[str, str]],
+    source_proposal_draft: List[Dict[str, str]],
+    source_proposal_promotion_checklist: List[Dict[str, str]],
+    source_registry_update_worksheet: List[Dict[str, str]],
+    source_registry_diff_review: List[Dict[str, str]],
+    source_registry_verification_log: List[Dict[str, str]],
+    source_registry_approval_packet: List[Dict[str, str]],
+    source_registry_patch_preview: List[Dict[str, str]],
+    source_registry_post_edit_validation: List[Dict[str, str]],
+    source_proposal_pack_readiness: List[Dict[str, str]],
+) -> Dict[str, str]:
+    coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
+    ready_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status") == "ready_to_copy_after_freshness_check"]
+    blocked_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status", "").startswith("blocked_")]
+    checklist_verify_rows = [row for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "verify_then_copy"]
+    checklist_hold_rows = [
+        row
+        for row in source_proposal_promotion_checklist
+        if row.get("checklist_decision") in {"hold", "discard"}
+    ]
+    worksheet_rows = [row for row in source_registry_update_worksheet if row.get("worksheet_decision") == "manual_registry_plan_after_verification"]
+    diff_hold_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD"]
+    diff_review_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW"]
+    verification_rows = [row for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required"]
+    approval_ready_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "ready_for_final_manual_review"]
+    approval_hold_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "hold_before_manual_registry_edit"]
+    patch_ready_rows = [row for row in source_registry_patch_preview if row.get("patch_preview_status") == "ready_for_manual_copy_paste"]
+    patch_hold_rows = [row for row in source_registry_patch_preview if row.get("patch_preview_status") == "hold_before_manual_patch"]
+    post_edit_exact_rows = [row for row in source_registry_post_edit_validation if row.get("post_edit_validation_status") == "validated_exact_match"]
+    post_edit_issue_rows = [
+        row
+        for row in source_registry_post_edit_validation
+        if row.get("post_edit_validation_status") in {"missing_manual_edit", "drift_review_required", "unsafe_hold"}
+    ]
+    duplicate_pack_rows = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review"]
+    freshness_pack_rows = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check"]
+    ready_pack_rows = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal"]
+
+    summary = {
+        "readiness_status": "ready_to_start",
+        "next_safest_action": "Open the trusted-registry operator playbook and start at the first incomplete stop/go gate.",
+        "blockers": "none",
+        "open_first_file": "trusted_registry_operator_playbook.md",
+        "support_file": "trusted_registry_operator_playbook.md",
+        "focus_source_ids": "none",
+        "rollup": "No active manual registry change rows found.",
+        "guardrail": "Manual review only; keep proposed sources disabled; no paid APIs, auto-runs, auto-enabling, or publishing.",
+    }
+
+    def set_summary(
+        status: str,
+        action: str,
+        blockers: str,
+        open_first_file: str,
+        rows: List[Dict[str, str]],
+        rollup: str,
+        focus_key: str = "source_id",
+    ) -> Dict[str, str]:
+        summary.update(
+            {
+                "readiness_status": status,
+                "next_safest_action": action,
+                "blockers": blockers or "none",
+                "open_first_file": open_first_file,
+                "focus_source_ids": summarize_source_ids(rows, key=focus_key),
+                "rollup": rollup,
+            }
+        )
+        return summary
+
+    if post_edit_issue_rows:
+        blocker_bits = [
+            f"{clean(row.get('source_id'))}: {clean(row.get('post_edit_validation_status'))}"
+            f"{' (' + clean(row.get('unsafe_flags')) + ')' if clean(row.get('unsafe_flags')) else ''}"
+            for row in post_edit_issue_rows[:4]
+        ]
+        return set_summary(
+            "blocked_post_edit_validation",
+            "Open source_registry_post_edit_validation.md first and hold unsafe or drifted rows before trusting any registry edit.",
+            "; ".join(blocker_bits),
+            "source_registry_post_edit_validation.md",
+            post_edit_issue_rows,
+            f"{len(post_edit_issue_rows)} post-edit issue row(s), {len(post_edit_exact_rows)} exact match row(s).",
+        )
+    if patch_hold_rows:
+        return set_summary(
+            "blocked_patch_preview",
+            "Open source_registry_patch_preview.md and resolve held patch rows before any manual copy/paste registry edit.",
+            f"{len(patch_hold_rows)} held patch preview row(s): {summarize_source_ids(patch_hold_rows)}",
+            "source_registry_patch_preview.md",
+            patch_hold_rows,
+            f"{len(patch_ready_rows)} ready patch row(s), {len(patch_hold_rows)} held row(s).",
+        )
+    if approval_hold_rows:
+        return set_summary(
+            "blocked_approval_packet",
+            "Open source_registry_approval_packet.md and clear held approval rows before preparing a registry patch.",
+            f"{len(approval_hold_rows)} held approval row(s): {summarize_source_ids(approval_hold_rows)}",
+            "source_registry_approval_packet.md",
+            approval_hold_rows,
+            f"{len(approval_ready_rows)} ready approval row(s), {len(approval_hold_rows)} held row(s).",
+        )
+    if diff_hold_rows or diff_review_rows:
+        rows = diff_hold_rows + diff_review_rows
+        return set_summary(
+            "blocked_diff_review",
+            "Open source_registry_diff_review.md and resolve duplicate ID, duplicate domain, trust-band, or rollback warnings.",
+            f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s): {summarize_source_ids(rows)}",
+            "source_registry_diff_review.md",
+            rows,
+            f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s) before verification can be trusted.",
+        )
+    if verification_rows:
+        return set_summary(
+            "needs_operator_evidence",
+            "Open source_registry_verification_log.csv and record URL checked, freshness, duplicate decision, and approval/hold outcome.",
+            f"{len(verification_rows)} row(s) still need operator evidence: {summarize_source_ids(verification_rows)}",
+            "source_registry_verification_log.csv",
+            verification_rows,
+            f"{len(verification_rows)} manual verification row(s) need human evidence before approval.",
+        )
+    if patch_ready_rows:
+        return set_summary(
+            "ready_for_manual_patch_preview",
+            "Open source_registry_patch_preview.md, compare the side-by-side preview, then copy/paste manually only if the playbook stop/go checks pass.",
+            "none",
+            "source_registry_patch_preview.md",
+            patch_ready_rows,
+            f"{len(patch_ready_rows)} patch preview row(s) ready for final manual copy/paste review.",
+        )
+    if approval_ready_rows:
+        return set_summary(
+            "ready_for_final_approval_review",
+            "Open source_registry_approval_packet.md and review the exact disabled JSON plus evidence before creating a patch preview.",
+            "none",
+            "source_registry_approval_packet.md",
+            approval_ready_rows,
+            f"{len(approval_ready_rows)} approved row(s) ready for final manual review.",
+        )
+    if worksheet_rows:
+        return set_summary(
+            "worksheet_review_needed",
+            "Open source_registry_update_worksheet.md and review disabled proposed source objects, before/after notes, and rollback coverage.",
+            "none",
+            "source_registry_update_worksheet.md",
+            worksheet_rows,
+            f"{len(worksheet_rows)} review-only registry worksheet row(s) are waiting.",
+        )
+    if checklist_verify_rows:
+        return set_summary(
+            "proposal_checklist_ready",
+            "Open source_registry_proposal_promotion_checklist.md and verify ready rows manually before copying selected rows to the proposal inbox.",
+            f"{len(checklist_hold_rows)} held/discarded checklist row(s)" if checklist_hold_rows else "none",
+            "source_registry_proposal_promotion_checklist.md",
+            checklist_verify_rows,
+            f"{len(checklist_verify_rows)} verify-then-copy row(s), {len(checklist_hold_rows)} held/discarded row(s).",
+        )
+    if ready_draft_rows:
+        return set_summary(
+            "proposal_draft_ready",
+            "Open source_registry_proposal_draft.md and freshness-check ready draft rows before using the promotion checklist.",
+            f"{len(blocked_draft_rows)} blocked draft row(s)" if blocked_draft_rows else "none",
+            "source_registry_proposal_draft.md",
+            ready_draft_rows,
+            f"{len(ready_draft_rows)} draft row(s) ready after freshness check, {len(blocked_draft_rows)} blocked row(s).",
+        )
+    if duplicate_pack_rows:
+        return set_summary(
+            "pack_duplicate_review_needed",
+            "Open source_proposal_pack_readiness.md and resolve duplicate cues before promoting any pack rows.",
+            f"{len(duplicate_pack_rows)} pack(s) need duplicate review.",
+            "source_proposal_pack_readiness.md",
+            duplicate_pack_rows,
+            f"{len(ready_pack_rows)} ready pack(s), {len(duplicate_pack_rows)} duplicate-review pack(s), {len(freshness_pack_rows)} freshness-check pack(s).",
+            focus_key="pack_key",
+        )
+    if freshness_pack_rows:
+        return set_summary(
+            "pack_freshness_check_needed",
+            "Open source_proposal_pack_readiness.md and manually freshness-check top candidates before proposal drafting.",
+            f"{len(freshness_pack_rows)} pack(s) need source freshness checks.",
+            "source_proposal_pack_readiness.md",
+            freshness_pack_rows,
+            f"{len(ready_pack_rows)} ready pack(s), {len(freshness_pack_rows)} freshness-check pack(s).",
+            focus_key="pack_key",
+        )
+    if coverage_gaps:
+        return set_summary(
+            "coverage_gap_intake_needed",
+            "Open source_coverage_map.csv to choose the next free official, team, wire, or cross-check source gap for proposal intake.",
+            f"{len(coverage_gaps)} coverage gap(s): {summarize_source_ids(coverage_gaps, key='key')}",
+            "source_coverage_map.csv",
+            coverage_gaps,
+            f"{len(coverage_gaps)} source coverage gap(s) still need proposal intake.",
+            focus_key="key",
+        )
+    return summary
+
+
 def decision_callout(
     overall: str,
     guard: Dict[str, Any],
@@ -1124,6 +1333,18 @@ def build_payload() -> Dict[str, Any]:
     source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
     render_counts = render.get("counts", {}) if isinstance(render.get("counts"), dict) else {}
+    source_registry_readiness_summary = build_source_registry_readiness_summary(
+        coverage_map,
+        source_proposal_draft,
+        source_proposal_promotion_checklist,
+        source_registry_update_worksheet,
+        source_registry_diff_review,
+        source_registry_verification_log,
+        source_registry_approval_packet,
+        source_registry_patch_preview,
+        source_registry_post_edit_validation,
+        source_proposal_pack_readiness,
+    )
 
     decision = {
         "overall": first_present(operator.get("overall"), default="NO-GO"),
@@ -1203,6 +1424,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Post-edit validations", len(source_registry_post_edit_validation)),
         metric("Post-edit exact", sum(1 for row in source_registry_post_edit_validation if row.get("post_edit_validation_status") == "validated_exact_match")),
         metric("Post-edit issues", sum(1 for row in source_registry_post_edit_validation if row.get("post_edit_validation_status") in {"missing_manual_edit", "drift_review_required", "unsafe_hold"})),
+        metric("Registry readiness", source_registry_readiness_summary["readiness_status"], source_registry_readiness_summary["blockers"]),
         metric("Source packs ready", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal")),
         metric("Source packs duplicate review", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review")),
         metric("Source packs freshness check", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check")),
@@ -1294,6 +1516,7 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_approval_packet": source_registry_approval_packet,
         "source_registry_patch_preview": source_registry_patch_preview,
         "source_registry_post_edit_validation": source_registry_post_edit_validation,
+        "source_registry_readiness_summary": source_registry_readiness_summary,
         "source_proposal_pack_readiness": source_proposal_pack_readiness,
         "source_proposal_packs": source_proposal_packs,
         "wnba_source_proposal_pack": wnba_source_proposal_pack,
@@ -1353,6 +1576,26 @@ def render_action_rows(actions: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(rows) or '<p class="empty">No next actions found.</p>'
+
+
+def render_source_registry_readiness_summary(summary: Dict[str, str]) -> str:
+    open_first = clean(summary.get("open_first_file"))
+    support_file = clean(summary.get("support_file")) or "trusted_registry_operator_playbook.md"
+    return f"""
+    <article class="content-row">
+      <div>
+        <div class="row-kicker">Source registry readiness {pill(summary.get('readiness_status') or 'review')}</div>
+        <h3>{html.escape(clean(summary.get('next_safest_action')) or 'Open the trusted-registry operator playbook.')}</h3>
+        <p><strong>Blockers:</strong> {html.escape(clean(summary.get('blockers')) or 'none')}</p>
+        <p><strong>Focus:</strong> {html.escape(clean(summary.get('focus_source_ids')) or 'none')}</p>
+        <small>{html.escape(clean(summary.get('rollup')) or 'No registry readiness rollup found.')} {html.escape(clean(summary.get('guardrail')) or '')}</small>
+      </div>
+      <div class="row-tool">
+        {open_link(open_first, 'Open next')}
+        <div style="margin-top:8px">{open_link(support_file, 'Playbook')}</div>
+      </div>
+    </article>
+    """
 
 
 def render_schedule(rows: Iterable[Dict[str, str]]) -> str:
@@ -2025,6 +2268,10 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry readiness</h2>
+        <div class="content-list">{render_source_registry_readiness_summary(payload['source_registry_readiness_summary'])}</div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source coverage map</h2>
         <div class="table-wrap">
           <table>
@@ -2265,6 +2512,19 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | angle: {item.get('story_opportunity_angle') or 'n/a'} | path: {item.get('story_opportunity_recommended_path') or item.get('promotion') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'n/a'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
+    )
+    readiness = payload["source_registry_readiness_summary"]
+    lines += ["", "## Source registry readiness", ""]
+    lines.extend(
+        [
+            f"- Status: {clean(readiness.get('readiness_status')) or 'review'}",
+            f"- Next safest action: {clean(readiness.get('next_safest_action'))}",
+            f"- Blockers: {clean(readiness.get('blockers')) or 'none'}",
+            f"- Open first: {clean(readiness.get('open_first_file')) or 'trusted_registry_operator_playbook.md'}",
+            f"- Playbook: {clean(readiness.get('support_file')) or 'trusted_registry_operator_playbook.md'}",
+            f"- Focus: {clean(readiness.get('focus_source_ids')) or 'none'}",
+            f"- Guardrail: {clean(readiness.get('guardrail'))}",
+        ]
     )
     lines += ["", "## Source coverage map", ""]
     lines.extend(
