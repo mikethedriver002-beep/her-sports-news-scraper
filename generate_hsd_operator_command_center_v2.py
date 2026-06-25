@@ -723,11 +723,20 @@ def stat_module_review_summary(renderer: Dict[str, Any]) -> Dict[str, str]:
     cue = clean(content.get("stat_review_cue"))
     player = clean(content.get("content_module_player"))
     source_text = clean(content.get("content_module_source_text"))
+    microcopy = " ".join(
+        part
+        for part in [
+            clean(content.get("editorial_microcopy_headline")),
+            clean(content.get("editorial_microcopy_body")),
+            clean(content.get("editorial_microcopy_review_cue")),
+        ]
+        if part
+    )
     if mode == "verified_player_stats":
         return {
             "status": confidence or "verified_stat_text_ready_manual_crosscheck_required",
             "summary": f"Stats: {label or 'player ledger ready'}",
-            "detail": short(" | ".join(part for part in [player, source_text, cue] if part), 220),
+            "detail": short(" | ".join(part for part in [player, source_text, microcopy, cue] if part), 260),
             "tone": "good",
         }
     if mode == "game_edge_fallback":
@@ -735,7 +744,7 @@ def stat_module_review_summary(renderer: Dict[str, Any]) -> Dict[str, str]:
         return {
             "status": confidence or "score_only_fallback_manual_context_required",
             "summary": f"Stats: {fallback}",
-            "detail": short(cue or "No named performer stats available; review source proof before using player-ledger treatment.", 220),
+            "detail": short(" | ".join(part for part in [microcopy, cue] if part) or "No named performer stats available; review source proof before using player-ledger treatment.", 260),
             "tone": "warn",
         }
     return {

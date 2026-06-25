@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.11.0-team-color-logo-cues"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.12.0-editorial-microcopy"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -89,6 +89,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["content_module"]["content_module_status"] == "fallback_game_edge_no_verified_stat_text"
     assert manifest["content_module"]["content_module_fallback_label"] == "SCORE-DERIVED EDGE"
     assert manifest["content_module"]["stat_source_confidence"] == "score_only_fallback_manual_context_required"
+    assert manifest["content_module"]["editorial_microcopy_status"] == "source_safe_editorial_microcopy_ready"
+    assert manifest["content_module"]["editorial_microcopy_variant"] == "scoreline_spine"
+    assert "LIBERTY +11 FINAL" == manifest["content_module"]["editorial_microcopy_headline"]
+    assert "anchor the angle" in manifest["content_module"]["editorial_microcopy_body"]
     assert manifest["selected_template"]["template_id"] == "hsd_game_recap_final_score_a"
     assert manifest["selected_template"]["template_family"] == "game_recap_final_score"
     assert manifest["selected_template"]["reference_pack_id"] == "templates_hsd_20260625"
@@ -153,6 +157,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "hsd_game_recap_final_score_a" in report
     assert "## Team Color And Logo Review Cues" in report
     assert "LOGO REVIEW" in report
+    assert "Editorial microcopy" in report
     assert "publish_ready=`false`" in report
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
 
@@ -206,6 +211,12 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
         {"label": "TOTAL", "value": "163"},
         {"label": "SOURCES", "value": "4"},
     ]
+    microcopy = module.selected_editorial_microcopy(packet, score, {"status": "fallback_game_edge_no_verified_stat_text"})
+    assert microcopy["selected_variant_id"] == "scoreline_spine"
+    assert microcopy["headline"] == "LIBERTY +11 FINAL"
+    assert microcopy["context"] == "LIBERTY +11 vs ACES; 163 combined points"
+    assert "anchor the angle" in microcopy["body"]
+    assert "why/how" in microcopy["review_cue"]
     edge = module.game_edge_module(score)
     assert edge["headline"] == "CLEAR EDGE"
     assert edge["eyebrow"] == "SCORE-DERIVED EDGE"
@@ -239,6 +250,11 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert selected["headline"] == "STEWART LED LIBERTY"
     assert selected["matchup_note"] == "LIBERTY +11 vs ACES"
     assert "20 PTS / 6 REB / 4 AST" in selected["editorial_line"]
+    microcopy = module.selected_editorial_microcopy({"copy_context": "4 source(s); publish_grade."}, score, selected)
+    assert microcopy["selected_variant_id"] == "verified_player_ledger"
+    assert microcopy["headline"] == "STEWART + LIBERTY"
+    assert "Stewart's verified 20 PTS, 6 REB, 4 AST" in microcopy["body"]
+    assert "named lead" in microcopy["body"]
     assert selected["callouts"][:3] == [
         {"label": "PTS", "value": "20"},
         {"label": "REB", "value": "6"},
@@ -256,6 +272,9 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["content_module_player"] == "Breanna Stewart"
     assert summary["content_module_title"] == "STEWART LED LIBERTY"
     assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
+    assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
+    assert summary["editorial_microcopy_headline"] == "STEWART + LIBERTY"
+    assert len(summary["editorial_microcopy_variants"]) == 3
     assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Confirm the named performer" in summary["stat_review_cue"]
 
