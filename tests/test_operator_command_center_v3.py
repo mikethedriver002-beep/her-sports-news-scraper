@@ -931,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.29.0-render-readiness"
+    assert payload["version"] == "hsd-operator-command-center-v3.30.0-render-prep-packets"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1009,6 +1009,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Render holds" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Render needs source" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Render needs asset" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Render prep packets" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Render packets ready" and item["value"] == "1" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
@@ -1132,6 +1134,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_action["status"] == "Render ready"
     assert "Score 100/100" in render_action["detail"]
     assert render_action["artifact"] == "news_fact_packets.csv"
+    packet_action = next(action for action in payload["next_actions"] if action["title"] == "Open render prep packet: New York Liberty beat Las Vegas Aces")
+    assert packet_action["status"] == "Render packet"
+    assert packet_action["artifact"] == "render_prep_packets.md"
+    assert "news_fact_card_review" in packet_action["detail"]
     assert payload["render_readiness_queue"][0]["title"] == "New York Liberty beat Las Vegas Aces"
     assert payload["render_readiness_queue"][0]["band"] == "render_ready_review"
     assert payload["render_readiness_queue"][0]["score"] == "100"
@@ -1143,6 +1149,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_readiness_queue"][1]["title"] == "Public team social lead"
     assert payload["render_readiness_queue"][1]["band"] == "hold_for_source_confirmation"
     assert payload["render_readiness_queue"][1]["blockers"] == "source confirmation required"
+    assert payload["render_prep_packets"][0]["packet_status"] == "ready_for_manual_render_review"
+    assert payload["render_prep_packets"][0]["template_fit"] == "news_fact_card_review"
+    assert payload["render_prep_packets"][0]["template_shape"] == "IG feed 1080x1350; Threads crop-safe summary"
+    assert payload["render_prep_packets"][0]["copy_headline"] == "New York Liberty beat Las Vegas Aces"
+    assert "Verified final" in payload["render_prep_packets"][0]["copy_dek"]
+    assert payload["render_prep_packets"][0]["asset_requirement"] == "No player asset required; use HSD brand treatment and verified source text only."
+    assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
+    assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"
+    assert payload["render_prep_packets"][0]["publish_policy"] == "review_only_not_publish_ready"
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -1266,7 +1281,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
     assert "Render readiness" in html
+    assert "Render prep packets" in html
     assert "render_ready_review" in html
+    assert "ready_for_manual_render_review" in html
+    assert "news_fact_card_review" in html
+    assert "human_visual_review_required_before_any_post" in html
     assert "hold_for_source_confirmation" in html
     assert "manual_review_artifact_ready:news_fact_packets.csv" in html
     assert "source_confidence_ready" in html
@@ -1336,7 +1355,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown
     assert "Render readiness" in markdown
+    assert "Render prep packets" in markdown
     assert "render_ready_review" in markdown
+    assert "ready_for_manual_render_review" in markdown
+    assert "news_fact_card_review" in markdown
     assert "hold_for_source_confirmation" in markdown
     assert "manual_review_artifact_ready:news_fact_packets.csv" in markdown
     assert "source confirmation required" in markdown
@@ -1345,6 +1367,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("operator_command_center.html").exists()
     assert Path("operator_command_center.json").exists()
     assert Path("operator_command_center.md").exists()
+    assert Path("render_prep_packets.md").exists()
+    assert Path("render_prep_packets.csv").exists()
+    assert Path("render_prep_packets.json").exists()
+    assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
+    render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))
+    assert render_prep_manifest["guardrails"]["auto_render"] is False
+    assert render_prep_manifest["guardrails"]["auto_publish"] is False
 
 
 def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_path, monkeypatch) -> None:
@@ -1390,6 +1419,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "operator_command_center.html" in runner
     assert "operator_command_center.md" in runner
     assert "operator_command_center.json" in runner
+    assert "render_prep_packets.md" in runner
+    assert "render_prep_packets.csv" in runner
+    assert "render_prep_packets.json" in runner
     assert "bebe_posting_schedule_today.md" in runner
     assert "preview_bundle_quality_summary.csv" in runner
     assert "publish_guard_report.json" in runner

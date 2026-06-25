@@ -46,6 +46,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
     text = RUNNER.read_text(encoding="utf-8")
     required_pathspecs = [
         "operator_command_center.*",
+        "render_prep_packets.*",
         "publish_guard_report.*",
         "results_desk_v5_manifest.json",
         "results_dashboard/**",

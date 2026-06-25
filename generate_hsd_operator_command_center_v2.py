@@ -8,18 +8,53 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-from hsd_run_io import input_path, output_path, write_json, write_text
+from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.29.0-render-readiness"
+VERSION = "hsd-operator-command-center-v3.30.0-render-prep-packets"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
+OUT_RENDER_PREP_MD = output_path("render_prep_packets.md")
+OUT_RENDER_PREP_CSV = output_path("render_prep_packets.csv")
+OUT_RENDER_PREP_JSON = output_path("render_prep_packets.json")
+
+RENDER_PREP_FIELDS = [
+    "packet_id",
+    "packet_status",
+    "render_rank",
+    "render_readiness_score",
+    "render_readiness_band",
+    "title",
+    "recommended_path",
+    "template_fit",
+    "template_shape",
+    "renderer_family",
+    "copy_headline",
+    "copy_dek",
+    "copy_context",
+    "source_artifact",
+    "source_cue",
+    "source_detail",
+    "asset_requirement",
+    "asset_cue",
+    "format_cue",
+    "manual_path",
+    "manual_renderer_steps",
+    "approval_gate",
+    "auto_render_status",
+    "publish_policy",
+    "paid_api_policy",
+    "blockers",
+]
 
 ARTIFACTS = [
     ("Decision", "Operator status", "operator_status.md"),
     ("Decision", "Publish guard", "publish_guard_report.md"),
     ("Decision", "BeBe daily ops plan", "bebe_daily_ops_plan.md"),
     ("Decision", "BeBe posting schedule", "bebe_posting_schedule_today.md"),
+    ("Decision", "Render prep packets", "render_prep_packets.md"),
+    ("Decision", "Render prep packet data", "render_prep_packets.csv"),
+    ("Decision", "Render prep packet manifest", "render_prep_packets.json"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -762,6 +797,140 @@ def render_readiness_queue(
     return rows[:12]
 
 
+def packet_slug(value: Any) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", clean(value).lower()).strip("-")
+    return slug[:70] or "untitled-render-candidate"
+
+
+def template_fit_for_path(path: str, source: str) -> Dict[str, str]:
+    token = clean(path).lower()
+    source_token = clean(source).lower()
+    if token == "news_packet" or source_token == "news packet":
+        return {
+            "template_fit": "news_fact_card_review",
+            "template_shape": "IG feed 1080x1350; Threads crop-safe summary",
+            "asset_requirement": "No player asset required; use HSD brand treatment and verified source text only.",
+            "renderer_family": "news_or_quality_graphics_manual_review",
+        }
+    if token == "studio_brief":
+        return {
+            "template_fit": "studio_brief_card_review",
+            "template_shape": "IG feed 1080x1350 or carousel cover",
+            "asset_requirement": "Confirm exact league/team/player assets before render prep; no text-logo fallback.",
+            "renderer_family": "studio_bundle_manual_review",
+        }
+    if token == "manual_story_candidate":
+        return {
+            "template_fit": "manual_story_candidate_card_review",
+            "template_shape": "IG feed 1080x1350 or IG story 1080x1920 after editor chooses angle",
+            "asset_requirement": "Use brand-only treatment until a verified exact image or logo is approved.",
+            "renderer_family": "manual_story_workflow_review",
+        }
+    if token == "final result" or source_token == "final result":
+        return {
+            "template_fit": "final_score_result_card_review",
+            "template_shape": "IG story 1080x1920 or feed 1080x1350",
+            "asset_requirement": "Use exact team logos from approved local registry; no placeholder badges.",
+            "renderer_family": "final_score_story_manual_review",
+        }
+    return {
+        "template_fit": "operator_review_card",
+        "template_shape": "Choose feed 1080x1350 unless the operator marks story-first.",
+        "asset_requirement": "Operator must decide whether verified assets are required before render prep.",
+        "renderer_family": "manual_review_only",
+    }
+
+
+def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str, str]:
+    title = clean(row.get("title"))
+    for candidate in payload.get("content_candidates", []):
+        if clean(candidate.get("headline")) == title:
+            return {
+                "copy_headline": title,
+                "copy_dek": clean(candidate.get("detail")),
+                "copy_context": (
+                    f"{clean(candidate.get('source_count')) or '0'} source(s); "
+                    f"{clean(candidate.get('source_grade')) or 'not_scored'}"
+                    f"{' score ' + clean(candidate.get('source_score')) if clean(candidate.get('source_score')) else ''}."
+                ),
+                "source_detail": clean(candidate.get("source_reason")),
+            }
+    for lead in payload.get("lead_promotion_recommendations", []):
+        if clean(lead.get("title")) == title:
+            return {
+                "copy_headline": title,
+                "copy_dek": clean(lead.get("detail")),
+                "copy_context": (
+                    f"Angle: {clean(lead.get('story_opportunity_angle')) or 'review'}; "
+                    f"sources: {clean(lead.get('story_opportunity_sources')) or 'review'}."
+                ),
+                "source_detail": clean(lead.get("story_opportunity_reason")),
+            }
+    for lead in payload.get("source_discovery_board", []):
+        if clean(lead.get("title")) == title:
+            return {
+                "copy_headline": title,
+                "copy_dek": clean(lead.get("detail")),
+                "copy_context": (
+                    f"Discovery lane: {clean(lead.get('lane')) or 'review'}; "
+                    f"posture: {clean(lead.get('posture')) or 'review'}."
+                ),
+                "source_detail": clean(lead.get("story_opportunity_reason")),
+            }
+    return {"copy_headline": title, "copy_dek": "", "copy_context": "", "source_detail": ""}
+
+
+def manual_renderer_steps(packet: Dict[str, str]) -> str:
+    steps = [
+        f"Open {packet.get('source_artifact')} and confirm the source/copy fields match this packet.",
+        "Open operator_command_center.html and confirm the candidate is still not held by source, asset, or format blockers.",
+        f"Use template fit {packet.get('template_fit')} at {packet.get('template_shape')}.",
+        f"Confirm asset requirement: {packet.get('asset_requirement')}",
+        "Prepare the graphic manually in the renderer or design tool; do not auto-post or auto-publish.",
+        "After visual review, record the decision in the normal manual QA or approval artifact before any human posting.",
+    ]
+    return " | ".join(steps)
+
+
+def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
+    packets: List[Dict[str, str]] = []
+    for row in payload.get("render_readiness_queue", []):
+        band = clean(row.get("band"))
+        blockers = clean(row.get("blockers"))
+        if band.startswith("hold_") or blockers not in {"", "none"}:
+            continue
+        fit = template_fit_for_path(row.get("recommended_path", ""), row.get("source", ""))
+        enriched = enrich_render_row(row, payload)
+        packet = {
+            "packet_id": f"render_prep_{clean(row.get('rank')) or len(packets) + 1}_{packet_slug(row.get('title'))}",
+            "packet_status": "ready_for_manual_render_review" if band == "render_ready_review" else "review_before_manual_render",
+            "render_rank": clean(row.get("rank")),
+            "render_readiness_score": clean(row.get("score")),
+            "render_readiness_band": band,
+            "title": clean(row.get("title")),
+            "recommended_path": clean(row.get("recommended_path")),
+            "source_artifact": clean(row.get("artifact")),
+            "source_cue": clean(row.get("source_cue")),
+            "asset_cue": clean(row.get("asset_cue")),
+            "format_cue": clean(row.get("format_cue")),
+            "manual_path": clean(row.get("manual_path")),
+            "blockers": blockers or "none",
+            "copy_headline": enriched["copy_headline"],
+            "copy_dek": enriched["copy_dek"],
+            "copy_context": enriched["copy_context"],
+            "source_detail": enriched["source_detail"],
+            **fit,
+            "manual_renderer_steps": "",
+            "approval_gate": "human_visual_review_required_before_any_post",
+            "auto_render_status": "not_rendered_by_generator",
+            "publish_policy": "review_only_not_publish_ready",
+            "paid_api_policy": "free_public_sources_only_no_paid_api",
+        }
+        packet["manual_renderer_steps"] = manual_renderer_steps(packet)
+        packets.append(packet)
+    return packets
+
+
 def schedule_rows() -> List[Dict[str, str]]:
     rows = parse_markdown_table("bebe_posting_schedule_today.md")
     normalized: List[Dict[str, str]] = []
@@ -785,6 +954,7 @@ def build_next_actions(
     candidates: List[Dict[str, str]],
     studio: List[Dict[str, str]],
     render_queue: List[Dict[str, str]],
+    render_prep_packets: List[Dict[str, str]],
     source_board: List[Dict[str, str]],
     promotions: List[Dict[str, str]],
     coverage_map: List[Dict[str, str]],
@@ -931,6 +1101,20 @@ def build_next_actions(
                 f"Score {row.get('score')}/100. {row.get('next_step')}",
                 row.get("artifact") or "operator_command_center.md",
             )
+
+    if render_prep_packets:
+        packet = render_prep_packets[0]
+        add_action(
+            "Render packet",
+            "Editor",
+            f"Open render prep packet: {packet['title']}",
+            (
+                f"{packet.get('packet_status')} at score {packet.get('render_readiness_score')}/100. "
+                f"Template: {packet.get('template_fit')} / {packet.get('template_shape')}. "
+                "Use the packet steps for manual render prep only; publishing remains off."
+            ),
+            "render_prep_packets.md",
+        )
 
     coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
     proposal_holds = [row for row in proposal_review if row.get("review_status") == "hold"]
@@ -1580,7 +1764,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 20) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 24) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -1616,6 +1800,14 @@ def build_payload() -> Dict[str, Any]:
     studio = studio_queue()
     schedule = schedule_rows()
     render_queue = render_readiness_queue(candidates, promotions, source_board)
+    render_prep_packets = build_render_prep_packets(
+        {
+            "content_candidates": candidates,
+            "lead_promotion_recommendations": promotions,
+            "source_discovery_board": source_board,
+            "render_readiness_queue": render_queue,
+        }
+    )
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
@@ -1776,6 +1968,8 @@ def build_payload() -> Dict[str, Any]:
         metric("Render holds", sum(1 for row in render_queue if row.get("band", "").startswith("hold_"))),
         metric("Render needs source", sum(1 for row in render_queue if "source" in row.get("blockers", ""))),
         metric("Render needs asset", sum(1 for row in render_queue if "asset" in row.get("blockers", ""))),
+        metric("Render prep packets", len(render_prep_packets)),
+        metric("Render packets ready", sum(1 for row in render_prep_packets if row.get("packet_status") == "ready_for_manual_render_review")),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -1787,6 +1981,7 @@ def build_payload() -> Dict[str, Any]:
         candidates,
         studio,
         render_queue,
+        render_prep_packets,
         source_board,
         promotions,
         coverage_map,
@@ -1836,6 +2031,7 @@ def build_payload() -> Dict[str, Any]:
         "schedule": schedule,
         "content_candidates": candidates,
         "render_readiness_queue": render_queue,
+        "render_prep_packets": render_prep_packets,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
@@ -1999,6 +2195,28 @@ def render_render_readiness(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(body) or '<tr><td colspan="12" class="empty">No render-readiness candidates found.</td></tr>'
+
+
+def render_render_prep_packets(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{pill(row.get('packet_status') or 'review')}</td>
+              <td>{html.escape(clean(row.get('render_readiness_score')) or '0')}</td>
+              <td>{html.escape(clean(row.get('title')))}</td>
+              <td>{html.escape(clean(row.get('template_fit')))}</td>
+              <td>{html.escape(clean(row.get('template_shape')))}</td>
+              <td>{html.escape(clean(row.get('copy_headline')))}</td>
+              <td>{html.escape(clean(row.get('asset_requirement')))}</td>
+              <td>{html.escape(clean(row.get('manual_renderer_steps')))}</td>
+              <td>{html.escape(clean(row.get('approval_gate')))}</td>
+              <td>{open_link('render_prep_packets.md', 'Open packet')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="10" class="empty">No render-prep packets cleared review gates.</td></tr>'
 
 
 def render_studio(rows: Iterable[Dict[str, str]]) -> str:
@@ -2656,6 +2874,15 @@ def render_html(payload: Dict[str, Any]) -> str:
           </table>
         </div>
       </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>Render prep packets</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Status</th><th>Score</th><th>Story</th><th>Template</th><th>Shape</th><th>Copy headline</th><th>Assets</th><th>Manual steps</th><th>Gate</th><th>Open</th></tr></thead>
+            <tbody>{render_render_prep_packets(payload['render_prep_packets'])}</tbody>
+          </table>
+        </div>
+      </div>
       <div class="two-col">
         <div class="panel">
           <h2>Content candidates</h2>
@@ -2924,6 +3151,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- {item.get('rank') or '-'} | {item.get('band') or 'not_scored'} | score: {item.get('score') or '0'} | {item.get('title') or 'Untitled candidate'} | path: {item.get('recommended_path') or 'review'} | source: {item.get('source_cue') or 'n/a'} | assets: {item.get('asset_cue') or 'n/a'} | format: {item.get('format_cue') or 'n/a'} | manual: {item.get('manual_path') or 'n/a'} | blockers: {item.get('blockers') or 'none'} | next: {item.get('next_step') or 'review manually'}"
         for item in payload["render_readiness_queue"]
     )
+    lines += ["", "## Render prep packets", ""]
+    lines.extend(
+        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
+        for item in payload["render_prep_packets"]
+    )
     lines += ["", "## Content candidates", ""]
     lines.extend(
         f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'} | render: {item.get('render_readiness_score') or 'n/a'}/100 | {item.get('render_readiness_band') or 'not_scored'} | manual: {item.get('render_readiness_manual_path') or 'n/a'}"
@@ -3035,7 +3267,97 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
+    packets = payload.get("render_prep_packets", [])
+    lines = [
+        "# HSD Render Prep Packets",
+        "",
+        f"Generated: {payload['generated_at_utc']}",
+        f"Command center version: {payload['version']}",
+        "",
+        "## Guardrails",
+        "",
+        "- Review-only packet. It does not render files.",
+        "- Publishing remains off.",
+        "- Paid APIs remain disabled.",
+        "- Human visual review is required before any post.",
+        "",
+        "## Summary",
+        "",
+        f"- Packet rows: {len(packets)}",
+        f"- Ready for manual render review: {sum(1 for row in packets if row.get('packet_status') == 'ready_for_manual_render_review')}",
+        "",
+    ]
+    if not packets:
+        lines += [
+            "## No Packets",
+            "",
+            "No render-ready or render-prep candidates cleared the source, asset, format, and manual-path gates.",
+            "",
+        ]
+        return "\n".join(lines).rstrip() + "\n"
+
+    for index, packet in enumerate(packets, 1):
+        steps = [step.strip() for step in clean(packet.get("manual_renderer_steps")).split("|") if step.strip()]
+        lines += [
+            f"## Packet {index}: {clean(packet.get('title'))}",
+            "",
+            f"- Packet ID: `{clean(packet.get('packet_id'))}`",
+            f"- Status: `{clean(packet.get('packet_status'))}`",
+            f"- Readiness: `{clean(packet.get('render_readiness_score'))}/100` / `{clean(packet.get('render_readiness_band'))}`",
+            f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
+            f"- Source artifact: `{clean(packet.get('source_artifact'))}`",
+            f"- Template fit: `{clean(packet.get('template_fit'))}`",
+            f"- Template shape: `{clean(packet.get('template_shape'))}`",
+            f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
+            f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            f"- Approval gate: `{clean(packet.get('approval_gate'))}`",
+            f"- Auto-render status: `{clean(packet.get('auto_render_status'))}`",
+            f"- Publish policy: `{clean(packet.get('publish_policy'))}`",
+            "",
+            "### Copy Fields",
+            "",
+            f"- Headline: {clean(packet.get('copy_headline'))}",
+            f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+            f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
+            f"- Source detail: {clean(packet.get('source_detail')) or 'n/a'}",
+            "",
+            "### Manual Renderer Steps",
+            "",
+        ]
+        lines.extend(f"{step_index}. {step}" for step_index, step in enumerate(steps, 1))
+        lines += ["", "---", ""]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_render_prep_outputs(payload: Dict[str, Any]) -> None:
+    packets = payload.get("render_prep_packets", [])
+    write_csv(OUT_RENDER_PREP_CSV, packets, RENDER_PREP_FIELDS)
+    write_json(
+        OUT_RENDER_PREP_JSON,
+        {
+            "version": payload["version"],
+            "generated_at_utc": payload["generated_at_utc"],
+            "guardrails": {
+                "review_only": True,
+                "auto_render": False,
+                "auto_publish": False,
+                "paid_apis": False,
+            },
+            "counts": {
+                "packets": len(packets),
+                "ready_for_manual_render_review": sum(
+                    1 for row in packets if row.get("packet_status") == "ready_for_manual_render_review"
+                ),
+            },
+            "packets": packets,
+        },
+    )
+    write_text(OUT_RENDER_PREP_MD, render_render_prep_packets_markdown(payload))
+
+
 def write_outputs(payload: Dict[str, Any]) -> None:
+    write_render_prep_outputs(payload)
     write_json(OUT_JSON, payload)
     write_text(OUT_MD, render_markdown(payload))
     write_text(OUT_HTML, render_html(payload))
