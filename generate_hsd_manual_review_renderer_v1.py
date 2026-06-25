@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.6.0-final-score-polish"
+VERSION = "hsd-manual-review-renderer-v1.7.0-final-score-content-polish"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -668,6 +668,42 @@ def score_margin(score: Dict[str, str]) -> int | None:
         return None
 
 
+def score_total(score: Dict[str, str]) -> int | None:
+    try:
+        return int(score.get("winner_score", "0")) + int(score.get("loser_score", "0"))
+    except Exception:
+        return None
+
+
+def source_count(packet: Dict[str, Any]) -> str:
+    text = " ".join(clean(packet.get(key)) for key in ["copy_context", "source_detail", "source_cue"])
+    match = re.search(r"\b(\d+)\s+source", text, re.IGNORECASE)
+    return clean(match.group(1)) if match else ""
+
+
+def source_quality_label(packet: Dict[str, Any]) -> str:
+    text = " ".join(clean(packet.get(key)) for key in ["copy_context", "source_detail", "source_cue"]).lower()
+    if "publish_grade" in text or "publish grade" in text:
+        return "PUBLISH-GRADE"
+    if "confidence_ready" in text or "source_confidence_ready" in text:
+        return "SOURCE CHECKED"
+    return "SOURCE REVIEW"
+
+
+def final_score_callouts(packet: Dict[str, Any], score: Dict[str, str]) -> List[Dict[str, str]]:
+    callouts: List[Dict[str, str]] = []
+    margin = score_margin(score)
+    total = score_total(score)
+    if margin is not None:
+        callouts.append({"label": "MARGIN", "value": f"+{margin}"})
+    if total is not None:
+        callouts.append({"label": "TOTAL", "value": str(total)})
+    count = source_count(packet)
+    if count:
+        callouts.append({"label": "SOURCES", "value": count})
+    return callouts[:3]
+
+
 def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     winner = clean(score.get("winner"))
     loser = clean(score.get("loser"))
@@ -678,15 +714,18 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
             "headline": "FINAL RESULT",
             "body": f"{winner} finished ahead of {loser}.",
         }
-    if margin <= 4:
-        headline = f"{short_team(winner)} SURVIVES"
-        body = f"{winner} closed out a one-possession final over {loser}."
-    elif margin <= 11:
-        headline = f"{short_team(winner)} SEPARATES"
-        body = f"{winner} created enough late cushion to hold off {loser}."
+    if margin <= 3:
+        headline = "DOWN TO THE WIRE"
+        body = f"{short_team(winner)} finished {margin} point{'s' if margin != 1 else ''} clear of {short_team(loser)}."
+    elif margin <= 7:
+        headline = "LATE SEPARATION"
+        body = f"{short_team(winner)} created a {margin}-point final margin over {short_team(loser)}."
+    elif margin <= 14:
+        headline = "CLEAR EDGE"
+        body = f"{short_team(winner)} finished with a {margin}-point advantage over {short_team(loser)}."
     else:
-        headline = f"{short_team(winner)} CONTROLS IT"
-        body = f"{winner} owned the scoreboard by {margin} and kept {loser} chasing."
+        headline = "STATEMENT WIN"
+        body = f"{short_team(winner)} closed with a {margin}-point victory over {short_team(loser)}."
     return {"eyebrow": "GAME EDGE", "headline": headline, "body": body}
 
 
@@ -694,11 +733,11 @@ def review_prompt(score: Dict[str, str]) -> str:
     winner = short_team(clean(score.get("winner")))
     loser = short_team(clean(score.get("loser")))
     margin = score_margin(score)
-    if margin is not None and margin <= 4:
-        return f"WHAT DECIDED {winner}'S CLOSE?"
-    if margin is not None and margin >= 12:
-        return f"WHERE DID {winner} TAKE CONTROL?"
-    return f"WHAT SWUNG {winner} VS {loser}?"
+    if margin is not None and margin <= 3:
+        return "WHO MADE THE DIFFERENCE LATE?"
+    if margin is not None and margin <= 7:
+        return "WHERE DID THE GAME TURN?"
+    return f"WHAT FUELED {winner}'S SEPARATION?"
 
 
 def logo_candidates(team_id: str, row: Dict[str, str]) -> List[Path]:
@@ -965,8 +1004,8 @@ def square_reference_spec() -> Dict[str, Any]:
             "secondary_logo_slot": {"x": 70, "y": 612, "w": 190, "h": 190},
             "secondary_team": {"x": 292, "y": 636, "w": 330, "h": 86},
             "secondary_score": {"x": 692, "y": 602, "w": 260, "h": 190},
-            "key_performer": {"x": 60, "y": 806, "w": 960, "h": 88},
-            "hook_takeaway": {"x": 60, "y": 914, "w": 960, "h": 88},
+            "key_performer": {"x": 60, "y": 820, "w": 960, "h": 82},
+            "hook_takeaway": {"x": 60, "y": 918, "w": 960, "h": 82},
         },
     }
 
@@ -1028,16 +1067,53 @@ def draw_final_score_reference_title(image: Any, template_spec: Dict[str, Any], 
     draw.text((left + first_size[0] + gap, y_cursor), second, font=chosen, fill=PALETTE["gold"], stroke_width=2, stroke_fill=(0, 0, 0))
 
 
-def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "") -> None:
+def draw_module_callouts(image: Any, box: Tuple[int, int, int, int], callouts: List[Dict[str, str]], accent: tuple[int, int, int], *, compact: bool = False) -> int:
+    if not callouts:
+        return 0
+    x, y, w, h = box
+    draw = ImageDraw.Draw(image, "RGBA")
+    if compact:
+        chip_w = min(132, max(92, w // 5))
+        chip_h = 34
+        gap = 8
+        start_x = x + w - (chip_w + gap) * min(2, len(callouts)) + gap
+        for index, item in enumerate(callouts[:2]):
+            cx = start_x + index * (chip_w + gap)
+            draw.rounded_rectangle((cx, y + 10, cx + chip_w, y + 10 + chip_h), radius=8, fill=(2, 4, 9, 170), outline=(*accent, 142), width=1)
+            value_font = reference_font("context", 18)
+            label_font = reference_font("context", 10)
+            draw.text((cx + 9, y + 13), clean(item.get("value")), font=value_font, fill=PALETTE["ink"])
+            draw.text((cx + 52, y + 17), clean(item.get("label")), font=label_font, fill=accent)
+        return (chip_w + gap) * min(2, len(callouts))
+    callout_w = min(280, max(210, w // 4))
+    card_w = max(78, (callout_w - 20) // max(1, min(3, len(callouts))))
+    top = y + max(18, h - 72)
+    for index, item in enumerate(callouts[:3]):
+        cx = x + w - callout_w + index * (card_w + 8)
+        draw.rounded_rectangle((cx, top, cx + card_w, min(y + h - 16, top + 58)), radius=10, fill=(2, 4, 9, 182), outline=(*accent, 150), width=1)
+        value_font = reference_font("score", 24)
+        label_font = reference_font("context", 10)
+        value = clean(item.get("value"))
+        label = clean(item.get("label"))
+        value_w, _ = text_size(draw, value, value_font)
+        label_w, _ = text_size(draw, label, label_font)
+        draw.text((cx + (card_w - value_w) // 2, top + 5), value, font=value_font, fill=PALETTE["ink"])
+        draw.text((cx + (card_w - label_w) // 2, top + 34), label, font=label_font, fill=accent)
+    return callout_w
+
+
+def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "", callouts: List[Dict[str, str]] | None = None) -> None:
     x, y, w, h = box
     compact = h < 112
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 218), radius=14, width=2)
-    draw_reference_text(image, (x + 24, y + 10, w - 48, min(30 if compact else 34, h - 16)), eyebrow, "context", 20 if compact else 24, 12, accent, max_lines=1)
+    callout_w = draw_module_callouts(image, (x + 18, y, w - 36, h), callouts or [], accent, compact=compact)
+    text_w = max(220, w - 48 - (callout_w if compact else min(callout_w + 10, w // 3)))
+    draw_reference_text(image, (x + 24, y + 10, text_w, min(30 if compact else 34, h - 16)), eyebrow, "context", 20 if compact else 24, 12, accent, max_lines=1)
     body_top = y + (38 if compact else 48)
     if headline:
         draw_reference_text(
             image,
-            (x + 24, body_top, w - 48, min(34 if compact else 44, h - 42)),
+            (x + 24, body_top, text_w, min(34 if compact else 44, h - 42)),
             headline,
             "display",
             27 if compact else 38,
@@ -1050,7 +1126,7 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
         return
     draw_reference_text(
         image,
-        (x + 24, body_top, w - 48, max(28, y + h - body_top - 14)),
+        (x + 24, body_top, text_w, max(28, y + h - body_top - 14)),
         body,
         "body",
         18 if compact else 27,
@@ -1113,10 +1189,10 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", primary_score_size, 88, PALETTE["ink"], max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
     draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", secondary_score_size, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
-    context = clean(packet.get("copy_context")) or clean(packet.get("source_detail")) or "Free-source evidence ready for human review."
     edge = game_edge_module(score)
+    callouts = final_score_callouts(packet, score)
     key_box = zone_box(template_spec, "key_performer")
-    draw_lower_reference_module(image, key_box, edge["eyebrow"], edge["body"], (247, 203, 84), headline=edge["headline"])
+    draw_lower_reference_module(image, key_box, edge["eyebrow"], edge["body"], (247, 203, 84), headline=edge["headline"], callouts=callouts)
 
     hook_name = "hook_question" if zone_box(template_spec, "hook_question") != (0, 0, 0, 0) else "hook_takeaway"
     hook_box = zone_box(template_spec, hook_name)
@@ -1127,7 +1203,15 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     prompt_body = dek
     if hook_name == "hook_question":
         prompt_body = "Tell us what you saw after reviewing the final."
-    draw_lower_reference_module(image, hook_box, "YOUR TAKE", prompt_body, (37, 99, 163), headline=prompt)
+    source_body = f"{source_quality_label(packet)} fact check. {prompt_body}"
+    draw_lower_reference_module(
+        image,
+        hook_box,
+        "YOUR TAKE",
+        source_body,
+        (37, 99, 163),
+        headline=prompt,
+    )
 
     draw_reference_guardrail(image)
 
