@@ -594,6 +594,42 @@ def seed_daily_ops_files() -> None:
             }
         ],
     )
+    Path("source_registry_same_domain_resolution.md").write_text(
+        "# HSD Source Registry Same-Domain Resolution\n\nManual same-domain review.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_same_domain_resolution.csv",
+        [
+            {
+                "same_domain_resolution_status": "operator_input_required",
+                "resolution_decision": "",
+                "evidence_requirement": "Required: choose same_domain_ok, revise, discard, or hold; add evidence before approval.",
+                "operator_step": "compare_existing_same_domain_source_then_mark_same_domain_ok_revise_or_discard",
+                "source_id": "pwhl_official_news",
+                "source_name": "PWHL official news",
+                "candidate_url": "https://www.thepwhl.com/en/news",
+                "candidate_domain": "thepwhl.com",
+                "diff_review_status": "HOLD",
+                "diff_resolution_action": "HOLD",
+                "diff_flags": "duplicate_domain",
+                "registry_domain_match": "thepwhl.com",
+                "worksheet_domain_match": "No",
+                "compared_existing_source_id": "",
+                "compared_existing_url": "",
+                "evidence_url": "",
+                "checked_at_local": "",
+                "operator_name": "",
+                "operator_notes": "",
+                "verification_log_instruction": "Before filling approval fields, compare the existing/domain-matched source and record same_domain_ok, hold, or discard in operator notes.",
+                "approval_gate": "same_domain_ok_with_evidence_required_before_approval",
+                "auto_edit_status": "not_performed_by_generator",
+                "publish_policy": "same_domain_resolution_only_not_publish_ready",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "registry_edit_status": "not_edited_by_generator",
+            }
+        ],
+    )
     Path("source_registry_verification_log.md").write_text(
         "# HSD Source Registry Verification Log\n\nManual fill-in log.\n",
         encoding="utf-8",
@@ -605,7 +641,11 @@ def seed_daily_ops_files() -> None:
                 "verification_log_status": "operator_input_required",
                 "operator_step": "open_url_record_freshness_duplicate_decision_and_approval_outcome",
                 "diff_resolution_action": "HOLD",
-                "diff_resolution_instruction": "Before filling approval fields, compare the existing/domain-matched source and record same_domain_ok, hold, or discard in operator notes.",
+                "diff_resolution_instruction": "Resolve source_registry_same_domain_resolution.csv before filling approval fields in the verification log.",
+                "same_domain_resolution_status": "operator_input_required",
+                "same_domain_resolution_decision": "",
+                "same_domain_evidence_url": "",
+                "same_domain_compared_existing_source_id": "",
                 "source_id": "pwhl_official_news",
                 "source_name": "PWHL official news",
                 "candidate_url": "https://www.thepwhl.com/en/news",
@@ -891,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.27.0-diff-resolution-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.28.0-same-domain-resolution"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -936,6 +976,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Diff cues revise" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Diff cues hold" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Diff cues discard" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Same-domain rows" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Same-domain needs decision" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Same-domain OK" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Same-domain revise/discard" and item["value"] == "0/0" for item in payload["metrics"])
     assert any(item["label"] == "Verification log rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Verification input needed" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Approval packet rows" and item["value"] == "1" for item in payload["metrics"])
@@ -990,9 +1034,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_diff_review"][0]["flags"] == "duplicate_domain"
     assert payload["source_registry_diff_review"][0]["registry_domain_match"] == "thepwhl.com"
     assert payload["source_registry_diff_review"][0]["rollback_status"] == "present"
+    assert payload["source_registry_same_domain_resolution"][0]["same_domain_resolution_status"] == "operator_input_required"
+    assert payload["source_registry_same_domain_resolution"][0]["approval_gate"] == "same_domain_ok_with_evidence_required_before_approval"
+    assert "choose same_domain_ok" in payload["source_registry_same_domain_resolution"][0]["evidence_requirement"]
     assert payload["source_registry_verification_log"][0]["verification_log_status"] == "operator_input_required"
     assert payload["source_registry_verification_log"][0]["diff_resolution_action"] == "HOLD"
-    assert "Before filling approval fields" in payload["source_registry_verification_log"][0]["diff_resolution_instruction"]
+    assert "Resolve source_registry_same_domain_resolution.csv" in payload["source_registry_verification_log"][0]["diff_resolution_instruction"]
+    assert payload["source_registry_verification_log"][0]["same_domain_resolution_status"] == "operator_input_required"
     assert payload["source_registry_verification_log"][0]["url_checked"] == ""
     assert payload["source_registry_verification_log"][0]["freshness_result"] == ""
     assert payload["source_registry_verification_log"][0]["duplicate_decision"] == ""
@@ -1049,6 +1097,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert diff_action["artifact"] == "source_registry_diff_review.md"
     assert "1 hold row(s)" in diff_action["detail"]
     assert "Do not hand-edit the registry" in diff_action["detail"]
+    same_domain_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve same-domain source decisions")
+    assert same_domain_action["artifact"] == "source_registry_same_domain_resolution.md"
+    assert "1 need decision/evidence" in same_domain_action["detail"]
     verification_action = next(action for action in payload["next_actions"] if action["title"] == "Fill manual source verification log")
     assert verification_action["artifact"] == "source_registry_verification_log.md"
     assert "1 source row(s) need operator evidence" in verification_action["detail"]
@@ -1137,6 +1188,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry diff review" in html
     assert "Hold for duplicate review" in html
     assert "Before filling approval fields" in html
+    assert "Source registry same-domain resolution" in html
+    assert "same_domain_ok_with_evidence_required_before_approval" in html
+    assert "choose same_domain_ok" in html
     assert "duplicate_domain" in html
     assert "candidate domain already exists" in html
     assert "Source verification log" in html
@@ -1192,10 +1246,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry diff review" in markdown
     assert "cue: HOLD" in markdown
     assert "before log: Before filling approval fields" in markdown
+    assert "Source registry same-domain resolution" in markdown
+    assert "same_domain_ok_with_evidence_required_before_approval" in markdown
     assert "duplicate_domain" in markdown
     assert "candidate domain already exists" in markdown
     assert "Source verification log" in markdown
-    assert "instruction: Before filling approval fields" in markdown
+    assert "instruction: Resolve source_registry_same_domain_resolution.csv" in markdown
     assert "operator_input_required" in markdown
     assert "url_checked: operator fill-in" in markdown
     assert "Source registry approval packet" in markdown
@@ -1320,6 +1376,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_update_worksheet.csv" in runner
     assert "source_registry_diff_review.md" in runner
     assert "source_registry_diff_review.csv" in runner
+    assert "source_registry_same_domain_resolution.md" in runner
+    assert "source_registry_same_domain_resolution.csv" in runner
     assert "source_registry_verification_log.md" in runner
     assert "source_registry_verification_log.csv" in runner
     assert "source_registry_approval_packet.md" in runner

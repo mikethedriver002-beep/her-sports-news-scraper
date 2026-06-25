@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.27.0-diff-resolution-cues"
+VERSION = "hsd-operator-command-center-v3.28.0-same-domain-resolution"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -36,6 +36,8 @@ ARTIFACTS = [
     ("Sources", "Source registry update worksheet data", "source_registry_update_worksheet.csv"),
     ("Sources", "Source registry diff review", "source_registry_diff_review.md"),
     ("Sources", "Source registry diff review data", "source_registry_diff_review.csv"),
+    ("Sources", "Source registry same-domain resolution", "source_registry_same_domain_resolution.md"),
+    ("Sources", "Source registry same-domain resolution data", "source_registry_same_domain_resolution.csv"),
     ("Sources", "Source verification log", "source_registry_verification_log.md"),
     ("Sources", "Source verification log data", "source_registry_verification_log.csv"),
     ("Sources", "Source registry approval packet", "source_registry_approval_packet.md"),
@@ -149,6 +151,8 @@ RUN_COMMANDS = {
     "source_registry_update_worksheet.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_diff_review.md": ".\\hsd.cmd run -Mode review",
     "source_registry_diff_review.csv": ".\\hsd.cmd run -Mode review",
+    "source_registry_same_domain_resolution.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_same_domain_resolution.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_verification_log.md": ".\\hsd.cmd run -Mode review",
     "source_registry_verification_log.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_approval_packet.md": ".\\hsd.cmd run -Mode review",
@@ -561,6 +565,7 @@ def build_next_actions(
     source_proposal_promotion_checklist: List[Dict[str, str]],
     source_registry_update_worksheet: List[Dict[str, str]],
     source_registry_diff_review: List[Dict[str, str]],
+    source_registry_same_domain_resolution: List[Dict[str, str]],
     source_registry_verification_log: List[Dict[str, str]],
     source_registry_approval_packet: List[Dict[str, str]],
     source_registry_patch_preview: List[Dict[str, str]],
@@ -672,6 +677,14 @@ def build_next_actions(
     registry_update_rows = [row for row in source_registry_update_worksheet if row.get("worksheet_decision") == "manual_registry_plan_after_verification"]
     registry_diff_hold_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD"]
     registry_diff_review_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW"]
+    same_domain_input_rows = [
+        row
+        for row in source_registry_same_domain_resolution
+        if row.get("same_domain_resolution_status") in {"operator_input_required", "evidence_incomplete", "held_by_operator"}
+    ]
+    same_domain_resolved_rows = [row for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "same_domain_ok_evidence_ready"]
+    same_domain_revise_rows = [row for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "revise_before_verification"]
+    same_domain_discard_rows = [row for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "discard_before_verification"]
     verification_input_rows = [row for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required"]
     approval_packet_ready_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "ready_for_final_manual_review"]
     approval_packet_hold_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "hold_before_manual_registry_edit"]
@@ -763,6 +776,22 @@ def build_next_actions(
                 "Do not hand-edit the registry until this review is clear."
             ),
             "source_registry_diff_review.md",
+        )
+
+    if same_domain_input_rows or same_domain_revise_rows or same_domain_discard_rows:
+        row = (same_domain_input_rows + same_domain_revise_rows + same_domain_discard_rows)[0]
+        add_action(
+            "Same-domain review",
+            "Research",
+            "Resolve same-domain source decisions",
+            (
+                f"{len(same_domain_input_rows)} need decision/evidence, "
+                f"{len(same_domain_revise_rows)} revise, {len(same_domain_discard_rows)} discard, "
+                f"{len(same_domain_resolved_rows)} same-domain OK. "
+                f"Start with {row.get('source_id')}: {row.get('evidence_requirement') or row.get('verification_log_instruction')}. "
+                "Do this before filling approval fields in the verification log."
+            ),
+            "source_registry_same_domain_resolution.md",
         )
 
     if verification_input_rows:
@@ -1055,6 +1084,7 @@ def build_source_registry_readiness_summary(
     source_proposal_promotion_checklist: List[Dict[str, str]],
     source_registry_update_worksheet: List[Dict[str, str]],
     source_registry_diff_review: List[Dict[str, str]],
+    source_registry_same_domain_resolution: List[Dict[str, str]],
     source_registry_verification_log: List[Dict[str, str]],
     source_registry_approval_packet: List[Dict[str, str]],
     source_registry_patch_preview: List[Dict[str, str]],
@@ -1073,6 +1103,14 @@ def build_source_registry_readiness_summary(
     worksheet_rows = [row for row in source_registry_update_worksheet if row.get("worksheet_decision") == "manual_registry_plan_after_verification"]
     diff_hold_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD"]
     diff_review_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW"]
+    same_domain_input_rows = [
+        row
+        for row in source_registry_same_domain_resolution
+        if row.get("same_domain_resolution_status") in {"operator_input_required", "evidence_incomplete", "held_by_operator"}
+    ]
+    same_domain_revise_rows = [row for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "revise_before_verification"]
+    same_domain_discard_rows = [row for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "discard_before_verification"]
+    same_domain_ok_rows = [row for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "same_domain_ok_evidence_ready"]
     verification_rows = [row for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required"]
     approval_ready_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "ready_for_final_manual_review"]
     approval_hold_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "hold_before_manual_registry_edit"]
@@ -1165,11 +1203,11 @@ def build_source_registry_readiness_summary(
         ) or "resolution cues not available"
         return set_summary(
             "blocked_diff_review",
-            "Open source_registry_diff_review.md and follow VERIFY, REVISE, HOLD, or DISCARD cues before filling the verification log.",
+            "Open source_registry_same_domain_resolution.md for HOLD rows, then follow VERIFY, REVISE, HOLD, or DISCARD cues before filling the verification log.",
             f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s): {summarize_source_ids(rows)}",
-            "source_registry_diff_review.md",
+            "source_registry_same_domain_resolution.md" if same_domain_input_rows or same_domain_revise_rows or same_domain_discard_rows else "source_registry_diff_review.md",
             rows,
-            f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s) before verification can be trusted; {resolution_rollup}.",
+            f"{len(diff_hold_rows)} hold row(s), {len(diff_review_rows)} review row(s) before verification can be trusted; {resolution_rollup}; same-domain ok {len(same_domain_ok_rows)}, needs decision {len(same_domain_input_rows)}, revise {len(same_domain_revise_rows)}, discard {len(same_domain_discard_rows)}.",
         )
     if verification_rows:
         return set_summary(
@@ -1279,7 +1317,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 18) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 20) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -1321,6 +1359,7 @@ def build_payload() -> Dict[str, Any]:
     source_proposal_promotion_checklist = read_csv("source_registry_proposal_promotion_checklist.csv")
     source_registry_update_worksheet = read_csv("source_registry_update_worksheet.csv")
     source_registry_diff_review = read_csv("source_registry_diff_review.csv")
+    source_registry_same_domain_resolution = read_csv("source_registry_same_domain_resolution.csv")
     source_registry_verification_log = read_csv("source_registry_verification_log.csv")
     source_registry_approval_packet = read_csv("source_registry_approval_packet.csv")
     source_registry_patch_preview = read_csv("source_registry_patch_preview.csv")
@@ -1348,6 +1387,7 @@ def build_payload() -> Dict[str, Any]:
         source_proposal_promotion_checklist,
         source_registry_update_worksheet,
         source_registry_diff_review,
+        source_registry_same_domain_resolution,
         source_registry_verification_log,
         source_registry_approval_packet,
         source_registry_patch_preview,
@@ -1426,6 +1466,13 @@ def build_payload() -> Dict[str, Any]:
         metric("Diff cues revise", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "REVISE")),
         metric("Diff cues hold", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "HOLD")),
         metric("Diff cues discard", sum(1 for row in source_registry_diff_review if row.get("resolution_action") == "DISCARD")),
+        metric("Same-domain rows", len(source_registry_same_domain_resolution)),
+        metric("Same-domain needs decision", sum(1 for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") in {"operator_input_required", "evidence_incomplete", "held_by_operator"})),
+        metric("Same-domain OK", sum(1 for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "same_domain_ok_evidence_ready")),
+        metric("Same-domain revise/discard", "/".join([
+            str(sum(1 for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "revise_before_verification")),
+            str(sum(1 for row in source_registry_same_domain_resolution if row.get("same_domain_resolution_status") == "discard_before_verification")),
+        ])),
         metric("Verification log rows", len(source_registry_verification_log)),
         metric("Verification input needed", sum(1 for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required")),
         metric("Approval packet rows", len(source_registry_approval_packet)),
@@ -1477,6 +1524,7 @@ def build_payload() -> Dict[str, Any]:
         source_proposal_promotion_checklist,
         source_registry_update_worksheet,
         source_registry_diff_review,
+        source_registry_same_domain_resolution,
         source_registry_verification_log,
         source_registry_approval_packet,
         source_registry_patch_preview,
@@ -1525,6 +1573,7 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_proposal_promotion_checklist": source_proposal_promotion_checklist,
         "source_registry_update_worksheet": source_registry_update_worksheet,
         "source_registry_diff_review": source_registry_diff_review,
+        "source_registry_same_domain_resolution": source_registry_same_domain_resolution,
         "source_registry_verification_log": source_registry_verification_log,
         "source_registry_approval_packet": source_registry_approval_packet,
         "source_registry_patch_preview": source_registry_patch_preview,
@@ -1935,6 +1984,27 @@ def render_source_registry_diff_review(rows: Iterable[Dict[str, str]]) -> str:
     return "".join(body) or '<tr><td colspan="10" class="empty">No source registry diff review rows found.</td></tr>'
 
 
+def render_source_registry_same_domain_resolution(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{pill(clean(row.get('same_domain_resolution_status')) or 'operator_input_required')}</td>
+              <td>{html.escape(clean(row.get('resolution_decision')) or 'operator fill-in')}</td>
+              <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
+              <td>{html.escape(clean(row.get('candidate_domain')) or '-')}</td>
+              <td>{html.escape(clean(row.get('registry_domain_match')) or clean(row.get('worksheet_domain_match')) or '-')}</td>
+              <td>{html.escape(clean(row.get('compared_existing_source_id')) or 'operator fill-in')}</td>
+              <td>{html.escape(clean(row.get('evidence_url')) or 'operator fill-in')}</td>
+              <td>{html.escape(clean(row.get('evidence_requirement')) or '-')}</td>
+              <td>{html.escape(clean(row.get('approval_gate')) or '-')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="9" class="empty">No same-domain resolution rows found.</td></tr>'
+
+
 def render_source_registry_verification_log(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
@@ -2318,6 +2388,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry same-domain resolution</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Status</th><th>Decision</th><th>Source ID</th><th>Domain</th><th>Match</th><th>Compared source</th><th>Evidence</th><th>Requirement</th><th>Gate</th></tr></thead>
+            <tbody>{render_source_registry_same_domain_resolution(payload['source_registry_same_domain_resolution'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source verification log</h2>
         <div class="table-wrap">
           <table>
@@ -2559,6 +2638,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('diff_review_status')) or 'review'} | cue: {clean(item.get('resolution_action')) or 'review'} | {clean(item.get('resolution_label')) or 'Review'} | {clean(item.get('source_id'))} | flags: {clean(item.get('flags')) or 'none'} | issues: {clean(item.get('issues')) or 'none'} | registry domain: {clean(item.get('registry_domain_match')) or 'No'} | worksheet domain: {clean(item.get('worksheet_domain_match')) or 'No'} | rollback: {clean(item.get('rollback_status')) or 'missing'} | before log: {clean(item.get('verification_log_instruction')) or clean(item.get('recommendation')) or 'review before edit'}"
         for item in payload["source_registry_diff_review"]
+    )
+    lines += ["", "## Source registry same-domain resolution", ""]
+    lines.extend(
+        f"- {clean(item.get('same_domain_resolution_status')) or 'operator_input_required'} | decision: {clean(item.get('resolution_decision')) or 'operator fill-in'} | {clean(item.get('source_id'))} | domain: {clean(item.get('candidate_domain')) or 'n/a'} | compared: {clean(item.get('compared_existing_source_id')) or clean(item.get('compared_existing_url')) or 'operator fill-in'} | evidence: {clean(item.get('evidence_url')) or 'operator fill-in'} | gate: {clean(item.get('approval_gate')) or 'same_domain_ok_with_evidence_required_before_approval'}"
+        for item in payload["source_registry_same_domain_resolution"]
     )
     lines += ["", "## Source verification log", ""]
     lines.extend(
