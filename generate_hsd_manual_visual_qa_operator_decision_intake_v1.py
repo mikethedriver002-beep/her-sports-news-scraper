@@ -106,10 +106,18 @@ def row_bool_is_false(row: Dict[str, str], key: str) -> bool:
     return value in {"", "false", "no", "0"}
 
 
+def has_placeholder(value: Any) -> bool:
+    text = clean(value).upper()
+    return "REPLACE_WITH_" in text or text.startswith("TEMPLATE_") or text.startswith("EXAMPLE_")
+
+
 def validate_decision(row: Dict[str, str], draft: Dict[str, str] | None) -> tuple[str, str]:
     decision = clean(row.get("operator_decision"))
     if not draft:
         return "invalid_no_matching_decision_draft", "No generated decision draft matched this row."
+    for key in ["operator_notes", "hold_reason", "revision_request", "operator_name", "reviewed_at_local"]:
+        if has_placeholder(row.get(key)):
+            return "invalid_template_placeholder", f"{key} still contains a template placeholder."
     if decision not in ALLOWED_DECISIONS:
         return "invalid_operator_decision", f"operator_decision must be one of {', '.join(sorted(ALLOWED_DECISIONS))}."
     if clean(row.get("source_intake_id")) != clean(draft.get("source_intake_id")):

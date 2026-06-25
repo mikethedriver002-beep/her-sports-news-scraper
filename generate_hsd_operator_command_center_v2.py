@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.37.0-manual-operator-decision-intake"
+VERSION = "hsd-operator-command-center-v3.38.0-manual-operator-decision-template"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -82,6 +82,9 @@ ARTIFACTS = [
     ("Decision", "Manual visual QA operator decision draft", "manual_visual_qa_operator_decision_draft.md"),
     ("Decision", "Manual visual QA operator decision draft data", "manual_visual_qa_operator_decision_draft.csv"),
     ("Decision", "Manual visual QA operator decision draft manifest", "manual_visual_qa_operator_decision_draft.json"),
+    ("Decision", "Manual visual QA operator decision template", "manual_visual_qa_operator_decision_template.md"),
+    ("Decision", "Manual visual QA operator decision template data", "manual_visual_qa_operator_decision_template.csv"),
+    ("Decision", "Manual visual QA operator decision template manifest", "manual_visual_qa_operator_decision_template.json"),
     ("Decision", "Manual visual QA operator decision intake", "manual_visual_qa_operator_decision_intake.md"),
     ("Decision", "Manual visual QA operator decision intake data", "manual_visual_qa_operator_decision_intake.csv"),
     ("Decision", "Manual visual QA operator decision intake manifest", "manual_visual_qa_operator_decision_intake.json"),
@@ -219,6 +222,9 @@ RUN_COMMANDS = {
     "manual_visual_qa_operator_decision_draft.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_draft.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_draft.json": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_template.md": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_template.csv": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_template.json": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_intake.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_intake.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_intake.json": ".\\hsd.cmd run -Mode render",
