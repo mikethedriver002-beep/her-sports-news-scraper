@@ -931,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.39.0-manual-operator-decision-walkthrough"
+    assert payload["version"] == "hsd-operator-command-center-v3.40.0-manual-operator-decision-inbox-starter"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1220,6 +1220,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["manual_visual_qa_operator_decision_walkthrough.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_operator_decision_walkthrough.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_operator_decision_walkthrough.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["manual_visual_qa_operator_decision_inbox_starter.md"]["run_command"] == ".\\hsd.cmd run -Mode decision-inbox"
+    assert artifact_by_path["manual_visual_qa_operator_decision_inbox_starter.csv"]["run_command"] == ".\\hsd.cmd run -Mode decision-inbox"
+    assert artifact_by_path["manual_visual_qa_operator_decision_inbox_starter.json"]["run_command"] == ".\\hsd.cmd run -Mode decision-inbox"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"
@@ -1497,6 +1500,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "manual_visual_qa_operator_decision_walkthrough.md" in runner
     assert "manual_visual_qa_operator_decision_walkthrough.csv" in runner
     assert "manual_visual_qa_operator_decision_walkthrough.json" in runner
+    assert "manual_visual_qa_operator_decision_inbox_starter.md" in runner
+    assert "manual_visual_qa_operator_decision_inbox_starter.csv" in runner
+    assert "manual_visual_qa_operator_decision_inbox_starter.json" in runner
     assert "bebe_posting_schedule_today.md" in runner
     assert "preview_bundle_quality_summary.csv" in runner
     assert "publish_guard_report.json" in runner

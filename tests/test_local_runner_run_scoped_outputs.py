@@ -21,6 +21,7 @@ def test_local_runner_creates_run_scoped_output_context() -> None:
     assert "$env:HSD_LOCAL_RUN_ROOT" in text
     assert "$env:HSD_RUN_OUTPUT_DIR" in text
     assert '$env:HSD_OUTPUT_MODE = "run_scoped_local"' in text
+    assert "function Test-HsdPreserveGeneratedPath" in text
 
 
 def test_local_runner_archives_generated_state_before_root_restore() -> None:
@@ -173,7 +174,9 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     doc = DOC.read_text(encoding="utf-8")
 
     assert '"render"' in wrapper
+    assert '"decision-inbox"' in wrapper
     assert "function Invoke-RenderStage" in runner
+    assert "function Invoke-DecisionInboxStarterStage" in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional' in runner
@@ -182,6 +185,10 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_intake_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_post_approval_render_staging_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "create_hsd_manual_visual_qa_operator_decision_inbox_starter_v1.py" -Optional' in runner
+    assert '$env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"' in runner
+    assert '"decision-inbox" { Invoke-DecisionInboxStarterStage $python }' in runner
+    assert 'operator/inbox/manual_visual_qa_operator_decisions.csv' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
     assert "manual_review_renderer_report.md" in runner
@@ -207,7 +214,11 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "manual_visual_qa_operator_decision_walkthrough.md" in runner
     assert "manual_visual_qa_operator_decision_walkthrough.csv" in runner
     assert "manual_visual_qa_operator_decision_walkthrough.json" in runner
+    assert "manual_visual_qa_operator_decision_inbox_starter.md" in runner
+    assert "manual_visual_qa_operator_decision_inbox_starter.csv" in runner
+    assert "manual_visual_qa_operator_decision_inbox_starter.json" in runner
     assert ".\\hsd.cmd run -Mode render" in doc
+    assert ".\\hsd.cmd run -Mode decision-inbox" in doc
 
 
 def test_legacy_scraper_is_retired_from_active_local_runner() -> None:

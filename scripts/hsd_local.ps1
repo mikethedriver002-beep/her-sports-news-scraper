@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -16,6 +16,7 @@ $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $PolicyPath = Join-Path $Root "config\hsd_free_source_policy_v1.json"
 $script:HsdExitCode = 0
+$script:GeneratedStatePreservePaths = @()
 $GeneratedStatePathspecs = @(
     "hsd_pipeline_lite_review/**",
     "hsd_pipeline_lite_review.zip",
@@ -356,6 +357,17 @@ function Get-GeneratedGitState {
     }
 }
 
+function Test-HsdPreserveGeneratedPath([string]$Path) {
+    if (-not $Path) { return $false }
+    $normalized = ($Path -replace "\\", "/").TrimStart("/")
+    foreach ($preserve in @($script:GeneratedStatePreservePaths)) {
+        if ($normalized.Equals(($preserve -replace "\\", "/").TrimStart("/"), [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Remove-GeneratedUntrackedFiles([string[]]$Paths) {
     if (-not $Paths -or $Paths.Count -eq 0) { return 0 }
 
@@ -366,6 +378,9 @@ function Remove-GeneratedUntrackedFiles([string[]]$Paths) {
         if (-not $rel) { continue }
         $normalized = ($rel -replace "\\", "/").TrimStart("/")
         if (-not $normalized -or $normalized.StartsWith("outputs/local/", [StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        if (Test-HsdPreserveGeneratedPath $normalized) {
             continue
         }
         $full = [IO.Path]::GetFullPath((Join-Path $Root $rel))
@@ -387,8 +402,8 @@ function Restore-GeneratedGitState($Baseline) {
     $current = Get-GeneratedGitState
     if (-not $current.enabled) { return }
 
-    $trackedToRestore = @($current.tracked_dirty | Where-Object { $Baseline.tracked_dirty -notcontains $_ })
-    $untrackedToRemove = @($current.untracked | Where-Object { $Baseline.untracked -notcontains $_ })
+    $trackedToRestore = @($current.tracked_dirty | Where-Object { $Baseline.tracked_dirty -notcontains $_ -and -not (Test-HsdPreserveGeneratedPath $_) })
+    $untrackedToRemove = @($current.untracked | Where-Object { $Baseline.untracked -notcontains $_ -and -not (Test-HsdPreserveGeneratedPath $_) })
 
     if ($trackedToRestore.Count -gt 0) {
         $restoreArgs = @("restore", "--") + $trackedToRestore
@@ -638,6 +653,18 @@ function Invoke-RenderStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional
 }
 
+function Invoke-DecisionInboxStarterStage($Python) {
+    Write-Section "Manual operator decision inbox starter stage"
+    $previous = $env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER
+    $env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"
+    Invoke-ScriptIfPresent $Python "create_hsd_manual_visual_qa_operator_decision_inbox_starter_v1.py" -Optional
+    if ($null -eq $previous) {
+        Remove-Item Env:\HSD_EXPLICIT_OPERATOR_INBOX_STARTER -ErrorAction SilentlyContinue
+    } else {
+        $env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = $previous
+    }
+}
+
 function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
     $candidates = @()
     if ($env:HSD_RUN_OUTPUT_DIR) {
@@ -784,6 +811,9 @@ function Collect-HsdArtifacts($RunContext) {
         "manual_visual_qa_operator_decision_walkthrough.md",
         "manual_visual_qa_operator_decision_walkthrough.csv",
         "manual_visual_qa_operator_decision_walkthrough.json",
+        "manual_visual_qa_operator_decision_inbox_starter.md",
+        "manual_visual_qa_operator_decision_inbox_starter.csv",
+        "manual_visual_qa_operator_decision_inbox_starter.json",
         "bebe_daily_ops_plan.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
@@ -844,6 +874,10 @@ function Invoke-HsdRun {
     if (-not $python) { Show-InstallHint; Stop-Hsd "Python 3.11 is required before the HSD pipeline can run." }
     $runContext = New-HsdRunContext
     $generatedBaseline = Get-GeneratedGitState
+    $script:GeneratedStatePreservePaths = @()
+    if ($Mode -eq "decision-inbox") {
+        $script:GeneratedStatePreservePaths = @("operator/inbox/manual_visual_qa_operator_decisions.csv")
+    }
     Set-FreeSourceEnv
     Set-RunScopedEnv $runContext
     Write-Section "Free-first local run"
@@ -864,6 +898,7 @@ function Invoke-HsdRun {
             "dashboards" { Invoke-DrilldownDashboardsStage $python; Invoke-ReviewStage $python }
             "review" { Invoke-ReviewStage $python }
             "render" { Invoke-RenderStage $python }
+            "decision-inbox" { Invoke-DecisionInboxStarterStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }
     } catch {
