@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.28.0-same-domain-resolution"
+VERSION = "hsd-operator-command-center-v3.29.0-render-readiness"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -289,6 +289,150 @@ def packet_source_confidence(row: Dict[str, Any]) -> Dict[str, str]:
     return {"source_grade": grade, "source_score": "", "source_reason": reason}
 
 
+def split_tokens(value: Any) -> List[str]:
+    text = clean(value)
+    if not text:
+        return []
+    return [part.strip() for part in re.split(r"[;,|]", text) if part.strip()]
+
+
+def clamp_score(score: int, minimum: int = 0, maximum: int = 100) -> int:
+    return max(minimum, min(maximum, score))
+
+
+def render_readiness_band(score: int, blockers: List[str]) -> str:
+    if blockers:
+        if any("source" in blocker or "confirmation" in blocker for blocker in blockers):
+            return "hold_for_source_confirmation"
+        if any("asset" in blocker for blocker in blockers):
+            return "hold_for_asset_review"
+        return "hold_before_render"
+    if score >= 85:
+        return "render_ready_review"
+    if score >= 65:
+        return "render_prep_candidate"
+    if score >= 45:
+        return "needs_operator_review"
+    return "hold_before_render"
+
+
+def score_render_readiness(
+    row: Dict[str, str],
+    *,
+    item_type: str,
+    headline: str,
+    artifact: str,
+    artifact_exists: Dict[str, bool] | None = None,
+) -> Dict[str, str]:
+    artifact_exists = artifact_exists or {}
+    score = 0
+    blockers: List[str] = []
+
+    source_grade = clean(first_present(row.get("source_grade"), row.get("story_opportunity_confidence_tier")))
+    source_coverage = clean(row.get("story_opportunity_source_coverage"))
+    confirmation = clean(row.get("story_opportunity_confirmation_cue"))
+    source_count = as_int(row.get("source_count")) or len(split_tokens(row.get("story_opportunity_sources")))
+    second_source = clean(first_present(row.get("story_opportunity_second_source_id"), row.get("story_opportunity_second_source_lane")))
+
+    if source_grade in {"publish_grade", "publish_grade_candidate"}:
+        score += 35
+        source_cue = "source_confidence_ready"
+    elif source_grade in {"review_before_publish", "needs_official_confirmation"}:
+        score += 18
+        source_cue = "source_confirmation_needed"
+    elif source_grade in {"discovery_only", "discovery_source_only"} or source_coverage == "discovery_source_only":
+        score += 8
+        source_cue = "discovery_only_source"
+    elif source_count >= 2:
+        score += 22
+        source_cue = "source_depth_present"
+    else:
+        score += 6
+        source_cue = "source_confidence_missing"
+
+    if source_count >= 2:
+        score += 6
+    if second_source and second_source != "n/a":
+        score += 4
+    if confirmation in {"needs_second_source", "needs_official_confirmation"}:
+        blockers.append("source confirmation required")
+        score = min(score, 24)
+    elif confirmation in {"already_covered", "official_confirmed", "source_confidence_ready"}:
+        score += 5
+
+    asset_cue = clean(row.get("story_opportunity_asset_cue"))
+    status = clean(row.get("status")).lower()
+    if asset_cue in {"asset_not_required_for_news_packet", "asset_ready", "assets_ready"}:
+        score += 25
+        asset_readiness = asset_cue
+    elif asset_cue == "asset_check_required_before_studio":
+        score += 8
+        blockers.append("asset review required")
+        asset_readiness = asset_cue
+    elif status in {"ready", "graphics ready", "allow"}:
+        score += 22
+        asset_readiness = "artifact_assets_ready_or_not_required"
+    elif item_type.lower().startswith("news"):
+        score += 20
+        asset_readiness = "asset_not_required_for_news_packet"
+    else:
+        score += 10
+        asset_readiness = "asset_readiness_review"
+
+    recommended_path = clean(first_present(row.get("story_opportunity_recommended_path"), row.get("recommendation"), item_type))
+    path_token = re.sub(r"[^a-z0-9]+", "_", recommended_path.lower()).strip("_")
+    if recommended_path in {"news_packet", "manual_story_candidate", "studio_brief", "News packet", "Final result"}:
+        score += 20
+        format_fit = f"{path_token}_format_fit"
+    elif recommended_path:
+        score += 12
+        format_fit = f"{path_token}_needs_format_review"
+    else:
+        score += 5
+        format_fit = "format_path_missing"
+
+    manual_path_exists = bool(artifact and artifact_exists.get(artifact, input_path(artifact).exists()))
+    if manual_path_exists:
+        score += 20
+        manual_path = f"manual_review_artifact_ready:{artifact}"
+    elif artifact:
+        score += 8
+        manual_path = f"create_manual_artifact:{artifact}"
+        blockers.append("manual render path artifact missing")
+    else:
+        manual_path = "manual_render_path_missing"
+        blockers.append("manual render path missing")
+
+    if "source confirmation required" in blockers:
+        score = min(score, 55)
+    if "asset review required" in blockers:
+        score = min(score, 70)
+    if "manual render path artifact missing" in blockers or "manual render path missing" in blockers:
+        score = min(score, 60)
+    score = clamp_score(score)
+    band = render_readiness_band(score, blockers)
+    next_step = "Open the artifact, confirm facts visually, then prepare a manual render; publishing stays off."
+    if "source confirmation required" in blockers:
+        next_step = "Verify the second official, wire, or primary source before News, Studio, or render work."
+    elif "asset review required" in blockers:
+        next_step = "Confirm the asset path, crop, and identity before render prep."
+    elif "manual render path artifact missing" in blockers:
+        next_step = "Create the missing manual artifact before render prep."
+    elif band == "render_prep_candidate":
+        next_step = "Review the remaining cues, then move this into manual render prep."
+
+    return {
+        "render_readiness_score": str(score),
+        "render_readiness_band": band,
+        "render_readiness_source_cue": source_cue,
+        "render_readiness_asset_cue": asset_readiness,
+        "render_readiness_format_cue": format_fit,
+        "render_readiness_manual_path": manual_path,
+        "render_readiness_blockers": "; ".join(blockers) if blockers else "none",
+        "render_readiness_next_step": next_step,
+    }
+
+
 def parse_markdown_table(path: str) -> List[Dict[str, str]]:
     text = read_text(path)
     rows: List[Dict[str, str]] = []
@@ -384,32 +528,50 @@ def content_candidates() -> List[Dict[str, str]]:
     candidates: List[Dict[str, str]] = []
     for row in read_csv("news_fact_packets.csv")[:8]:
         source_confidence = packet_source_confidence(row)
+        candidate = {
+            "type": "News packet",
+            "priority": first_present(row.get("urgency"), row.get("publish_recommendation"), default="Review"),
+            "headline": first_present(row.get("headline"), row.get("dek")),
+            "status": "Ready" if clean(row.get("production_ready")).lower() == "yes" else "Review",
+            "detail": short(first_present(row.get("caption_hard_fact"), row.get("brief_120w"), row.get("dek")), 210),
+            "artifact": "news_fact_packets.csv",
+            "source_count": clean(row.get("source_count")),
+            **source_confidence,
+        }
+        candidate.update(
+            score_render_readiness(
+                candidate,
+                item_type="News packet",
+                headline=candidate["headline"],
+                artifact=candidate["artifact"],
+            )
+        )
         candidates.append(
-            {
-                "type": "News packet",
-                "priority": first_present(row.get("urgency"), row.get("publish_recommendation"), default="Review"),
-                "headline": first_present(row.get("headline"), row.get("dek")),
-                "status": "Ready" if clean(row.get("production_ready")).lower() == "yes" else "Review",
-                "detail": short(first_present(row.get("caption_hard_fact"), row.get("brief_120w"), row.get("dek")), 210),
-                "artifact": "news_fact_packets.csv",
-                "source_count": clean(row.get("source_count")),
-                **source_confidence,
-            }
+            candidate
         )
     for row in read_csv("today_final_results.csv")[:6]:
+        candidate = {
+            "type": "Final result",
+            "priority": first_present(row.get("posting_priority"), row.get("editorial_bucket"), default="Review"),
+            "headline": first_present(row.get("graphics_headline"), row.get("caption_seed")),
+            "status": "Graphics ready" if clean(row.get("include_in_graphics")).lower() == "yes" else "Review",
+            "detail": short(first_present(row.get("graphics_subhead"), row.get("final_score_display"), row.get("caption_seed")), 210),
+            "artifact": "today_final_results.csv",
+            "source_count": clean(row.get("source_count")),
+            "source_grade": "publish_grade" if clean(row.get("manual_review")).lower() != "true" and clean(row.get("manual_review")).lower() != "yes" else "review_before_publish",
+            "source_score": clean(row.get("confidence")),
+            "source_reason": short(clean(row.get("confidence_reason_json")), 160),
+        }
+        candidate.update(
+            score_render_readiness(
+                candidate,
+                item_type="Final result",
+                headline=candidate["headline"],
+                artifact=candidate["artifact"],
+            )
+        )
         candidates.append(
-            {
-                "type": "Final result",
-                "priority": first_present(row.get("posting_priority"), row.get("editorial_bucket"), default="Review"),
-                "headline": first_present(row.get("graphics_headline"), row.get("caption_seed")),
-                "status": "Graphics ready" if clean(row.get("include_in_graphics")).lower() == "yes" else "Review",
-                "detail": short(first_present(row.get("graphics_subhead"), row.get("final_score_display"), row.get("caption_seed")), 210),
-                "artifact": "today_final_results.csv",
-                "source_count": clean(row.get("source_count")),
-                "source_grade": "publish_grade" if clean(row.get("manual_review")).lower() != "true" and clean(row.get("manual_review")).lower() != "yes" else "review_before_publish",
-                "source_score": clean(row.get("confidence")),
-                "source_reason": short(clean(row.get("confidence_reason_json")), 160),
-            }
+            candidate
         )
     return candidates
 
@@ -417,104 +579,118 @@ def content_candidates() -> List[Dict[str, str]]:
 def source_discovery_board() -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for row in read_csv("morning_source_discovery_board.csv"):
-        rows.append(
-            {
-                "rank": clean(row.get("rank")),
-                "lane": first_present(row.get("lane"), default="source_review"),
-                "status": first_present(row.get("review_status"), default="review"),
-                "posture": first_present(row.get("publish_posture"), default="discovery_only"),
-                "band": first_present(row.get("source_band"), default="yellow"),
-                "source": first_present(row.get("source_name"), row.get("source_type"), default="Unknown source"),
-                "title": first_present(row.get("title"), row.get("source_url"), default="Untitled source lead"),
-                "detail": short(first_present(row.get("evidence_preview"), row.get("summary"), row.get("reason"), row.get("next_action")), 260),
-                "next_action": short(clean(row.get("next_action")), 180),
-                "artifact": first_present(row.get("source_artifact"), default="morning_source_discovery_board.csv"),
-                "url": clean(row.get("source_url")),
-                "evidence_title": clean(row.get("evidence_title")),
-                "evidence_published_at": clean(row.get("evidence_published_at")),
-                "evidence_description": short(clean(row.get("evidence_description")), 260),
-                "evidence_preview": short(clean(row.get("evidence_preview")), 260),
-                "evidence_source": clean(row.get("evidence_source")),
-                "story_opportunity_id": clean(row.get("story_opportunity_id")),
-                "story_opportunity_title": clean(row.get("story_opportunity_title")),
-                "story_opportunity_size": clean(row.get("story_opportunity_size")),
-                "story_opportunity_sources": clean(row.get("story_opportunity_sources")),
-                "story_opportunity_urls": clean(row.get("story_opportunity_urls")),
-                "story_opportunity_reason": short(clean(row.get("story_opportunity_reason")), 220),
-                "story_opportunity_angle": clean(row.get("story_opportunity_angle")),
-                "story_opportunity_recommended_path": clean(row.get("story_opportunity_recommended_path")),
-                "story_opportunity_path_reason": short(clean(row.get("story_opportunity_path_reason")), 220),
-                "story_opportunity_confidence_tier": clean(row.get("story_opportunity_confidence_tier")),
-                "story_opportunity_source_coverage": clean(row.get("story_opportunity_source_coverage")),
-                "story_opportunity_confirmation_cue": clean(row.get("story_opportunity_confirmation_cue")),
-                "story_opportunity_asset_cue": clean(row.get("story_opportunity_asset_cue")),
-                "story_opportunity_readiness_note": short(clean(row.get("story_opportunity_readiness_note")), 220),
-                "story_opportunity_second_source_id": clean(row.get("story_opportunity_second_source_id")),
-                "story_opportunity_second_source_url": clean(row.get("story_opportunity_second_source_url")),
-                "story_opportunity_second_source_lane": clean(row.get("story_opportunity_second_source_lane")),
-                "story_opportunity_second_source_reason": short(clean(row.get("story_opportunity_second_source_reason")), 220),
-                "story_opportunity_second_source_action": short(clean(row.get("story_opportunity_second_source_action")), 220),
-                "promotion": first_present(row.get("promotion_recommendation"), default="monitor_only"),
-                "promotion_priority": first_present(row.get("promotion_priority"), default="P4"),
-                "promotion_target": clean(row.get("promotion_target")),
-                "promotion_next_step": short(clean(row.get("promotion_next_step")), 180),
-                "quality_score": clean(row.get("quality_score")),
-                "freshness_label": clean(row.get("freshness_label")),
-                "freshness_source": clean(row.get("freshness_source")),
-                "freshness_score": clean(row.get("freshness_score")),
-                "quality_reason": short(clean(row.get("quality_reason")), 190),
-            }
+        item = {
+            "rank": clean(row.get("rank")),
+            "lane": first_present(row.get("lane"), default="source_review"),
+            "status": first_present(row.get("review_status"), default="review"),
+            "posture": first_present(row.get("publish_posture"), default="discovery_only"),
+            "band": first_present(row.get("source_band"), default="yellow"),
+            "source": first_present(row.get("source_name"), row.get("source_type"), default="Unknown source"),
+            "title": first_present(row.get("title"), row.get("source_url"), default="Untitled source lead"),
+            "detail": short(first_present(row.get("evidence_preview"), row.get("summary"), row.get("reason"), row.get("next_action")), 260),
+            "next_action": short(clean(row.get("next_action")), 180),
+            "artifact": first_present(row.get("source_artifact"), default="morning_source_discovery_board.csv"),
+            "url": clean(row.get("source_url")),
+            "evidence_title": clean(row.get("evidence_title")),
+            "evidence_published_at": clean(row.get("evidence_published_at")),
+            "evidence_description": short(clean(row.get("evidence_description")), 260),
+            "evidence_preview": short(clean(row.get("evidence_preview")), 260),
+            "evidence_source": clean(row.get("evidence_source")),
+            "story_opportunity_id": clean(row.get("story_opportunity_id")),
+            "story_opportunity_title": clean(row.get("story_opportunity_title")),
+            "story_opportunity_size": clean(row.get("story_opportunity_size")),
+            "story_opportunity_sources": clean(row.get("story_opportunity_sources")),
+            "story_opportunity_urls": clean(row.get("story_opportunity_urls")),
+            "story_opportunity_reason": short(clean(row.get("story_opportunity_reason")), 220),
+            "story_opportunity_angle": clean(row.get("story_opportunity_angle")),
+            "story_opportunity_recommended_path": clean(row.get("story_opportunity_recommended_path")),
+            "story_opportunity_path_reason": short(clean(row.get("story_opportunity_path_reason")), 220),
+            "story_opportunity_confidence_tier": clean(row.get("story_opportunity_confidence_tier")),
+            "story_opportunity_source_coverage": clean(row.get("story_opportunity_source_coverage")),
+            "story_opportunity_confirmation_cue": clean(row.get("story_opportunity_confirmation_cue")),
+            "story_opportunity_asset_cue": clean(row.get("story_opportunity_asset_cue")),
+            "story_opportunity_readiness_note": short(clean(row.get("story_opportunity_readiness_note")), 220),
+            "story_opportunity_second_source_id": clean(row.get("story_opportunity_second_source_id")),
+            "story_opportunity_second_source_url": clean(row.get("story_opportunity_second_source_url")),
+            "story_opportunity_second_source_lane": clean(row.get("story_opportunity_second_source_lane")),
+            "story_opportunity_second_source_reason": short(clean(row.get("story_opportunity_second_source_reason")), 220),
+            "story_opportunity_second_source_action": short(clean(row.get("story_opportunity_second_source_action")), 220),
+            "promotion": first_present(row.get("promotion_recommendation"), default="monitor_only"),
+            "promotion_priority": first_present(row.get("promotion_priority"), default="P4"),
+            "promotion_target": clean(row.get("promotion_target")),
+            "promotion_next_step": short(clean(row.get("promotion_next_step")), 180),
+            "quality_score": clean(row.get("quality_score")),
+            "freshness_label": clean(row.get("freshness_label")),
+            "freshness_source": clean(row.get("freshness_source")),
+            "freshness_score": clean(row.get("freshness_score")),
+            "quality_reason": short(clean(row.get("quality_reason")), 190),
+        }
+        item.update(
+            score_render_readiness(
+                item,
+                item_type="Story opportunity",
+                headline=item["title"],
+                artifact=item["artifact"],
+            )
         )
+        rows.append(item)
     return rows
 
 
 def lead_promotion_recommendations() -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for row in read_csv("morning_lead_promotion_recommendations.csv"):
-        rows.append(
-            {
-                "rank": clean(row.get("promotion_rank")),
-                "priority": first_present(row.get("promotion_priority"), default="P?"),
-                "recommendation": first_present(row.get("promotion_recommendation"), default="review"),
-                "title": first_present(row.get("story_opportunity_title"), row.get("title"), row.get("source_url"), default="Untitled lead"),
-                "status": first_present(row.get("review_status"), default="review"),
-                "lane": first_present(row.get("lane"), default="source_review"),
-                "target": first_present(row.get("promotion_target"), default="morning_source_discovery_board.csv"),
-                "detail": short(first_present(row.get("evidence_preview"), row.get("summary"), row.get("reason")), 260),
-                "reason": short(clean(row.get("promotion_reason")), 190),
-                "next_step": short(clean(row.get("promotion_next_step")), 190),
-                "evidence_title": clean(row.get("evidence_title")),
-                "evidence_published_at": clean(row.get("evidence_published_at")),
-                "evidence_description": short(clean(row.get("evidence_description")), 260),
-                "evidence_preview": short(clean(row.get("evidence_preview")), 260),
-                "evidence_source": clean(row.get("evidence_source")),
-                "story_opportunity_id": clean(row.get("story_opportunity_id")),
-                "story_opportunity_title": clean(row.get("story_opportunity_title")),
-                "story_opportunity_size": clean(row.get("story_opportunity_size")),
-                "story_opportunity_sources": clean(row.get("story_opportunity_sources")),
-                "story_opportunity_urls": clean(row.get("story_opportunity_urls")),
-                "story_opportunity_reason": short(clean(row.get("story_opportunity_reason")), 220),
-                "story_opportunity_angle": clean(row.get("story_opportunity_angle")),
-                "story_opportunity_recommended_path": clean(row.get("story_opportunity_recommended_path")),
-                "story_opportunity_path_reason": short(clean(row.get("story_opportunity_path_reason")), 220),
-                "story_opportunity_confidence_tier": clean(row.get("story_opportunity_confidence_tier")),
-                "story_opportunity_source_coverage": clean(row.get("story_opportunity_source_coverage")),
-                "story_opportunity_confirmation_cue": clean(row.get("story_opportunity_confirmation_cue")),
-                "story_opportunity_asset_cue": clean(row.get("story_opportunity_asset_cue")),
-                "story_opportunity_readiness_note": short(clean(row.get("story_opportunity_readiness_note")), 220),
-                "story_opportunity_second_source_id": clean(row.get("story_opportunity_second_source_id")),
-                "story_opportunity_second_source_url": clean(row.get("story_opportunity_second_source_url")),
-                "story_opportunity_second_source_lane": clean(row.get("story_opportunity_second_source_lane")),
-                "story_opportunity_second_source_reason": short(clean(row.get("story_opportunity_second_source_reason")), 220),
-                "story_opportunity_second_source_action": short(clean(row.get("story_opportunity_second_source_action")), 220),
-                "quality_score": clean(row.get("quality_score")),
-                "freshness_label": clean(row.get("freshness_label")),
-                "freshness_source": clean(row.get("freshness_source")),
-                "freshness_score": clean(row.get("freshness_score")),
-                "quality_reason": short(clean(row.get("quality_reason")), 190),
-                "artifact": "morning_lead_promotion_recommendations.csv",
-            }
+        item = {
+            "rank": clean(row.get("promotion_rank")),
+            "priority": first_present(row.get("promotion_priority"), default="P?"),
+            "recommendation": first_present(row.get("promotion_recommendation"), default="review"),
+            "title": first_present(row.get("story_opportunity_title"), row.get("title"), row.get("source_url"), default="Untitled lead"),
+            "status": first_present(row.get("review_status"), default="review"),
+            "lane": first_present(row.get("lane"), default="source_review"),
+            "target": first_present(row.get("promotion_target"), default="morning_source_discovery_board.csv"),
+            "detail": short(first_present(row.get("evidence_preview"), row.get("summary"), row.get("reason")), 260),
+            "reason": short(clean(row.get("promotion_reason")), 190),
+            "next_step": short(clean(row.get("promotion_next_step")), 190),
+            "evidence_title": clean(row.get("evidence_title")),
+            "evidence_published_at": clean(row.get("evidence_published_at")),
+            "evidence_description": short(clean(row.get("evidence_description")), 260),
+            "evidence_preview": short(clean(row.get("evidence_preview")), 260),
+            "evidence_source": clean(row.get("evidence_source")),
+            "story_opportunity_id": clean(row.get("story_opportunity_id")),
+            "story_opportunity_title": clean(row.get("story_opportunity_title")),
+            "story_opportunity_size": clean(row.get("story_opportunity_size")),
+            "story_opportunity_sources": clean(row.get("story_opportunity_sources")),
+            "story_opportunity_urls": clean(row.get("story_opportunity_urls")),
+            "story_opportunity_reason": short(clean(row.get("story_opportunity_reason")), 220),
+            "story_opportunity_angle": clean(row.get("story_opportunity_angle")),
+            "story_opportunity_recommended_path": clean(row.get("story_opportunity_recommended_path")),
+            "story_opportunity_path_reason": short(clean(row.get("story_opportunity_path_reason")), 220),
+            "story_opportunity_confidence_tier": clean(row.get("story_opportunity_confidence_tier")),
+            "story_opportunity_source_coverage": clean(row.get("story_opportunity_source_coverage")),
+            "story_opportunity_confirmation_cue": clean(row.get("story_opportunity_confirmation_cue")),
+            "story_opportunity_asset_cue": clean(row.get("story_opportunity_asset_cue")),
+            "story_opportunity_readiness_note": short(clean(row.get("story_opportunity_readiness_note")), 220),
+            "story_opportunity_second_source_id": clean(row.get("story_opportunity_second_source_id")),
+            "story_opportunity_second_source_url": clean(row.get("story_opportunity_second_source_url")),
+            "story_opportunity_second_source_lane": clean(row.get("story_opportunity_second_source_lane")),
+            "story_opportunity_second_source_reason": short(clean(row.get("story_opportunity_second_source_reason")), 220),
+            "story_opportunity_second_source_action": short(clean(row.get("story_opportunity_second_source_action")), 220),
+            "quality_score": clean(row.get("quality_score")),
+            "freshness_label": clean(row.get("freshness_label")),
+            "freshness_source": clean(row.get("freshness_source")),
+            "freshness_score": clean(row.get("freshness_score")),
+            "quality_reason": short(clean(row.get("quality_reason")), 190),
+            "artifact": "morning_lead_promotion_recommendations.csv",
+        }
+        item.update(
+            score_render_readiness(
+                item,
+                item_type="Story opportunity",
+                headline=item["title"],
+                artifact=item["artifact"],
+            )
         )
+        rows.append(item)
     return rows
 
 
@@ -533,6 +709,57 @@ def studio_queue() -> List[Dict[str, str]]:
             }
         )
     return rows
+
+
+def render_readiness_queue(
+    candidates: List[Dict[str, str]],
+    promotions: List[Dict[str, str]],
+    source_board: List[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add_row(row: Dict[str, str], source: str, title_key: str = "headline") -> None:
+        title = first_present(row.get(title_key), row.get("title"), row.get("story_opportunity_title"), default="Untitled candidate")
+        key = first_present(row.get("story_opportunity_id"), title, source)
+        if key in seen:
+            return
+        seen.add(key)
+        rows.append(
+            {
+                "rank": "",
+                "source": source,
+                "title": title,
+                "recommended_path": first_present(
+                    row.get("story_opportunity_recommended_path"),
+                    row.get("recommendation"),
+                    row.get("type"),
+                    default="review",
+                ),
+                "score": clean(row.get("render_readiness_score")),
+                "band": clean(row.get("render_readiness_band")),
+                "source_cue": clean(row.get("render_readiness_source_cue")),
+                "asset_cue": clean(row.get("render_readiness_asset_cue")),
+                "format_cue": clean(row.get("render_readiness_format_cue")),
+                "manual_path": clean(row.get("render_readiness_manual_path")),
+                "blockers": clean(row.get("render_readiness_blockers")) or "none",
+                "next_step": clean(row.get("render_readiness_next_step")),
+                "artifact": first_present(row.get("artifact"), row.get("target"), default="operator_command_center.md"),
+            }
+        )
+
+    for row in candidates:
+        add_row(row, row.get("type") or "Content candidate")
+    for row in promotions:
+        add_row(row, "Lead promotion", title_key="title")
+    for row in source_board:
+        if row.get("story_opportunity_id") and row.get("story_opportunity_id") not in seen:
+            add_row(row, "Source discovery", title_key="title")
+
+    rows.sort(key=lambda item: (-as_int(item.get("score")), item.get("title", "")))
+    for index, row in enumerate(rows[:12], 1):
+        row["rank"] = str(index)
+    return rows[:12]
 
 
 def schedule_rows() -> List[Dict[str, str]]:
@@ -557,6 +784,7 @@ def build_next_actions(
     guard: Dict[str, Any],
     candidates: List[Dict[str, str]],
     studio: List[Dict[str, str]],
+    render_queue: List[Dict[str, str]],
     source_board: List[Dict[str, str]],
     promotions: List[Dict[str, str]],
     coverage_map: List[Dict[str, str]],
@@ -668,6 +896,41 @@ def build_next_actions(
             f"{promo['priority']} / {promo['lane']} / quality {promo.get('quality_score') or 'n/a'} / {freshness_note}. {opportunity_note}{angle_note}{readiness_note}{second_source_note}{evidence_note}{promo.get('next_step') or promo.get('reason')}",
             promo["artifact"],
         )
+
+    if render_queue:
+        ready_render_rows = [row for row in render_queue if row.get("band") == "render_ready_review"]
+        blocked_render_rows = [row for row in render_queue if row.get("band", "").startswith("hold_")]
+        prep_render_rows = [row for row in render_queue if row.get("band") == "render_prep_candidate"]
+        if ready_render_rows:
+            row = ready_render_rows[0]
+            add_action(
+                "Render ready",
+                "Editor",
+                f"Review render-ready story candidate: {row['title']}",
+                (
+                    f"Score {row.get('score')}/100. Source, asset, format, and manual path cues are ready for human review. "
+                    f"{row.get('next_step')}"
+                ),
+                row.get("artifact") or "operator_command_center.md",
+            )
+        elif blocked_render_rows:
+            row = blocked_render_rows[0]
+            add_action(
+                "Render hold",
+                "Editor",
+                f"Clear render-readiness blocker: {row['title']}",
+                f"Score {row.get('score')}/100; blockers: {row.get('blockers')}. {row.get('next_step')}",
+                row.get("artifact") or "operator_command_center.md",
+            )
+        elif prep_render_rows:
+            row = prep_render_rows[0]
+            add_action(
+                "Render prep",
+                "Editor",
+                f"Prepare render candidate: {row['title']}",
+                f"Score {row.get('score')}/100. {row.get('next_step')}",
+                row.get("artifact") or "operator_command_center.md",
+            )
 
     coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
     proposal_holds = [row for row in proposal_review if row.get("review_status") == "hold"]
@@ -1352,6 +1615,7 @@ def build_payload() -> Dict[str, Any]:
     promotions = lead_promotion_recommendations()
     studio = studio_queue()
     schedule = schedule_rows()
+    render_queue = render_readiness_queue(candidates, promotions, source_board)
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
@@ -1506,6 +1770,12 @@ def build_payload() -> Dict[str, Any]:
             str(sum(1 for row in promotions if row.get("recommendation") == "manual_story_candidate")),
             str(sum(1 for row in promotions if row.get("recommendation") == "studio_brief")),
         ])),
+        metric("Render readiness rows", len(render_queue)),
+        metric("Render-ready review", sum(1 for row in render_queue if row.get("band") == "render_ready_review")),
+        metric("Render prep candidates", sum(1 for row in render_queue if row.get("band") == "render_prep_candidate")),
+        metric("Render holds", sum(1 for row in render_queue if row.get("band", "").startswith("hold_"))),
+        metric("Render needs source", sum(1 for row in render_queue if "source" in row.get("blockers", ""))),
+        metric("Render needs asset", sum(1 for row in render_queue if "asset" in row.get("blockers", ""))),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -1516,6 +1786,7 @@ def build_payload() -> Dict[str, Any]:
         guard,
         candidates,
         studio,
+        render_queue,
         source_board,
         promotions,
         coverage_map,
@@ -1564,6 +1835,7 @@ def build_payload() -> Dict[str, Any]:
         "next_actions": next_actions,
         "schedule": schedule,
         "content_candidates": candidates,
+        "render_readiness_queue": render_queue,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
@@ -1681,6 +1953,14 @@ def render_schedule(rows: Iterable[Dict[str, str]]) -> str:
 def render_content(rows: Iterable[Dict[str, str]]) -> str:
     cards = []
     for row in rows:
+        readiness = (
+            f"render: {html.escape(row.get('render_readiness_score') or 'n/a')}/100"
+            f" / {html.escape(row.get('render_readiness_band') or 'not_scored')}"
+            f" / source: {html.escape(row.get('render_readiness_source_cue') or 'n/a')}"
+            f" / assets: {html.escape(row.get('render_readiness_asset_cue') or 'n/a')}"
+            f" / format: {html.escape(row.get('render_readiness_format_cue') or 'n/a')}"
+            f" / path: {html.escape(row.get('render_readiness_manual_path') or 'n/a')}"
+        )
         cards.append(
             f"""
             <article class="content-row">
@@ -1688,13 +1968,37 @@ def render_content(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row['type'])} {pill(row['priority'])} {pill(row['status'])}</div>
                 <h3>{html.escape(row['headline'])}</h3>
                 <p>{html.escape(row['detail'])}</p>
-                <small>{html.escape(row.get('source_count') or '0')} source(s) / {html.escape(row.get('source_grade') or 'not_scored')} {f"({html.escape(row.get('source_score') or '')})" if row.get('source_score') else ""}</small>
+                <small>{html.escape(row.get('source_count') or '0')} source(s) / {html.escape(row.get('source_grade') or 'not_scored')} {f"({html.escape(row.get('source_score') or '')})" if row.get('source_score') else ""} / {readiness}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
             """
         )
     return "".join(cards) or '<p class="empty">No content candidates found.</p>'
+
+
+def render_render_readiness(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{html.escape(clean(row.get('rank')))}</td>
+              <td>{pill(row.get('band') or 'not_scored')}</td>
+              <td>{html.escape(clean(row.get('score')) or '0')}</td>
+              <td>{html.escape(clean(row.get('title')))}</td>
+              <td>{html.escape(clean(row.get('recommended_path')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('source_cue')) or 'n/a')}</td>
+              <td>{html.escape(clean(row.get('asset_cue')) or 'n/a')}</td>
+              <td>{html.escape(clean(row.get('format_cue')) or 'n/a')}</td>
+              <td>{html.escape(clean(row.get('manual_path')) or 'n/a')}</td>
+              <td>{html.escape(clean(row.get('blockers')) or 'none')}</td>
+              <td>{html.escape(clean(row.get('next_step')))}</td>
+              <td>{open_link(clean(row.get('artifact')))}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="12" class="empty">No render-readiness candidates found.</td></tr>'
 
 
 def render_studio(rows: Iterable[Dict[str, str]]) -> str:
@@ -1748,6 +2052,11 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
             second_source_note = (
                 f" / second source: {html.escape(row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a')}"
             )
+        render_note = (
+            f" / render: {html.escape(row.get('render_readiness_score') or 'n/a')}/100"
+            f" / {html.escape(row.get('render_readiness_band') or 'not_scored')}"
+            f" / path: {html.escape(row.get('render_readiness_manual_path') or 'n/a')}"
+        )
         cards.append(
             f"""
             <article class="content-row">
@@ -1756,7 +2065,7 @@ def render_source_discovery(rows: Iterable[Dict[str, str]]) -> str:
                 <h3>{html.escape(row['title'])}</h3>
                 {detail_html}
                 {next_html}
-                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}{second_source_note}</small>
+                <small>{html.escape(row.get('source') or '')} / {html.escape(row.get('band') or '')} / promote: {html.escape(row.get('promotion') or 'monitor_only')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}{second_source_note}{render_note}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -1797,6 +2106,11 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
             second_source_note = (
                 f" / second source: {html.escape(row.get('story_opportunity_second_source_id') or row.get('story_opportunity_second_source_lane') or 'n/a')}"
             )
+        render_note = (
+            f" / render: {html.escape(row.get('render_readiness_score') or 'n/a')}/100"
+            f" / {html.escape(row.get('render_readiness_band') or 'not_scored')}"
+            f" / path: {html.escape(row.get('render_readiness_manual_path') or 'n/a')}"
+        )
         cards.append(
             f"""
             <article class="content-row">
@@ -1805,7 +2119,7 @@ def render_lead_promotions(rows: Iterable[Dict[str, str]]) -> str:
                 <h3>{html.escape(row['title'])}</h3>
                 {detail_html}
                 {next_html}
-                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}{second_source_note}</small>
+                <small>{html.escape(row.get('lane') or '')} / target: {html.escape(row.get('target') or '')} / quality: {html.escape(row.get('quality_score') or 'n/a')} / {html.escape(row.get('freshness_label') or 'undated')}{' via ' + html.escape(row.get('freshness_source') or '') if row.get('freshness_source') else ''}{opportunity_note}{angle_note}{readiness_note}{second_source_note}{render_note}</small>
               </div>
               <div>{open_link(row['artifact'])}</div>
             </article>
@@ -2333,6 +2647,15 @@ def render_html(payload: Dict[str, Any]) -> str:
     </section>
 
     <section id="content" class="tab-panel">
+      <div class="panel" style="margin-bottom:16px">
+        <h2>Render readiness</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rank</th><th>Band</th><th>Score</th><th>Story</th><th>Path</th><th>Source</th><th>Assets</th><th>Format</th><th>Manual path</th><th>Blockers</th><th>Next step</th><th>Open</th></tr></thead>
+            <tbody>{render_render_readiness(payload['render_readiness_queue'])}</tbody>
+          </table>
+        </div>
+      </div>
       <div class="two-col">
         <div class="panel">
           <h2>Content candidates</h2>
@@ -2596,19 +2919,24 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         )
         for action in payload["next_actions"]
     )
+    lines += ["", "## Render readiness", ""]
+    lines.extend(
+        f"- {item.get('rank') or '-'} | {item.get('band') or 'not_scored'} | score: {item.get('score') or '0'} | {item.get('title') or 'Untitled candidate'} | path: {item.get('recommended_path') or 'review'} | source: {item.get('source_cue') or 'n/a'} | assets: {item.get('asset_cue') or 'n/a'} | format: {item.get('format_cue') or 'n/a'} | manual: {item.get('manual_path') or 'n/a'} | blockers: {item.get('blockers') or 'none'} | next: {item.get('next_step') or 'review manually'}"
+        for item in payload["render_readiness_queue"]
+    )
     lines += ["", "## Content candidates", ""]
     lines.extend(
-        f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'}"
+        f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'} | render: {item.get('render_readiness_score') or 'n/a'}/100 | {item.get('render_readiness_band') or 'not_scored'} | manual: {item.get('render_readiness_manual_path') or 'n/a'}"
         for item in payload["content_candidates"]
     )
     lines += ["", "## Lead promotion recommendations", ""]
     lines.extend(
-        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or '1'} source(s) | angle: {item.get('story_opportunity_angle') or 'review'} | path: {item.get('story_opportunity_recommended_path') or item.get('recommendation') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'review'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
+        f"- {item['rank']} | {item['priority']} | {item['recommendation']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or '1'} source(s) | angle: {item.get('story_opportunity_angle') or 'review'} | path: {item.get('story_opportunity_recommended_path') or item.get('recommendation') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'review'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | render: {item.get('render_readiness_score') or 'n/a'}/100 | {item.get('render_readiness_band') or 'not_scored'} | manual: {item.get('render_readiness_manual_path') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | target: {item['target']} | {item.get('next_step') or item.get('reason')}"
         for item in payload["lead_promotion_recommendations"]
     )
     lines += ["", "## Morning source discovery", ""]
     lines.extend(
-        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | angle: {item.get('story_opportunity_angle') or 'n/a'} | path: {item.get('story_opportunity_recommended_path') or item.get('promotion') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'n/a'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
+        f"- {item['rank']} | {item['lane']} | quality: {item.get('quality_score') or 'n/a'} | {item.get('freshness_label') or 'undated'}{(' via ' + item.get('freshness_source')) if item.get('freshness_source') else ''} | opportunity: {item.get('story_opportunity_size') or 'n/a'} | angle: {item.get('story_opportunity_angle') or 'n/a'} | path: {item.get('story_opportunity_recommended_path') or item.get('promotion') or 'review'} | confidence: {item.get('story_opportunity_confidence_tier') or 'n/a'} | coverage: {item.get('story_opportunity_source_coverage') or 'n/a'} | cue: {item.get('story_opportunity_confirmation_cue') or 'n/a'} | assets: {item.get('story_opportunity_asset_cue') or 'n/a'} | second source: {item.get('story_opportunity_second_source_id') or item.get('story_opportunity_second_source_lane') or 'n/a'} | render: {item.get('render_readiness_score') or 'n/a'}/100 | {item.get('render_readiness_band') or 'not_scored'} | manual: {item.get('render_readiness_manual_path') or 'n/a'} | {item['title']} | preview: {item.get('detail') or 'n/a'} | {item['status']} | {item['posture']} | {item.get('next_action') or item.get('detail')}"
         for item in payload["source_discovery_board"]
     )
     readiness = payload["source_registry_readiness_summary"]
