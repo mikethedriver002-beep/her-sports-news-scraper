@@ -1,0 +1,117 @@
+{
+  "template_id": "hsd_game_recap_final_score_b",
+  "family": "game_recap_final_score",
+  "variant": "B",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "w": 80,
+    "h": 80,
+    "rules": [
+      "Use official compact HSD badge asset only",
+      "Do not recreate as text",
+      "Do not redesign the badge",
+      "One badge only, top-left"
+    ]
+  },
+  "zones": {
+    "title": {
+      "x": 60,
+      "y": 120,
+      "w": 960,
+      "h": 170,
+      "text_role": "game_recap_final_score_title"
+    },
+    "context_row": {
+      "x": 60,
+      "y": 330,
+      "w": 960,
+      "h": 68,
+      "text_role": "date_time_location_competition"
+    },
+    "primary_logo_slot": {
+      "x": 60,
+      "y": 430,
+      "w": 180,
+      "h": 180,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "primary_team": {
+      "x": 260,
+      "y": 430,
+      "w": 430,
+      "h": 110,
+      "text_role": "primary_team_name"
+    },
+    "primary_score": {
+      "x": 60,
+      "y": 560,
+      "w": 620,
+      "h": 300,
+      "text_role": "primary_score"
+    },
+    "secondary_logo_slot": {
+      "x": 60,
+      "y": 880,
+      "w": 180,
+      "h": 180,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "secondary_team": {
+      "x": 260,
+      "y": 900,
+      "w": 300,
+      "h": 90,
+      "text_role": "secondary_team_name"
+    },
+    "secondary_score": {
+      "x": 260,
+      "y": 980,
+      "w": 220,
+      "h": 120,
+      "text_role": "secondary_score"
+    },
+    "approved_player_photo_slot": {
+      "x": 700,
+      "y": 430,
+      "w": 320,
+      "h": 520,
+      "asset_role": "approved_player_photo_slot_only"
+    },
+    "key_performer": {
+      "x": 700,
+      "y": 970,
+      "w": 320,
+      "h": 120,
+      "text_role": "optional_key_performer"
+    },
+    "hook_takeaway": {
+      "x": 60,
+      "y": 1130,
+      "w": 960,
+      "h": 160,
+      "text_role": "optional_hook_or_takeaway"
+    }
+  },
+  "renderer_notes": [
+    "Public mockup must not show internal variant labels.",
+    "Use only when an approved player photo exists.",
+    "If no approved player photo exists, revert to Variant A.",
+    "Approved team logo slots only. Do not invent logos.",
+    "Winner/crown treatment is optional and not automatic.",
+    "Brush-script hook is optional, not required."
+  ],
+  "when_to_use": "Use when an approved player photo helps sell the final score story and there is a clear key performer angle."
+}

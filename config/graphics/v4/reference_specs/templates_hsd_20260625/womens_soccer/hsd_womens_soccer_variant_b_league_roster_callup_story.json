@@ -1,0 +1,93 @@
+{
+  "template_id": "hsd_womens_soccer_variant_b_league_roster_callup_story",
+  "family": "womens_soccer_nwsl_uswnt",
+  "variant": "B",
+  "template_name": "League / Roster / Callup Story Card",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "width_min": 80,
+    "width_max": 96,
+    "placement": "top-left"
+  },
+  "public_mockup": "public_mockups/03_variant_B_league_roster_callup_public.png",
+  "layout_reference": "layout_references/04_variant_B_league_roster_callup_layout_reference.png",
+  "headline_examples": [
+    "ROSTER STORY HEADLINE",
+    "TEAM NAMES ROSTER",
+    "CALLUP STORY HEADLINE",
+    "PLAYER / TEAM STORY"
+  ],
+  "zones": {
+    "family_label": {
+      "x": 185,
+      "y": 110,
+      "w": 700,
+      "h": 60,
+      "text_role": "LEAGUE / TEAM / COUNTRY"
+    },
+    "main_headline": {
+      "x": 60,
+      "y": 220,
+      "w": 500,
+      "h": 580,
+      "text_role": "editable headline"
+    },
+    "abstract_texture_or_visual_panel": {
+      "x": 570,
+      "y": 180,
+      "w": 420,
+      "h": 960,
+      "asset_role": "APPROVED IMAGE SLOT or abstract editorial texture",
+      "optional": true
+    },
+    "short_context": {
+      "x": 60,
+      "y": 840,
+      "w": 440,
+      "h": 130,
+      "text_role": "SHORT CONTEXT"
+    },
+    "why_it_matters": {
+      "x": 60,
+      "y": 995,
+      "w": 450,
+      "h": 150,
+      "text_role": "WHY IT MATTERS"
+    },
+    "source_note": {
+      "x": 60,
+      "y": 1180,
+      "w": 500,
+      "h": 110,
+      "text_role": "SOURCE NOTE"
+    },
+    "optional_logo_slot": {
+      "x": 705,
+      "y": 830,
+      "w": 180,
+      "h": 150,
+      "asset_role": "APPROVED LOGO SLOT",
+      "optional": true
+    }
+  },
+  "renderer_notes": [
+    "Public mockup must read as an editable template, not a specific reported roster event.",
+    "Do not imply real callups, rosters, or transfers unless details are provided.",
+    "Abstract soccer textures are allowed as backgrounds and should not replace approved team imagery.",
+    "Use approved image/logo slots only when real assets are available."
+  ],
+  "when_to_use": "Use for roster news, callups, transfers, awards, milestones, or other women\u2019s soccer editorial stories that are not centered on one match result."
+}

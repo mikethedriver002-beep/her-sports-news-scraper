@@ -1,0 +1,188 @@
+{
+  "template_id": "hsd_daily_debrief_variant_a_carousel_system",
+  "family": "the_daily_debrief",
+  "variant": "A",
+  "template_name": "Daily Debrief Carousel System",
+  "format": "ig_carousel",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "w_min": 80,
+    "w_max": 96,
+    "placement": "top-left",
+    "rules": [
+      "Use the uploaded official compact HSD badge exactly as provided.",
+      "Use one badge only.",
+      "Keep the badge small and secondary to the content.",
+      "Do not recreate the logo as text.",
+      "Do not add HER SPORTS DAILY beside the badge."
+    ]
+  },
+  "public_mockups": {
+    "cover_slide": "public_mockups/01_daily_debrief_A_cover_slide_public.png",
+    "story_slide": "public_mockups/02_daily_debrief_A_story_slide_public.png",
+    "end_question_slide": "public_mockups/03_daily_debrief_A_end_question_slide_public.png"
+  },
+  "layout_reference": "layout_references/04_daily_debrief_A_carousel_system_layout_reference.png",
+  "slides": {
+    "cover_slide": {
+      "purpose": "Set the tone for the daily broad women\u2019s sports roundup.",
+      "zones": {
+        "franchise_title": {
+          "x": 80,
+          "y": 150,
+          "w": 700,
+          "h": 480,
+          "text_role": "THE DAILY DEBRIEF"
+        },
+        "editable_strapline": {
+          "x": 80,
+          "y": 930,
+          "w": 850,
+          "h": 90,
+          "text_role": "strapline",
+          "examples": [
+            "3 STORIES. WHAT MATTERS TODAY.",
+            "3 STORIES. ONE DAILY RESET.",
+            "THE TOP STORIES IN WOMEN\u2019S SPORTS."
+          ]
+        },
+        "story_count_cue": {
+          "x": 80,
+          "y": 1080,
+          "w": 500,
+          "h": 70,
+          "text_role": "1 / 3 or swipe cue"
+        },
+        "optional_approved_image_slot_or_abstract_texture": {
+          "x": 650,
+          "y": 190,
+          "w": 360,
+          "h": 660,
+          "asset_role": "approved_image_slot_or_abstract_editorial_texture",
+          "optional": true
+        }
+      }
+    },
+    "story_slide": {
+      "purpose": "Tell one story with context and why it matters.",
+      "zones": {
+        "story_number": {
+          "x": 865,
+          "y": 60,
+          "w": 160,
+          "h": 130,
+          "text_role": "01 / 02 / 03"
+        },
+        "story_headline": {
+          "x": 60,
+          "y": 245,
+          "w": 520,
+          "h": 260,
+          "text_role": "STORY HEADLINE"
+        },
+        "sport_league": {
+          "x": 60,
+          "y": 560,
+          "w": 380,
+          "h": 55,
+          "text_role": "SPORT / LEAGUE"
+        },
+        "why_it_matters": {
+          "x": 60,
+          "y": 690,
+          "w": 470,
+          "h": 150,
+          "text_role": "WHY IT MATTERS"
+        },
+        "short_context": {
+          "x": 60,
+          "y": 905,
+          "w": 470,
+          "h": 210,
+          "text_role": "SHORT CONTEXT"
+        },
+        "source_note": {
+          "x": 60,
+          "y": 1190,
+          "w": 430,
+          "h": 75,
+          "text_role": "SOURCE NOTE"
+        },
+        "optional_approved_image_slot": {
+          "x": 560,
+          "y": 210,
+          "w": 470,
+          "h": 1000,
+          "asset_role": "approved_image_slot_or_abstract_texture",
+          "optional": true
+        }
+      }
+    },
+    "end_question_slide": {
+      "purpose": "Close the carousel with engagement.",
+      "zones": {
+        "engagement_headline": {
+          "x": 80,
+          "y": 330,
+          "w": 820,
+          "h": 270,
+          "text_role": "YOUR TAKE?"
+        },
+        "question_cta": {
+          "x": 80,
+          "y": 760,
+          "w": 880,
+          "h": 250,
+          "text_role": "QUESTION / CTA"
+        },
+        "support_line": {
+          "x": 80,
+          "y": 1130,
+          "w": 820,
+          "h": 90,
+          "text_role": "conversation support line"
+        },
+        "abstract_conversation_graphic": {
+          "x": 610,
+          "y": 120,
+          "w": 380,
+          "h": 330,
+          "role": "abstract speech bubble motif",
+          "optional": true
+        }
+      }
+    }
+  },
+  "story_fields": [
+    "STORY HEADLINE",
+    "SPORT / LEAGUE",
+    "WHY IT MATTERS",
+    "SHORT CONTEXT",
+    "SOURCE NOTE",
+    "QUESTION / CTA",
+    "APPROVED IMAGE SLOT",
+    "APPROVED LOGO SLOT"
+  ],
+  "renderer_notes": [
+    "Carousel is capped at three stories max.",
+    "Public mockups must not show internal labels, variant labels, spec labels, guide lines, or production notes.",
+    "Cover, story slide, and end-question slide should feel like one cohesive system.",
+    "Use placeholder copy unless real details are provided.",
+    "Use approved image/logo slots or abstract editorial textures only.",
+    "Do not use fake athletes, fake logos, real stats, real standings, real quotes, injuries, or scores unless provided.",
+    "Daily Debrief should feel broad across women\u2019s sports, not WNBA-only."
+  ],
+  "when_to_use": "Use when HSD wants a full flagship daily roundup carousel with a cover, one slide per story, and an engagement-focused close."
+}

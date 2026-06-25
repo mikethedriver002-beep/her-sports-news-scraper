@@ -1,0 +1,143 @@
+{
+  "template_id": "hsd_tennis_wta_variant_a_match_result_card",
+  "family": "tennis_wta",
+  "variant": "A",
+  "template_name": "Match Result Card",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "width_min": 80,
+    "width_max": 96,
+    "placement": "top-left",
+    "rules": [
+      "Use official compact HSD badge exactly as uploaded.",
+      "Use one badge only.",
+      "Keep badge small and secondary.",
+      "Do not recreate logo as text.",
+      "Do not add HER SPORTS DAILY beside the badge."
+    ]
+  },
+  "public_mockup": "public_mockups/01_tennis_wta_A_match_result_public.png",
+  "layout_reference": "layout_references/02_tennis_wta_A_match_result_layout_reference.png",
+  "center_result_area": {
+    "mode_rule": "Only one mode should be active at a time.",
+    "result_mode": {
+      "primary_line": "PLAYER NAME def. OPPONENT",
+      "secondary_line": "SET SCORELINE",
+      "editable_fields": [
+        "PLAYER NAME",
+        "OPPONENT NAME",
+        "RESULT / SCORELINE"
+      ]
+    },
+    "preview_mode": {
+      "primary_line": "PLAYER NAME vs OPPONENT",
+      "secondary_line": "ROUND / TIME / TOURNAMENT",
+      "editable_fields": [
+        "PLAYER NAME",
+        "OPPONENT NAME",
+        "ROUND NAME",
+        "TOURNAMENT NAME",
+        "NEXT MATCH"
+      ]
+    }
+  },
+  "zones": {
+    "round_name": {
+      "x": 365,
+      "y": 140,
+      "w": 350,
+      "h": 62,
+      "text_role": "ROUND NAME"
+    },
+    "tournament_name": {
+      "x": 285,
+      "y": 235,
+      "w": 510,
+      "h": 55,
+      "text_role": "TOURNAMENT NAME"
+    },
+    "player_name": {
+      "x": 150,
+      "y": 330,
+      "w": 780,
+      "h": 330,
+      "text_role": "PLAYER NAME"
+    },
+    "opponent_line": {
+      "x": 250,
+      "y": 705,
+      "w": 580,
+      "h": 85,
+      "text_role": "def. OPPONENT NAME or vs OPPONENT NAME"
+    },
+    "result_scoreline": {
+      "x": 275,
+      "y": 815,
+      "w": 530,
+      "h": 70,
+      "text_role": "RESULT / SCORELINE"
+    },
+    "why_it_matters": {
+      "x": 230,
+      "y": 955,
+      "w": 700,
+      "h": 90,
+      "text_role": "WHY IT MATTERS"
+    },
+    "question_cta": {
+      "x": 230,
+      "y": 1095,
+      "w": 700,
+      "h": 110,
+      "text_role": "QUESTION / CTA"
+    },
+    "approved_tour_event_logo_slot": {
+      "x": 825,
+      "y": 60,
+      "w": 180,
+      "h": 160,
+      "asset_role": "APPROVED TOUR / EVENT LOGO SLOT",
+      "optional": true
+    },
+    "approved_image_slot_or_abstract_texture": {
+      "x": 760,
+      "y": 760,
+      "w": 240,
+      "h": 300,
+      "asset_role": "APPROVED IMAGE SLOT or abstract tennis texture",
+      "optional": true
+    }
+  },
+  "placeholder_fields": [
+    "PLAYER NAME",
+    "OPPONENT NAME",
+    "TOURNAMENT NAME",
+    "ROUND NAME",
+    "RESULT / SCORELINE",
+    "NEXT MATCH",
+    "WHY IT MATTERS",
+    "QUESTION / CTA"
+  ],
+  "renderer_notes": [
+    "Do not require result mode and preview mode at the same time.",
+    "WIN / RESULT should be an editable field, not hardcoded.",
+    "Use confirmed scorelines only.",
+    "Use approved tour/event logo only when provided.",
+    "Abstract tennis textures are allowed as design backgrounds.",
+    "Public mockups must be clean and publish-ready."
+  ],
+  "when_to_use": "Use for a WTA match result or preview where the core information is player, opponent, tournament, round, and scoreline or next-match context."
+}

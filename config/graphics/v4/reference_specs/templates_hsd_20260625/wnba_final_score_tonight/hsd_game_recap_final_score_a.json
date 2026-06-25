@@ -1,0 +1,109 @@
+{
+  "template_id": "hsd_game_recap_final_score_a",
+  "family": "game_recap_final_score",
+  "variant": "A",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "w": 80,
+    "h": 80,
+    "rules": [
+      "Use official compact HSD badge asset only",
+      "Do not recreate as text",
+      "Do not redesign the badge",
+      "One badge only, top-left"
+    ]
+  },
+  "zones": {
+    "title": {
+      "x": 60,
+      "y": 120,
+      "w": 960,
+      "h": 170,
+      "text_role": "game_recap_final_score_title"
+    },
+    "context_row": {
+      "x": 60,
+      "y": 330,
+      "w": 960,
+      "h": 68,
+      "text_role": "date_location_competition_context"
+    },
+    "primary_logo_slot": {
+      "x": 60,
+      "y": 430,
+      "w": 220,
+      "h": 220,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "primary_team": {
+      "x": 300,
+      "y": 430,
+      "w": 300,
+      "h": 110,
+      "text_role": "primary_team_name"
+    },
+    "primary_score": {
+      "x": 600,
+      "y": 390,
+      "w": 420,
+      "h": 360,
+      "text_role": "primary_score"
+    },
+    "secondary_logo_slot": {
+      "x": 60,
+      "y": 680,
+      "w": 220,
+      "h": 220,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "secondary_team": {
+      "x": 300,
+      "y": 700,
+      "w": 360,
+      "h": 100,
+      "text_role": "secondary_team_name"
+    },
+    "secondary_score": {
+      "x": 660,
+      "y": 690,
+      "w": 280,
+      "h": 250,
+      "text_role": "secondary_score"
+    },
+    "key_performer": {
+      "x": 60,
+      "y": 960,
+      "w": 960,
+      "h": 150,
+      "text_role": "optional_key_performer"
+    },
+    "hook_takeaway": {
+      "x": 60,
+      "y": 1130,
+      "w": 960,
+      "h": 160,
+      "text_role": "optional_hook_or_question"
+    }
+  },
+  "renderer_notes": [
+    "Public mockup must not show internal variant labels.",
+    "Use PRIMARY TEAM / SECONDARY TEAM or WINNING TEAM / OPPONENT only.",
+    "Approved team logo slots only. Do not invent logos.",
+    "Winner/crown treatment is optional and not automatic.",
+    "Brush-script hook is optional, not required."
+  ],
+  "when_to_use": "Default logo-first final score for IG Feed and Threads when no approved player photo is available."
+}

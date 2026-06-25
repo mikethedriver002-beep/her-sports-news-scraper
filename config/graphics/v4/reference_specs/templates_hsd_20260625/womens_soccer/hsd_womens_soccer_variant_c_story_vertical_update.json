@@ -1,0 +1,126 @@
+{
+  "template_id": "hsd_womens_soccer_variant_c_story_vertical_update",
+  "family": "womens_soccer_nwsl_uswnt",
+  "variant": "C",
+  "template_name": "Story / Vertical Soccer Update",
+  "format": "ig_story_reels",
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "safe_zones": {
+    "top": 120,
+    "right": 60,
+    "bottom": 140,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 52,
+    "y": 48,
+    "width_min": 88,
+    "width_max": 104,
+    "placement": "top-left"
+  },
+  "public_mockup": "public_mockups/05_variant_C_story_vertical_public.png",
+  "layout_reference": "layout_references/06_variant_C_story_vertical_layout_reference.png",
+  "placeholder_fields": [
+    "STORY UPDATE",
+    "MATCH CONTEXT",
+    "WHY IT MATTERS",
+    "KEY DETAIL",
+    "QUESTION / CTA"
+  ],
+  "modes": {
+    "mode_1": {
+      "name": "score/match update + CTA",
+      "active_modules": [
+        "headline",
+        "score_or_matchup",
+        "match_context",
+        "why_it_matters",
+        "question_cta"
+      ]
+    },
+    "mode_2": {
+      "name": "three quick story points + CTA",
+      "active_modules": [
+        "headline",
+        "story_point_1",
+        "story_point_2",
+        "story_point_3",
+        "question_cta"
+      ]
+    },
+    "mode_3": {
+      "name": "roster/callup note + poll/question",
+      "active_modules": [
+        "headline",
+        "story_update",
+        "key_detail",
+        "question_cta",
+        "optional_poll_space"
+      ]
+    }
+  },
+  "zones": {
+    "headline": {
+      "x": 55,
+      "y": 145,
+      "w": 470,
+      "h": 350,
+      "text_role": "STORY UPDATE"
+    },
+    "optional_logo_or_image_panel": {
+      "x": 665,
+      "y": 215,
+      "w": 320,
+      "h": 420,
+      "asset_role": "APPROVED LOGO SLOT or APPROVED IMAGE SLOT",
+      "optional": true
+    },
+    "score_or_matchup_area": {
+      "x": 60,
+      "y": 695,
+      "w": 940,
+      "h": 210,
+      "text_role": "scoreline or matchup summary"
+    },
+    "module_stack_area": {
+      "x": 70,
+      "y": 960,
+      "w": 940,
+      "h": 620,
+      "role": "modular story content"
+    },
+    "question_cta_area": {
+      "x": 70,
+      "y": 1590,
+      "w": 940,
+      "h": 155,
+      "text_role": "QUESTION / CTA"
+    },
+    "optional_poll_space": {
+      "x": 610,
+      "y": 1595,
+      "w": 340,
+      "h": 120,
+      "role": "poll/question sticker safe space",
+      "optional": true
+    },
+    "story_ui_clear_zone": {
+      "x": 0,
+      "y": 1780,
+      "w": 1080,
+      "h": 140,
+      "role": "keep content above Story UI"
+    }
+  },
+  "renderer_notes": [
+    "Do not include platform UI icons inside the actual graphic.",
+    "Bottom area must stay clear for Story UI.",
+    "Not every module must be active at once.",
+    "Abstract soccer textures may be used as background only and should not imply real photography."
+  ],
+  "when_to_use": "Use for quick vertical women\u2019s soccer updates in Stories or Reels, including match updates, roster notes, or fast editorial recap points."
+}

@@ -1,0 +1,126 @@
+{
+  "template_id": "hsd_lpga_golf_variant_a_winner_champion_card",
+  "family": "lpga_golf",
+  "variant": "A",
+  "template_name": "Winner / Champion Card",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "width_min": 80,
+    "width_max": 96,
+    "placement": "top-left",
+    "rules": [
+      "Use official compact HSD badge exactly as uploaded.",
+      "Use one badge only.",
+      "Keep badge small and secondary.",
+      "Do not recreate logo as text.",
+      "Do not add HER SPORTS DAILY beside the badge."
+    ]
+  },
+  "public_mockup": "public_mockups/01_lpga_golf_A_winner_champion_public.png",
+  "layout_reference": "layout_references/02_lpga_golf_A_winner_champion_layout_reference.png",
+  "zones": {
+    "tournament_name": {
+      "x": 230,
+      "y": 100,
+      "w": 600,
+      "h": 70,
+      "text_role": "TOURNAMENT NAME"
+    },
+    "tour_series_label": {
+      "x": 230,
+      "y": 175,
+      "w": 420,
+      "h": 55,
+      "text_role": "LPGA TOUR / SERIES"
+    },
+    "player_name": {
+      "x": 70,
+      "y": 255,
+      "w": 700,
+      "h": 425,
+      "text_role": "PLAYER NAME"
+    },
+    "winner_champion": {
+      "x": 70,
+      "y": 680,
+      "w": 780,
+      "h": 105,
+      "text_role": "WINNER / CHAMPION"
+    },
+    "result_score": {
+      "x": 140,
+      "y": 830,
+      "w": 600,
+      "h": 130,
+      "text_role": "RESULT / SCORE"
+    },
+    "why_it_matters": {
+      "x": 90,
+      "y": 1010,
+      "w": 430,
+      "h": 175,
+      "text_role": "WHY IT MATTERS"
+    },
+    "question_cta": {
+      "x": 560,
+      "y": 1010,
+      "w": 430,
+      "h": 175,
+      "text_role": "QUESTION / CTA"
+    },
+    "abstract_trophy_visual_area": {
+      "x": 720,
+      "y": 240,
+      "w": 300,
+      "h": 560,
+      "role": "abstract trophy/golf editorial visual",
+      "optional": true,
+      "asset_rule": "Treat as abstract editorial design unless approved event imagery is provided."
+    },
+    "approved_image_slot_optional": {
+      "x": 170,
+      "y": 1195,
+      "w": 740,
+      "h": 90,
+      "asset_role": "APPROVED IMAGE SLOT",
+      "optional": true
+    },
+    "approved_logo_slot_optional": {
+      "x": 850,
+      "y": 80,
+      "w": 155,
+      "h": 100,
+      "asset_role": "APPROVED LOGO SLOT",
+      "optional": true
+    }
+  },
+  "placeholder_fields": [
+    "PLAYER NAME",
+    "TOURNAMENT NAME",
+    "WINNER / CHAMPION",
+    "RESULT / SCORE",
+    "WHY IT MATTERS",
+    "QUESTION / CTA"
+  ],
+  "renderer_notes": [
+    "Keep winner/champion hierarchy clean and dominant.",
+    "Trophy and golf visuals are abstract editorial design elements unless approved event imagery is provided.",
+    "Use confirmed score/result only.",
+    "Do not invent scores, tournament names, results, or player details.",
+    "Public mockups must be clean and publish-ready."
+  ],
+  "when_to_use": "Use for an LPGA winner, champion moment, major victory, trophy-focused result, or major final-round win."
+}
