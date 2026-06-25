@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hersportsdaily.local/schemas/athlete_photo_catalog_v1.schema.json",
+  "title": "HSD Athlete Photo Catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["report", "rows"],
+  "properties": {
+    "report": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "generated_at_utc", "review_only", "rows", "status_counts", "policy"],
+      "properties": {
+        "version": { "const": "hsd-athlete-photo-catalog-v1-review-only" },
+        "generated_at_utc": { "type": "string" },
+        "review_only": { "const": true },
+        "catalog_csv": { "type": "string" },
+        "catalog_json": { "type": "string" },
+        "catalog_md": { "type": "string" },
+        "rows": { "type": "integer", "minimum": 0 },
+        "status_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "asset_kind_status_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "render_template_uses_discovered": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "policy": { "type": "string" }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "athlete_id",
+          "athlete_name",
+          "team_id",
+          "league",
+          "asset_kind",
+          "local_asset_path",
+          "file_exists",
+          "approved_marker_path",
+          "approved_marker_exists",
+          "status",
+          "source_evidence",
+          "crop_readiness_notes",
+          "render_template_uses",
+          "review_only_policy"
+        ],
+        "properties": {
+          "athlete_id": { "type": "string" },
+          "athlete_name": { "type": "string" },
+          "team_id": { "type": "string" },
+          "league": { "type": "string" },
+          "provider_player_id": { "type": "string" },
+          "asset_kind": { "enum": ["headshot", "cutout"] },
+          "local_asset_path": { "type": "string" },
+          "file_exists": { "enum": ["true", "false"] },
+          "approved_marker_path": { "type": "string" },
+          "approved_marker_exists": { "enum": ["true", "false"] },
+          "status": { "enum": ["approved", "unapproved", "missing"] },
+          "source_evidence": { "type": "string" },
+          "crop_readiness_notes": { "type": "string" },
+          "render_template_uses": { "type": "string" },
+          "review_only_policy": { "const": "catalog_only_no_auto_approval_no_file_movement" }
+        }
+      }
+    }
+  }
+}

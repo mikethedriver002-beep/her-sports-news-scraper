@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.4.0-photo-first-score-readability"
+VERSION = "hsd-manual-visual-qa-v1.5.0-photo-first-crop-clearance"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -87,6 +87,51 @@ def primary_photo_layout_mode(renderer_manifest: Dict[str, Any]) -> str:
     formats = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
     primary = next((item for item in formats if isinstance(item, dict) and item.get("primary") is True), formats[0] if formats else {})
     return clean(primary.get("athlete_photo_layout_mode")) if isinstance(primary, dict) else ""
+
+
+def primary_format_option(renderer_manifest: Dict[str, Any]) -> Dict[str, Any]:
+    formats = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
+    primary = next((item for item in formats if isinstance(item, dict) and item.get("primary") is True), formats[0] if formats else {})
+    return primary if isinstance(primary, dict) else {}
+
+
+def box_from_geometry(geometry: Dict[str, Any], key: str) -> Zone | None:
+    raw = geometry.get(key)
+    if not isinstance(raw, list) or len(raw) != 4:
+        return None
+    try:
+        return int(raw[0]), int(raw[1]), int(raw[2]), int(raw[3])
+    except Exception:
+        return None
+
+
+def clamp_box(box: Zone, size: Tuple[int, int]) -> Zone:
+    x, y, w, h = box
+    max_w, max_h = size
+    x = max(0, min(x, max_w))
+    y = max(0, min(y, max_h))
+    w = max(0, min(w, max_w - x))
+    h = max(0, min(h, max_h - y))
+    return x, y, w, h
+
+
+def pil_crop_box(box: Zone) -> Tuple[int, int, int, int]:
+    x, y, w, h = box
+    return x, y, x + w, y + h
+
+
+def box_clearance(a: Zone, b: Zone) -> int:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    dx = max(bx - (ax + aw), ax - (bx + bw), 0)
+    dy = max(by - (ay + ah), ay - (by + bh), 0)
+    if dx and dy:
+        return min(dx, dy)
+    if dx or dy:
+        return max(dx, dy)
+    overlap_x = min(ax + aw, bx + bw) - max(ax, bx)
+    overlap_y = min(ay + ah, by + bh) - max(ay, by)
+    return -min(overlap_x, overlap_y)
 
 
 def add_check(checks: List[Dict[str, Any]], check_id: str, label: str, passed: bool, evidence: str, *, result: str | None = None) -> None:
@@ -401,6 +446,126 @@ def add_player_ledger_readability_check(checks: List[Dict[str, Any]], renderer_m
     )
 
 
+def add_photo_first_template_checks(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any], image: Any | None) -> None:
+    primary = primary_format_option(renderer_manifest)
+    mode = clean(primary.get("athlete_photo_layout_mode"))
+    if mode != "photo_first_final_score":
+        add_check(
+            checks,
+            "photo_first_template_readiness",
+            "Photo-first template readiness",
+            True,
+            f"Primary render layout={mode or 'standard'}; photo-first crop and clearance checks are not required for this fallback.",
+            result="pass_human_review_required",
+        )
+        return
+    geometry = primary.get("photo_first_template_geometry") if isinstance(primary.get("photo_first_template_geometry"), dict) else {}
+    if not geometry:
+        add_check(
+            checks,
+            "photo_first_template_readiness",
+            "Photo-first template readiness",
+            False,
+            "Primary render is photo_first_final_score, but no renderer geometry was provided for QA.",
+        )
+        return
+    if image is None:
+        add_check(
+            checks,
+            "photo_first_template_readiness",
+            "Photo-first template readiness",
+            False,
+            "Primary render is photo_first_final_score, but the preview image was unavailable for crop and clearance QA.",
+        )
+        return
+
+    stage = box_from_geometry(geometry, "photo_stage_box")
+    face = box_from_geometry(geometry, "photo_face_focus_box")
+    if not stage or not face:
+        add_check(
+            checks,
+            "photo_first_template_readiness",
+            "Photo-first template readiness",
+            False,
+            "Photo-first renderer geometry is missing photo_stage_box or photo_face_focus_box.",
+        )
+        return
+
+    stage = clamp_box(stage, image.size)
+    face = clamp_box(face, image.size)
+    stage_signal = text_zone_signal(image, pil_crop_box(stage))
+    stage_passed = stage_signal["variance"] >= 900.0 and stage_signal["bright_pixel_ratio"] >= 0.018 and stage_signal["dark_pixel_ratio"] >= 0.700
+    add_check(
+        checks,
+        "photo_first_crop_signal",
+        "Photo-first athlete crop signal",
+        stage_passed,
+        (
+            f"layout={mode}; stage_box={stage}; luma avg {stage_signal['average_luma']:.1f}, "
+            f"variance {stage_signal['variance']:.1f} (min 900.0), bright pixel ratio "
+            f"{stage_signal['bright_pixel_ratio']:.3f} (min 0.018), dark pixel ratio "
+            f"{stage_signal['dark_pixel_ratio']:.3f} (min 0.700)."
+        ),
+    )
+
+    face_crop = image.crop(pil_crop_box(face)).convert("RGB")
+    face_signal = text_zone_signal(image, pil_crop_box(face))
+    face_edge = edge_contrast_ratio(face_crop)
+    face_edge_min = 0.014
+    face_passed = face_signal["variance"] >= 700.0 and face_signal["bright_pixel_ratio"] >= 0.015 and face_edge >= face_edge_min
+    add_check(
+        checks,
+        "photo_first_face_visibility",
+        "Photo-first face visibility signal",
+        face_passed,
+        (
+            f"layout={mode}; face_focus_box={face}; luma avg {face_signal['average_luma']:.1f}, "
+            f"variance {face_signal['variance']:.1f} (min 700.0), bright pixel ratio "
+            f"{face_signal['bright_pixel_ratio']:.3f} (min 0.015), edge contrast "
+            f"{face_edge:.3f} (min {face_edge_min:.3f}). Heuristic only; human eye review remains required."
+        ),
+    )
+
+    boxes = {
+        "photo_stage": stage,
+        "winner_score": box_from_geometry(geometry, "winner_score_row_box"),
+        "loser_score": box_from_geometry(geometry, "loser_score_row_box"),
+        "score_context": box_from_geometry(geometry, "score_context_box"),
+        "stat_strip": box_from_geometry(geometry, "stat_strip_box"),
+        "matchup_angle": box_from_geometry(geometry, "matchup_angle_box"),
+    }
+    missing = [label for label, box in boxes.items() if box is None]
+    if missing:
+        add_check(
+            checks,
+            "photo_first_text_clearance",
+            "Photo-first text and module clearance",
+            False,
+            f"Photo-first geometry is missing boxes: {', '.join(missing)}.",
+        )
+        return
+    typed_boxes = {label: clamp_box(box, image.size) for label, box in boxes.items() if box is not None}
+    pairs = [
+        ("photo_stage", "winner_score"),
+        ("photo_stage", "loser_score"),
+        ("photo_stage", "stat_strip"),
+        ("winner_score", "loser_score"),
+        ("loser_score", "score_context"),
+        ("score_context", "stat_strip"),
+        ("stat_strip", "matchup_angle"),
+    ]
+    gaps = {f"{left}->{right}": box_clearance(typed_boxes[left], typed_boxes[right]) for left, right in pairs}
+    minimum = int(geometry.get("minimum_clearance_px", 24) or 24)
+    min_gap = min(gaps.values()) if gaps else 0
+    add_check(
+        checks,
+        "photo_first_text_clearance",
+        "Photo-first text and module clearance",
+        min_gap >= minimum,
+        f"minimum_clearance={min_gap}px (required {minimum}px); " + "; ".join(f"{key}={value}px" for key, value in gaps.items()),
+    )
+
+
 def checklist_rows(checks: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for check in checks:
@@ -556,6 +721,7 @@ def main() -> None:
                         photo_layout_mode=photo_layout_mode or "standard",
                     ),
                 )
+        add_photo_first_template_checks(checks, renderer_manifest, image)
         add_player_ledger_readability_check(checks, renderer_manifest, image)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
@@ -577,6 +743,7 @@ def main() -> None:
 
     guardrails = guardrail_checks(renderer_manifest, handoff_manifest)
     if Image is None or ImageStat is None or not preview_path:
+        add_photo_first_template_checks(checks, renderer_manifest, None)
         add_player_ledger_readability_check(checks, renderer_manifest, None)
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_check(

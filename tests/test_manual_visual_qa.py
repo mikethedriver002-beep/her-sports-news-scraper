@@ -68,6 +68,49 @@ def make_reference_style_preview(path: Path) -> None:
     image.save(path)
 
 
+def make_photo_first_preview(path: Path) -> None:
+    image = Image.new("RGB", (1080, 1350), (6, 10, 18))
+    draw = ImageDraw.Draw(image)
+    title_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 64)
+    score_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 118)
+    team_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 42)
+    body_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 34)
+    small_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 24)
+    gold = (247, 203, 84)
+    mint = (144, 216, 192)
+    ink = (244, 247, 252)
+    red = (190, 39, 54)
+    draw.rectangle((710, 74, 1030, 150), fill=red)
+    draw.rectangle((54, 1288, 1028, 1318), fill=red)
+    draw.line((60, 245, 1020, 245), fill=gold, width=3)
+    draw.text((210, 170), "GAME RECAP", font=title_font, fill=ink, stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((620, 170), "FINAL SCORE", font=title_font, fill=gold, stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((70, 338), "FINAL / WNBA / PHOTO-FIRST DRAFT", font=body_font, fill=gold, stroke_width=1, stroke_fill=(0, 0, 0))
+    draw.rounded_rectangle((58, 372, 466, 962), radius=30, fill=(18, 42, 38), outline=mint, width=4)
+    draw.text((94, 402), "PLAYER FOCUS", font=small_font, fill=mint)
+    draw.ellipse((178, 538, 346, 714), fill=(210, 152, 118), outline=(255, 224, 200), width=4)
+    draw.ellipse((222, 588, 236, 602), fill=(20, 24, 28))
+    draw.ellipse((288, 588, 302, 602), fill=(20, 24, 28))
+    draw.arc((232, 624, 296, 670), start=10, end=170, fill=(95, 32, 42), width=5)
+    draw.rectangle((178, 706, 346, 918), fill=(28, 110, 96))
+    draw.rounded_rectangle((80, 904, 300, 942), radius=8, fill=(3, 5, 10), outline=mint, width=2)
+    draw.text((104, 911), "APPROVED PHOTO", font=small_font, fill=mint)
+    for y, team, score, outline in [(398, "LIBERTY", "87", mint), (598, "ACES", "76", red)]:
+        draw.rounded_rectangle((494, y, 1022, y + 176), radius=18, fill=(2, 4, 9), outline=outline, width=3)
+        draw.text((620, y + 70), team, font=team_font, fill=ink)
+        draw.text((860, y + 12), score, font=score_font, fill=ink, stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((494, 796), "LIBERTY +11 VS ACES / 163 PTS", font=small_font, fill=mint)
+    draw.rounded_rectangle((58, 990, 1022, 1122), radius=16, fill=(2, 4, 9), outline=mint, width=3)
+    draw.text((86, 1002), "PHOTO-FIRST / VERIFIED STAT TEXT", font=small_font, fill=mint)
+    draw.text((86, 1038), "STEWART LED LIBERTY", font=team_font, fill=ink)
+    draw.text((86, 1084), "20 PTS / 6 REB / 4 AST in the LIBERTY +11 vs ACES final.", font=small_font, fill=ink)
+    draw.rounded_rectangle((58, 1148, 1022, 1260), radius=16, fill=(2, 4, 9), outline=red, width=3)
+    draw.text((86, 1166), "MATCHUP ANGLE", font=small_font, fill=red)
+    draw.text((86, 1202), "STEWART + CLEAR SEPARATION", font=team_font, fill=ink)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(path)
+
+
 def write_guardrail_inputs(run_dir: Path) -> None:
     handoff_dir = run_dir / "render_handoff_top_packet"
     (handoff_dir / "handoff_manifest.json").write_text(
@@ -136,6 +179,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "score_team_text_zone" in check_ids
     assert "context_text_zone" in check_ids
     assert "lower_module_text_zone" in check_ids
+    assert "photo_first_template_readiness" in check_ids
     assert "player_ledger_readability" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
@@ -180,6 +224,60 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     assert "title ink ratio" in title_check["evidence"]
     assert ledger_check["qa_result"] == "pass"
     assert "content_module=verified_player_stats" in ledger_check["evidence"]
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
+
+
+def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_photo_first_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["format_options"] = [
+        {
+            "format_id": "ig_feed_4x5",
+            "primary": True,
+            "athlete_photo_layout_mode": "photo_first_final_score",
+            "photo_first_template_geometry": {
+                "photo_stage_box": [58, 372, 408, 590],
+                "photo_face_focus_box": [106, 572, 312, 188],
+                "winner_score_row_box": [494, 398, 528, 176],
+                "loser_score_row_box": [494, 598, 528, 160],
+                "score_context_box": [494, 786, 528, 54],
+                "stat_strip_box": [58, 990, 964, 132],
+                "matchup_angle_box": [58, 1148, 964, 112],
+                "minimum_clearance_px": 24,
+            },
+        }
+    ]
+    renderer_manifest["content_module"] = {
+        "content_module_mode": "verified_player_stats",
+        "content_module_status": "verified_player_stat_module",
+        "content_module_player": "Breanna Stewart",
+        "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
+        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+    }
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    checks = {check["check_id"]: check for check in manifest["checks"]}
+    assert checks["photo_first_crop_signal"]["qa_result"] == "pass"
+    assert checks["photo_first_face_visibility"]["qa_result"] == "pass"
+    assert checks["photo_first_text_clearance"]["qa_result"] == "pass"
+    assert "minimum_clearance" in checks["photo_first_text_clearance"]["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 

@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.16.0-photo-first-final-score-template"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.17.0-photo-first-art-direction-qa"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -411,6 +411,11 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_story_9x16", "height": 1920})["athlete_photo_layout_mode"] == "photo_first_final_score"
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_status"] == "approved_photo_first_template"
     assert module.athlete_photo_layout_for_format(content, {"format_id": "square_feed_1x1", "height": 1080})["athlete_photo_layout_mode"] == "compact_headshot_chip"
+    geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    assert geometry["template_family"] == "approved_athlete_photo_final_score"
+    assert geometry["photo_stage_box"] == [58, 372, 408, 590]
+    assert geometry["stat_strip_box"] == [58, 990, 964, 132]
+    assert geometry["minimum_clearance_px"] == 24
     assert (
         module.athlete_photo_layout_for_format({"athlete_photo_status": "athlete_photo_missing", "athlete_photo_blocker": "missing"}, {"format_id": "ig_feed_4x5", "height": 1350})[
             "athlete_photo_layout_mode"
