@@ -101,7 +101,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert by_format["square_feed_1x1"]["reference_derivation"] == "square_review_draft_derived_from_imported_4x5_layout"
     assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
     assert any(slot["slot_id"] == "primary_team_logo" for slot in manifest["asset_slots"])
-    assert any(slot["slot_id"] == "secondary_team_logo" for slot in manifest["asset_slots"])
+    secondary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "secondary_team_logo")
+    assert secondary_logo["status"] == "approved_logo"
+    assert secondary_logo["asset_path"] == "assets/leagues/wnba/teams/las_vegas_aces/logo.png"
+    assert secondary_logo["render_method"] == "source_png"
     assert manifest["guardrails"]["manual_only"] is True
     assert manifest["guardrails"]["auto_render"] is False
     assert manifest["guardrails"]["auto_publish"] is False

@@ -5,6 +5,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+from PIL import Image
+
 REPO = Path(__file__).resolve().parents[1]
 VALIDATOR = REPO / "scripts/validate_hsd_template_contract_v4.py"
 APPROVED = REPO / "config/graphics/v4/approved"
@@ -65,6 +67,17 @@ def test_registry_specs_and_reference_assets_are_hash_locked() -> None:
             path = REPO / row[path_key]
             assert path.exists(), path
             assert sha256(path) == row[hash_key], path
+
+
+def test_official_hsd_badge_uses_transparent_background() -> None:
+    manifest = json.loads((APPROVED / "source_manifest_v4.json").read_text(encoding="utf-8"))
+    badge = manifest["badge"]
+    path = REPO / badge["path"]
+    image = Image.open(path).convert("RGBA")
+
+    assert image.size == tuple(badge["dimensions"])
+    assert image.getpixel((0, 0))[3] == 0
+    assert image.getbbox() is not None
 
 
 def test_routing_matrix_covers_every_canonical_template() -> None:
