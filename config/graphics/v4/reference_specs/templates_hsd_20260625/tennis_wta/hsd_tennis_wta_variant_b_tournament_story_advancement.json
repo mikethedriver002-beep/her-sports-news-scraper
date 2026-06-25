@@ -1,0 +1,118 @@
+{
+  "template_id": "hsd_tennis_wta_variant_b_tournament_story_advancement",
+  "family": "tennis_wta",
+  "variant": "B",
+  "template_name": "Tournament Story / Advancement Card",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "width_min": 80,
+    "width_max": 96,
+    "placement": "top-left",
+    "rules": [
+      "Use official compact HSD badge exactly as uploaded.",
+      "Use one badge only.",
+      "Keep badge small and secondary.",
+      "Do not recreate logo as text.",
+      "Do not add HER SPORTS DAILY beside the badge."
+    ]
+  },
+  "public_mockup": "public_mockups/03_tennis_wta_B_tournament_story_public.png",
+  "layout_reference": "layout_references/04_tennis_wta_B_tournament_story_layout_reference.png",
+  "headline_options": [
+    "PLAYER NAME ADVANCES",
+    "TOURNAMENT STORY HEADLINE",
+    "TITLE RUN CONTINUES",
+    "UPSET STORY HEADLINE",
+    "MILESTONE STORY HEADLINE"
+  ],
+  "zones": {
+    "round_name": {
+      "x": 365,
+      "y": 140,
+      "w": 350,
+      "h": 62,
+      "text_role": "ROUND NAME"
+    },
+    "tournament_name": {
+      "x": 285,
+      "y": 235,
+      "w": 510,
+      "h": 55,
+      "text_role": "TOURNAMENT NAME"
+    },
+    "story_headline": {
+      "x": 90,
+      "y": 320,
+      "w": 780,
+      "h": 430,
+      "text_role": "PLAYER NAME ADVANCES / TOURNAMENT STORY HEADLINE"
+    },
+    "short_context": {
+      "x": 120,
+      "y": 825,
+      "w": 810,
+      "h": 105,
+      "text_role": "SHORT CONTEXT"
+    },
+    "why_it_matters": {
+      "x": 120,
+      "y": 960,
+      "w": 810,
+      "h": 115,
+      "text_role": "WHY IT MATTERS"
+    },
+    "source_note_or_cta": {
+      "x": 120,
+      "y": 1110,
+      "w": 810,
+      "h": 110,
+      "text_role": "SOURCE NOTE OR CTA / QUESTION / CTA"
+    },
+    "approved_tour_event_logo_slot": {
+      "x": 825,
+      "y": 60,
+      "w": 180,
+      "h": 160,
+      "asset_role": "APPROVED TOUR / EVENT LOGO SLOT",
+      "optional": true
+    },
+    "approved_image_slot_or_abstract_texture": {
+      "x": 735,
+      "y": 290,
+      "w": 275,
+      "h": 420,
+      "asset_role": "APPROVED IMAGE SLOT or abstract tennis texture",
+      "optional": true
+    }
+  },
+  "placeholder_fields": [
+    "PLAYER NAME",
+    "TOURNAMENT NAME",
+    "ROUND NAME",
+    "SHORT CONTEXT",
+    "WHY IT MATTERS",
+    "SOURCE NOTE OR CTA",
+    "QUESTION / CTA"
+  ],
+  "renderer_notes": [
+    "Use a clearly editable headline option.",
+    "Do not make the public mockup look like a specific real event unless real details are provided.",
+    "Use approved tour/event logo slot only unless an approved logo is provided.",
+    "Do not include website URLs on public templates.",
+    "Abstract tennis textures are allowed as backgrounds."
+  ],
+  "when_to_use": "Use for WTA advancement stories, title runs, upset stories, milestones, seed stories, bracket movement, or broader tournament moments."
+}

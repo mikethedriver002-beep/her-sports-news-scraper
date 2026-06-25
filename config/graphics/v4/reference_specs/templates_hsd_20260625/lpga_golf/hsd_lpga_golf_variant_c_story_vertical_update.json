@@ -1,0 +1,204 @@
+{
+  "template_id": "hsd_lpga_golf_variant_c_story_vertical_update",
+  "family": "lpga_golf",
+  "variant": "C",
+  "template_name": "Story / Vertical Golf Update",
+  "format": "ig_story_reels",
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "safe_zones": {
+    "top": 120,
+    "right": 60,
+    "bottom": 140,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 52,
+    "y": 48,
+    "width_min": 88,
+    "width_max": 104,
+    "placement": "top-left",
+    "rules": [
+      "Use official compact HSD badge exactly as uploaded.",
+      "Use one badge only.",
+      "Keep badge small and secondary.",
+      "Do not recreate logo as text."
+    ]
+  },
+  "public_mockup": "public_mockups/05_lpga_golf_C_story_vertical_public.png",
+  "layout_reference": "layout_references/06_lpga_golf_C_story_vertical_layout_reference.png",
+  "mode_rule": "Only one mode should be active at a time.",
+  "allowed_modes": {
+    "mode_1": {
+      "name": "winner/champion update",
+      "active_modules": [
+        "player_name",
+        "tournament_name",
+        "winner_champion",
+        "result_score",
+        "why_it_matters",
+        "question_cta"
+      ]
+    },
+    "mode_2": {
+      "name": "leaderboard snapshot",
+      "active_modules": [
+        "player_name",
+        "tournament_name",
+        "leaderboard_position",
+        "leaderboard_snapshot",
+        "round_status",
+        "why_it_matters",
+        "question_cta"
+      ]
+    },
+    "mode_3": {
+      "name": "final-round story",
+      "active_modules": [
+        "player_name",
+        "tournament_name",
+        "round_status",
+        "final_round_note",
+        "why_it_matters",
+        "next_update"
+      ]
+    },
+    "mode_4": {
+      "name": "player spotlight",
+      "active_modules": [
+        "player_name",
+        "tournament_name",
+        "approved_image_slot",
+        "story_summary",
+        "poll_question_sticker_space"
+      ]
+    }
+  },
+  "zones": {
+    "tournament_name": {
+      "x": 190,
+      "y": 115,
+      "w": 700,
+      "h": 75,
+      "text_role": "TOURNAMENT NAME"
+    },
+    "tour_series_label": {
+      "x": 190,
+      "y": 195,
+      "w": 700,
+      "h": 55,
+      "text_role": "LPGA TOUR / GOLF STORY"
+    },
+    "headline_player_name": {
+      "x": 65,
+      "y": 290,
+      "w": 650,
+      "h": 320,
+      "text_role": "PLAYER NAME / HEADLINE"
+    },
+    "leaderboard_position": {
+      "x": 65,
+      "y": 645,
+      "w": 640,
+      "h": 95,
+      "text_role": "LEADERBOARD POSITION"
+    },
+    "leaderboard_snapshot": {
+      "x": 65,
+      "y": 765,
+      "w": 650,
+      "h": 320,
+      "text_role": "LEADERBOARD SNAPSHOT"
+    },
+    "round_status": {
+      "x": 65,
+      "y": 1110,
+      "w": 700,
+      "h": 90,
+      "text_role": "ROUND STATUS"
+    },
+    "why_it_matters": {
+      "x": 65,
+      "y": 1235,
+      "w": 430,
+      "h": 175,
+      "text_role": "WHY IT MATTERS"
+    },
+    "question_cta": {
+      "x": 530,
+      "y": 1235,
+      "w": 430,
+      "h": 175,
+      "text_role": "QUESTION / CTA"
+    },
+    "poll_question_sticker_space": {
+      "x": 65,
+      "y": 1430,
+      "w": 895,
+      "h": 110,
+      "role": "POLL / QUESTION STICKER SPACE",
+      "optional": true
+    },
+    "next_update": {
+      "x": 65,
+      "y": 1580,
+      "w": 720,
+      "h": 90,
+      "text_role": "NEXT UPDATE / ROUND STATUS / FINAL ROUND NOTE / WATCH THIS SPACE",
+      "optional": true
+    },
+    "approved_image_slot_optional": {
+      "x": 610,
+      "y": 355,
+      "w": 360,
+      "h": 475,
+      "asset_role": "APPROVED IMAGE SLOT",
+      "optional": true
+    },
+    "approved_logo_slot_optional": {
+      "x": 760,
+      "y": 70,
+      "w": 200,
+      "h": 125,
+      "asset_role": "APPROVED LOGO SLOT",
+      "optional": true
+    },
+    "story_ui_clear_zone": {
+      "x": 0,
+      "y": 1780,
+      "w": 1080,
+      "h": 140,
+      "role": "Keep critical content above this zone"
+    }
+  },
+  "editable_lower_note_examples": [
+    "NEXT UPDATE",
+    "ROUND STATUS",
+    "FINAL ROUND NOTE",
+    "WATCH THIS SPACE"
+  ],
+  "placeholder_fields": [
+    "PLAYER NAME",
+    "TOURNAMENT NAME",
+    "RESULT / SCORE",
+    "LEADERBOARD POSITION",
+    "FINAL ROUND",
+    "ROUND STATUS",
+    "WHY IT MATTERS",
+    "QUESTION / CTA",
+    "NEXT UPDATE",
+    "WATCH THIS SPACE"
+  ],
+  "renderer_notes": [
+    "Fix spelling to LEADERBOARD POSITION.",
+    "Do not bake platform poll UI into the graphic.",
+    "Use POLL / QUESTION STICKER SPACE or QUESTION / CTA as clean editable areas.",
+    "NEXT UPDATE is editable.",
+    "Only one mode should be active in a real use case.",
+    "Keep bottom area clear for Story UI."
+  ],
+  "when_to_use": "Use for quick LPGA or women\u2019s golf Stories/Reels updates, including winner moments, leaderboard snapshots, final-round storylines, and player spotlights."
+}

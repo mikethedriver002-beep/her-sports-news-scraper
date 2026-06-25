@@ -1,0 +1,177 @@
+{
+  "template_id": "hsd_tennis_wta_variant_c_story_vertical_update",
+  "family": "tennis_wta",
+  "variant": "C",
+  "template_name": "Story / Vertical Tennis Update",
+  "format": "ig_story_reels",
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "safe_zones": {
+    "top": 120,
+    "right": 60,
+    "bottom": 140,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 52,
+    "y": 48,
+    "width_min": 88,
+    "width_max": 104,
+    "placement": "top-left",
+    "rules": [
+      "Use official compact HSD badge exactly as uploaded.",
+      "Use one badge only.",
+      "Keep badge small and secondary.",
+      "Do not recreate logo as text.",
+      "Do not add HER SPORTS DAILY beside the badge."
+    ]
+  },
+  "public_mockup": "public_mockups/05_tennis_wta_C_story_vertical_public.png",
+  "layout_reference": "layout_references/06_tennis_wta_C_story_vertical_layout_reference.png",
+  "mode_rule": "Only one mode should be active at a time.",
+  "allowed_modes": {
+    "mode_1": {
+      "name": "match result + question",
+      "active_modules": [
+        "player_name",
+        "opponent_name",
+        "result_scoreline",
+        "why_it_matters",
+        "question_cta"
+      ]
+    },
+    "mode_2": {
+      "name": "next match preview + question",
+      "active_modules": [
+        "player_name",
+        "opponent_name",
+        "next_match",
+        "why_it_matters",
+        "question_cta"
+      ]
+    },
+    "mode_3": {
+      "name": "tournament story update + why it matters",
+      "active_modules": [
+        "player_name",
+        "tournament_name",
+        "round_name",
+        "story_summary",
+        "why_it_matters"
+      ]
+    },
+    "mode_4": {
+      "name": "player spotlight + poll/question",
+      "active_modules": [
+        "player_name",
+        "approved_image_slot",
+        "story_summary",
+        "optional_poll_question_sticker",
+        "question_cta"
+      ]
+    }
+  },
+  "zones": {
+    "round_name": {
+      "x": 330,
+      "y": 150,
+      "w": 420,
+      "h": 65,
+      "text_role": "ROUND NAME"
+    },
+    "tournament_name": {
+      "x": 220,
+      "y": 250,
+      "w": 650,
+      "h": 60,
+      "text_role": "TOURNAMENT NAME"
+    },
+    "headline": {
+      "x": 120,
+      "y": 360,
+      "w": 840,
+      "h": 380,
+      "text_role": "NEXT MATCH / TENNIS UPDATE"
+    },
+    "player_opponent_module": {
+      "x": 115,
+      "y": 805,
+      "w": 850,
+      "h": 240,
+      "text_role": "PLAYER NAME vs OPPONENT NAME"
+    },
+    "next_match_or_result_area": {
+      "x": 110,
+      "y": 1065,
+      "w": 860,
+      "h": 135,
+      "text_role": "NEXT MATCH or RESULT / SCORELINE"
+    },
+    "why_it_matters": {
+      "x": 110,
+      "y": 1235,
+      "w": 860,
+      "h": 115,
+      "text_role": "WHY IT MATTERS"
+    },
+    "question_cta": {
+      "x": 110,
+      "y": 1395,
+      "w": 860,
+      "h": 130,
+      "text_role": "QUESTION / CTA"
+    },
+    "approved_image_slot": {
+      "x": 110,
+      "y": 1580,
+      "w": 860,
+      "h": 185,
+      "asset_role": "APPROVED IMAGE SLOT or abstract tennis texture",
+      "optional": true
+    },
+    "approved_tour_event_logo_slot": {
+      "x": 760,
+      "y": 70,
+      "w": 200,
+      "h": 155,
+      "asset_role": "APPROVED TOUR / EVENT LOGO SLOT",
+      "optional": true
+    },
+    "story_ui_clear_zone": {
+      "x": 0,
+      "y": 1780,
+      "w": 1080,
+      "h": 140,
+      "role": "Keep critical content above this zone"
+    },
+    "optional_poll_question_sticker": {
+      "x": 115,
+      "y": 1535,
+      "w": 850,
+      "h": 130,
+      "role": "Optional poll/question sticker space",
+      "optional": true
+    }
+  },
+  "placeholder_fields": [
+    "PLAYER NAME",
+    "OPPONENT NAME",
+    "TOURNAMENT NAME",
+    "ROUND NAME",
+    "RESULT / SCORELINE",
+    "NEXT MATCH",
+    "WHY IT MATTERS",
+    "QUESTION / CTA"
+  ],
+  "renderer_notes": [
+    "Only one mode should be active in a real use case.",
+    "Do not include platform UI icons inside the graphic.",
+    "Keep bottom clear for Story UI.",
+    "Do not use fake athlete silhouettes or implied real player photography.",
+    "Use abstract tennis textures or approved images only."
+  ],
+  "when_to_use": "Use for quick vertical tennis updates, including match results, next-match previews, tournament story updates, and player spotlights."
+}

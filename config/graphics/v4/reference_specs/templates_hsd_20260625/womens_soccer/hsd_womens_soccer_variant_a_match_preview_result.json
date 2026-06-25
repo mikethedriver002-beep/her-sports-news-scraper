@@ -1,0 +1,126 @@
+{
+  "template_id": "hsd_womens_soccer_variant_a_match_preview_result",
+  "family": "womens_soccer_nwsl_uswnt",
+  "variant": "A",
+  "template_name": "Match Preview / Match Result Card",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "width_min": 80,
+    "width_max": 96,
+    "placement": "top-left",
+    "rules": [
+      "Use official compact HSD badge exactly as uploaded.",
+      "One badge only.",
+      "Keep badge small and secondary.",
+      "Do not recreate logo as text."
+    ]
+  },
+  "public_mockup": "public_mockups/01_variant_A_match_preview_public.png",
+  "layout_reference": "layout_references/02_variant_A_match_preview_result_layout_reference.png",
+  "modes": {
+    "preview_mode": {
+      "center_module": {
+        "primary_line": "TEAM ONE vs TEAM TWO",
+        "secondary_line": "DATE / TIME / COMPETITION"
+      },
+      "rules": [
+        "Do not show FULL TIME in preview mode.",
+        "Use clean matchup hierarchy.",
+        "Approved logo slots only.",
+        "Optional approved image slot may be used subtly."
+      ]
+    },
+    "result_mode": {
+      "center_module": {
+        "line_1": "TEAM ONE 00",
+        "line_2": "TEAM TWO 00",
+        "status_line": "FINAL / FULL TIME"
+      },
+      "rules": [
+        "Use only after result is confirmed.",
+        "Score hierarchy should be clean and readable.",
+        "Approved logo slots only.",
+        "Do not invent scores."
+      ]
+    }
+  },
+  "zones": {
+    "league_competition_label": {
+      "x": 250,
+      "y": 110,
+      "w": 580,
+      "h": 55,
+      "text_role": "LEAGUE / COMPETITION"
+    },
+    "headline": {
+      "x": 60,
+      "y": 190,
+      "w": 960,
+      "h": 225,
+      "text_role": "MATCHUP / RESULT"
+    },
+    "team_logo_slot_left": {
+      "x": 95,
+      "y": 470,
+      "w": 280,
+      "h": 250,
+      "asset_role": "APPROVED LOGO SLOT"
+    },
+    "team_logo_slot_right": {
+      "x": 705,
+      "y": 470,
+      "w": 280,
+      "h": 250,
+      "asset_role": "APPROVED LOGO SLOT"
+    },
+    "center_matchup_result_module": {
+      "x": 395,
+      "y": 490,
+      "w": 290,
+      "h": 220,
+      "role": "preview or result module"
+    },
+    "context_bar": {
+      "x": 80,
+      "y": 930,
+      "w": 920,
+      "h": 120,
+      "text_role": "MATCH CONTEXT"
+    },
+    "question_cta_bar": {
+      "x": 80,
+      "y": 1140,
+      "w": 920,
+      "h": 125,
+      "text_role": "QUESTION / CTA"
+    },
+    "optional_image_slot": {
+      "x": 785,
+      "y": 880,
+      "w": 185,
+      "h": 190,
+      "asset_role": "APPROVED IMAGE SLOT",
+      "optional": true
+    }
+  },
+  "renderer_notes": [
+    "Public mockup shown in preview mode should not display FULL TIME.",
+    "Use placeholder copy unless real details are provided.",
+    "Abstract soccer textures are allowed as background design only.",
+    "Keep all key content inside safe zones."
+  ],
+  "when_to_use": "Use for a single women\u2019s soccer match preview or result card across Feed and Threads."
+}

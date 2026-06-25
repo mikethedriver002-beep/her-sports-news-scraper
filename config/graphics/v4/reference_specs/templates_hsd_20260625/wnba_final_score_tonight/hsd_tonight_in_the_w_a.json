@@ -1,0 +1,93 @@
+{
+  "template_id": "hsd_tonight_in_the_w_a",
+  "family": "matchup_preview",
+  "variant": "A",
+  "format": "ig_feed_threads",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "safe_zones": {
+    "top": 90,
+    "right": 60,
+    "bottom": 90,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 48,
+    "y": 42,
+    "w": 80,
+    "h": 80,
+    "rules": [
+      "Use official compact HSD badge asset only",
+      "Do not recreate as text",
+      "Do not redesign the badge",
+      "One badge only, top-left"
+    ]
+  },
+  "zones": {
+    "headline": {
+      "x": 60,
+      "y": 90,
+      "w": 960,
+      "h": 220,
+      "text_role": "tonight_in_the_w_headline"
+    },
+    "time_tv_context": {
+      "x": 80,
+      "y": 340,
+      "w": 920,
+      "h": 70,
+      "text_role": "time_tv_context"
+    },
+    "left_logo_slot": {
+      "x": 100,
+      "y": 450,
+      "w": 320,
+      "h": 300,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "matchup_center": {
+      "x": 450,
+      "y": 500,
+      "w": 180,
+      "h": 150,
+      "text_role": "versus_marker"
+    },
+    "right_logo_slot": {
+      "x": 660,
+      "y": 450,
+      "w": 320,
+      "h": 300,
+      "asset_role": "approved_team_logo_slot"
+    },
+    "debate_question": {
+      "x": 80,
+      "y": 780,
+      "w": 920,
+      "h": 140,
+      "text_role": "debate_question"
+    },
+    "active_lower_module": {
+      "x": 80,
+      "y": 960,
+      "w": 920,
+      "h": 290,
+      "module_rule": "one_active_module_only"
+    }
+  },
+  "allowed_modules": [
+    "KEY MATCHUP",
+    "WATCH POINT",
+    "WHY IT MATTERS",
+    "APPROVED PLAYER PHOTO SLOT"
+  ],
+  "renderer_notes": [
+    "Public mockup must not show internal template labels.",
+    "Approved team logo slots only. Do not invent logos.",
+    "Only one lower module may be active per post.",
+    "Do not stack Key Matchup, Watch Point, Why It Matters, and Approved Player Photo Slot together."
+  ],
+  "when_to_use": "Premium matchup preview for IG Feed and Threads when you want a strong debate question plus one clean lower module."
+}

@@ -1,0 +1,118 @@
+{
+  "template_id": "hsd_daily_debrief_variant_c_story_vertical",
+  "family": "the_daily_debrief",
+  "variant": "C",
+  "template_name": "Daily Debrief Story / Vertical Roundup",
+  "format": "ig_story_reels",
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "safe_zones": {
+    "top": 120,
+    "right": 60,
+    "bottom": 140,
+    "left": 60
+  },
+  "badge": {
+    "asset": "official_hsd_badge_reference.png",
+    "x": 52,
+    "y": 48,
+    "w_min": 88,
+    "w_max": 104,
+    "placement": "top-left",
+    "rules": [
+      "Use the uploaded official compact HSD badge exactly as provided.",
+      "Use one badge only.",
+      "Keep the badge small and secondary to the content.",
+      "Do not recreate the logo as text."
+    ]
+  },
+  "public_mockup": "public_mockups/07_daily_debrief_C_story_vertical_public.png",
+  "layout_reference": "layout_references/08_daily_debrief_C_story_vertical_layout_reference.png",
+  "zones": {
+    "franchise_title": {
+      "x": 150,
+      "y": 110,
+      "w": 800,
+      "h": 300,
+      "text_role": "THE DAILY DEBRIEF"
+    },
+    "editable_strapline": {
+      "x": 150,
+      "y": 425,
+      "w": 760,
+      "h": 70,
+      "text_role": "strapline",
+      "examples": [
+        "3 STORIES. WHAT MATTERS TODAY.",
+        "3 STORIES. ONE DAILY RESET.",
+        "THE TOP STORIES IN WOMEN\u2019S SPORTS."
+      ]
+    },
+    "optional_lead_visual_or_texture": {
+      "x": 80,
+      "y": 530,
+      "w": 920,
+      "h": 230,
+      "asset_role": "approved_image_slot_or_abstract_texture",
+      "optional": true
+    },
+    "story_blocks": [
+      {
+        "x": 80,
+        "y": 800,
+        "w": 920,
+        "h": 250,
+        "role": "story block 01"
+      },
+      {
+        "x": 80,
+        "y": 1070,
+        "w": 920,
+        "h": 250,
+        "role": "story block 02"
+      },
+      {
+        "x": 80,
+        "y": 1340,
+        "w": 920,
+        "h": 250,
+        "role": "story block 03"
+      }
+    ],
+    "poll_question_sticker_safe_space": {
+      "x": 80,
+      "y": 1625,
+      "w": 920,
+      "h": 150,
+      "role": "optional poll/question sticker space",
+      "notes": "Keep above Story UI and do not include platform UI icons in public graphic."
+    },
+    "bottom_clear_area": {
+      "x": 0,
+      "y": 1780,
+      "w": 1080,
+      "h": 140,
+      "role": "Story UI safe area"
+    }
+  },
+  "story_fields": [
+    "STORY HEADLINE",
+    "SPORT / LEAGUE",
+    "WHY IT MATTERS",
+    "SHORT CONTEXT",
+    "QUESTION / CTA",
+    "APPROVED IMAGE SLOT",
+    "APPROVED LOGO SLOT"
+  ],
+  "renderer_notes": [
+    "Three-story max layout.",
+    "Keep bottom clear for Story UI.",
+    "Do not include platform UI icons inside the graphic.",
+    "Reserve optional poll/question sticker space above UI area.",
+    "Use approved image/logo slots or abstract editorial textures only.",
+    "Public mockups must not show internal labels or guides."
+  ],
+  "when_to_use": "Use when HSD needs a quick vertical Daily Debrief roundup for Stories or Reels with three stacked story blocks."
+}

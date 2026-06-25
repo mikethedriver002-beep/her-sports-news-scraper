@@ -1,0 +1,83 @@
+{
+  "version": "hsd-template-reference-packs-v1.0",
+  "status": "reference_only",
+  "default_review_only": true,
+  "renderer_cutover_allowed": false,
+  "auto_render_allowed": false,
+  "auto_publish_allowed": false,
+  "paid_api_required": false,
+  "packs": [
+    {
+      "pack_id": "templates_hsd_20260625",
+      "source_filename": "Templates-hsd.zip",
+      "imported_at_local": "2026-06-25",
+      "status": "reference_only_not_publish_ready",
+      "purpose": "Canonical visual quality references for future HSD local review renderer work.",
+      "brand_reference": "assets/graphics/v4/approved/brand/official_hsd_watermark_templates_hsd_20260625.png",
+      "public_mockup_root": "assets/graphics/v4/approved/public_mockups",
+      "layout_reference_root": "assets/graphics/v4/approved/layout_references",
+      "reference_spec_root": "config/graphics/v4/reference_specs/templates_hsd_20260625",
+      "source_doc_root": "assets/graphics/v4/approved/source_docs/templates_hsd_20260625",
+      "families": [
+        {
+          "family_key": "daily_debrief",
+          "family_label": "Daily Debrief",
+          "public_mockup_count": 5,
+          "layout_reference_count": 3,
+          "reference_spec_count": 3,
+          "source_doc_count": 3
+        },
+        {
+          "family_key": "wnba_final_score_tonight",
+          "family_label": "WNBA Final Score / Tonight in the W",
+          "public_mockup_count": 4,
+          "layout_reference_count": 4,
+          "reference_spec_count": 4,
+          "source_doc_count": 3,
+          "note": "Imported as a reference pack without replacing existing hash-locked WNBA v4 canonical files."
+        },
+        {
+          "family_key": "last_night_in_the_w",
+          "family_label": "Last Night in the W",
+          "public_mockup_count": 3,
+          "layout_reference_count": 3,
+          "reference_spec_count": 3,
+          "source_doc_count": 3
+        },
+        {
+          "family_key": "lpga_golf",
+          "family_label": "LPGA / Golf",
+          "public_mockup_count": 3,
+          "layout_reference_count": 3,
+          "reference_spec_count": 3,
+          "source_doc_count": 3
+        },
+        {
+          "family_key": "tennis_wta",
+          "family_label": "Tennis / WTA",
+          "public_mockup_count": 3,
+          "layout_reference_count": 3,
+          "reference_spec_count": 3,
+          "source_doc_count": 3
+        },
+        {
+          "family_key": "womens_soccer",
+          "family_label": "Women's Soccer / NWSL / USWNT",
+          "public_mockup_count": 3,
+          "layout_reference_count": 3,
+          "reference_spec_count": 3,
+          "source_doc_count": 3
+        }
+      ],
+      "guardrails": {
+        "reference_only": true,
+        "publish_ready": false,
+        "auto_approval": false,
+        "auto_render": false,
+        "auto_publish": false,
+        "move_files_to_publish_lane": false,
+        "paid_apis": false
+      }
+    }
+  ]
+}
