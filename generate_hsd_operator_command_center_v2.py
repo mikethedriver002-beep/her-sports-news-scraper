@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.14.0-pwhl-proposal-pack"
+VERSION = "hsd-operator-command-center-v3.15.0-league-proposal-packs"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -28,6 +28,8 @@ ARTIFACTS = [
     ("Sources", "Source registry intake template", "source_registry_intake_template.csv"),
     ("Sources", "Source proposal review", "source_registry_proposal_review.md"),
     ("Sources", "Source proposal review data", "source_registry_proposal_review.csv"),
+    ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
+    ("Sources", "Guided source proposal pack data", "source_proposal_packs.csv"),
     ("Sources", "PWHL source proposal pack", "pwhl_source_proposal_pack.md"),
     ("Sources", "PWHL source proposal pack data", "pwhl_source_proposal_pack.csv"),
     ("Sources", "Manual story intake report", "manual_story_inbox_report.md"),
@@ -114,6 +116,8 @@ RUN_COMMANDS = {
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.csv": ".\\hsd.cmd run -Mode review",
+    "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
+    "source_proposal_packs.csv": ".\\hsd.cmd run -Mode review",
     "pwhl_source_proposal_pack.md": ".\\hsd.cmd run -Mode review",
     "pwhl_source_proposal_pack.csv": ".\\hsd.cmd run -Mode review",
     "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
@@ -503,7 +507,7 @@ def build_next_actions(
     promotions: List[Dict[str, str]],
     coverage_map: List[Dict[str, str]],
     proposal_review: List[Dict[str, str]],
-    pwhl_source_proposal_pack: List[Dict[str, str]],
+    source_proposal_packs: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
     artifact_exists = {row["path"]: bool(row["exists"]) for row in artifacts}
@@ -615,10 +619,16 @@ def build_next_actions(
 
     if coverage_gaps:
         gap = coverage_gaps[0]
-        pack_count = len(pwhl_source_proposal_pack) if gap.get("key") == "pwhl" else 0
-        artifact = "pwhl_source_proposal_pack.csv" if pack_count else "source_registry_intake_template.csv"
+        pack_rows = [
+            row
+            for row in source_proposal_packs
+            if row.get("pack_key") == gap.get("key") or row.get("coverage_key") == gap.get("key")
+        ]
+        pack_count = len(pack_rows)
+        pack_name = first_present(pack_rows[0].get("pack_name") if pack_rows else "", default=f"{gap['name']} source proposal pack")
+        artifact = "source_proposal_packs.csv" if pack_count else "source_registry_intake_template.csv"
         pack_note = (
-            f"Use the guided PWHL proposal pack with {pack_count} free official/team/cross-check candidates; "
+            f"Use the guided {pack_name} with {pack_count} free official/team/cross-check candidates; "
             if pack_count
             else "Use the intake template; "
         )
@@ -818,7 +828,10 @@ def build_payload() -> Dict[str, Any]:
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
+    source_proposal_packs = read_csv("source_proposal_packs.csv")
     pwhl_source_proposal_pack = read_csv("pwhl_source_proposal_pack.csv")
+    if not source_proposal_packs and pwhl_source_proposal_pack:
+        source_proposal_packs = pwhl_source_proposal_pack
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
     source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
@@ -880,6 +893,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Source intake proposals", len(source_intake_rows)),
         metric("Source proposal holds", sum(1 for row in source_proposal_review if row.get("review_status") == "hold")),
         metric("Source proposals ready", sum(1 for row in source_proposal_review if row.get("review_status") == "ready_for_registry_review")),
+        metric("Guided source pack rows", len(source_proposal_packs)),
         metric("PWHL proposal pack", len(pwhl_source_proposal_pack)),
         metric(
             "Studio asset checks",
@@ -908,7 +922,7 @@ def build_payload() -> Dict[str, Any]:
         promotions,
         coverage_map,
         source_proposal_review,
-        pwhl_source_proposal_pack,
+        source_proposal_packs,
         artifacts,
     )
     if as_int(source_registry_counts.get("fail")) or as_int(source_registry_counts.get("review")):
@@ -947,6 +961,7 @@ def build_payload() -> Dict[str, Any]:
         "source_coverage_map": coverage_map,
         "source_registry_intake_template": source_intake_rows,
         "source_registry_proposal_review": source_proposal_review,
+        "source_proposal_packs": source_proposal_packs,
         "pwhl_source_proposal_pack": pwhl_source_proposal_pack,
         "studio_queue": studio,
         "source_health": source_rows,
@@ -1196,12 +1211,13 @@ def render_source_intake(rows: Iterable[Dict[str, str]]) -> str:
     return "".join(body) or '<tr><td colspan="7" class="empty">No source intake proposals found.</td></tr>'
 
 
-def render_pwhl_source_proposal_pack(rows: Iterable[Dict[str, str]]) -> str:
+def render_source_proposal_packs(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
         body.append(
             f"""
             <tr>
+              <td>{html.escape(clean(row.get('pack_name')) or clean(row.get('display_name')))}</td>
               <td>{html.escape(clean(row.get('candidate_group')))}</td>
               <td>{html.escape(clean(row.get('suggested_priority')))}</td>
               <td>{html.escape(clean(row.get('candidate_source_id')) or '-')}</td>
@@ -1213,7 +1229,7 @@ def render_pwhl_source_proposal_pack(rows: Iterable[Dict[str, str]]) -> str:
             </tr>
             """
         )
-    return "".join(body) or '<tr><td colspan="8" class="empty">No PWHL source proposal pack found.</td></tr>'
+    return "".join(body) or '<tr><td colspan="9" class="empty">No guided source proposal packs found.</td></tr>'
 
 
 def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
@@ -1499,11 +1515,11 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
-        <h2>PWHL source proposal pack</h2>
+        <h2>Guided source proposal packs</h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Group</th><th>Priority</th><th>Source ID</th><th>Name</th><th>URL</th><th>Enabled</th><th>Action</th><th>Registry</th></tr></thead>
-            <tbody>{render_pwhl_source_proposal_pack(payload['pwhl_source_proposal_pack'])}</tbody>
+            <thead><tr><th>Pack</th><th>Group</th><th>Priority</th><th>Source ID</th><th>Name</th><th>URL</th><th>Enabled</th><th>Action</th><th>Registry</th></tr></thead>
+            <tbody>{render_source_proposal_packs(payload['source_proposal_packs'])}</tbody>
           </table>
         </div>
       </div>
@@ -1651,10 +1667,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- {clean(item.get('display_name'))} | {clean(item.get('needed_source_type'))} | {clean(item.get('coverage_gap'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action'))}"
         for item in payload["source_registry_intake_template"]
     )
-    lines += ["", "## PWHL source proposal pack", ""]
+    lines += ["", "## Guided source proposal packs", ""]
     lines.extend(
-        f"- {clean(item.get('suggested_priority'))} | {clean(item.get('candidate_group'))} | {clean(item.get('candidate_source_id'))} | {clean(item.get('candidate_url'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action')) or 'proposal_only_do_not_import'} | registry: {clean(item.get('registry_presence')) or 'not_checked'}"
-        for item in payload["pwhl_source_proposal_pack"]
+        f"- {clean(item.get('pack_name')) or clean(item.get('display_name'))} | {clean(item.get('suggested_priority'))} | {clean(item.get('candidate_group'))} | {clean(item.get('candidate_source_id'))} | {clean(item.get('candidate_url'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action')) or 'proposal_only_do_not_import'} | registry: {clean(item.get('registry_presence')) or 'not_checked'}"
+        for item in payload["source_proposal_packs"]
     )
     lines += ["", "## Source proposal review", ""]
     lines.extend(

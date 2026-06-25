@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.8-pwhl-proposal-pack"
+VERSION = "hsd-source-registry-audit-bebe-v2.9-league-proposal-pack-framework"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -18,6 +18,8 @@ OUT_INTAKE_CSV = "source_registry_intake_template.csv"
 OUT_INTAKE_MD = "source_registry_intake_template.md"
 OUT_PROPOSAL_CSV = "source_registry_proposal_review.csv"
 OUT_PROPOSAL_MD = "source_registry_proposal_review.md"
+OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
+OUT_PROPOSAL_PACKS_MD = "source_proposal_packs.md"
 OUT_PWHL_PACK_CSV = "pwhl_source_proposal_pack.csv"
 OUT_PWHL_PACK_MD = "pwhl_source_proposal_pack.md"
 OUT_MD = "source_registry_audit.md"
@@ -83,7 +85,9 @@ PROPOSAL_REVIEW_FIELDS = [
     "registry_action",
 ]
 
-PWHL_PROPOSAL_PACK_FIELDS = [
+SOURCE_PROPOSAL_PACK_FIELDS = [
+    "pack_key",
+    "pack_name",
     "candidate_group",
     "suggested_priority",
     *INTAKE_FIELDS,
@@ -342,6 +346,21 @@ PWHL_SOURCE_CANDIDATES = [
     },
 ]
 
+SOURCE_PROPOSAL_PACKS = [
+    {
+        "pack_key": "pwhl",
+        "pack_name": "PWHL Source Proposal Pack",
+        "display_name": "PWHL",
+        "fallback_coverage_gap": "missing official league/team source; missing scoreboard/stat/cross-check source",
+        "fallback_operator_next_step": "Add or monitor free PWHL league/team official pages before relying on wire-only hockey leads.",
+        "description": "Guided free-source candidates for manual review of PWHL coverage gaps.",
+        "output_csv": OUT_PWHL_PACK_CSV,
+        "output_md": OUT_PWHL_PACK_MD,
+        "candidates": PWHL_SOURCE_CANDIDATES,
+        "group_order": ["league_official", "team_official", "league_cross_check", "reputable_cross_check"],
+    },
+]
+
 COVERAGE_TARGETS = [
     {
         "key": "wnba",
@@ -436,8 +455,8 @@ def write_proposal_review_csv(path: str | Path, rows: List[Dict[str, Any]]) -> N
     write_run_csv(path, rows, PROPOSAL_REVIEW_FIELDS, extrasaction="ignore")
 
 
-def write_pwhl_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
-    write_run_csv(path, rows, PWHL_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
+def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
 
 
 def canonical_band(src: Dict[str, Any]) -> str:
@@ -759,26 +778,32 @@ def registry_presence_for_candidate(candidate: Dict[str, str], registry_indexes:
     return "not_in_registry"
 
 
-def pwhl_coverage_context(coverage_rows: List[Dict[str, str]]) -> Dict[str, str]:
+def proposal_pack_coverage_context(pack: Dict[str, Any], coverage_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    pack_key = clean(pack.get("pack_key"))
     for row in coverage_rows:
-        if row.get("coverage_key") == "pwhl":
+        if row.get("coverage_key") == pack_key:
             return row
     return {
-        "coverage_key": "pwhl",
-        "display_name": "PWHL",
+        "coverage_key": pack_key,
+        "display_name": clean(pack.get("display_name") or pack.get("pack_name")),
         "coverage_status": "gap",
-        "coverage_gap": "missing official league/team source; missing scoreboard/stat/cross-check source",
-        "operator_next_step": "Add or monitor free PWHL league/team official pages before relying on wire-only hockey leads.",
+        "coverage_gap": clean(pack.get("fallback_coverage_gap")) or "review current source coverage",
+        "operator_next_step": clean(pack.get("fallback_operator_next_step")) or "Review free official/team/cross-check coverage manually.",
     }
 
 
-def build_pwhl_source_proposal_pack(sources: List[Dict[str, Any]], coverage_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+def build_source_proposal_pack(sources: List[Dict[str, Any]], coverage_rows: List[Dict[str, str]], pack: Dict[str, Any]) -> List[Dict[str, str]]:
     registry_indexes = existing_registry_indexes(sources)
-    coverage = pwhl_coverage_context(coverage_rows)
-    current_gap = clean(coverage.get("coverage_gap")) or "review current PWHL coverage"
+    coverage = proposal_pack_coverage_context(pack, coverage_rows)
+    pack_key = clean(pack.get("pack_key"))
+    pack_name = clean(pack.get("pack_name"))
+    display_name = clean(pack.get("display_name") or coverage.get("display_name") or pack_name)
+    current_gap = clean(coverage.get("coverage_gap")) or f"review current {display_name} coverage"
     current_status = clean(coverage.get("coverage_status")) or "review"
     rows: List[Dict[str, str]] = []
-    for candidate in PWHL_SOURCE_CANDIDATES:
+    for candidate in pack.get("candidates", []):
+        if not isinstance(candidate, dict):
+            continue
         url = clean(candidate.get("candidate_url"))
         presence = registry_presence_for_candidate(candidate, registry_indexes)
         note = (
@@ -790,10 +815,12 @@ def build_pwhl_source_proposal_pack(sources: List[Dict[str, Any]], coverage_rows
             note += f" Registry check: {presence}."
         rows.append(
             {
+                "pack_key": pack_key,
+                "pack_name": pack_name,
                 "candidate_group": clean(candidate.get("candidate_group")),
                 "suggested_priority": clean(candidate.get("suggested_priority")),
-                "coverage_key": "pwhl",
-                "display_name": "PWHL",
+                "coverage_key": pack_key,
+                "display_name": display_name,
                 "needed_source_type": clean(candidate.get("needed_source_type")),
                 "coverage_gap": clean(candidate.get("coverage_gap")) or current_gap,
                 "candidate_source_id": clean(candidate.get("candidate_source_id")),
@@ -803,14 +830,14 @@ def build_pwhl_source_proposal_pack(sources: List[Dict[str, Any]], coverage_rows
                 "source_type": clean(candidate.get("source_type")),
                 "tier": clean(candidate.get("tier")),
                 "trust_band": "green_candidate_after_operator_review",
-                "sport_league": "PWHL",
+                "sport_league": display_name,
                 "proposed_enabled": "No",
                 "automation_status": "disabled_manual_review_only",
                 "publish_policy": "proposal_only_not_publish_ready",
                 "allowed_use": clean(candidate.get("allowed_use")),
                 "operator_verification_status": "unverified",
                 "registry_action": "proposal_only_do_not_import",
-                "review_notes": f"Guided PWHL pack candidate. Current coverage status: {current_status}; current gap: {current_gap}.",
+                "review_notes": f"Guided {display_name} pack candidate. Current coverage status: {current_status}; current gap: {current_gap}.",
                 "source_basis": clean(candidate.get("source_basis")),
                 "registry_presence": presence,
                 "manual_review_note": note,
@@ -819,12 +846,29 @@ def build_pwhl_source_proposal_pack(sources: List[Dict[str, Any]], coverage_rows
     return rows
 
 
-def write_pwhl_source_proposal_pack_markdown(path: str | Path, rows: List[Dict[str, str]], coverage_rows: List[Dict[str, str]]) -> None:
-    coverage = pwhl_coverage_context(coverage_rows)
+def build_source_proposal_packs(sources: List[Dict[str, Any]], coverage_rows: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    return {
+        clean(pack.get("pack_key")): build_source_proposal_pack(sources, coverage_rows, pack)
+        for pack in SOURCE_PROPOSAL_PACKS
+        if clean(pack.get("pack_key"))
+    }
+
+
+def source_proposal_pack_rows(pack_rows_by_key: Dict[str, List[Dict[str, str]]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for pack in SOURCE_PROPOSAL_PACKS:
+        rows.extend(pack_rows_by_key.get(clean(pack.get("pack_key")), []))
+    return rows
+
+
+def write_source_proposal_pack_markdown(path: str | Path, rows: List[Dict[str, str]], coverage_rows: List[Dict[str, str]], pack: Dict[str, Any]) -> None:
+    coverage = proposal_pack_coverage_context(pack, coverage_rows)
+    pack_name = clean(pack.get("pack_name")) or "Source Proposal Pack"
+    description = clean(pack.get("description")) or "Guided free-source candidates for manual review of source coverage gaps."
     lines = [
-        "# PWHL Source Proposal Pack",
+        f"# {pack_name}",
         "",
-        "Guided free-source candidates for manual review of PWHL coverage gaps.",
+        description,
         "No rows are imported automatically, no sources are auto-enabled, and this pack does not publish anything.",
         "",
         "## Current Coverage",
@@ -845,9 +889,11 @@ def write_pwhl_source_proposal_pack_markdown(path: str | Path, rows: List[Dict[s
         "",
     ]
     if not rows:
-        lines.append("No PWHL proposal candidates were generated.")
+        lines.append("No proposal candidates were generated.")
     else:
-        for group in ["league_official", "team_official", "league_cross_check", "reputable_cross_check"]:
+        configured_groups = pack.get("group_order") if isinstance(pack.get("group_order"), list) else []
+        row_groups = sorted({row.get("candidate_group") for row in rows if row.get("candidate_group")})
+        for group in [*configured_groups, *[item for item in row_groups if item not in configured_groups]]:
             grouped = [row for row in rows if row.get("candidate_group") == group]
             if not grouped:
                 continue
@@ -859,7 +905,54 @@ def write_pwhl_source_proposal_pack_markdown(path: str | Path, rows: List[Dict[s
                     f"registry: {row['registry_presence']}"
                 )
             lines.append("")
-    lines += ["See `pwhl_source_proposal_pack.csv` for copy-ready proposal rows.", ""]
+    lines += [f"See `{pack.get('output_csv') or OUT_PROPOSAL_PACKS_CSV}` for copy-ready proposal rows.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
+def write_source_proposal_packs_markdown(path: str | Path, pack_rows_by_key: Dict[str, List[Dict[str, str]]], coverage_rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Guided Source Proposal Packs",
+        "",
+        "Reusable free-source proposal packs for leagues with known coverage gaps.",
+        "These packs are review guides only: no rows are imported automatically, no sources are auto-enabled, and nothing is published.",
+        "",
+        "## Guardrails",
+        "",
+        "- Free public pages only.",
+        "- Keep `proposed_enabled` as `No`.",
+        "- Keep `registry_action` as `proposal_only_do_not_import`.",
+        "- Do not use paid APIs, paywalled pages, login-only pages, private pages, auto-runs, or auto-publishing.",
+        "",
+        "## Packs",
+        "",
+    ]
+    if not pack_rows_by_key:
+        lines.append("No guided source proposal packs are configured.")
+    for pack in SOURCE_PROPOSAL_PACKS:
+        key = clean(pack.get("pack_key"))
+        rows = pack_rows_by_key.get(key, [])
+        coverage = proposal_pack_coverage_context(pack, coverage_rows)
+        official = sum(1 for row in rows if row.get("candidate_group") in {"league_official", "team_official"})
+        cross_check = sum(1 for row in rows if "cross_check" in row.get("candidate_group", ""))
+        lines += [
+            f"### {clean(pack.get('pack_name')) or key}",
+            "",
+            f"- coverage status: {coverage.get('coverage_status') or 'review'}",
+            f"- coverage gap: {coverage.get('coverage_gap') or 'review'}",
+            f"- candidates: {len(rows)} total; {official} official/team; {cross_check} cross-check",
+            f"- detailed report: `{pack.get('output_md') or ''}`",
+            f"- detailed data: `{pack.get('output_csv') or ''}`",
+            "",
+        ]
+        for row in rows[:6]:
+            lines.append(
+                f"- {row['suggested_priority']} | {row['candidate_group']} | {row['candidate_source_id']} | "
+                f"{row['candidate_url']} | enabled: {row['proposed_enabled']} | action: {row['registry_action']}"
+            )
+        if len(rows) > 6:
+            lines.append(f"- ... {len(rows) - 6} more candidates in the CSV.")
+        lines.append("")
+    lines += ["See `source_proposal_packs.csv` for every configured pack row.", ""]
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
@@ -1025,15 +1118,24 @@ def main() -> None:
     coverage_rows = build_coverage_map(sources)
     intake_rows = build_intake_template(coverage_rows)
     proposal_review_rows = build_proposal_review(sources)
-    pwhl_proposal_pack_rows = build_pwhl_source_proposal_pack(sources, coverage_rows)
+    proposal_pack_rows_by_key = build_source_proposal_packs(sources, coverage_rows)
+    proposal_pack_rows = source_proposal_pack_rows(proposal_pack_rows_by_key)
+    pwhl_proposal_pack_rows = proposal_pack_rows_by_key.get("pwhl", [])
     write_csv(OUT_CSV, rows)
     write_coverage_csv(OUT_COVERAGE_CSV, coverage_rows)
     write_intake_csv(OUT_INTAKE_CSV, intake_rows)
     write_intake_markdown(OUT_INTAKE_MD, intake_rows)
     write_proposal_review_csv(OUT_PROPOSAL_CSV, proposal_review_rows)
     write_proposal_review_markdown(OUT_PROPOSAL_MD, proposal_review_rows)
-    write_pwhl_source_proposal_pack_csv(OUT_PWHL_PACK_CSV, pwhl_proposal_pack_rows)
-    write_pwhl_source_proposal_pack_markdown(OUT_PWHL_PACK_MD, pwhl_proposal_pack_rows, coverage_rows)
+    write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
+    write_source_proposal_packs_markdown(OUT_PROPOSAL_PACKS_MD, proposal_pack_rows_by_key, coverage_rows)
+    for pack in SOURCE_PROPOSAL_PACKS:
+        pack_key = clean(pack.get("pack_key"))
+        pack_rows = proposal_pack_rows_by_key.get(pack_key, [])
+        if pack.get("output_csv"):
+            write_source_proposal_pack_csv(pack["output_csv"], pack_rows)
+        if pack.get("output_md"):
+            write_source_proposal_pack_markdown(pack["output_md"], pack_rows, coverage_rows, pack)
 
     counts = {
         "sources": len(rows),
@@ -1052,6 +1154,10 @@ def main() -> None:
         "proposal_hold": sum(1 for r in proposal_review_rows if r["review_status"] == "hold"),
         "proposal_review": sum(1 for r in proposal_review_rows if r["review_status"] == "review"),
         "proposal_ready": sum(1 for r in proposal_review_rows if r["review_status"] == "ready_for_registry_review"),
+        "proposal_pack_leagues": len(proposal_pack_rows_by_key),
+        "proposal_pack_rows": len(proposal_pack_rows),
+        "proposal_pack_official": sum(1 for r in proposal_pack_rows if r["candidate_group"] in {"league_official", "team_official"}),
+        "proposal_pack_cross_check": sum(1 for r in proposal_pack_rows if "cross_check" in r["candidate_group"]),
         "pwhl_proposal_pack_rows": len(pwhl_proposal_pack_rows),
         "pwhl_proposal_pack_official": sum(1 for r in pwhl_proposal_pack_rows if r["candidate_group"] in {"league_official", "team_official"}),
         "pwhl_proposal_pack_cross_check": sum(1 for r in pwhl_proposal_pack_rows if "cross_check" in r["candidate_group"]),
@@ -1067,6 +1173,17 @@ def main() -> None:
         "coverage_map": coverage_rows,
         "source_registry_intake_template": intake_rows,
         "source_registry_proposal_review": proposal_review_rows,
+        "source_proposal_packs": proposal_pack_rows,
+        "source_proposal_pack_index": [
+            {
+                "pack_key": clean(pack.get("pack_key")),
+                "pack_name": clean(pack.get("pack_name")),
+                "rows": len(proposal_pack_rows_by_key.get(clean(pack.get("pack_key")), [])),
+                "output_csv": clean(pack.get("output_csv")),
+                "output_md": clean(pack.get("output_md")),
+            }
+            for pack in SOURCE_PROPOSAL_PACKS
+        ],
         "pwhl_source_proposal_pack": pwhl_proposal_pack_rows,
     }
     write_json(OUT_JSON, manifest, indent=2)
@@ -1091,6 +1208,8 @@ def main() -> None:
         f"- source intake template rows: {counts['intake_template_rows']}",
         f"- source proposals reviewed: {counts['proposal_review_rows']}",
         f"- source proposals on hold: {counts['proposal_hold']}",
+        f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
+        f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
         "",
         "## Green source decision",
@@ -1131,15 +1250,22 @@ def main() -> None:
             )
     else:
         lines.append("No manual source proposals found in `operator/inbox/source_registry_proposals.csv`.")
-    lines += ["", "## PWHL guided source proposal pack", ""]
-    lines.append("Guided free-source PWHL proposal candidates were created in `pwhl_source_proposal_pack.csv` and `.md`.")
-    for row in pwhl_proposal_pack_rows[:8]:
+    lines += ["", "## Guided source proposal packs", ""]
+    lines.append("Guided free-source proposal candidates were created in `source_proposal_packs.csv` and `.md`.")
+    for pack in SOURCE_PROPOSAL_PACKS:
+        pack_key = clean(pack.get("pack_key"))
+        pack_rows = proposal_pack_rows_by_key.get(pack_key, [])
         lines.append(
-            f"- {row['suggested_priority']} | {row['candidate_group']} | {row['candidate_source_id']} | "
-            f"{row['registry_action']} | enabled: {row['proposed_enabled']}"
+            f"- {clean(pack.get('pack_name'))} | rows: {len(pack_rows)} | "
+            f"data: `{clean(pack.get('output_csv'))}` | report: `{clean(pack.get('output_md'))}`"
         )
-    if len(pwhl_proposal_pack_rows) > 8:
-        lines.append(f"- ... {len(pwhl_proposal_pack_rows) - 8} more candidates in the CSV.")
+        for row in pack_rows[:5]:
+            lines.append(
+                f"  - {row['suggested_priority']} | {row['candidate_group']} | {row['candidate_source_id']} | "
+                f"{row['registry_action']} | enabled: {row['proposed_enabled']}"
+            )
+        if len(pack_rows) > 5:
+            lines.append(f"  - ... {len(pack_rows) - 5} more candidates in the CSV.")
     lines += ["", "## Full registry audit", "", "See `source_registry_audit.csv` for every source.", ""]
     write_text(OUT_MD, "\n".join(lines), encoding="utf-8")
     print(json.dumps({"output_scope": manifest["output_scope"], **counts}, indent=2))

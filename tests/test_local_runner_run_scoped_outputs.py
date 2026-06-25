@@ -51,6 +51,8 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "source_registry_audit.*",
         "source_registry_intake_template.*",
         "source_registry_proposal_review.*",
+        "source_proposal_packs.*",
+        "*_source_proposal_pack.*",
         "pwhl_source_proposal_pack.*",
         "morning_source_discovery_board.*",
         "morning_lead_promotion_recommendations.*",
@@ -93,6 +95,8 @@ def test_review_stage_refreshes_source_registry_audit_for_command_center() -> No
     assert "source_registry_intake_template.csv" in runner
     assert "source_registry_proposal_review.md" in runner
     assert "source_registry_proposal_review.csv" in runner
+    assert "source_proposal_packs.md" in runner
+    assert "source_proposal_packs.csv" in runner
     assert "pwhl_source_proposal_pack.md" in runner
     assert "pwhl_source_proposal_pack.csv" in runner
     assert "manual_story_inbox_report.md" in runner

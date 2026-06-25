@@ -50,6 +50,7 @@ KEY_FILES = [
     "source_registry_audit.csv", "source_registry_audit.md", "source_registry_audit.json",
     "source_coverage_map.csv", "source_registry_intake_template.md", "source_registry_intake_template.csv",
     "source_registry_proposal_review.md", "source_registry_proposal_review.csv",
+    "source_proposal_packs.md", "source_proposal_packs.csv",
     "pwhl_source_proposal_pack.md", "pwhl_source_proposal_pack.csv",
     "bebe_daily_ops_plan.md", "bebe_daily_ops_plan.csv", "bebe_daily_ops_status.json", "bebe_priority_board.md", "bebe_posting_schedule_today.md",
     "operator_command_center.html", "operator_command_center.md", "operator_command_center.json",
