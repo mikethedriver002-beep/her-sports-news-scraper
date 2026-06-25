@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.1.0-template-draft-system"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.2.0-mobile-score-review-drafts"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["renderer_mode"] == "template_driven_review_drafts"
     assert manifest["selected_template"]["template_id"] == "hsd_final_score_review_v1"
@@ -109,3 +109,24 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "hsd_final_score_review_v1" in report
     assert "publish_ready=`false`" in report
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
+
+
+def test_manual_review_renderer_parses_final_score_for_mobile_first_card() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    parsed = module.parse_final_score(
+        {
+            "copy_headline": "New York Liberty beat Las Vegas Aces",
+            "copy_dek": "New York Liberty beat Las Vegas Aces. Verified final: New York Liberty 87, Las Vegas Aces 76.",
+        }
+    )
+
+    assert parsed["winner"] == "New York Liberty"
+    assert parsed["loser"] == "Las Vegas Aces"
+    assert parsed["winner_score"] == "87"
+    assert parsed["loser_score"] == "76"
