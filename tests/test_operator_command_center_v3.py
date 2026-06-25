@@ -565,6 +565,10 @@ def seed_daily_ops_files() -> None:
         [
             {
                 "diff_review_status": "HOLD",
+                "resolution_action": "HOLD",
+                "resolution_label": "Hold for duplicate review",
+                "resolution_reason": "The domain overlaps the trusted registry or another worksheet row; decide whether it is distinct coverage before verification.",
+                "verification_log_instruction": "Before filling approval fields, compare the existing/domain-matched source and record same_domain_ok, hold, or discard in operator notes.",
                 "issue_count": "1",
                 "issues": "candidate domain already exists in trusted registry: thepwhl.com",
                 "flags": "duplicate_domain",
@@ -600,6 +604,8 @@ def seed_daily_ops_files() -> None:
             {
                 "verification_log_status": "operator_input_required",
                 "operator_step": "open_url_record_freshness_duplicate_decision_and_approval_outcome",
+                "diff_resolution_action": "HOLD",
+                "diff_resolution_instruction": "Before filling approval fields, compare the existing/domain-matched source and record same_domain_ok, hold, or discard in operator notes.",
                 "source_id": "pwhl_official_news",
                 "source_name": "PWHL official news",
                 "candidate_url": "https://www.thepwhl.com/en/news",
@@ -885,7 +891,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.26.0-source-registry-readiness-summary"
+    assert payload["version"] == "hsd-operator-command-center-v3.27.0-diff-resolution-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -926,6 +932,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Registry diff hold" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Registry diff review" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Registry diff pass" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Diff cues verify" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Diff cues revise" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Diff cues hold" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Diff cues discard" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Verification log rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Verification input needed" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Approval packet rows" and item["value"] == "1" for item in payload["metrics"])
@@ -974,10 +984,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_update_worksheet"][0]["auto_edit_status"] == "not_performed_by_generator"
     assert "remove the manually added" in payload["source_registry_update_worksheet"][0]["rollback_note"]
     assert payload["source_registry_diff_review"][0]["diff_review_status"] == "HOLD"
+    assert payload["source_registry_diff_review"][0]["resolution_action"] == "HOLD"
+    assert payload["source_registry_diff_review"][0]["resolution_label"] == "Hold for duplicate review"
+    assert "Before filling approval fields" in payload["source_registry_diff_review"][0]["verification_log_instruction"]
     assert payload["source_registry_diff_review"][0]["flags"] == "duplicate_domain"
     assert payload["source_registry_diff_review"][0]["registry_domain_match"] == "thepwhl.com"
     assert payload["source_registry_diff_review"][0]["rollback_status"] == "present"
     assert payload["source_registry_verification_log"][0]["verification_log_status"] == "operator_input_required"
+    assert payload["source_registry_verification_log"][0]["diff_resolution_action"] == "HOLD"
+    assert "Before filling approval fields" in payload["source_registry_verification_log"][0]["diff_resolution_instruction"]
     assert payload["source_registry_verification_log"][0]["url_checked"] == ""
     assert payload["source_registry_verification_log"][0]["freshness_result"] == ""
     assert payload["source_registry_verification_log"][0]["duplicate_decision"] == ""
@@ -1120,9 +1135,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Open next" in html
     assert "Source registry intake template" in html
     assert "Source registry diff review" in html
+    assert "Hold for duplicate review" in html
+    assert "Before filling approval fields" in html
     assert "duplicate_domain" in html
     assert "candidate domain already exists" in html
     assert "Source verification log" in html
+    assert "follow diff review cue" not in html
     assert "operator_input_required" in html
     assert "operator fill-in" in html
     assert "Source registry approval packet" in html
@@ -1172,9 +1190,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
     assert "Source registry diff review" in markdown
+    assert "cue: HOLD" in markdown
+    assert "before log: Before filling approval fields" in markdown
     assert "duplicate_domain" in markdown
     assert "candidate domain already exists" in markdown
     assert "Source verification log" in markdown
+    assert "instruction: Before filling approval fields" in markdown
     assert "operator_input_required" in markdown
     assert "url_checked: operator fill-in" in markdown
     assert "Source registry approval packet" in markdown

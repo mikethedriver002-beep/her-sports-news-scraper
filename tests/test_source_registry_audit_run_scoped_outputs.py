@@ -405,6 +405,10 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["registry_diff_review_hold"] == 0
     assert manifest["counts"]["registry_diff_review_review"] >= 1
     assert manifest["counts"]["registry_diff_review_pass"] >= 1
+    assert manifest["counts"]["registry_diff_resolution_verify"] >= 1
+    assert manifest["counts"]["registry_diff_resolution_hold"] >= 1
+    assert manifest["counts"]["registry_diff_resolution_revise"] == 0
+    assert manifest["counts"]["registry_diff_resolution_discard"] == 0
     assert manifest["counts"]["source_verification_log_rows"] == 20
     assert manifest["counts"]["source_verification_log_input_required"] == 19
     assert manifest["counts"]["source_verification_log_recorded"] == 1
@@ -493,19 +497,27 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert len(registry_diff_review) == 20
     assert registry_diff_review[0]["diff_review_status"] == "PASS"
     assert registry_diff_review[0]["source_id"] == "wnba_official_home_review"
+    assert registry_diff_review[0]["resolution_action"] == "VERIFY"
+    assert registry_diff_review[0]["resolution_label"] == "Verify URL"
+    assert "Open the public URL" in registry_diff_review[0]["verification_log_instruction"]
     assert registry_diff_review[0]["proposed_enabled"] == "False"
     assert registry_diff_review[0]["proposed_json_status"] == "valid_json"
     assert registry_diff_review[0]["rollback_status"] == "present"
     assert registry_diff_review[0]["registry_source_id_match"] == "No"
     assert any(row["diff_review_status"] == "REVIEW" for row in registry_diff_review)
     assert any("worksheet_domain_repeat" in row["flags"] for row in registry_diff_review)
+    assert any(row["resolution_action"] == "HOLD" for row in registry_diff_review if "worksheet_domain_repeat" in row["flags"])
     registry_diff_review_md = (run_dir / "source_registry_diff_review.md").read_text(encoding="utf-8")
     assert "Source Registry Diff Review" in registry_diff_review_md
     assert "does not edit files" in registry_diff_review_md
+    assert "VERIFY" in registry_diff_review_md
+    assert "HOLD" in registry_diff_review_md
     verification_log = read_csv(run_dir / "source_registry_verification_log.csv")
     assert len(verification_log) == 20
     assert verification_log[0]["source_id"] == "wnba_official_home_review"
     assert verification_log[0]["diff_review_status"] == "PASS"
+    assert verification_log[0]["diff_resolution_action"] == "VERIFY"
+    assert "Open the public URL" in verification_log[0]["diff_resolution_instruction"]
     approved_log = next(row for row in verification_log if row["source_id"] == "wnba_official_home_review")
     assert approved_log["verification_log_status"] == "operator_review_recorded"
     assert approved_log["url_checked"] == "https://www.wnba.com/"
@@ -518,6 +530,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     verification_log_md = (run_dir / "source_registry_verification_log.md").read_text(encoding="utf-8")
     assert "Source Registry Verification Log" in verification_log_md
     assert "url_checked" in verification_log_md
+    assert "cue: VERIFY" in verification_log_md
     approval_packet = read_csv(run_dir / "source_registry_approval_packet.csv")
     assert len(approval_packet) == 1
     assert approval_packet[0]["approval_packet_status"] == "ready_for_final_manual_review"
@@ -644,8 +657,10 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["source_registry_update_worksheet"][0]["auto_edit_status"] == "not_performed_by_generator"
     assert manifest["source_registry_diff_review"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_diff_review"][0]["diff_review_status"] == "PASS"
+    assert manifest["source_registry_diff_review"][0]["resolution_action"] == "VERIFY"
     assert manifest["source_registry_verification_log"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_verification_log"][0]["verification_log_status"] == "operator_review_recorded"
+    assert manifest["source_registry_verification_log"][0]["diff_resolution_action"] == "VERIFY"
     assert manifest["source_registry_approval_packet"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_approval_packet"][0]["approval_packet_status"] == "ready_for_final_manual_review"
     assert manifest["source_registry_patch_preview"][0]["source_id"] == "wnba_official_home_review"
@@ -685,6 +700,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "source_registry_post_edit_validation.csv" in report
     assert "trusted_registry_operator_playbook.md" in report
     assert "source_proposal_pack_readiness.csv" in report
+    assert "source registry diff cue verify rows" in report
     assert "PWHL" in report
 
 
