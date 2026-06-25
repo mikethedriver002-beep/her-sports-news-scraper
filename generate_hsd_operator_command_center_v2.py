@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.44.0-template-draft-render-artifacts"
+VERSION = "hsd-operator-command-center-v3.45.0-decision-render-gallery"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -622,6 +622,90 @@ def file_shortcut(label: str, path: str, purpose: str) -> Dict[str, Any]:
     }
 
 
+def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Dict[str, str]) -> List[Dict[str, Any]]:
+    format_options = renderer.get("format_options", [])
+    if not isinstance(format_options, list):
+        format_options = []
+    by_format = {
+        clean(row.get("format_id")): row
+        for row in format_options
+        if isinstance(row, dict) and clean(row.get("format_id"))
+    }
+    gallery_specs = [
+        {
+            "format_id": "ig_feed_4x5",
+            "label": "Primary feed",
+            "path": "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png",
+            "fallback_path": "render_handoff_top_packet/draft_preview.png",
+            "shape": "1080x1350",
+            "fit_note": "Best for the main IG feed review.",
+        },
+        {
+            "format_id": "ig_story_9x16",
+            "label": "Story",
+            "path": "render_handoff_top_packet/review_drafts/draft_preview_story.png",
+            "fallback_path": "",
+            "shape": "1080x1920",
+            "fit_note": "Use for story-safe vertical review.",
+        },
+        {
+            "format_id": "square_feed_1x1",
+            "label": "Square",
+            "path": "render_handoff_top_packet/review_drafts/draft_preview_square.png",
+            "fallback_path": "",
+            "shape": "1080x1080",
+            "fit_note": "Use when a tighter square crop is needed.",
+        },
+    ]
+    qa_summary = qa.get("summary", {}) if isinstance(qa.get("summary"), dict) else {}
+    asset_slots = renderer.get("asset_slots", [])
+    if not isinstance(asset_slots, list):
+        asset_slots = []
+    asset_note = "Review asset checklist before approval."
+    if asset_slots:
+        slot_summaries = [
+            f"{clean(slot.get('slot_id'))}: {clean(slot.get('status'))}"
+            for slot in asset_slots
+            if isinstance(slot, dict) and clean(slot.get("slot_id"))
+        ]
+        if slot_summaries:
+            asset_note = "; ".join(slot_summaries[:3])
+    out: List[Dict[str, Any]] = []
+    for spec in gallery_specs:
+        option = by_format.get(spec["format_id"], {})
+        path = spec["path"]
+        found = find_existing_input(path)
+        if not found.exists() and spec.get("fallback_path"):
+            fallback = find_existing_input(spec["fallback_path"])
+            if fallback.exists():
+                path = spec["fallback_path"]
+                found = fallback
+        width = clean(option.get("width")) or spec["shape"].split("x")[0]
+        height = clean(option.get("height")) or spec["shape"].split("x")[-1]
+        exists = found.exists()
+        out.append(
+            {
+                "format_id": spec["format_id"],
+                "label": spec["label"],
+                "shape": f"{width}x{height}",
+                "fit_note": spec["fit_note"],
+                "path": path,
+                "exists": exists,
+                "href": href_for_path(path) if exists else "",
+                "review_status": "ready_for_visual_review" if exists else "missing_render",
+                "qa_status": clean(first_present(qa.get("status"), draft.get("qa_status"), default="not_run")),
+                "qa_summary": f"{clean(qa_summary.get('pass_count')) or '0'}/{clean(qa_summary.get('check_count')) or '0'} QA checks passed",
+                "asset_note": asset_note,
+                "approval_scope": "manual_next_step_only_not_publish_ready",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+            }
+        )
+    return out
+
+
 def malformed_single_cell_paste(row: Dict[str, str]) -> bool:
     draft_id = clean(row.get("decision_draft_id"))
     return bool(draft_id and "," in draft_id and not clean(row.get("source_intake_id")))
@@ -779,6 +863,7 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         "qa_check_count": clean(qa_summary.get("check_count")),
         "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
         "decision_draft": draft,
+        "render_gallery": build_render_gallery(renderer, qa, draft),
         "template_choices": template_choices,
         "file_shortcuts": [
             file_shortcut("Draft preview", "render_handoff_top_packet/draft_preview.png", "Open the rendered image before making any decision."),
@@ -3358,6 +3443,44 @@ def render_decision_history(rows: Iterable[Dict[str, Any]]) -> str:
     """
 
 
+def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        exists = bool(row.get("exists"))
+        preview = (
+            f'<a href="{html.escape(clean(row.get("href")))}"><img src="{html.escape(clean(row.get("href")))}" alt="{html.escape(clean(row.get("label")))} render draft"></a>'
+            if exists
+            else '<div class="render-gallery-missing">Missing render</div>'
+        )
+        action = (
+            f'<a class="tool-link" href="{html.escape(clean(row.get("href")))}">Open</a>'
+            if exists
+            else '<span class="muted">Run render mode</span>'
+        )
+        body.append(
+            f"""
+            <article class="render-gallery-card">
+              <div class="render-gallery-frame {html.escape(clean(row.get('format_id')))}">{preview}</div>
+              <div class="render-gallery-meta">
+                <div>
+                  <strong>{html.escape(clean(row.get('label')))}</strong>
+                  <p>{html.escape(clean(row.get('fit_note')))}</p>
+                </div>
+                {action}
+              </div>
+              <div class="render-gallery-facts">
+                {pill(clean(row.get('review_status')) or 'review')}
+                {pill(clean(row.get('shape')))}
+                {pill('publish ready: false')}
+              </div>
+              <p class="render-gallery-note">{html.escape(clean(row.get('qa_summary')))}. {html.escape(short(clean(row.get('asset_note')), 150))}</p>
+              <code>{html.escape(clean(row.get('path')))}</code>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No render draft formats found yet.</p>'
+
+
 def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
@@ -3412,6 +3535,12 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             <strong>{html.escape(clean(panel.get('panel_status')) or 'not_ready')}</strong>
             <p>{html.escape(clean(panel.get('validation_issue')) or clean(panel.get('next_step')) or 'Manual review required.')}</p>
             <small>{html.escape(clean(panel.get('next_step')))}</small>
+          </div>
+          <div class="decision-desk-section">
+            <div class="row-kicker">Render gallery {pill('review-only drafts')} {pill('no publish-ready lane')}</div>
+            <div class="render-gallery-grid">
+              {render_decision_render_gallery(panel.get('render_gallery', []))}
+            </div>
           </div>
           <div class="decision-desk-section">
             <div class="row-kicker">Open before deciding</div>
@@ -3609,6 +3738,17 @@ def render_html(payload: Dict[str, Any]) -> str:
     .decision-link-card p {{ color:#5e616a; font-size:12px; margin:3px 0 6px; }}
     .decision-link-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
     .decision-link-card > div:last-child {{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }}
+    .render-gallery-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }}
+    .render-gallery-card {{ border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; display:grid; gap:8px; min-width:0; }}
+    .render-gallery-frame {{ background:#111823; border:1px solid #242b38; border-radius:7px; min-height:260px; display:grid; place-items:center; overflow:hidden; }}
+    .render-gallery-frame.ig_story_9x16 {{ min-height:330px; }}
+    .render-gallery-frame img {{ width:100%; height:100%; max-height:430px; object-fit:contain; display:block; }}
+    .render-gallery-missing {{ color:#fff; font-weight:800; padding:28px 12px; text-align:center; }}
+    .render-gallery-meta {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:start; }}
+    .render-gallery-meta strong {{ display:block; font-size:14px; }}
+    .render-gallery-meta p,.render-gallery-note {{ color:#5e616a; font-size:12px; margin-top:3px; }}
+    .render-gallery-facts {{ display:flex; gap:6px; flex-wrap:wrap; }}
+    .render-gallery-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
     .decision-warning-list {{ margin:0; padding:0; display:grid; gap:6px; list-style:none; }}
     .decision-warning-list li {{ border:1px solid #ecd58a; background:#fff7d7; border-radius:6px; padding:8px 10px; color:#5d4800; font-weight:700; }}
     .decision-warning-list li.good {{ border-color:#b9dfc8; background:var(--green-bg); color:var(--green); }}
@@ -3628,6 +3768,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       header {{ padding:20px; }}
       main {{ padding:16px; }}
       .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
+      .render-gallery-grid {{ grid-template-columns:1fr; }}
       .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
       .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
@@ -4149,6 +4290,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Next safe action: {decision_panel.get('next_step')}",
         "- Guardrails: file-backed manual approval, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
+    lines.extend(
+        f"- Render gallery: {item.get('label')} | {item.get('shape')} | {item.get('review_status')} | {item.get('path')} | publish_ready={item.get('publish_ready')}"
+        for item in decision_panel.get("render_gallery", [])
+    )
     lines.extend(
         f"- Open: {item.get('label')} -> {item.get('path')} ({'found' if item.get('exists') else 'missing'})"
         for item in decision_panel.get("file_shortcuts", [])
