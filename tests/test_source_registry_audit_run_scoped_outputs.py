@@ -355,6 +355,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_update_worksheet.md").exists()
     assert (run_dir / "source_registry_diff_review.csv").exists()
     assert (run_dir / "source_registry_diff_review.md").exists()
+    assert (run_dir / "source_registry_same_domain_resolution.csv").exists()
+    assert (run_dir / "source_registry_same_domain_resolution.md").exists()
     assert (run_dir / "source_registry_verification_log.csv").exists()
     assert (run_dir / "source_registry_verification_log.md").exists()
     assert (run_dir / "source_registry_approval_packet.csv").exists()
@@ -409,6 +411,9 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["registry_diff_resolution_hold"] >= 1
     assert manifest["counts"]["registry_diff_resolution_revise"] == 0
     assert manifest["counts"]["registry_diff_resolution_discard"] == 0
+    assert manifest["counts"]["same_domain_resolution_rows"] >= 1
+    assert manifest["counts"]["same_domain_resolution_input_required"] >= 1
+    assert manifest["counts"]["same_domain_resolution_ok"] == 0
     assert manifest["counts"]["source_verification_log_rows"] == 20
     assert manifest["counts"]["source_verification_log_input_required"] == 19
     assert manifest["counts"]["source_verification_log_recorded"] == 1
@@ -512,6 +517,14 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "does not edit files" in registry_diff_review_md
     assert "VERIFY" in registry_diff_review_md
     assert "HOLD" in registry_diff_review_md
+    same_domain_resolution = read_csv(run_dir / "source_registry_same_domain_resolution.csv")
+    assert same_domain_resolution
+    assert same_domain_resolution[0]["same_domain_resolution_status"] == "operator_input_required"
+    assert same_domain_resolution[0]["resolution_decision"] == ""
+    assert "same_domain_ok" in same_domain_resolution[0]["evidence_requirement"]
+    same_domain_resolution_md = (run_dir / "source_registry_same_domain_resolution.md").read_text(encoding="utf-8")
+    assert "Source Registry Same-Domain Resolution" in same_domain_resolution_md
+    assert "operator/inbox/source_registry_same_domain_resolution.csv" in same_domain_resolution_md
     verification_log = read_csv(run_dir / "source_registry_verification_log.csv")
     assert len(verification_log) == 20
     assert verification_log[0]["source_id"] == "wnba_official_home_review"
@@ -578,6 +591,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "## Rollback Steps" in playbook
     assert "## Stop/Go Summary" in playbook
     assert "`source_registry_verification_log.csv`" in playbook
+    assert "`source_registry_same_domain_resolution.csv`" in playbook
     assert "`source_registry_patch_preview.md`" in playbook
     assert "`config/source_registry.json`" in playbook
     assert "free public source" in playbook
@@ -658,6 +672,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["source_registry_diff_review"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_diff_review"][0]["diff_review_status"] == "PASS"
     assert manifest["source_registry_diff_review"][0]["resolution_action"] == "VERIFY"
+    assert manifest["source_registry_same_domain_resolution"][0]["same_domain_resolution_status"] == "operator_input_required"
     assert manifest["source_registry_verification_log"][0]["source_id"] == "wnba_official_home_review"
     assert manifest["source_registry_verification_log"][0]["verification_log_status"] == "operator_review_recorded"
     assert manifest["source_registry_verification_log"][0]["diff_resolution_action"] == "VERIFY"
@@ -694,6 +709,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "source_registry_proposal_promotion_checklist.csv" in report
     assert "source_registry_update_worksheet.csv" in report
     assert "source_registry_diff_review.csv" in report
+    assert "source_registry_same_domain_resolution.csv" in report
     assert "source_registry_verification_log.csv" in report
     assert "source_registry_approval_packet.csv" in report
     assert "source_registry_patch_preview.csv" in report
