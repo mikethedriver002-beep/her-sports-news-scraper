@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.11.0-team-color-logo-cues"
+VERSION = "hsd-manual-review-renderer-v1.12.0-editorial-microcopy"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -941,6 +941,93 @@ def review_prompt(score: Dict[str, str]) -> str:
     return f"WHAT FUELED {winner}'S SEPARATION?"
 
 
+def scoreline_context(score: Dict[str, str]) -> str:
+    winner = short_team(score.get("winner", ""))
+    loser = short_team(score.get("loser", ""))
+    margin = score_margin(score)
+    total = score_total(score)
+    parts = []
+    if margin is not None:
+        parts.append(f"{winner} +{margin} vs {loser}")
+    else:
+        parts.append(f"{winner} over {loser}")
+    if total is not None:
+        parts.append(f"{total} combined points")
+    return "; ".join(parts)
+
+
+def stat_line_for_microcopy(module: Dict[str, Any]) -> str:
+    return " / ".join(
+        f"{clean(item.get('value'))} {clean(item.get('label'))}"
+        for item in (module.get("callouts") or [])[:3]
+        if clean(item.get("value")) and clean(item.get("label"))
+    )
+
+
+def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], stat_module: Dict[str, Any]) -> List[Dict[str, str]]:
+    winner = short_team(score.get("winner", ""))
+    loser = short_team(score.get("loser", ""))
+    margin = score_margin(score)
+    total = score_total(score)
+    source_label = source_quality_label(packet)
+    variants: List[Dict[str, str]] = []
+    margin_text = f"+{margin}" if margin is not None else "final-score"
+    total_text = f"{total}-point total" if total is not None else "verified final"
+    variants.append(
+        {
+            "variant_id": "scoreline_spine",
+            "label": "Scoreline spine",
+            "headline": f"{winner} {margin_text} FINAL",
+            "body": f"{winner} finished ahead of {loser}; anchor the angle to the {margin_text} margin and {total_text}.",
+        }
+    )
+    if clean(stat_module.get("status")) == "verified_player_stat_module":
+        player = clean(stat_module.get("player_name"))
+        stat_line = stat_line_for_microcopy(stat_module)
+        variants.append(
+            {
+                "variant_id": "verified_player_ledger",
+                "label": "Verified player ledger",
+                "headline": f"{last_name(player)} + {winner}",
+                "body": f"{last_name(player).title()}'s verified {stat_line.replace(' / ', ', ')} gives this recap the named lead.",
+            }
+        )
+    else:
+        variants.append(
+            {
+                "variant_id": "score_only_hold",
+                "label": "Score-only fallback",
+                "headline": f"{winner} SCOREBOARD EDGE",
+                "body": "No verified player stat line is available; hold player-led framing until source proof supports it.",
+            }
+        )
+    variants.append(
+        {
+            "variant_id": "operator_angle_check",
+            "label": "Operator angle check",
+            "headline": review_prompt(score),
+            "body": f"{source_label} review: use this as the manual question, not an automated claim. Add the why only after the source packet supports it.",
+        }
+    )
+    return variants
+
+
+def selected_editorial_microcopy(packet: Dict[str, Any], score: Dict[str, str], stat_module: Dict[str, Any]) -> Dict[str, Any]:
+    variants = editorial_microcopy_variants(packet, score, stat_module)
+    preferred = next((item for item in variants if item["variant_id"] == "verified_player_ledger"), variants[0] if variants else {})
+    context = scoreline_context(score)
+    return {
+        "status": "source_safe_editorial_microcopy_ready",
+        "selected_variant_id": clean(preferred.get("variant_id")),
+        "eyebrow": "MATCHUP ANGLE",
+        "headline": clean(preferred.get("headline")),
+        "body": clean(preferred.get("body")),
+        "context": context,
+        "review_cue": "Copy is score/stat-derived only; verify source proof before adding why/how claims.",
+        "variants": variants,
+    }
+
+
 def logo_candidates(team_id: str, row: Dict[str, str]) -> List[Path]:
     candidates: List[Path] = []
     raw = clean(row.get("file_path"))
@@ -1514,17 +1601,16 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     if not dek:
         dek = f"Verified final: {score['winner']} {score['winner_score']}, {score['loser']} {score['loser_score']}."
     prompt = review_prompt(score)
-    prompt_body = dek
-    if hook_name == "hook_question":
-        prompt_body = "Tell us what you saw after reviewing the final."
-    source_body = f"{source_quality_label(packet)} fact check. {prompt_body}"
+    microcopy = selected_editorial_microcopy(packet, score, stat_module)
+    prompt_body = clean(microcopy.get("body")) or dek
+    source_body = f"{clean(microcopy.get('context'))}. {prompt_body}"
     draw_lower_reference_module(
         image,
         hook_box,
-        "YOUR TAKE",
+        clean(microcopy.get("eyebrow")) or "YOUR TAKE",
         source_body,
         (37, 99, 163),
-        headline=prompt,
+        headline=clean(microcopy.get("headline")) or prompt,
     )
 
     draw_reference_guardrail(image)
@@ -1605,6 +1691,7 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
     if not score:
         return {"content_module_mode": "not_final_score", "content_module_status": "not_applicable"}
     stat_module = select_verified_stat_module(packet, score)
+    microcopy = selected_editorial_microcopy(packet, score, stat_module)
     if clean(stat_module.get("status")) == "verified_player_stat_module":
         return {
             "content_module_mode": "verified_player_stats",
@@ -1620,6 +1707,13 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "stat_source_confidence": clean(stat_module.get("stat_source_confidence")),
             "stat_source_label": clean(stat_module.get("stat_source_label")),
             "stat_review_cue": clean(stat_module.get("stat_review_cue")),
+            "editorial_microcopy_status": clean(microcopy.get("status")),
+            "editorial_microcopy_variant": clean(microcopy.get("selected_variant_id")),
+            "editorial_microcopy_headline": clean(microcopy.get("headline")),
+            "editorial_microcopy_body": clean(microcopy.get("body")),
+            "editorial_microcopy_context": clean(microcopy.get("context")),
+            "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
+            "editorial_microcopy_variants": microcopy.get("variants") or [],
         }
     edge = game_edge_module(score)
     return {
@@ -1634,6 +1728,13 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "stat_source_confidence": "score_only_fallback_manual_context_required",
         "stat_source_label": "Score-derived fallback",
         "stat_review_cue": "No named performer stat text is available; hold if a player ledger is expected.",
+        "editorial_microcopy_status": clean(microcopy.get("status")),
+        "editorial_microcopy_variant": clean(microcopy.get("selected_variant_id")),
+        "editorial_microcopy_headline": clean(microcopy.get("headline")),
+        "editorial_microcopy_body": clean(microcopy.get("body")),
+        "editorial_microcopy_context": clean(microcopy.get("context")),
+        "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
+        "editorial_microcopy_variants": microcopy.get("variants") or [],
     }
 
 
@@ -1801,6 +1902,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Stat source confidence: `{clean(content_module.get('stat_source_confidence')) or 'not_applicable'}`",
         f"- Stat review cue: {clean(content_module.get('stat_review_cue')) or 'n/a'}",
+        f"- Editorial microcopy: `{clean(content_module.get('editorial_microcopy_variant')) or 'not_selected'}` / {clean(content_module.get('editorial_microcopy_headline')) or 'n/a'}",
+        f"- Editorial review cue: {clean(content_module.get('editorial_microcopy_review_cue')) or 'n/a'}",
         f"- Reason: {reason or 'n/a'}",
         "",
         "## Review Draft Formats",

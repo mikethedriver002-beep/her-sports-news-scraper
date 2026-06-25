@@ -92,6 +92,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                 "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
                 "stat_source_label": "Verified player/stat text available",
                 "stat_review_cue": "Confirm the named performer and stat line against source proof before approval.",
+                "editorial_microcopy_headline": "STEWART + LIBERTY",
+                "editorial_microcopy_body": "Stewart's verified 20 PTS, 6 REB, 4 AST gives this recap the named lead.",
+                "editorial_microcopy_review_cue": "Copy is score/stat-derived only; verify source proof before adding why/how claims.",
             },
             "format_options": [
                 {
@@ -1647,6 +1650,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["revision_focus"] == "Score/team lane balance"
     assert feed_gallery["stat_module_status"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Verified player/stat text available" in feed_gallery["stat_module_summary"]
+    assert "STEWART + LIBERTY" in feed_gallery["stat_module_detail"]
+    assert "score/stat-derived" in feed_gallery["stat_module_detail"]
     assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "Stats", "QA", "Visual delta", "Manual revision"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
     assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
