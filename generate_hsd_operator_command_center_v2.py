@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.21.0-source-verification-log"
+VERSION = "hsd-operator-command-center-v3.22.0-source-approval-packet"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -38,6 +38,8 @@ ARTIFACTS = [
     ("Sources", "Source registry diff review data", "source_registry_diff_review.csv"),
     ("Sources", "Source verification log", "source_registry_verification_log.md"),
     ("Sources", "Source verification log data", "source_registry_verification_log.csv"),
+    ("Sources", "Source registry approval packet", "source_registry_approval_packet.md"),
+    ("Sources", "Source registry approval packet data", "source_registry_approval_packet.csv"),
     ("Sources", "Guided source pack readiness", "source_proposal_pack_readiness.md"),
     ("Sources", "Guided source pack readiness data", "source_proposal_pack_readiness.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
@@ -144,6 +146,8 @@ RUN_COMMANDS = {
     "source_registry_diff_review.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_verification_log.md": ".\\hsd.cmd run -Mode review",
     "source_registry_verification_log.csv": ".\\hsd.cmd run -Mode review",
+    "source_registry_approval_packet.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_approval_packet.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
@@ -548,6 +552,7 @@ def build_next_actions(
     source_registry_update_worksheet: List[Dict[str, str]],
     source_registry_diff_review: List[Dict[str, str]],
     source_registry_verification_log: List[Dict[str, str]],
+    source_registry_approval_packet: List[Dict[str, str]],
     source_proposal_pack_readiness: List[Dict[str, str]],
     source_proposal_packs: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
@@ -656,6 +661,8 @@ def build_next_actions(
     registry_diff_hold_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD"]
     registry_diff_review_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW"]
     verification_input_rows = [row for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required"]
+    approval_packet_ready_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "ready_for_final_manual_review"]
+    approval_packet_hold_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "hold_before_manual_registry_edit"]
     ready_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status") == "ready_to_copy_after_freshness_check"]
     blocked_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status", "").startswith("blocked_")]
     duplicate_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review"]
@@ -738,6 +745,20 @@ def build_next_actions(
                 "duplicate decision, and approval/hold outcome before any registry edit."
             ),
             "source_registry_verification_log.md",
+        )
+
+    if approval_packet_ready_rows or approval_packet_hold_rows:
+        row = (approval_packet_hold_rows + approval_packet_ready_rows)[0]
+        add_action(
+            "Approval packet",
+            "Research",
+            "Review manual registry approval packet",
+            (
+                f"{len(approval_packet_ready_rows)} ready row(s), {len(approval_packet_hold_rows)} held row(s). "
+                f"Start with {row.get('source_id')}: {row.get('hold_reason') or 'final JSON and evidence review required'}. "
+                "This packet is review-only and does not edit the trusted registry."
+            ),
+            "source_registry_approval_packet.md",
         )
 
     if ready_draft_rows:
@@ -980,7 +1001,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 14) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 15) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -1023,6 +1044,7 @@ def build_payload() -> Dict[str, Any]:
     source_registry_update_worksheet = read_csv("source_registry_update_worksheet.csv")
     source_registry_diff_review = read_csv("source_registry_diff_review.csv")
     source_registry_verification_log = read_csv("source_registry_verification_log.csv")
+    source_registry_approval_packet = read_csv("source_registry_approval_packet.csv")
     source_proposal_pack_readiness = read_csv("source_proposal_pack_readiness.csv")
     source_proposal_packs = read_csv("source_proposal_packs.csv")
     wnba_source_proposal_pack = read_csv("wnba_source_proposal_pack.csv")
@@ -1110,6 +1132,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Registry diff pass", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "PASS")),
         metric("Verification log rows", len(source_registry_verification_log)),
         metric("Verification input needed", sum(1 for row in source_registry_verification_log if row.get("verification_log_status") == "operator_input_required")),
+        metric("Approval packet rows", len(source_registry_approval_packet)),
+        metric("Approval packet ready", sum(1 for row in source_registry_approval_packet if row.get("approval_packet_status") == "ready_for_final_manual_review")),
+        metric("Approval packet held", sum(1 for row in source_registry_approval_packet if row.get("approval_packet_status") == "hold_before_manual_registry_edit")),
         metric("Source packs ready", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal")),
         metric("Source packs duplicate review", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review")),
         metric("Source packs freshness check", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check")),
@@ -1150,6 +1175,7 @@ def build_payload() -> Dict[str, Any]:
         source_registry_update_worksheet,
         source_registry_diff_review,
         source_registry_verification_log,
+        source_registry_approval_packet,
         source_proposal_pack_readiness,
         source_proposal_packs,
         artifacts,
@@ -1195,6 +1221,7 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_update_worksheet": source_registry_update_worksheet,
         "source_registry_diff_review": source_registry_diff_review,
         "source_registry_verification_log": source_registry_verification_log,
+        "source_registry_approval_packet": source_registry_approval_packet,
         "source_proposal_pack_readiness": source_proposal_pack_readiness,
         "source_proposal_packs": source_proposal_packs,
         "wnba_source_proposal_pack": wnba_source_proposal_pack,
@@ -1597,6 +1624,28 @@ def render_source_registry_verification_log(rows: Iterable[Dict[str, str]]) -> s
     return "".join(body) or '<tr><td colspan="9" class="empty">No source verification log rows found.</td></tr>'
 
 
+def render_source_registry_approval_packet(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        exact_json = clean(row.get("exact_proposed_source_json"))
+        body.append(
+            f"""
+            <tr>
+              <td>{pill(clean(row.get('approval_packet_status')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
+              <td>{html.escape(clean(row.get('candidate_url')) or '-')}</td>
+              <td>{html.escape(clean(row.get('evidence_url')) or '-')}</td>
+              <td>{html.escape(clean(row.get('freshness_result')) or '-')}</td>
+              <td>{html.escape(clean(row.get('duplicate_decision')) or '-')}</td>
+              <td>{html.escape(clean(row.get('hold_reason')) or 'none')}</td>
+              <td>{html.escape(exact_json[:160] + ('...' if len(exact_json) > 160 else ''))}</td>
+              <td>{html.escape(clean(row.get('registry_edit_status')) or 'not_edited_by_generator')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="9" class="empty">No approved source verification rows found.</td></tr>'
+
+
 def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
@@ -1898,6 +1947,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry approval packet</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Status</th><th>Source ID</th><th>URL</th><th>Evidence</th><th>Freshness</th><th>Duplicate</th><th>Hold reason</th><th>Exact JSON</th><th>Registry edit</th></tr></thead>
+            <tbody>{render_source_registry_approval_packet(payload['source_registry_approval_packet'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source registry update worksheet</h2>
         <div class="table-wrap">
           <table>
@@ -2095,6 +2153,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('verification_log_status')) or 'operator_input_required'} | {clean(item.get('source_id'))} | diff: {clean(item.get('diff_review_status')) or 'review'} | url_checked: {clean(item.get('url_checked')) or 'operator fill-in'} | freshness: {clean(item.get('freshness_result')) or 'operator fill-in'} | duplicate: {clean(item.get('duplicate_decision')) or 'operator fill-in'} | outcome: {clean(item.get('approval_outcome')) or 'operator fill-in'} | registry: {clean(item.get('registry_edit_status')) or 'not_edited_by_generator'}"
         for item in payload["source_registry_verification_log"]
+    )
+    lines += ["", "## Source registry approval packet", ""]
+    lines.extend(
+        f"- {clean(item.get('approval_packet_status')) or 'review'} | {clean(item.get('source_id'))} | evidence: {clean(item.get('evidence_url')) or 'missing'} | freshness: {clean(item.get('freshness_result')) or 'missing'} | duplicate: {clean(item.get('duplicate_decision')) or 'missing'} | hold: {clean(item.get('hold_reason')) or 'none'} | registry: {clean(item.get('registry_edit_status')) or 'not_edited_by_generator'}"
+        for item in payload["source_registry_approval_packet"]
     )
     lines += ["", "## Source registry update worksheet", ""]
     lines.extend(

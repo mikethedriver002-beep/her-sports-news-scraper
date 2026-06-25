@@ -55,6 +55,7 @@ KEY_FILES = [
     "source_registry_update_worksheet.md", "source_registry_update_worksheet.csv",
     "source_registry_diff_review.md", "source_registry_diff_review.csv",
     "source_registry_verification_log.md", "source_registry_verification_log.csv",
+    "source_registry_approval_packet.md", "source_registry_approval_packet.csv",
     "source_proposal_pack_readiness.md", "source_proposal_pack_readiness.csv",
     "source_proposal_packs.md", "source_proposal_packs.csv",
     "wnba_source_proposal_pack.md", "wnba_source_proposal_pack.csv",
