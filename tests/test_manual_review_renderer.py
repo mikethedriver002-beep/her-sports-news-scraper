@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.12.0-editorial-microcopy"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.13.0-adaptive-final-score-modules"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -90,9 +90,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["content_module"]["content_module_fallback_label"] == "SCORE-DERIVED EDGE"
     assert manifest["content_module"]["stat_source_confidence"] == "score_only_fallback_manual_context_required"
     assert manifest["content_module"]["editorial_microcopy_status"] == "source_safe_editorial_microcopy_ready"
-    assert manifest["content_module"]["editorial_microcopy_variant"] == "scoreline_spine"
+    assert manifest["content_module"]["editorial_microcopy_variant"] == "score_only_hold"
     assert "LIBERTY +11 FINAL" == manifest["content_module"]["editorial_microcopy_headline"]
-    assert "anchor the angle" in manifest["content_module"]["editorial_microcopy_body"]
+    assert "No verified player stat line" in manifest["content_module"]["editorial_microcopy_body"]
+    assert manifest["content_module"]["editorial_microcopy_game_shape"] == "clear_separation"
     assert manifest["selected_template"]["template_id"] == "hsd_game_recap_final_score_a"
     assert manifest["selected_template"]["template_family"] == "game_recap_final_score"
     assert manifest["selected_template"]["reference_pack_id"] == "templates_hsd_20260625"
@@ -204,6 +205,9 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
 
     assert module.score_margin(score) == 11
     assert module.score_total(score) == 163
+    assert module.game_shape(score)["game_shape"] == "clear_separation"
+    assert module.game_shape({**score, "winner_score": "78", "loser_score": "76"})["game_shape"] == "close_finish"
+    assert module.game_shape({**score, "winner_score": "102", "loser_score": "74"})["game_shape"] == "statement_margin"
     assert module.source_count(packet) == "4"
     assert module.source_quality_label(packet) == "PUBLISH-GRADE"
     assert module.final_score_callouts(packet, score) == [
@@ -212,14 +216,16 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
         {"label": "SOURCES", "value": "4"},
     ]
     microcopy = module.selected_editorial_microcopy(packet, score, {"status": "fallback_game_edge_no_verified_stat_text"})
-    assert microcopy["selected_variant_id"] == "scoreline_spine"
+    assert microcopy["selected_variant_id"] == "score_only_hold"
     assert microcopy["headline"] == "LIBERTY +11 FINAL"
     assert microcopy["context"] == "LIBERTY +11 vs ACES; 163 combined points"
-    assert "anchor the angle" in microcopy["body"]
+    assert microcopy["game_shape"] == "clear_separation"
+    assert "No verified player stat line" in microcopy["body"]
     assert "why/how" in microcopy["review_cue"]
     edge = module.game_edge_module(score)
     assert edge["headline"] == "CLEAR EDGE"
     assert edge["eyebrow"] == "SCORE-DERIVED EDGE"
+    assert edge["game_shape"] == "clear_separation"
     assert "11-point advantage" in edge["body"]
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
 
@@ -252,9 +258,10 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert "20 PTS / 6 REB / 4 AST" in selected["editorial_line"]
     microcopy = module.selected_editorial_microcopy({"copy_context": "4 source(s); publish_grade."}, score, selected)
     assert microcopy["selected_variant_id"] == "verified_player_ledger"
-    assert microcopy["headline"] == "STEWART + LIBERTY"
+    assert microcopy["headline"] == "STEWART + CLEAR SEPARATION"
+    assert microcopy["game_shape"] == "clear_separation"
     assert "Stewart's verified 20 PTS, 6 REB, 4 AST" in microcopy["body"]
-    assert "named lead" in microcopy["body"]
+    assert "clear separation" in microcopy["body"]
     assert selected["callouts"][:3] == [
         {"label": "PTS", "value": "20"},
         {"label": "REB", "value": "6"},
@@ -272,8 +279,11 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["content_module_player"] == "Breanna Stewart"
     assert summary["content_module_title"] == "STEWART LED LIBERTY"
     assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
+    assert summary["content_module_game_shape"] == "clear_separation"
+    assert summary["content_module_stat_strength"] == "lead_ledger"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
-    assert summary["editorial_microcopy_headline"] == "STEWART + LIBERTY"
+    assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
+    assert summary["editorial_microcopy_game_shape"] == "clear_separation"
     assert len(summary["editorial_microcopy_variants"]) == 3
     assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Confirm the named performer" in summary["stat_review_cue"]
@@ -293,3 +303,60 @@ def test_manual_review_renderer_falls_back_when_stat_text_is_not_parseable() -> 
     )
 
     assert selected["status"] == "fallback_game_edge_no_verified_stat_text"
+
+
+def test_manual_review_renderer_adapts_close_and_statement_margin_copy() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    packet = {"top_performers": "Sabrina Ionescu (New York Liberty): PTS 18, REB 5, AST 7"}
+    close_score = {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "78", "loser_score": "76"}
+    close_module = module.select_verified_stat_module(packet, close_score)
+    close_microcopy = module.selected_editorial_microcopy({"copy_context": "2 source(s)."}, close_score, close_module)
+    assert close_module["headline"] == "IONESCU + CLOSE FINISH"
+    assert close_module["game_shape"] == "close_finish"
+    assert close_microcopy["headline"] == "IONESCU + CLOSE FINISH"
+    assert "close finish" in close_microcopy["body"]
+    assert module.review_prompt(close_score) == "WHO MADE THE DIFFERENCE LATE?"
+
+    statement_score = {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "102", "loser_score": "74"}
+    statement_module = module.select_verified_stat_module(packet, statement_score)
+    statement_microcopy = module.selected_editorial_microcopy({"copy_context": "2 source(s)."}, statement_score, statement_module)
+    assert statement_module["headline"] == "IONESCU + STATEMENT MARGIN"
+    assert statement_module["game_shape"] == "statement_margin"
+    assert statement_microcopy["headline"] == "IONESCU + STATEMENT MARGIN"
+    assert "statement margin" in statement_microcopy["body"]
+
+
+def test_manual_review_renderer_keeps_low_stat_packets_as_supporting_context() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    packet = {"top_performers": "Bench Guard (New York Liberty): PTS 4, REB 2, AST 1"}
+    score = {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "78", "loser_score": "76"}
+    selected = module.select_verified_stat_module(packet, score)
+    microcopy = module.selected_editorial_microcopy({"copy_context": "2 source(s)."}, score, selected)
+    summary = module.content_module_summary(
+        {"copy_angle": "New York Liberty beat Las Vegas Aces", "copy_dek": "Verified final: New York Liberty 78, Las Vegas Aces 76.", **packet},
+        {"tone": "result"},
+    )
+
+    assert selected["status"] == "verified_supporting_stat_module"
+    assert selected["headline"] == "GUARD STAT NOTE"
+    assert selected["stat_strength"] == "low_stat_context"
+    assert selected["stat_source_confidence"] == "verified_low_stat_context_manual_crosscheck_required"
+    assert "supporting context" in selected["stat_review_cue"]
+    assert microcopy["selected_variant_id"] == "verified_supporting_stat_note"
+    assert microcopy["headline"] == "LIBERTY CLOSE FINISH"
+    assert "supporting context" in microcopy["body"]
+    assert summary["content_module_status"] == "verified_supporting_stat_module"
+    assert summary["content_module_stat_strength"] == "low_stat_context"
+    assert summary["editorial_microcopy_variant"] == "verified_supporting_stat_note"
