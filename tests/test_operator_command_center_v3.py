@@ -693,6 +693,65 @@ def seed_daily_ops_files() -> None:
             }
         ],
     )
+    Path("source_registry_post_edit_validation.md").write_text(
+        "# HSD Source Registry Post-Edit Validation\n\nRead-only validation.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_post_edit_validation.csv",
+        [
+            {
+                "post_edit_validation_status": "validated_exact_match",
+                "source_id": "wnba_official_home_review",
+                "source_name": "WNBA official site",
+                "manual_edit_target": "config/source_registry.json",
+                "expected_source_json": "{\"enabled\":false,\"source_id\":\"wnba_official_home_review\"}",
+                "actual_source_json": "{\"enabled\":false,\"source_id\":\"wnba_official_home_review\"}",
+                "exact_match": "Yes",
+                "drift_fields": "none",
+                "unsafe_flags": "none",
+                "enabled_status": "disabled",
+                "automation_status_check": "pass",
+                "publish_policy_check": "pass",
+                "free_source_check": "pass",
+                "approval_packet_status": "ready_for_final_manual_review",
+                "patch_preview_status": "ready_for_manual_copy_paste",
+                "evidence_url": "https://www.wnba.com/",
+                "rollback_instructions": "Remove source_id=wnba_official_home_review.",
+                "recommendation": "Registry row matches the approved preview and remains disabled/manual-review-only.",
+                "validation_guardrails": "read_only_post_edit_validation_no_auto_fix_no_enable_no_publish",
+                "auto_edit_status": "not_performed_by_generator",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "publish_policy": "validation_only_not_publish_ready",
+                "registry_edit_status": "not_edited_by_generator",
+            },
+            {
+                "post_edit_validation_status": "unsafe_hold",
+                "source_id": "pwhl_official_news",
+                "source_name": "PWHL official news",
+                "manual_edit_target": "config/source_registry.json",
+                "expected_source_json": "{\"enabled\":false,\"source_id\":\"pwhl_official_news\"}",
+                "actual_source_json": "{\"enabled\":true,\"source_id\":\"pwhl_official_news\"}",
+                "exact_match": "No",
+                "drift_fields": "enabled; automation_status; publish_policy",
+                "unsafe_flags": "enabled_not_false; automation_not_disabled_manual_review_only; publish_policy_not_review_only",
+                "enabled_status": "unsafe_enabled_value=True",
+                "automation_status_check": "review",
+                "publish_policy_check": "review",
+                "free_source_check": "pass",
+                "approval_packet_status": "ready_for_final_manual_review",
+                "patch_preview_status": "ready_for_manual_copy_paste",
+                "evidence_url": "https://www.thepwhl.com/en/news",
+                "rollback_instructions": "Remove source_id=pwhl_official_news.",
+                "recommendation": "Hold this registry row until unsafe enablement, automation, paid/login, or publish-policy issue is fixed manually.",
+                "validation_guardrails": "read_only_post_edit_validation_no_auto_fix_no_enable_no_publish",
+                "auto_edit_status": "not_performed_by_generator",
+                "paid_api_policy": "free_public_sources_only_no_paid_api",
+                "publish_policy": "validation_only_not_publish_ready",
+                "registry_edit_status": "not_edited_by_generator",
+            },
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -822,7 +881,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.23.0-registry-patch-preview"
+    assert payload["version"] == "hsd-operator-command-center-v3.24.0-post-edit-validation"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -871,6 +930,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Patch preview rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Patch preview ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Patch preview held" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Post-edit validations" and item["value"] == "2" for item in payload["metrics"])
+    assert any(item["label"] == "Post-edit exact" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Post-edit issues" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -926,6 +988,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "source_id=wnba_official_home_review present: No" in payload["source_registry_patch_preview"][0]["registry_before_summary"]
     assert "append the copy_paste_source_json object to sources[]" in payload["source_registry_patch_preview"][0]["copy_paste_patch_instructions"]
     assert payload["source_registry_patch_preview"][0]["registry_edit_status"] == "not_edited_by_generator"
+    assert payload["source_registry_post_edit_validation"][0]["post_edit_validation_status"] == "validated_exact_match"
+    assert payload["source_registry_post_edit_validation"][0]["exact_match"] == "Yes"
+    assert payload["source_registry_post_edit_validation"][1]["post_edit_validation_status"] == "unsafe_hold"
+    assert "enabled_not_false" in payload["source_registry_post_edit_validation"][1]["unsafe_flags"]
+    assert payload["source_registry_post_edit_validation"][1]["registry_edit_status"] == "not_edited_by_generator"
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -963,6 +1030,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert patch_preview_action["artifact"] == "source_registry_patch_preview.md"
     assert "1 ready copy/paste row(s), 0 held row(s)" in patch_preview_action["detail"]
     assert "does not edit the trusted registry" in patch_preview_action["detail"]
+    post_edit_action = next(action for action in payload["next_actions"] if action["title"] == "Review post-edit registry validation")
+    assert post_edit_action["artifact"] == "source_registry_post_edit_validation.md"
+    assert "1 exact match row(s), 1 issue row(s)" in post_edit_action["detail"]
+    assert "Hold any drift" in post_edit_action["detail"]
     checklist_hold_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve held or discarded source checklist rows")
     assert checklist_hold_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 discard row(s)" in checklist_hold_action["detail"]
@@ -1038,6 +1109,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry patch preview" in html
     assert "ready_for_manual_copy_paste" in html
     assert "wnba_official_home_review" in html
+    assert "Source registry post-edit validation" in html
+    assert "validated_exact_match" in html
+    assert "unsafe_hold" in html
+    assert "enabled_not_false" in html
     assert "Source registry update worksheet" in html
     assert "manual_registry_plan_after_verification" in html
     assert "not_performed_by_generator" in html
@@ -1085,6 +1160,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source registry patch preview" in markdown
     assert "ready_for_manual_copy_paste" in markdown
     assert "wnba_official_home_review" in markdown
+    assert "Source registry post-edit validation" in markdown
+    assert "validated_exact_match" in markdown
+    assert "unsafe_hold" in markdown
+    assert "enabled_not_false" in markdown
     assert "Source registry update worksheet" in markdown
     assert "manual_registry_plan_after_verification" in markdown
     assert "not_performed_by_generator" in markdown
@@ -1198,6 +1277,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_approval_packet.csv" in runner
     assert "source_registry_patch_preview.md" in runner
     assert "source_registry_patch_preview.csv" in runner
+    assert "source_registry_post_edit_validation.md" in runner
+    assert "source_registry_post_edit_validation.csv" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner

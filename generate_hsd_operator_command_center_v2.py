@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.23.0-registry-patch-preview"
+VERSION = "hsd-operator-command-center-v3.24.0-post-edit-validation"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -42,6 +42,8 @@ ARTIFACTS = [
     ("Sources", "Source registry approval packet data", "source_registry_approval_packet.csv"),
     ("Sources", "Source registry patch preview", "source_registry_patch_preview.md"),
     ("Sources", "Source registry patch preview data", "source_registry_patch_preview.csv"),
+    ("Sources", "Source registry post-edit validation", "source_registry_post_edit_validation.md"),
+    ("Sources", "Source registry post-edit validation data", "source_registry_post_edit_validation.csv"),
     ("Sources", "Guided source pack readiness", "source_proposal_pack_readiness.md"),
     ("Sources", "Guided source pack readiness data", "source_proposal_pack_readiness.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
@@ -152,6 +154,8 @@ RUN_COMMANDS = {
     "source_registry_approval_packet.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_patch_preview.md": ".\\hsd.cmd run -Mode review",
     "source_registry_patch_preview.csv": ".\\hsd.cmd run -Mode review",
+    "source_registry_post_edit_validation.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_post_edit_validation.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
@@ -558,6 +562,7 @@ def build_next_actions(
     source_registry_verification_log: List[Dict[str, str]],
     source_registry_approval_packet: List[Dict[str, str]],
     source_registry_patch_preview: List[Dict[str, str]],
+    source_registry_post_edit_validation: List[Dict[str, str]],
     source_proposal_pack_readiness: List[Dict[str, str]],
     source_proposal_packs: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
@@ -670,6 +675,12 @@ def build_next_actions(
     approval_packet_hold_rows = [row for row in source_registry_approval_packet if row.get("approval_packet_status") == "hold_before_manual_registry_edit"]
     patch_preview_ready_rows = [row for row in source_registry_patch_preview if row.get("patch_preview_status") == "ready_for_manual_copy_paste"]
     patch_preview_hold_rows = [row for row in source_registry_patch_preview if row.get("patch_preview_status") == "hold_before_manual_patch"]
+    post_edit_exact_rows = [row for row in source_registry_post_edit_validation if row.get("post_edit_validation_status") == "validated_exact_match"]
+    post_edit_issue_rows = [
+        row
+        for row in source_registry_post_edit_validation
+        if row.get("post_edit_validation_status") in {"missing_manual_edit", "drift_review_required", "unsafe_hold"}
+    ]
     ready_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status") == "ready_to_copy_after_freshness_check"]
     blocked_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status", "").startswith("blocked_")]
     duplicate_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review"]
@@ -780,6 +791,20 @@ def build_next_actions(
                 "This preview does not edit the trusted registry."
             ),
             "source_registry_patch_preview.md",
+        )
+
+    if post_edit_exact_rows or post_edit_issue_rows:
+        row = (post_edit_issue_rows + post_edit_exact_rows)[0]
+        add_action(
+            "Post-edit check",
+            "Research",
+            "Review post-edit registry validation",
+            (
+                f"{len(post_edit_exact_rows)} exact match row(s), {len(post_edit_issue_rows)} issue row(s). "
+                f"Start with {row.get('source_id')}: {row.get('post_edit_validation_status')}. "
+                "Hold any drift, unsafe enablement, paid/login signal, automation, or publish-policy issue."
+            ),
+            "source_registry_post_edit_validation.md",
         )
 
     if ready_draft_rows:
@@ -1022,7 +1047,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 16) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 17) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -1067,6 +1092,7 @@ def build_payload() -> Dict[str, Any]:
     source_registry_verification_log = read_csv("source_registry_verification_log.csv")
     source_registry_approval_packet = read_csv("source_registry_approval_packet.csv")
     source_registry_patch_preview = read_csv("source_registry_patch_preview.csv")
+    source_registry_post_edit_validation = read_csv("source_registry_post_edit_validation.csv")
     source_proposal_pack_readiness = read_csv("source_proposal_pack_readiness.csv")
     source_proposal_packs = read_csv("source_proposal_packs.csv")
     wnba_source_proposal_pack = read_csv("wnba_source_proposal_pack.csv")
@@ -1160,6 +1186,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Patch preview rows", len(source_registry_patch_preview)),
         metric("Patch preview ready", sum(1 for row in source_registry_patch_preview if row.get("patch_preview_status") == "ready_for_manual_copy_paste")),
         metric("Patch preview held", sum(1 for row in source_registry_patch_preview if row.get("patch_preview_status") == "hold_before_manual_patch")),
+        metric("Post-edit validations", len(source_registry_post_edit_validation)),
+        metric("Post-edit exact", sum(1 for row in source_registry_post_edit_validation if row.get("post_edit_validation_status") == "validated_exact_match")),
+        metric("Post-edit issues", sum(1 for row in source_registry_post_edit_validation if row.get("post_edit_validation_status") in {"missing_manual_edit", "drift_review_required", "unsafe_hold"})),
         metric("Source packs ready", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal")),
         metric("Source packs duplicate review", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review")),
         metric("Source packs freshness check", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check")),
@@ -1202,6 +1231,7 @@ def build_payload() -> Dict[str, Any]:
         source_registry_verification_log,
         source_registry_approval_packet,
         source_registry_patch_preview,
+        source_registry_post_edit_validation,
         source_proposal_pack_readiness,
         source_proposal_packs,
         artifacts,
@@ -1249,6 +1279,7 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_verification_log": source_registry_verification_log,
         "source_registry_approval_packet": source_registry_approval_packet,
         "source_registry_patch_preview": source_registry_patch_preview,
+        "source_registry_post_edit_validation": source_registry_post_edit_validation,
         "source_proposal_pack_readiness": source_proposal_pack_readiness,
         "source_proposal_packs": source_proposal_packs,
         "wnba_source_proposal_pack": wnba_source_proposal_pack,
@@ -1694,6 +1725,27 @@ def render_source_registry_patch_preview(rows: Iterable[Dict[str, str]]) -> str:
     return "".join(body) or '<tr><td colspan="8" class="empty">No ready registry patch preview rows found.</td></tr>'
 
 
+def render_source_registry_post_edit_validation(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{pill(clean(row.get('post_edit_validation_status')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
+              <td>{html.escape(clean(row.get('exact_match')) or '-')}</td>
+              <td>{html.escape(clean(row.get('enabled_status')) or '-')}</td>
+              <td>{html.escape(clean(row.get('automation_status_check')) or '-')}</td>
+              <td>{html.escape(clean(row.get('publish_policy_check')) or '-')}</td>
+              <td>{html.escape(clean(row.get('free_source_check')) or '-')}</td>
+              <td>{html.escape(clean(row.get('drift_fields')) or 'none')}</td>
+              <td>{html.escape(clean(row.get('unsafe_flags')) or 'none')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="9" class="empty">No post-edit validation rows found.</td></tr>'
+
+
 def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
@@ -2013,6 +2065,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry post-edit validation</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Status</th><th>Source ID</th><th>Exact</th><th>Enabled</th><th>Automation</th><th>Publish</th><th>Free</th><th>Drift</th><th>Unsafe</th></tr></thead>
+            <tbody>{render_source_registry_post_edit_validation(payload['source_registry_post_edit_validation'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source registry update worksheet</h2>
         <div class="table-wrap">
           <table>
@@ -2220,6 +2281,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('patch_preview_status')) or 'review'} | {clean(item.get('source_id'))} | target: {clean(item.get('manual_edit_target')) or 'config/source_registry.json'} | hold: {clean(item.get('hold_reason')) or 'none'} | evidence: {clean(item.get('evidence_url')) or 'missing'} | registry: {clean(item.get('registry_edit_status')) or 'not_edited_by_generator'}"
         for item in payload["source_registry_patch_preview"]
+    )
+    lines += ["", "## Source registry post-edit validation", ""]
+    lines.extend(
+        f"- {clean(item.get('post_edit_validation_status')) or 'review'} | {clean(item.get('source_id'))} | exact: {clean(item.get('exact_match')) or 'No'} | enabled: {clean(item.get('enabled_status')) or 'missing'} | drift: {clean(item.get('drift_fields')) or 'none'} | unsafe: {clean(item.get('unsafe_flags')) or 'none'}"
+        for item in payload["source_registry_post_edit_validation"]
     )
     lines += ["", "## Source registry update worksheet", ""]
     lines.extend(
