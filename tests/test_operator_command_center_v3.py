@@ -931,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.31.0-render-handoff-folder"
+    assert payload["version"] == "hsd-operator-command-center-v3.32.0-manual-review-renderer"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1203,6 +1203,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert news_candidate["render_readiness_score"] == "100"
     artifact_by_path = {item["path"]: item for item in payload["artifacts"]}
     assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
+    assert artifact_by_path["render_handoff_top_packet/draft_preview.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["manual_review_renderer_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"
@@ -1217,6 +1219,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Paid APIs and auto-publishing are off" in html
     assert "Run next" in html
     assert ".\\hsd.cmd run -Mode asset" in html
+    assert ".\\hsd.cmd run -Mode render" in html
     assert "Next step" in html
     assert "publish_grade" in html
     assert "Public team social lead" in html
@@ -1455,6 +1458,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "render_prep_packets.json" in runner
     assert "render_handoff_top_packet/README.md" in runner
     assert "render_handoff_top_packet/manual_renderer_prompt.md" in runner
+    assert "render_handoff_top_packet/draft_preview.png" in runner
+    assert "manual_review_renderer_report.md" in runner
+    assert "manual_review_renderer_manifest.json" in runner
     assert "bebe_posting_schedule_today.md" in runner
     assert "preview_bundle_quality_summary.csv" in runner
     assert "publish_guard_report.json" in runner
