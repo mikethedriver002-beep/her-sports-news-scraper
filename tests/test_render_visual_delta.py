@@ -46,6 +46,9 @@ def run_delta(tmp_path: Path, manifest: dict) -> tuple[dict, list[dict[str, str]
     payload = json.loads((run_dir / "render_visual_delta_manifest.json").read_text(encoding="utf-8"))
     rows = list(csv.DictReader((run_dir / "render_visual_delta.csv").open(newline="", encoding="utf-8")))
     assert (run_dir / "render_visual_delta_report.md").exists()
+    assert (run_dir / "render_visual_revision_plan.md").exists()
+    assert (run_dir / "render_visual_revision_plan.csv").exists()
+    assert (run_dir / "render_visual_revision_plan.json").exists()
     return payload, rows
 
 
@@ -82,6 +85,15 @@ def test_render_visual_delta_scores_drafts_against_public_and_layout_references(
     assert all(row["reference_visual_delta_score"].isdigit() for row in rows)
     assert all(row["approval_policy"].startswith("review-only warning") for row in rows)
     assert payload["format_summaries"]["ig_feed_4x5"]["reference_visual_delta_score"].isdigit()
+    revision = json.loads((tmp_path / "run" / "files" / "render_visual_revision_plan.json").read_text(encoding="utf-8"))
+    assert revision["status"] == "manual_revision_plan_ready"
+    assert revision["guardrails"]["auto_publish"] is False
+    assert revision["guardrails"]["publish_ready"] is False
+    revision_row = revision["revision_rows"][0]
+    assert revision_row["format_id"] == "ig_feed_4x5"
+    assert revision_row["revision_focus"]
+    assert "Compare" in revision_row["specific_manual_revisions"] or "Open" in revision_row["inspect_first"]
+    assert revision_row["approval_policy"].startswith("review-only manual guidance")
 
 
 def test_render_visual_delta_warns_when_reference_is_missing(tmp_path: Path) -> None:
@@ -110,3 +122,5 @@ def test_render_visual_delta_warns_when_reference_is_missing(tmp_path: Path) -> 
     assert missing["reference_visual_delta_score"] == "0"
     assert payload["summary"]["warning_count"] >= 1
     assert payload["guardrails"]["move_files"] is False
+    revision = json.loads((tmp_path / "run" / "files" / "render_visual_revision_plan.json").read_text(encoding="utf-8"))
+    assert revision["revision_rows"][0]["revision_priority"] == "revise_before_manual_next_step"

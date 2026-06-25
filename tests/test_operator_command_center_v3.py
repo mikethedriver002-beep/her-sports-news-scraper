@@ -214,6 +214,80 @@ def seed_manual_visual_qa_decision_files() -> None:
         ],
     )
     write_json(
+        "render_visual_revision_plan.json",
+        {
+            "status": "manual_revision_plan_ready",
+            "approval_status": "not_approved_human_review_required",
+            "summary": {
+                "revision_count": 3,
+                "revise_before_manual_next_step_count": 1,
+                "inspect_before_decision_count": 1,
+                "human_decision_required": True,
+            },
+            "revision_rows": [
+                {
+                    "format_id": "ig_feed_4x5",
+                    "revision_priority": "reference_check_only",
+                    "revision_status": "manual_reference_check",
+                    "reference_visual_delta_score": "92",
+                    "drift_band": "aligned_to_reference",
+                    "worst_zone": "score_lane",
+                    "revision_focus": "Score/team lane balance",
+                    "specific_manual_revisions": "Confirm score lane against layout reference before deciding.",
+                    "inspect_first": "Open draft, public mockup, and layout reference.",
+                    "hold_or_revise_cue": "Open references and confirm by eye; no automated approval is implied.",
+                    "approval_policy": "review-only manual guidance; does not approve, publish, move files, or mark publish-ready",
+                },
+                {
+                    "format_id": "ig_story_9x16",
+                    "revision_priority": "inspect_before_decision",
+                    "revision_status": "manual_inspection_recommended",
+                    "reference_visual_delta_score": "84",
+                    "drift_band": "review_minor_drift",
+                    "worst_zone": "lower_modules",
+                    "revision_focus": "Lower module rhythm",
+                    "specific_manual_revisions": "Compress lower module copy and check spacing.",
+                    "inspect_first": "Open draft, public mockup, and layout reference.",
+                    "hold_or_revise_cue": "Inspect the named zone before choosing approve, hold, or revise.",
+                    "approval_policy": "review-only manual guidance; does not approve, publish, move files, or mark publish-ready",
+                },
+                {
+                    "format_id": "square_feed_1x1",
+                    "revision_priority": "revise_before_manual_next_step",
+                    "revision_status": "manual_revision_recommended",
+                    "reference_visual_delta_score": "73",
+                    "drift_band": "manual_drift_warning",
+                    "worst_zone": "score_lane",
+                    "revision_focus": "Score/team lane balance",
+                    "specific_manual_revisions": "Rebalance logo, team name, and score columns before deciding.",
+                    "inspect_first": "Open draft, public mockup, and layout reference.",
+                    "hold_or_revise_cue": "Hold or revise this draft if the named zone visibly drifts from the reference.",
+                    "approval_policy": "review-only manual guidance; does not approve, publish, move files, or mark publish-ready",
+                },
+            ],
+            "guardrails": {
+                "manual_only": True,
+                "review_only": True,
+                "auto_approval": False,
+                "auto_publish": False,
+                "move_files": False,
+                "publish_ready": False,
+                "paid_apis": False,
+            },
+        },
+    )
+    Path("render_visual_revision_plan.md").write_text("# Render visual revision plan\n", encoding="utf-8")
+    write_csv(
+        "render_visual_revision_plan.csv",
+        [
+            {
+                "format_id": "ig_feed_4x5",
+                "revision_priority": "reference_check_only",
+                "revision_focus": "Score/team lane balance",
+            }
+        ],
+    )
+    write_json(
         "manual_visual_qa_manifest.json",
         {
             "status": "human_review_required",
@@ -1232,7 +1306,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.48.0-visual-delta-review"
+    assert payload["version"] == "hsd-operator-command-center-v3.49.0-render-revision-guidance"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1496,11 +1570,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
     assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"
     assert feed_gallery["visual_delta_score"] == "92"
-    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "QA", "Visual delta"]
+    assert feed_gallery["revision_status"] == "manual_reference_check"
+    assert feed_gallery["revision_focus"] == "Score/team lane balance"
+    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "QA", "Visual delta", "Manual revision"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
     assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
+    assert payload["operator_decision_panel"]["render_gallery"][2]["revision_status"] == "manual_revision_recommended"
     assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert any(item["label"] == "Visual delta report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
+    assert any(item["label"] == "Revision plan" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert any(item["label"] == "Decision inbox" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert payload["operator_decision_panel"]["guardrails"]["auto_approval"] is False
     assert payload["operator_decision_panel"]["guardrails"]["auto_publish"] is False
@@ -1546,6 +1624,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["manual_review_renderer_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["render_visual_delta_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["render_visual_delta_manifest.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_visual_revision_plan.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_visual_revision_plan.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_checklist.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_approval_intake.md"]["run_command"] == ".\\hsd.cmd run -Mode render"

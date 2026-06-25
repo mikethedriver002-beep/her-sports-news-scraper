@@ -52,6 +52,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "manual_review_renderer_*",
         "render_visual_delta.*",
         "render_visual_delta_*",
+        "render_visual_revision_plan.*",
         "manual_visual_qa_*",
         "manual_visual_qa_approval_intake.*",
         "manual_post_approval_render_staging.*",
@@ -202,6 +203,9 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "render_visual_delta_report.md" in runner
     assert "render_visual_delta.csv" in runner
     assert "render_visual_delta_manifest.json" in runner
+    assert "render_visual_revision_plan.md" in runner
+    assert "render_visual_revision_plan.csv" in runner
+    assert "render_visual_revision_plan.json" in runner
     assert "manual_visual_qa_report.md" in runner
     assert "manual_visual_qa_manifest.json" in runner
     assert "manual_visual_qa_checklist.csv" in runner
