@@ -115,9 +115,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_derivation": "exact_imported_reference_spec",
                     "reference_public_mockup_path": reference_public.as_posix(),
                     "reference_layout_path": reference_layout.as_posix(),
-                    "athlete_photo_layout_mode": "premium_headshot_left",
-                    "athlete_photo_layout_status": "approved_photo_premium_layout",
-                    "athlete_photo_layout_detail": "Approved local headshot uses a larger left-side player spotlight inside the review-only ledger.",
+                    "athlete_photo_layout_mode": "photo_first_final_score",
+                    "athlete_photo_layout_status": "approved_photo_first_template",
+                    "athlete_photo_layout_detail": "Approved local headshot becomes the main editorial visual with score lanes and verified stat modules kept review-only.",
                 },
                 {
                     "format_id": "ig_story_9x16",
@@ -132,9 +132,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_derivation": "exact_imported_reference_spec",
                     "reference_public_mockup_path": reference_story_public.as_posix(),
                     "reference_layout_path": reference_story_layout.as_posix(),
-                    "athlete_photo_layout_mode": "premium_headshot_left",
-                    "athlete_photo_layout_status": "approved_photo_premium_layout",
-                    "athlete_photo_layout_detail": "Approved local headshot uses a larger left-side player spotlight inside the review-only ledger.",
+                    "athlete_photo_layout_mode": "photo_first_final_score",
+                    "athlete_photo_layout_status": "approved_photo_first_template",
+                    "athlete_photo_layout_detail": "Approved local headshot becomes the main editorial visual with score lanes and verified stat modules kept review-only.",
                 },
                 {
                     "format_id": "square_feed_1x1",
@@ -1386,7 +1386,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.53.0-premium-athlete-photo-layout-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.54.0-photo-first-template-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1664,9 +1664,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["photo_status"] == "athlete_photo_ready"
     assert "APPROVED PHOTO" in feed_gallery["photo_summary"]
     assert "Breanna Stewart" in feed_gallery["photo_detail"]
-    assert feed_gallery["photo_layout_mode"] == "premium_headshot_left"
-    assert feed_gallery["photo_layout_status"] == "approved_photo_premium_layout"
-    assert "larger left-side player spotlight" in feed_gallery["photo_layout_detail"]
+    assert feed_gallery["photo_layout_mode"] == "photo_first_final_score"
+    assert feed_gallery["photo_layout_status"] == "approved_photo_first_template"
+    assert "main editorial visual" in feed_gallery["photo_layout_detail"]
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
     assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"

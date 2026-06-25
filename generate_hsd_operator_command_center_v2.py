@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.53.0-premium-athlete-photo-layout-cues"
+VERSION = "hsd-operator-command-center-v3.54.0-photo-first-template-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -4117,7 +4117,7 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
                 {pill(clean(row.get('review_status')) or 'review')}
                 {pill(clean(row.get('shape')))}
                 {pill('reference exact: ' + (clean(row.get('reference_exact_format_match')) or 'false'))}
-                {pill('photo layout: ' + (clean(row.get('photo_layout_mode')) or 'n/a'), 'good' if clean(row.get('photo_layout_status')) == 'approved_photo_premium_layout' else 'neutral')}
+                {pill('photo layout: ' + (clean(row.get('photo_layout_mode')) or 'n/a'), 'good' if clean(row.get('photo_layout_status')) in {'approved_photo_premium_layout', 'approved_photo_first_template', 'approved_photo_compact_layout'} else 'neutral')}
                 {pill(clean(row.get('visual_delta_summary')) or 'Delta: not scored', clean(row.get('visual_delta_tone')) or 'warn')}
                 {pill(clean(row.get('revision_summary')) or 'Revision: not planned', clean(row.get('revision_tone')) or 'warn')}
                 {pill('publish ready: false')}

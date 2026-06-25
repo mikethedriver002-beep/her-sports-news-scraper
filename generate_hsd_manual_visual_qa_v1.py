@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.3.0-player-ledger-readability"
+VERSION = "hsd-manual-visual-qa-v1.4.0-photo-first-score-readability"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -81,6 +81,12 @@ def read_json(path: Path | None) -> Dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8", errors="replace"))
     except Exception:
         return {}
+
+
+def primary_photo_layout_mode(renderer_manifest: Dict[str, Any]) -> str:
+    formats = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
+    primary = next((item for item in formats if isinstance(item, dict) and item.get("primary") is True), formats[0] if formats else {})
+    return clean(primary.get("athlete_photo_layout_mode")) if isinstance(primary, dict) else ""
 
 
 def add_check(checks: List[Dict[str, Any]], check_id: str, label: str, passed: bool, evidence: str, *, result: str | None = None) -> None:
@@ -509,6 +515,7 @@ def main() -> None:
 
         zone_scores: List[float] = []
         bright_scores: List[float] = []
+        photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
         for zone_id, (box, min_bright_ratio, min_variance) in TEXT_ZONES.items():
             signal = title_zone_signal(image, box) if zone_id == "headline_text_zone" else text_zone_signal(image, box)
             zone_scores.append(signal["dark_pixel_ratio"])
@@ -529,33 +536,43 @@ def main() -> None:
                     ).format(**signal, box=box),
                 )
             else:
-                passed = signal["variance"] >= min_variance and signal["bright_pixel_ratio"] >= min_bright_ratio
+                effective_min_bright_ratio = min_bright_ratio
+                label = "Readable text zone signal"
+                if zone_id == "score_team_text_zone" and photo_layout_mode == "photo_first_final_score":
+                    effective_min_bright_ratio = 0.045
+                    label = "Photo-first score/team readable signal"
+                passed = signal["variance"] >= min_variance and signal["bright_pixel_ratio"] >= effective_min_bright_ratio
                 add_check(
                     checks,
                     zone_id,
-                    "Readable text zone signal",
+                    label,
                     passed,
                     "Luma avg {average_luma:.1f}, variance {variance:.1f}, bright pixel ratio {bright_pixel_ratio:.3f} "
-                    "(min {min_bright_ratio:.3f}), dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}.".format(
+                    "(min {min_bright_ratio:.3f}), dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}; "
+                    "layout={photo_layout_mode}.".format(
                         **signal,
-                        min_bright_ratio=min_bright_ratio,
+                        min_bright_ratio=effective_min_bright_ratio,
                         box=box,
+                        photo_layout_mode=photo_layout_mode or "standard",
                     ),
                 )
         add_player_ledger_readability_check(checks, renderer_manifest, image)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
+        min_average_bright_signal = 0.065 if photo_layout_mode == "photo_first_final_score" else 0.070
+        overall_passed = average_signal >= 0.020 and average_bright_signal >= min_average_bright_signal
         add_check(
             checks,
             "overall_text_signal",
             "Overall readable text-zone signal",
-            average_signal >= 0.020 and average_bright_signal >= 0.070,
+            overall_passed,
             (
                 f"Average dark pixel ratio across text zones {average_signal:.3f}; "
-                f"average bright pixel ratio {average_bright_signal:.3f}; this is a heuristic, not OCR."
+                f"average bright pixel ratio {average_bright_signal:.3f} "
+                f"(min {min_average_bright_signal:.3f}); layout={photo_layout_mode or 'standard'}; this is a heuristic, not OCR."
             ),
-            result="pass_human_review_required" if average_signal >= 0.020 and average_bright_signal >= 0.070 else "hold",
+            result="pass_human_review_required" if overall_passed else "hold",
         )
 
     guardrails = guardrail_checks(renderer_manifest, handoff_manifest)
