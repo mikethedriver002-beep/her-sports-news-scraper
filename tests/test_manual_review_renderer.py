@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.8.0-verified-stat-modules"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.9.0-stat-confidence-cues"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -87,6 +87,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_mode"] == "template_driven_review_drafts"
     assert manifest["content_module"]["content_module_mode"] == "game_edge_fallback"
     assert manifest["content_module"]["content_module_status"] == "fallback_game_edge_no_verified_stat_text"
+    assert manifest["content_module"]["content_module_fallback_label"] == "SCORE-DERIVED EDGE"
+    assert manifest["content_module"]["stat_source_confidence"] == "score_only_fallback_manual_context_required"
     assert manifest["selected_template"]["template_id"] == "hsd_game_recap_final_score_a"
     assert manifest["selected_template"]["template_family"] == "game_recap_final_score"
     assert manifest["selected_template"]["reference_pack_id"] == "templates_hsd_20260625"
@@ -188,6 +190,7 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     ]
     edge = module.game_edge_module(score)
     assert edge["headline"] == "CLEAR EDGE"
+    assert edge["eyebrow"] == "SCORE-DERIVED EDGE"
     assert "11-point advantage" in edge["body"]
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
 
@@ -231,6 +234,8 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     )
     assert summary["content_module_mode"] == "verified_player_stats"
     assert summary["content_module_player"] == "Breanna Stewart"
+    assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
+    assert "Confirm the named performer" in summary["stat_review_cue"]
 
 
 def test_manual_review_renderer_falls_back_when_stat_text_is_not_parseable() -> None:

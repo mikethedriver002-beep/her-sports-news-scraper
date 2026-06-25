@@ -136,6 +136,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "score_team_text_zone" in check_ids
     assert "context_text_zone" in check_ids
     assert "lower_module_text_zone" in check_ids
+    assert "player_ledger_readability" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
     assert all(row["operator_decision"] == "operator_fill_required" for row in rows)
@@ -147,6 +148,15 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     handoff_dir = run_dir / "render_handoff_top_packet"
     make_reference_style_preview(handoff_dir / "draft_preview.png")
     write_guardrail_inputs(run_dir)
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["content_module"] = {
+        "content_module_mode": "verified_player_stats",
+        "content_module_status": "verified_player_stat_module",
+        "content_module_player": "Breanna Stewart",
+        "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
+        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+    }
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
@@ -162,11 +172,14 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     assert proc.returncode == 0, proc.stderr
     manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
     title_check = next(check for check in manifest["checks"] if check["check_id"] == "headline_text_zone")
+    ledger_check = next(check for check in manifest["checks"] if check["check_id"] == "player_ledger_readability")
     assert manifest["status"] == "human_review_required"
     assert title_check["qa_result"] == "pass"
     assert title_check["check_label"] == "Title readable contrast and safe-zone fit"
     assert "Style=reference_white_gold_title" in title_check["evidence"]
     assert "title ink ratio" in title_check["evidence"]
+    assert ledger_check["qa_result"] == "pass"
+    assert "content_module=verified_player_stats" in ledger_check["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 

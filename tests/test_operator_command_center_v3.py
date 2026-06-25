@@ -81,6 +81,18 @@ def seed_manual_visual_qa_decision_files() -> None:
             "source_artifact": "news_fact_packets.csv",
             "source_cue": "source_confidence_ready",
             "copy_context": "4 source(s); publish_grade.",
+            "content_module": {
+                "content_module_mode": "verified_player_stats",
+                "content_module_status": "verified_player_stat_module",
+                "content_module_title": "STEWART: 20 PTS",
+                "content_module_body": "Breanna Stewart (LIBERTY): 20 PTS, 6 REB, 4 AST.",
+                "content_module_stat_count": "3",
+                "content_module_player": "Breanna Stewart",
+                "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
+                "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+                "stat_source_label": "Verified player/stat text available",
+                "stat_review_cue": "Confirm the named performer and stat line against source proof before approval.",
+            },
             "format_options": [
                 {
                     "format_id": "ig_feed_4x5",
@@ -315,6 +327,13 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "qa_result": "pass_human_review_required",
                     "passed": True,
                     "evidence": "New York Liberty: registry_logo_review_required; Las Vegas Aces: approved_logo",
+                },
+                {
+                    "check_id": "player_ledger_readability",
+                    "check_label": "Player ledger readability",
+                    "qa_result": "pass",
+                    "passed": True,
+                    "evidence": "content_module=verified_player_stats; confidence=verified_stat_text_ready_manual_crosscheck_required; player=Breanna Stewart.",
                 },
                 {
                     "check_id": "approval_guardrails",
@@ -1337,7 +1356,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.50.0-verified-stat-render-handoff"
+    assert payload["version"] == "hsd-operator-command-center-v3.51.0-stat-confidence-qa-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1571,6 +1590,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Verified final" in payload["render_prep_packets"][0]["copy_dek"]
     assert "Breanna Stewart" in payload["render_prep_packets"][0]["top_performers"]
     assert payload["render_prep_packets"][0]["stat_module_status"] == "verified_stat_text_available"
+    assert payload["render_prep_packets"][0]["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
+    assert payload["render_prep_packets"][0]["stat_source_label"] == "Verified player/stat text available"
+    assert "Confirm the named performer" in payload["render_prep_packets"][0]["stat_review_cue"]
     assert "exact local WNBA team logos" in payload["render_prep_packets"][0]["asset_requirement"]
     assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"
@@ -1593,6 +1615,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     ]
     assert payload["operator_decision_panel"]["qa_cues"][0]["tone"] == "good"
     assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
+    assert any(item["label"] == "Player ledger readability" for item in payload["operator_decision_panel"]["qa_cues"])
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])
     assert payload["operator_decision_panel"]["render_gallery"][1]["shape"] == "1080x1920"
@@ -1611,7 +1634,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["visual_delta_score"] == "92"
     assert feed_gallery["revision_status"] == "manual_reference_check"
     assert feed_gallery["revision_focus"] == "Score/team lane balance"
-    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "QA", "Visual delta", "Manual revision"]
+    assert feed_gallery["stat_module_status"] == "verified_stat_text_ready_manual_crosscheck_required"
+    assert "Verified player/stat text available" in feed_gallery["stat_module_summary"]
+    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "Stats", "QA", "Visual delta", "Manual revision"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
     assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
     assert payload["operator_decision_panel"]["render_gallery"][2]["revision_status"] == "manual_revision_recommended"
