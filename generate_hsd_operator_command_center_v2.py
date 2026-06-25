@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.42.0-manual-visual-qa-review-desk"
+VERSION = "hsd-operator-command-center-v3.43.0-manual-visual-qa-valid-state-clarity"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -735,6 +735,7 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
     staging = staging_rows[0] if staging_rows else {}
     history = build_decision_history(inbox_rows, intake_rows, draft)
     invalid_history = [row for row in history if row.get("cue") in {"replace", "revise", "hold"} or str(row.get("validation_status", "")).startswith("invalid")]
+    valid_history = [row for row in history if row.get("validation_status") == "valid_operator_decision" or row.get("row_status") == "ready_for_render_validation"]
     preview_relative = "render_handoff_top_packet/draft_preview.png"
     preview_file = find_existing_input(preview_relative)
     preview_src = href_for_path(preview_relative) if preview_file.exists() else clean(first_present(draft.get("preview_path"), renderer.get("preview_path")))
@@ -787,6 +788,8 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         ],
         "decision_history": history,
         "history_issue_count": len(invalid_history),
+        "has_valid_decision": bool(valid_history) and not invalid_history,
+        "valid_decision_summary": valid_history[0] if valid_history else {},
         "intake_status": clean(intake.get("status")),
         "validation_status": clean(intake_row.get("validation_status")),
         "validation_issue": clean(intake_row.get("validation_issue")),
@@ -3353,6 +3356,7 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
     fields_json = html.escape(json.dumps(DECISION_UI_FIELDS), quote=True)
+    has_valid_decision = "true" if panel.get("has_valid_decision") else "false"
     preview = clean(panel.get("preview_src"))
     preview_html = (
         f'<img class="decision-preview-img" src="{html.escape(preview)}" alt="Draft preview for manual visual QA decision">'
@@ -3387,7 +3391,7 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     inbox_command = command_hint(".\\hsd.cmd run -Mode decision-inbox") if not panel.get("inbox_exists") else ""
     render_command = command_hint(".\\hsd.cmd run -Mode render")
     return f"""
-      <div class="decision-ui" data-decision-draft="{draft_json}" data-decision-fields="{fields_json}">
+      <div class="decision-ui" data-decision-draft="{draft_json}" data-decision-fields="{fields_json}" data-has-valid-decision="{has_valid_decision}">
         <div class="decision-preview">
           {preview_html}
         </div>
@@ -3410,12 +3414,12 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             </div>
           </div>
           <div class="decision-desk-section">
-            <div class="row-kicker">Missing-field warnings <span id="decisionReadyBadge" class="pill warn">Needs review</span></div>
+            <div class="row-kicker">Replacement row builder <span id="decisionReadyBadge" class="pill warn">Optional</span></div>
             <ul id="decisionFieldWarnings" class="decision-warning-list"></ul>
           </div>
           <form class="decision-form">
             <fieldset class="decision-options">
-              <legend>Decision</legend>
+              <legend>New or replacement decision</legend>
               {''.join(choice_html)}
             </fieldset>
             <label>Operator notes<textarea id="operatorNotes" rows="3" required placeholder="What did you verify by eye?"></textarea></label>
@@ -3957,6 +3961,8 @@ def render_html(payload: Dict[str, Any]) -> str:
     if (decisionPanel) {{
       const draft = JSON.parse(decisionPanel.getAttribute("data-decision-draft") || "{{}}");
       const fields = JSON.parse(decisionPanel.getAttribute("data-decision-fields") || "[]");
+      const hasValidDecision = decisionPanel.getAttribute("data-has-valid-decision") === "true";
+      let replacementTouched = false;
       const output = document.getElementById("decisionCsvOutput");
       const notes = document.getElementById("operatorNotes");
       const holdReason = document.getElementById("holdReason");
@@ -3978,7 +3984,16 @@ def render_html(payload: Dict[str, Any]) -> str:
         const checked = document.querySelector('input[name="operatorDecision"]:checked');
         return checked ? checked.value : "hold";
       }}
+      function replacementFormHasInput() {{
+        return Boolean(
+          notes.value.trim() ||
+          holdReason.value.trim() ||
+          revisionRequest.value.trim() ||
+          operatorName.value.trim()
+        );
+      }}
       function currentWarnings() {{
+        if (hasValidDecision && !replacementTouched && !replacementFormHasInput()) return [];
         const decision = selectedDecision();
         const warnings = [];
         if (!notes.value.trim()) warnings.push("Add operator notes describing what you checked by eye.");
@@ -3992,6 +4007,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         if (!warningList || !readyBadge) return [];
         const warnings = currentWarnings();
         warningList.innerHTML = "";
+        if (hasValidDecision && !replacementTouched && !replacementFormHasInput()) {{
+          const item = document.createElement("li");
+          item.className = "good";
+          item.textContent = "A valid inbox decision is already recorded. Use this form only if you want to replace that decision.";
+          warningList.appendChild(item);
+          readyBadge.textContent = "No action needed";
+          readyBadge.className = "pill good";
+          return warnings;
+        }}
         if (!warnings.length) {{
           const item = document.createElement("li");
           item.className = "good";
@@ -4032,11 +4056,18 @@ def render_html(payload: Dict[str, Any]) -> str:
         renderWarnings();
       }}
       [notes, holdReason, revisionRequest, operatorName, reviewedAt].forEach((el) => {{
-        if (el) el.addEventListener("input", buildDecisionRow);
+        if (el) el.addEventListener("input", () => {{
+          replacementTouched = true;
+          buildDecisionRow();
+        }});
       }});
-      document.querySelectorAll('input[name="operatorDecision"]').forEach((el) => el.addEventListener("change", buildDecisionRow));
+      document.querySelectorAll('input[name="operatorDecision"]').forEach((el) => el.addEventListener("change", () => {{
+        replacementTouched = true;
+        buildDecisionRow();
+      }}));
       if (copyButton) {{
         copyButton.addEventListener("click", async () => {{
+          replacementTouched = true;
           buildDecisionRow();
           const warnings = currentWarnings();
           if (warnings.length) {{

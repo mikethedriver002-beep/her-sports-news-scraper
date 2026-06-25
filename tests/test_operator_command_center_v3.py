@@ -1086,7 +1086,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.42.0-manual-visual-qa-review-desk"
+    assert payload["version"] == "hsd-operator-command-center-v3.43.0-manual-visual-qa-valid-state-clarity"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1483,6 +1483,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Manual visual QA decision" in html
     assert "decisionCsvOutput" in html
     assert "decisionFieldWarnings" in html
+    assert "Replacement row builder" in html
     assert "Decision history" in html
     assert "Open before deciding" in html
     assert "QA report" in html
@@ -1641,6 +1642,37 @@ def test_operator_decision_review_desk_flags_malformed_paste(tmp_path, monkeypat
     assert "Decision history" in html
     assert "Do not paste the header row" in html
     assert "History row 1: replace_row" in markdown
+
+
+def test_operator_decision_review_desk_marks_valid_decision_no_action_needed(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    seed_manual_visual_qa_decision_files()
+    draft = next(csv.DictReader(Path("manual_visual_qa_operator_decision_draft.csv").open(newline="", encoding="utf-8")))
+    draft["operator_decision"] = "approve_for_manual_next_step"
+    draft["operator_notes"] = "Preview, QA report, copy sheet, and source proof reviewed."
+    draft["operator_name"] = "Mike"
+    draft["reviewed_at_local"] = "6/25/2026, 12:32:54 PM"
+    write_csv_with_fields("operator/inbox/manual_visual_qa_operator_decisions.csv", [draft], DECISION_FIELDS)
+    intake_row = {
+        "decision_draft_id": draft["decision_draft_id"],
+        "validation_status": "valid_operator_decision",
+        "operator_decision": draft["operator_decision"],
+        "operator_notes": draft["operator_notes"],
+        "operator_name": draft["operator_name"],
+        "reviewed_at_local": draft["reviewed_at_local"],
+    }
+    write_csv("manual_visual_qa_operator_decision_intake.csv", [intake_row])
+    write_json("manual_visual_qa_operator_decision_intake.json", {"status": "valid_operator_decision_ready_for_staging"})
+
+    payload = command_center.build_payload()
+    html = command_center.render_html(payload)
+
+    assert payload["operator_decision_panel"]["has_valid_decision"] is True
+    assert payload["operator_decision_panel"]["history_issue_count"] == 0
+    assert 'data-has-valid-decision="true"' in html
+    assert "A valid inbox decision is already recorded" in html
+    assert "Replacement row builder" in html
 
 
 def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_path, monkeypatch) -> None:
