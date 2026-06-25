@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.13-registry-update-worksheet"
+VERSION = "hsd-source-registry-audit-bebe-v2.14-registry-diff-reviewer"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -24,6 +24,8 @@ OUT_PROPOSAL_PROMOTION_CHECKLIST_CSV = "source_registry_proposal_promotion_check
 OUT_PROPOSAL_PROMOTION_CHECKLIST_MD = "source_registry_proposal_promotion_checklist.md"
 OUT_REGISTRY_UPDATE_WORKSHEET_CSV = "source_registry_update_worksheet.csv"
 OUT_REGISTRY_UPDATE_WORKSHEET_MD = "source_registry_update_worksheet.md"
+OUT_REGISTRY_DIFF_REVIEW_CSV = "source_registry_diff_review.csv"
+OUT_REGISTRY_DIFF_REVIEW_MD = "source_registry_diff_review.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -210,6 +212,32 @@ SOURCE_REGISTRY_UPDATE_WORKSHEET_FIELDS = [
     "before_after_diff",
     "rollback_note",
     "review_notes",
+]
+
+SOURCE_REGISTRY_DIFF_REVIEW_FIELDS = [
+    "diff_review_status",
+    "issue_count",
+    "issues",
+    "flags",
+    "operator_step",
+    "manual_edit_target",
+    "source_id",
+    "source_name",
+    "candidate_url",
+    "candidate_domain",
+    "proposed_enabled",
+    "proposed_trust_band",
+    "proposed_automation_status",
+    "proposed_publish_policy",
+    "registry_source_id_match",
+    "registry_url_match",
+    "registry_domain_match",
+    "worksheet_domain_match",
+    "rollback_status",
+    "proposed_json_status",
+    "before_after_status",
+    "auto_edit_status",
+    "recommendation",
 ]
 
 PWHL_SOURCE_CANDIDATES = [
@@ -1120,6 +1148,10 @@ def write_source_registry_proposal_promotion_checklist_csv(path: str | Path, row
 
 def write_source_registry_update_worksheet_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_REGISTRY_UPDATE_WORKSHEET_FIELDS, extrasaction="ignore")
+
+
+def write_source_registry_diff_review_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_DIFF_REVIEW_FIELDS, extrasaction="ignore")
 
 
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
@@ -2097,6 +2129,201 @@ def write_source_registry_update_worksheet_markdown(path: str | Path, rows: List
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def parse_proposed_source_json(value: str) -> tuple[Dict[str, Any], str]:
+    try:
+        parsed = json.loads(clean(value))
+    except Exception:
+        return {}, "invalid_json"
+    if not isinstance(parsed, dict):
+        return {}, "invalid_json"
+    return parsed, "valid_json"
+
+
+def proposed_source_domains(row: Dict[str, str], proposed: Dict[str, Any]) -> List[str]:
+    domains = [lower(item).removeprefix("www.") for item in proposed.get("domains", []) if clean(item)]
+    if not domains:
+        candidate_domain = lower(row.get("candidate_domain")).removeprefix("www.")
+        if candidate_domain:
+            domains.append(candidate_domain)
+    if not domains:
+        domain = domain_from_url(clean(row.get("candidate_url")))
+        if domain:
+            domains.append(domain)
+    return sorted(set(domains))
+
+
+def proposed_source_urls(row: Dict[str, str], proposed: Dict[str, Any]) -> List[str]:
+    urls = [clean(item).lower().rstrip("/") for item in proposed.get("urls", []) if clean(item)]
+    if not urls and clean(row.get("candidate_url")):
+        urls.append(clean(row.get("candidate_url")).lower().rstrip("/"))
+    return sorted(set(urls))
+
+
+def build_source_registry_diff_review(
+    sources: List[Dict[str, Any]],
+    worksheet_rows: List[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    registry_indexes = existing_registry_indexes(sources)
+    seen_ids: set[str] = set()
+    seen_domains: set[str] = set()
+    review_rows: List[Dict[str, str]] = []
+    allowed_trust_bands = {"green_after_operator_verification", "yellow_manual_review"}
+    for row in worksheet_rows:
+        issues: List[str] = []
+        flags: List[str] = []
+        proposed, json_status = parse_proposed_source_json(clean(row.get("proposed_source_json")))
+        source_id = lower(proposed.get("source_id") or row.get("source_id"))
+        domains = proposed_source_domains(row, proposed)
+        urls = proposed_source_urls(row, proposed)
+        trust_band = clean(proposed.get("trust_band") or row.get("trust_band"))
+        proposed_enabled = proposed.get("enabled")
+        automation_status = clean(proposed.get("automation_status") or row.get("proposed_automation_status"))
+        publish_policy = clean(proposed.get("publish_policy") or row.get("proposed_publish_policy"))
+        rollback_note = lower(row.get("rollback_note"))
+        before_after = lower(row.get("before_after_diff"))
+        registry_source_id_match = "Yes" if source_id and source_id in registry_indexes["source_ids"] else "No"
+        registry_url_matches = [url for url in urls if url in registry_indexes["urls"]]
+        registry_domain_matches = [domain for domain in domains if domain in registry_indexes["domains"]]
+        worksheet_domain_matches = [domain for domain in domains if domain in seen_domains]
+
+        if json_status != "valid_json":
+            issues.append("proposed_source_json is missing or invalid")
+            flags.append("invalid_json")
+        if not source_id:
+            issues.append("missing proposed source_id")
+            flags.append("missing_source_id")
+        elif source_id in registry_indexes["source_ids"]:
+            issues.append("duplicate source_id already exists in trusted registry")
+            flags.append("duplicate_source_id")
+        elif source_id in seen_ids:
+            issues.append("duplicate source_id appears more than once in this worksheet")
+            flags.append("duplicate_source_id")
+        if source_id:
+            seen_ids.add(source_id)
+
+        if registry_url_matches:
+            issues.append(f"duplicate URL already exists in trusted registry: {'; '.join(registry_url_matches)}")
+            flags.append("duplicate_url")
+        if registry_domain_matches:
+            issues.append(f"candidate domain already exists in trusted registry: {'; '.join(registry_domain_matches)}")
+            flags.append("duplicate_domain")
+        if worksheet_domain_matches:
+            issues.append(f"candidate domain is repeated inside this worksheet: {'; '.join(worksheet_domain_matches)}")
+            flags.append("worksheet_domain_repeat")
+        for domain in domains:
+            seen_domains.add(domain)
+
+        if proposed_enabled is not False or clean(row.get("proposed_enabled")) != "False":
+            issues.append("proposed source must stay disabled before manual registry approval")
+            flags.append("enabled_risk")
+        if trust_band not in allowed_trust_bands:
+            issues.append(f"risky or unexpected trust_band for manual proposal: {trust_band or 'missing'}")
+            flags.append("risky_trust_band")
+        if automation_status != "disabled_manual_review_only":
+            issues.append("automation_status must remain disabled_manual_review_only")
+            flags.append("automation_risk")
+        if "not_publish_ready" not in publish_policy:
+            issues.append("publish_policy must stay not publish-ready until operator verification")
+            flags.append("publish_risk")
+        if "remove" not in rollback_note or source_id not in rollback_note:
+            issues.append("rollback note must say how to remove the proposed source_id")
+            flags.append("missing_rollback")
+        if "before" not in before_after or "after" not in before_after:
+            issues.append("before/after diff note is missing before or after coverage")
+            flags.append("missing_diff_note")
+        if clean(row.get("auto_edit_status")) != "not_performed_by_generator":
+            issues.append("auto edit status must be not_performed_by_generator")
+            flags.append("auto_edit_risk")
+
+        blocking_flags = {
+            "invalid_json",
+            "missing_source_id",
+            "duplicate_source_id",
+            "duplicate_url",
+            "duplicate_domain",
+            "enabled_risk",
+            "risky_trust_band",
+            "automation_risk",
+            "publish_risk",
+            "missing_rollback",
+            "missing_diff_note",
+            "auto_edit_risk",
+        }
+        if any(flag in blocking_flags for flag in flags):
+            status = "HOLD"
+            recommendation = "Do not manually edit the trusted registry until blocking diff issues are resolved."
+        elif flags:
+            status = "REVIEW"
+            recommendation = "Review repeated worksheet coverage before any manual registry edit."
+        else:
+            status = "PASS"
+            recommendation = "Structurally clean for human verification; still do not edit until the operator approves."
+
+        review_rows.append(
+            {
+                "diff_review_status": status,
+                "issue_count": str(len(issues)),
+                "issues": "; ".join(issues) if issues else "none",
+                "flags": "; ".join(sorted(set(flags))) if flags else "none",
+                "operator_step": "review_diff_then_verify_url_before_manual_registry_edit",
+                "manual_edit_target": clean(row.get("manual_edit_target")) or REGISTRY,
+                "source_id": clean(row.get("source_id") or proposed.get("source_id")),
+                "source_name": clean(row.get("source_name")),
+                "candidate_url": clean(row.get("candidate_url")),
+                "candidate_domain": "; ".join(domains) if domains else clean(row.get("candidate_domain")),
+                "proposed_enabled": clean(row.get("proposed_enabled")),
+                "proposed_trust_band": trust_band,
+                "proposed_automation_status": automation_status,
+                "proposed_publish_policy": publish_policy,
+                "registry_source_id_match": registry_source_id_match,
+                "registry_url_match": "; ".join(registry_url_matches) if registry_url_matches else "No",
+                "registry_domain_match": "; ".join(registry_domain_matches) if registry_domain_matches else "No",
+                "worksheet_domain_match": "; ".join(worksheet_domain_matches) if worksheet_domain_matches else "No",
+                "rollback_status": "present" if "missing_rollback" not in flags else "missing_or_incomplete",
+                "proposed_json_status": json_status,
+                "before_after_status": "present" if "missing_diff_note" not in flags else "missing_or_incomplete",
+                "auto_edit_status": clean(row.get("auto_edit_status")),
+                "recommendation": recommendation,
+            }
+        )
+    return review_rows
+
+
+def write_source_registry_diff_review_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Diff Review",
+        "",
+        "Read-only diff preflight for source registry worksheet rows before any human edits `config/source_registry.json`.",
+        "This review compares proposed disabled source objects against the current trusted registry and does not edit files, enable sources, run automation, call paid APIs, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- pass: {sum(1 for row in rows if row['diff_review_status'] == 'PASS')}",
+        f"- review: {sum(1 for row in rows if row['diff_review_status'] == 'REVIEW')}",
+        f"- hold: {sum(1 for row in rows if row['diff_review_status'] == 'HOLD')}",
+        "",
+        "## Guardrails",
+        "",
+        "- HOLD rows must not be manually added to `config/source_registry.json`.",
+        "- REVIEW rows need a human duplicate-domain judgment before any manual edit.",
+        "- PASS rows still require manual URL verification and operator approval.",
+        "- Keep proposed sources disabled/manual-review-only/not publish-ready.",
+        "",
+        "## Diff Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No diff review rows were generated. Work the registry update worksheet first.")
+    else:
+        for row in rows:
+            lines.append(
+                f"- **{row['diff_review_status']}** | {row['source_id']} | flags: {row['flags']} | "
+                f"issues: {row['issues']} | recommendation: {row['recommendation']}"
+            )
+    lines += ["", "Use `source_registry_diff_review.csv` for field-level duplicate, trust, and rollback checks.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
     issues: List[str] = []
     flags: List[str] = []
@@ -2265,6 +2492,7 @@ def main() -> None:
     proposal_draft_rows = build_source_registry_proposal_draft(proposal_pack_rows_by_key, proposal_pack_readiness_rows)
     proposal_promotion_checklist_rows = build_source_registry_proposal_promotion_checklist(proposal_draft_rows)
     registry_update_worksheet_rows = build_source_registry_update_worksheet(proposal_promotion_checklist_rows)
+    registry_diff_review_rows = build_source_registry_diff_review(sources, registry_update_worksheet_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -2281,6 +2509,8 @@ def main() -> None:
     write_source_registry_proposal_promotion_checklist_markdown(OUT_PROPOSAL_PROMOTION_CHECKLIST_MD, proposal_promotion_checklist_rows)
     write_source_registry_update_worksheet_csv(OUT_REGISTRY_UPDATE_WORKSHEET_CSV, registry_update_worksheet_rows)
     write_source_registry_update_worksheet_markdown(OUT_REGISTRY_UPDATE_WORKSHEET_MD, registry_update_worksheet_rows)
+    write_source_registry_diff_review_csv(OUT_REGISTRY_DIFF_REVIEW_CSV, registry_diff_review_rows)
+    write_source_registry_diff_review_markdown(OUT_REGISTRY_DIFF_REVIEW_MD, registry_diff_review_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -2322,6 +2552,10 @@ def main() -> None:
         "proposal_promotion_discard": sum(1 for r in proposal_promotion_checklist_rows if r["checklist_decision"] == "discard"),
         "registry_update_worksheet_rows": len(registry_update_worksheet_rows),
         "registry_update_worksheet_disabled": sum(1 for r in registry_update_worksheet_rows if r["proposed_enabled"] == "False"),
+        "registry_diff_review_rows": len(registry_diff_review_rows),
+        "registry_diff_review_pass": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "PASS"),
+        "registry_diff_review_review": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "REVIEW"),
+        "registry_diff_review_hold": sum(1 for r in registry_diff_review_rows if r["diff_review_status"] == "HOLD"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -2347,6 +2581,7 @@ def main() -> None:
         "source_registry_proposal_draft": proposal_draft_rows,
         "source_registry_proposal_promotion_checklist": proposal_promotion_checklist_rows,
         "source_registry_update_worksheet": registry_update_worksheet_rows,
+        "source_registry_diff_review": registry_diff_review_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -2396,6 +2631,7 @@ def main() -> None:
         f"- source proposal checklist hold rows: {counts['proposal_promotion_hold']}",
         f"- source proposal checklist discard rows: {counts['proposal_promotion_discard']}",
         f"- source registry update worksheet rows: {counts['registry_update_worksheet_rows']}",
+        f"- source registry diff review hold rows: {counts['registry_diff_review_hold']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -2444,7 +2680,19 @@ def main() -> None:
     lines.append("A manual proposal draft was created in `source_registry_proposal_draft.csv` and `.md`.")
     lines.append("A promotion checklist was created in `source_registry_proposal_promotion_checklist.csv` and `.md`.")
     lines.append("A review-only registry update worksheet was created in `source_registry_update_worksheet.csv` and `.md`.")
+    lines.append("A read-only registry diff review was created in `source_registry_diff_review.csv` and `.md`.")
     lines.append("")
+    if registry_diff_review_rows:
+        lines.append("### Manual registry diff review")
+        lines.append("")
+        for row in registry_diff_review_rows[:8]:
+            lines.append(
+                f"- **{row['diff_review_status']}** | {row['source_id']} | "
+                f"flags: {row['flags']} | {row['recommendation']}"
+            )
+        if len(registry_diff_review_rows) > 8:
+            lines.append(f"- ... {len(registry_diff_review_rows) - 8} more diff review rows in the CSV.")
+        lines.append("")
     if registry_update_worksheet_rows:
         lines.append("### Manual registry update worksheet")
         lines.append("")

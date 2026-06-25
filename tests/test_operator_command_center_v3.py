@@ -556,6 +556,40 @@ def seed_daily_ops_files() -> None:
             }
         ],
     )
+    Path("source_registry_diff_review.md").write_text(
+        "# HSD Source Registry Diff Review\n\nRead-only diff preflight.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_diff_review.csv",
+        [
+            {
+                "diff_review_status": "HOLD",
+                "issue_count": "1",
+                "issues": "candidate domain already exists in trusted registry: thepwhl.com",
+                "flags": "duplicate_domain",
+                "operator_step": "review_diff_then_verify_url_before_manual_registry_edit",
+                "manual_edit_target": "config/source_registry.json",
+                "source_id": "pwhl_official_news",
+                "source_name": "PWHL official news",
+                "candidate_url": "https://www.thepwhl.com/en/news",
+                "candidate_domain": "thepwhl.com",
+                "proposed_enabled": "False",
+                "proposed_trust_band": "green_after_operator_verification",
+                "proposed_automation_status": "disabled_manual_review_only",
+                "proposed_publish_policy": "not_publish_ready_until_operator_verifies_and_enables",
+                "registry_source_id_match": "No",
+                "registry_url_match": "No",
+                "registry_domain_match": "thepwhl.com",
+                "worksheet_domain_match": "No",
+                "rollback_status": "present",
+                "proposed_json_status": "valid_json",
+                "before_after_status": "present",
+                "auto_edit_status": "not_performed_by_generator",
+                "recommendation": "Do not manually edit the trusted registry until blocking diff issues are resolved.",
+            }
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -685,7 +719,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.19.0-source-update-worksheet"
+    assert payload["version"] == "hsd-operator-command-center-v3.20.0-source-diff-review"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -723,6 +757,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Checklist discard" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Registry worksheet rows" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Worksheet disabled plans" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Registry diff hold" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Registry diff review" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Registry diff pass" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -758,6 +795,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_update_worksheet"][0]["proposed_enabled"] == "False"
     assert payload["source_registry_update_worksheet"][0]["auto_edit_status"] == "not_performed_by_generator"
     assert "remove the manually added" in payload["source_registry_update_worksheet"][0]["rollback_note"]
+    assert payload["source_registry_diff_review"][0]["diff_review_status"] == "HOLD"
+    assert payload["source_registry_diff_review"][0]["flags"] == "duplicate_domain"
+    assert payload["source_registry_diff_review"][0]["registry_domain_match"] == "thepwhl.com"
+    assert payload["source_registry_diff_review"][0]["rollback_status"] == "present"
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -779,6 +820,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     worksheet_action = next(action for action in payload["next_actions"] if action["title"] == "Review trusted-registry update worksheet")
     assert worksheet_action["artifact"] == "source_registry_update_worksheet.md"
     assert "1 review-only registry plan row(s)" in worksheet_action["detail"]
+    diff_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve trusted-registry diff review")
+    assert diff_action["artifact"] == "source_registry_diff_review.md"
+    assert "1 hold row(s)" in diff_action["detail"]
+    assert "Do not hand-edit the registry" in diff_action["detail"]
     checklist_hold_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve held or discarded source checklist rows")
     assert checklist_hold_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 discard row(s)" in checklist_hold_action["detail"]
@@ -841,6 +886,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
+    assert "Source registry diff review" in html
+    assert "duplicate_domain" in html
+    assert "candidate domain already exists" in html
     assert "Source registry update worksheet" in html
     assert "manual_registry_plan_after_verification" in html
     assert "not_performed_by_generator" in html
@@ -876,6 +924,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "Source registry diff review" in markdown
+    assert "duplicate_domain" in markdown
+    assert "candidate domain already exists" in markdown
     assert "Source registry update worksheet" in markdown
     assert "manual_registry_plan_after_verification" in markdown
     assert "not_performed_by_generator" in markdown
@@ -981,6 +1032,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_proposal_promotion_checklist.csv" in runner
     assert "source_registry_update_worksheet.md" in runner
     assert "source_registry_update_worksheet.csv" in runner
+    assert "source_registry_diff_review.md" in runner
+    assert "source_registry_diff_review.csv" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner

@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.19.0-source-update-worksheet"
+VERSION = "hsd-operator-command-center-v3.20.0-source-diff-review"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -34,6 +34,8 @@ ARTIFACTS = [
     ("Sources", "Source proposal promotion checklist data", "source_registry_proposal_promotion_checklist.csv"),
     ("Sources", "Source registry update worksheet", "source_registry_update_worksheet.md"),
     ("Sources", "Source registry update worksheet data", "source_registry_update_worksheet.csv"),
+    ("Sources", "Source registry diff review", "source_registry_diff_review.md"),
+    ("Sources", "Source registry diff review data", "source_registry_diff_review.csv"),
     ("Sources", "Guided source pack readiness", "source_proposal_pack_readiness.md"),
     ("Sources", "Guided source pack readiness data", "source_proposal_pack_readiness.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
@@ -136,6 +138,8 @@ RUN_COMMANDS = {
     "source_registry_proposal_promotion_checklist.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_update_worksheet.md": ".\\hsd.cmd run -Mode review",
     "source_registry_update_worksheet.csv": ".\\hsd.cmd run -Mode review",
+    "source_registry_diff_review.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_diff_review.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_pack_readiness.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
@@ -538,6 +542,7 @@ def build_next_actions(
     source_proposal_draft: List[Dict[str, str]],
     source_proposal_promotion_checklist: List[Dict[str, str]],
     source_registry_update_worksheet: List[Dict[str, str]],
+    source_registry_diff_review: List[Dict[str, str]],
     source_proposal_pack_readiness: List[Dict[str, str]],
     source_proposal_packs: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
@@ -643,6 +648,8 @@ def build_next_actions(
     checklist_hold_rows = [row for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "hold"]
     checklist_discard_rows = [row for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "discard"]
     registry_update_rows = [row for row in source_registry_update_worksheet if row.get("worksheet_decision") == "manual_registry_plan_after_verification"]
+    registry_diff_hold_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD"]
+    registry_diff_review_rows = [row for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW"]
     ready_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status") == "ready_to_copy_after_freshness_check"]
     blocked_draft_rows = [row for row in source_proposal_draft if row.get("draft_selection_status", "").startswith("blocked_")]
     duplicate_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review"]
@@ -697,6 +704,20 @@ def build_next_actions(
                 "and hand-edit config/source_registry.json only after approval."
             ),
             "source_registry_update_worksheet.md",
+        )
+
+    if registry_diff_hold_rows or registry_diff_review_rows:
+        row = (registry_diff_hold_rows + registry_diff_review_rows)[0]
+        add_action(
+            "Registry diff",
+            "Research",
+            "Resolve trusted-registry diff review",
+            (
+                f"{len(registry_diff_hold_rows)} hold row(s), {len(registry_diff_review_rows)} review row(s). "
+                f"Start with {row.get('source_id')}: {row.get('issues') or row.get('recommendation')}. "
+                "Do not hand-edit the registry until this review is clear."
+            ),
+            "source_registry_diff_review.md",
         )
 
     if ready_draft_rows:
@@ -939,7 +960,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 12) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 13) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -980,6 +1001,7 @@ def build_payload() -> Dict[str, Any]:
     source_proposal_draft = read_csv("source_registry_proposal_draft.csv")
     source_proposal_promotion_checklist = read_csv("source_registry_proposal_promotion_checklist.csv")
     source_registry_update_worksheet = read_csv("source_registry_update_worksheet.csv")
+    source_registry_diff_review = read_csv("source_registry_diff_review.csv")
     source_proposal_pack_readiness = read_csv("source_proposal_pack_readiness.csv")
     source_proposal_packs = read_csv("source_proposal_packs.csv")
     wnba_source_proposal_pack = read_csv("wnba_source_proposal_pack.csv")
@@ -1062,6 +1084,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Checklist discard", sum(1 for row in source_proposal_promotion_checklist if row.get("checklist_decision") == "discard")),
         metric("Registry worksheet rows", len(source_registry_update_worksheet)),
         metric("Worksheet disabled plans", sum(1 for row in source_registry_update_worksheet if row.get("proposed_enabled") == "False")),
+        metric("Registry diff hold", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "HOLD")),
+        metric("Registry diff review", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "REVIEW")),
+        metric("Registry diff pass", sum(1 for row in source_registry_diff_review if row.get("diff_review_status") == "PASS")),
         metric("Source packs ready", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal")),
         metric("Source packs duplicate review", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review")),
         metric("Source packs freshness check", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check")),
@@ -1100,6 +1125,7 @@ def build_payload() -> Dict[str, Any]:
         source_proposal_draft,
         source_proposal_promotion_checklist,
         source_registry_update_worksheet,
+        source_registry_diff_review,
         source_proposal_pack_readiness,
         source_proposal_packs,
         artifacts,
@@ -1143,6 +1169,7 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_proposal_draft": source_proposal_draft,
         "source_registry_proposal_promotion_checklist": source_proposal_promotion_checklist,
         "source_registry_update_worksheet": source_registry_update_worksheet,
+        "source_registry_diff_review": source_registry_diff_review,
         "source_proposal_pack_readiness": source_proposal_pack_readiness,
         "source_proposal_packs": source_proposal_packs,
         "wnba_source_proposal_pack": wnba_source_proposal_pack,
@@ -1503,6 +1530,27 @@ def render_source_registry_update_worksheet(rows: Iterable[Dict[str, str]]) -> s
     return "".join(body) or '<tr><td colspan="9" class="empty">No source registry update worksheet rows found.</td></tr>'
 
 
+def render_source_registry_diff_review(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{pill(clean(row.get('diff_review_status')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('source_id')) or '-')}</td>
+              <td>{html.escape(clean(row.get('candidate_domain')) or '-')}</td>
+              <td>{html.escape(clean(row.get('flags')) or 'none')}</td>
+              <td>{html.escape(clean(row.get('issues')) or 'none')}</td>
+              <td>{html.escape(clean(row.get('registry_source_id_match')) or 'No')}</td>
+              <td>{html.escape(clean(row.get('registry_domain_match')) or 'No')}</td>
+              <td>{html.escape(clean(row.get('rollback_status')) or '-')}</td>
+              <td>{html.escape(clean(row.get('recommendation')) or '-')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="9" class="empty">No source registry diff review rows found.</td></tr>'
+
+
 def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
     body = []
     for row in rows:
@@ -1786,6 +1834,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry diff review</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Status</th><th>Source ID</th><th>Domain</th><th>Flags</th><th>Issues</th><th>ID match</th><th>Domain match</th><th>Rollback</th><th>Recommendation</th></tr></thead>
+            <tbody>{render_source_registry_diff_review(payload['source_registry_diff_review'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source registry update worksheet</h2>
         <div class="table-wrap">
           <table>
@@ -1973,6 +2030,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('display_name'))} | {clean(item.get('needed_source_type'))} | {clean(item.get('coverage_gap'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action'))}"
         for item in payload["source_registry_intake_template"]
+    )
+    lines += ["", "## Source registry diff review", ""]
+    lines.extend(
+        f"- {clean(item.get('diff_review_status')) or 'review'} | {clean(item.get('source_id'))} | flags: {clean(item.get('flags')) or 'none'} | issues: {clean(item.get('issues')) or 'none'} | registry domain: {clean(item.get('registry_domain_match')) or 'No'} | worksheet domain: {clean(item.get('worksheet_domain_match')) or 'No'} | rollback: {clean(item.get('rollback_status')) or 'missing'} | {clean(item.get('recommendation')) or 'review before edit'}"
+        for item in payload["source_registry_diff_review"]
     )
     lines += ["", "## Source registry update worksheet", ""]
     lines.extend(
