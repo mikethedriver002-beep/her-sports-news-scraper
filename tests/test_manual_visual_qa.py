@@ -36,10 +36,40 @@ def make_preview(path: Path, *, size: tuple[int, int] = (1080, 1350)) -> None:
     image.save(path)
 
 
-def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path) -> None:
-    run_dir = tmp_path / "run" / "files"
+def make_reference_style_preview(path: Path) -> None:
+    image = Image.new("RGB", (1080, 1350), (8, 12, 22))
+    draw = ImageDraw.Draw(image)
+    title_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 64)
+    score_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 190)
+    team_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 58)
+    body_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 34)
+    small_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 24)
+    gold = (247, 203, 84)
+    ink = (244, 247, 252)
+    muted = (204, 210, 222)
+    draw.rectangle((710, 74, 1030, 150), fill=(190, 39, 54))
+    draw.rectangle((54, 1288, 1028, 1318), fill=(190, 39, 54))
+    draw.line((60, 245, 1020, 245), fill=gold, width=3)
+    draw.text((210, 170), "GAME RECAP", font=title_font, fill=ink, stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((620, 170), "FINAL SCORE", font=title_font, fill=gold, stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((70, 338), "FINAL / WNBA / SOURCE CHECKED", font=body_font, fill=gold, stroke_width=1, stroke_fill=(0, 0, 0))
+    draw.text((820, 338), "REVIEW DRAFT", font=small_font, fill=ink, stroke_width=1, stroke_fill=(0, 0, 0))
+    draw.text((320, 450), "LIBERTY", font=team_font, fill=ink)
+    draw.text((720, 420), "87", font=score_font, fill=ink)
+    draw.text((320, 675), "ACES", font=team_font, fill=muted)
+    draw.text((760, 650), "76", font=score_font, fill=ink)
+    draw.text((82, 970), "GAME EDGE", font=body_font, fill=gold)
+    draw.text((82, 1018), "LIBERTY SEPARATES", font=body_font, fill=ink)
+    draw.text((82, 1066), "New York created enough late cushion to hold off Las Vegas.", font=body_font, fill=ink)
+    draw.text((82, 1114), "Verified final: Liberty 87, Aces 76.", font=body_font, fill=ink)
+    draw.text((82, 1178), "YOUR TAKE", font=body_font, fill=(42, 132, 216))
+    draw.text((82, 1226), "WHAT SWUNG LIBERTY VS ACES?", font=body_font, fill=ink)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(path)
+
+
+def write_guardrail_inputs(run_dir: Path) -> None:
     handoff_dir = run_dir / "render_handoff_top_packet"
-    make_preview(handoff_dir / "draft_preview.png")
     (handoff_dir / "handoff_manifest.json").write_text(
         json.dumps({"guardrails": {"review_only": True, "auto_render": False, "auto_publish": False, "paid_apis": False}}),
         encoding="utf-8",
@@ -61,6 +91,13 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
         ),
         encoding="utf-8",
     )
+
+
+def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
@@ -103,6 +140,35 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "operator_visual_review" in check_ids
     assert all(row["operator_decision"] == "operator_fill_required" for row in rows)
     assert "Does not approve the preview" in report_path.read_text(encoding="utf-8")
+
+
+def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_reference_style_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    title_check = next(check for check in manifest["checks"] if check["check_id"] == "headline_text_zone")
+    assert manifest["status"] == "human_review_required"
+    assert title_check["qa_result"] == "pass"
+    assert title_check["check_label"] == "Title readable contrast and safe-zone fit"
+    assert "Style=reference_white_gold_title" in title_check["evidence"]
+    assert "title ink ratio" in title_check["evidence"]
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
 
 
 def test_manual_visual_qa_holds_wrong_dimensions_without_approval(tmp_path: Path) -> None:

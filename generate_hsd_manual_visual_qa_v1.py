@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.1.0-reference-readable-review"
+VERSION = "hsd-manual-visual-qa-v1.2.0-title-contrast-fit"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -122,6 +122,104 @@ def text_zone_signal(image: Any, box: Zone) -> Dict[str, float]:
     dark_ratio = darkish / len(data) if data else 0.0
     bright_ratio = bright / len(data) if data else 0.0
     return {"average_luma": avg, "variance": variance, "dark_pixel_ratio": dark_ratio, "bright_pixel_ratio": bright_ratio}
+
+
+def edge_contrast_ratio(crop: Any) -> float:
+    gray = crop.convert("L")
+    width, height = gray.size
+    data = gray.tobytes()
+    if width < 3 or height < 3 or not data:
+        return 0.0
+    edges = 0
+    checks = 0
+    for y in range(0, height, 2):
+        row = y * width
+        for x in range(0, width - 2, 2):
+            if abs(data[row + x] - data[row + x + 2]) >= 55:
+                edges += 1
+            checks += 1
+    for y in range(0, height - 2, 2):
+        row = y * width
+        next_row = (y + 2) * width
+        for x in range(0, width, 2):
+            if abs(data[row + x] - data[next_row + x]) >= 55:
+                edges += 1
+            checks += 1
+    return edges / checks if checks else 0.0
+
+
+def title_zone_signal(image: Any, box: Zone) -> Dict[str, Any]:
+    crop = image.crop(box).convert("RGB")
+    width, height = crop.size
+    base = text_zone_signal(image, box)
+    data = crop.tobytes()
+    pixel_count = len(data) // 3
+    if not pixel_count:
+        return {
+            **base,
+            "style": "missing",
+            "title_ink_ratio": 0.0,
+            "white_ink_ratio": 0.0,
+            "gold_ink_ratio": 0.0,
+            "dark_ink_ratio": 0.0,
+            "edge_contrast_ratio": 0.0,
+            "dense_row_count": 0,
+            "top_fit_margin": 0,
+            "bottom_fit_margin": 0,
+            "fit_passed": False,
+            "contrast_passed": False,
+        }
+
+    light_style = base["average_luma"] >= 150
+    foreground_rows: Dict[int, int] = {}
+    white_pixels = 0
+    gold_pixels = 0
+    dark_pixels = 0
+    for idx in range(0, len(data), 3):
+        r, g, b = data[idx], data[idx + 1], data[idx + 2]
+        y = (idx // 3) // width
+        luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        white_ink = luma >= 180 and abs(r - g) < 60 and abs(g - b) < 80
+        gold_ink = r >= 170 and g >= 125 and b <= 125 and r >= g >= b
+        dark_ink = luma <= 115
+        if white_ink:
+            white_pixels += 1
+        if gold_ink:
+            gold_pixels += 1
+        if dark_ink:
+            dark_pixels += 1
+        if (dark_ink if light_style else (white_ink or gold_ink)):
+            foreground_rows[y] = foreground_rows.get(y, 0) + 1
+
+    row_threshold = 0.012 if light_style else 0.120
+    dense_rows = [row for row, count in foreground_rows.items() if count / width >= row_threshold]
+    top_margin = min(dense_rows) if dense_rows else 0
+    bottom_margin = height - 1 - max(dense_rows) if dense_rows else 0
+    edge_ratio = edge_contrast_ratio(crop)
+    white_ratio = white_pixels / pixel_count
+    gold_ratio = gold_pixels / pixel_count
+    dark_ratio = dark_pixels / pixel_count
+    title_ink_ratio = dark_ratio if light_style else white_ratio + gold_ratio
+    contrast_passed = (
+        base["variance"] >= 850.0 and title_ink_ratio >= 0.015
+        if light_style
+        else base["variance"] >= 850.0 and title_ink_ratio >= 0.045 and edge_ratio >= 0.025
+    )
+    fit_passed = bool(dense_rows) if light_style else bool(dense_rows) and top_margin >= 4 and bottom_margin >= 8
+    return {
+        **base,
+        "style": "legacy_light_title" if light_style else "reference_white_gold_title",
+        "title_ink_ratio": title_ink_ratio,
+        "white_ink_ratio": white_ratio,
+        "gold_ink_ratio": gold_ratio,
+        "dark_ink_ratio": dark_ratio,
+        "edge_contrast_ratio": edge_ratio,
+        "dense_row_count": len(dense_rows),
+        "top_fit_margin": top_margin,
+        "bottom_fit_margin": bottom_margin,
+        "fit_passed": fit_passed,
+        "contrast_passed": contrast_passed,
+    }
 
 
 def guardrail_checks(renderer_manifest: Dict[str, Any], handoff_manifest: Dict[str, Any]) -> Dict[str, bool]:
@@ -365,22 +463,38 @@ def main() -> None:
         zone_scores: List[float] = []
         bright_scores: List[float] = []
         for zone_id, (box, min_bright_ratio, min_variance) in TEXT_ZONES.items():
-            signal = text_zone_signal(image, box)
+            signal = title_zone_signal(image, box) if zone_id == "headline_text_zone" else text_zone_signal(image, box)
             zone_scores.append(signal["dark_pixel_ratio"])
             bright_scores.append(signal["bright_pixel_ratio"])
-            passed = signal["variance"] >= min_variance and signal["bright_pixel_ratio"] >= min_bright_ratio
-            add_check(
-                checks,
-                zone_id,
-                "Readable text zone signal",
-                passed,
-                "Luma avg {average_luma:.1f}, variance {variance:.1f}, bright pixel ratio {bright_pixel_ratio:.3f} "
-                "(min {min_bright_ratio:.3f}), dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}.".format(
-                    **signal,
-                    min_bright_ratio=min_bright_ratio,
-                    box=box,
-                ),
-            )
+            if zone_id == "headline_text_zone":
+                passed = bool(signal["contrast_passed"] and signal["fit_passed"])
+                add_check(
+                    checks,
+                    zone_id,
+                    "Title readable contrast and safe-zone fit",
+                    passed,
+                    (
+                        "Style={style}; luma avg {average_luma:.1f}, variance {variance:.1f}; title ink ratio "
+                        "{title_ink_ratio:.3f} (white {white_ink_ratio:.3f}, gold {gold_ink_ratio:.3f}, dark "
+                        "{dark_ink_ratio:.3f}); edge contrast {edge_contrast_ratio:.3f}; dense title rows "
+                        "{dense_row_count}; fit margins top={top_fit_margin}px bottom={bottom_fit_margin}px "
+                        "in crop {box}."
+                    ).format(**signal, box=box),
+                )
+            else:
+                passed = signal["variance"] >= min_variance and signal["bright_pixel_ratio"] >= min_bright_ratio
+                add_check(
+                    checks,
+                    zone_id,
+                    "Readable text zone signal",
+                    passed,
+                    "Luma avg {average_luma:.1f}, variance {variance:.1f}, bright pixel ratio {bright_pixel_ratio:.3f} "
+                    "(min {min_bright_ratio:.3f}), dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}.".format(
+                        **signal,
+                        min_bright_ratio=min_bright_ratio,
+                        box=box,
+                    ),
+                )
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
         add_check(
