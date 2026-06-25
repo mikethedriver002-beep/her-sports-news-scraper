@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.2.0-title-contrast-fit"
+VERSION = "hsd-manual-visual-qa-v1.3.0-player-ledger-readability"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -32,6 +32,7 @@ TEXT_ZONES: Dict[str, TextZoneSpec] = {
     "context_text_zone": ((55, 320, 1030, 405), 0.04, 650.0),
     "lower_module_text_zone": ((70, 960, 1010, 1268), 0.045, 700.0),
 }
+PLAYER_LEDGER_ZONE: Zone = (70, 960, 1010, 1128)
 DRAFT_MARK_ZONES: Dict[str, Tuple[Zone, float]] = {
     "top_draft_label_zone": ((710, 74, 1030, 150), 0.025),
     "footer_guardrail_zone": ((54, 1288, 1028, 1318), 0.100),
@@ -339,12 +340,58 @@ def add_renderer_metadata_checks(checks: List[Dict[str, Any]], renderer_manifest
         "Final-score content module cue",
         True,
         (
-            "Final-score draft should use GAME EDGE, verified player-stat module, or matchup-specific YOUR TAKE copy; "
-            "hold by eye if it falls back to internal source-confidence language."
+            "Final-score draft should use SCORE-DERIVED EDGE, verified player-stat module, or matchup-specific YOUR TAKE copy; "
+            "hold by eye if it falls back to internal source-confidence language or an unsupported player ledger."
             if final_score_template
             else "Non-final-score template; human copy review still required."
         ),
         result="pass_human_review_required",
+    )
+
+
+def add_player_ledger_readability_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any], image: Any | None) -> None:
+    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
+    mode = clean(content_module.get("content_module_mode"))
+    status = clean(content_module.get("content_module_status"))
+    confidence = clean(content_module.get("stat_source_confidence"))
+    player = clean(content_module.get("content_module_player"))
+    source_text = clean(content_module.get("content_module_source_text"))
+    if mode != "verified_player_stats":
+        add_check(
+            checks,
+            "player_ledger_readability",
+            "Player ledger readability",
+            True,
+            (
+                f"Player ledger not expected for content_module={mode or 'missing'}; "
+                f"status={status or 'missing'}; fallback={clean(content_module.get('content_module_fallback_label')) or 'n/a'}."
+            ),
+            result="pass_human_review_required",
+        )
+        return
+    if image is None:
+        add_check(
+            checks,
+            "player_ledger_readability",
+            "Player ledger readability",
+            False,
+            "Verified player-stat module metadata exists, but the preview image was unavailable for ledger-zone analysis.",
+        )
+        return
+    signal = text_zone_signal(image, PLAYER_LEDGER_ZONE)
+    passed = signal["variance"] >= 1200.0 and signal["bright_pixel_ratio"] >= 0.035 and signal["dark_pixel_ratio"] >= 0.700
+    add_check(
+        checks,
+        "player_ledger_readability",
+        "Player ledger readability",
+        passed,
+        (
+            f"content_module={mode}; confidence={confidence or 'missing'}; player={player or 'missing'}; "
+            f"source_text={source_text or 'missing'}; luma avg {signal['average_luma']:.1f}, "
+            f"variance {signal['variance']:.1f}, bright pixel ratio {signal['bright_pixel_ratio']:.3f} "
+            f"(min 0.035), dark pixel ratio {signal['dark_pixel_ratio']:.3f} (min 0.700) "
+            f"in crop {PLAYER_LEDGER_ZONE}."
+        ),
     )
 
 
@@ -495,6 +542,8 @@ def main() -> None:
                         box=box,
                     ),
                 )
+        add_player_ledger_readability_check(checks, renderer_manifest, image)
+
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
         add_check(
@@ -510,6 +559,8 @@ def main() -> None:
         )
 
     guardrails = guardrail_checks(renderer_manifest, handoff_manifest)
+    if Image is None or ImageStat is None or not preview_path:
+        add_player_ledger_readability_check(checks, renderer_manifest, None)
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_check(
         checks,

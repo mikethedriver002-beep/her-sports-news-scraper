@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.8.0-verified-stat-modules"
+VERSION = "hsd-manual-review-renderer-v1.9.0-stat-confidence-cues"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -794,6 +794,9 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "player_name": player,
         "team": team,
         "source_text": clean(selected.get("source_text")),
+        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+        "stat_source_label": "Verified player/stat text available",
+        "stat_review_cue": "Confirm the named performer and stat line against source proof before approval.",
     }
 
 
@@ -803,7 +806,7 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     margin = score_margin(score)
     if margin is None:
         return {
-            "eyebrow": "GAME EDGE",
+            "eyebrow": "SCORE-DERIVED EDGE",
             "headline": "FINAL RESULT",
             "body": f"{winner} finished ahead of {loser}.",
         }
@@ -819,7 +822,7 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     else:
         headline = "STATEMENT WIN"
         body = f"{short_team(winner)} closed with a {margin}-point victory over {short_team(loser)}."
-    return {"eyebrow": "GAME EDGE", "headline": headline, "body": body}
+    return {"eyebrow": "SCORE-DERIVED EDGE", "headline": headline, "body": body}
 
 
 def review_prompt(score: Dict[str, str]) -> str:
@@ -1403,6 +1406,10 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "content_module_stat_count": str(len(stat_module.get("callouts") or [])),
             "content_module_player": clean(stat_module.get("player_name")),
             "content_module_source_text": clean(stat_module.get("source_text")),
+            "content_module_fallback_label": "",
+            "stat_source_confidence": clean(stat_module.get("stat_source_confidence")),
+            "stat_source_label": clean(stat_module.get("stat_source_label")),
+            "stat_review_cue": clean(stat_module.get("stat_review_cue")),
         }
     edge = game_edge_module(score)
     return {
@@ -1413,6 +1420,10 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "content_module_stat_count": "0",
         "content_module_player": "",
         "content_module_source_text": "",
+        "content_module_fallback_label": clean(edge.get("eyebrow")) or "SCORE-DERIVED EDGE",
+        "stat_source_confidence": "score_only_fallback_manual_context_required",
+        "stat_source_label": "Score-derived fallback",
+        "stat_review_cue": "No named performer stat text is available; hold if a player ledger is expected.",
     }
 
 
@@ -1548,6 +1559,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
+        f"- Stat source confidence: `{clean(content_module.get('stat_source_confidence')) or 'not_applicable'}`",
+        f"- Stat review cue: {clean(content_module.get('stat_review_cue')) or 'n/a'}",
         f"- Reason: {reason or 'n/a'}",
         "",
         "## Review Draft Formats",

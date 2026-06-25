@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.50.0-verified-stat-render-handoff"
+VERSION = "hsd-operator-command-center-v3.51.0-stat-confidence-qa-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -46,6 +46,9 @@ RENDER_PREP_FIELDS = [
     "copy_context",
     "top_performers",
     "stat_module_status",
+    "stat_source_confidence",
+    "stat_source_label",
+    "stat_review_cue",
     "source_artifact",
     "source_cue",
     "source_detail",
@@ -707,6 +710,37 @@ def source_review_summary(renderer: Dict[str, Any], asset_slots: List[Dict[str, 
     }
 
 
+def stat_module_review_summary(renderer: Dict[str, Any]) -> Dict[str, str]:
+    content = renderer.get("content_module") if isinstance(renderer.get("content_module"), dict) else {}
+    mode = clean(content.get("content_module_mode"))
+    confidence = clean(content.get("stat_source_confidence"))
+    label = clean(content.get("stat_source_label"))
+    cue = clean(content.get("stat_review_cue"))
+    player = clean(content.get("content_module_player"))
+    source_text = clean(content.get("content_module_source_text"))
+    if mode == "verified_player_stats":
+        return {
+            "status": confidence or "verified_stat_text_ready_manual_crosscheck_required",
+            "summary": f"Stats: {label or 'player ledger ready'}",
+            "detail": short(" | ".join(part for part in [player, source_text, cue] if part), 220),
+            "tone": "good",
+        }
+    if mode == "game_edge_fallback":
+        fallback = clean(content.get("content_module_fallback_label")) or "Score-derived fallback"
+        return {
+            "status": confidence or "score_only_fallback_manual_context_required",
+            "summary": f"Stats: {fallback}",
+            "detail": short(cue or "No named performer stats available; review source proof before using player-ledger treatment.", 220),
+            "tone": "warn",
+        }
+    return {
+        "status": "stat_module_not_applicable",
+        "summary": "Stats: not applicable",
+        "detail": "No final-score player/stat module metadata found.",
+        "tone": "neutral",
+    }
+
+
 def qa_review_summary(qa: Dict[str, Any], draft: Dict[str, str]) -> Dict[str, str]:
     qa_summary = qa.get("summary", {}) if isinstance(qa.get("summary"), dict) else {}
     pass_count = clean(qa_summary.get("pass_count")) or "0"
@@ -932,6 +966,7 @@ def build_render_gallery(
     logo_summary = render_slot_summary(asset_slots)
     source_summary = source_review_summary(renderer, asset_slots)
     qa_summary_cue = qa_review_summary(qa, draft)
+    stat_summary = stat_module_review_summary(renderer)
     asset_note = "Review asset checklist before approval."
     if asset_slots:
         slot_summaries = [
@@ -1007,6 +1042,9 @@ def build_render_gallery(
                 "qa_cue_status": qa_summary_cue["status"],
                 "qa_cue_summary": qa_summary_cue["summary"],
                 "qa_cue_detail": qa_summary_cue["detail"],
+                "stat_module_status": stat_summary["status"],
+                "stat_module_summary": stat_summary["summary"],
+                "stat_module_detail": stat_summary["detail"],
                 "visual_delta_status": delta_summary["status"],
                 "visual_delta_summary": delta_summary["summary"],
                 "visual_delta_detail": delta_summary["detail"],
@@ -1029,6 +1067,7 @@ def build_render_gallery(
                     {"label": "Template", **reference_summary},
                     {"label": "Logos", **logo_summary},
                     {"label": "Source", **source_summary},
+                    {"label": "Stats", **stat_summary},
                     {"label": "QA", **qa_summary_cue},
                     {"label": "Visual delta", **delta_summary},
                     {"label": "Manual revision", **revision_summary},
@@ -1153,6 +1192,7 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         "score_team_text_zone",
         "context_text_zone",
         "lower_module_text_zone",
+        "player_ledger_readability",
         "team_logo_review_status",
         "approval_guardrails",
     ]
@@ -1161,6 +1201,7 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         "score_team_text_zone": "Score/team readability",
         "context_text_zone": "Context row readability",
         "lower_module_text_zone": "Lower-module readability",
+        "player_ledger_readability": "Player ledger readability",
         "team_logo_review_status": "Logo readiness",
         "approval_guardrails": "Approval guardrails",
     }
@@ -1638,6 +1679,22 @@ def looks_like_final_score(enriched: Dict[str, str], row: Dict[str, str]) -> boo
     )
 
 
+def stat_source_fields(top_performers: str) -> Dict[str, str]:
+    if clean(top_performers):
+        return {
+            "stat_module_status": "verified_stat_text_available",
+            "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+            "stat_source_label": "Verified player/stat text available",
+            "stat_review_cue": "Confirm the named performer and stat line against source proof before approval.",
+        }
+    return {
+        "stat_module_status": "no_verified_stat_text",
+        "stat_source_confidence": "score_only_fallback_manual_context_required",
+        "stat_source_label": "Score-derived fallback",
+        "stat_review_cue": "No named performer stat text is available; hold if a player ledger is expected.",
+    }
+
+
 def final_score_template_fit() -> Dict[str, str]:
     return {
         "template_fit": "hsd_game_recap_final_score_review",
@@ -1655,6 +1712,7 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
     for packet in payload.get("news_fact_packets", []):
         if clean(packet.get("headline")) == title:
             top_performers = clean(packet.get("top_performers"))
+            stat_fields = stat_source_fields(top_performers)
             return {
                 "copy_headline": title,
                 "copy_dek": clean(packet.get("caption_hard_fact")) or clean(packet.get("dek")),
@@ -1665,11 +1723,12 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                 ),
                 "source_detail": clean(packet.get("source_confidence_reason")) or clean(packet.get("rights_safe_note")),
                 "top_performers": top_performers,
-                "stat_module_status": "verified_stat_text_available" if top_performers else "no_verified_stat_text",
+                **stat_fields,
             }
     for candidate in payload.get("content_candidates", []):
         if clean(candidate.get("headline")) == title:
             top_performers = clean(candidate.get("top_performers"))
+            stat_fields = stat_source_fields(top_performers)
             return {
                 "copy_headline": title,
                 "copy_dek": clean(candidate.get("detail")),
@@ -1680,7 +1739,7 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                 ),
                 "source_detail": clean(candidate.get("source_reason")),
                 "top_performers": top_performers,
-                "stat_module_status": "verified_stat_text_available" if top_performers else "no_verified_stat_text",
+                **stat_fields,
             }
     for lead in payload.get("lead_promotion_recommendations", []):
         if clean(lead.get("title")) == title:
@@ -1693,7 +1752,7 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                 ),
                 "source_detail": clean(lead.get("story_opportunity_reason")),
                 "top_performers": "",
-                "stat_module_status": "no_verified_stat_text",
+                **stat_source_fields(""),
             }
     for lead in payload.get("source_discovery_board", []):
         if clean(lead.get("title")) == title:
@@ -1706,9 +1765,9 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                 ),
                 "source_detail": clean(lead.get("story_opportunity_reason")),
                 "top_performers": "",
-                "stat_module_status": "no_verified_stat_text",
+                **stat_source_fields(""),
             }
-    return {"copy_headline": title, "copy_dek": "", "copy_context": "", "source_detail": "", "top_performers": "", "stat_module_status": "no_verified_stat_text"}
+    return {"copy_headline": title, "copy_dek": "", "copy_context": "", "source_detail": "", "top_performers": "", **stat_source_fields("")}
 
 
 def manual_renderer_steps(packet: Dict[str, str]) -> str:
@@ -1755,6 +1814,9 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "copy_context": enriched["copy_context"],
             "top_performers": clean(enriched.get("top_performers")),
             "stat_module_status": clean(enriched.get("stat_module_status")) or "no_verified_stat_text",
+            "stat_source_confidence": clean(enriched.get("stat_source_confidence")),
+            "stat_source_label": clean(enriched.get("stat_source_label")),
+            "stat_review_cue": clean(enriched.get("stat_review_cue")),
             "source_detail": enriched["source_detail"],
             "selected_template_id": "",
             "template_family": "",
@@ -1870,6 +1932,9 @@ def render_handoff_copy_sheet(packet: Dict[str, str]) -> str:
             f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
             f"- Verified performer/stat text: {clean(packet.get('top_performers')) or 'none provided'}",
             f"- Stat module status: `{clean(packet.get('stat_module_status')) or 'no_verified_stat_text'}`",
+            f"- Stat source confidence: `{clean(packet.get('stat_source_confidence')) or 'not_scored'}`",
+            f"- Stat source label: {clean(packet.get('stat_source_label')) or 'n/a'}",
+            f"- Stat review cue: {clean(packet.get('stat_review_cue')) or 'n/a'}",
             f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
             f"- Template fit: `{clean(packet.get('template_fit'))}`",
             f"- Selected template: `{clean(packet.get('selected_template_id')) or 'operator_review'}`",
@@ -1914,6 +1979,8 @@ def render_handoff_source_proof(packet: Dict[str, str]) -> str:
             f"- Source detail: {clean(packet.get('source_detail')) or 'n/a'}",
             f"- Source/copy context: {clean(packet.get('copy_context')) or 'n/a'}",
             f"- Performer/stat evidence: {clean(packet.get('top_performers')) or 'none provided'}",
+            f"- Stat source confidence: `{clean(packet.get('stat_source_confidence')) or 'not_scored'}`",
+            f"- Stat review cue: {clean(packet.get('stat_review_cue')) or 'n/a'}",
             f"- Paid API policy: `{clean(packet.get('paid_api_policy'))}`",
             "",
             "## Required Human Check",
@@ -1943,6 +2010,8 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
         f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
         f"- Verified performer/stat text: {clean(packet.get('top_performers')) or 'none provided'}",
+        f"- Stat source confidence: {clean(packet.get('stat_source_confidence')) or 'not_scored'}",
+        f"- Stat review cue: {clean(packet.get('stat_review_cue')) or 'n/a'}",
         "",
         "## Format",
         "",
@@ -2010,6 +2079,9 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "context": packet.get("copy_context"),
                     "top_performers": packet.get("top_performers"),
                     "stat_module_status": packet.get("stat_module_status"),
+                    "stat_source_confidence": packet.get("stat_source_confidence"),
+                    "stat_source_label": packet.get("stat_source_label"),
+                    "stat_review_cue": packet.get("stat_review_cue"),
                     "template_fit": packet.get("template_fit"),
                     "selected_template_id": packet.get("selected_template_id"),
                     "template_family": packet.get("template_family"),
@@ -2018,7 +2090,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "approval_gate": packet.get("approval_gate"),
                 }
             ],
-            ["packet_id", "headline", "dek", "context", "top_performers", "stat_module_status", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
+            ["packet_id", "headline", "dek", "context", "top_performers", "stat_module_status", "stat_source_confidence", "stat_source_label", "stat_review_cue", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
         )
         write_text(OUT_RENDER_HANDOFF_ASSETS, render_handoff_asset_checklist(packet))
         write_csv(
