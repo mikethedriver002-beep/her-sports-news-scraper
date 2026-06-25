@@ -191,6 +191,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_intake_template.md").exists()
     assert (run_dir / "source_registry_proposal_review.csv").exists()
     assert (run_dir / "source_registry_proposal_review.md").exists()
+    assert (run_dir / "source_proposal_pack_readiness.csv").exists()
+    assert (run_dir / "source_proposal_pack_readiness.md").exists()
     assert (run_dir / "source_proposal_packs.csv").exists()
     assert (run_dir / "source_proposal_packs.md").exists()
     assert (run_dir / "wnba_source_proposal_pack.csv").exists()
@@ -214,6 +216,9 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["proposal_review_rows"] == 4
     assert manifest["counts"]["proposal_hold"] == 3
     assert manifest["counts"]["proposal_ready"] == 1
+    assert manifest["counts"]["proposal_pack_ready"] == 4
+    assert manifest["counts"]["proposal_pack_duplicate_review"] == 0
+    assert manifest["counts"]["proposal_pack_freshness_check"] == 0
     assert manifest["counts"]["proposal_pack_leagues"] == 4
     assert manifest["counts"]["proposal_pack_rows"] == 57
     assert manifest["counts"]["proposal_pack_official"] == 39
@@ -246,6 +251,20 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     proposal_md = (run_dir / "source_registry_proposal_review.md").read_text(encoding="utf-8")
     assert "paid/API sources" in proposal_md
     assert "No rows are imported automatically" in proposal_md
+    pack_readiness = read_csv(run_dir / "source_proposal_pack_readiness.csv")
+    assert len(pack_readiness) == 4
+    readiness_by_key = {row["pack_key"]: row for row in pack_readiness}
+    assert readiness_by_key["wnba"]["readiness_status"] == "ready_for_registry_proposal"
+    assert readiness_by_key["wnba"]["official_candidates"] == "8"
+    assert readiness_by_key["wnba"]["cross_check_candidates"] == "5"
+    assert "wnba_official_home_review" in readiness_by_key["wnba"]["top_candidate_ids"]
+    assert readiness_by_key["nwsl"]["readiness_status"] == "ready_for_registry_proposal"
+    assert readiness_by_key["lpga"]["readiness_status"] == "ready_for_registry_proposal"
+    assert readiness_by_key["pwhl"]["readiness_status"] == "ready_for_registry_proposal"
+    assert all(row["duplicate_candidates"] == "0" for row in pack_readiness)
+    pack_readiness_md = (run_dir / "source_proposal_pack_readiness.md").read_text(encoding="utf-8")
+    assert "Guided Source Proposal Pack Readiness" in pack_readiness_md
+    assert "ready_for_registry_proposal" in pack_readiness_md
     proposal_packs = read_csv(run_dir / "source_proposal_packs.csv")
     assert len(proposal_packs) == 57
     assert proposal_packs[0]["pack_key"] == "wnba"
@@ -299,6 +318,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["lpga_source_proposal_pack"][0]["candidate_source_id"] == "lpga_official_home_review"
     assert manifest["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_home"
     assert manifest["source_proposal_packs"][0]["candidate_source_id"] == "wnba_official_home_review"
+    assert manifest["source_proposal_pack_readiness"][0]["pack_key"] == "wnba"
+    assert manifest["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert [row["pack_key"] for row in manifest["source_proposal_pack_index"]] == ["wnba", "nwsl", "lpga", "pwhl"]
     assert [row["rows"] for row in manifest["source_proposal_pack_index"]] == [13, 15, 10, 19]
     wnba_pack_md = (run_dir / "wnba_source_proposal_pack.md").read_text(encoding="utf-8")
@@ -319,6 +340,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "## Manual source intake template" in report
     assert "## Manual source proposal review" in report
     assert "## Guided source proposal packs" in report
+    assert "source_proposal_pack_readiness.csv" in report
     assert "PWHL" in report
 
 
@@ -350,6 +372,8 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_intake_template.md").exists()
     assert (work_dir / "source_registry_proposal_review.csv").exists()
     assert (work_dir / "source_registry_proposal_review.md").exists()
+    assert (work_dir / "source_proposal_pack_readiness.csv").exists()
+    assert (work_dir / "source_proposal_pack_readiness.md").exists()
     assert (work_dir / "source_proposal_packs.csv").exists()
     assert (work_dir / "source_proposal_packs.md").exists()
     assert (work_dir / "wnba_source_proposal_pack.csv").exists()

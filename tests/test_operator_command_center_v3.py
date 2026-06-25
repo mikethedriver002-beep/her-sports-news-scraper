@@ -297,6 +297,78 @@ def seed_daily_ops_files() -> None:
         "# HSD Guided Source Proposal Packs\n\nNo rows are imported automatically.\n",
         encoding="utf-8",
     )
+    Path("source_proposal_pack_readiness.md").write_text(
+        "# HSD Guided Source Proposal Pack Readiness\n\nNo rows are imported automatically.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_proposal_pack_readiness.csv",
+        [
+            {
+                "pack_key": "pwhl",
+                "pack_name": "PWHL Source Proposal Pack",
+                "display_name": "PWHL",
+                "readiness_status": "ready_for_registry_proposal",
+                "readiness_label": "Ready for proposal review",
+                "candidate_rows": "3",
+                "official_candidates": "2",
+                "cross_check_candidates": "1",
+                "duplicate_candidates": "0",
+                "freshness_check_candidates": "3",
+                "ready_candidates": "3",
+                "coverage_status": "gap",
+                "coverage_gap": "missing official league/team source",
+                "review_cues": "Balanced free official/team/tournament and cross-check candidates; no registry duplicates detected.",
+                "next_step": "Open top candidates manually for freshness, then copy selected rows into operator/inbox/source_registry_proposals.csv for deliberate review.",
+                "top_candidate_ids": "pwhl_official_news; pwhl_boston_fleet_team; pwhl_official_scores",
+                "duplicate_candidate_ids": "",
+                "output_csv": "pwhl_source_proposal_pack.csv",
+                "output_md": "pwhl_source_proposal_pack.md",
+            },
+            {
+                "pack_key": "wnba",
+                "pack_name": "WNBA Source Proposal Pack",
+                "display_name": "WNBA",
+                "readiness_status": "needs_duplicate_review",
+                "readiness_label": "Duplicate review",
+                "candidate_rows": "13",
+                "official_candidates": "8",
+                "cross_check_candidates": "5",
+                "duplicate_candidates": "1",
+                "freshness_check_candidates": "12",
+                "ready_candidates": "12",
+                "coverage_status": "watch",
+                "coverage_gap": "review official league/team source depth",
+                "review_cues": "1 candidate already resembles trusted registry coverage.",
+                "next_step": "Review duplicate source IDs, URLs, or domains before copying any pack rows into manual proposals.",
+                "top_candidate_ids": "wnba_official_home_review; wnba_official_news_review",
+                "duplicate_candidate_ids": "espn_wnba_scoreboard_pack_review",
+                "output_csv": "wnba_source_proposal_pack.csv",
+                "output_md": "wnba_source_proposal_pack.md",
+            },
+            {
+                "pack_key": "lpga",
+                "pack_name": "LPGA Source Proposal Pack",
+                "display_name": "LPGA / golf",
+                "readiness_status": "needs_source_freshness_check",
+                "readiness_label": "Freshness/source check",
+                "candidate_rows": "10",
+                "official_candidates": "6",
+                "cross_check_candidates": "0",
+                "duplicate_candidates": "0",
+                "freshness_check_candidates": "10",
+                "ready_candidates": "10",
+                "coverage_status": "watch",
+                "coverage_gap": "review leaderboard/stat/cross-check source depth",
+                "review_cues": "missing cross-check candidate",
+                "next_step": "Open candidate pages manually, confirm they are current free public sources, and add missing official or cross-check coverage before proposal.",
+                "top_candidate_ids": "lpga_official_home_review; lpga_official_tournaments_review",
+                "duplicate_candidate_ids": "",
+                "output_csv": "lpga_source_proposal_pack.csv",
+                "output_md": "lpga_source_proposal_pack.md",
+            },
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -426,7 +498,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.15.0-league-proposal-packs"
+    assert payload["version"] == "hsd-operator-command-center-v3.16.0-source-pack-readiness"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -456,6 +528,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Source intake proposals" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source proposal holds" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source proposals ready" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Guided source pack rows" and item["value"] == "3" for item in payload["metrics"])
     assert any(item["label"] == "PWHL proposal pack" and item["value"] == "3" for item in payload["metrics"])
     assert any(item["label"] == "Studio asset checks" and item["value"] == "0" for item in payload["metrics"])
@@ -474,6 +549,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_proposal_review"][0]["candidate_source_id"] == "pwhl_instagram"
     assert payload["source_registry_proposal_review"][0]["review_status"] == "hold"
     assert payload["source_registry_proposal_review"][1]["review_status"] == "ready_for_registry_review"
+    assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
+    assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
+    assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
+    assert payload["source_proposal_pack_readiness"][2]["readiness_status"] == "needs_source_freshness_check"
     assert payload["source_proposal_packs"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_packs"][0]["candidate_source_id"] == "pwhl_official_news"
     assert payload["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_news"
@@ -482,6 +561,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     pwhl_action = next(action for action in payload["next_actions"] if action["title"] == "Propose free source coverage for PWHL")
     assert pwhl_action["artifact"] == "source_proposal_packs.csv"
     assert "guided PWHL Source Proposal Pack with 3 free official/team/cross-check candidates" in pwhl_action["detail"]
+    duplicate_pack_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve duplicate cues in WNBA Source Proposal Pack")
+    assert duplicate_pack_action["artifact"] == "source_proposal_pack_readiness.md"
+    assert "espn_wnba_scoreboard_pack_review" in duplicate_pack_action["detail"]
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -538,6 +620,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
+    assert "Guided source pack readiness" in html
+    assert "ready_for_registry_proposal" in html
+    assert "needs_duplicate_review" in html
+    assert "needs_source_freshness_check" in html
+    assert "espn_wnba_scoreboard_pack_review" in html
     assert "Guided source proposal packs" in html
     assert "PWHL Source Proposal Pack" in html
     assert "Source proposal review" in html
@@ -555,6 +642,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "Guided source pack readiness" in markdown
+    assert "needs_duplicate_review" in markdown
+    assert "missing cross-check candidate" in markdown
     assert "opportunity: 2 source(s)" in markdown
     assert "angle: Roster or transaction update" in markdown
     assert "path: news_packet" in markdown
@@ -642,6 +732,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_intake_template.csv" in runner
     assert "source_registry_proposal_review.md" in runner
     assert "source_registry_proposal_review.csv" in runner
+    assert "source_proposal_pack_readiness.md" in runner
+    assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner
     assert "source_proposal_packs.csv" in runner
     assert "wnba_source_proposal_pack.md" in runner

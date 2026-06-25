@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.9-league-proposal-pack-framework"
+VERSION = "hsd-source-registry-audit-bebe-v2.10-pack-readiness-cues"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -18,6 +18,8 @@ OUT_INTAKE_CSV = "source_registry_intake_template.csv"
 OUT_INTAKE_MD = "source_registry_intake_template.md"
 OUT_PROPOSAL_CSV = "source_registry_proposal_review.csv"
 OUT_PROPOSAL_MD = "source_registry_proposal_review.md"
+OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
+OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
 OUT_PROPOSAL_PACKS_MD = "source_proposal_packs.md"
 OUT_WNBA_PACK_CSV = "wnba_source_proposal_pack.csv"
@@ -100,6 +102,28 @@ SOURCE_PROPOSAL_PACK_FIELDS = [
     "source_basis",
     "registry_presence",
     "manual_review_note",
+]
+
+SOURCE_PROPOSAL_PACK_READINESS_FIELDS = [
+    "pack_key",
+    "pack_name",
+    "display_name",
+    "readiness_status",
+    "readiness_label",
+    "candidate_rows",
+    "official_candidates",
+    "cross_check_candidates",
+    "duplicate_candidates",
+    "freshness_check_candidates",
+    "ready_candidates",
+    "coverage_status",
+    "coverage_gap",
+    "review_cues",
+    "next_step",
+    "top_candidate_ids",
+    "duplicate_candidate_ids",
+    "output_csv",
+    "output_md",
 ]
 
 PWHL_SOURCE_CANDIDATES = [
@@ -1004,6 +1028,10 @@ def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]])
     write_run_csv(path, rows, SOURCE_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
 
 
+def write_source_proposal_pack_readiness_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_PROPOSAL_PACK_READINESS_FIELDS, extrasaction="ignore")
+
+
 def canonical_band(src: Dict[str, Any]) -> str:
     raw = clean(src.get("trust_band")).lower()
     tier = clean(src.get("tier")).lower()
@@ -1408,7 +1436,81 @@ def source_proposal_pack_rows(pack_rows_by_key: Dict[str, List[Dict[str, str]]])
 
 def proposal_pack_group_is_official(row: Dict[str, str]) -> bool:
     group = clean(row.get("candidate_group"))
-    return group.endswith("_official") or group in {"league_official", "team_official"}
+    return group.endswith("_official") or group in {"league_official", "team_official", "tournament_official"}
+
+
+def build_source_proposal_pack_readiness(
+    pack_rows_by_key: Dict[str, List[Dict[str, str]]],
+    coverage_rows: List[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    readiness_rows: List[Dict[str, str]] = []
+    for pack in SOURCE_PROPOSAL_PACKS:
+        key = clean(pack.get("pack_key"))
+        rows = pack_rows_by_key.get(key, [])
+        coverage = proposal_pack_coverage_context(pack, coverage_rows)
+        official_rows = [row for row in rows if proposal_pack_group_is_official(row)]
+        cross_check_rows = [row for row in rows if "cross_check" in row.get("candidate_group", "")]
+        duplicate_rows = [
+            row
+            for row in rows
+            if clean(row.get("registry_presence")) not in {"", "not_in_registry", "not_checked"}
+        ]
+        ready_rows = [
+            row
+            for row in rows
+            if clean(row.get("registry_presence")) in {"", "not_in_registry", "not_checked"}
+            and clean(row.get("proposed_enabled")).lower() == "no"
+            and clean(row.get("registry_action")) == "proposal_only_do_not_import"
+        ]
+        missing_cues: List[str] = []
+        if not rows:
+            missing_cues.append("no guided candidates")
+        if not official_rows:
+            missing_cues.append("missing official/team/tournament candidate")
+        if not cross_check_rows:
+            missing_cues.append("missing cross-check candidate")
+
+        if duplicate_rows:
+            status = "needs_duplicate_review"
+            label = "Duplicate review"
+            next_step = "Review duplicate source IDs, URLs, or domains before copying any pack rows into manual proposals."
+            review_cues = f"{len(duplicate_rows)} candidate(s) already resemble trusted registry coverage."
+        elif missing_cues:
+            status = "needs_source_freshness_check"
+            label = "Freshness/source check"
+            next_step = "Open candidate pages manually, confirm they are current free public sources, and add missing official or cross-check coverage before proposal."
+            review_cues = "; ".join(missing_cues)
+        else:
+            status = "ready_for_registry_proposal"
+            label = "Ready for proposal review"
+            next_step = "Open top candidates manually for freshness, then copy selected rows into operator/inbox/source_registry_proposals.csv for deliberate review."
+            review_cues = "Balanced free official/team/tournament and cross-check candidates; no registry duplicates detected."
+
+        priority_rows = [row for row in ready_rows if clean(row.get("suggested_priority")) == "P1"] or ready_rows
+        readiness_rows.append(
+            {
+                "pack_key": key,
+                "pack_name": clean(pack.get("pack_name")),
+                "display_name": clean(pack.get("display_name") or coverage.get("display_name") or pack.get("pack_name")),
+                "readiness_status": status,
+                "readiness_label": label,
+                "candidate_rows": str(len(rows)),
+                "official_candidates": str(len(official_rows)),
+                "cross_check_candidates": str(len(cross_check_rows)),
+                "duplicate_candidates": str(len(duplicate_rows)),
+                "freshness_check_candidates": str(len(ready_rows)),
+                "ready_candidates": str(len(ready_rows)),
+                "coverage_status": clean(coverage.get("coverage_status")) or "review",
+                "coverage_gap": clean(coverage.get("coverage_gap")) or "review current source coverage",
+                "review_cues": review_cues,
+                "next_step": next_step,
+                "top_candidate_ids": "; ".join(row["candidate_source_id"] for row in priority_rows[:5]),
+                "duplicate_candidate_ids": "; ".join(row["candidate_source_id"] for row in duplicate_rows[:5]),
+                "output_csv": clean(pack.get("output_csv")),
+                "output_md": clean(pack.get("output_md")),
+            }
+        )
+    return readiness_rows
 
 
 def write_source_proposal_pack_markdown(path: str | Path, rows: List[Dict[str, str]], coverage_rows: List[Dict[str, str]], pack: Dict[str, Any]) -> None:
@@ -1505,6 +1607,45 @@ def write_source_proposal_packs_markdown(path: str | Path, pack_rows_by_key: Dic
         lines.append("")
     lines += ["See `source_proposal_packs.csv` for every configured pack row.", ""]
     write_text(path, "\n".join(lines), encoding="utf-8")
+
+
+def write_source_proposal_pack_readiness_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Guided Source Proposal Pack Readiness",
+        "",
+        "Operator-facing readiness cues for guided free-source packs.",
+        "These cues do not enable sources, update the trusted registry, run automation, call paid APIs, or publish.",
+        "",
+        "## Guardrails",
+        "",
+        "- `ready_for_registry_proposal` means ready for manual proposal review, not ready to enable.",
+        "- Open candidate pages manually for freshness before copying rows into `operator/inbox/source_registry_proposals.csv`.",
+        "- Resolve duplicate, paid, login-only, social-only, and unsafe flags in the proposal review report before registry updates.",
+        "",
+    ]
+    if not rows:
+        lines.append("No guided source proposal pack readiness rows were generated.")
+    else:
+        lines += ["## Pack Readiness", ""]
+        for row in rows:
+            lines += [
+                f"### {row['pack_name'] or row['display_name']}",
+                "",
+                f"- status: {row['readiness_status']} ({row['readiness_label']})",
+                (
+                    f"- candidates: {row['candidate_rows']} total; "
+                    f"{row['official_candidates']} official/team/tournament; "
+                    f"{row['cross_check_candidates']} cross-check; "
+                    f"{row['duplicate_candidates']} duplicate review"
+                ),
+                f"- coverage: {row['coverage_status']} | {row['coverage_gap']}",
+                f"- cues: {row['review_cues']}",
+                f"- top candidates: {row['top_candidate_ids'] or 'none'}",
+                f"- next step: {row['next_step']}",
+                f"- details: `{row['output_md']}` / `{row['output_csv']}`",
+                "",
+            ]
+    write_text(path, "\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
@@ -1671,6 +1812,7 @@ def main() -> None:
     proposal_review_rows = build_proposal_review(sources)
     proposal_pack_rows_by_key = build_source_proposal_packs(sources, coverage_rows)
     proposal_pack_rows = source_proposal_pack_rows(proposal_pack_rows_by_key)
+    proposal_pack_readiness_rows = build_source_proposal_pack_readiness(proposal_pack_rows_by_key, coverage_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -1681,6 +1823,8 @@ def main() -> None:
     write_intake_markdown(OUT_INTAKE_MD, intake_rows)
     write_proposal_review_csv(OUT_PROPOSAL_CSV, proposal_review_rows)
     write_proposal_review_markdown(OUT_PROPOSAL_MD, proposal_review_rows)
+    write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
+    write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
     write_source_proposal_packs_markdown(OUT_PROPOSAL_PACKS_MD, proposal_pack_rows_by_key, coverage_rows)
     for pack in SOURCE_PROPOSAL_PACKS:
@@ -1708,6 +1852,9 @@ def main() -> None:
         "proposal_hold": sum(1 for r in proposal_review_rows if r["review_status"] == "hold"),
         "proposal_review": sum(1 for r in proposal_review_rows if r["review_status"] == "review"),
         "proposal_ready": sum(1 for r in proposal_review_rows if r["review_status"] == "ready_for_registry_review"),
+        "proposal_pack_ready": sum(1 for r in proposal_pack_readiness_rows if r["readiness_status"] == "ready_for_registry_proposal"),
+        "proposal_pack_duplicate_review": sum(1 for r in proposal_pack_readiness_rows if r["readiness_status"] == "needs_duplicate_review"),
+        "proposal_pack_freshness_check": sum(1 for r in proposal_pack_readiness_rows if r["readiness_status"] == "needs_source_freshness_check"),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -1730,6 +1877,7 @@ def main() -> None:
         "coverage_map": coverage_rows,
         "source_registry_intake_template": intake_rows,
         "source_registry_proposal_review": proposal_review_rows,
+        "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
             {
@@ -1768,6 +1916,9 @@ def main() -> None:
         f"- source intake template rows: {counts['intake_template_rows']}",
         f"- source proposals reviewed: {counts['proposal_review_rows']}",
         f"- source proposals on hold: {counts['proposal_hold']}",
+        f"- source packs ready for proposal review: {counts['proposal_pack_ready']}",
+        f"- source packs needing duplicate review: {counts['proposal_pack_duplicate_review']}",
+        f"- source packs needing freshness/source checks: {counts['proposal_pack_freshness_check']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -1812,6 +1963,15 @@ def main() -> None:
         lines.append("No manual source proposals found in `operator/inbox/source_registry_proposals.csv`.")
     lines += ["", "## Guided source proposal packs", ""]
     lines.append("Guided free-source proposal candidates were created in `source_proposal_packs.csv` and `.md`.")
+    lines.append("Pack-level readiness cues were created in `source_proposal_pack_readiness.csv` and `.md`.")
+    lines.append("")
+    for row in proposal_pack_readiness_rows:
+        lines.append(
+            f"- **{row['pack_name'] or row['display_name']}** | {row['readiness_status']} | "
+            f"{row['candidate_rows']} candidates | duplicates: {row['duplicate_candidates']} | "
+            f"freshness checks: {row['freshness_check_candidates']} | {row['next_step']}"
+        )
+    lines.append("")
     for pack in SOURCE_PROPOSAL_PACKS:
         pack_key = clean(pack.get("pack_key"))
         pack_rows = proposal_pack_rows_by_key.get(pack_key, [])

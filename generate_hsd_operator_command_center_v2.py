@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.15.0-league-proposal-packs"
+VERSION = "hsd-operator-command-center-v3.16.0-source-pack-readiness"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -28,6 +28,8 @@ ARTIFACTS = [
     ("Sources", "Source registry intake template", "source_registry_intake_template.csv"),
     ("Sources", "Source proposal review", "source_registry_proposal_review.md"),
     ("Sources", "Source proposal review data", "source_registry_proposal_review.csv"),
+    ("Sources", "Guided source pack readiness", "source_proposal_pack_readiness.md"),
+    ("Sources", "Guided source pack readiness data", "source_proposal_pack_readiness.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
     ("Sources", "Guided source proposal pack data", "source_proposal_packs.csv"),
     ("Sources", "WNBA source proposal pack", "wnba_source_proposal_pack.md"),
@@ -122,6 +124,8 @@ RUN_COMMANDS = {
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.csv": ".\\hsd.cmd run -Mode review",
+    "source_proposal_pack_readiness.md": ".\\hsd.cmd run -Mode review",
+    "source_proposal_pack_readiness.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.csv": ".\\hsd.cmd run -Mode review",
     "wnba_source_proposal_pack.md": ".\\hsd.cmd run -Mode review",
@@ -519,6 +523,7 @@ def build_next_actions(
     promotions: List[Dict[str, str]],
     coverage_map: List[Dict[str, str]],
     proposal_review: List[Dict[str, str]],
+    source_proposal_pack_readiness: List[Dict[str, str]],
     source_proposal_packs: List[Dict[str, str]],
     artifacts: List[Dict[str, Any]],
 ) -> List[Dict[str, str]]:
@@ -619,6 +624,9 @@ def build_next_actions(
 
     coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
     proposal_holds = [row for row in proposal_review if row.get("review_status") == "hold"]
+    duplicate_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review"]
+    freshness_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check"]
+    ready_pack_reviews = [row for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal"]
     if proposal_holds:
         held = proposal_holds[0]
         add_action(
@@ -627,6 +635,46 @@ def build_next_actions(
             f"Resolve unsafe source proposal: {held.get('candidate_source_id') or 'missing source id'}",
             f"{held.get('safety_flags') or 'proposal issue'}; {held.get('issues') or 'Review before registry update.'}",
             "source_registry_proposal_review.md",
+        )
+
+    if duplicate_pack_reviews:
+        pack = duplicate_pack_reviews[0]
+        add_action(
+            "Pack duplicate review",
+            "Research",
+            f"Resolve duplicate cues in {pack.get('pack_name') or pack.get('display_name')}",
+            (
+                f"{pack.get('review_cues') or 'Duplicate source cues detected.'} "
+                f"Duplicates: {pack.get('duplicate_candidate_ids') or 'see readiness report'}. "
+                "Do not copy duplicate candidates into proposals until the registry match is reviewed."
+            ),
+            "source_proposal_pack_readiness.md",
+        )
+    elif freshness_pack_reviews:
+        pack = freshness_pack_reviews[0]
+        add_action(
+            "Pack freshness check",
+            "Research",
+            f"Freshness-check {pack.get('pack_name') or pack.get('display_name')}",
+            (
+                f"{pack.get('review_cues') or 'Source freshness check needed.'} "
+                f"Open top candidates manually: {pack.get('top_candidate_ids') or 'see readiness report'}. "
+                "Keep every row disabled and proposal-only."
+            ),
+            "source_proposal_pack_readiness.md",
+        )
+    elif ready_pack_reviews and not coverage_gaps:
+        pack = ready_pack_reviews[0]
+        add_action(
+            "Pack proposal review",
+            "Research",
+            f"Review ready source pack: {pack.get('pack_name') or pack.get('display_name')}",
+            (
+                f"{pack.get('review_cues') or 'Pack is ready for manual proposal review.'} "
+                f"Open top candidates for freshness: {pack.get('top_candidate_ids') or 'see readiness report'}. "
+                "Copy only selected rows into the manual proposal inbox after review."
+            ),
+            "source_proposal_pack_readiness.md",
         )
 
     if coverage_gaps:
@@ -802,7 +850,7 @@ def decision_callout(
     return "Manual review required before any post leaves the system."
 
 
-def trim_actions(actions: List[Dict[str, str]], limit: int = 7) -> List[Dict[str, str]]:
+def trim_actions(actions: List[Dict[str, str]], limit: int = 8) -> List[Dict[str, str]]:
     trimmed = list(actions)
     for status in ["Waiting", "Plan slots", "Optional drill-down"]:
         if len(trimmed) <= limit:
@@ -840,6 +888,7 @@ def build_payload() -> Dict[str, Any]:
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
+    source_proposal_pack_readiness = read_csv("source_proposal_pack_readiness.csv")
     source_proposal_packs = read_csv("source_proposal_packs.csv")
     wnba_source_proposal_pack = read_csv("wnba_source_proposal_pack.csv")
     nwsl_source_proposal_pack = read_csv("nwsl_source_proposal_pack.csv")
@@ -913,6 +962,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Source intake proposals", len(source_intake_rows)),
         metric("Source proposal holds", sum(1 for row in source_proposal_review if row.get("review_status") == "hold")),
         metric("Source proposals ready", sum(1 for row in source_proposal_review if row.get("review_status") == "ready_for_registry_review")),
+        metric("Source packs ready", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "ready_for_registry_proposal")),
+        metric("Source packs duplicate review", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_duplicate_review")),
+        metric("Source packs freshness check", sum(1 for row in source_proposal_pack_readiness if row.get("readiness_status") == "needs_source_freshness_check")),
         metric("Guided source pack rows", len(source_proposal_packs)),
         metric("WNBA proposal pack", len(wnba_source_proposal_pack)),
         metric("NWSL proposal pack", len(nwsl_source_proposal_pack)),
@@ -945,6 +997,7 @@ def build_payload() -> Dict[str, Any]:
         promotions,
         coverage_map,
         source_proposal_review,
+        source_proposal_pack_readiness,
         source_proposal_packs,
         artifacts,
     )
@@ -984,6 +1037,7 @@ def build_payload() -> Dict[str, Any]:
         "source_coverage_map": coverage_map,
         "source_registry_intake_template": source_intake_rows,
         "source_registry_proposal_review": source_proposal_review,
+        "source_proposal_pack_readiness": source_proposal_pack_readiness,
         "source_proposal_packs": source_proposal_packs,
         "wnba_source_proposal_pack": wnba_source_proposal_pack,
         "nwsl_source_proposal_pack": nwsl_source_proposal_pack,
@@ -1256,6 +1310,27 @@ def render_source_proposal_packs(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(body) or '<tr><td colspan="9" class="empty">No guided source proposal packs found.</td></tr>'
+
+
+def render_source_proposal_pack_readiness(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{html.escape(clean(row.get('pack_name')) or clean(row.get('display_name')))}</td>
+              <td>{pill(clean(row.get('readiness_status')) or 'review')}</td>
+              <td>{html.escape(clean(row.get('candidate_rows')) or '0')}</td>
+              <td>{html.escape(clean(row.get('official_candidates')) or '0')}</td>
+              <td>{html.escape(clean(row.get('cross_check_candidates')) or '0')}</td>
+              <td>{html.escape(clean(row.get('duplicate_candidates')) or '0')}</td>
+              <td>{html.escape(clean(row.get('review_cues')) or '-')}</td>
+              <td>{html.escape(clean(row.get('top_candidate_ids')) or '-')}</td>
+              <td>{html.escape(clean(row.get('next_step')) or '-')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="9" class="empty">No source pack readiness cues found.</td></tr>'
 
 
 def render_source_proposal_review(rows: Iterable[Dict[str, str]]) -> str:
@@ -1541,6 +1616,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Guided source pack readiness</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pack</th><th>Status</th><th>Rows</th><th>Official</th><th>Cross-check</th><th>Duplicates</th><th>Cues</th><th>Top candidates</th><th>Next step</th></tr></thead>
+            <tbody>{render_source_proposal_pack_readiness(payload['source_proposal_pack_readiness'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Guided source proposal packs</h2>
         <div class="table-wrap">
           <table>
@@ -1692,6 +1776,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {clean(item.get('display_name'))} | {clean(item.get('needed_source_type'))} | {clean(item.get('coverage_gap'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action'))}"
         for item in payload["source_registry_intake_template"]
+    )
+    lines += ["", "## Guided source pack readiness", ""]
+    lines.extend(
+        f"- {clean(item.get('pack_name')) or clean(item.get('display_name'))} | {clean(item.get('readiness_status')) or 'review'} | rows: {clean(item.get('candidate_rows')) or '0'} | official: {clean(item.get('official_candidates')) or '0'} | cross-check: {clean(item.get('cross_check_candidates')) or '0'} | duplicates: {clean(item.get('duplicate_candidates')) or '0'} | cues: {clean(item.get('review_cues')) or 'none'} | top: {clean(item.get('top_candidate_ids')) or 'none'} | next: {clean(item.get('next_step')) or 'review manually'}"
+        for item in payload["source_proposal_pack_readiness"]
     )
     lines += ["", "## Guided source proposal packs", ""]
     lines.extend(
