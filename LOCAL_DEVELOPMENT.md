@@ -99,6 +99,8 @@ Legacy scripts can still write root-level files, but local operation now treats 
 
 The review stage builds `operator_command_center.html`, `operator_command_center.md`, and `operator_command_center.json`.
 
+The same command center pass also writes review-only render prep packets: `render_prep_packets.md`, `render_prep_packets.csv`, and `render_prep_packets.json`. These packets are created only from render-ready or render-prep story candidates that clear source, asset, format, and manual-path gates. They provide template fit, copy fields, asset requirements, and exact manual renderer steps, but they do not render files, auto-run graphics, call paid APIs, or publish.
+
 The command center is a local/manual cockpit. It summarizes:
 
 - the current publish decision and safety posture
@@ -106,6 +108,7 @@ The command center is a local/manual cockpit. It summarizes:
 - the morning source discovery board
 - the daily posting schedule
 - content candidates and studio bundles
+- render-readiness scores and review-only render prep packets
 - source health, blockers, and artifact links
 
 It does not publish, push to Git, call paid APIs, or run hidden handoff refresh scripts. It reads the current local artifacts and turns them into a daily operating view.
