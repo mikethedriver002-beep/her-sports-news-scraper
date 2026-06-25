@@ -1386,7 +1386,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.54.0-photo-first-template-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.55.0-athlete-photo-onboarding-links"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1750,6 +1750,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["manual_visual_qa_operator_decision_inbox_starter.md"]["run_command"] == ".\\hsd.cmd run -Mode decision-inbox"
     assert artifact_by_path["manual_visual_qa_operator_decision_inbox_starter.csv"]["run_command"] == ".\\hsd.cmd run -Mode decision-inbox"
     assert artifact_by_path["manual_visual_qa_operator_decision_inbox_starter.json"]["run_command"] == ".\\hsd.cmd run -Mode decision-inbox"
+    assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_report.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
+    assert artifact_by_path["athlete_photo_onboarding/athlete_photo_contact_sheet_index.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
+    assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"

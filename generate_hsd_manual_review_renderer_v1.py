@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
-from hsd_run_io import output_path, write_json, write_text
+from hsd_run_io import input_path, output_path, write_json, write_text
 
 try:
     from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.17.0-photo-first-art-direction-qa"
+VERSION = "hsd-manual-review-renderer-v1.18.0-athlete-photo-onboarding-variants"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -40,6 +40,7 @@ TEAM_ALIASES_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_ali
 TEAM_LOGOS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_logos.csv"
 TEAM_COLORS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "teams.csv"
 WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
+ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onboarding_metadata.json"
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -151,6 +152,36 @@ def read_json(path: Path) -> Dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8", errors="replace"))
     except Exception:
         return {}
+
+
+_ATHLETE_PHOTO_ONBOARDING_CACHE: Dict[str, Any] | None = None
+
+
+def athlete_photo_onboarding_metadata() -> Dict[str, Dict[str, str]]:
+    global _ATHLETE_PHOTO_ONBOARDING_CACHE
+    if _ATHLETE_PHOTO_ONBOARDING_CACHE is None:
+        path = input_path(ATHLETE_PHOTO_ONBOARDING_METADATA)
+        payload = read_json(path) if path.exists() else {}
+        athletes = payload.get("athletes") if isinstance(payload.get("athletes"), dict) else {}
+        _ATHLETE_PHOTO_ONBOARDING_CACHE = {
+            clean(key): value
+            for key, value in athletes.items()
+            if isinstance(value, dict)
+        }
+    return _ATHLETE_PHOTO_ONBOARDING_CACHE
+
+
+def athlete_photo_onboarding_row(athlete_id: str, source_headshot_path: str) -> Dict[str, str]:
+    row = athlete_photo_onboarding_metadata().get(clean(athlete_id), {})
+    if not row:
+        return {}
+    if clean(row.get("source_headshot_path")) != clean(source_headshot_path):
+        return {}
+    if clean(row.get("variant_status")) != "review_variant_ready":
+        return {}
+    if clean(row.get("approval_scope")) != "review_only_derivative_from_approved_headshot":
+        return {}
+    return {str(key): clean(value) for key, value in row.items()}
 
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
@@ -449,6 +480,13 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
                 "blocker": clean(photo.get("blocker")),
                 "approval_policy": clean(photo.get("approval_policy")),
                 "approved_at_utc": clean(photo.get("approved_at_utc")),
+                "review_variant_status": clean(photo.get("review_variant_status")),
+                "review_variant_feed_path": clean(photo.get("review_variant_feed_path")),
+                "review_variant_story_path": clean(photo.get("review_variant_story_path")),
+                "review_variant_square_path": clean(photo.get("review_variant_square_path")),
+                "review_variant_metadata_source": clean(photo.get("review_variant_metadata_source")),
+                "review_variant_policy": clean(photo.get("review_variant_policy")),
+                "review_variant_crop_readiness_score": clean(photo.get("review_variant_crop_readiness_score")),
             }
         aliases, logos = team_registry()
         for slot_id, team_name in [("primary_team_logo", score.get("winner")), ("secondary_team_logo", score.get("loser"))]:
@@ -813,12 +851,20 @@ def resolve_athlete_photo(player: str, team: str) -> Dict[str, Any]:
         "requirement": "Use only approved local athlete headshot/cutout assets; missing or unapproved images stay review-only fallbacks.",
     }
     if headshot.exists() and marker.exists() and marker_matches:
+        variant = athlete_photo_onboarding_row(athlete_id, relative_project_path(headshot))
         return {
             **base,
             "status": "approved_local_headshot",
             "photo_review_required": False,
             "photo_approval_cue": "APPROVED PHOTO",
             "render_method": "approved_local_png_with_marker",
+            "review_variant_status": "review_variant_available" if variant else "not_generated",
+            "review_variant_feed_path": clean(variant.get("feed_variant_path")),
+            "review_variant_story_path": clean(variant.get("story_variant_path")),
+            "review_variant_square_path": clean(variant.get("square_variant_path")),
+            "review_variant_metadata_source": ATHLETE_PHOTO_ONBOARDING_METADATA if variant else "",
+            "review_variant_policy": clean(variant.get("review_only_policy")),
+            "review_variant_crop_readiness_score": clean(variant.get("crop_readiness_score")),
             "blocker": "",
         }
     if headshot.exists() and marker.exists() and not marker_matches:
@@ -1081,6 +1127,13 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "athlete_photo_render_method": clean(photo.get("render_method")),
         "athlete_photo_policy": clean(photo.get("approval_policy")),
         "athlete_photo_approved_at_utc": clean(photo.get("approved_at_utc")),
+        "athlete_photo_review_variant_status": clean(photo.get("review_variant_status")),
+        "athlete_photo_review_variant_feed_path": clean(photo.get("review_variant_feed_path")),
+        "athlete_photo_review_variant_story_path": clean(photo.get("review_variant_story_path")),
+        "athlete_photo_review_variant_square_path": clean(photo.get("review_variant_square_path")),
+        "athlete_photo_review_variant_metadata_source": clean(photo.get("review_variant_metadata_source")),
+        "athlete_photo_review_variant_policy": clean(photo.get("review_variant_policy")),
+        "athlete_photo_review_variant_crop_readiness_score": clean(photo.get("review_variant_crop_readiness_score")),
         "athlete_photo_layout_options": "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback",
         "callouts": stats[:3],
         "player_name": player,
@@ -1692,8 +1745,8 @@ def prepared_athlete_photo_fill(path: Path, target_w: int, target_h: int) -> Any
 def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], *, compact: bool = False) -> Tuple[int, str]:
     if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
         return 0, "safe_no_photo_fallback"
-    path = project_path(module.get("athlete_photo_path"))
-    if not path.exists() or Image is None:
+    path = athlete_photo_render_source_path(module, "compact_square")
+    if path is None or not path.exists() or Image is None:
         return 0, "safe_no_photo_fallback"
     x, y, w, h = box
     try:
@@ -1796,6 +1849,27 @@ def approved_athlete_photo_path(module: Dict[str, Any]) -> Path | None:
     return path
 
 
+def athlete_photo_review_variant_path(module: Dict[str, Any], variant_id: str) -> Path | None:
+    if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
+        return None
+    if clean(module.get("athlete_photo_review_variant_status")) != "review_variant_available":
+        return None
+    if clean(module.get("athlete_photo_review_variant_policy")) != "derived_variant_does_not_approve_move_publish_or_mark_publish_ready":
+        return None
+    key = {
+        "photo_first_story": "athlete_photo_review_variant_story_path",
+        "compact_square": "athlete_photo_review_variant_square_path",
+    }.get(variant_id, "athlete_photo_review_variant_feed_path")
+    path = project_path(module.get(key))
+    if not path.exists() or Image is None:
+        return None
+    return path
+
+
+def athlete_photo_render_source_path(module: Dict[str, Any], variant_id: str) -> Path | None:
+    return athlete_photo_review_variant_path(module, variant_id) or approved_athlete_photo_path(module)
+
+
 def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     width, height = int(format_spec.get("width", 1080)), int(format_spec.get("height", 1350))
     is_story = height > 1500
@@ -1836,7 +1910,9 @@ def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
 
 
 def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> bool:
-    path = approved_athlete_photo_path(module)
+    _x, _y, _w, h = box
+    variant_id = "photo_first_story" if h > 650 else "photo_first_feed"
+    path = athlete_photo_render_source_path(module, variant_id)
     if path is None:
         return False
     x, y, w, h = box
@@ -1872,9 +1948,10 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     draw.rounded_rectangle((x + 22, y + h - 58, x + 22 + label_w, y + h - 20), radius=8, fill=(3, 5, 10, 232), outline=(248, 250, 255, 150), width=1)
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
+    variant_label = "APPROVED SOURCE / REVIEW CROP" if clean(module.get("athlete_photo_review_variant_status")) == "review_variant_available" else "APPROVED PHOTO"
     draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "PLAYER FOCUS", "context", 19, 10, accent, max_lines=1, align="left")
     draw_reference_text(image, (x + 36, y + 58, w - 72, 42), player, "context", 26, 14, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
-    draw_reference_text(image, (x + 30, y + h - 52, label_w - 16, 28), "APPROVED PHOTO", "context", 14, 9, accent, max_lines=1, align="center")
+    draw_reference_text(image, (x + 30, y + h - 52, label_w - 16, 28), variant_label, "context", 13, 8, accent, max_lines=1, align="center")
     return True
 
 
@@ -2218,6 +2295,13 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "athlete_photo_render_method": clean(stat_module.get("athlete_photo_render_method")),
             "athlete_photo_policy": clean(stat_module.get("athlete_photo_policy")),
             "athlete_photo_approved_at_utc": clean(stat_module.get("athlete_photo_approved_at_utc")),
+            "athlete_photo_review_variant_status": clean(stat_module.get("athlete_photo_review_variant_status")),
+            "athlete_photo_review_variant_feed_path": clean(stat_module.get("athlete_photo_review_variant_feed_path")),
+            "athlete_photo_review_variant_story_path": clean(stat_module.get("athlete_photo_review_variant_story_path")),
+            "athlete_photo_review_variant_square_path": clean(stat_module.get("athlete_photo_review_variant_square_path")),
+            "athlete_photo_review_variant_metadata_source": clean(stat_module.get("athlete_photo_review_variant_metadata_source")),
+            "athlete_photo_review_variant_policy": clean(stat_module.get("athlete_photo_review_variant_policy")),
+            "athlete_photo_review_variant_crop_readiness_score": clean(stat_module.get("athlete_photo_review_variant_crop_readiness_score")),
             "athlete_photo_layout_options": clean(stat_module.get("athlete_photo_layout_options")),
             "athlete_photo_template_family": "approved_athlete_photo_final_score"
             if clean(stat_module.get("athlete_photo_status")) == "approved_local_headshot"
