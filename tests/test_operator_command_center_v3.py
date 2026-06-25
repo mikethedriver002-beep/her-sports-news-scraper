@@ -885,7 +885,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.25.0-trusted-registry-playbook"
+    assert payload["version"] == "hsd-operator-command-center-v3.26.0-source-registry-readiness-summary"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -937,6 +937,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Post-edit validations" and item["value"] == "2" for item in payload["metrics"])
     assert any(item["label"] == "Post-edit exact" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Post-edit issues" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Registry readiness" and item["value"] == "blocked_post_edit_validation" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -997,6 +998,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_post_edit_validation"][1]["post_edit_validation_status"] == "unsafe_hold"
     assert "enabled_not_false" in payload["source_registry_post_edit_validation"][1]["unsafe_flags"]
     assert payload["source_registry_post_edit_validation"][1]["registry_edit_status"] == "not_edited_by_generator"
+    assert payload["source_registry_readiness_summary"]["readiness_status"] == "blocked_post_edit_validation"
+    assert payload["source_registry_readiness_summary"]["open_first_file"] == "source_registry_post_edit_validation.md"
+    assert payload["source_registry_readiness_summary"]["support_file"] == "trusted_registry_operator_playbook.md"
+    assert "Open source_registry_post_edit_validation.md first" in payload["source_registry_readiness_summary"]["next_safest_action"]
+    assert "pwhl_official_news: unsafe_hold" in payload["source_registry_readiness_summary"]["blockers"]
+    assert "enabled_not_false" in payload["source_registry_readiness_summary"]["blockers"]
+    assert payload["source_registry_readiness_summary"]["focus_source_ids"] == "pwhl_official_news"
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -1105,6 +1113,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "assets: asset_not_required_for_news_packet" in html
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
+    assert "Source registry readiness" in html
+    assert "blocked_post_edit_validation" in html
+    assert "Open source_registry_post_edit_validation.md first" in html
+    assert "pwhl_official_news: unsafe_hold" in html
+    assert "Open next" in html
     assert "Source registry intake template" in html
     assert "Source registry diff review" in html
     assert "duplicate_domain" in html
@@ -1195,6 +1208,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "assets: asset_not_required_for_news_packet" in markdown
     assert "second source: wnba_official_news" in markdown
     assert "Source coverage map" in markdown
+    assert "Source registry readiness" in markdown
+    assert "Status: blocked_post_edit_validation" in markdown
+    assert "Open first: source_registry_post_edit_validation.md" in markdown
+    assert "pwhl_official_news: unsafe_hold" in markdown
     assert "Source registry intake template" in markdown
     assert "Guided source proposal packs" in markdown
     assert "PWHL Source Proposal Pack" in markdown
