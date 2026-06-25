@@ -1771,6 +1771,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Lead promotion recommendations" in html
     assert "Render readiness" in html
     assert "Manual visual QA decision" in html
+    assert "Primary draft preview" in html
+    assert "Decision cockpit" in html
+    assert "Inspect render" in html
+    assert "Check evidence" in html
+    assert "Record decision" in html
+    assert "Visual delta warnings" in html
+    assert "Manual decision controls" in html
+    assert "Approve, hold, or revise" in html
     assert "Start here" in html
     assert "Use this dashboard for daily review" in html
     assert "Open Decision Desk" in html
@@ -1779,7 +1787,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Open guard report" in html
     assert "decisionCsvOutput" in html
     assert "decisionFieldWarnings" in html
-    assert "Replacement row builder" in html
+    assert "Manual decision controls" in html
     assert "Decision history" in html
     assert "Open before deciding" in html
     assert "Visual QA cues" in html
@@ -1983,7 +1991,7 @@ def test_operator_decision_review_desk_marks_valid_decision_no_action_needed(tmp
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
     assert 'data-has-valid-decision="true"' in html
     assert "A valid inbox decision is already recorded" in html
-    assert "Replacement row builder" in html
+    assert "Manual decision controls" in html
 
 
 def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_path, monkeypatch) -> None:

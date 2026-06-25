@@ -3985,6 +3985,32 @@ def render_visual_qa_cues(rows: Iterable[Dict[str, str]]) -> str:
     return "".join(body) or '<p class="empty">No visual QA cues found yet. Open the QA report from the file links.</p>'
 
 
+def render_visual_delta_cues(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        score = clean(row.get("visual_delta_score")) or "not scored"
+        band = clean(row.get("visual_delta_band")) or "not_scored"
+        focus = clean(row.get("revision_focus")) or clean(row.get("worst_zone")) or "Manual review"
+        summary = clean(row.get("visual_delta_summary")) or band
+        detail = clean(row.get("revision_manual_revisions")) or clean(row.get("revision_status")) or clean(row.get("visual_delta_status"))
+        tone = clean(row.get("visual_delta_tone")) or clean(row.get("revision_tone")) or "warn"
+        body.append(
+            f"""
+            <article class="delta-cue-card delta-cue-{html.escape(tone)}">
+              <div>
+                <span>{html.escape(clean(row.get('label')) or 'Format')}</span>
+                <strong>{html.escape(score)}</strong>
+              </div>
+              <div>
+                <b>{html.escape(summary)}</b>
+                <p>{html.escape(focus)}: {html.escape(short(detail, 150))}</p>
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No visual delta cues found yet.</p>'
+
+
 def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
@@ -4025,25 +4051,61 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     render_command = command_hint(".\\hsd.cmd run -Mode render")
     return f"""
       <div class="decision-ui" data-decision-draft="{draft_json}" data-decision-fields="{fields_json}" data-has-valid-decision="{has_valid_decision}">
-        <div class="decision-preview">
-          {preview_html}
+        <div class="decision-preview-column">
+          <div class="decision-preview-header">
+            <div>
+              <span class="row-kicker">Primary draft preview</span>
+              <strong>Inspect the image first</strong>
+            </div>
+            {pill('not approved', 'warn')}
+          </div>
+          <div class="decision-preview">
+            {preview_html}
+          </div>
+          <div class="decision-preview-footer">
+            {pill('review-only draft')}
+            {pill('manual decision required', 'warn')}
+            {pill('publish-ready: false')}
+          </div>
         </div>
         <div class="decision-workbench">
-          <div class="decision-status-grid">
-            <div><span>QA status</span>{pill(panel.get('qa_status') or 'not_ready')}</div>
-            <div><span>Validation</span>{pill(panel.get('validation_status') or panel.get('intake_status') or 'awaiting')}</div>
-            <div><span>Automated holds</span><strong>{html.escape(clean(panel.get('automated_hold_count')) or '0')}</strong></div>
-            <div><span>Inbox rows</span><strong>{html.escape(str(panel.get('inbox_rows', 0)))}</strong></div>
-          </div>
-          <div class="decision-feedback">
-            <strong>{html.escape(clean(panel.get('panel_status')) or 'not_ready')}</strong>
-            <p>{html.escape(clean(panel.get('validation_issue')) or clean(panel.get('next_step')) or 'Manual review required.')}</p>
+          <div class="decision-cockpit-card">
+            <div class="decision-cockpit-head">
+              <div>
+                <span class="row-kicker">Decision cockpit</span>
+                <strong>{html.escape(clean(panel.get('panel_status')) or 'not_ready')}</strong>
+                <p>{html.escape(clean(panel.get('validation_issue')) or clean(panel.get('next_step')) or 'Manual review required.')}</p>
+              </div>
+              <div class="decision-cockpit-actions">
+                {pill(panel.get('qa_status') or 'not_ready')}
+                {pill(panel.get('validation_status') or panel.get('intake_status') or 'awaiting')}
+              </div>
+            </div>
+            <div class="decision-status-grid">
+              <div><span>QA checks</span><strong>{html.escape(clean(panel.get('qa_pass_count')) or '0')}/{html.escape(clean(panel.get('qa_check_count')) or '0')}</strong></div>
+              <div><span>Automated holds</span><strong>{html.escape(clean(panel.get('automated_hold_count')) or '0')}</strong></div>
+              <div><span>Inbox rows</span><strong>{html.escape(str(panel.get('inbox_rows', 0)))}</strong></div>
+              <div><span>Approval state</span>{pill(panel.get('approval_status') or 'not_approved')}</div>
+            </div>
+            <div class="review-flow">
+              <div><span>1</span><strong>Inspect render</strong><p>Open the draft and compare reference drift.</p></div>
+              <div><span>2</span><strong>Check evidence</strong><p>Review QA cues, source proof, and logo readiness.</p></div>
+              <div><span>3</span><strong>Record decision</strong><p>Use approve, hold, or revise without moving files.</p></div>
+            </div>
             <small>{html.escape(clean(panel.get('next_step')))}</small>
           </div>
-          <div class="decision-desk-section">
-            <div class="row-kicker">Visual QA cues {pill((clean(panel.get('qa_pass_count')) or '0') + '/' + (clean(panel.get('qa_check_count')) or '0') + ' passed', 'good' if clean(panel.get('automated_hold_count')) == '0' else 'warn')} {pill('manual review still required')}</div>
-            <div class="qa-cue-grid">
-              {render_visual_qa_cues(panel.get('qa_cues', []))}
+          <div class="decision-signal-grid">
+            <div class="decision-desk-section">
+              <div class="row-kicker">Visual QA cues {pill((clean(panel.get('qa_pass_count')) or '0') + '/' + (clean(panel.get('qa_check_count')) or '0') + ' passed', 'good' if clean(panel.get('automated_hold_count')) == '0' else 'warn')} {pill('manual review still required')}</div>
+              <div class="qa-cue-grid">
+                {render_visual_qa_cues(panel.get('qa_cues', []))}
+              </div>
+            </div>
+            <div class="decision-desk-section">
+              <div class="row-kicker">Visual delta warnings {pill('compare by eye')}</div>
+              <div class="delta-cue-grid">
+                {render_visual_delta_cues(panel.get('render_gallery', []))}
+              </div>
             </div>
           </div>
           <div class="decision-desk-section">
@@ -4058,31 +4120,31 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
               {render_decision_shortcuts(panel.get('file_shortcuts', []))}
             </div>
           </div>
-          <div class="decision-desk-section">
-            <div class="row-kicker">Replacement row builder <span id="decisionReadyBadge" class="pill warn">Optional</span></div>
+          <div class="decision-action-card">
+            <div class="row-kicker">Manual decision controls <span id="decisionReadyBadge" class="pill warn">Optional</span></div>
             <ul id="decisionFieldWarnings" class="decision-warning-list"></ul>
-          </div>
-          <form class="decision-form">
-            <fieldset class="decision-options">
-              <legend>New or replacement decision</legend>
-              {''.join(choice_html)}
-            </fieldset>
-            <label>Operator notes<textarea id="operatorNotes" rows="3" required placeholder="What did you verify by eye?"></textarea></label>
-            <div class="decision-form-grid">
-              <label>Hold reason<input id="holdReason" type="text" placeholder="Required for hold"></label>
-              <label>Revision request<input id="revisionRequest" type="text" placeholder="Required for revise"></label>
-            </div>
-            <div class="decision-form-grid">
-              <label>Operator name<input id="operatorName" type="text" required placeholder="Your name"></label>
-              <label>Reviewed at<input id="reviewedAtLocal" type="text" required></label>
-            </div>
-          </form>
-          <div class="decision-copy-box">
-            <div class="row-kicker">Copy-safe CSV row</div>
-            <textarea id="decisionCsvOutput" rows="5" readonly></textarea>
-            <div class="decision-button-row">
-              <button class="tool-link" type="button" id="copyDecisionRow">Copy row</button>
-              <span class="muted" id="decisionCopyStatus">Paste the copied row below the header in {html.escape(panel.get('inbox_path'))}. Do not paste the header row.</span>
+            <form class="decision-form">
+              <fieldset class="decision-options">
+                <legend>Approve, hold, or revise</legend>
+                {''.join(choice_html)}
+              </fieldset>
+              <label>Operator notes<textarea id="operatorNotes" rows="3" required placeholder="What did you verify by eye?"></textarea></label>
+              <div class="decision-form-grid">
+                <label>Hold reason<input id="holdReason" type="text" placeholder="Required for hold"></label>
+                <label>Revision request<input id="revisionRequest" type="text" placeholder="Required for revise"></label>
+              </div>
+              <div class="decision-form-grid">
+                <label>Operator name<input id="operatorName" type="text" required placeholder="Your name"></label>
+                <label>Reviewed at<input id="reviewedAtLocal" type="text" required></label>
+              </div>
+            </form>
+            <div class="decision-copy-box">
+              <div class="row-kicker">Copy-safe CSV row</div>
+              <textarea id="decisionCsvOutput" rows="5" readonly></textarea>
+              <div class="decision-button-row">
+                <button class="tool-link" type="button" id="copyDecisionRow">Copy row</button>
+                <span class="muted" id="decisionCopyStatus">Paste the copied row below the header in {html.escape(panel.get('inbox_path'))}. Do not paste the header row.</span>
+              </div>
             </div>
           </div>
           <div class="decision-desk-section">
@@ -4238,17 +4300,30 @@ def render_html(payload: Dict[str, Any]) -> str:
     .artifact-toolbar input {{ min-width:280px; flex:1; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; }}
     .artifact-toolbar select {{ border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; background:#fff; }}
     .table-wrap {{ overflow:auto; background:#fff; border:1px solid var(--line); border-radius:8px; max-width:100%; }}
-    .decision-ui {{ display:grid; grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr); gap:16px; align-items:start; }}
+    .decision-ui {{ display:grid; grid-template-columns:minmax(300px,.78fr) minmax(0,1.22fr); gap:16px; align-items:start; }}
+    .decision-preview-column {{ display:grid; gap:10px; position:sticky; top:12px; align-self:start; }}
+    .decision-preview-header {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px; }}
+    .decision-preview-header strong {{ display:block; font-size:17px; margin-top:2px; }}
     .decision-preview {{ background:#111; border:1px solid var(--line); border-radius:8px; overflow:hidden; min-height:360px; display:grid; place-items:center; }}
     .decision-preview-img {{ width:100%; max-height:720px; object-fit:contain; display:block; background:#111; }}
     .decision-preview-missing {{ color:#fff; font-weight:800; }}
+    .decision-preview-footer {{ display:flex; gap:6px; flex-wrap:wrap; }}
     .decision-workbench {{ display:grid; gap:12px; min-width:0; }}
+    .decision-cockpit-card {{ display:grid; gap:12px; background:#fff; border:1px solid var(--line); border-left:6px solid #f0c84b; border-radius:8px; padding:12px; min-width:0; }}
+    .decision-cockpit-head {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:start; }}
+    .decision-cockpit-head strong {{ display:block; font-size:18px; margin:2px 0 4px; }}
+    .decision-cockpit-head p,.decision-cockpit-card small {{ color:#5e616a; }}
+    .decision-cockpit-actions {{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }}
     .decision-status-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }}
     .decision-status-grid div {{ border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff; min-width:0; }}
     .decision-status-grid span {{ display:block; color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:5px; }}
     .decision-status-grid strong {{ display:block; font-size:18px; overflow-wrap:anywhere; }}
-    .decision-feedback {{ border-left:5px solid #d7a900; background:#fff7d7; padding:12px; border-radius:8px; }}
-    .decision-feedback small {{ display:block; margin-top:6px; color:#5e616a; font-weight:700; }}
+    .review-flow {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }}
+    .review-flow div {{ border:1px solid #e5d493; background:#fff9df; border-radius:8px; padding:9px; min-width:0; }}
+    .review-flow span {{ width:22px; height:22px; border-radius:999px; display:inline-grid; place-items:center; background:#171719; color:#fff; font-weight:900; font-size:12px; }}
+    .review-flow strong {{ display:block; margin-top:6px; font-size:13px; }}
+    .review-flow p {{ color:#5e616a; font-size:12px; line-height:1.3; margin-top:2px; }}
+    .decision-signal-grid {{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr); gap:12px; align-items:start; }}
     .decision-desk-section {{ display:grid; gap:8px; border-top:1px solid var(--line); padding-top:12px; min-width:0; }}
     .decision-link-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }}
     .decision-link-card {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff; min-width:0; }}
@@ -4284,6 +4359,17 @@ def render_html(payload: Dict[str, Any]) -> str:
     .qa-cue-card {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; min-width:0; }}
     .qa-cue-card strong {{ display:block; font-size:13px; }}
     .qa-cue-card p {{ color:#5e616a; font-size:12px; line-height:1.3; margin-top:4px; overflow-wrap:anywhere; }}
+    .delta-cue-grid {{ display:grid; gap:8px; }}
+    .delta-cue-card {{ display:grid; grid-template-columns:76px minmax(0,1fr); gap:10px; border:1px solid var(--line); border-left-width:5px; border-radius:8px; background:#fff; padding:10px; min-width:0; }}
+    .delta-cue-card span {{ color:#5e616a; display:block; font-size:10px; font-weight:900; text-transform:uppercase; }}
+    .delta-cue-card strong {{ display:block; font-size:22px; line-height:1.05; margin-top:3px; }}
+    .delta-cue-card b {{ display:block; font-size:13px; }}
+    .delta-cue-card p {{ color:#5e616a; font-size:12px; line-height:1.3; margin-top:3px; }}
+    .delta-cue-good {{ border-left-color:#16a34a; background:#f7fcf9; }}
+    .delta-cue-warn {{ border-left-color:#d39c08; background:#fffaf0; }}
+    .delta-cue-bad {{ border-left-color:#c02637; background:#fff5f6; }}
+    .delta-cue-neutral {{ border-left-color:#6b7280; background:#f8f9fb; }}
+    .decision-action-card {{ display:grid; gap:10px; border:1px solid var(--line); border-left:6px solid #171719; border-radius:8px; background:#fff; padding:12px; min-width:0; }}
     .decision-warning-list {{ margin:0; padding:0; display:grid; gap:6px; list-style:none; }}
     .decision-warning-list li {{ border:1px solid #ecd58a; background:#fff7d7; border-radius:6px; padding:8px 10px; color:#5d4800; font-weight:700; }}
     .decision-warning-list li.good {{ border-color:#b9dfc8; background:var(--green-bg); color:var(--green); }}
@@ -4303,10 +4389,12 @@ def render_html(payload: Dict[str, Any]) -> str:
       header {{ padding:20px; }}
       main {{ padding:16px; }}
       .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
+      .decision-preview-column {{ position:static; }}
       .home-header {{ grid-template-columns:1fr; }}
       .home-actions {{ justify-content:flex-start; }}
       .render-gallery-grid {{ grid-template-columns:1fr; }}
       .render-comparison-grid {{ grid-template-columns:1fr; }}
+      .decision-cockpit-head,.decision-signal-grid,.review-flow {{ grid-template-columns:1fr; }}
       .qa-cue-grid {{ grid-template-columns:1fr; }}
       .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
