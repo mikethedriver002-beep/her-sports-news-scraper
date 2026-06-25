@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.54.0-photo-first-template-cues"
+VERSION = "hsd-operator-command-center-v3.55.0-athlete-photo-onboarding-links"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -203,6 +203,11 @@ ARTIFACTS = [
     ("Graphics", "Final score story guard", "final_score_story_guard_report.md"),
     ("Graphics", "Manual workflow handoff", "manual_workflow_handoff.md"),
     ("Graphics", "Manual workflow pack status", "manual_workflow_pack_status.csv"),
+    ("Graphics", "Athlete photo onboarding report", "athlete_photo_onboarding/athlete_photo_onboarding_report.md"),
+    ("Graphics", "Athlete photo contact sheet index", "athlete_photo_onboarding/athlete_photo_contact_sheet_index.md"),
+    ("Graphics", "Athlete photo onboarding metadata", "athlete_photo_onboarding/athlete_photo_onboarding_metadata.csv"),
+    ("Graphics", "Athlete photo onboarding decisions", "athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"),
+    ("Graphics", "Athlete photo onboarding manifest", "athlete_photo_onboarding/athlete_photo_onboarding_manifest.json"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
 ]
 
@@ -216,6 +221,11 @@ RUN_COMMANDS = {
     "final_score_story_guard_report.md": ".\\hsd.cmd run -Mode stories",
     "manual_workflow_handoff.md": ".\\hsd.cmd run -Mode handoff",
     "manual_workflow_pack_status.csv": ".\\hsd.cmd run -Mode handoff",
+    "athlete_photo_onboarding/athlete_photo_onboarding_report.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
+    "athlete_photo_onboarding/athlete_photo_contact_sheet_index.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
+    "athlete_photo_onboarding/athlete_photo_onboarding_metadata.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
+    "athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
+    "athlete_photo_onboarding/athlete_photo_onboarding_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
     "post_slot_status.csv": ".\\hsd.cmd run -Mode posts",
     "ig_feed_queue.csv": ".\\hsd.cmd run -Mode posts",
@@ -697,11 +707,14 @@ def photo_asset_summary(renderer: Dict[str, Any], asset_slots: List[Dict[str, An
     path = clean(slot.get("asset_path")) or clean(content.get("athlete_photo_path"))
     marker = clean(slot.get("approval_marker_path")) or clean(content.get("athlete_photo_approval_marker_path"))
     blocker = clean(slot.get("blocker")) or clean(content.get("athlete_photo_blocker"))
+    variant_status = clean(slot.get("review_variant_status")) or clean(content.get("athlete_photo_review_variant_status"))
+    variant_score = clean(slot.get("review_variant_crop_readiness_score")) or clean(content.get("athlete_photo_review_variant_crop_readiness_score"))
+    variant_note = f"review crop {variant_score}/100" if variant_status == "review_variant_available" and variant_score else ("review crop available" if variant_status == "review_variant_available" else "")
     if status == "approved_local_headshot":
         return {
             "status": "athlete_photo_ready",
-            "summary": f"Photo: {cue or 'approved'}",
-            "detail": short(" | ".join(part for part in [player, path, marker] if part), 220),
+            "summary": f"Photo: {cue or 'approved'}" + (f" / {variant_note}" if variant_note else ""),
+            "detail": short(" | ".join(part for part in [player, path, marker, variant_note] if part), 220),
             "tone": "good",
         }
     if status in {"not_required_for_review_draft", "athlete_photo_not_applicable", ""}:

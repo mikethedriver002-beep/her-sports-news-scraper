@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.17.0-photo-first-art-direction-qa"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.18.0-athlete-photo-onboarding-variants"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -300,6 +300,57 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert len(summary["editorial_microcopy_variants"]) == 3
     assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Confirm the named performer" in summary["stat_review_cue"]
+
+
+def test_manual_review_renderer_uses_run_scoped_athlete_photo_variant_metadata(tmp_path: Path, monkeypatch) -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    run_dir = tmp_path / "run" / "files"
+    metadata_path = run_dir / "athlete_photo_onboarding" / "athlete_photo_onboarding_metadata.json"
+    variant_path = run_dir / "athlete_photo_onboarding" / "variants" / "new_york_liberty" / "new_york_liberty_breanna_stewart__photo_first_feed.png"
+    variant_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (380, 518), (20, 120, 110, 255)).save(variant_path)
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "athletes": {
+                    "new_york_liberty_breanna_stewart": {
+                        "athlete_id": "new_york_liberty_breanna_stewart",
+                        "source_headshot_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+                        "feed_variant_path": variant_path.as_posix(),
+                        "story_variant_path": variant_path.as_posix(),
+                        "square_variant_path": variant_path.as_posix(),
+                        "variant_status": "review_variant_ready",
+                        "crop_readiness_score": "91",
+                        "approval_scope": "review_only_derivative_from_approved_headshot",
+                        "review_only_policy": "derived_variant_does_not_approve_move_publish_or_mark_publish_ready",
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    module._ATHLETE_PHOTO_ONBOARDING_CACHE = None
+
+    selected = module.select_verified_stat_module(
+        {"top_performers": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4"},
+        {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "87", "loser_score": "76"},
+    )
+
+    assert selected["athlete_photo_status"] == "approved_local_headshot"
+    assert selected["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
+    assert selected["athlete_photo_review_variant_status"] == "review_variant_available"
+    assert selected["athlete_photo_review_variant_feed_path"] == variant_path.as_posix()
+    assert selected["athlete_photo_review_variant_crop_readiness_score"] == "91"
+    assert selected["athlete_photo_review_variant_policy"] == "derived_variant_does_not_approve_move_publish_or_mark_publish_ready"
+    assert module.athlete_photo_review_variant_path(selected, "photo_first_feed") == variant_path
 
 
 def test_manual_review_renderer_falls_back_when_stat_text_is_not_parseable() -> None:
