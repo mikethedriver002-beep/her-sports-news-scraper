@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+import csv
+import json
+import os
+import subprocess
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
+
+REPO = Path(__file__).resolve().parents[1]
+SCRIPT = REPO / "generate_hsd_manual_visual_qa_v1.py"
+
+
+def make_preview(path: Path, *, size: tuple[int, int] = (1080, 1350)) -> None:
+    image = Image.new("RGB", size, (248, 246, 241))
+    draw = ImageDraw.Draw(image)
+    headline_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 68)
+    body_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 34)
+    small_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 24)
+    draw.rectangle((710, 74, 1030, 150), fill=(190, 39, 54))
+    draw.rectangle((54, 1288, 1028, 1318), fill=(190, 39, 54))
+    draw.text((74, 260), "Test Liberty result", font=headline_font, fill=(24, 28, 36))
+    draw.text((74, 342), "Verified final: Liberty 87, Aces 76.", font=headline_font, fill=(24, 28, 36))
+    draw.text((74, 520), "Source confidence ready and assets not required.", font=body_font, fill=(24, 28, 36))
+    draw.text((82, 980), "Manual render context", font=body_font, fill=(24, 28, 36))
+    draw.text((82, 1040), "Approval: human visual review required before any post", font=small_font, fill=(24, 28, 36))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.save(path)
+
+
+def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_preview(handoff_dir / "draft_preview.png")
+    (handoff_dir / "handoff_manifest.json").write_text(
+        json.dumps({"guardrails": {"review_only": True, "auto_render": False, "auto_publish": False, "paid_apis": False}}),
+        encoding="utf-8",
+    )
+    (run_dir / "manual_review_renderer_manifest.json").write_text(
+        json.dumps(
+            {
+                "status": "draft_preview_created",
+                "approval_status": "not_approved_human_review_required",
+                "guardrails": {
+                    "manual_only": True,
+                    "review_only": True,
+                    "auto_render": False,
+                    "auto_publish": False,
+                    "approved": False,
+                    "paid_apis": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest_path = run_dir / "manual_visual_qa_manifest.json"
+    report_path = run_dir / "manual_visual_qa_report.md"
+    checklist_path = run_dir / "manual_visual_qa_checklist.csv"
+    assert manifest_path.exists()
+    assert report_path.exists()
+    assert checklist_path.exists()
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["status"] == "human_review_required"
+    assert manifest["approval_status"] == "not_approved_human_review_required"
+    assert manifest["dimensions"] == {"width": 1080, "height": 1350}
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["auto_publish"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
+    assert manifest["summary"]["human_decision_required"] is True
+
+    rows = list(csv.DictReader(checklist_path.open(newline="", encoding="utf-8")))
+    check_ids = {row["check_id"] for row in rows}
+    assert "dimensions_1080x1350" in check_ids
+    assert "top_draft_label_zone" in check_ids
+    assert "footer_guardrail_zone" in check_ids
+    assert "headline_text_zone" in check_ids
+    assert "dek_text_zone" in check_ids
+    assert "context_text_zone" in check_ids
+    assert "approval_guardrails" in check_ids
+    assert "operator_visual_review" in check_ids
+    assert all(row["operator_decision"] == "operator_fill_required" for row in rows)
+    assert "Does not approve the preview" in report_path.read_text(encoding="utf-8")
+
+
+def test_manual_visual_qa_holds_wrong_dimensions_without_approval(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_preview(handoff_dir / "draft_preview.png", size=(1000, 1000))
+    (handoff_dir / "handoff_manifest.json").write_text(
+        json.dumps({"guardrails": {"review_only": True, "auto_render": False, "auto_publish": False, "paid_apis": False}}),
+        encoding="utf-8",
+    )
+    (run_dir / "manual_review_renderer_manifest.json").write_text(
+        json.dumps(
+            {
+                "approval_status": "not_approved_human_review_required",
+                "guardrails": {
+                    "manual_only": True,
+                    "review_only": True,
+                    "auto_render": False,
+                    "auto_publish": False,
+                    "approved": False,
+                    "paid_apis": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    dimension_check = next(check for check in manifest["checks"] if check["check_id"] == "dimensions_1080x1350")
+    assert manifest["status"] == "hold_for_manual_review"
+    assert dimension_check["qa_result"] == "hold"
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["publish_ready"] is False

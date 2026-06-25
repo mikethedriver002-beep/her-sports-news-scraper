@@ -49,6 +49,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "render_prep_packets.*",
         "render_handoff_top_packet/**",
         "manual_review_renderer_*",
+        "manual_visual_qa_*",
         "publish_guard_report.*",
         "results_desk_v5_manifest.json",
         "results_dashboard/**",
@@ -172,10 +173,14 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert '"render"' in wrapper
     assert "function Invoke-RenderStage" in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
     assert "manual_review_renderer_report.md" in runner
     assert "manual_review_renderer_manifest.json" in runner
+    assert "manual_visual_qa_report.md" in runner
+    assert "manual_visual_qa_manifest.json" in runner
+    assert "manual_visual_qa_checklist.csv" in runner
     assert ".\\hsd.cmd run -Mode render" in doc
 
 

@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.32.0-manual-review-renderer"
+VERSION = "hsd-operator-command-center-v3.33.0-manual-visual-qa"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -73,6 +73,9 @@ ARTIFACTS = [
     ("Decision", "Top render handoff manifest", "render_handoff_top_packet/handoff_manifest.json"),
     ("Decision", "Manual review renderer report", "manual_review_renderer_report.md"),
     ("Decision", "Manual review renderer manifest", "manual_review_renderer_manifest.json"),
+    ("Decision", "Manual visual QA report", "manual_visual_qa_report.md"),
+    ("Decision", "Manual visual QA manifest", "manual_visual_qa_manifest.json"),
+    ("Decision", "Manual visual QA checklist", "manual_visual_qa_checklist.csv"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -195,6 +198,9 @@ RUN_COMMANDS = {
     "render_handoff_top_packet/draft_preview.png": ".\\hsd.cmd run -Mode render",
     "manual_review_renderer_report.md": ".\\hsd.cmd run -Mode render",
     "manual_review_renderer_manifest.json": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_report.md": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_manifest.json": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_checklist.csv": ".\\hsd.cmd run -Mode render",
     "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
