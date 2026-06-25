@@ -59,11 +59,59 @@ def seed_manual_visual_qa_decision_files() -> None:
     preview = Path("render_handoff_top_packet/draft_preview.png")
     preview.parent.mkdir(parents=True, exist_ok=True)
     preview.write_bytes(b"fake png for operator decision panel")
+    review_drafts = preview.parent / "review_drafts"
+    review_drafts.mkdir(parents=True, exist_ok=True)
+    feed_preview = review_drafts / "draft_preview_ig_feed.png"
+    story_preview = review_drafts / "draft_preview_story.png"
+    square_preview = review_drafts / "draft_preview_square.png"
+    for render_file in [feed_preview, story_preview, square_preview]:
+        render_file.write_bytes(b"fake social render draft")
     write_json(
         "manual_review_renderer_manifest.json",
         {
             "status": "draft_preview_created",
             "preview_path": preview.as_posix(),
+            "format_options": [
+                {
+                    "format_id": "ig_feed_4x5",
+                    "path": feed_preview.as_posix(),
+                    "width": 1080,
+                    "height": 1350,
+                    "primary": True,
+                    "review_only": True,
+                    "publish_ready": False,
+                },
+                {
+                    "format_id": "ig_story_9x16",
+                    "path": story_preview.as_posix(),
+                    "width": 1080,
+                    "height": 1920,
+                    "primary": False,
+                    "review_only": True,
+                    "publish_ready": False,
+                },
+                {
+                    "format_id": "square_feed_1x1",
+                    "path": square_preview.as_posix(),
+                    "width": 1080,
+                    "height": 1080,
+                    "primary": False,
+                    "review_only": True,
+                    "publish_ready": False,
+                },
+            ],
+            "asset_slots": [
+                {
+                    "slot_id": "primary_photo",
+                    "status": "not_required_for_review_draft",
+                    "requirement": "No player asset required; use HSD brand treatment and verified source text only.",
+                },
+                {
+                    "slot_id": "source_evidence",
+                    "status": "manual_review_required",
+                    "requirement": "news_fact_packets.csv",
+                },
+            ],
             "guardrails": {"manual_only": True, "review_only": True, "auto_publish": False, "approved": False, "paid_apis": False},
         },
     )
@@ -1086,7 +1134,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.44.0-template-draft-render-artifacts"
+    assert payload["version"] == "hsd-operator-command-center-v3.45.0-decision-render-gallery"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1331,6 +1379,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
+    assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
+    assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])
+    assert payload["operator_decision_panel"]["render_gallery"][1]["shape"] == "1080x1920"
+    assert all(item["publish_ready"] == "false" for item in payload["operator_decision_panel"]["render_gallery"])
+    assert all(item["auto_publish"] == "false" for item in payload["operator_decision_panel"]["render_gallery"])
     assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert any(item["label"] == "Decision inbox" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert payload["operator_decision_panel"]["guardrails"]["auto_approval"] is False
@@ -1489,6 +1542,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Replacement row builder" in html
     assert "Decision history" in html
     assert "Open before deciding" in html
+    assert "Render gallery" in html
+    assert "Primary feed" in html
+    assert "Story" in html
+    assert "Square" in html
+    assert "review-only drafts" in html
+    assert "publish ready: false" in html
     assert "QA report" in html
     assert "Source proof" in html
     assert "operatorDecision" in html
@@ -1517,6 +1576,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Manual Visual QA Decision UI" in markdown
+    assert "Render gallery: Story | 1080x1920 | ready_for_visual_review" in markdown
     assert "file-backed manual approval" in markdown
     assert "awaiting_operator_decision" in markdown
     assert "History issues: 0" in markdown
