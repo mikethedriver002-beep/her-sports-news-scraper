@@ -517,6 +517,45 @@ def seed_daily_ops_files() -> None:
             },
         ],
     )
+    Path("source_registry_update_worksheet.md").write_text(
+        "# HSD Source Registry Update Worksheet\n\nReview-only registry change plan.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_update_worksheet.csv",
+        [
+            {
+                "worksheet_decision": "manual_registry_plan_after_verification",
+                "operator_step": "1_open_url_2_confirm_free_public_current_3_compare_json_4_edit_registry_manually_if_approved",
+                "manual_edit_target": "config/source_registry.json",
+                "manual_edit_allowed": "Yes_only_after_operator_verification",
+                "auto_edit_status": "not_performed_by_generator",
+                "pack_key": "pwhl",
+                "pack_name": "PWHL Source Proposal Pack",
+                "source_id": "pwhl_official_news",
+                "source_name": "PWHL official news",
+                "candidate_url": "https://www.thepwhl.com/en/news",
+                "candidate_domain": "thepwhl.com",
+                "source_type": "official_site",
+                "tier": "official",
+                "trust_band": "green_after_operator_verification",
+                "sport_league": "PWHL",
+                "allowed_use": "official_news; source_confirmation",
+                "registry_presence": "not_in_registry",
+                "checklist_decision": "verify_then_copy",
+                "checklist_copy_target": "operator/inbox/source_registry_proposals.csv",
+                "verification_gate": "Operator must open the public URL first.",
+                "current_registry_state": "Before: no approved trusted-registry object should be added.",
+                "proposed_enabled": "False",
+                "proposed_automation_status": "disabled_manual_review_only",
+                "proposed_publish_policy": "not_publish_ready_until_operator_verifies_and_enables",
+                "proposed_source_json": "{\"enabled\":false,\"source_id\":\"pwhl_official_news\"}",
+                "before_after_diff": "Before: no manual change from this generator. After manual approval only: append disabled source object.",
+                "rollback_note": "If verification fails, remove the manually added sources[] object with source_id=pwhl_official_news.",
+                "review_notes": "Review-only worksheet row.",
+            }
+        ],
+    )
     Path("source_proposal_packs.csv").write_text(
         Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
         encoding="utf-8",
@@ -646,7 +685,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.18.0-source-promotion-checklist"
+    assert payload["version"] == "hsd-operator-command-center-v3.19.0-source-update-worksheet"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -682,6 +721,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Checklist verify/copy" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Checklist hold" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Checklist discard" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Registry worksheet rows" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Worksheet disabled plans" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs duplicate review" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source packs freshness check" and item["value"] == "1" for item in payload["metrics"])
@@ -712,6 +753,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_proposal_promotion_checklist"][0]["copy_allowed"] == "Yes_after_manual_freshness_check"
     assert payload["source_registry_proposal_promotion_checklist"][1]["checklist_decision"] == "discard"
     assert "trusted registry coverage" in payload["source_registry_proposal_promotion_checklist"][1]["discard_reason"]
+    assert payload["source_registry_update_worksheet"][0]["worksheet_decision"] == "manual_registry_plan_after_verification"
+    assert payload["source_registry_update_worksheet"][0]["manual_edit_target"] == "config/source_registry.json"
+    assert payload["source_registry_update_worksheet"][0]["proposed_enabled"] == "False"
+    assert payload["source_registry_update_worksheet"][0]["auto_edit_status"] == "not_performed_by_generator"
+    assert "remove the manually added" in payload["source_registry_update_worksheet"][0]["rollback_note"]
     assert payload["source_proposal_pack_readiness"][0]["pack_key"] == "pwhl"
     assert payload["source_proposal_pack_readiness"][0]["readiness_status"] == "ready_for_registry_proposal"
     assert payload["source_proposal_pack_readiness"][1]["readiness_status"] == "needs_duplicate_review"
@@ -730,6 +776,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     checklist_action = next(action for action in payload["next_actions"] if action["title"] == "Work source proposal promotion checklist")
     assert checklist_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 row(s) are verify-then-copy candidates" in checklist_action["detail"]
+    worksheet_action = next(action for action in payload["next_actions"] if action["title"] == "Review trusted-registry update worksheet")
+    assert worksheet_action["artifact"] == "source_registry_update_worksheet.md"
+    assert "1 review-only registry plan row(s)" in worksheet_action["detail"]
     checklist_hold_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve held or discarded source checklist rows")
     assert checklist_hold_action["artifact"] == "source_registry_proposal_promotion_checklist.md"
     assert "1 discard row(s)" in checklist_hold_action["detail"]
@@ -792,6 +841,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
+    assert "Source registry update worksheet" in html
+    assert "manual_registry_plan_after_verification" in html
+    assert "not_performed_by_generator" in html
+    assert "remove the manually added" in html
     assert "Source proposal promotion checklist" in html
     assert "verify_then_copy" in html
     assert "discard_duplicate_candidate_do_not_copy" in html
@@ -823,6 +876,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
     assert "Morning source discovery" in markdown
+    assert "Source registry update worksheet" in markdown
+    assert "manual_registry_plan_after_verification" in markdown
+    assert "not_performed_by_generator" in markdown
     assert "Source proposal promotion checklist" in markdown
     assert "verify_then_copy" in markdown
     assert "discard" in markdown
@@ -923,6 +979,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_proposal_draft.csv" in runner
     assert "source_registry_proposal_promotion_checklist.md" in runner
     assert "source_registry_proposal_promotion_checklist.csv" in runner
+    assert "source_registry_update_worksheet.md" in runner
+    assert "source_registry_update_worksheet.csv" in runner
     assert "source_proposal_pack_readiness.md" in runner
     assert "source_proposal_pack_readiness.csv" in runner
     assert "source_proposal_packs.md" in runner
