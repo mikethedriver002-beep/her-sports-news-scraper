@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.35.0-manual-post-approval-render-staging"
+VERSION = "hsd-operator-command-center-v3.36.0-manual-operator-decision-helper"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -79,6 +79,9 @@ ARTIFACTS = [
     ("Decision", "Manual visual QA approval intake", "manual_visual_qa_approval_intake.md"),
     ("Decision", "Manual visual QA approval intake data", "manual_visual_qa_approval_intake.csv"),
     ("Decision", "Manual visual QA approval intake manifest", "manual_visual_qa_approval_intake.json"),
+    ("Decision", "Manual visual QA operator decision draft", "manual_visual_qa_operator_decision_draft.md"),
+    ("Decision", "Manual visual QA operator decision draft data", "manual_visual_qa_operator_decision_draft.csv"),
+    ("Decision", "Manual visual QA operator decision draft manifest", "manual_visual_qa_operator_decision_draft.json"),
     ("Decision", "Manual post-approval render staging", "manual_post_approval_render_staging.md"),
     ("Decision", "Manual post-approval render staging data", "manual_post_approval_render_staging.csv"),
     ("Decision", "Manual post-approval render staging manifest", "manual_post_approval_render_staging.json"),
@@ -210,6 +213,9 @@ RUN_COMMANDS = {
     "manual_visual_qa_approval_intake.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.json": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_draft.md": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_draft.csv": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_draft.json": ".\\hsd.cmd run -Mode render",
     "manual_post_approval_render_staging.md": ".\\hsd.cmd run -Mode render",
     "manual_post_approval_render_staging.csv": ".\\hsd.cmd run -Mode render",
     "manual_post_approval_render_staging.json": ".\\hsd.cmd run -Mode render",

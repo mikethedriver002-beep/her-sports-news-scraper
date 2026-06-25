@@ -931,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.35.0-manual-post-approval-render-staging"
+    assert payload["version"] == "hsd-operator-command-center-v3.36.0-manual-operator-decision-helper"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1209,6 +1209,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["manual_visual_qa_checklist.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_approval_intake.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_approval_intake.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["manual_visual_qa_operator_decision_draft.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["manual_visual_qa_operator_decision_draft.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_post_approval_render_staging.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_post_approval_render_staging.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
@@ -1473,6 +1475,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "manual_visual_qa_approval_intake.md" in runner
     assert "manual_visual_qa_approval_intake.csv" in runner
     assert "manual_visual_qa_approval_intake.json" in runner
+    assert "manual_visual_qa_operator_decision_draft.md" in runner
+    assert "manual_visual_qa_operator_decision_draft.csv" in runner
+    assert "manual_visual_qa_operator_decision_draft.json" in runner
     assert "manual_post_approval_render_staging.md" in runner
     assert "manual_post_approval_render_staging.csv" in runner
     assert "manual_post_approval_render_staging.json" in runner
