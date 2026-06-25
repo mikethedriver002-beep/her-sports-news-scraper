@@ -47,6 +47,7 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
     required_pathspecs = [
         "operator_command_center.*",
         "render_prep_packets.*",
+        "render_handoff_top_packet/**",
         "publish_guard_report.*",
         "results_desk_v5_manifest.json",
         "results_dashboard/**",

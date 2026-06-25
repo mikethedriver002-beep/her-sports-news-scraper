@@ -10,13 +10,22 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.30.0-render-prep-packets"
+VERSION = "hsd-operator-command-center-v3.31.0-render-handoff-folder"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
 OUT_RENDER_PREP_MD = output_path("render_prep_packets.md")
 OUT_RENDER_PREP_CSV = output_path("render_prep_packets.csv")
 OUT_RENDER_PREP_JSON = output_path("render_prep_packets.json")
+OUT_RENDER_HANDOFF_DIR = output_path("render_handoff_top_packet")
+OUT_RENDER_HANDOFF_README = OUT_RENDER_HANDOFF_DIR / "README.md"
+OUT_RENDER_HANDOFF_COPY = OUT_RENDER_HANDOFF_DIR / "copy_sheet.md"
+OUT_RENDER_HANDOFF_COPY_CSV = OUT_RENDER_HANDOFF_DIR / "copy_sheet.csv"
+OUT_RENDER_HANDOFF_ASSETS = OUT_RENDER_HANDOFF_DIR / "asset_checklist.md"
+OUT_RENDER_HANDOFF_ASSETS_CSV = OUT_RENDER_HANDOFF_DIR / "asset_checklist.csv"
+OUT_RENDER_HANDOFF_SOURCE_PROOF = OUT_RENDER_HANDOFF_DIR / "source_proof.md"
+OUT_RENDER_HANDOFF_PROMPT = OUT_RENDER_HANDOFF_DIR / "manual_renderer_prompt.md"
+OUT_RENDER_HANDOFF_MANIFEST = OUT_RENDER_HANDOFF_DIR / "handoff_manifest.json"
 
 RENDER_PREP_FIELDS = [
     "packet_id",
@@ -55,6 +64,12 @@ ARTIFACTS = [
     ("Decision", "Render prep packets", "render_prep_packets.md"),
     ("Decision", "Render prep packet data", "render_prep_packets.csv"),
     ("Decision", "Render prep packet manifest", "render_prep_packets.json"),
+    ("Decision", "Top render handoff", "render_handoff_top_packet/README.md"),
+    ("Decision", "Top render copy sheet", "render_handoff_top_packet/copy_sheet.md"),
+    ("Decision", "Top render asset checklist", "render_handoff_top_packet/asset_checklist.md"),
+    ("Decision", "Top render source proof", "render_handoff_top_packet/source_proof.md"),
+    ("Decision", "Top render manual prompt", "render_handoff_top_packet/manual_renderer_prompt.md"),
+    ("Decision", "Top render handoff manifest", "render_handoff_top_packet/handoff_manifest.json"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -931,6 +946,260 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
     return packets
 
 
+def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> Dict[str, Any]:
+    if not render_prep_packets:
+        return {
+            "handoff_status": "no_render_prep_packet",
+            "packet_id": "",
+            "title": "",
+            "folder": "render_handoff_top_packet",
+            "readme": "render_handoff_top_packet/README.md",
+            "files": [],
+            "guardrails": {
+                "review_only": True,
+                "auto_render": False,
+                "auto_publish": False,
+                "paid_apis": False,
+            },
+        }
+    packet = render_prep_packets[0]
+    return {
+        "handoff_status": "ready_for_manual_review",
+        "packet_id": packet.get("packet_id", ""),
+        "title": packet.get("title", ""),
+        "folder": "render_handoff_top_packet",
+        "readme": "render_handoff_top_packet/README.md",
+        "files": [
+            "render_handoff_top_packet/README.md",
+            "render_handoff_top_packet/copy_sheet.md",
+            "render_handoff_top_packet/copy_sheet.csv",
+            "render_handoff_top_packet/asset_checklist.md",
+            "render_handoff_top_packet/asset_checklist.csv",
+            "render_handoff_top_packet/source_proof.md",
+            "render_handoff_top_packet/manual_renderer_prompt.md",
+            "render_handoff_top_packet/handoff_manifest.json",
+        ],
+        "guardrails": {
+            "review_only": True,
+            "auto_render": False,
+            "auto_publish": False,
+            "paid_apis": False,
+        },
+    }
+
+
+def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None) -> str:
+    if not packet:
+        return "\n".join(
+            [
+                "# HSD Top Render Handoff",
+                "",
+                f"Generated: {payload['generated_at_utc']}",
+                f"Command center version: {payload['version']}",
+                "",
+                "No render prep packet cleared the review gates for a top-packet handoff.",
+                "",
+                "Guardrails: review-only, no auto-rendering, no paid APIs, no auto-publishing.",
+                "",
+            ]
+        )
+    return "\n".join(
+        [
+            "# HSD Top Render Handoff",
+            "",
+            f"Generated: {payload['generated_at_utc']}",
+            f"Command center version: {payload['version']}",
+            "",
+            f"Packet: `{clean(packet.get('packet_id'))}`",
+            f"Story: {clean(packet.get('title'))}",
+            f"Status: `{clean(packet.get('packet_status'))}`",
+            f"Readiness: `{clean(packet.get('render_readiness_score'))}/100` / `{clean(packet.get('render_readiness_band'))}`",
+            "",
+            "## Open These Files",
+            "",
+            "1. `copy_sheet.md`",
+            "2. `asset_checklist.md`",
+            "3. `source_proof.md`",
+            "4. `manual_renderer_prompt.md`",
+            "5. `handoff_manifest.json`",
+            "",
+            "## Guardrails",
+            "",
+            "- Review-only handoff.",
+            "- Does not render files.",
+            "- Does not publish.",
+            "- Does not call paid APIs.",
+            "- Human visual review is required before any post.",
+            "",
+        ]
+    )
+
+
+def render_handoff_copy_sheet(packet: Dict[str, str]) -> str:
+    return "\n".join(
+        [
+            "# Render Copy Sheet",
+            "",
+            f"- Headline: {clean(packet.get('copy_headline'))}",
+            f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+            f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
+            f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
+            f"- Template fit: `{clean(packet.get('template_fit'))}`",
+            f"- Template shape: `{clean(packet.get('template_shape'))}`",
+            f"- Approval gate: `{clean(packet.get('approval_gate'))}`",
+            "",
+            "Copy is not approved for publishing until source proof and human visual review are complete.",
+            "",
+        ]
+    )
+
+
+def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
+    return "\n".join(
+        [
+            "# Render Asset Checklist",
+            "",
+            f"- Asset cue: `{clean(packet.get('asset_cue'))}`",
+            f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            f"- Manual path: `{clean(packet.get('manual_path'))}`",
+            f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
+            "",
+            "## Stop/Go",
+            "",
+            "- GO only if exact required logos/images are approved or the packet explicitly says no player asset is required.",
+            "- HOLD if any team, player, league, source, crop, or identity asset is uncertain.",
+            "- Do not use text-logo fallback for public graphics.",
+            "",
+        ]
+    )
+
+
+def render_handoff_source_proof(packet: Dict[str, str]) -> str:
+    return "\n".join(
+        [
+            "# Render Source Proof",
+            "",
+            f"- Source artifact: `{clean(packet.get('source_artifact'))}`",
+            f"- Source cue: `{clean(packet.get('source_cue'))}`",
+            f"- Source detail: {clean(packet.get('source_detail')) or 'n/a'}",
+            f"- Source/copy context: {clean(packet.get('copy_context')) or 'n/a'}",
+            f"- Paid API policy: `{clean(packet.get('paid_api_policy'))}`",
+            "",
+            "## Required Human Check",
+            "",
+            f"1. Open {clean(packet.get('source_artifact'))} manually.",
+            "2. Confirm the headline, dek, and context match verified source facts.",
+            "3. Hold the render if a second source, official confirmation, or source timestamp is missing.",
+            "",
+        ]
+    )
+
+
+def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
+    steps = [step.strip() for step in clean(packet.get("manual_renderer_steps")).split("|") if step.strip()]
+    lines = [
+        "# Manual Renderer Prompt",
+        "",
+        "Use this prompt manually only. Do not auto-render, auto-post, or publish.",
+        "",
+        "## Brief",
+        "",
+        f"Create a review-only HSD graphic for: {clean(packet.get('title'))}",
+        "",
+        "## Copy",
+        "",
+        f"- Headline: {clean(packet.get('copy_headline'))}",
+        f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+        f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
+        "",
+        "## Format",
+        "",
+        f"- Template fit: {clean(packet.get('template_fit'))}",
+        f"- Shape: {clean(packet.get('template_shape'))}",
+        f"- Renderer family: {clean(packet.get('renderer_family'))}",
+        "",
+        "## Assets",
+        "",
+        f"- {clean(packet.get('asset_requirement'))}",
+        "",
+        "## Steps",
+        "",
+    ]
+    lines.extend(f"{index}. {step}" for index, step in enumerate(steps, 1))
+    lines += [
+        "",
+        "## Guardrail",
+        "",
+        "Output is for human visual review only. Nothing in this folder is publish-ready by itself.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
+    packets = payload.get("render_prep_packets", [])
+    packet = packets[0] if packets else None
+    write_text(OUT_RENDER_HANDOFF_README, render_handoff_readme(payload, packet))
+    manifest = {
+        "version": payload["version"],
+        "generated_at_utc": payload["generated_at_utc"],
+        "handoff_status": "ready_for_manual_review" if packet else "no_render_prep_packet",
+        "folder": "render_handoff_top_packet",
+        "guardrails": {
+            "review_only": True,
+            "auto_render": False,
+            "auto_publish": False,
+            "paid_apis": False,
+        },
+        "packet": packet or {},
+        "files": [
+            "README.md",
+            "copy_sheet.md",
+            "copy_sheet.csv",
+            "asset_checklist.md",
+            "asset_checklist.csv",
+            "source_proof.md",
+            "manual_renderer_prompt.md",
+            "handoff_manifest.json",
+        ],
+    }
+    if packet:
+        write_text(OUT_RENDER_HANDOFF_COPY, render_handoff_copy_sheet(packet))
+        write_csv(
+            OUT_RENDER_HANDOFF_COPY_CSV,
+            [
+                {
+                    "packet_id": packet.get("packet_id"),
+                    "headline": packet.get("copy_headline"),
+                    "dek": packet.get("copy_dek"),
+                    "context": packet.get("copy_context"),
+                    "template_fit": packet.get("template_fit"),
+                    "template_shape": packet.get("template_shape"),
+                    "approval_gate": packet.get("approval_gate"),
+                }
+            ],
+            ["packet_id", "headline", "dek", "context", "template_fit", "template_shape", "approval_gate"],
+        )
+        write_text(OUT_RENDER_HANDOFF_ASSETS, render_handoff_asset_checklist(packet))
+        write_csv(
+            OUT_RENDER_HANDOFF_ASSETS_CSV,
+            [
+                {
+                    "packet_id": packet.get("packet_id"),
+                    "asset_cue": packet.get("asset_cue"),
+                    "asset_requirement": packet.get("asset_requirement"),
+                    "manual_path": packet.get("manual_path"),
+                    "renderer_family": packet.get("renderer_family"),
+                    "decision": "operator_review_required",
+                }
+            ],
+            ["packet_id", "asset_cue", "asset_requirement", "manual_path", "renderer_family", "decision"],
+        )
+        write_text(OUT_RENDER_HANDOFF_SOURCE_PROOF, render_handoff_source_proof(packet))
+        write_text(OUT_RENDER_HANDOFF_PROMPT, render_manual_renderer_prompt(packet))
+    write_json(OUT_RENDER_HANDOFF_MANIFEST, manifest)
+
+
 def schedule_rows() -> List[Dict[str, str]]:
     rows = parse_markdown_table("bebe_posting_schedule_today.md")
     normalized: List[Dict[str, str]] = []
@@ -955,6 +1224,7 @@ def build_next_actions(
     studio: List[Dict[str, str]],
     render_queue: List[Dict[str, str]],
     render_prep_packets: List[Dict[str, str]],
+    render_handoff_summary: Dict[str, Any],
     source_board: List[Dict[str, str]],
     promotions: List[Dict[str, str]],
     coverage_map: List[Dict[str, str]],
@@ -1114,6 +1384,18 @@ def build_next_actions(
                 "Use the packet steps for manual render prep only; publishing remains off."
             ),
             "render_prep_packets.md",
+        )
+
+    if render_handoff_summary.get("handoff_status") == "ready_for_manual_review":
+        add_action(
+            "Render handoff",
+            "Editor",
+            f"Open render handoff folder: {render_handoff_summary.get('title')}",
+            (
+                "Use the copy sheet, asset checklist, source proof, and manual renderer prompt as a review-only handoff. "
+                "It does not render or publish anything."
+            ),
+            "render_handoff_top_packet/README.md",
         )
 
     coverage_gaps = [row for row in coverage_map if row.get("status") == "gap"]
@@ -1808,6 +2090,7 @@ def build_payload() -> Dict[str, Any]:
             "render_readiness_queue": render_queue,
         }
     )
+    render_handoff_summary = build_render_handoff_summary(render_prep_packets)
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
@@ -1970,6 +2253,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Render needs asset", sum(1 for row in render_queue if "asset" in row.get("blockers", ""))),
         metric("Render prep packets", len(render_prep_packets)),
         metric("Render packets ready", sum(1 for row in render_prep_packets if row.get("packet_status") == "ready_for_manual_render_review")),
+        metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -1982,6 +2266,7 @@ def build_payload() -> Dict[str, Any]:
         studio,
         render_queue,
         render_prep_packets,
+        render_handoff_summary,
         source_board,
         promotions,
         coverage_map,
@@ -2032,6 +2317,7 @@ def build_payload() -> Dict[str, Any]:
         "content_candidates": candidates,
         "render_readiness_queue": render_queue,
         "render_prep_packets": render_prep_packets,
+        "render_handoff_summary": render_handoff_summary,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
@@ -2217,6 +2503,25 @@ def render_render_prep_packets(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(body) or '<tr><td colspan="10" class="empty">No render-prep packets cleared review gates.</td></tr>'
+
+
+def render_render_handoff_summary(summary: Dict[str, Any]) -> str:
+    files = summary.get("files") or []
+    file_links = " ".join(open_link(clean(path), Path(clean(path)).name) for path in files[:6])
+    return f"""
+    <article class="content-row">
+      <div>
+        <div class="row-kicker">Render handoff {pill(summary.get('handoff_status') or 'not_created')}</div>
+        <h3>{html.escape(clean(summary.get('title')) or 'No top render handoff ready')}</h3>
+        <p>Review-only folder: <code>{html.escape(clean(summary.get('folder')) or 'render_handoff_top_packet')}</code>. Use copy sheet, asset checklist, source proof, and manual renderer prompt before any human visual review.</p>
+        <small>Guardrails: no paid APIs / no auto-runs / no auto-rendering / no publishing.</small>
+      </div>
+      <div class="row-tool">
+        {open_link(clean(summary.get('readme')) or 'render_handoff_top_packet/README.md', 'Open folder')}
+        <div style="margin-top:8px">{file_links}</div>
+      </div>
+    </article>
+    """
 
 
 def render_studio(rows: Iterable[Dict[str, str]]) -> str:
@@ -2883,6 +3188,10 @@ def render_html(payload: Dict[str, Any]) -> str:
           </table>
         </div>
       </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>Top render handoff</h2>
+        <div class="content-list">{render_render_handoff_summary(payload['render_handoff_summary'])}</div>
+      </div>
       <div class="two-col">
         <div class="panel">
           <h2>Content candidates</h2>
@@ -3156,6 +3465,17 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
+    handoff = payload["render_handoff_summary"]
+    lines += ["", "## Top render handoff", ""]
+    lines.extend(
+        [
+            f"- Status: {clean(handoff.get('handoff_status')) or 'not_created'}",
+            f"- Story: {clean(handoff.get('title')) or 'none'}",
+            f"- Folder: {clean(handoff.get('folder')) or 'render_handoff_top_packet'}",
+            f"- Open first: {clean(handoff.get('readme')) or 'render_handoff_top_packet/README.md'}",
+            "- Guardrails: review-only, no paid APIs, no auto-runs, no auto-rendering, no publishing.",
+        ]
+    )
     lines += ["", "## Content candidates", ""]
     lines.extend(
         f"- {item['type']} | {item['priority']} | {item['headline']} | {item['status']} | source: {item.get('source_grade') or 'not_scored'} | render: {item.get('render_readiness_score') or 'n/a'}/100 | {item.get('render_readiness_band') or 'not_scored'} | manual: {item.get('render_readiness_manual_path') or 'n/a'}"
@@ -3358,6 +3678,7 @@ def write_render_prep_outputs(payload: Dict[str, Any]) -> None:
 
 def write_outputs(payload: Dict[str, Any]) -> None:
     write_render_prep_outputs(payload)
+    write_render_handoff_outputs(payload)
     write_json(OUT_JSON, payload)
     write_text(OUT_MD, render_markdown(payload))
     write_text(OUT_HTML, render_html(payload))
