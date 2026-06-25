@@ -66,23 +66,46 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     assert proc.returncode == 0, proc.stderr
     preview = run_dir / "render_handoff_top_packet" / "draft_preview.png"
+    review_drafts = run_dir / "render_handoff_top_packet" / "review_drafts"
     manifest_path = run_dir / "manual_review_renderer_manifest.json"
     report_path = run_dir / "manual_review_renderer_report.md"
     assert preview.exists()
+    assert (review_drafts / "draft_preview_ig_feed.png").exists()
+    assert (review_drafts / "draft_preview_story.png").exists()
+    assert (review_drafts / "draft_preview_square.png").exists()
     assert manifest_path.exists()
     assert report_path.exists()
     assert (run_dir / "render_handoff_top_packet" / "handoff_manifest.json").exists()
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.1.0-template-draft-system"
     assert manifest["title"] == "Test Liberty result"
+    assert manifest["renderer_mode"] == "template_driven_review_drafts"
+    assert manifest["selected_template"]["template_id"] == "hsd_final_score_review_v1"
+    assert manifest["selected_template"]["template_family"] == "final_score_editorial_card"
+    assert len(manifest["format_options"]) == 3
+    assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
+    assert all(item["review_only"] is True for item in manifest["format_options"])
+    assert all(item["publish_ready"] is False for item in manifest["format_options"])
+    assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
     assert manifest["guardrails"]["manual_only"] is True
     assert manifest["guardrails"]["auto_render"] is False
     assert manifest["guardrails"]["auto_publish"] is False
     assert manifest["guardrails"]["approved"] is False
+    assert manifest["guardrails"]["move_files"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
     assert manifest["approval_status"] == "not_approved_human_review_required"
 
     image = Image.open(preview)
     assert image.size == (1080, 1350)
-    assert "Draft preview is for human review only" in report_path.read_text(encoding="utf-8")
+    story = Image.open(review_drafts / "draft_preview_story.png")
+    square = Image.open(review_drafts / "draft_preview_square.png")
+    assert story.size == (1080, 1920)
+    assert square.size == (1080, 1080)
+    report = report_path.read_text(encoding="utf-8")
+    assert "Draft preview is for human review only" in report
+    assert "## Review Draft Formats" in report
+    assert "hsd_final_score_review_v1" in report
+    assert "publish_ready=`false`" in report
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()

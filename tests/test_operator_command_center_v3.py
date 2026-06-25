@@ -1086,7 +1086,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.43.0-manual-visual-qa-valid-state-clarity"
+    assert payload["version"] == "hsd-operator-command-center-v3.44.0-template-draft-render-artifacts"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1371,6 +1371,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     artifact_by_path = {item["path"]: item for item in payload["artifacts"]}
     assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
     assert artifact_by_path["render_handoff_top_packet/draft_preview.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_handoff_top_packet/review_drafts/draft_preview_story.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_handoff_top_packet/review_drafts/draft_preview_square.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_review_renderer_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_checklist.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
@@ -1502,6 +1505,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "news_fact_card_review" in html
     assert "human_visual_review_required_before_any_post" in html
     assert "render_handoff_top_packet/README.md" in html
+    assert "Top render story draft" in html
+    assert "Top render square draft" in html
     assert "manual_renderer_prompt.md" in html
     assert "hold_for_source_confirmation" in html
     assert "manual_review_artifact_ready:news_fact_packets.csv" in html
