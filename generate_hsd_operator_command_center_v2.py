@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.41.0-manual-visual-qa-decision-ui"
+VERSION = "hsd-operator-command-center-v3.42.0-manual-visual-qa-review-desk"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -315,7 +315,10 @@ def href_for_path(path: str) -> str:
     try:
         return found.resolve().relative_to(current_output).as_posix()
     except Exception:
-        return found.as_posix()
+        try:
+            return found.resolve().as_uri()
+        except Exception:
+            return found.as_posix()
 
 
 def yes(value: Any) -> bool:
@@ -601,6 +604,121 @@ def artifact_entries() -> List[Dict[str, Any]]:
     return entries
 
 
+def file_shortcut(label: str, path: str, purpose: str) -> Dict[str, Any]:
+    found = find_existing_input(path)
+    return {
+        "label": label,
+        "path": path,
+        "purpose": purpose,
+        "exists": found.exists(),
+        "href": href_for_path(path) if found.exists() else "",
+        "source_path": found.as_posix() if found.exists() else "",
+    }
+
+
+def malformed_single_cell_paste(row: Dict[str, str]) -> bool:
+    draft_id = clean(row.get("decision_draft_id"))
+    return bool(draft_id and "," in draft_id and not clean(row.get("source_intake_id")))
+
+
+def decision_row_status(row: Dict[str, str], draft: Dict[str, Any]) -> Dict[str, Any]:
+    expected_draft_id = clean(draft.get("decision_draft_id"))
+    expected_source_id = clean(draft.get("source_intake_id"))
+    draft_id = clean(row.get("decision_draft_id"))
+    source_id = clean(row.get("source_intake_id"))
+    decision = clean(row.get("operator_decision"))
+    warnings: List[str] = []
+    cue = "verify"
+
+    if malformed_single_cell_paste(row):
+        warnings.append("This row appears pasted as one quoted cell. Replace it with a fresh copied row pasted as plain CSV below the inbox header.")
+        cue = "replace"
+    if expected_draft_id and draft_id != expected_draft_id:
+        warnings.append("Decision draft ID does not exactly match the latest generated draft.")
+        cue = "replace"
+    if expected_source_id and source_id and source_id != expected_source_id:
+        warnings.append("Source intake ID does not match the latest generated draft.")
+        cue = "replace"
+    if decision not in {"approve_for_manual_next_step", "hold", "revise"}:
+        warnings.append("Decision must be approve_for_manual_next_step, hold, or revise.")
+        cue = "revise" if cue != "replace" else cue
+    if not clean(row.get("operator_notes")):
+        warnings.append("Operator notes are required.")
+        cue = "revise" if cue == "verify" else cue
+    if not clean(row.get("operator_name")):
+        warnings.append("Operator name is required.")
+        cue = "revise" if cue == "verify" else cue
+    if not clean(row.get("reviewed_at_local")):
+        warnings.append("Reviewed-at time is required.")
+        cue = "revise" if cue == "verify" else cue
+    if decision == "hold" and not clean(row.get("hold_reason")):
+        warnings.append("Hold decisions need a hold reason.")
+        cue = "revise" if cue != "replace" else cue
+    if decision == "revise" and not clean(row.get("revision_request")):
+        warnings.append("Revise decisions need a revision request.")
+        cue = "revise" if cue != "replace" else cue
+    for guardrail in ["publish_ready", "auto_approval", "auto_publish", "move_files", "paid_apis"]:
+        if clean(row.get(guardrail)).lower() not in {"", "false", "0", "no"}:
+            warnings.append(f"{guardrail} must remain false.")
+            cue = "hold" if cue != "replace" else cue
+
+    if not warnings:
+        cue = "verify"
+        status = "ready_for_render_validation"
+        next_step = "Rerun .\\hsd.cmd run -Mode render so the file-backed intake can validate this row."
+    elif cue == "replace":
+        status = "replace_row"
+        next_step = "Delete or replace this inbox row, copy a fresh row from the Decision tab, paste below the header, then rerun render."
+    elif cue == "hold":
+        status = "hold"
+        next_step = "Hold this row until unsafe guardrail values are corrected."
+    else:
+        status = "revise_row"
+        next_step = "Fill the missing fields in the panel, copy the row again, paste below the inbox header, then rerun render."
+
+    return {
+        "status": status,
+        "cue": cue,
+        "warnings": warnings,
+        "warning_count": len(warnings),
+        "next_step": next_step,
+    }
+
+
+def build_decision_history(
+    inbox_rows: List[Dict[str, str]],
+    intake_rows: List[Dict[str, str]],
+    draft: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    intake_by_draft = {clean(row.get("decision_draft_id")): row for row in intake_rows if clean(row.get("decision_draft_id"))}
+    history: List[Dict[str, Any]] = []
+    for index, row in enumerate(inbox_rows, start=1):
+        status = decision_row_status(row, draft)
+        draft_id = clean(row.get("decision_draft_id"))
+        intake = intake_by_draft.get(draft_id, {})
+        validation_status = clean(intake.get("validation_status"))
+        validation_issue = clean(intake.get("validation_issue"))
+        if not validation_status and status["status"] != "ready_for_render_validation":
+            validation_status = status["status"]
+        history.append(
+            {
+                "row_number": index,
+                "decision_draft_id": short(draft_id, 96),
+                "source_intake_id": short(clean(row.get("source_intake_id")), 72),
+                "operator_decision": clean(row.get("operator_decision")) or "missing",
+                "operator_name": clean(row.get("operator_name")) or "missing",
+                "reviewed_at_local": clean(row.get("reviewed_at_local")) or "missing",
+                "validation_status": validation_status or "needs_render_validation",
+                "validation_issue": validation_issue or "; ".join(status["warnings"]) or status["next_step"],
+                "cue": status["cue"],
+                "row_status": status["status"],
+                "warning_count": status["warning_count"],
+                "next_step": status["next_step"],
+            }
+        )
+    return history
+
+
 def operator_decision_ui_panel() -> Dict[str, Any]:
     renderer = read_json("manual_review_renderer_manifest.json")
     qa = read_json("manual_visual_qa_manifest.json")
@@ -615,6 +733,8 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
     draft = draft_rows[0] if draft_rows else {}
     intake_row = intake_rows[0] if intake_rows else {}
     staging = staging_rows[0] if staging_rows else {}
+    history = build_decision_history(inbox_rows, intake_rows, draft)
+    invalid_history = [row for row in history if row.get("cue") in {"replace", "revise", "hold"} or str(row.get("validation_status", "")).startswith("invalid")]
     preview_relative = "render_handoff_top_packet/draft_preview.png"
     preview_file = find_existing_input(preview_relative)
     preview_src = href_for_path(preview_relative) if preview_file.exists() else clean(first_present(draft.get("preview_path"), renderer.get("preview_path")))
@@ -629,7 +749,9 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         for row in template_rows
     ]
     status = clean(first_present(intake.get("status"), intake_row.get("validation_status"), draft.get("copy_status"), default="not_ready"))
-    if not draft_rows:
+    if invalid_history:
+        next_step = clean(invalid_history[0].get("next_step")) or "Fix the latest inbox row, then rerun .\\hsd.cmd run -Mode render."
+    elif not draft_rows:
         next_step = "Run .\\hsd.cmd run -Mode render to create the draft and QA reports."
     elif not find_existing_input("operator/inbox/manual_visual_qa_operator_decisions.csv").exists():
         next_step = "Run .\\hsd.cmd run -Mode decision-inbox to create the local inbox shell."
@@ -651,6 +773,20 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
         "decision_draft": draft,
         "template_choices": template_choices,
+        "file_shortcuts": [
+            file_shortcut("Draft preview", "render_handoff_top_packet/draft_preview.png", "Open the rendered image before making any decision."),
+            file_shortcut("QA report", "manual_visual_qa_report.md", "Read visual QA findings and guardrails."),
+            file_shortcut("QA checklist", "manual_visual_qa_checklist.csv", "Check pass/hold rows behind the QA summary."),
+            file_shortcut("Copy sheet", "render_handoff_top_packet/copy_sheet.md", "Confirm the visible copy and source-safe summary."),
+            file_shortcut("Source proof", "render_handoff_top_packet/source_proof.md", "Confirm the source artifact used for the draft."),
+            file_shortcut("Decision draft CSV", "manual_visual_qa_operator_decision_draft.csv", "Use this as the generated row contract."),
+            file_shortcut("Decision template CSV", "manual_visual_qa_operator_decision_template.csv", "Copy-only examples for approve, hold, or revise."),
+            file_shortcut("Decision inbox", "operator/inbox/manual_visual_qa_operator_decisions.csv", "Paste the final operator row below the header."),
+            file_shortcut("Decision intake", "manual_visual_qa_operator_decision_intake.csv", "See validation results after rerunning render."),
+            file_shortcut("Staging report", "manual_post_approval_render_staging.csv", "Review the next-step staging lane after validation."),
+        ],
+        "decision_history": history,
+        "history_issue_count": len(invalid_history),
         "intake_status": clean(intake.get("status")),
         "validation_status": clean(intake_row.get("validation_status")),
         "validation_issue": clean(intake_row.get("validation_issue")),
@@ -2509,9 +2645,9 @@ def pill(value: Any, tone: str | None = None) -> str:
 
 
 def open_link(path: str, label: str = "Open") -> str:
-    if not path or not input_path(path).exists():
+    if not path or not find_existing_input(path).exists():
         return '<span class="muted">Missing</span>'
-    return f'<a class="tool-link" href="{html.escape(path)}">{html.escape(label)}</a>'
+    return f'<a class="tool-link" href="{html.escape(href_for_path(path))}">{html.escape(label)}</a>'
 
 
 def command_hint(command: str) -> str:
@@ -3147,6 +3283,72 @@ DECISION_UI_FIELDS = [
 ]
 
 
+def render_decision_shortcuts(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        if row.get("exists"):
+            action = f'<a class="tool-link" href="{html.escape(clean(row.get("href")))}">Open</a>'
+            state = pill("found", "good")
+        else:
+            action = '<span class="muted">Missing</span>'
+            state = pill("missing", "warn")
+        body.append(
+            f"""
+            <article class="decision-link-card">
+              <div>
+                <strong>{html.escape(clean(row.get('label')))}</strong>
+                <p>{html.escape(clean(row.get('purpose')))}</p>
+                <code>{html.escape(clean(row.get('path')))}</code>
+              </div>
+              <div>{state}{action}</div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No linked decision files found.</p>'
+
+
+def render_decision_history(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        cue = clean(row.get("cue")) or "verify"
+        tone = {"replace": "bad", "revise": "warn", "hold": "bad", "verify": "neutral"}.get(cue, "neutral")
+        body.append(
+            f"""
+            <tr>
+              <td>{html.escape(str(row.get('row_number') or '-'))}</td>
+              <td>{pill(clean(row.get('row_status')) or 'review', tone)}</td>
+              <td>{html.escape(clean(row.get('operator_decision')))}</td>
+              <td>{html.escape(clean(row.get('operator_name')))}</td>
+              <td>{html.escape(clean(row.get('reviewed_at_local')))}</td>
+              <td>{html.escape(clean(row.get('validation_status')))}</td>
+              <td>{html.escape(short(clean(row.get('validation_issue')), 180))}</td>
+              <td>{html.escape(short(clean(row.get('next_step')), 180))}</td>
+            </tr>
+            """
+        )
+    if not body:
+        return '<p class="empty">No local inbox decision rows yet.</p>'
+    return f"""
+      <div class="table-wrap decision-history-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Cue</th>
+              <th>Decision</th>
+              <th>Operator</th>
+              <th>Reviewed</th>
+              <th>Validation</th>
+              <th>Issue</th>
+              <th>Next</th>
+            </tr>
+          </thead>
+          <tbody>{''.join(body)}</tbody>
+        </table>
+      </div>
+    """
+
+
 def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
@@ -3199,6 +3401,17 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
           <div class="decision-feedback">
             <strong>{html.escape(clean(panel.get('panel_status')) or 'not_ready')}</strong>
             <p>{html.escape(clean(panel.get('validation_issue')) or clean(panel.get('next_step')) or 'Manual review required.')}</p>
+            <small>{html.escape(clean(panel.get('next_step')))}</small>
+          </div>
+          <div class="decision-desk-section">
+            <div class="row-kicker">Open before deciding</div>
+            <div class="decision-link-grid">
+              {render_decision_shortcuts(panel.get('file_shortcuts', []))}
+            </div>
+          </div>
+          <div class="decision-desk-section">
+            <div class="row-kicker">Missing-field warnings <span id="decisionReadyBadge" class="pill warn">Needs review</span></div>
+            <ul id="decisionFieldWarnings" class="decision-warning-list"></ul>
           </div>
           <form class="decision-form">
             <fieldset class="decision-options">
@@ -3220,8 +3433,12 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             <textarea id="decisionCsvOutput" rows="5" readonly></textarea>
             <div class="decision-button-row">
               <button class="tool-link" type="button" id="copyDecisionRow">Copy row</button>
-              <span class="muted" id="decisionCopyStatus">Paste into {html.escape(panel.get('inbox_path'))}</span>
+              <span class="muted" id="decisionCopyStatus">Paste the copied row below the header in {html.escape(panel.get('inbox_path'))}. Do not paste the header row.</span>
             </div>
+          </div>
+          <div class="decision-desk-section">
+            <div class="row-kicker">Decision history {pill(str(panel.get('inbox_rows', 0)) + ' inbox row(s)')} {pill(str(panel.get('history_issue_count', 0)) + ' issue(s)', 'warn' if panel.get('history_issue_count') else 'good')}</div>
+            {render_decision_history(panel.get('decision_history', []))}
           </div>
           <div class="safety-strip">
             {pill('file-backed manual approval', 'good')}
@@ -3374,6 +3591,19 @@ def render_html(payload: Dict[str, Any]) -> str:
     .decision-status-grid span {{ display:block; color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:5px; }}
     .decision-status-grid strong {{ display:block; font-size:18px; overflow-wrap:anywhere; }}
     .decision-feedback {{ border-left:5px solid #d7a900; background:#fff7d7; padding:12px; border-radius:8px; }}
+    .decision-feedback small {{ display:block; margin-top:6px; color:#5e616a; font-weight:700; }}
+    .decision-desk-section {{ display:grid; gap:8px; border-top:1px solid var(--line); padding-top:12px; min-width:0; }}
+    .decision-link-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }}
+    .decision-link-card {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff; min-width:0; }}
+    .decision-link-card strong {{ display:block; font-size:13px; }}
+    .decision-link-card p {{ color:#5e616a; font-size:12px; margin:3px 0 6px; }}
+    .decision-link-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+    .decision-link-card > div:last-child {{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }}
+    .decision-warning-list {{ margin:0; padding:0; display:grid; gap:6px; list-style:none; }}
+    .decision-warning-list li {{ border:1px solid #ecd58a; background:#fff7d7; border-radius:6px; padding:8px 10px; color:#5d4800; font-weight:700; }}
+    .decision-warning-list li.good {{ border-color:#b9dfc8; background:var(--green-bg); color:var(--green); }}
+    .decision-history-table {{ max-height:260px; }}
+    .decision-history-table td {{ font-size:13px; }}
     .decision-form {{ display:grid; gap:10px; }}
     .decision-form label {{ display:grid; gap:5px; color:#3f424b; font-size:13px; font-weight:800; }}
     .decision-form textarea,.decision-form input,.decision-copy-box textarea {{ width:100%; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; background:#fff; color:var(--ink); resize:vertical; }}
@@ -3388,6 +3618,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       header {{ padding:20px; }}
       main {{ padding:16px; }}
       .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
+      .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
       .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       .brief-list {{ grid-template-columns:1fr; }}
@@ -3734,6 +3965,8 @@ def render_html(payload: Dict[str, Any]) -> str:
       const reviewedAt = document.getElementById("reviewedAtLocal");
       const copyButton = document.getElementById("copyDecisionRow");
       const copyStatus = document.getElementById("decisionCopyStatus");
+      const warningList = document.getElementById("decisionFieldWarnings");
+      const readyBadge = document.getElementById("decisionReadyBadge");
       if (reviewedAt && !reviewedAt.value) {{
         reviewedAt.value = new Date().toLocaleString();
       }}
@@ -3744,6 +3977,38 @@ def render_html(payload: Dict[str, Any]) -> str:
       function selectedDecision() {{
         const checked = document.querySelector('input[name="operatorDecision"]:checked');
         return checked ? checked.value : "hold";
+      }}
+      function currentWarnings() {{
+        const decision = selectedDecision();
+        const warnings = [];
+        if (!notes.value.trim()) warnings.push("Add operator notes describing what you checked by eye.");
+        if (!operatorName.value.trim()) warnings.push("Add the operator name before copying.");
+        if (!reviewedAt.value.trim()) warnings.push("Keep a reviewed-at time on the row.");
+        if (decision === "hold" && !holdReason.value.trim()) warnings.push("Hold needs a hold reason.");
+        if (decision === "revise" && !revisionRequest.value.trim()) warnings.push("Revise needs a revision request.");
+        return warnings;
+      }}
+      function renderWarnings() {{
+        if (!warningList || !readyBadge) return [];
+        const warnings = currentWarnings();
+        warningList.innerHTML = "";
+        if (!warnings.length) {{
+          const item = document.createElement("li");
+          item.className = "good";
+          item.textContent = "Ready to copy after you have opened the preview, QA report, copy sheet, and source proof.";
+          warningList.appendChild(item);
+          readyBadge.textContent = "Ready to copy";
+          readyBadge.className = "pill good";
+          return warnings;
+        }}
+        warnings.forEach((warning) => {{
+          const item = document.createElement("li");
+          item.textContent = warning;
+          warningList.appendChild(item);
+        }});
+        readyBadge.textContent = warnings.length + " missing";
+        readyBadge.className = "pill warn";
+        return warnings;
       }}
       function buildDecisionRow() {{
         const decision = selectedDecision();
@@ -3764,6 +4029,7 @@ def render_html(payload: Dict[str, Any]) -> str:
         const header = fields.join(",");
         const values = fields.map((field) => csvCell(row[field]));
         output.value = header + "\\n" + values.join(",");
+        renderWarnings();
       }}
       [notes, holdReason, revisionRequest, operatorName, reviewedAt].forEach((el) => {{
         if (el) el.addEventListener("input", buildDecisionRow);
@@ -3772,13 +4038,18 @@ def render_html(payload: Dict[str, Any]) -> str:
       if (copyButton) {{
         copyButton.addEventListener("click", async () => {{
           buildDecisionRow();
+          const warnings = currentWarnings();
+          if (warnings.length) {{
+            copyStatus.textContent = "Fill the missing fields before copying a decision row.";
+            return;
+          }}
           try {{
             await navigator.clipboard.writeText(output.value.split("\\n").slice(1).join("\\n"));
-            copyStatus.textContent = "Row copied. Paste below the header in operator/inbox/manual_visual_qa_operator_decisions.csv";
+            copyStatus.textContent = "Row copied. Paste below the header in operator/inbox/manual_visual_qa_operator_decisions.csv, then rerun render.";
           }} catch (err) {{
             output.focus();
             output.select();
-            copyStatus.textContent = "Copy from the text box, then paste below the inbox header.";
+            copyStatus.textContent = "Copy only the data row from the text box, then paste below the inbox header.";
           }}
         }});
       }}
@@ -3837,9 +4108,18 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Validation: {decision_panel.get('validation_status') or decision_panel.get('intake_status') or 'awaiting'}",
         f"- Preview: {decision_panel.get('preview_path') or 'missing'}",
         f"- Inbox: {decision_panel.get('inbox_path')} ({decision_panel.get('inbox_rows')} row(s))",
+        f"- History issues: {decision_panel.get('history_issue_count', 0)}",
         f"- Next safe action: {decision_panel.get('next_step')}",
         "- Guardrails: file-backed manual approval, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
+    lines.extend(
+        f"- Open: {item.get('label')} -> {item.get('path')} ({'found' if item.get('exists') else 'missing'})"
+        for item in decision_panel.get("file_shortcuts", [])
+    )
+    lines.extend(
+        f"- History row {item.get('row_number')}: {item.get('row_status')} | {item.get('operator_decision')} | {item.get('validation_status')} | next: {item.get('next_step')}"
+        for item in decision_panel.get("decision_history", [])
+    )
     handoff = payload["render_handoff_summary"]
     lines += ["", "## Top render handoff", ""]
     lines.extend(
