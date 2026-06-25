@@ -66,6 +66,13 @@ def seed_manual_visual_qa_decision_files() -> None:
     square_preview = review_drafts / "draft_preview_square.png"
     for render_file in [feed_preview, story_preview, square_preview]:
         render_file.write_bytes(b"fake social render draft")
+    reference_public = Path("assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight/01_game_recap_final_score_variant_A_public.png")
+    reference_layout = Path("assets/graphics/v4/approved/layout_references/wnba_final_score_tonight/02_game_recap_final_score_variant_A_layout_reference.png")
+    reference_story_public = Path("assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight/05_game_recap_final_score_variant_C_story_public.png")
+    reference_story_layout = Path("assets/graphics/v4/approved/layout_references/wnba_final_score_tonight/06_game_recap_final_score_variant_C_story_layout_reference.png")
+    for reference_file in [reference_public, reference_layout, reference_story_public, reference_story_layout]:
+        reference_file.parent.mkdir(parents=True, exist_ok=True)
+        reference_file.write_bytes(b"fake reference image")
     write_json(
         "manual_review_renderer_manifest.json",
         {
@@ -86,6 +93,8 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_template_id": "hsd_game_recap_final_score_a",
                     "reference_exact_format_match": True,
                     "reference_derivation": "exact_imported_reference_spec",
+                    "reference_public_mockup_path": reference_public.as_posix(),
+                    "reference_layout_path": reference_layout.as_posix(),
                 },
                 {
                     "format_id": "ig_story_9x16",
@@ -98,6 +107,8 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_template_id": "hsd_game_recap_final_score_c_story",
                     "reference_exact_format_match": True,
                     "reference_derivation": "exact_imported_reference_spec",
+                    "reference_public_mockup_path": reference_story_public.as_posix(),
+                    "reference_layout_path": reference_story_layout.as_posix(),
                 },
                 {
                     "format_id": "square_feed_1x1",
@@ -110,6 +121,8 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_template_id": "hsd_game_recap_final_score_a",
                     "reference_exact_format_match": False,
                     "reference_derivation": "square_review_draft_derived_from_imported_4x5_layout",
+                    "reference_public_mockup_path": reference_public.as_posix(),
+                    "reference_layout_path": reference_layout.as_posix(),
                 },
             ],
             "asset_slots": [
@@ -1158,7 +1171,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.46.0-render-gallery-qa-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.47.0-render-fidelity-comparison"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1413,6 +1426,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert all(item["auto_publish"] == "false" for item in payload["operator_decision_panel"]["render_gallery"])
     feed_gallery = payload["operator_decision_panel"]["render_gallery"][0]
     assert feed_gallery["template_status"] == "exact_reference_match"
+    assert feed_gallery["reference_public_exists"] == "true"
+    assert feed_gallery["reference_layout_exists"] == "true"
+    assert "01_game_recap_final_score_variant_A_public.png" in feed_gallery["reference_public_href"]
+    assert "02_game_recap_final_score_variant_A_layout_reference.png" in feed_gallery["reference_layout_href"]
     assert feed_gallery["logo_status"] == "logo_review_required"
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
@@ -1577,6 +1594,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Decision history" in html
     assert "Open before deciding" in html
     assert "Render gallery" in html
+    assert "Public mockup" in html
+    assert "Layout reference" in html
     assert "Primary feed" in html
     assert "Story" in html
     assert "Square" in html
