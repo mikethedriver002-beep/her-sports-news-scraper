@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.15.0-premium-athlete-photo-layouts"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.16.0-photo-first-final-score-template"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -292,7 +292,8 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["athlete_photo_approval_cue"] == "APPROVED PHOTO"
     assert summary["athlete_photo_review_required"] == "false"
     assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
-    assert summary["athlete_photo_layout_options"] == "premium_headshot_left,compact_headshot_chip,safe_no_photo_fallback"
+    assert summary["athlete_photo_layout_options"] == "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback"
+    assert summary["athlete_photo_template_family"] == "approved_athlete_photo_final_score"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
     assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
     assert summary["editorial_microcopy_game_shape"] == "clear_separation"
@@ -406,8 +407,9 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
 
     content = {"athlete_photo_status": "approved_local_headshot"}
 
-    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_mode"] == "premium_headshot_left"
-    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_story_9x16", "height": 1920})["athlete_photo_layout_mode"] == "premium_headshot_left"
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_mode"] == "photo_first_final_score"
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_story_9x16", "height": 1920})["athlete_photo_layout_mode"] == "photo_first_final_score"
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_status"] == "approved_photo_first_template"
     assert module.athlete_photo_layout_for_format(content, {"format_id": "square_feed_1x1", "height": 1080})["athlete_photo_layout_mode"] == "compact_headshot_chip"
     assert (
         module.athlete_photo_layout_for_format({"athlete_photo_status": "athlete_photo_missing", "athlete_photo_blocker": "missing"}, {"format_id": "ig_feed_4x5", "height": 1350})[

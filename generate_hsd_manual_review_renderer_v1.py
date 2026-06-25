@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.15.0-premium-athlete-photo-layouts"
+VERSION = "hsd-manual-review-renderer-v1.16.0-photo-first-final-score-template"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -1081,7 +1081,7 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "athlete_photo_render_method": clean(photo.get("render_method")),
         "athlete_photo_policy": clean(photo.get("approval_policy")),
         "athlete_photo_approved_at_utc": clean(photo.get("approved_at_utc")),
-        "athlete_photo_layout_options": "premium_headshot_left,compact_headshot_chip,safe_no_photo_fallback",
+        "athlete_photo_layout_options": "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback",
         "callouts": stats[:3],
         "player_name": player,
         "team": team,
@@ -1771,6 +1771,152 @@ def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, in
         draw_reference_text(image, (x + w - chip_w - 22, y + 15, chip_w, 24), player, "context", 16, 10, accent, max_lines=1, align="center", uppercase=False)
 
 
+def approved_athlete_photo_path(module: Dict[str, Any]) -> Path | None:
+    if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
+        return None
+    path = project_path(module.get("athlete_photo_path"))
+    if not path.exists() or Image is None:
+        return None
+    return path
+
+
+def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> bool:
+    path = approved_athlete_photo_path(module)
+    if path is None:
+        return False
+    x, y, w, h = box
+    try:
+        photo = prepared_athlete_photo(path, w - 34, h - 48, crop_square=False)
+    except Exception:
+        return False
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    draw.rounded_rectangle((x + 10, y + 12, x + w + 10, y + h + 12), radius=26, fill=(0, 0, 0, 132))
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, fill=(2, 4, 9, 214), outline=(*accent, 250), width=3)
+    draw.polygon([(x + 18, y + h - 128), (x + w - 18, y + h - 210), (x + w - 18, y + h - 18), (x + 18, y + h - 18)], fill=(*accent, 58))
+    draw.line((x + 24, y + 28, x + w - 24, y + 28), fill=(*accent, 185), width=3)
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow, "RGBA")
+    glow_draw.ellipse((x - 72, y + 44, x + w + 72, y + h + 88), fill=(*accent, 54))
+    if ImageFilter is not None:
+        glow = glow.filter(ImageFilter.GaussianBlur(28))
+    layer.alpha_composite(glow)
+    photo_x = x + (w - photo.width) // 2
+    photo_y = y + h - photo.height - 20
+    layer.alpha_composite(photo, (photo_x, photo_y))
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 250), width=3)
+    label_w = min(w - 42, 214)
+    draw.rounded_rectangle((x + 20, y + h - 52, x + 20 + label_w, y + h - 18), radius=8, fill=(3, 5, 10, 226), outline=(248, 250, 255, 150), width=1)
+    image.alpha_composite(layer)
+    player = clean(module.get("player_name")) or "APPROVED ATHLETE"
+    draw_reference_text(image, (x + 32, y + 26, w - 64, 46), player, "context", 25, 14, PALETTE["ink"], max_lines=1, align="center", uppercase=False)
+    draw_reference_text(image, (x + 28, y + h - 47, label_w - 16, 26), "APPROVED PHOTO", "context", 14, 9, accent, max_lines=1, align="center")
+    return True
+
+
+def draw_photo_first_score_row(
+    image: Any,
+    box: Tuple[int, int, int, int],
+    team: str,
+    score_value: str,
+    accent: tuple[int, int, int],
+    aliases: Dict[str, str],
+    logos: Dict[str, Dict[str, str]],
+    *,
+    winner: bool = False,
+) -> None:
+    x, y, w, h = box
+    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 226 if winner else 210), radius=18, width=2)
+    logo_size = min(h - 30, 104 if winner else 92)
+    logo_box = (x + 20, y + (h - logo_size) // 2, logo_size, logo_size)
+    draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
+    draw_reference_text(image, (x + logo_size + 44, y + 18, max(220, w - logo_size - 214), h - 36), short_team(team), "context", 38 if winner else 32, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, (x + w - 184, y - 12, 162, h + 24), score_value, "score", 122 if winner else 102, 54, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
+
+
+def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
+    x, y, w, h = box
+    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16, width=2)
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((x + 2, y + 2, x + 11, y + h - 2), fill=(*accent, 238))
+    chip_w = min(338, max(260, w // 3))
+    draw_premium_stat_chips(image, (x + w - chip_w - 22, y + 18, chip_w, h - 36), module.get("callouts") or [], accent, compact=h < 132)
+    player = clean(module.get("player_name"))
+    source_label = "VERIFIED STAT TEXT"
+    heading = clean(module.get("headline")) or (f"{last_name(player)} LEDGER" if player else "PLAYER LEDGER")
+    text_w = max(390, w - chip_w - 72)
+    draw_reference_text(image, (x + 28, y + 15, text_w, 24), f"PHOTO-FIRST / {source_label}", "context", 19, 11, accent, max_lines=1)
+    draw_reference_text(image, (x + 28, y + 42, text_w, 46), heading, "display", 40, 22, PALETTE["ink"], max_lines=1)
+    draw_reference_text(image, (x + 28, y + 88, text_w, max(34, h - 94)), clean(module.get("editorial_line")) or clean(module.get("body")), "body", 23, 13, (235, 239, 247), max_lines=2, uppercase=False)
+
+
+def draw_photo_first_final_score_template(
+    image: Any,
+    packet: Dict[str, Any],
+    template: Dict[str, str],
+    format_spec: Dict[str, Any],
+    score: Dict[str, str],
+    reference: Dict[str, Any],
+    stat_module: Dict[str, Any],
+) -> bool:
+    template_spec = format_reference_spec(format_spec, reference)
+    width, height = int(format_spec["width"]), int(format_spec["height"])
+    aliases, logos = team_registry()
+    winner_profile = team_visual_profile(score["winner"], aliases, logos, (247, 203, 84))
+    loser_profile = team_visual_profile(score["loser"], aliases, logos, (37, 99, 163))
+    winner_accent = winner_profile["accent_rgb"]
+    loser_accent = loser_profile["accent_rgb"]
+    format_id = clean(format_spec.get("format_id"))
+    is_story = height > 1500
+
+    draw_reference_background(image, "final")
+    draw_reference_badge(image, template_spec)
+    draw_final_score_reference_title(image, template_spec, format_id)
+    draw_context_divider(image, zone_box(template_spec, "context_row"), "FINAL / WNBA / APPROVED PHOTO DRAFT")
+
+    if is_story:
+        photo_box = (72, 505, 392, 690)
+        score_top = 520
+        score_h = 210
+        stat_box = (72, 1235, 936, 168)
+        hook_box = (72, 1430, 936, 168)
+    else:
+        photo_box = (58, 384, 374, 560)
+        score_top = 398
+        score_h = 178
+        stat_box = (58, 972, 964, 142)
+        hook_box = (58, 1140, 964, 112)
+
+    photo_ok = draw_photo_first_athlete_stage(image, photo_box, stat_module, winner_accent)
+    if not photo_ok:
+        return False
+
+    score_x = photo_box[0] + photo_box[2] + 34
+    score_w = width - score_x - photo_box[0]
+    draw_photo_first_score_row(image, (score_x, score_top, score_w, score_h), score["winner"], score["winner_score"], winner_accent, aliases, logos, winner=True)
+    draw_photo_first_score_row(image, (score_x, score_top + score_h + 26, score_w, score_h - 18), score["loser"], score["loser_score"], loser_accent, aliases, logos, winner=False)
+
+    total = score_total(score)
+    context_parts = [clean(stat_module.get("matchup_note"))]
+    if total is not None:
+        context_parts.append(f"{total} pts")
+    draw_reference_text(image, (score_x, score_top + score_h * 2 + 40, score_w, 54), " / ".join([part for part in context_parts if part]), "context", 27, 13, winner_accent, max_lines=1)
+
+    draw_photo_first_stat_strip(image, stat_box, stat_module, winner_accent)
+    microcopy = selected_editorial_microcopy(packet, score, stat_module)
+    prompt_body = f"{clean(microcopy.get('context'))}. {clean(microcopy.get('body'))}"
+    draw_lower_reference_module(
+        image,
+        hook_box,
+        clean(microcopy.get("eyebrow")) or "MATCHUP ANGLE",
+        prompt_body,
+        loser_accent,
+        headline=clean(microcopy.get("headline")) or review_prompt(score),
+    )
+    draw_reference_guardrail(image)
+    return True
+
+
 def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "", callouts: List[Dict[str, str]] | None = None) -> None:
     x, y, w, h = box
     compact = h < 112
@@ -1840,11 +1986,20 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     loser_profile = team_visual_profile(score["loser"], aliases, logos, (37, 99, 163))
     winner_accent = winner_profile["accent_rgb"]
     loser_accent = loser_profile["accent_rgb"]
+    stat_module = select_verified_stat_module(packet, score)
+    format_id = clean(format_spec.get("format_id"))
+    if (
+        format_id != "square_feed_1x1"
+        and clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}
+        and approved_athlete_photo_path(stat_module) is not None
+        and draw_photo_first_final_score_template(image, packet, template, format_spec, score, reference, stat_module)
+    ):
+        return
 
     draw_reference_background(image, "final")
     draw_reference_badge(image, template_spec)
 
-    draw_final_score_reference_title(image, template_spec, clean(format_spec.get("format_id")))
+    draw_final_score_reference_title(image, template_spec, format_id)
 
     context_box = zone_box(template_spec, "context_row")
     draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
@@ -1853,7 +2008,6 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, winner_accent, winner=True)
     draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, loser_accent, winner=False)
 
-    format_id = clean(format_spec.get("format_id"))
     primary_team_size = 54 if format_id == "square_feed_1x1" else 58
     secondary_team_size = 42 if format_id == "square_feed_1x1" else 46
     primary_score_size = 220 if format_id == "square_feed_1x1" else (238 if height <= 1350 else 254)
@@ -1863,7 +2017,6 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", primary_score_size, 88, PALETTE["ink"], max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
     draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", secondary_score_size, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
-    stat_module = select_verified_stat_module(packet, score)
     edge = game_edge_module(score)
     stat_status = clean(stat_module.get("status"))
     module = stat_module if stat_status in {"verified_player_stat_module", "verified_supporting_stat_module"} else edge
@@ -2003,6 +2156,10 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "athlete_photo_policy": clean(stat_module.get("athlete_photo_policy")),
             "athlete_photo_approved_at_utc": clean(stat_module.get("athlete_photo_approved_at_utc")),
             "athlete_photo_layout_options": clean(stat_module.get("athlete_photo_layout_options")),
+            "athlete_photo_template_family": "approved_athlete_photo_final_score"
+            if clean(stat_module.get("athlete_photo_status")) == "approved_local_headshot"
+            else "logo_first_final_score_fallback",
+            "athlete_photo_template_policy": "Approved local athlete photo can become the main editorial visual only in review-only feed/story formats; square and unsafe cases keep compact or logo-first fallbacks.",
             "content_module_fallback_label": "",
             "stat_source_confidence": clean(stat_module.get("stat_source_confidence")),
             "stat_source_label": clean(stat_module.get("stat_source_label")),
@@ -2032,6 +2189,8 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "athlete_photo_approval_cue": "NO PLAYER SELECTED",
         "athlete_photo_review_required": "true",
         "athlete_photo_blocker": "No verified player/stat module selected for this final-score draft.",
+        "athlete_photo_template_family": "logo_first_final_score_fallback",
+        "athlete_photo_template_policy": "No approved player photo is available; keep logo-first score layout and manual review guardrails.",
         "content_module_fallback_label": clean(edge.get("eyebrow")) or "SCORE-DERIVED EDGE",
         "stat_source_confidence": "score_only_fallback_manual_context_required",
         "stat_source_label": "Score-derived fallback",
@@ -2055,17 +2214,20 @@ def athlete_photo_layout_for_format(content_module: Dict[str, Any], spec: Dict[s
             "athlete_photo_layout_mode": "safe_no_photo_fallback",
             "athlete_photo_layout_status": "photo_not_rendered",
             "athlete_photo_layout_detail": clean(content_module.get("athlete_photo_blocker")) or "Approved local athlete photo is not available for this format.",
+            "athlete_photo_template_family": "logo_first_final_score_fallback",
         }
     if clean(spec.get("format_id")) == "square_feed_1x1" or int(spec.get("height", 0)) <= 1100:
         return {
             "athlete_photo_layout_mode": "compact_headshot_chip",
             "athlete_photo_layout_status": "approved_photo_compact_layout",
             "athlete_photo_layout_detail": "Approved local headshot uses a compact chip to preserve the square score layout.",
+            "athlete_photo_template_family": "compact_athlete_photo_score_fallback",
         }
     return {
-        "athlete_photo_layout_mode": "premium_headshot_left",
-        "athlete_photo_layout_status": "approved_photo_premium_layout",
-        "athlete_photo_layout_detail": "Approved local headshot uses a larger left-side player spotlight inside the review-only ledger.",
+        "athlete_photo_layout_mode": "photo_first_final_score",
+        "athlete_photo_layout_status": "approved_photo_first_template",
+        "athlete_photo_layout_detail": "Approved local headshot becomes the main editorial visual with score lanes and verified stat modules kept review-only.",
+        "athlete_photo_template_family": "approved_athlete_photo_final_score",
     }
 
 
