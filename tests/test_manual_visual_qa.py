@@ -17,13 +17,19 @@ def make_preview(path: Path, *, size: tuple[int, int] = (1080, 1350)) -> None:
     image = Image.new("RGB", size, (248, 246, 241))
     draw = ImageDraw.Draw(image)
     headline_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 68)
+    score_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 190)
+    team_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 58)
     body_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 34)
     small_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 24)
     draw.rectangle((710, 74, 1030, 150), fill=(190, 39, 54))
     draw.rectangle((54, 1288, 1028, 1318), fill=(190, 39, 54))
     draw.text((74, 260), "Test Liberty result", font=headline_font, fill=(24, 28, 36))
     draw.text((74, 342), "Verified final: Liberty 87, Aces 76.", font=headline_font, fill=(24, 28, 36))
-    draw.text((74, 520), "Source confidence ready and assets not required.", font=body_font, fill=(24, 28, 36))
+    draw.text((320, 450), "LIBERTY", font=team_font, fill=(24, 28, 36))
+    draw.text((720, 420), "87", font=score_font, fill=(24, 28, 36))
+    draw.text((320, 675), "ACES", font=team_font, fill=(24, 28, 36))
+    draw.text((760, 650), "76", font=score_font, fill=(24, 28, 36))
+    draw.text((74, 910), "Source confidence ready and assets not required.", font=body_font, fill=(24, 28, 36))
     draw.text((82, 980), "Manual render context", font=body_font, fill=(24, 28, 36))
     draw.text((82, 1040), "Approval: human visual review required before any post", font=small_font, fill=(24, 28, 36))
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,8 +96,9 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "top_draft_label_zone" in check_ids
     assert "footer_guardrail_zone" in check_ids
     assert "headline_text_zone" in check_ids
-    assert "dek_text_zone" in check_ids
+    assert "score_team_text_zone" in check_ids
     assert "context_text_zone" in check_ids
+    assert "lower_module_text_zone" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
     assert all(row["operator_decision"] == "operator_fill_required" for row in rows)

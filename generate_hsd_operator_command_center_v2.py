@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.46.0-render-gallery-qa-cues"
+VERSION = "hsd-operator-command-center-v3.47.0-render-fidelity-comparison"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -733,6 +733,48 @@ def reference_review_summary(option: Dict[str, Any]) -> Dict[str, str]:
     }
 
 
+def reference_mockup_summary(option: Dict[str, Any]) -> Dict[str, str]:
+    public_path = clean(option.get("reference_public_mockup_path"))
+    layout_path = clean(option.get("reference_layout_path"))
+    found_public = find_existing_input(public_path) if public_path else Path("")
+    found_layout = find_existing_input(layout_path) if layout_path else Path("")
+    if public_path and found_public.exists():
+        return {
+            "path": public_path,
+            "href": href_for_path(public_path),
+            "exists": "true",
+            "label": "Reference mockup",
+            "detail": "Approved public mockup from Templates-hsd.",
+        }
+    if layout_path and found_layout.exists():
+        return {
+            "path": layout_path,
+            "href": href_for_path(layout_path),
+            "exists": "true",
+            "label": "Layout reference",
+            "detail": "Approved layout reference from Templates-hsd.",
+        }
+    return {
+        "path": public_path or layout_path,
+        "href": "",
+        "exists": "false",
+        "label": "Reference missing",
+        "detail": "No local reference thumbnail found.",
+    }
+
+
+def reference_asset_summary(option: Dict[str, Any], key: str, label: str, detail: str) -> Dict[str, str]:
+    path = clean(option.get(key))
+    found = find_existing_input(path) if path else Path("")
+    return {
+        "path": path,
+        "href": href_for_path(path) if path and found.exists() else "",
+        "exists": "true" if path and found.exists() else "false",
+        "label": label if path and found.exists() else f"{label} missing",
+        "detail": detail if path and found.exists() else f"No local {label.lower()} found.",
+    }
+
+
 def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Dict[str, str]) -> List[Dict[str, Any]]:
     format_options = renderer.get("format_options", [])
     if not isinstance(format_options, list):
@@ -804,6 +846,9 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
         else:
             reference_note = "Reference: not linked"
         reference_summary = reference_review_summary(option)
+        mockup_summary = reference_mockup_summary(option)
+        public_summary = reference_asset_summary(option, "reference_public_mockup_path", "Public mockup", "Approved public mockup from Templates-hsd.")
+        layout_summary = reference_asset_summary(option, "reference_layout_path", "Layout reference", "Approved layout reference from Templates-hsd.")
         out.append(
             {
                 "format_id": spec["format_id"],
@@ -823,6 +868,19 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
                 "reference_public_mockup_path": clean(option.get("reference_public_mockup_path")),
                 "reference_layout_path": clean(option.get("reference_layout_path")),
                 "reference_exact_format_match": "true" if option.get("reference_exact_format_match") is True else "false",
+                "reference_mockup_href": mockup_summary["href"],
+                "reference_mockup_path": mockup_summary["path"],
+                "reference_mockup_exists": mockup_summary["exists"],
+                "reference_mockup_label": mockup_summary["label"],
+                "reference_mockup_detail": mockup_summary["detail"],
+                "reference_public_href": public_summary["href"],
+                "reference_public_exists": public_summary["exists"],
+                "reference_public_label": public_summary["label"],
+                "reference_public_detail": public_summary["detail"],
+                "reference_layout_href": layout_summary["href"],
+                "reference_layout_exists": layout_summary["exists"],
+                "reference_layout_label": layout_summary["label"],
+                "reference_layout_detail": layout_summary["detail"],
                 "logo_status": logo_summary["status"],
                 "logo_summary": logo_summary["summary"],
                 "logo_detail": logo_summary["detail"],
@@ -3666,21 +3724,52 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
             if exists
             else '<div class="render-gallery-missing">Missing render</div>'
         )
+        reference_exists = clean(row.get("reference_mockup_exists")) == "true" and clean(row.get("reference_mockup_href"))
+        public_exists = clean(row.get("reference_public_exists")) == "true" and clean(row.get("reference_public_href"))
+        layout_exists = clean(row.get("reference_layout_exists")) == "true" and clean(row.get("reference_layout_href"))
+        public_preview = (
+            f'<a href="{html.escape(clean(row.get("reference_public_href")))}"><img src="{html.escape(clean(row.get("reference_public_href")))}" alt="{html.escape(clean(row.get("label")))} public mockup"></a>'
+            if public_exists
+            else '<div class="render-gallery-missing">Public mockup missing</div>'
+        )
+        layout_preview = (
+            f'<a href="{html.escape(clean(row.get("reference_layout_href")))}"><img src="{html.escape(clean(row.get("reference_layout_href")))}" alt="{html.escape(clean(row.get("label")))} layout reference"></a>'
+            if layout_exists
+            else '<div class="render-gallery-missing">Layout reference missing</div>'
+        )
         action = (
             f'<a class="tool-link" href="{html.escape(clean(row.get("href")))}">Open</a>'
             if exists
             else '<span class="muted">Run render mode</span>'
         )
+        reference_action = (
+            f'<a class="tool-link" href="{html.escape(clean(row.get("reference_mockup_href")))}">Open ref</a>'
+            if reference_exists
+            else '<span class="muted">Reference missing</span>'
+        )
         body.append(
             f"""
             <article class="render-gallery-card">
-              <div class="render-gallery-frame {html.escape(clean(row.get('format_id')))}">{preview}</div>
+              <div class="render-comparison-grid">
+                <div>
+                  <span>Draft</span>
+                  <div class="render-gallery-frame {html.escape(clean(row.get('format_id')))}">{preview}</div>
+                </div>
+                <div>
+                  <span>{html.escape(clean(row.get('reference_public_label')) or 'Public mockup')}</span>
+                  <div class="render-gallery-frame render-reference-frame {html.escape(clean(row.get('format_id')))}">{public_preview}</div>
+                </div>
+                <div>
+                  <span>{html.escape(clean(row.get('reference_layout_label')) or 'Layout reference')}</span>
+                  <div class="render-gallery-frame render-reference-frame {html.escape(clean(row.get('format_id')))}">{layout_preview}</div>
+                </div>
+              </div>
               <div class="render-gallery-meta">
                 <div>
                   <strong>{html.escape(clean(row.get('label')))}</strong>
                   <p>{html.escape(clean(row.get('fit_note')))}</p>
                 </div>
-                {action}
+                <div class="render-gallery-actions">{action}{reference_action}</div>
               </div>
               <div class="render-gallery-facts">
                 {pill(clean(row.get('review_status')) or 'review')}
@@ -3690,6 +3779,7 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
               </div>
               <div class="render-cue-grid">{''.join(cue_html)}</div>
               <p class="render-gallery-note">{html.escape(clean(row.get('reference_note')))}</p>
+              <p class="render-gallery-note">{html.escape(clean(row.get('reference_public_detail')))} {html.escape(clean(row.get('reference_layout_detail')))}</p>
               <p class="render-gallery-note">{html.escape(clean(row.get('qa_summary')))}. {html.escape(short(clean(row.get('asset_note')), 150))}</p>
               <code>{html.escape(clean(row.get('path')))}</code>
             </article>
@@ -3958,11 +4048,15 @@ def render_html(payload: Dict[str, Any]) -> str:
     .decision-link-card > div:last-child {{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }}
     .render-gallery-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }}
     .render-gallery-card {{ border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; display:grid; gap:8px; min-width:0; }}
+    .render-comparison-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; align-items:stretch; }}
+    .render-comparison-grid span {{ color:#5e616a; display:block; font-size:10px; font-weight:900; letter-spacing:0; margin-bottom:4px; text-transform:uppercase; }}
     .render-gallery-frame {{ background:#111823; border:1px solid #242b38; border-radius:7px; min-height:260px; display:grid; place-items:center; overflow:hidden; }}
     .render-gallery-frame.ig_story_9x16 {{ min-height:330px; }}
+    .render-reference-frame {{ background:#f5f6f8; border-color:#d8dbe3; }}
     .render-gallery-frame img {{ width:100%; height:100%; max-height:430px; object-fit:contain; display:block; }}
     .render-gallery-missing {{ color:#fff; font-weight:800; padding:28px 12px; text-align:center; }}
     .render-gallery-meta {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:start; }}
+    .render-gallery-actions {{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }}
     .render-gallery-meta strong {{ display:block; font-size:14px; }}
     .render-gallery-meta p,.render-gallery-note {{ color:#5e616a; font-size:12px; margin-top:3px; }}
     .render-gallery-facts {{ display:flex; gap:6px; flex-wrap:wrap; }}
@@ -3996,6 +4090,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       main {{ padding:16px; }}
       .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
       .render-gallery-grid {{ grid-template-columns:1fr; }}
+      .render-comparison-grid {{ grid-template-columns:1fr; }}
       .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
       .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}

@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.0.0-review-only"
+VERSION = "hsd-manual-visual-qa-v1.1.0-reference-readable-review"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -25,10 +25,12 @@ OUT_MANIFEST = output_path("manual_visual_qa_manifest.json")
 OUT_CHECKLIST = output_path("manual_visual_qa_checklist.csv")
 
 Zone = Tuple[int, int, int, int]
-TEXT_ZONES: Dict[str, Zone] = {
-    "headline_text_zone": (60, 240, 1020, 500),
-    "dek_text_zone": (60, 500, 1020, 700),
-    "context_text_zone": (60, 930, 1020, 1268),
+TextZoneSpec = Tuple[Zone, float, float]
+TEXT_ZONES: Dict[str, TextZoneSpec] = {
+    "headline_text_zone": ((50, 130, 1030, 285), 0.18, 850.0),
+    "score_team_text_zone": ((280, 420, 1030, 900), 0.08, 800.0),
+    "context_text_zone": ((55, 320, 1030, 405), 0.04, 650.0),
+    "lower_module_text_zone": ((70, 960, 1010, 1268), 0.045, 700.0),
 }
 DRAFT_MARK_ZONES: Dict[str, Tuple[Zone, float]] = {
     "top_draft_label_zone": ((710, 74, 1030, 150), 0.025),
@@ -116,8 +118,10 @@ def text_zone_signal(image: Any, box: Zone) -> Dict[str, float]:
     variance = float(stat.var[0])
     data = crop.tobytes()
     darkish = sum(1 for value in data if value < 190)
+    bright = sum(1 for value in data if value >= 190)
     dark_ratio = darkish / len(data) if data else 0.0
-    return {"average_luma": avg, "variance": variance, "dark_pixel_ratio": dark_ratio}
+    bright_ratio = bright / len(data) if data else 0.0
+    return {"average_luma": avg, "variance": variance, "dark_pixel_ratio": dark_ratio, "bright_pixel_ratio": bright_ratio}
 
 
 def guardrail_checks(renderer_manifest: Dict[str, Any], handoff_manifest: Dict[str, Any]) -> Dict[str, bool]:
@@ -359,28 +363,36 @@ def main() -> None:
             )
 
         zone_scores: List[float] = []
-        for zone_id, box in TEXT_ZONES.items():
+        bright_scores: List[float] = []
+        for zone_id, (box, min_bright_ratio, min_variance) in TEXT_ZONES.items():
             signal = text_zone_signal(image, box)
             zone_scores.append(signal["dark_pixel_ratio"])
-            passed = signal["variance"] >= 60.0 and signal["dark_pixel_ratio"] >= 0.015
+            bright_scores.append(signal["bright_pixel_ratio"])
+            passed = signal["variance"] >= min_variance and signal["bright_pixel_ratio"] >= min_bright_ratio
             add_check(
                 checks,
                 zone_id,
                 "Readable text zone signal",
                 passed,
-                "Luma avg {average_luma:.1f}, variance {variance:.1f}, dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}.".format(
+                "Luma avg {average_luma:.1f}, variance {variance:.1f}, bright pixel ratio {bright_pixel_ratio:.3f} "
+                "(min {min_bright_ratio:.3f}), dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}.".format(
                     **signal,
+                    min_bright_ratio=min_bright_ratio,
                     box=box,
                 ),
             )
         average_signal = mean(zone_scores) if zone_scores else 0.0
+        average_bright_signal = mean(bright_scores) if bright_scores else 0.0
         add_check(
             checks,
             "overall_text_signal",
             "Overall readable text-zone signal",
-            average_signal >= 0.020,
-            f"Average dark pixel ratio across text zones {average_signal:.3f}; this is a heuristic, not OCR.",
-            result="pass_human_review_required" if average_signal >= 0.020 else "hold",
+            average_signal >= 0.020 and average_bright_signal >= 0.070,
+            (
+                f"Average dark pixel ratio across text zones {average_signal:.3f}; "
+                f"average bright pixel ratio {average_bright_signal:.3f}; this is a heuristic, not OCR."
+            ),
+            result="pass_human_review_required" if average_signal >= 0.020 and average_bright_signal >= 0.070 else "hold",
         )
 
     guardrails = guardrail_checks(renderer_manifest, handoff_manifest)

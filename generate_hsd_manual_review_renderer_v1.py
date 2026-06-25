@@ -995,6 +995,26 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
     )
 
 
+def draw_score_lanes(image: Any, template_spec: Dict[str, Any]) -> None:
+    draw = ImageDraw.Draw(image, "RGBA")
+    lane_pairs = [
+        ("primary_logo_slot", "primary_score", (3, 5, 10, 176), (247, 203, 84, 190)),
+        ("secondary_logo_slot", "secondary_score", (3, 5, 10, 168), (206, 214, 226, 175)),
+    ]
+    for logo_name, score_name, fill, accent in lane_pairs:
+        lx, ly, lw, lh = zone_box(template_spec, logo_name)
+        sx, sy, sw, sh = zone_box(template_spec, score_name)
+        if not lw or not sw:
+            continue
+        x1 = max(30, min(lx, sx) - 12)
+        y1 = max(0, min(ly, sy) + 12)
+        x2 = min(image.size[0] - 30, max(lx + lw, sx + sw) + 10)
+        y2 = min(image.size[1], max(ly + lh, sy + sh) - 10)
+        draw.rounded_rectangle((x1 + 8, y1 + 10, x2 + 8, y2 + 10), radius=22, fill=(0, 0, 0, 82))
+        draw.rounded_rectangle((x1, y1, x2, y2), radius=22, fill=fill, outline=accent, width=2)
+        draw.line((x1 + 22, y2 - 10, x2 - 22, y2 - 10), fill=accent, width=2)
+
+
 def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], format_spec: Dict[str, Any], score: Dict[str, str], reference: Dict[str, Any]) -> None:
     template_spec = format_reference_spec(format_spec, reference)
     width, height = int(format_spec["width"]), int(format_spec["height"])
@@ -1011,13 +1031,14 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
 
     context_box = zone_box(template_spec, "context_row")
     draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
+    draw_score_lanes(image, template_spec)
 
     draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, (247, 203, 84))
     draw_team_logo_slot(image, score["loser"], zone_box(template_spec, "secondary_logo_slot"), aliases, logos, (37, 99, 163))
 
     draw_reference_text(image, zone_box(template_spec, "primary_team"), short_team(score["winner"]), "context", 58, 24, PALETTE["ink"], max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
     draw_reference_text(image, zone_box(template_spec, "secondary_team"), short_team(score["loser"]), "context", 46, 22, (204, 210, 222), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
-    draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", 238 if height <= 1350 else 254, 88, (247, 203, 84), max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, zone_box(template_spec, "primary_score"), score["winner_score"], "score", 238 if height <= 1350 else 254, 88, PALETTE["ink"], max_lines=1, align="right", stroke=3, stroke_fill=(0, 0, 0))
     draw_reference_text(image, zone_box(template_spec, "secondary_score"), score["loser_score"], "score", 176 if height <= 1350 else 188, 72, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
     context = clean(packet.get("copy_context")) or clean(packet.get("source_detail")) or "Free-source evidence ready for human review."
