@@ -208,6 +208,8 @@ def seed_daily_ops_files() -> None:
         "pwhl_source_proposal_pack.csv",
         [
             {
+                "pack_key": "pwhl",
+                "pack_name": "PWHL Source Proposal Pack",
                 "candidate_group": "league_official",
                 "suggested_priority": "P1",
                 "coverage_key": "pwhl",
@@ -234,6 +236,8 @@ def seed_daily_ops_files() -> None:
                 "manual_review_note": "Open and verify manually before copying into proposals.",
             },
             {
+                "pack_key": "pwhl",
+                "pack_name": "PWHL Source Proposal Pack",
                 "candidate_group": "team_official",
                 "suggested_priority": "P1",
                 "coverage_key": "pwhl",
@@ -260,6 +264,8 @@ def seed_daily_ops_files() -> None:
                 "manual_review_note": "Open and verify manually before copying into proposals.",
             },
             {
+                "pack_key": "pwhl",
+                "pack_name": "PWHL Source Proposal Pack",
                 "candidate_group": "league_cross_check",
                 "suggested_priority": "P1",
                 "coverage_key": "pwhl",
@@ -286,6 +292,14 @@ def seed_daily_ops_files() -> None:
                 "manual_review_note": "Open and verify manually before copying into proposals.",
             },
         ],
+    )
+    Path("source_proposal_packs.md").write_text(
+        "# HSD Guided Source Proposal Packs\n\nNo rows are imported automatically.\n",
+        encoding="utf-8",
+    )
+    Path("source_proposal_packs.csv").write_text(
+        Path("pwhl_source_proposal_pack.csv").read_text(encoding="utf-8"),
+        encoding="utf-8",
     )
     Path("source_registry_audit.md").write_text("# Source registry audit\n", encoding="utf-8")
     write_csv(
@@ -412,7 +426,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.14.0-pwhl-proposal-pack"
+    assert payload["version"] == "hsd-operator-command-center-v3.15.0-league-proposal-packs"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -442,6 +456,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Source intake proposals" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source proposal holds" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source proposals ready" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Guided source pack rows" and item["value"] == "3" for item in payload["metrics"])
     assert any(item["label"] == "PWHL proposal pack" and item["value"] == "3" for item in payload["metrics"])
     assert any(item["label"] == "Studio asset checks" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
@@ -459,12 +474,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_proposal_review"][0]["candidate_source_id"] == "pwhl_instagram"
     assert payload["source_registry_proposal_review"][0]["review_status"] == "hold"
     assert payload["source_registry_proposal_review"][1]["review_status"] == "ready_for_registry_review"
+    assert payload["source_proposal_packs"][0]["pack_key"] == "pwhl"
+    assert payload["source_proposal_packs"][0]["candidate_source_id"] == "pwhl_official_news"
     assert payload["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_news"
     assert payload["pwhl_source_proposal_pack"][1]["candidate_source_id"] == "pwhl_boston_fleet_team"
     assert payload["pwhl_source_proposal_pack"][2]["candidate_source_id"] == "pwhl_official_scores"
     pwhl_action = next(action for action in payload["next_actions"] if action["title"] == "Propose free source coverage for PWHL")
-    assert pwhl_action["artifact"] == "pwhl_source_proposal_pack.csv"
-    assert "guided PWHL proposal pack with 3 free official/team/cross-check candidates" in pwhl_action["detail"]
+    assert pwhl_action["artifact"] == "source_proposal_packs.csv"
+    assert "guided PWHL Source Proposal Pack with 3 free official/team/cross-check candidates" in pwhl_action["detail"]
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -521,7 +538,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
-    assert "PWHL source proposal pack" in html
+    assert "Guided source proposal packs" in html
+    assert "PWHL Source Proposal Pack" in html
     assert "Source proposal review" in html
     assert "PWHL" in html
     assert "pwhl_official_scores" in html
@@ -546,7 +564,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in markdown
     assert "Source coverage map" in markdown
     assert "Source registry intake template" in markdown
-    assert "PWHL source proposal pack" in markdown
+    assert "Guided source proposal packs" in markdown
+    assert "PWHL Source Proposal Pack" in markdown
     assert "Source proposal review" in markdown
     assert "PWHL | gap" in markdown
     assert "pwhl_official_news" in markdown
@@ -623,6 +642,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_registry_intake_template.csv" in runner
     assert "source_registry_proposal_review.md" in runner
     assert "source_registry_proposal_review.csv" in runner
+    assert "source_proposal_packs.md" in runner
+    assert "source_proposal_packs.csv" in runner
     assert "pwhl_source_proposal_pack.md" in runner
     assert "pwhl_source_proposal_pack.csv" in runner
     assert "manual_workflow_handoff.md" in runner

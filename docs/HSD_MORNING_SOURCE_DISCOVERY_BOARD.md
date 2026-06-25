@@ -31,6 +31,8 @@ The board is generated during local `review` and `full` runs as:
 - `source_registry_intake_template.md`
 - `source_registry_proposal_review.csv`
 - `source_registry_proposal_review.md`
+- `source_proposal_packs.csv`
+- `source_proposal_packs.md`
 - `pwhl_source_proposal_pack.csv`
 - `pwhl_source_proposal_pack.md`
 
@@ -47,7 +49,7 @@ Review runs now refresh the intake layer first:
 - The source registry audit writes `source_coverage_map.csv` and a coverage map in `source_registry_audit.json` so sport/league gaps such as missing PWHL official/team sources are visible for manual follow-up.
 - Coverage gaps also produce `source_registry_intake_template.csv` and `.md` proposal worksheets. These rows are disabled, review-only, and do not update `config/source_registry.json`.
 - Manual source proposals in `operator/inbox/source_registry_proposals.csv` produce `source_registry_proposal_review.csv` and `.md`. The review flags duplicate, paid/API, login-only, social-only, and unsafe proposed sources before any human updates the trusted source registry.
-- PWHL gaps also produce `pwhl_source_proposal_pack.csv` and `.md`, a guided set of free public official, team, and cross-check candidates for manual review. The pack never imports rows, enables sources, scrapes private pages, uses paid APIs, or publishes.
+- Guided league proposal packs produce `source_proposal_packs.csv` and `.md`, plus focused pack files such as `pwhl_source_proposal_pack.csv/.md`. These are curated free public official, team, and cross-check candidates for manual review only. The packs never import rows, enable sources, scrape private pages, use paid APIs, or publish.
 - Top official and wire story links can be sampled once for public article metadata titles, dates, and short descriptions from signals such as OpenGraph, JSON-LD, or `<time datetime>`.
 - Manual social inbox rows become discovery-only leads.
 - Generic source scans remain `monitor_only` until a concrete lead appears.

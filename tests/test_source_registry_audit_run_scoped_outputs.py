@@ -191,6 +191,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_registry_intake_template.md").exists()
     assert (run_dir / "source_registry_proposal_review.csv").exists()
     assert (run_dir / "source_registry_proposal_review.md").exists()
+    assert (run_dir / "source_proposal_packs.csv").exists()
+    assert (run_dir / "source_proposal_packs.md").exists()
     assert (run_dir / "pwhl_source_proposal_pack.csv").exists()
     assert (run_dir / "pwhl_source_proposal_pack.md").exists()
     assert (run_dir / "source_registry_audit.md").exists()
@@ -206,6 +208,10 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["counts"]["proposal_review_rows"] == 4
     assert manifest["counts"]["proposal_hold"] == 3
     assert manifest["counts"]["proposal_ready"] == 1
+    assert manifest["counts"]["proposal_pack_leagues"] == 1
+    assert manifest["counts"]["proposal_pack_rows"] == 19
+    assert manifest["counts"]["proposal_pack_official"] == 14
+    assert manifest["counts"]["proposal_pack_cross_check"] == 5
     assert manifest["counts"]["pwhl_proposal_pack_rows"] == 19
     assert manifest["counts"]["pwhl_proposal_pack_official"] == 14
     assert manifest["counts"]["pwhl_proposal_pack_cross_check"] == 5
@@ -231,6 +237,13 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     proposal_md = (run_dir / "source_registry_proposal_review.md").read_text(encoding="utf-8")
     assert "paid/API sources" in proposal_md
     assert "No rows are imported automatically" in proposal_md
+    proposal_packs = read_csv(run_dir / "source_proposal_packs.csv")
+    assert len(proposal_packs) == 19
+    assert proposal_packs[0]["pack_key"] == "pwhl"
+    assert proposal_packs[0]["pack_name"] == "PWHL Source Proposal Pack"
+    proposal_packs_md = (run_dir / "source_proposal_packs.md").read_text(encoding="utf-8")
+    assert "HSD Guided Source Proposal Packs" in proposal_packs_md
+    assert "PWHL Source Proposal Pack" in proposal_packs_md
     pwhl_pack = read_csv(run_dir / "pwhl_source_proposal_pack.csv")
     assert len(pwhl_pack) == 19
     pwhl_by_id = {row["candidate_source_id"]: row for row in pwhl_pack}
@@ -242,7 +255,10 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert all(row["proposed_enabled"] == "No" for row in pwhl_pack)
     assert all(row["registry_action"] == "proposal_only_do_not_import" for row in pwhl_pack)
     assert all(row["publish_policy"] == "proposal_only_not_publish_ready" for row in pwhl_pack)
+    assert all(row["pack_key"] == "pwhl" for row in pwhl_pack)
     assert manifest["pwhl_source_proposal_pack"][0]["candidate_source_id"] == "pwhl_official_home"
+    assert manifest["source_proposal_packs"][0]["candidate_source_id"] == "pwhl_official_home"
+    assert manifest["source_proposal_pack_index"][0]["pack_key"] == "pwhl"
     pwhl_pack_md = (run_dir / "pwhl_source_proposal_pack.md").read_text(encoding="utf-8")
     assert "PWHL Source Proposal Pack" in pwhl_pack_md
     assert "No rows are imported automatically" in pwhl_pack_md
@@ -251,7 +267,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "## Coverage map" in report
     assert "## Manual source intake template" in report
     assert "## Manual source proposal review" in report
-    assert "## PWHL guided source proposal pack" in report
+    assert "## Guided source proposal packs" in report
     assert "PWHL" in report
 
 
@@ -283,6 +299,8 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_registry_intake_template.md").exists()
     assert (work_dir / "source_registry_proposal_review.csv").exists()
     assert (work_dir / "source_registry_proposal_review.md").exists()
+    assert (work_dir / "source_proposal_packs.csv").exists()
+    assert (work_dir / "source_proposal_packs.md").exists()
     assert (work_dir / "pwhl_source_proposal_pack.csv").exists()
     assert (work_dir / "pwhl_source_proposal_pack.md").exists()
     assert (work_dir / "source_registry_audit.md").exists()
