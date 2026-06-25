@@ -89,6 +89,11 @@ def seed_manual_visual_qa_decision_files() -> None:
                 "content_module_stat_count": "3",
                 "content_module_player": "Breanna Stewart",
                 "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
+                "athlete_photo_status": "approved_local_headshot",
+                "athlete_photo_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+                "athlete_photo_approval_marker_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved",
+                "athlete_photo_approval_cue": "APPROVED PHOTO",
+                "athlete_photo_review_required": "false",
                 "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
                 "stat_source_label": "Verified player/stat text available",
                 "stat_review_cue": "Confirm the named performer and stat line against source proof before approval.",
@@ -143,8 +148,13 @@ def seed_manual_visual_qa_decision_files() -> None:
             "asset_slots": [
                 {
                     "slot_id": "primary_photo",
-                    "status": "not_required_for_review_draft",
-                    "requirement": "No player asset required; use HSD brand treatment and verified source text only.",
+                    "status": "approved_local_headshot",
+                    "requirement": "Use only approved local athlete headshot/cutout assets; missing or unapproved images stay review-only fallbacks.",
+                    "asset_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+                    "approval_marker_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved",
+                    "player": "Breanna Stewart",
+                    "photo_approval_cue": "APPROVED PHOTO",
+                    "photo_review_required": "false",
                 },
                 {
                     "slot_id": "source_evidence",
@@ -1367,7 +1377,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.51.0-stat-confidence-qa-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.52.0-athlete-photo-readiness-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1642,6 +1652,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "New York Liberty: LOGO REVIEW" in feed_gallery["logo_detail"]
     assert "accent #247CA8" in feed_gallery["logo_detail"]
     assert "Las Vegas Aces: APPROVED LOGO" in feed_gallery["logo_detail"]
+    assert feed_gallery["photo_status"] == "athlete_photo_ready"
+    assert "APPROVED PHOTO" in feed_gallery["photo_summary"]
+    assert "Breanna Stewart" in feed_gallery["photo_detail"]
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
     assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"
@@ -1652,7 +1665,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Verified player/stat text available" in feed_gallery["stat_module_summary"]
     assert "STEWART + CLEAR SEPARATION" in feed_gallery["stat_module_detail"]
     assert "score/stat-derived" in feed_gallery["stat_module_detail"]
-    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "Stats", "QA", "Visual delta", "Manual revision"]
+    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Photo", "Source", "Stats", "QA", "Visual delta", "Manual revision"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
     assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
     assert payload["operator_decision_panel"]["render_gallery"][2]["revision_status"] == "manual_revision_recommended"

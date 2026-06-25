@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.13.0-adaptive-final-score-modules"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.14.0-athlete-photo-readiness"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -255,6 +255,10 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert selected["player_name"] == "Breanna Stewart"
     assert selected["headline"] == "STEWART LED LIBERTY"
     assert selected["matchup_note"] == "LIBERTY +11 vs ACES"
+    assert selected["athlete_photo_status"] == "approved_local_headshot"
+    assert selected["athlete_photo_approval_cue"] == "APPROVED PHOTO"
+    assert selected["athlete_photo_review_required"] is False
+    assert selected["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
     assert "20 PTS / 6 REB / 4 AST" in selected["editorial_line"]
     microcopy = module.selected_editorial_microcopy({"copy_context": "4 source(s); publish_grade."}, score, selected)
     assert microcopy["selected_variant_id"] == "verified_player_ledger"
@@ -281,6 +285,10 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
     assert summary["content_module_game_shape"] == "clear_separation"
     assert summary["content_module_stat_strength"] == "lead_ledger"
+    assert summary["athlete_photo_status"] == "approved_local_headshot"
+    assert summary["athlete_photo_approval_cue"] == "APPROVED PHOTO"
+    assert summary["athlete_photo_review_required"] == "false"
+    assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
     assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
     assert summary["editorial_microcopy_game_shape"] == "clear_separation"
@@ -360,3 +368,25 @@ def test_manual_review_renderer_keeps_low_stat_packets_as_supporting_context() -
     assert summary["content_module_status"] == "verified_supporting_stat_module"
     assert summary["content_module_stat_strength"] == "low_stat_context"
     assert summary["editorial_microcopy_variant"] == "verified_supporting_stat_note"
+
+
+def test_manual_review_renderer_holds_missing_athlete_photo() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    score = {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "87", "loser_score": "76"}
+    selected = module.select_verified_stat_module(
+        {"top_performers": "Imaginary Player (New York Liberty): PTS 22, REB 7, AST 4"},
+        score,
+    )
+
+    assert selected["status"] == "verified_player_stat_module"
+    assert selected["athlete_photo_status"] == "athlete_photo_missing"
+    assert selected["athlete_photo_approval_cue"] == "PHOTO MISSING"
+    assert selected["athlete_photo_review_required"] is True
+    assert selected["athlete_photo_render_method"] == "safe_text_fallback"
+    assert "No local athlete headshot" in selected["athlete_photo_blocker"]

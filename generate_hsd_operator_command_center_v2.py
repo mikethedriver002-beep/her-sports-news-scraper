@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.51.0-stat-confidence-qa-cues"
+VERSION = "hsd-operator-command-center-v3.52.0-athlete-photo-readiness-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -681,6 +681,44 @@ def render_slot_summary(asset_slots: List[Dict[str, Any]]) -> Dict[str, str]:
     }
 
 
+def photo_asset_summary(renderer: Dict[str, Any], asset_slots: List[Dict[str, Any]]) -> Dict[str, str]:
+    content = renderer.get("content_module") if isinstance(renderer.get("content_module"), dict) else {}
+    slot = next(
+        (
+            item
+            for item in asset_slots
+            if isinstance(item, dict) and clean(item.get("slot_id")) == "primary_photo"
+        ),
+        {},
+    )
+    status = clean(slot.get("status")) or clean(content.get("athlete_photo_status"))
+    cue = clean(slot.get("photo_approval_cue")) or clean(content.get("athlete_photo_approval_cue"))
+    player = clean(slot.get("player")) or clean(content.get("content_module_player"))
+    path = clean(slot.get("asset_path")) or clean(content.get("athlete_photo_path"))
+    marker = clean(slot.get("approval_marker_path")) or clean(content.get("athlete_photo_approval_marker_path"))
+    blocker = clean(slot.get("blocker")) or clean(content.get("athlete_photo_blocker"))
+    if status == "approved_local_headshot":
+        return {
+            "status": "athlete_photo_ready",
+            "summary": f"Photo: {cue or 'approved'}",
+            "detail": short(" | ".join(part for part in [player, path, marker] if part), 220),
+            "tone": "good",
+        }
+    if status in {"not_required_for_review_draft", "athlete_photo_not_applicable", ""}:
+        return {
+            "status": "athlete_photo_not_required",
+            "summary": "Photo: not required",
+            "detail": blocker or "No approved player-photo slot is required for this draft.",
+            "tone": "neutral",
+        }
+    return {
+        "status": status or "athlete_photo_review_required",
+        "summary": f"Photo: {cue or 'review required'}",
+        "detail": short(" | ".join(part for part in [player, blocker, path, marker] if part), 220),
+        "tone": "warn",
+    }
+
+
 def source_review_summary(renderer: Dict[str, Any], asset_slots: List[Dict[str, Any]]) -> Dict[str, str]:
     source_cue = clean(renderer.get("source_cue"))
     artifact = clean(renderer.get("source_artifact"))
@@ -978,6 +1016,7 @@ def build_render_gallery(
     if not isinstance(asset_slots, list):
         asset_slots = []
     logo_summary = render_slot_summary(asset_slots)
+    photo_summary = photo_asset_summary(renderer, asset_slots)
     source_summary = source_review_summary(renderer, asset_slots)
     qa_summary_cue = qa_review_summary(qa, draft)
     stat_summary = stat_module_review_summary(renderer)
@@ -1050,6 +1089,9 @@ def build_render_gallery(
                 "logo_status": logo_summary["status"],
                 "logo_summary": logo_summary["summary"],
                 "logo_detail": logo_summary["detail"],
+                "photo_status": photo_summary["status"],
+                "photo_summary": photo_summary["summary"],
+                "photo_detail": photo_summary["detail"],
                 "source_status": source_summary["status"],
                 "source_summary": source_summary["summary"],
                 "source_detail": source_summary["detail"],
@@ -1080,6 +1122,7 @@ def build_render_gallery(
                 "cue_rows": [
                     {"label": "Template", **reference_summary},
                     {"label": "Logos", **logo_summary},
+                    {"label": "Photo", **photo_summary},
                     {"label": "Source", **source_summary},
                     {"label": "Stats", **stat_summary},
                     {"label": "QA", **qa_summary_cue},
