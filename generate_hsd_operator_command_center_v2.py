@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.43.0-manual-visual-qa-valid-state-clarity"
+VERSION = "hsd-operator-command-center-v3.44.0-template-draft-render-artifacts"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -70,6 +70,9 @@ ARTIFACTS = [
     ("Decision", "Top render source proof", "render_handoff_top_packet/source_proof.md"),
     ("Decision", "Top render manual prompt", "render_handoff_top_packet/manual_renderer_prompt.md"),
     ("Decision", "Top render draft preview", "render_handoff_top_packet/draft_preview.png"),
+    ("Decision", "Top render IG feed draft", "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png"),
+    ("Decision", "Top render story draft", "render_handoff_top_packet/review_drafts/draft_preview_story.png"),
+    ("Decision", "Top render square draft", "render_handoff_top_packet/review_drafts/draft_preview_square.png"),
     ("Decision", "Top render handoff manifest", "render_handoff_top_packet/handoff_manifest.json"),
     ("Decision", "Manual review renderer report", "manual_review_renderer_report.md"),
     ("Decision", "Manual review renderer manifest", "manual_review_renderer_manifest.json"),
@@ -217,6 +220,9 @@ RUN_COMMANDS = {
     "morning_lead_promotion_recommendations.csv": ".\\hsd.cmd run -Mode review",
     "morning_lead_promotion_recommendations.json": ".\\hsd.cmd run -Mode review",
     "render_handoff_top_packet/draft_preview.png": ".\\hsd.cmd run -Mode render",
+    "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png": ".\\hsd.cmd run -Mode render",
+    "render_handoff_top_packet/review_drafts/draft_preview_story.png": ".\\hsd.cmd run -Mode render",
+    "render_handoff_top_packet/review_drafts/draft_preview_square.png": ".\\hsd.cmd run -Mode render",
     "manual_review_renderer_report.md": ".\\hsd.cmd run -Mode render",
     "manual_review_renderer_manifest.json": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_report.md": ".\\hsd.cmd run -Mode render",
