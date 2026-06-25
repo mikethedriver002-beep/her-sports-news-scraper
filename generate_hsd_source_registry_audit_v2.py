@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.10-pack-readiness-cues"
+VERSION = "hsd-source-registry-audit-bebe-v2.11-proposal-draft-workflow"
 REGISTRY = "config/source_registry.json"
 PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
@@ -18,6 +18,8 @@ OUT_INTAKE_CSV = "source_registry_intake_template.csv"
 OUT_INTAKE_MD = "source_registry_intake_template.md"
 OUT_PROPOSAL_CSV = "source_registry_proposal_review.csv"
 OUT_PROPOSAL_MD = "source_registry_proposal_review.md"
+OUT_PROPOSAL_DRAFT_CSV = "source_registry_proposal_draft.csv"
+OUT_PROPOSAL_DRAFT_MD = "source_registry_proposal_draft.md"
 OUT_PROPOSAL_PACK_READINESS_CSV = "source_proposal_pack_readiness.csv"
 OUT_PROPOSAL_PACK_READINESS_MD = "source_proposal_pack_readiness.md"
 OUT_PROPOSAL_PACKS_CSV = "source_proposal_packs.csv"
@@ -124,6 +126,24 @@ SOURCE_PROPOSAL_PACK_READINESS_FIELDS = [
     "duplicate_candidate_ids",
     "output_csv",
     "output_md",
+]
+
+SOURCE_REGISTRY_PROPOSAL_DRAFT_FIELDS = [
+    "draft_selection_status",
+    "draft_action",
+    "pack_key",
+    "pack_name",
+    "pack_readiness_status",
+    "pack_readiness_label",
+    "candidate_group",
+    "suggested_priority",
+    *INTAKE_FIELDS,
+    "source_basis",
+    "registry_presence",
+    "readiness_warning",
+    "duplicate_warning",
+    "freshness_warning",
+    "manual_review_note",
 ]
 
 PWHL_SOURCE_CANDIDATES = [
@@ -1024,6 +1044,10 @@ def write_proposal_review_csv(path: str | Path, rows: List[Dict[str, Any]]) -> N
     write_run_csv(path, rows, PROPOSAL_REVIEW_FIELDS, extrasaction="ignore")
 
 
+def write_source_registry_proposal_draft_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, SOURCE_REGISTRY_PROPOSAL_DRAFT_FIELDS, extrasaction="ignore")
+
+
 def write_source_proposal_pack_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, SOURCE_PROPOSAL_PACK_FIELDS, extrasaction="ignore")
 
@@ -1648,6 +1672,115 @@ def write_source_proposal_pack_readiness_markdown(path: str | Path, rows: List[D
     write_text(path, "\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
+def split_semicolon_ids(value: str) -> List[str]:
+    return [clean(item) for item in value.split(";") if clean(item)]
+
+
+def build_source_registry_proposal_draft(
+    pack_rows_by_key: Dict[str, List[Dict[str, str]]],
+    readiness_rows: List[Dict[str, str]],
+) -> List[Dict[str, str]]:
+    draft_rows: List[Dict[str, str]] = []
+    for readiness in readiness_rows:
+        pack_key = clean(readiness.get("pack_key"))
+        pack_rows = pack_rows_by_key.get(pack_key, [])
+        by_id = {row["candidate_source_id"]: row for row in pack_rows if row.get("candidate_source_id")}
+        selected_ids = split_semicolon_ids(clean(readiness.get("top_candidate_ids")))
+        if not selected_ids:
+            selected_ids = [
+                row["candidate_source_id"]
+                for row in pack_rows
+                if clean(row.get("registry_presence")) in {"", "not_in_registry", "not_checked"}
+            ][:5]
+
+        status = clean(readiness.get("readiness_status")) or "review"
+        duplicate_ids = clean(readiness.get("duplicate_candidate_ids"))
+        if status == "ready_for_registry_proposal":
+            draft_status = "ready_to_copy_after_freshness_check"
+            draft_action = "manual_copy_to_inbox_after_freshness_check"
+        elif status == "needs_duplicate_review":
+            draft_status = "blocked_duplicate_review"
+            draft_action = "hold_do_not_copy_until_duplicate_review"
+        elif status == "needs_source_freshness_check":
+            draft_status = "blocked_source_freshness_check"
+            draft_action = "hold_do_not_copy_until_source_freshness_check"
+        else:
+            draft_status = "blocked_manual_review"
+            draft_action = "hold_do_not_copy_until_manual_review"
+
+        duplicate_warning = (
+            f"Duplicate review required for pack; duplicate candidate IDs: {duplicate_ids}."
+            if duplicate_ids
+            else "No duplicate candidates detected in this pack."
+        )
+        freshness_warning = "Open this public page manually and confirm it is current before copying to the inbox."
+        readiness_warning = clean(readiness.get("review_cues")) or "Review this pack manually before copying rows."
+
+        for candidate_id in selected_ids[:5]:
+            row = by_id.get(candidate_id)
+            if not row:
+                continue
+            draft = {field: clean(row.get(field)) for field in INTAKE_FIELDS}
+            draft.update(
+                {
+                    "draft_selection_status": draft_status,
+                    "draft_action": draft_action,
+                    "pack_key": pack_key,
+                    "pack_name": clean(readiness.get("pack_name") or row.get("pack_name")),
+                    "pack_readiness_status": status,
+                    "pack_readiness_label": clean(readiness.get("readiness_label")),
+                    "candidate_group": clean(row.get("candidate_group")),
+                    "suggested_priority": clean(row.get("suggested_priority")),
+                    "source_basis": clean(row.get("source_basis")),
+                    "registry_presence": clean(row.get("registry_presence")) or "not_checked",
+                    "readiness_warning": readiness_warning,
+                    "duplicate_warning": duplicate_warning,
+                    "freshness_warning": freshness_warning,
+                    "manual_review_note": (
+                        f"{clean(row.get('manual_review_note'))} "
+                        "This is a draft row only; copying into operator/inbox/source_registry_proposals.csv is a manual operator decision."
+                    ).strip(),
+                }
+            )
+            draft["proposed_enabled"] = "No"
+            draft["automation_status"] = "disabled_manual_review_only"
+            draft["publish_policy"] = "proposal_only_not_publish_ready"
+            draft["operator_verification_status"] = "unverified"
+            draft["registry_action"] = "proposal_only_do_not_import"
+            draft_rows.append(draft)
+    return draft_rows
+
+
+def write_source_registry_proposal_draft_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Registry Proposal Draft",
+        "",
+        "Selected guided-pack rows for manual proposal drafting.",
+        "This file is not the trusted registry and is not the live proposal inbox.",
+        "",
+        "## Guardrails",
+        "",
+        "- Review this draft before copying any row into `operator/inbox/source_registry_proposals.csv`.",
+        "- Rows marked `blocked_*` are do-not-copy until the duplicate or freshness warning is resolved.",
+        "- Keep `proposed_enabled` as `No` and `registry_action` as `proposal_only_do_not_import`.",
+        "- No sources are enabled, no registry files are updated, no paid APIs are called, and nothing is published.",
+        "",
+        "## Draft Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No draft rows were generated. Review `source_proposal_pack_readiness.md` first.")
+    else:
+        for row in rows:
+            lines.append(
+                f"- **{row['draft_selection_status']}** | {row['pack_name']} | "
+                f"{row['candidate_source_id']} | {row['candidate_url']} | action: {row['draft_action']} | "
+                f"registry: {row['registry_presence']} | warning: {row['readiness_warning']}"
+            )
+    lines += ["", "Use `source_registry_proposal_draft.csv` for copy-ready field structure after manual review.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
     issues: List[str] = []
     flags: List[str] = []
@@ -1813,6 +1946,7 @@ def main() -> None:
     proposal_pack_rows_by_key = build_source_proposal_packs(sources, coverage_rows)
     proposal_pack_rows = source_proposal_pack_rows(proposal_pack_rows_by_key)
     proposal_pack_readiness_rows = build_source_proposal_pack_readiness(proposal_pack_rows_by_key, coverage_rows)
+    proposal_draft_rows = build_source_registry_proposal_draft(proposal_pack_rows_by_key, proposal_pack_readiness_rows)
     wnba_proposal_pack_rows = proposal_pack_rows_by_key.get("wnba", [])
     nwsl_proposal_pack_rows = proposal_pack_rows_by_key.get("nwsl", [])
     lpga_proposal_pack_rows = proposal_pack_rows_by_key.get("lpga", [])
@@ -1823,6 +1957,8 @@ def main() -> None:
     write_intake_markdown(OUT_INTAKE_MD, intake_rows)
     write_proposal_review_csv(OUT_PROPOSAL_CSV, proposal_review_rows)
     write_proposal_review_markdown(OUT_PROPOSAL_MD, proposal_review_rows)
+    write_source_registry_proposal_draft_csv(OUT_PROPOSAL_DRAFT_CSV, proposal_draft_rows)
+    write_source_registry_proposal_draft_markdown(OUT_PROPOSAL_DRAFT_MD, proposal_draft_rows)
     write_source_proposal_pack_readiness_csv(OUT_PROPOSAL_PACK_READINESS_CSV, proposal_pack_readiness_rows)
     write_source_proposal_pack_readiness_markdown(OUT_PROPOSAL_PACK_READINESS_MD, proposal_pack_readiness_rows)
     write_source_proposal_pack_csv(OUT_PROPOSAL_PACKS_CSV, proposal_pack_rows)
@@ -1855,6 +1991,9 @@ def main() -> None:
         "proposal_pack_ready": sum(1 for r in proposal_pack_readiness_rows if r["readiness_status"] == "ready_for_registry_proposal"),
         "proposal_pack_duplicate_review": sum(1 for r in proposal_pack_readiness_rows if r["readiness_status"] == "needs_duplicate_review"),
         "proposal_pack_freshness_check": sum(1 for r in proposal_pack_readiness_rows if r["readiness_status"] == "needs_source_freshness_check"),
+        "proposal_draft_rows": len(proposal_draft_rows),
+        "proposal_draft_ready_to_copy": sum(1 for r in proposal_draft_rows if r["draft_selection_status"] == "ready_to_copy_after_freshness_check"),
+        "proposal_draft_blocked": sum(1 for r in proposal_draft_rows if r["draft_selection_status"].startswith("blocked_")),
         "proposal_pack_leagues": len(proposal_pack_rows_by_key),
         "proposal_pack_rows": len(proposal_pack_rows),
         "proposal_pack_official": sum(1 for r in proposal_pack_rows if proposal_pack_group_is_official(r)),
@@ -1877,6 +2016,7 @@ def main() -> None:
         "coverage_map": coverage_rows,
         "source_registry_intake_template": intake_rows,
         "source_registry_proposal_review": proposal_review_rows,
+        "source_registry_proposal_draft": proposal_draft_rows,
         "source_proposal_pack_readiness": proposal_pack_readiness_rows,
         "source_proposal_packs": proposal_pack_rows,
         "source_proposal_pack_index": [
@@ -1919,6 +2059,9 @@ def main() -> None:
         f"- source packs ready for proposal review: {counts['proposal_pack_ready']}",
         f"- source packs needing duplicate review: {counts['proposal_pack_duplicate_review']}",
         f"- source packs needing freshness/source checks: {counts['proposal_pack_freshness_check']}",
+        f"- source proposal draft rows: {counts['proposal_draft_rows']}",
+        f"- source proposal draft ready-to-copy rows: {counts['proposal_draft_ready_to_copy']}",
+        f"- source proposal draft blocked rows: {counts['proposal_draft_blocked']}",
         f"- guided proposal pack leagues: {counts['proposal_pack_leagues']}",
         f"- guided proposal pack rows: {counts['proposal_pack_rows']}",
         f"- PWHL proposal pack rows: {counts['pwhl_proposal_pack_rows']}",
@@ -1964,7 +2107,19 @@ def main() -> None:
     lines += ["", "## Guided source proposal packs", ""]
     lines.append("Guided free-source proposal candidates were created in `source_proposal_packs.csv` and `.md`.")
     lines.append("Pack-level readiness cues were created in `source_proposal_pack_readiness.csv` and `.md`.")
+    lines.append("A manual proposal draft was created in `source_registry_proposal_draft.csv` and `.md`.")
     lines.append("")
+    if proposal_draft_rows:
+        lines.append("### Manual proposal draft")
+        lines.append("")
+        for row in proposal_draft_rows[:8]:
+            lines.append(
+                f"- **{row['draft_selection_status']}** | {row['pack_name']} | "
+                f"{row['candidate_source_id']} | {row['draft_action']} | {row['readiness_warning']}"
+            )
+        if len(proposal_draft_rows) > 8:
+            lines.append(f"- ... {len(proposal_draft_rows) - 8} more draft rows in the CSV.")
+        lines.append("")
     for row in proposal_pack_readiness_rows:
         lines.append(
             f"- **{row['pack_name'] or row['display_name']}** | {row['readiness_status']} | "
