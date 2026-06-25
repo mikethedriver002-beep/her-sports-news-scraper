@@ -50,6 +50,8 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "render_prep_packets.*",
         "render_handoff_top_packet/**",
         "manual_review_renderer_*",
+        "render_visual_delta.*",
+        "render_visual_delta_*",
         "manual_visual_qa_*",
         "manual_visual_qa_approval_intake.*",
         "manual_post_approval_render_staging.*",
@@ -179,6 +181,7 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "function Invoke-RenderStage" in runner
     assert "function Invoke-DecisionInboxStarterStage" in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_render_visual_delta_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_draft_v1.py" -Optional' in render_stage
@@ -196,6 +199,9 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "render_handoff_top_packet/draft_preview.png" in runner
     assert "manual_review_renderer_report.md" in runner
     assert "manual_review_renderer_manifest.json" in runner
+    assert "render_visual_delta_report.md" in runner
+    assert "render_visual_delta.csv" in runner
+    assert "render_visual_delta_manifest.json" in runner
     assert "manual_visual_qa_report.md" in runner
     assert "manual_visual_qa_manifest.json" in runner
     assert "manual_visual_qa_checklist.csv" in runner

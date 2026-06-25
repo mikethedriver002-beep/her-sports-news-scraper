@@ -153,6 +153,67 @@ def seed_manual_visual_qa_decision_files() -> None:
         },
     )
     write_json(
+        "render_visual_delta_manifest.json",
+        {
+            "status": "visual_delta_review_ready",
+            "approval_status": "not_approved_human_review_required",
+            "summary": {"comparison_count": 6, "warning_count": 1, "human_decision_required": True},
+            "format_summaries": {
+                "ig_feed_4x5": {
+                    "format_id": "ig_feed_4x5",
+                    "drift_band": "aligned_to_reference",
+                    "comparison_status": "reference_aligned_review",
+                    "reference_visual_delta_score": "92",
+                    "worst_zone": "score_lane",
+                    "warning_count": 0,
+                    "warning_summary": "Reference comparison aligned enough for human review.",
+                    "next_step": "Reference comparison looks aligned enough for human visual review; still not approved.",
+                },
+                "ig_story_9x16": {
+                    "format_id": "ig_story_9x16",
+                    "drift_band": "review_minor_drift",
+                    "comparison_status": "manual_review_warning",
+                    "reference_visual_delta_score": "84",
+                    "worst_zone": "lower_modules",
+                    "warning_count": 1,
+                    "warning_summary": "layout: review_minor_drift (lower_modules)",
+                    "next_step": "Compare draft, public mockup, and layout reference by eye before recording a manual decision.",
+                },
+                "square_feed_1x1": {
+                    "format_id": "square_feed_1x1",
+                    "drift_band": "manual_drift_warning",
+                    "comparison_status": "manual_review_warning",
+                    "reference_visual_delta_score": "73",
+                    "worst_zone": "score_lane",
+                    "warning_count": 1,
+                    "warning_summary": "public_mockup: manual_drift_warning (score_lane)",
+                    "next_step": "Hold or revise if the highlighted zones drift from the approved template intent.",
+                },
+            },
+            "guardrails": {
+                "manual_only": True,
+                "review_only": True,
+                "auto_approval": False,
+                "auto_publish": False,
+                "move_files": False,
+                "publish_ready": False,
+                "paid_apis": False,
+            },
+        },
+    )
+    Path("render_visual_delta_report.md").write_text("# Render visual delta\n", encoding="utf-8")
+    write_csv(
+        "render_visual_delta.csv",
+        [
+            {
+                "format_id": "ig_feed_4x5",
+                "reference_kind": "public_mockup",
+                "drift_band": "aligned_to_reference",
+                "reference_visual_delta_score": "92",
+            }
+        ],
+    )
+    write_json(
         "manual_visual_qa_manifest.json",
         {
             "status": "human_review_required",
@@ -1171,7 +1232,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.47.0-render-fidelity-comparison"
+    assert payload["version"] == "hsd-operator-command-center-v3.48.0-visual-delta-review"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1433,9 +1494,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["logo_status"] == "logo_review_required"
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
-    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "QA"]
+    assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"
+    assert feed_gallery["visual_delta_score"] == "92"
+    assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Source", "QA", "Visual delta"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
+    assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
     assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
+    assert any(item["label"] == "Visual delta report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert any(item["label"] == "Decision inbox" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
     assert payload["operator_decision_panel"]["guardrails"]["auto_approval"] is False
     assert payload["operator_decision_panel"]["guardrails"]["auto_publish"] is False
@@ -1479,6 +1544,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["render_handoff_top_packet/review_drafts/draft_preview_story.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["render_handoff_top_packet/review_drafts/draft_preview_square.png"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_review_renderer_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_visual_delta_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_visual_delta_manifest.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_checklist.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_approval_intake.md"]["run_command"] == ".\\hsd.cmd run -Mode render"

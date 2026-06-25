@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.47.0-render-fidelity-comparison"
+VERSION = "hsd-operator-command-center-v3.48.0-visual-delta-review"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -79,6 +79,9 @@ ARTIFACTS = [
     ("Decision", "Top render handoff manifest", "render_handoff_top_packet/handoff_manifest.json"),
     ("Decision", "Manual review renderer report", "manual_review_renderer_report.md"),
     ("Decision", "Manual review renderer manifest", "manual_review_renderer_manifest.json"),
+    ("Decision", "Render visual delta report", "render_visual_delta_report.md"),
+    ("Decision", "Render visual delta data", "render_visual_delta.csv"),
+    ("Decision", "Render visual delta manifest", "render_visual_delta_manifest.json"),
     ("Decision", "Manual visual QA report", "manual_visual_qa_report.md"),
     ("Decision", "Manual visual QA manifest", "manual_visual_qa_manifest.json"),
     ("Decision", "Manual visual QA checklist", "manual_visual_qa_checklist.csv"),
@@ -228,6 +231,9 @@ RUN_COMMANDS = {
     "render_handoff_top_packet/review_drafts/draft_preview_square.png": ".\\hsd.cmd run -Mode render",
     "manual_review_renderer_report.md": ".\\hsd.cmd run -Mode render",
     "manual_review_renderer_manifest.json": ".\\hsd.cmd run -Mode render",
+    "render_visual_delta_report.md": ".\\hsd.cmd run -Mode render",
+    "render_visual_delta.csv": ".\\hsd.cmd run -Mode render",
+    "render_visual_delta_manifest.json": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_report.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_manifest.json": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_checklist.csv": ".\\hsd.cmd run -Mode render",
@@ -708,6 +714,48 @@ def qa_review_summary(qa: Dict[str, Any], draft: Dict[str, str]) -> Dict[str, st
     }
 
 
+def visual_delta_summary(delta: Dict[str, Any], format_id: str) -> Dict[str, str]:
+    summaries = delta.get("format_summaries") if isinstance(delta.get("format_summaries"), dict) else {}
+    summary = summaries.get(format_id) if isinstance(summaries.get(format_id), dict) else {}
+    if not delta:
+        return {
+            "status": "visual_delta_not_run",
+            "summary": "Delta: not scored",
+            "detail": "Run render mode to compare draft against public mockup and layout reference.",
+            "tone": "warn",
+        }
+    band = clean(summary.get("drift_band"))
+    score = clean(summary.get("reference_visual_delta_score")) or "0"
+    if not summary:
+        return {
+            "status": "visual_delta_missing_format",
+            "summary": "Delta: missing",
+            "detail": f"No visual-delta row found for {format_id}.",
+            "tone": "warn",
+        }
+    if band == "aligned_to_reference":
+        tone = "good"
+        status = "visual_delta_aligned_review"
+        label = f"Delta: {score}/100"
+    elif band == "review_minor_drift":
+        tone = "warn"
+        status = "visual_delta_review_minor_drift"
+        label = f"Delta: {score}/100 review"
+    else:
+        tone = "bad"
+        status = "visual_delta_manual_warning"
+        label = f"Delta: {score}/100 warning"
+    return {
+        "status": status,
+        "summary": label,
+        "detail": short(clean(summary.get("warning_summary")) or clean(summary.get("next_step")), 180),
+        "tone": tone,
+        "score": score,
+        "band": band or "not_scored",
+        "worst_zone": clean(summary.get("worst_zone")),
+    }
+
+
 def reference_review_summary(option: Dict[str, Any]) -> Dict[str, str]:
     template = clean(option.get("reference_template_id"))
     exact = option.get("reference_exact_format_match") is True
@@ -775,7 +823,7 @@ def reference_asset_summary(option: Dict[str, Any], key: str, label: str, detail
     }
 
 
-def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Dict[str, str]) -> List[Dict[str, Any]]:
+def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], delta: Dict[str, Any], draft: Dict[str, str]) -> List[Dict[str, Any]]:
     format_options = renderer.get("format_options", [])
     if not isinstance(format_options, list):
         format_options = []
@@ -846,6 +894,7 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
         else:
             reference_note = "Reference: not linked"
         reference_summary = reference_review_summary(option)
+        delta_summary = visual_delta_summary(delta, spec["format_id"])
         mockup_summary = reference_mockup_summary(option)
         public_summary = reference_asset_summary(option, "reference_public_mockup_path", "Public mockup", "Approved public mockup from Templates-hsd.")
         layout_summary = reference_asset_summary(option, "reference_layout_path", "Layout reference", "Approved layout reference from Templates-hsd.")
@@ -890,6 +939,13 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
                 "qa_cue_status": qa_summary_cue["status"],
                 "qa_cue_summary": qa_summary_cue["summary"],
                 "qa_cue_detail": qa_summary_cue["detail"],
+                "visual_delta_status": delta_summary["status"],
+                "visual_delta_summary": delta_summary["summary"],
+                "visual_delta_detail": delta_summary["detail"],
+                "visual_delta_score": delta_summary.get("score", ""),
+                "visual_delta_band": delta_summary.get("band", ""),
+                "visual_delta_worst_zone": delta_summary.get("worst_zone", ""),
+                "visual_delta_tone": delta_summary.get("tone", "warn"),
                 "template_status": reference_summary["status"],
                 "template_summary": reference_summary["summary"],
                 "template_detail": reference_summary["detail"],
@@ -898,6 +954,7 @@ def build_render_gallery(renderer: Dict[str, Any], qa: Dict[str, Any], draft: Di
                     {"label": "Logos", **logo_summary},
                     {"label": "Source", **source_summary},
                     {"label": "QA", **qa_summary_cue},
+                    {"label": "Visual delta", **delta_summary},
                 ],
                 "approval_scope": "manual_next_step_only_not_publish_ready",
                 "publish_ready": "false",
@@ -1014,6 +1071,7 @@ def build_decision_history(
 
 def operator_decision_ui_panel() -> Dict[str, Any]:
     renderer = read_json("manual_review_renderer_manifest.json")
+    delta = read_json("render_visual_delta_manifest.json")
     qa = read_json("manual_visual_qa_manifest.json")
     approval = read_json("manual_visual_qa_approval_intake.json")
     draft_rows = read_csv("manual_visual_qa_operator_decision_draft.csv")
@@ -1066,10 +1124,12 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         "qa_check_count": clean(qa_summary.get("check_count")),
         "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
         "decision_draft": draft,
-        "render_gallery": build_render_gallery(renderer, qa, draft),
+        "render_gallery": build_render_gallery(renderer, qa, delta, draft),
         "template_choices": template_choices,
         "file_shortcuts": [
             file_shortcut("Draft preview", "render_handoff_top_packet/draft_preview.png", "Open the rendered image before making any decision."),
+            file_shortcut("Visual delta report", "render_visual_delta_report.md", "Review mockup/layout drift warnings before deciding."),
+            file_shortcut("Visual delta data", "render_visual_delta.csv", "See per-format public mockup and layout comparison scores."),
             file_shortcut("QA report", "manual_visual_qa_report.md", "Read visual QA findings and guardrails."),
             file_shortcut("QA checklist", "manual_visual_qa_checklist.csv", "Check pass/hold rows behind the QA summary."),
             file_shortcut("Copy sheet", "render_handoff_top_packet/copy_sheet.md", "Confirm the visible copy and source-safe summary."),
@@ -3775,6 +3835,7 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
                 {pill(clean(row.get('review_status')) or 'review')}
                 {pill(clean(row.get('shape')))}
                 {pill('reference exact: ' + (clean(row.get('reference_exact_format_match')) or 'false'))}
+                {pill(clean(row.get('visual_delta_summary')) or 'Delta: not scored', clean(row.get('visual_delta_tone')) or 'warn')}
                 {pill('publish ready: false')}
               </div>
               <div class="render-cue-grid">{''.join(cue_html)}</div>
@@ -4613,7 +4674,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Guardrails: file-backed manual approval, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
     lines.extend(
-        f"- Render gallery: {item.get('label')} | {item.get('shape')} | {item.get('review_status')} | {item.get('path')} | publish_ready={item.get('publish_ready')}"
+        f"- Render gallery: {item.get('label')} | {item.get('shape')} | {item.get('review_status')} | delta={item.get('visual_delta_score') or '0'} ({item.get('visual_delta_band') or 'not_scored'}) | {item.get('path')} | publish_ready={item.get('publish_ready')}"
         for item in decision_panel.get("render_gallery", [])
     )
     lines.extend(
