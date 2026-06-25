@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.11.0-source-coverage-map"
+VERSION = "hsd-operator-command-center-v3.12.0-source-intake-template"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -24,6 +24,8 @@ ARTIFACTS = [
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
     ("Sources", "Source coverage map", "source_coverage_map.csv"),
+    ("Sources", "Source registry intake guide", "source_registry_intake_template.md"),
+    ("Sources", "Source registry intake template", "source_registry_intake_template.csv"),
     ("Sources", "Manual story intake report", "manual_story_inbox_report.md"),
     ("Sources", "Manual story intake data", "story_candidates_manual.csv"),
     ("Sources", "Discovery intake report", "discovery_sources_report.md"),
@@ -104,6 +106,8 @@ RUN_COMMANDS = {
     "morning_lead_promotion_recommendations.md": ".\\hsd.cmd run -Mode review",
     "morning_lead_promotion_recommendations.csv": ".\\hsd.cmd run -Mode review",
     "morning_lead_promotion_recommendations.json": ".\\hsd.cmd run -Mode review",
+    "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
+    "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
     "launch_graphics_chat_brief.md": ".\\hsd.cmd run -Mode launch",
     "launch_daily_operator_checklist.md": ".\\hsd.cmd run -Mode launch",
@@ -593,9 +597,13 @@ def build_next_actions(
         add_action(
             "Source gap",
             "Research",
-            f"Add or monitor free source coverage for {gap['name']}",
-            f"{gap.get('gap') or 'coverage gap'}; {gap.get('next_step') or 'Add a free official, team, wire, or reputable cross-check source manually.'}",
-            "source_coverage_map.csv",
+            f"Propose free source coverage for {gap['name']}",
+            (
+                f"{gap.get('gap') or 'coverage gap'}; "
+                f"{gap.get('next_step') or 'Add a free official, team, wire, or reputable cross-check source manually.'} "
+                "Use the intake template; proposals stay disabled until the registry is deliberately reviewed."
+            ),
+            "source_registry_intake_template.csv",
         )
 
     source_leads = [
@@ -780,6 +788,7 @@ def build_payload() -> Dict[str, Any]:
     studio = studio_queue()
     schedule = schedule_rows()
     coverage_map = source_coverage_map(source_registry)
+    source_intake_rows = read_csv("source_registry_intake_template.csv")
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
     source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
@@ -838,6 +847,7 @@ def build_payload() -> Dict[str, Any]:
         ),
         metric("Source coverage gaps", sum(1 for row in coverage_map if row.get("status") == "gap")),
         metric("Source coverage watch", sum(1 for row in coverage_map if row.get("status") == "watch")),
+        metric("Source intake proposals", len(source_intake_rows)),
         metric(
             "Studio asset checks",
             sum(1 for row in opportunity_representatives.values() if row.get("story_opportunity_asset_cue") == "asset_check_required_before_studio"),
@@ -891,6 +901,7 @@ def build_payload() -> Dict[str, Any]:
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
+        "source_registry_intake_template": source_intake_rows,
         "studio_queue": studio,
         "source_health": source_rows,
         "issues": operator.get("issues") or guard.get("issues") or [],
@@ -1118,6 +1129,25 @@ def render_source_coverage(rows: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(body) or '<tr><td colspan="8" class="empty">No source coverage map found.</td></tr>'
+
+
+def render_source_intake(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <tr>
+              <td>{html.escape(clean(row.get('display_name')))}</td>
+              <td>{html.escape(clean(row.get('needed_source_type')))}</td>
+              <td>{html.escape(clean(row.get('coverage_gap')))}</td>
+              <td>{html.escape(clean(row.get('source_type')))}</td>
+              <td>{html.escape(clean(row.get('proposed_enabled')) or 'No')}</td>
+              <td>{html.escape(clean(row.get('registry_action')))}</td>
+              <td>{html.escape(clean(row.get('candidate_url')) or '-')}</td>
+            </tr>
+            """
+        )
+    return "".join(body) or '<tr><td colspan="7" class="empty">No source intake proposals found.</td></tr>'
 
 
 def render_sources(rows: Iterable[Dict[str, str]]) -> str:
@@ -1376,6 +1406,15 @@ def render_html(payload: Dict[str, Any]) -> str:
         </div>
       </div>
       <div class="panel" style="margin-top:16px">
+        <h2>Source registry intake template</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>League</th><th>Need</th><th>Gap</th><th>Type</th><th>Enabled</th><th>Action</th><th>Candidate URL</th></tr></thead>
+            <tbody>{render_source_intake(payload['source_registry_intake_template'])}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
         <h2>Source health</h2>
         <div class="table-wrap">
           <table>
@@ -1504,6 +1543,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item['name']} | {item['status']} | official: {item.get('official') or 'none'} | team: {item.get('team') or 'none'} | wire: {item.get('wire') or 'none'} | cross-check: {item.get('cross_check') or 'none'} | gap: {item.get('gap') or 'none'} | {item.get('next_step') or ''}"
         for item in payload["source_coverage_map"]
+    )
+    lines += ["", "## Source registry intake template", ""]
+    lines.extend(
+        f"- {clean(item.get('display_name'))} | {clean(item.get('needed_source_type'))} | {clean(item.get('coverage_gap'))} | enabled: {clean(item.get('proposed_enabled')) or 'No'} | action: {clean(item.get('registry_action'))}"
+        for item in payload["source_registry_intake_template"]
     )
     lines += ["", "## Studio queue", ""]
     lines.extend(f"- {item['priority']} | {item['name']} | {item['status']} | {item['detail']}" for item in payload["studio_queue"])

@@ -129,6 +129,36 @@ def seed_daily_ops_files() -> None:
             ],
         },
     )
+    Path("source_registry_intake_template.md").write_text(
+        "# Source registry intake template\n\nRows are proposal-only and disabled by default.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_intake_template.csv",
+        [
+            {
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "official_or_team",
+                "coverage_gap": "missing official league/team source",
+                "candidate_source_id": "",
+                "candidate_source_name": "",
+                "candidate_url": "",
+                "candidate_domain": "",
+                "source_type": "official_site",
+                "tier": "official",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "official_news; team_news; source_confirmation",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Fill candidate fields only after checking the free public source manually.",
+            }
+        ],
+    )
     Path("source_registry_audit.md").write_text("# Source registry audit\n", encoding="utf-8")
     write_csv(
         "morning_source_discovery_board.csv",
@@ -254,7 +284,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.11.0-source-coverage-map"
+    assert payload["version"] == "hsd-operator-command-center-v3.12.0-source-intake-template"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -266,7 +296,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     build_action = next(action for action in payload["next_actions"] if action["title"] == "Build graphics pack for Tonight in the W")
     assert build_action["status"] == "Build next"
     assert build_action["command"] == ".\\hsd.cmd run -Mode asset"
-    assert any(action["title"] == "Add or monitor free source coverage for PWHL" for action in payload["next_actions"])
+    assert any(action["title"] == "Propose free source coverage for PWHL" for action in payload["next_actions"])
     assert any(action["title"] == "Promote source lead toward manual_story_candidate: Public team social lead" for action in payload["next_actions"])
     assert any(action["title"] == "Review morning source lead: Public team social lead" for action in payload["next_actions"])
     assert all(action["title"] != "no_content_ready" for action in payload["next_actions"])
@@ -281,6 +311,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Second-source suggestions" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source coverage gaps" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source coverage watch" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Source intake proposals" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Studio asset checks" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
@@ -291,7 +322,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
     assert "PWHL league/team official pages" in payload["source_coverage_map"][1]["next_step"]
-    assert any(action["title"] == "Add or monitor free source coverage for PWHL" for action in payload["next_actions"])
+    assert payload["source_registry_intake_template"][0]["display_name"] == "PWHL"
+    assert payload["source_registry_intake_template"][0]["proposed_enabled"] == "No"
+    assert payload["source_registry_intake_template"][0]["registry_action"] == "proposal_only_do_not_import"
+    assert any(action["title"] == "Propose free source coverage for PWHL" for action in payload["next_actions"])
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -347,8 +381,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "assets: asset_not_required_for_news_packet" in html
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
+    assert "Source registry intake template" in html
     assert "PWHL" in html
     assert "missing official league/team source" in html
+    assert "proposal_only_do_not_import" in html
     assert "wnba_official_news; ap_womens_sports_wire" in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
@@ -365,7 +401,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "assets: asset_not_required_for_news_packet" in markdown
     assert "second source: wnba_official_news" in markdown
     assert "Source coverage map" in markdown
+    assert "Source registry intake template" in markdown
     assert "PWHL | gap" in markdown
+    assert "enabled: No | action: proposal_only_do_not_import" in markdown
     assert "PWHL league/team official pages" in markdown
     assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
@@ -431,6 +469,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "morning_lead_promotion_recommendations.md" in runner
     assert "morning_lead_promotion_recommendations.csv" in runner
     assert "morning_lead_promotion_recommendations.json" in runner
+    assert "source_coverage_map.csv" in runner
+    assert "source_registry_intake_template.md" in runner
+    assert "source_registry_intake_template.csv" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
     assert "ig_story_results_queue.csv" in runner

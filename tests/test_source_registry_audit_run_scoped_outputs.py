@@ -80,6 +80,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert payload["fail"] == 0
     assert (run_dir / "source_registry_audit.csv").exists()
     assert (run_dir / "source_coverage_map.csv").exists()
+    assert (run_dir / "source_registry_intake_template.csv").exists()
+    assert (run_dir / "source_registry_intake_template.md").exists()
     assert (run_dir / "source_registry_audit.md").exists()
     assert (run_dir / "source_registry_audit.json").exists()
     assert not (work_dir / "source_registry_audit.csv").exists()
@@ -89,9 +91,18 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["output_scope"] == "run_scoped"
     assert manifest["registry_version"] == "test-registry"
     assert manifest["counts"]["coverage_total"] >= 1
+    assert manifest["counts"]["intake_template_rows"] >= 1
     assert any(row["coverage_key"] == "pwhl" and row["coverage_status"] == "gap" for row in manifest["coverage_map"])
+    intake_rows = manifest["source_registry_intake_template"]
+    assert any(row["coverage_key"] == "pwhl" and row["proposed_enabled"] == "No" for row in intake_rows)
+    assert all(row["registry_action"] == "proposal_only_do_not_import" for row in intake_rows)
+    intake_csv = (run_dir / "source_registry_intake_template.csv").read_text(encoding="utf-8")
+    assert "proposal_only_not_publish_ready" in intake_csv
+    intake_md = (run_dir / "source_registry_intake_template.md").read_text(encoding="utf-8")
+    assert "Rows are proposal-only and disabled by default" in intake_md
     report = (run_dir / "source_registry_audit.md").read_text(encoding="utf-8")
     assert "## Coverage map" in report
+    assert "## Manual source intake template" in report
     assert "PWHL" in report
 
 
@@ -119,5 +130,7 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert payload["output_scope"] == "legacy_root"
     assert (work_dir / "source_registry_audit.csv").exists()
     assert (work_dir / "source_coverage_map.csv").exists()
+    assert (work_dir / "source_registry_intake_template.csv").exists()
+    assert (work_dir / "source_registry_intake_template.md").exists()
     assert (work_dir / "source_registry_audit.md").exists()
     assert (work_dir / "source_registry_audit.json").exists()

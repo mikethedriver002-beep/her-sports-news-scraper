@@ -55,6 +55,8 @@ Thumbs.db
 /reconciled_events.csv
 /today_womens_results.csv
 /today_final_results.csv
+/source_coverage_map.csv
+/source_registry_intake_template.*
 /results_contract_v2.csv
 /results_contract_v2.jsonl
 /results_contract_report.md

@@ -26,6 +26,9 @@ The board is generated during local `review` and `full` runs as:
 - `morning_lead_promotion_recommendations.csv`
 - `morning_lead_promotion_recommendations.md`
 - `morning_lead_promotion_recommendations.json`
+- `source_coverage_map.csv`
+- `source_registry_intake_template.csv`
+- `source_registry_intake_template.md`
 
 ## Review Rules
 
@@ -38,6 +41,7 @@ Review runs now refresh the intake layer first:
 - Manual story inbox rows become run-scoped manual candidates.
 - Free official and wire pages are sampled for public story links, not crawled as a publishing feed.
 - The source registry audit writes `source_coverage_map.csv` and a coverage map in `source_registry_audit.json` so sport/league gaps such as missing PWHL official/team sources are visible for manual follow-up.
+- Coverage gaps also produce `source_registry_intake_template.csv` and `.md` proposal worksheets. These rows are disabled, review-only, and do not update `config/source_registry.json`.
 - Top official and wire story links can be sampled once for public article metadata titles, dates, and short descriptions from signals such as OpenGraph, JSON-LD, or `<time datetime>`.
 - Manual social inbox rows become discovery-only leads.
 - Generic source scans remain `monitor_only` until a concrete lead appears.
@@ -74,6 +78,7 @@ The daily command center now shows:
 - High-quality lead count and fresh lead count.
 - A Sources tab with the morning board.
 - A source coverage map showing official, team, wire, and cross-check coverage by sport/league.
+- A source registry intake template for proposing free official/team/cross-check sources from coverage gaps without auto-enabling them.
 - Lead promotion recommendations with metadata evidence previews, story angle, source coverage, readiness cues, suggested second-source checks, target artifacts, and next steps.
 - A next-action item when a manual, social, discovery, or News Sync source lead needs review.
 
