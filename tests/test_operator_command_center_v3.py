@@ -931,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.28.0-same-domain-resolution"
+    assert payload["version"] == "hsd-operator-command-center-v3.29.0-render-readiness"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1003,6 +1003,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "High-quality leads" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Fresh leads" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "News/Manual/Studio" and item["value"] == "0/1/0" for item in payload["metrics"])
+    assert any(item["label"] == "Render readiness rows" and item["value"] == "2" for item in payload["metrics"])
+    assert any(item["label"] == "Render-ready review" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Render prep candidates" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Render holds" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Render needs source" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Render needs asset" and item["value"] == "0" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
@@ -1122,6 +1128,21 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     duplicate_pack_action = next(action for action in payload["next_actions"] if action["title"] == "Resolve duplicate cues in WNBA Source Proposal Pack")
     assert duplicate_pack_action["artifact"] == "source_proposal_pack_readiness.md"
     assert "espn_wnba_scoreboard_pack_review" in duplicate_pack_action["detail"]
+    render_action = next(action for action in payload["next_actions"] if action["title"] == "Review render-ready story candidate: New York Liberty beat Las Vegas Aces")
+    assert render_action["status"] == "Render ready"
+    assert "Score 100/100" in render_action["detail"]
+    assert render_action["artifact"] == "news_fact_packets.csv"
+    assert payload["render_readiness_queue"][0]["title"] == "New York Liberty beat Las Vegas Aces"
+    assert payload["render_readiness_queue"][0]["band"] == "render_ready_review"
+    assert payload["render_readiness_queue"][0]["score"] == "100"
+    assert payload["render_readiness_queue"][0]["source_cue"] == "source_confidence_ready"
+    assert payload["render_readiness_queue"][0]["asset_cue"] == "artifact_assets_ready_or_not_required"
+    assert payload["render_readiness_queue"][0]["format_cue"] == "news_packet_format_fit"
+    assert payload["render_readiness_queue"][0]["manual_path"] == "manual_review_artifact_ready:news_fact_packets.csv"
+    assert payload["render_readiness_queue"][0]["blockers"] == "none"
+    assert payload["render_readiness_queue"][1]["title"] == "Public team social lead"
+    assert payload["render_readiness_queue"][1]["band"] == "hold_for_source_confirmation"
+    assert payload["render_readiness_queue"][1]["blockers"] == "source confirmation required"
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -1135,6 +1156,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_discovery_board"][0]["story_opportunity_confirmation_cue"] == "needs_official_confirmation"
     assert payload["source_discovery_board"][0]["story_opportunity_asset_cue"] == "asset_not_required_for_news_packet"
     assert payload["source_discovery_board"][0]["story_opportunity_second_source_id"] == "wnba_official_news"
+    assert payload["source_discovery_board"][0]["render_readiness_band"] == "hold_for_source_confirmation"
+    assert payload["source_discovery_board"][0]["render_readiness_manual_path"] == "manual_review_artifact_ready:morning_source_discovery_board.csv"
     assert payload["lead_promotion_recommendations"][0]["recommendation"] == "manual_story_candidate"
     assert payload["lead_promotion_recommendations"][0]["freshness_source"] == "article_metadata"
     assert "A concise public metadata description" in payload["lead_promotion_recommendations"][0]["detail"]
@@ -1143,12 +1166,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_recommended_path"] == "news_packet"
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_confidence_tier"] == "needs_official_confirmation"
     assert payload["lead_promotion_recommendations"][0]["story_opportunity_second_source_id"] == "wnba_official_news"
+    assert payload["lead_promotion_recommendations"][0]["render_readiness_band"] == "hold_for_source_confirmation"
+    assert payload["lead_promotion_recommendations"][0]["render_readiness_next_step"] == "Verify the second official, wire, or primary source before News, Studio, or render work."
     promote_action = next(action for action in payload["next_actions"] if action["title"] == "Promote source lead toward manual_story_candidate: Public team social lead")
     assert "needs_official_confirmation" in promote_action["detail"]
     assert "Suggested second source: wnba_official_news" in promote_action["detail"]
     news_candidate = next(item for item in payload["content_candidates"] if item["type"] == "News packet")
     assert news_candidate["source_grade"] == "publish_grade"
     assert news_candidate["source_score"] == "92"
+    assert news_candidate["render_readiness_band"] == "render_ready_review"
+    assert news_candidate["render_readiness_score"] == "100"
     artifact_by_path = {item["path"]: item for item in payload["artifacts"]}
     assert artifact_by_path["graphics_upload_pack_status.csv"]["run_command"] == ".\\hsd.cmd run -Mode asset"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
@@ -1238,6 +1265,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "wnba_official_news; ap_womens_sports_wire" in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
+    assert "Render readiness" in html
+    assert "render_ready_review" in html
+    assert "hold_for_source_confirmation" in html
+    assert "manual_review_artifact_ready:news_fact_packets.csv" in html
+    assert "source_confidence_ready" in html
+    assert "asset_not_required_for_news_packet" in html
     assert "Next actions" in markdown
     assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
@@ -1302,6 +1335,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
     assert "Lead promotion recommendations" in markdown
+    assert "Render readiness" in markdown
+    assert "render_ready_review" in markdown
+    assert "hold_for_source_confirmation" in markdown
+    assert "manual_review_artifact_ready:news_fact_packets.csv" in markdown
+    assert "source confirmation required" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
