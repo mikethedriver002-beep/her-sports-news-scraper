@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.52.0-athlete-photo-readiness-cues"
+VERSION = "hsd-operator-command-center-v3.53.0-premium-athlete-photo-layout-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -1092,6 +1092,9 @@ def build_render_gallery(
                 "photo_status": photo_summary["status"],
                 "photo_summary": photo_summary["summary"],
                 "photo_detail": photo_summary["detail"],
+                "photo_layout_mode": clean(option.get("athlete_photo_layout_mode")),
+                "photo_layout_status": clean(option.get("athlete_photo_layout_status")),
+                "photo_layout_detail": clean(option.get("athlete_photo_layout_detail")),
                 "source_status": source_summary["status"],
                 "source_summary": source_summary["summary"],
                 "source_detail": source_summary["detail"],
@@ -4114,12 +4117,14 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
                 {pill(clean(row.get('review_status')) or 'review')}
                 {pill(clean(row.get('shape')))}
                 {pill('reference exact: ' + (clean(row.get('reference_exact_format_match')) or 'false'))}
+                {pill('photo layout: ' + (clean(row.get('photo_layout_mode')) or 'n/a'), 'good' if clean(row.get('photo_layout_status')) == 'approved_photo_premium_layout' else 'neutral')}
                 {pill(clean(row.get('visual_delta_summary')) or 'Delta: not scored', clean(row.get('visual_delta_tone')) or 'warn')}
                 {pill(clean(row.get('revision_summary')) or 'Revision: not planned', clean(row.get('revision_tone')) or 'warn')}
                 {pill('publish ready: false')}
               </div>
               <div class="render-cue-grid">{''.join(cue_html)}</div>
               <p class="render-gallery-note">{html.escape(clean(row.get('reference_note')))}</p>
+              <p class="render-gallery-note">Photo layout: {html.escape(clean(row.get('photo_layout_detail')) or 'No photo layout cue found.')}</p>
               <p class="render-gallery-note">{html.escape(clean(row.get('reference_public_detail')))} {html.escape(clean(row.get('reference_layout_detail')))}</p>
               <p class="render-gallery-note">{html.escape(clean(row.get('revision_focus')))}: {html.escape(short(clean(row.get('revision_manual_revisions')), 190))}</p>
               <p class="render-gallery-note">{html.escape(clean(row.get('qa_summary')))}. {html.escape(short(clean(row.get('asset_note')), 150))}</p>

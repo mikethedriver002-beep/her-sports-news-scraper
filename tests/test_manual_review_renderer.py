@@ -79,7 +79,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.14.0-athlete-photo-readiness"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.15.0-premium-athlete-photo-layouts"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -111,6 +111,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert by_format["ig_story_9x16"]["reference_exact_format_match"] is True
     assert by_format["square_feed_1x1"]["reference_exact_format_match"] is False
     assert by_format["square_feed_1x1"]["reference_derivation"] == "square_review_draft_derived_from_imported_4x5_layout"
+    assert by_format["ig_feed_4x5"]["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
+    assert by_format["ig_story_9x16"]["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
+    assert by_format["square_feed_1x1"]["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
     assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
     assert any(slot["slot_id"] == "primary_team_logo" for slot in manifest["asset_slots"])
     primary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "primary_team_logo")
@@ -289,6 +292,7 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["athlete_photo_approval_cue"] == "APPROVED PHOTO"
     assert summary["athlete_photo_review_required"] == "false"
     assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
+    assert summary["athlete_photo_layout_options"] == "premium_headshot_left,compact_headshot_chip,safe_no_photo_fallback"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
     assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
     assert summary["editorial_microcopy_game_shape"] == "clear_separation"
@@ -390,3 +394,24 @@ def test_manual_review_renderer_holds_missing_athlete_photo() -> None:
     assert selected["athlete_photo_review_required"] is True
     assert selected["athlete_photo_render_method"] == "safe_text_fallback"
     assert "No local athlete headshot" in selected["athlete_photo_blocker"]
+
+
+def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    content = {"athlete_photo_status": "approved_local_headshot"}
+
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_mode"] == "premium_headshot_left"
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_story_9x16", "height": 1920})["athlete_photo_layout_mode"] == "premium_headshot_left"
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "square_feed_1x1", "height": 1080})["athlete_photo_layout_mode"] == "compact_headshot_chip"
+    assert (
+        module.athlete_photo_layout_for_format({"athlete_photo_status": "athlete_photo_missing", "athlete_photo_blocker": "missing"}, {"format_id": "ig_feed_4x5", "height": 1350})[
+            "athlete_photo_layout_mode"
+        ]
+        == "safe_no_photo_fallback"
+    )

@@ -115,6 +115,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_derivation": "exact_imported_reference_spec",
                     "reference_public_mockup_path": reference_public.as_posix(),
                     "reference_layout_path": reference_layout.as_posix(),
+                    "athlete_photo_layout_mode": "premium_headshot_left",
+                    "athlete_photo_layout_status": "approved_photo_premium_layout",
+                    "athlete_photo_layout_detail": "Approved local headshot uses a larger left-side player spotlight inside the review-only ledger.",
                 },
                 {
                     "format_id": "ig_story_9x16",
@@ -129,6 +132,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_derivation": "exact_imported_reference_spec",
                     "reference_public_mockup_path": reference_story_public.as_posix(),
                     "reference_layout_path": reference_story_layout.as_posix(),
+                    "athlete_photo_layout_mode": "premium_headshot_left",
+                    "athlete_photo_layout_status": "approved_photo_premium_layout",
+                    "athlete_photo_layout_detail": "Approved local headshot uses a larger left-side player spotlight inside the review-only ledger.",
                 },
                 {
                     "format_id": "square_feed_1x1",
@@ -143,6 +149,9 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_derivation": "square_review_draft_derived_from_imported_4x5_layout",
                     "reference_public_mockup_path": reference_public.as_posix(),
                     "reference_layout_path": reference_layout.as_posix(),
+                    "athlete_photo_layout_mode": "compact_headshot_chip",
+                    "athlete_photo_layout_status": "approved_photo_compact_layout",
+                    "athlete_photo_layout_detail": "Approved local headshot uses a compact chip to preserve the square score layout.",
                 },
             ],
             "asset_slots": [
@@ -1377,7 +1386,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.52.0-athlete-photo-readiness-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.53.0-premium-athlete-photo-layout-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1655,6 +1664,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["photo_status"] == "athlete_photo_ready"
     assert "APPROVED PHOTO" in feed_gallery["photo_summary"]
     assert "Breanna Stewart" in feed_gallery["photo_detail"]
+    assert feed_gallery["photo_layout_mode"] == "premium_headshot_left"
+    assert feed_gallery["photo_layout_status"] == "approved_photo_premium_layout"
+    assert "larger left-side player spotlight" in feed_gallery["photo_layout_detail"]
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
     assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"
@@ -1667,6 +1679,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "score/stat-derived" in feed_gallery["stat_module_detail"]
     assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Photo", "Source", "Stats", "QA", "Visual delta", "Manual revision"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
+    assert payload["operator_decision_panel"]["render_gallery"][2]["photo_layout_mode"] == "compact_headshot_chip"
     assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
     assert payload["operator_decision_panel"]["render_gallery"][2]["revision_status"] == "manual_revision_recommended"
     assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])

@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.14.0-athlete-photo-readiness"
+VERSION = "hsd-manual-review-renderer-v1.15.0-premium-athlete-photo-layouts"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -1081,6 +1081,7 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "athlete_photo_render_method": clean(photo.get("render_method")),
         "athlete_photo_policy": clean(photo.get("approval_policy")),
         "athlete_photo_approved_at_utc": clean(photo.get("approved_at_utc")),
+        "athlete_photo_layout_options": "premium_headshot_left,compact_headshot_chip,safe_no_photo_fallback",
         "callouts": stats[:3],
         "player_name": player,
         "team": team,
@@ -1657,25 +1658,64 @@ def draw_premium_stat_chips(image: Any, chip_box: Tuple[int, int, int, int], cal
     return w
 
 
-def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], *, compact: bool = False) -> int:
+def prepared_athlete_photo(path: Path, target_w: int, target_h: int, *, crop_square: bool = False) -> Any:
+    photo = Image.open(path).convert("RGBA")
+    bbox = photo.getbbox()
+    if bbox:
+        photo = photo.crop(bbox)
+    if crop_square:
+        size = min(photo.width, photo.height)
+        left = max(0, (photo.width - size) // 2)
+        top = max(0, int((photo.height - size) * 0.18))
+        photo = photo.crop((left, top, left + size, top + size))
+    scale = max(target_w / max(1, photo.width), target_h / max(1, photo.height)) if crop_square else min(target_w / max(1, photo.width), target_h / max(1, photo.height))
+    photo = photo.resize((max(1, int(photo.width * scale)), max(1, int(photo.height * scale))), resample_filter())
+    return photo
+
+
+def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], *, compact: bool = False) -> Tuple[int, str]:
     if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
-        return 0
+        return 0, "safe_no_photo_fallback"
     path = project_path(module.get("athlete_photo_path"))
     if not path.exists() or Image is None:
-        return 0
+        return 0, "safe_no_photo_fallback"
     x, y, w, h = box
-    size = max(44 if compact else 84, min(h - 20, 62 if compact else 112))
-    left = x + (14 if compact else 22)
-    top = y + max(8, (h - size) // 2)
     try:
-        photo = Image.open(path).convert("RGBA")
-        bbox = photo.getbbox()
-        if bbox:
-            photo = photo.crop(bbox)
-        scale = max(size / max(1, photo.width), size / max(1, photo.height))
-        photo = photo.resize((max(1, int(photo.width * scale)), max(1, int(photo.height * scale))), resample_filter())
+        if not compact and h >= 130:
+            slot_w = min(190, max(150, int(w * 0.18)))
+            slot_h = min(h + 42, 198)
+            left = x + 18
+            top = y + h - slot_h + 14
+            photo = prepared_athlete_photo(path, slot_w - 18, slot_h - 24, crop_square=False)
+            layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            draw = ImageDraw.Draw(layer, "RGBA")
+            card = (left, y + 12, left + slot_w, y + h - 12)
+            draw.rounded_rectangle((card[0] + 5, card[1] + 7, card[2] + 5, card[3] + 7), radius=18, fill=(0, 0, 0, 120))
+            draw.rounded_rectangle(card, radius=18, fill=(2, 4, 9, 170), outline=(*accent, 245), width=2)
+            draw.polygon(
+                [(card[0] + 10, card[3] - 22), (card[2] - 10, card[3] - 50), (card[2] - 10, card[3] - 10), (card[0] + 10, card[3] - 10)],
+                fill=(*accent, 62),
+            )
+            glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            glow_draw = ImageDraw.Draw(glow, "RGBA")
+            glow_draw.ellipse((left - 26, top - 22, left + slot_w + 22, top + slot_h + 18), fill=(*accent, 48))
+            if ImageFilter is not None:
+                glow = glow.filter(ImageFilter.GaussianBlur(18))
+            layer.alpha_composite(glow)
+            photo_x = left + max(0, (slot_w - photo.width) // 2)
+            photo_y = top + max(0, (slot_h - photo.height) // 2)
+            layer.alpha_composite(photo, (photo_x, photo_y))
+            draw.rounded_rectangle(card, radius=18, outline=(*accent, 245), width=2)
+            image.alpha_composite(layer)
+            draw_reference_text(image, (left + 10, y + h - 33, slot_w - 20, 18), "APPROVED PHOTO", "context", 10, 7, PALETTE["ink"], max_lines=1, align="center")
+            return slot_w + 36, "premium_headshot_left"
+
+        size = max(44 if compact else 84, min(h - 20, 62 if compact else 112))
+        left = x + (14 if compact else 22)
+        top = y + max(8, (h - size) // 2)
+        photo = prepared_athlete_photo(path, size, size, crop_square=True)
         crop_left = max(0, (photo.width - size) // 2)
-        crop_top = max(0, int((photo.height - size) * 0.18))
+        crop_top = max(0, (photo.height - size) // 2)
         photo = photo.crop((crop_left, crop_top, crop_left + size, crop_top + size))
         layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(layer, "RGBA")
@@ -1690,9 +1730,9 @@ def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int],
         image.alpha_composite(layer)
         if not compact:
             draw_reference_text(image, (left, top + size - 19, size, 16), "APPROVED PHOTO", "context", 9, 7, PALETTE["ink"], max_lines=1, align="center")
-        return size + (34 if compact else 42)
+        return size + (34 if compact else 42), "compact_headshot_chip"
     except Exception:
-        return 0
+        return 0, "safe_no_photo_fallback"
 
 
 def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
@@ -1705,7 +1745,8 @@ def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, in
     player = clean(module.get("player_name"))
     matchup = clean(module.get("matchup_note"))
     source_label = "VERIFIED STAT TEXT"
-    photo_offset = draw_approved_athlete_photo_tile(image, box, module, accent, compact=compact)
+    photo_offset, photo_layout_mode = draw_approved_athlete_photo_tile(image, box, module, accent, compact=compact)
+    module["athlete_photo_layout_mode"] = photo_layout_mode
     if compact:
         chip_w = min(210, max(148, w // 4))
         text_x = x + 24 + photo_offset
@@ -1961,6 +2002,7 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "athlete_photo_render_method": clean(stat_module.get("athlete_photo_render_method")),
             "athlete_photo_policy": clean(stat_module.get("athlete_photo_policy")),
             "athlete_photo_approved_at_utc": clean(stat_module.get("athlete_photo_approved_at_utc")),
+            "athlete_photo_layout_options": clean(stat_module.get("athlete_photo_layout_options")),
             "content_module_fallback_label": "",
             "stat_source_confidence": clean(stat_module.get("stat_source_confidence")),
             "stat_source_label": clean(stat_module.get("stat_source_label")),
@@ -2003,6 +2045,27 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "editorial_microcopy_game_shape_label": clean(microcopy.get("game_shape_label")),
         "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
         "editorial_microcopy_variants": microcopy.get("variants") or [],
+    }
+
+
+def athlete_photo_layout_for_format(content_module: Dict[str, Any], spec: Dict[str, Any]) -> Dict[str, str]:
+    status = clean(content_module.get("athlete_photo_status"))
+    if status != "approved_local_headshot":
+        return {
+            "athlete_photo_layout_mode": "safe_no_photo_fallback",
+            "athlete_photo_layout_status": "photo_not_rendered",
+            "athlete_photo_layout_detail": clean(content_module.get("athlete_photo_blocker")) or "Approved local athlete photo is not available for this format.",
+        }
+    if clean(spec.get("format_id")) == "square_feed_1x1" or int(spec.get("height", 0)) <= 1100:
+        return {
+            "athlete_photo_layout_mode": "compact_headshot_chip",
+            "athlete_photo_layout_status": "approved_photo_compact_layout",
+            "athlete_photo_layout_detail": "Approved local headshot uses a compact chip to preserve the square score layout.",
+        }
+    return {
+        "athlete_photo_layout_mode": "premium_headshot_left",
+        "athlete_photo_layout_status": "approved_photo_premium_layout",
+        "athlete_photo_layout_detail": "Approved local headshot uses a larger left-side player spotlight inside the review-only ledger.",
     }
 
 
@@ -2109,6 +2172,7 @@ def render_format(packet: Dict[str, Any], template: Dict[str, str], spec: Dict[s
 def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
     OUT_PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     template = choose_template(packet)
+    content_module = content_module_summary(packet, template)
     outputs = []
     for spec in FORMAT_SPECS:
         output = render_format(packet, template, spec)
@@ -2124,13 +2188,14 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         }
         if reference:
             row.update(reference)
+        row.update(athlete_photo_layout_for_format(content_module, spec))
         outputs.append(row)
     return {
         "template": template,
         "reference_pack": reference_pack_summary() if clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID else {},
         "format_options": outputs,
         "asset_slots": asset_slots(packet, template),
-        "content_module": content_module_summary(packet, template),
+        "content_module": content_module,
         "team_visual_profiles": team_visual_profiles(packet, template),
     }
 
@@ -2183,8 +2248,9 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         for item in formats:
             ref = clean(item.get("reference_template_id")) or "none"
             derivation = clean(item.get("reference_derivation")) or "not_reference_packed"
+            photo_layout = clean(item.get("athlete_photo_layout_mode")) or "n/a"
             lines.append(
-                f"- `{item.get('format_id')}` | `{item.get('width')}x{item.get('height')}` | `{item.get('path')}` | reference=`{ref}` | derivation=`{derivation}` | publish_ready=`false`"
+                f"- `{item.get('format_id')}` | `{item.get('width')}x{item.get('height')}` | `{item.get('path')}` | reference=`{ref}` | derivation=`{derivation}` | photo_layout=`{photo_layout}` | publish_ready=`false`"
             )
     else:
         lines.append("- none")
