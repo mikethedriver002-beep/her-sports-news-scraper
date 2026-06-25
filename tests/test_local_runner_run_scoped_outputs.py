@@ -181,6 +181,7 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_template_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_intake_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_post_approval_render_staging_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
     assert "manual_review_renderer_report.md" in runner
@@ -203,6 +204,9 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "manual_post_approval_render_staging.md" in runner
     assert "manual_post_approval_render_staging.csv" in runner
     assert "manual_post_approval_render_staging.json" in runner
+    assert "manual_visual_qa_operator_decision_walkthrough.md" in runner
+    assert "manual_visual_qa_operator_decision_walkthrough.csv" in runner
+    assert "manual_visual_qa_operator_decision_walkthrough.json" in runner
     assert ".\\hsd.cmd run -Mode render" in doc
 
 
