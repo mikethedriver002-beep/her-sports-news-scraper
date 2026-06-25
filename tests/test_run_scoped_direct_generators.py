@@ -84,8 +84,12 @@ def test_operator_command_center_writes_outputs_inside_run_folder(tmp_path, monk
         assert (run_dir / "render_prep_packets.md").exists()
         assert (run_dir / "render_prep_packets.csv").exists()
         assert (run_dir / "render_prep_packets.json").exists()
+        assert (run_dir / "render_handoff_top_packet" / "README.md").exists()
+        assert (run_dir / "render_handoff_top_packet" / "manual_renderer_prompt.md").exists()
+        assert (run_dir / "render_handoff_top_packet" / "handoff_manifest.json").exists()
         assert not Path("operator_command_center.html").exists()
         assert not Path("render_prep_packets.md").exists()
+        assert not Path("render_handoff_top_packet").exists()
     finally:
         monkeypatch.delenv("HSD_RUN_OUTPUT_DIR", raising=False)
         importlib.reload(command_center)

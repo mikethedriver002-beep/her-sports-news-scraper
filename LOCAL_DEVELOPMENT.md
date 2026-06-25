@@ -99,7 +99,7 @@ Legacy scripts can still write root-level files, but local operation now treats 
 
 The review stage builds `operator_command_center.html`, `operator_command_center.md`, and `operator_command_center.json`.
 
-The same command center pass also writes review-only render prep packets: `render_prep_packets.md`, `render_prep_packets.csv`, and `render_prep_packets.json`. These packets are created only from render-ready or render-prep story candidates that clear source, asset, format, and manual-path gates. They provide template fit, copy fields, asset requirements, and exact manual renderer steps, but they do not render files, auto-run graphics, call paid APIs, or publish.
+The same command center pass also writes review-only render prep packets: `render_prep_packets.md`, `render_prep_packets.csv`, and `render_prep_packets.json`. These packets are created only from render-ready or render-prep story candidates that clear source, asset, format, and manual-path gates. They provide template fit, copy fields, asset requirements, and exact manual renderer steps, but they do not render files, auto-run graphics, call paid APIs, or publish. The top packet also gets a review-only handoff folder at `render_handoff_top_packet/` with `README.md`, `copy_sheet.md/.csv`, `asset_checklist.md/.csv`, `source_proof.md`, `manual_renderer_prompt.md`, and `handoff_manifest.json`.
 
 The command center is a local/manual cockpit. It summarizes:
 

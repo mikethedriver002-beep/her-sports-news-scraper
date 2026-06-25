@@ -931,7 +931,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.30.0-render-prep-packets"
+    assert payload["version"] == "hsd-operator-command-center-v3.31.0-render-handoff-folder"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1011,6 +1011,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Render needs asset" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Render prep packets" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Render packets ready" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Render handoff" and item["value"] == "ready_for_manual_review" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
@@ -1138,6 +1139,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert packet_action["status"] == "Render packet"
     assert packet_action["artifact"] == "render_prep_packets.md"
     assert "news_fact_card_review" in packet_action["detail"]
+    handoff_action = next(action for action in payload["next_actions"] if action["title"] == "Open render handoff folder: New York Liberty beat Las Vegas Aces")
+    assert handoff_action["status"] == "Render handoff"
+    assert handoff_action["artifact"] == "render_handoff_top_packet/README.md"
     assert payload["render_readiness_queue"][0]["title"] == "New York Liberty beat Las Vegas Aces"
     assert payload["render_readiness_queue"][0]["band"] == "render_ready_review"
     assert payload["render_readiness_queue"][0]["score"] == "100"
@@ -1158,6 +1162,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"
     assert payload["render_prep_packets"][0]["publish_policy"] == "review_only_not_publish_ready"
+    assert payload["render_handoff_summary"]["handoff_status"] == "ready_for_manual_review"
+    assert payload["render_handoff_summary"]["title"] == "New York Liberty beat Las Vegas Aces"
+    assert payload["render_handoff_summary"]["readme"] == "render_handoff_top_packet/README.md"
+    assert "render_handoff_top_packet/manual_renderer_prompt.md" in payload["render_handoff_summary"]["files"]
+    assert payload["render_handoff_summary"]["guardrails"]["auto_render"] is False
+    assert payload["render_handoff_summary"]["guardrails"]["auto_publish"] is False
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -1282,10 +1292,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Lead promotion recommendations" in html
     assert "Render readiness" in html
     assert "Render prep packets" in html
+    assert "Top render handoff" in html
     assert "render_ready_review" in html
     assert "ready_for_manual_render_review" in html
     assert "news_fact_card_review" in html
     assert "human_visual_review_required_before_any_post" in html
+    assert "render_handoff_top_packet/README.md" in html
+    assert "manual_renderer_prompt.md" in html
     assert "hold_for_source_confirmation" in html
     assert "manual_review_artifact_ready:news_fact_packets.csv" in html
     assert "source_confidence_ready" in html
@@ -1356,9 +1369,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Lead promotion recommendations" in markdown
     assert "Render readiness" in markdown
     assert "Render prep packets" in markdown
+    assert "Top render handoff" in markdown
     assert "render_ready_review" in markdown
     assert "ready_for_manual_render_review" in markdown
     assert "news_fact_card_review" in markdown
+    assert "render_handoff_top_packet/README.md" in markdown
     assert "hold_for_source_confirmation" in markdown
     assert "manual_review_artifact_ready:news_fact_packets.csv" in markdown
     assert "source confirmation required" in markdown
@@ -1370,10 +1385,26 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_prep_packets.md").exists()
     assert Path("render_prep_packets.csv").exists()
     assert Path("render_prep_packets.json").exists()
+    assert Path("render_handoff_top_packet/README.md").exists()
+    assert Path("render_handoff_top_packet/copy_sheet.md").exists()
+    assert Path("render_handoff_top_packet/copy_sheet.csv").exists()
+    assert Path("render_handoff_top_packet/asset_checklist.md").exists()
+    assert Path("render_handoff_top_packet/asset_checklist.csv").exists()
+    assert Path("render_handoff_top_packet/source_proof.md").exists()
+    assert Path("render_handoff_top_packet/manual_renderer_prompt.md").exists()
+    assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
     assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
+    assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
+    assert "No player asset required" in Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
+    assert "Open news_fact_packets.csv" in Path("render_handoff_top_packet/source_proof.md").read_text(encoding="utf-8")
+    assert "Use this prompt manually only" in Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))
     assert render_prep_manifest["guardrails"]["auto_render"] is False
     assert render_prep_manifest["guardrails"]["auto_publish"] is False
+    render_handoff_manifest = json.loads(Path("render_handoff_top_packet/handoff_manifest.json").read_text(encoding="utf-8"))
+    assert render_handoff_manifest["guardrails"]["auto_render"] is False
+    assert render_handoff_manifest["guardrails"]["auto_publish"] is False
+    assert render_handoff_manifest["packet"]["packet_id"] == payload["render_prep_packets"][0]["packet_id"]
 
 
 def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_path, monkeypatch) -> None:
@@ -1422,6 +1453,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "render_prep_packets.md" in runner
     assert "render_prep_packets.csv" in runner
     assert "render_prep_packets.json" in runner
+    assert "render_handoff_top_packet/README.md" in runner
+    assert "render_handoff_top_packet/manual_renderer_prompt.md" in runner
     assert "bebe_posting_schedule_today.md" in runner
     assert "preview_bundle_quality_summary.csv" in runner
     assert "publish_guard_report.json" in runner
