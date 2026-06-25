@@ -106,6 +106,7 @@ $GeneratedStatePathspecs = @(
     "render_handoff_top_packet/**",
     "manual_review_renderer_*",
     "manual_visual_qa_*",
+    "manual_visual_qa_approval_intake.*",
     "phase2_closure_v1.*",
     "phase2g_install_report.*",
     "pipeline_stop_reason.md",
@@ -628,6 +629,7 @@ function Invoke-RenderStage($Python) {
     Write-Section "Manual review renderer stage"
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional
 }
 
 function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
@@ -758,6 +760,9 @@ function Collect-HsdArtifacts($RunContext) {
         "manual_visual_qa_report.md",
         "manual_visual_qa_manifest.json",
         "manual_visual_qa_checklist.csv",
+        "manual_visual_qa_approval_intake.md",
+        "manual_visual_qa_approval_intake.csv",
+        "manual_visual_qa_approval_intake.json",
         "bebe_daily_ops_plan.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
