@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.39.0-manual-operator-decision-walkthrough"
+VERSION = "hsd-operator-command-center-v3.40.0-manual-operator-decision-inbox-starter"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -94,6 +94,9 @@ ARTIFACTS = [
     ("Decision", "Manual operator decision walkthrough", "manual_visual_qa_operator_decision_walkthrough.md"),
     ("Decision", "Manual operator decision walkthrough data", "manual_visual_qa_operator_decision_walkthrough.csv"),
     ("Decision", "Manual operator decision walkthrough manifest", "manual_visual_qa_operator_decision_walkthrough.json"),
+    ("Decision", "Manual operator decision inbox starter", "manual_visual_qa_operator_decision_inbox_starter.md"),
+    ("Decision", "Manual operator decision inbox starter data", "manual_visual_qa_operator_decision_inbox_starter.csv"),
+    ("Decision", "Manual operator decision inbox starter manifest", "manual_visual_qa_operator_decision_inbox_starter.json"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -237,6 +240,9 @@ RUN_COMMANDS = {
     "manual_visual_qa_operator_decision_walkthrough.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_walkthrough.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_operator_decision_walkthrough.json": ".\\hsd.cmd run -Mode render",
+    "manual_visual_qa_operator_decision_inbox_starter.md": ".\\hsd.cmd run -Mode decision-inbox",
+    "manual_visual_qa_operator_decision_inbox_starter.csv": ".\\hsd.cmd run -Mode decision-inbox",
+    "manual_visual_qa_operator_decision_inbox_starter.json": ".\\hsd.cmd run -Mode decision-inbox",
     "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
