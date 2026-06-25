@@ -4190,6 +4190,13 @@ def render_html(payload: Dict[str, Any]) -> str:
     .panel {{ background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:16px; box-shadow:0 1px 2px rgba(20,20,30,.05); min-width:0; }}
     .decision {{ display:grid; gap:14px; grid-template-columns:1fr auto; }}
     .decision-call strong {{ display:block; font-size:34px; line-height:1; margin:8px 0; }}
+    .home-header {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; background:#fff; border:1px solid var(--line); border-left:6px solid #f0c84b; border-radius:8px; padding:14px 16px; margin-bottom:14px; }}
+    .home-header h2 {{ margin:2px 0 4px; font-size:22px; }}
+    .home-header p {{ color:#4f535c; max-width:850px; }}
+    .home-actions {{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }}
+    .primary-tab-jump {{ border:0; border-radius:7px; background:#171719; color:#fff; padding:11px 14px; font-weight:900; cursor:pointer; }}
+    .secondary-artifact-link {{ color:#4f535c; font-size:12px; font-weight:800; text-align:right; }}
+    .secondary-artifact-link a {{ margin-top:5px; }}
     .safety-strip {{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }}
     .brief-list {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:18px; }}
     .brief-list div {{ border-top:1px solid var(--line); padding-top:10px; }}
@@ -4296,6 +4303,8 @@ def render_html(payload: Dict[str, Any]) -> str:
       header {{ padding:20px; }}
       main {{ padding:16px; }}
       .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
+      .home-header {{ grid-template-columns:1fr; }}
+      .home-actions {{ justify-content:flex-start; }}
       .render-gallery-grid {{ grid-template-columns:1fr; }}
       .render-comparison-grid {{ grid-template-columns:1fr; }}
       .qa-cue-grid {{ grid-template-columns:1fr; }}
@@ -4318,6 +4327,18 @@ def render_html(payload: Dict[str, Any]) -> str:
     <p>Generated {html.escape(payload['generated_at_utc'])}. Local/manual operation is the default. Paid APIs and auto-publishing are off.</p>
   </header>
   <main>
+    <section class="home-header" aria-label="Start here">
+      <div>
+        <span class="row-kicker">Start here</span>
+        <h2>Use this dashboard for daily review. Use guard reports only as safety evidence.</h2>
+        <p>The Decision tab is the render review desk. It contains the draft previews, visual QA cues, reference drift warnings, and manual approve/hold/revise controls.</p>
+      </div>
+      <div class="home-actions">
+        <button class="primary-tab-jump" type="button" data-tab-jump="decision-panel">Open Decision Desk</button>
+        <button class="tool-link" type="button" data-tab-jump="artifacts">Open Artifact List</button>
+      </div>
+    </section>
+
     <section class="top-grid">
       <div class="panel decision">
         <div class="decision-call">
@@ -4337,7 +4358,10 @@ def render_html(payload: Dict[str, Any]) -> str:
             <div><span>Next manual move</span><strong>{html.escape(payload['briefing']['next_manual_move'])}</strong></div>
           </div>
         </div>
-        <div>{open_link('publish_guard_report.md', 'Open guard')}</div>
+        <div class="secondary-artifact-link">
+          <span>Secondary safety report</span>
+          {open_link('publish_guard_report.md', 'Open guard report')}
+        </div>
       </div>
       <div class="panel">
         <h2>Top next actions</h2>
@@ -4612,12 +4636,22 @@ def render_html(payload: Dict[str, Any]) -> str:
   </main>
   <script>
     const buttons = Array.from(document.querySelectorAll("[data-tab-target]"));
+    const jumps = Array.from(document.querySelectorAll("[data-tab-jump]"));
     const panels = Array.from(document.querySelectorAll(".tab-panel"));
+    function activateTab(target) {{
+      const selectedButton = buttons.find((button) => button.getAttribute("data-tab-target") === target);
+      buttons.forEach((b) => b.setAttribute("aria-selected", String(b === selectedButton)));
+        panels.forEach((panel) => panel.classList.toggle("active", panel.id === target));
+      if (selectedButton) selectedButton.scrollIntoView({{ block: "nearest" }});
+    }}
     buttons.forEach((button) => {{
       button.addEventListener("click", () => {{
-        const target = button.getAttribute("data-tab-target");
-        buttons.forEach((b) => b.setAttribute("aria-selected", String(b === button)));
-        panels.forEach((panel) => panel.classList.toggle("active", panel.id === target));
+        activateTab(button.getAttribute("data-tab-target"));
+      }});
+    }});
+    jumps.forEach((button) => {{
+      button.addEventListener("click", () => {{
+        activateTab(button.getAttribute("data-tab-jump"));
       }});
     }});
     const search = document.getElementById("artifactSearch");

@@ -1771,6 +1771,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Lead promotion recommendations" in html
     assert "Render readiness" in html
     assert "Manual visual QA decision" in html
+    assert "Start here" in html
+    assert "Use this dashboard for daily review" in html
+    assert "Open Decision Desk" in html
+    assert 'data-tab-jump="decision-panel"' in html
+    assert "Secondary safety report" in html
+    assert "Open guard report" in html
     assert "decisionCsvOutput" in html
     assert "decisionFieldWarnings" in html
     assert "Replacement row builder" in html
