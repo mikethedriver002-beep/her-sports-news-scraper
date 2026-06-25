@@ -19,11 +19,14 @@ except Exception:  # pragma: no cover - surfaced in manifest
     ImageStat = None
 
 
-VERSION = "hsd-render-visual-delta-v1.0.0-template-aware-review"
+VERSION = "hsd-render-visual-delta-v1.1.0-manual-revision-plan"
 PROJECT_ROOT = Path(__file__).resolve().parent
 OUT_MD = output_path("render_visual_delta_report.md")
 OUT_CSV = output_path("render_visual_delta.csv")
 OUT_JSON = output_path("render_visual_delta_manifest.json")
+OUT_REVISION_MD = output_path("render_visual_revision_plan.md")
+OUT_REVISION_CSV = output_path("render_visual_revision_plan.csv")
+OUT_REVISION_JSON = output_path("render_visual_revision_plan.json")
 
 CSV_FIELDS = [
     "format_id",
@@ -41,6 +44,20 @@ CSV_FIELDS = [
     "worst_zone",
     "zone_warnings",
     "next_step",
+    "approval_policy",
+]
+
+REVISION_FIELDS = [
+    "format_id",
+    "revision_priority",
+    "revision_status",
+    "reference_visual_delta_score",
+    "drift_band",
+    "worst_zone",
+    "revision_focus",
+    "specific_manual_revisions",
+    "inspect_first",
+    "hold_or_revise_cue",
     "approval_policy",
 ]
 
@@ -322,6 +339,111 @@ def summarize_format(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def zone_revision_focus(zone: str, format_id: str) -> Dict[str, str]:
+    if zone == "title":
+        return {
+            "revision_focus": "Title hierarchy and safe-zone fit",
+            "specific_manual_revisions": (
+                "Compare headline placement against the public mockup; tighten line breaks, reduce title scale by 4-8% if it crowds the top, "
+                "and keep the headline inside the approved title block before changing any other module."
+            ),
+        }
+    if zone == "score_lane":
+        return {
+            "revision_focus": "Score/team lane balance",
+            "specific_manual_revisions": (
+                "Rebalance logo, team name, and score columns against the layout reference; keep scores dominant, align team labels to the "
+                "same baseline, and preserve enough gap between logo slots and score panels."
+            ),
+        }
+    if zone == "context_row":
+        return {
+            "revision_focus": "Context row spacing",
+            "specific_manual_revisions": (
+                "Shorten context copy, keep it on one clean row where possible, and restore the vertical gap between title and score lane."
+            ),
+        }
+    if zone == "lower_modules":
+        return {
+            "revision_focus": "Lower module rhythm",
+            "specific_manual_revisions": (
+                "Compress GAME EDGE/YOUR TAKE copy, align module headers to the reference grid, and keep the lower cards from pushing into the footer guardrail."
+            ),
+        }
+    if zone == "footer_guardrail":
+        return {
+            "revision_focus": "Draft footer and guardrail strip",
+            "specific_manual_revisions": (
+                "Verify the red draft footer remains visible, uncropped, and separated from content; do not remove draft-only guardrails."
+            ),
+        }
+    if format_id == "square_feed_1x1":
+        return {
+            "revision_focus": "Square crop derivation",
+            "specific_manual_revisions": (
+                "Treat square as a derived crop; compare against both 4x5 references, then manually rebalance title and score lane for the shorter canvas."
+            ),
+        }
+    return {
+        "revision_focus": "Template alignment review",
+        "specific_manual_revisions": (
+            "Open the draft beside the public mockup and layout reference; adjust the most visibly drifted block before recording a decision."
+        ),
+    }
+
+
+def revision_priority(score: str, band: str) -> str:
+    try:
+        numeric = int(score)
+    except Exception:
+        numeric = 0
+    if band.startswith("not_scored") or numeric < 80:
+        return "revise_before_manual_next_step"
+    if numeric < 90:
+        return "inspect_before_decision"
+    return "reference_check_only"
+
+
+def build_revision_plan(summaries: Dict[str, Dict[str, Any]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for format_id in ["ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"]:
+        summary = summaries.get(format_id, {})
+        if not summary:
+            continue
+        score = clean(summary.get("reference_visual_delta_score")) or "0"
+        band = clean(summary.get("drift_band")) or "not_scored"
+        zone = clean(summary.get("worst_zone")) or "overall"
+        focus = zone_revision_focus(zone, format_id)
+        priority = revision_priority(score, band)
+        if priority == "reference_check_only":
+            cue = "Open references and confirm by eye; no automated approval is implied."
+            status = "manual_reference_check"
+        elif priority == "inspect_before_decision":
+            cue = "Inspect the named zone before choosing approve, hold, or revise."
+            status = "manual_inspection_recommended"
+        else:
+            cue = "Hold or revise this draft if the named zone visibly drifts from the reference."
+            status = "manual_revision_recommended"
+        rows.append(
+            {
+                "format_id": format_id,
+                "revision_priority": priority,
+                "revision_status": status,
+                "reference_visual_delta_score": score,
+                "drift_band": band,
+                "worst_zone": zone,
+                "revision_focus": focus["revision_focus"],
+                "specific_manual_revisions": focus["specific_manual_revisions"],
+                "inspect_first": (
+                    "Open draft, public mockup, layout reference, then compare the named zone before changing copy or assets."
+                ),
+                "hold_or_revise_cue": cue,
+                "approval_policy": "review-only manual guidance; does not approve, publish, move files, or mark publish-ready",
+            }
+        )
+    return rows
+
+
 def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, Any]]) -> List[str]:
     lines = [
         "# HSD Render Visual Delta Report",
@@ -357,6 +479,53 @@ def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, Any]]) -> List[s
             "## Stop/Go Cue",
             "",
             "Use this report as a warning layer only. If drift is visible in the draft, hold or revise in the manual Decision tab.",
+        ]
+    )
+    return lines
+
+
+def revision_report_lines(manifest: Dict[str, Any], rows: List[Dict[str, str]]) -> List[str]:
+    lines = [
+        "# HSD Render Visual Revision Plan",
+        "",
+        f"Version: `{VERSION}`",
+        f"Status: `{manifest['status']}`",
+        f"Generated: `{manifest['generated_at_utc']}`",
+        "",
+        "## Guardrails",
+        "",
+        "- Manual revision guidance only.",
+        "- Does not approve drafts.",
+        "- Does not publish, move files, or create a publish-ready lane.",
+        "- Does not call paid APIs.",
+        "",
+        "## Recommended Manual Revisions",
+        "",
+    ]
+    if not rows:
+        lines.append("- No revision rows found. Run render mode after creating draft renders.")
+        return lines
+    for row in rows:
+        lines.extend(
+            [
+                f"### {row['format_id']}",
+                "",
+                f"- Priority: `{row['revision_priority']}`",
+                f"- Score: `{row['reference_visual_delta_score']}/100`",
+                f"- Drift band: `{row['drift_band']}`",
+                f"- Worst zone: `{row['worst_zone']}`",
+                f"- Focus: {row['revision_focus']}",
+                f"- Manual revision: {row['specific_manual_revisions']}",
+                f"- Inspect first: {row['inspect_first']}",
+                f"- Cue: {row['hold_or_revise_cue']}",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Stop/Go Cue",
+            "",
+            "Use this plan to decide whether to revise the draft manually. It is not an approval, staging, movement, or publishing instruction.",
         ]
     )
     return lines
@@ -398,9 +567,39 @@ def main() -> None:
             "paid_apis": False,
         },
     }
+    revision_rows = build_revision_plan(summaries)
+    revision_manifest = {
+        "version": VERSION,
+        "generated_at_utc": manifest["generated_at_utc"],
+        "status": "manual_revision_plan_ready" if revision_rows else "manual_revision_plan_not_scored",
+        "approval_status": "not_approved_human_review_required",
+        "summary": {
+            "revision_count": len(revision_rows),
+            "revise_before_manual_next_step_count": sum(
+                1 for row in revision_rows if row["revision_priority"] == "revise_before_manual_next_step"
+            ),
+            "inspect_before_decision_count": sum(
+                1 for row in revision_rows if row["revision_priority"] == "inspect_before_decision"
+            ),
+            "human_decision_required": True,
+        },
+        "revision_rows": revision_rows,
+        "guardrails": {
+            "manual_only": True,
+            "review_only": True,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "publish_ready": False,
+            "paid_apis": False,
+        },
+    }
     write_json(OUT_JSON, manifest)
     write_csv(OUT_CSV, rows, CSV_FIELDS)
     write_text(OUT_MD, "\n".join(report_lines(manifest, rows)))
+    write_json(OUT_REVISION_JSON, revision_manifest)
+    write_csv(OUT_REVISION_CSV, revision_rows, REVISION_FIELDS)
+    write_text(OUT_REVISION_MD, "\n".join(revision_report_lines(revision_manifest, revision_rows)))
     print(json.dumps(manifest, indent=2))
 
 
