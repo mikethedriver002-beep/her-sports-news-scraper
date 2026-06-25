@@ -7,14 +7,17 @@ from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
-from hsd_run_io import input_path, run_output_dir, write_csv as write_run_csv, write_json, write_text
+from hsd_run_io import input_path, read_csv as read_run_csv, run_output_dir, write_csv as write_run_csv, write_json, write_text
 
-VERSION = "hsd-source-registry-audit-bebe-v2.6-manual-source-intake"
+VERSION = "hsd-source-registry-audit-bebe-v2.7-proposal-review"
 REGISTRY = "config/source_registry.json"
+PROPOSALS = "operator/inbox/source_registry_proposals.csv"
 OUT_CSV = "source_registry_audit.csv"
 OUT_COVERAGE_CSV = "source_coverage_map.csv"
 OUT_INTAKE_CSV = "source_registry_intake_template.csv"
 OUT_INTAKE_MD = "source_registry_intake_template.md"
+OUT_PROPOSAL_CSV = "source_registry_proposal_review.csv"
+OUT_PROPOSAL_MD = "source_registry_proposal_review.md"
 OUT_MD = "source_registry_audit.md"
 OUT_JSON = "source_registry_audit.json"
 
@@ -59,6 +62,23 @@ INTAKE_FIELDS = [
     "operator_verification_status",
     "registry_action",
     "review_notes",
+]
+
+PROPOSAL_REVIEW_FIELDS = [
+    "candidate_source_id",
+    "candidate_source_name",
+    "candidate_url",
+    "candidate_domain",
+    "sport_league",
+    "source_type",
+    "tier",
+    "proposed_enabled",
+    "review_status",
+    "issue_count",
+    "issues",
+    "safety_flags",
+    "recommendation",
+    "registry_action",
 ]
 
 COVERAGE_TARGETS = [
@@ -125,6 +145,10 @@ def clean(v: Any) -> str:
     return re.sub(r"\s+", " ", str(v or "")).strip()
 
 
+def lower(v: Any) -> str:
+    return clean(v).lower()
+
+
 def read_json(path: str | Path) -> Dict[str, Any]:
     p = input_path(path)
     if not p.exists():
@@ -147,6 +171,10 @@ def write_intake_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
     write_run_csv(path, rows, INTAKE_FIELDS, extrasaction="ignore")
 
 
+def write_proposal_review_csv(path: str | Path, rows: List[Dict[str, Any]]) -> None:
+    write_run_csv(path, rows, PROPOSAL_REVIEW_FIELDS, extrasaction="ignore")
+
+
 def canonical_band(src: Dict[str, Any]) -> str:
     raw = clean(src.get("trust_band")).lower()
     tier = clean(src.get("tier")).lower()
@@ -165,6 +193,20 @@ def url_ok(url: str) -> bool:
         return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
     except Exception:
         return False
+
+
+def domain_from_url(url: str) -> str:
+    try:
+        parsed = urlparse(url)
+        return parsed.netloc.lower().removeprefix("www.")
+    except Exception:
+        return ""
+
+
+def split_tokens(value: Any) -> List[str]:
+    if isinstance(value, list):
+        return [clean(item) for item in value if clean(item)]
+    return [clean(item) for item in re.split(r"[;,]", clean(value)) if clean(item)]
 
 
 def audit_source(src: Dict[str, Any], seen: set[str]) -> Dict[str, Any]:
@@ -403,6 +445,195 @@ def write_intake_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
     write_text(path, "\n".join(lines), encoding="utf-8")
 
 
+def proposal_has_candidate(row: Dict[str, str]) -> bool:
+    candidate_fields = [
+        "candidate_source_id",
+        "candidate_source_name",
+        "candidate_url",
+        "candidate_domain",
+        "review_notes",
+    ]
+    return any(clean(row.get(field)) for field in candidate_fields)
+
+
+def existing_registry_indexes(sources: List[Dict[str, Any]]) -> Dict[str, set[str]]:
+    source_ids: set[str] = set()
+    urls: set[str] = set()
+    domains: set[str] = set()
+    for src in sources:
+        if not isinstance(src, dict):
+            continue
+        sid = lower(src.get("source_id"))
+        if sid:
+            source_ids.add(sid)
+        for url in src.get("urls") or []:
+            url_text = clean(url)
+            if url_text:
+                urls.add(url_text.lower().rstrip("/"))
+                domain = domain_from_url(url_text)
+                if domain:
+                    domains.add(domain)
+        for domain in src.get("domains") or []:
+            domain_text = lower(domain).removeprefix("www.")
+            if domain_text:
+                domains.add(domain_text)
+    return {"source_ids": source_ids, "urls": urls, "domains": domains}
+
+
+def proposal_issue_flags(row: Dict[str, str], registry_indexes: Dict[str, set[str]], seen: set[str]) -> Dict[str, List[str]]:
+    issues: List[str] = []
+    flags: List[str] = []
+    sid = lower(row.get("candidate_source_id"))
+    url = clean(row.get("candidate_url"))
+    normalized_url = url.lower().rstrip("/")
+    domain = lower(row.get("candidate_domain")).removeprefix("www.") or domain_from_url(url)
+    source_type = lower(row.get("source_type"))
+    tier = lower(row.get("tier"))
+    trust = lower(row.get("trust_band"))
+    enabled = lower(row.get("proposed_enabled"))
+    action = lower(row.get("registry_action"))
+    text = " ".join(
+        [
+            lower(row.get("candidate_source_name")),
+            lower(row.get("candidate_url")),
+            lower(row.get("candidate_domain")),
+            lower(row.get("publish_policy")),
+            lower(row.get("allowed_use")),
+            lower(row.get("review_notes")),
+        ]
+    )
+
+    if not sid:
+        issues.append("missing candidate_source_id")
+        flags.append("incomplete")
+    elif sid in registry_indexes["source_ids"]:
+        issues.append("duplicate source_id already exists in trusted registry")
+        flags.append("duplicate")
+    elif sid in seen:
+        issues.append("duplicate source_id inside proposal inbox")
+        flags.append("duplicate")
+    seen.add(sid)
+
+    if not url:
+        issues.append("missing candidate_url")
+        flags.append("incomplete")
+    elif not url_ok(url):
+        issues.append("unsafe or invalid URL; only http/https public sources are allowed")
+        flags.append("unsafe_url")
+    elif normalized_url in registry_indexes["urls"]:
+        issues.append("duplicate URL already exists in trusted registry")
+        flags.append("duplicate")
+
+    if domain and domain in registry_indexes["domains"]:
+        issues.append("candidate domain already exists in trusted registry; confirm this is not duplicate coverage")
+        flags.append("duplicate_domain")
+
+    social_domains = {
+        "instagram.com", "threads.net", "x.com", "twitter.com", "tiktok.com", "facebook.com",
+        "reddit.com", "mastodon.social", "bsky.app", "youtube.com", "youtu.be",
+    }
+    if any(domain == item or domain.endswith(f".{item}") for item in social_domains) or "social" in source_type or tier.startswith("social"):
+        issues.append("social-only source cannot be added as official/wire/cross-check registry coverage")
+        flags.append("social_only")
+
+    paid_tokens = ["paid api", "paid_api", "api key", "apikey", "subscription", "subscribe", "paywall", "pricing", "premium"]
+    paid_domains = ["sportradar.com", "sportsdata.io", "statsperform.com", "rapidapi.com", "serpapi.com"]
+    if any(token in text for token in paid_tokens) or any(domain == item or domain.endswith(f".{item}") for item in paid_domains):
+        issues.append("paid, paywalled, or API-key source is not allowed for free-first intake")
+        flags.append("paid_or_api")
+
+    login_tokens = ["login", "log-in", "signin", "sign-in", "account", "auth", "members-only", "private"]
+    if any(token in text for token in login_tokens):
+        issues.append("login-only or private/account source is not allowed")
+        flags.append("login_only")
+
+    unsafe_domains = ["bet365.com", "draftkings.com", "fanduel.com", "prizepicks.com", "onlyfans.com", "patreon.com"]
+    if any(domain == item or domain.endswith(f".{item}") for item in unsafe_domains):
+        issues.append("unsafe or off-policy source domain")
+        flags.append("unsafe_domain")
+
+    if enabled in {"yes", "true", "1"}:
+        issues.append("proposal attempts to enable source; keep proposed_enabled=No until registry review")
+        flags.append("auto_enable_attempt")
+    if action and action != "proposal_only_do_not_import":
+        issues.append("registry_action must stay proposal_only_do_not_import before human registry update")
+        flags.append("unsafe_registry_action")
+    if "green" not in trust:
+        issues.append("trust_band should remain green_candidate_after_operator_review for source proposals")
+        flags.append("needs_trust_review")
+
+    return {"issues": issues, "flags": flags}
+
+
+def build_proposal_review(sources: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    proposal_rows = [row for row in read_run_csv(PROPOSALS) if proposal_has_candidate(row)]
+    registry_indexes = existing_registry_indexes(sources)
+    seen: set[str] = set()
+    review_rows: List[Dict[str, str]] = []
+    for row in proposal_rows:
+        result = proposal_issue_flags(row, registry_indexes, seen)
+        issues = result["issues"]
+        flags = sorted(set(result["flags"]))
+        blocking = {"duplicate", "social_only", "paid_or_api", "login_only", "unsafe_url", "unsafe_domain", "auto_enable_attempt", "unsafe_registry_action"}
+        if any(flag in blocking for flag in flags):
+            status = "hold"
+            recommendation = "Do not add to trusted source registry until the blocking issue is resolved."
+        elif issues:
+            status = "review"
+            recommendation = "Manually review the proposal before any registry update."
+        else:
+            status = "ready_for_registry_review"
+            recommendation = "Candidate may be considered for a deliberate manual registry update."
+        review_rows.append(
+            {
+                "candidate_source_id": clean(row.get("candidate_source_id")),
+                "candidate_source_name": clean(row.get("candidate_source_name")),
+                "candidate_url": clean(row.get("candidate_url")),
+                "candidate_domain": clean(row.get("candidate_domain")) or domain_from_url(clean(row.get("candidate_url"))),
+                "sport_league": clean(row.get("sport_league") or row.get("display_name")),
+                "source_type": clean(row.get("source_type")),
+                "tier": clean(row.get("tier")),
+                "proposed_enabled": clean(row.get("proposed_enabled")) or "No",
+                "review_status": status,
+                "issue_count": str(len(issues)),
+                "issues": "; ".join(issues) if issues else "none",
+                "safety_flags": "; ".join(flags) if flags else "none",
+                "recommendation": recommendation,
+                "registry_action": clean(row.get("registry_action")) or "proposal_only_do_not_import",
+            }
+        )
+    return review_rows
+
+
+def write_proposal_review_markdown(path: str | Path, rows: List[Dict[str, str]]) -> None:
+    lines = [
+        "# HSD Source Proposal Review",
+        "",
+        "Reviews `operator/inbox/source_registry_proposals.csv` before any manual update to `config/source_registry.json`.",
+        "The report flags duplicates, paid/API sources, login-only sources, social-only sources, and unsafe proposals.",
+        "",
+        "## Summary",
+        "",
+        f"- proposals reviewed: {len(rows)}",
+        f"- hold: {sum(1 for row in rows if row['review_status'] == 'hold')}",
+        f"- review: {sum(1 for row in rows if row['review_status'] == 'review')}",
+        f"- ready for registry review: {sum(1 for row in rows if row['review_status'] == 'ready_for_registry_review')}",
+        "",
+        "## Proposal rows",
+        "",
+    ]
+    if not rows:
+        lines.append("No manual source proposals found. Add rows to `operator/inbox/source_registry_proposals.csv` when ready.")
+    else:
+        for row in rows:
+            lines.append(
+                f"- **{row['review_status']}** | {row['candidate_source_id'] or 'missing_id'} | "
+                f"{row['candidate_url'] or 'missing_url'} | flags: {row['safety_flags']} | {row['issues']}"
+            )
+    lines += ["", "No rows are imported automatically. Update the trusted registry only after deliberate human review.", ""]
+    write_text(path, "\n".join(lines), encoding="utf-8")
+
+
 def main() -> None:
     raw = read_json(REGISTRY)
     sources = raw.get("sources", []) if isinstance(raw.get("sources", []), list) else []
@@ -410,10 +641,13 @@ def main() -> None:
     rows = [audit_source(src, seen) for src in sources if isinstance(src, dict)]
     coverage_rows = build_coverage_map(sources)
     intake_rows = build_intake_template(coverage_rows)
+    proposal_review_rows = build_proposal_review(sources)
     write_csv(OUT_CSV, rows)
     write_coverage_csv(OUT_COVERAGE_CSV, coverage_rows)
     write_intake_csv(OUT_INTAKE_CSV, intake_rows)
     write_intake_markdown(OUT_INTAKE_MD, intake_rows)
+    write_proposal_review_csv(OUT_PROPOSAL_CSV, proposal_review_rows)
+    write_proposal_review_markdown(OUT_PROPOSAL_MD, proposal_review_rows)
 
     counts = {
         "sources": len(rows),
@@ -428,6 +662,10 @@ def main() -> None:
         "coverage_watch": sum(1 for r in coverage_rows if r["coverage_status"] == "watch"),
         "coverage_covered": sum(1 for r in coverage_rows if r["coverage_status"] == "covered"),
         "intake_template_rows": len(intake_rows),
+        "proposal_review_rows": len(proposal_review_rows),
+        "proposal_hold": sum(1 for r in proposal_review_rows if r["review_status"] == "hold"),
+        "proposal_review": sum(1 for r in proposal_review_rows if r["review_status"] == "review"),
+        "proposal_ready": sum(1 for r in proposal_review_rows if r["review_status"] == "ready_for_registry_review"),
     }
     run_dir = run_output_dir()
     manifest = {
@@ -439,6 +677,7 @@ def main() -> None:
         "registry_version": raw.get("registry_version", ""),
         "coverage_map": coverage_rows,
         "source_registry_intake_template": intake_rows,
+        "source_registry_proposal_review": proposal_review_rows,
     }
     write_json(OUT_JSON, manifest, indent=2)
 
@@ -460,6 +699,8 @@ def main() -> None:
         f"- coverage watch: {counts['coverage_watch']}",
         f"- coverage covered: {counts['coverage_covered']}",
         f"- source intake template rows: {counts['intake_template_rows']}",
+        f"- source proposals reviewed: {counts['proposal_review_rows']}",
+        f"- source proposals on hold: {counts['proposal_hold']}",
         "",
         "## Green source decision",
         "",
@@ -489,6 +730,16 @@ def main() -> None:
             )
     else:
         lines.append("No source intake proposal rows were needed.")
+    lines += ["", "## Manual source proposal review", ""]
+    if proposal_review_rows:
+        lines.append("Manual proposal rows were reviewed in `source_registry_proposal_review.csv`.")
+        for row in proposal_review_rows:
+            lines.append(
+                f"- **{row['review_status']}** | {row['candidate_source_id'] or 'missing_id'} | "
+                f"{row['safety_flags']} | {row['issues']}"
+            )
+    else:
+        lines.append("No manual source proposals found in `operator/inbox/source_registry_proposals.csv`.")
     lines += ["", "## Full registry audit", "", "See `source_registry_audit.csv` for every source.", ""]
     write_text(OUT_MD, "\n".join(lines), encoding="utf-8")
     print(json.dumps({"output_scope": manifest["output_scope"], **counts}, indent=2))

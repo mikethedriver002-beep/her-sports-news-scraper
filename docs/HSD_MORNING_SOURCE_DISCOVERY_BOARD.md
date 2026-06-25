@@ -29,6 +29,8 @@ The board is generated during local `review` and `full` runs as:
 - `source_coverage_map.csv`
 - `source_registry_intake_template.csv`
 - `source_registry_intake_template.md`
+- `source_registry_proposal_review.csv`
+- `source_registry_proposal_review.md`
 
 ## Review Rules
 
@@ -42,6 +44,7 @@ Review runs now refresh the intake layer first:
 - Free official and wire pages are sampled for public story links, not crawled as a publishing feed.
 - The source registry audit writes `source_coverage_map.csv` and a coverage map in `source_registry_audit.json` so sport/league gaps such as missing PWHL official/team sources are visible for manual follow-up.
 - Coverage gaps also produce `source_registry_intake_template.csv` and `.md` proposal worksheets. These rows are disabled, review-only, and do not update `config/source_registry.json`.
+- Manual source proposals in `operator/inbox/source_registry_proposals.csv` produce `source_registry_proposal_review.csv` and `.md`. The review flags duplicate, paid/API, login-only, social-only, and unsafe proposed sources before any human updates the trusted source registry.
 - Top official and wire story links can be sampled once for public article metadata titles, dates, and short descriptions from signals such as OpenGraph, JSON-LD, or `<time datetime>`.
 - Manual social inbox rows become discovery-only leads.
 - Generic source scans remain `monitor_only` until a concrete lead appears.
@@ -79,6 +82,7 @@ The daily command center now shows:
 - A Sources tab with the morning board.
 - A source coverage map showing official, team, wire, and cross-check coverage by sport/league.
 - A source registry intake template for proposing free official/team/cross-check sources from coverage gaps without auto-enabling them.
+- A source proposal review report showing holds and ready-for-registry-review rows before any trusted registry update.
 - Lead promotion recommendations with metadata evidence previews, story angle, source coverage, readiness cues, suggested second-source checks, target artifacts, and next steps.
 - A next-action item when a manual, social, discovery, or News Sync source lead needs review.
 

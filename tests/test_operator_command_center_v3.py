@@ -159,6 +159,47 @@ def seed_daily_ops_files() -> None:
             }
         ],
     )
+    Path("source_registry_proposal_review.md").write_text(
+        "# Source proposal review\n\nNo rows are imported automatically.\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        "source_registry_proposal_review.csv",
+        [
+            {
+                "candidate_source_id": "pwhl_instagram",
+                "candidate_source_name": "PWHL Instagram",
+                "candidate_url": "https://www.instagram.com/thepwhlofficial/",
+                "candidate_domain": "instagram.com",
+                "sport_league": "PWHL",
+                "source_type": "official_site",
+                "tier": "official",
+                "proposed_enabled": "No",
+                "review_status": "hold",
+                "issue_count": "1",
+                "issues": "social-only source cannot be added as official/wire/cross-check registry coverage",
+                "safety_flags": "social_only",
+                "recommendation": "Do not add to trusted source registry until the blocking issue is resolved.",
+                "registry_action": "proposal_only_do_not_import",
+            },
+            {
+                "candidate_source_id": "pwhl_official_site",
+                "candidate_source_name": "PWHL official site",
+                "candidate_url": "https://www.thepwhl.com/en/",
+                "candidate_domain": "thepwhl.com",
+                "sport_league": "PWHL",
+                "source_type": "official_site",
+                "tier": "official",
+                "proposed_enabled": "No",
+                "review_status": "ready_for_registry_review",
+                "issue_count": "0",
+                "issues": "none",
+                "safety_flags": "none",
+                "recommendation": "Candidate may be considered for a deliberate manual registry update.",
+                "registry_action": "proposal_only_do_not_import",
+            },
+        ],
+    )
     Path("source_registry_audit.md").write_text("# Source registry audit\n", encoding="utf-8")
     write_csv(
         "morning_source_discovery_board.csv",
@@ -284,7 +325,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.12.0-source-intake-template"
+    assert payload["version"] == "hsd-operator-command-center-v3.13.0-source-proposal-review"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -297,8 +338,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert build_action["status"] == "Build next"
     assert build_action["command"] == ".\\hsd.cmd run -Mode asset"
     assert any(action["title"] == "Propose free source coverage for PWHL" for action in payload["next_actions"])
+    assert any(action["title"] == "Resolve unsafe source proposal: pwhl_instagram" for action in payload["next_actions"])
     assert any(action["title"] == "Promote source lead toward manual_story_candidate: Public team social lead" for action in payload["next_actions"])
-    assert any(action["title"] == "Review morning source lead: Public team social lead" for action in payload["next_actions"])
     assert all(action["title"] != "no_content_ready" for action in payload["next_actions"])
     assert any(item["label"] == "Source registry" and item["value"] == "REVIEW" for item in payload["metrics"])
     assert any(item["label"] == "Publish-grade packets" and item["value"] == "1" for item in payload["metrics"])
@@ -312,6 +353,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Source coverage gaps" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Source coverage watch" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Source intake proposals" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Source proposal holds" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Source proposals ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Studio asset checks" and item["value"] == "0" for item in payload["metrics"])
     assert any(item["label"] == "Gray/social leads" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Lead promotions" and item["value"] == "1" for item in payload["metrics"])
@@ -325,6 +368,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["source_registry_intake_template"][0]["display_name"] == "PWHL"
     assert payload["source_registry_intake_template"][0]["proposed_enabled"] == "No"
     assert payload["source_registry_intake_template"][0]["registry_action"] == "proposal_only_do_not_import"
+    assert payload["source_registry_proposal_review"][0]["candidate_source_id"] == "pwhl_instagram"
+    assert payload["source_registry_proposal_review"][0]["review_status"] == "hold"
+    assert payload["source_registry_proposal_review"][1]["review_status"] == "ready_for_registry_review"
     assert any(action["title"] == "Propose free source coverage for PWHL" for action in payload["next_actions"])
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
@@ -382,9 +428,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in html
     assert "Source coverage map" in html
     assert "Source registry intake template" in html
+    assert "Source proposal review" in html
     assert "PWHL" in html
     assert "missing official league/team source" in html
     assert "proposal_only_do_not_import" in html
+    assert "social-only source cannot be added" in html
     assert "wnba_official_news; ap_womens_sports_wire" in html
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
@@ -402,8 +450,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "second source: wnba_official_news" in markdown
     assert "Source coverage map" in markdown
     assert "Source registry intake template" in markdown
+    assert "Source proposal review" in markdown
     assert "PWHL | gap" in markdown
     assert "enabled: No | action: proposal_only_do_not_import" in markdown
+    assert "pwhl_instagram | hold | flags: social_only" in markdown
     assert "PWHL league/team official pages" in markdown
     assert "preview: Official metadata title for public team lead" in markdown
     assert "recent_30_days via article_metadata" in markdown
@@ -472,6 +522,8 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "source_coverage_map.csv" in runner
     assert "source_registry_intake_template.md" in runner
     assert "source_registry_intake_template.csv" in runner
+    assert "source_registry_proposal_review.md" in runner
+    assert "source_registry_proposal_review.csv" in runner
     assert "manual_workflow_handoff.md" in runner
     assert "manual_workflow_pack_status.csv" in runner
     assert "ig_story_results_queue.csv" in runner

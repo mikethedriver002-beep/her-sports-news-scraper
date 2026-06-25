@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import os
 import subprocess
@@ -47,6 +48,111 @@ def write_registry(path: Path) -> None:
     )
 
 
+def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def write_source_proposals(path: Path) -> None:
+    write_csv(
+        path,
+        [
+            {
+                "coverage_key": "wnba",
+                "display_name": "WNBA",
+                "needed_source_type": "scoreboard_or_stats_cross_check",
+                "coverage_gap": "missing scoreboard/stat/cross-check source",
+                "candidate_source_id": "espn_wnba_public",
+                "candidate_source_name": "Duplicate ESPN WNBA source",
+                "candidate_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard",
+                "candidate_domain": "",
+                "source_type": "scoreboard_site",
+                "tier": "stats_provider",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "WNBA",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "cross_check; scores",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Duplicate test row.",
+            },
+            {
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "official_or_team",
+                "coverage_gap": "missing official league/team source",
+                "candidate_source_id": "pwhl_instagram",
+                "candidate_source_name": "PWHL Instagram",
+                "candidate_url": "https://www.instagram.com/thepwhlofficial/",
+                "candidate_domain": "",
+                "source_type": "official_site",
+                "tier": "official",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "official_news",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Social account should not become trusted registry coverage.",
+            },
+            {
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "scoreboard_or_stats_cross_check",
+                "coverage_gap": "missing scoreboard/stat/cross-check source",
+                "candidate_source_id": "pwhl_paid_api",
+                "candidate_source_name": "Paid API",
+                "candidate_url": "https://api.sportsdata.io/v3/pwhl/scores/json",
+                "candidate_domain": "",
+                "source_type": "scoreboard_site",
+                "tier": "stats_provider",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "Yes",
+                "automation_status": "manual_review",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "cross_check",
+                "operator_verification_status": "unverified",
+                "registry_action": "import_to_registry",
+                "review_notes": "Requires paid API key and account login.",
+            },
+            {
+                "coverage_key": "pwhl",
+                "display_name": "PWHL",
+                "needed_source_type": "official_or_team",
+                "coverage_gap": "missing official league/team source",
+                "candidate_source_id": "pwhl_official_site",
+                "candidate_source_name": "PWHL official site",
+                "candidate_url": "https://www.thepwhl.com/en/",
+                "candidate_domain": "",
+                "source_type": "official_site",
+                "tier": "official",
+                "trust_band": "green_candidate_after_operator_review",
+                "sport_league": "PWHL",
+                "proposed_enabled": "No",
+                "automation_status": "disabled_manual_review_only",
+                "publish_policy": "proposal_only_not_publish_ready",
+                "allowed_use": "official_news; team_news; source_confirmation",
+                "operator_verification_status": "unverified",
+                "registry_action": "proposal_only_do_not_import",
+                "review_notes": "Free public official candidate for human review.",
+            },
+        ],
+    )
+
+
 def stdout_json(proc: subprocess.CompletedProcess[str]) -> dict:
     start = proc.stdout.index("{")
     return json.loads(proc.stdout[start:])
@@ -57,6 +163,7 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     run_dir = tmp_path / "run" / "files"
     work_dir.mkdir()
     write_registry(work_dir / "config" / "source_registry.json")
+    write_source_proposals(work_dir / "operator" / "inbox" / "source_registry_proposals.csv")
 
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
@@ -82,6 +189,8 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert (run_dir / "source_coverage_map.csv").exists()
     assert (run_dir / "source_registry_intake_template.csv").exists()
     assert (run_dir / "source_registry_intake_template.md").exists()
+    assert (run_dir / "source_registry_proposal_review.csv").exists()
+    assert (run_dir / "source_registry_proposal_review.md").exists()
     assert (run_dir / "source_registry_audit.md").exists()
     assert (run_dir / "source_registry_audit.json").exists()
     assert not (work_dir / "source_registry_audit.csv").exists()
@@ -92,6 +201,9 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert manifest["registry_version"] == "test-registry"
     assert manifest["counts"]["coverage_total"] >= 1
     assert manifest["counts"]["intake_template_rows"] >= 1
+    assert manifest["counts"]["proposal_review_rows"] == 4
+    assert manifest["counts"]["proposal_hold"] == 3
+    assert manifest["counts"]["proposal_ready"] == 1
     assert any(row["coverage_key"] == "pwhl" and row["coverage_status"] == "gap" for row in manifest["coverage_map"])
     intake_rows = manifest["source_registry_intake_template"]
     assert any(row["coverage_key"] == "pwhl" and row["proposed_enabled"] == "No" for row in intake_rows)
@@ -100,9 +212,24 @@ def test_source_registry_audit_writes_outputs_to_run_folder(tmp_path: Path) -> N
     assert "proposal_only_not_publish_ready" in intake_csv
     intake_md = (run_dir / "source_registry_intake_template.md").read_text(encoding="utf-8")
     assert "Rows are proposal-only and disabled by default" in intake_md
+    proposal_review = read_csv(run_dir / "source_registry_proposal_review.csv")
+    by_id = {row["candidate_source_id"]: row for row in proposal_review}
+    assert by_id["espn_wnba_public"]["review_status"] == "hold"
+    assert "duplicate" in by_id["espn_wnba_public"]["safety_flags"]
+    assert by_id["pwhl_instagram"]["review_status"] == "hold"
+    assert "social_only" in by_id["pwhl_instagram"]["safety_flags"]
+    assert by_id["pwhl_paid_api"]["review_status"] == "hold"
+    assert "paid_or_api" in by_id["pwhl_paid_api"]["safety_flags"]
+    assert "login_only" in by_id["pwhl_paid_api"]["safety_flags"]
+    assert "auto_enable_attempt" in by_id["pwhl_paid_api"]["safety_flags"]
+    assert by_id["pwhl_official_site"]["review_status"] == "ready_for_registry_review"
+    proposal_md = (run_dir / "source_registry_proposal_review.md").read_text(encoding="utf-8")
+    assert "paid/API sources" in proposal_md
+    assert "No rows are imported automatically" in proposal_md
     report = (run_dir / "source_registry_audit.md").read_text(encoding="utf-8")
     assert "## Coverage map" in report
     assert "## Manual source intake template" in report
+    assert "## Manual source proposal review" in report
     assert "PWHL" in report
 
 
@@ -132,5 +259,7 @@ def test_source_registry_audit_preserves_legacy_root_output_when_env_unset(tmp_p
     assert (work_dir / "source_coverage_map.csv").exists()
     assert (work_dir / "source_registry_intake_template.csv").exists()
     assert (work_dir / "source_registry_intake_template.md").exists()
+    assert (work_dir / "source_registry_proposal_review.csv").exists()
+    assert (work_dir / "source_registry_proposal_review.md").exists()
     assert (work_dir / "source_registry_audit.md").exists()
     assert (work_dir / "source_registry_audit.json").exists()
