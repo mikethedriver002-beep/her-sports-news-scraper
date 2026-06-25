@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HSD Logo Asset Catalog v1",
+  "type": "object",
+  "required": ["version", "generated_at_utc", "review_only", "row_count", "rows", "policy"],
+  "properties": {
+    "version": { "const": "hsd-logo-asset-catalog-v1" },
+    "generated_at_utc": { "type": "string" },
+    "review_only": { "const": true },
+    "catalog_csv": { "type": "string" },
+    "schema": { "type": "string" },
+    "template_mapping": { "type": "string" },
+    "row_count": { "type": "integer", "minimum": 0 },
+    "team_logo_rows": { "type": "integer", "minimum": 0 },
+    "league_logo_rows": { "type": "integer", "minimum": 0 },
+    "approval_status_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "policy": {
+      "type": "object",
+      "required": ["no_auto_approval", "no_asset_downloads", "fallbacks_are_review_only", "catalog_does_not_change_renderer_behavior"],
+      "properties": {
+        "no_auto_approval": { "const": true },
+        "no_asset_downloads": { "const": true },
+        "fallbacks_are_review_only": { "const": true },
+        "catalog_does_not_change_renderer_behavior": { "const": true }
+      },
+      "additionalProperties": true
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "league",
+          "entity_type",
+          "team_id",
+          "team_name",
+          "asset_type",
+          "local_logo_path",
+          "png_path",
+          "png_exists",
+          "svg_path",
+          "svg_exists",
+          "approval_status",
+          "fallback_status",
+          "source_note",
+          "render_template_ids",
+          "review_only",
+          "operator_action"
+        ],
+        "properties": {
+          "league": { "type": "string" },
+          "entity_type": { "enum": ["team_logo", "league_logo"] },
+          "team_id": { "type": "string" },
+          "team_name": { "type": "string" },
+          "asset_type": { "type": "string" },
+          "local_logo_path": { "type": "string" },
+          "png_path": { "type": "string" },
+          "png_exists": { "enum": ["true", "false"] },
+          "svg_path": { "type": "string" },
+          "svg_exists": { "enum": ["true", "false"] },
+          "preferred_format": { "type": "string" },
+          "file_exists": { "enum": ["true", "false"] },
+          "approval_status": {
+            "enum": ["approved", "unapproved_review_required", "missing", "not_registered"]
+          },
+          "required": { "type": "string" },
+          "missing_status": { "type": "string" },
+          "fallback_status": { "type": "string" },
+          "source_url": { "type": "string" },
+          "source_note": { "type": "string" },
+          "evidence": { "type": "string" },
+          "render_template_ids": { "type": "string" },
+          "template_scope": { "type": "string" },
+          "review_only": { "const": "true" },
+          "operator_action": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": true
+}

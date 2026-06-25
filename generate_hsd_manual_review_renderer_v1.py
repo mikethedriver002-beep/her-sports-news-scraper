@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.16.0-photo-first-final-score-template"
+VERSION = "hsd-manual-review-renderer-v1.17.0-photo-first-art-direction-qa"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -1673,6 +1673,22 @@ def prepared_athlete_photo(path: Path, target_w: int, target_h: int, *, crop_squ
     return photo
 
 
+def prepared_athlete_photo_fill(path: Path, target_w: int, target_h: int) -> Any:
+    photo = Image.open(path).convert("RGBA")
+    bbox = photo.getbbox()
+    if bbox:
+        photo = photo.crop(bbox)
+    scale = max(target_w / max(1, photo.width), target_h / max(1, photo.height))
+    photo = photo.resize((max(1, int(photo.width * scale)), max(1, int(photo.height * scale))), resample_filter())
+    if photo.width > target_w:
+        left = max(0, (photo.width - target_w) // 2)
+        photo = photo.crop((left, 0, left + target_w, photo.height))
+    if photo.height > target_h:
+        top = max(0, int((photo.height - target_h) * 0.18))
+        photo = photo.crop((0, top, target_w, top + target_h))
+    return photo
+
+
 def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], *, compact: bool = False) -> Tuple[int, str]:
     if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
         return 0, "safe_no_photo_fallback"
@@ -1780,37 +1796,85 @@ def approved_athlete_photo_path(module: Dict[str, Any]) -> Path | None:
     return path
 
 
+def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
+    width, height = int(format_spec.get("width", 1080)), int(format_spec.get("height", 1350))
+    is_story = height > 1500
+    if is_story:
+        photo_box = [72, 505, 410, 710]
+        score_top = 520
+        score_h = 206
+        stat_box = [72, 1246, 936, 168]
+        hook_box = [72, 1440, 936, 172]
+    else:
+        photo_box = [58, 372, 408, 590]
+        score_top = 398
+        score_h = 176
+        stat_box = [58, 990, 964, 132]
+        hook_box = [58, 1148, 964, 112]
+    score_x = photo_box[0] + photo_box[2] + 28
+    score_w = width - score_x - photo_box[0]
+    winner_row = [score_x, score_top, score_w, score_h]
+    loser_row = [score_x, score_top + score_h + 24, score_w, score_h - 16]
+    context_box = [score_x, score_top + score_h * 2 + 36, score_w, 54]
+    return {
+        "template_family": "approved_athlete_photo_final_score",
+        "format_id": clean(format_spec.get("format_id")),
+        "photo_stage_box": photo_box,
+        "photo_face_focus_box": [photo_box[0] + 48, photo_box[1] + int(photo_box[3] * 0.34), photo_box[2] - 96, int(photo_box[3] * 0.32)],
+        "winner_score_row_box": winner_row,
+        "loser_score_row_box": loser_row,
+        "score_context_box": context_box,
+        "stat_strip_box": stat_box,
+        "matchup_angle_box": hook_box,
+        "minimum_clearance_px": 24,
+        "text_clearance_policy": "photo-first stage, score lanes, stat strip, and matchup module must remain visually separated; human review still required.",
+    }
+
+
+def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
+    return int(raw[0]), int(raw[1]), int(raw[2]), int(raw[3])
+
+
 def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> bool:
     path = approved_athlete_photo_path(module)
     if path is None:
         return False
     x, y, w, h = box
     try:
-        photo = prepared_athlete_photo(path, w - 34, h - 48, crop_square=False)
+        photo = prepared_athlete_photo_fill(path, w - 28, h - 72)
     except Exception:
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    draw.rounded_rectangle((x + 10, y + 12, x + w + 10, y + h + 12), radius=26, fill=(0, 0, 0, 132))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, fill=(2, 4, 9, 214), outline=(*accent, 250), width=3)
-    draw.polygon([(x + 18, y + h - 128), (x + w - 18, y + h - 210), (x + w - 18, y + h - 18), (x + 18, y + h - 18)], fill=(*accent, 58))
-    draw.line((x + 24, y + 28, x + w - 24, y + 28), fill=(*accent, 185), width=3)
+    draw.rounded_rectangle((x + 12, y + 14, x + w + 12, y + h + 14), radius=30, fill=(0, 0, 0, 142))
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 218), outline=(*accent, 250), width=3)
+    draw.rectangle((x, y + 34, x + 12, y + h - 32), fill=(*accent, 232))
+    draw.polygon([(x + 28, y + h - 152), (x + w - 20, y + h - 244), (x + w - 20, y + h - 20), (x + 28, y + h - 20)], fill=(*accent, 68))
+    draw.polygon([(x + 44, y + 92), (x + w - 26, y + 36), (x + w - 26, y + 112), (x + 44, y + 166)], fill=(255, 255, 255, 16))
+    draw.line((x + 30, y + 30, x + w - 28, y + 30), fill=(*accent, 205), width=3)
+    draw.line((x + 30, y + h - 78, x + w - 28, y + h - 78), fill=(*accent, 120), width=2)
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((x - 72, y + 44, x + w + 72, y + h + 88), fill=(*accent, 54))
+    glow_draw.ellipse((x - 80, y + 26, x + w + 80, y + h + 92), fill=(*accent, 62))
     if ImageFilter is not None:
-        glow = glow.filter(ImageFilter.GaussianBlur(28))
+        glow = glow.filter(ImageFilter.GaussianBlur(30))
     layer.alpha_composite(glow)
-    photo_x = x + (w - photo.width) // 2
-    photo_y = y + h - photo.height - 20
-    layer.alpha_composite(photo, (photo_x, photo_y))
+    photo_x = x + 14 + max(0, (w - 28 - photo.width) // 2)
+    photo_y = y + h - photo.height - 42
+    stage_photo = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    stage_photo.alpha_composite(photo, (photo_x, photo_y))
+    stage_mask = Image.new("L", image.size, 0)
+    mask_draw = ImageDraw.Draw(stage_mask)
+    mask_draw.rounded_rectangle((x + 14, y + 38, x + w - 14, y + h - 18), radius=22, fill=255)
+    layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
     draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 250), width=3)
-    label_w = min(w - 42, 214)
-    draw.rounded_rectangle((x + 20, y + h - 52, x + 20 + label_w, y + h - 18), radius=8, fill=(3, 5, 10, 226), outline=(248, 250, 255, 150), width=1)
+    label_w = min(w - 42, 234)
+    draw.rounded_rectangle((x + 22, y + h - 58, x + 22 + label_w, y + h - 20), radius=8, fill=(3, 5, 10, 232), outline=(248, 250, 255, 150), width=1)
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
-    draw_reference_text(image, (x + 32, y + 26, w - 64, 46), player, "context", 25, 14, PALETTE["ink"], max_lines=1, align="center", uppercase=False)
-    draw_reference_text(image, (x + 28, y + h - 47, label_w - 16, 26), "APPROVED PHOTO", "context", 14, 9, accent, max_lines=1, align="center")
+    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "PLAYER FOCUS", "context", 19, 10, accent, max_lines=1, align="left")
+    draw_reference_text(image, (x + 36, y + 58, w - 72, 42), player, "context", 26, 14, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
+    draw_reference_text(image, (x + 30, y + h - 52, label_w - 16, 28), "APPROVED PHOTO", "context", 14, 9, accent, max_lines=1, align="center")
     return True
 
 
@@ -1827,11 +1891,18 @@ def draw_photo_first_score_row(
 ) -> None:
     x, y, w, h = box
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 226 if winner else 210), radius=18, width=2)
+    draw = ImageDraw.Draw(image, "RGBA")
+    label = "WINNER" if winner else "FINAL"
+    label_w = 96 if winner else 74
+    draw.rounded_rectangle((x + 20, y + 16, x + 20 + label_w, y + 42), radius=7, fill=(*accent, 230), outline=(248, 250, 255, 128), width=1)
+    draw_reference_text(image, (x + 29, y + 19, label_w - 18, 20), label, "context", 12, 8, (2, 4, 9), max_lines=1, align="center")
     logo_size = min(h - 30, 104 if winner else 92)
-    logo_box = (x + 20, y + (h - logo_size) // 2, logo_size, logo_size)
+    logo_box = (x + 22, y + (h - logo_size) // 2 + 10, logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
-    draw_reference_text(image, (x + logo_size + 44, y + 18, max(220, w - logo_size - 214), h - 36), short_team(team), "context", 38 if winner else 32, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
-    draw_reference_text(image, (x + w - 184, y - 12, 162, h + 24), score_value, "score", 122 if winner else 102, 54, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, (x + logo_size + 52, y + 48, max(220, w - logo_size - 232), h - 68), short_team(team), "context", 40 if winner else 34, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    score_box = (x + w - 178, y - 6, 150, h + 14)
+    draw.rounded_rectangle((score_box[0] - 14, y + 18, x + w - 18, y + h - 18), radius=18, fill=(255, 255, 255, 18), outline=(*accent, 92), width=1)
+    draw_reference_text(image, score_box, score_value, "score", 114 if winner else 96, 52, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
@@ -1872,35 +1943,27 @@ def draw_photo_first_final_score_template(
     draw_reference_background(image, "final")
     draw_reference_badge(image, template_spec)
     draw_final_score_reference_title(image, template_spec, format_id)
-    draw_context_divider(image, zone_box(template_spec, "context_row"), "FINAL / WNBA / APPROVED PHOTO DRAFT")
-
-    if is_story:
-        photo_box = (72, 505, 392, 690)
-        score_top = 520
-        score_h = 210
-        stat_box = (72, 1235, 936, 168)
-        hook_box = (72, 1430, 936, 168)
-    else:
-        photo_box = (58, 384, 374, 560)
-        score_top = 398
-        score_h = 178
-        stat_box = (58, 972, 964, 142)
-        hook_box = (58, 1140, 964, 112)
+    draw_context_divider(image, zone_box(template_spec, "context_row"), "FINAL / WNBA / PHOTO-FIRST DRAFT")
+    geometry = photo_first_layout_geometry(format_spec)
+    photo_box = tuple_box(geometry["photo_stage_box"])
+    winner_box = tuple_box(geometry["winner_score_row_box"])
+    loser_box = tuple_box(geometry["loser_score_row_box"])
+    context_box = tuple_box(geometry["score_context_box"])
+    stat_box = tuple_box(geometry["stat_strip_box"])
+    hook_box = tuple_box(geometry["matchup_angle_box"])
 
     photo_ok = draw_photo_first_athlete_stage(image, photo_box, stat_module, winner_accent)
     if not photo_ok:
         return False
 
-    score_x = photo_box[0] + photo_box[2] + 34
-    score_w = width - score_x - photo_box[0]
-    draw_photo_first_score_row(image, (score_x, score_top, score_w, score_h), score["winner"], score["winner_score"], winner_accent, aliases, logos, winner=True)
-    draw_photo_first_score_row(image, (score_x, score_top + score_h + 26, score_w, score_h - 18), score["loser"], score["loser_score"], loser_accent, aliases, logos, winner=False)
+    draw_photo_first_score_row(image, winner_box, score["winner"], score["winner_score"], winner_accent, aliases, logos, winner=True)
+    draw_photo_first_score_row(image, loser_box, score["loser"], score["loser_score"], loser_accent, aliases, logos, winner=False)
 
     total = score_total(score)
     context_parts = [clean(stat_module.get("matchup_note"))]
     if total is not None:
         context_parts.append(f"{total} pts")
-    draw_reference_text(image, (score_x, score_top + score_h * 2 + 40, score_w, 54), " / ".join([part for part in context_parts if part]), "context", 27, 13, winner_accent, max_lines=1)
+    draw_reference_text(image, context_box, " / ".join([part for part in context_parts if part]), "context", 25 if is_story else 27, 13, winner_accent, max_lines=1)
 
     draw_photo_first_stat_strip(image, stat_box, stat_module, winner_accent)
     microcopy = selected_editorial_microcopy(packet, score, stat_module)
@@ -2351,6 +2414,9 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         if reference:
             row.update(reference)
         row.update(athlete_photo_layout_for_format(content_module, spec))
+        if clean(row.get("athlete_photo_layout_mode")) == "photo_first_final_score":
+            row["photo_first_template_geometry"] = photo_first_layout_geometry(spec)
+            row["photo_first_art_direction"] = "approved_local_headshot_primary_visual_with_balanced_score_rails_verified_stat_strip_and_review_only_guardrails"
         outputs.append(row)
     return {
         "template": template,
