@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.13.0-adaptive-final-score-modules"
+VERSION = "hsd-manual-review-renderer-v1.14.0-athlete-photo-readiness"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -39,6 +39,7 @@ REFERENCE_BRAND_ROOT = PROJECT_ROOT / "assets" / "graphics" / "v4" / "approved" 
 TEAM_ALIASES_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_aliases.csv"
 TEAM_LOGOS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_logos.csv"
 TEAM_COLORS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "teams.csv"
+WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -99,6 +100,10 @@ def norm(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", clean(value).lower())
 
 
+def slug(value: Any) -> str:
+    return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", clean(value).lower())).strip("_")
+
+
 def repo_root() -> Path:
     return Path.cwd().resolve()
 
@@ -108,6 +113,20 @@ def project_path(raw: Any) -> Path:
     if path.is_absolute():
         return path
     return PROJECT_ROOT / path
+
+
+def relative_project_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT).as_posix()
+    except Exception:
+        return path.as_posix()
+
+
+def read_json_file(path: Path) -> Dict[str, Any]:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 def input_handoff_candidates() -> List[Path]:
@@ -408,6 +427,29 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
     ]
     score = parse_final_score(packet)
     if score and clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID:
+        stat_module = select_verified_stat_module(packet, score)
+        if clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}:
+            photo = resolve_athlete_photo(
+                clean(stat_module.get("player_name")),
+                clean(stat_module.get("team")) or clean(score.get("winner")),
+            )
+            slots[0] = {
+                "slot_id": "primary_photo",
+                "status": clean(photo.get("status")),
+                "requirement": clean(photo.get("requirement")),
+                "asset_path": clean(photo.get("asset_path")),
+                "approval_marker_path": clean(photo.get("approval_marker_path")),
+                "player": clean(photo.get("player_name")),
+                "team": clean(photo.get("team")),
+                "team_id": clean(photo.get("team_id")),
+                "athlete_id": clean(photo.get("athlete_id")),
+                "photo_approval_cue": clean(photo.get("photo_approval_cue")),
+                "photo_review_required": str(bool(photo.get("photo_review_required"))).lower(),
+                "render_method": clean(photo.get("render_method")),
+                "blocker": clean(photo.get("blocker")),
+                "approval_policy": clean(photo.get("approval_policy")),
+                "approved_at_utc": clean(photo.get("approved_at_utc")),
+            }
         aliases, logos = team_registry()
         for slot_id, team_name in [("primary_team_logo", score.get("winner")), ("secondary_team_logo", score.get("loser"))]:
             fallback, fallback_source = team_registry_accent(
@@ -734,6 +776,79 @@ def team_registry_accent(team: str, aliases: Dict[str, str], fallback: tuple[int
     return fallback, "fallback_hsd_accent_no_team_color_registry"
 
 
+def resolve_athlete_photo(player: str, team: str) -> Dict[str, Any]:
+    player_name = clean(player)
+    team_name = clean(team)
+    if not player_name:
+        return {
+            "status": "athlete_photo_not_applicable",
+            "photo_review_required": True,
+            "photo_approval_cue": "NO PLAYER SELECTED",
+            "requirement": "No verified player selected for an athlete photo slot.",
+        }
+    aliases, _ = team_registry()
+    team_id = resolve_team_id(team_name, aliases) or slug(team_name)
+    athlete_id = "_".join(part for part in [team_id, slug(player_name)] if part)
+    athlete_dir = WNBA_ATHLETE_ROOT / athlete_id
+    headshot = athlete_dir / "headshot.png"
+    marker = athlete_dir / "headshot.png.approved"
+    marker_payload = read_json_file(marker) if marker.exists() else {}
+    marker_player = clean(marker_payload.get("display_name"))
+    marker_team = clean(marker_payload.get("team_id"))
+    marker_matches = bool(
+        marker_payload
+        and (not marker_player or norm(marker_player) == norm(player_name))
+        and (not marker_team or marker_team == team_id)
+    )
+    base = {
+        "athlete_id": athlete_id,
+        "player_name": player_name,
+        "team": team_name,
+        "team_id": team_id,
+        "asset_path": relative_project_path(headshot),
+        "approval_marker_path": relative_project_path(marker),
+        "approval_policy": clean(marker_payload.get("policy")) or "approved marker required before local render use",
+        "approval_source_file": clean(marker_payload.get("source_file")),
+        "approved_at_utc": clean(marker_payload.get("approved_at_utc")),
+        "requirement": "Use only approved local athlete headshot/cutout assets; missing or unapproved images stay review-only fallbacks.",
+    }
+    if headshot.exists() and marker.exists() and marker_matches:
+        return {
+            **base,
+            "status": "approved_local_headshot",
+            "photo_review_required": False,
+            "photo_approval_cue": "APPROVED PHOTO",
+            "render_method": "approved_local_png_with_marker",
+            "blocker": "",
+        }
+    if headshot.exists() and marker.exists() and not marker_matches:
+        return {
+            **base,
+            "status": "athlete_photo_marker_mismatch",
+            "photo_review_required": True,
+            "photo_approval_cue": "PHOTO HOLD",
+            "render_method": "safe_text_fallback",
+            "blocker": "Approval marker does not match the selected player/team.",
+        }
+    if headshot.exists():
+        return {
+            **base,
+            "status": "athlete_photo_unapproved",
+            "photo_review_required": True,
+            "photo_approval_cue": "PHOTO REVIEW",
+            "render_method": "safe_text_fallback",
+            "blocker": "Local headshot exists but the approved marker is missing.",
+        }
+    return {
+        **base,
+        "status": "athlete_photo_missing",
+        "photo_review_required": True,
+        "photo_approval_cue": "PHOTO MISSING",
+        "render_method": "safe_text_fallback",
+        "blocker": "No local athlete headshot found for the selected player/team.",
+    }
+
+
 def short_team(team: str) -> str:
     text = clean(team).upper()
     prefixes = [
@@ -938,6 +1053,7 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
     team_text = f" ({short_team(team)})" if team else ""
     matchup_note = f"{winner_short} {score.get('winner_score')} - {loser_short} {score.get('loser_score')}"
     shape = game_shape(score)
+    photo = resolve_athlete_photo(player, team or score.get("winner", ""))
     if margin is not None:
         matchup_note = f"{winner_short} +{margin} vs {loser_short}"
     if clean(shape.get("game_shape")) == "close_finish":
@@ -956,6 +1072,15 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "game_shape": clean(shape.get("game_shape")),
         "game_shape_label": clean(shape.get("game_shape_label")),
         "stat_strength": strength,
+        "athlete_photo_status": clean(photo.get("status")),
+        "athlete_photo_path": clean(photo.get("asset_path")),
+        "athlete_photo_approval_marker_path": clean(photo.get("approval_marker_path")),
+        "athlete_photo_approval_cue": clean(photo.get("photo_approval_cue")),
+        "athlete_photo_review_required": bool(photo.get("photo_review_required")),
+        "athlete_photo_blocker": clean(photo.get("blocker")),
+        "athlete_photo_render_method": clean(photo.get("render_method")),
+        "athlete_photo_policy": clean(photo.get("approval_policy")),
+        "athlete_photo_approved_at_utc": clean(photo.get("approved_at_utc")),
         "callouts": stats[:3],
         "player_name": player,
         "team": team,
@@ -1532,6 +1657,44 @@ def draw_premium_stat_chips(image: Any, chip_box: Tuple[int, int, int, int], cal
     return w
 
 
+def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], *, compact: bool = False) -> int:
+    if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
+        return 0
+    path = project_path(module.get("athlete_photo_path"))
+    if not path.exists() or Image is None:
+        return 0
+    x, y, w, h = box
+    size = max(44 if compact else 84, min(h - 20, 62 if compact else 112))
+    left = x + (14 if compact else 22)
+    top = y + max(8, (h - size) // 2)
+    try:
+        photo = Image.open(path).convert("RGBA")
+        bbox = photo.getbbox()
+        if bbox:
+            photo = photo.crop(bbox)
+        scale = max(size / max(1, photo.width), size / max(1, photo.height))
+        photo = photo.resize((max(1, int(photo.width * scale)), max(1, int(photo.height * scale))), resample_filter())
+        crop_left = max(0, (photo.width - size) // 2)
+        crop_top = max(0, int((photo.height - size) * 0.18))
+        photo = photo.crop((crop_left, crop_top, crop_left + size, crop_top + size))
+        layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(layer, "RGBA")
+        radius = 10 if compact else 14
+        draw.rounded_rectangle((left + 4, top + 5, left + size + 4, top + size + 5), radius=radius, fill=(0, 0, 0, 110))
+        draw.rounded_rectangle((left, top, left + size, top + size), radius=radius, fill=(1, 3, 8, 235), outline=(*accent, 230), width=2)
+        mask = Image.new("L", (size, size), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.rounded_rectangle((0, 0, size, size), radius=radius - 2, fill=255)
+        layer.paste(photo, (left, top), mask)
+        draw.rounded_rectangle((left, top, left + size, top + size), radius=radius, outline=(*accent, 245), width=2)
+        image.alpha_composite(layer)
+        if not compact:
+            draw_reference_text(image, (left, top + size - 19, size, 16), "APPROVED PHOTO", "context", 9, 7, PALETTE["ink"], max_lines=1, align="center")
+        return size + (34 if compact else 42)
+    except Exception:
+        return 0
+
+
 def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
     x, y, w, h = box
     compact = h < 112
@@ -1542,23 +1705,26 @@ def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, in
     player = clean(module.get("player_name"))
     matchup = clean(module.get("matchup_note"))
     source_label = "VERIFIED STAT TEXT"
+    photo_offset = draw_approved_athlete_photo_tile(image, box, module, accent, compact=compact)
     if compact:
         chip_w = min(210, max(148, w // 4))
-        text_w = max(320, w - chip_w - 62)
+        text_x = x + 24 + photo_offset
+        text_w = max(260, w - chip_w - 62 - photo_offset)
         draw_premium_stat_chips(image, (x + w - chip_w - 20, y + 8, chip_w, h - 16), module.get("callouts") or [], accent, compact=True)
-        draw_reference_text(image, (x + 24, y + 8, text_w, 22), f"{clean(module.get('eyebrow'))} / {source_label}", "context", 15, 10, accent, max_lines=1)
-        draw_reference_text(image, (x + 24, y + 30, text_w, 32), clean(module.get("headline")), "display", 28, 17, PALETTE["ink"], max_lines=1)
-        draw_reference_text(image, (x + 24, y + 58, text_w, max(18, h - 60)), matchup or clean(module.get("body")), "body", 15, 10, (218, 226, 238), max_lines=1, uppercase=False)
+        draw_reference_text(image, (text_x, y + 8, text_w, 22), f"{clean(module.get('eyebrow'))} / {source_label}", "context", 15, 10, accent, max_lines=1)
+        draw_reference_text(image, (text_x, y + 30, text_w, 32), clean(module.get("headline")), "display", 28, 17, PALETTE["ink"], max_lines=1)
+        draw_reference_text(image, (text_x, y + 58, text_w, max(18, h - 60)), matchup or clean(module.get("body")), "body", 15, 10, (218, 226, 238), max_lines=1, uppercase=False)
         return
 
     chip_w = min(310, max(250, w // 3))
-    text_w = max(420, w - chip_w - 72)
+    text_x = x + 28 + photo_offset
+    text_w = max(360, w - chip_w - 72 - photo_offset)
     pill_text = f"{source_label} / {matchup}" if matchup else source_label
-    draw_reference_text(image, (x + 28, y + 14, text_w, 24), clean(module.get("eyebrow")), "context", 22, 12, accent, max_lines=1)
-    draw_reference_text(image, (x + 210, y + 15, text_w - 190, 22), pill_text, "context", 14, 9, (218, 226, 238), max_lines=1)
-    draw_reference_text(image, (x + 28, y + 46, text_w, 48), clean(module.get("headline")), "display", 42, 24, PALETTE["ink"], max_lines=1)
+    draw_reference_text(image, (text_x, y + 14, text_w, 24), clean(module.get("eyebrow")), "context", 22, 12, accent, max_lines=1)
+    draw_reference_text(image, (text_x + 182, y + 15, max(90, text_w - 190), 22), pill_text, "context", 14, 9, (218, 226, 238), max_lines=1)
+    draw_reference_text(image, (text_x, y + 46, text_w, 48), clean(module.get("headline")), "display", 42, 24, PALETTE["ink"], max_lines=1)
     editorial = clean(module.get("editorial_line")) or clean(module.get("body"))
-    draw_reference_text(image, (x + 28, y + 94, text_w, max(34, h - 98)), editorial, "body", 24, 13, (235, 239, 247), max_lines=2, uppercase=False)
+    draw_reference_text(image, (text_x, y + 94, text_w, max(34, h - 98)), editorial, "body", 24, 13, (235, 239, 247), max_lines=2, uppercase=False)
     draw_premium_stat_chips(image, (x + w - chip_w - 22, y + 48, chip_w, h - 62), module.get("callouts") or [], accent, compact=False)
     if player:
         draw_reference_text(image, (x + w - chip_w - 22, y + 15, chip_w, 24), player, "context", 16, 10, accent, max_lines=1, align="center", uppercase=False)
@@ -1786,6 +1952,15 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "content_module_stat_count": str(len(stat_module.get("callouts") or [])),
             "content_module_player": clean(stat_module.get("player_name")),
             "content_module_source_text": clean(stat_module.get("source_text")),
+            "athlete_photo_status": clean(stat_module.get("athlete_photo_status")),
+            "athlete_photo_path": clean(stat_module.get("athlete_photo_path")),
+            "athlete_photo_approval_marker_path": clean(stat_module.get("athlete_photo_approval_marker_path")),
+            "athlete_photo_approval_cue": clean(stat_module.get("athlete_photo_approval_cue")),
+            "athlete_photo_review_required": str(bool(stat_module.get("athlete_photo_review_required"))).lower(),
+            "athlete_photo_blocker": clean(stat_module.get("athlete_photo_blocker")),
+            "athlete_photo_render_method": clean(stat_module.get("athlete_photo_render_method")),
+            "athlete_photo_policy": clean(stat_module.get("athlete_photo_policy")),
+            "athlete_photo_approved_at_utc": clean(stat_module.get("athlete_photo_approved_at_utc")),
             "content_module_fallback_label": "",
             "stat_source_confidence": clean(stat_module.get("stat_source_confidence")),
             "stat_source_label": clean(stat_module.get("stat_source_label")),
@@ -1811,6 +1986,10 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "content_module_stat_count": "0",
         "content_module_player": "",
         "content_module_source_text": "",
+        "athlete_photo_status": "athlete_photo_not_applicable",
+        "athlete_photo_approval_cue": "NO PLAYER SELECTED",
+        "athlete_photo_review_required": "true",
+        "athlete_photo_blocker": "No verified player/stat module selected for this final-score draft.",
         "content_module_fallback_label": clean(edge.get("eyebrow")) or "SCORE-DERIVED EDGE",
         "stat_source_confidence": "score_only_fallback_manual_context_required",
         "stat_source_label": "Score-derived fallback",
@@ -1990,6 +2169,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
+        f"- Athlete photo: `{clean(content_module.get('athlete_photo_status')) or 'not_applicable'}` / {clean(content_module.get('athlete_photo_approval_cue')) or 'n/a'}",
         f"- Stat source confidence: `{clean(content_module.get('stat_source_confidence')) or 'not_applicable'}`",
         f"- Stat review cue: {clean(content_module.get('stat_review_cue')) or 'n/a'}",
         f"- Editorial microcopy: `{clean(content_module.get('editorial_microcopy_variant')) or 'not_selected'}` / {clean(content_module.get('editorial_microcopy_headline')) or 'n/a'}",
