@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.4.1-hsd-final-score-readable-polish"
+VERSION = "hsd-manual-review-renderer-v1.5.0-title-square-fit"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -965,32 +965,74 @@ def draw_context_divider(image: Any, box: Tuple[int, int, int, int], text: str) 
     draw_reference_text(image, (x, y, w, h - 12), "REVIEW DRAFT", "context", 24, 14, (241, 238, 229), max_lines=1, align="right")
 
 
+def draw_final_score_reference_title(image: Any, template_spec: Dict[str, Any], format_id: str) -> None:
+    if ImageDraw is None:
+        return
+    title_x, title_y, title_w, title_h = zone_box(template_spec, "title")
+    badge = template_spec.get("badge") if isinstance(template_spec.get("badge"), dict) else {}
+    badge_right = int(badge.get("x", 48)) + max(int(badge.get("w", 80)), min(124, int(min(image.size) * 0.115)))
+    left = max(title_x, badge_right + 38)
+    right = title_x + title_w
+    width = max(360, right - left)
+    is_square = format_id == "square_feed_1x1"
+    is_story = format_id == "ig_story_9x16"
+    y = title_y + (-4 if not is_square else 2)
+    h = max(92, title_h - (28 if is_square else 18))
+    if is_story:
+        first, second, start, minimum = "QUICK FINAL", "SCORE", 84, 44
+    elif is_square:
+        first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 70, 38
+    else:
+        first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 80, 42
+    gap = 14 if not is_square else 10
+    draw = ImageDraw.Draw(image, "RGBA")
+    chosen = font(minimum, True)
+    first_size = text_size(draw, first, chosen)
+    second_size = text_size(draw, second, chosen)
+    for size in range(start, minimum - 1, -2):
+        candidate = font(size, True)
+        candidate_first = text_size(draw, first, candidate)
+        candidate_second = text_size(draw, second, candidate)
+        if candidate_first[0] + gap + candidate_second[0] <= width and max(candidate_first[1], candidate_second[1]) <= h:
+            chosen = candidate
+            first_size = candidate_first
+            second_size = candidate_second
+            break
+    text_h = max(first_size[1], second_size[1])
+    y_cursor = y + max(0, (h - text_h) // 2) - (8 if not is_square else 4)
+    draw.text((left, y_cursor), first, font=chosen, fill=PALETTE["ink"], stroke_width=2, stroke_fill=(0, 0, 0))
+    draw.text((left + first_size[0] + gap, y_cursor), second, font=chosen, fill=PALETTE["gold"], stroke_width=2, stroke_fill=(0, 0, 0))
+
+
 def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "") -> None:
     x, y, w, h = box
+    compact = h < 112
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 218), radius=14, width=2)
-    draw_reference_text(image, (x + 24, y + 12, w - 48, min(34, h - 16)), eyebrow, "context", 24, 14, accent, max_lines=1)
-    body_top = y + 48 if h >= 92 else y + 34
+    draw_reference_text(image, (x + 24, y + 10, w - 48, min(30 if compact else 34, h - 16)), eyebrow, "context", 20 if compact else 24, 12, accent, max_lines=1)
+    body_top = y + (38 if compact else 48)
     if headline:
         draw_reference_text(
             image,
-            (x + 24, body_top, w - 48, min(44, h - 46)),
+            (x + 24, body_top, w - 48, min(34 if compact else 44, h - 42)),
             headline,
             "display",
-            38 if h >= 110 else 28,
+            27 if compact else 38,
             16,
             PALETTE["ink"],
             max_lines=1,
         )
-        body_top += 48 if h >= 110 else 34
+        body_top += 30 if compact else 48
+    if compact and y + h - body_top < 24:
+        return
     draw_reference_text(
         image,
         (x + 24, body_top, w - 48, max(28, y + h - body_top - 14)),
         body,
         "body",
-        27 if h >= 100 else 20,
-        14,
+        18 if compact else 27,
+        12 if compact else 14,
         PALETTE["ink"],
-        max_lines=2,
+        max_lines=1 if compact else 2,
         uppercase=False,
     )
 
@@ -1023,11 +1065,7 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_reference_background(image, "final")
     draw_reference_badge(image, template_spec)
 
-    title_box = zone_box(template_spec, "title")
-    title = "GAME RECAP FINAL SCORE"
-    if clean(format_spec.get("format_id")) == "ig_story_9x16":
-        title = "QUICK FINAL SCORE"
-    draw_reference_text(image, title_box, title, "display", 94 if height <= 1350 else 100, 40, PALETTE["ink"], max_lines=2, stroke=2, stroke_fill=(0, 0, 0))
+    draw_final_score_reference_title(image, template_spec, clean(format_spec.get("format_id")))
 
     context_box = zone_box(template_spec, "context_row")
     draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
