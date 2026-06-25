@@ -172,19 +172,22 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     runner = RUNNER.read_text(encoding="utf-8")
     wrapper = WRAPPER.read_text(encoding="utf-8")
     doc = DOC.read_text(encoding="utf-8")
+    render_stage = runner[runner.index("function Invoke-RenderStage") : runner.index("function Invoke-DecisionInboxStarterStage")]
 
     assert '"render"' in wrapper
     assert '"decision-inbox"' in wrapper
     assert "function Invoke-RenderStage" in runner
     assert "function Invoke-DecisionInboxStarterStage" in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_draft_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_template_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_intake_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_post_approval_render_staging_v1.py" -Optional' in runner
-    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_approval_intake_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_draft_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_template_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_intake_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_post_approval_render_staging_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional' in render_stage
+    assert 'Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional' in render_stage
+    assert render_stage.index('Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional') < render_stage.index('Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional')
     assert 'Invoke-ScriptIfPresent $Python "create_hsd_manual_visual_qa_operator_decision_inbox_starter_v1.py" -Optional' in runner
     assert '$env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"' in runner
     assert '"decision-inbox" { Invoke-DecisionInboxStarterStage $python }' in runner

@@ -651,6 +651,7 @@ function Invoke-RenderStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_intake_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_post_approval_render_staging_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional
 }
 
 function Invoke-DecisionInboxStarterStage($Python) {

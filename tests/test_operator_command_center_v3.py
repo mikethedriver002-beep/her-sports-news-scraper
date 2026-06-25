@@ -20,6 +20,160 @@ def write_csv(path: str, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+DECISION_FIELDS = [
+    "decision_draft_id",
+    "source_intake_id",
+    "preview_path",
+    "qa_status",
+    "automated_hold_count",
+    "allowed_decisions",
+    "operator_decision",
+    "operator_notes",
+    "hold_reason",
+    "revision_request",
+    "operator_name",
+    "reviewed_at_local",
+    "required_evidence",
+    "copy_target",
+    "copy_instructions",
+    "copy_status",
+    "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+
+def write_csv_with_fields(path: str, rows: list[dict[str, str]], fields: list[str]) -> None:
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def seed_manual_visual_qa_decision_files() -> None:
+    preview = Path("render_handoff_top_packet/draft_preview.png")
+    preview.parent.mkdir(parents=True, exist_ok=True)
+    preview.write_bytes(b"fake png for operator decision panel")
+    write_json(
+        "manual_review_renderer_manifest.json",
+        {
+            "status": "draft_preview_created",
+            "preview_path": preview.as_posix(),
+            "guardrails": {"manual_only": True, "review_only": True, "auto_publish": False, "approved": False, "paid_apis": False},
+        },
+    )
+    write_json(
+        "manual_visual_qa_manifest.json",
+        {
+            "status": "human_review_required",
+            "approval_status": "not_approved_human_review_required",
+            "dimensions": {"width": 1080, "height": 1350},
+            "summary": {"check_count": 8, "pass_count": 8, "hold_count": 0, "human_decision_required": True},
+        },
+    )
+    write_json(
+        "manual_visual_qa_approval_intake.json",
+        {"status": "ready_for_manual_decision", "approval_status": "not_approved_operator_input_required"},
+    )
+    draft = {
+        "decision_draft_id": "decision_draft_manual_visual_qa_preview_1",
+        "source_intake_id": "manual_visual_qa_preview_1",
+        "preview_path": preview.as_posix(),
+        "qa_status": "human_review_required",
+        "automated_hold_count": "0",
+        "allowed_decisions": "approve_for_manual_next_step|hold|revise",
+        "operator_decision": "operator_fill_required",
+        "operator_notes": "",
+        "hold_reason": "",
+        "revision_request": "",
+        "operator_name": "",
+        "reviewed_at_local": "",
+        "required_evidence": "Open draft_preview.png plus manual_visual_qa_report.md.",
+        "copy_target": "operator/inbox/manual_visual_qa_operator_decisions.csv",
+        "copy_instructions": "Copy this row only after visual review.",
+        "copy_status": "ready_for_operator_fill_after_opening_preview",
+        "approval_scope": "manual_next_step_only_not_publish_ready",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+    write_csv_with_fields("manual_visual_qa_operator_decision_draft.csv", [draft], DECISION_FIELDS)
+    write_json("manual_visual_qa_operator_decision_draft.json", {"status": "draft_ready_for_operator_fill"})
+    template_rows = []
+    for decision in ["approve_for_manual_next_step", "hold", "revise"]:
+        row = dict(draft)
+        row["operator_decision"] = decision
+        row["template_row_type"] = f"{decision}_example_copy_then_replace_placeholders"
+        row["operator_notes"] = "REPLACE_WITH_OPERATOR_NOTES"
+        row["operator_name"] = "REPLACE_WITH_OPERATOR_NAME"
+        row["reviewed_at_local"] = "REPLACE_WITH_LOCAL_REVIEW_TIME"
+        row["copy_status"] = "template_only_not_valid_until_placeholders_replaced"
+        template_rows.append(row)
+    write_csv_with_fields("manual_visual_qa_operator_decision_template.csv", template_rows, DECISION_FIELDS + ["template_row_type"])
+    write_json("manual_visual_qa_operator_decision_template.json", {"status": "template_ready_copy_only"})
+    intake_row = {
+        "intake_id": "manual_visual_qa_preview_1",
+        "decision_draft_id": draft["decision_draft_id"],
+        "source_intake_id": draft["source_intake_id"],
+        "preview_path": draft["preview_path"],
+        "qa_status": draft["qa_status"],
+        "automated_hold_count": "0",
+        "operator_decision": "operator_fill_required",
+        "validation_status": "awaiting_operator_decision",
+        "validation_issue": "Copy a draft row into operator/inbox/manual_visual_qa_operator_decisions.csv, then fill approve_for_manual_next_step, hold, or revise with notes.",
+        "operator_notes": "",
+        "hold_reason": "",
+        "revision_request": "",
+        "operator_name": "",
+        "reviewed_at_local": "",
+        "approval_scope": "manual_next_step_only_not_publish_ready",
+        "source_decision_path": "operator/inbox/manual_visual_qa_operator_decisions.csv",
+        "source_draft_path": "manual_visual_qa_operator_decision_draft.csv",
+        "source_qa_report_path": "manual_visual_qa_report.md",
+        "copy_to_publish_lane": "false",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+    write_csv("manual_visual_qa_operator_decision_intake.csv", [intake_row])
+    write_json("manual_visual_qa_operator_decision_intake.json", {"status": "awaiting_operator_decision", "approval_status": "not_approved_validated_decision_only"})
+    write_csv(
+        "manual_post_approval_render_staging.csv",
+        [
+            {
+                "intake_id": "manual_visual_qa_preview_1",
+                "preview_path": draft["preview_path"],
+                "operator_decision": "operator_fill_required",
+                "staging_lane": "awaiting_operator_decision",
+                "qa_status": "human_review_required",
+                "automated_hold_count": "0",
+                "next_safe_action": "Fill one operator decision row, then rerun render.",
+                "blocked_reason": "Awaiting operator decision.",
+                "move_files": "false",
+                "copy_to_publish_lane": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "paid_apis": "false",
+            }
+        ],
+    )
+    write_json("manual_post_approval_render_staging.json", {"status": "review_only_staging_needs_operator_action"})
+    Path("manual_visual_qa_report.md").write_text("# Manual visual QA\n", encoding="utf-8")
+    Path("manual_visual_qa_operator_decision_walkthrough.md").write_text("# Walkthrough\n", encoding="utf-8")
+    write_json("manual_visual_qa_operator_decision_inbox_starter.json", {"status": "starter_already_ready"})
+    write_csv_with_fields("operator/inbox/manual_visual_qa_operator_decisions.csv", [], DECISION_FIELDS)
+
+
 def seed_daily_ops_files() -> None:
     write_json(
         "operator_status.json",
@@ -926,12 +1080,13 @@ def seed_daily_ops_files() -> None:
 def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     seed_daily_ops_files()
+    seed_manual_visual_qa_decision_files()
 
     payload = command_center.build_payload()
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.40.0-manual-operator-decision-inbox-starter"
+    assert payload["version"] == "hsd-operator-command-center-v3.41.0-manual-visual-qa-decision-ui"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1012,6 +1167,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Render prep packets" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Render packets ready" and item["value"] == "1" for item in payload["metrics"])
     assert any(item["label"] == "Render handoff" and item["value"] == "ready_for_manual_review" for item in payload["metrics"])
+    assert any(item["label"] == "Decision UI" and item["value"] == "awaiting_operator_decision" for item in payload["metrics"])
+    assert any(item["label"] == "Decision inbox rows" and item["value"] == "0" for item in payload["metrics"])
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
@@ -1168,6 +1325,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "render_handoff_top_packet/manual_renderer_prompt.md" in payload["render_handoff_summary"]["files"]
     assert payload["render_handoff_summary"]["guardrails"]["auto_render"] is False
     assert payload["render_handoff_summary"]["guardrails"]["auto_publish"] is False
+    assert payload["operator_decision_panel"]["qa_status"] == "human_review_required"
+    assert payload["operator_decision_panel"]["validation_status"] == "awaiting_operator_decision"
+    assert payload["operator_decision_panel"]["preview_exists"] is True
+    assert payload["operator_decision_panel"]["inbox_exists"] is True
+    assert payload["operator_decision_panel"]["inbox_rows"] == 0
+    assert payload["operator_decision_panel"]["guardrails"]["auto_approval"] is False
+    assert payload["operator_decision_panel"]["guardrails"]["auto_publish"] is False
     assert payload["source_discovery_board"][0]["title"] == "Public team social lead"
     assert payload["source_discovery_board"][0]["posture"] == "discovery_only"
     assert payload["source_discovery_board"][0]["freshness_source"] == "article_metadata"
@@ -1229,6 +1393,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
 
     assert "HSD Daily Operator Command Center" in html
     assert 'data-tab-target="today"' in html
+    assert 'data-tab-target="decision-panel"' in html
     assert 'data-tab-target="content"' in html
     assert 'data-tab-target="sources"' in html
     assert 'data-tab-target="safety"' in html
@@ -1312,6 +1477,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "recent_30_days via article_metadata" in html
     assert "Lead promotion recommendations" in html
     assert "Render readiness" in html
+    assert "Manual visual QA decision" in html
+    assert "decisionCsvOutput" in html
+    assert "operatorDecision" in html
+    assert "approve_for_manual_next_step" in html
+    assert "Copy row" in html
+    assert "file-backed manual approval" in html
+    assert "manual_next_step_only_not_publish_ready" in html
+    assert "operator/inbox/manual_visual_qa_operator_decisions.csv" in html
+    assert "awaiting_operator_decision" in html
     assert "Render prep packets" in html
     assert "Top render handoff" in html
     assert "render_ready_review" in html
@@ -1328,6 +1502,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Run: `.\\hsd.cmd run -Mode asset`." in markdown
     assert "Create with `.\\hsd.cmd run -Mode dashboards`" in markdown
     assert "source: publish_grade" in markdown
+    assert "Manual Visual QA Decision UI" in markdown
+    assert "file-backed manual approval" in markdown
+    assert "awaiting_operator_decision" in markdown
     assert "Morning source discovery" in markdown
     assert "Source registry diff review" in markdown
     assert "cue: HOLD" in markdown
