@@ -79,16 +79,29 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.2.0-mobile-score-review-drafts"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.3.0-template-reference-pack-drafts"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["renderer_mode"] == "template_driven_review_drafts"
-    assert manifest["selected_template"]["template_id"] == "hsd_final_score_review_v1"
-    assert manifest["selected_template"]["template_family"] == "final_score_editorial_card"
+    assert manifest["selected_template"]["template_id"] == "hsd_game_recap_final_score_a"
+    assert manifest["selected_template"]["template_family"] == "game_recap_final_score"
+    assert manifest["selected_template"]["reference_pack_id"] == "templates_hsd_20260625"
+    assert manifest["reference_pack"]["pack_id"] == "templates_hsd_20260625"
+    assert manifest["reference_pack"]["guardrails"]["reference_only"] is True
+    assert manifest["reference_pack"]["guardrails"]["auto_publish"] is False
     assert len(manifest["format_options"]) == 3
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
+    by_format = {item["format_id"]: item for item in manifest["format_options"]}
+    assert by_format["ig_feed_4x5"]["reference_template_id"] == "hsd_game_recap_final_score_a"
+    assert by_format["ig_feed_4x5"]["reference_exact_format_match"] is True
+    assert by_format["ig_story_9x16"]["reference_template_id"] == "hsd_game_recap_final_score_c_story"
+    assert by_format["ig_story_9x16"]["reference_exact_format_match"] is True
+    assert by_format["square_feed_1x1"]["reference_exact_format_match"] is False
+    assert by_format["square_feed_1x1"]["reference_derivation"] == "square_review_draft_derived_from_imported_4x5_layout"
     assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
+    assert any(slot["slot_id"] == "primary_team_logo" for slot in manifest["asset_slots"])
+    assert any(slot["slot_id"] == "secondary_team_logo" for slot in manifest["asset_slots"])
     assert manifest["guardrails"]["manual_only"] is True
     assert manifest["guardrails"]["auto_render"] is False
     assert manifest["guardrails"]["auto_publish"] is False
@@ -106,7 +119,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     report = report_path.read_text(encoding="utf-8")
     assert "Draft preview is for human review only" in report
     assert "## Review Draft Formats" in report
-    assert "hsd_final_score_review_v1" in report
+    assert "templates_hsd_20260625" in report
+    assert "hsd_game_recap_final_score_a" in report
     assert "publish_ready=`false`" in report
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
 
