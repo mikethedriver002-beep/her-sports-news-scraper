@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.34.0-manual-visual-qa-approval-intake"
+VERSION = "hsd-operator-command-center-v3.35.0-manual-post-approval-render-staging"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -79,6 +79,9 @@ ARTIFACTS = [
     ("Decision", "Manual visual QA approval intake", "manual_visual_qa_approval_intake.md"),
     ("Decision", "Manual visual QA approval intake data", "manual_visual_qa_approval_intake.csv"),
     ("Decision", "Manual visual QA approval intake manifest", "manual_visual_qa_approval_intake.json"),
+    ("Decision", "Manual post-approval render staging", "manual_post_approval_render_staging.md"),
+    ("Decision", "Manual post-approval render staging data", "manual_post_approval_render_staging.csv"),
+    ("Decision", "Manual post-approval render staging manifest", "manual_post_approval_render_staging.json"),
     ("Sources", "Source registry audit", "source_registry_audit.md"),
     ("Sources", "Source registry audit data", "source_registry_audit.json"),
     ("Sources", "Source registry audit table", "source_registry_audit.csv"),
@@ -207,6 +210,9 @@ RUN_COMMANDS = {
     "manual_visual_qa_approval_intake.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.json": ".\\hsd.cmd run -Mode render",
+    "manual_post_approval_render_staging.md": ".\\hsd.cmd run -Mode render",
+    "manual_post_approval_render_staging.csv": ".\\hsd.cmd run -Mode render",
+    "manual_post_approval_render_staging.json": ".\\hsd.cmd run -Mode render",
     "source_registry_intake_template.md": ".\\hsd.cmd run -Mode review",
     "source_registry_intake_template.csv": ".\\hsd.cmd run -Mode review",
     "source_registry_proposal_review.md": ".\\hsd.cmd run -Mode review",
