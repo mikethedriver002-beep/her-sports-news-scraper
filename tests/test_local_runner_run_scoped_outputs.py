@@ -34,6 +34,14 @@ def test_local_runner_archives_generated_state_before_root_restore() -> None:
     assert finally_block.index("Collect-HsdArtifacts") < finally_block.index("Restore-GeneratedGitState")
 
 
+def test_generated_state_quarantine_preserves_run_output_folder() -> None:
+    text = RUNNER.read_text(encoding="utf-8")
+    remove_function = text[text.index("function Remove-GeneratedUntrackedFiles") : text.index("function Restore-GeneratedGitState")]
+
+    assert 'StartsWith("outputs/local/", [StringComparison]::OrdinalIgnoreCase)' in remove_function
+    assert "continue" in remove_function
+
+
 def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
     text = RUNNER.read_text(encoding="utf-8")
     required_pathspecs = [
@@ -97,6 +105,12 @@ def test_review_stage_refreshes_source_registry_audit_for_command_center() -> No
     assert "source_registry_proposal_review.csv" in runner
     assert "source_proposal_packs.md" in runner
     assert "source_proposal_packs.csv" in runner
+    assert "wnba_source_proposal_pack.md" in runner
+    assert "wnba_source_proposal_pack.csv" in runner
+    assert "nwsl_source_proposal_pack.md" in runner
+    assert "nwsl_source_proposal_pack.csv" in runner
+    assert "lpga_source_proposal_pack.md" in runner
+    assert "lpga_source_proposal_pack.csv" in runner
     assert "pwhl_source_proposal_pack.md" in runner
     assert "pwhl_source_proposal_pack.csv" in runner
     assert "manual_story_inbox_report.md" in runner

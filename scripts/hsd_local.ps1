@@ -347,6 +347,10 @@ function Remove-GeneratedUntrackedFiles([string[]]$Paths) {
     $removed = 0
     foreach ($rel in $Paths) {
         if (-not $rel) { continue }
+        $normalized = ($rel -replace "\\", "/").TrimStart("/")
+        if (-not $normalized -or $normalized.StartsWith("outputs/local/", [StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
         $full = [IO.Path]::GetFullPath((Join-Path $Root $rel))
         if (-not $full.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
             Write-Warning "Skipping generated path outside repo: $rel"
@@ -655,6 +659,12 @@ function Collect-HsdArtifacts($RunContext) {
         "source_registry_proposal_review.csv",
         "source_proposal_packs.md",
         "source_proposal_packs.csv",
+        "wnba_source_proposal_pack.md",
+        "wnba_source_proposal_pack.csv",
+        "nwsl_source_proposal_pack.md",
+        "nwsl_source_proposal_pack.csv",
+        "lpga_source_proposal_pack.md",
+        "lpga_source_proposal_pack.csv",
         "pwhl_source_proposal_pack.md",
         "pwhl_source_proposal_pack.csv",
         "manual_story_inbox_report.md",

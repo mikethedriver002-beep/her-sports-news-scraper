@@ -30,6 +30,12 @@ ARTIFACTS = [
     ("Sources", "Source proposal review data", "source_registry_proposal_review.csv"),
     ("Sources", "Guided source proposal packs", "source_proposal_packs.md"),
     ("Sources", "Guided source proposal pack data", "source_proposal_packs.csv"),
+    ("Sources", "WNBA source proposal pack", "wnba_source_proposal_pack.md"),
+    ("Sources", "WNBA source proposal pack data", "wnba_source_proposal_pack.csv"),
+    ("Sources", "NWSL source proposal pack", "nwsl_source_proposal_pack.md"),
+    ("Sources", "NWSL source proposal pack data", "nwsl_source_proposal_pack.csv"),
+    ("Sources", "LPGA source proposal pack", "lpga_source_proposal_pack.md"),
+    ("Sources", "LPGA source proposal pack data", "lpga_source_proposal_pack.csv"),
     ("Sources", "PWHL source proposal pack", "pwhl_source_proposal_pack.md"),
     ("Sources", "PWHL source proposal pack data", "pwhl_source_proposal_pack.csv"),
     ("Sources", "Manual story intake report", "manual_story_inbox_report.md"),
@@ -118,6 +124,12 @@ RUN_COMMANDS = {
     "source_registry_proposal_review.csv": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.md": ".\\hsd.cmd run -Mode review",
     "source_proposal_packs.csv": ".\\hsd.cmd run -Mode review",
+    "wnba_source_proposal_pack.md": ".\\hsd.cmd run -Mode review",
+    "wnba_source_proposal_pack.csv": ".\\hsd.cmd run -Mode review",
+    "nwsl_source_proposal_pack.md": ".\\hsd.cmd run -Mode review",
+    "nwsl_source_proposal_pack.csv": ".\\hsd.cmd run -Mode review",
+    "lpga_source_proposal_pack.md": ".\\hsd.cmd run -Mode review",
+    "lpga_source_proposal_pack.csv": ".\\hsd.cmd run -Mode review",
     "pwhl_source_proposal_pack.md": ".\\hsd.cmd run -Mode review",
     "pwhl_source_proposal_pack.csv": ".\\hsd.cmd run -Mode review",
     "launch_daily_runbook.md": ".\\hsd.cmd run -Mode launch",
@@ -829,9 +841,17 @@ def build_payload() -> Dict[str, Any]:
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
     source_proposal_packs = read_csv("source_proposal_packs.csv")
+    wnba_source_proposal_pack = read_csv("wnba_source_proposal_pack.csv")
+    nwsl_source_proposal_pack = read_csv("nwsl_source_proposal_pack.csv")
+    lpga_source_proposal_pack = read_csv("lpga_source_proposal_pack.csv")
     pwhl_source_proposal_pack = read_csv("pwhl_source_proposal_pack.csv")
-    if not source_proposal_packs and pwhl_source_proposal_pack:
-        source_proposal_packs = pwhl_source_proposal_pack
+    if not source_proposal_packs:
+        source_proposal_packs = (
+            wnba_source_proposal_pack
+            + nwsl_source_proposal_pack
+            + lpga_source_proposal_pack
+            + pwhl_source_proposal_pack
+        )
     counts = manifest.get("counts", {}) if isinstance(manifest.get("counts"), dict) else {}
     source_registry_counts = source_registry.get("counts", {}) if isinstance(source_registry.get("counts"), dict) else {}
     handoff_counts = handoff.get("counts", {}) if isinstance(handoff.get("counts"), dict) else {}
@@ -894,6 +914,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Source proposal holds", sum(1 for row in source_proposal_review if row.get("review_status") == "hold")),
         metric("Source proposals ready", sum(1 for row in source_proposal_review if row.get("review_status") == "ready_for_registry_review")),
         metric("Guided source pack rows", len(source_proposal_packs)),
+        metric("WNBA proposal pack", len(wnba_source_proposal_pack)),
+        metric("NWSL proposal pack", len(nwsl_source_proposal_pack)),
+        metric("LPGA proposal pack", len(lpga_source_proposal_pack)),
         metric("PWHL proposal pack", len(pwhl_source_proposal_pack)),
         metric(
             "Studio asset checks",
@@ -962,6 +985,9 @@ def build_payload() -> Dict[str, Any]:
         "source_registry_intake_template": source_intake_rows,
         "source_registry_proposal_review": source_proposal_review,
         "source_proposal_packs": source_proposal_packs,
+        "wnba_source_proposal_pack": wnba_source_proposal_pack,
+        "nwsl_source_proposal_pack": nwsl_source_proposal_pack,
+        "lpga_source_proposal_pack": lpga_source_proposal_pack,
         "pwhl_source_proposal_pack": pwhl_source_proposal_pack,
         "studio_queue": studio,
         "source_health": source_rows,
