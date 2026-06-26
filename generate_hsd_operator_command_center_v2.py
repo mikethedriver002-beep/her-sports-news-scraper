@@ -3045,6 +3045,23 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
     return packets
 
 
+def attach_render_prep_active_cues(render_queue: List[Dict[str, str]], render_prep_packets: List[Dict[str, str]]) -> None:
+    prep_by_title = {clean(packet.get("title")): packet for packet in render_prep_packets}
+    cue_fields = [
+        "active_asset_stop_go",
+        "active_logo_readiness_status",
+        "active_athlete_identity_status",
+    ]
+    for row in render_queue:
+        packet = prep_by_title.get(clean(row.get("title")))
+        if not packet:
+            continue
+        for field in cue_fields:
+            value = clean(packet.get(field))
+            if value and not clean(row.get(field)):
+                row[field] = value
+
+
 def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> Dict[str, Any]:
     if not render_prep_packets:
         return {
@@ -4596,6 +4613,7 @@ def build_payload() -> Dict[str, Any]:
             "news_fact_packets": news_packets,
         }
     )
+    attach_render_prep_active_cues(render_queue, render_prep_packets)
     render_handoff_summary = build_render_handoff_summary(render_prep_packets)
     operator_decision_panel = operator_decision_ui_panel()
     asset_readiness_panel = asset_availability_readiness_panel()
