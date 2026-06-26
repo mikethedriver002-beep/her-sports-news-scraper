@@ -2860,9 +2860,11 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
                 "No render prep packet cleared the review gates for a top-packet handoff.",
                 "",
                 "Guardrails: review-only, no auto-rendering, no paid APIs, no auto-publishing.",
-                "",
-            ]
-        )
+            "",
+        ]
+    )
+    active_logo_status = clean(packet.get("active_logo_readiness_status")) or "logo_review_not_flagged"
+    active_athlete_status = clean(packet.get("active_athlete_identity_status")) or "athlete_identity_not_flagged"
     return "\n".join(
         [
             "# HSD Top Render Handoff",
@@ -2874,6 +2876,16 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             f"Story: {clean(packet.get('title'))}",
             f"Status: `{clean(packet.get('packet_status'))}`",
             f"Readiness: `{clean(packet.get('render_readiness_score'))}/100` / `{clean(packet.get('render_readiness_band'))}`",
+            "",
+            "## Active Review Holds",
+            "",
+            f"- Logo readiness: `{active_logo_status}`",
+            f"- Logo cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
+            f"- Logo artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
+            f"- Athlete identity: `{active_athlete_status}`",
+            f"- Athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
+            f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
+            "- Treat these as stop/go review cues only; they do not approve assets or create a publish-ready lane.",
             "",
             "## Open These Files",
             "",
