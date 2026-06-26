@@ -179,8 +179,10 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
 
     assert '"render"' in wrapper
     assert '"decision-inbox"' in wrapper
+    assert '"identity-decision"' in wrapper
     assert "function Invoke-RenderStage" in runner
     assert "function Invoke-DecisionInboxStarterStage" in runner
+    assert "function Invoke-IdentityDecisionServerStage" in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_render_visual_delta_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in render_stage
@@ -193,9 +195,12 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional' in render_stage
     assert render_stage.index('Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_operator_decision_walkthrough_v1.py" -Optional') < render_stage.index('Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional')
     assert 'Invoke-ScriptIfPresent $Python "create_hsd_manual_visual_qa_operator_decision_inbox_starter_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "serve_hsd_identity_resolution_ui_v1.py" -Optional' in runner
     assert '$env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"' in runner
     assert '"decision-inbox" { Invoke-DecisionInboxStarterStage $python }' in runner
+    assert '"identity-decision" { Invoke-IdentityDecisionServerStage $python }' in runner
     assert 'operator/inbox/manual_visual_qa_operator_decisions.csv' in runner
+    assert 'operator/inbox/wnba_athlete_identity_resolution.csv' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
     assert "manual_review_renderer_report.md" in runner
@@ -230,8 +235,11 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "manual_visual_qa_operator_decision_inbox_starter.md" in runner
     assert "manual_visual_qa_operator_decision_inbox_starter.csv" in runner
     assert "manual_visual_qa_operator_decision_inbox_starter.json" in runner
+    assert "identity_resolution_local_server.md" in runner
+    assert "identity_resolution_local_server.json" in runner
     assert ".\\hsd.cmd run -Mode render" in doc
     assert ".\\hsd.cmd run -Mode decision-inbox" in doc
+    assert ".\\hsd.cmd run -Mode identity-decision" in doc
 
 
 def test_legacy_scraper_is_retired_from_active_local_runner() -> None:

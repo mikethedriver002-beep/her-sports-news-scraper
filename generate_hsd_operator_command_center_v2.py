@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.58.0-identity-resolution-ui"
+VERSION = "hsd-operator-command-center-v3.59.0-identity-writeback-local-mode"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -218,6 +218,8 @@ ARTIFACTS = [
     ("Graphics", "WNBA athlete identity closure packet data", "data/asset_registry/wnba/athlete_identity_closure_packet.json"),
     ("Graphics", "WNBA athlete identity issue closure template", "data/asset_registry/wnba/athlete_identity_issue_closure_template.csv"),
     ("Graphics", "WNBA athlete provider ID backfill template", "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"),
+    ("Graphics", "WNBA identity local save server", "identity_resolution_local_server.md"),
+    ("Graphics", "WNBA identity local save server data", "identity_resolution_local_server.json"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -248,6 +250,8 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/athlete_identity_closure_packet.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py",
     "data/asset_registry/wnba/athlete_identity_issue_closure_template.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py",
     "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py",
+    "identity_resolution_local_server.md": ".\\hsd.cmd run -Mode identity-decision",
+    "identity_resolution_local_server.json": ".\\hsd.cmd run -Mode identity-decision",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -4811,6 +4815,8 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
     fields_json = html.escape(json.dumps(ATHLETE_PHOTO_DECISION_FIELDS), quote=True)
     identity_fields_json = html.escape(json.dumps(IDENTITY_RESOLUTION_FIELDS), quote=True)
     featured_name = clean(panel.get("featured_athlete_name")) or clean(panel.get("featured_athlete_id")) or "No current athlete"
+    identity_decision_command = ".\\hsd.cmd run -Mode identity-decision"
+    identity_decision_hint = command_hint(identity_decision_command)
     return f"""
       <div class="athlete-photo-desk" data-athlete-photo-rows="{rows_json}" data-athlete-photo-fields="{fields_json}" data-identity-resolution-fields="{identity_fields_json}">
         <div class="decision-cockpit-card athlete-photo-cockpit">
@@ -4895,6 +4901,7 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
             <div class="decision-desk-section">
               <div class="row-kicker">Identity resolution <span id="identityResolutionReadyBadge" class="pill warn">Source evidence required</span></div>
               <div class="athlete-photo-selected" id="identityResolutionSelectedSummary">Select a row to prepare identity evidence.</div>
+              <p class="muted" id="identityWritebackMode">File-opened dashboard is copy-safe. Run {html.escape(identity_decision_command)} to open localhost save mode.</p>
               <ul id="identityResolutionWarnings" class="decision-warning-list"></ul>
               <form class="decision-form">
                 <fieldset class="decision-options">
@@ -4937,6 +4944,7 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
                   <span class="muted" id="identityResolutionCopyStatus">Paste below the header in operator/inbox/wnba_athlete_identity_resolution.csv. Backfill-only rows do not clear photo-first rendering.</span>
                 </div>
               </div>
+              {identity_decision_hint}
             </div>
             <div class="safety-strip">
               {pill('review-only derivative', 'good')}
@@ -5723,8 +5731,18 @@ def render_html(payload: Dict[str, Any]) -> str:
       const identityWarningList = document.getElementById("identityResolutionWarnings");
       const identityReadyBadge = document.getElementById("identityResolutionReadyBadge");
       const identitySelectedSummary = document.getElementById("identityResolutionSelectedSummary");
+      const identityWritebackMode = document.getElementById("identityWritebackMode");
+      const identityWritebackEnabled = window.location.protocol === "http:" && ["127.0.0.1", "localhost"].includes(window.location.hostname);
       if (identityReviewedAtLocal && !identityReviewedAtLocal.value) {{
         identityReviewedAtLocal.value = new Date().toLocaleString();
+      }}
+      if (identityCopyButton && identityWritebackEnabled) {{
+        identityCopyButton.textContent = "Save identity row";
+      }}
+      if (identityWritebackMode) {{
+        identityWritebackMode.textContent = identityWritebackEnabled
+          ? "Local save mode is active. Saving writes only to operator/inbox/wnba_athlete_identity_resolution.csv."
+          : "File-opened dashboard is copy-safe. Run .\\hsd.cmd run -Mode identity-decision to open localhost save mode.";
       }}
       function csvCell(value) {{
         const text = String(value || "");
@@ -5927,6 +5945,7 @@ def render_html(payload: Dict[str, Any]) -> str:
           identityOutput.value = identityFields.join(",") + "\\n" + identityFields.map((field) => csvCell(out[field])).join(",");
         }}
         renderIdentityWarnings(row);
+        return out;
       }}
       document.querySelectorAll('input[name="athletePhotoRow"], input[name="athletePhotoDecision"]').forEach((el) => {{
         el.addEventListener("change", buildAthletePhotoRow);
@@ -5962,11 +5981,32 @@ def render_html(payload: Dict[str, Any]) -> str:
       }}
       if (identityCopyButton) {{
         identityCopyButton.addEventListener("click", async () => {{
-          buildIdentityResolutionRow();
+          const out = buildIdentityResolutionRow();
           const warnings = identityWarnings(selectedAthleteRow());
           if (warnings.length) {{
-            identityCopyStatus.textContent = "Resolve the missing source-backed identity fields before copying.";
+            identityCopyStatus.textContent = identityWritebackEnabled
+              ? "Resolve the missing source-backed identity fields before saving."
+              : "Resolve the missing source-backed identity fields before copying.";
             return;
+          }}
+          if (identityWritebackEnabled) {{
+            try {{
+              const response = await fetch("/api/identity-resolution", {{
+                method: "POST",
+                headers: {{ "Content-Type": "application/json" }},
+                body: JSON.stringify({{ row: out }})
+              }});
+              const payload = await response.json();
+              if (!response.ok || !payload.ok) {{
+                identityCopyStatus.textContent = (payload.warnings || [payload.status || "Save failed"]).join(" ");
+                return;
+              }}
+              identityCopyStatus.textContent = `Saved to ${{payload.inbox_path}}. Rows: ${{payload.rows_after}}. Rerun render to refresh identity gates.`;
+              return;
+            }} catch (err) {{
+              identityCopyStatus.textContent = "Local save failed. Keep this localhost tab open and make sure identity-decision mode is still running.";
+              return;
+            }}
           }}
           try {{
             await navigator.clipboard.writeText(identityOutput.value.split("\\n").slice(1).join("\\n"));
