@@ -610,13 +610,25 @@ function Invoke-AssetAuditStage($Python) {
     Invoke-ScriptIfPresent $Python "scripts\report_hsd_athlete_photo_catalog_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "scripts\report_hsd_logo_asset_catalog_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "scripts\report_hsd_asset_availability_audit_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\report_hsd_wnba_athlete_identity_audit_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\generate_hsd_wnba_athlete_identity_resolution_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "scripts\generate_hsd_wnba_athlete_identity_closure_packet_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\validate_hsd_wnba_asset_registry_v1.py" -Optional
     if ($env:HSD_RUN_OUTPUT_DIR) {
         $assetAuditStaticManifest = New-Object System.Collections.ArrayList
         foreach ($relative in @(
             "data/asset_registry/wnba/logo_review_catalog_report.md",
             "data/asset_registry/wnba/logo_review_catalog.csv",
-            "data/asset_registry/wnba/logo_review_catalog.json"
+            "data/asset_registry/wnba/logo_review_catalog.json",
+            "data/asset_registry/wnba/logo_review_packets.csv",
+            "data/asset_registry/wnba/athlete_identity_audit.md",
+            "data/asset_registry/wnba/athlete_identity_audit.csv",
+            "data/asset_registry/wnba/athlete_identity_audit.json",
+            "data/asset_registry/wnba/athlete_identity_resolution_workflow.md",
+            "data/asset_registry/wnba/athlete_identity_resolution_candidates.csv",
+            "data/asset_registry/wnba/athlete_identity_review_packet.csv",
+            "data/asset_registry/wnba/athlete_identity_resolution_template.csv",
+            "data/asset_registry/wnba/athlete_identity_resolution_manifest.json"
         )) {
             Copy-IfPresent $relative $env:HSD_RUN_OUTPUT_DIR $assetAuditStaticManifest
         }
