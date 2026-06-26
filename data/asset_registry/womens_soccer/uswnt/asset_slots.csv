@@ -1,0 +1,4 @@
+entity_type,entity_id,league_id,team_id,asset_slot,intended_use,target_path,source_url_required,local_file_path,file_exists,approval_status,render_enabled,auto_download_allowed,publish_ready,notes
+league,uswnt,uswnt,,federation_mark,league or federation reference only,assets/leagues/womens_soccer/uswnt/federation_mark.png,true,,false,not_approved,false,false,false,Proposed path only no file movement
+team,uswnt,uswnt,uswnt,national_team_crest,team identity reference,assets/leagues/womens_soccer/uswnt/teams/uswnt/crest.png,true,,false,not_approved,false,false,false,Proposed path only no file movement
+player_template,__manual_player_id__,uswnt,uswnt,player_headshot,manual player photo review,assets/leagues/womens_soccer/uswnt/players/__manual_player_id__/headshot.png,true,,false,not_approved,false,false,false,Template path only; no player photo exists or is approved

@@ -1,0 +1,54 @@
+{
+  "version": "hsd-wnba-logo-review-catalog-v1",
+  "generated_at_utc": "2026-06-26T00:00:00+00:00",
+  "review_only": true,
+  "source_policy": {
+    "free_official_sources_only_for_new_trust": true,
+    "no_asset_downloads": true,
+    "no_auto_approval": true,
+    "no_publish_ready_movement": true,
+    "does_not_change_renderer_behavior": true
+  },
+  "inputs_reviewed": [
+    "data/asset_registry/wnba/teams.csv",
+    "data/asset_registry/wnba/team_logos.csv",
+    "data/asset_registry/wnba/logo_sources.csv",
+    "config/hsd_verified_logo_registry_v1.json",
+    "contracts/logo_asset_catalog_v1.schema.json",
+    "assets/leagues/wnba/teams/*/logo.png",
+    "assets/leagues/wnba/teams/*/logo.svg"
+  ],
+  "official_team_count": 15,
+  "catalog_csv": "data/asset_registry/wnba/logo_review_catalog.csv",
+  "summary": {
+    "team_logo_rows": 15,
+    "league_mark_rows": 2,
+    "team_png_files_present": 15,
+    "team_svg_files_present": 10,
+    "missing_required_team_logo_files": 0,
+    "unapproved_local_team_logos": 3,
+    "blocked_or_stale_source_rows": 1,
+    "non_official_registry_source_rows": 15,
+    "missing_league_mark_files": 2
+  },
+  "renderer_readiness_counts": {
+    "review_ready_source_recheck_before_publish": 11,
+    "not_ready_human_review_hold": 3,
+    "not_ready_blocked_source_hold": 1,
+    "not_ready_missing_optional_league_mark": 2
+  },
+  "gap_summary": [
+    "All 15 active WNBA teams have a local primary PNG registered; no required team logo file is missing.",
+    "Atlanta Dream, New York Liberty, and Washington Mystics have local PNG files but remain approved=false in team_logos.csv.",
+    "Portland Fire source metadata is blocked by config/hsd_verified_logo_registry_v1.json as a stale/legacy risk.",
+    "Every current logo_sources.csv row uses Wikimedia rather than an official WNBA/team source, so source evidence needs official replacement before operator trust.",
+    "No WNBA league mark exists at assets/leagues/wnba/logo.png or assets/leagues/wnba/logo.svg."
+  ],
+  "next_integration_steps": [
+    "Have an operator verify each local team mark against the official WNBA team site or official team identity page.",
+    "Replace logo_sources.csv URLs with official/free WNBA or team source URLs after manual evidence review; do not download in this workstream.",
+    "Clear the Portland Fire blocked-source issue before treating the local logo as renderer-trusted.",
+    "Decide whether the renderer needs league-level WNBA marks; if yes, add explicit source and asset slots under assets/leagues/wnba/ after manual review.",
+    "After source metadata is official-first, run the existing validator and logo asset catalog reporter before proposing any renderer wiring."
+  ]
+}

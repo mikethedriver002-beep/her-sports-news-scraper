@@ -105,6 +105,8 @@ To create local review drafts from that handoff, run `.\hsd.cmd run -Mode render
 
 To save WNBA athlete identity-resolution decisions from the clean local UI instead of editing CSVs directly, first refresh the latest Decision tab with `.\hsd.cmd run -Mode render`, then run `.\hsd.cmd run -Mode identity-decision`. That explicit mode opens a localhost-only command center and enables the identity-resolution form to append verified, hold, revise, or provider-ID backfill rows only to `operator/inbox/wnba_athlete_identity_resolution.csv`. The normal file-opened dashboard remains copy-safe. Identity decision mode writes a startup report at `identity_resolution_local_server.md/.json`, does not change the trusted asset registry, does not approve images, does not move files, does not publish, does not create a publish-ready lane, and keeps paid APIs off. To verify the live write-back path without relying on browser automation, run `.\hsd.cmd run -Mode identity-decision-verify`; it starts the same localhost handler on an ephemeral port, posts one command-center-derived review-only row, confirms the saved CSV exactly matches that draft after server normalization, writes `identity_decision_live_writeback_verification.md/.json`, and restores the inbox file afterward.
 
+To inspect whether local player photos, team logos, league marks, and renderer fallbacks are trustworthy before a render pass, run `.\hsd.cmd run -Mode asset-audit`. This explicit review-only mode writes `data/asset_registry/asset_availability_audit.md/.csv/.json`, refreshes `data/asset_registry/wnba/athlete_photo_catalog.md/.csv/.json`, and refreshes the logo catalog artifacts. It does not download assets, approve images/logos, move files, publish, create a publish-ready lane, or call paid APIs. Treat warnings such as default player-photo approvals, unapproved logos, blocked logo sources, missing cutouts, or missing league marks as HOLD cues until a human source-backed review clears them.
+
 The command center is a local/manual cockpit. It summarizes:
 
 - the current publish decision and safety posture
@@ -143,6 +145,7 @@ That mode creates `results_dashboard/index.html` and `studio_dashboard/index.htm
 - `review`: source registry audit, operator status, publish guard, morning source discovery board, command center, lite review pack.
 - `full`: results, news, studio, then review.
 - `asset`: asset desk and visual QA support scripts.
+- `asset-audit`: review-only asset availability preflight for athlete photos, team/league logos, source provenance, and renderer fallback coverage.
 - `stories`: final-score IG Story packs, then review command center.
 - `handoff`: manual inbox to handoff packs, then review command center.
 - `posts`: multi-post daily board and platform queues, then review command center.

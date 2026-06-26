@@ -1,0 +1,21 @@
+{
+  "asset_slot_count": 3,
+  "auto_approval_allowed": false,
+  "auto_download_allowed": false,
+  "blockers": [],
+  "league_count": 1,
+  "player_count": 0,
+  "publish_ready": false,
+  "registry_path": "data/asset_registry/womens_soccer/uswnt",
+  "render_enabled": false,
+  "review_only": true,
+  "source_url_count": 10,
+  "status": "review_only_foundation_seeded",
+  "team_count": 1,
+  "version": "v1.0-uswnt-asset-registry-review-only",
+  "warnings": [
+    "players_csv_header_only_manual_intake",
+    "player_photo_slots_are_templates_only",
+    "uswnt_roster_membership_is_time_sensitive_and_requires_dated_manual_review"
+  ]
+}
