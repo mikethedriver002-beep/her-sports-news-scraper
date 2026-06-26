@@ -2027,8 +2027,12 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
     needs_review = as_int(manifest.get("review_variant_needs_crop_review")) or max(0, source_rows - ready_rows)
     contact_sheets = as_int(manifest.get("contact_sheets")) or len({clean(row.get("contact_sheet_path")) for row in metadata_rows if clean(row.get("contact_sheet_path"))})
     if not metadata_rows:
-        panel_status = "not_run"
-        next_step = "Run .\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py to create review-only contact sheets."
+        if identity_review_packet_rows:
+            panel_status = "identity_resolution_required"
+            next_step = "Open data/asset_registry/wnba/athlete_identity_review_packet.csv and resolve hold-first default/suspicious athlete-photo rows before photo-first renders."
+        else:
+            panel_status = "not_run"
+            next_step = "Run .\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py to create review-only contact sheets."
     elif featured_row_id and review_rows:
         if clean(review_rows[0].get("identity_resolution_status")) == "resolution_cleared_for_review_renders":
             panel_status = "identity_resolution_cleared_review_only"
@@ -5317,7 +5321,9 @@ def render_identity_review_packet_cards(rows: Iterable[Dict[str, Any]]) -> str:
                   {pill('default approval' if clean(row.get('default_approval_present')).lower() == 'true' else 'source review')}
                 </div>
               </div>
-              <p>{html.escape(short(clean(row.get('hold_reason_codes')) or clean(row.get('focused_evidence')), 190))}</p>
+              <p><strong>Hold reasons:</strong> {html.escape(short(clean(row.get('hold_reason_codes')) or 'manual_identity_review_required', 190))}</p>
+              <p><strong>Evidence:</strong> {html.escape(short(clean(row.get('focused_evidence')) or source_url or 'source evidence required before review renders', 190))}</p>
+              <p><strong>Operator steps:</strong> {html.escape(short(clean(row.get('operator_review_steps')) or 'open_asset_and_marker; compare_to_source; record_hold_or_verified_decision', 190))}</p>
               <code>{html.escape(short(clean(row.get('asset_path')), 120))}</code>
               <div class="asset-blocker-actions">
                 {source_link}
@@ -6654,7 +6660,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Guardrails: review-only, identity human-check required, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
     lines.extend(
-        f"- Identity packet: {item.get('display_name') or item.get('athlete_id')} | {item.get('team_id')} | {item.get('identity_review_status')} | hold={item.get('identity_hold')} | default={item.get('default_approval_present')} | source={item.get('source_check_url') or item.get('provider_player_page_hint') or 'missing'}"
+        f"- Identity packet: {item.get('display_name') or item.get('athlete_id')} | {item.get('team_id')} | {item.get('identity_review_status')} | hold={item.get('identity_hold')} | default={item.get('default_approval_present')} | reasons={item.get('hold_reason_codes') or 'manual_identity_review_required'} | evidence={item.get('focused_evidence') or 'source evidence required'} | steps={item.get('operator_review_steps') or 'open_asset_and_marker; compare_to_source; record_decision'} | source={item.get('source_check_url') or item.get('provider_player_page_hint') or 'missing'}"
         for item in athlete_photo_panel.get("identity_review_packets", [])[:8]
     )
     lines.extend(
