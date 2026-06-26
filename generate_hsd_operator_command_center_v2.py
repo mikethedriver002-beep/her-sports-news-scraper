@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.77.0-asset-packet-freshness-cues"
+VERSION = "hsd-operator-command-center-v3.78.0-manual-asset-source-board"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -25,6 +25,8 @@ OUT_RENDER_HANDOFF_ASSETS = OUT_RENDER_HANDOFF_DIR / "asset_checklist.md"
 OUT_RENDER_HANDOFF_ASSETS_CSV = OUT_RENDER_HANDOFF_DIR / "asset_checklist.csv"
 OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE = OUT_RENDER_HANDOFF_DIR / "active_asset_review_queue.md"
 OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV = OUT_RENDER_HANDOFF_DIR / "active_asset_review_queue.csv"
+OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD = OUT_RENDER_HANDOFF_DIR / "manual_asset_source_board.md"
+OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV = OUT_RENDER_HANDOFF_DIR / "manual_asset_source_board.csv"
 OUT_RENDER_HANDOFF_SOURCE_PROOF = OUT_RENDER_HANDOFF_DIR / "source_proof.md"
 OUT_RENDER_HANDOFF_PROMPT = OUT_RENDER_HANDOFF_DIR / "manual_renderer_prompt.md"
 OUT_RENDER_HANDOFF_MANIFEST = OUT_RENDER_HANDOFF_DIR / "handoff_manifest.json"
@@ -122,9 +124,46 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "review_only_policy",
 ]
 
+MANUAL_ASSET_SOURCE_BOARD_FIELDS = [
+    "source_board_id",
+    "packet_id",
+    "priority",
+    "asset_domain",
+    "entity_type",
+    "entity_id",
+    "entity_name",
+    "team_id",
+    "source_board_lane",
+    "required_asset",
+    "official_source_candidate",
+    "free_source_candidate",
+    "manual_search_query",
+    "source_hint_url",
+    "current_local_asset",
+    "registry_source_target",
+    "source_confidence",
+    "identity_confidence",
+    "manual_approval_status",
+    "recommended_operator_action",
+    "manual_review_packet",
+    "operator_copy_target",
+    "allowed_decisions",
+    "legacy_reference_model",
+    "review_only",
+    "manual_approval_required",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+]
+
 COMMAND_CENTER_GENERATED_ARTIFACTS = {
     "render_handoff_top_packet/active_asset_review_queue.md",
     "render_handoff_top_packet/active_asset_review_queue.csv",
+    "render_handoff_top_packet/manual_asset_source_board.md",
+    "render_handoff_top_packet/manual_asset_source_board.csv",
 }
 
 ARTIFACTS = [
@@ -140,6 +179,8 @@ ARTIFACTS = [
     ("Decision", "Top render asset checklist", "render_handoff_top_packet/asset_checklist.md"),
     ("Decision", "Top render active asset review queue", "render_handoff_top_packet/active_asset_review_queue.md"),
     ("Decision", "Top render active asset review queue data", "render_handoff_top_packet/active_asset_review_queue.csv"),
+    ("Decision", "Top render manual asset source board", "render_handoff_top_packet/manual_asset_source_board.md"),
+    ("Decision", "Top render manual asset source board data", "render_handoff_top_packet/manual_asset_source_board.csv"),
     ("Decision", "Top render source proof", "render_handoff_top_packet/source_proof.md"),
     ("Decision", "Top render manual prompt", "render_handoff_top_packet/manual_renderer_prompt.md"),
     ("Decision", "Top render draft preview", "render_handoff_top_packet/draft_preview.png"),
@@ -3165,6 +3206,8 @@ def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> D
             "render_handoff_top_packet/asset_checklist.csv",
             "render_handoff_top_packet/active_asset_review_queue.md",
             "render_handoff_top_packet/active_asset_review_queue.csv",
+            "render_handoff_top_packet/manual_asset_source_board.md",
+            "render_handoff_top_packet/manual_asset_source_board.csv",
             "render_handoff_top_packet/source_proof.md",
             "render_handoff_top_packet/manual_renderer_prompt.md",
             "render_handoff_top_packet/handoff_manifest.json",
@@ -3242,9 +3285,10 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             "1. `copy_sheet.md`",
             "2. `asset_checklist.md`",
             "3. `active_asset_review_queue.md`",
-            "4. `source_proof.md`",
-            "5. `manual_renderer_prompt.md`",
-            "6. `handoff_manifest.json`",
+            "4. `manual_asset_source_board.md`",
+            "5. `source_proof.md`",
+            "6. `manual_renderer_prompt.md`",
+            "7. `handoff_manifest.json`",
             "",
             "## Guardrails",
             "",
@@ -3499,6 +3543,172 @@ def active_queue_entity_list(rows: List[Dict[str, str]], *, limit: int = 6) -> s
     return " | ".join(names[:limit]) + f" | +{len(names) - limit} more"
 
 
+def manual_asset_source_priority(row: Dict[str, str]) -> str:
+    blocking_status = clean(row.get("selected_template_blocking_status"))
+    if blocking_status.startswith("blocking_selected_template"):
+        return "P0_selected_template_hold"
+    if blocking_status == "not_blocking_selected_template_photo_not_required":
+        return "P1_future_photo_first_hold"
+    if blocking_status == "not_blocking_selected_template_league_mark_not_required":
+        return "P2_league_mark_context"
+    return "P3_manual_asset_review"
+
+
+def manual_asset_required_label(row: Dict[str, str]) -> str:
+    domain = clean(row.get("asset_domain"))
+    name = clean(row.get("entity_name")) or clean(row.get("entity_id"))
+    if domain == "athlete_photo":
+        return f"Verified athlete photo identity evidence for {name}"
+    if domain == "league_logo":
+        return f"Exact official league mark evidence for {name}"
+    if domain == "team_logo":
+        return f"Exact official team logo evidence for {name}"
+    return f"Manual asset evidence for {name}"
+
+
+def manual_asset_source_candidate(row: Dict[str, str]) -> str:
+    source_url = clean(row.get("source_check_url"))
+    if source_url:
+        return source_url
+    domain = clean(row.get("asset_domain"))
+    name = clean(row.get("entity_name")) or clean(row.get("entity_id"))
+    team_id = clean(row.get("team_id"))
+    if domain == "athlete_photo":
+        team = f" / {team_id}" if team_id else ""
+        return f"Official WNBA or team roster/profile page for {name}{team}; manual lookup only"
+    if domain == "league_logo":
+        return "Official WNBA brand, media, or league page; manual lookup only"
+    if domain == "team_logo":
+        return f"Official {name} team site, media guide, or WNBA team page; manual lookup only"
+    return "Official/free public source candidate; manual lookup only"
+
+
+def manual_asset_free_source_candidate(row: Dict[str, str]) -> str:
+    domain = clean(row.get("asset_domain"))
+    if domain == "athlete_photo":
+        return "Free public official roster/profile evidence; do not download or approve from this board"
+    if domain in {"team_logo", "league_logo"}:
+        return "Free public official logo/source evidence; do not download or move files from this board"
+    return "Free public source evidence only; no paid APIs and no automatic downloads"
+
+
+def manual_asset_search_query(row: Dict[str, str]) -> str:
+    name = clean(row.get("entity_name")) or clean(row.get("entity_id"))
+    team = clean(row.get("team_id"))
+    domain = clean(row.get("asset_domain"))
+    if domain == "athlete_photo":
+        team_part = f" {team.replace('_', ' ')}" if team else ""
+        return f'"{name}"{team_part} WNBA official player profile photo'
+    if domain == "league_logo":
+        return '"WNBA" official logo PNG brand'
+    if domain == "team_logo":
+        return f'"{name}" official logo PNG WNBA'
+    return f'"{name}" official source evidence'
+
+
+def manual_asset_source_board_rows(active_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, row in enumerate(active_rows, 1):
+        board_row = {
+            "source_board_id": f"manual_asset_source_{index:03d}_{clean(row.get('review_queue_id')) or clean(row.get('entity_id'))}",
+            "packet_id": clean(row.get("packet_id")),
+            "priority": manual_asset_source_priority(row),
+            "asset_domain": clean(row.get("asset_domain")),
+            "entity_type": clean(row.get("entity_type")),
+            "entity_id": clean(row.get("entity_id")),
+            "entity_name": clean(row.get("entity_name")),
+            "team_id": clean(row.get("team_id")),
+            "source_board_lane": clean(row.get("decision_lane")) or "manual_asset_review",
+            "required_asset": manual_asset_required_label(row),
+            "official_source_candidate": manual_asset_source_candidate(row),
+            "free_source_candidate": manual_asset_free_source_candidate(row),
+            "manual_search_query": manual_asset_search_query(row),
+            "source_hint_url": clean(row.get("source_check_url")),
+            "current_local_asset": clean(row.get("asset_path")) or clean(row.get("registered_path")),
+            "registry_source_target": clean(row.get("source_target_path")) or clean(row.get("registered_path")),
+            "source_confidence": clean(row.get("source_confidence")),
+            "identity_confidence": clean(row.get("identity_confidence")),
+            "manual_approval_status": clean(row.get("manual_approval_status")) or "manual_review_required",
+            "recommended_operator_action": clean(row.get("primary_action")) or "manual source review required",
+            "manual_review_packet": clean(row.get("manual_review_packet")),
+            "operator_copy_target": clean(row.get("operator_copy_target")),
+            "allowed_decisions": clean(row.get("allowed_decisions")),
+            "legacy_reference_model": "D:/Her Sports Daily asset-index/DDG packet shape used as reference only",
+            "review_only": "true",
+            "manual_approval_required": "true",
+            "publish_ready": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "paid_apis": "false",
+            "asset_downloads": "false",
+        }
+        rows.append({field: clean(board_row.get(field)) for field in MANUAL_ASSET_SOURCE_BOARD_FIELDS})
+    return rows
+
+
+def render_manual_asset_source_board(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
+    lines = [
+        "# Manual Asset Source Board",
+        "",
+        f"Packet: `{clean(packet.get('packet_id')) if packet else ''}`",
+        f"Story: {clean(packet.get('title')) if packet else 'No active render packet'}",
+        "",
+        "Review-only source board for active WNBA logo and athlete identity holds. Legacy `D:\\Her Sports Daily` asset-index/DDG packets are reference shape only; this board does not copy, download, approve, move, publish, or create a publish-ready lane.",
+        "",
+        "## Guardrails",
+        "",
+        "- review_only=true",
+        "- manual_approval_required=true",
+        "- publish_ready=false",
+        "- auto_approval=false",
+        "- auto_publish=false",
+        "- move_files=false",
+        "- paid_apis=false",
+        "- asset_downloads=false",
+        "",
+    ]
+    if not rows:
+        lines += ["No active WNBA logo or athlete identity holds were available for source-board rows.", ""]
+        return "\n".join(lines)
+    lines += [
+        "## Summary",
+        "",
+        f"- Source-board rows: {len(rows)}",
+        f"- P0 selected-template holds: {sum(1 for row in rows if clean(row.get('priority')) == 'P0_selected_template_hold')}",
+        f"- Future photo-first holds: {sum(1 for row in rows if clean(row.get('priority')) == 'P1_future_photo_first_hold')}",
+        f"- League-mark context rows: {sum(1 for row in rows if clean(row.get('priority')) == 'P2_league_mark_context')}",
+        "- Review order: clear P0 selected-template logo holds first; keep future photo-first and league-mark rows review-only.",
+        "",
+        "## Rows",
+        "",
+    ]
+    for index, row in enumerate(rows, 1):
+        lines += [
+            f"### {index}. {clean(row.get('entity_name')) or clean(row.get('entity_id'))}",
+            "",
+            f"- Priority: `{clean(row.get('priority'))}`",
+            f"- Lane: `{clean(row.get('source_board_lane'))}`",
+            f"- Required asset: {clean(row.get('required_asset'))}",
+            f"- Official/free candidate: {clean(row.get('official_source_candidate'))}",
+            f"- Manual search query: `{clean(row.get('manual_search_query'))}`",
+            f"- Source hint URL: {clean(row.get('source_hint_url')) or 'n/a'}",
+            f"- Current local asset: `{clean(row.get('current_local_asset')) or 'n/a'}`",
+            f"- Registry/source target: `{clean(row.get('registry_source_target')) or 'n/a'}`",
+            f"- Source confidence: `{clean(row.get('source_confidence')) or 'manual_review_required'}`",
+            f"- Identity confidence: `{clean(row.get('identity_confidence')) or 'n/a'}`",
+            f"- Manual approval status: `{clean(row.get('manual_approval_status'))}`",
+            f"- Recommended operator action: {clean(row.get('recommended_operator_action'))}",
+            f"- Manual review packet: `{clean(row.get('manual_review_packet')) or 'n/a'}`",
+            f"- Operator copy target: `{clean(row.get('operator_copy_target')) or 'n/a'}`",
+            f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
+            f"- Legacy reference: {clean(row.get('legacy_reference_model'))}",
+            f"- Guardrails: review_only={clean(row.get('review_only'))}; manual_approval_required={clean(row.get('manual_approval_required'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}",
+            "",
+        ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
     lines = [
         "# Active Asset Review Queue",
@@ -3689,6 +3899,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
     if manifest_packet:
         manifest_packet["raw_blockers"] = clean(packet.get("blockers")) or "none"
         manifest_packet["blockers"] = display_render_blockers(packet)
+    manifest_active_asset_rows = active_asset_review_queue_rows(packet) if packet else []
+    manifest_manual_source_rows = manual_asset_source_board_rows(manifest_active_asset_rows)
     write_text(OUT_RENDER_HANDOFF_README, render_handoff_readme(payload, packet))
     manifest = {
         "version": payload["version"],
@@ -3707,6 +3919,20 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             "publishing": False,
         },
         "packet": manifest_packet,
+        "manual_asset_source_board": {
+            "rows": len(manifest_manual_source_rows),
+            "review_only": True,
+            "manual_approval_required": True,
+            "asset_downloads": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+            "publish_ready": False,
+            "artifact": "manual_asset_source_board.md",
+            "data_artifact": "manual_asset_source_board.csv",
+            "legacy_reference_model": "D:/Her Sports Daily asset-index/DDG packet shape used as reference only",
+        },
         "files": [
             "README.md",
             "copy_sheet.md",
@@ -3715,6 +3941,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             "asset_checklist.csv",
             "active_asset_review_queue.md",
             "active_asset_review_queue.csv",
+            "manual_asset_source_board.md",
+            "manual_asset_source_board.csv",
             "source_proof.md",
             "manual_renderer_prompt.md",
             "handoff_manifest.json",
@@ -3771,14 +3999,19 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             ],
             ["packet_id", "asset_cue", "active_asset_stop_go", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "active_athlete_identity_status", "active_athlete_identity_cues", "athlete_identity_artifact", "active_athlete_identity_closure_cues", "athlete_identity_closure_artifact", "athlete_identity_backfill_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
         )
-        active_asset_rows = active_asset_review_queue_rows(packet)
+        active_asset_rows = manifest_active_asset_rows
+        manual_asset_source_rows = manifest_manual_source_rows
         write_text(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE, render_active_asset_review_queue(packet, active_asset_rows))
         write_csv(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV, active_asset_rows, ACTIVE_ASSET_REVIEW_QUEUE_FIELDS)
+        write_text(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD, render_manual_asset_source_board(packet, manual_asset_source_rows))
+        write_csv(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV, manual_asset_source_rows, MANUAL_ASSET_SOURCE_BOARD_FIELDS)
         write_text(OUT_RENDER_HANDOFF_SOURCE_PROOF, render_handoff_source_proof(packet))
         write_text(OUT_RENDER_HANDOFF_PROMPT, render_manual_renderer_prompt(packet))
     else:
         write_text(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE, render_active_asset_review_queue(None, []))
         write_csv(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV, [], ACTIVE_ASSET_REVIEW_QUEUE_FIELDS)
+        write_text(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD, render_manual_asset_source_board(None, []))
+        write_csv(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV, [], MANUAL_ASSET_SOURCE_BOARD_FIELDS)
     write_json(OUT_RENDER_HANDOFF_MANIFEST, manifest)
 
 
@@ -4681,6 +4914,9 @@ def build_payload() -> Dict[str, Any]:
     )
     attach_render_prep_active_cues(render_queue, render_prep_packets)
     render_handoff_summary = build_render_handoff_summary(render_prep_packets)
+    top_render_packet = render_prep_packets[0] if render_prep_packets else None
+    active_asset_rows = active_asset_review_queue_rows(top_render_packet) if top_render_packet else []
+    manual_asset_source_board = manual_asset_source_board_rows(active_asset_rows)
     operator_decision_panel = operator_decision_ui_panel()
     asset_readiness_panel = asset_availability_readiness_panel()
     athlete_photo_panel = athlete_photo_onboarding_panel(read_json("manual_review_renderer_manifest.json"))
@@ -4847,6 +5083,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Render prep packets", len(render_prep_packets)),
         metric("Render packets ready", sum(1 for row in render_prep_packets if row.get("packet_status") == "ready_for_manual_render_review")),
         metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
+        metric("Manual asset source board", len(manual_asset_source_board)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
         metric("Asset audit", asset_readiness_panel["panel_status"], asset_readiness_panel["next_step"]),
@@ -4920,6 +5157,7 @@ def build_payload() -> Dict[str, Any]:
         "render_readiness_queue": render_queue,
         "render_prep_packets": render_prep_packets,
         "render_handoff_summary": render_handoff_summary,
+        "manual_asset_source_board": manual_asset_source_board,
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
         "athlete_photo_onboarding_panel": athlete_photo_panel,
@@ -5135,6 +5373,63 @@ def render_render_handoff_summary(summary: Dict[str, Any]) -> str:
         <div style="margin-top:8px">{file_links}</div>
       </div>
     </article>
+    """
+
+
+def render_manual_asset_source_board_cards(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        source_hint = clean(row.get("source_hint_url"))
+        source_link = f'<a class="tool-link" href="{html.escape(source_hint)}">Source hint</a>' if source_hint else '<span class="muted">Manual lookup</span>'
+        board_link = open_link("render_handoff_top_packet/manual_asset_source_board.md", "Open board")
+        body.append(
+            f"""
+            <article class="asset-blocker-card manual-source-board-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">{html.escape(clean(row.get('priority')))} / {html.escape(clean(row.get('asset_domain')))}</span>
+                  <strong>{html.escape(clean(row.get('entity_name')) or clean(row.get('entity_id')))}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill(clean(row.get('manual_approval_status')) or 'manual_review_required', 'warn')}
+                  {pill('review-only')}
+                </div>
+              </div>
+              <p>{html.escape(short(clean(row.get('required_asset')), 180))}</p>
+              <div class="asset-guidance-grid">
+                <div><span>Official/free source</span><strong>{html.escape(short(clean(row.get('official_source_candidate')), 135))}</strong></div>
+                <div><span>Search</span><strong>{html.escape(short(clean(row.get('manual_search_query')), 135))}</strong></div>
+                <div><span>Local asset</span><strong>{html.escape(short(clean(row.get('current_local_asset')) or 'missing', 135))}</strong></div>
+                <div><span>Action</span><strong>{html.escape(short(clean(row.get('recommended_operator_action')), 135))}</strong></div>
+              </div>
+              <p class="muted">{html.escape(short(clean(row.get('free_source_candidate')), 180))}</p>
+              <p class="muted">Legacy reference only: {html.escape(short(clean(row.get('legacy_reference_model')), 150))}</p>
+              <div class="asset-blocker-actions">
+                {source_link}
+                {board_link}
+                {pill('no downloads')}
+                {pill('no auto-approval')}
+                {pill('publish-ready: false')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No active manual asset source-board rows found.</p>'
+
+
+def render_manual_asset_source_board_panel(rows: Iterable[Dict[str, str]]) -> str:
+    board_rows = list(rows)
+    p0 = sum(1 for row in board_rows if clean(row.get("priority")) == "P0_selected_template_hold")
+    future = sum(1 for row in board_rows if clean(row.get("priority")) == "P1_future_photo_first_hold")
+    league = sum(1 for row in board_rows if clean(row.get("priority")) == "P2_league_mark_context")
+    return f"""
+      <div class="decision-desk-section">
+        <div class="row-kicker">Manual Asset Source Board {pill(str(len(board_rows)) + ' rows')} {pill(str(p0) + ' selected-template holds')} {pill(str(future) + ' future photo-first')} {pill(str(league) + ' league context')}</div>
+        <p class="muted">Old HSD asset-index/DDG packet structure, rebuilt as current review-only source guidance. Nothing here downloads, approves, moves, publishes, or creates a publish-ready lane.</p>
+        <div class="asset-blocker-grid">
+          {render_manual_asset_source_board_cards(board_rows)}
+        </div>
+      </div>
     """
 
 
@@ -6876,6 +7171,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       <div class="panel">
         <h2>Decision desk</h2>
         {render_asset_readiness_panel(payload['asset_readiness_panel'])}
+        {render_manual_asset_source_board_panel(payload.get('manual_asset_source_board', []))}
         {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
         <h2>Manual visual QA decision</h2>
         {render_operator_decision_panel(payload['operator_decision_panel'])}
@@ -7675,6 +7971,22 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- Logo packet: {item.get('team_name') or item.get('team_id')} | {item.get('issue_type') or 'logo_review_required'} | {item.get('decision_packet_title') or item.get('packet_id')} | registered={item.get('registered_path') or item.get('registered_logo_path') or item.get('local_logo_path') or item.get('recommended_path') or 'missing'} | source={item.get('source_target_path') or item.get('source_path') or item.get('target_path') or 'missing'} | fallback={item.get('renderer_fallback_cue') or 'Renderer fallback remains review-only.'} | next: {item.get('primary_action') or item.get('decision_primary_action') or 'manual logo review required'}"
         for item in asset_panel.get("logo_review_packets", [])[:8]
+    )
+    source_board = payload.get("manual_asset_source_board", [])
+    lines += [
+        "",
+        "## Manual Asset Source Board",
+        "",
+        f"- Source-board rows: {len(source_board)}",
+        f"- P0 selected-template holds: {sum(1 for item in source_board if clean(item.get('priority')) == 'P0_selected_template_hold')}",
+        f"- Future photo-first holds: {sum(1 for item in source_board if clean(item.get('priority')) == 'P1_future_photo_first_hold')}",
+        f"- League-mark context rows: {sum(1 for item in source_board if clean(item.get('priority')) == 'P2_league_mark_context')}",
+        "- Legacy reference: `D:\\Her Sports Daily` asset-index/DDG packet structure only; current board is review-only.",
+        "- Guardrails: no downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
+    ]
+    lines.extend(
+        f"- Source board row: {item.get('priority')} | {item.get('asset_domain')} | {item.get('entity_name') or item.get('entity_id')} | required={item.get('required_asset')} | source={item.get('official_source_candidate')} | query={item.get('manual_search_query')} | local={item.get('current_local_asset') or 'missing'} | packet={item.get('manual_review_packet') or 'n/a'} | copy={item.get('operator_copy_target') or 'n/a'} | downloads={item.get('asset_downloads')} | approval={item.get('auto_approval')} | publish_ready={item.get('publish_ready')}"
+        for item in source_board[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
     lines += [
