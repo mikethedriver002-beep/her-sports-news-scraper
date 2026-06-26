@@ -13,6 +13,7 @@ def test_phase6m_renderer_restores_rows_and_has_safe_fallback_routes():
     assert "team_spotlight_fallback" in text
     assert "downgraded_player_to_non_player_team_spotlight" in text
     assert "phase6m_input_rows_skipped_for_assets" in text
+    assert "asset_fallback_review_cue" in text
 
 
 def test_phase6m_live_gate_keeps_hash_bound_human_review():
@@ -21,6 +22,14 @@ def test_phase6m_live_gate_keeps_hash_bound_human_review():
     assert "production_cutover_allowed" in text
     assert "auto_publish_allowed" in text
     assert "asset_live_candidate_eligible" in text
+    assert "asset_fallback_review_cue" in text
+
+
+def test_phase6m_asset_assurance_report_surfaces_fallback_review_cues():
+    text = (ROOT / "scripts" / "validate_hsd_asset_assurance_v1.py").read_text(encoding="utf-8")
+    assert "asset_fallback_review_cue" in text
+    assert "Fallback Review Cues" in text
+    assert "Human asset review remains required" in text
 
 
 def test_phase6m_policy_keeps_publish_safeties_closed():

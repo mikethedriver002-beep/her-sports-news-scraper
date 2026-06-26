@@ -40,6 +40,7 @@ EXTRA_FIELDS = [
     "asset_live_ready_pre_human",
     "asset_requires_visual_approval",
     "asset_release_lane",
+    "asset_fallback_review_cue",
     "team_asset_count",
     "team_exact_logo_count",
     "team_fallback_badge_count",

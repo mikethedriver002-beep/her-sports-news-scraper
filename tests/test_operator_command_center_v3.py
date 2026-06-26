@@ -300,6 +300,7 @@ def seed_asset_availability_audit_files() -> None:
             "approval_status": "review_required",
             "format_status": "not_applicable",
             "renderer_coverage": "fallback_requires_operator_review",
+            "renderer_fallback_cue": "HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane.",
             "asset_path": "generate_hsd_manual_review_renderer_v1.py",
             "evidence": "renderer fallback coverage audit not refreshed",
             "recommended_next_step": "rerun asset-audit and renderer QA before trusting fallback visuals",
@@ -1831,6 +1832,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Path check:" in html
     assert "assets/leagues/wnba/teams/new_york_liberty/logo.svg" in html
     assert "Renderer fallback remains review-only while logo trust is held." in html
+    assert "HSD team badges are review-only stand-ins" in html
+    assert "they do not approve logo identity or create a publish-ready lane" in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
     assert "data/asset_registry/asset_availability_audit.md" in html
@@ -1841,6 +1844,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
     assert "fallback=Renderer fallback remains review-only while logo trust is held." in markdown
+    assert "fallback: HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane." in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
     assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown

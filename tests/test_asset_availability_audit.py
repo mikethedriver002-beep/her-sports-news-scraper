@@ -208,6 +208,52 @@ def seed_renderer_fallback(root: Path) -> None:
         json.dumps({"version": "renderer-test", "rendered_count": 1}),
         encoding="utf-8",
     )
+    write_csv(
+        root / "outputs" / "latest" / "HSD_ASSET_ASSURANCE" / "asset_assurance_v1_rows.csv",
+        [
+            {
+                "item_id": "badge-review-1",
+                "source_id": "badge_source",
+                "headline": "Badge fallback review row",
+                "asset_release_lane": "hsd_badge_review",
+                "team_fallback_badge_count": "1",
+                "asset_render_safe": "true",
+                "asset_live_ready_pre_human": "false",
+                "asset_fallback_review_cue": "HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane.",
+            },
+            {
+                "item_id": "spotlight-review-1",
+                "source_id": "spotlight_source",
+                "headline": "Team spotlight fallback row",
+                "asset_release_lane": "team_spotlight_review",
+                "asset_assurance_player_mode": "team_spotlight_fallback",
+                "asset_assurance_player_route": "downgraded_player_to_non_player_team_spotlight",
+                "asset_fallback_review_cue": "Team spotlight fallback is a non-player review route when verified athlete assets are unavailable; it does not approve athlete identity or photo-first rendering.",
+            },
+            {
+                "item_id": "fixture-review-1",
+                "source_id": "fixture_source",
+                "headline": "Fixture reference row",
+                "asset_release_lane": "blocked",
+                "asset_assurance_player_mode": "fixture_reference_asset",
+                "fixture_only_player_asset": "true",
+                "asset_fallback_review_cue": "Fixture reference assets remain review-only and must be replaced or manually verified before any athlete-photo trust.",
+            },
+        ],
+        [
+            "item_id",
+            "source_id",
+            "headline",
+            "asset_release_lane",
+            "team_fallback_badge_count",
+            "asset_assurance_player_mode",
+            "asset_assurance_player_route",
+            "asset_render_safe",
+            "asset_live_ready_pre_human",
+            "fixture_only_player_asset",
+            "asset_fallback_review_cue",
+        ],
+    )
 
 
 def test_availability_audit_flags_assets_approvals_formats_and_renderer_fallbacks(tmp_path: Path) -> None:
@@ -229,6 +275,9 @@ def test_availability_audit_flags_assets_approvals_formats_and_renderer_fallback
     assert ("logo_format_problem", "broken_team") in findings
     assert ("suspicious_logo_source_or_approval", "broken_team") in findings
     assert ("renderer_active_logo_fallback", "missing_logo_team") in findings
+    assert ("renderer_hsd_team_badge_review", "badge_source") in findings
+    assert ("renderer_team_spotlight_fallback_review", "spotlight_source") in findings
+    assert ("renderer_fixture_reference_asset_review", "fixture_source") in findings
     assert report["severity_counts"]["error"] >= 2
     suspicious_photo = by_finding[("suspicious_or_default_player_approval", "approved_default")]
     assert suspicious_photo["decision_lane"] == "wnba_athlete_identity_resolution"
@@ -253,6 +302,17 @@ def test_availability_audit_flags_assets_approvals_formats_and_renderer_fallback
     assert renderer["decision_packet_title"] == "Renderer fallback review: Missing Logo Team"
     assert renderer["renderer_fallback_cue"] == "active_text_badge_fallback_review_only_hold_exact_logo_required"
     assert renderer["allowed_operator_decisions"] == "confirm_no_active_fallback|hold_render|revise_asset_registry"
+    badge = by_finding[("renderer_hsd_team_badge_review", "badge_source")]
+    assert badge["severity"] == "info"
+    assert "review-only stand-ins" in badge["renderer_fallback_cue"]
+    assert "publish-ready lane" in badge["renderer_fallback_cue"]
+    spotlight = by_finding[("renderer_team_spotlight_fallback_review", "spotlight_source")]
+    assert spotlight["severity"] == "info"
+    assert "non-player review route" in spotlight["renderer_fallback_cue"]
+    assert "does not approve athlete identity" in spotlight["renderer_fallback_cue"]
+    fixture = by_finding[("renderer_fixture_reference_asset_review", "fixture_source")]
+    assert fixture["severity"] == "info"
+    assert "Fixture reference assets remain review-only" in fixture["renderer_fallback_cue"]
 
 
 def test_availability_audit_main_writes_run_scoped_reports(tmp_path: Path, monkeypatch) -> None:

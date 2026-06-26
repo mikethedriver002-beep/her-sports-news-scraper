@@ -24,7 +24,8 @@ DEFAULT_TEMPLATE_MAPPING = Path("config/graphics/template_render_mapping_v1.json
 DEFAULT_VERIFIED_LOGO_REGISTRY = Path("config/hsd_verified_logo_registry_v1.json")
 DEFAULT_RENDERER_LOGO_AUDIT = Path(renderer_logo_status.DEFAULT_LOGO_AUDIT_JSON)
 DEFAULT_RENDERER_MANIFEST = Path(renderer_logo_status.DEFAULT_MANIFEST_JSON)
-DEFAULT_ASSET_ASSURANCE_ROWS = Path("outputs/latest/HSD_ASSET_ASSURANCE/asset_assurance_preflight_v1_rows.csv")
+DEFAULT_ASSET_ASSURANCE_ROWS = Path("outputs/latest/HSD_ASSET_ASSURANCE/asset_assurance_v1_rows.csv")
+DEFAULT_ASSET_ASSURANCE_PREFLIGHT_ROWS = Path("outputs/latest/HSD_ASSET_ASSURANCE/asset_assurance_preflight_v1_rows.csv")
 
 DEFAULT_OUT_CSV = "data/asset_registry/asset_availability_audit.csv"
 DEFAULT_OUT_JSON = "data/asset_registry/asset_availability_audit.json"
@@ -483,25 +484,64 @@ def audit_renderer_fallbacks(root: Path, logo_audit_path: Path, manifest_path: P
         ))
 
     assurance_rows = read_csv(root / assurance_rows_path)
+    if not assurance_rows and assurance_rows_path != DEFAULT_ASSET_ASSURANCE_PREFLIGHT_ROWS:
+        assurance_rows = read_csv(root / DEFAULT_ASSET_ASSURANCE_PREFLIGHT_ROWS)
     for item in assurance_rows:
-        mode = clean(item.get("resolution_mode"))
-        if mode.startswith("hsd_"):
+        mode = clean(item.get("resolution_mode")) or clean(item.get("asset_release_lane"))
+        player_mode = clean(item.get("asset_assurance_player_mode"))
+        lane = clean(item.get("asset_release_lane"))
+        fallback_cue = clean(item.get("asset_fallback_review_cue"))
+        if mode.startswith("hsd_") or lane == "hsd_badge_review" or clean(item.get("team_fallback_badge_count")) not in {"", "0"}:
             findings.append(row(
                 asset_domain="renderer",
                 league=clean(item.get("sport_id")).upper(),
-                entity_type=clean(item.get("entity_type")),
-                entity_id=clean(item.get("entity_id")),
-                entity_name=clean(item.get("display_name")),
+                entity_type=clean(item.get("entity_type")) or "team_logo",
+                entity_id=clean(item.get("entity_id")) or clean(item.get("source_id")) or clean(item.get("item_id")),
+                entity_name=clean(item.get("display_name")) or clean(item.get("headline")) or clean(item.get("item_id")),
                 asset_kind="asset_assurance_fallback",
-                asset_path=clean(item.get("resolved_path")),
-                finding="asset_assurance_hsd_fallback_generated",
+                asset_path=clean(item.get("resolved_path")) or clean(item.get("output_path")),
+                finding="renderer_hsd_team_badge_review",
                 severity="info",
                 approval_status="fallback_review_only",
                 format_status="generated_local_fallback",
-                renderer_coverage=mode,
-                renderer_fallback_cue="generated_hsd_fallback_review_only_not_publish_ready",
+                renderer_coverage=mode or lane,
+                renderer_fallback_cue=fallback_cue or "HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane.",
                 recommended_next_step="keep fallback in review lane until exact asset or human visual approval is available",
-                evidence=f"render_safe={clean(item.get('render_safe'))}; live_ready_pre_human={clean(item.get('live_ready_pre_human'))}; reason={clean(item.get('reason'))}",
+                evidence=f"render_safe={clean(item.get('render_safe') or item.get('asset_render_safe'))}; live_ready_pre_human={clean(item.get('live_ready_pre_human') or item.get('asset_live_ready_pre_human'))}; reason={clean(item.get('reason') or item.get('asset_assurance_reasons'))}",
+            ))
+        if lane == "team_spotlight_review" or player_mode == "team_spotlight_fallback":
+            findings.append(row(
+                asset_domain="renderer",
+                league=clean(item.get("sport_id")).upper(),
+                entity_type="player_photo",
+                entity_id=clean(item.get("source_id")) or clean(item.get("item_id")),
+                entity_name=clean(item.get("headline")) or clean(item.get("item_id")),
+                asset_kind="asset_assurance_player_fallback",
+                asset_path=clean(item.get("output_path")),
+                finding="renderer_team_spotlight_fallback_review",
+                severity="info",
+                approval_status="fallback_review_only",
+                renderer_coverage=player_mode or lane,
+                renderer_fallback_cue=fallback_cue or "Team spotlight fallback is a non-player review route when verified athlete assets are unavailable; it does not approve athlete identity or photo-first rendering.",
+                recommended_next_step="keep player module downgraded to team spotlight until a source-verified athlete asset is manually approved",
+                evidence=f"release_lane={lane}; player_mode={player_mode}; route={clean(item.get('asset_assurance_player_route'))}",
+            ))
+        if player_mode == "fixture_reference_asset":
+            findings.append(row(
+                asset_domain="renderer",
+                league=clean(item.get("sport_id")).upper(),
+                entity_type="player_photo",
+                entity_id=clean(item.get("source_id")) or clean(item.get("item_id")),
+                entity_name=clean(item.get("headline")) or clean(item.get("item_id")),
+                asset_kind="fixture_reference_asset",
+                asset_path=clean(item.get("output_path")),
+                finding="renderer_fixture_reference_asset_review",
+                severity="info",
+                approval_status="fixture_reference_review_only",
+                renderer_coverage=player_mode,
+                renderer_fallback_cue=fallback_cue or "Fixture reference assets remain review-only and must be replaced or manually verified before any athlete-photo trust.",
+                recommended_next_step="hold athlete-photo trust until fixture reference usage is removed or source-backed manual identity review is complete",
+                evidence=f"release_lane={lane}; player_mode={player_mode}; fixture_only={clean(item.get('fixture_only_player_asset'))}",
             ))
     return findings
 

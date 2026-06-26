@@ -394,6 +394,12 @@ def assurance_from_item(item: Mapping[str, Any]) -> Dict[str, Any]:
     live_ready_pre_human = render_safe and exact_count >= 2 and player_live_ready
     live_candidate_eligible = render_safe and not as_bool(item.get("fixture_only_player_asset"))
     requires_visual = release_lane in {"hsd_badge_review", "team_spotlight_review"} or not live_ready_pre_human
+    fallback_review_cues = {
+        "blocked": "Asset assurance is blocked; do not use this row for review renders until the listed blockers are cleared.",
+        "hsd_badge_review": "HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane.",
+        "team_spotlight_review": "Team spotlight fallback is a non-player review route when verified athlete assets are unavailable; it does not approve athlete identity or photo-first rendering.",
+        "exact_assets": "Exact assets are technically render-safe, but human visual QA remains required before any next step.",
+    }
     return {
         "asset_assurance_version": VERSION,
         "asset_assurance_status": "passed_render_safe" if render_safe else "blocked_render_safe",
@@ -407,4 +413,5 @@ def assurance_from_item(item: Mapping[str, Any]) -> Dict[str, Any]:
         "team_exact_logo_count": exact_count,
         "team_fallback_badge_count": fallback_count,
         "asset_assurance_player_mode": player_mode,
+        "asset_fallback_review_cue": fallback_review_cues.get(release_lane, "Human asset review remains required before any next step."),
     }

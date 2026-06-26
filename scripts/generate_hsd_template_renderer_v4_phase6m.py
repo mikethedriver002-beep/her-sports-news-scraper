@@ -25,6 +25,7 @@ EXTRA_FIELDS = [
     "asset_live_ready_pre_human", "asset_requires_visual_approval", "asset_release_lane",
     "team_asset_count", "team_exact_logo_count", "team_fallback_badge_count",
     "asset_assurance_player_mode", "asset_assurance_player_route", "requested_module_mode",
+    "asset_fallback_review_cue",
 ]
 
 _CONFIGURED = False
