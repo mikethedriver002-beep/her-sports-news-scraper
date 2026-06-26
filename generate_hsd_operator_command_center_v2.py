@@ -3386,6 +3386,16 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
     return rows
 
 
+def active_queue_entity_list(rows: List[Dict[str, str]], *, limit: int = 6) -> str:
+    names = [clean(row.get("entity_name")) or clean(row.get("entity_id")) for row in rows]
+    names = [name for name in names if name]
+    if not names:
+        return "none"
+    if len(names) <= limit:
+        return " | ".join(names)
+    return " | ".join(names[:limit]) + f" | +{len(names) - limit} more"
+
+
 def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
     lines = [
         "# Active Asset Review Queue",
@@ -3399,7 +3409,21 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
     if not rows:
         lines += ["No active logo or athlete identity review rows were matched.", ""]
         return "\n".join(lines)
-    lines += ["## Rows", ""]
+    blocking_rows = [row for row in rows if clean(row.get("selected_template_blocking_status")).startswith("blocking_selected_template")]
+    future_photo_rows = [row for row in rows if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_photo_not_required"]
+    lines += [
+        "## Summary",
+        "",
+        f"- Total review rows: {len(rows)}",
+        f"- Blocking selected template now: {len(blocking_rows)}",
+        f"- Future photo-first holds: {len(future_photo_rows)}",
+        f"- Blocking entities: {active_queue_entity_list(blocking_rows)}",
+        f"- Future photo-first entities: {active_queue_entity_list(future_photo_rows)}",
+        "- Immediate manual path: clear the blocking selected-template rows first; future photo-first holds stay review-only and do not approve player imagery.",
+        "",
+        "## Rows",
+        "",
+    ]
     for index, row in enumerate(rows, 1):
         evidence_lines: List[str] = []
         evidence = clean(row.get("evidence"))
@@ -5872,6 +5896,33 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     """
 
 
+def asset_blocker_approval_pill(row: Dict[str, Any]) -> str:
+    approval_status = clean(row.get("approval_status")) or "approval_review"
+    review_fields = " ".join(
+        clean(row.get(field))
+        for field in (
+            "finding",
+            "asset_readiness",
+            "renderer_coverage",
+            "blocker_summary",
+            "evidence",
+            "recommended_next_step",
+        )
+    ).lower()
+    needs_recheck = (
+        approval_status.lower() == "approved"
+        and (
+            "review_only_manual_source_recheck_required" in review_fields
+            or "suspicious_or_default_player_approval" in review_fields
+            or "decision_source=default" in review_fields
+            or "default_decision_source_manual_recheck_required" in review_fields
+        )
+    )
+    if needs_recheck:
+        return pill("approved marker needs recheck", "warn")
+    return pill(approval_status)
+
+
 def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for row in rows:
@@ -5909,7 +5960,7 @@ def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
               {fallback_line}
               <div class="asset-blocker-actions">
                 {open_link_html}
-                {pill(clean(row.get('approval_status')) or 'approval_review')}
+                {asset_blocker_approval_pill(row)}
                 {pill(clean(row.get('format_status')) or 'format_review')}
                 {pill(clean(row.get('renderer_coverage')) or 'renderer_review')}
                 {pill(clean(row.get('asset_readiness')) or 'asset_review')}
