@@ -1892,7 +1892,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.67.0-active-queue-evidence"
+    assert payload["version"] == "hsd-operator-command-center-v3.68.0-handoff-guardrails"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2230,8 +2230,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_handoff_summary"]["title"] == "New York Liberty beat Las Vegas Aces"
     assert payload["render_handoff_summary"]["readme"] == "render_handoff_top_packet/README.md"
     assert "render_handoff_top_packet/manual_renderer_prompt.md" in payload["render_handoff_summary"]["files"]
+    assert payload["render_handoff_summary"]["guardrails"]["review_only"] is True
+    assert payload["render_handoff_summary"]["guardrails"]["auto_approval"] is False
     assert payload["render_handoff_summary"]["guardrails"]["auto_render"] is False
     assert payload["render_handoff_summary"]["guardrails"]["auto_publish"] is False
+    assert payload["render_handoff_summary"]["guardrails"]["asset_downloads"] is False
+    assert payload["render_handoff_summary"]["guardrails"]["file_movement"] is False
+    assert payload["render_handoff_summary"]["guardrails"]["paid_apis"] is False
+    assert payload["render_handoff_summary"]["guardrails"]["publish_ready_lane"] is False
+    assert payload["render_handoff_summary"]["guardrails"]["publishing"] is False
     assert payload["operator_decision_panel"]["qa_status"] == "human_review_required"
     assert payload["operator_decision_panel"]["validation_status"] == "awaiting_operator_decision"
     assert payload["operator_decision_panel"]["preview_exists"] is True
@@ -2669,8 +2676,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_prep_manifest["guardrails"]["auto_render"] is False
     assert render_prep_manifest["guardrails"]["auto_publish"] is False
     render_handoff_manifest = json.loads(Path("render_handoff_top_packet/handoff_manifest.json").read_text(encoding="utf-8"))
+    assert render_handoff_manifest["guardrails"]["review_only"] is True
+    assert render_handoff_manifest["guardrails"]["auto_approval"] is False
     assert render_handoff_manifest["guardrails"]["auto_render"] is False
     assert render_handoff_manifest["guardrails"]["auto_publish"] is False
+    assert render_handoff_manifest["guardrails"]["asset_downloads"] is False
+    assert render_handoff_manifest["guardrails"]["file_movement"] is False
+    assert render_handoff_manifest["guardrails"]["paid_apis"] is False
+    assert render_handoff_manifest["guardrails"]["publish_ready_lane"] is False
+    assert render_handoff_manifest["guardrails"]["publishing"] is False
     assert render_handoff_manifest["packet"]["packet_id"] == payload["render_prep_packets"][0]["packet_id"]
 
 
