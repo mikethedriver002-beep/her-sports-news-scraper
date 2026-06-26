@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.63.0-render-handoff-closure-cues"
+VERSION = "hsd-operator-command-center-v3.64.0-active-queue-closure-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -94,6 +94,9 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "allowed_decisions",
     "primary_action",
     "evidence",
+    "identity_closure_cues",
+    "identity_closure_artifact",
+    "identity_backfill_artifact",
     "review_only",
     "publish_ready",
     "auto_approval",
@@ -3210,6 +3213,9 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "allowed_decisions": clean(item.get("allowed_decisions")) or "hold_identity|revise_asset|backfill_provider_id_only|identity_verified_approved_for_review_renders",
                 "primary_action": clean(item.get("operator_review_steps")) or "manual identity review required",
                 "evidence": clean(item.get("focused_evidence")),
+                "identity_closure_cues": clean(packet.get("active_athlete_identity_closure_cues")),
+                "identity_closure_artifact": clean(packet.get("athlete_identity_closure_artifact")),
+                "identity_backfill_artifact": clean(packet.get("athlete_identity_backfill_artifact")),
                 "review_only": "true",
                 "publish_ready": clean(item.get("publish_ready")) or "false",
                 "auto_approval": clean(item.get("auto_approval")) or "false",
@@ -3238,6 +3244,13 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
         return "\n".join(lines)
     lines += ["## Rows", ""]
     for index, row in enumerate(rows, 1):
+        closure_lines: List[str] = []
+        if clean(row.get("identity_closure_cues")):
+            closure_lines.append(f"- Identity closure cues: {clean(row.get('identity_closure_cues'))}")
+        if clean(row.get("identity_closure_artifact")):
+            closure_lines.append(f"- Identity closure packet: `{clean(row.get('identity_closure_artifact'))}`")
+        if clean(row.get("identity_backfill_artifact")):
+            closure_lines.append(f"- Identity backfill packet: `{clean(row.get('identity_backfill_artifact'))}`")
         lines += [
             f"### {index}. {clean(row.get('entity_name')) or clean(row.get('entity_id'))}",
             "",
@@ -3250,6 +3263,7 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             f"- Source check URL: {clean(row.get('source_check_url')) or 'n/a'}",
             f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
             f"- Primary action: {clean(row.get('primary_action')) or 'manual review required'}",
+            *closure_lines,
             f"- Guardrails: review_only={clean(row.get('review_only'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}",
             "",
         ]
