@@ -232,6 +232,7 @@ ARTIFACTS = [
     ("Graphics", "WNBA logo review catalog", "data/asset_registry/wnba/logo_review_catalog_report.md"),
     ("Graphics", "WNBA logo review catalog data", "data/asset_registry/wnba/logo_review_catalog.csv"),
     ("Graphics", "WNBA logo review catalog manifest", "data/asset_registry/wnba/logo_review_catalog.json"),
+    ("Graphics", "WNBA logo review packets", "data/asset_registry/wnba/logo_review_packets.csv"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -276,6 +277,7 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/logo_review_catalog_report.md": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/logo_review_catalog.csv": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/logo_review_catalog.json": ".\\hsd.cmd run -Mode asset-audit",
+    "data/asset_registry/wnba/logo_review_packets.csv": ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -881,8 +883,32 @@ def top_asset_audit_findings(findings: List[Dict[str, Any]]) -> List[Dict[str, s
     return selected
 
 
+def logo_review_packet_rows(rows: Iterable[Dict[str, str]], *, limit: int = 8) -> List[Dict[str, str]]:
+    normalized: List[Dict[str, str]] = []
+    for row in rows:
+        packet_id = clean(row.get("packet_id")) or clean(row.get("decision_packet_id"))
+        team_id = clean(row.get("team_id"))
+        issue_type = clean(row.get("issue_type")) or clean(row.get("decision_review_status"))
+        if not (packet_id or team_id or issue_type):
+            continue
+        item = {str(key): clean(value) for key, value in row.items()}
+        item["packet_id"] = packet_id or f"logo_packet_{team_id or len(normalized) + 1}"
+        item["issue_type"] = issue_type or "logo_review_required"
+        normalized.append(item)
+    return sorted(
+        normalized,
+        key=lambda row: (
+            0 if "unapproved" in clean(row.get("issue_type")) else 1,
+            clean(row.get("team_name")) or clean(row.get("team_id")),
+            clean(row.get("packet_id")),
+        ),
+    )[:limit]
+
+
 def asset_availability_readiness_panel() -> Dict[str, Any]:
     audit = read_json("data/asset_registry/asset_availability_audit.json")
+    logo_packet_rows = read_csv("data/asset_registry/wnba/logo_review_packets.csv")
+    logo_packets = logo_review_packet_rows(logo_packet_rows)
     findings = audit.get("findings") if isinstance(audit.get("findings"), list) else []
     severity_counts = audit.get("severity_counts") if isinstance(audit.get("severity_counts"), dict) else {}
     domain_counts = audit.get("asset_domain_counts") if isinstance(audit.get("asset_domain_counts"), dict) else {}
@@ -913,6 +939,10 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "team_logo_hold_findings": as_int(finding_counts.get("logo_present_without_complete_approval")) + as_int(finding_counts.get("suspicious_logo_source_or_approval")),
         "league_mark_hold_findings": as_int(finding_counts.get("missing_or_unregistered_logo_asset")),
         "renderer_fallback_findings": as_int(finding_counts.get("renderer_active_logo_fallback")) + as_int(finding_counts.get("renderer_logo_audit_missing")),
+        "logo_review_packet_rows": len(logo_packet_rows),
+        "logo_review_packet_unapproved_rows": sum(1 for row in logo_packet_rows if "unapproved" in clean(row.get("issue_type")).lower()),
+        "logo_review_packet_source_drift_rows": sum(1 for row in logo_packet_rows if "source" in clean(row.get("issue_type")).lower() or "drift" in clean(row.get("issue_type")).lower()),
+        "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
         "policy": {
@@ -928,6 +958,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Asset availability data", "data/asset_registry/asset_availability_audit.csv", "Filter all asset findings by domain, severity, entity, and finding type."),
             file_shortcut("WNBA athlete photo catalog", "data/asset_registry/wnba/athlete_photo_catalog.md", "Review photo source, identity, crop, and approval readiness."),
             file_shortcut("WNBA logo review catalog", "data/asset_registry/wnba/logo_review_catalog_report.md", "Review team logo source trust, approval holds, and missing league marks."),
+            file_shortcut("WNBA logo review packets", "data/asset_registry/wnba/logo_review_packets.csv", "Review unapproved logos and source path drift rows before renderer trust."),
             file_shortcut("Logo asset catalog", "data/asset_registry/logo_asset_catalog.md", "Cross-check logo approval status and source policy."),
         ],
     }
@@ -5116,6 +5147,43 @@ def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
     return "".join(body) or '<p class="empty">No asset blockers found in the latest audit.</p>'
 
 
+def render_logo_review_packet_cards(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        title = clean(row.get("decision_packet_title")) or clean(row.get("packet_title")) or f"WNBA logo review: {clean(row.get('team_name')) or clean(row.get('team_id'))}"
+        registered_path = clean(row.get("registered_path")) or clean(row.get("registered_logo_path")) or clean(row.get("local_logo_path")) or clean(row.get("recommended_path"))
+        source_path = clean(row.get("source_target_path")) or clean(row.get("source_path")) or clean(row.get("target_path"))
+        primary_action = clean(row.get("primary_action")) or clean(row.get("decision_primary_action"))
+        hold_cue = clean(row.get("hold_cue")) or clean(row.get("decision_hold_cue"))
+        revise_cue = clean(row.get("revise_cue")) or clean(row.get("decision_revise_cue"))
+        body.append(
+            f"""
+            <article class="asset-blocker-card logo-packet-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">{html.escape(clean(row.get('issue_type')) or 'logo_review_required')} / {html.escape(clean(row.get('team_id')) or 'wnba')}</span>
+                  <strong>{html.escape(title)}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill(clean(row.get('decision_review_status')) or 'operator_review')}
+                  {pill('review-only')}
+                </div>
+              </div>
+              <p>{html.escape(short(primary_action or 'Review logo source evidence before renderer trust.', 180))}</p>
+              <div class="asset-guidance-grid">
+                <div><span>Hold</span><strong>{html.escape(short(hold_cue or 'Hold logo slot until exact source and local file are reviewed.', 130))}</strong></div>
+                <div><span>Revise</span><strong>{html.escape(short(revise_cue or 'Revise registry metadata only after manual evidence review.', 130))}</strong></div>
+                <div><span>Fallback</span><strong>{html.escape(short(clean(row.get('renderer_fallback_cue')) or 'Renderer fallback remains review-only.', 130))}</strong></div>
+                <div><span>Decisions</span><strong>{html.escape(short(clean(row.get('allowed_decisions')) or 'verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata', 130))}</strong></div>
+              </div>
+              <code>{html.escape(short(registered_path or 'registered path missing', 120))}</code>
+              <p class="muted">{html.escape(short('source target: ' + (source_path or 'missing'), 180))}</p>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No focused logo review packets found. Run the WNBA asset registry validator.</p>'
+
+
 def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
     policy = panel.get("policy") if isinstance(panel.get("policy"), dict) else {}
     status_t = "good" if clean(panel.get("panel_status")) in {"pass", "passed"} else "warn" if clean(panel.get("panel_status")) == "review_required" else "neutral"
@@ -5143,6 +5211,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Renderer findings</span><strong>{html.escape(str(panel.get('renderer_findings', 0)))}</strong></div>
             <div><span>Default photo approvals</span><strong>{html.escape(str(panel.get('default_player_approval_findings', 0)))}</strong></div>
             <div><span>Missing player assets</span><strong>{html.escape(str(panel.get('missing_player_asset_findings', 0)))}</strong></div>
+            <div><span>Logo review packets</span><strong>{html.escape(str(panel.get('logo_review_packet_rows', 0)))}</strong></div>
           </div>
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
@@ -5154,6 +5223,12 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           <div class="row-kicker">Highest-risk asset blockers {pill(str(len(panel.get('top_findings', []))) + ' shown')} {pill('manual guidance only')}</div>
           <div class="asset-blocker-grid">
             {render_asset_blocker_cards(panel.get('top_findings', []))}
+          </div>
+        </div>
+        <div class="decision-desk-section">
+          <div class="row-kicker">Focused logo review packets {pill(str(len(panel.get('logo_review_packets', []))) + ' shown')} {pill(str(panel.get('logo_review_packet_unapproved_rows', 0)) + ' unapproved')} {pill(str(panel.get('logo_review_packet_source_drift_rows', 0)) + ' source drift')}</div>
+          <div class="asset-blocker-grid">
+            {render_logo_review_packet_cards(panel.get('logo_review_packets', []))}
           </div>
         </div>
         <div class="decision-desk-section">
