@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.78.0-manual-asset-source-board"
+VERSION = "hsd-operator-command-center-v3.79.0-decision-stop-go-summary"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3647,6 +3647,59 @@ def manual_asset_source_board_rows(active_rows: List[Dict[str, str]]) -> List[Di
     return rows
 
 
+def decision_stop_go_summary(
+    packet: Dict[str, str] | None,
+    active_rows: List[Dict[str, str]],
+    source_board_rows: List[Dict[str, str]],
+) -> Dict[str, Any]:
+    blocking_rows = [
+        row
+        for row in active_rows
+        if clean(row.get("selected_template_blocking_status")).startswith("blocking_selected_template")
+    ]
+    future_photo_rows = [
+        row
+        for row in active_rows
+        if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_photo_not_required"
+    ]
+    league_context_rows = [
+        row
+        for row in active_rows
+        if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_league_mark_not_required"
+    ]
+    if blocking_rows:
+        status = "hold_selected_template_manual_asset_review"
+        status_tone = "warn"
+        next_step = "Clear selected-template blockers first; future photo-first and league-mark context rows stay review-only."
+    elif future_photo_rows or league_context_rows:
+        status = "manual_context_review_only"
+        status_tone = "neutral"
+        next_step = "No selected-template asset blocker is active; keep context rows review-only until a future template requires them."
+    else:
+        status = "clear_no_active_asset_holds"
+        status_tone = "good"
+        next_step = "No active asset stop/go rows were matched for the top render packet."
+    return {
+        "panel_status": status,
+        "status_tone": status_tone,
+        "packet_id": clean(packet.get("packet_id")) if packet else "",
+        "title": clean(packet.get("title")) if packet else "No active render packet",
+        "active_asset_stop_go": clean(packet.get("active_asset_stop_go")) if packet else "clear_no_active_asset_holds",
+        "selected_template_blockers": len(blocking_rows),
+        "selected_template_entities": active_queue_entity_list(blocking_rows),
+        "future_photo_first_holds": len(future_photo_rows),
+        "future_photo_first_entities": active_queue_entity_list(future_photo_rows),
+        "league_mark_context_holds": len(league_context_rows),
+        "league_mark_context_entities": active_queue_entity_list(league_context_rows),
+        "active_queue_rows": len(active_rows),
+        "source_board_rows": len(source_board_rows),
+        "active_queue_artifact": "render_handoff_top_packet/active_asset_review_queue.md",
+        "manual_asset_source_board_artifact": "render_handoff_top_packet/manual_asset_source_board.md",
+        "next_step": next_step,
+        "guardrail_summary": "review-only; no downloads; no auto-approval; no file movement; no publishing; no publish-ready lane",
+    }
+
+
 def render_manual_asset_source_board(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
     lines = [
         "# Manual Asset Source Board",
@@ -4917,6 +4970,7 @@ def build_payload() -> Dict[str, Any]:
     top_render_packet = render_prep_packets[0] if render_prep_packets else None
     active_asset_rows = active_asset_review_queue_rows(top_render_packet) if top_render_packet else []
     manual_asset_source_board = manual_asset_source_board_rows(active_asset_rows)
+    stop_go_summary = decision_stop_go_summary(top_render_packet, active_asset_rows, manual_asset_source_board)
     operator_decision_panel = operator_decision_ui_panel()
     asset_readiness_panel = asset_availability_readiness_panel()
     athlete_photo_panel = athlete_photo_onboarding_panel(read_json("manual_review_renderer_manifest.json"))
@@ -5083,6 +5137,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Render prep packets", len(render_prep_packets)),
         metric("Render packets ready", sum(1 for row in render_prep_packets if row.get("packet_status") == "ready_for_manual_render_review")),
         metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
+        metric("Decision stop/go", stop_go_summary["panel_status"], stop_go_summary["next_step"]),
         metric("Manual asset source board", len(manual_asset_source_board)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
@@ -5157,6 +5212,7 @@ def build_payload() -> Dict[str, Any]:
         "render_readiness_queue": render_queue,
         "render_prep_packets": render_prep_packets,
         "render_handoff_summary": render_handoff_summary,
+        "decision_stop_go_summary": stop_go_summary,
         "manual_asset_source_board": manual_asset_source_board,
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
@@ -5373,6 +5429,42 @@ def render_render_handoff_summary(summary: Dict[str, Any]) -> str:
         <div style="margin-top:8px">{file_links}</div>
       </div>
     </article>
+    """
+
+
+def render_decision_stop_go_summary_panel(summary: Dict[str, Any]) -> str:
+    tone = clean(summary.get("status_tone")) or "warn"
+    return f"""
+      <div class="decision-desk-section stop-go-summary-card">
+        <div class="decision-cockpit-card asset-readiness-cockpit">
+          <div class="decision-cockpit-head">
+            <div>
+              <span class="row-kicker">What blocks this render now?</span>
+              <strong>{html.escape(clean(summary.get('panel_status')) or 'not_run')}</strong>
+              <p>{html.escape(clean(summary.get('next_step')))}</p>
+            </div>
+            <div class="decision-cockpit-actions">
+              {pill(clean(summary.get('active_asset_stop_go')) or 'clear_no_active_asset_holds', tone)}
+              {pill('review-only')}
+              {pill('publish-ready: false')}
+            </div>
+          </div>
+          <div class="decision-status-grid">
+            <div><span>Selected-template blockers</span><strong>{html.escape(str(summary.get('selected_template_blockers', 0)))}</strong><small>{html.escape(clean(summary.get('selected_template_entities')) or 'none')}</small></div>
+            <div><span>Future photo-first holds</span><strong>{html.escape(str(summary.get('future_photo_first_holds', 0)))}</strong><small>{html.escape(clean(summary.get('future_photo_first_entities')) or 'none')}</small></div>
+            <div><span>League-mark context</span><strong>{html.escape(str(summary.get('league_mark_context_holds', 0)))}</strong><small>{html.escape(clean(summary.get('league_mark_context_entities')) or 'none')}</small></div>
+            <div><span>Source-board rows</span><strong>{html.escape(str(summary.get('source_board_rows', 0)))}</strong><small>manual source evidence only</small></div>
+          </div>
+          <div class="asset-blocker-actions">
+            {open_link(clean(summary.get('active_queue_artifact')) or 'render_handoff_top_packet/active_asset_review_queue.md', 'Open active queue')}
+            {open_link(clean(summary.get('manual_asset_source_board_artifact')) or 'render_handoff_top_packet/manual_asset_source_board.md', 'Open source board')}
+            {pill('no downloads')}
+            {pill('no auto-approval')}
+            {pill('no publishing')}
+          </div>
+          <p class="muted">{html.escape(clean(summary.get('guardrail_summary')))}</p>
+        </div>
+      </div>
     """
 
 
@@ -7170,6 +7262,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     <section id="decision-panel" class="tab-panel">
       <div class="panel">
         <h2>Decision desk</h2>
+        {render_decision_stop_go_summary_panel(payload.get('decision_stop_go_summary', {}))}
         {render_asset_readiness_panel(payload['asset_readiness_panel'])}
         {render_manual_asset_source_board_panel(payload.get('manual_asset_source_board', []))}
         {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
@@ -7941,6 +8034,21 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | active asset stop/go: {item.get('active_asset_stop_go') or 'clear_no_active_asset_holds'} | active logo: {item.get('active_logo_readiness_status') or 'logo_review_not_flagged'} | logo cues: {item.get('active_logo_review_cues') or 'none'} | active athlete: {item.get('active_athlete_identity_status') or 'athlete_identity_not_flagged'} | athlete cues: {item.get('active_athlete_identity_cues') or 'none'} | closure cues: {item.get('active_athlete_identity_closure_cues') or 'none'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
+    stop_go = payload.get("decision_stop_go_summary", {})
+    lines += [
+        "",
+        "## What Blocks This Render Now",
+        "",
+        f"- Status: {stop_go.get('panel_status') or 'not_run'}",
+        f"- Active asset stop/go: {stop_go.get('active_asset_stop_go') or 'clear_no_active_asset_holds'}",
+        f"- Selected-template blockers: {stop_go.get('selected_template_blockers', 0)} ({stop_go.get('selected_template_entities') or 'none'})",
+        f"- Future photo-first holds: {stop_go.get('future_photo_first_holds', 0)} ({stop_go.get('future_photo_first_entities') or 'none'})",
+        f"- League-mark context: {stop_go.get('league_mark_context_holds', 0)} ({stop_go.get('league_mark_context_entities') or 'none'})",
+        f"- Active queue: `{stop_go.get('active_queue_artifact') or 'render_handoff_top_packet/active_asset_review_queue.md'}`",
+        f"- Manual source board: `{stop_go.get('manual_asset_source_board_artifact') or 'render_handoff_top_packet/manual_asset_source_board.md'}`",
+        f"- Next safe action: {stop_go.get('next_step') or 'review manually'}",
+        f"- Guardrails: {stop_go.get('guardrail_summary') or 'review-only'}",
+    ]
     asset_panel = payload["asset_readiness_panel"]
     lines += [
         "",
