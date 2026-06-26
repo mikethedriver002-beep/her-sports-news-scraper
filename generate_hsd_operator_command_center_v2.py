@@ -6647,11 +6647,16 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Contact sheets: {athlete_photo_panel.get('contact_sheets', 0)}",
         f"- Identity audit: {athlete_photo_panel.get('identity_audit_status') or 'not_run'} ({athlete_photo_panel.get('identity_audit_issue_rows', 0)} issue row(s))",
         f"- Identity resolution: {athlete_photo_panel.get('identity_resolution_status') or 'not_run'} ({athlete_photo_panel.get('identity_resolution_inbox_rows', 0)} inbox row(s))",
+        f"- Identity review packets: {athlete_photo_panel.get('identity_review_packet_rows', 0)} ({athlete_photo_panel.get('identity_review_packet_hold_rows', 0)} holds / {athlete_photo_panel.get('identity_review_packet_default_rows', 0)} default approvals)",
         f"- Closure/backfill: {athlete_photo_panel.get('identity_closure_status') or 'not_run'} ({athlete_photo_panel.get('identity_closure_rows', 0)}/{athlete_photo_panel.get('identity_provider_backfill_rows', 0)} row(s))",
         f"- Featured athlete: {athlete_photo_panel.get('featured_athlete_name') or athlete_photo_panel.get('featured_athlete_id') or 'none'}",
         f"- Next safe action: {athlete_photo_panel.get('next_step')}",
         "- Guardrails: review-only, identity human-check required, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
+    lines.extend(
+        f"- Identity packet: {item.get('display_name') or item.get('athlete_id')} | {item.get('team_id')} | {item.get('identity_review_status')} | hold={item.get('identity_hold')} | default={item.get('default_approval_present')} | source={item.get('source_check_url') or item.get('provider_player_page_hint') or 'missing'}"
+        for item in athlete_photo_panel.get("identity_review_packets", [])[:8]
+    )
     lines.extend(
         f"- Athlete row: {item.get('athlete_name')} | {item.get('team_id')} | crop {item.get('crop_readiness_score')}/100 | {item.get('identity_review_status')} | issues: {item.get('identity_issue_codes') or 'none'} | {item.get('recommended_review_variant_path')}"
         for item in athlete_photo_panel.get("review_rows", [])[:8]
