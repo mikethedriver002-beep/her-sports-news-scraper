@@ -1,0 +1,129 @@
+{
+  "version": "hsd-wnba-athlete-photo-contact-sheets-v1-review-only",
+  "generated_at_utc": "2026-06-26T22:26:59.974229+00:00",
+  "status": "contact_sheets_ready",
+  "review_only": true,
+  "athlete_rows": 200,
+  "team_rows": 15,
+  "local_headshots_present": 196,
+  "index": "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_index.md",
+  "contact_sheet_data": "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet.csv",
+  "human_intake_csv": "data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv",
+  "team_outputs": [
+    {
+      "team_id": "atlanta_dream",
+      "team_name": "Atlanta Dream",
+      "rows": "13",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/atlanta_dream.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/atlanta_dream.md"
+    },
+    {
+      "team_id": "chicago_sky",
+      "team_name": "Chicago Sky",
+      "rows": "15",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/chicago_sky.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/chicago_sky.md"
+    },
+    {
+      "team_id": "connecticut_sun",
+      "team_name": "Connecticut Sun",
+      "rows": "14",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/connecticut_sun.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/connecticut_sun.md"
+    },
+    {
+      "team_id": "dallas_wings",
+      "team_name": "Dallas Wings",
+      "rows": "13",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/dallas_wings.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/dallas_wings.md"
+    },
+    {
+      "team_id": "golden_state_valkyries",
+      "team_name": "Golden State Valkyries",
+      "rows": "15",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/golden_state_valkyries.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/golden_state_valkyries.md"
+    },
+    {
+      "team_id": "indiana_fever",
+      "team_name": "Indiana Fever",
+      "rows": "14",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/indiana_fever.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/indiana_fever.md"
+    },
+    {
+      "team_id": "las_vegas_aces",
+      "team_name": "Las Vegas Aces",
+      "rows": "12",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/las_vegas_aces.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/las_vegas_aces.md"
+    },
+    {
+      "team_id": "los_angeles_sparks",
+      "team_name": "Los Angeles Sparks",
+      "rows": "14",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/los_angeles_sparks.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/los_angeles_sparks.md"
+    },
+    {
+      "team_id": "minnesota_lynx",
+      "team_name": "Minnesota Lynx",
+      "rows": "14",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/minnesota_lynx.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/minnesota_lynx.md"
+    },
+    {
+      "team_id": "new_york_liberty",
+      "team_name": "New York Liberty",
+      "rows": "13",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/new_york_liberty.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/new_york_liberty.md"
+    },
+    {
+      "team_id": "phoenix_mercury",
+      "team_name": "Phoenix Mercury",
+      "rows": "12",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/phoenix_mercury.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/phoenix_mercury.md"
+    },
+    {
+      "team_id": "portland_fire",
+      "team_name": "Portland Fire",
+      "rows": "13",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/portland_fire.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/portland_fire.md"
+    },
+    {
+      "team_id": "seattle_storm",
+      "team_name": "Seattle Storm",
+      "rows": "13",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/seattle_storm.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/seattle_storm.md"
+    },
+    {
+      "team_id": "toronto_tempo",
+      "team_name": "Toronto Tempo",
+      "rows": "12",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/toronto_tempo.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/toronto_tempo.md"
+    },
+    {
+      "team_id": "washington_mystics",
+      "team_name": "Washington Mystics",
+      "rows": "13",
+      "sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/washington_mystics.png",
+      "board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/washington_mystics.md"
+    }
+  ],
+  "warnings": [],
+  "guardrails": {
+    "publish_ready": false,
+    "auto_approval": false,
+    "auto_publish": false,
+    "move_files": false,
+    "paid_apis": false,
+    "asset_downloads": false,
+    "publishing": false
+  }
+}
