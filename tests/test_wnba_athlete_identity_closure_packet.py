@@ -206,9 +206,11 @@ def test_closure_packet_main_writes_run_scoped_artifacts_without_registry_mutati
     closure_path = run_dir / "data" / "asset_registry" / "wnba" / "athlete_identity_issue_closure_template.csv"
     backfill_path = run_dir / "data" / "asset_registry" / "wnba" / "athlete_identity_provider_id_backfill_template.csv"
     packet_path = run_dir / "data" / "asset_registry" / "wnba" / "athlete_identity_closure_packet.json"
+    packet_md_path = run_dir / "data" / "asset_registry" / "wnba" / "athlete_identity_closure_packet.md"
     assert closure_path.exists()
     assert backfill_path.exists()
     assert packet_path.exists()
+    assert packet_md_path.exists()
     assert not (tmp_path / "data" / "asset_registry" / "wnba" / "athlete_identity_issue_closure_template.csv").exists()
 
     closure_rows = read_csv(closure_path)
@@ -219,5 +221,11 @@ def test_closure_packet_main_writes_run_scoped_artifacts_without_registry_mutati
     assert any(row["issue_code"] == "default_approval_requires_identity_recheck" for row in closure_rows)
     assert any(row["proposed_value"] == "123" and row["target_csv"].endswith("athletes.csv") for row in backfill_rows)
     assert manifest["report"]["policy"]["canonical_registries_unchanged"] is True
+    assert manifest["report"]["closure_template_csv"] == module.OUT_CLOSURE_CSV
+    assert manifest["report"]["provider_id_backfill_template_csv"] == module.OUT_BACKFILL_CSV
+    packet_md = packet_md_path.read_text(encoding="utf-8")
+    assert f"Issue closure template: `{module.OUT_CLOSURE_CSV}`" in packet_md
+    assert f"Provider ID backfill template: `{module.OUT_BACKFILL_CSV}`" in packet_md
+    assert str(run_dir) not in packet_md
     assert athletes_csv.read_text(encoding="utf-8") == before_athletes
     assert athlete_images_csv.read_text(encoding="utf-8") == before_images
