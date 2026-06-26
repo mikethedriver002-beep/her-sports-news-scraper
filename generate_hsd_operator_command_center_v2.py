@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.74.0-active-queue-template-blockers"
+VERSION = "hsd-operator-command-center-v3.75.0-handoff-template-scope"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3115,6 +3115,11 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             f"- Athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
             f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
             f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
+            (
+                "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
+                if "no player asset required" in clean(packet.get("asset_requirement")).lower()
+                else "- Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use."
+            ),
             f"- Athlete identity closure cues: {clean(packet.get('active_athlete_identity_closure_cues')) or 'none recorded'}",
             f"- Athlete identity closure packet: `{clean(packet.get('athlete_identity_closure_artifact')) or 'not generated'}`",
             f"- Athlete identity backfill packet: `{clean(packet.get('athlete_identity_backfill_artifact')) or 'not generated'}`",

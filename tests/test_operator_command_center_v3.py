@@ -1923,7 +1923,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.74.0-active-queue-template-blockers"
+    assert payload["version"] == "hsd-operator-command-center-v3.75.0-handoff-template-scope"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2668,6 +2668,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Active asset stop/go: `hold_required_manual_asset_review`" in readme
     assert "Breanna Stewart: hold_identity_review_required" in readme
     assert "do not approve assets or create a publish-ready lane" in readme
+    assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in readme
     active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
     assert "Active Asset Review Queue" in active_queue
     assert "New York Liberty" in active_queue
