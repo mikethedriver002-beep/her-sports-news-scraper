@@ -1893,7 +1893,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.69.0-logo-source-url-queue"
+    assert payload["version"] == "hsd-operator-command-center-v3.70.0-active-asset-stop-go"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2177,6 +2177,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     render_action = next(action for action in payload["next_actions"] if action["title"] == "Review render-ready story candidate: New York Liberty beat Las Vegas Aces")
     assert render_action["status"] == "Render ready"
     assert "Score 100/100" in render_action["detail"]
+    assert "Source, format, and manual path cues are ready; active asset holds remain stop/go review cues." in render_action["detail"]
+    assert "Source, asset, format, and manual path cues are ready" not in render_action["detail"]
     assert render_action["artifact"] == "news_fact_packets.csv"
     packet_action = next(action for action in payload["next_actions"] if action["title"] == "Open render prep packet: New York Liberty beat Las Vegas Aces")
     assert packet_action["status"] == "Render packet"
@@ -2216,8 +2218,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "WNBA: missing_or_unregistered_logo_asset" in payload["render_prep_packets"][0]["active_logo_review_cues"]
     assert payload["render_prep_packets"][0]["logo_review_artifact"] == "data/asset_registry/wnba/logo_review_packets.csv"
     assert "Renderer fallback remains review-only" in payload["render_prep_packets"][0]["renderer_fallback_cue"]
+    assert payload["render_prep_packets"][0]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert "source, format, and manual-path blockers are clear" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "active asset holds remain separate stop/go cues" in payload["render_prep_packets"][0]["manual_renderer_steps"]
+    assert "Confirm active asset stop/go: hold_required_manual_asset_review." in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "Confirm active logo readiness: hold_logo_review_required" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["active_athlete_identity_status"] == "hold_identity_review_required"
     assert "Breanna Stewart: hold_identity_review_required" in payload["render_prep_packets"][0]["active_athlete_identity_cues"]
@@ -2229,6 +2233,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_prep_packets"][0]["publish_policy"] == "review_only_not_publish_ready"
     assert payload["render_handoff_summary"]["handoff_status"] == "ready_for_manual_review"
     assert payload["render_handoff_summary"]["title"] == "New York Liberty beat Las Vegas Aces"
+    assert payload["render_handoff_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert payload["render_handoff_summary"]["readme"] == "render_handoff_top_packet/README.md"
     assert "render_handoff_top_packet/manual_renderer_prompt.md" in payload["render_handoff_summary"]["files"]
     assert payload["render_handoff_summary"]["guardrails"]["review_only"] is True
@@ -2605,6 +2610,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "active logo: hold_logo_review_required" in markdown
     assert "New York Liberty: unapproved_required_logo" in markdown
     assert "active athlete: hold_identity_review_required" in markdown
+    assert "active asset stop/go: hold_required_manual_asset_review" in markdown
     assert "Breanna Stewart: hold_identity_review_required" in markdown
     assert "blockers: none for source/format/manual path" in markdown
 
@@ -2629,6 +2635,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Active Review Holds" in readme
     assert "Logo readiness: `hold_logo_review_required`" in readme
     assert "Athlete identity: `hold_identity_review_required`" in readme
+    assert "Active asset stop/go: `hold_required_manual_asset_review`" in readme
     assert "Breanna Stewart: hold_identity_review_required" in readme
     assert "do not approve assets or create a publish-ready lane" in readme
     active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
@@ -2664,6 +2671,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
     assert "exact local WNBA team logos" in asset_checklist
     assert "Active logo readiness: `hold_logo_review_required`" in asset_checklist
+    assert "Active asset stop/go: `hold_required_manual_asset_review`" in asset_checklist
     assert "New York Liberty: unapproved_required_logo" in asset_checklist
     assert "WNBA: missing_or_unregistered_logo_asset" in asset_checklist
     assert "Active athlete identity: `hold_identity_review_required`" in asset_checklist
@@ -2673,12 +2681,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Open news_fact_packets.csv" in Path("render_handoff_top_packet/source_proof.md").read_text(encoding="utf-8")
     manual_prompt = Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     assert "Use this prompt manually only" in manual_prompt
+    assert "Active asset stop/go: hold_required_manual_asset_review" in manual_prompt
     assert "Active logo readiness: hold_logo_review_required" in manual_prompt
     assert "Active athlete identity: hold_identity_review_required" in manual_prompt
     render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))
     assert render_prep_manifest["guardrails"]["auto_render"] is False
     assert render_prep_manifest["guardrails"]["auto_publish"] is False
     render_handoff_manifest = json.loads(Path("render_handoff_top_packet/handoff_manifest.json").read_text(encoding="utf-8"))
+    assert render_handoff_manifest["packet"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert render_handoff_manifest["guardrails"]["review_only"] is True
     assert render_handoff_manifest["guardrails"]["auto_approval"] is False
     assert render_handoff_manifest["guardrails"]["auto_render"] is False

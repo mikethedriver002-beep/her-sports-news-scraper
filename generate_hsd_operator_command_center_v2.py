@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.69.0-logo-source-url-queue"
+VERSION = "hsd-operator-command-center-v3.70.0-active-asset-stop-go"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -61,6 +61,7 @@ RENDER_PREP_FIELDS = [
     "active_athlete_identity_status",
     "active_athlete_identity_cues",
     "athlete_identity_artifact",
+    "active_asset_stop_go",
     "active_athlete_identity_closure_cues",
     "athlete_identity_closure_artifact",
     "athlete_identity_backfill_artifact",
@@ -596,6 +597,18 @@ def display_render_blockers(row: Mapping[str, Any]) -> str:
     if active_logo.startswith("hold_") or active_athlete.startswith("hold_"):
         return "none for source/format/manual path; active asset holds remain"
     return "none for source/format/manual path"
+
+
+def active_asset_stop_go(row: Mapping[str, Any]) -> str:
+    active_logo = clean(row.get("active_logo_readiness_status"))
+    active_athlete = clean(row.get("active_athlete_identity_status"))
+    if active_logo.startswith("hold_") or active_athlete.startswith("hold_"):
+        return "hold_required_manual_asset_review"
+    if active_logo and active_logo != "logo_review_not_flagged":
+        return "manual_asset_review_required"
+    if active_athlete and active_athlete != "athlete_identity_not_flagged":
+        return "manual_asset_review_required"
+    return "clear_no_active_asset_holds"
 
 
 def score_render_readiness(
@@ -2702,6 +2715,7 @@ def manual_renderer_steps(packet: Dict[str, str]) -> str:
     steps = [
         f"Open {packet.get('source_artifact')} and confirm the source/copy fields match this packet.",
         "Open operator_command_center.html and confirm source, format, and manual-path blockers are clear; active asset holds remain separate stop/go cues.",
+        f"Confirm active asset stop/go: {clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}.",
         f"Use {template_label} at {packet.get('template_shape')}.",
         f"Confirm asset requirement: {packet.get('asset_requirement')}",
         f"Confirm active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}; {active_logo_cues}",
@@ -2926,6 +2940,7 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "active_athlete_identity_status": "",
             "active_athlete_identity_cues": "",
             "athlete_identity_artifact": "",
+            "active_asset_stop_go": "",
             "active_athlete_identity_closure_cues": "",
             "athlete_identity_closure_artifact": "",
             "athlete_identity_backfill_artifact": "",
@@ -2938,6 +2953,7 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
         }
         packet.update(active_logo_readiness_for_packet(packet))
         packet.update(active_athlete_identity_for_packet(packet))
+        packet["active_asset_stop_go"] = active_asset_stop_go(packet)
         packet["manual_renderer_steps"] = manual_renderer_steps(packet)
         packets.append(packet)
     return packets
@@ -2969,6 +2985,7 @@ def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> D
         "handoff_status": "ready_for_manual_review",
         "packet_id": packet.get("packet_id", ""),
         "title": packet.get("title", ""),
+        "active_asset_stop_go": packet.get("active_asset_stop_go", ""),
         "folder": "render_handoff_top_packet",
         "readme": "render_handoff_top_packet/README.md",
         "files": [
@@ -3025,6 +3042,7 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             f"Story: {clean(packet.get('title'))}",
             f"Status: `{clean(packet.get('packet_status'))}`",
             f"Readiness: `{clean(packet.get('render_readiness_score'))}/100` / `{clean(packet.get('render_readiness_band'))}`",
+            f"Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             "",
             "## Active Review Holds",
             "",
@@ -3034,6 +3052,7 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             f"- Athlete identity: `{active_athlete_status}`",
             f"- Athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
             f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
+            f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             f"- Athlete identity closure cues: {clean(packet.get('active_athlete_identity_closure_cues')) or 'none recorded'}",
             f"- Athlete identity closure packet: `{clean(packet.get('athlete_identity_closure_artifact')) or 'not generated'}`",
             f"- Athlete identity backfill packet: `{clean(packet.get('athlete_identity_backfill_artifact')) or 'not generated'}`",
@@ -3093,6 +3112,7 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
             "# Render Asset Checklist",
             "",
             f"- Asset cue: `{clean(packet.get('asset_cue'))}`",
+            f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
             f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
@@ -3353,6 +3373,7 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         "## Assets",
         "",
         f"- {clean(packet.get('asset_requirement'))}",
+        f"- Active asset stop/go: {clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}",
         f"- Active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}",
         f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
         f"- Active athlete identity: {clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}",
@@ -3442,6 +3463,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                 {
                     "packet_id": packet.get("packet_id"),
                     "asset_cue": packet.get("asset_cue"),
+                    "active_asset_stop_go": packet.get("active_asset_stop_go"),
                     "asset_requirement": packet.get("asset_requirement"),
                     "active_logo_readiness_status": packet.get("active_logo_readiness_status"),
                     "active_logo_review_cues": packet.get("active_logo_review_cues"),
@@ -3458,7 +3480,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "decision": "operator_review_required",
                 }
             ],
-            ["packet_id", "asset_cue", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "active_athlete_identity_status", "active_athlete_identity_cues", "athlete_identity_artifact", "active_athlete_identity_closure_cues", "athlete_identity_closure_artifact", "athlete_identity_backfill_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
+            ["packet_id", "asset_cue", "active_asset_stop_go", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "active_athlete_identity_status", "active_athlete_identity_cues", "athlete_identity_artifact", "active_athlete_identity_closure_cues", "athlete_identity_closure_artifact", "athlete_identity_backfill_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
         )
         active_asset_rows = active_asset_review_queue_rows(packet)
         write_text(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE, render_active_asset_review_queue(packet, active_asset_rows))
@@ -3609,17 +3631,23 @@ def build_next_actions(
         )
 
     if render_queue:
+        prep_by_title = {clean(packet.get("title")): packet for packet in render_prep_packets}
         ready_render_rows = [row for row in render_queue if row.get("band") == "render_ready_review"]
         blocked_render_rows = [row for row in render_queue if row.get("band", "").startswith("hold_")]
         prep_render_rows = [row for row in render_queue if row.get("band") == "render_prep_candidate"]
         if ready_render_rows:
             row = ready_render_rows[0]
+            packet = prep_by_title.get(clean(row.get("title")), {})
+            stop_go = clean(packet.get("active_asset_stop_go"))
+            readiness_detail = "Source, asset, format, and manual path cues are ready for human review."
+            if stop_go.startswith("hold_"):
+                readiness_detail = "Source, format, and manual path cues are ready; active asset holds remain stop/go review cues."
             add_action(
                 "Render ready",
                 "Editor",
                 f"Review render-ready story candidate: {row['title']}",
                 (
-                    f"Score {row.get('score')}/100. Source, asset, format, and manual path cues are ready for human review. "
+                    f"Score {row.get('score')}/100. {readiness_detail} "
                     f"{row.get('next_step')}"
                 ),
                 row.get("artifact") or "operator_command_center.md",
@@ -7295,7 +7323,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Render prep packets", ""]
     lines.extend(
-        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | active logo: {item.get('active_logo_readiness_status') or 'logo_review_not_flagged'} | logo cues: {item.get('active_logo_review_cues') or 'none'} | active athlete: {item.get('active_athlete_identity_status') or 'athlete_identity_not_flagged'} | athlete cues: {item.get('active_athlete_identity_cues') or 'none'} | closure cues: {item.get('active_athlete_identity_closure_cues') or 'none'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
+        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | active asset stop/go: {item.get('active_asset_stop_go') or 'clear_no_active_asset_holds'} | active logo: {item.get('active_logo_readiness_status') or 'logo_review_not_flagged'} | logo cues: {item.get('active_logo_review_cues') or 'none'} | active athlete: {item.get('active_athlete_identity_status') or 'athlete_identity_not_flagged'} | athlete cues: {item.get('active_athlete_identity_cues') or 'none'} | closure cues: {item.get('active_athlete_identity_closure_cues') or 'none'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
     asset_panel = payload["asset_readiness_panel"]
@@ -7564,6 +7592,7 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             f"- Template shape: `{clean(packet.get('template_shape'))}`",
             f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
             f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
             f"- Logo review artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
