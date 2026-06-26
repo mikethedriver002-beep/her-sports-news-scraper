@@ -204,6 +204,7 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_athlete_photo_catalog_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_logo_asset_catalog_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_asset_availability_audit_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py" -Optional' in runner
     assert '$env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"' in runner
     assert '"decision-inbox" { Invoke-DecisionInboxStarterStage $python }' in runner
     assert '"identity-decision" { Invoke-IdentityDecisionServerStage $python }' in runner
@@ -213,6 +214,8 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'operator/inbox/wnba_athlete_identity_resolution.csv' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
+    assert "render_handoff_top_packet/active_asset_review_queue.md" in runner
+    assert "render_handoff_top_packet/active_asset_review_queue.csv" in runner
     assert "manual_review_renderer_report.md" in runner
     assert "manual_review_renderer_manifest.json" in runner
     assert "render_visual_delta_report.md" in runner
@@ -247,6 +250,10 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "data/asset_registry/asset_availability_audit.md" in runner
     assert "data/asset_registry/wnba/athlete_photo_catalog.md" in runner
     assert "data/asset_registry/wnba/logo_review_catalog_report.md" in runner
+    assert "data/asset_registry/wnba/athlete_identity_closure_packet.md" in runner
+    assert "data/asset_registry/wnba/athlete_identity_closure_packet.json" in runner
+    assert "data/asset_registry/wnba/athlete_identity_issue_closure_template.csv" in runner
+    assert "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv" in runner
     assert "manual_visual_qa_operator_decision_inbox_starter.json" in runner
     assert "identity_resolution_local_server.md" in runner
     assert "identity_resolution_local_server.json" in runner
