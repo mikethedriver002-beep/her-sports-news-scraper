@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.61.0-asset-readiness-panel"
+VERSION = "hsd-operator-command-center-v3.62.0-identity-closure-summary"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -1923,6 +1923,46 @@ def athlete_identity_review_packet_team_summary(rows: Iterable[Dict[str, str]], 
     ]
 
 
+def ranked_field_counts(rows: Iterable[Dict[str, str]], field: str, *, limit: int = 6, fallback: str = "unknown") -> List[Dict[str, str]]:
+    counts: Dict[str, int] = {}
+    for row in rows:
+        label = clean(row.get(field)) or fallback
+        counts[label] = counts.get(label, 0) + 1
+    return [
+        {"label": label, "rows": str(count)}
+        for label, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:limit]
+    ]
+
+
+def athlete_identity_closure_summary(
+    closure_rows: Iterable[Dict[str, str]],
+    backfill_rows: Iterable[Dict[str, str]],
+) -> Dict[str, Any]:
+    closures = [dict(row) for row in closure_rows]
+    backfills = [dict(row) for row in backfill_rows]
+    high_rows = sum(1 for row in closures if clean(row.get("severity")).lower() in {"critical", "high"})
+    blank_closure_decisions = sum(1 for row in closures if not clean(row.get("operator_closure_decision")))
+    manual_backfill_rows = sum(1 for row in backfills if clean(row.get("backfill_status")).lower() == "manual_review_required")
+    blank_backfill_decisions = sum(1 for row in backfills if not clean(row.get("operator_decision")))
+    if closures:
+        next_step = "Open the issue closure template, handle high-severity rows first, and keep blank rows held until evidence is recorded."
+    elif backfills:
+        next_step = "Open the provider ID backfill template only after identity proof exists; these rows do not clear photo-first rendering."
+    else:
+        next_step = "Run the identity closure packet generator after athlete identity audit packets exist."
+    return {
+        "identity_closure_high_rows": high_rows,
+        "identity_closure_blank_decisions": blank_closure_decisions,
+        "identity_provider_backfill_manual_review_rows": manual_backfill_rows,
+        "identity_provider_backfill_blank_decisions": blank_backfill_decisions,
+        "identity_closure_severity_counts": ranked_field_counts(closures, "severity"),
+        "identity_closure_issue_counts": ranked_field_counts(closures, "issue_code"),
+        "identity_provider_backfill_status_counts": ranked_field_counts(backfills, "backfill_status"),
+        "identity_provider_backfill_target_counts": ranked_field_counts(backfills, "target_csv"),
+        "identity_closure_next_step": next_step,
+    }
+
+
 def athlete_identity_candidate_summary(
     athlete_id: str,
     candidate_by_athlete: Dict[str, Dict[str, str]],
@@ -2064,6 +2104,8 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
     identity_candidate_by_id = athlete_identity_candidates_by_athlete(identity_candidate_rows)
     identity_backfill_rows = read_csv("data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv")
     identity_backfills_by_id = athlete_identity_backfills_by_athlete(identity_backfill_rows)
+    identity_closure_rows = read_csv("data/asset_registry/wnba/athlete_identity_issue_closure_template.csv")
+    identity_closure_summary_payload = athlete_identity_closure_summary(identity_closure_rows, identity_backfill_rows)
     identity_audit_report = identity_audit.get("report") if isinstance(identity_audit.get("report"), dict) else {}
     identity_audit_by_id = athlete_identity_audit_by_athlete(identity_audit)
     athletes_payload = metadata_json.get("athletes") if isinstance(metadata_json.get("athletes"), dict) else {}
@@ -2157,8 +2199,9 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         "identity_review_packet_teams": identity_review_packet_teams,
         "identity_resolution_inbox_rows": len(identity_resolution_rows),
         "identity_closure_status": clean(identity_closure_report.get("status")) or "not_run",
-        "identity_closure_rows": as_int(identity_closure_report.get("closure_rows")),
-        "identity_provider_backfill_rows": as_int(identity_closure_report.get("backfill_rows")),
+        "identity_closure_rows": as_int(identity_closure_report.get("closure_rows")) or len(identity_closure_rows),
+        "identity_provider_backfill_rows": as_int(identity_closure_report.get("backfill_rows")) or len(identity_backfill_rows),
+        **identity_closure_summary_payload,
         "featured_athlete_id": featured_id,
         "featured_athlete_name": featured_name,
         "review_rows": review_rows,
@@ -5790,6 +5833,39 @@ def render_identity_review_packet_cards(rows: Iterable[Dict[str, Any]]) -> str:
     return "".join(body) or '<p class="empty">No focused identity review packet rows found. Run the identity resolution generator after the identity audit.</p>'
 
 
+def render_identity_closure_summary_cards(panel: Dict[str, Any]) -> str:
+    groups = [
+        ("Closure severity", panel.get("identity_closure_severity_counts", [])),
+        ("Closure issue types", panel.get("identity_closure_issue_counts", [])),
+        ("Backfill status", panel.get("identity_provider_backfill_status_counts", [])),
+        ("Backfill targets", panel.get("identity_provider_backfill_target_counts", [])),
+    ]
+    body: List[str] = []
+    for title, rows in groups:
+        if not isinstance(rows, list) or not rows:
+            continue
+        chips = "".join(
+            f"<li><strong>{html.escape(short(clean(row.get('label')) or 'unknown', 58))}</strong><span>{html.escape(str(row.get('rows', 0)))} row(s)</span></li>"
+            for row in rows[:6]
+            if isinstance(row, dict)
+        )
+        body.append(
+            f"""
+            <article class="identity-packet-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">closure packet summary</span>
+                  <strong>{html.escape(title)}</strong>
+                </div>
+                {pill('review-only')}
+              </div>
+              <ul class="asset-detail-list">{chips}</ul>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No identity closure/backfill packet summaries found.</p>'
+
+
 def render_identity_review_team_queue(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for row in rows:
@@ -5853,6 +5929,8 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
             <div><span>Identity packet holds</span><strong>{html.escape(str(panel.get('identity_review_packet_hold_rows', 0)))}/{html.escape(str(panel.get('identity_review_packet_rows', 0)))}</strong></div>
             <div><span>Resolution inbox rows</span><strong>{html.escape(str(panel.get('identity_resolution_inbox_rows', 0)))}</strong></div>
             <div><span>Closure/backfill rows</span><strong>{html.escape(str(panel.get('identity_closure_rows', 0)))}/{html.escape(str(panel.get('identity_provider_backfill_rows', 0)))}</strong></div>
+            <div><span>Closure high rows</span><strong>{html.escape(str(panel.get('identity_closure_high_rows', 0)))}</strong></div>
+            <div><span>Blank closure/backfill decisions</span><strong>{html.escape(str(panel.get('identity_closure_blank_decisions', 0)))}/{html.escape(str(panel.get('identity_provider_backfill_blank_decisions', 0)))}</strong></div>
           </div>
           <div class="review-flow">
             <div><span>1</span><strong>Open source</strong><p>Compare source headshot and contact sheet by eye.</p></div>
@@ -5864,6 +5942,13 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
           <div class="row-kicker">Onboarding files {pill('open before deciding')}</div>
           <div class="decision-link-grid">
             {render_decision_shortcuts(panel.get('file_shortcuts', []))}
+          </div>
+        </div>
+        <div class="decision-desk-section">
+          <div class="row-kicker">Identity closure/backfill packet {pill(clean(panel.get('identity_closure_status')) or 'not_run')} {pill(str(panel.get('identity_provider_backfill_manual_review_rows', 0)) + ' manual backfill rows')}</div>
+          <p class="muted">{html.escape(clean(panel.get('identity_closure_next_step')))}</p>
+          <div class="identity-packet-grid">
+            {render_identity_closure_summary_cards(panel)}
           </div>
         </div>
         <div class="decision-desk-section">
@@ -7153,10 +7238,28 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Identity resolution: {athlete_photo_panel.get('identity_resolution_status') or 'not_run'} ({athlete_photo_panel.get('identity_resolution_inbox_rows', 0)} inbox row(s))",
         f"- Identity review packets: {athlete_photo_panel.get('identity_review_packet_rows', 0)} ({athlete_photo_panel.get('identity_review_packet_hold_rows', 0)} holds / {athlete_photo_panel.get('identity_review_packet_default_rows', 0)} default approvals)",
         f"- Closure/backfill: {athlete_photo_panel.get('identity_closure_status') or 'not_run'} ({athlete_photo_panel.get('identity_closure_rows', 0)}/{athlete_photo_panel.get('identity_provider_backfill_rows', 0)} row(s))",
+        f"- Closure detail: high/critical={athlete_photo_panel.get('identity_closure_high_rows', 0)} | blank closure decisions={athlete_photo_panel.get('identity_closure_blank_decisions', 0)} | manual backfill review={athlete_photo_panel.get('identity_provider_backfill_manual_review_rows', 0)} | blank backfill decisions={athlete_photo_panel.get('identity_provider_backfill_blank_decisions', 0)}",
+        f"- Closure next safe action: {athlete_photo_panel.get('identity_closure_next_step') or 'Open the manual closure packet only after source evidence review.'}",
         f"- Featured athlete: {athlete_photo_panel.get('featured_athlete_name') or athlete_photo_panel.get('featured_athlete_id') or 'none'}",
         f"- Next safe action: {athlete_photo_panel.get('next_step')}",
         "- Guardrails: review-only, identity human-check required, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
+    lines.extend(
+        f"- Closure severity: {item.get('label') or 'unknown'}={item.get('rows') or 0}"
+        for item in athlete_photo_panel.get("identity_closure_severity_counts", [])[:6]
+    )
+    lines.extend(
+        f"- Closure issue: {item.get('label') or 'unknown'}={item.get('rows') or 0}"
+        for item in athlete_photo_panel.get("identity_closure_issue_counts", [])[:6]
+    )
+    lines.extend(
+        f"- Provider backfill status: {item.get('label') or 'unknown'}={item.get('rows') or 0}"
+        for item in athlete_photo_panel.get("identity_provider_backfill_status_counts", [])[:6]
+    )
+    lines.extend(
+        f"- Provider backfill target: {item.get('label') or 'unknown'}={item.get('rows') or 0}"
+        for item in athlete_photo_panel.get("identity_provider_backfill_target_counts", [])[:6]
+    )
     lines.extend(
         f"- Identity team queue: {item.get('team_id') or 'unknown_team'} | packets={item.get('packet_rows') or 0} | holds={item.get('identity_hold_rows') or 0} | defaults={item.get('default_approval_rows') or 0} | high={item.get('high_severity_rows') or 0}"
         for item in athlete_photo_panel.get("identity_review_packet_teams", [])[:12]

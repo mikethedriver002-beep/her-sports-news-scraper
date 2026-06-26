@@ -1824,7 +1824,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.61.0-asset-readiness-panel"
+    assert payload["version"] == "hsd-operator-command-center-v3.62.0-identity-closure-summary"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2656,6 +2656,113 @@ def test_athlete_photo_panel_prioritizes_identity_packets_before_onboarding(tmp_
     assert panel["identity_review_packet_hold_rows"] == 1
     assert panel["identity_review_packet_default_rows"] == 1
     assert "athlete_identity_review_packet.csv" in panel["next_step"]
+
+
+def test_athlete_photo_panel_surfaces_identity_closure_packet_breakdown(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("data/asset_registry/wnba").mkdir(parents=True, exist_ok=True)
+    closure_report = {
+        "report": {
+            "status": "manual_identity_closure_ready",
+            "closure_rows": 2,
+            "backfill_rows": 2,
+        }
+    }
+    write_json("data/asset_registry/wnba/athlete_identity_closure_packet.json", closure_report)
+    closure_rows = [
+        {
+            "issue_key": "issue_high",
+            "severity": "high",
+            "issue_code": "approved_asset_still_has_pending_match_review",
+            "athlete_id": "atlanta_dream_aaliyah_nye",
+            "display_name": "Aaliyah Nye",
+            "team_id": "atlanta_dream",
+            "operator_closure_decision": "",
+            "review_only_policy": "manual_closure_packet_only_no_auto_approval_no_registry_write_no_file_movement_no_publish_ready_lane",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "publish_ready": "false",
+        },
+        {
+            "issue_key": "issue_low",
+            "severity": "low",
+            "issue_code": "provider_id_missing_from_registry",
+            "athlete_id": "atlanta_dream_aaliyah_nye",
+            "display_name": "Aaliyah Nye",
+            "team_id": "atlanta_dream",
+            "operator_closure_decision": "",
+            "review_only_policy": "manual_closure_packet_only_no_auto_approval_no_registry_write_no_file_movement_no_publish_ready_lane",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "publish_ready": "false",
+        },
+    ]
+    backfill_rows = [
+        {
+            "backfill_key": "image_row",
+            "target_csv": "data/asset_registry/wnba/athlete_images.csv",
+            "athlete_id": "atlanta_dream_aaliyah_nye",
+            "display_name": "Aaliyah Nye",
+            "team_id": "atlanta_dream",
+            "target_field": "provider_player_id",
+            "proposed_value": "1642801",
+            "backfill_status": "manual_review_required",
+            "operator_decision": "",
+            "review_only_policy": "manual_closure_packet_only_no_auto_approval_no_registry_write_no_file_movement_no_publish_ready_lane",
+            "auto_apply": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "publish_ready": "false",
+        },
+        {
+            "backfill_key": "athlete_row",
+            "target_csv": "data/asset_registry/wnba/athletes.csv",
+            "athlete_id": "atlanta_dream_aaliyah_nye",
+            "display_name": "Aaliyah Nye",
+            "team_id": "atlanta_dream",
+            "target_field": "provider_player_id",
+            "proposed_value": "1642801",
+            "backfill_status": "manual_review_required",
+            "operator_decision": "",
+            "review_only_policy": "manual_closure_packet_only_no_auto_approval_no_registry_write_no_file_movement_no_publish_ready_lane",
+            "auto_apply": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "publish_ready": "false",
+        },
+    ]
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_issue_closure_template.csv",
+        closure_rows,
+        list(closure_rows[0].keys()),
+    )
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv",
+        backfill_rows,
+        list(backfill_rows[0].keys()),
+    )
+
+    panel = command_center.athlete_photo_onboarding_panel({})
+    html = command_center.render_athlete_photo_onboarding_panel(panel)
+
+    assert panel["identity_closure_status"] == "manual_identity_closure_ready"
+    assert panel["identity_closure_rows"] == 2
+    assert panel["identity_provider_backfill_rows"] == 2
+    assert panel["identity_closure_high_rows"] == 1
+    assert panel["identity_closure_blank_decisions"] == 2
+    assert panel["identity_provider_backfill_manual_review_rows"] == 2
+    assert panel["identity_provider_backfill_blank_decisions"] == 2
+    assert panel["identity_closure_severity_counts"][0] == {"label": "high", "rows": "1"}
+    assert panel["identity_provider_backfill_status_counts"][0] == {"label": "manual_review_required", "rows": "2"}
+    assert "Identity closure/backfill packet" in html
+    assert "Closure severity" in html
+    assert "Backfill targets" in html
+    assert "manual backfill rows" in html
+    assert "review-only" in html
 
 
 def test_operator_command_center_identity_resolution_clears_only_with_full_manual_guardrails(tmp_path, monkeypatch) -> None:
