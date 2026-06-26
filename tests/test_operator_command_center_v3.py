@@ -146,7 +146,12 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
         list(backfill_row.keys()),
     )
 
-    packet = {"packet_id": "render_prep_test", "title": "Breanna Stewart powers Liberty", "top_performers": "Breanna Stewart: PTS 20"}
+    packet = {
+        "packet_id": "render_prep_test",
+        "title": "Breanna Stewart powers Liberty",
+        "top_performers": "Breanna Stewart: PTS 20",
+        "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
+    }
     identity = command_center.active_athlete_identity_for_packet(packet)
     packet.update(identity)
     active_queue_rows = command_center.active_asset_review_queue_rows(packet)
@@ -161,7 +166,15 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
     assert active_queue_rows[0]["identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
     assert active_queue_rows[0]["provider_player_id"] == "1627668"
     assert active_queue_rows[0]["approved_marker_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved"
+    assert active_queue_rows[0]["selected_template_blocking_status"] == "not_blocking_selected_template_photo_not_required"
+    assert active_queue_rows[0]["decision_lane"] == "wnba_athlete_identity_resolution"
+    assert active_queue_rows[0]["default_operator_decision"] == "hold_identity"
+    assert active_queue_rows[0]["asset_readiness"] == "blocked_until_identity_resolution"
+    assert active_queue_rows[0]["identity_confidence"] == "identity_hold_default_or_suspicious_approval"
     assert "Evidence: approved marker decision_source=default" in active_queue_md
+    assert "Selected template blocker: `not_blocking_selected_template_photo_not_required`" in active_queue_md
+    assert "Decision lane: `wnba_athlete_identity_resolution`" in active_queue_md
+    assert "Identity confidence: `identity_hold_default_or_suspicious_approval`" in active_queue_md
     assert "Provider player ID: `1627668`" in active_queue_md
     assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue_md
     assert "Identity closure packet: `data/asset_registry/wnba/athlete_identity_closure_packet.md`" in active_queue_md
@@ -450,10 +463,16 @@ def seed_asset_availability_audit_files() -> None:
             "league": "WNBA",
             "finding": "missing_or_unregistered_logo_asset",
             "review_packet_id": "asset_review_0605_league_logo_WNBA",
+            "decision_lane": "wnba_logo_review",
+            "default_operator_decision": "hold_league_mark",
+            "source_confidence": "source_missing_or_unregistered",
+            "manual_approval_status": "manual_review_required",
+            "asset_readiness": "optional_league_logo_file_missing_review_only",
             "allowed_operator_decisions": "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata",
             "decision_primary_action": "supply_exact_local_logo_and_manual_registry_review",
             "manual_review_packet": "data/asset_registry/wnba/logo_review_catalog_report.md",
             "operator_copy_target": "operator/assets/brand_logos/README.md",
+            "blocker_summary": "WNBA: missing league mark; default decision=hold_league_mark; readiness=optional_league_logo_file_missing_review_only",
             "approval_status": "missing",
             "format_status": "missing_file",
             "renderer_coverage": "review_only_not_renderable_until_approved",
@@ -1904,7 +1923,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.73.0-audit-packet-metadata-queue"
+    assert payload["version"] == "hsd-operator-command-center-v3.74.0-active-queue-template-blockers"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2663,6 +2682,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Review source: `data/asset_registry/asset_availability_audit.csv`" in active_queue
     assert "Review-only policy: logo_review_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
     assert "Review-only policy: manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
+    assert "Selected template blocker: `blocking_selected_template_logo_review`" in active_queue
+    assert "Selected template blocker: `not_blocking_selected_template_photo_not_required`" in active_queue
+    assert "Decision lane: `wnba_logo_review`" in active_queue
+    assert "Source confidence: `source_missing_or_unregistered`" in active_queue
+    assert "Manual approval status: `manual_review_required`" in active_queue
+    assert "Asset readiness: `optional_league_logo_file_missing_review_only`" in active_queue
+    assert "Blocker summary: WNBA: missing league mark" in active_queue
     assert "Manual review packet: `data/asset_registry/wnba/logo_review_catalog_report.md`" in active_queue
     assert "Operator copy target: `operator/assets/brand_logos/README.md`" in active_queue
     assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
@@ -2683,6 +2709,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert breanna_queue["approved_marker_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved"
     wnba_queue = next(row for row in active_queue_rows if row["entity_name"] == "WNBA")
     assert wnba_queue["review_queue_id"] == "asset_review_0605_league_logo_WNBA"
+    assert wnba_queue["decision_lane"] == "wnba_logo_review"
+    assert wnba_queue["default_operator_decision"] == "hold_league_mark"
+    assert wnba_queue["source_confidence"] == "source_missing_or_unregistered"
+    assert wnba_queue["manual_approval_status"] == "manual_review_required"
+    assert wnba_queue["asset_readiness"] == "optional_league_logo_file_missing_review_only"
+    assert wnba_queue["selected_template_blocking_status"] == "blocking_selected_template_logo_review"
+    assert wnba_queue["blocker_summary"] == "WNBA: missing league mark; default decision=hold_league_mark; readiness=optional_league_logo_file_missing_review_only"
     assert wnba_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
     assert wnba_queue["primary_action"] == "supply_exact_local_logo_and_manual_registry_review"
     assert wnba_queue["manual_review_packet"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
@@ -2700,6 +2733,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
     asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
     assert "exact local WNBA team logos" in asset_checklist
+    assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in asset_checklist
     assert "Active logo readiness: `hold_logo_review_required`" in asset_checklist
     assert "Active asset stop/go: `hold_required_manual_asset_review`" in asset_checklist
     assert "New York Liberty: unapproved_required_logo" in asset_checklist
