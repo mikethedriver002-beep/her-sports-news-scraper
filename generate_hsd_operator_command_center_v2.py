@@ -56,6 +56,9 @@ RENDER_PREP_FIELDS = [
     "active_logo_readiness_status",
     "active_logo_review_cues",
     "logo_review_artifact",
+    "active_athlete_identity_status",
+    "active_athlete_identity_cues",
+    "athlete_identity_artifact",
     "renderer_fallback_cue",
     "asset_cue",
     "format_cue",
@@ -2592,18 +2595,24 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
 
 def manual_renderer_steps(packet: Dict[str, str]) -> str:
     template_label = clean(packet.get("selected_template_id")) or clean(packet.get("template_fit"))
-    active_logo_cues = (clean(packet.get("active_logo_review_cues")) or "no active logo hold cue recorded").replace(" | ", "; ")
+    active_logo_cues = (clean(packet.get("active_logo_review_cues")) or "no active logo hold cue recorded").replace(" | ", "; ").replace("|", ";")
+    active_athlete_cues = (clean(packet.get("active_athlete_identity_cues")) or "no active athlete identity hold cue recorded").replace(" | ", "; ").replace("|", ";")
     steps = [
         f"Open {packet.get('source_artifact')} and confirm the source/copy fields match this packet.",
         "Open operator_command_center.html and confirm the candidate is still not held by source, asset, or format blockers.",
         f"Use {template_label} at {packet.get('template_shape')}.",
         f"Confirm asset requirement: {packet.get('asset_requirement')}",
         f"Confirm active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}; {active_logo_cues}",
+        f"Confirm active athlete identity: {clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}; {active_athlete_cues}",
         "Compare the draft against the linked Templates-hsd reference mockup/layout before recording any decision.",
         "Prepare the graphic manually in the renderer or design tool; do not auto-post or auto-publish.",
         "After visual review, record the decision in the normal manual QA or approval artifact before any human posting.",
     ]
     return " | ".join(steps)
+
+
+def split_manual_renderer_steps(value: Any) -> List[str]:
+    return [step.strip() for step in clean(value).split(" | ") if step.strip()]
 
 
 def active_logo_packet_text(packet: Dict[str, str]) -> str:
@@ -2687,6 +2696,58 @@ def active_logo_readiness_for_packet(packet: Dict[str, str]) -> Dict[str, str]:
     }
 
 
+def active_athlete_packet_text(packet: Dict[str, str]) -> str:
+    return " ".join(
+        clean(packet.get(key))
+        for key in ["title", "copy_headline", "copy_dek", "top_performers", "asset_requirement", "template_family", "renderer_family"]
+    ).lower()
+
+
+def active_athlete_identity_matches(packet_text: str, athlete_name: str, athlete_id: str) -> bool:
+    aliases = [clean(athlete_name).lower()]
+    ident = clean(athlete_id).replace("_", " ").lower()
+    if ident and ident not in aliases:
+        aliases.append(ident)
+    return any(alias and re.search(rf"(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])", packet_text) for alias in aliases)
+
+
+def active_athlete_identity_for_packet(packet: Dict[str, str]) -> Dict[str, str]:
+    packet_text = active_athlete_packet_text(packet)
+    cues: List[str] = []
+    hold_cue_found = False
+    for row in read_csv("data/asset_registry/wnba/athlete_identity_review_packet.csv"):
+        athlete_id = clean(row.get("athlete_id"))
+        display_name = clean(row.get("display_name")) or clean(row.get("athlete_name")) or athlete_id.replace("_", " ").title()
+        if not active_athlete_identity_matches(packet_text, display_name, athlete_id):
+            continue
+        hold = clean(row.get("identity_hold")).lower() == "true"
+        default_approval = clean(row.get("default_approval_present")).lower() == "true"
+        review_required = clean(row.get("review_required")).lower() == "true"
+        if not (hold or default_approval or review_required):
+            continue
+        status = clean(row.get("identity_review_status")) or "identity_review_required"
+        if hold or status.startswith("hold_"):
+            hold_cue_found = True
+        reasons = clean(row.get("hold_reason_codes")) or clean(row.get("issue_codes")) or "manual identity review required"
+        evidence = clean(row.get("focused_evidence")) or clean(row.get("source_check_url")) or clean(row.get("provider_player_page_hint"))
+        cue = f"{display_name}: {status}; {reasons}"
+        if evidence:
+            cue = f"{cue}; evidence={evidence}"
+        if cue not in cues:
+            cues.append(cue)
+    if hold_cue_found:
+        status = "hold_identity_review_required"
+    elif cues:
+        status = "athlete_identity_review_required"
+    else:
+        status = "athlete_identity_not_flagged"
+    return {
+        "active_athlete_identity_status": status,
+        "active_athlete_identity_cues": " | ".join(cues[:6]),
+        "athlete_identity_artifact": "data/asset_registry/wnba/athlete_identity_review_packet.csv" if cues else "data/asset_registry/wnba/athlete_identity_audit.csv",
+    }
+
+
 def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
     packets: List[Dict[str, str]] = []
     for row in payload.get("render_readiness_queue", []):
@@ -2728,6 +2789,9 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "active_logo_readiness_status": "",
             "active_logo_review_cues": "",
             "logo_review_artifact": "",
+            "active_athlete_identity_status": "",
+            "active_athlete_identity_cues": "",
+            "athlete_identity_artifact": "",
             "renderer_fallback_cue": "",
             "manual_renderer_steps": "",
             "approval_gate": "human_visual_review_required_before_any_post",
@@ -2736,6 +2800,7 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "paid_api_policy": "free_public_sources_only_no_paid_api",
         }
         packet.update(active_logo_readiness_for_packet(packet))
+        packet.update(active_athlete_identity_for_packet(packet))
         packet["manual_renderer_steps"] = manual_renderer_steps(packet)
         packets.append(packet)
     return packets
@@ -2867,6 +2932,9 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
             f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
             f"- Logo review artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
+            f"- Active athlete identity: `{clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}`",
+            f"- Active athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
+            f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
             f"- Renderer fallback cue: {clean(packet.get('renderer_fallback_cue')) or 'none recorded'}",
             f"- Manual path: `{clean(packet.get('manual_path'))}`",
             f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
@@ -2906,7 +2974,7 @@ def render_handoff_source_proof(packet: Dict[str, str]) -> str:
 
 
 def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
-    steps = [step.strip() for step in clean(packet.get("manual_renderer_steps")).split("|") if step.strip()]
+    steps = split_manual_renderer_steps(packet.get("manual_renderer_steps"))
     lines = [
         "# Manual Renderer Prompt",
         "",
@@ -2939,6 +3007,8 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         f"- {clean(packet.get('asset_requirement'))}",
         f"- Active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}",
         f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
+        f"- Active athlete identity: {clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}",
+        f"- Active athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
         f"- Renderer fallback cue: {clean(packet.get('renderer_fallback_cue')) or 'none recorded'}",
         "",
         "## Steps",
@@ -3018,13 +3088,16 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "active_logo_readiness_status": packet.get("active_logo_readiness_status"),
                     "active_logo_review_cues": packet.get("active_logo_review_cues"),
                     "logo_review_artifact": packet.get("logo_review_artifact"),
+                    "active_athlete_identity_status": packet.get("active_athlete_identity_status"),
+                    "active_athlete_identity_cues": packet.get("active_athlete_identity_cues"),
+                    "athlete_identity_artifact": packet.get("athlete_identity_artifact"),
                     "renderer_fallback_cue": packet.get("renderer_fallback_cue"),
                     "manual_path": packet.get("manual_path"),
                     "renderer_family": packet.get("renderer_family"),
                     "decision": "operator_review_required",
                 }
             ],
-            ["packet_id", "asset_cue", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
+            ["packet_id", "asset_cue", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "active_athlete_identity_status", "active_athlete_identity_cues", "athlete_identity_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
         )
         write_text(OUT_RENDER_HANDOFF_SOURCE_PROOF, render_handoff_source_proof(packet))
         write_text(OUT_RENDER_HANDOFF_PROMPT, render_manual_renderer_prompt(packet))
@@ -6813,7 +6886,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Render prep packets", ""]
     lines.extend(
-        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | active logo: {item.get('active_logo_readiness_status') or 'logo_review_not_flagged'} | cues: {item.get('active_logo_review_cues') or 'none'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
+        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | active logo: {item.get('active_logo_readiness_status') or 'logo_review_not_flagged'} | logo cues: {item.get('active_logo_review_cues') or 'none'} | active athlete: {item.get('active_athlete_identity_status') or 'athlete_identity_not_flagged'} | athlete cues: {item.get('active_athlete_identity_cues') or 'none'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
     asset_panel = payload["asset_readiness_panel"]
@@ -7047,7 +7120,7 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
         return "\n".join(lines).rstrip() + "\n"
 
     for index, packet in enumerate(packets, 1):
-        steps = [step.strip() for step in clean(packet.get("manual_renderer_steps")).split("|") if step.strip()]
+        steps = split_manual_renderer_steps(packet.get("manual_renderer_steps"))
         lines += [
             f"## Packet {index}: {clean(packet.get('title'))}",
             "",
@@ -7066,6 +7139,9 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
             f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
             f"- Logo review artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
+            f"- Active athlete identity: `{clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}`",
+            f"- Active athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
+            f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
             f"- Renderer fallback cue: {clean(packet.get('renderer_fallback_cue')) or 'none recorded'}",
             f"- Approval gate: `{clean(packet.get('approval_gate'))}`",
             f"- Auto-render status: `{clean(packet.get('auto_render_status'))}`",
