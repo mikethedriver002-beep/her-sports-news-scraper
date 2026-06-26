@@ -3,7 +3,7 @@ atlanta_dream,primary_logo,assets/leagues/wnba/teams/atlanta_dream/logo.png,true
 chicago_sky,primary_logo,assets/leagues/wnba/teams/chicago_sky/logo.png,true,true,true,2026-06-16T04:22:32.137752+00:00,local_png_fallback_from_approved_svg
 connecticut_sun,primary_logo,assets/leagues/wnba/teams/connecticut_sun/logo.png,true,true,true,2026-06-16T04:22:32.140276+00:00,local_png_fallback_from_approved_svg
 indiana_fever,primary_logo,assets/leagues/wnba/teams/indiana_fever/logo.png,true,true,true,2026-06-16T04:22:32.142751+00:00,local_png_fallback_from_approved_svg
-new_york_liberty,primary_logo,assets/leagues/wnba/teams/new_york_liberty/logo.png,true,false,true,2026-06-16T04:22:32.145528+00:00,local_png_exists_review_required_exact_logo
+new_york_liberty,primary_logo,assets/leagues/wnba/teams/new_york_liberty/logo.png,true,true,true,2026-06-26T20:14:57.880239+00:00,human_reviewed_official_team_source_for_review_only_renderer_use
 toronto_tempo,primary_logo,assets/leagues/wnba/teams/toronto_tempo/logo.png,true,true,true,2026-06-16T04:22:32.147995+00:00,strict_exact_identity_match
 washington_mystics,primary_logo,assets/leagues/wnba/teams/washington_mystics/logo.png,true,false,true,2026-06-16T04:22:32.150546+00:00,local_png_exists_review_required_exact_logo
 dallas_wings,primary_logo,assets/leagues/wnba/teams/dallas_wings/logo.png,true,true,true,2026-06-16T04:22:32.153009+00:00,local_png_fallback_from_approved_svg
