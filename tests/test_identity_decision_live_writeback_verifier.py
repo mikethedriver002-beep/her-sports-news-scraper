@@ -73,7 +73,9 @@ def test_verifier_posts_to_live_endpoint_and_restores_inbox(tmp_path: Path, monk
     assert json_path.exists()
     assert md_path.exists()
     assert json_path.parent == tmp_path / "run" / "files"
-    assert "No auto-approval" in md_path.read_text(encoding="utf-8")
+    report_text = md_path.read_text(encoding="utf-8")
+    assert "Diff count: `0`" in report_text
+    assert "No auto-approval" in report_text
 
 
 def test_verifier_requires_real_wnba_athlete_row(tmp_path: Path) -> None:

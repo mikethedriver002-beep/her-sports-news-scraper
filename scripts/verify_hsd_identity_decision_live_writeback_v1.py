@@ -30,7 +30,9 @@ OUT_MD = "identity_decision_live_writeback_verification.md"
 
 
 def clean(value: Any) -> str:
-    return re.sub(r"\s+", " ", str(value or "")).strip()
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", str(value)).strip()
 
 
 def slug(value: str) -> str:
