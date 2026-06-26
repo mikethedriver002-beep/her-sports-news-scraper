@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.81.0-active-asset-evidence-gaps"
+VERSION = "hsd-operator-command-center-v3.82.0-liberty-logo-intake-bridge"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -27,6 +27,8 @@ OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE = OUT_RENDER_HANDOFF_DIR / "active_asset_r
 OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV = OUT_RENDER_HANDOFF_DIR / "active_asset_review_queue.csv"
 OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD = OUT_RENDER_HANDOFF_DIR / "manual_asset_source_board.md"
 OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV = OUT_RENDER_HANDOFF_DIR / "manual_asset_source_board.csv"
+OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE = OUT_RENDER_HANDOFF_DIR / "manual_logo_verification_intake.md"
+OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE_CSV = OUT_RENDER_HANDOFF_DIR / "manual_logo_verification_intake.csv"
 OUT_RENDER_HANDOFF_SOURCE_PROOF = OUT_RENDER_HANDOFF_DIR / "source_proof.md"
 OUT_RENDER_HANDOFF_PROMPT = OUT_RENDER_HANDOFF_DIR / "manual_renderer_prompt.md"
 OUT_RENDER_HANDOFF_MANIFEST = OUT_RENDER_HANDOFF_DIR / "handoff_manifest.json"
@@ -109,6 +111,7 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "local_asset_state",
     "official_source_candidate",
     "current_registry_source",
+    "source_policy_status",
     "cannot_clear_automatically_because",
     "blocker_summary",
     "allowed_decisions",
@@ -147,6 +150,7 @@ MANUAL_ASSET_SOURCE_BOARD_FIELDS = [
     "current_local_asset",
     "registry_source_target",
     "current_registry_source",
+    "source_policy_status",
     "evidence_gap_status",
     "local_asset_state",
     "cannot_clear_automatically_because",
@@ -168,11 +172,45 @@ MANUAL_ASSET_SOURCE_BOARD_FIELDS = [
     "asset_downloads",
 ]
 
+MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS = [
+    "intake_bridge_id",
+    "packet_id",
+    "priority",
+    "asset_domain",
+    "entity_id",
+    "entity_name",
+    "selected_template_blocking_status",
+    "local_logo_path",
+    "official_source_candidate",
+    "current_legacy_registry_source",
+    "current_unapproved_status",
+    "source_policy_status",
+    "evidence_gap_status",
+    "manual_intake_files",
+    "manual_intake_files_detail",
+    "manual_review_packet",
+    "operator_copy_target",
+    "required_manual_checks",
+    "allowed_manual_outcomes",
+    "cannot_clear_automatically_because",
+    "review_only",
+    "approval_state_change",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+    "publishing",
+]
+
 COMMAND_CENTER_GENERATED_ARTIFACTS = {
     "render_handoff_top_packet/active_asset_review_queue.md",
     "render_handoff_top_packet/active_asset_review_queue.csv",
     "render_handoff_top_packet/manual_asset_source_board.md",
     "render_handoff_top_packet/manual_asset_source_board.csv",
+    "render_handoff_top_packet/manual_logo_verification_intake.md",
+    "render_handoff_top_packet/manual_logo_verification_intake.csv",
 }
 
 ARTIFACTS = [
@@ -190,6 +228,8 @@ ARTIFACTS = [
     ("Decision", "Top render active asset review queue data", "render_handoff_top_packet/active_asset_review_queue.csv"),
     ("Decision", "Top render manual asset source board", "render_handoff_top_packet/manual_asset_source_board.md"),
     ("Decision", "Top render manual asset source board data", "render_handoff_top_packet/manual_asset_source_board.csv"),
+    ("Decision", "Top render manual logo verification intake", "render_handoff_top_packet/manual_logo_verification_intake.md"),
+    ("Decision", "Top render manual logo verification intake data", "render_handoff_top_packet/manual_logo_verification_intake.csv"),
     ("Decision", "Top render source proof", "render_handoff_top_packet/source_proof.md"),
     ("Decision", "Top render manual prompt", "render_handoff_top_packet/manual_renderer_prompt.md"),
     ("Decision", "Top render draft preview", "render_handoff_top_packet/draft_preview.png"),
@@ -3217,6 +3257,8 @@ def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> D
             "render_handoff_top_packet/active_asset_review_queue.csv",
             "render_handoff_top_packet/manual_asset_source_board.md",
             "render_handoff_top_packet/manual_asset_source_board.csv",
+            "render_handoff_top_packet/manual_logo_verification_intake.md",
+            "render_handoff_top_packet/manual_logo_verification_intake.csv",
             "render_handoff_top_packet/source_proof.md",
             "render_handoff_top_packet/manual_renderer_prompt.md",
             "render_handoff_top_packet/handoff_manifest.json",
@@ -3295,9 +3337,10 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             "2. `asset_checklist.md`",
             "3. `active_asset_review_queue.md`",
             "4. `manual_asset_source_board.md`",
-            "5. `source_proof.md`",
-            "6. `manual_renderer_prompt.md`",
-            "7. `handoff_manifest.json`",
+            "5. `manual_logo_verification_intake.md`",
+            "6. `source_proof.md`",
+            "7. `manual_renderer_prompt.md`",
+            "8. `handoff_manifest.json`",
             "",
             "## Guardrails",
             "",
@@ -3490,6 +3533,7 @@ def add_asset_evidence_gap_fields(row: Dict[str, str], lookup: Mapping[str, Dict
         if clean(row.get("asset_domain")) in {"team_logo", "league_logo"}
         else clean(row.get("source_check_url")) or "manual_identity_source_required"
     )
+    enriched["source_policy_status"] = clean(catalog_row.get("source_policy_status")) or "manual_review_required"
     enriched["local_asset_state"] = (
         local_asset_state(row, catalog_row)
         if clean(row.get("asset_domain")) in {"team_logo", "league_logo"}
@@ -3776,13 +3820,14 @@ def manual_asset_source_board_rows(active_rows: List[Dict[str, str]]) -> List[Di
             "team_id": clean(row.get("team_id")),
             "source_board_lane": clean(row.get("decision_lane")) or "manual_asset_review",
             "required_asset": manual_asset_required_label(row),
-            "official_source_candidate": manual_asset_source_candidate(row),
+            "official_source_candidate": clean(row.get("official_source_candidate")) or manual_asset_source_candidate(row),
             "free_source_candidate": manual_asset_free_source_candidate(row),
             "manual_search_query": manual_asset_search_query(row),
             "source_hint_url": clean(row.get("source_check_url")),
             "current_local_asset": clean(row.get("asset_path")) or clean(row.get("registered_path")),
             "registry_source_target": clean(row.get("source_target_path")) or clean(row.get("registered_path")),
             "current_registry_source": clean(row.get("current_registry_source")) or "missing",
+            "source_policy_status": clean(row.get("source_policy_status")) or "manual_review_required",
             "evidence_gap_status": clean(row.get("evidence_gap_status")) or "manual_evidence_review_required",
             "local_asset_state": clean(row.get("local_asset_state")) or "manual_review_required",
             "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because"))
@@ -3805,6 +3850,54 @@ def manual_asset_source_board_rows(active_rows: List[Dict[str, str]]) -> List[Di
             "asset_downloads": "false",
         }
         rows.append({field: clean(board_row.get(field)) for field in MANUAL_ASSET_SOURCE_BOARD_FIELDS})
+    return rows
+
+
+def manual_logo_verification_intake_rows(source_board_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, row in enumerate(source_board_rows, 1):
+        if clean(row.get("priority")) != "P0_selected_template_hold" or clean(row.get("asset_domain")) != "team_logo":
+            continue
+        entity_id = clean(row.get("entity_id"))
+        entity_name = clean(row.get("entity_name")) or entity_id
+        intake_row = {
+            "intake_bridge_id": f"manual_logo_intake_{index:03d}_{entity_id or re.sub(r'[^a-z0-9]+', '_', entity_name.lower()).strip('_')}",
+            "packet_id": clean(row.get("packet_id")),
+            "priority": clean(row.get("priority")),
+            "asset_domain": clean(row.get("asset_domain")),
+            "entity_id": entity_id,
+            "entity_name": entity_name,
+            "selected_template_blocking_status": "blocking_selected_template_logo_review",
+            "local_logo_path": clean(row.get("current_local_asset")),
+            "official_source_candidate": clean(row.get("official_source_candidate")),
+            "current_legacy_registry_source": clean(row.get("current_registry_source")) or "missing",
+            "current_unapproved_status": clean(row.get("manual_approval_status")) or "unapproved_review_required",
+            "source_policy_status": clean(row.get("source_policy_status")) or clean(row.get("evidence_gap_status")),
+            "evidence_gap_status": clean(row.get("evidence_gap_status")),
+            "manual_intake_files": "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv",
+            "manual_intake_files_detail": (
+                "Human operator verifies the local logo against the official source, then manually edits "
+                "team_logos.csv approval fields and logo_sources.csv source metadata if evidence supports it."
+            ),
+            "manual_review_packet": clean(row.get("manual_review_packet")) or "data/asset_registry/wnba/logo_review_catalog_report.md",
+            "operator_copy_target": clean(row.get("operator_copy_target")) or "operator/assets/brand_logos/README.md",
+            "required_manual_checks": (
+                "confirm exact local logo path exists; compare logo to official Liberty/WNBA source; confirm current "
+                "legacy registry source; decide whether manual registry edit is justified"
+            ),
+            "allowed_manual_outcomes": "hold_logo_slot|revise_logo_source_metadata|human_edit_registry_after_review",
+            "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because")),
+            "review_only": "true",
+            "approval_state_change": "false",
+            "publish_ready": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "paid_apis": "false",
+            "asset_downloads": "false",
+            "publishing": "false",
+        }
+        rows.append({field: clean(intake_row.get(field)) for field in MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS})
     return rows
 
 
@@ -3858,6 +3951,7 @@ def decision_stop_go_summary(
         "source_board_rows": len(source_board_rows),
         "active_queue_artifact": "render_handoff_top_packet/active_asset_review_queue.md",
         "manual_asset_source_board_artifact": "render_handoff_top_packet/manual_asset_source_board.md",
+        "manual_logo_verification_intake_artifact": "render_handoff_top_packet/manual_logo_verification_intake.md",
         "next_step": next_step,
         "guardrail_summary": "review-only; no downloads; no auto-approval; no file movement; no publishing; no publish-ready lane",
     }
@@ -3903,6 +3997,14 @@ def decision_review_order_checklist(summary: Dict[str, Any]) -> List[Dict[str, s
             clean(summary.get("manual_asset_source_board_artifact")) or "render_handoff_top_packet/manual_asset_source_board.md",
             "Review official/free source candidates for the active hold rows without downloading or approving assets.",
             "Use it as manual evidence guidance only; do not copy files or change approval state.",
+        )
+    if selected_count:
+        add_step(
+            len(rows) + 1,
+            "Open Manual Logo Verification Intake Bridge",
+            clean(summary.get("manual_logo_verification_intake_artifact")) or "render_handoff_top_packet/manual_logo_verification_intake.md",
+            "Use the intake bridge to see the exact local logo path, official source candidate, current legacy source, and human-edited registry files.",
+            "Keep it review-only; only a human-edited registry update can clear the selected-template logo blocker.",
         )
     if selected_count or league_count:
         add_step(
@@ -3980,6 +4082,7 @@ def render_manual_asset_source_board(packet: Dict[str, str] | None, rows: List[D
             f"- Current local asset: `{clean(row.get('current_local_asset')) or 'n/a'}`",
             f"- Registry/source target: `{clean(row.get('registry_source_target')) or 'n/a'}`",
             f"- Current registry source: {clean(row.get('current_registry_source')) or 'missing'}",
+            f"- Source policy status: `{clean(row.get('source_policy_status')) or 'manual_review_required'}`",
             f"- Evidence gap status: `{clean(row.get('evidence_gap_status')) or 'manual_evidence_review_required'}`",
             f"- Local asset state: `{clean(row.get('local_asset_state')) or 'manual_review_required'}`",
             f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because')) or 'Manual evidence review is required before any renderer trust change.'}",
@@ -3992,6 +4095,65 @@ def render_manual_asset_source_board(packet: Dict[str, str] | None, rows: List[D
             f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
             f"- Legacy reference: {clean(row.get('legacy_reference_model'))}",
             f"- Guardrails: review_only={clean(row.get('review_only'))}; manual_approval_required={clean(row.get('manual_approval_required'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}",
+            "",
+        ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_manual_logo_verification_intake(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
+    lines = [
+        "# Manual Logo Verification Intake Bridge",
+        "",
+        f"Packet: `{clean(packet.get('packet_id')) if packet else ''}`",
+        f"Story: {clean(packet.get('title')) if packet else 'No active render packet'}",
+        "",
+        "Review-only bridge for selected-template team logo blockers. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.",
+        "",
+        "## Guardrails",
+        "",
+        "- review_only=true",
+        "- approval_state_change=false",
+        "- publish_ready=false",
+        "- auto_approval=false",
+        "- auto_publish=false",
+        "- move_files=false",
+        "- paid_apis=false",
+        "- asset_downloads=false",
+        "- publishing=false",
+        "",
+    ]
+    if not rows:
+        lines += ["No selected-template team logo intake bridge rows were available.", ""]
+        return "\n".join(lines)
+    lines += [
+        "## Summary",
+        "",
+        f"- Intake bridge rows: {len(rows)}",
+        "- Human-edited intake files: `data/asset_registry/wnba/team_logos.csv`; `data/asset_registry/wnba/logo_sources.csv`",
+        "- Use this as review guidance only. The operator must make any registry edits manually after source review.",
+        "",
+        "## Rows",
+        "",
+    ]
+    for index, row in enumerate(rows, 1):
+        lines += [
+            f"### {index}. {clean(row.get('entity_name')) or clean(row.get('entity_id'))}",
+            "",
+            f"- Selected-template blocker: `{clean(row.get('selected_template_blocking_status'))}`",
+            f"- Exact local logo path: `{clean(row.get('local_logo_path')) or 'missing'}`",
+            f"- Official source candidate: {clean(row.get('official_source_candidate')) or 'manual lookup required'}",
+            f"- Current legacy registry source: {clean(row.get('current_legacy_registry_source')) or 'missing'}",
+            f"- Current unapproved status: `{clean(row.get('current_unapproved_status'))}`",
+            f"- Source policy status: `{clean(row.get('source_policy_status'))}`",
+            f"- Evidence gap status: `{clean(row.get('evidence_gap_status'))}`",
+            f"- Human-edited manual intake files: `{clean(row.get('manual_intake_files'))}`",
+            f"- Manual intake detail: {clean(row.get('manual_intake_files_detail'))}",
+            f"- Manual review packet: `{clean(row.get('manual_review_packet'))}`",
+            f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`",
+            f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
+            f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
+            f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
+            f"- Guardrails: review_only={clean(row.get('review_only'))}; approval_state_change={clean(row.get('approval_state_change'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}; publishing={clean(row.get('publishing'))}",
             "",
         ]
     return "\n".join(lines).rstrip() + "\n"
@@ -4194,6 +4356,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
         manifest_packet["blockers"] = display_render_blockers(packet)
     manifest_active_asset_rows = active_asset_review_queue_rows(packet) if packet else []
     manifest_manual_source_rows = manual_asset_source_board_rows(manifest_active_asset_rows)
+    manifest_logo_intake_rows = manual_logo_verification_intake_rows(manifest_manual_source_rows)
     write_text(OUT_RENDER_HANDOFF_README, render_handoff_readme(payload, packet))
     manifest = {
         "version": payload["version"],
@@ -4226,6 +4389,24 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             "data_artifact": "manual_asset_source_board.csv",
             "legacy_reference_model": "D:/Her Sports Daily asset-index/DDG packet shape used as reference only",
         },
+        "manual_logo_verification_intake": {
+            "rows": len(manifest_logo_intake_rows),
+            "review_only": True,
+            "approval_state_change": False,
+            "asset_downloads": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+            "publish_ready": False,
+            "publishing": False,
+            "artifact": "manual_logo_verification_intake.md",
+            "data_artifact": "manual_logo_verification_intake.csv",
+            "human_intake_files": [
+                "data/asset_registry/wnba/team_logos.csv",
+                "data/asset_registry/wnba/logo_sources.csv",
+            ],
+        },
         "files": [
             "README.md",
             "copy_sheet.md",
@@ -4236,6 +4417,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             "active_asset_review_queue.csv",
             "manual_asset_source_board.md",
             "manual_asset_source_board.csv",
+            "manual_logo_verification_intake.md",
+            "manual_logo_verification_intake.csv",
             "source_proof.md",
             "manual_renderer_prompt.md",
             "handoff_manifest.json",
@@ -4294,10 +4477,13 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
         )
         active_asset_rows = manifest_active_asset_rows
         manual_asset_source_rows = manifest_manual_source_rows
+        manual_logo_intake_rows = manifest_logo_intake_rows
         write_text(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE, render_active_asset_review_queue(packet, active_asset_rows))
         write_csv(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV, active_asset_rows, ACTIVE_ASSET_REVIEW_QUEUE_FIELDS)
         write_text(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD, render_manual_asset_source_board(packet, manual_asset_source_rows))
         write_csv(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV, manual_asset_source_rows, MANUAL_ASSET_SOURCE_BOARD_FIELDS)
+        write_text(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE, render_manual_logo_verification_intake(packet, manual_logo_intake_rows))
+        write_csv(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE_CSV, manual_logo_intake_rows, MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS)
         write_text(OUT_RENDER_HANDOFF_SOURCE_PROOF, render_handoff_source_proof(packet))
         write_text(OUT_RENDER_HANDOFF_PROMPT, render_manual_renderer_prompt(packet))
     else:
@@ -4305,6 +4491,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
         write_csv(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV, [], ACTIVE_ASSET_REVIEW_QUEUE_FIELDS)
         write_text(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD, render_manual_asset_source_board(None, []))
         write_csv(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV, [], MANUAL_ASSET_SOURCE_BOARD_FIELDS)
+        write_text(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE, render_manual_logo_verification_intake(None, []))
+        write_csv(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE_CSV, [], MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS)
     write_json(OUT_RENDER_HANDOFF_MANIFEST, manifest)
 
 
@@ -5210,6 +5398,7 @@ def build_payload() -> Dict[str, Any]:
     top_render_packet = render_prep_packets[0] if render_prep_packets else None
     active_asset_rows = active_asset_review_queue_rows(top_render_packet) if top_render_packet else []
     manual_asset_source_board = manual_asset_source_board_rows(active_asset_rows)
+    manual_logo_verification_intake = manual_logo_verification_intake_rows(manual_asset_source_board)
     stop_go_summary = decision_stop_go_summary(top_render_packet, active_asset_rows, manual_asset_source_board)
     review_order_checklist = decision_review_order_checklist(stop_go_summary)
     operator_decision_panel = operator_decision_ui_panel()
@@ -5381,6 +5570,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Decision stop/go", stop_go_summary["panel_status"], stop_go_summary["next_step"]),
         metric("Review-order checklist", len(review_order_checklist)),
         metric("Manual asset source board", len(manual_asset_source_board)),
+        metric("Manual logo intake bridge", len(manual_logo_verification_intake)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
         metric("Asset audit", asset_readiness_panel["panel_status"], asset_readiness_panel["next_step"]),
@@ -5457,6 +5647,7 @@ def build_payload() -> Dict[str, Any]:
         "decision_stop_go_summary": stop_go_summary,
         "decision_review_order_checklist": review_order_checklist,
         "manual_asset_source_board": manual_asset_source_board,
+        "manual_logo_verification_intake": manual_logo_verification_intake,
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
         "athlete_photo_onboarding_panel": athlete_photo_panel,
@@ -5816,6 +6007,57 @@ def render_manual_asset_source_board_panel(rows: Iterable[Dict[str, str]]) -> st
         <p class="muted">Old HSD asset-index/DDG packet structure, rebuilt as current review-only source guidance. Nothing here downloads, approves, moves, publishes, or creates a publish-ready lane.</p>
         <div class="asset-blocker-grid">
           {render_manual_asset_source_board_cards(board_rows)}
+        </div>
+      </div>
+    """
+
+
+def render_manual_logo_verification_intake_cards(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        intake_link = open_link("render_handoff_top_packet/manual_logo_verification_intake.md", "Open intake")
+        body.append(
+            f"""
+            <article class="asset-blocker-card manual-logo-intake-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">{html.escape(clean(row.get('priority')))} / selected-template logo</span>
+                  <strong>{html.escape(clean(row.get('entity_name')) or clean(row.get('entity_id')))}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill(clean(row.get('current_unapproved_status')) or 'unapproved_review_required', 'warn')}
+                  {pill('approval change: false', 'good')}
+                </div>
+              </div>
+              <div class="asset-guidance-grid">
+                <div><span>Exact local logo path</span><strong>{html.escape(short(clean(row.get('local_logo_path')) or 'missing', 135))}</strong></div>
+                <div><span>Official source candidate</span><strong>{html.escape(short(clean(row.get('official_source_candidate')) or 'manual lookup required', 135))}</strong></div>
+                <div><span>Current legacy source</span><strong>{html.escape(short(clean(row.get('current_legacy_registry_source')) or 'missing', 135))}</strong></div>
+                <div><span>Human-edited files</span><strong>{html.escape(short(clean(row.get('manual_intake_files')), 160))}</strong></div>
+              </div>
+              <p class="muted"><strong>Required manual checks:</strong> {html.escape(short(clean(row.get('required_manual_checks')), 220))}</p>
+              <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')), 220))}</p>
+              <div class="asset-blocker-actions">
+                {intake_link}
+                {open_link(clean(row.get('manual_review_packet')) or 'data/asset_registry/wnba/logo_review_catalog_report.md', 'Open review packet')}
+                {pill('no downloads')}
+                {pill('no auto-approval')}
+                {pill('publish-ready: false')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No selected-template logo intake bridge rows found.</p>'
+
+
+def render_manual_logo_verification_intake_panel(rows: Iterable[Dict[str, str]]) -> str:
+    intake_rows = list(rows)
+    return f"""
+      <div class="decision-desk-section">
+        <div class="row-kicker">Manual Logo Verification Intake Bridge {pill(str(len(intake_rows)) + ' rows')} {pill('review-only')} {pill('approval change: false')}</div>
+        <p class="muted">Human verification path for selected-template logo blockers. This only points to exact evidence and human-edited intake files; it does not approve assets or change registry state.</p>
+        <div class="asset-blocker-grid">
+          {render_manual_logo_verification_intake_cards(intake_rows)}
         </div>
       </div>
     """
@@ -7562,6 +7804,7 @@ def render_html(payload: Dict[str, Any]) -> str:
         {render_decision_review_order_panel(payload.get('decision_review_order_checklist', []))}
         {render_asset_readiness_panel(payload['asset_readiness_panel'])}
         {render_manual_asset_source_board_panel(payload.get('manual_asset_source_board', []))}
+        {render_manual_logo_verification_intake_panel(payload.get('manual_logo_verification_intake', []))}
         {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
         <h2>Manual visual QA decision</h2>
         {render_operator_decision_panel(payload['operator_decision_panel'])}
@@ -8405,6 +8648,20 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- Source board row: {item.get('priority')} | {item.get('asset_domain')} | {item.get('entity_name') or item.get('entity_id')} | required={item.get('required_asset')} | source={item.get('official_source_candidate')} | current_registry_source={item.get('current_registry_source') or 'missing'} | evidence_gap={item.get('evidence_gap_status') or 'manual_evidence_review_required'} | local_state={item.get('local_asset_state') or 'manual_review_required'} | cannot_clear={item.get('cannot_clear_automatically_because') or 'manual evidence review required'} | query={item.get('manual_search_query')} | local={item.get('current_local_asset') or 'missing'} | packet={item.get('manual_review_packet') or 'n/a'} | copy={item.get('operator_copy_target') or 'n/a'} | downloads={item.get('asset_downloads')} | approval={item.get('auto_approval')} | publish_ready={item.get('publish_ready')}"
         for item in source_board[:8]
+    )
+    logo_intake = payload.get("manual_logo_verification_intake", [])
+    lines += [
+        "",
+        "## Manual Logo Verification Intake Bridge",
+        "",
+        f"- Intake bridge rows: {len(logo_intake)}",
+        "- Artifact: `render_handoff_top_packet/manual_logo_verification_intake.md`",
+        "- Data: `render_handoff_top_packet/manual_logo_verification_intake.csv`",
+        "- Guardrails: review-only, approval_state_change=false, no downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
+    ]
+    lines.extend(
+        f"- Logo intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_logo_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_legacy_source={item.get('current_legacy_registry_source') or 'missing'} | status={item.get('current_unapproved_status') or 'manual_review_required'} | human_files={item.get('manual_intake_files')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
+        for item in logo_intake[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
     lines += [

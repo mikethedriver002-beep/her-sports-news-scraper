@@ -296,11 +296,13 @@ def test_decision_stop_go_summary_separates_blockers_from_context_rows() -> None
     assert [row["title"] for row in checklist] == [
         "Open active asset queue",
         "Open Manual Asset Source Board",
+        "Open Manual Logo Verification Intake Bridge",
         "Open WNBA logo review catalog",
     ]
     assert checklist[0]["artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
     assert checklist[1]["artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
-    assert checklist[2]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert checklist[2]["artifact"] == "render_handoff_top_packet/manual_logo_verification_intake.md"
+    assert checklist[3]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
     assert all(row["review_only"] == "true" for row in checklist)
     assert all(row["approval_state_change"] == "false" for row in checklist)
     assert all(row["asset_downloads"] == "false" for row in checklist)
@@ -386,10 +388,16 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
 
     active_rows = command_center.active_asset_review_queue_rows(packet)
     board_rows = command_center.manual_asset_source_board_rows(active_rows)
+    intake_rows = command_center.manual_logo_verification_intake_rows(board_rows)
     summary = command_center.decision_stop_go_summary(packet, active_rows, board_rows)
     active_md = command_center.render_active_asset_review_queue(packet, active_rows)
     board_md = command_center.render_manual_asset_source_board(packet, board_rows)
-    html = command_center.render_decision_stop_go_summary_panel(summary) + command_center.render_manual_asset_source_board_panel(board_rows)
+    intake_md = command_center.render_manual_logo_verification_intake(packet, intake_rows)
+    html = (
+        command_center.render_decision_stop_go_summary_panel(summary)
+        + command_center.render_manual_asset_source_board_panel(board_rows)
+        + command_center.render_manual_logo_verification_intake_panel(intake_rows)
+    )
 
     liberty_queue = next(row for row in active_rows if row["entity_name"] == "New York Liberty")
     assert liberty_queue["evidence_gap_status"] == "present_unapproved_legacy_source_review"
@@ -408,7 +416,20 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
     assert "Cannot clear automatically because: New York Liberty is selected-template blocking" in active_md
     assert "Evidence gap status: `present_unapproved_legacy_source_review`" in board_md
     assert "Current registry source: https://upload.wikimedia.org/new-york-liberty-logo.png" in board_md
+    assert len(intake_rows) == 1
+    liberty_intake = intake_rows[0]
+    assert liberty_intake["entity_name"] == "New York Liberty"
+    assert liberty_intake["local_logo_path"] == "assets/leagues/wnba/teams/new_york_liberty/logo.png"
+    assert liberty_intake["official_source_candidate"] == "https://liberty.wnba.com/"
+    assert liberty_intake["current_legacy_registry_source"] == "https://upload.wikimedia.org/new-york-liberty-logo.png"
+    assert liberty_intake["current_unapproved_status"] == "unapproved_review_required"
+    assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv"
+    assert liberty_intake["approval_state_change"] == "false"
+    assert liberty_intake["asset_downloads"] == "false"
+    assert "Manual Logo Verification Intake Bridge" in intake_md
+    assert "Human-edited manual intake files: `data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv`" in intake_md
     assert "Cannot clear automatically because" in html
+    assert "Manual Logo Verification Intake Bridge" in html
     assert all(row["publish_ready"] == "false" for row in active_rows)
     assert all(row["auto_approval"] == "false" for row in active_rows)
     assert all(row["asset_downloads"] == "false" for row in active_rows)
@@ -439,6 +460,8 @@ def test_command_center_generated_artifacts_point_to_current_output_when_latest_
     (stale / "active_asset_review_queue.csv").write_text("stale,queue\n", encoding="utf-8")
     (stale / "manual_asset_source_board.md").write_text("stale source board", encoding="utf-8")
     (stale / "manual_asset_source_board.csv").write_text("stale,source\n", encoding="utf-8")
+    (stale / "manual_logo_verification_intake.md").write_text("stale logo intake", encoding="utf-8")
+    (stale / "manual_logo_verification_intake.csv").write_text("stale,logo\n", encoding="utf-8")
 
     by_path = {row["path"]: row for row in command_center.artifact_entries()}
 
@@ -446,14 +469,20 @@ def test_command_center_generated_artifacts_point_to_current_output_when_latest_
     csv_artifact = by_path["render_handoff_top_packet/active_asset_review_queue.csv"]
     board_md_artifact = by_path["render_handoff_top_packet/manual_asset_source_board.md"]
     board_csv_artifact = by_path["render_handoff_top_packet/manual_asset_source_board.csv"]
+    intake_md_artifact = by_path["render_handoff_top_packet/manual_logo_verification_intake.md"]
+    intake_csv_artifact = by_path["render_handoff_top_packet/manual_logo_verification_intake.csv"]
     assert md_artifact["status_detail"] == "Created with this command center run"
     assert csv_artifact["status_detail"] == "Created with this command center run"
     assert board_md_artifact["status_detail"] == "Created with this command center run"
     assert board_csv_artifact["status_detail"] == "Created with this command center run"
+    assert intake_md_artifact["status_detail"] == "Created with this command center run"
+    assert intake_csv_artifact["status_detail"] == "Created with this command center run"
     assert md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.md").as_posix()
     assert csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.csv").as_posix()
     assert board_md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_asset_source_board.md").as_posix()
     assert board_csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_asset_source_board.csv").as_posix()
+    assert intake_md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_logo_verification_intake.md").as_posix()
+    assert intake_csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_logo_verification_intake.csv").as_posix()
     assert "latest" not in md_artifact["source_path"]
 
 
@@ -2179,7 +2208,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.81.0-active-asset-evidence-gaps"
+    assert payload["version"] == "hsd-operator-command-center-v3.82.0-liberty-logo-intake-bridge"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2559,7 +2588,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
         and item["value"] == "hold_selected_template_manual_asset_review"
         for item in payload["metrics"]
     )
-    assert any(item["label"] == "Review-order checklist" and item["value"] == "3" for item in payload["metrics"])
+    assert any(item["label"] == "Review-order checklist" and item["value"] == "4" for item in payload["metrics"])
     assert payload["decision_stop_go_summary"]["panel_status"] == "hold_selected_template_manual_asset_review"
     assert payload["decision_stop_go_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert payload["decision_stop_go_summary"]["selected_template_blockers"] == 1
@@ -2574,14 +2603,17 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert [row["title"] for row in payload["decision_review_order_checklist"]] == [
         "Open active asset queue",
         "Open Manual Asset Source Board",
+        "Open Manual Logo Verification Intake Bridge",
         "Open WNBA logo review catalog",
     ]
     assert payload["decision_review_order_checklist"][0]["artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
     assert payload["decision_review_order_checklist"][1]["artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
-    assert payload["decision_review_order_checklist"][2]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert payload["decision_review_order_checklist"][2]["artifact"] == "render_handoff_top_packet/manual_logo_verification_intake.md"
+    assert payload["decision_review_order_checklist"][3]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
     assert all(row["approval_state_change"] == "false" for row in payload["decision_review_order_checklist"])
     assert all(row["asset_downloads"] == "false" for row in payload["decision_review_order_checklist"])
     assert any(item["label"] == "Manual asset source board" and item["value"] == "3" for item in payload["metrics"])
+    assert any(item["label"] == "Manual logo intake bridge" and item["value"] == "1" for item in payload["metrics"])
     assert len(payload["manual_asset_source_board"]) == 3
     assert {row["entity_name"] for row in payload["manual_asset_source_board"]} == {"New York Liberty", "WNBA", "Breanna Stewart"}
     liberty_source = next(row for row in payload["manual_asset_source_board"] if row["entity_name"] == "New York Liberty")
@@ -2594,6 +2626,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert all(row["review_only"] == "true" for row in payload["manual_asset_source_board"])
     assert all(row["manual_approval_required"] == "true" for row in payload["manual_asset_source_board"])
     assert all(row["asset_downloads"] == "false" for row in payload["manual_asset_source_board"])
+    assert len(payload["manual_logo_verification_intake"]) == 1
+    liberty_intake = payload["manual_logo_verification_intake"][0]
+    assert liberty_intake["entity_name"] == "New York Liberty"
+    assert liberty_intake["local_logo_path"] == "assets/leagues/wnba/logos/new_york_liberty/logo.png"
+    assert liberty_intake["official_source_candidate"] == "https://example.test/liberty-logo.png"
+    assert liberty_intake["current_legacy_registry_source"] == "https://example.test/liberty-logo.png"
+    assert liberty_intake["current_unapproved_status"] == "operator_logo_review_required"
+    assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv"
+    assert liberty_intake["approval_state_change"] == "false"
+    assert liberty_intake["asset_downloads"] == "false"
     assert payload["operator_decision_panel"]["qa_status"] == "human_review_required"
     assert payload["operator_decision_panel"]["validation_status"] == "awaiting_operator_decision"
     assert payload["operator_decision_panel"]["preview_exists"] is True
@@ -2977,20 +3019,26 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Open these in order" in html
     assert "Open active asset queue" in html
     assert "Open Manual Asset Source Board" in html
+    assert "Open Manual Logo Verification Intake Bridge" in html
     assert "Open WNBA logo review catalog" in html
     assert "render_handoff_top_packet/active_asset_review_queue.md" in html
     assert "render_handoff_top_packet/manual_asset_source_board.md" in html
+    assert "render_handoff_top_packet/manual_logo_verification_intake.md" in html
     assert "data/asset_registry/wnba/logo_review_catalog_report.md" in html
     assert "Open These In Order" in markdown
     assert "1. Open active asset queue" in markdown
     assert "2. Open Manual Asset Source Board" in markdown
-    assert "3. Open WNBA logo review catalog" in markdown
+    assert "3. Open Manual Logo Verification Intake Bridge" in markdown
+    assert "4. Open WNBA logo review catalog" in markdown
     assert "approval_change=false" in markdown
     assert "downloads=false" in markdown
     assert "Manual Asset Source Board" in html
     assert "Old HSD asset-index/DDG packet structure" in html
     assert "Manual Asset Source Board" in markdown
+    assert "Manual Logo Verification Intake Bridge" in html
+    assert "Manual Logo Verification Intake Bridge" in markdown
     assert "Source-board rows: 3" in markdown
+    assert "Intake bridge rows: 1" in markdown
     assert "P0 selected-template holds: 1" in markdown
     assert "Future photo-first holds: 1" in markdown
     assert "Legacy reference: `D:\\Her Sports Daily` asset-index/DDG packet structure only; current board is review-only." in markdown
@@ -3013,6 +3061,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/active_asset_review_queue.csv").exists()
     assert Path("render_handoff_top_packet/manual_asset_source_board.md").exists()
     assert Path("render_handoff_top_packet/manual_asset_source_board.csv").exists()
+    assert Path("render_handoff_top_packet/manual_logo_verification_intake.md").exists()
+    assert Path("render_handoff_top_packet/manual_logo_verification_intake.csv").exists()
     assert Path("render_handoff_top_packet/source_proof.md").exists()
     assert Path("render_handoff_top_packet/manual_renderer_prompt.md").exists()
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
@@ -3025,6 +3075,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Breanna Stewart: hold_identity_review_required" in readme
     assert "do not approve assets or create a publish-ready lane" in readme
     assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in readme
+    assert "5. `manual_logo_verification_intake.md`" in readme
     active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
     assert "Active Asset Review Queue" in active_queue
     assert "## Summary" in active_queue
@@ -3081,6 +3132,19 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert all(row["move_files"] == "false" for row in source_board_rows)
     assert all(row["paid_apis"] == "false" for row in source_board_rows)
     assert all(row["asset_downloads"] == "false" for row in source_board_rows)
+    logo_intake = Path("render_handoff_top_packet/manual_logo_verification_intake.md").read_text(encoding="utf-8")
+    assert "Manual Logo Verification Intake Bridge" in logo_intake
+    assert "Exact local logo path: `assets/leagues/wnba/logos/new_york_liberty/logo.png`" in logo_intake
+    assert "Official source candidate: https://example.test/liberty-logo.png" in logo_intake
+    assert "Current legacy registry source: https://example.test/liberty-logo.png" in logo_intake
+    assert "Current unapproved status: `operator_logo_review_required`" in logo_intake
+    assert "Human-edited manual intake files: `data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv`" in logo_intake
+    assert "approval_state_change=false" in logo_intake
+    logo_intake_rows = list(csv.DictReader(Path("render_handoff_top_packet/manual_logo_verification_intake.csv").open(encoding="utf-8")))
+    assert len(logo_intake_rows) == 1
+    assert logo_intake_rows[0]["entity_name"] == "New York Liberty"
+    assert logo_intake_rows[0]["approval_state_change"] == "false"
+    assert logo_intake_rows[0]["asset_downloads"] == "false"
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
     assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
     liberty_queue = next(row for row in active_queue_rows if row["entity_name"] == "New York Liberty")
@@ -3166,6 +3230,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_handoff_manifest["manual_asset_source_board"]["asset_downloads"] is False
     assert render_handoff_manifest["manual_asset_source_board"]["auto_approval"] is False
     assert "manual_asset_source_board.md" in render_handoff_manifest["files"]
+    assert render_handoff_manifest["manual_logo_verification_intake"]["rows"] == 1
+    assert render_handoff_manifest["manual_logo_verification_intake"]["review_only"] is True
+    assert render_handoff_manifest["manual_logo_verification_intake"]["approval_state_change"] is False
+    assert render_handoff_manifest["manual_logo_verification_intake"]["asset_downloads"] is False
+    assert render_handoff_manifest["manual_logo_verification_intake"]["auto_approval"] is False
+    assert "manual_logo_verification_intake.md" in render_handoff_manifest["files"]
 
 
 def test_operator_command_center_identity_resolution_requires_full_renderer_clearance_contract(tmp_path, monkeypatch) -> None:
