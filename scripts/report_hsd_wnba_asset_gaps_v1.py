@@ -2,16 +2,20 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
-ROOT = Path("data/asset_registry/wnba")
-MISSING_TEAM_LOGOS = ROOT / "missing_team_logos.csv"
-VALIDATION_JSON = ROOT / "asset_registry_validation.json"
-GAPS_MD = ROOT / "asset_gap_report.md"
-GAPS_JSON = ROOT / "asset_gap_report.json"
-UPLOAD_CSV = ROOT / "logo_gap_upload_manifest.csv"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hsd_run_io import input_path, write_csv as write_run_csv, write_json, write_text
+
+MISSING_TEAM_LOGOS = "data/asset_registry/wnba/missing_team_logos.csv"
+VALIDATION_JSON = "data/asset_registry/wnba/asset_registry_validation.json"
+GAPS_MD = "data/asset_registry/wnba/asset_gap_report.md"
+GAPS_JSON = "data/asset_registry/wnba/asset_gap_report.json"
+UPLOAD_CSV = "data/asset_registry/wnba/logo_gap_upload_manifest.csv"
 UPLOAD_FIELDS = [
     "team_id",
     "team_name",
@@ -40,14 +44,15 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def read_csv(path: Path) -> List[Dict[str, str]]:
-    if not path.exists():
+def read_csv(path: str | Path) -> List[Dict[str, str]]:
+    resolved = input_path(path)
+    if not resolved.exists():
         return []
-    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+    with resolved.open(newline="", encoding="utf-8", errors="replace") as f:
         return list(csv.DictReader(f))
 
 
-def write_upload_manifest(missing: List[Dict[str, str]]) -> None:
+def write_upload_manifest(missing: List[Dict[str, str]]) -> Path:
     rows = []
     for row in missing:
         target = row.get("recommended_path", "")
@@ -67,17 +72,14 @@ def write_upload_manifest(missing: List[Dict[str, str]]) -> None:
             "decision_hold_cue": row.get("decision_hold_cue", "Hold the card if an exact local logo is missing, unverified, or not source-backed."),
             "decision_revise_cue": row.get("decision_revise_cue", "Revise registry metadata only after human evidence review."),
             "renderer_fallback_cue": row.get("renderer_fallback_cue", "Renderer fallback remains review-only until this missing exact logo is resolved."),
-            "decision_source_artifact": row.get("decision_source_artifact", MISSING_TEAM_LOGOS.as_posix()),
+            "decision_source_artifact": row.get("decision_source_artifact", MISSING_TEAM_LOGOS),
             "publish_ready": row.get("publish_ready", "false"),
             "auto_approval": row.get("auto_approval", "false"),
             "auto_publish": row.get("auto_publish", "false"),
             "move_files": row.get("move_files", "false"),
             "paid_apis": row.get("paid_apis", "false"),
         })
-    with UPLOAD_CSV.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=UPLOAD_FIELDS)
-        writer.writeheader()
-        writer.writerows(rows)
+    return write_run_csv(UPLOAD_CSV, rows, UPLOAD_FIELDS)
 
 
 def next_action(missing: List[Dict[str, str]], validation: Dict[str, object]) -> str:
@@ -95,12 +97,13 @@ def next_action(missing: List[Dict[str, str]], validation: Dict[str, object]) ->
 def main() -> None:
     missing = read_csv(MISSING_TEAM_LOGOS)
     validation = {}
-    if VALIDATION_JSON.exists():
+    validation_json = input_path(VALIDATION_JSON)
+    if validation_json.exists():
         try:
-            validation = json.loads(VALIDATION_JSON.read_text(encoding="utf-8"))
+            validation = json.loads(validation_json.read_text(encoding="utf-8"))
         except Exception:
             validation = {}
-    write_upload_manifest(missing)
+    upload_csv = write_upload_manifest(missing)
     operator_warnings = validation.get("operator_warnings") or []
     source_path_warnings = validation.get("source_path_metadata_warnings") or []
     report = {
@@ -110,7 +113,7 @@ def main() -> None:
         "validation_status": validation.get("status", "unknown"),
         "operator_warnings": len(operator_warnings),
         "source_path_metadata_warnings": len(source_path_warnings),
-        "logo_upload_manifest": UPLOAD_CSV.as_posix(),
+        "logo_upload_manifest": upload_csv.as_posix(),
         "decision_packet_fields": UPLOAD_FIELDS,
         "decision_packet_count": len(missing),
         "next_action": next_action(missing, validation),
@@ -123,7 +126,7 @@ def main() -> None:
             "no_publishing": True,
         },
     }
-    GAPS_JSON.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    write_json(GAPS_JSON, report)
     lines = [
         "# HSD WNBA Asset Gap Report",
         "",
@@ -177,7 +180,7 @@ def main() -> None:
             )
     else:
         lines.append("- None")
-    GAPS_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text(GAPS_MD, "\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
 
 

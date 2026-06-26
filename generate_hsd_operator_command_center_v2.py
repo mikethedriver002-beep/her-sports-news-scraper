@@ -212,6 +212,7 @@ ARTIFACTS = [
     ("Graphics", "WNBA athlete identity audit data", "data/asset_registry/wnba/athlete_identity_audit.csv"),
     ("Graphics", "WNBA athlete identity resolution workflow", "data/asset_registry/wnba/athlete_identity_resolution_workflow.md"),
     ("Graphics", "WNBA athlete identity resolution candidates", "data/asset_registry/wnba/athlete_identity_resolution_candidates.csv"),
+    ("Graphics", "WNBA athlete identity review packet", "data/asset_registry/wnba/athlete_identity_review_packet.csv"),
     ("Graphics", "WNBA athlete identity resolution template", "data/asset_registry/wnba/athlete_identity_resolution_template.csv"),
     ("Graphics", "WNBA athlete identity resolution manifest", "data/asset_registry/wnba/athlete_identity_resolution_manifest.json"),
     ("Graphics", "WNBA athlete identity closure packet", "data/asset_registry/wnba/athlete_identity_closure_packet.md"),
@@ -255,6 +256,7 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/athlete_identity_audit.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py",
     "data/asset_registry/wnba/athlete_identity_resolution_workflow.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py",
     "data/asset_registry/wnba/athlete_identity_resolution_candidates.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py",
+    "data/asset_registry/wnba/athlete_identity_review_packet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py",
     "data/asset_registry/wnba/athlete_identity_resolution_template.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py",
     "data/asset_registry/wnba/athlete_identity_resolution_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py",
     "data/asset_registry/wnba/athlete_identity_closure_packet.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py",
@@ -1782,6 +1784,25 @@ def athlete_identity_backfills_by_athlete(rows: Iterable[Dict[str, str]]) -> Dic
     return out
 
 
+def athlete_identity_review_packet_rows(rows: Iterable[Dict[str, str]], *, limit: int = 8) -> List[Dict[str, str]]:
+    normalized: List[Dict[str, str]] = []
+    for row in rows:
+        athlete_id = clean(row.get("athlete_id"))
+        if not athlete_id:
+            continue
+        normalized.append({str(key): clean(value) for key, value in row.items()})
+    return sorted(
+        normalized,
+        key=lambda row: (
+            clean(row.get("identity_hold")).lower() != "true",
+            clean(row.get("default_approval_present")).lower() != "true",
+            clean(row.get("team_id")),
+            clean(row.get("display_name")),
+            clean(row.get("athlete_id")),
+        ),
+    )[:limit]
+
+
 def athlete_identity_candidate_summary(
     athlete_id: str,
     candidate_by_athlete: Dict[str, Dict[str, str]],
@@ -1917,6 +1938,8 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
     identity_resolution_rows = read_csv("operator/inbox/wnba_athlete_identity_resolution.csv")
     identity_resolution_by_id = athlete_identity_resolution_by_athlete(identity_resolution_rows)
     identity_candidate_rows = read_csv("data/asset_registry/wnba/athlete_identity_resolution_candidates.csv")
+    identity_review_packet_rows = read_csv("data/asset_registry/wnba/athlete_identity_review_packet.csv")
+    identity_review_packets = athlete_identity_review_packet_rows(identity_review_packet_rows)
     identity_candidate_by_id = athlete_identity_candidates_by_athlete(identity_candidate_rows)
     identity_backfill_rows = read_csv("data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv")
     identity_backfills_by_id = athlete_identity_backfills_by_athlete(identity_backfill_rows)
@@ -2002,6 +2025,10 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         "identity_audit_critical_rows": as_int((identity_audit_report.get("severity_counts") or {}).get("critical")) if isinstance(identity_audit_report.get("severity_counts"), dict) else 0,
         "identity_resolution_status": clean(identity_resolution_report.get("status")) or "not_run",
         "identity_resolution_candidate_rows": as_int(identity_resolution_report.get("candidate_rows")),
+        "identity_review_packet_rows": len(identity_review_packet_rows),
+        "identity_review_packet_hold_rows": sum(1 for row in identity_review_packet_rows if clean(row.get("identity_hold")).lower() == "true"),
+        "identity_review_packet_default_rows": sum(1 for row in identity_review_packet_rows if clean(row.get("default_approval_present")).lower() == "true"),
+        "identity_review_packets": identity_review_packets,
         "identity_resolution_inbox_rows": len(identity_resolution_rows),
         "identity_closure_status": clean(identity_closure_report.get("status")) or "not_run",
         "identity_closure_rows": as_int(identity_closure_report.get("closure_rows")),
@@ -2018,6 +2045,7 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
             file_shortcut("WNBA identity audit", "data/asset_registry/wnba/athlete_identity_audit.md", "Review identity provenance risks before trusting any athlete crop."),
             file_shortcut("WNBA identity audit data", "data/asset_registry/wnba/athlete_identity_audit.csv", "See per-athlete identity issue rows and evidence."),
             file_shortcut("Identity resolution workflow", "data/asset_registry/wnba/athlete_identity_resolution_workflow.md", "Follow the manual steps to close or hold identity issues."),
+            file_shortcut("Identity review packet", "data/asset_registry/wnba/athlete_identity_review_packet.csv", "Start here for hold-first default/suspicious athlete-photo review rows."),
             file_shortcut("Identity resolution template", "data/asset_registry/wnba/athlete_identity_resolution_template.csv", "Copy rows from here into the operator inbox after source verification."),
             file_shortcut("Identity resolution inbox", "operator/inbox/wnba_athlete_identity_resolution.csv", "Human-filled source evidence row; renderer reads this file only."),
             file_shortcut("Identity closure packet", "data/asset_registry/wnba/athlete_identity_closure_packet.md", "Use this deeper worksheet to close audit rows and plan provider ID backfills."),
@@ -5196,8 +5224,40 @@ def render_athlete_photo_cards(rows: Iterable[Dict[str, Any]]) -> str:
     return "".join(body) or '<p class="empty">No athlete photo onboarding rows found. Run the onboarding generator first.</p>'
 
 
+def render_identity_review_packet_cards(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        source_url = clean(row.get("source_check_url")) or clean(row.get("provider_player_page_hint"))
+        source_link = f'<a class="tool-link" href="{html.escape(source_url)}">Source hint</a>' if source_url else '<span class="muted">No source hint</span>'
+        body.append(
+            f"""
+            <article class="identity-packet-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">{html.escape(clean(row.get('team_id')) or 'wnba')} / {html.escape(clean(row.get('identity_review_status')) or 'identity_review')}</span>
+                  <strong>{html.escape(clean(row.get('display_name')) or clean(row.get('athlete_id')))}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill('hold' if clean(row.get('identity_hold')).lower() == 'true' else 'review', 'warn')}
+                  {pill('default approval' if clean(row.get('default_approval_present')).lower() == 'true' else 'source review')}
+                </div>
+              </div>
+              <p>{html.escape(short(clean(row.get('hold_reason_codes')) or clean(row.get('focused_evidence')), 190))}</p>
+              <code>{html.escape(short(clean(row.get('asset_path')), 120))}</code>
+              <div class="asset-blocker-actions">
+                {source_link}
+                {pill(clean(row.get('allowed_decisions')) or 'hold_identity|revise_asset')}
+                {pill('publish-ready: false')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No focused identity review packet rows found. Run the identity resolution generator after the identity audit.</p>'
+
+
 def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
     rows = panel.get("review_rows", []) if isinstance(panel.get("review_rows"), list) else []
+    identity_packets = panel.get("identity_review_packets", []) if isinstance(panel.get("identity_review_packets"), list) else []
     rows_json = html.escape(json.dumps(rows), quote=True)
     fields_json = html.escape(json.dumps(ATHLETE_PHOTO_DECISION_FIELDS), quote=True)
     identity_fields_json = html.escape(json.dumps(IDENTITY_RESOLUTION_FIELDS), quote=True)
@@ -5226,6 +5286,7 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
             <div><span>Crop review holds</span><strong>{html.escape(str(panel.get('review_variant_needs_crop_review', 0)))}</strong></div>
             <div><span>Identity audit issues</span><strong>{html.escape(str(panel.get('identity_audit_issue_rows', 0)))}</strong></div>
             <div><span>Resolution candidates</span><strong>{html.escape(str(panel.get('identity_resolution_candidate_rows', 0)))}</strong></div>
+            <div><span>Identity packet holds</span><strong>{html.escape(str(panel.get('identity_review_packet_hold_rows', 0)))}/{html.escape(str(panel.get('identity_review_packet_rows', 0)))}</strong></div>
             <div><span>Resolution inbox rows</span><strong>{html.escape(str(panel.get('identity_resolution_inbox_rows', 0)))}</strong></div>
             <div><span>Closure/backfill rows</span><strong>{html.escape(str(panel.get('identity_closure_rows', 0)))}/{html.escape(str(panel.get('identity_provider_backfill_rows', 0)))}</strong></div>
           </div>
@@ -5239,6 +5300,12 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
           <div class="row-kicker">Onboarding files {pill('open before deciding')}</div>
           <div class="decision-link-grid">
             {render_decision_shortcuts(panel.get('file_shortcuts', []))}
+          </div>
+        </div>
+        <div class="decision-desk-section">
+          <div class="row-kicker">Focused identity review packet {pill(str(len(identity_packets)) + ' shown')} {pill(str(panel.get('identity_review_packet_default_rows', 0)) + ' default approvals')}</div>
+          <div class="identity-packet-grid">
+            {render_identity_review_packet_cards(identity_packets)}
           </div>
         </div>
         <div class="athlete-photo-layout">
@@ -5598,6 +5665,10 @@ def render_html(payload: Dict[str, Any]) -> str:
     .athlete-photo-badges,.athlete-photo-actions {{ display:flex; gap:6px; flex-wrap:wrap; }}
     .athlete-photo-action-card {{ display:grid; gap:10px; border:1px solid var(--line); border-left:6px solid #94dbc9; border-radius:8px; background:#fff; padding:12px; min-width:0; position:sticky; top:12px; }}
     .athlete-photo-selected {{ border:1px solid #d6efe8; background:#f3fbf8; border-radius:7px; padding:10px; font-size:13px; font-weight:800; color:#165b4a; overflow-wrap:anywhere; }}
+    .identity-packet-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }}
+    .identity-packet-card {{ display:grid; gap:8px; border:1px solid var(--line); border-left:5px solid #d7a900; border-radius:8px; background:#fff; padding:10px; min-width:0; }}
+    .identity-packet-card p {{ color:#5e616a; font-size:12px; line-height:1.35; overflow-wrap:anywhere; }}
+    .identity-packet-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
     .decision-form select {{ width:100%; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; background:#fff; color:var(--ink); }}
     @media (max-width: 900px) {{
       header {{ padding:20px; }}
@@ -5611,6 +5682,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       .decision-cockpit-head,.decision-signal-grid,.review-flow {{ grid-template-columns:1fr; }}
       .qa-cue-grid {{ grid-template-columns:1fr; }}
       .asset-blocker-grid {{ grid-template-columns:1fr; }}
+      .identity-packet-grid {{ grid-template-columns:1fr; }}
       .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
       .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}

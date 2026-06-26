@@ -187,6 +187,34 @@ def seed_athlete_photo_onboarding_files() -> None:
             "issues": [issue],
         },
     )
+    packet = {
+        "review_packet_id": "new_york_liberty_breanna_stewart",
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "display_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "provider_player_id": "1627668",
+        "asset_path": source.as_posix(),
+        "approved_marker_path": marker.as_posix(),
+        "identity_review_status": "hold_identity_review_required",
+        "review_required": "true",
+        "identity_hold": "true",
+        "default_approval_present": "true",
+        "highest_severity": "high",
+        "issue_count": "1",
+        "hold_reason_codes": "approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck",
+        "focused_evidence": "approved marker decision_source=default",
+        "source_check_url": "https://www.wnba.com/player/1627668/breanna-stewart",
+        "provider_player_page_hint": "https://www.wnba.com/player/1627668/breanna-stewart",
+        "operator_review_steps": "open_asset_and_marker; compare_to_official_player_or_team_source; choose_hold_or_verified_review_only_decision",
+        "allowed_decisions": "hold_identity|revise_asset|backfill_provider_id_only|identity_verified_approved_for_review_renders",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "review_only_policy": "manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane",
+    }
+    write_csv_with_fields((audit_dir / "athlete_identity_review_packet.csv").as_posix(), [packet], list(packet.keys()))
     (audit_dir / "athlete_identity_audit.md").write_text("# WNBA Athlete Identity Audit\n", encoding="utf-8")
 
 
@@ -1784,6 +1812,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
     assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"
     assert payload["athlete_photo_onboarding_panel"]["identity_resolution_status"] == "not_run"
+    assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_rows"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_hold_rows"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_default_rows"] == 1
     assert payload["athlete_photo_onboarding_panel"]["identity_resolution_inbox_rows"] == 0
     assert payload["athlete_photo_onboarding_panel"]["identity_closure_status"] == "not_run"
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_review_status"] == "hold_identity_review_required"
@@ -1792,6 +1823,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_candidate_status"] == "no_resolution_candidate"
     assert "Athlete photo onboarding" in html
     assert "Identity resolution" in html
+    assert "Focused identity review packet" in html
+    assert "default approvals" in html
+    assert "https://www.wnba.com/player/1627668/breanna-stewart" in html
     assert "Verify, hold, revise, or backfill" in html
     assert "operator/inbox/wnba_athlete_identity_resolution.csv" in html
     assert "Backfill-only rows do not clear photo-first rendering." in html
@@ -2086,6 +2120,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_audit.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_resolution_workflow.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/athlete_identity_review_packet.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_resolution_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_closure_packet.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
