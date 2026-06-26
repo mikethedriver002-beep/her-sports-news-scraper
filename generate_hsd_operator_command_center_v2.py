@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.76.0-asset-panel-packet-fallbacks"
+VERSION = "hsd-operator-command-center-v3.77.0-asset-packet-freshness-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -1013,10 +1013,64 @@ def logo_review_packet_rows(rows: Iterable[Dict[str, str]], *, limit: int = 8) -
     )[:limit]
 
 
+def packet_freshness_cue(path: str, rows: int, run_command: str, *, context: str) -> Dict[str, str]:
+    exists = find_existing_input(path).exists()
+    if rows > 0:
+        return {
+            "path": path,
+            "status": "packet_ready",
+            "detail": f"{context} packet is present with {rows} row(s).",
+            "run_command": run_command,
+        }
+    if exists:
+        return {
+            "path": path,
+            "status": "packet_empty",
+            "detail": f"{context} packet is present but has 0 row(s); use the catalog/audit rows for context or rerun the packet generator if holds are active.",
+            "run_command": run_command,
+        }
+    return {
+        "path": path,
+        "status": "packet_missing",
+        "detail": f"{context} packet is missing in this snapshot; active holds may still be visible from the latest audit or render prep. Run the listed refresh command to refresh review packets.",
+        "run_command": run_command,
+    }
+
+
+def packet_freshness_markdown(cue: Mapping[str, str], label: str) -> str:
+    command = clean(cue.get("run_command"))
+    return (
+        f"- {label} packet freshness: {cue.get('status') or 'unknown'} | "
+        f"{cue.get('detail') or 'refresh packet before trusting counts'}"
+        f"{' | refresh: `' + command + '`' if command else ''}"
+    )
+
+
+def packet_freshness_html(panel: Mapping[str, Any], prefix: str, label: str) -> str:
+    status = clean(panel.get(f"{prefix}_freshness_status")) or "packet_unknown"
+    detail = clean(panel.get(f"{prefix}_freshness_detail")) or "Refresh packet before trusting packet counts."
+    command = clean(panel.get(f"{prefix}_refresh_command"))
+    tone = "good" if status == "packet_ready" else "warn" if status in {"packet_missing", "packet_empty"} else "neutral"
+    command_line = f"<code>{html.escape(command)}</code>" if command else ""
+    return f"""
+      <div class="packet-freshness-cue">
+        <div class="row-kicker">{html.escape(label)} packet freshness {pill(status, tone)}</div>
+        <p>{html.escape(detail)}</p>
+        {command_line}
+      </div>
+    """
+
+
 def asset_availability_readiness_panel() -> Dict[str, Any]:
     audit = read_json("data/asset_registry/asset_availability_audit.json")
     logo_packet_rows = read_csv("data/asset_registry/wnba/logo_review_packets.csv")
     logo_packets = logo_review_packet_rows(logo_packet_rows)
+    logo_packet_cue = packet_freshness_cue(
+        "data/asset_registry/wnba/logo_review_packets.csv",
+        len(logo_packet_rows),
+        RUN_COMMANDS["data/asset_registry/wnba/logo_review_packets.csv"],
+        context="WNBA logo review",
+    )
     findings = audit.get("findings") if isinstance(audit.get("findings"), list) else []
     severity_counts = audit.get("severity_counts") if isinstance(audit.get("severity_counts"), dict) else {}
     domain_counts = audit.get("asset_domain_counts") if isinstance(audit.get("asset_domain_counts"), dict) else {}
@@ -1056,6 +1110,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "logo_review_packet_rows": len(logo_packet_rows),
         "logo_review_packet_unapproved_rows": sum(1 for row in logo_packet_rows if "unapproved" in clean(row.get("issue_type")).lower()),
         "logo_review_packet_source_drift_rows": sum(1 for row in logo_packet_rows if "source" in clean(row.get("issue_type")).lower() or "drift" in clean(row.get("issue_type")).lower()),
+        "logo_review_packet_freshness_status": logo_packet_cue["status"],
+        "logo_review_packet_freshness_detail": logo_packet_cue["detail"],
+        "logo_review_packet_refresh_command": logo_packet_cue["run_command"],
         "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
@@ -2157,6 +2214,12 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
     identity_review_packet_rows = read_csv("data/asset_registry/wnba/athlete_identity_review_packet.csv")
     identity_review_packets = athlete_identity_review_packet_rows(identity_review_packet_rows)
     identity_review_packet_teams = athlete_identity_review_packet_team_summary(identity_review_packet_rows)
+    identity_packet_cue = packet_freshness_cue(
+        "data/asset_registry/wnba/athlete_identity_review_packet.csv",
+        len(identity_review_packet_rows),
+        RUN_COMMANDS["data/asset_registry/wnba/athlete_identity_review_packet.csv"],
+        context="WNBA athlete identity review",
+    )
     identity_candidate_by_id = athlete_identity_candidates_by_athlete(identity_candidate_rows)
     identity_backfill_rows = read_csv("data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv")
     identity_backfills_by_id = athlete_identity_backfills_by_athlete(identity_backfill_rows)
@@ -2251,6 +2314,9 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         "identity_review_packet_rows": len(identity_review_packet_rows),
         "identity_review_packet_hold_rows": sum(1 for row in identity_review_packet_rows if clean(row.get("identity_hold")).lower() == "true"),
         "identity_review_packet_default_rows": sum(1 for row in identity_review_packet_rows if clean(row.get("default_approval_present")).lower() == "true"),
+        "identity_review_packet_freshness_status": identity_packet_cue["status"],
+        "identity_review_packet_freshness_detail": identity_packet_cue["detail"],
+        "identity_review_packet_refresh_command": identity_packet_cue["run_command"],
         "identity_review_packets": identity_review_packets,
         "identity_review_packet_teams": identity_review_packet_teams,
         "identity_resolution_inbox_rows": len(identity_resolution_rows),
@@ -6089,6 +6155,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Missing player assets</span><strong>{html.escape(str(panel.get('missing_player_asset_findings', 0)))}</strong></div>
             <div><span>Logo review packets</span><strong>{html.escape(str(panel.get('logo_review_packet_rows', 0)))}</strong></div>
           </div>
+          {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
             <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
@@ -6307,6 +6374,7 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
             <div><span>Closure high rows</span><strong>{html.escape(str(panel.get('identity_closure_high_rows', 0)))}</strong></div>
             <div><span>Blank closure/backfill decisions</span><strong>{html.escape(str(panel.get('identity_closure_blank_decisions', 0)))}/{html.escape(str(panel.get('identity_provider_backfill_blank_decisions', 0)))}</strong></div>
           </div>
+          {packet_freshness_html(panel, 'identity_review_packet', 'Identity review')}
           <div class="review-flow">
             <div><span>1</span><strong>Open source</strong><p>Compare source headshot and contact sheet by eye.</p></div>
             <div><span>2</span><strong>Verify identity</strong><p>Crop score is not identity proof; wrong-person risk must be held.</p></div>
@@ -7589,6 +7657,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- League mark findings: {asset_panel.get('league_logo_findings', 0)}",
         f"- Renderer findings: {asset_panel.get('renderer_findings', 0)}",
         f"- Logo review packets: {asset_panel.get('logo_review_packet_rows', 0)} ({asset_panel.get('logo_review_packet_unapproved_rows', 0)} unapproved / {asset_panel.get('logo_review_packet_source_drift_rows', 0)} source drift)",
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("logo_review_packet_freshness_status"),
+                "detail": asset_panel.get("logo_review_packet_freshness_detail"),
+                "run_command": asset_panel.get("logo_review_packet_refresh_command"),
+            },
+            "Logo review",
+        ),
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
@@ -7612,6 +7688,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Identity audit: {athlete_photo_panel.get('identity_audit_status') or 'not_run'} ({athlete_photo_panel.get('identity_audit_issue_rows', 0)} issue row(s))",
         f"- Identity resolution: {athlete_photo_panel.get('identity_resolution_status') or 'not_run'} ({athlete_photo_panel.get('identity_resolution_inbox_rows', 0)} inbox row(s))",
         f"- Identity review packets: {athlete_photo_panel.get('identity_review_packet_rows', 0)} ({athlete_photo_panel.get('identity_review_packet_hold_rows', 0)} holds / {athlete_photo_panel.get('identity_review_packet_default_rows', 0)} default approvals)",
+        packet_freshness_markdown(
+            {
+                "status": athlete_photo_panel.get("identity_review_packet_freshness_status"),
+                "detail": athlete_photo_panel.get("identity_review_packet_freshness_detail"),
+                "run_command": athlete_photo_panel.get("identity_review_packet_refresh_command"),
+            },
+            "Identity review",
+        ),
         f"- Closure/backfill: {athlete_photo_panel.get('identity_closure_status') or 'not_run'} ({athlete_photo_panel.get('identity_closure_rows', 0)}/{athlete_photo_panel.get('identity_provider_backfill_rows', 0)} row(s))",
         f"- Closure detail: high/critical={athlete_photo_panel.get('identity_closure_high_rows', 0)} | blank closure decisions={athlete_photo_panel.get('identity_closure_blank_decisions', 0)} | manual backfill review={athlete_photo_panel.get('identity_provider_backfill_manual_review_rows', 0)} | blank backfill decisions={athlete_photo_panel.get('identity_provider_backfill_blank_decisions', 0)}",
         f"- Closure next safe action: {athlete_photo_panel.get('identity_closure_next_step') or 'Open the manual closure packet only after source evidence review.'}",

@@ -1935,7 +1935,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.76.0-asset-panel-packet-fallbacks"
+    assert payload["version"] == "hsd-operator-command-center-v3.77.0-asset-packet-freshness-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2026,6 +2026,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["finding_count"] == 5
     assert payload["asset_readiness_panel"]["logo_review_packet_rows"] == 1
     assert payload["asset_readiness_panel"]["logo_review_packet_unapproved_rows"] == 1
+    assert payload["asset_readiness_panel"]["logo_review_packet_freshness_status"] == "packet_ready"
+    assert "present with 1 row(s)" in payload["asset_readiness_panel"]["logo_review_packet_freshness_detail"]
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision_lane"] == "wnba_athlete_identity_resolution"
     assert payload["asset_readiness_panel"]["top_findings"][0]["default_operator_decision"] == "hold_identity"
@@ -2059,6 +2061,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "packet: wnba_logo_review / hold_league_mark / optional_league_logo_file_missing_review_only" in markdown
     assert "packet: manual_review / review_required / review_required" not in markdown
     assert "Logo review packets: 1 (1 unapproved / 0 source drift)" in markdown
+    assert "Logo review packet freshness: packet_ready" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
@@ -2066,6 +2069,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "fallback: HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane." in markdown
     assert "review-only fallback status not recorded" not in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
+    assert "Identity review packet freshness: packet_ready" in markdown
     assert "Identity team queue: new_york_liberty | packets=1 | holds=1 | defaults=1 | high=1" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
     assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown
@@ -2078,6 +2082,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_rows"] == 1
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_hold_rows"] == 1
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_default_rows"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_freshness_status"] == "packet_ready"
+    assert "present with 1 row(s)" in payload["athlete_photo_onboarding_panel"]["identity_review_packet_freshness_detail"]
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_teams"][0] == {
         "team_id": "new_york_liberty",
         "packet_rows": "1",
@@ -2876,6 +2882,60 @@ def test_athlete_photo_panel_prioritizes_identity_packets_before_onboarding(tmp_
     assert panel["identity_review_packet_hold_rows"] == 1
     assert panel["identity_review_packet_default_rows"] == 1
     assert "athlete_identity_review_packet.csv" in panel["next_step"]
+
+
+def test_command_center_surfaces_missing_asset_packet_freshness_cues(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("data/asset_registry").mkdir(parents=True)
+    Path("data/asset_registry/wnba").mkdir(parents=True)
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "status": "review_required",
+            "finding_count": 1,
+            "severity_counts": {"warning": 1},
+            "asset_domain_counts": {"team_logo": 1},
+            "finding_counts": {"logo_present_without_complete_approval": 1},
+            "findings": [
+                {
+                    "asset_domain": "team_logo",
+                    "entity_name": "New York Liberty",
+                    "entity_id": "new_york_liberty",
+                    "finding": "logo_present_without_complete_approval",
+                    "recommended_next_step": "human_review_required_before_renderer_logo_use",
+                    "renderer_fallback_cue": "review_only_logo_hold",
+                }
+            ],
+            "policy": {
+                "no_paid_apis": True,
+                "no_asset_downloads": True,
+                "no_auto_approval": True,
+                "no_file_movement_into_publish_ready_lanes": True,
+                "no_publishing": True,
+            },
+        },
+    )
+
+    asset_panel = command_center.asset_availability_readiness_panel()
+    athlete_panel = command_center.athlete_photo_onboarding_panel({})
+    asset_html = command_center.render_asset_readiness_panel(asset_panel)
+    athlete_html = command_center.render_athlete_photo_onboarding_panel(athlete_panel)
+
+    assert asset_panel["panel_status"] == "review_required"
+    assert asset_panel["logo_review_packet_rows"] == 0
+    assert asset_panel["logo_review_packet_freshness_status"] == "packet_missing"
+    assert "active holds may still be visible" in asset_panel["logo_review_packet_freshness_detail"]
+    assert "scripts\\validate_hsd_wnba_asset_registry_v1.py" in asset_panel["logo_review_packet_refresh_command"]
+    assert "Logo review packet freshness" in asset_html
+    assert "packet_missing" in asset_html
+
+    assert athlete_panel["panel_status"] == "not_run"
+    assert athlete_panel["identity_review_packet_rows"] == 0
+    assert athlete_panel["identity_review_packet_freshness_status"] == "packet_missing"
+    assert "active holds may still be visible" in athlete_panel["identity_review_packet_freshness_detail"]
+    assert "scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py" in athlete_panel["identity_review_packet_refresh_command"]
+    assert "Identity review packet freshness" in athlete_html
+    assert "packet_missing" in athlete_html
 
 
 def test_athlete_photo_panel_surfaces_identity_closure_packet_breakdown(tmp_path, monkeypatch) -> None:
