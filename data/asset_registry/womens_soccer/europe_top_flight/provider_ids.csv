@@ -1,0 +1,10 @@
+entity_type,entity_id,provider,provider_id,provider_url,source_url,manual_review_status,approval_status,notes
+league,wsl_england,hsd_manual_registry,wsl_england,,https://www.wslfootball.com/,review_required,not_approved,Internal manual-safe slug only
+league,liga_f_spain,hsd_manual_registry,liga_f_spain,,https://www.laliga.com/en-GB/liga-f,review_required,not_approved,Internal manual-safe slug only
+league,frauen_bundesliga_germany,hsd_manual_registry,frauen_bundesliga_germany,,https://www.dfb.de/en/women/womens-bundesliga,review_required,not_approved,Internal manual-safe slug only
+league,premiere_ligue_france,hsd_manual_registry,premiere_ligue_france,,https://uk.fff.fr/,review_required,not_approved,Internal manual-safe slug only
+league,serie_a_women_italy,hsd_manual_registry,serie_a_women_italy,,https://www.figc.it/it/femminile/,review_required,not_approved,Internal manual-safe slug only
+team,arsenal_women,hsd_manual_registry,arsenal_women,,https://www.arsenal.com/women,review_required,not_approved,Internal manual-safe slug only
+team,chelsea_women,hsd_manual_registry,chelsea_women,,https://www.chelseafc.com/en/teams/chelsea-women,review_required,not_approved,Internal manual-safe slug only
+team,manchester_city_women,hsd_manual_registry,manchester_city_women,,https://www.mancity.com/teams/mcwfc,review_required,not_approved,Internal manual-safe slug only
+team,manchester_united_women,hsd_manual_registry,manchester_united_women,,https://www.manutd.com/en/teams/women,review_required,not_approved,Internal manual-safe slug only

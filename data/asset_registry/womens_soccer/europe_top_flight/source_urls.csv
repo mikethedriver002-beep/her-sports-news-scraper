@@ -1,0 +1,26 @@
+entity_type,entity_id,source_kind,source_url,source_domain,source_tier,manual_review_status,paid_source,download_allowed,approval_status,notes
+league,wsl_england,league_home,https://www.wslfootball.com/,www.wslfootball.com,official_candidate,review_required,false,false,not_approved,Official league home source candidate
+league,wsl_england,clubs_index,https://www.wslfootball.com/clubs/index,www.wslfootball.com,official_candidate,review_required,false,false,not_approved,Official clubs index source candidate
+league,wsl_england,players_index,https://www.wslfootball.com/players/index,www.wslfootball.com,official_candidate,review_required,false,false,not_approved,Official players index source candidate
+league,wsl_england,standings_index,https://www.wslfootball.com/standings/wsl,www.wslfootball.com,official_candidate,review_required,false,false,not_approved,Official standings source candidate
+league,liga_f_spain,league_home,https://www.laliga.com/en-GB/liga-f,www.laliga.com,official_candidate,review_required,false,false,not_approved,Official league home source candidate
+league,liga_f_spain,clubs_index,https://www.laliga.com/en-GB/liga-f/clubs,www.laliga.com,official_candidate,review_required,false,false,not_approved,Official clubs source candidate
+league,liga_f_spain,players_index,https://www.laliga.com/en-GB/liga-f/stats,www.laliga.com,official_candidate,review_required,false,false,not_approved,Official stats/source candidate
+league,frauen_bundesliga_germany,league_home,https://www.dfb.de/en/women/womens-bundesliga,www.dfb.de,official_candidate,review_required,false,false,not_approved,Official league home source candidate
+league,frauen_bundesliga_germany,clubs_index,https://www.dfb.de/en/women/womens-bundesliga,www.dfb.de,official_candidate,review_required,false,false,not_approved,Official clubs source candidate
+league,premiere_ligue_france,league_home,https://uk.fff.fr/,uk.fff.fr,official_candidate,review_required,false,false,not_approved,Official FFF source candidate
+league,premiere_ligue_france,clubs_index,https://uk.fff.fr/,uk.fff.fr,official_candidate,review_required,false,false,not_approved,Official FFF/LFFP clubs source candidate needs manual exact-page review
+league,serie_a_women_italy,league_home,https://www.figc.it/it/femminile/,www.figc.it,official_candidate,review_required,false,false,not_approved,Official FIGC source candidate
+league,serie_a_women_italy,clubs_index,https://www.figc.it/it/femminile/,www.figc.it,official_candidate,review_required,false,false,not_approved,Official FIGC clubs source candidate needs manual exact-page review
+team,arsenal_women,team_site,https://www.arsenal.com/women,www.arsenal.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,arsenal_women,roster,https://www.arsenal.com/women/players,www.arsenal.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,arsenal_women,logo_review_source,https://www.arsenal.com/women,www.arsenal.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,chelsea_women,team_site,https://www.chelseafc.com/en/teams/chelsea-women,www.chelseafc.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,chelsea_women,roster,https://www.chelseafc.com/en/teams/chelsea-women,www.chelseafc.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,chelsea_women,logo_review_source,https://www.chelseafc.com/en/teams/chelsea-women,www.chelseafc.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,manchester_city_women,team_site,https://www.mancity.com/teams/mcwfc,www.mancity.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,manchester_city_women,roster,https://www.mancity.com/teams/mcwfc,www.mancity.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,manchester_city_women,logo_review_source,https://www.mancity.com/teams/mcwfc,www.mancity.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,manchester_united_women,team_site,https://www.manutd.com/en/teams/women,www.manutd.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,manchester_united_women,roster,https://www.manutd.com/en/teams/women,www.manutd.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,manchester_united_women,logo_review_source,https://www.manutd.com/en/teams/women,www.manutd.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate

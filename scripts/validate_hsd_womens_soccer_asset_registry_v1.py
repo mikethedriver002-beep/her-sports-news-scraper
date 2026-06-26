@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 VERSION = "v1.0-womens-soccer-asset-registry-review-only"
 REGISTRY = Path("data/asset_registry/womens_soccer/nwsl")
+EUROPE_REGISTRY = Path("data/asset_registry/womens_soccer/europe_top_flight")
 OUT_JSON = REGISTRY / "review_scaffold_report.json"
 OUT_MD = REGISTRY / "review_scaffold_report.md"
 
@@ -134,6 +135,21 @@ REQUIRED_TEAM_APPROVAL_SCOPES = {
     "team_roster_source",
 }
 
+REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES = {
+    "wsl_england",
+    "liga_f_spain",
+    "frauen_bundesliga_germany",
+    "premiere_ligue_france",
+    "serie_a_women_italy",
+}
+
+REQUIRED_EUROPE_PILOT_TEAMS = {
+    "arsenal_women",
+    "chelsea_women",
+    "manchester_city_women",
+    "manchester_united_women",
+}
+
 
 def clean(value: Any) -> str:
     return str(value or "").strip()
@@ -168,10 +184,12 @@ def values(rows_by_file: Dict[str, List[Dict[str, str]]], file_name: str, field:
 
 def evaluate(root: Path) -> Dict[str, Any]:
     base = root / REGISTRY
+    europe_base = root / EUROPE_REGISTRY
     blockers: List[str] = []
     warnings: List[str] = []
     rows_by_file: Dict[str, List[Dict[str, str]]] = {}
     headers_by_file: Dict[str, List[str]] = {}
+    europe_rows_by_file: Dict[str, List[Dict[str, str]]] = {}
 
     for file_name, required_fields in EXPECTED_FILES.items():
         path = base / file_name
@@ -225,6 +243,74 @@ def evaluate(root: Path) -> Dict[str, Any]:
                 value = clean(row.get(url_field))
                 if value and not value.startswith("https://"):
                     blockers.append(f"non_https_source:{ident}:{url_field}")
+
+    for file_name, required_fields in EXPECTED_FILES.items():
+        path = europe_base / file_name
+        if not path.exists():
+            blockers.append(f"missing_europe_registry_file:{file_name}")
+            continue
+        fields = header(path)
+        rows = read_rows(path)
+        europe_rows_by_file[file_name] = rows
+        missing = sorted(set(required_fields) - set(fields))
+        for field in missing:
+            blockers.append(f"missing_required_europe_field:{file_name}:{field}")
+        for index, row in enumerate(rows):
+            ident = f"europe_top_flight:{row_identity(file_name, index, row)}"
+            for field in FALSE_ONLY_FIELDS & set(row):
+                value = clean(row.get(field)).lower()
+                if value and value != "false":
+                    blockers.append(f"unsafe_truthy_field:{ident}:{field}={value}")
+            for field in NOT_APPROVED_FIELDS & set(row):
+                value = clean(row.get(field)).lower()
+                if value in {"approved", "true", "auto_approved", "render_approved"}:
+                    blockers.append(f"approval_not_review_only:{ident}:{field}={value}")
+            url_fields = [
+                field
+                for field in row
+                if field.endswith("_url")
+                or field
+                in {
+                    "source_url",
+                    "official_url",
+                    "teams_url",
+                    "players_url",
+                    "team_site_url",
+                    "roster_source_url",
+                    "league_team_url",
+                    "roster_url",
+                    "schedule_url",
+                    "logo_review_source_url",
+                }
+            ]
+            for url_field in url_fields:
+                value = clean(row.get(url_field))
+                if value and not value.startswith("https://"):
+                    blockers.append(f"non_https_source:{ident}:{url_field}")
+
+    europe_leagues = set(values(europe_rows_by_file, "leagues.csv", "league_id"))
+    for league_id in sorted(REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES - europe_leagues):
+        blockers.append(f"missing_required_europe_top_flight_league:{league_id}")
+
+    europe_teams = set(values(europe_rows_by_file, "teams.csv", "team_id"))
+    for team_id in sorted(REQUIRED_EUROPE_PILOT_TEAMS - europe_teams):
+        blockers.append(f"missing_required_europe_pilot_team:{team_id}")
+
+    europe_league_mark_rows = {
+        clean(row.get("entity_id"))
+        for row in europe_rows_by_file.get("asset_slots.csv", [])
+        if clean(row.get("entity_type")) == "league" and clean(row.get("asset_slot")) == "league_mark"
+    }
+    for league_id in sorted(REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES - europe_league_mark_rows):
+        blockers.append(f"missing_europe_league_mark_slot:{league_id}")
+
+    europe_team_logo_rows = {
+        clean(row.get("entity_id"))
+        for row in europe_rows_by_file.get("asset_slots.csv", [])
+        if clean(row.get("entity_type")) == "team" and clean(row.get("asset_slot")) == "primary_logo"
+    }
+    for team_id in sorted(REQUIRED_EUROPE_PILOT_TEAMS - europe_team_logo_rows):
+        blockers.append(f"missing_europe_pilot_team_logo_slot:{team_id}")
 
     team_asset_rows = {
         clean(row.get("entity_id"))
@@ -286,6 +372,10 @@ def evaluate(root: Path) -> Dict[str, Any]:
     player_count = len(rows_by_file.get("players.csv", []))
     if player_count == 0:
         warnings.append("players_csv_header_only_manual_intake")
+    europe_player_count = len(europe_rows_by_file.get("players.csv", []))
+    if europe_player_count == 0:
+        warnings.append("europe_players_csv_header_only_manual_intake")
+    warnings.append("europe_top_flight_team_rows_are_pilot_only_manual_expansion_required")
 
     status = "passed_womens_soccer_review_scaffold" if not blockers else "blocked_womens_soccer_review_scaffold"
     return {
@@ -299,6 +389,13 @@ def evaluate(root: Path) -> Dict[str, Any]:
         "required_team_count": len(REQUIRED_NWSL_TEAMS),
         "team_count": len(teams),
         "player_count": player_count,
+        "europe_top_flight_required_league_count": len(REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES),
+        "europe_top_flight_league_count": len(europe_leagues),
+        "europe_top_flight_required_pilot_team_count": len(REQUIRED_EUROPE_PILOT_TEAMS),
+        "europe_top_flight_pilot_team_count": len(europe_teams),
+        "europe_top_flight_player_count": europe_player_count,
+        "europe_top_flight_source_url_count": len(europe_rows_by_file.get("source_urls.csv", [])),
+        "europe_top_flight_asset_slot_count": len(europe_rows_by_file.get("asset_slots.csv", [])),
         "source_url_count": len(rows_by_file.get("source_urls.csv", [])),
         "asset_slot_count": len(rows_by_file.get("asset_slots.csv", [])),
         "league_source_kind_count": len(league_source_kinds),
@@ -331,6 +428,10 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         f"Required NWSL teams: `{report['team_count']}/{report['required_team_count']}`",
         f"Players: `{report['player_count']}`",
         f"Source URL rows: `{report['source_url_count']}`",
+        f"Europe top-flight leagues: `{report['europe_top_flight_league_count']}/{report['europe_top_flight_required_league_count']}`",
+        f"Europe pilot teams: `{report['europe_top_flight_pilot_team_count']}/{report['europe_top_flight_required_pilot_team_count']}`",
+        f"Europe source URL rows: `{report['europe_top_flight_source_url_count']}`",
+        f"Europe asset slot rows: `{report['europe_top_flight_asset_slot_count']}`",
         f"League source kinds: `{report['league_source_kind_count']}/{report['required_league_source_kind_count']}`",
         f"Team source kinds required: `{report['required_team_source_kind_count']}`",
         f"Team review scopes required: `{report['required_team_approval_scope_count']}`",
