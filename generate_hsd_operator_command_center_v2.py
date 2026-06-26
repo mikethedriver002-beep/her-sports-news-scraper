@@ -3231,7 +3231,8 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
             "## Stop/Go",
             "",
             "- GO only if exact required logos/images are approved or the packet explicitly says no player asset is required.",
-            "- HOLD if any team, player, league, source, crop, or identity asset is uncertain.",
+            "- HOLD this selected-template render if required team logos, source proof, format fit, or manual-path evidence is uncertain.",
+            "- Keep future photo-first and optional league-mark issues review-only; they do not approve assets or create a publish-ready lane.",
             "- Do not use text-logo fallback for public graphics.",
             "",
         ]
