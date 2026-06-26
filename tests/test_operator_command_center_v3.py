@@ -144,13 +144,21 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
         list(backfill_row.keys()),
     )
 
-    identity = command_center.active_athlete_identity_for_packet({"top_performers": "Breanna Stewart: PTS 20"})
+    packet = {"packet_id": "render_prep_test", "title": "Breanna Stewart powers Liberty", "top_performers": "Breanna Stewart: PTS 20"}
+    identity = command_center.active_athlete_identity_for_packet(packet)
+    packet.update(identity)
+    active_queue_rows = command_center.active_asset_review_queue_rows(packet)
+    active_queue_md = command_center.render_active_asset_review_queue(packet, active_queue_rows)
 
     assert identity["active_athlete_identity_status"] == "hold_identity_review_required"
     assert "closure_rows=1" in identity["active_athlete_identity_closure_cues"]
     assert "provider_backfill_rows=1" in identity["active_athlete_identity_closure_cues"]
     assert identity["athlete_identity_closure_artifact"] == "data/asset_registry/wnba/athlete_identity_closure_packet.md"
     assert identity["athlete_identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
+    assert active_queue_rows[0]["identity_closure_artifact"] == "data/asset_registry/wnba/athlete_identity_closure_packet.md"
+    assert active_queue_rows[0]["identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
+    assert "Identity closure packet: `data/asset_registry/wnba/athlete_identity_closure_packet.md`" in active_queue_md
+    assert "Identity backfill packet: `data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv`" in active_queue_md
 
 
 def test_command_center_generated_artifacts_point_to_current_output_when_latest_exists(tmp_path, monkeypatch) -> None:
@@ -1883,7 +1891,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.63.0-render-handoff-closure-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.64.0-active-queue-closure-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
