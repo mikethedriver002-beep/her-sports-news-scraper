@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.71.0-athlete-queue-identity-details"
+VERSION = "hsd-operator-command-center-v3.72.0-active-queue-review-source"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3163,7 +3163,7 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
         matched_logo_team_ids.add(team_id)
         add_row(
             {
-                "review_queue_id": clean(item.get("decision_packet_id")) or f"active_logo_{team_id}",
+                "review_queue_id": clean(item.get("decision_packet_id")) or clean(item.get("packet_id")) or f"active_logo_{team_id}",
                 "packet_id": packet_id,
                 "asset_domain": "team_logo",
                 "entity_type": "team",
@@ -3311,6 +3311,8 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             "",
             f"- Domain: `{clean(row.get('asset_domain'))}`",
             f"- Status: `{clean(row.get('review_status'))}`",
+            f"- Review queue ID: `{clean(row.get('review_queue_id')) or 'n/a'}`",
+            f"- Review source: `{clean(row.get('review_source')) or 'n/a'}`",
             f"- Issue: {clean(row.get('issue_type')) or 'review required'}",
             f"- Registered path: `{clean(row.get('registered_path')) or 'n/a'}`",
             f"- Source target path: `{clean(row.get('source_target_path')) or 'n/a'}`",
@@ -3321,6 +3323,7 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             *evidence_lines,
             *identity_detail_lines,
             *closure_lines,
+            f"- Review-only policy: {clean(row.get('review_only_policy')) or 'review_only_no_auto_approval_no_file_movement_no_publish_ready_lane'}",
             f"- Guardrails: review_only={clean(row.get('review_only'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}",
             "",
         ]

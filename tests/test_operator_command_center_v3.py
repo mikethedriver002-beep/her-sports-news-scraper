@@ -1899,7 +1899,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.71.0-athlete-queue-identity-details"
+    assert payload["version"] == "hsd-operator-command-center-v3.72.0-active-queue-review-source"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2650,6 +2650,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Breanna Stewart" in active_queue
     assert "Evidence: Hold the logo slot until source and local file are manually checked." in active_queue
     assert "Evidence: approved marker decision_source=default" in active_queue
+    assert "Review queue ID: `logo_packet_new_york_liberty_unapproved`" in active_queue
+    assert "Review queue ID: `new_york_liberty_breanna_stewart`" in active_queue
+    assert "Review source: `data/asset_registry/wnba/logo_review_packets.csv`" in active_queue
+    assert "Review source: `data/asset_registry/wnba/athlete_identity_review_packet.csv`" in active_queue
+    assert "Review-only policy: logo_review_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
+    assert "Review-only policy: manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
     assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
     assert "Provider player ID: `1627668`" in active_queue
     assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue
