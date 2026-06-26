@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.80.0-decision-review-order-checklist"
+VERSION = "hsd-operator-command-center-v3.81.0-active-asset-evidence-gaps"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -105,6 +105,11 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "renderer_fallback_cue",
     "selected_template_blocking_status",
     "selected_template_blocking_reason",
+    "evidence_gap_status",
+    "local_asset_state",
+    "official_source_candidate",
+    "current_registry_source",
+    "cannot_clear_automatically_because",
     "blocker_summary",
     "allowed_decisions",
     "primary_action",
@@ -141,6 +146,10 @@ MANUAL_ASSET_SOURCE_BOARD_FIELDS = [
     "source_hint_url",
     "current_local_asset",
     "registry_source_target",
+    "current_registry_source",
+    "evidence_gap_status",
+    "local_asset_state",
+    "cannot_clear_automatically_because",
     "source_confidence",
     "identity_confidence",
     "manual_approval_status",
@@ -3366,6 +3375,135 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
     )
 
 
+def logo_review_catalog_lookup() -> Dict[str, Dict[str, str]]:
+    lookup: Dict[str, Dict[str, str]] = {}
+    for item in read_csv("data/asset_registry/wnba/logo_review_catalog.csv"):
+        normalized = {key: clean(value) for key, value in item.items()}
+        keys = {
+            clean(normalized.get("entity_id")).lower(),
+            clean(normalized.get("team_id")).lower(),
+            clean(normalized.get("display_name")).lower(),
+        }
+        for key in keys:
+            if key and key not in lookup:
+                lookup[key] = normalized
+    return lookup
+
+
+def logo_review_catalog_row(row: Mapping[str, str], lookup: Mapping[str, Dict[str, str]]) -> Dict[str, str]:
+    for value in (
+        clean(row.get("entity_id")).lower(),
+        clean(row.get("team_id")).lower(),
+        clean(row.get("entity_name")).lower(),
+    ):
+        if value and value in lookup:
+            return lookup[value]
+    return {}
+
+
+def local_asset_state(row: Mapping[str, str], catalog_row: Mapping[str, str]) -> str:
+    status = clean(catalog_row.get("status"))
+    file_exists = clean(catalog_row.get("file_exists")).lower()
+    approved = clean(catalog_row.get("registry_approved")).lower()
+    manual_status = clean(row.get("manual_approval_status")).lower()
+    source_confidence = clean(row.get("source_confidence")).lower()
+    issue = clean(row.get("issue_type")).lower()
+    if status:
+        if "unapproved" in status or (file_exists == "true" and approved == "false"):
+            return "present_but_unapproved"
+        if "missing" in status or file_exists == "false":
+            return "missing_or_unregistered"
+        return status
+    if "unapproved" in manual_status:
+        return "present_but_unapproved"
+    if "missing" in manual_status or "missing" in source_confidence or "missing" in issue:
+        return "missing_or_unregistered"
+    if clean(row.get("asset_path")) or clean(row.get("registered_path")):
+        return "present_manual_review_required"
+    return "manual_review_required"
+
+
+def evidence_gap_status(row: Mapping[str, str], catalog_row: Mapping[str, str]) -> str:
+    source_policy = clean(catalog_row.get("source_policy_status")).lower()
+    asset_state = local_asset_state(row, catalog_row)
+    blocking_status = clean(row.get("selected_template_blocking_status"))
+    if "non_official" in source_policy:
+        return "present_unapproved_legacy_source_review"
+    if "official_source_needed" in source_policy:
+        return "official_source_needed_review_only"
+    if blocking_status == "not_blocking_selected_template_league_mark_not_required":
+        return "league_mark_context_missing_or_unregistered"
+    if asset_state == "present_but_unapproved":
+        return "present_but_unapproved"
+    if asset_state == "missing_or_unregistered":
+        return "missing_or_unregistered"
+    if clean(row.get("source_check_url")):
+        return "source_hint_present_manual_review_required"
+    return "manual_evidence_review_required"
+
+
+def current_registry_source(row: Mapping[str, str], catalog_row: Mapping[str, str]) -> str:
+    return (
+        clean(catalog_row.get("current_registry_source_url"))
+        or clean(row.get("source_check_url"))
+        or "missing"
+    )
+
+
+def official_logo_source_candidate(row: Mapping[str, str], catalog_row: Mapping[str, str]) -> str:
+    return clean(catalog_row.get("official_source_url")) or manual_asset_source_candidate(dict(row))
+
+
+def cannot_clear_automatically_reason(row: Mapping[str, str], catalog_row: Mapping[str, str]) -> str:
+    name = clean(row.get("entity_name")) or clean(row.get("entity_id")) or "asset"
+    blocking_status = clean(row.get("selected_template_blocking_status"))
+    source_policy = clean(catalog_row.get("source_policy_status"))
+    asset_state = local_asset_state(row, catalog_row)
+    manual_status = clean(row.get("manual_approval_status")) or "manual_review_required"
+    if blocking_status.startswith("blocking_selected_template"):
+        return (
+            f"{name} is selected-template blocking; local/source evidence and a human-edited manual approval "
+            f"must be resolved first (asset_state={asset_state}; manual_approval_status={manual_status}; "
+            f"source_policy={source_policy or 'manual_review_required'})."
+        )
+    if blocking_status == "not_blocking_selected_template_league_mark_not_required":
+        return (
+            f"{name} is league-mark context only for this packet; it stays review-only unless a template "
+            f"explicitly requires a league mark (asset_state={asset_state}; manual_approval_status={manual_status})."
+        )
+    return (
+        f"{name} requires manual evidence review before any renderer trust change "
+        f"(asset_state={asset_state}; manual_approval_status={manual_status})."
+    )
+
+
+def add_asset_evidence_gap_fields(row: Dict[str, str], lookup: Mapping[str, Dict[str, str]]) -> Dict[str, str]:
+    catalog_row = logo_review_catalog_row(row, lookup) if clean(row.get("asset_domain")) in {"team_logo", "league_logo"} else {}
+    enriched = dict(row)
+    enriched["official_source_candidate"] = (
+        official_logo_source_candidate(row, catalog_row)
+        if clean(row.get("asset_domain")) in {"team_logo", "league_logo"}
+        else manual_asset_source_candidate(row)
+    )
+    enriched["current_registry_source"] = (
+        current_registry_source(row, catalog_row)
+        if clean(row.get("asset_domain")) in {"team_logo", "league_logo"}
+        else clean(row.get("source_check_url")) or "manual_identity_source_required"
+    )
+    enriched["local_asset_state"] = (
+        local_asset_state(row, catalog_row)
+        if clean(row.get("asset_domain")) in {"team_logo", "league_logo"}
+        else "identity_review_required"
+    )
+    enriched["evidence_gap_status"] = (
+        evidence_gap_status(row, catalog_row)
+        if clean(row.get("asset_domain")) in {"team_logo", "league_logo"}
+        else clean(row.get("identity_confidence")) or "manual_identity_review_required"
+    )
+    enriched["cannot_clear_automatically_because"] = cannot_clear_automatically_reason(row, catalog_row)
+    return enriched
+
+
 def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[str, str]]:
     if not packet:
         return []
@@ -3374,6 +3512,7 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
     rows: List[Dict[str, str]] = []
     seen: set[str] = set()
     matched_logo_team_ids: set[str] = set()
+    logo_catalog = logo_review_catalog_lookup()
 
     def add_row(row: Dict[str, str]) -> None:
         key = clean(row.get("review_queue_id"))
@@ -3384,6 +3523,7 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
         for field, value in selected_template_blocking_status(packet, enriched).items():
             if not clean(enriched.get(field)):
                 enriched[field] = value
+        enriched = add_asset_evidence_gap_fields(enriched, logo_catalog)
         rows.append({field: clean(enriched.get(field)) for field in ACTIVE_ASSET_REVIEW_QUEUE_FIELDS})
 
     for item in read_csv("data/asset_registry/wnba/logo_review_packets.csv"):
@@ -3543,6 +3683,22 @@ def active_queue_entity_list(rows: List[Dict[str, str]], *, limit: int = 6) -> s
     return " | ".join(names[:limit]) + f" | +{len(names) - limit} more"
 
 
+def active_queue_evidence_gap_list(rows: List[Dict[str, str]], *, limit: int = 4) -> str:
+    parts: List[str] = []
+    for row in rows:
+        name = clean(row.get("entity_name")) or clean(row.get("entity_id"))
+        status = clean(row.get("evidence_gap_status")) or "manual_evidence_review_required"
+        reason = clean(row.get("cannot_clear_automatically_because"))
+        if not name:
+            continue
+        parts.append(f"{name}: {status}; {reason}" if reason else f"{name}: {status}")
+    if not parts:
+        return "none"
+    if len(parts) <= limit:
+        return " | ".join(parts)
+    return " | ".join(parts[:limit]) + f" | +{len(parts) - limit} more"
+
+
 def manual_asset_source_priority(row: Dict[str, str]) -> str:
     blocking_status = clean(row.get("selected_template_blocking_status"))
     if blocking_status.startswith("blocking_selected_template"):
@@ -3626,6 +3782,11 @@ def manual_asset_source_board_rows(active_rows: List[Dict[str, str]]) -> List[Di
             "source_hint_url": clean(row.get("source_check_url")),
             "current_local_asset": clean(row.get("asset_path")) or clean(row.get("registered_path")),
             "registry_source_target": clean(row.get("source_target_path")) or clean(row.get("registered_path")),
+            "current_registry_source": clean(row.get("current_registry_source")) or "missing",
+            "evidence_gap_status": clean(row.get("evidence_gap_status")) or "manual_evidence_review_required",
+            "local_asset_state": clean(row.get("local_asset_state")) or "manual_review_required",
+            "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because"))
+            or "Manual evidence review is required before any renderer trust change.",
             "source_confidence": clean(row.get("source_confidence")),
             "identity_confidence": clean(row.get("identity_confidence")),
             "manual_approval_status": clean(row.get("manual_approval_status")) or "manual_review_required",
@@ -3687,10 +3848,12 @@ def decision_stop_go_summary(
         "active_asset_stop_go": clean(packet.get("active_asset_stop_go")) if packet else "clear_no_active_asset_holds",
         "selected_template_blockers": len(blocking_rows),
         "selected_template_entities": active_queue_entity_list(blocking_rows),
+        "selected_template_evidence_gaps": active_queue_evidence_gap_list(blocking_rows),
         "future_photo_first_holds": len(future_photo_rows),
         "future_photo_first_entities": active_queue_entity_list(future_photo_rows),
         "league_mark_context_holds": len(league_context_rows),
         "league_mark_context_entities": active_queue_entity_list(league_context_rows),
+        "league_mark_evidence_gaps": active_queue_evidence_gap_list(league_context_rows),
         "active_queue_rows": len(active_rows),
         "source_board_rows": len(source_board_rows),
         "active_queue_artifact": "render_handoff_top_packet/active_asset_review_queue.md",
@@ -3816,6 +3979,10 @@ def render_manual_asset_source_board(packet: Dict[str, str] | None, rows: List[D
             f"- Source hint URL: {clean(row.get('source_hint_url')) or 'n/a'}",
             f"- Current local asset: `{clean(row.get('current_local_asset')) or 'n/a'}`",
             f"- Registry/source target: `{clean(row.get('registry_source_target')) or 'n/a'}`",
+            f"- Current registry source: {clean(row.get('current_registry_source')) or 'missing'}",
+            f"- Evidence gap status: `{clean(row.get('evidence_gap_status')) or 'manual_evidence_review_required'}`",
+            f"- Local asset state: `{clean(row.get('local_asset_state')) or 'manual_review_required'}`",
+            f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because')) or 'Manual evidence review is required before any renderer trust change.'}",
             f"- Source confidence: `{clean(row.get('source_confidence')) or 'manual_review_required'}`",
             f"- Identity confidence: `{clean(row.get('identity_confidence')) or 'n/a'}`",
             f"- Manual approval status: `{clean(row.get('manual_approval_status'))}`",
@@ -3913,6 +4080,11 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             f"- Source target path: `{clean(row.get('source_target_path')) or 'n/a'}`",
             f"- Asset path: `{clean(row.get('asset_path')) or 'n/a'}`",
             f"- Source check URL: {clean(row.get('source_check_url')) or 'n/a'}",
+            f"- Official source candidate: {clean(row.get('official_source_candidate')) or 'manual lookup required'}",
+            f"- Current registry source: {clean(row.get('current_registry_source')) or 'missing'}",
+            f"- Evidence gap status: `{clean(row.get('evidence_gap_status')) or 'manual_evidence_review_required'}`",
+            f"- Local asset state: `{clean(row.get('local_asset_state')) or 'manual_review_required'}`",
+            f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because')) or 'Manual evidence review is required before any renderer trust change.'}",
             f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
             f"- Primary action: {clean(row.get('primary_action')) or 'manual review required'}",
             *evidence_lines,
@@ -5533,6 +5705,10 @@ def render_decision_stop_go_summary_panel(summary: Dict[str, Any]) -> str:
             {pill('no auto-approval')}
             {pill('no publishing')}
           </div>
+          <div class="asset-guidance-grid">
+            <div><span>Selected-template evidence gap</span><strong>{html.escape(short(clean(summary.get('selected_template_evidence_gaps')) or 'none', 220))}</strong></div>
+            <div><span>League-mark context evidence gap</span><strong>{html.escape(short(clean(summary.get('league_mark_evidence_gaps')) or 'none', 220))}</strong></div>
+          </div>
           <p class="muted">{html.escape(clean(summary.get('guardrail_summary')))}</p>
         </div>
       </div>
@@ -5606,10 +5782,14 @@ def render_manual_asset_source_board_cards(rows: Iterable[Dict[str, str]]) -> st
               <p>{html.escape(short(clean(row.get('required_asset')), 180))}</p>
               <div class="asset-guidance-grid">
                 <div><span>Official/free source</span><strong>{html.escape(short(clean(row.get('official_source_candidate')), 135))}</strong></div>
+                <div><span>Current registry source</span><strong>{html.escape(short(clean(row.get('current_registry_source')) or 'missing', 135))}</strong></div>
                 <div><span>Search</span><strong>{html.escape(short(clean(row.get('manual_search_query')), 135))}</strong></div>
                 <div><span>Local asset</span><strong>{html.escape(short(clean(row.get('current_local_asset')) or 'missing', 135))}</strong></div>
+                <div><span>Asset state</span><strong>{html.escape(short(clean(row.get('local_asset_state')) or 'manual_review_required', 135))}</strong></div>
+                <div><span>Evidence gap</span><strong>{html.escape(short(clean(row.get('evidence_gap_status')) or 'manual_evidence_review_required', 135))}</strong></div>
                 <div><span>Action</span><strong>{html.escape(short(clean(row.get('recommended_operator_action')), 135))}</strong></div>
               </div>
+              <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')) or 'Manual evidence review is required before any renderer trust change.', 220))}</p>
               <p class="muted">{html.escape(short(clean(row.get('free_source_candidate')), 180))}</p>
               <p class="muted">Legacy reference only: {html.escape(short(clean(row.get('legacy_reference_model')), 150))}</p>
               <div class="asset-blocker-actions">
@@ -8159,8 +8339,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Status: {stop_go.get('panel_status') or 'not_run'}",
         f"- Active asset stop/go: {stop_go.get('active_asset_stop_go') or 'clear_no_active_asset_holds'}",
         f"- Selected-template blockers: {stop_go.get('selected_template_blockers', 0)} ({stop_go.get('selected_template_entities') or 'none'})",
+        f"- Selected-template evidence gap: {stop_go.get('selected_template_evidence_gaps') or 'none'}",
         f"- Future photo-first holds: {stop_go.get('future_photo_first_holds', 0)} ({stop_go.get('future_photo_first_entities') or 'none'})",
         f"- League-mark context: {stop_go.get('league_mark_context_holds', 0)} ({stop_go.get('league_mark_context_entities') or 'none'})",
+        f"- League-mark evidence gap: {stop_go.get('league_mark_evidence_gaps') or 'none'}",
         f"- Active queue: `{stop_go.get('active_queue_artifact') or 'render_handoff_top_packet/active_asset_review_queue.md'}`",
         f"- Manual source board: `{stop_go.get('manual_asset_source_board_artifact') or 'render_handoff_top_packet/manual_asset_source_board.md'}`",
         f"- Next safe action: {stop_go.get('next_step') or 'review manually'}",
@@ -8221,7 +8403,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Guardrails: no downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
-        f"- Source board row: {item.get('priority')} | {item.get('asset_domain')} | {item.get('entity_name') or item.get('entity_id')} | required={item.get('required_asset')} | source={item.get('official_source_candidate')} | query={item.get('manual_search_query')} | local={item.get('current_local_asset') or 'missing'} | packet={item.get('manual_review_packet') or 'n/a'} | copy={item.get('operator_copy_target') or 'n/a'} | downloads={item.get('asset_downloads')} | approval={item.get('auto_approval')} | publish_ready={item.get('publish_ready')}"
+        f"- Source board row: {item.get('priority')} | {item.get('asset_domain')} | {item.get('entity_name') or item.get('entity_id')} | required={item.get('required_asset')} | source={item.get('official_source_candidate')} | current_registry_source={item.get('current_registry_source') or 'missing'} | evidence_gap={item.get('evidence_gap_status') or 'manual_evidence_review_required'} | local_state={item.get('local_asset_state') or 'manual_review_required'} | cannot_clear={item.get('cannot_clear_automatically_because') or 'manual evidence review required'} | query={item.get('manual_search_query')} | local={item.get('current_local_asset') or 'missing'} | packet={item.get('manual_review_packet') or 'n/a'} | copy={item.get('operator_copy_target') or 'n/a'} | downloads={item.get('asset_downloads')} | approval={item.get('auto_approval')} | publish_ready={item.get('publish_ready')}"
         for item in source_board[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
