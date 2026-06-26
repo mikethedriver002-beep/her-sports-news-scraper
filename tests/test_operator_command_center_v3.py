@@ -152,6 +152,96 @@ def test_asset_readiness_panel_surfaces_logo_contact_sheet(tmp_path, monkeypatch
     assert "Logo contact sheet packet freshness" in html
 
 
+def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    registry = Path("data/asset_registry/womens_soccer")
+    registry.mkdir(parents=True)
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "status": "review_required",
+            "finding_count": 0,
+            "severity_counts": {},
+            "asset_domain_counts": {},
+            "finding_counts": {},
+            "policy": {"no_auto_approval": True, "no_asset_downloads": True},
+            "findings": [],
+        },
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv",
+        [
+            {
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "entity_type": "team",
+                "entity_id": "angel_city_fc",
+                "display_name": "Angel City FC",
+                "local_logo_path": "assets/leagues/womens_soccer/nwsl/teams/angel_city_fc/logo.png",
+                "official_source_candidate": "https://www.angelcity.com/",
+                "current_approval_status": "not_approved",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            },
+            {
+                "scope_id": "europe_top_flight",
+                "league_id": "wsl_england",
+                "entity_type": "league",
+                "entity_id": "wsl_england",
+                "display_name": "Barclays Women's Super League",
+                "local_logo_path": "assets/leagues/womens_soccer/europe_top_flight/wsl_england/league_mark.png",
+                "official_source_candidate": "https://www.wslfootball.com/",
+                "current_approval_status": "not_approved",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            },
+        ],
+        [
+            "scope_id",
+            "league_id",
+            "entity_type",
+            "entity_id",
+            "display_name",
+            "local_logo_path",
+            "official_source_candidate",
+            "current_approval_status",
+            "review_only",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+            "asset_downloads",
+        ],
+    )
+    Path("data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md").write_text("# Contact sheet\n", encoding="utf-8")
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json",
+        {"status": "contact_sheet_ready", "row_count": 2, "review_only": True},
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["womens_soccer_logo_contact_sheet_rows"] == 2
+    assert panel["womens_soccer_logo_contact_sheet_status"] == "contact_sheet_ready"
+    assert panel["womens_soccer_logo_contact_sheet_freshness_status"] == "packet_ready"
+    assert any(item["label"] == "Women's soccer logo contact sheet" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer logo review intake" for item in panel["file_shortcuts"])
+    assert "Soccer logo sweep rows" in html
+    assert "Women&#x27;s soccer logo contact sheet packet freshness" in html
+
+
 def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     packet_dir = Path("data/asset_registry/wnba")

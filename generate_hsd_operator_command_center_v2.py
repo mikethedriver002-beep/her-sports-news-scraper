@@ -437,6 +437,11 @@ ARTIFACTS = [
     ("Graphics", "WNBA team logo contact sheet data", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv"),
     ("Graphics", "WNBA team logo review intake", "data/asset_registry/wnba/wnba_team_logo_review_intake.csv"),
     ("Graphics", "WNBA team logo contact sheet manifest", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json"),
+    ("Graphics", "Women's soccer logo contact sheet", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md"),
+    ("Graphics", "Women's soccer logo contact sheet image", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.png"),
+    ("Graphics", "Women's soccer logo contact sheet data", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv"),
+    ("Graphics", "Women's soccer logo review intake", "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv"),
+    ("Graphics", "Women's soccer logo contact sheet manifest", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -491,6 +496,11 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
     "data/asset_registry/wnba/wnba_team_logo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
     "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_logo_contact_sheet_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.png": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_logo_contact_sheet_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_logo_contact_sheet_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_logo_contact_sheet_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_logo_contact_sheet_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -1214,11 +1224,19 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     logo_packet_rows = read_csv("data/asset_registry/wnba/logo_review_packets.csv")
     logo_contact_manifest = read_json("data/asset_registry/wnba/wnba_team_logo_contact_sheet.json")
     logo_contact_rows = read_csv("data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv")
+    womens_soccer_logo_contact_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json")
+    womens_soccer_logo_contact_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv")
     logo_contact_cue = packet_freshness_cue(
         "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md",
         len(logo_contact_rows),
         RUN_COMMANDS["data/asset_registry/wnba/wnba_team_logo_contact_sheet.md"],
         context="WNBA team logo contact sheet",
+    )
+    womens_soccer_logo_contact_cue = packet_freshness_cue(
+        "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md",
+        len(womens_soccer_logo_contact_rows),
+        RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md"],
+        context="women's soccer logo contact sheet",
     )
     logo_packets = logo_review_packet_rows(logo_packet_rows)
     logo_packet_cue = packet_freshness_cue(
@@ -1274,6 +1292,11 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "logo_contact_sheet_freshness_status": logo_contact_cue["status"],
         "logo_contact_sheet_freshness_detail": logo_contact_cue["detail"],
         "logo_contact_sheet_refresh_command": logo_contact_cue["run_command"],
+        "womens_soccer_logo_contact_sheet_status": clean(womens_soccer_logo_contact_manifest.get("status")) if isinstance(womens_soccer_logo_contact_manifest, dict) else "",
+        "womens_soccer_logo_contact_sheet_rows": len(womens_soccer_logo_contact_rows),
+        "womens_soccer_logo_contact_sheet_freshness_status": womens_soccer_logo_contact_cue["status"],
+        "womens_soccer_logo_contact_sheet_freshness_detail": womens_soccer_logo_contact_cue["detail"],
+        "womens_soccer_logo_contact_sheet_refresh_command": womens_soccer_logo_contact_cue["run_command"],
         "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
@@ -1293,6 +1316,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("WNBA logo review packets", "data/asset_registry/wnba/logo_review_packets.csv", "Review unapproved logos and source path drift rows before renderer trust."),
             file_shortcut("WNBA team logo contact sheet", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md", "Open every active WNBA logo in one sweep-review board."),
             file_shortcut("WNBA team logo review intake", "data/asset_registry/wnba/wnba_team_logo_review_intake.csv", "Human-edited approve/deny/hold worksheet; this generator does not apply decisions."),
+            file_shortcut("Women's soccer logo contact sheet", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md", "Review NWSL team logos and European top-flight league mark source candidates in one sweep board."),
+            file_shortcut("Women's soccer logo review intake", "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv", "Human-edited approve/deny/hold worksheet; this generator does not apply decisions."),
             file_shortcut("Logo asset catalog", "data/asset_registry/logo_asset_catalog.md", "Cross-check logo approval status and source policy."),
         ],
     }
@@ -7397,9 +7422,11 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Missing player assets</span><strong>{html.escape(str(panel.get('missing_player_asset_findings', 0)))}</strong></div>
             <div><span>Logo review packets</span><strong>{html.escape(str(panel.get('logo_review_packet_rows', 0)))}</strong></div>
             <div><span>Logo sweep rows</span><strong>{html.escape(str(panel.get('logo_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Soccer logo sweep rows</span><strong>{html.escape(str(panel.get('womens_soccer_logo_contact_sheet_rows', 0)))}</strong></div>
           </div>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
+          {packet_freshness_html(panel, 'womens_soccer_logo_contact_sheet', "Women's soccer logo contact sheet")}
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
             <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
@@ -8938,6 +8965,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Renderer findings: {asset_panel.get('renderer_findings', 0)}",
         f"- Logo review packets: {asset_panel.get('logo_review_packet_rows', 0)} ({asset_panel.get('logo_review_packet_unapproved_rows', 0)} unapproved / {asset_panel.get('logo_review_packet_source_drift_rows', 0)} source drift)",
         f"- Logo contact sheet rows: {asset_panel.get('logo_contact_sheet_rows', 0)}",
+        f"- Women's soccer logo contact sheet rows: {asset_panel.get('womens_soccer_logo_contact_sheet_rows', 0)}",
         packet_freshness_markdown(
             {
                 "status": asset_panel.get("logo_review_packet_freshness_status"),
@@ -8953,6 +8981,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("logo_contact_sheet_refresh_command"),
             },
             "Logo contact sheet",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("womens_soccer_logo_contact_sheet_freshness_status"),
+                "detail": asset_panel.get("womens_soccer_logo_contact_sheet_freshness_detail"),
+                "run_command": asset_panel.get("womens_soccer_logo_contact_sheet_refresh_command"),
+            },
+            "Women's soccer logo contact sheet",
         ),
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",

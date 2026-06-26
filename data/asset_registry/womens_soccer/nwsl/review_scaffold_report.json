@@ -3,8 +3,15 @@
   "auto_approval_allowed": false,
   "auto_download_allowed": false,
   "blockers": [],
+  "europe_top_flight_asset_slot_count": 10,
+  "europe_top_flight_league_count": 5,
+  "europe_top_flight_pilot_team_count": 4,
+  "europe_top_flight_player_count": 0,
+  "europe_top_flight_required_league_count": 5,
+  "europe_top_flight_required_pilot_team_count": 4,
+  "europe_top_flight_source_url_count": 25,
   "expected_file_count": 7,
-  "generated_at_utc": "2026-06-26T01:45:19.482850+00:00",
+  "generated_at_utc": "2026-06-26T23:23:48.582398+00:00",
   "league_source_kind_count": 7,
   "player_count": 0,
   "present_file_count": 7,
@@ -136,6 +143,8 @@
   },
   "version": "v1.0-womens-soccer-asset-registry-review-only",
   "warnings": [
+    "europe_players_csv_header_only_manual_intake",
+    "europe_top_flight_team_rows_are_pilot_only_manual_expansion_required",
     "players_csv_header_only_manual_intake"
   ]
 }

@@ -6,7 +6,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from validate_hsd_womens_soccer_asset_registry_v1 import REQUIRED_NWSL_TEAMS, evaluate
+from validate_hsd_womens_soccer_asset_registry_v1 import (
+    REQUIRED_EUROPE_PILOT_TEAMS,
+    REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES,
+    REQUIRED_NWSL_TEAMS,
+    evaluate,
+)
 
 
 def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
@@ -16,6 +21,13 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert report["required_team_count"] == 16
     assert report["player_count"] == 0
     assert report["source_url_count"] == 87
+    assert report["europe_top_flight_league_count"] == len(REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES)
+    assert report["europe_top_flight_required_league_count"] == 5
+    assert report["europe_top_flight_pilot_team_count"] == len(REQUIRED_EUROPE_PILOT_TEAMS)
+    assert report["europe_top_flight_required_pilot_team_count"] == 4
+    assert report["europe_top_flight_player_count"] == 0
+    assert report["europe_top_flight_source_url_count"] >= 25
+    assert report["europe_top_flight_asset_slot_count"] == 10
     assert report["league_source_kind_count"] == report["required_league_source_kind_count"]
     assert report["required_team_source_kind_count"] == 5
     for team_id in REQUIRED_NWSL_TEAMS:
@@ -32,11 +44,13 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert report["publish_ready"] is False
     assert not report["blockers"]
     assert "players_csv_header_only_manual_intake" in report["warnings"]
+    assert "europe_players_csv_header_only_manual_intake" in report["warnings"]
+    assert "europe_top_flight_team_rows_are_pilot_only_manual_expansion_required" in report["warnings"]
 
 
 def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
-    base = ROOT / "data" / "asset_registry" / "womens_soccer" / "nwsl"
-    text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(base.glob("*.csv")))
+    base = ROOT / "data" / "asset_registry" / "womens_soccer"
+    text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(base.glob("*/*.csv")))
     forbidden = [
         ",true,approved",
         "render_enabled,true",
@@ -49,6 +63,9 @@ def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
         assert token not in text
     assert "assets/leagues/womens_soccer/nwsl/teams/angel_city_fc/logo.png" in text
     assert "https://www.nwslsoccer.com/teams/index" in text
+    assert "https://www.wslfootball.com/" in text
+    assert "https://www.laliga.com/en-GB/liga-f" in text
+    assert "europe_top_flight/wsl_england/teams/arsenal_women/logo.png" in text
     assert "logo_review_source" in text
     assert "nwsl_roster" in text
     assert "nwsl_schedule" in text
