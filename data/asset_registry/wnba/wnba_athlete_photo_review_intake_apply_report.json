@@ -1,0 +1,1824 @@
+{
+  "version": "hsd-wnba-athlete-photo-review-intake-apply-v1",
+  "generated_at_utc": "2026-06-26T22:56:01.017837+00:00",
+  "review_only": true,
+  "policy": "manual_intake_only_no_downloads_no_file_movement_no_publish_ready_lane",
+  "intake_rows": 200,
+  "approved_intake_rows": 196,
+  "revise_asset_rows": 4,
+  "applied_review_only_metadata": 196,
+  "failed_rows": 0,
+  "applied_rows": [
+    {
+      "athlete_id": "atlanta_dream_aaliyah_nye",
+      "athlete_name": "Aaliyah Nye",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1642801",
+      "source_url_to_record": "https://www.wnba.com/player/1642801/aaliyah-nye",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_allisha_gray",
+      "athlete_name": "Allisha Gray",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1628277",
+      "source_url_to_record": "https://www.wnba.com/player/1628277/allisha-gray",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_amy_okonkwo",
+      "athlete_name": "Amy Okonkwo",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1629539",
+      "source_url_to_record": "https://www.wnba.com/player/1629539/amy-okonkwo",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_angel_reese",
+      "athlete_name": "Angel Reese",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1642291",
+      "source_url_to_record": "https://www.wnba.com/player/1642291/angel-reese",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_brionna_jones",
+      "athlete_name": "Brionna Jones",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1628280",
+      "source_url_to_record": "https://www.wnba.com/player/1628280/brionna-jones",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_indya_nivar",
+      "athlete_name": "Indya Nivar",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1643469",
+      "source_url_to_record": "https://www.wnba.com/player/1643469/indya-nivar",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_isobel_borlase",
+      "athlete_name": "Isobel Borlase",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1642302",
+      "source_url_to_record": "https://www.wnba.com/player/1642302/isobel-borlase",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_jordin_canada",
+      "athlete_name": "Jordin Canada",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1628886",
+      "source_url_to_record": "https://www.wnba.com/player/1628886/jordin-canada",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_madina_okot",
+      "athlete_name": "Madina Okot",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1643431",
+      "source_url_to_record": "https://www.wnba.com/player/1643431/madina-okot",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_naz_hillmon",
+      "athlete_name": "Naz Hillmon",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1631044",
+      "source_url_to_record": "https://www.wnba.com/player/1631044/naz-hillmon",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_rhyne_howard",
+      "athlete_name": "Rhyne Howard",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1631009",
+      "source_url_to_record": "https://www.wnba.com/player/1631009/rhyne-howard",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_sika_kone",
+      "athlete_name": "Sika Kone",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1631021",
+      "source_url_to_record": "https://www.wnba.com/player/1631021/sika-kone",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "atlanta_dream_te_hina_paopao",
+      "athlete_name": "Te-Hina Paopao",
+      "team_id": "atlanta_dream",
+      "provider_player_id": "1642804",
+      "source_url_to_record": "https://www.wnba.com/player/1642804/te-hina-paopao",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_aicha_coulibaly",
+      "athlete_name": "Aicha Coulibaly",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1642786",
+      "source_url_to_record": "https://www.wnba.com/player/1642786/aicha-coulibaly",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_azura_stevens",
+      "athlete_name": "Azura Stevens",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1628922",
+      "source_url_to_record": "https://www.wnba.com/player/1628922/azura-stevens",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_courtney_vandersloot",
+      "athlete_name": "Courtney Vandersloot",
+      "team_id": "chicago_sky",
+      "provider_player_id": "202664",
+      "source_url_to_record": "https://www.wnba.com/player/202664/courtney-vandersloot",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_dijonai_carrington",
+      "athlete_name": "DiJonai Carrington",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1630096",
+      "source_url_to_record": "https://www.wnba.com/player/1630096/dijonai-carrington",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_elizabeth_williams",
+      "athlete_name": "Elizabeth Williams",
+      "team_id": "chicago_sky",
+      "provider_player_id": "204322",
+      "source_url_to_record": "https://www.wnba.com/player/204322/elizabeth-williams",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_gabriela_jaquez",
+      "athlete_name": "Gabriela Jaquez",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1643447",
+      "source_url_to_record": "https://www.wnba.com/player/1643447/gabriela-jaquez",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_jacy_sheldon",
+      "athlete_name": "Jacy Sheldon",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1642292",
+      "source_url_to_record": "https://www.wnba.com/player/1642292/jacy-sheldon",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_kamilla_cardoso",
+      "athlete_name": "Kamilla Cardoso",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1642289",
+      "source_url_to_record": "https://www.wnba.com/player/1642289/kamilla-cardoso",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_maddy_westbeld",
+      "athlete_name": "Maddy Westbeld",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1642818",
+      "source_url_to_record": "https://www.wnba.com/player/1642818/maddy-westbeld",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_natasha_cloud",
+      "athlete_name": "Natasha Cloud",
+      "team_id": "chicago_sky",
+      "provider_player_id": "204333",
+      "source_url_to_record": "https://www.wnba.com/player/204333/natasha-cloud",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_rachel_banham",
+      "athlete_name": "Rachel Banham",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1627671",
+      "source_url_to_record": "https://www.wnba.com/player/1627671/rachel-banham",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_rickea_jackson",
+      "athlete_name": "Rickea Jackson",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1642288",
+      "source_url_to_record": "https://www.wnba.com/player/1642288/rickea-jackson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_saylor_poffenbarger",
+      "athlete_name": "Saylor Poffenbarger",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1643458",
+      "source_url_to_record": "https://www.wnba.com/player/1643458/saylor-poffenbarger",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_skylar_diggins",
+      "athlete_name": "Skylar Diggins",
+      "team_id": "chicago_sky",
+      "provider_player_id": "203400",
+      "source_url_to_record": "https://www.wnba.com/player/203400/skylar-diggins",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "chicago_sky_sydney_taylor",
+      "athlete_name": "Sydney Taylor",
+      "team_id": "chicago_sky",
+      "provider_player_id": "1642321",
+      "source_url_to_record": "https://www.wnba.com/player/1642321/sydney-taylor",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_aaliyah_edwards",
+      "athlete_name": "Aaliyah Edwards",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1642290",
+      "source_url_to_record": "https://www.wnba.com/player/1642290/aaliyah-edwards",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_aneesah_morrow",
+      "athlete_name": "Aneesah Morrow",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1642800",
+      "source_url_to_record": "https://www.wnba.com/player/1642800/aneesah-morrow",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_ashlon_jackson",
+      "athlete_name": "Ashlon Jackson",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1643437",
+      "source_url_to_record": "https://www.wnba.com/player/1643437/ashlon-jackson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_brittney_griner",
+      "athlete_name": "Brittney Griner",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "203398",
+      "source_url_to_record": "https://www.wnba.com/player/203398/brittney-griner",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_charlisse_leger_walker",
+      "athlete_name": "Charlisse Leger-Walker",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1643449",
+      "source_url_to_record": "https://www.wnba.com/player/1643449/charlisse-leger-walker",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_diamond_miller",
+      "athlete_name": "Diamond Miller",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1641649",
+      "source_url_to_record": "https://www.wnba.com/player/1641649/diamond-miller",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_gianna_kneepkens",
+      "athlete_name": "Gianna Kneepkens",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1643429",
+      "source_url_to_record": "https://www.wnba.com/player/1643429/gianna-kneepkens",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_hailey_van_lith",
+      "athlete_name": "Hailey Van Lith",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1642817",
+      "source_url_to_record": "https://www.wnba.com/player/1642817/hailey-van-lith",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_kennedy_burke",
+      "athlete_name": "Kennedy Burke",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1629568",
+      "source_url_to_record": "https://www.wnba.com/player/1629568/kennedy-burke",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_leila_lacan",
+      "athlete_name": "Leila Lacan",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1642303",
+      "source_url_to_record": "https://www.wnba.com/player/1642303/leila-lacan",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_nell_angloma",
+      "athlete_name": "Nell Angloma",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1643448",
+      "source_url_to_record": "https://www.wnba.com/player/1643448/nell-angloma",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_olivia_nelson_ododa",
+      "athlete_name": "Olivia Nelson-Ododa",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1631135",
+      "source_url_to_record": "https://www.wnba.com/player/1631135/olivia-nelson-ododa",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_raegan_beers",
+      "athlete_name": "Raegan Beers",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1643441",
+      "source_url_to_record": "https://www.wnba.com/player/1643441/raegan-beers",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "connecticut_sun_saniya_rivers",
+      "athlete_name": "Saniya Rivers",
+      "team_id": "connecticut_sun",
+      "provider_player_id": "1642809",
+      "source_url_to_record": "https://www.wnba.com/player/1642809/saniya-rivers",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_alanna_smith",
+      "athlete_name": "Alanna Smith",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1629501",
+      "source_url_to_record": "https://www.wnba.com/player/1629501/alanna-smith",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_alysha_clark",
+      "athlete_name": "Alysha Clark",
+      "team_id": "dallas_wings",
+      "provider_player_id": "202252",
+      "source_url_to_record": "https://www.wnba.com/player/202252/alysha-clark",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_arike_ogunbowale",
+      "athlete_name": "Arike Ogunbowale",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1629481",
+      "source_url_to_record": "https://www.wnba.com/player/1629481/arike-ogunbowale",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_awak_kuier",
+      "athlete_name": "Awak Kuier",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1630386",
+      "source_url_to_record": "https://www.wnba.com/player/1630386/awak-kuier",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_aziaha_james",
+      "athlete_name": "Aziaha James",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1642793",
+      "source_url_to_record": "https://www.wnba.com/player/1642793/aziaha-james",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_azzi_fudd",
+      "athlete_name": "Azzi Fudd",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1643425",
+      "source_url_to_record": "https://www.wnba.com/player/1643425/azzi-fudd",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_costanza_verona",
+      "athlete_name": "Costanza Verona",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1643424",
+      "source_url_to_record": "https://www.wnba.com/player/1643424/costanza-verona",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_jessica_shepard",
+      "athlete_name": "Jessica Shepard",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1629491",
+      "source_url_to_record": "https://www.wnba.com/player/1629491/jessica-shepard",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_li_yueru",
+      "athlete_name": "Li Yueru",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1629574",
+      "source_url_to_record": "https://www.wnba.com/player/1629574/li-yueru",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_maddy_siegrist",
+      "athlete_name": "Maddy Siegrist",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1641652",
+      "source_url_to_record": "https://www.wnba.com/player/1641652/maddy-siegrist",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_odyssey_sims",
+      "athlete_name": "Odyssey Sims",
+      "team_id": "dallas_wings",
+      "provider_player_id": "203824",
+      "source_url_to_record": "https://www.wnba.com/player/203824/odyssey-sims",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_paige_bueckers",
+      "athlete_name": "Paige Bueckers",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1642784",
+      "source_url_to_record": "https://www.wnba.com/player/1642784/paige-bueckers",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "dallas_wings_sug_sutton",
+      "athlete_name": "Sug Sutton",
+      "team_id": "dallas_wings",
+      "provider_player_id": "1630134",
+      "source_url_to_record": "https://www.wnba.com/player/1630134/sug-sutton",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_ashten_prechtel",
+      "athlete_name": "Ashten Prechtel",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1641695",
+      "source_url_to_record": "https://www.wnba.com/player/1641695/ashten-prechtel",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_cecilia_zandalasini",
+      "athlete_name": "Cecilia Zandalasini",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1628508",
+      "source_url_to_record": "https://www.wnba.com/player/1628508/cecilia-zandalasini",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_gabby_williams",
+      "athlete_name": "Gabby Williams",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1628931",
+      "source_url_to_record": "https://www.wnba.com/player/1628931/gabby-williams",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_iliana_rupert",
+      "athlete_name": "Iliana Rupert",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1630387",
+      "source_url_to_record": "https://www.wnba.com/player/1630387/iliana-rupert",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_janelle_salaun",
+      "athlete_name": "Janelle Salaun",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1642767",
+      "source_url_to_record": "https://www.wnba.com/player/1642767/janelle-salaun",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_kaila_charles",
+      "athlete_name": "Kaila Charles",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1630097",
+      "source_url_to_record": "https://www.wnba.com/player/1630097/kaila-charles",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_kaitlyn_chen",
+      "athlete_name": "Kaitlyn Chen",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1642822",
+      "source_url_to_record": "https://www.wnba.com/player/1642822/kaitlyn-chen",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_kayla_thornton",
+      "athlete_name": "Kayla Thornton",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "203866",
+      "source_url_to_record": "https://www.wnba.com/player/203866/kayla-thornton",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_kiah_stokes",
+      "athlete_name": "Kiah Stokes",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "204329",
+      "source_url_to_record": "https://www.wnba.com/player/204329/kiah-stokes",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_laeticia_amihere",
+      "athlete_name": "Laeticia Amihere",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1641656",
+      "source_url_to_record": "https://www.wnba.com/player/1641656/laeticia-amihere",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_miela_sowah",
+      "athlete_name": "Miela Sowah",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1631039",
+      "source_url_to_record": "https://www.wnba.com/player/1631039/miela-sowah",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_tiffany_hayes",
+      "athlete_name": "Tiffany Hayes",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "203026",
+      "source_url_to_record": "https://www.wnba.com/player/203026/tiffany-hayes",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_veronica_burton",
+      "athlete_name": "Veronica Burton",
+      "team_id": "golden_state_valkyries",
+      "provider_player_id": "1631007",
+      "source_url_to_record": "https://www.wnba.com/player/1631007/veronica-burton",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_aliyah_boston",
+      "athlete_name": "Aliyah Boston",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1641648",
+      "source_url_to_record": "https://www.wnba.com/player/1641648/aliyah-boston",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_bree_hall",
+      "athlete_name": "Bree Hall",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1642788",
+      "source_url_to_record": "https://www.wnba.com/player/1642788/bree-hall",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_caitlin_clark",
+      "athlete_name": "Caitlin Clark",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1642286",
+      "source_url_to_record": "https://www.wnba.com/player/1642286/caitlin-clark",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_damiris_dantas",
+      "athlete_name": "Damiris Dantas",
+      "team_id": "indiana_fever",
+      "provider_player_id": "203024",
+      "source_url_to_record": "https://www.wnba.com/player/203024/damiris-dantas",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_grace_vanslooten",
+      "athlete_name": "Grace VanSlooten",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1643453",
+      "source_url_to_record": "https://www.wnba.com/player/1643453/grace-vanslooten",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_justine_pissott",
+      "athlete_name": "Justine Pissott",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1643495",
+      "source_url_to_record": "https://www.wnba.com/player/1643495/justine-pissott",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_kelsey_mitchell",
+      "athlete_name": "Kelsey Mitchell",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1628909",
+      "source_url_to_record": "https://www.wnba.com/player/1628909/kelsey-mitchell",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_lexie_hull",
+      "athlete_name": "Lexie Hull",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1631086",
+      "source_url_to_record": "https://www.wnba.com/player/1631086/lexie-hull",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_makayla_timpson",
+      "athlete_name": "Makayla Timpson",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1642815",
+      "source_url_to_record": "https://www.wnba.com/player/1642815/makayla-timpson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_monique_billings",
+      "athlete_name": "Monique Billings",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1628881",
+      "source_url_to_record": "https://www.wnba.com/player/1628881/monique-billings",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_myisha_hines_allen",
+      "athlete_name": "Myisha Hines-Allen",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1628899",
+      "source_url_to_record": "https://www.wnba.com/player/1628899/myisha-hines-allen",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_raven_johnson",
+      "athlete_name": "Raven Johnson",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1643433",
+      "source_url_to_record": "https://www.wnba.com/player/1643433/raven-johnson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_sophie_cunningham",
+      "athlete_name": "Sophie Cunningham",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1629482",
+      "source_url_to_record": "https://www.wnba.com/player/1629482/sophie-cunningham",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "indiana_fever_tyasha_harris",
+      "athlete_name": "Tyasha Harris",
+      "team_id": "indiana_fever",
+      "provider_player_id": "1630112",
+      "source_url_to_record": "https://www.wnba.com/player/1630112/tyasha-harris",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_a_ja_wilson",
+      "athlete_name": "A'ja Wilson",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1628932",
+      "source_url_to_record": "https://www.wnba.com/player/1628932/a-ja-wilson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_brianna_turner",
+      "athlete_name": "Brianna Turner",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1629488",
+      "source_url_to_record": "https://www.wnba.com/player/1629488/brianna-turner",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_chelsea_gray",
+      "athlete_name": "Chelsea Gray",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "203833",
+      "source_url_to_record": "https://www.wnba.com/player/203833/chelsea-gray",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_chennedy_carter",
+      "athlete_name": "Chennedy Carter",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1630150",
+      "source_url_to_record": "https://www.wnba.com/player/1630150/chennedy-carter",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_cheyenne_parker_tyus",
+      "athlete_name": "Cheyenne Parker-Tyus",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "204323",
+      "source_url_to_record": "https://www.wnba.com/player/204323/cheyenne-parker-tyus",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_dana_evans",
+      "athlete_name": "Dana Evans",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1630389",
+      "source_url_to_record": "https://www.wnba.com/player/1630389/dana-evans",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_jackie_young",
+      "athlete_name": "Jackie Young",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1629498",
+      "source_url_to_record": "https://www.wnba.com/player/1629498/jackie-young",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_janiah_barker",
+      "athlete_name": "Janiah Barker",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1643434",
+      "source_url_to_record": "https://www.wnba.com/player/1643434/janiah-barker",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_jewell_loyd",
+      "athlete_name": "Jewell Loyd",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "204319",
+      "source_url_to_record": "https://www.wnba.com/player/204319/jewell-loyd",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_kierstan_bell",
+      "athlete_name": "Kierstan Bell",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1631006",
+      "source_url_to_record": "https://www.wnba.com/player/1631006/kierstan-bell",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_nalyssa_smith",
+      "athlete_name": "NaLyssa Smith",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "1631019",
+      "source_url_to_record": "https://www.wnba.com/player/1631019/nalyssa-smith",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "las_vegas_aces_stephanie_talbot",
+      "athlete_name": "Stephanie Talbot",
+      "team_id": "las_vegas_aces",
+      "provider_player_id": "203855",
+      "source_url_to_record": "https://www.wnba.com/player/203855/stephanie-talbot",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_ariel_atkins",
+      "athlete_name": "Ariel Atkins",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1628878",
+      "source_url_to_record": "https://www.wnba.com/player/1628878/ariel-atkins",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_cameron_brink",
+      "athlete_name": "Cameron Brink",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1642287",
+      "source_url_to_record": "https://www.wnba.com/player/1642287/cameron-brink",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_chance_gray",
+      "athlete_name": "Chance Gray",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1643462",
+      "source_url_to_record": "https://www.wnba.com/player/1643462/chance-gray",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_dearica_hamby",
+      "athlete_name": "Dearica Hamby",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "204324",
+      "source_url_to_record": "https://www.wnba.com/player/204324/dearica-hamby",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_emma_cannon",
+      "athlete_name": "Emma Cannon",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1628242",
+      "source_url_to_record": "https://www.wnba.com/player/1628242/emma-cannon",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_erica_wheeler",
+      "athlete_name": "Erica Wheeler",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "204365",
+      "source_url_to_record": "https://www.wnba.com/player/204365/erica-wheeler",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_jihyun_park",
+      "athlete_name": "Jihyun Park",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1630148",
+      "source_url_to_record": "https://www.wnba.com/player/1630148/jihyun-park",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_kate_martin",
+      "athlete_name": "Kate Martin",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1642324",
+      "source_url_to_record": "https://www.wnba.com/player/1642324/kate-martin",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_kelsey_plum",
+      "athlete_name": "Kelsey Plum",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1628276",
+      "source_url_to_record": "https://www.wnba.com/player/1628276/kelsey-plum",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_laura_ziegler",
+      "athlete_name": "Laura Ziegler",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1643461",
+      "source_url_to_record": "https://www.wnba.com/player/1643461/laura-ziegler",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_nneka_ogwumike",
+      "athlete_name": "Nneka Ogwumike",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "203014",
+      "source_url_to_record": "https://www.wnba.com/player/203014/nneka-ogwumike",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_rae_burrell",
+      "athlete_name": "Rae Burrell",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1630996",
+      "source_url_to_record": "https://www.wnba.com/player/1630996/rae-burrell",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_sania_feagin",
+      "athlete_name": "Sania Feagin",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1642790",
+      "source_url_to_record": "https://www.wnba.com/player/1642790/sania-feagin",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "los_angeles_sparks_ta_niya_latson",
+      "athlete_name": "Ta'Niya Latson",
+      "team_id": "los_angeles_sparks",
+      "provider_player_id": "1643444",
+      "source_url_to_record": "https://www.wnba.com/player/1643444/ta-niya-latson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_anastasiia_olairi_kosu",
+      "athlete_name": "Anastasiia Olairi Kosu",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1642797",
+      "source_url_to_record": "https://www.wnba.com/player/1642797/anastasiia-olairi-kosu",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_antonia_delaere",
+      "athlete_name": "Antonia Delaere",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1643489",
+      "source_url_to_record": "https://www.wnba.com/player/1643489/antonia-delaere",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_courtney_williams",
+      "athlete_name": "Courtney Williams",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1627675",
+      "source_url_to_record": "https://www.wnba.com/player/1627675/courtney-williams",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_dorka_juhasz",
+      "athlete_name": "Dorka Juhasz",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1641657",
+      "source_url_to_record": "https://www.wnba.com/player/1641657/dorka-juhasz",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_eliska_hamzova",
+      "athlete_name": "Eliska Hamzova",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1643490",
+      "source_url_to_record": "https://www.wnba.com/player/1643490/eliska-hamzova",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_emma_cechova",
+      "athlete_name": "Emma Cechova",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1643488",
+      "source_url_to_record": "https://www.wnba.com/player/1643488/emma-cechova",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_kayla_mcbride",
+      "athlete_name": "Kayla McBride",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "203825",
+      "source_url_to_record": "https://www.wnba.com/player/203825/kayla-mcbride",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_liatu_king",
+      "athlete_name": "Liatu King",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1642820",
+      "source_url_to_record": "https://www.wnba.com/player/1642820/liatu-king",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_maya_caldwell",
+      "athlete_name": "Maya Caldwell",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1630471",
+      "source_url_to_record": "https://www.wnba.com/player/1630471/maya-caldwell",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_napheesa_collier",
+      "athlete_name": "Napheesa Collier",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1629483",
+      "source_url_to_record": "https://www.wnba.com/player/1629483/napheesa-collier",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_natasha_howard",
+      "athlete_name": "Natasha Howard",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "203827",
+      "source_url_to_record": "https://www.wnba.com/player/203827/natasha-howard",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_nia_coffey",
+      "athlete_name": "Nia Coffey",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1628269",
+      "source_url_to_record": "https://www.wnba.com/player/1628269/nia-coffey",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_olivia_miles",
+      "athlete_name": "Olivia Miles",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1643426",
+      "source_url_to_record": "https://www.wnba.com/player/1643426/olivia-miles",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "minnesota_lynx_teaira_mccowan",
+      "athlete_name": "Teaira McCowan",
+      "team_id": "minnesota_lynx",
+      "provider_player_id": "1629479",
+      "source_url_to_record": "https://www.wnba.com/player/1629479/teaira-mccowan",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_anneli_maley",
+      "athlete_name": "Anneli Maley",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1629546",
+      "source_url_to_record": "https://www.wnba.com/player/1629546/anneli-maley",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_betnijah_laney_hamilton",
+      "athlete_name": "Betnijah Laney-Hamilton",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1627673",
+      "source_url_to_record": "https://www.wnba.com/player/1627673/betnijah-laney-hamilton",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_breanna_stewart",
+      "athlete_name": "Breanna Stewart",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1630993",
+      "source_url_to_record": "https://www.wnba.com/player/1630993/breanna-stewart",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_han_xu",
+      "athlete_name": "Han Xu",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1629477",
+      "source_url_to_record": "https://www.wnba.com/player/1629477/han-xu",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_jonquel_jones",
+      "athlete_name": "Jonquel Jones",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1627668",
+      "source_url_to_record": "https://www.wnba.com/player/1627668/jonquel-jones",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_leonie_fiebich",
+      "athlete_name": "Leonie Fiebich",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "204296",
+      "source_url_to_record": "https://www.wnba.com/player/204296/leonie-fiebich",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_marine_fauthoux",
+      "athlete_name": "Marine Fauthoux",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1630469",
+      "source_url_to_record": "https://www.wnba.com/player/1630469/marine-fauthoux",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_marine_johannes",
+      "athlete_name": "Marine Johannes",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1629566",
+      "source_url_to_record": "https://www.wnba.com/player/1629566/marine-johannes",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_pauline_astier",
+      "athlete_name": "Pauline Astier",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1630384",
+      "source_url_to_record": "https://www.wnba.com/player/1630384/pauline-astier",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_raquel_carrera",
+      "athlete_name": "Raquel Carrera",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1630142",
+      "source_url_to_record": "https://www.wnba.com/player/1630142/raquel-carrera",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_rebekah_gardner",
+      "athlete_name": "Rebekah Gardner",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "203822",
+      "source_url_to_record": "https://www.wnba.com/player/203822/rebekah-gardner",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_sabrina_ionescu",
+      "athlete_name": "Sabrina Ionescu",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1631136",
+      "source_url_to_record": "https://www.wnba.com/player/1631136/sabrina-ionescu",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "new_york_liberty_satou_sabally",
+      "athlete_name": "Satou Sabally",
+      "team_id": "new_york_liberty",
+      "provider_player_id": "1630149",
+      "source_url_to_record": "https://www.wnba.com/player/1630149/satou-sabally",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_alyssa_thomas",
+      "athlete_name": "Alyssa Thomas",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1630461",
+      "source_url_to_record": "https://www.wnba.com/player/1630461/alyssa-thomas",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_jovana_nogic",
+      "athlete_name": "Jovana Nogic",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "201886",
+      "source_url_to_record": "https://www.wnba.com/player/201886/jovana-nogic",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_kahleah_copper",
+      "athlete_name": "Kahleah Copper",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1643493",
+      "source_url_to_record": "https://www.wnba.com/player/1643493/kahleah-copper",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_kiana_williams",
+      "athlete_name": "Kiana Williams",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1643487",
+      "source_url_to_record": "https://www.wnba.com/player/1643487/kiana-williams",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_kyara_linskens",
+      "athlete_name": "Kyara Linskens",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "203826",
+      "source_url_to_record": "https://www.wnba.com/player/203826/kyara-linskens",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_lexi_held",
+      "athlete_name": "Lexi Held",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "204468",
+      "source_url_to_record": "https://www.wnba.com/player/204468/lexi-held",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_marta_suarez",
+      "athlete_name": "Marta Suarez",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1642768",
+      "source_url_to_record": "https://www.wnba.com/player/1642768/marta-suarez",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_monique_akoa_makani",
+      "athlete_name": "Monique Akoa Makani",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1630442",
+      "source_url_to_record": "https://www.wnba.com/player/1630442/monique-akoa-makani",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_natasha_mack",
+      "athlete_name": "Natasha Mack",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1627674",
+      "source_url_to_record": "https://www.wnba.com/player/1627674/natasha-mack",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_quionche_carter",
+      "athlete_name": "Quionche Carter",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1631118",
+      "source_url_to_record": "https://www.wnba.com/player/1631118/quionche-carter",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_sami_whitcomb",
+      "athlete_name": "Sami Whitcomb",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1643505",
+      "source_url_to_record": "https://www.wnba.com/player/1643505/sami-whitcomb",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "phoenix_mercury_valeriane_ayayi",
+      "athlete_name": "Valeriane Ayayi",
+      "team_id": "phoenix_mercury",
+      "provider_player_id": "1642777",
+      "source_url_to_record": "https://www.wnba.com/player/1642777/valeriane-ayayi",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_bridget_carleton",
+      "athlete_name": "Bridget Carleton",
+      "team_id": "portland_fire",
+      "provider_player_id": "1629524",
+      "source_url_to_record": "https://www.wnba.com/player/1629524/bridget-carleton",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_carla_leite",
+      "athlete_name": "Carla Leite",
+      "team_id": "portland_fire",
+      "provider_player_id": "1642304",
+      "source_url_to_record": "https://www.wnba.com/player/1642304/carla-leite",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_emily_engstler",
+      "athlete_name": "Emily Engstler",
+      "team_id": "portland_fire",
+      "provider_player_id": "1631083",
+      "source_url_to_record": "https://www.wnba.com/player/1631083/emily-engstler",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_frieda_buhner",
+      "athlete_name": "Frieda Buhner",
+      "team_id": "portland_fire",
+      "provider_player_id": "1643494",
+      "source_url_to_record": "https://www.wnba.com/player/1643494/frieda-buhner",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_holly_winterburn",
+      "athlete_name": "Holly Winterburn",
+      "team_id": "portland_fire",
+      "provider_player_id": "1641683",
+      "source_url_to_record": "https://www.wnba.com/player/1641683/holly-winterburn",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_jordan_harrison",
+      "athlete_name": "Jordan Harrison",
+      "team_id": "portland_fire",
+      "provider_player_id": "1643527",
+      "source_url_to_record": "https://www.wnba.com/player/1643527/jordan-harrison",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_karlie_samuelson",
+      "athlete_name": "Karlie Samuelson",
+      "team_id": "portland_fire",
+      "provider_player_id": "1628317",
+      "source_url_to_record": "https://www.wnba.com/player/1628317/karlie-samuelson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_luisa_geiselsoder",
+      "athlete_name": "Luisa Geiselsoder",
+      "team_id": "portland_fire",
+      "provider_player_id": "1630143",
+      "source_url_to_record": "https://www.wnba.com/player/1630143/luisa-geiselsoder",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_megan_gustafson",
+      "athlete_name": "Megan Gustafson",
+      "team_id": "portland_fire",
+      "provider_player_id": "1629484",
+      "source_url_to_record": "https://www.wnba.com/player/1629484/megan-gustafson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_nyadiew_puoch",
+      "athlete_name": "Nyadiew Puoch",
+      "team_id": "portland_fire",
+      "provider_player_id": "1642296",
+      "source_url_to_record": "https://www.wnba.com/player/1642296/nyadiew-puoch",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_sarah_ashlee_barker",
+      "athlete_name": "Sarah Ashlee Barker",
+      "team_id": "portland_fire",
+      "provider_player_id": "1642782",
+      "source_url_to_record": "https://www.wnba.com/player/1642782/sarah-ashlee-barker",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_serah_williams",
+      "athlete_name": "Serah Williams",
+      "team_id": "portland_fire",
+      "provider_player_id": "1643436",
+      "source_url_to_record": "https://www.wnba.com/player/1643436/serah-williams",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "portland_fire_teja_oblak",
+      "athlete_name": "Teja Oblak",
+      "team_id": "portland_fire",
+      "provider_player_id": "1643506",
+      "source_url_to_record": "https://www.wnba.com/player/1643506/teja-oblak",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_awa_fam",
+      "athlete_name": "Awa Fam",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1643443",
+      "source_url_to_record": "https://www.wnba.com/player/1643443/awa-fam",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_dominique_malonga",
+      "athlete_name": "Dominique Malonga",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1642798",
+      "source_url_to_record": "https://www.wnba.com/player/1642798/dominique-malonga",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_ezi_magbegor",
+      "athlete_name": "Ezi Magbegor",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1629496",
+      "source_url_to_record": "https://www.wnba.com/player/1629496/ezi-magbegor",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_flau_jae_johnson",
+      "athlete_name": "Flau'jae Johnson",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1643428",
+      "source_url_to_record": "https://www.wnba.com/player/1643428/flau-jae-johnson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_jade_melbourne",
+      "athlete_name": "Jade Melbourne",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1631141",
+      "source_url_to_record": "https://www.wnba.com/player/1631141/jade-melbourne",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_jordan_horston",
+      "athlete_name": "Jordan Horston",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1641651",
+      "source_url_to_record": "https://www.wnba.com/player/1641651/jordan-horston",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_katie_lou_samuelson",
+      "athlete_name": "Katie Lou Samuelson",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1629478",
+      "source_url_to_record": "https://www.wnba.com/player/1629478/katie-lou-samuelson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_mackenzie_holmes",
+      "athlete_name": "Mackenzie Holmes",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1642307",
+      "source_url_to_record": "https://www.wnba.com/player/1642307/mackenzie-holmes",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_natisha_hiedeman",
+      "athlete_name": "Natisha Hiedeman",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1629567",
+      "source_url_to_record": "https://www.wnba.com/player/1629567/natisha-hiedeman",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_stefanie_dolson",
+      "athlete_name": "Stefanie Dolson",
+      "team_id": "seattle_storm",
+      "provider_player_id": "203828",
+      "source_url_to_record": "https://www.wnba.com/player/203828/stefanie-dolson",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_taina_mair",
+      "athlete_name": "Taina Mair",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1643473",
+      "source_url_to_record": "https://www.wnba.com/player/1643473/taina-mair",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_taylor_thierry",
+      "athlete_name": "Taylor Thierry",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1642814",
+      "source_url_to_record": "https://www.wnba.com/player/1642814/taylor-thierry",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "seattle_storm_zia_cooke",
+      "athlete_name": "Zia Cooke",
+      "team_id": "seattle_storm",
+      "provider_player_id": "1641660",
+      "source_url_to_record": "https://www.wnba.com/player/1641660/zia-cooke",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_brittney_sykes",
+      "athlete_name": "Brittney Sykes",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1628279",
+      "source_url_to_record": "https://www.wnba.com/player/1628279/brittney-sykes",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_isabelle_harrison",
+      "athlete_name": "Isabelle Harrison",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "204330",
+      "source_url_to_record": "https://www.wnba.com/player/204330/isabelle-harrison",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_julie_allemand",
+      "athlete_name": "Julie Allemand",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1627700",
+      "source_url_to_record": "https://www.wnba.com/player/1627700/julie-allemand",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_kia_nurse",
+      "athlete_name": "Kia Nurse",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1628915",
+      "source_url_to_record": "https://www.wnba.com/player/1628915/kia-nurse",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_kiki_rice",
+      "athlete_name": "Kiki Rice",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1643445",
+      "source_url_to_record": "https://www.wnba.com/player/1643445/kiki-rice",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_laura_juskaite",
+      "athlete_name": "Laura Juskaite",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1643420",
+      "source_url_to_record": "https://www.wnba.com/player/1643420/laura-juskaite",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_marina_mabrey",
+      "athlete_name": "Marina Mabrey",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1629497",
+      "source_url_to_record": "https://www.wnba.com/player/1629497/marina-mabrey",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_nyara_sabally",
+      "athlete_name": "Nyara Sabally",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1631055",
+      "source_url_to_record": "https://www.wnba.com/player/1631055/nyara-sabally",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_temi_fagbenle",
+      "athlete_name": "Temi Fagbenle",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1627701",
+      "source_url_to_record": "https://www.wnba.com/player/1627701/temi-fagbenle",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "toronto_tempo_teonni_key",
+      "athlete_name": "Teonni Key",
+      "team_id": "toronto_tempo",
+      "provider_player_id": "1643457",
+      "source_url_to_record": "https://www.wnba.com/player/1643457/teonni-key",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_alicia_florez",
+      "athlete_name": "Alicia Florez",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643644",
+      "source_url_to_record": "https://www.wnba.com/player/1643644/alicia-florez",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_angela_dugalic",
+      "athlete_name": "Angela Dugalic",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643455",
+      "source_url_to_record": "https://www.wnba.com/player/1643455/angela-dugalic",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_cassandre_prosper",
+      "athlete_name": "Cassandre Prosper",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643467",
+      "source_url_to_record": "https://www.wnba.com/player/1643467/cassandre-prosper",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_cotie_mcmahon",
+      "athlete_name": "Cotie McMahon",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643430",
+      "source_url_to_record": "https://www.wnba.com/player/1643430/cotie-mcmahon",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_darianna_littlepage_buggs",
+      "athlete_name": "Darianna Littlepage-Buggs",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643440",
+      "source_url_to_record": "https://www.wnba.com/player/1643440/darianna-littlepage-buggs",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_georgia_amoore",
+      "athlete_name": "Georgia Amoore",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1642781",
+      "source_url_to_record": "https://www.wnba.com/player/1642781/georgia-amoore",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_kiki_iriafen",
+      "athlete_name": "Kiki Iriafen",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1642792",
+      "source_url_to_record": "https://www.wnba.com/player/1642792/kiki-iriafen",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_lauren_betts",
+      "athlete_name": "Lauren Betts",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643427",
+      "source_url_to_record": "https://www.wnba.com/player/1643427/lauren-betts",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_lucy_olsen",
+      "athlete_name": "Lucy Olsen",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1642802",
+      "source_url_to_record": "https://www.wnba.com/player/1642802/lucy-olsen",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_michaela_onyenwere",
+      "athlete_name": "Michaela Onyenwere",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1630446",
+      "source_url_to_record": "https://www.wnba.com/player/1630446/michaela-onyenwere",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_rori_harmon",
+      "athlete_name": "Rori Harmon",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1643450",
+      "source_url_to_record": "https://www.wnba.com/player/1643450/rori-harmon",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_shakira_austin",
+      "athlete_name": "Shakira Austin",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1631022",
+      "source_url_to_record": "https://www.wnba.com/player/1631022/shakira-austin",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    },
+    {
+      "athlete_id": "washington_mystics_sonia_citron",
+      "athlete_name": "Sonia Citron",
+      "team_id": "washington_mystics",
+      "provider_player_id": "1642785",
+      "source_url_to_record": "https://www.wnba.com/player/1642785/sonia-citron",
+      "status": "applied_review_only_metadata",
+      "marker_status": "marker_metadata_updated"
+    }
+  ],
+  "held_rows": [
+    {
+      "athlete_id": "golden_state_valkyries_juste_jocyte",
+      "athlete_name": "Juste Jocyte",
+      "team_id": "golden_state_valkyries",
+      "operator_decision": "revise_asset",
+      "registry_action": "hold_no_registry_change_find_replacement_image",
+      "source_url_to_record": "https://www.fiba.basketball/en/players/269430-juste-jocyte",
+      "status": "held_no_registry_metadata_change"
+    },
+    {
+      "athlete_id": "golden_state_valkyries_nadia_fingall",
+      "athlete_name": "Nadia Fingall",
+      "team_id": "golden_state_valkyries",
+      "operator_decision": "revise_asset",
+      "registry_action": "hold_no_registry_change_find_replacement_image",
+      "source_url_to_record": "https://gostanford.com/sports/womens-basketball/roster/player/nadia-fingall",
+      "status": "held_no_registry_metadata_change"
+    },
+    {
+      "athlete_id": "toronto_tempo_maria_conde",
+      "athlete_name": "Maria Conde",
+      "team_id": "toronto_tempo",
+      "operator_decision": "revise_asset",
+      "registry_action": "hold_no_registry_change_found_official_image_candidate",
+      "source_url_to_record": "https://cdn.wnba.com/headshots/wnba/latest/260x190/1629576.png",
+      "status": "held_no_registry_metadata_change"
+    },
+    {
+      "athlete_id": "toronto_tempo_tima_pouye",
+      "athlete_name": "Tima Pouye",
+      "team_id": "toronto_tempo",
+      "operator_decision": "revise_asset",
+      "registry_action": "hold_no_registry_change_found_official_image_candidate",
+      "source_url_to_record": "https://cdn.wnba.com/headshots/wnba/latest/260x190/1643647.png",
+      "status": "held_no_registry_metadata_change"
+    }
+  ],
+  "failed": [],
+  "guardrails": {
+    "paid_apis": false,
+    "asset_downloads": false,
+    "auto_approval": false,
+    "auto_publish": false,
+    "move_files": false,
+    "publish_ready": false
+  }
+}

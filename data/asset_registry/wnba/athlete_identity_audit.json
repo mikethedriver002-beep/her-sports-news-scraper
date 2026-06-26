@@ -1,0 +1,29 @@
+{
+  "report": {
+    "version": "hsd-wnba-athlete-identity-audit-v1-review-only",
+    "generated_at_utc": "2026-06-26T22:56:03.149129+00:00",
+    "review_only": true,
+    "status": "pass",
+    "issue_rows": 0,
+    "severity_counts": {},
+    "issue_code_counts": {},
+    "coverage_summary": {
+      "approved_asset_rows": 196,
+      "approved_missing_athlete_provider_player_id": 0,
+      "approved_missing_image_provider_player_id": 0,
+      "approved_unique_athletes": 196,
+      "approved_with_default_decision_source": 0,
+      "approved_with_match_review_provider_player_id": 196,
+      "approved_with_official_roster_source_url": 196,
+      "approved_with_order_match_review": 0,
+      "approved_with_pending_match_review": 0,
+      "athlete_rows": 200,
+      "headshot_registry_rows": 200
+    },
+    "audit_csv": "data/asset_registry/wnba/athlete_identity_audit.csv",
+    "audit_json": "data/asset_registry/wnba/athlete_identity_audit.json",
+    "audit_md": "data/asset_registry/wnba/athlete_identity_audit.md",
+    "policy": "This audit reports WNBA athlete identity provenance risks only. It does not approve, reject, move, fetch, publish, or create a publish-ready lane for athlete photos."
+  },
+  "issues": []
+}

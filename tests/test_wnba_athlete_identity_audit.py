@@ -93,6 +93,67 @@ def test_identity_audit_flags_default_pending_and_blank_decision(tmp_path: Path)
     assert all(row["review_only_policy"] == module.REVIEW_ONLY_POLICY for row in issues)
 
 
+def test_identity_audit_accepts_human_contact_sheet_review_as_explicit_decision(tmp_path: Path) -> None:
+    module = load_module()
+    asset = tmp_path / "assets" / "leagues" / "wnba" / "athletes" / "new_york_liberty_test_player" / "headshot.png"
+    make_png_like(asset)
+    marker = make_marker(
+        asset,
+        source_file="https://www.wnba.com/player/123/test-player",
+        decision_source="human_reviewed_wnba_athlete_photo_contact_sheet",
+    )
+
+    issues = module.audit_approved_assets(
+        athlete_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "display_name": "Test Player",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "123",
+            "source_url": "https://www.wnba.com/player/123/test-player",
+        }],
+        image_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "display_name": "Test Player",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "123",
+            "image_type": "headshot",
+            "file_path": asset.as_posix(),
+            "approved": "true",
+        }],
+        approved_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "display_name": "Test Player",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "123",
+            "approved_file": asset.as_posix(),
+            "approved_marker": marker.as_posix(),
+            "source_file": "https://www.wnba.com/player/123/test-player",
+            "decision_source": "human_reviewed_wnba_athlete_photo_contact_sheet",
+        }],
+        review_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "status": "human_verified_review_only",
+            "confidence": "1.00",
+            "provider_player_id": "123",
+            "match_method": "human_verified_contact_sheet_review",
+            "image_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/123.png",
+        }],
+        decision_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "decision": "",
+            "approval_target_path": asset.as_posix(),
+            "provider_player_id": "123",
+        }],
+    )
+
+    codes = {row["issue_code"] for row in issues}
+
+    assert "default_approval_requires_identity_recheck" not in codes
+    assert "approved_asset_still_has_pending_match_review" not in codes
+    assert "blank_per_row_approval_decision" not in codes
+    assert "order_matched_headshot_requires_source_backed_identity_review" not in codes
+
+
 def test_identity_audit_flags_marker_identity_mismatch(tmp_path: Path) -> None:
     module = load_module()
     asset = tmp_path / "assets" / "leagues" / "wnba" / "athletes" / "new_york_liberty_test_player" / "headshot.png"

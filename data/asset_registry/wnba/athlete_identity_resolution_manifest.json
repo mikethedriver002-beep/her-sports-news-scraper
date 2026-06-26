@@ -1,0 +1,27 @@
+{
+  "report": {
+    "version": "hsd-wnba-athlete-identity-resolution-v1-review-only",
+    "generated_at_utc": "2026-06-26T22:56:03.232205+00:00",
+    "status": "no_audit_issues_found",
+    "candidate_rows": 0,
+    "identity_hold_rows": 0,
+    "default_approval_rows": 0,
+    "severity_counts": {},
+    "workflow_md": "data/asset_registry/wnba/athlete_identity_resolution_workflow.md",
+    "candidates_csv": "data/asset_registry/wnba/athlete_identity_resolution_candidates.csv",
+    "review_packet_csv": "data/asset_registry/wnba/athlete_identity_review_packet.csv",
+    "template_csv": "data/asset_registry/wnba/athlete_identity_resolution_template.csv",
+    "operator_inbox": "operator/inbox/wnba_athlete_identity_resolution.csv",
+    "review_only": true,
+    "policy": "manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane",
+    "guardrails": {
+      "auto_approval": false,
+      "auto_publish": false,
+      "move_files": false,
+      "publish_ready": false,
+      "paid_apis": false
+    }
+  },
+  "rows": [],
+  "review_packet_rows": []
+}

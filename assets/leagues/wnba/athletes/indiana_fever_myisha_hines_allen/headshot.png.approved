@@ -1,10 +1,16 @@
 {
-  "approved_at_utc": "2026-06-16T04:22:55.105546+00:00",
+  "approved_at_utc": "2026-06-26T22:56:01.017837+00:00",
   "athlete_id": "indiana_fever_myisha_hines_allen",
   "display_name": "Myisha Hines-Allen",
   "team_id": "indiana_fever",
   "provider_player_id": "1628899",
-  "source_file": "outputs/latest/review_files/athlete_image_approval_pack/downloads/indiana_fever/indiana_fever_myisha_hines_allen__1628899.png",
-  "decision_source": "default",
-  "policy": "human_reviewed_contact_sheet_then_approved"
+  "source_file": "https://www.wnba.com/player/1628899/myisha-hines-allen",
+  "decision_source": "human_reviewed_wnba_athlete_photo_contact_sheet",
+  "policy": "human_reviewed_contact_sheet_then_approved",
+  "operator_decision": "approve_for_review_only_renderer_use",
+  "human_reviewed_by": "Mike explicit sweep via Codex",
+  "human_reviewed_at_local": "2026-06-26 18:31 local",
+  "human_intake_file": "data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv",
+  "approval_scope": "review_only_renderer_athlete_photo_trust_manual_intake",
+  "review_only_policy": "manual_intake_only_no_downloads_no_file_movement_no_publish_ready_lane"
 }

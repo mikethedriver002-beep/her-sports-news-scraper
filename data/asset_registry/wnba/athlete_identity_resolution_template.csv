@@ -1,0 +1,2 @@
+athlete_id,display_name,team_id,provider_player_id,asset_path,approved_marker_path,highest_severity,issue_count,issue_codes,audit_evidence,recommended_operator_action,allowed_decisions,operator_decision,identity_verified,provider_player_id_verified,approved_source_url,secondary_source_url,backfill_provider_player_id,operator_notes,operator_name,reviewed_at_local,issue_resolution_status,copy_target,approval_scope,publish_ready,auto_approval,auto_publish,move_files,paid_apis,review_only_policy
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
