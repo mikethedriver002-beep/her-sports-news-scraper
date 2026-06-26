@@ -15,6 +15,17 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert report["team_count"] == len(REQUIRED_NWSL_TEAMS)
     assert report["required_team_count"] == 16
     assert report["player_count"] == 0
+    assert report["source_url_count"] == 87
+    assert report["league_source_kind_count"] == report["required_league_source_kind_count"]
+    assert report["required_team_source_kind_count"] == 5
+    for team_id in REQUIRED_NWSL_TEAMS:
+        assert report["team_source_coverage"][team_id] == [
+            "logo_review_source",
+            "nwsl_roster",
+            "nwsl_schedule",
+            "nwsl_team_detail",
+            "team_site",
+        ]
     assert report["auto_download_allowed"] is False
     assert report["auto_approval_allowed"] is False
     assert report["render_enabled"] is False
@@ -38,3 +49,8 @@ def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
         assert token not in text
     assert "assets/leagues/womens_soccer/nwsl/teams/angel_city_fc/logo.png" in text
     assert "https://www.nwslsoccer.com/teams/index" in text
+    assert "logo_review_source" in text
+    assert "nwsl_roster" in text
+    assert "nwsl_schedule" in text
+    assert "nwslsoccer_team_uuid" in text
+    assert "review_required,not_approved" in text

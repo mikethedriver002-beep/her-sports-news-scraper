@@ -1,8 +1,10 @@
 {
   "version": "hsd-wnba-asset-gap-report-v1.1-logo-upload-pack",
-  "generated_at_utc": "2026-06-16T04:22:32.240535+00:00",
-  "missing_team_logos": 3,
-  "validation_status": "needs_assets",
+  "generated_at_utc": "2026-06-26T00:46:25.154982+00:00",
+  "missing_team_logos": 0,
+  "validation_status": "operator_review",
+  "operator_warnings": 3,
+  "source_path_metadata_warnings": 10,
   "logo_upload_manifest": "data/asset_registry/wnba/logo_gap_upload_manifest.csv",
-  "next_action": "upload each exact primary team logo as logo.png into its recommended folder path"
+  "next_action": "review unapproved local logos and source evidence before any manual approval"
 }

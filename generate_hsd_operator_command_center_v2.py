@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.57.0-athlete-identity-resolution-desk"
+VERSION = "hsd-operator-command-center-v3.58.0-identity-resolution-ui"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -1487,6 +1487,55 @@ def athlete_identity_resolution_by_athlete(rows: Iterable[Dict[str, str]]) -> Di
     return out
 
 
+def athlete_identity_candidates_by_athlete(rows: Iterable[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
+    out: Dict[str, Dict[str, str]] = {}
+    for row in rows:
+        athlete_id = clean(row.get("athlete_id"))
+        if athlete_id and athlete_id not in out:
+            out[athlete_id] = {str(key): clean(value) for key, value in row.items()}
+    return out
+
+
+def athlete_identity_backfills_by_athlete(rows: Iterable[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    out: Dict[str, List[Dict[str, str]]] = {}
+    for row in rows:
+        athlete_id = clean(row.get("athlete_id"))
+        if athlete_id:
+            out.setdefault(athlete_id, []).append({str(key): clean(value) for key, value in row.items()})
+    return out
+
+
+def athlete_identity_candidate_summary(
+    athlete_id: str,
+    candidate_by_athlete: Dict[str, Dict[str, str]],
+    backfills_by_athlete: Dict[str, List[Dict[str, str]]],
+) -> Dict[str, Any]:
+    candidate = dict(candidate_by_athlete.get(clean(athlete_id), {}))
+    backfills = [dict(row) for row in backfills_by_athlete.get(clean(athlete_id), [])[:4]]
+    proposed_ids = [
+        clean(row.get("proposed_value"))
+        for row in backfills
+        if clean(row.get("target_field")) == "provider_player_id" and clean(row.get("proposed_value"))
+    ]
+    provider_candidate = clean(candidate.get("provider_player_id")) or (proposed_ids[0] if proposed_ids else "")
+    candidate_status = "no_resolution_candidate"
+    if candidate:
+        candidate_status = "hold_until_source_backed_decision"
+        if clean(candidate.get("highest_severity")) not in {"critical", "high"}:
+            candidate_status = "candidate_ready"
+    return {
+        "identity_candidate_status": candidate_status,
+        "identity_resolution_candidate": candidate,
+        "identity_provider_backfill_rows": backfills,
+        "identity_provider_candidate": provider_candidate,
+        "identity_provider_backfill_summary": "; ".join(
+            f"{clean(row.get('target_csv'))}:{clean(row.get('target_field'))}->{clean(row.get('proposed_value'))}"
+            for row in backfills[:3]
+            if clean(row.get("proposed_value"))
+        ),
+    }
+
+
 def athlete_identity_resolution_summary(athlete_id: str, rows_by_athlete: Dict[str, Dict[str, str]]) -> Dict[str, str]:
     row = rows_by_athlete.get(clean(athlete_id), {})
     if not row:
@@ -1520,6 +1569,8 @@ def athlete_photo_onboarding_row_payload(
     row: Dict[str, str],
     audit_by_athlete: Dict[str, List[Dict[str, str]]],
     resolution_by_athlete: Dict[str, Dict[str, str]],
+    candidate_by_athlete: Dict[str, Dict[str, str]],
+    backfills_by_athlete: Dict[str, List[Dict[str, str]]],
     *,
     featured: bool = False,
 ) -> Dict[str, Any]:
@@ -1561,6 +1612,7 @@ def athlete_photo_onboarding_row_payload(
         "tone": athlete_photo_score_tone(row),
         **audit,
         **resolution,
+        **athlete_identity_candidate_summary(athlete_id, candidate_by_athlete, backfills_by_athlete),
         "decision_cue": "Verify the athlete by eye against trusted source evidence before using this crop in a render.",
     }
 
@@ -1577,6 +1629,10 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
     identity_closure_report = identity_closure_packet.get("report") if isinstance(identity_closure_packet.get("report"), dict) else {}
     identity_resolution_rows = read_csv("operator/inbox/wnba_athlete_identity_resolution.csv")
     identity_resolution_by_id = athlete_identity_resolution_by_athlete(identity_resolution_rows)
+    identity_candidate_rows = read_csv("data/asset_registry/wnba/athlete_identity_resolution_candidates.csv")
+    identity_candidate_by_id = athlete_identity_candidates_by_athlete(identity_candidate_rows)
+    identity_backfill_rows = read_csv("data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv")
+    identity_backfills_by_id = athlete_identity_backfills_by_athlete(identity_backfill_rows)
     identity_audit_report = identity_audit.get("report") if isinstance(identity_audit.get("report"), dict) else {}
     identity_audit_by_id = athlete_identity_audit_by_athlete(identity_audit)
     athletes_payload = metadata_json.get("athletes") if isinstance(metadata_json.get("athletes"), dict) else {}
@@ -1615,7 +1671,14 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
                 break
 
     review_rows = [
-        athlete_photo_onboarding_row_payload(row, identity_audit_by_id, identity_resolution_by_id, featured=(index == 0 and bool(featured_row_id)))
+        athlete_photo_onboarding_row_payload(
+            row,
+            identity_audit_by_id,
+            identity_resolution_by_id,
+            identity_candidate_by_id,
+            identity_backfills_by_id,
+            featured=(index == 0 and bool(featured_row_id)),
+        )
         for index, row in enumerate(ordered[:24])
     ]
     source_rows = as_int(manifest.get("source_rows")) or len(metadata_rows)
@@ -4302,6 +4365,39 @@ ATHLETE_PHOTO_DECISION_FIELDS = [
     "paid_apis",
 ]
 
+IDENTITY_RESOLUTION_FIELDS = [
+    "athlete_id",
+    "display_name",
+    "team_id",
+    "provider_player_id",
+    "asset_path",
+    "approved_marker_path",
+    "highest_severity",
+    "issue_count",
+    "issue_codes",
+    "audit_evidence",
+    "recommended_operator_action",
+    "allowed_decisions",
+    "operator_decision",
+    "identity_verified",
+    "provider_player_id_verified",
+    "approved_source_url",
+    "secondary_source_url",
+    "backfill_provider_player_id",
+    "operator_notes",
+    "operator_name",
+    "reviewed_at_local",
+    "issue_resolution_status",
+    "copy_target",
+    "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "review_only_policy",
+]
+
 
 def render_decision_shortcuts(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
@@ -4691,12 +4787,15 @@ def render_athlete_photo_cards(rows: Iterable[Dict[str, Any]]) -> str:
                   {featured}
                   {pill(clean(row.get('identity_review_status')) or 'identity_review_required', clean(row.get('identity_review_tone')) or 'warn')}
                   {pill(clean(row.get('identity_resolution_status')) or 'resolution_not_recorded', clean(row.get('identity_resolution_tone')) or 'warn')}
+                  {pill(clean(row.get('identity_candidate_status')) or 'identity_candidate_missing', 'warn' if clean(row.get('identity_candidate_status')) != 'candidate_ready' else 'good')}
+                  {pill('provider ' + (clean(row.get('identity_provider_candidate')) or 'missing'), 'good' if clean(row.get('identity_provider_candidate')) else 'warn')}
                   {pill('crop ' + (clean(row.get('crop_readiness_score')) or '0') + '/100', clean(row.get('tone')) or 'neutral')}
                   {pill(clean(row.get('variant_status')) or 'review')}
                 </div>
                 <p>{html.escape(short(clean(row.get('decision_cue')), 170))}</p>
                 <p>{html.escape(short(clean(row.get('identity_resolution_next_step')), 190))}</p>
                 <p>{html.escape(short(clean(row.get('identity_issue_codes')) or clean(row.get('identity_evidence')), 190))}</p>
+                <p>{html.escape(short(clean(row.get('identity_provider_backfill_summary')) or 'Provider-ID backfill requires manual source evidence.', 190))}</p>
                 <code>{html.escape(clean(row.get('source_headshot_path')))}</code>
                 <div class="athlete-photo-actions">{source_link}{sheet_link}{variant_link}</div>
               </div>
@@ -4710,9 +4809,10 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
     rows = panel.get("review_rows", []) if isinstance(panel.get("review_rows"), list) else []
     rows_json = html.escape(json.dumps(rows), quote=True)
     fields_json = html.escape(json.dumps(ATHLETE_PHOTO_DECISION_FIELDS), quote=True)
+    identity_fields_json = html.escape(json.dumps(IDENTITY_RESOLUTION_FIELDS), quote=True)
     featured_name = clean(panel.get("featured_athlete_name")) or clean(panel.get("featured_athlete_id")) or "No current athlete"
     return f"""
-      <div class="athlete-photo-desk" data-athlete-photo-rows="{rows_json}" data-athlete-photo-fields="{fields_json}">
+      <div class="athlete-photo-desk" data-athlete-photo-rows="{rows_json}" data-athlete-photo-fields="{fields_json}" data-identity-resolution-fields="{identity_fields_json}">
         <div class="decision-cockpit-card athlete-photo-cockpit">
           <div class="decision-cockpit-head">
             <div>
@@ -4790,6 +4890,52 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
               <div class="decision-button-row">
                 <button class="tool-link" type="button" id="copyAthletePhotoRow">Copy row</button>
                 <span class="muted" id="athletePhotoCopyStatus">Paste into a manual copy of the athlete-photo decision template. Do not edit generated files directly.</span>
+              </div>
+            </div>
+            <div class="decision-desk-section">
+              <div class="row-kicker">Identity resolution <span id="identityResolutionReadyBadge" class="pill warn">Source evidence required</span></div>
+              <div class="athlete-photo-selected" id="identityResolutionSelectedSummary">Select a row to prepare identity evidence.</div>
+              <ul id="identityResolutionWarnings" class="decision-warning-list"></ul>
+              <form class="decision-form">
+                <fieldset class="decision-options">
+                  <legend>Verify, hold, revise, or backfill</legend>
+                  <label class="decision-option"><input type="radio" name="identityResolutionDecision" value="identity_verified_approved_for_review_renders"><span>Verify</span></label>
+                  <label class="decision-option"><input type="radio" name="identityResolutionDecision" value="hold_identity" checked><span>Hold</span></label>
+                  <label class="decision-option"><input type="radio" name="identityResolutionDecision" value="revise_asset"><span>Revise</span></label>
+                  <label class="decision-option"><input type="radio" name="identityResolutionDecision" value="backfill_provider_id_only"><span>Backfill ID</span></label>
+                </fieldset>
+                <div class="decision-form-grid">
+                  <label>Identity verified
+                    <select id="identityResolutionVerified">
+                      <option value="">Choose after source check</option>
+                      <option value="yes">Yes, source-backed</option>
+                      <option value="no">No / hold</option>
+                    </select>
+                  </label>
+                  <label>Provider ID verified
+                    <select id="identityProviderVerified">
+                      <option value="">Choose after source check</option>
+                      <option value="yes">Yes, provider/source backed</option>
+                      <option value="no">No / unknown</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Approved source URL<input id="identityApprovedSourceUrl" type="url" placeholder="Free official/team/reputable public URL checked by eye"></label>
+                <label>Secondary source URL<input id="identitySecondarySourceUrl" type="url" placeholder="Optional cross-check URL"></label>
+                <div class="decision-form-grid">
+                  <label>Backfill provider player ID<input id="identityBackfillProviderId" type="text" placeholder="Only if source-backed"></label>
+                  <label>Operator name<input id="identityOperatorName" type="text" placeholder="Your name"></label>
+                </div>
+                <label>Reviewed at<input id="identityReviewedAtLocal" type="text"></label>
+                <label>Identity notes<textarea id="identityResolutionNotes" rows="3" placeholder="Who did you compare, what source did you use, and why approve/hold/revise/backfill?"></textarea></label>
+              </form>
+              <div class="decision-copy-box">
+                <div class="row-kicker">Copy-safe identity resolution CSV row</div>
+                <textarea id="identityResolutionCsvOutput" rows="5" readonly></textarea>
+                <div class="decision-button-row">
+                  <button class="tool-link" type="button" id="copyIdentityResolutionRow">Copy identity row</button>
+                  <span class="muted" id="identityResolutionCopyStatus">Paste below the header in operator/inbox/wnba_athlete_identity_resolution.csv. Backfill-only rows do not clear photo-first rendering.</span>
+                </div>
               </div>
             </div>
             <div class="safety-strip">
@@ -5562,6 +5708,24 @@ def render_html(payload: Dict[str, Any]) -> str:
       const warningList = document.getElementById("athletePhotoWarnings");
       const readyBadge = document.getElementById("athletePhotoReadyBadge");
       const selectedSummary = document.getElementById("athletePhotoSelectedSummary");
+      const identityFields = JSON.parse(athletePhotoDesk.getAttribute("data-identity-resolution-fields") || "[]");
+      const identityOutput = document.getElementById("identityResolutionCsvOutput");
+      const identityResolutionNotes = document.getElementById("identityResolutionNotes");
+      const identityResolutionVerified = document.getElementById("identityResolutionVerified");
+      const identityProviderVerified = document.getElementById("identityProviderVerified");
+      const identityApprovedSourceUrl = document.getElementById("identityApprovedSourceUrl");
+      const identitySecondarySourceUrl = document.getElementById("identitySecondarySourceUrl");
+      const identityBackfillProviderId = document.getElementById("identityBackfillProviderId");
+      const identityOperatorName = document.getElementById("identityOperatorName");
+      const identityReviewedAtLocal = document.getElementById("identityReviewedAtLocal");
+      const identityCopyButton = document.getElementById("copyIdentityResolutionRow");
+      const identityCopyStatus = document.getElementById("identityResolutionCopyStatus");
+      const identityWarningList = document.getElementById("identityResolutionWarnings");
+      const identityReadyBadge = document.getElementById("identityResolutionReadyBadge");
+      const identitySelectedSummary = document.getElementById("identityResolutionSelectedSummary");
+      if (identityReviewedAtLocal && !identityReviewedAtLocal.value) {{
+        identityReviewedAtLocal.value = new Date().toLocaleString();
+      }}
       function csvCell(value) {{
         const text = String(value || "");
         return /[",\\n\\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
@@ -5574,6 +5738,10 @@ def render_html(payload: Dict[str, Any]) -> str:
       function selectedPhotoDecision() {{
         const checked = document.querySelector('input[name="athletePhotoDecision"]:checked');
         return checked ? checked.value : "hold";
+      }}
+      function selectedIdentityDecision() {{
+        const checked = document.querySelector('input[name="identityResolutionDecision"]:checked');
+        return checked ? checked.value : "hold_identity";
       }}
       function athleteWarnings(row) {{
         const decision = selectedPhotoDecision();
@@ -5610,6 +5778,87 @@ def render_html(payload: Dict[str, Any]) -> str:
         readyBadge.className = "pill warn";
         return warnings;
       }}
+      function identityCandidate(row) {{
+        const candidate = row.identity_resolution_candidate || {{}};
+        if (candidate.athlete_id) return candidate;
+        return {{
+          athlete_id: row.athlete_id || "",
+          display_name: row.athlete_name || "",
+          team_id: row.team_id || "",
+          provider_player_id: row.identity_provider_candidate || "",
+          asset_path: row.source_headshot_path || "",
+          approved_marker_path: "",
+          highest_severity: row.identity_review_status || "review",
+          issue_count: row.identity_issue_count || "",
+          issue_codes: row.identity_issue_codes || "",
+          audit_evidence: row.identity_evidence || "",
+          recommended_operator_action: "manual_identity_resolution_required",
+          allowed_decisions: "identity_verified_approved_for_review_renders|hold_identity|revise_asset|backfill_provider_id_only",
+          copy_target: "operator/inbox/wnba_athlete_identity_resolution.csv",
+          approval_scope: "review_only_identity_resolution_for_local_draft_renders",
+          publish_ready: "false",
+          auto_approval: "false",
+          auto_publish: "false",
+          move_files: "false",
+          paid_apis: "false",
+          review_only_policy: "manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane"
+        }};
+      }}
+      function identityStatusForDecision(decision) {{
+        if (decision === "identity_verified_approved_for_review_renders") return "identity_verified";
+        if (decision === "backfill_provider_id_only") return "provider_id_backfill_ready_identity_still_held";
+        if (decision === "revise_asset") return "needs_asset_revision";
+        return "held_for_identity_review";
+      }}
+      function identityWarnings(row) {{
+        const decision = selectedIdentityDecision();
+        const candidate = identityCandidate(row);
+        const warnings = [];
+        const sourceUrl = (identityApprovedSourceUrl.value || "").trim();
+        const notesValue = (identityResolutionNotes.value || "").trim();
+        const providerValue = (identityBackfillProviderId.value || "").trim() || (row.identity_provider_candidate || "");
+        if (!row.athlete_id) warnings.push("Select an athlete row before preparing identity evidence.");
+        if (!candidate.athlete_id) warnings.push("No identity-resolution candidate exists for this athlete.");
+        if (!identityOperatorName.value.trim()) warnings.push("Add the operator name.");
+        if (!identityReviewedAtLocal.value.trim()) warnings.push("Keep a reviewed-at time.");
+        if (!notesValue) warnings.push("Add source-backed identity notes.");
+        if (decision === "identity_verified_approved_for_review_renders") {{
+          if (identityResolutionVerified.value !== "yes") warnings.push("Verify requires identity_verified = yes.");
+          if (identityProviderVerified.value !== "yes" && !providerValue) warnings.push("Verify requires provider ID verification or a source-backed backfill ID.");
+          if (!sourceUrl) warnings.push("Verify requires an approved source URL.");
+        }}
+        if (decision === "backfill_provider_id_only") {{
+          if (!providerValue) warnings.push("Backfill ID requires a provider player ID.");
+          if (!sourceUrl) warnings.push("Backfill ID requires the public source URL used to verify the ID.");
+        }}
+        if (decision === "hold_identity" && !notesValue.toLowerCase().includes("hold")) warnings.push("Hold notes should explain why identity remains held.");
+        if (decision === "revise_asset" && !notesValue.toLowerCase().includes("revise")) warnings.push("Revise notes should explain what asset/source needs replacement.");
+        return warnings;
+      }}
+      function renderIdentityWarnings(row) {{
+        const warnings = identityWarnings(row);
+        if (!identityWarningList || !identityReadyBadge) return warnings;
+        identityWarningList.innerHTML = "";
+        if (!warnings.length) {{
+          const item = document.createElement("li");
+          item.className = "good";
+          item.textContent = selectedIdentityDecision() === "backfill_provider_id_only"
+            ? "Ready to copy a provider-ID backfill row. This keeps photo-first rendering held."
+            : "Ready to copy a source-backed identity row. Renderer still waits until the inbox file is saved and rerun.";
+          identityWarningList.appendChild(item);
+          identityReadyBadge.textContent = "Ready to copy";
+          identityReadyBadge.className = "pill good";
+          return warnings;
+        }}
+        warnings.forEach((warning) => {{
+          const item = document.createElement("li");
+          item.textContent = warning;
+          identityWarningList.appendChild(item);
+        }});
+        identityReadyBadge.textContent = warnings.length + " missing";
+        identityReadyBadge.className = "pill warn";
+        return warnings;
+      }}
       function buildAthletePhotoRow() {{
         const row = selectedAthleteRow();
         if (selectedSummary) {{
@@ -5632,13 +5881,66 @@ def render_html(payload: Dict[str, Any]) -> str:
         out.paid_apis = "false";
         output.value = fields.join(",") + "\\n" + fields.map((field) => csvCell(out[field])).join(",");
         renderAthleteWarnings(row);
+        buildIdentityResolutionRow();
+      }}
+      function buildIdentityResolutionRow() {{
+        const row = selectedAthleteRow();
+        const candidate = identityCandidate(row);
+        const decision = selectedIdentityDecision();
+        if (identitySelectedSummary) {{
+          identitySelectedSummary.textContent = row.athlete_id
+            ? `${{row.athlete_name}} / ${{row.team_id}} / ${{candidate.highest_severity || "review"}} / issues ${{candidate.issue_count || row.identity_issue_count || "0"}} / provider ${{(identityBackfillProviderId.value || row.identity_provider_candidate || candidate.provider_player_id || "missing")}}`
+            : "No athlete selected.";
+        }}
+        if (identityBackfillProviderId && !identityBackfillProviderId.value && (row.identity_provider_candidate || candidate.provider_player_id)) {{
+          identityBackfillProviderId.value = row.identity_provider_candidate || candidate.provider_player_id || "";
+        }}
+        const out = {{}};
+        identityFields.forEach((field) => out[field] = candidate[field] || "");
+        out.athlete_id = candidate.athlete_id || row.athlete_id || "";
+        out.display_name = candidate.display_name || row.athlete_name || "";
+        out.team_id = candidate.team_id || row.team_id || "";
+        out.provider_player_id = candidate.provider_player_id || row.identity_provider_candidate || "";
+        out.asset_path = candidate.asset_path || row.source_headshot_path || "";
+        out.issue_codes = candidate.issue_codes || row.identity_issue_codes || "";
+        out.audit_evidence = candidate.audit_evidence || row.identity_evidence || "";
+        out.allowed_decisions = "identity_verified_approved_for_review_renders|hold_identity|revise_asset|backfill_provider_id_only";
+        out.operator_decision = decision;
+        out.identity_verified = identityResolutionVerified.value || "";
+        out.provider_player_id_verified = identityProviderVerified.value || "";
+        out.approved_source_url = identityApprovedSourceUrl.value.trim();
+        out.secondary_source_url = identitySecondarySourceUrl.value.trim();
+        out.backfill_provider_player_id = identityBackfillProviderId.value.trim();
+        out.operator_notes = identityResolutionNotes.value.trim();
+        out.operator_name = identityOperatorName.value.trim();
+        out.reviewed_at_local = identityReviewedAtLocal.value.trim();
+        out.issue_resolution_status = identityStatusForDecision(decision);
+        out.copy_target = "operator/inbox/wnba_athlete_identity_resolution.csv";
+        out.approval_scope = "review_only_identity_resolution_for_local_draft_renders";
+        out.publish_ready = "false";
+        out.auto_approval = "false";
+        out.auto_publish = "false";
+        out.move_files = "false";
+        out.paid_apis = "false";
+        out.review_only_policy = "manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane";
+        if (identityOutput) {{
+          identityOutput.value = identityFields.join(",") + "\\n" + identityFields.map((field) => csvCell(out[field])).join(",");
+        }}
+        renderIdentityWarnings(row);
       }}
       document.querySelectorAll('input[name="athletePhotoRow"], input[name="athletePhotoDecision"]').forEach((el) => {{
         el.addEventListener("change", buildAthletePhotoRow);
       }});
+      document.querySelectorAll('input[name="identityResolutionDecision"]').forEach((el) => {{
+        el.addEventListener("change", buildIdentityResolutionRow);
+      }});
       [notes, identity, cropChoice].forEach((el) => {{
         if (el) el.addEventListener("input", buildAthletePhotoRow);
         if (el) el.addEventListener("change", buildAthletePhotoRow);
+      }});
+      [identityResolutionNotes, identityResolutionVerified, identityProviderVerified, identityApprovedSourceUrl, identitySecondarySourceUrl, identityBackfillProviderId, identityOperatorName, identityReviewedAtLocal].forEach((el) => {{
+        if (el) el.addEventListener("input", buildIdentityResolutionRow);
+        if (el) el.addEventListener("change", buildIdentityResolutionRow);
       }});
       if (copyButton) {{
         copyButton.addEventListener("click", async () => {{
@@ -5655,6 +5957,24 @@ def render_html(payload: Dict[str, Any]) -> str:
             output.focus();
             output.select();
             copyStatus.textContent = "Copy only the data row from the text box. Do not copy the header.";
+          }}
+        }});
+      }}
+      if (identityCopyButton) {{
+        identityCopyButton.addEventListener("click", async () => {{
+          buildIdentityResolutionRow();
+          const warnings = identityWarnings(selectedAthleteRow());
+          if (warnings.length) {{
+            identityCopyStatus.textContent = "Resolve the missing source-backed identity fields before copying.";
+            return;
+          }}
+          try {{
+            await navigator.clipboard.writeText(identityOutput.value.split("\\n").slice(1).join("\\n"));
+            identityCopyStatus.textContent = "Identity row copied. Paste below the header in operator/inbox/wnba_athlete_identity_resolution.csv, then rerun render.";
+          }} catch (err) {{
+            identityOutput.focus();
+            identityOutput.select();
+            identityCopyStatus.textContent = "Copy only the data row from the text box. Do not copy the header.";
           }}
         }});
       }}
