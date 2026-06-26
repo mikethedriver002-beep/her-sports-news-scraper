@@ -2793,6 +2793,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     manual_prompt = Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     assert "Use this prompt manually only" in manual_prompt
     assert "Active asset stop/go: hold_required_manual_asset_review" in manual_prompt
+    assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in manual_prompt
+    assert "Review order: clear selected-template blockers first; future photo-first and league-mark context holds stay review-only." in manual_prompt
     assert "Active logo readiness: hold_logo_review_required" in manual_prompt
     assert "Active athlete identity: hold_identity_review_required" in manual_prompt
     render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))

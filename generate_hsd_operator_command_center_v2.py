@@ -3570,6 +3570,12 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         "",
         f"- {clean(packet.get('asset_requirement'))}",
         f"- Active asset stop/go: {clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}",
+        (
+            "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
+            if "no player asset required" in clean(packet.get("asset_requirement")).lower()
+            else "- Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use."
+        ),
+        "- Review order: clear selected-template blockers first; future photo-first and league-mark context holds stay review-only.",
         f"- Active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}",
         f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
         f"- Active athlete identity: {clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}",
