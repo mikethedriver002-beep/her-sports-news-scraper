@@ -181,6 +181,18 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
     assert "Identity backfill packet: `data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv`" in active_queue_md
 
 
+def test_selected_template_blocking_status_keeps_optional_league_mark_context() -> None:
+    packet = {
+        "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
+    }
+    league_context = command_center.selected_template_blocking_status(packet, {"asset_domain": "league_logo"})
+    assert league_context["selected_template_blocking_status"] == "not_blocking_selected_template_league_mark_not_required"
+    assert "team logo slots" in league_context["selected_template_blocking_reason"]
+
+    league_required = command_center.selected_template_blocking_status({"asset_requirement": "league mark required"}, {"asset_domain": "league_logo"})
+    assert league_required["selected_template_blocking_status"] == "blocking_selected_template_logo_review"
+
+
 def test_command_center_generated_artifacts_point_to_current_output_when_latest_exists(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     run_dir = tmp_path / "run" / "files"
@@ -2687,11 +2699,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Active Asset Review Queue" in active_queue
     assert "## Summary" in active_queue
     assert "Total review rows: 3" in active_queue
-    assert "Blocking selected template now: 2" in active_queue
+    assert "Blocking selected template now: 1" in active_queue
     assert "Future photo-first holds: 1" in active_queue
-    assert "Blocking entities: New York Liberty | WNBA" in active_queue
+    assert "League-mark context holds: 1" in active_queue
+    assert "Blocking entities: New York Liberty" in active_queue
     assert "Future photo-first entities: Breanna Stewart" in active_queue
-    assert "Immediate manual path: clear the blocking selected-template rows first" in active_queue
+    assert "League-mark context entities: WNBA" in active_queue
+    assert "Immediate manual path: clear the blocking selected-template rows first; future photo-first and league-mark context holds stay review-only." in active_queue
     assert "New York Liberty" in active_queue
     assert "Breanna Stewart" in active_queue
     assert "Evidence: Hold the logo slot until source and local file are manually checked." in active_queue
@@ -2705,6 +2719,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Review-only policy: logo_review_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
     assert "Review-only policy: manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
     assert "Selected template blocker: `blocking_selected_template_logo_review`" in active_queue
+    assert "Selected template blocker: `not_blocking_selected_template_league_mark_not_required`" in active_queue
     assert "Selected template blocker: `not_blocking_selected_template_photo_not_required`" in active_queue
     assert "Decision lane: `wnba_logo_review`" in active_queue
     assert "Source confidence: `source_missing_or_unregistered`" in active_queue
@@ -2742,7 +2757,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert wnba_queue["source_confidence"] == "source_missing_or_unregistered"
     assert wnba_queue["manual_approval_status"] == "manual_review_required"
     assert wnba_queue["asset_readiness"] == "optional_league_logo_file_missing_review_only"
-    assert wnba_queue["selected_template_blocking_status"] == "blocking_selected_template_logo_review"
+    assert wnba_queue["selected_template_blocking_status"] == "not_blocking_selected_template_league_mark_not_required"
     assert wnba_queue["blocker_summary"] == "WNBA: missing league mark; default decision=hold_league_mark; readiness=optional_league_logo_file_missing_review_only"
     assert wnba_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
     assert wnba_queue["primary_action"] == "supply_exact_local_logo_and_manual_registry_review"

@@ -2784,10 +2784,20 @@ def active_logo_entity_matches(packet_text: str, entity_name: str, entity_id: st
 def selected_template_blocking_status(packet: Dict[str, str], row: Dict[str, str]) -> Dict[str, str]:
     requirement = clean(packet.get("asset_requirement")).lower()
     domain = clean(row.get("asset_domain"))
-    if domain in {"team_logo", "league_logo"}:
+    if domain == "team_logo":
         return {
             "selected_template_blocking_status": "blocking_selected_template_logo_review",
             "selected_template_blocking_reason": "Selected final-score template requires exact WNBA logo review before renderer trust.",
+        }
+    if domain == "league_logo":
+        if "league mark required" in requirement or "league logo required" in requirement:
+            return {
+                "selected_template_blocking_status": "blocking_selected_template_logo_review",
+                "selected_template_blocking_reason": "Selected template explicitly requires an exact league mark before renderer trust.",
+            }
+        return {
+            "selected_template_blocking_status": "not_blocking_selected_template_league_mark_not_required",
+            "selected_template_blocking_reason": "Selected final-score template uses team logo slots; keep the league mark hold as review-only context for future branded templates.",
         }
     if domain == "athlete_photo":
         if "no player asset required" in requirement:
@@ -3415,15 +3425,18 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
         return "\n".join(lines)
     blocking_rows = [row for row in rows if clean(row.get("selected_template_blocking_status")).startswith("blocking_selected_template")]
     future_photo_rows = [row for row in rows if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_photo_not_required"]
+    league_context_rows = [row for row in rows if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_league_mark_not_required"]
     lines += [
         "## Summary",
         "",
         f"- Total review rows: {len(rows)}",
         f"- Blocking selected template now: {len(blocking_rows)}",
         f"- Future photo-first holds: {len(future_photo_rows)}",
+        f"- League-mark context holds: {len(league_context_rows)}",
         f"- Blocking entities: {active_queue_entity_list(blocking_rows)}",
         f"- Future photo-first entities: {active_queue_entity_list(future_photo_rows)}",
-        "- Immediate manual path: clear the blocking selected-template rows first; future photo-first holds stay review-only and do not approve player imagery.",
+        f"- League-mark context entities: {active_queue_entity_list(league_context_rows)}",
+        "- Immediate manual path: clear the blocking selected-template rows first; future photo-first and league-mark context holds stay review-only.",
         "",
         "## Rows",
         "",
