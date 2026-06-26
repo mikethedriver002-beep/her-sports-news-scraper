@@ -2521,6 +2521,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/source_proof.md").exists()
     assert Path("render_handoff_top_packet/manual_renderer_prompt.md").exists()
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
+    readme = Path("render_handoff_top_packet/README.md").read_text(encoding="utf-8")
+    assert "Active Review Holds" in readme
+    assert "Logo readiness: `hold_logo_review_required`" in readme
+    assert "Athlete identity: `hold_identity_review_required`" in readme
+    assert "Breanna Stewart: hold_identity_review_required" in readme
+    assert "do not approve assets or create a publish-ready lane" in readme
     assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
     asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
