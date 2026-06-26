@@ -6,11 +6,11 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.64.0-active-queue-closure-cues"
+VERSION = "hsd-operator-command-center-v3.65.0-render-blocker-scope"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -585,6 +585,17 @@ def render_readiness_band(score: int, blockers: List[str]) -> str:
     if score >= 45:
         return "needs_operator_review"
     return "hold_before_render"
+
+
+def display_render_blockers(row: Mapping[str, Any]) -> str:
+    blockers = clean(row.get("blockers"))
+    if blockers and blockers != "none":
+        return blockers
+    active_logo = clean(row.get("active_logo_readiness_status"))
+    active_athlete = clean(row.get("active_athlete_identity_status"))
+    if active_logo.startswith("hold_") or active_athlete.startswith("hold_"):
+        return "none for source/format/manual path; active asset holds remain"
+    return "none for source/format/manual path"
 
 
 def score_render_readiness(
@@ -4729,7 +4740,7 @@ def render_render_readiness(rows: Iterable[Dict[str, str]]) -> str:
               <td>{html.escape(clean(row.get('asset_cue')) or 'n/a')}</td>
               <td>{html.escape(clean(row.get('format_cue')) or 'n/a')}</td>
               <td>{html.escape(clean(row.get('manual_path')) or 'n/a')}</td>
-              <td>{html.escape(clean(row.get('blockers')) or 'none')}</td>
+              <td>{html.escape(display_render_blockers(row))}</td>
               <td>{html.escape(clean(row.get('next_step')))}</td>
               <td>{open_link(clean(row.get('artifact')))}</td>
             </tr>
@@ -7258,7 +7269,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Render readiness", ""]
     lines.extend(
-        f"- {item.get('rank') or '-'} | {item.get('band') or 'not_scored'} | score: {item.get('score') or '0'} | {item.get('title') or 'Untitled candidate'} | path: {item.get('recommended_path') or 'review'} | source: {item.get('source_cue') or 'n/a'} | assets: {item.get('asset_cue') or 'n/a'} | format: {item.get('format_cue') or 'n/a'} | manual: {item.get('manual_path') or 'n/a'} | blockers: {item.get('blockers') or 'none'} | next: {item.get('next_step') or 'review manually'}"
+        f"- {item.get('rank') or '-'} | {item.get('band') or 'not_scored'} | score: {item.get('score') or '0'} | {item.get('title') or 'Untitled candidate'} | path: {item.get('recommended_path') or 'review'} | source: {item.get('source_cue') or 'n/a'} | assets: {item.get('asset_cue') or 'n/a'} | format: {item.get('format_cue') or 'n/a'} | manual: {item.get('manual_path') or 'n/a'} | blockers: {display_render_blockers(item)} | next: {item.get('next_step') or 'review manually'}"
         for item in payload["render_readiness_queue"]
     )
     lines += ["", "## Render prep packets", ""]
@@ -7522,6 +7533,7 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             f"- Packet ID: `{clean(packet.get('packet_id'))}`",
             f"- Status: `{clean(packet.get('packet_status'))}`",
             f"- Readiness: `{clean(packet.get('render_readiness_score'))}/100` / `{clean(packet.get('render_readiness_band'))}`",
+            f"- Blockers: {display_render_blockers(packet)}",
             f"- Recommended path: `{clean(packet.get('recommended_path'))}`",
             f"- Source artifact: `{clean(packet.get('source_artifact'))}`",
             f"- Template fit: `{clean(packet.get('template_fit'))}`",

@@ -1891,7 +1891,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.64.0-active-queue-closure-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.65.0-render-blocker-scope"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2191,6 +2191,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_readiness_queue"][0]["format_cue"] == "news_packet_format_fit"
     assert payload["render_readiness_queue"][0]["manual_path"] == "manual_review_artifact_ready:news_fact_packets.csv"
     assert payload["render_readiness_queue"][0]["blockers"] == "none"
+    assert command_center.display_render_blockers(payload["render_readiness_queue"][0]) == "none for source/format/manual path"
     assert payload["render_readiness_queue"][1]["title"] == "Public team social lead"
     assert payload["render_readiness_queue"][1]["band"] == "hold_for_source_confirmation"
     assert payload["render_readiness_queue"][1]["blockers"] == "source confirmation required"
@@ -2594,6 +2595,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "New York Liberty: unapproved_required_logo" in markdown
     assert "active athlete: hold_identity_review_required" in markdown
     assert "Breanna Stewart: hold_identity_review_required" in markdown
+    assert "blockers: none for source/format/manual path" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -2642,6 +2644,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert all(row["paid_apis"] == "false" for row in active_queue_rows)
     assert all(row["asset_downloads"] == "false" for row in active_queue_rows)
     assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
+    assert "Blockers: none for source/format/manual path; active asset holds remain" in Path("render_prep_packets.md").read_text(encoding="utf-8")
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
     asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
     assert "exact local WNBA team logos" in asset_checklist
