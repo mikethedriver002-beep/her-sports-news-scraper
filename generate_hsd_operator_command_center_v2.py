@@ -5174,6 +5174,7 @@ def render_logo_review_packet_cards(rows: Iterable[Dict[str, Any]]) -> str:
                 </div>
               </div>
               <p>{html.escape(short(primary_action or 'Review logo source evidence before renderer trust.', 180))}</p>
+              <p><strong>Path check:</strong> registered={html.escape(short(registered_path or 'missing', 90))} / source={html.escape(short(source_path or 'missing', 90))}</p>
               <div class="asset-guidance-grid">
                 <div><span>Hold</span><strong>{html.escape(short(hold_cue or 'Hold logo slot until exact source and local file are reviewed.', 130))}</strong></div>
                 <div><span>Revise</span><strong>{html.escape(short(revise_cue or 'Revise registry metadata only after manual evidence review.', 130))}</strong></div>
@@ -6639,7 +6640,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         for item in asset_panel.get("top_findings", [])[:8]
     )
     lines.extend(
-        f"- Logo packet: {item.get('team_name') or item.get('team_id')} | {item.get('issue_type') or 'logo_review_required'} | {item.get('decision_packet_title') or item.get('packet_id')} | next: {item.get('primary_action') or item.get('decision_primary_action') or 'manual logo review required'}"
+        f"- Logo packet: {item.get('team_name') or item.get('team_id')} | {item.get('issue_type') or 'logo_review_required'} | {item.get('decision_packet_title') or item.get('packet_id')} | registered={item.get('registered_path') or item.get('registered_logo_path') or item.get('local_logo_path') or item.get('recommended_path') or 'missing'} | source={item.get('source_target_path') or item.get('source_path') or item.get('target_path') or 'missing'} | fallback={item.get('renderer_fallback_cue') or 'Renderer fallback remains review-only.'} | next: {item.get('primary_action') or item.get('decision_primary_action') or 'manual logo review required'}"
         for item in asset_panel.get("logo_review_packets", [])[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
