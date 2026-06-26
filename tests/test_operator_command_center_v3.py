@@ -1833,6 +1833,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "data/asset_registry/asset_availability_audit.md" in html
     assert "Asset Readiness Decision Desk" in markdown
     assert "review-only, no paid APIs, no asset downloads" in markdown
+    assert "Logo review packets: 1 (1 unapproved / 0 source drift)" in markdown
+    assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert any(item["label"] == "Athlete photo review" and item["value"] == "hold_identity_review_required" for item in payload["metrics"])
     assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
     assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"

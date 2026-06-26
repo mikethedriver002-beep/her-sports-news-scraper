@@ -6624,12 +6624,17 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Team logo findings: {asset_panel.get('team_logo_findings', 0)}",
         f"- League mark findings: {asset_panel.get('league_logo_findings', 0)}",
         f"- Renderer findings: {asset_panel.get('renderer_findings', 0)}",
+        f"- Logo review packets: {asset_panel.get('logo_review_packet_rows', 0)} ({asset_panel.get('logo_review_packet_unapproved_rows', 0)} unapproved / {asset_panel.get('logo_review_packet_source_drift_rows', 0)} source drift)",
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
         f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | next: {item.get('manual_action')} | packet: {item.get('decision_lane') or 'manual_review'} / {item.get('default_operator_decision') or 'review_required'} / {item.get('asset_readiness') or 'review_required'}"
         for item in asset_panel.get("top_findings", [])[:8]
+    )
+    lines.extend(
+        f"- Logo packet: {item.get('team_name') or item.get('team_id')} | {item.get('issue_type') or 'logo_review_required'} | {item.get('decision_packet_title') or item.get('packet_id')} | next: {item.get('primary_action') or item.get('decision_primary_action') or 'manual logo review required'}"
+        for item in asset_panel.get("logo_review_packets", [])[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
     lines += [
