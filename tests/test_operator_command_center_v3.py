@@ -449,6 +449,11 @@ def seed_asset_availability_audit_files() -> None:
             "entity_name": "WNBA",
             "league": "WNBA",
             "finding": "missing_or_unregistered_logo_asset",
+            "review_packet_id": "asset_review_0605_league_logo_WNBA",
+            "allowed_operator_decisions": "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata",
+            "decision_primary_action": "supply_exact_local_logo_and_manual_registry_review",
+            "manual_review_packet": "data/asset_registry/wnba/logo_review_catalog_report.md",
+            "operator_copy_target": "operator/assets/brand_logos/README.md",
             "approval_status": "missing",
             "format_status": "missing_file",
             "renderer_coverage": "review_only_not_renderable_until_approved",
@@ -1899,7 +1904,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.72.0-active-queue-review-source"
+    assert payload["version"] == "hsd-operator-command-center-v3.73.0-audit-packet-metadata-queue"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2652,10 +2657,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Evidence: approved marker decision_source=default" in active_queue
     assert "Review queue ID: `logo_packet_new_york_liberty_unapproved`" in active_queue
     assert "Review queue ID: `new_york_liberty_breanna_stewart`" in active_queue
+    assert "Review queue ID: `asset_review_0605_league_logo_WNBA`" in active_queue
     assert "Review source: `data/asset_registry/wnba/logo_review_packets.csv`" in active_queue
     assert "Review source: `data/asset_registry/wnba/athlete_identity_review_packet.csv`" in active_queue
+    assert "Review source: `data/asset_registry/asset_availability_audit.csv`" in active_queue
     assert "Review-only policy: logo_review_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
     assert "Review-only policy: manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
+    assert "Manual review packet: `data/asset_registry/wnba/logo_review_catalog_report.md`" in active_queue
+    assert "Operator copy target: `operator/assets/brand_logos/README.md`" in active_queue
     assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
     assert "Provider player ID: `1627668`" in active_queue
     assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue
@@ -2673,6 +2682,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert breanna_queue["provider_player_id"] == "1627668"
     assert breanna_queue["approved_marker_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved"
     wnba_queue = next(row for row in active_queue_rows if row["entity_name"] == "WNBA")
+    assert wnba_queue["review_queue_id"] == "asset_review_0605_league_logo_WNBA"
+    assert wnba_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
+    assert wnba_queue["primary_action"] == "supply_exact_local_logo_and_manual_registry_review"
+    assert wnba_queue["manual_review_packet"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert wnba_queue["operator_copy_target"] == "operator/assets/brand_logos/README.md"
     assert wnba_queue["registered_path"] == "assets/leagues/wnba/logos/league/wnba.png"
     assert wnba_queue["source_target_path"] == "assets/leagues/wnba/logos/league/wnba.png"
     assert all(row["publish_ready"] == "false" for row in active_queue_rows)
