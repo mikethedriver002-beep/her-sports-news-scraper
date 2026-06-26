@@ -5,6 +5,14 @@ league,frauen_bundesliga_germany,hsd_manual_registry,frauen_bundesliga_germany,,
 league,premiere_ligue_france,hsd_manual_registry,premiere_ligue_france,,https://uk.fff.fr/,review_required,not_approved,Internal manual-safe slug only
 league,serie_a_women_italy,hsd_manual_registry,serie_a_women_italy,,https://www.figc.it/it/femminile/,review_required,not_approved,Internal manual-safe slug only
 team,arsenal_women,hsd_manual_registry,arsenal_women,,https://www.arsenal.com/women,review_required,not_approved,Internal manual-safe slug only
+team,aston_villa_women,hsd_manual_registry,aston_villa_women,,https://www.avfc.co.uk/teams/womens,review_required,not_approved,Internal manual-safe slug only
+team,brighton_hove_albion_women,hsd_manual_registry,brighton_hove_albion_women,,https://www.brightonandhovealbion.com/pages/en/womens-team,review_required,not_approved,Internal manual-safe slug only
 team,chelsea_women,hsd_manual_registry,chelsea_women,,https://www.chelseafc.com/en/teams/chelsea-women,review_required,not_approved,Internal manual-safe slug only
+team,everton_women,hsd_manual_registry,everton_women,,https://www.evertonfc.com/teams/women,review_required,not_approved,Internal manual-safe slug only
+team,leicester_city_women,hsd_manual_registry,leicester_city_women,,https://www.lcfc.com/pages/en/women,review_required,not_approved,Internal manual-safe slug only
+team,liverpool_women,hsd_manual_registry,liverpool_women,,https://www.liverpoolfc.com/team/womens,review_required,not_approved,Internal manual-safe slug only
+team,london_city_lionesses,hsd_manual_registry,london_city_lionesses,,https://www.londoncitylionesses.com/,review_required,not_approved,Internal manual-safe slug only
 team,manchester_city_women,hsd_manual_registry,manchester_city_women,,https://www.mancity.com/teams/mcwfc,review_required,not_approved,Internal manual-safe slug only
 team,manchester_united_women,hsd_manual_registry,manchester_united_women,,https://www.manutd.com/en/teams/women,review_required,not_approved,Internal manual-safe slug only
+team,tottenham_hotspur_women,hsd_manual_registry,tottenham_hotspur_women,,https://www.tottenhamhotspur.com/teams/women/,review_required,not_approved,Internal manual-safe slug only
+team,west_ham_united_women,hsd_manual_registry,west_ham_united_women,,https://www.whufc.com/teams/women,review_required,not_approved,Internal manual-safe slug only

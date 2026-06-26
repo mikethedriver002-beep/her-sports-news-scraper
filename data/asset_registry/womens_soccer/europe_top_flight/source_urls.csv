@@ -15,12 +15,36 @@ league,serie_a_women_italy,clubs_index,https://www.figc.it/it/femminile/,www.fig
 team,arsenal_women,team_site,https://www.arsenal.com/women,www.arsenal.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
 team,arsenal_women,roster,https://www.arsenal.com/women/players,www.arsenal.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
 team,arsenal_women,logo_review_source,https://www.arsenal.com/women,www.arsenal.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,aston_villa_women,team_site,https://www.avfc.co.uk/teams/womens,www.avfc.co.uk,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,aston_villa_women,roster,https://www.avfc.co.uk/teams/womens,www.avfc.co.uk,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,aston_villa_women,logo_review_source,https://www.avfc.co.uk/teams/womens,www.avfc.co.uk,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,brighton_hove_albion_women,team_site,https://www.brightonandhovealbion.com/pages/en/womens-team,www.brightonandhovealbion.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,brighton_hove_albion_women,roster,https://www.brightonandhovealbion.com/pages/en/womens-team,www.brightonandhovealbion.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,brighton_hove_albion_women,logo_review_source,https://www.brightonandhovealbion.com/pages/en/womens-team,www.brightonandhovealbion.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
 team,chelsea_women,team_site,https://www.chelseafc.com/en/teams/chelsea-women,www.chelseafc.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
 team,chelsea_women,roster,https://www.chelseafc.com/en/teams/chelsea-women,www.chelseafc.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
 team,chelsea_women,logo_review_source,https://www.chelseafc.com/en/teams/chelsea-women,www.chelseafc.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,everton_women,team_site,https://www.evertonfc.com/teams/women,www.evertonfc.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,everton_women,roster,https://www.evertonfc.com/teams/women,www.evertonfc.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,everton_women,logo_review_source,https://www.evertonfc.com/teams/women,www.evertonfc.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,leicester_city_women,team_site,https://www.lcfc.com/pages/en/women,www.lcfc.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,leicester_city_women,roster,https://www.lcfc.com/pages/en/women,www.lcfc.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,leicester_city_women,logo_review_source,https://www.lcfc.com/pages/en/women,www.lcfc.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,liverpool_women,team_site,https://www.liverpoolfc.com/team/womens,www.liverpoolfc.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,liverpool_women,roster,https://www.liverpoolfc.com/team/womens,www.liverpoolfc.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,liverpool_women,logo_review_source,https://www.liverpoolfc.com/team/womens,www.liverpoolfc.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,london_city_lionesses,team_site,https://www.londoncitylionesses.com/,www.londoncitylionesses.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,london_city_lionesses,roster,https://www.londoncitylionesses.com/teams,www.londoncitylionesses.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,london_city_lionesses,logo_review_source,https://www.londoncitylionesses.com/,www.londoncitylionesses.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
 team,manchester_city_women,team_site,https://www.mancity.com/teams/mcwfc,www.mancity.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
 team,manchester_city_women,roster,https://www.mancity.com/teams/mcwfc,www.mancity.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
 team,manchester_city_women,logo_review_source,https://www.mancity.com/teams/mcwfc,www.mancity.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
 team,manchester_united_women,team_site,https://www.manutd.com/en/teams/women,www.manutd.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
 team,manchester_united_women,roster,https://www.manutd.com/en/teams/women,www.manutd.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
 team,manchester_united_women,logo_review_source,https://www.manutd.com/en/teams/women,www.manutd.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,tottenham_hotspur_women,team_site,https://www.tottenhamhotspur.com/teams/women/,www.tottenhamhotspur.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,tottenham_hotspur_women,roster,https://www.tottenhamhotspur.com/teams/women/players/,www.tottenhamhotspur.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,tottenham_hotspur_women,logo_review_source,https://www.tottenhamhotspur.com/teams/women/,www.tottenhamhotspur.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate
+team,west_ham_united_women,team_site,https://www.whufc.com/teams/women,www.whufc.com,official_candidate,review_required,false,false,not_approved,Official club source candidate
+team,west_ham_united_women,roster,https://www.whufc.com/teams/women,www.whufc.com,official_candidate,review_required,false,false,not_approved,Official roster source candidate
+team,west_ham_united_women,logo_review_source,https://www.whufc.com/teams/women,www.whufc.com,official_candidate,review_required,false,false,not_approved,Official logo/source candidate

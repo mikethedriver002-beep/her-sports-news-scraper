@@ -143,11 +143,19 @@ REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES = {
     "serie_a_women_italy",
 }
 
-REQUIRED_EUROPE_PILOT_TEAMS = {
+REQUIRED_WSL_TEAMS = {
     "arsenal_women",
+    "aston_villa_women",
+    "brighton_hove_albion_women",
     "chelsea_women",
+    "everton_women",
+    "leicester_city_women",
+    "liverpool_women",
+    "london_city_lionesses",
     "manchester_city_women",
     "manchester_united_women",
+    "tottenham_hotspur_women",
+    "west_ham_united_women",
 }
 
 
@@ -293,8 +301,8 @@ def evaluate(root: Path) -> Dict[str, Any]:
         blockers.append(f"missing_required_europe_top_flight_league:{league_id}")
 
     europe_teams = set(values(europe_rows_by_file, "teams.csv", "team_id"))
-    for team_id in sorted(REQUIRED_EUROPE_PILOT_TEAMS - europe_teams):
-        blockers.append(f"missing_required_europe_pilot_team:{team_id}")
+    for team_id in sorted(REQUIRED_WSL_TEAMS - europe_teams):
+        blockers.append(f"missing_required_wsl_team:{team_id}")
 
     europe_league_mark_rows = {
         clean(row.get("entity_id"))
@@ -309,8 +317,8 @@ def evaluate(root: Path) -> Dict[str, Any]:
         for row in europe_rows_by_file.get("asset_slots.csv", [])
         if clean(row.get("entity_type")) == "team" and clean(row.get("asset_slot")) == "primary_logo"
     }
-    for team_id in sorted(REQUIRED_EUROPE_PILOT_TEAMS - europe_team_logo_rows):
-        blockers.append(f"missing_europe_pilot_team_logo_slot:{team_id}")
+    for team_id in sorted(REQUIRED_WSL_TEAMS - europe_team_logo_rows):
+        blockers.append(f"missing_wsl_team_logo_slot:{team_id}")
 
     team_asset_rows = {
         clean(row.get("entity_id"))
@@ -375,7 +383,7 @@ def evaluate(root: Path) -> Dict[str, Any]:
     europe_player_count = len(europe_rows_by_file.get("players.csv", []))
     if europe_player_count == 0:
         warnings.append("europe_players_csv_header_only_manual_intake")
-    warnings.append("europe_top_flight_team_rows_are_pilot_only_manual_expansion_required")
+    warnings.append("non_wsl_europe_team_rows_require_manual_expansion")
 
     status = "passed_womens_soccer_review_scaffold" if not blockers else "blocked_womens_soccer_review_scaffold"
     return {
@@ -391,8 +399,10 @@ def evaluate(root: Path) -> Dict[str, Any]:
         "player_count": player_count,
         "europe_top_flight_required_league_count": len(REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES),
         "europe_top_flight_league_count": len(europe_leagues),
-        "europe_top_flight_required_pilot_team_count": len(REQUIRED_EUROPE_PILOT_TEAMS),
+        "europe_top_flight_required_pilot_team_count": len(REQUIRED_WSL_TEAMS),
+        "europe_top_flight_required_wsl_team_count": len(REQUIRED_WSL_TEAMS),
         "europe_top_flight_pilot_team_count": len(europe_teams),
+        "europe_top_flight_wsl_team_count": len(europe_teams & REQUIRED_WSL_TEAMS),
         "europe_top_flight_player_count": europe_player_count,
         "europe_top_flight_source_url_count": len(europe_rows_by_file.get("source_urls.csv", [])),
         "europe_top_flight_asset_slot_count": len(europe_rows_by_file.get("asset_slots.csv", [])),
@@ -429,7 +439,7 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         f"Players: `{report['player_count']}`",
         f"Source URL rows: `{report['source_url_count']}`",
         f"Europe top-flight leagues: `{report['europe_top_flight_league_count']}/{report['europe_top_flight_required_league_count']}`",
-        f"Europe pilot teams: `{report['europe_top_flight_pilot_team_count']}/{report['europe_top_flight_required_pilot_team_count']}`",
+        f"Europe WSL teams: `{report['europe_top_flight_wsl_team_count']}/{report['europe_top_flight_required_wsl_team_count']}`",
         f"Europe source URL rows: `{report['europe_top_flight_source_url_count']}`",
         f"Europe asset slot rows: `{report['europe_top_flight_asset_slot_count']}`",
         f"League source kinds: `{report['league_source_kind_count']}/{report['required_league_source_kind_count']}`",
