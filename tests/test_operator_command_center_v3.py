@@ -107,6 +107,8 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
         "review_required": "true",
         "hold_reason_codes": "approved_asset_still_has_pending_match_review",
         "focused_evidence": "approved marker decision_source=default",
+        "provider_player_id": "1627668",
+        "approved_marker_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved",
     }
     write_csv_with_fields(
         "data/asset_registry/wnba/athlete_identity_review_packet.csv",
@@ -157,7 +159,11 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
     assert identity["athlete_identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
     assert active_queue_rows[0]["identity_closure_artifact"] == "data/asset_registry/wnba/athlete_identity_closure_packet.md"
     assert active_queue_rows[0]["identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
+    assert active_queue_rows[0]["provider_player_id"] == "1627668"
+    assert active_queue_rows[0]["approved_marker_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved"
     assert "Evidence: approved marker decision_source=default" in active_queue_md
+    assert "Provider player ID: `1627668`" in active_queue_md
+    assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue_md
     assert "Identity closure packet: `data/asset_registry/wnba/athlete_identity_closure_packet.md`" in active_queue_md
     assert "Identity backfill packet: `data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv`" in active_queue_md
 
@@ -1893,7 +1899,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.70.0-active-asset-stop-go"
+    assert payload["version"] == "hsd-operator-command-center-v3.71.0-athlete-queue-identity-details"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2645,6 +2651,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Evidence: Hold the logo slot until source and local file are manually checked." in active_queue
     assert "Evidence: approved marker decision_source=default" in active_queue
     assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
+    assert "Provider player ID: `1627668`" in active_queue
+    assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue
     assert "asset_downloads=false" in active_queue
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
     assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
@@ -2656,6 +2664,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     breanna_queue = next(row for row in active_queue_rows if row["entity_name"] == "Breanna Stewart")
     assert breanna_queue["asset_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
     assert breanna_queue["source_check_url"] == "https://www.wnba.com/player/1627668/breanna-stewart"
+    assert breanna_queue["provider_player_id"] == "1627668"
+    assert breanna_queue["approved_marker_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved"
     wnba_queue = next(row for row in active_queue_rows if row["entity_name"] == "WNBA")
     assert wnba_queue["registered_path"] == "assets/leagues/wnba/logos/league/wnba.png"
     assert wnba_queue["source_target_path"] == "assets/leagues/wnba/logos/league/wnba.png"
