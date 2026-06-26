@@ -253,6 +253,47 @@ def test_manual_asset_source_board_derives_review_only_rows_from_active_queue(tm
     assert "asset_downloads=false" in board_md
 
 
+def test_decision_stop_go_summary_separates_blockers_from_context_rows() -> None:
+    packet = {
+        "packet_id": "render_prep_test",
+        "title": "New York Liberty beat Las Vegas Aces",
+        "active_asset_stop_go": "hold_required_manual_asset_review",
+    }
+    active_rows = [
+        {
+            "entity_name": "New York Liberty",
+            "asset_domain": "team_logo",
+            "selected_template_blocking_status": "blocking_selected_template_logo_review",
+        },
+        {
+            "entity_name": "Breanna Stewart",
+            "asset_domain": "athlete_photo",
+            "selected_template_blocking_status": "not_blocking_selected_template_photo_not_required",
+        },
+        {
+            "entity_name": "WNBA",
+            "asset_domain": "league_logo",
+            "selected_template_blocking_status": "not_blocking_selected_template_league_mark_not_required",
+        },
+    ]
+    source_rows = [{"entity_name": row["entity_name"]} for row in active_rows]
+
+    summary = command_center.decision_stop_go_summary(packet, active_rows, source_rows)
+
+    assert summary["panel_status"] == "hold_selected_template_manual_asset_review"
+    assert summary["selected_template_blockers"] == 1
+    assert summary["selected_template_entities"] == "New York Liberty"
+    assert summary["future_photo_first_holds"] == 1
+    assert summary["future_photo_first_entities"] == "Breanna Stewart"
+    assert summary["league_mark_context_holds"] == 1
+    assert summary["league_mark_context_entities"] == "WNBA"
+    assert summary["source_board_rows"] == 3
+    assert summary["active_queue_artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
+    assert summary["manual_asset_source_board_artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
+    assert "no downloads" in summary["guardrail_summary"]
+    assert "no auto-approval" in summary["guardrail_summary"]
+
+
 def test_selected_template_blocking_status_keeps_optional_league_mark_context() -> None:
     packet = {
         "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
@@ -2015,7 +2056,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.78.0-manual-asset-source-board"
+    assert payload["version"] == "hsd-operator-command-center-v3.79.0-decision-stop-go-summary"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2390,6 +2431,22 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_handoff_summary"]["guardrails"]["paid_apis"] is False
     assert payload["render_handoff_summary"]["guardrails"]["publish_ready_lane"] is False
     assert payload["render_handoff_summary"]["guardrails"]["publishing"] is False
+    assert any(
+        item["label"] == "Decision stop/go"
+        and item["value"] == "hold_selected_template_manual_asset_review"
+        for item in payload["metrics"]
+    )
+    assert payload["decision_stop_go_summary"]["panel_status"] == "hold_selected_template_manual_asset_review"
+    assert payload["decision_stop_go_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
+    assert payload["decision_stop_go_summary"]["selected_template_blockers"] == 1
+    assert payload["decision_stop_go_summary"]["selected_template_entities"] == "New York Liberty"
+    assert payload["decision_stop_go_summary"]["future_photo_first_holds"] == 1
+    assert payload["decision_stop_go_summary"]["future_photo_first_entities"] == "Breanna Stewart"
+    assert payload["decision_stop_go_summary"]["league_mark_context_holds"] == 1
+    assert payload["decision_stop_go_summary"]["league_mark_context_entities"] == "WNBA"
+    assert payload["decision_stop_go_summary"]["active_queue_artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
+    assert payload["decision_stop_go_summary"]["manual_asset_source_board_artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
+    assert "no auto-approval" in payload["decision_stop_go_summary"]["guardrail_summary"]
     assert any(item["label"] == "Manual asset source board" and item["value"] == "3" for item in payload["metrics"])
     assert len(payload["manual_asset_source_board"]) == 3
     assert {row["entity_name"] for row in payload["manual_asset_source_board"]} == {"New York Liberty", "WNBA", "Breanna Stewart"}
@@ -2771,6 +2828,18 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "active asset stop/go: hold_required_manual_asset_review" in markdown
     assert "Breanna Stewart: hold_identity_review_required" in markdown
     assert "blockers: none for source/format/manual path" in markdown
+    assert "What blocks this render now?" in html
+    assert "hold_selected_template_manual_asset_review" in html
+    assert "Selected-template blockers" in html
+    assert "Future photo-first holds" in html
+    assert "League-mark context" in html
+    assert "What Blocks This Render Now" in markdown
+    assert "Selected-template blockers: 1 (New York Liberty)" in markdown
+    assert "Future photo-first holds: 1 (Breanna Stewart)" in markdown
+    assert "League-mark context: 1 (WNBA)" in markdown
+    assert "Active queue: `render_handoff_top_packet/active_asset_review_queue.md`" in markdown
+    assert "Manual source board: `render_handoff_top_packet/manual_asset_source_board.md`" in markdown
+    assert "Guardrails: review-only; no downloads; no auto-approval; no file movement; no publishing; no publish-ready lane" in markdown
     assert "Manual Asset Source Board" in html
     assert "Old HSD asset-index/DDG packet structure" in html
     assert "Manual Asset Source Board" in markdown
