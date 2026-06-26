@@ -1,6 +1,6 @@
 # WNBA Athlete Photo Contact Sheets
 
-Generated: `2026-06-26T22:26:59.974229+00:00`
+Generated: `2026-06-26T22:56:03.368719+00:00`
 
 Review-only sweep board for WNBA athlete photos by team. Local headshots are shown in generated contact sheets; official roster/profile/photo URLs are source candidates only and are not downloaded by this generator.
 
@@ -9,7 +9,7 @@ Review-only sweep board for WNBA athlete photos by team. Local headshots are sho
 - Athlete rows: `200`
 - Teams: `15`
 - Local headshots present: `196`
-- Identity/source review rows: `196`
+- Identity/source review rows: `0`
 - Human-edited intake CSV: `data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv`
 - Allowed decisions: `approve_for_review_only_renderer_use|hold_identity|revise_asset|revise_source_metadata`
 - Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false

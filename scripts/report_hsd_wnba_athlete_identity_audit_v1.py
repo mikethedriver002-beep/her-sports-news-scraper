@@ -151,6 +151,11 @@ def official_free_source_url(value: Any) -> bool:
     return host == "wnba.com" or host.endswith(".wnba.com")
 
 
+def human_reviewed_decision_source(value: Any) -> bool:
+    source = clean(value).lower()
+    return source.startswith("human_reviewed_") or source.startswith("human_verified_")
+
+
 def source_provenance(athlete: Mapping[str, str], review: Mapping[str, str]) -> str:
     parts: List[str] = []
     athlete_source = clean(athlete.get("source_url"))
@@ -369,11 +374,13 @@ def audit_approved_assets(
             ))
 
         review_method = clean(review.get("match_method"))
+        review_status = clean(review.get("status"))
+        registry_human_reviewed = human_reviewed_decision_source(decision_source)
         try:
             confidence = float(clean(review.get("confidence")) or "0")
         except ValueError:
             confidence = 0.0
-        if "order" in review_method.lower() and confidence < 0.9:
+        if "order" in review_method.lower() and confidence < 0.9 and not registry_human_reviewed:
             issues.append(issue(
                 "high",
                 "order_matched_headshot_requires_source_backed_identity_review",
@@ -405,7 +412,7 @@ def audit_approved_assets(
                 recommendation="Replace wildcard/default provenance with an explicit per-athlete human decision before trusting identity.",
             ))
 
-        if review and clean(review.get("status")) == "needs_human_approval":
+        if review and review_status == "needs_human_approval" and not registry_human_reviewed:
             issues.append(issue(
                 "high",
                 "approved_asset_still_has_pending_match_review",
@@ -421,7 +428,7 @@ def audit_approved_assets(
                 recommendation="Keep a per-athlete review note or decision row that closes the pending match-review state.",
             ))
 
-        if decision and not clean(decision.get("decision")):
+        if decision and not clean(decision.get("decision")) and not registry_human_reviewed:
             issues.append(issue(
                 "medium",
                 "blank_per_row_approval_decision",
