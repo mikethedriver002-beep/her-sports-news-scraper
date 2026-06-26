@@ -10,10 +10,15 @@
     "catalog_csv": { "type": "string" },
     "schema": { "type": "string" },
     "template_mapping": { "type": "string" },
+    "verified_logo_registry": { "type": "string" },
     "row_count": { "type": "integer", "minimum": 0 },
     "team_logo_rows": { "type": "integer", "minimum": 0 },
     "league_logo_rows": { "type": "integer", "minimum": 0 },
     "approval_status_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "source_trust_status_counts": {
       "type": "object",
       "additionalProperties": { "type": "integer", "minimum": 0 }
     },
@@ -46,6 +51,9 @@
           "approval_status",
           "fallback_status",
           "source_note",
+          "source_trust_status",
+          "verified_registry_status",
+          "blocked_url_match",
           "render_template_ids",
           "review_only",
           "operator_action"
@@ -71,6 +79,9 @@
           "fallback_status": { "type": "string" },
           "source_url": { "type": "string" },
           "source_note": { "type": "string" },
+          "source_trust_status": { "type": "string" },
+          "verified_registry_status": { "type": "string" },
+          "blocked_url_match": { "type": "string" },
           "evidence": { "type": "string" },
           "render_template_ids": { "type": "string" },
           "template_scope": { "type": "string" },
