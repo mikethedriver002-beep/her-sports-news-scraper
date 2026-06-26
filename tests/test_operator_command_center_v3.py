@@ -1834,6 +1834,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Renderer fallback remains review-only while logo trust is held." in html
     assert "HSD team badges are review-only stand-ins" in html
     assert "they do not approve logo identity or create a publish-ready lane" in html
+    assert "review-only fallback status not recorded" not in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
     assert "data/asset_registry/asset_availability_audit.md" in html
@@ -1845,6 +1846,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
     assert "fallback=Renderer fallback remains review-only while logo trust is held." in markdown
     assert "fallback: HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane." in markdown
+    assert "review-only fallback status not recorded" not in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
     assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown
