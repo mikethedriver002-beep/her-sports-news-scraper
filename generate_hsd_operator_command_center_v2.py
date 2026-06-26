@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.75.0-handoff-template-scope"
+VERSION = "hsd-operator-command-center-v3.76.0-asset-panel-packet-fallbacks"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -897,32 +897,44 @@ def asset_audit_decision_guidance(row: Dict[str, Any]) -> Dict[str, str]:
 def normalize_asset_audit_finding(row: Dict[str, Any], rank: int) -> Dict[str, str]:
     guidance = asset_audit_decision_guidance(row)
     open_path = guidance["open_path"]
+    domain = clean(row.get("asset_domain")) or "unknown"
+    finding = clean(row.get("finding")) or "review_required"
+    entity_name = clean(row.get("entity_name")) or clean(row.get("entity_id")) or "Unknown asset"
+    default_decision = clean(row.get("default_operator_decision")) or audit_default_operator_decision(domain, finding)
+    readiness = audit_asset_readiness(row) or "manual_review_required"
+    source_confidence = clean(row.get("source_confidence"))
+    if not source_confidence and domain in {"team_logo", "league_logo"} and "missing" in finding:
+        source_confidence = "source_missing_or_unregistered"
+    identity_confidence = clean(row.get("identity_confidence"))
+    if not identity_confidence and domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        identity_confidence = "identity_hold_default_or_suspicious_approval"
+    blocker_summary = clean(row.get("blocker_summary")) or f"{entity_name}: {finding}; default decision={default_decision}; readiness={readiness}"
     return {
         "rank": str(rank),
-        "asset_domain": clean(row.get("asset_domain")) or "unknown",
+        "asset_domain": domain,
         "league": clean(row.get("league")),
         "entity_type": clean(row.get("entity_type")),
         "entity_id": clean(row.get("entity_id")),
-        "entity_name": clean(row.get("entity_name")) or clean(row.get("entity_id")) or "Unknown asset",
+        "entity_name": entity_name,
         "asset_kind": clean(row.get("asset_kind")),
         "asset_path": clean(row.get("asset_path")),
-        "finding": clean(row.get("finding")) or "review_required",
+        "finding": finding,
         "severity": clean(row.get("severity")) or "review",
         "approval_status": clean(row.get("approval_status")),
         "format_status": clean(row.get("format_status")),
         "dimension_status": clean(row.get("dimension_status")),
         "renderer_coverage": clean(row.get("renderer_coverage")),
         "review_packet_id": clean(row.get("review_packet_id")),
-        "decision_lane": clean(row.get("decision_lane")),
-        "default_operator_decision": clean(row.get("default_operator_decision")),
-        "source_confidence": clean(row.get("source_confidence")),
-        "identity_confidence": clean(row.get("identity_confidence")),
-        "manual_approval_status": clean(row.get("manual_approval_status")),
-        "asset_readiness": clean(row.get("asset_readiness")),
+        "decision_lane": clean(row.get("decision_lane")) or audit_decision_lane(domain, finding, clean(row.get("league"))),
+        "default_operator_decision": default_decision,
+        "source_confidence": source_confidence,
+        "identity_confidence": identity_confidence,
+        "manual_approval_status": clean(row.get("manual_approval_status")) or clean(row.get("approval_status")) or "manual_review_required",
+        "asset_readiness": readiness,
         "renderer_fallback_cue": clean(row.get("renderer_fallback_cue")),
         "operator_copy_target": clean(row.get("operator_copy_target")),
         "manual_review_packet": clean(row.get("manual_review_packet")),
-        "blocker_summary": clean(row.get("blocker_summary")),
+        "blocker_summary": blocker_summary,
         "recommended_next_step": clean(row.get("recommended_next_step")) or guidance["manual_action"],
         "evidence": short(clean(row.get("evidence")), 260),
         "decision": guidance["decision"],
@@ -2793,9 +2805,11 @@ def selected_template_blocking_status(packet: Dict[str, str], row: Dict[str, str
     }
 
 
-def audit_decision_lane(domain: str) -> str:
+def audit_decision_lane(domain: str, finding: str = "", league: str = "") -> str:
     if domain in {"team_logo", "league_logo"}:
-        return "wnba_logo_review"
+        return "wnba_logo_review" if clean(league).upper() in {"", "WNBA"} else "logo_review"
+    if domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "wnba_athlete_identity_resolution"
     if domain == "player_photo":
         return "wnba_athlete_photo_onboarding"
     return "asset_manual_review"
@@ -3302,7 +3316,7 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "registered_path": clean(item.get("registered_path")) or asset_path,
                 "source_target_path": source_target_path,
                 "asset_path": asset_path,
-                "decision_lane": clean(item.get("decision_lane")) or audit_decision_lane(domain),
+                "decision_lane": clean(item.get("decision_lane")) or audit_decision_lane(domain, clean(item.get("finding")), clean(item.get("league"))),
                 "default_operator_decision": clean(item.get("default_operator_decision")) or audit_default_operator_decision(domain, clean(item.get("finding"))),
                 "asset_readiness": audit_asset_readiness(item),
                 "source_confidence": clean(item.get("source_confidence")) or ("source_missing_or_unregistered" if domain in {"team_logo", "league_logo"} and "missing" in clean(item.get("finding")) else ""),
