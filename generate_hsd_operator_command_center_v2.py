@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.65.0-render-blocker-scope"
+VERSION = "hsd-operator-command-center-v3.66.0-manual-render-step-scope"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -2701,7 +2701,7 @@ def manual_renderer_steps(packet: Dict[str, str]) -> str:
     active_athlete_cues = (clean(packet.get("active_athlete_identity_cues")) or "no active athlete identity hold cue recorded").replace(" | ", "; ").replace("|", ";")
     steps = [
         f"Open {packet.get('source_artifact')} and confirm the source/copy fields match this packet.",
-        "Open operator_command_center.html and confirm the candidate is still not held by source, asset, or format blockers.",
+        "Open operator_command_center.html and confirm source, format, and manual-path blockers are clear; active asset holds remain separate stop/go cues.",
         f"Use {template_label} at {packet.get('template_shape')}.",
         f"Confirm asset requirement: {packet.get('asset_requirement')}",
         f"Confirm active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}; {active_logo_cues}",
