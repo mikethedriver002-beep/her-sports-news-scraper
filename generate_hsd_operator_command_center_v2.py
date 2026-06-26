@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.72.0-active-queue-review-source"
+VERSION = "hsd-operator-command-center-v3.73.0-audit-packet-metadata-queue"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -97,6 +97,8 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "allowed_decisions",
     "primary_action",
     "evidence",
+    "manual_review_packet",
+    "operator_copy_target",
     "identity_closure_cues",
     "identity_closure_artifact",
     "identity_backfill_artifact",
@@ -3208,7 +3210,7 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
         source_target_path = clean(item.get("source_target_path")) or clean(item.get("source_path")) or asset_path
         add_row(
             {
-                "review_queue_id": f"active_{domain}_{entity_id}_{clean(item.get('finding')) or 'review'}",
+                "review_queue_id": clean(item.get("review_packet_id")) or f"active_{domain}_{entity_id}_{clean(item.get('finding')) or 'review'}",
                 "packet_id": packet_id,
                 "asset_domain": domain,
                 "entity_type": clean(item.get("entity_type")) or ("league" if domain == "league_logo" else "team"),
@@ -3221,9 +3223,11 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "registered_path": clean(item.get("registered_path")) or asset_path,
                 "source_target_path": source_target_path,
                 "asset_path": asset_path,
-                "allowed_decisions": "hold_asset_slot|request_exact_logo_evidence|revise_registry_metadata",
-                "primary_action": clean(item.get("recommended_next_step")) or "manual asset review required",
+                "allowed_decisions": clean(item.get("allowed_operator_decisions")) or "hold_asset_slot|request_exact_logo_evidence|revise_registry_metadata",
+                "primary_action": clean(item.get("decision_primary_action")) or clean(item.get("recommended_next_step")) or "manual asset review required",
                 "evidence": clean(item.get("evidence")),
+                "manual_review_packet": clean(item.get("manual_review_packet")),
+                "operator_copy_target": clean(item.get("operator_copy_target")),
                 "review_only": "true",
                 "publish_ready": "false",
                 "auto_approval": "false",
@@ -3294,6 +3298,11 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
         evidence = clean(row.get("evidence"))
         if evidence:
             evidence_lines.append(f"- Evidence: {short(evidence, 260)}")
+        packet_target_lines: List[str] = []
+        if clean(row.get("manual_review_packet")):
+            packet_target_lines.append(f"- Manual review packet: `{clean(row.get('manual_review_packet'))}`")
+        if clean(row.get("operator_copy_target")):
+            packet_target_lines.append(f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`")
         identity_detail_lines: List[str] = []
         if clean(row.get("provider_player_id")):
             identity_detail_lines.append(f"- Provider player ID: `{clean(row.get('provider_player_id'))}`")
@@ -3321,6 +3330,7 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
             f"- Primary action: {clean(row.get('primary_action')) or 'manual review required'}",
             *evidence_lines,
+            *packet_target_lines,
             *identity_detail_lines,
             *closure_lines,
             f"- Review-only policy: {clean(row.get('review_only_policy')) or 'review_only_no_auto_approval_no_file_movement_no_publish_ready_lane'}",
