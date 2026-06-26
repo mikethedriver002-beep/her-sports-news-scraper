@@ -1,0 +1,20 @@
+{
+  "version": "hsd-wnba-logo-contact-sheet-v1-review-only",
+  "generated_at_utc": "2026-06-26T20:31:31.548674+00:00",
+  "review_only": true,
+  "status": "contact_sheet_ready",
+  "team_rows": 15,
+  "contact_sheet": "data/asset_registry/wnba/wnba_team_logo_contact_sheet.png",
+  "contact_sheet_data": "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv",
+  "human_intake_csv": "data/asset_registry/wnba/wnba_team_logo_review_intake.csv",
+  "warnings": [],
+  "guardrails": {
+    "publish_ready": false,
+    "auto_approval": false,
+    "auto_publish": false,
+    "move_files": false,
+    "paid_apis": false,
+    "asset_downloads": false,
+    "publishing": false
+  }
+}

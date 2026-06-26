@@ -54,6 +54,104 @@ def test_active_logo_readiness_matches_team_nicknames_and_audit_artifact(tmp_pat
     assert not command_center.active_logo_entity_matches("sunday preview", "Connecticut Sun", "connecticut_sun")
 
 
+def test_asset_readiness_panel_surfaces_logo_contact_sheet(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    registry = Path("data/asset_registry/wnba")
+    registry.mkdir(parents=True)
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "status": "review_required",
+            "finding_count": 1,
+            "severity_counts": {"warning": 1},
+            "asset_domain_counts": {"team_logo": 1},
+            "finding_counts": {"logo_present_without_complete_approval": 1},
+            "policy": {"no_auto_approval": True, "no_asset_downloads": True},
+            "findings": [],
+        },
+    )
+    write_csv_with_fields(
+        "data/asset_registry/wnba/logo_review_packets.csv",
+        [
+            {
+                "decision_packet_id": "asset_logo_review_atlanta_dream_unapproved_required_team_logo",
+                "team_id": "atlanta_dream",
+                "team_name": "Atlanta Dream",
+                "issue_type": "unapproved_required_team_logo",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        ],
+        [
+            "decision_packet_id",
+            "team_id",
+            "team_name",
+            "issue_type",
+            "review_only",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+            "asset_downloads",
+        ],
+    )
+    write_csv_with_fields(
+        "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv",
+        [
+            {
+                "team_id": "atlanta_dream",
+                "team_name": "Atlanta Dream",
+                "local_logo_path": "assets/leagues/wnba/teams/atlanta_dream/logo.png",
+                "official_source_candidate": "https://www.wnba.com/team/atlanta-dream",
+                "current_approval_status": "unapproved_review_required",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        ],
+        [
+            "team_id",
+            "team_name",
+            "local_logo_path",
+            "official_source_candidate",
+            "current_approval_status",
+            "review_only",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+            "asset_downloads",
+        ],
+    )
+    Path("data/asset_registry/wnba/wnba_team_logo_contact_sheet.md").write_text("# Contact sheet\n", encoding="utf-8")
+    write_json(
+        "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json",
+        {"status": "contact_sheet_ready", "team_rows": 1, "review_only": True},
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["logo_contact_sheet_rows"] == 1
+    assert panel["logo_contact_sheet_status"] == "contact_sheet_ready"
+    assert panel["logo_contact_sheet_freshness_status"] == "packet_ready"
+    assert any(item["label"] == "WNBA team logo contact sheet" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "WNBA team logo review intake" for item in panel["file_shortcuts"])
+    assert "Logo sweep rows" in html
+    assert "Logo contact sheet packet freshness" in html
+
+
 def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     packet_dir = Path("data/asset_registry/wnba")
