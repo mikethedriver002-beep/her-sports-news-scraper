@@ -1891,7 +1891,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.65.0-render-blocker-scope"
+    assert payload["version"] == "hsd-operator-command-center-v3.66.0-manual-render-step-scope"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2214,6 +2214,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "WNBA: missing_or_unregistered_logo_asset" in payload["render_prep_packets"][0]["active_logo_review_cues"]
     assert payload["render_prep_packets"][0]["logo_review_artifact"] == "data/asset_registry/wnba/logo_review_packets.csv"
     assert "Renderer fallback remains review-only" in payload["render_prep_packets"][0]["renderer_fallback_cue"]
+    assert "source, format, and manual-path blockers are clear" in payload["render_prep_packets"][0]["manual_renderer_steps"]
+    assert "active asset holds remain separate stop/go cues" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "Confirm active logo readiness: hold_logo_review_required" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["active_athlete_identity_status"] == "hold_identity_review_required"
     assert "Breanna Stewart: hold_identity_review_required" in payload["render_prep_packets"][0]["active_athlete_identity_cues"]
