@@ -3,18 +3,20 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hsd_run_io import input_path, write_csv as write_run_csv, write_json, write_text
+
 ROOT = Path("data/asset_registry/wnba")
-TEAMS = ROOT / "teams.csv"
-ALIASES = ROOT / "team_aliases.csv"
-TEAM_LOGOS = ROOT / "team_logos.csv"
-MISSING_TEAM_LOGOS = ROOT / "missing_team_logos.csv"
-REPORT_MD = ROOT / "asset_registry_validation_report.md"
-REPORT_JSON = ROOT / "asset_registry_validation.json"
+MISSING_TEAM_LOGOS = "data/asset_registry/wnba/missing_team_logos.csv"
+REPORT_MD = "data/asset_registry/wnba/asset_registry_validation_report.md"
+REPORT_JSON = "data/asset_registry/wnba/asset_registry_validation.json"
 VERSION = "hsd-wnba-asset-registry-validator-v1.3-review-only-logo-decision-packets"
 LOGO_EXTENSIONS = {".png", ".svg", ".webp", ".jpg", ".jpeg"}
 MISSING_LOGO_FIELDS = [
@@ -45,9 +47,10 @@ def now_iso() -> str:
 
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
-    if not path.exists():
+    resolved = input_path(path)
+    if not resolved.exists():
         return []
-    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+    with resolved.open(newline="", encoding="utf-8", errors="replace") as f:
         return list(csv.DictReader(f))
 
 
@@ -107,11 +110,11 @@ def first_by_field(rows: Iterable[Mapping[str, str]], field: str) -> Dict[str, M
 
 
 def path_exists(path_text: str) -> bool:
-    return bool(path_text) and Path(path_text).exists()
+    return bool(path_text) and input_path(path_text).exists()
 
 
 def hash_file(path_text: str) -> str:
-    path = Path(path_text)
+    path = input_path(path_text)
     if not path.exists() or not path.is_file():
         return ""
     digest = hashlib.sha256()
@@ -283,11 +286,8 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
 
 
 def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]]) -> None:
-    with MISSING_TEAM_LOGOS.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=MISSING_LOGO_FIELDS)
-        writer.writeheader()
-        writer.writerows(missing_rows)
-    REPORT_JSON.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    write_run_csv(MISSING_TEAM_LOGOS, missing_rows, MISSING_LOGO_FIELDS)
+    write_json(REPORT_JSON, result)
     lines = [
         "# HSD WNBA Asset Registry Validation",
         "",
@@ -328,7 +328,7 @@ def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]])
         f"decisions `{row['allowed_decisions']}` | fallback cue `{row['renderer_fallback_cue']}`"
         for row in missing_rows
     ] if missing_rows else ["- None"]
-    REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text(REPORT_MD, "\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> None:

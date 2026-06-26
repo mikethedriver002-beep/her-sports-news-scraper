@@ -151,6 +151,63 @@ def test_validator_reports_true_missing_required_logo(tmp_path: Path, monkeypatc
     assert result["missing_logo_decision_packets"] == 1
 
 
+def test_validator_writes_generated_reports_to_run_output_dir(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "outputs" / "run-validator"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    root = tmp_path / "data" / "asset_registry" / "wnba"
+
+    write_csv(
+        root / "teams.csv",
+        [{"team_id": "missing_team", "league": "WNBA", "team_name": "Missing Team"}],
+        ["team_id", "league", "team_name"],
+    )
+    write_csv(root / "team_aliases.csv", [], ["team_id", "alias"])
+    write_csv(
+        root / "team_logos.csv",
+        [
+            {
+                "team_id": "missing_team",
+                "asset_type": "primary_logo",
+                "file_path": "assets/leagues/wnba/teams/missing_team/logo.png",
+                "file_exists": "false",
+                "approved": "false",
+                "required": "true",
+                "last_verified_utc": "2026-06-25T00:00:00+00:00",
+                "source_note": "missing_required_exact_logo",
+            }
+        ],
+        ["team_id", "asset_type", "file_path", "file_exists", "approved", "required", "last_verified_utc", "source_note"],
+    )
+    write_csv(
+        root / "logo_sources.csv",
+        [
+            {
+                "team_id": "missing_team",
+                "team_name": "Missing Team",
+                "source_url": "https://example.test/missing-team-logo.png",
+                "target_path": "assets/leagues/wnba/teams/missing_team/logo.png",
+                "source_note": "fixture_exact_logo_source",
+            }
+        ],
+        ["team_id", "team_name", "source_url", "target_path", "source_note"],
+    )
+
+    module.main()
+
+    run_registry = run_dir / "data" / "asset_registry" / "wnba"
+    assert (run_registry / "missing_team_logos.csv").exists()
+    assert (run_registry / "asset_registry_validation.json").exists()
+    assert (run_registry / "asset_registry_validation_report.md").exists()
+    assert not (root / "missing_team_logos.csv").exists()
+    assert not (root / "asset_registry_validation.json").exists()
+    assert not (root / "asset_registry_validation_report.md").exists()
+    report = json.loads((run_registry / "asset_registry_validation.json").read_text(encoding="utf-8"))
+    assert report["status"] == "needs_assets"
+    assert report["missing_required_team_logos"] == 1
+
+
 def test_validator_flags_duplicate_logo_bytes_and_source_path_drift(tmp_path: Path, monkeypatch) -> None:
     module = load_module()
     monkeypatch.chdir(tmp_path)
@@ -249,3 +306,48 @@ def test_gap_report_preserves_missing_logo_decision_packet_fields(tmp_path: Path
     report = json.loads((root / "asset_gap_report.json").read_text(encoding="utf-8"))
     assert report["decision_packet_count"] == 1
     assert report["policy"]["no_auto_approval"] is True
+
+
+def test_gap_report_writes_generated_outputs_to_run_output_dir(tmp_path: Path, monkeypatch) -> None:
+    validator = load_module()
+    gap = load_gap_module()
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "outputs" / "run-gap"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    root = tmp_path / "data" / "asset_registry" / "wnba"
+    root.mkdir(parents=True)
+    missing = {
+        "team_id": "missing_team",
+        "team_name": "Missing Team",
+        "required_asset": "primary_logo",
+        "reason": "required exact team logo file not found",
+        "recommended_path": "assets/leagues/wnba/teams/missing_team/logo.png",
+        **validator.missing_logo_decision_packet(
+            "missing_team",
+            "Missing Team",
+            "assets/leagues/wnba/teams/missing_team/logo.png",
+        ),
+    }
+    with (root / "missing_team_logos.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=validator.MISSING_LOGO_FIELDS)
+        writer.writeheader()
+        writer.writerow(missing)
+    (root / "asset_registry_validation.json").write_text(
+        json.dumps({"status": "needs_assets", "operator_warnings": [], "source_path_metadata_warnings": []}),
+        encoding="utf-8",
+    )
+
+    gap.main()
+
+    run_registry = run_dir / "data" / "asset_registry" / "wnba"
+    assert (run_registry / "logo_gap_upload_manifest.csv").exists()
+    assert (run_registry / "asset_gap_report.json").exists()
+    assert (run_registry / "asset_gap_report.md").exists()
+    assert not (root / "logo_gap_upload_manifest.csv").exists()
+    assert not (root / "asset_gap_report.json").exists()
+    assert not (root / "asset_gap_report.md").exists()
+    rows = list(csv.DictReader((run_registry / "logo_gap_upload_manifest.csv").open(newline="", encoding="utf-8")))
+    assert rows[0]["decision_packet_id"] == "asset_logo_blocker_missing_team"
+    report = json.loads((run_registry / "asset_gap_report.json").read_text(encoding="utf-8"))
+    assert report["decision_packet_count"] == 1
+    assert report["logo_upload_manifest"] == (run_registry / "logo_gap_upload_manifest.csv").as_posix()
