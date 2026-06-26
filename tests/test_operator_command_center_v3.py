@@ -1828,6 +1828,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Highest-risk asset blockers" in html
     assert "Focused logo review packets" in html
     assert "WNBA logo review: New York Liberty" in html
+    assert "Path check:" in html
+    assert "assets/leagues/wnba/teams/new_york_liberty/logo.svg" in html
+    assert "Renderer fallback remains review-only while logo trust is held." in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
     assert "data/asset_registry/asset_availability_audit.md" in html
@@ -1835,6 +1838,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "review-only, no paid APIs, no asset downloads" in markdown
     assert "Logo review packets: 1 (1 unapproved / 0 source drift)" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
+    assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
+    assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
+    assert "fallback=Renderer fallback remains review-only while logo trust is held." in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
     assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown
