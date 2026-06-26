@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox", "identity-decision")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -670,6 +670,11 @@ function Invoke-DecisionInboxStarterStage($Python) {
     }
 }
 
+function Invoke-IdentityDecisionServerStage($Python) {
+    Write-Section "WNBA identity decision local save mode"
+    Invoke-ScriptIfPresent $Python "serve_hsd_identity_resolution_ui_v1.py" -Optional
+}
+
 function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
     $candidates = @()
     if ($env:HSD_RUN_OUTPUT_DIR) {
@@ -825,6 +830,8 @@ function Collect-HsdArtifacts($RunContext) {
         "manual_visual_qa_operator_decision_inbox_starter.md",
         "manual_visual_qa_operator_decision_inbox_starter.csv",
         "manual_visual_qa_operator_decision_inbox_starter.json",
+        "identity_resolution_local_server.md",
+        "identity_resolution_local_server.json",
         "bebe_daily_ops_plan.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
@@ -889,6 +896,9 @@ function Invoke-HsdRun {
     if ($Mode -eq "decision-inbox") {
         $script:GeneratedStatePreservePaths = @("operator/inbox/manual_visual_qa_operator_decisions.csv")
     }
+    if ($Mode -eq "identity-decision") {
+        $script:GeneratedStatePreservePaths = @("operator/inbox/wnba_athlete_identity_resolution.csv")
+    }
     Set-FreeSourceEnv
     Set-RunScopedEnv $runContext
     Write-Section "Free-first local run"
@@ -910,6 +920,7 @@ function Invoke-HsdRun {
             "review" { Invoke-ReviewStage $python }
             "render" { Invoke-RenderStage $python }
             "decision-inbox" { Invoke-DecisionInboxStarterStage $python }
+            "identity-decision" { Invoke-IdentityDecisionServerStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }
     } catch {

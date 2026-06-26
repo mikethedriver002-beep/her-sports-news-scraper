@@ -1522,7 +1522,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.58.0-identity-resolution-ui"
+    assert payload["version"] == "hsd-operator-command-center-v3.59.0-identity-writeback-local-mode"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1620,6 +1620,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Verify, hold, revise, or backfill" in html
     assert "operator/inbox/wnba_athlete_identity_resolution.csv" in html
     assert "Backfill-only rows do not clear photo-first rendering." in html
+    assert ".\\hsd.cmd run -Mode identity-decision" in html
+    assert "Local save mode is active" in html
+    assert "Save identity row" in html
     assert "Identity audit says hold" in html
     assert "approved_asset_still_has_pending_match_review" in html
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
@@ -1911,6 +1914,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_resolution_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_closure_packet.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
+    assert artifact_by_path["identity_resolution_local_server.md"]["run_command"] == ".\\hsd.cmd run -Mode identity-decision"
+    assert artifact_by_path["identity_resolution_local_server.json"]["run_command"] == ".\\hsd.cmd run -Mode identity-decision"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
