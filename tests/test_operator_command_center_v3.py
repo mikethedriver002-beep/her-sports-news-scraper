@@ -292,6 +292,19 @@ def test_decision_stop_go_summary_separates_blockers_from_context_rows() -> None
     assert summary["manual_asset_source_board_artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
     assert "no downloads" in summary["guardrail_summary"]
     assert "no auto-approval" in summary["guardrail_summary"]
+    checklist = command_center.decision_review_order_checklist(summary)
+    assert [row["title"] for row in checklist] == [
+        "Open active asset queue",
+        "Open Manual Asset Source Board",
+        "Open WNBA logo review catalog",
+    ]
+    assert checklist[0]["artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
+    assert checklist[1]["artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
+    assert checklist[2]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert all(row["review_only"] == "true" for row in checklist)
+    assert all(row["approval_state_change"] == "false" for row in checklist)
+    assert all(row["asset_downloads"] == "false" for row in checklist)
+    assert all(row["publishing"] == "false" for row in checklist)
 
 
 def test_selected_template_blocking_status_keeps_optional_league_mark_context() -> None:
@@ -2056,7 +2069,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.79.0-decision-stop-go-summary"
+    assert payload["version"] == "hsd-operator-command-center-v3.80.0-decision-review-order-checklist"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2436,6 +2449,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
         and item["value"] == "hold_selected_template_manual_asset_review"
         for item in payload["metrics"]
     )
+    assert any(item["label"] == "Review-order checklist" and item["value"] == "3" for item in payload["metrics"])
     assert payload["decision_stop_go_summary"]["panel_status"] == "hold_selected_template_manual_asset_review"
     assert payload["decision_stop_go_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert payload["decision_stop_go_summary"]["selected_template_blockers"] == 1
@@ -2447,6 +2461,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["decision_stop_go_summary"]["active_queue_artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
     assert payload["decision_stop_go_summary"]["manual_asset_source_board_artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
     assert "no auto-approval" in payload["decision_stop_go_summary"]["guardrail_summary"]
+    assert [row["title"] for row in payload["decision_review_order_checklist"]] == [
+        "Open active asset queue",
+        "Open Manual Asset Source Board",
+        "Open WNBA logo review catalog",
+    ]
+    assert payload["decision_review_order_checklist"][0]["artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
+    assert payload["decision_review_order_checklist"][1]["artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
+    assert payload["decision_review_order_checklist"][2]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert all(row["approval_state_change"] == "false" for row in payload["decision_review_order_checklist"])
+    assert all(row["asset_downloads"] == "false" for row in payload["decision_review_order_checklist"])
     assert any(item["label"] == "Manual asset source board" and item["value"] == "3" for item in payload["metrics"])
     assert len(payload["manual_asset_source_board"]) == 3
     assert {row["entity_name"] for row in payload["manual_asset_source_board"]} == {"New York Liberty", "WNBA", "Breanna Stewart"}
@@ -2840,6 +2864,19 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Active queue: `render_handoff_top_packet/active_asset_review_queue.md`" in markdown
     assert "Manual source board: `render_handoff_top_packet/manual_asset_source_board.md`" in markdown
     assert "Guardrails: review-only; no downloads; no auto-approval; no file movement; no publishing; no publish-ready lane" in markdown
+    assert "Open these in order" in html
+    assert "Open active asset queue" in html
+    assert "Open Manual Asset Source Board" in html
+    assert "Open WNBA logo review catalog" in html
+    assert "render_handoff_top_packet/active_asset_review_queue.md" in html
+    assert "render_handoff_top_packet/manual_asset_source_board.md" in html
+    assert "data/asset_registry/wnba/logo_review_catalog_report.md" in html
+    assert "Open These In Order" in markdown
+    assert "1. Open active asset queue" in markdown
+    assert "2. Open Manual Asset Source Board" in markdown
+    assert "3. Open WNBA logo review catalog" in markdown
+    assert "approval_change=false" in markdown
+    assert "downloads=false" in markdown
     assert "Manual Asset Source Board" in html
     assert "Old HSD asset-index/DDG packet structure" in html
     assert "Manual Asset Source Board" in markdown

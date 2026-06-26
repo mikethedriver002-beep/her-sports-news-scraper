@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.79.0-decision-stop-go-summary"
+VERSION = "hsd-operator-command-center-v3.80.0-decision-review-order-checklist"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3700,6 +3700,74 @@ def decision_stop_go_summary(
     }
 
 
+def decision_review_order_checklist(summary: Dict[str, Any]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+
+    def add_step(rank: int, title: str, artifact: str, reason: str, action: str) -> None:
+        rows.append(
+            {
+                "rank": str(rank),
+                "title": title,
+                "artifact": artifact,
+                "reason": reason,
+                "operator_action": action,
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+                "auto_approval": "false",
+                "file_movement": "false",
+                "publishing": "false",
+            }
+        )
+
+    selected_count = as_int(summary.get("selected_template_blockers"))
+    future_count = as_int(summary.get("future_photo_first_holds"))
+    league_count = as_int(summary.get("league_mark_context_holds"))
+    active_count = as_int(summary.get("active_queue_rows"))
+    source_board_count = as_int(summary.get("source_board_rows"))
+    if active_count:
+        add_step(
+            1,
+            "Open active asset queue",
+            clean(summary.get("active_queue_artifact")) or "render_handoff_top_packet/active_asset_review_queue.md",
+            f"Confirm selected-template blockers ({summary.get('selected_template_entities') or 'none'}), future photo-first holds ({summary.get('future_photo_first_entities') or 'none'}), and league-mark context ({summary.get('league_mark_context_entities') or 'none'}).",
+            "Read the stop/go row labels before deciding whether the render stays held.",
+        )
+    if source_board_count:
+        add_step(
+            len(rows) + 1,
+            "Open Manual Asset Source Board",
+            clean(summary.get("manual_asset_source_board_artifact")) or "render_handoff_top_packet/manual_asset_source_board.md",
+            "Review official/free source candidates for the active hold rows without downloading or approving assets.",
+            "Use it as manual evidence guidance only; do not copy files or change approval state.",
+        )
+    if selected_count or league_count:
+        add_step(
+            len(rows) + 1,
+            "Open WNBA logo review catalog",
+            "data/asset_registry/wnba/logo_review_catalog_report.md",
+            "Logo review is the current selected-template path, with optional league-mark context tracked separately.",
+            "Check source trust, exact local path, and manual review notes before any renderer trust change.",
+        )
+    if future_count and not selected_count:
+        add_step(
+            len(rows) + 1,
+            "Open athlete identity workflow",
+            "data/asset_registry/wnba/athlete_identity_resolution_workflow.md",
+            "Future photo-first rows are active context, not selected-template blockers.",
+            "Keep photo-first use held until human identity review is complete.",
+        )
+    if not rows:
+        add_step(
+            1,
+            "No active asset review rows",
+            clean(summary.get("active_queue_artifact")) or "render_handoff_top_packet/active_asset_review_queue.md",
+            "No active selected-template, photo-first, or league-mark rows were matched.",
+            "Continue normal manual source and visual QA review.",
+        )
+    return rows
+
+
 def render_manual_asset_source_board(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
     lines = [
         "# Manual Asset Source Board",
@@ -4971,6 +5039,7 @@ def build_payload() -> Dict[str, Any]:
     active_asset_rows = active_asset_review_queue_rows(top_render_packet) if top_render_packet else []
     manual_asset_source_board = manual_asset_source_board_rows(active_asset_rows)
     stop_go_summary = decision_stop_go_summary(top_render_packet, active_asset_rows, manual_asset_source_board)
+    review_order_checklist = decision_review_order_checklist(stop_go_summary)
     operator_decision_panel = operator_decision_ui_panel()
     asset_readiness_panel = asset_availability_readiness_panel()
     athlete_photo_panel = athlete_photo_onboarding_panel(read_json("manual_review_renderer_manifest.json"))
@@ -5138,6 +5207,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Render packets ready", sum(1 for row in render_prep_packets if row.get("packet_status") == "ready_for_manual_render_review")),
         metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
         metric("Decision stop/go", stop_go_summary["panel_status"], stop_go_summary["next_step"]),
+        metric("Review-order checklist", len(review_order_checklist)),
         metric("Manual asset source board", len(manual_asset_source_board)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
@@ -5213,6 +5283,7 @@ def build_payload() -> Dict[str, Any]:
         "render_prep_packets": render_prep_packets,
         "render_handoff_summary": render_handoff_summary,
         "decision_stop_go_summary": stop_go_summary,
+        "decision_review_order_checklist": review_order_checklist,
         "manual_asset_source_board": manual_asset_source_board,
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
@@ -5463,6 +5534,51 @@ def render_decision_stop_go_summary_panel(summary: Dict[str, Any]) -> str:
             {pill('no publishing')}
           </div>
           <p class="muted">{html.escape(clean(summary.get('guardrail_summary')))}</p>
+        </div>
+      </div>
+    """
+
+
+def render_decision_review_order_checklist(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        artifact = clean(row.get("artifact"))
+        body.append(
+            f"""
+            <article class="asset-blocker-card review-order-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">step {html.escape(clean(row.get('rank')) or '-')} / review-only</span>
+                  <strong>{html.escape(clean(row.get('title')))}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill('no approval change', 'good')}
+                  {pill('no downloads', 'good')}
+                </div>
+              </div>
+              <p>{html.escape(short(clean(row.get('reason')), 190))}</p>
+              <p class="muted">{html.escape(short(clean(row.get('operator_action')), 190))}</p>
+              <code>{html.escape(artifact)}</code>
+              <div class="asset-blocker-actions">
+                {open_link(artifact, 'Open')}
+                {pill('review-only')}
+                {pill('publish-ready: false')}
+                {pill('auto-approval: false')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No review-order checklist rows found.</p>'
+
+
+def render_decision_review_order_panel(rows: Iterable[Dict[str, str]]) -> str:
+    checklist = list(rows)
+    return f"""
+      <div class="decision-desk-section review-order-checklist">
+        <div class="row-kicker">Open these in order {pill(str(len(checklist)) + ' steps')} {pill('display-only')} {pill('review-only')}</div>
+        <p class="muted">Ordered review path for the current stop/go state. These links do not approve assets, download files, move files, publish, or create a publish-ready lane.</p>
+        <div class="asset-blocker-grid">
+          {render_decision_review_order_checklist(checklist)}
         </div>
       </div>
     """
@@ -7263,6 +7379,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       <div class="panel">
         <h2>Decision desk</h2>
         {render_decision_stop_go_summary_panel(payload.get('decision_stop_go_summary', {}))}
+        {render_decision_review_order_panel(payload.get('decision_review_order_checklist', []))}
         {render_asset_readiness_panel(payload['asset_readiness_panel'])}
         {render_manual_asset_source_board_panel(payload.get('manual_asset_source_board', []))}
         {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
@@ -8049,6 +8166,17 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Next safe action: {stop_go.get('next_step') or 'review manually'}",
         f"- Guardrails: {stop_go.get('guardrail_summary') or 'review-only'}",
     ]
+    review_order = payload.get("decision_review_order_checklist", [])
+    lines += [
+        "",
+        "## Open These In Order",
+        "",
+        "- This checklist is display-only and review-only; it does not approve assets or move files.",
+    ]
+    lines.extend(
+        f"{item.get('rank')}. {item.get('title')} - {item.get('reason')} | artifact: `{item.get('artifact')}` | action: {item.get('operator_action')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publishing={item.get('publishing')}"
+        for item in review_order
+    )
     asset_panel = payload["asset_readiness_panel"]
     lines += [
         "",
