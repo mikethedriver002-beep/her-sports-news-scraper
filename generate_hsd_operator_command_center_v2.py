@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.66.0-manual-render-step-scope"
+VERSION = "hsd-operator-command-center-v3.67.0-active-queue-evidence"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3255,6 +3255,10 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
         return "\n".join(lines)
     lines += ["## Rows", ""]
     for index, row in enumerate(rows, 1):
+        evidence_lines: List[str] = []
+        evidence = clean(row.get("evidence"))
+        if evidence:
+            evidence_lines.append(f"- Evidence: {short(evidence, 260)}")
         closure_lines: List[str] = []
         if clean(row.get("identity_closure_cues")):
             closure_lines.append(f"- Identity closure cues: {clean(row.get('identity_closure_cues'))}")
@@ -3274,6 +3278,7 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             f"- Source check URL: {clean(row.get('source_check_url')) or 'n/a'}",
             f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
             f"- Primary action: {clean(row.get('primary_action')) or 'manual review required'}",
+            *evidence_lines,
             *closure_lines,
             f"- Guardrails: review_only={clean(row.get('review_only'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}",
             "",

@@ -157,6 +157,7 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
     assert identity["athlete_identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
     assert active_queue_rows[0]["identity_closure_artifact"] == "data/asset_registry/wnba/athlete_identity_closure_packet.md"
     assert active_queue_rows[0]["identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
+    assert "Evidence: approved marker decision_source=default" in active_queue_md
     assert "Identity closure packet: `data/asset_registry/wnba/athlete_identity_closure_packet.md`" in active_queue_md
     assert "Identity backfill packet: `data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv`" in active_queue_md
 
@@ -1891,7 +1892,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.66.0-manual-render-step-scope"
+    assert payload["version"] == "hsd-operator-command-center-v3.67.0-active-queue-evidence"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2626,6 +2627,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Active Asset Review Queue" in active_queue
     assert "New York Liberty" in active_queue
     assert "Breanna Stewart" in active_queue
+    assert "Evidence: Hold the logo slot until source and local file are manually checked." in active_queue
+    assert "Evidence: approved marker decision_source=default" in active_queue
     assert "asset_downloads=false" in active_queue
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
     assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
