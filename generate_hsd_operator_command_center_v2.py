@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.70.0-active-asset-stop-go"
+VERSION = "hsd-operator-command-center-v3.71.0-athlete-queue-identity-details"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -92,6 +92,8 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "source_target_path",
     "asset_path",
     "source_check_url",
+    "provider_player_id",
+    "approved_marker_path",
     "allowed_decisions",
     "primary_action",
     "evidence",
@@ -3252,6 +3254,8 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "issue_type": clean(item.get("hold_reason_codes")),
                 "asset_path": clean(item.get("asset_path")),
                 "source_check_url": clean(item.get("source_check_url")) or clean(item.get("provider_player_page_hint")),
+                "provider_player_id": clean(item.get("provider_player_id")),
+                "approved_marker_path": clean(item.get("approved_marker_path")),
                 "allowed_decisions": clean(item.get("allowed_decisions")) or "hold_identity|revise_asset|backfill_provider_id_only|identity_verified_approved_for_review_renders",
                 "primary_action": clean(item.get("operator_review_steps")) or "manual identity review required",
                 "evidence": clean(item.get("focused_evidence")),
@@ -3290,6 +3294,11 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
         evidence = clean(row.get("evidence"))
         if evidence:
             evidence_lines.append(f"- Evidence: {short(evidence, 260)}")
+        identity_detail_lines: List[str] = []
+        if clean(row.get("provider_player_id")):
+            identity_detail_lines.append(f"- Provider player ID: `{clean(row.get('provider_player_id'))}`")
+        if clean(row.get("approved_marker_path")):
+            identity_detail_lines.append(f"- Approved marker path: `{clean(row.get('approved_marker_path'))}`")
         closure_lines: List[str] = []
         if clean(row.get("identity_closure_cues")):
             closure_lines.append(f"- Identity closure cues: {clean(row.get('identity_closure_cues'))}")
@@ -3310,6 +3319,7 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             f"- Allowed decisions: `{clean(row.get('allowed_decisions'))}`",
             f"- Primary action: {clean(row.get('primary_action')) or 'manual review required'}",
             *evidence_lines,
+            *identity_detail_lines,
             *closure_lines,
             f"- Guardrails: review_only={clean(row.get('review_only'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}",
             "",
