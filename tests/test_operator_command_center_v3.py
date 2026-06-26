@@ -190,6 +190,126 @@ def seed_athlete_photo_onboarding_files() -> None:
     (audit_dir / "athlete_identity_audit.md").write_text("# WNBA Athlete Identity Audit\n", encoding="utf-8")
 
 
+def seed_asset_availability_audit_files() -> None:
+    registry_dir = Path("data/asset_registry")
+    wnba_dir = registry_dir / "wnba"
+    registry_dir.mkdir(parents=True, exist_ok=True)
+    wnba_dir.mkdir(parents=True, exist_ok=True)
+    findings = [
+        {
+            "severity": "warning",
+            "asset_domain": "player_photo",
+            "asset_kind": "headshot",
+            "entity_type": "athlete",
+            "entity_id": "new_york_liberty_breanna_stewart",
+            "entity_name": "Breanna Stewart",
+            "league": "WNBA",
+            "finding": "suspicious_or_default_player_approval",
+            "approval_status": "approved",
+            "format_status": "valid_raster",
+            "renderer_coverage": "review_only_manual_source_recheck_required: default_decision_source_manual_recheck_required",
+            "asset_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+            "evidence": "approved_assets_registry; decision_source=default; headshot_slot_requires_identity_and_crop_review",
+            "recommended_next_step": "recheck_decision_source_source_file_and_approval_timestamp",
+        },
+        {
+            "severity": "error",
+            "asset_domain": "player_photo",
+            "asset_kind": "cutout",
+            "entity_type": "athlete",
+            "entity_id": "new_york_liberty_breanna_stewart",
+            "entity_name": "Breanna Stewart",
+            "league": "WNBA",
+            "finding": "missing_local_player_asset",
+            "approval_status": "missing",
+            "format_status": "missing_file",
+            "renderer_coverage": "review_only_not_renderable_until_approved",
+            "asset_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/cutout.png",
+            "evidence": "asset_file_missing; cutout_slot_requires_manual_crop_review",
+            "recommended_next_step": "keep_photo_slot_disabled_until_asset_and_marker_are_reviewed",
+        },
+        {
+            "severity": "warning",
+            "asset_domain": "team_logo",
+            "asset_kind": "primary_logo",
+            "entity_type": "team",
+            "entity_id": "new_york_liberty",
+            "entity_name": "New York Liberty",
+            "league": "WNBA",
+            "finding": "logo_present_without_complete_approval",
+            "approval_status": "review_required",
+            "format_status": "valid_raster",
+            "renderer_coverage": "available_review_only",
+            "asset_path": "assets/leagues/wnba/logos/new_york_liberty/logo.png",
+            "evidence": "approved logo marker missing; source review note pending",
+            "recommended_next_step": "verify logo source, marker, and format before render trust",
+        },
+        {
+            "severity": "error",
+            "asset_domain": "league_logo",
+            "asset_kind": "league_mark",
+            "entity_type": "league",
+            "entity_id": "wnba",
+            "entity_name": "WNBA",
+            "league": "WNBA",
+            "finding": "missing_or_unregistered_logo_asset",
+            "approval_status": "missing",
+            "format_status": "missing_file",
+            "renderer_coverage": "review_only_not_renderable_until_approved",
+            "asset_path": "assets/leagues/wnba/logos/league/wnba.png",
+            "evidence": "league mark missing from local approved catalog",
+            "recommended_next_step": "hold league logo slot until a local approved mark is registered",
+        },
+        {
+            "severity": "info",
+            "asset_domain": "renderer",
+            "asset_kind": "fallback_guard",
+            "entity_type": "renderer",
+            "entity_id": "manual_review_renderer",
+            "entity_name": "Manual review renderer",
+            "league": "WNBA",
+            "finding": "renderer_logo_audit_missing",
+            "approval_status": "review_required",
+            "format_status": "not_applicable",
+            "renderer_coverage": "fallback_requires_operator_review",
+            "asset_path": "generate_hsd_manual_review_renderer_v1.py",
+            "evidence": "renderer fallback coverage audit not refreshed",
+            "recommended_next_step": "rerun asset-audit and renderer QA before trusting fallback visuals",
+        },
+    ]
+    write_json(
+        (registry_dir / "asset_availability_audit.json").as_posix(),
+        {
+            "status": "review_required",
+            "review_only": True,
+            "generated_at_utc": "2026-06-25T12:00:00+00:00",
+            "finding_count": len(findings),
+            "severity_counts": {"error": 2, "warning": 2, "info": 1},
+            "asset_domain_counts": {"player_photo": 2, "team_logo": 1, "league_logo": 1, "renderer": 1},
+            "finding_counts": {
+                "suspicious_or_default_player_approval": 1,
+                "missing_local_player_asset": 1,
+                "logo_present_without_complete_approval": 1,
+                "missing_or_unregistered_logo_asset": 1,
+                "renderer_logo_audit_missing": 1,
+            },
+            "policy": {
+                "no_paid_apis": True,
+                "no_asset_downloads": True,
+                "no_auto_approval": True,
+                "no_file_movement_into_publish_ready_lanes": True,
+                "no_publishing": True,
+            },
+            "findings": findings,
+        },
+    )
+    (registry_dir / "asset_availability_audit.md").write_text("# Asset Availability Audit\n", encoding="utf-8")
+    write_csv_with_fields((registry_dir / "asset_availability_audit.csv").as_posix(), findings, list(findings[0].keys()))
+    (registry_dir / "logo_asset_catalog.md").write_text("# Logo Asset Catalog\n", encoding="utf-8")
+    (wnba_dir / "athlete_photo_catalog.md").write_text("# WNBA Athlete Photo Catalog\n", encoding="utf-8")
+    (wnba_dir / "logo_review_catalog_report.md").write_text("# WNBA Logo Review Catalog\n", encoding="utf-8")
+
+
 def write_identity_resolution_inbox(**overrides: str) -> None:
     row = {
         "athlete_id": "new_york_liberty_breanna_stewart",
@@ -1548,6 +1668,7 @@ def seed_daily_ops_files() -> None:
     )
     Path("morning_lead_promotion_recommendations.md").write_text("# Lead promotion recommendations\n", encoding="utf-8")
     Path("studio_bundle_queue.csv").touch()
+    seed_asset_availability_audit_files()
 
 
 def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) -> None:
@@ -1559,7 +1680,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.60.0-identity-resolution-closure-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.61.0-asset-readiness-panel"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1642,6 +1763,23 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Render handoff" and item["value"] == "ready_for_manual_review" for item in payload["metrics"])
     assert any(item["label"] == "Decision UI" and item["value"] == "awaiting_operator_decision" for item in payload["metrics"])
     assert any(item["label"] == "Decision inbox rows" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Asset audit" and item["value"] == "review_required" for item in payload["metrics"])
+    assert any(item["label"] == "Asset blockers" and item["value"] == "5" for item in payload["metrics"])
+    assert any(item["label"] == "Asset errors/warnings" and item["value"] == "2/2" for item in payload["metrics"])
+    assert any(item["label"] == "Default photo approvals" and item["value"] == "1" for item in payload["metrics"])
+    assert payload["asset_readiness_panel"]["panel_status"] == "review_required"
+    assert payload["asset_readiness_panel"]["finding_count"] == 5
+    assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
+    assert any(item["decision"] == "Verify logo" for item in payload["asset_readiness_panel"]["top_findings"])
+    assert any(item["decision"] == "Hold league mark" for item in payload["asset_readiness_panel"]["top_findings"])
+    assert any(item["decision"] == "Verify renderer fallback" for item in payload["asset_readiness_panel"]["top_findings"])
+    assert "Asset readiness" in html
+    assert "Highest-risk asset blockers" in html
+    assert "Verify identity" in html
+    assert "Hold league mark" in html
+    assert "data/asset_registry/asset_availability_audit.md" in html
+    assert "Asset Readiness Decision Desk" in markdown
+    assert "review-only, no paid APIs, no asset downloads" in markdown
     assert any(item["label"] == "Athlete photo review" and item["value"] == "hold_identity_review_required" for item in payload["metrics"])
     assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
     assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"
