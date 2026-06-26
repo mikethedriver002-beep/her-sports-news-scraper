@@ -2802,6 +2802,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_prep_manifest["guardrails"]["auto_publish"] is False
     render_handoff_manifest = json.loads(Path("render_handoff_top_packet/handoff_manifest.json").read_text(encoding="utf-8"))
     assert render_handoff_manifest["packet"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
+    assert render_handoff_manifest["packet"]["raw_blockers"] == "none"
+    assert render_handoff_manifest["packet"]["blockers"] == "none for source/format/manual path; active asset holds remain"
     assert render_handoff_manifest["guardrails"]["review_only"] is True
     assert render_handoff_manifest["guardrails"]["auto_approval"] is False
     assert render_handoff_manifest["guardrails"]["auto_render"] is False
