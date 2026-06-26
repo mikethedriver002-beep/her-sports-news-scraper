@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.68.0-handoff-guardrails"
+VERSION = "hsd-operator-command-center-v3.69.0-logo-source-url-queue"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3154,6 +3154,7 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "registered_path": clean(item.get("registered_path")),
                 "source_target_path": clean(item.get("source_target_path")),
                 "asset_path": clean(item.get("registered_path")),
+                "source_check_url": clean(item.get("source_url")),
                 "allowed_decisions": clean(item.get("allowed_decisions")) or "approve_after_manual_review|hold_logo_slot|revise_registry_metadata",
                 "primary_action": clean(item.get("primary_action")) or clean(item.get("hold_cue")),
                 "evidence": clean(item.get("issue_summary")) or clean(item.get("hold_cue")),

@@ -506,6 +506,7 @@ def seed_asset_availability_audit_files() -> None:
         "team_name": "New York Liberty",
         "issue_type": "unapproved_required_logo",
         "decision_review_status": "operator_logo_review_required",
+        "source_url": "https://example.test/liberty-logo.png",
         "registered_path": "assets/leagues/wnba/logos/new_york_liberty/logo.png",
         "source_target_path": "assets/leagues/wnba/teams/new_york_liberty/logo.svg",
         "primary_action": "Review exact local logo source evidence before renderer trust.",
@@ -1892,7 +1893,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.68.0-handoff-guardrails"
+    assert payload["version"] == "hsd-operator-command-center-v3.69.0-logo-source-url-queue"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2636,12 +2637,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Breanna Stewart" in active_queue
     assert "Evidence: Hold the logo slot until source and local file are manually checked." in active_queue
     assert "Evidence: approved marker decision_source=default" in active_queue
+    assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
     assert "asset_downloads=false" in active_queue
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
     assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
     liberty_queue = next(row for row in active_queue_rows if row["entity_name"] == "New York Liberty")
     assert liberty_queue["registered_path"] == "assets/leagues/wnba/logos/new_york_liberty/logo.png"
     assert liberty_queue["source_target_path"] == "assets/leagues/wnba/teams/new_york_liberty/logo.svg"
+    assert liberty_queue["source_check_url"] == "https://example.test/liberty-logo.png"
     assert liberty_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
     breanna_queue = next(row for row in active_queue_rows if row["entity_name"] == "Breanna Stewart")
     assert breanna_queue["asset_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
