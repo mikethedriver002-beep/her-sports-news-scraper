@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.55.0-athlete-photo-onboarding-links"
+VERSION = "hsd-operator-command-center-v3.56.0-athlete-photo-decision-desk"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -208,6 +208,10 @@ ARTIFACTS = [
     ("Graphics", "Athlete photo onboarding metadata", "athlete_photo_onboarding/athlete_photo_onboarding_metadata.csv"),
     ("Graphics", "Athlete photo onboarding decisions", "athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"),
     ("Graphics", "Athlete photo onboarding manifest", "athlete_photo_onboarding/athlete_photo_onboarding_manifest.json"),
+    ("Graphics", "WNBA athlete identity audit", "data/asset_registry/wnba/athlete_identity_audit.md"),
+    ("Graphics", "WNBA athlete identity audit data", "data/asset_registry/wnba/athlete_identity_audit.csv"),
+    ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
+    ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
 ]
 
@@ -226,6 +230,10 @@ RUN_COMMANDS = {
     "athlete_photo_onboarding/athlete_photo_onboarding_metadata.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
     "athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
     "athlete_photo_onboarding/athlete_photo_onboarding_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py",
+    "data/asset_registry/wnba/athlete_identity_audit.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py",
+    "data/asset_registry/wnba/athlete_identity_audit.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py",
+    "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
+    "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
     "post_slot_status.csv": ".\\hsd.cmd run -Mode posts",
     "ig_feed_queue.csv": ".\\hsd.cmd run -Mode posts",
@@ -1394,6 +1402,208 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
             "auto_publish": False,
             "move_files": False,
             "copy_to_publish_lane": False,
+            "publish_ready": False,
+            "paid_apis": False,
+        },
+    }
+
+
+def athlete_photo_score_tone(row: Dict[str, str]) -> str:
+    score = as_int(row.get("crop_readiness_score"))
+    status = clean(row.get("variant_status"))
+    if status != "review_variant_ready":
+        return "warn"
+    if score >= 90:
+        return "good"
+    if score >= 70:
+        return "neutral"
+    return "warn"
+
+
+def athlete_identity_audit_by_athlete(payload: Dict[str, Any]) -> Dict[str, List[Dict[str, str]]]:
+    issues = payload.get("issues") if isinstance(payload.get("issues"), list) else []
+    out: Dict[str, List[Dict[str, str]]] = {}
+    for issue_row in issues:
+        if not isinstance(issue_row, dict):
+            continue
+        athlete_id = clean(issue_row.get("athlete_id"))
+        if athlete_id:
+            out.setdefault(athlete_id, []).append({str(key): clean(value) for key, value in issue_row.items()})
+    return out
+
+
+def athlete_identity_audit_summary(athlete_id: str, audit_by_athlete: Dict[str, List[Dict[str, str]]]) -> Dict[str, str]:
+    issues = audit_by_athlete.get(clean(athlete_id), [])
+    if not issues:
+        return {
+            "identity_review_status": "identity_audit_clear_or_not_run",
+            "identity_review_tone": "warn",
+            "identity_issue_count": "0",
+            "identity_high_issue_count": "0",
+            "identity_issue_codes": "",
+            "identity_evidence": "No per-athlete audit issue found in the latest run; still verify identity by eye.",
+        }
+    high = [row for row in issues if clean(row.get("severity")) in {"critical", "high"}]
+    codes = sorted({clean(row.get("issue_code")) for row in issues if clean(row.get("issue_code"))})
+    evidence = "; ".join(short(clean(row.get("evidence")), 90) for row in issues[:3] if clean(row.get("evidence")))
+    if high:
+        status = "hold_identity_review_required"
+        tone = "bad" if any(clean(row.get("severity")) == "critical" for row in high) else "warn"
+    else:
+        status = "identity_review_required"
+        tone = "warn"
+    return {
+        "identity_review_status": status,
+        "identity_review_tone": tone,
+        "identity_issue_count": str(len(issues)),
+        "identity_high_issue_count": str(len(high)),
+        "identity_issue_codes": ", ".join(codes[:4]),
+        "identity_evidence": evidence or "Audit issue present; review the athlete identity audit.",
+    }
+
+
+def athlete_photo_onboarding_row_payload(
+    row: Dict[str, str],
+    audit_by_athlete: Dict[str, List[Dict[str, str]]],
+    *,
+    featured: bool = False,
+) -> Dict[str, Any]:
+    athlete_id = clean(row.get("athlete_id"))
+    team_id = clean(row.get("team_id"))
+    contact_sheet_path = clean(row.get("contact_sheet_path"))
+    recommended_path = clean(row.get("recommended_review_variant_path"))
+    source_path = clean(row.get("source_headshot_path"))
+    audit = athlete_identity_audit_summary(athlete_id, audit_by_athlete)
+    return {
+        "athlete_id": athlete_id,
+        "athlete_name": clean(row.get("athlete_name")) or athlete_id.replace("_", " ").title(),
+        "team_id": team_id,
+        "source_headshot_path": source_path,
+        "source_headshot_href": href_for_path(source_path) if source_path and find_existing_input(source_path).exists() else "",
+        "contact_sheet_path": contact_sheet_path,
+        "contact_sheet_href": href_for_path(contact_sheet_path) if contact_sheet_path and find_existing_input(contact_sheet_path).exists() else "",
+        "feed_variant_path": clean(row.get("feed_variant_path")),
+        "feed_variant_href": href_for_path(row.get("feed_variant_path", "")) if clean(row.get("feed_variant_path")) and Path(clean(row.get("feed_variant_path"))).exists() else "",
+        "story_variant_path": clean(row.get("story_variant_path")),
+        "story_variant_href": href_for_path(row.get("story_variant_path", "")) if clean(row.get("story_variant_path")) and Path(clean(row.get("story_variant_path"))).exists() else "",
+        "square_variant_path": clean(row.get("square_variant_path")),
+        "square_variant_href": href_for_path(row.get("square_variant_path", "")) if clean(row.get("square_variant_path")) and Path(clean(row.get("square_variant_path"))).exists() else "",
+        "recommended_review_variant_path": recommended_path,
+        "recommended_review_variant_href": href_for_path(recommended_path) if recommended_path and Path(recommended_path).exists() else "",
+        "variant_status": clean(row.get("variant_status")) or "not_generated",
+        "crop_readiness_score": clean(row.get("crop_readiness_score")) or "0",
+        "crop_readiness_notes": clean(row.get("crop_readiness_notes")) or "Identity still requires human review.",
+        "renderer_review_candidate": clean(row.get("renderer_review_candidate")),
+        "approval_scope": clean(row.get("approval_scope")) or "review_only_derivative_from_approved_headshot",
+        "review_only_policy": clean(row.get("review_only_policy")) or "derived_variant_does_not_approve_move_publish_or_mark_publish_ready",
+        "publish_ready": clean(row.get("publish_ready")) or "false",
+        "auto_approval": clean(row.get("auto_approval")) or "false",
+        "auto_publish": clean(row.get("auto_publish")) or "false",
+        "move_files": clean(row.get("move_files")) or "false",
+        "paid_apis": clean(row.get("paid_apis")) or "false",
+        "featured": featured,
+        "tone": athlete_photo_score_tone(row),
+        **audit,
+        "decision_cue": "Verify the athlete by eye against trusted source evidence before using this crop in a render.",
+    }
+
+
+def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
+    manifest = read_json("athlete_photo_onboarding/athlete_photo_onboarding_manifest.json")
+    metadata_json = read_json("athlete_photo_onboarding/athlete_photo_onboarding_metadata.json")
+    metadata_rows = read_csv("athlete_photo_onboarding/athlete_photo_onboarding_metadata.csv")
+    decision_rows = read_csv("athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv")
+    identity_audit = read_json("data/asset_registry/wnba/athlete_identity_audit.json")
+    identity_audit_report = identity_audit.get("report") if isinstance(identity_audit.get("report"), dict) else {}
+    identity_audit_by_id = athlete_identity_audit_by_athlete(identity_audit)
+    athletes_payload = metadata_json.get("athletes") if isinstance(metadata_json.get("athletes"), dict) else {}
+    if athletes_payload and not metadata_rows:
+        metadata_rows = [dict(row) for row in athletes_payload.values() if isinstance(row, dict)]
+
+    content_module = renderer.get("content_module") if isinstance(renderer.get("content_module"), dict) else {}
+    featured_id = clean(content_module.get("athlete_photo_athlete_id"))
+    featured_name = clean(content_module.get("player_name"))
+    featured_source_path = clean(content_module.get("athlete_photo_path"))
+    if not featured_id and featured_name:
+        featured_id = clean(re.sub(r"[^a-z0-9]+", "_", featured_name.lower())).strip("_")
+
+    ordered: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    featured_row_id = ""
+    for row in metadata_rows:
+        athlete_id = clean(row.get("athlete_id"))
+        if not athlete_id:
+            continue
+        source_matches = featured_source_path and clean(row.get("source_headshot_path")) == featured_source_path
+        id_matches = featured_id and (athlete_id == featured_id or athlete_id.endswith(featured_id) or featured_id.endswith(athlete_id))
+        if source_matches or id_matches:
+            ordered.insert(0, row)
+            seen.add(athlete_id)
+            featured_row_id = athlete_id
+        elif athlete_id not in seen:
+            ordered.append(row)
+            seen.add(athlete_id)
+
+    if featured_id and not featured_row_id and (not ordered or clean(ordered[0].get("athlete_id")) != featured_id):
+        for row in metadata_rows:
+            if clean(row.get("athlete_id")).endswith(featured_id) or featured_id.endswith(clean(row.get("athlete_id"))):
+                ordered = [row] + [item for item in ordered if clean(item.get("athlete_id")) != clean(row.get("athlete_id"))]
+                featured_row_id = clean(row.get("athlete_id"))
+                break
+
+    review_rows = [
+        athlete_photo_onboarding_row_payload(row, identity_audit_by_id, featured=(index == 0 and bool(featured_row_id)))
+        for index, row in enumerate(ordered[:24])
+    ]
+    source_rows = as_int(manifest.get("source_rows")) or len(metadata_rows)
+    ready_rows = as_int(manifest.get("review_variant_ready")) or sum(1 for row in metadata_rows if clean(row.get("variant_status")) == "review_variant_ready")
+    needs_review = as_int(manifest.get("review_variant_needs_crop_review")) or max(0, source_rows - ready_rows)
+    contact_sheets = as_int(manifest.get("contact_sheets")) or len({clean(row.get("contact_sheet_path")) for row in metadata_rows if clean(row.get("contact_sheet_path"))})
+    if not metadata_rows:
+        panel_status = "not_run"
+        next_step = "Run .\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py to create review-only contact sheets."
+    elif featured_row_id and review_rows:
+        if clean(review_rows[0].get("identity_review_status")).startswith("hold_"):
+            panel_status = "hold_identity_review_required"
+            next_step = "Hold this athlete crop until the identity audit issue is resolved with human evidence."
+        else:
+            panel_status = "identity_review_required"
+            next_step = "Open the contact sheet and source headshot, then record approve, hold, or revise with identity notes."
+    else:
+        panel_status = "review_queue_ready"
+        next_step = "Choose an athlete row, verify identity and crop by eye, then copy a review-only decision row."
+    return {
+        "panel_status": panel_status,
+        "manifest_status": clean(manifest.get("status")) or "not_run",
+        "source_rows": source_rows,
+        "review_variant_ready": ready_rows,
+        "review_variant_needs_crop_review": needs_review,
+        "contact_sheets": contact_sheets,
+        "decision_template_rows": len(decision_rows),
+        "identity_audit_status": clean(identity_audit_report.get("status")) or "not_run",
+        "identity_audit_issue_rows": as_int(identity_audit_report.get("issue_rows")),
+        "identity_audit_high_rows": as_int((identity_audit_report.get("severity_counts") or {}).get("high")) if isinstance(identity_audit_report.get("severity_counts"), dict) else 0,
+        "identity_audit_critical_rows": as_int((identity_audit_report.get("severity_counts") or {}).get("critical")) if isinstance(identity_audit_report.get("severity_counts"), dict) else 0,
+        "featured_athlete_id": featured_id,
+        "featured_athlete_name": featured_name,
+        "review_rows": review_rows,
+        "file_shortcuts": [
+            file_shortcut("Onboarding report", "athlete_photo_onboarding/athlete_photo_onboarding_report.md", "Read the generated review-only onboarding summary."),
+            file_shortcut("Contact sheet index", "athlete_photo_onboarding/athlete_photo_contact_sheet_index.md", "Open team contact sheets before choosing any crop."),
+            file_shortcut("Metadata CSV", "athlete_photo_onboarding/athlete_photo_onboarding_metadata.csv", "Review crop scores, source paths, and policy fields."),
+            file_shortcut("Decision template CSV", "athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv", "Use this as the copy-safe row contract."),
+            file_shortcut("Manifest", "athlete_photo_onboarding/athlete_photo_onboarding_manifest.json", "Check the generated run status and guardrails."),
+            file_shortcut("WNBA identity audit", "data/asset_registry/wnba/athlete_identity_audit.md", "Review identity provenance risks before trusting any athlete crop."),
+            file_shortcut("WNBA identity audit data", "data/asset_registry/wnba/athlete_identity_audit.csv", "See per-athlete identity issue rows and evidence."),
+        ],
+        "next_step": next_step,
+        "guardrails": {
+            "review_only": True,
+            "identity_human_verification_required": True,
+            "writes_in_browser": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
             "publish_ready": False,
             "paid_apis": False,
         },
@@ -3078,6 +3288,7 @@ def build_payload() -> Dict[str, Any]:
     )
     render_handoff_summary = build_render_handoff_summary(render_prep_packets)
     operator_decision_panel = operator_decision_ui_panel()
+    athlete_photo_panel = athlete_photo_onboarding_panel(read_json("manual_review_renderer_manifest.json"))
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
     source_proposal_review = read_csv("source_registry_proposal_review.csv")
@@ -3243,6 +3454,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
+        metric("Athlete photo review", athlete_photo_panel["panel_status"], athlete_photo_panel["next_step"]),
+        metric("Athlete photo variants", f"{athlete_photo_panel['review_variant_ready']}/{athlete_photo_panel['source_rows']}"),
+        metric("Athlete contact sheets", athlete_photo_panel["contact_sheets"]),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -3308,6 +3522,7 @@ def build_payload() -> Dict[str, Any]:
         "render_prep_packets": render_prep_packets,
         "render_handoff_summary": render_handoff_summary,
         "operator_decision_panel": operator_decision_panel,
+        "athlete_photo_onboarding_panel": athlete_photo_panel,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
@@ -3989,6 +4204,26 @@ DECISION_UI_FIELDS = [
     "paid_apis",
 ]
 
+ATHLETE_PHOTO_DECISION_FIELDS = [
+    "athlete_id",
+    "athlete_name",
+    "team_id",
+    "source_headshot_path",
+    "contact_sheet_path",
+    "recommended_review_variant_path",
+    "allowed_decisions",
+    "operator_decision",
+    "identity_verified",
+    "crop_choice",
+    "operator_notes",
+    "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
 
 def render_decision_shortcuts(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
@@ -4345,6 +4580,148 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     """
 
 
+def render_athlete_photo_cards(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for index, row in enumerate(rows):
+        athlete_id = clean(row.get("athlete_id"))
+        recommended_href = clean(row.get("recommended_review_variant_href"))
+        source_href = clean(row.get("source_headshot_href"))
+        sheet_href = clean(row.get("contact_sheet_href"))
+        preview = (
+            f'<img src="{html.escape(recommended_href)}" alt="{html.escape(clean(row.get("athlete_name")))} recommended review crop">'
+            if recommended_href
+            else '<div class="athlete-photo-missing">Crop missing</div>'
+        )
+        source_link = f'<a class="tool-link" href="{html.escape(source_href)}">Source</a>' if source_href else '<span class="muted">Source missing</span>'
+        sheet_link = f'<a class="tool-link" href="{html.escape(sheet_href)}">Sheet</a>' if sheet_href else '<span class="muted">Sheet missing</span>'
+        variant_link = f'<a class="tool-link" href="{html.escape(recommended_href)}">Crop</a>' if recommended_href else '<span class="muted">Crop missing</span>'
+        featured = pill("current render athlete", "warn") if row.get("featured") else ""
+        body.append(
+            f"""
+            <article class="athlete-photo-card" data-athlete-card="{html.escape(athlete_id)}">
+              <label class="athlete-photo-select">
+                <input type="radio" name="athletePhotoRow" value="{html.escape(athlete_id)}" {'checked' if index == 0 else ''}>
+                <span>Select</span>
+              </label>
+              <div class="athlete-photo-thumb">{preview}</div>
+              <div class="athlete-photo-meta">
+                <div>
+                  <strong>{html.escape(clean(row.get('athlete_name')))}</strong>
+                  <p>{html.escape(clean(row.get('team_id')))}</p>
+                </div>
+                <div class="athlete-photo-badges">
+                  {featured}
+                  {pill(clean(row.get('identity_review_status')) or 'identity_review_required', clean(row.get('identity_review_tone')) or 'warn')}
+                  {pill('crop ' + (clean(row.get('crop_readiness_score')) or '0') + '/100', clean(row.get('tone')) or 'neutral')}
+                  {pill(clean(row.get('variant_status')) or 'review')}
+                </div>
+                <p>{html.escape(short(clean(row.get('decision_cue')), 170))}</p>
+                <p>{html.escape(short(clean(row.get('identity_issue_codes')) or clean(row.get('identity_evidence')), 190))}</p>
+                <code>{html.escape(clean(row.get('source_headshot_path')))}</code>
+                <div class="athlete-photo-actions">{source_link}{sheet_link}{variant_link}</div>
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No athlete photo onboarding rows found. Run the onboarding generator first.</p>'
+
+
+def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
+    rows = panel.get("review_rows", []) if isinstance(panel.get("review_rows"), list) else []
+    rows_json = html.escape(json.dumps(rows), quote=True)
+    fields_json = html.escape(json.dumps(ATHLETE_PHOTO_DECISION_FIELDS), quote=True)
+    featured_name = clean(panel.get("featured_athlete_name")) or clean(panel.get("featured_athlete_id")) or "No current athlete"
+    return f"""
+      <div class="athlete-photo-desk" data-athlete-photo-rows="{rows_json}" data-athlete-photo-fields="{fields_json}">
+        <div class="decision-cockpit-card athlete-photo-cockpit">
+          <div class="decision-cockpit-head">
+            <div>
+              <span class="row-kicker">Athlete photo onboarding</span>
+              <strong>{html.escape(clean(panel.get('panel_status')) or 'not_run')}</strong>
+              <p>{html.escape(clean(panel.get('next_step')))}</p>
+            </div>
+            <div class="decision-cockpit-actions">
+              {pill(clean(panel.get('manifest_status')) or 'not_run')}
+              {pill('identity audit: ' + (clean(panel.get('identity_audit_status')) or 'not_run'), 'warn' if clean(panel.get('identity_audit_status')) != 'pass' else 'good')}
+              {pill('publish-ready: false')}
+            </div>
+          </div>
+          <div class="decision-status-grid">
+            <div><span>Current render athlete</span><strong>{html.escape(featured_name)}</strong></div>
+            <div><span>Review variants</span><strong>{html.escape(str(panel.get('review_variant_ready', 0)))}/{html.escape(str(panel.get('source_rows', 0)))}</strong></div>
+            <div><span>Crop review holds</span><strong>{html.escape(str(panel.get('review_variant_needs_crop_review', 0)))}</strong></div>
+            <div><span>Identity audit issues</span><strong>{html.escape(str(panel.get('identity_audit_issue_rows', 0)))}</strong></div>
+          </div>
+          <div class="review-flow">
+            <div><span>1</span><strong>Open source</strong><p>Compare source headshot and contact sheet by eye.</p></div>
+            <div><span>2</span><strong>Verify identity</strong><p>Crop score is not identity proof; wrong-person risk must be held.</p></div>
+            <div><span>3</span><strong>Copy decision</strong><p>Prepare a review-only row without approving or moving files.</p></div>
+          </div>
+        </div>
+        <div class="decision-desk-section">
+          <div class="row-kicker">Onboarding files {pill('open before deciding')}</div>
+          <div class="decision-link-grid">
+            {render_decision_shortcuts(panel.get('file_shortcuts', []))}
+          </div>
+        </div>
+        <div class="athlete-photo-layout">
+          <div class="athlete-photo-list">
+            <div class="row-kicker">Review queue {pill(str(len(rows)) + ' shown')} {pill('all manual')}</div>
+            {render_athlete_photo_cards(rows)}
+          </div>
+          <div class="athlete-photo-action-card">
+            <div class="row-kicker">Prepare athlete-photo decision <span id="athletePhotoReadyBadge" class="pill warn">Identity required</span></div>
+            <div class="athlete-photo-selected" id="athletePhotoSelectedSummary">Select a row to prepare a decision.</div>
+            <ul id="athletePhotoWarnings" class="decision-warning-list"></ul>
+            <form class="decision-form">
+              <fieldset class="decision-options">
+                <legend>Approve, hold, or revise crop</legend>
+                <label class="decision-option"><input type="radio" name="athletePhotoDecision" value="approve_variant_for_review_drafts"><span>Approve review crop</span></label>
+                <label class="decision-option"><input type="radio" name="athletePhotoDecision" value="hold" checked><span>Hold</span></label>
+                <label class="decision-option"><input type="radio" name="athletePhotoDecision" value="revise_crop"><span>Revise crop</span></label>
+              </fieldset>
+              <div class="decision-form-grid">
+                <label>Identity verified
+                  <select id="athletePhotoIdentityVerified">
+                    <option value="">Choose after visual check</option>
+                    <option value="yes">Yes, verified by eye</option>
+                    <option value="no">No / not sure</option>
+                  </select>
+                </label>
+                <label>Crop choice
+                  <select id="athletePhotoCropChoice">
+                    <option value="recommended_review_variant">Recommended crop</option>
+                    <option value="photo_first_feed">Feed crop</option>
+                    <option value="photo_first_story">Story crop</option>
+                    <option value="compact_square">Square crop</option>
+                    <option value="hold_no_crop">Hold, no crop</option>
+                  </select>
+                </label>
+              </div>
+              <label>Operator notes<textarea id="athletePhotoNotes" rows="3" required placeholder="What source/contact sheet did you compare? If this looks wrong, say who/what failed."></textarea></label>
+            </form>
+            <div class="decision-copy-box">
+              <div class="row-kicker">Copy-safe onboarding CSV row</div>
+              <textarea id="athletePhotoCsvOutput" rows="5" readonly></textarea>
+              <div class="decision-button-row">
+                <button class="tool-link" type="button" id="copyAthletePhotoRow">Copy row</button>
+                <span class="muted" id="athletePhotoCopyStatus">Paste into a manual copy of the athlete-photo decision template. Do not edit generated files directly.</span>
+              </div>
+            </div>
+            <div class="safety-strip">
+              {pill('review-only derivative', 'good')}
+              {pill('identity human-check required', 'warn')}
+              {pill('auto-approval off')}
+              {pill('no file movement')}
+              {pill('publishing off')}
+              {pill('paid APIs off', 'good')}
+            </div>
+          </div>
+        </div>
+      </div>
+    """
+
+
 def render_issues(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for issue in rows:
@@ -4565,11 +4942,30 @@ def render_html(payload: Dict[str, Any]) -> str:
     .decision-option input {{ width:auto; }}
     .decision-copy-box {{ display:grid; gap:8px; border-top:1px solid var(--line); padding-top:12px; }}
     .decision-button-row {{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }}
+    .athlete-photo-desk {{ display:grid; gap:12px; margin-bottom:18px; padding-bottom:18px; border-bottom:2px solid #eceef4; }}
+    .athlete-photo-cockpit {{ border-left-color:#94dbc9; }}
+    .athlete-photo-layout {{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr); gap:12px; align-items:start; }}
+    .athlete-photo-list {{ display:grid; gap:8px; min-width:0; max-height:920px; overflow:auto; padding-right:4px; }}
+    .athlete-photo-card {{ display:grid; grid-template-columns:auto 130px minmax(0,1fr); gap:10px; align-items:start; border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; min-width:0; }}
+    .athlete-photo-card:has(input:checked) {{ border-color:#171719; box-shadow:0 0 0 2px rgba(23,23,25,.08); }}
+    .athlete-photo-select {{ display:flex !important; align-items:center; gap:6px !important; font-size:12px !important; color:#333640 !important; }}
+    .athlete-photo-select input {{ width:auto; }}
+    .athlete-photo-thumb {{ background:#07101c; border:1px solid #242b38; border-radius:7px; width:130px; height:162px; display:grid; place-items:center; overflow:hidden; }}
+    .athlete-photo-thumb img {{ width:100%; height:100%; object-fit:contain; display:block; }}
+    .athlete-photo-missing {{ color:#fff; font-weight:800; text-align:center; padding:8px; }}
+    .athlete-photo-meta {{ display:grid; gap:6px; min-width:0; }}
+    .athlete-photo-meta strong {{ display:block; font-size:15px; }}
+    .athlete-photo-meta p {{ color:#5e616a; font-size:12px; overflow-wrap:anywhere; }}
+    .athlete-photo-meta code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+    .athlete-photo-badges,.athlete-photo-actions {{ display:flex; gap:6px; flex-wrap:wrap; }}
+    .athlete-photo-action-card {{ display:grid; gap:10px; border:1px solid var(--line); border-left:6px solid #94dbc9; border-radius:8px; background:#fff; padding:12px; min-width:0; position:sticky; top:12px; }}
+    .athlete-photo-selected {{ border:1px solid #d6efe8; background:#f3fbf8; border-radius:7px; padding:10px; font-size:13px; font-weight:800; color:#165b4a; overflow-wrap:anywhere; }}
+    .decision-form select {{ width:100%; border:1px solid var(--line); border-radius:6px; padding:10px 12px; font:inherit; background:#fff; color:var(--ink); }}
     @media (max-width: 900px) {{
       header {{ padding:20px; }}
       main {{ padding:16px; }}
-      .top-grid,.two-col,.decision-ui {{ grid-template-columns:1fr; }}
-      .decision-preview-column {{ position:static; }}
+      .top-grid,.two-col,.decision-ui,.athlete-photo-layout {{ grid-template-columns:1fr; }}
+      .decision-preview-column,.athlete-photo-action-card {{ position:static; }}
       .home-header {{ grid-template-columns:1fr; }}
       .home-actions {{ justify-content:flex-start; }}
       .render-gallery-grid {{ grid-template-columns:1fr; }}
@@ -4585,6 +4981,8 @@ def render_html(payload: Dict[str, Any]) -> str:
     }}
     @media (max-width: 560px) {{
       .metric-grid,.decision-status-grid,.decision-form-grid {{ grid-template-columns:1fr; }}
+      .athlete-photo-card {{ grid-template-columns:1fr; }}
+      .athlete-photo-thumb {{ width:100%; height:220px; }}
       header h1 {{ font-size:23px; }}
     }}
   </style>
@@ -4668,6 +5066,8 @@ def render_html(payload: Dict[str, Any]) -> str:
 
     <section id="decision-panel" class="tab-panel">
       <div class="panel">
+        <h2>Decision desk</h2>
+        {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
         <h2>Manual visual QA decision</h2>
         {render_operator_decision_panel(payload['operator_decision_panel'])}
       </div>
@@ -5065,6 +5465,117 @@ def render_html(payload: Dict[str, Any]) -> str:
       }}
       buildDecisionRow();
     }}
+    const athletePhotoDesk = document.querySelector(".athlete-photo-desk");
+    if (athletePhotoDesk) {{
+      const rows = JSON.parse(athletePhotoDesk.getAttribute("data-athlete-photo-rows") || "[]");
+      const fields = JSON.parse(athletePhotoDesk.getAttribute("data-athlete-photo-fields") || "[]");
+      const output = document.getElementById("athletePhotoCsvOutput");
+      const notes = document.getElementById("athletePhotoNotes");
+      const identity = document.getElementById("athletePhotoIdentityVerified");
+      const cropChoice = document.getElementById("athletePhotoCropChoice");
+      const copyButton = document.getElementById("copyAthletePhotoRow");
+      const copyStatus = document.getElementById("athletePhotoCopyStatus");
+      const warningList = document.getElementById("athletePhotoWarnings");
+      const readyBadge = document.getElementById("athletePhotoReadyBadge");
+      const selectedSummary = document.getElementById("athletePhotoSelectedSummary");
+      function csvCell(value) {{
+        const text = String(value || "");
+        return /[",\\n\\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+      }}
+      function selectedAthleteRow() {{
+        const checked = document.querySelector('input[name="athletePhotoRow"]:checked');
+        const id = checked ? checked.value : "";
+        return rows.find((row) => row.athlete_id === id) || rows[0] || {{}};
+      }}
+      function selectedPhotoDecision() {{
+        const checked = document.querySelector('input[name="athletePhotoDecision"]:checked');
+        return checked ? checked.value : "hold";
+      }}
+      function athleteWarnings(row) {{
+        const decision = selectedPhotoDecision();
+        const warnings = [];
+        if (!row.athlete_id) warnings.push("No athlete onboarding row is selected.");
+        if (!identity.value) warnings.push("Choose whether identity was verified by eye.");
+        if (String(row.identity_review_status || "").startsWith("hold_") && decision === "approve_variant_for_review_drafts") warnings.push("Identity audit says hold; resolve the audit issue before approving this crop for future review drafts.");
+        if (decision === "approve_variant_for_review_drafts" && identity.value !== "yes") warnings.push("Approval for review drafts requires identity_verified = yes.");
+        if (decision === "approve_variant_for_review_drafts" && String(row.variant_status || "") !== "review_variant_ready") warnings.push("Only review_variant_ready crops can be approved for future review drafts.");
+        if (decision === "approve_variant_for_review_drafts" && Number(row.crop_readiness_score || 0) < 70) warnings.push("Crop score is below the review-ready threshold.");
+        if (!notes.value.trim()) warnings.push("Add operator notes naming what source/contact sheet you checked.");
+        if (decision === "revise_crop" && cropChoice.value === "hold_no_crop") warnings.push("Choose the crop that needs revision, or use Hold.");
+        if (decision === "hold" && identity.value === "yes" && !notes.value.toLowerCase().includes("hold")) warnings.push("Hold is selected; notes should explain the hold reason.");
+        return warnings;
+      }}
+      function renderAthleteWarnings(row) {{
+        const warnings = athleteWarnings(row);
+        warningList.innerHTML = "";
+        if (!warnings.length) {{
+          const item = document.createElement("li");
+          item.className = "good";
+          item.textContent = "Ready to copy a review-only athlete-photo decision row. This does not approve publishing or move files.";
+          warningList.appendChild(item);
+          readyBadge.textContent = "Ready to copy";
+          readyBadge.className = "pill good";
+          return warnings;
+        }}
+        warnings.forEach((warning) => {{
+          const item = document.createElement("li");
+          item.textContent = warning;
+          warningList.appendChild(item);
+        }});
+        readyBadge.textContent = warnings.length + " missing";
+        readyBadge.className = "pill warn";
+        return warnings;
+      }}
+      function buildAthletePhotoRow() {{
+        const row = selectedAthleteRow();
+        if (selectedSummary) {{
+          selectedSummary.textContent = row.athlete_id
+            ? `${{row.athlete_name}} / ${{row.team_id}} / crop ${{row.crop_readiness_score || "0"}}/100 / ${{row.variant_status || "review"}} / ${{row.identity_review_status || "identity review"}}`
+            : "No athlete selected.";
+        }}
+        const out = {{}};
+        fields.forEach((field) => out[field] = row[field] || "");
+        out.allowed_decisions = "approve_variant_for_review_drafts|hold|revise_crop";
+        out.operator_decision = selectedPhotoDecision();
+        out.identity_verified = identity.value || "";
+        out.crop_choice = cropChoice.value || "recommended_review_variant";
+        out.operator_notes = notes.value.trim();
+        out.approval_scope = "review_only_derivative_from_approved_headshot";
+        out.publish_ready = "false";
+        out.auto_approval = "false";
+        out.auto_publish = "false";
+        out.move_files = "false";
+        out.paid_apis = "false";
+        output.value = fields.join(",") + "\\n" + fields.map((field) => csvCell(out[field])).join(",");
+        renderAthleteWarnings(row);
+      }}
+      document.querySelectorAll('input[name="athletePhotoRow"], input[name="athletePhotoDecision"]').forEach((el) => {{
+        el.addEventListener("change", buildAthletePhotoRow);
+      }});
+      [notes, identity, cropChoice].forEach((el) => {{
+        if (el) el.addEventListener("input", buildAthletePhotoRow);
+        if (el) el.addEventListener("change", buildAthletePhotoRow);
+      }});
+      if (copyButton) {{
+        copyButton.addEventListener("click", async () => {{
+          buildAthletePhotoRow();
+          const warnings = athleteWarnings(selectedAthleteRow());
+          if (warnings.length) {{
+            copyStatus.textContent = "Resolve the missing identity/crop fields before copying.";
+            return;
+          }}
+          try {{
+            await navigator.clipboard.writeText(output.value.split("\\n").slice(1).join("\\n"));
+            copyStatus.textContent = "Row copied. Paste into a manual copy of the athlete-photo decision template; no generated file was edited.";
+          }} catch (err) {{
+            output.focus();
+            output.select();
+            copyStatus.textContent = "Copy only the data row from the text box. Do not copy the header.";
+          }}
+        }});
+      }}
+      buildAthletePhotoRow();
+    }}
   </script>
 </body>
 </html>
@@ -5107,6 +5618,24 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
+    )
+    athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
+    lines += [
+        "",
+        "## Athlete Photo Onboarding Decision Desk",
+        "",
+        f"- Panel status: {athlete_photo_panel.get('panel_status') or 'not_run'}",
+        f"- Manifest status: {athlete_photo_panel.get('manifest_status') or 'not_run'}",
+        f"- Review variants: {athlete_photo_panel.get('review_variant_ready', 0)}/{athlete_photo_panel.get('source_rows', 0)}",
+        f"- Contact sheets: {athlete_photo_panel.get('contact_sheets', 0)}",
+        f"- Identity audit: {athlete_photo_panel.get('identity_audit_status') or 'not_run'} ({athlete_photo_panel.get('identity_audit_issue_rows', 0)} issue row(s))",
+        f"- Featured athlete: {athlete_photo_panel.get('featured_athlete_name') or athlete_photo_panel.get('featured_athlete_id') or 'none'}",
+        f"- Next safe action: {athlete_photo_panel.get('next_step')}",
+        "- Guardrails: review-only, identity human-check required, no auto-approval, no publishing, no file movement, no paid APIs.",
+    ]
+    lines.extend(
+        f"- Athlete row: {item.get('athlete_name')} | {item.get('team_id')} | crop {item.get('crop_readiness_score')}/100 | {item.get('identity_review_status')} | issues: {item.get('identity_issue_codes') or 'none'} | {item.get('recommended_review_variant_path')}"
+        for item in athlete_photo_panel.get("review_rows", [])[:8]
     )
     decision_panel = payload["operator_decision_panel"]
     lines += [

@@ -45,6 +45,26 @@ DECISION_FIELDS = [
     "paid_apis",
 ]
 
+ATHLETE_PHOTO_DECISION_FIELDS = [
+    "athlete_id",
+    "athlete_name",
+    "team_id",
+    "source_headshot_path",
+    "contact_sheet_path",
+    "recommended_review_variant_path",
+    "allowed_decisions",
+    "operator_decision",
+    "identity_verified",
+    "crop_choice",
+    "operator_notes",
+    "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
 
 def write_csv_with_fields(path: str, rows: list[dict[str, str]], fields: list[str]) -> None:
     p = Path(path)
@@ -53,6 +73,121 @@ def write_csv_with_fields(path: str, rows: list[dict[str, str]], fields: list[st
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def seed_athlete_photo_onboarding_files() -> None:
+    source = Path("assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png")
+    marker = Path(source.as_posix() + ".approved")
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"fake breanna headshot")
+    marker.write_text(json.dumps({"approved_at_utc": "2026-06-25T00:00:00+00:00"}), encoding="utf-8")
+    onboarding = Path("athlete_photo_onboarding")
+    variant = onboarding / "variants" / "new_york_liberty" / "new_york_liberty_breanna_stewart__photo_first_feed.png"
+    story = onboarding / "variants" / "new_york_liberty" / "new_york_liberty_breanna_stewart__photo_first_story.png"
+    square = onboarding / "variants" / "new_york_liberty" / "new_york_liberty_breanna_stewart__compact_square.png"
+    sheet = onboarding / "contact_sheets" / "new_york_liberty_contact_sheet.jpg"
+    for path in [variant, story, square, sheet]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"fake athlete photo review image")
+    row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "athlete_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "source_headshot_path": source.as_posix(),
+        "source_approval_marker_path": marker.as_posix(),
+        "source_approved_at_utc": "2026-06-25T00:00:00+00:00",
+        "source_evidence": "approved_assets_registry",
+        "feed_variant_path": variant.as_posix(),
+        "story_variant_path": story.as_posix(),
+        "square_variant_path": square.as_posix(),
+        "recommended_review_variant_path": variant.as_posix(),
+        "variant_status": "review_variant_ready",
+        "crop_readiness_score": "100",
+        "crop_readiness_notes": "Review crop generated; identity still requires human review.",
+        "contact_sheet_path": sheet.as_posix(),
+        "renderer_review_candidate": "true",
+        "approval_scope": "review_only_derivative_from_approved_headshot",
+        "review_only_policy": "derived_variant_does_not_approve_move_publish_or_mark_publish_ready",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+    metadata_fields = list(row.keys())
+    write_csv_with_fields((onboarding / "athlete_photo_onboarding_metadata.csv").as_posix(), [row], metadata_fields)
+    write_json(
+        (onboarding / "athlete_photo_onboarding_metadata.json").as_posix(),
+        {
+            "report": {"status": "review_only_onboarding_ready"},
+            "athletes": {"new_york_liberty_breanna_stewart": row},
+        },
+    )
+    write_csv_with_fields(
+        (onboarding / "athlete_photo_onboarding_decision_template.csv").as_posix(),
+        [{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "athlete_name": "Breanna Stewart",
+            "team_id": "new_york_liberty",
+            "source_headshot_path": source.as_posix(),
+            "contact_sheet_path": sheet.as_posix(),
+            "recommended_review_variant_path": variant.as_posix(),
+            "allowed_decisions": "approve_variant_for_review_drafts|hold|revise_crop",
+            "operator_decision": "",
+            "identity_verified": "",
+            "crop_choice": "",
+            "operator_notes": "",
+            "approval_scope": "review_only_derivative_from_approved_headshot",
+            "publish_ready": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "paid_apis": "false",
+        }],
+        ATHLETE_PHOTO_DECISION_FIELDS,
+    )
+    write_json(
+        (onboarding / "athlete_photo_onboarding_manifest.json").as_posix(),
+        {
+            "status": "review_only_onboarding_ready",
+            "source_rows": 1,
+            "review_variant_ready": 1,
+            "review_variant_needs_crop_review": 0,
+            "contact_sheets": 1,
+            "policy": {"auto_approval": False, "auto_publish": False, "move_files": False, "paid_apis": False},
+        },
+    )
+    (onboarding / "athlete_photo_onboarding_report.md").write_text("# Athlete Photo Onboarding\n", encoding="utf-8")
+    (onboarding / "athlete_photo_contact_sheet_index.md").write_text("# Contact Sheets\n", encoding="utf-8")
+
+    audit_dir = Path("data/asset_registry/wnba")
+    audit_dir.mkdir(parents=True, exist_ok=True)
+    issue = {
+        "severity": "high",
+        "issue_code": "approved_asset_still_has_pending_match_review",
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "display_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "provider_player_id": "1627668",
+        "asset_path": source.as_posix(),
+        "approved_marker_path": marker.as_posix(),
+        "evidence": "match_review status=needs_human_approval; confidence=0.72",
+        "recommendation": "Keep a per-athlete review note or decision row that closes the pending match-review state.",
+        "review_only_policy": "audit_only_no_auto_approval_no_file_movement_no_publish_ready_lane",
+    }
+    write_csv_with_fields((audit_dir / "athlete_identity_audit.csv").as_posix(), [issue], list(issue.keys()))
+    write_json(
+        (audit_dir / "athlete_identity_audit.json").as_posix(),
+        {
+            "report": {
+                "status": "needs_identity_review",
+                "issue_rows": 1,
+                "severity_counts": {"high": 1},
+            },
+            "issues": [issue],
+        },
+    )
+    (audit_dir / "athlete_identity_audit.md").write_text("# WNBA Athlete Identity Audit\n", encoding="utf-8")
 
 
 def seed_manual_visual_qa_decision_files() -> None:
@@ -471,6 +606,7 @@ def seed_manual_visual_qa_decision_files() -> None:
     Path("manual_visual_qa_operator_decision_walkthrough.md").write_text("# Walkthrough\n", encoding="utf-8")
     write_json("manual_visual_qa_operator_decision_inbox_starter.json", {"status": "starter_already_ready"})
     write_csv_with_fields("operator/inbox/manual_visual_qa_operator_decisions.csv", [], DECISION_FIELDS)
+    seed_athlete_photo_onboarding_files()
 
 
 def seed_daily_ops_files() -> None:
@@ -1386,7 +1522,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.55.0-athlete-photo-onboarding-links"
+    assert payload["version"] == "hsd-operator-command-center-v3.56.0-athlete-photo-decision-desk"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1469,6 +1605,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Render handoff" and item["value"] == "ready_for_manual_review" for item in payload["metrics"])
     assert any(item["label"] == "Decision UI" and item["value"] == "awaiting_operator_decision" for item in payload["metrics"])
     assert any(item["label"] == "Decision inbox rows" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Athlete photo review" and item["value"] == "hold_identity_review_required" for item in payload["metrics"])
+    assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
+    assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"
+    assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_review_status"] == "hold_identity_review_required"
+    assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_issue_codes"] == "approved_asset_still_has_pending_match_review"
+    assert "Athlete photo onboarding" in html
+    assert "Identity audit says hold" in html
+    assert "approved_asset_still_has_pending_match_review" in html
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
@@ -1753,6 +1897,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_report.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_contact_sheet_index.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/athlete_identity_audit.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py"
+    assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"

@@ -16,6 +16,7 @@ from hsd_run_io import output_path, write_csv as write_run_csv, write_json
 VERSION = "hsd-logo-asset-catalog-v1"
 DEFAULT_REGISTRY_ROOT = Path("data/asset_registry")
 DEFAULT_TEMPLATE_MAPPING = Path("config/graphics/template_render_mapping_v1.json")
+DEFAULT_VERIFIED_LOGO_REGISTRY = Path("config/hsd_verified_logo_registry_v1.json")
 DEFAULT_SCHEMA = Path("contracts/logo_asset_catalog_v1.schema.json")
 DEFAULT_OUT_CSV = "data/asset_registry/logo_asset_catalog.csv"
 DEFAULT_OUT_JSON = "data/asset_registry/logo_asset_catalog.json"
@@ -40,6 +41,9 @@ CATALOG_FIELDS = [
     "fallback_status",
     "source_url",
     "source_note",
+    "source_trust_status",
+    "verified_registry_status",
+    "blocked_url_match",
     "evidence",
     "render_template_ids",
     "template_scope",
@@ -138,6 +142,41 @@ def source_for_team(sources: List[Dict[str, str]], team_id: str) -> Dict[str, st
     return {}
 
 
+def verified_policy_for_team(verified_registry: Mapping[str, Any], team_name: str) -> Mapping[str, Any]:
+    teams = verified_registry.get("teams") if isinstance(verified_registry, Mapping) else {}
+    if not isinstance(teams, Mapping):
+        return {}
+    policy = teams.get(team_name)
+    return policy if isinstance(policy, Mapping) else {}
+
+
+def blocked_url_match(source_url: str, policy: Mapping[str, Any]) -> str:
+    haystack = source_url.lower()
+    for item in policy.get("blocked_url_substrings") or []:
+        needle = clean(item).lower()
+        if needle and needle in haystack:
+            return clean(item)
+    return ""
+
+
+def verified_registry_status(policy: Mapping[str, Any], blocked_match: str) -> str:
+    if not policy:
+        return "no_verified_policy"
+    if blocked_match:
+        return "blocked_source_url_match"
+    return "verified_policy_present"
+
+
+def source_trust_status(source_url: str, policy: Mapping[str, Any], blocked_match: str) -> str:
+    if blocked_match:
+        return "blocked_stale_source_review_required"
+    if not source_url:
+        return "missing_source_url_review_required"
+    if policy:
+        return "registered_source_policy_no_block_match"
+    return "source_policy_not_registered_review_required"
+
+
 def approval_status(logo_row: Mapping[str, str], local_exists: bool) -> str:
     if not logo_row:
         return "not_registered"
@@ -164,7 +203,9 @@ def fallback_status(status: str) -> str:
     return "fallback_review_only_human_hold"
 
 
-def operator_action(status: str) -> str:
+def operator_action(status: str, blocked_match: str = "") -> str:
+    if blocked_match:
+        return "replace_or_reverify_blocked_source_before_manual_approval"
     if status == "approved":
         return "catalog_only_no_action"
     if status == "unapproved_review_required":
@@ -179,9 +220,11 @@ def build_team_row(
     team: Mapping[str, str],
     logo_row: Mapping[str, str],
     source_row: Mapping[str, str],
+    verified_registry: Mapping[str, Any],
     template_ids: List[str],
 ) -> Dict[str, str]:
     team_id = clean(team.get("team_id") or logo_row.get("team_id"))
+    team_name = clean(team.get("team_name") or source_row.get("team_name") or team_id)
     registered_path = clean(logo_row.get("file_path")) or f"assets/leagues/{league_code(league)}/teams/{team_id}/logo.png"
     paths = primary_paths(league, team_id, registered_path)
     local_exists = file_exists(registered_path)
@@ -191,12 +234,18 @@ def build_team_row(
     preferred_format = Path(registered_path).suffix.lower().lstrip(".") if local_exists else ("png" if png_exists else ("svg" if svg_exists else ""))
     source_url = clean(source_row.get("source_url"))
     source_note = clean(logo_row.get("source_note") or source_row.get("source_note"))
+    verified_policy = verified_policy_for_team(verified_registry, team_name)
+    blocked_match = blocked_url_match(source_url, verified_policy)
+    verified_status = verified_registry_status(verified_policy, blocked_match)
+    trust_status = source_trust_status(source_url, verified_policy, blocked_match)
     evidence = "; ".join(
         part
         for part in [
             f"registry_path={registered_path}" if registered_path else "",
             f"source_url={source_url}" if source_url else "",
             f"source_note={source_note}" if source_note else "",
+            f"blocked_url_match={blocked_match}" if blocked_match else "",
+            f"verified_registry_status={verified_status}",
             f"png_exists={bool_text(png_exists)}",
             f"svg_exists={bool_text(svg_exists)}",
         ]
@@ -206,7 +255,7 @@ def build_team_row(
         "league": league_label(league),
         "entity_type": "team_logo",
         "team_id": team_id,
-        "team_name": clean(team.get("team_name") or source_row.get("team_name") or team_id),
+        "team_name": team_name,
         "asset_type": clean(logo_row.get("asset_type")) or "primary_logo",
         "local_logo_path": registered_path,
         "png_path": paths["png_path"],
@@ -221,11 +270,14 @@ def build_team_row(
         "fallback_status": fallback_status(status),
         "source_url": source_url,
         "source_note": source_note,
+        "source_trust_status": trust_status,
+        "verified_registry_status": verified_status,
+        "blocked_url_match": blocked_match,
         "evidence": evidence,
         "render_template_ids": ";".join(template_ids),
         "template_scope": "current_review_mapping",
         "review_only": "true",
-        "operator_action": operator_action(status),
+        "operator_action": operator_action(status, blocked_match),
     }
 
 
@@ -255,6 +307,9 @@ def build_league_row(league: str, template_ids: List[str]) -> Dict[str, str]:
         "fallback_status": "fallback_review_only_human_hold",
         "source_url": "",
         "source_note": "league_logo_catalog_probe_no_auto_approval",
+        "source_trust_status": "league_logo_source_not_registered_review_required",
+        "verified_registry_status": "not_applicable",
+        "blocked_url_match": "",
         "evidence": f"png_exists={bool_text(png_exists)}; svg_exists={bool_text(svg_exists)}",
         "render_template_ids": ";".join(template_ids),
         "template_scope": "current_review_mapping",
@@ -263,8 +318,13 @@ def build_league_row(league: str, template_ids: List[str]) -> Dict[str, str]:
     }
 
 
-def build_catalog(registry_root: Path = DEFAULT_REGISTRY_ROOT, template_mapping: Path = DEFAULT_TEMPLATE_MAPPING) -> Dict[str, Any]:
+def build_catalog(
+    registry_root: Path = DEFAULT_REGISTRY_ROOT,
+    template_mapping: Path = DEFAULT_TEMPLATE_MAPPING,
+    verified_logo_registry: Path = DEFAULT_VERIFIED_LOGO_REGISTRY,
+) -> Dict[str, Any]:
     mapping = read_json(template_mapping)
+    verified_registry = read_json(verified_logo_registry)
     rows: List[Dict[str, str]] = []
     league_dirs = sorted(path for path in registry_root.iterdir() if path.is_dir()) if registry_root.exists() else []
 
@@ -279,11 +339,14 @@ def build_catalog(registry_root: Path = DEFAULT_REGISTRY_ROOT, template_mapping:
         rows.append(build_league_row(league, template_ids))
         for team in teams:
             team_id = clean(team.get("team_id"))
-            rows.append(build_team_row(league, team, by_logo.get(team_id, {}), source_for_team(sources, team_id), template_ids))
+            rows.append(build_team_row(league, team, by_logo.get(team_id, {}), source_for_team(sources, team_id), verified_registry, template_ids))
 
     by_status: Dict[str, int] = {}
+    by_trust_status: Dict[str, int] = {}
     for row in rows:
         by_status[row["approval_status"]] = by_status.get(row["approval_status"], 0) + 1
+        trust_status = row.get("source_trust_status") or ""
+        by_trust_status[trust_status] = by_trust_status.get(trust_status, 0) + 1
 
     return {
         "version": VERSION,
@@ -292,10 +355,12 @@ def build_catalog(registry_root: Path = DEFAULT_REGISTRY_ROOT, template_mapping:
         "catalog_csv": output_path(DEFAULT_OUT_CSV).as_posix(),
         "schema": DEFAULT_SCHEMA.as_posix(),
         "template_mapping": template_mapping.as_posix(),
+        "verified_logo_registry": verified_logo_registry.as_posix(),
         "row_count": len(rows),
         "team_logo_rows": sum(row["entity_type"] == "team_logo" for row in rows),
         "league_logo_rows": sum(row["entity_type"] == "league_logo" for row in rows),
         "approval_status_counts": by_status,
+        "source_trust_status_counts": by_trust_status,
         "rows": rows,
         "policy": {
             "no_auto_approval": True,
@@ -326,6 +391,11 @@ def write_markdown(report: Mapping[str, Any], path: Path) -> None:
     for key in sorted(status_counts):
         lines.append(f"- {key}: `{status_counts[key]}`")
 
+    trust_counts = report.get("source_trust_status_counts") or {}
+    lines += ["", "## Source trust status", ""]
+    for key in sorted(trust_counts):
+        lines.append(f"- {key}: `{trust_counts[key]}`")
+
     lines += ["", "## Needs operator review", ""]
     review_rows = [row for row in rows if row.get("approval_status") != "approved"]
     if review_rows:
@@ -334,6 +404,18 @@ def write_markdown(report: Mapping[str, Any], path: Path) -> None:
             lines.append(
                 f"- `{row.get('league')}` {row.get('entity_type')} `{label}`: "
                 f"`{row.get('approval_status')}`; path `{row.get('local_logo_path')}`; action `{row.get('operator_action')}`"
+            )
+    else:
+        lines.append("- None")
+
+    lines += ["", "## Source policy warnings", ""]
+    warning_rows = [row for row in rows if row.get("blocked_url_match")]
+    if warning_rows:
+        for row in warning_rows:
+            lines.append(
+                f"- `{row.get('league')}` team_logo `{row.get('team_name')}`: "
+                f"blocked source substring `{row.get('blocked_url_match')}`; source `{row.get('source_url')}`; "
+                f"action `{row.get('operator_action')}`"
             )
     else:
         lines.append("- None")
@@ -353,12 +435,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Build a review-only HSD team/league logo asset catalog.")
     parser.add_argument("--registry-root", default=str(DEFAULT_REGISTRY_ROOT))
     parser.add_argument("--template-mapping", default=str(DEFAULT_TEMPLATE_MAPPING))
+    parser.add_argument("--verified-logo-registry", default=str(DEFAULT_VERIFIED_LOGO_REGISTRY))
     parser.add_argument("--csv", default=DEFAULT_OUT_CSV)
     parser.add_argument("--json", default=DEFAULT_OUT_JSON)
     parser.add_argument("--md", default=DEFAULT_OUT_MD)
     args = parser.parse_args(argv)
 
-    report = build_catalog(Path(args.registry_root), Path(args.template_mapping))
+    report = build_catalog(Path(args.registry_root), Path(args.template_mapping), Path(args.verified_logo_registry))
     csv_path = output_path(args.csv)
     json_path = output_path(args.json)
     md_path = output_path(args.md)
@@ -375,6 +458,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "review_only": True,
                 "row_count": report["row_count"],
                 "approval_status_counts": report["approval_status_counts"],
+                "source_trust_status_counts": report["source_trust_status_counts"],
                 "csv": csv_path.as_posix(),
                 "json": json_path.as_posix(),
                 "md": md_path.as_posix(),
