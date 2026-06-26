@@ -54,6 +54,46 @@ def test_active_logo_readiness_matches_team_nicknames_and_audit_artifact(tmp_pat
     assert not command_center.active_logo_entity_matches("sunday preview", "Connecticut Sun", "connecticut_sun")
 
 
+def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    packet_dir = Path("data/asset_registry/wnba")
+    packet_dir.mkdir(parents=True)
+    rows = [
+        {
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "display_name": "Breanna Stewart",
+            "identity_review_status": "hold_identity_review_required",
+            "identity_hold": "true",
+            "default_approval_present": "true",
+            "review_required": "true",
+            "hold_reason_codes": "approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck",
+            "focused_evidence": "approved marker decision_source=default",
+        },
+        {
+            "athlete_id": "new_york_liberty_sabrina_ionescu",
+            "display_name": "Sabrina Ionescu",
+            "identity_review_status": "manual_identity_review_required",
+            "identity_hold": "false",
+            "default_approval_present": "true",
+            "review_required": "true",
+            "hold_reason_codes": "default_approval_requires_identity_recheck",
+            "focused_evidence": "manual review needed",
+        },
+    ]
+    write_csv("data/asset_registry/wnba/athlete_identity_review_packet.csv", rows)
+
+    hold = command_center.active_athlete_identity_for_packet({"top_performers": "Breanna Stewart: PTS 20"})
+    review = command_center.active_athlete_identity_for_packet({"top_performers": "Sabrina Ionescu: PTS 16"})
+    clear = command_center.active_athlete_identity_for_packet({"top_performers": "Jonquel Jones: REB 8"})
+
+    assert hold["active_athlete_identity_status"] == "hold_identity_review_required"
+    assert "Breanna Stewart: hold_identity_review_required" in hold["active_athlete_identity_cues"]
+    assert review["active_athlete_identity_status"] == "athlete_identity_review_required"
+    assert "Sabrina Ionescu: manual_identity_review_required" in review["active_athlete_identity_cues"]
+    assert clear["active_athlete_identity_status"] == "athlete_identity_not_flagged"
+    assert clear["athlete_identity_artifact"] == "data/asset_registry/wnba/athlete_identity_audit.csv"
+
+
 DECISION_FIELDS = [
     "decision_draft_id",
     "source_intake_id",
@@ -2087,6 +2127,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_prep_packets"][0]["logo_review_artifact"] == "data/asset_registry/wnba/logo_review_packets.csv"
     assert "Renderer fallback remains review-only" in payload["render_prep_packets"][0]["renderer_fallback_cue"]
     assert "Confirm active logo readiness: hold_logo_review_required" in payload["render_prep_packets"][0]["manual_renderer_steps"]
+    assert payload["render_prep_packets"][0]["active_athlete_identity_status"] == "hold_identity_review_required"
+    assert "Breanna Stewart: hold_identity_review_required" in payload["render_prep_packets"][0]["active_athlete_identity_cues"]
+    assert "default_approval_requires_identity_recheck" in payload["render_prep_packets"][0]["active_athlete_identity_cues"]
+    assert payload["render_prep_packets"][0]["athlete_identity_artifact"] == "data/asset_registry/wnba/athlete_identity_review_packet.csv"
+    assert "Confirm active athlete identity: hold_identity_review_required" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"
     assert payload["render_prep_packets"][0]["publish_policy"] == "review_only_not_publish_ready"
@@ -2458,6 +2503,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "source confirmation required" in markdown
     assert "active logo: hold_logo_review_required" in markdown
     assert "New York Liberty: unapproved_required_logo" in markdown
+    assert "active athlete: hold_identity_review_required" in markdown
+    assert "Breanna Stewart: hold_identity_review_required" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -2481,11 +2528,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Active logo readiness: `hold_logo_review_required`" in asset_checklist
     assert "New York Liberty: unapproved_required_logo" in asset_checklist
     assert "WNBA: missing_or_unregistered_logo_asset" in asset_checklist
+    assert "Active athlete identity: `hold_identity_review_required`" in asset_checklist
+    assert "Breanna Stewart: hold_identity_review_required" in asset_checklist
+    assert "athlete_identity_review_packet.csv" in asset_checklist
     assert "Renderer fallback remains review-only" in asset_checklist
     assert "Open news_fact_packets.csv" in Path("render_handoff_top_packet/source_proof.md").read_text(encoding="utf-8")
     manual_prompt = Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     assert "Use this prompt manually only" in manual_prompt
     assert "Active logo readiness: hold_logo_review_required" in manual_prompt
+    assert "Active athlete identity: hold_identity_review_required" in manual_prompt
     render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))
     assert render_prep_manifest["guardrails"]["auto_render"] is False
     assert render_prep_manifest["guardrails"]["auto_publish"] is False
