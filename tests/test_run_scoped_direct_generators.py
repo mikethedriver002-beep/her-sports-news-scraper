@@ -85,6 +85,8 @@ def test_operator_command_center_writes_outputs_inside_run_folder(tmp_path, monk
         assert (run_dir / "render_prep_packets.csv").exists()
         assert (run_dir / "render_prep_packets.json").exists()
         assert (run_dir / "render_handoff_top_packet" / "README.md").exists()
+        assert (run_dir / "render_handoff_top_packet" / "active_asset_review_queue.md").exists()
+        assert (run_dir / "render_handoff_top_packet" / "active_asset_review_queue.csv").exists()
         assert (run_dir / "render_handoff_top_packet" / "manual_renderer_prompt.md").exists()
         assert (run_dir / "render_handoff_top_packet" / "handoff_manifest.json").exists()
         assert not Path("operator_command_center.html").exists()
