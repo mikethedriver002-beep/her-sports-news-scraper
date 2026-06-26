@@ -3602,6 +3602,10 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
 def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
     packets = payload.get("render_prep_packets", [])
     packet = packets[0] if packets else None
+    manifest_packet = dict(packet) if packet else {}
+    if manifest_packet:
+        manifest_packet["raw_blockers"] = clean(packet.get("blockers")) or "none"
+        manifest_packet["blockers"] = display_render_blockers(packet)
     write_text(OUT_RENDER_HANDOFF_README, render_handoff_readme(payload, packet))
     manifest = {
         "version": payload["version"],
@@ -3619,7 +3623,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             "publish_ready_lane": False,
             "publishing": False,
         },
-        "packet": packet or {},
+        "packet": manifest_packet,
         "files": [
             "README.md",
             "copy_sheet.md",
