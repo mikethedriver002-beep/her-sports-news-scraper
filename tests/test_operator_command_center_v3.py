@@ -1837,6 +1837,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
+    assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown
+    assert "evidence=approved marker decision_source=default" in markdown
+    assert "steps=open_asset_and_marker; compare_to_official_player_or_team_source; choose_hold_or_verified_review_only_decision" in markdown
     assert any(item["label"] == "Athlete photo review" and item["value"] == "hold_identity_review_required" for item in payload["metrics"])
     assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
     assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"
@@ -1863,6 +1866,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Save identity row" in html
     assert "Identity audit says hold" in html
     assert "approved_asset_still_has_pending_match_review" in html
+    assert "Hold reasons:" in html
+    assert "Evidence:" in html
+    assert "Operator steps:" in html
+    assert "approved marker decision_source=default" in html
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."
     assert payload["source_coverage_map"][1]["name"] == "PWHL"
     assert payload["source_coverage_map"][1]["status"] == "gap"
@@ -2430,6 +2437,50 @@ def test_operator_command_center_identity_resolution_requires_full_renderer_clea
     assert row["identity_review_status"] == "hold_identity_review_required"
     assert row["identity_resolution_status"] == "resolution_incomplete_or_hold"
     assert row["identity_resolution_next_step"] == "Keep photo-first rendering held until evidence, operator, and resolution fields are complete."
+
+
+def test_athlete_photo_panel_prioritizes_identity_packets_before_onboarding(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    packet = {
+        "review_packet_id": "atlanta_dream_aaliyah_nye",
+        "athlete_id": "atlanta_dream_aaliyah_nye",
+        "display_name": "Aaliyah Nye",
+        "team_id": "atlanta_dream",
+        "provider_player_id": "1642801",
+        "asset_path": "assets/leagues/wnba/athletes/atlanta_dream_aaliyah_nye/headshot.png",
+        "approved_marker_path": "assets/leagues/wnba/athletes/atlanta_dream_aaliyah_nye/headshot.png.approved",
+        "identity_review_status": "hold_identity_review_required",
+        "review_required": "true",
+        "identity_hold": "true",
+        "default_approval_present": "true",
+        "highest_severity": "high",
+        "issue_count": "2",
+        "hold_reason_codes": "default_approval_requires_identity_recheck",
+        "focused_evidence": "approved marker decision_source=default",
+        "source_check_url": "https://www.wnba.com/player/1642801/aaliyah-nye",
+        "provider_player_page_hint": "https://www.wnba.com/player/1642801/aaliyah-nye",
+        "operator_review_steps": "open_asset_and_marker; compare_to_official_player_or_team_source; choose_hold_or_verified_review_only_decision",
+        "allowed_decisions": "hold_identity|revise_asset|backfill_provider_id_only|identity_verified_approved_for_review_renders",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "review_only_policy": "manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane",
+    }
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_review_packet.csv",
+        [packet],
+        list(packet.keys()),
+    )
+
+    panel = command_center.athlete_photo_onboarding_panel({})
+
+    assert panel["panel_status"] == "identity_resolution_required"
+    assert panel["identity_review_packet_rows"] == 1
+    assert panel["identity_review_packet_hold_rows"] == 1
+    assert panel["identity_review_packet_default_rows"] == 1
+    assert "athlete_identity_review_packet.csv" in panel["next_step"]
 
 
 def test_operator_command_center_identity_resolution_clears_only_with_full_manual_guardrails(tmp_path, monkeypatch) -> None:
