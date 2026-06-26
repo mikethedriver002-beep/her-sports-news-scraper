@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.59.0-identity-writeback-local-mode"
+VERSION = "hsd-operator-command-center-v3.60.0-identity-resolution-closure-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -220,6 +220,8 @@ ARTIFACTS = [
     ("Graphics", "WNBA athlete provider ID backfill template", "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"),
     ("Graphics", "WNBA identity local save server", "identity_resolution_local_server.md"),
     ("Graphics", "WNBA identity local save server data", "identity_resolution_local_server.json"),
+    ("Graphics", "WNBA identity live writeback verifier", "identity_decision_live_writeback_verification.md"),
+    ("Graphics", "WNBA identity live writeback verifier data", "identity_decision_live_writeback_verification.json"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -252,6 +254,8 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py",
     "identity_resolution_local_server.md": ".\\hsd.cmd run -Mode identity-decision",
     "identity_resolution_local_server.json": ".\\hsd.cmd run -Mode identity-decision",
+    "identity_decision_live_writeback_verification.md": ".\\hsd.cmd run -Mode identity-decision-verify",
+    "identity_decision_live_writeback_verification.json": ".\\hsd.cmd run -Mode identity-decision-verify",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -1491,6 +1495,28 @@ def athlete_identity_resolution_by_athlete(rows: Iterable[Dict[str, str]]) -> Di
     return out
 
 
+def identity_guardrail_false(row: Dict[str, str], field: str) -> bool:
+    return clean(row.get(field)).lower() in {"", "0", "false", "no", "n"}
+
+
+def identity_resolution_is_cleared(row: Dict[str, str]) -> bool:
+    decision = clean(row.get("operator_decision"))
+    status = clean(row.get("issue_resolution_status"))
+    verified_identity = clean(row.get("identity_verified")).lower() == "yes"
+    verified_provider = clean(row.get("provider_player_id_verified")).lower() == "yes" or bool(clean(row.get("backfill_provider_player_id")))
+    return (
+        decision == "identity_verified_approved_for_review_renders"
+        and status in {"resolved", "closed_with_evidence", "identity_verified"}
+        and verified_identity
+        and verified_provider
+        and bool(clean(row.get("approved_source_url")))
+        and bool(clean(row.get("operator_name")))
+        and bool(clean(row.get("reviewed_at_local")))
+        and bool(clean(row.get("operator_notes")))
+        and all(identity_guardrail_false(row, field) for field in ["publish_ready", "auto_approval", "auto_publish", "move_files", "paid_apis"])
+    )
+
+
 def athlete_identity_candidates_by_athlete(rows: Iterable[Dict[str, str]]) -> Dict[str, Dict[str, str]]:
     out: Dict[str, Dict[str, str]] = {}
     for row in rows:
@@ -1551,21 +1577,28 @@ def athlete_identity_resolution_summary(athlete_id: str, rows_by_athlete: Dict[s
             "identity_resolution_next_step": "Fill a source-backed row in operator/inbox/wnba_athlete_identity_resolution.csv before renderer photo use.",
         }
     decision = clean(row.get("operator_decision"))
-    status = clean(row.get("issue_resolution_status"))
     evidence = clean(row.get("approved_source_url"))
-    cleared = (
-        decision == "identity_verified_approved_for_review_renders"
-        and status in {"resolved", "closed_with_evidence", "identity_verified"}
-        and clean(row.get("identity_verified")).lower() == "yes"
-        and bool(evidence)
-        and clean(row.get("operator_name"))
-    )
+    cleared = identity_resolution_is_cleared(row)
+    tone = "good" if cleared else "bad" if decision in {"hold_identity", "revise_asset"} else "warn"
+    review_status = "identity_resolution_cleared_for_review_renders" if cleared else ""
+    review_tone = "good" if cleared else ""
+    next_step = "Renderer may use this photo only for review drafts." if cleared else "Keep photo-first rendering held until evidence, operator, and resolution fields are complete."
+    if decision == "hold_identity":
+        next_step = "Identity remains held by operator decision; photo-first rendering stays blocked."
+    elif decision == "revise_asset":
+        next_step = "Asset revision is required before this athlete photo can be reconsidered."
+    elif decision == "backfill_provider_id_only":
+        next_step = "Provider ID backfill is recorded, but identity is still held until a verified source-backed decision is saved."
     return {
         "identity_resolution_status": "resolution_cleared_for_review_renders" if cleared else "resolution_incomplete_or_hold",
-        "identity_resolution_tone": "good" if cleared else "bad" if decision in {"hold_identity", "revise_asset"} else "warn",
+        "identity_resolution_tone": tone,
         "identity_resolution_decision": decision,
         "identity_resolution_evidence_url": evidence,
-        "identity_resolution_next_step": "Renderer may use this photo only for review drafts." if cleared else "Keep photo-first rendering held until evidence, operator, and resolution fields are complete.",
+        "identity_resolution_next_step": next_step,
+        "identity_resolution_operator": clean(row.get("operator_name")),
+        "identity_resolution_reviewed_at_local": clean(row.get("reviewed_at_local")),
+        "identity_resolution_review_status": review_status,
+        "identity_resolution_review_tone": review_tone,
     }
 
 
@@ -1585,6 +1618,9 @@ def athlete_photo_onboarding_row_payload(
     source_path = clean(row.get("source_headshot_path"))
     audit = athlete_identity_audit_summary(athlete_id, audit_by_athlete)
     resolution = athlete_identity_resolution_summary(athlete_id, resolution_by_athlete)
+    if clean(resolution.get("identity_resolution_review_status")) == "identity_resolution_cleared_for_review_renders":
+        audit["identity_review_status"] = "identity_resolution_cleared_for_review_renders"
+        audit["identity_review_tone"] = "good"
     return {
         "athlete_id": athlete_id,
         "athlete_name": clean(row.get("athlete_name")) or athlete_id.replace("_", " ").title(),
@@ -1693,12 +1729,12 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         panel_status = "not_run"
         next_step = "Run .\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py to create review-only contact sheets."
     elif featured_row_id and review_rows:
-        if clean(review_rows[0].get("identity_review_status")).startswith("hold_"):
-            panel_status = "hold_identity_review_required"
-            next_step = "Hold this athlete crop until the identity audit issue is resolved with human evidence in the operator identity inbox."
-        elif clean(review_rows[0].get("identity_resolution_status")) == "resolution_cleared_for_review_renders":
+        if clean(review_rows[0].get("identity_resolution_status")) == "resolution_cleared_for_review_renders":
             panel_status = "identity_resolution_cleared_review_only"
             next_step = "Renderer can use the photo for review drafts only; still complete visual QA before any next step."
+        elif clean(review_rows[0].get("identity_review_status")).startswith("hold_"):
+            panel_status = "hold_identity_review_required"
+            next_step = "Hold this athlete crop until the identity audit issue is resolved with human evidence in the operator identity inbox."
         else:
             panel_status = "identity_review_required"
             next_step = "Open the contact sheet and source headshot, then record approve, hold, or revise with identity notes."

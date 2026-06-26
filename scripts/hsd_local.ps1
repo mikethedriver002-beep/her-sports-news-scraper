@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox", "identity-decision")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox", "identity-decision", "identity-decision-verify")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -675,6 +675,11 @@ function Invoke-IdentityDecisionServerStage($Python) {
     Invoke-ScriptIfPresent $Python "serve_hsd_identity_resolution_ui_v1.py" -Optional
 }
 
+function Invoke-IdentityDecisionVerifyStage($Python) {
+    Write-Section "WNBA identity decision live writeback verification"
+    Invoke-ScriptIfPresent $Python "scripts/verify_hsd_identity_decision_live_writeback_v1.py" -Optional
+}
+
 function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
     $candidates = @()
     if ($env:HSD_RUN_OUTPUT_DIR) {
@@ -832,6 +837,8 @@ function Collect-HsdArtifacts($RunContext) {
         "manual_visual_qa_operator_decision_inbox_starter.json",
         "identity_resolution_local_server.md",
         "identity_resolution_local_server.json",
+        "identity_decision_live_writeback_verification.md",
+        "identity_decision_live_writeback_verification.json",
         "bebe_daily_ops_plan.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
@@ -921,6 +928,7 @@ function Invoke-HsdRun {
             "render" { Invoke-RenderStage $python }
             "decision-inbox" { Invoke-DecisionInboxStarterStage $python }
             "identity-decision" { Invoke-IdentityDecisionServerStage $python }
+            "identity-decision-verify" { Invoke-IdentityDecisionVerifyStage $python }
             "full" { Invoke-ResultsStage $python; Invoke-NewsStage $python; Invoke-StudioStage $python; Invoke-ReviewStage $python }
         }
     } catch {

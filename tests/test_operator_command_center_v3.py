@@ -190,6 +190,43 @@ def seed_athlete_photo_onboarding_files() -> None:
     (audit_dir / "athlete_identity_audit.md").write_text("# WNBA Athlete Identity Audit\n", encoding="utf-8")
 
 
+def write_identity_resolution_inbox(**overrides: str) -> None:
+    row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "display_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "provider_player_id": "1627668",
+        "asset_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+        "approved_marker_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved",
+        "highest_severity": "high",
+        "issue_count": "1",
+        "issue_codes": "approved_asset_still_has_pending_match_review",
+        "audit_evidence": "match_review status=needs_human_approval; confidence=0.72",
+        "recommended_operator_action": "verify_identity_and_backfill_provider_id_if_source_supported",
+        "allowed_decisions": "identity_verified_approved_for_review_renders|hold_identity|revise_asset|backfill_provider_id_only",
+        "operator_decision": "identity_verified_approved_for_review_renders",
+        "identity_verified": "yes",
+        "provider_player_id_verified": "yes",
+        "approved_source_url": "https://www.wnba.com/player/1627668/breanna-stewart",
+        "secondary_source_url": "https://liberty.wnba.com/roster/",
+        "backfill_provider_player_id": "",
+        "operator_notes": "Verified Breanna Stewart by official public source for review-only render eligibility.",
+        "operator_name": "Test Operator",
+        "reviewed_at_local": "2026-06-25T12:00:00",
+        "issue_resolution_status": "identity_verified",
+        "copy_target": "operator/inbox/wnba_athlete_identity_resolution.csv",
+        "approval_scope": "review_only_identity_resolution_for_local_draft_renders",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "review_only_policy": "manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane",
+    }
+    row.update(overrides)
+    write_csv_with_fields("operator/inbox/wnba_athlete_identity_resolution.csv", [row], command_center.IDENTITY_RESOLUTION_FIELDS)
+
+
 def seed_manual_visual_qa_decision_files() -> None:
     preview = Path("render_handoff_top_packet/draft_preview.png")
     preview.parent.mkdir(parents=True, exist_ok=True)
@@ -1522,7 +1559,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.59.0-identity-writeback-local-mode"
+    assert payload["version"] == "hsd-operator-command-center-v3.60.0-identity-resolution-closure-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1916,6 +1953,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
     assert artifact_by_path["identity_resolution_local_server.md"]["run_command"] == ".\\hsd.cmd run -Mode identity-decision"
     assert artifact_by_path["identity_resolution_local_server.json"]["run_command"] == ".\\hsd.cmd run -Mode identity-decision"
+    assert artifact_by_path["identity_decision_live_writeback_verification.md"]["run_command"] == ".\\hsd.cmd run -Mode identity-decision-verify"
+    assert artifact_by_path["identity_decision_live_writeback_verification.json"]["run_command"] == ".\\hsd.cmd run -Mode identity-decision-verify"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
@@ -2170,6 +2209,40 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_handoff_manifest["guardrails"]["auto_render"] is False
     assert render_handoff_manifest["guardrails"]["auto_publish"] is False
     assert render_handoff_manifest["packet"]["packet_id"] == payload["render_prep_packets"][0]["packet_id"]
+
+
+def test_operator_command_center_identity_resolution_requires_full_renderer_clearance_contract(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    seed_manual_visual_qa_decision_files()
+    write_identity_resolution_inbox(provider_player_id_verified="no", backfill_provider_player_id="", publish_ready="true")
+
+    payload = command_center.build_payload()
+    row = payload["athlete_photo_onboarding_panel"]["review_rows"][0]
+
+    assert payload["athlete_photo_onboarding_panel"]["panel_status"] != "identity_resolution_cleared_review_only"
+    assert row["identity_review_status"] == "hold_identity_review_required"
+    assert row["identity_resolution_status"] == "resolution_incomplete_or_hold"
+    assert row["identity_resolution_next_step"] == "Keep photo-first rendering held until evidence, operator, and resolution fields are complete."
+
+
+def test_operator_command_center_identity_resolution_clears_only_with_full_manual_guardrails(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    seed_manual_visual_qa_decision_files()
+    write_identity_resolution_inbox()
+
+    payload = command_center.build_payload()
+    row = payload["athlete_photo_onboarding_panel"]["review_rows"][0]
+
+    assert payload["athlete_photo_onboarding_panel"]["panel_status"] == "identity_resolution_cleared_review_only"
+    assert payload["athlete_photo_onboarding_panel"]["next_step"] == "Renderer can use the photo for review drafts only; still complete visual QA before any next step."
+    assert row["identity_review_status"] == "identity_resolution_cleared_for_review_renders"
+    assert row["identity_review_tone"] == "good"
+    assert row["identity_resolution_status"] == "resolution_cleared_for_review_renders"
+    assert row["identity_resolution_next_step"] == "Renderer may use this photo only for review drafts."
+    assert row["publish_ready"] == "false"
+    assert row["auto_approval"] == "false"
 
 
 def test_operator_decision_review_desk_flags_malformed_paste(tmp_path, monkeypatch) -> None:
