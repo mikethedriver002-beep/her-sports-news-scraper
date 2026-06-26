@@ -2094,6 +2094,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Save identity row" in html
     assert "Identity audit says hold" in html
     assert "approved_asset_still_has_pending_match_review" in html
+    assert "approved marker needs recheck" in html
     assert "Hold reasons:" in html
     assert "Evidence:" in html
     assert "Operator steps:" in html
@@ -2684,6 +2685,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in readme
     active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
     assert "Active Asset Review Queue" in active_queue
+    assert "## Summary" in active_queue
+    assert "Total review rows: 3" in active_queue
+    assert "Blocking selected template now: 2" in active_queue
+    assert "Future photo-first holds: 1" in active_queue
+    assert "Blocking entities: New York Liberty | WNBA" in active_queue
+    assert "Future photo-first entities: Breanna Stewart" in active_queue
+    assert "Immediate manual path: clear the blocking selected-template rows first" in active_queue
     assert "New York Liberty" in active_queue
     assert "Breanna Stewart" in active_queue
     assert "Evidence: Hold the logo slot until source and local file are manually checked." in active_queue
