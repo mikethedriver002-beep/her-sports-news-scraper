@@ -181,6 +181,78 @@ def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypa
     assert "Identity backfill packet: `data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv`" in active_queue_md
 
 
+def test_manual_asset_source_board_derives_review_only_rows_from_active_queue(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    packet_dir = Path("data/asset_registry/wnba")
+    packet_dir.mkdir(parents=True)
+    logo_packet = {
+        "packet_id": "logo_packet_new_york_liberty_unapproved",
+        "decision_packet_title": "WNBA logo review: New York Liberty",
+        "team_id": "new_york_liberty",
+        "team_name": "New York Liberty",
+        "issue_type": "unapproved_required_logo",
+        "decision_review_status": "operator_logo_review_required",
+        "source_url": "https://example.test/liberty-logo.png",
+        "registered_path": "assets/leagues/wnba/logos/new_york_liberty/logo.png",
+        "source_target_path": "assets/leagues/wnba/teams/new_york_liberty/logo.svg",
+        "primary_action": "Review exact local logo source evidence before renderer trust.",
+        "allowed_decisions": "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata",
+    }
+    write_csv_with_fields(
+        "data/asset_registry/wnba/logo_review_packets.csv",
+        [logo_packet],
+        list(logo_packet.keys()),
+    )
+    identity_row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "display_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "identity_review_status": "hold_identity_review_required",
+        "identity_hold": "true",
+        "default_approval_present": "true",
+        "hold_reason_codes": "default_approval_requires_identity_recheck",
+        "source_check_url": "https://www.wnba.com/player/1627668/breanna-stewart",
+        "asset_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+        "focused_evidence": "approved marker decision_source=default",
+    }
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_review_packet.csv",
+        [identity_row],
+        list(identity_row.keys()),
+    )
+    write_json("data/asset_registry/asset_availability_audit.json", {"findings": []})
+
+    packet = {
+        "packet_id": "render_prep_test",
+        "title": "New York Liberty beat Las Vegas Aces",
+        "top_performers": "Breanna Stewart: PTS 20",
+        "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
+    }
+    active_rows = command_center.active_asset_review_queue_rows(packet)
+    board_rows = command_center.manual_asset_source_board_rows(active_rows)
+    board_md = command_center.render_manual_asset_source_board(packet, board_rows)
+
+    assert len(board_rows) == 2
+    liberty = next(row for row in board_rows if row["entity_name"] == "New York Liberty")
+    breanna = next(row for row in board_rows if row["entity_name"] == "Breanna Stewart")
+    assert liberty["priority"] == "P0_selected_template_hold"
+    assert liberty["official_source_candidate"] == "https://example.test/liberty-logo.png"
+    assert liberty["manual_search_query"] == '"New York Liberty" official logo PNG WNBA'
+    assert liberty["current_local_asset"] == "assets/leagues/wnba/logos/new_york_liberty/logo.png"
+    assert breanna["priority"] == "P1_future_photo_first_hold"
+    assert breanna["official_source_candidate"] == "https://www.wnba.com/player/1627668/breanna-stewart"
+    assert breanna["manual_search_query"] == '"Breanna Stewart" new york liberty WNBA official player profile photo'
+    assert all(row["review_only"] == "true" for row in board_rows)
+    assert all(row["manual_approval_required"] == "true" for row in board_rows)
+    assert all(row["publish_ready"] == "false" for row in board_rows)
+    assert all(row["auto_approval"] == "false" for row in board_rows)
+    assert all(row["asset_downloads"] == "false" for row in board_rows)
+    assert "Legacy `D:\\Her Sports Daily` asset-index/DDG packets are reference shape only" in board_md
+    assert "Priority: `P0_selected_template_hold`" in board_md
+    assert "Manual search query: `\"Breanna Stewart\" new york liberty WNBA official player profile photo`" in board_md
+    assert "asset_downloads=false" in board_md
+
+
 def test_selected_template_blocking_status_keeps_optional_league_mark_context() -> None:
     packet = {
         "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
@@ -201,15 +273,23 @@ def test_command_center_generated_artifacts_point_to_current_output_when_latest_
     stale.mkdir(parents=True)
     (stale / "active_asset_review_queue.md").write_text("stale queue", encoding="utf-8")
     (stale / "active_asset_review_queue.csv").write_text("stale,queue\n", encoding="utf-8")
+    (stale / "manual_asset_source_board.md").write_text("stale source board", encoding="utf-8")
+    (stale / "manual_asset_source_board.csv").write_text("stale,source\n", encoding="utf-8")
 
     by_path = {row["path"]: row for row in command_center.artifact_entries()}
 
     md_artifact = by_path["render_handoff_top_packet/active_asset_review_queue.md"]
     csv_artifact = by_path["render_handoff_top_packet/active_asset_review_queue.csv"]
+    board_md_artifact = by_path["render_handoff_top_packet/manual_asset_source_board.md"]
+    board_csv_artifact = by_path["render_handoff_top_packet/manual_asset_source_board.csv"]
     assert md_artifact["status_detail"] == "Created with this command center run"
     assert csv_artifact["status_detail"] == "Created with this command center run"
+    assert board_md_artifact["status_detail"] == "Created with this command center run"
+    assert board_csv_artifact["status_detail"] == "Created with this command center run"
     assert md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.md").as_posix()
     assert csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.csv").as_posix()
+    assert board_md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_asset_source_board.md").as_posix()
+    assert board_csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_asset_source_board.csv").as_posix()
     assert "latest" not in md_artifact["source_path"]
 
 
@@ -1935,7 +2015,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.77.0-asset-packet-freshness-cues"
+    assert payload["version"] == "hsd-operator-command-center-v3.78.0-manual-asset-source-board"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2310,6 +2390,19 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_handoff_summary"]["guardrails"]["paid_apis"] is False
     assert payload["render_handoff_summary"]["guardrails"]["publish_ready_lane"] is False
     assert payload["render_handoff_summary"]["guardrails"]["publishing"] is False
+    assert any(item["label"] == "Manual asset source board" and item["value"] == "3" for item in payload["metrics"])
+    assert len(payload["manual_asset_source_board"]) == 3
+    assert {row["entity_name"] for row in payload["manual_asset_source_board"]} == {"New York Liberty", "WNBA", "Breanna Stewart"}
+    liberty_source = next(row for row in payload["manual_asset_source_board"] if row["entity_name"] == "New York Liberty")
+    breanna_source = next(row for row in payload["manual_asset_source_board"] if row["entity_name"] == "Breanna Stewart")
+    assert liberty_source["priority"] == "P0_selected_template_hold"
+    assert liberty_source["official_source_candidate"] == "https://example.test/liberty-logo.png"
+    assert liberty_source["manual_search_query"] == '"New York Liberty" official logo PNG WNBA'
+    assert breanna_source["priority"] == "P1_future_photo_first_hold"
+    assert breanna_source["official_source_candidate"] == "https://www.wnba.com/player/1627668/breanna-stewart"
+    assert all(row["review_only"] == "true" for row in payload["manual_asset_source_board"])
+    assert all(row["manual_approval_required"] == "true" for row in payload["manual_asset_source_board"])
+    assert all(row["asset_downloads"] == "false" for row in payload["manual_asset_source_board"])
     assert payload["operator_decision_panel"]["qa_status"] == "human_review_required"
     assert payload["operator_decision_panel"]["validation_status"] == "awaiting_operator_decision"
     assert payload["operator_decision_panel"]["preview_exists"] is True
@@ -2678,6 +2771,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "active asset stop/go: hold_required_manual_asset_review" in markdown
     assert "Breanna Stewart: hold_identity_review_required" in markdown
     assert "blockers: none for source/format/manual path" in markdown
+    assert "Manual Asset Source Board" in html
+    assert "Old HSD asset-index/DDG packet structure" in html
+    assert "Manual Asset Source Board" in markdown
+    assert "Source-board rows: 3" in markdown
+    assert "P0 selected-template holds: 1" in markdown
+    assert "Future photo-first holds: 1" in markdown
+    assert "Legacy reference: `D:\\Her Sports Daily` asset-index/DDG packet structure only; current board is review-only." in markdown
+    assert "Source board row: P0_selected_template_hold | team_logo | New York Liberty" in markdown
+    assert "downloads=false | approval=false | publish_ready=false" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -2693,6 +2795,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/asset_checklist.csv").exists()
     assert Path("render_handoff_top_packet/active_asset_review_queue.md").exists()
     assert Path("render_handoff_top_packet/active_asset_review_queue.csv").exists()
+    assert Path("render_handoff_top_packet/manual_asset_source_board.md").exists()
+    assert Path("render_handoff_top_packet/manual_asset_source_board.csv").exists()
     assert Path("render_handoff_top_packet/source_proof.md").exists()
     assert Path("render_handoff_top_packet/manual_renderer_prompt.md").exists()
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
@@ -2744,6 +2848,23 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Provider player ID: `1627668`" in active_queue
     assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue
     assert "asset_downloads=false" in active_queue
+    source_board = Path("render_handoff_top_packet/manual_asset_source_board.md").read_text(encoding="utf-8")
+    assert "Manual Asset Source Board" in source_board
+    assert "Legacy `D:\\Her Sports Daily` asset-index/DDG packets are reference shape only" in source_board
+    assert "Official/free candidate: https://example.test/liberty-logo.png" in source_board
+    assert "Official/free candidate: https://www.wnba.com/player/1627668/breanna-stewart" in source_board
+    assert "Review order: clear P0 selected-template logo holds first" in source_board
+    assert "asset_downloads=false" in source_board
+    source_board_rows = list(csv.DictReader(Path("render_handoff_top_packet/manual_asset_source_board.csv").open(encoding="utf-8")))
+    assert {row["entity_name"] for row in source_board_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
+    assert all(row["review_only"] == "true" for row in source_board_rows)
+    assert all(row["manual_approval_required"] == "true" for row in source_board_rows)
+    assert all(row["publish_ready"] == "false" for row in source_board_rows)
+    assert all(row["auto_approval"] == "false" for row in source_board_rows)
+    assert all(row["auto_publish"] == "false" for row in source_board_rows)
+    assert all(row["move_files"] == "false" for row in source_board_rows)
+    assert all(row["paid_apis"] == "false" for row in source_board_rows)
+    assert all(row["asset_downloads"] == "false" for row in source_board_rows)
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
     assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
     liberty_queue = next(row for row in active_queue_rows if row["entity_name"] == "New York Liberty")
@@ -2823,6 +2944,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_handoff_manifest["guardrails"]["publish_ready_lane"] is False
     assert render_handoff_manifest["guardrails"]["publishing"] is False
     assert render_handoff_manifest["packet"]["packet_id"] == payload["render_prep_packets"][0]["packet_id"]
+    assert render_handoff_manifest["manual_asset_source_board"]["rows"] == 3
+    assert render_handoff_manifest["manual_asset_source_board"]["review_only"] is True
+    assert render_handoff_manifest["manual_asset_source_board"]["manual_approval_required"] is True
+    assert render_handoff_manifest["manual_asset_source_board"]["asset_downloads"] is False
+    assert render_handoff_manifest["manual_asset_source_board"]["auto_approval"] is False
+    assert "manual_asset_source_board.md" in render_handoff_manifest["files"]
 
 
 def test_operator_command_center_identity_resolution_requires_full_renderer_clearance_contract(tmp_path, monkeypatch) -> None:
