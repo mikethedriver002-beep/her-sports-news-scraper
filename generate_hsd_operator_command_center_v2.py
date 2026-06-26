@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.73.0-audit-packet-metadata-queue"
+VERSION = "hsd-operator-command-center-v3.74.0-active-queue-template-blockers"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -94,6 +94,16 @@ ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
     "source_check_url",
     "provider_player_id",
     "approved_marker_path",
+    "decision_lane",
+    "default_operator_decision",
+    "asset_readiness",
+    "source_confidence",
+    "identity_confidence",
+    "manual_approval_status",
+    "renderer_fallback_cue",
+    "selected_template_blocking_status",
+    "selected_template_blocking_reason",
+    "blocker_summary",
     "allowed_decisions",
     "primary_action",
     "evidence",
@@ -2759,6 +2769,54 @@ def active_logo_entity_matches(packet_text: str, entity_name: str, entity_id: st
     return any(re.search(rf"(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])", packet_text) for alias in active_logo_entity_aliases(entity_name, entity_id))
 
 
+def selected_template_blocking_status(packet: Dict[str, str], row: Dict[str, str]) -> Dict[str, str]:
+    requirement = clean(packet.get("asset_requirement")).lower()
+    domain = clean(row.get("asset_domain"))
+    if domain in {"team_logo", "league_logo"}:
+        return {
+            "selected_template_blocking_status": "blocking_selected_template_logo_review",
+            "selected_template_blocking_reason": "Selected final-score template requires exact WNBA logo review before renderer trust.",
+        }
+    if domain == "athlete_photo":
+        if "no player asset required" in requirement:
+            return {
+                "selected_template_blocking_status": "not_blocking_selected_template_photo_not_required",
+                "selected_template_blocking_reason": "Selected final-score template does not require player imagery; keep identity hold for future photo-first renders.",
+            }
+        return {
+            "selected_template_blocking_status": "blocking_selected_template_identity_review",
+            "selected_template_blocking_reason": "Selected template may use athlete imagery; identity must be source-backed before renderer trust.",
+        }
+    return {
+        "selected_template_blocking_status": "review_only_context_required",
+        "selected_template_blocking_reason": "Review-only asset cue requires a human stop/go decision before renderer trust.",
+    }
+
+
+def audit_decision_lane(domain: str) -> str:
+    if domain in {"team_logo", "league_logo"}:
+        return "wnba_logo_review"
+    if domain == "player_photo":
+        return "wnba_athlete_photo_onboarding"
+    return "asset_manual_review"
+
+
+def audit_default_operator_decision(domain: str, finding: str) -> str:
+    if domain == "league_logo":
+        return "hold_league_mark"
+    if domain == "team_logo":
+        return "hold_or_verify_logo"
+    if domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "hold_identity"
+    if domain == "player_photo":
+        return "hold_photo_slot"
+    return "hold_asset_slot"
+
+
+def audit_asset_readiness(item: Dict[str, Any]) -> str:
+    return clean(first_present(item.get("asset_readiness"), item.get("logo_readiness_status"), item.get("renderer_coverage"), item.get("finding")))
+
+
 def active_logo_readiness_for_packet(packet: Dict[str, str]) -> Dict[str, str]:
     packet_text = active_logo_packet_text(packet)
     cues: List[str] = []
@@ -3118,6 +3176,11 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
             f"- Asset cue: `{clean(packet.get('asset_cue'))}`",
             f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            (
+                "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
+                if "no player asset required" in clean(packet.get("asset_requirement")).lower()
+                else "- Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use."
+            ),
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
             f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
             f"- Logo review artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
@@ -3155,7 +3218,11 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
         if not key or key in seen:
             return
         seen.add(key)
-        rows.append({field: clean(row.get(field)) for field in ACTIVE_ASSET_REVIEW_QUEUE_FIELDS})
+        enriched = dict(row)
+        for field, value in selected_template_blocking_status(packet, enriched).items():
+            if not clean(enriched.get(field)):
+                enriched[field] = value
+        rows.append({field: clean(enriched.get(field)) for field in ACTIVE_ASSET_REVIEW_QUEUE_FIELDS})
 
     for item in read_csv("data/asset_registry/wnba/logo_review_packets.csv"):
         team_name = clean(item.get("team_name")) or clean(item.get("team_id"))
@@ -3179,6 +3246,13 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "source_target_path": clean(item.get("source_target_path")),
                 "asset_path": clean(item.get("registered_path")),
                 "source_check_url": clean(item.get("source_url")),
+                "decision_lane": "wnba_logo_review",
+                "default_operator_decision": "hold_logo_slot",
+                "asset_readiness": "local_logo_manual_review_required",
+                "source_confidence": "source_url_present_manual_review_required" if clean(item.get("source_url")) else "source_missing_or_unregistered",
+                "manual_approval_status": clean(item.get("decision_review_status")) or "manual_review_required",
+                "renderer_fallback_cue": clean(item.get("renderer_fallback_cue")),
+                "blocker_summary": clean(item.get("blocker_summary")) or clean(item.get("issue_summary")) or clean(item.get("hold_cue")),
                 "allowed_decisions": clean(item.get("allowed_decisions")) or "approve_after_manual_review|hold_logo_slot|revise_registry_metadata",
                 "primary_action": clean(item.get("primary_action")) or clean(item.get("hold_cue")),
                 "evidence": clean(item.get("issue_summary")) or clean(item.get("hold_cue")),
@@ -3223,6 +3297,14 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "registered_path": clean(item.get("registered_path")) or asset_path,
                 "source_target_path": source_target_path,
                 "asset_path": asset_path,
+                "decision_lane": clean(item.get("decision_lane")) or audit_decision_lane(domain),
+                "default_operator_decision": clean(item.get("default_operator_decision")) or audit_default_operator_decision(domain, clean(item.get("finding"))),
+                "asset_readiness": audit_asset_readiness(item),
+                "source_confidence": clean(item.get("source_confidence")) or ("source_missing_or_unregistered" if domain in {"team_logo", "league_logo"} and "missing" in clean(item.get("finding")) else ""),
+                "identity_confidence": clean(item.get("identity_confidence")),
+                "manual_approval_status": clean(item.get("manual_approval_status")) or clean(item.get("approval_status")),
+                "renderer_fallback_cue": clean(item.get("renderer_fallback_cue")),
+                "blocker_summary": clean(item.get("blocker_summary")) or f"{entity_name}: {clean(item.get('finding')) or 'asset_review_required'}; default decision={clean(item.get('default_operator_decision')) or audit_default_operator_decision(domain, clean(item.get('finding')))}; readiness={audit_asset_readiness(item) or 'manual_review_required'}",
                 "allowed_decisions": clean(item.get("allowed_operator_decisions")) or "hold_asset_slot|request_exact_logo_evidence|revise_registry_metadata",
                 "primary_action": clean(item.get("decision_primary_action")) or clean(item.get("recommended_next_step")) or "manual asset review required",
                 "evidence": clean(item.get("evidence")),
@@ -3260,6 +3342,12 @@ def active_asset_review_queue_rows(packet: Dict[str, str] | None) -> List[Dict[s
                 "source_check_url": clean(item.get("source_check_url")) or clean(item.get("provider_player_page_hint")),
                 "provider_player_id": clean(item.get("provider_player_id")),
                 "approved_marker_path": clean(item.get("approved_marker_path")),
+                "decision_lane": "wnba_athlete_identity_resolution",
+                "default_operator_decision": "hold_identity",
+                "asset_readiness": "blocked_until_identity_resolution",
+                "identity_confidence": "identity_hold_default_or_suspicious_approval" if clean(item.get("identity_hold")).lower() == "true" or clean(item.get("default_approval_present")).lower() == "true" else clean(item.get("highest_severity")),
+                "manual_approval_status": clean(item.get("identity_review_status")) or "manual_review_required",
+                "blocker_summary": clean(item.get("blocker_summary")) or clean(item.get("hold_reason_codes")) or clean(item.get("focused_evidence")),
                 "allowed_decisions": clean(item.get("allowed_decisions")) or "hold_identity|revise_asset|backfill_provider_id_only|identity_verified_approved_for_review_renders",
                 "primary_action": clean(item.get("operator_review_steps")) or "manual identity review required",
                 "evidence": clean(item.get("focused_evidence")),
@@ -3303,6 +3391,24 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             packet_target_lines.append(f"- Manual review packet: `{clean(row.get('manual_review_packet'))}`")
         if clean(row.get("operator_copy_target")):
             packet_target_lines.append(f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`")
+        decision_metadata_lines: List[str] = []
+        if clean(row.get("selected_template_blocking_status")):
+            decision_metadata_lines.append(
+                f"- Selected template blocker: `{clean(row.get('selected_template_blocking_status'))}` - {clean(row.get('selected_template_blocking_reason'))}"
+            )
+        for label, field in [
+            ("Decision lane", "decision_lane"),
+            ("Default operator decision", "default_operator_decision"),
+            ("Asset readiness", "asset_readiness"),
+            ("Source confidence", "source_confidence"),
+            ("Identity confidence", "identity_confidence"),
+            ("Manual approval status", "manual_approval_status"),
+            ("Renderer fallback cue", "renderer_fallback_cue"),
+        ]:
+            if clean(row.get(field)):
+                decision_metadata_lines.append(f"- {label}: `{clean(row.get(field))}`")
+        if clean(row.get("blocker_summary")):
+            decision_metadata_lines.append(f"- Blocker summary: {short(clean(row.get('blocker_summary')), 260)}")
         identity_detail_lines: List[str] = []
         if clean(row.get("provider_player_id")):
             identity_detail_lines.append(f"- Provider player ID: `{clean(row.get('provider_player_id'))}`")
@@ -3331,6 +3437,7 @@ def render_active_asset_review_queue(packet: Dict[str, str] | None, rows: List[D
             f"- Primary action: {clean(row.get('primary_action')) or 'manual review required'}",
             *evidence_lines,
             *packet_target_lines,
+            *decision_metadata_lines,
             *identity_detail_lines,
             *closure_lines,
             f"- Review-only policy: {clean(row.get('review_only_policy')) or 'review_only_no_auto_approval_no_file_movement_no_publish_ready_lane'}",
