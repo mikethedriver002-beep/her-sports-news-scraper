@@ -307,6 +307,116 @@ def test_decision_stop_go_summary_separates_blockers_from_context_rows() -> None
     assert all(row["publishing"] == "false" for row in checklist)
 
 
+def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    packet_dir = Path("data/asset_registry/wnba")
+    packet_dir.mkdir(parents=True)
+    write_csv(
+        "data/asset_registry/wnba/logo_review_catalog.csv",
+        [
+            {
+                "entity_type": "league_logo",
+                "entity_id": "wnba_league_primary",
+                "team_id": "",
+                "display_name": "WNBA",
+                "local_asset_path": "assets/leagues/wnba/logo.png",
+                "file_exists": "false",
+                "registry_approved": "false",
+                "status": "missing",
+                "official_source_url": "https://www.wnba.com/",
+                "current_registry_source_url": "",
+                "source_policy_status": "official_source_needed_review_only",
+            },
+            {
+                "entity_type": "team_logo",
+                "entity_id": "new_york_liberty",
+                "team_id": "new_york_liberty",
+                "display_name": "New York Liberty",
+                "local_asset_path": "assets/leagues/wnba/teams/new_york_liberty/logo.png",
+                "file_exists": "true",
+                "registry_approved": "false",
+                "status": "local_file_unapproved_review_required",
+                "official_source_url": "https://liberty.wnba.com/",
+                "current_registry_source_url": "https://upload.wikimedia.org/new-york-liberty-logo.png",
+                "source_policy_status": "non_official_registry_source_review_required",
+            },
+        ],
+    )
+    write_csv(
+        "data/asset_registry/wnba/logo_review_packets.csv",
+        [
+            {
+                "decision_packet_id": "logo_packet_new_york_liberty_unapproved",
+                "team_id": "new_york_liberty",
+                "team_name": "New York Liberty",
+                "decision_review_status": "unapproved_review_required",
+                "issue_type": "unapproved_required_logo",
+                "registered_path": "assets/leagues/wnba/teams/new_york_liberty/logo.png",
+                "source_target_path": "assets/leagues/wnba/teams/new_york_liberty/logo.png",
+                "source_url": "",
+                "blocker_summary": "local PNG exists but source/approval needs human review",
+                "primary_action": "human_review_required_before_renderer_logo_use",
+            }
+        ],
+    )
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "findings": [
+                {
+                    "review_packet_id": "asset_review_0605_league_logo_WNBA",
+                    "asset_domain": "league_logo",
+                    "entity_id": "WNBA",
+                    "entity_name": "WNBA",
+                    "finding": "missing_or_unregistered_logo_asset",
+                    "approval_status": "missing",
+                    "asset_path": "assets/leagues/wnba/logo.png",
+                    "recommended_next_step": "supply_exact_local_logo_and_manual_registry_review",
+                    "evidence": "png_exists=false; svg_exists=false; path_missing",
+                }
+            ]
+        },
+    )
+    packet = {
+        "packet_id": "render_prep_test",
+        "title": "New York Liberty beat Las Vegas Aces",
+        "asset_requirement": "Use exact local WNBA team logos from the registry; no player asset required.",
+        "active_asset_stop_go": "hold_required_manual_asset_review",
+    }
+
+    active_rows = command_center.active_asset_review_queue_rows(packet)
+    board_rows = command_center.manual_asset_source_board_rows(active_rows)
+    summary = command_center.decision_stop_go_summary(packet, active_rows, board_rows)
+    active_md = command_center.render_active_asset_review_queue(packet, active_rows)
+    board_md = command_center.render_manual_asset_source_board(packet, board_rows)
+    html = command_center.render_decision_stop_go_summary_panel(summary) + command_center.render_manual_asset_source_board_panel(board_rows)
+
+    liberty_queue = next(row for row in active_rows if row["entity_name"] == "New York Liberty")
+    assert liberty_queue["evidence_gap_status"] == "present_unapproved_legacy_source_review"
+    assert liberty_queue["local_asset_state"] == "present_but_unapproved"
+    assert liberty_queue["official_source_candidate"] == "https://liberty.wnba.com/"
+    assert liberty_queue["current_registry_source"] == "https://upload.wikimedia.org/new-york-liberty-logo.png"
+    assert "human-edited manual approval" in liberty_queue["cannot_clear_automatically_because"]
+    wnba_queue = next(row for row in active_rows if row["entity_name"] == "WNBA")
+    assert wnba_queue["selected_template_blocking_status"] == "not_blocking_selected_template_league_mark_not_required"
+    assert wnba_queue["local_asset_state"] == "missing_or_unregistered"
+    assert wnba_queue["official_source_candidate"] == "https://www.wnba.com/"
+    assert wnba_queue["evidence_gap_status"] == "official_source_needed_review_only"
+    assert "league-mark context only" in wnba_queue["cannot_clear_automatically_because"]
+    assert "New York Liberty: present_unapproved_legacy_source_review" in summary["selected_template_evidence_gaps"]
+    assert "WNBA: official_source_needed_review_only" in summary["league_mark_evidence_gaps"]
+    assert "Cannot clear automatically because: New York Liberty is selected-template blocking" in active_md
+    assert "Evidence gap status: `present_unapproved_legacy_source_review`" in board_md
+    assert "Current registry source: https://upload.wikimedia.org/new-york-liberty-logo.png" in board_md
+    assert "Cannot clear automatically because" in html
+    assert all(row["publish_ready"] == "false" for row in active_rows)
+    assert all(row["auto_approval"] == "false" for row in active_rows)
+    assert all(row["asset_downloads"] == "false" for row in active_rows)
+    assert all(row["publish_ready"] == "false" for row in board_rows)
+    assert all(row["auto_approval"] == "false" for row in board_rows)
+    assert all(row["asset_downloads"] == "false" for row in board_rows)
+
+
 def test_selected_template_blocking_status_keeps_optional_league_mark_context() -> None:
     packet = {
         "asset_requirement": "Use exact local WNBA team logos from the registry; no invented identity, no text-logo fallback, no player asset required.",
@@ -2069,7 +2179,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.80.0-decision-review-order-checklist"
+    assert payload["version"] == "hsd-operator-command-center-v3.81.0-active-asset-evidence-gaps"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
