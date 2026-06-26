@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.19.0-athlete-identity-resolution-gate"
+VERSION = "hsd-manual-review-renderer-v1.20.0-premium-hsd-render-backgrounds"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -43,6 +43,11 @@ WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
 ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onboarding_metadata.json"
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v2"
+RENDER_BACKGROUND_CUES = (
+    "deep_hsd_ink_field,scoreboard_light_sweeps,team_accent_rim_light,"
+    "editorial_rule_grid,halftone_noise,review_only_brand_rails"
+)
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -823,36 +828,81 @@ def draw_reference_panel(image: Any, box: Tuple[int, int, int, int], outline: tu
     image.alpha_composite(layer)
 
 
-def draw_reference_background(image: Any, tone: str = "final") -> None:
-    width, height = image.size
-    draw = ImageDraw.Draw(image, "RGBA")
-    draw.rectangle((0, 0, width, height), fill=(3, 5, 10, 255))
-    draw.polygon([(int(width * 0.52), 0), (width, 0), (width, int(height * 0.54)), (int(width * 0.35), int(height * 0.22))], fill=(14, 24, 43, 238))
-    draw.polygon([(0, int(height * 0.58)), (int(width * 0.28), int(height * 0.31)), (int(width * 0.58), height), (0, height)], fill=(10, 20, 38, 235))
-    for x in range(-height, width + height, 185):
-        draw.line((x, height + 80, x + int(height * 0.72), -60), fill=(222, 161, 38, 120), width=3)
-    for x in range(-height, width + height, 340):
-        draw.line((x, height + 160, x + int(height * 0.58), -30), fill=(37, 99, 163, 90), width=2)
-    for y in [int(height * 0.14), int(height * 0.74), int(height * 0.88)]:
-        draw.line((30, y, width - 30, y), fill=(222, 161, 38, 105), width=2)
-    randomizer = random.Random(width * 17 + height * 31)
-    for _ in range(420 if height > 1500 else 290):
+def mix_rgb(a: tuple[int, int, int], b: tuple[int, int, int], amount: float) -> tuple[int, int, int]:
+    amount = max(0.0, min(1.0, amount))
+    return tuple(int(a[i] + (b[i] - a[i]) * amount) for i in range(3))
+
+
+def draw_editorial_halftone(draw: Any, width: int, height: int, accent: tuple[int, int, int], *, seed: int) -> None:
+    randomizer = random.Random(seed)
+    for _ in range(360 if height > 1500 else 240):
         x = randomizer.randrange(0, width)
         y = randomizer.randrange(0, height)
-        alpha = randomizer.randrange(18, 76)
-        color = (245, 204, 88, alpha) if randomizer.random() < 0.38 else (245, 245, 245, alpha)
-        draw.rectangle((x, y, x + randomizer.randrange(1, 3), y + randomizer.randrange(1, 3)), fill=color)
-    for cx, cy, rx, ry, alpha in [
-        (int(width * 0.20), int(height * 0.16), int(width * 0.55), int(height * 0.25), 38),
-        (int(width * 0.90), int(height * 0.72), int(width * 0.46), int(height * 0.24), 26),
-        (int(width * 0.72), int(height * 0.08), int(width * 0.24), int(height * 0.10), 34),
-    ]:
-        layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
-        layer_draw = ImageDraw.Draw(layer, "RGBA")
-        layer_draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=(245, 204, 88, alpha))
-        if ImageFilter is not None:
-            layer = layer.filter(ImageFilter.GaussianBlur(42))
-        image.alpha_composite(layer)
+        size = randomizer.randrange(1, 4)
+        alpha = randomizer.randrange(18, 66)
+        color = (*accent, alpha) if randomizer.random() < 0.42 else (248, 250, 255, alpha)
+        draw.rectangle((x, y, x + size, y + size), fill=color)
+
+
+def draw_reference_background(
+    image: Any,
+    tone: str = "final",
+    primary_accent: tuple[int, int, int] | None = None,
+    secondary_accent: tuple[int, int, int] | None = None,
+    *,
+    photo_first: bool = False,
+) -> None:
+    width, height = image.size
+    draw = ImageDraw.Draw(image, "RGBA")
+    primary = primary_accent or PALETTE["gold"]
+    secondary = secondary_accent or PALETTE["blue"]
+    base_top = (5, 8, 16)
+    base_bottom = (12, 20, 36)
+    for y in range(height):
+        amount = y / max(1, height - 1)
+        draw.line((0, y, width, y), fill=(*mix_rgb(base_top, base_bottom, amount), 255))
+
+    draw.polygon([(0, 0), (int(width * 0.60), 0), (int(width * 0.40), height), (0, height)], fill=(9, 13, 24, 146))
+    draw.polygon([(int(width * 0.48), 0), (width, 0), (width, int(height * 0.62)), (int(width * 0.34), int(height * 0.28))], fill=(*mix_rgb(secondary, (8, 12, 22), 0.72), 120))
+    draw.polygon([(0, int(height * 0.58)), (int(width * 0.31), int(height * 0.35)), (int(width * 0.66), height), (0, height)], fill=(*mix_rgb(primary, (9, 13, 24), 0.78), 112))
+
+    rail_alpha = 160 if tone == "final" else 116
+    for x in range(-height, width + height, 176):
+        draw.line((x, height + 80, x + int(height * 0.72), -60), fill=(*primary, rail_alpha), width=3)
+    for x in range(-height, width + height, 326):
+        draw.line((x, height + 160, x + int(height * 0.58), -30), fill=(*secondary, 118), width=2)
+
+    for y in [int(height * 0.12), int(height * 0.285), int(height * 0.74), int(height * 0.88)]:
+        draw.line((30, y, width - 30, y), fill=(*primary, 92), width=2)
+    for x in range(86, width, 124):
+        draw.line((x, int(height * 0.18), x, int(height * 0.92)), fill=(248, 250, 255, 15), width=1)
+
+    for index, word in enumerate(["HER SPORTS DAILY", "FINAL SCORE", "REVIEW DRAFT"]):
+        text_y = int(height * (0.18 + index * 0.29))
+        draw_reference_text(
+            image,
+            (width - 390, text_y, 330, 34),
+            word,
+            "context",
+            21,
+            12,
+            (248, 250, 255, 38),
+            max_lines=1,
+            align="right",
+        )
+
+    draw.rectangle((0, 0, width, 14), fill=(*primary, 240))
+    draw.rectangle((0, 14, width, 24), fill=(*secondary, 190))
+    draw.rectangle((0, height - 82, width, height - 64), fill=(*primary, 190))
+    draw.rectangle((0, height - 64, width, height - 58), fill=(*secondary, 168))
+
+    if photo_first:
+        draw.line((54, int(height * 0.305), width - 54, int(height * 0.305)), fill=(*primary, 182), width=4)
+        draw.line((54, int(height * 0.72), width - 54, int(height * 0.72)), fill=(*secondary, 136), width=3)
+        draw.rectangle((0, int(height * 0.325), 18, int(height * 0.68)), fill=(*primary, 214))
+        draw.rectangle((width - 18, int(height * 0.28), width, int(height * 0.62)), fill=(*secondary, 180))
+
+    draw_editorial_halftone(draw, width, height, primary, seed=width * 17 + height * 31 + (11 if photo_first else 0))
 
 def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
     badge = template_spec.get("badge") if isinstance(template_spec.get("badge"), dict) else {}
@@ -2209,7 +2259,7 @@ def draw_photo_first_final_score_template(
     format_id = clean(format_spec.get("format_id"))
     is_story = height > 1500
 
-    draw_reference_background(image, "final")
+    draw_reference_background(image, "final", winner_accent, loser_accent, photo_first=True)
     draw_reference_badge(image, template_spec)
     draw_final_score_reference_title(image, template_spec, format_id)
     draw_context_divider(image, zone_box(template_spec, "context_row"), "FINAL / WNBA / PHOTO-FIRST DRAFT")
@@ -2328,7 +2378,7 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     ):
         return
 
-    draw_reference_background(image, "final")
+    draw_reference_background(image, "final", winner_accent, loser_accent)
     draw_reference_badge(image, template_spec)
 
     draw_final_score_reference_title(image, template_spec, format_id)
@@ -2697,9 +2747,14 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         if reference:
             row.update(reference)
         row.update(athlete_photo_layout_for_format(content_module, spec))
+        row["render_background_style"] = RENDER_BACKGROUND_STYLE
+        row["render_background_cues"] = RENDER_BACKGROUND_CUES
         if clean(row.get("athlete_photo_layout_mode")) == "photo_first_final_score":
             row["photo_first_template_geometry"] = photo_first_layout_geometry(spec)
-            row["photo_first_art_direction"] = "approved_local_headshot_primary_visual_with_balanced_score_rails_verified_stat_strip_and_review_only_guardrails"
+            row["photo_first_art_direction"] = (
+                "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
+                "balanced_score_rails,verified_stat_strip,and_review_only_guardrails"
+            )
         outputs.append(row)
     return {
         "template": template,
@@ -2708,6 +2763,8 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         "asset_slots": asset_slots(packet, template),
         "content_module": content_module,
         "team_visual_profiles": team_visual_profiles(packet, template),
+        "render_background_style": RENDER_BACKGROUND_STYLE,
+        "render_background_cues": RENDER_BACKGROUND_CUES,
     }
 
 
@@ -2843,6 +2900,8 @@ def main() -> None:
         "asset_slots": render_result.get("asset_slots", []),
         "content_module": render_result.get("content_module", {}),
         "team_visual_profiles": render_result.get("team_visual_profiles", []),
+        "render_background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
+        "render_background_cues": clean(render_result.get("render_background_cues")) or RENDER_BACKGROUND_CUES,
         "guardrails": {
             "manual_only": True,
             "review_only": True,

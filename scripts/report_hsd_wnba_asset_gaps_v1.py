@@ -12,6 +12,28 @@ VALIDATION_JSON = ROOT / "asset_registry_validation.json"
 GAPS_MD = ROOT / "asset_gap_report.md"
 GAPS_JSON = ROOT / "asset_gap_report.json"
 UPLOAD_CSV = ROOT / "logo_gap_upload_manifest.csv"
+UPLOAD_FIELDS = [
+    "team_id",
+    "team_name",
+    "required_filename",
+    "target_folder",
+    "target_path",
+    "upload_status",
+    "decision_packet_id",
+    "decision_packet_title",
+    "decision_review_status",
+    "allowed_decisions",
+    "decision_primary_action",
+    "decision_hold_cue",
+    "decision_revise_cue",
+    "renderer_fallback_cue",
+    "decision_source_artifact",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
 
 
 def now_iso() -> str:
@@ -26,7 +48,6 @@ def read_csv(path: Path) -> List[Dict[str, str]]:
 
 
 def write_upload_manifest(missing: List[Dict[str, str]]) -> None:
-    fields = ["team_id", "team_name", "required_filename", "target_folder", "target_path", "upload_status"]
     rows = []
     for row in missing:
         target = row.get("recommended_path", "")
@@ -38,9 +59,23 @@ def write_upload_manifest(missing: List[Dict[str, str]]) -> None:
             "target_folder": folder,
             "target_path": target,
             "upload_status": "needed",
+            "decision_packet_id": row.get("decision_packet_id", ""),
+            "decision_packet_title": row.get("decision_packet_title", ""),
+            "decision_review_status": row.get("decision_review_status", "operator_asset_decision_required"),
+            "allowed_decisions": row.get("allowed_decisions", "supply_exact_logo_for_review|hold_logo_slot|revise_registry_metadata"),
+            "decision_primary_action": row.get("decision_primary_action", "Supply the exact local team logo file, then manually review source evidence before renderer trust."),
+            "decision_hold_cue": row.get("decision_hold_cue", "Hold the card if an exact local logo is missing, unverified, or not source-backed."),
+            "decision_revise_cue": row.get("decision_revise_cue", "Revise registry metadata only after human evidence review."),
+            "renderer_fallback_cue": row.get("renderer_fallback_cue", "Renderer fallback remains review-only until this missing exact logo is resolved."),
+            "decision_source_artifact": row.get("decision_source_artifact", MISSING_TEAM_LOGOS.as_posix()),
+            "publish_ready": row.get("publish_ready", "false"),
+            "auto_approval": row.get("auto_approval", "false"),
+            "auto_publish": row.get("auto_publish", "false"),
+            "move_files": row.get("move_files", "false"),
+            "paid_apis": row.get("paid_apis", "false"),
         })
     with UPLOAD_CSV.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fields)
+        writer = csv.DictWriter(f, fieldnames=UPLOAD_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -76,7 +111,17 @@ def main() -> None:
         "operator_warnings": len(operator_warnings),
         "source_path_metadata_warnings": len(source_path_warnings),
         "logo_upload_manifest": UPLOAD_CSV.as_posix(),
+        "decision_packet_fields": UPLOAD_FIELDS,
+        "decision_packet_count": len(missing),
         "next_action": next_action(missing, validation),
+        "policy": {
+            "review_only": True,
+            "no_paid_apis": True,
+            "no_asset_downloads": True,
+            "no_auto_approval": True,
+            "no_file_movement_into_publish_ready_lanes": True,
+            "no_publishing": True,
+        },
     }
     GAPS_JSON.write_text(json.dumps(report, indent=2), encoding="utf-8")
     lines = [
@@ -103,7 +148,10 @@ def main() -> None:
     if missing:
         for row in missing:
             target = row.get("recommended_path", "")
-            lines.append(f"- `{target}`")
+            lines.append(
+                f"- `{target}` | packet `{row.get('decision_packet_id', '')}` | "
+                f"decision `{row.get('decision_review_status', 'operator_asset_decision_required')}`"
+            )
     else:
         lines.append("- None")
     lines += ["", "## Operator warnings", ""]
@@ -119,6 +167,16 @@ def main() -> None:
     else:
         lines.append("- None")
     lines += ["", "## Next action", "", f"- {report['next_action']}"]
+    lines += ["", "## Decision tab packet fields", ""]
+    if missing:
+        for row in missing:
+            lines.append(
+                f"- {row.get('decision_packet_title') or row.get('team_name')}: "
+                f"{row.get('decision_primary_action') or 'manual review required'} "
+                f"Fallback cue: {row.get('renderer_fallback_cue') or 'review-only hold'}"
+            )
+    else:
+        lines.append("- None")
     GAPS_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
 

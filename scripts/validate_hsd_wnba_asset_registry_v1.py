@@ -15,8 +15,29 @@ TEAM_LOGOS = ROOT / "team_logos.csv"
 MISSING_TEAM_LOGOS = ROOT / "missing_team_logos.csv"
 REPORT_MD = ROOT / "asset_registry_validation_report.md"
 REPORT_JSON = ROOT / "asset_registry_validation.json"
-VERSION = "hsd-wnba-asset-registry-validator-v1.2-review-only-logo-metadata"
+VERSION = "hsd-wnba-asset-registry-validator-v1.3-review-only-logo-decision-packets"
 LOGO_EXTENSIONS = {".png", ".svg", ".webp", ".jpg", ".jpeg"}
+MISSING_LOGO_FIELDS = [
+    "team_id",
+    "team_name",
+    "required_asset",
+    "reason",
+    "recommended_path",
+    "decision_packet_id",
+    "decision_packet_title",
+    "decision_review_status",
+    "allowed_decisions",
+    "decision_primary_action",
+    "decision_hold_cue",
+    "decision_revise_cue",
+    "renderer_fallback_cue",
+    "decision_source_artifact",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
 
 
 def now_iso() -> str:
@@ -42,6 +63,32 @@ def canonical_logo_paths(team_id: str) -> set[str]:
     return {
         f"assets/leagues/wnba/teams/{team_id}/logo.png",
         f"assets/leagues/wnba/teams/{team_id}/logo.svg",
+    }
+
+
+def decision_slug(value: str) -> str:
+    cleaned = "".join(ch if ch.isalnum() else "_" for ch in clean(value).lower())
+    return "_".join(part for part in cleaned.split("_") if part) or "wnba_team_logo"
+
+
+def missing_logo_decision_packet(team_id: str, team_name: str, recommended_path: str) -> Dict[str, str]:
+    slug = decision_slug(team_id or team_name)
+    target = clean(recommended_path) or f"assets/leagues/wnba/teams/{slug}/logo.png"
+    return {
+        "decision_packet_id": f"asset_logo_blocker_{slug}",
+        "decision_packet_title": f"WNBA team logo blocker: {team_name or team_id}",
+        "decision_review_status": "operator_asset_decision_required",
+        "allowed_decisions": "supply_exact_logo_for_review|hold_logo_slot|revise_registry_metadata",
+        "decision_primary_action": f"Supply the exact local team logo file at {target}, then manually review source evidence before renderer trust.",
+        "decision_hold_cue": "Hold the card if an exact local logo is missing, unverified, or not source-backed.",
+        "decision_revise_cue": "Revise team_logos.csv/logo_sources.csv only after human evidence review; do not invent or substitute a logo.",
+        "renderer_fallback_cue": "Renderer text/logo fallback remains review-only and blocked for exact-logo WNBA templates until this asset is reviewed.",
+        "decision_source_artifact": "data/asset_registry/wnba/missing_team_logos.csv",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
     }
 
 
@@ -193,6 +240,11 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
             "required_asset": "primary_logo",
             "reason": "required exact team logo file not found",
             "recommended_path": f"assets/leagues/wnba/teams/{tid}/logo.png",
+            **missing_logo_decision_packet(
+                tid,
+                clean(teams_by_id.get(tid, {}).get("team_name")) or tid,
+                f"assets/leagues/wnba/teams/{tid}/logo.png",
+            ),
         }
         for tid in sorted(set(missing_required))
     ]
@@ -213,6 +265,8 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         "source_rows": len(sources),
         "missing_required_team_logos": len(set(missing_required)),
         "unapproved_required_team_logos": len(set(unapproved_required)),
+        "missing_logo_decision_packets": len(missing_rows),
+        "decision_packet_fields": MISSING_LOGO_FIELDS,
         "duplicate_logo_paths": duplicate_paths,
         "source_path_metadata_warnings": source_path_warnings,
         "operator_warnings": operator_warnings,
@@ -230,8 +284,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
 
 def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]]) -> None:
     with MISSING_TEAM_LOGOS.open("w", newline="", encoding="utf-8") as f:
-        fields = ["team_id", "team_name", "required_asset", "reason", "recommended_path"]
-        writer = csv.DictWriter(f, fieldnames=fields)
+        writer = csv.DictWriter(f, fieldnames=MISSING_LOGO_FIELDS)
         writer.writeheader()
         writer.writerows(missing_rows)
     REPORT_JSON.write_text(json.dumps(result, indent=2), encoding="utf-8")
@@ -251,6 +304,7 @@ def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]])
         f"- source rows: {result['source_rows']}",
         f"- missing required team logos: {result['missing_required_team_logos']}",
         f"- unapproved required team logos: {result['unapproved_required_team_logos']}",
+        f"- missing logo decision packets: {result['missing_logo_decision_packets']}",
         "",
         "## Issues",
         "",
@@ -269,7 +323,11 @@ def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]])
     duplicate_lines = [f"duplicate registered logo path: {item}" for item in duplicate_paths] + warnings
     lines += [f"- {item}" for item in duplicate_lines] if duplicate_lines else ["- None"]
     lines += ["", "## Missing required logos", ""]
-    lines += [f"- {row['team_name']} -> `{row['recommended_path']}`" for row in missing_rows] if missing_rows else ["- None"]
+    lines += [
+        f"- {row['team_name']} -> `{row['recommended_path']}` | packet `{row['decision_packet_id']}` | "
+        f"decisions `{row['allowed_decisions']}` | fallback cue `{row['renderer_fallback_cue']}`"
+        for row in missing_rows
+    ] if missing_rows else ["- None"]
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

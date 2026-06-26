@@ -219,6 +219,7 @@ def test_availability_audit_flags_assets_approvals_formats_and_renderer_fallback
 
     report = module.build_audit(tmp_path)
     findings = {(row["finding"], row["entity_id"]) for row in report["findings"]}
+    by_finding = {(row["finding"], row["entity_id"]): row for row in report["findings"]}
 
     assert report["review_only"] is True
     assert report["policy"]["no_auto_approval"] is True
@@ -229,6 +230,29 @@ def test_availability_audit_flags_assets_approvals_formats_and_renderer_fallback
     assert ("suspicious_logo_source_or_approval", "broken_team") in findings
     assert ("renderer_active_logo_fallback", "missing_logo_team") in findings
     assert report["severity_counts"]["error"] >= 2
+    suspicious_photo = by_finding[("suspicious_or_default_player_approval", "approved_default")]
+    assert suspicious_photo["decision_lane"] == "wnba_athlete_identity_resolution"
+    assert suspicious_photo["default_operator_decision"] == "hold_identity"
+    assert suspicious_photo["identity_confidence"] == "identity_hold_default_or_suspicious_approval"
+    assert suspicious_photo["asset_readiness"] == "blocked_until_identity_resolution"
+    assert suspicious_photo["operator_copy_target"] == "operator/inbox/wnba_athlete_identity_resolution.csv"
+    assert suspicious_photo["decision_packet_title"] == "Player photo blocker: Default Approved"
+    assert suspicious_photo["allowed_operator_decisions"] == "verify_identity_for_review_renders|hold_identity|revise_asset"
+    assert suspicious_photo["publish_ready"] == "false"
+    broken_logo = by_finding[("suspicious_logo_source_or_approval", "broken_team")]
+    assert broken_logo["decision_lane"] == "wnba_logo_review"
+    assert broken_logo["source_confidence"] == "source_recheck_required"
+    assert broken_logo["decision_packet_title"] == "WNBA team logo blocker: Broken Team"
+    assert broken_logo["asset_readiness"] == "approved_file_source_blocked_hold"
+    assert broken_logo["logo_readiness_status"] == "approved_file_source_blocked_hold"
+    assert broken_logo["renderer_fallback_cue"] == "hold_renderer_logo_trust_until_source_recheck_closes"
+    assert broken_logo["decision_hold_cue"].startswith("Hold if exact local logo evidence")
+    renderer = by_finding[("renderer_active_logo_fallback", "missing_logo_team")]
+    assert renderer["decision_lane"] == "renderer_fallback_review"
+    assert renderer["default_operator_decision"] == "verify_renderer_fallback"
+    assert renderer["decision_packet_title"] == "Renderer fallback review: Missing Logo Team"
+    assert renderer["renderer_fallback_cue"] == "active_text_badge_fallback_review_only_hold_exact_logo_required"
+    assert renderer["allowed_operator_decisions"] == "confirm_no_active_fallback|hold_render|revise_asset_registry"
 
 
 def test_availability_audit_main_writes_run_scoped_reports(tmp_path: Path, monkeypatch) -> None:

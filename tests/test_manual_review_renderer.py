@@ -112,7 +112,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.19.0-athlete-identity-resolution-gate"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.20.0-premium-hsd-render-backgrounds"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -134,9 +134,12 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["reference_pack"]["guardrails"]["reference_only"] is True
     assert manifest["reference_pack"]["guardrails"]["auto_publish"] is False
     assert len(manifest["format_options"]) == 3
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v2"
+    assert "team_accent_rim_light" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v2" for item in manifest["format_options"])
     by_format = {item["format_id"]: item for item in manifest["format_options"]}
     assert by_format["ig_feed_4x5"]["reference_template_id"] == "hsd_game_recap_final_score_a"
     assert by_format["ig_feed_4x5"]["reference_exact_format_match"] is True
