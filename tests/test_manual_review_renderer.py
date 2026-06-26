@@ -112,7 +112,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.20.0-premium-hsd-render-backgrounds"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.21.0-calm-premium-backgrounds"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -134,12 +134,15 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["reference_pack"]["guardrails"]["reference_only"] is True
     assert manifest["reference_pack"]["guardrails"]["auto_publish"] is False
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v2"
-    assert "team_accent_rim_light" in manifest["render_background_cues"]
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v3_calm"
+    assert "quiet_score_zones" in manifest["render_background_cues"]
+    assert "subtle_team_accent_rim_light" in manifest["render_background_cues"]
+    assert "soft_editorial_rule_grid" in manifest["render_background_cues"]
+    assert "restrained_halftone_noise" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v2" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v3_calm" for item in manifest["format_options"])
     by_format = {item["format_id"]: item for item in manifest["format_options"]}
     assert by_format["ig_feed_4x5"]["reference_template_id"] == "hsd_game_recap_final_score_a"
     assert by_format["ig_feed_4x5"]["reference_exact_format_match"] is True
@@ -190,6 +193,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     square = Image.open(review_drafts / "draft_preview_square.png")
     assert story.size == (1080, 1920)
     assert square.size == (1080, 1080)
+    square_title_crop = square.convert("L").crop((48, 112, 1032, 244))
+    square_title_histogram = square_title_crop.histogram()
+    bright_square_title_ratio = sum(square_title_histogram[200:]) / sum(square_title_histogram)
+    assert bright_square_title_ratio > 0.025
     report = report_path.read_text(encoding="utf-8")
     assert "Draft preview is for human review only" in report
     assert "## Review Draft Formats" in report
@@ -551,6 +558,20 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
         ]
         == "safe_no_photo_fallback"
     )
+
+
+def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    square_spec = module.square_reference_spec()
+    assert square_spec["canvas"] == {"width": 1080, "height": 1080}
+    assert square_spec["zones"]["title"] == {"x": 60, "y": 116, "w": 960, "h": 132}
+    assert module.format_reference_spec({"format_id": "square_feed_1x1"}, {})["zones"]["title"] == square_spec["zones"]["title"]
 
 
 def test_manual_review_renderer_keeps_partial_approved_module_out_of_photo_first_layout() -> None:
