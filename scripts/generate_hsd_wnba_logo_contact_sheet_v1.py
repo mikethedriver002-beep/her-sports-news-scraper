@@ -237,9 +237,15 @@ def build_rows() -> List[Dict[str, str]]:
     return rows
 
 
-def intake_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+def existing_intake_by_team() -> Dict[str, Mapping[str, str]]:
+    return by_key(read_csv("data/asset_registry/wnba/wnba_team_logo_review_intake.csv"), "team_id")
+
+
+def intake_rows(rows: Iterable[Mapping[str, str]], existing_by_team: Mapping[str, Mapping[str, str]] | None = None) -> List[Dict[str, str]]:
+    existing_by_team = existing_by_team or existing_intake_by_team()
     output: List[Dict[str, str]] = []
     for row in rows:
+        existing = existing_by_team.get(clean(row.get("team_id")), {})
         output.append(
             {
                 "team_id": clean(row.get("team_id")),
@@ -249,14 +255,14 @@ def intake_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
                 "official_source_candidate": clean(row.get("official_source_candidate")),
                 "current_approval_status": clean(row.get("current_approval_status")),
                 "allowed_decisions": clean(row.get("allowed_decisions")),
-                "operator_decision": "",
-                "source_reviewed": "",
-                "identity_match": "",
-                "source_url_to_record": "",
-                "registry_action": "",
-                "operator_notes": "",
-                "reviewed_by": "",
-                "reviewed_at_local": "",
+                "operator_decision": clean(existing.get("operator_decision")),
+                "source_reviewed": clean(existing.get("source_reviewed")),
+                "identity_match": clean(existing.get("identity_match")),
+                "source_url_to_record": clean(existing.get("source_url_to_record")),
+                "registry_action": clean(existing.get("registry_action")),
+                "operator_notes": clean(existing.get("operator_notes")),
+                "reviewed_by": clean(existing.get("reviewed_by")),
+                "reviewed_at_local": clean(existing.get("reviewed_at_local")),
                 "approval_scope": "review_only_renderer_logo_trust_manual_intake",
                 "publish_ready": "false",
                 "auto_approval": "false",

@@ -135,7 +135,21 @@ def test_wnba_logo_contact_sheet_builds_review_only_sweep_board(tmp_path: Path, 
     )
 
     rows = module.build_rows()
-    decisions = module.intake_rows(rows)
+    decisions = module.intake_rows(
+        rows,
+        {
+            "new_york_liberty": {
+                "operator_decision": "approve_for_review_only_renderer_use",
+                "source_reviewed": "yes",
+                "identity_match": "yes",
+                "source_url_to_record": "https://www.wnba.com/team/new-york-liberty",
+                "registry_action": "confirm_existing_approval_update_source_metadata",
+                "operator_notes": "Mike approved from contact sheet",
+                "reviewed_by": "Mike",
+                "reviewed_at_local": "2026-06-26 16:50",
+            }
+        },
+    )
     png_path, warnings = module.make_contact_sheet(rows, module.OUT_PNG)
 
     assert warnings == []
@@ -148,7 +162,11 @@ def test_wnba_logo_contact_sheet_builds_review_only_sweep_board(tmp_path: Path, 
     assert rows[0]["auto_approval"] == "false"
     assert rows[0]["asset_downloads"] == "false"
     assert Path(png_path).exists()
-    assert decisions[0]["operator_decision"] == ""
+    assert decisions[0]["operator_decision"] == "approve_for_review_only_renderer_use"
+    assert decisions[0]["source_reviewed"] == "yes"
+    assert decisions[0]["identity_match"] == "yes"
+    assert decisions[0]["registry_action"] == "confirm_existing_approval_update_source_metadata"
+    assert decisions[0]["reviewed_by"] == "Mike"
     assert decisions[0]["allowed_decisions"] == "approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata"
     assert decisions[0]["approval_scope"] == "review_only_renderer_logo_trust_manual_intake"
     assert decisions[0]["publish_ready"] == "false"

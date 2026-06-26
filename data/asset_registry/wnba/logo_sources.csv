@@ -1,16 +1,16 @@
-team_id,team_name,source_url,target_path,source_note
-atlanta_dream,Atlanta Dream,https://upload.wikimedia.org/wikipedia/en/thumb/5/54/Atlanta_Dream_logo.svg/250px-Atlanta_Dream_logo.svg.png,assets/leagues/wnba/teams/atlanta_dream/logo.png,wikipedia_rendered_from_exact_logo_file
-chicago_sky,Chicago Sky,https://upload.wikimedia.org/wikipedia/en/f/fc/Chicago_Sky_logo.svg,assets/leagues/wnba/teams/chicago_sky/logo.svg,wikipedia_exact_logo_file
-connecticut_sun,Connecticut Sun,https://upload.wikimedia.org/wikipedia/en/0/09/Connecticut_Sun_logo.svg,assets/leagues/wnba/teams/connecticut_sun/logo.svg,wikipedia_exact_logo_file
-indiana_fever,Indiana Fever,https://upload.wikimedia.org/wikipedia/en/5/54/Indiana_Fever_logo.svg,assets/leagues/wnba/teams/indiana_fever/logo.svg,wikipedia_exact_logo_file
-new_york_liberty,New York Liberty,https://liberty.wnba.com/,assets/leagues/wnba/teams/new_york_liberty/logo.png,human_reviewed_official_team_source_for_review_only_renderer_use
-toronto_tempo,Toronto Tempo,https://upload.wikimedia.org/wikipedia/en/thumb/1/1b/Toronto_Tempo_logo.svg/250px-Toronto_Tempo_logo.svg.png,assets/leagues/wnba/teams/toronto_tempo/logo.png,wikipedia_rendered_from_exact_logo_file
-washington_mystics,Washington Mystics,https://upload.wikimedia.org/wikipedia/en/thumb/7/79/Washington_Mystics_logo.svg/250px-Washington_Mystics_logo.svg.png,assets/leagues/wnba/teams/washington_mystics/logo.png,wikipedia_rendered_from_exact_logo_file
-dallas_wings,Dallas Wings,https://upload.wikimedia.org/wikipedia/en/9/95/Dallas_Wings_logo.svg,assets/leagues/wnba/teams/dallas_wings/logo.svg,wikipedia_exact_logo_file
-golden_state_valkyries,Golden State Valkyries,https://upload.wikimedia.org/wikipedia/en/0/00/Golden_State_Valkyries_logo.svg,assets/leagues/wnba/teams/golden_state_valkyries/logo.svg,wikipedia_exact_logo_file
-las_vegas_aces,Las Vegas Aces,https://upload.wikimedia.org/wikipedia/en/f/ff/New_Las_Vegas_Aces_WNBA_logo_2024.svg,assets/leagues/wnba/teams/las_vegas_aces/logo.svg,wikipedia_exact_logo_file
-los_angeles_sparks,Los Angeles Sparks,https://upload.wikimedia.org/wikipedia/en/thumb/9/9f/Los_Angeles_Sparks_logo.svg/250px-Los_Angeles_Sparks_logo.svg.png,assets/leagues/wnba/teams/los_angeles_sparks/logo.png,wikipedia_rendered_from_exact_logo_file
-minnesota_lynx,Minnesota Lynx,https://upload.wikimedia.org/wikipedia/en/7/75/Minnesota_Lynx_logo.svg,assets/leagues/wnba/teams/minnesota_lynx/logo.svg,wikipedia_exact_logo_file
-phoenix_mercury,Phoenix Mercury,https://upload.wikimedia.org/wikipedia/en/4/48/Phoenix_Mercury_logo_2025.svg,assets/leagues/wnba/teams/phoenix_mercury/logo.svg,wikipedia_exact_logo_file
-portland_fire,Portland Fire,https://upload.wikimedia.org/wikipedia/en/c/cf/Portland_Fire_logo.svg,assets/leagues/wnba/teams/portland_fire/logo.svg,wikipedia_exact_logo_file
-seattle_storm,Seattle Storm,https://upload.wikimedia.org/wikipedia/en/a/a0/Seattle_Storm_%282021%29_logo.svg,assets/leagues/wnba/teams/seattle_storm/logo.svg,wikipedia_exact_logo_file
+"team_id","team_name","source_url","target_path","source_note"
+"atlanta_dream","Atlanta Dream","https://www.wnba.com/team/atlanta-dream","assets/leagues/wnba/teams/atlanta_dream/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"chicago_sky","Chicago Sky","https://www.wnba.com/team/chicago-sky","assets/leagues/wnba/teams/chicago_sky/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"connecticut_sun","Connecticut Sun","https://www.wnba.com/team/connecticut-sun","assets/leagues/wnba/teams/connecticut_sun/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"indiana_fever","Indiana Fever","https://www.wnba.com/team/indiana-fever","assets/leagues/wnba/teams/indiana_fever/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"new_york_liberty","New York Liberty","https://www.wnba.com/team/new-york-liberty","assets/leagues/wnba/teams/new_york_liberty/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"toronto_tempo","Toronto Tempo","https://www.wnba.com/team/toronto-tempo","assets/leagues/wnba/teams/toronto_tempo/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"washington_mystics","Washington Mystics","https://www.wnba.com/team/washington-mystics","assets/leagues/wnba/teams/washington_mystics/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"dallas_wings","Dallas Wings","https://www.wnba.com/team/dallas-wings","assets/leagues/wnba/teams/dallas_wings/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"golden_state_valkyries","Golden State Valkyries","https://www.wnba.com/team/golden-state-valkyries","assets/leagues/wnba/teams/golden_state_valkyries/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"las_vegas_aces","Las Vegas Aces","https://www.wnba.com/team/las-vegas-aces","assets/leagues/wnba/teams/las_vegas_aces/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"los_angeles_sparks","Los Angeles Sparks","https://www.wnba.com/team/los-angeles-sparks","assets/leagues/wnba/teams/los_angeles_sparks/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"minnesota_lynx","Minnesota Lynx","https://www.wnba.com/team/minnesota-lynx","assets/leagues/wnba/teams/minnesota_lynx/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"phoenix_mercury","Phoenix Mercury","https://www.wnba.com/team/phoenix-mercury","assets/leagues/wnba/teams/phoenix_mercury/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"portland_fire","Portland Fire","https://www.wnba.com/team/portland-fire","assets/leagues/wnba/teams/portland_fire/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"
+"seattle_storm","Seattle Storm","https://www.wnba.com/team/seattle-storm","assets/leagues/wnba/teams/seattle_storm/logo.png","human_approved_contact_sheet_official_team_source_for_review_only_renderer_use"

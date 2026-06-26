@@ -1,25 +1,23 @@
 # HSD Asset Availability Audit v1
 
-Generated: `2026-06-26T20:19:25.233820+00:00`
+Generated: `2026-06-26T21:40:40.869040+00:00`
 Status: `review_required`
 
 Review-only audit. This report does not approve assets, fetch files, move files into publish-ready lanes, publish, or change renderer behavior.
 
 ## Counts
 
-- findings: `610`
+- findings: `607`
 - error: `206`
 - info: `1`
-- warning: `403`
+- warning: `400`
 
 ## Finding Types
 
-- logo_present_without_complete_approval: `2`
 - missing_local_player_asset: `204`
 - missing_or_unregistered_logo_asset: `2`
 - player_photo_format_problem: `204`
 - renderer_logo_audit_missing: `1`
-- suspicious_logo_source_or_approval: `1`
 - suspicious_or_default_player_approval: `196`
 
 ## Error And Warning Sample
@@ -104,7 +102,7 @@ Review-only audit. This report does not approve assets, fetch files, move files 
 - `warning` `suspicious_or_default_player_approval` | player_photo | Saylor Poffenbarger | `assets/leagues/wnba/athletes/chicago_sky_saylor_poffenbarger/headshot.png` | recheck_decision_source_source_file_and_approval_timestamp
 - `error` `missing_local_player_asset` | player_photo | Skylar Diggins | `assets/leagues/wnba/athletes/chicago_sky_skylar_diggins/cutout.png` | keep_photo_slot_disabled_until_asset_and_marker_are_reviewed
 - `warning` `player_photo_format_problem` | player_photo | Skylar Diggins | `assets/leagues/wnba/athletes/chicago_sky_skylar_diggins/cutout.png` | replace_with_decodable_png_jpg_or_webp_before_renderer_use
-- ...and 529 more error/warning findings in the CSV.
+- ...and 526 more error/warning findings in the CSV.
 
 ## Focused Decision Packets
 
@@ -188,7 +186,7 @@ Review-only audit. This report does not approve assets, fetch files, move files 
 - `hold_identity` | `wnba_athlete_identity_resolution` | Player photo blocker: Saylor Poffenbarger | readiness=`blocked_until_identity_resolution` | source=`source_recheck_required` | identity=`identity_hold_default_or_suspicious_approval` | copy=`operator/inbox/wnba_athlete_identity_resolution.csv` | action=`recheck_decision_source_source_file_and_approval_timestamp`
 - `hold_photo_slot` | `wnba_athlete_photo_onboarding` | Player photo blocker: Skylar Diggins | readiness=`blocked_until_asset_or_format_fixed` | source=`source_missing_or_unregistered` | identity=`identity_unverified_asset_missing` | copy=`operator/inbox/athlete_photo_onboarding_decisions.csv` | action=`keep_photo_slot_disabled_until_asset_and_marker_are_reviewed`
 - `hold_photo_slot` | `wnba_athlete_photo_onboarding` | Player photo blocker: Skylar Diggins | readiness=`review_format_before_renderer_use` | source=`source_missing_or_unregistered` | identity=`identity_unverified_asset_missing` | copy=`operator/inbox/athlete_photo_onboarding_decisions.csv` | action=`replace_with_decodable_png_jpg_or_webp_before_renderer_use`
-- ...and 529 more decision packet rows in the CSV.
+- ...and 526 more decision packet rows in the CSV.
 
 ## Renderer Availability Notes
 
