@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.67.0-active-queue-evidence"
+VERSION = "hsd-operator-command-center-v3.68.0-handoff-guardrails"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -2954,9 +2954,14 @@ def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> D
             "files": [],
             "guardrails": {
                 "review_only": True,
+                "auto_approval": False,
                 "auto_render": False,
                 "auto_publish": False,
+                "asset_downloads": False,
+                "file_movement": False,
                 "paid_apis": False,
+                "publish_ready_lane": False,
+                "publishing": False,
             },
         }
     packet = render_prep_packets[0]
@@ -2980,9 +2985,14 @@ def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> D
         ],
         "guardrails": {
             "review_only": True,
+            "auto_approval": False,
             "auto_render": False,
             "auto_publish": False,
+            "asset_downloads": False,
+            "file_movement": False,
             "paid_apis": False,
+            "publish_ready_lane": False,
+            "publishing": False,
         },
     }
 
@@ -3376,9 +3386,14 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
         "folder": "render_handoff_top_packet",
         "guardrails": {
             "review_only": True,
+            "auto_approval": False,
             "auto_render": False,
             "auto_publish": False,
+            "asset_downloads": False,
+            "file_movement": False,
             "paid_apis": False,
+            "publish_ready_lane": False,
+            "publishing": False,
         },
         "packet": packet or {},
         "files": [
