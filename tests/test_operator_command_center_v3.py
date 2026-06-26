@@ -1848,6 +1848,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "fallback: HSD team badges are review-only stand-ins for missing or undecodable exact logos; they do not approve logo identity or create a publish-ready lane." in markdown
     assert "review-only fallback status not recorded" not in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
+    assert "Identity team queue: new_york_liberty | packets=1 | holds=1 | defaults=1 | high=1" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
     assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown
     assert "evidence=approved marker decision_source=default" in markdown
@@ -1859,6 +1860,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_rows"] == 1
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_hold_rows"] == 1
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_default_rows"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_teams"][0] == {
+        "team_id": "new_york_liberty",
+        "packet_rows": "1",
+        "identity_hold_rows": "1",
+        "default_approval_rows": "1",
+        "high_severity_rows": "1",
+    }
     assert payload["athlete_photo_onboarding_panel"]["identity_resolution_inbox_rows"] == 0
     assert payload["athlete_photo_onboarding_panel"]["identity_closure_status"] == "not_run"
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_review_status"] == "hold_identity_review_required"
@@ -1868,6 +1876,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Athlete photo onboarding" in html
     assert "Identity resolution" in html
     assert "Focused identity review packet" in html
+    assert "Team packet queues" in html
+    assert "identity team queue" in html
     assert "default approvals" in html
     assert "https://www.wnba.com/player/1627668/breanna-stewart" in html
     assert "Verify, hold, revise, or backfill" in html

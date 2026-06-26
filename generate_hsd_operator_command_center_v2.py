@@ -1843,6 +1843,37 @@ def athlete_identity_review_packet_rows(rows: Iterable[Dict[str, str]], *, limit
     )[:limit]
 
 
+def athlete_identity_review_packet_team_summary(rows: Iterable[Dict[str, str]], *, limit: int = 12) -> List[Dict[str, str]]:
+    teams: Dict[str, Dict[str, int]] = {}
+    for row in rows:
+        athlete_id = clean(row.get("athlete_id"))
+        team_id = clean(row.get("team_id")) or "unknown_team"
+        if not athlete_id:
+            continue
+        summary = teams.setdefault(team_id, {"rows": 0, "holds": 0, "defaults": 0, "high": 0})
+        summary["rows"] += 1
+        if clean(row.get("identity_hold")).lower() == "true":
+            summary["holds"] += 1
+        if clean(row.get("default_approval_present")).lower() == "true":
+            summary["defaults"] += 1
+        if clean(row.get("highest_severity")).lower() in {"critical", "high"}:
+            summary["high"] += 1
+    ranked = sorted(
+        teams.items(),
+        key=lambda item: (-item[1]["holds"], -item[1]["defaults"], -item[1]["high"], item[0]),
+    )
+    return [
+        {
+            "team_id": team_id,
+            "packet_rows": str(values["rows"]),
+            "identity_hold_rows": str(values["holds"]),
+            "default_approval_rows": str(values["defaults"]),
+            "high_severity_rows": str(values["high"]),
+        }
+        for team_id, values in ranked[:limit]
+    ]
+
+
 def athlete_identity_candidate_summary(
     athlete_id: str,
     candidate_by_athlete: Dict[str, Dict[str, str]],
@@ -1980,6 +2011,7 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
     identity_candidate_rows = read_csv("data/asset_registry/wnba/athlete_identity_resolution_candidates.csv")
     identity_review_packet_rows = read_csv("data/asset_registry/wnba/athlete_identity_review_packet.csv")
     identity_review_packets = athlete_identity_review_packet_rows(identity_review_packet_rows)
+    identity_review_packet_teams = athlete_identity_review_packet_team_summary(identity_review_packet_rows)
     identity_candidate_by_id = athlete_identity_candidates_by_athlete(identity_candidate_rows)
     identity_backfill_rows = read_csv("data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv")
     identity_backfills_by_id = athlete_identity_backfills_by_athlete(identity_backfill_rows)
@@ -2073,6 +2105,7 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         "identity_review_packet_hold_rows": sum(1 for row in identity_review_packet_rows if clean(row.get("identity_hold")).lower() == "true"),
         "identity_review_packet_default_rows": sum(1 for row in identity_review_packet_rows if clean(row.get("default_approval_present")).lower() == "true"),
         "identity_review_packets": identity_review_packets,
+        "identity_review_packet_teams": identity_review_packet_teams,
         "identity_resolution_inbox_rows": len(identity_resolution_rows),
         "identity_closure_status": clean(identity_closure_report.get("status")) or "not_run",
         "identity_closure_rows": as_int(identity_closure_report.get("closure_rows")),
@@ -5353,9 +5386,38 @@ def render_identity_review_packet_cards(rows: Iterable[Dict[str, Any]]) -> str:
     return "".join(body) or '<p class="empty">No focused identity review packet rows found. Run the identity resolution generator after the identity audit.</p>'
 
 
+def render_identity_review_team_queue(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        body.append(
+            f"""
+            <article class="asset-blocker-card identity-team-queue-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">identity team queue</span>
+                  <strong>{html.escape(clean(row.get('team_id')) or 'unknown_team')}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill(str(row.get('identity_hold_rows', 0)) + ' holds', 'warn')}
+                  {pill(str(row.get('default_approval_rows', 0)) + ' defaults', 'warn')}
+                </div>
+              </div>
+              <div class="asset-guidance-grid">
+                <div><span>Packets</span><strong>{html.escape(str(row.get('packet_rows', 0)))}</strong></div>
+                <div><span>High severity</span><strong>{html.escape(str(row.get('high_severity_rows', 0)))}</strong></div>
+                <div><span>Action</span><strong>Review source evidence before photo-first renders</strong></div>
+                <div><span>Lane</span><strong>review-only identity resolution</strong></div>
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No team-level identity packet queue rows found.</p>'
+
+
 def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
     rows = panel.get("review_rows", []) if isinstance(panel.get("review_rows"), list) else []
     identity_packets = panel.get("identity_review_packets", []) if isinstance(panel.get("identity_review_packets"), list) else []
+    identity_team_queue = panel.get("identity_review_packet_teams", []) if isinstance(panel.get("identity_review_packet_teams"), list) else []
     rows_json = html.escape(json.dumps(rows), quote=True)
     fields_json = html.escape(json.dumps(ATHLETE_PHOTO_DECISION_FIELDS), quote=True)
     identity_fields_json = html.escape(json.dumps(IDENTITY_RESOLUTION_FIELDS), quote=True)
@@ -5402,6 +5464,10 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
         </div>
         <div class="decision-desk-section">
           <div class="row-kicker">Focused identity review packet {pill(str(len(identity_packets)) + ' shown')} {pill(str(panel.get('identity_review_packet_default_rows', 0)) + ' default approvals')}</div>
+          <div class="row-kicker">Team packet queues {pill(str(len(identity_team_queue)) + ' teams shown')} {pill('review-only')}</div>
+          <div class="identity-packet-grid">
+            {render_identity_review_team_queue(identity_team_queue)}
+          </div>
           <div class="identity-packet-grid">
             {render_identity_review_packet_cards(identity_packets)}
           </div>
@@ -6687,6 +6753,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Next safe action: {athlete_photo_panel.get('next_step')}",
         "- Guardrails: review-only, identity human-check required, no auto-approval, no publishing, no file movement, no paid APIs.",
     ]
+    lines.extend(
+        f"- Identity team queue: {item.get('team_id') or 'unknown_team'} | packets={item.get('packet_rows') or 0} | holds={item.get('identity_hold_rows') or 0} | defaults={item.get('default_approval_rows') or 0} | high={item.get('high_severity_rows') or 0}"
+        for item in athlete_photo_panel.get("identity_review_packet_teams", [])[:12]
+    )
     lines.extend(
         f"- Identity packet: {item.get('display_name') or item.get('athlete_id')} | {item.get('team_id')} | {item.get('identity_review_status')} | hold={item.get('identity_hold')} | default={item.get('default_approval_present')} | reasons={item.get('hold_reason_codes') or 'manual_identity_review_required'} | evidence={item.get('focused_evidence') or 'source evidence required'} | steps={item.get('operator_review_steps') or 'open_asset_and_marker; compare_to_source; record_decision'} | source={item.get('source_check_url') or item.get('provider_player_page_hint') or 'missing'}"
         for item in athlete_photo_panel.get("identity_review_packets", [])[:8]
