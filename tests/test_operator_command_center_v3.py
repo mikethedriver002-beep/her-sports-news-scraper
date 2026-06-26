@@ -2713,6 +2713,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Blocker summary: WNBA: missing league mark" in active_queue
     assert "Manual review packet: `data/asset_registry/wnba/logo_review_catalog_report.md`" in active_queue
     assert "Operator copy target: `operator/assets/brand_logos/README.md`" in active_queue
+    assert "Manual review packet: `data/asset_registry/wnba/athlete_identity_resolution_workflow.md`" in active_queue
+    assert "Operator copy target: `operator/inbox/wnba_athlete_identity_resolution.csv`" in active_queue
     assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
     assert "Provider player ID: `1627668`" in active_queue
     assert "Approved marker path: `assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved`" in active_queue
@@ -2723,12 +2725,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert liberty_queue["registered_path"] == "assets/leagues/wnba/logos/new_york_liberty/logo.png"
     assert liberty_queue["source_target_path"] == "assets/leagues/wnba/teams/new_york_liberty/logo.svg"
     assert liberty_queue["source_check_url"] == "https://example.test/liberty-logo.png"
+    assert liberty_queue["manual_review_packet"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert liberty_queue["operator_copy_target"] == "operator/assets/brand_logos/README.md"
     assert liberty_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
     breanna_queue = next(row for row in active_queue_rows if row["entity_name"] == "Breanna Stewart")
     assert breanna_queue["asset_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
     assert breanna_queue["source_check_url"] == "https://www.wnba.com/player/1627668/breanna-stewart"
     assert breanna_queue["provider_player_id"] == "1627668"
     assert breanna_queue["approved_marker_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png.approved"
+    assert breanna_queue["manual_review_packet"] == "data/asset_registry/wnba/athlete_identity_resolution_workflow.md"
+    assert breanna_queue["operator_copy_target"] == "operator/inbox/wnba_athlete_identity_resolution.csv"
     wnba_queue = next(row for row in active_queue_rows if row["entity_name"] == "WNBA")
     assert wnba_queue["review_queue_id"] == "asset_review_0605_league_logo_WNBA"
     assert wnba_queue["decision_lane"] == "wnba_logo_review"
