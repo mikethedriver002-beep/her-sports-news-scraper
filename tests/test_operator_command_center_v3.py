@@ -2692,6 +2692,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Logo readiness: `hold_logo_review_required`" in readme
     assert "Athlete identity: `hold_identity_review_required`" in readme
     assert "Active asset stop/go: `hold_required_manual_asset_review`" in readme
+    assert "Active queue scope: `3` rows; selected-template blockers `1` (New York Liberty); future photo-first holds `1` (Breanna Stewart); league-mark context holds `1` (WNBA)." in readme
     assert "Breanna Stewart: hold_identity_review_required" in readme
     assert "do not approve assets or create a publish-ready lane" in readme
     assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in readme

@@ -3117,6 +3117,10 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
     )
     active_logo_status = clean(packet.get("active_logo_readiness_status")) or "logo_review_not_flagged"
     active_athlete_status = clean(packet.get("active_athlete_identity_status")) or "athlete_identity_not_flagged"
+    active_asset_rows = active_asset_review_queue_rows(packet)
+    blocking_rows = [row for row in active_asset_rows if clean(row.get("selected_template_blocking_status")).startswith("blocking_selected_template")]
+    future_photo_rows = [row for row in active_asset_rows if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_photo_not_required"]
+    league_context_rows = [row for row in active_asset_rows if clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_league_mark_not_required"]
     return "\n".join(
         [
             "# HSD Top Render Handoff",
@@ -3139,6 +3143,7 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             f"- Athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
             f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
             f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
+            f"- Active queue scope: `{len(active_asset_rows)}` rows; selected-template blockers `{len(blocking_rows)}` ({active_queue_entity_list(blocking_rows)}); future photo-first holds `{len(future_photo_rows)}` ({active_queue_entity_list(future_photo_rows)}); league-mark context holds `{len(league_context_rows)}` ({active_queue_entity_list(league_context_rows)}).",
             (
                 "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
                 if "no player asset required" in clean(packet.get("asset_requirement")).lower()
