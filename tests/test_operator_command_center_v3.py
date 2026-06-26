@@ -754,6 +754,94 @@ def seed_athlete_photo_onboarding_files() -> None:
 
     audit_dir = Path("data/asset_registry/wnba")
     audit_dir.mkdir(parents=True, exist_ok=True)
+    contact_sheet_dir = audit_dir / "athlete_photo_contact_sheets"
+    contact_sheet_dir.mkdir(parents=True, exist_ok=True)
+    (contact_sheet_dir / "new_york_liberty.png").write_bytes(b"fake team athlete contact sheet")
+    (contact_sheet_dir / "new_york_liberty.md").write_text("# New York Liberty Athlete Photo Contact Sheet\n", encoding="utf-8")
+    athlete_contact_row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "athlete_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "team_name": "New York Liberty",
+        "conference": "Eastern",
+        "local_headshot_path": source.as_posix(),
+        "local_headshot_exists": "true",
+        "approved_marker_path": marker.as_posix(),
+        "approved_marker_exists": "true",
+        "current_approval_status": "approved_marker_present_manual_source_recheck_required",
+        "identity_review_status": "hold_identity_review_required",
+        "provider_player_id": "1627668",
+        "official_roster_page_candidate": "https://liberty.wnba.com/roster",
+        "official_player_profile_candidate": "https://www.wnba.com/player/1627668/breanna-stewart",
+        "official_roster_photo_candidate_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/1627668.png",
+        "source_evidence": "approved marker decision_source=default",
+        "crop_readiness_notes": "default_decision_source_manual_recheck_required",
+        "allowed_decisions": "approve_for_review_only_renderer_use|hold_identity|revise_asset|revise_source_metadata",
+        "human_intake_file": "data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv",
+        "team_contact_sheet_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/new_york_liberty.png",
+        "team_review_board_path": "data/asset_registry/wnba/athlete_photo_contact_sheets/new_york_liberty.md",
+        "review_only": "true",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "asset_downloads": "false",
+    }
+    write_csv_with_fields((audit_dir / "wnba_athlete_photo_contact_sheet.csv").as_posix(), [athlete_contact_row], list(athlete_contact_row.keys()))
+    intake_row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "athlete_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "team_name": "New York Liberty",
+        "local_headshot_path": source.as_posix(),
+        "approved_marker_path": marker.as_posix(),
+        "provider_player_id": "1627668",
+        "official_roster_page_candidate": "https://liberty.wnba.com/roster",
+        "official_player_profile_candidate": "https://www.wnba.com/player/1627668/breanna-stewart",
+        "official_roster_photo_candidate_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/1627668.png",
+        "current_approval_status": "approved_marker_present_manual_source_recheck_required",
+        "identity_review_status": "hold_identity_review_required",
+        "allowed_decisions": "approve_for_review_only_renderer_use|hold_identity|revise_asset|revise_source_metadata",
+        "operator_decision": "operator_fill_required",
+        "identity_verified": "operator_fill_required",
+        "source_reviewed": "operator_fill_required",
+        "local_file_reviewed": "operator_fill_required",
+        "source_url_to_record": "",
+        "provider_player_id_verified": "",
+        "registry_action": "",
+        "operator_notes": "",
+        "reviewed_by": "",
+        "reviewed_at_local": "",
+        "approval_scope": "review_only_renderer_athlete_photo_trust_manual_intake",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "asset_downloads": "false",
+    }
+    write_csv_with_fields((audit_dir / "wnba_athlete_photo_review_intake.csv").as_posix(), [intake_row], list(intake_row.keys()))
+    (audit_dir / "wnba_athlete_photo_contact_sheet_index.md").write_text("# WNBA Athlete Photo Contact Sheets\n", encoding="utf-8")
+    write_json(
+        (audit_dir / "wnba_athlete_photo_contact_sheet_manifest.json").as_posix(),
+        {
+            "status": "contact_sheets_ready",
+            "athlete_rows": 1,
+            "team_rows": 1,
+            "local_headshots_present": 1,
+            "review_only": True,
+            "guardrails": {
+                "publish_ready": False,
+                "auto_approval": False,
+                "auto_publish": False,
+                "move_files": False,
+                "paid_apis": False,
+                "asset_downloads": False,
+                "publishing": False,
+            },
+        },
+    )
     issue = {
         "severity": "high",
         "issue_code": "approved_asset_still_has_pending_match_review",
@@ -2334,7 +2422,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.83.0-league-mark-intake-bridge"
+    assert payload["version"] == "hsd-operator-command-center-v3.84.0-athlete-photo-contact-sheets"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2469,6 +2557,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "review-only fallback status not recorded" not in markdown
     assert "Identity review packets: 1 (1 holds / 1 default approvals)" in markdown
     assert "Identity review packet freshness: packet_ready" in markdown
+    assert "Athlete photo contact sheets packet freshness: packet_ready" in markdown
+    assert "Athlete source boards: 1 team board(s) / 1 athlete row(s)" in markdown
     assert "Identity team queue: new_york_liberty | packets=1 | holds=1 | defaults=1 | high=1" in markdown
     assert "Identity packet: Breanna Stewart | new_york_liberty | hold_identity_review_required | hold=true | default=true" in markdown
     assert "reasons=approved_asset_still_has_pending_match_review|default_approval_requires_identity_recheck" in markdown
@@ -2476,6 +2566,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "steps=open_asset_and_marker; compare_to_official_player_or_team_source; choose_hold_or_verified_review_only_decision" in markdown
     assert any(item["label"] == "Athlete photo review" and item["value"] == "hold_identity_review_required" for item in payload["metrics"])
     assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
+    assert any(item["label"] == "Athlete source boards" and item["value"] == "1/1" for item in payload["metrics"])
     assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"
     assert payload["athlete_photo_onboarding_panel"]["identity_resolution_status"] == "not_run"
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_rows"] == 1
@@ -2483,6 +2574,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_default_rows"] == 1
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_freshness_status"] == "packet_ready"
     assert "present with 1 row(s)" in payload["athlete_photo_onboarding_panel"]["identity_review_packet_freshness_detail"]
+    assert payload["athlete_photo_onboarding_panel"]["athlete_contact_sheet_status"] == "contact_sheets_ready"
+    assert payload["athlete_photo_onboarding_panel"]["athlete_contact_sheet_rows"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["athlete_contact_sheet_teams"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["athlete_contact_sheet_intake_rows"] == 1
+    assert payload["athlete_photo_onboarding_panel"]["athlete_contact_sheet_freshness_status"] == "packet_ready"
+    assert any(item["label"] == "WNBA athlete photo contact sheets" for item in payload["athlete_photo_onboarding_panel"]["file_shortcuts"])
+    assert any(item["label"] == "WNBA athlete photo review intake" for item in payload["athlete_photo_onboarding_panel"]["file_shortcuts"])
     assert payload["athlete_photo_onboarding_panel"]["identity_review_packet_teams"][0] == {
         "team_id": "new_york_liberty",
         "packet_rows": "1",
@@ -2890,6 +2988,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_report.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_contact_sheet_index.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_index.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_photo_contact_sheets_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_photo_contact_sheets_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_audit.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_resolution_workflow.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_review_packet.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"

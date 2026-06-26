@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.83.0-league-mark-intake-bridge"
+VERSION = "hsd-operator-command-center-v3.84.0-athlete-photo-contact-sheets"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -424,6 +424,10 @@ ARTIFACTS = [
     ("Graphics", "WNBA athlete photo catalog", "data/asset_registry/wnba/athlete_photo_catalog.md"),
     ("Graphics", "WNBA athlete photo catalog data", "data/asset_registry/wnba/athlete_photo_catalog.csv"),
     ("Graphics", "WNBA athlete photo catalog manifest", "data/asset_registry/wnba/athlete_photo_catalog.json"),
+    ("Graphics", "WNBA athlete photo contact sheet index", "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_index.md"),
+    ("Graphics", "WNBA athlete photo contact sheet data", "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet.csv"),
+    ("Graphics", "WNBA athlete photo review intake", "data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv"),
+    ("Graphics", "WNBA athlete photo contact sheet manifest", "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_manifest.json"),
     ("Graphics", "WNBA logo review catalog", "data/asset_registry/wnba/logo_review_catalog_report.md"),
     ("Graphics", "WNBA logo review catalog data", "data/asset_registry/wnba/logo_review_catalog.csv"),
     ("Graphics", "WNBA logo review catalog manifest", "data/asset_registry/wnba/logo_review_catalog.json"),
@@ -474,6 +478,10 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/athlete_photo_catalog.md": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/athlete_photo_catalog.csv": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/athlete_photo_catalog.json": ".\\hsd.cmd run -Mode asset-audit",
+    "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_index.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/wnba/logo_review_catalog_report.md": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/logo_review_catalog.csv": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/logo_review_catalog.json": ".\\hsd.cmd run -Mode asset-audit",
@@ -2375,6 +2383,15 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         RUN_COMMANDS["data/asset_registry/wnba/athlete_identity_review_packet.csv"],
         context="WNBA athlete identity review",
     )
+    athlete_contact_manifest = read_json("data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_manifest.json")
+    athlete_contact_rows = read_csv("data/asset_registry/wnba/wnba_athlete_photo_contact_sheet.csv")
+    athlete_contact_intake_rows = read_csv("data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv")
+    athlete_contact_cue = packet_freshness_cue(
+        "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet.csv",
+        len(athlete_contact_rows),
+        RUN_COMMANDS["data/asset_registry/wnba/wnba_athlete_photo_contact_sheet.csv"],
+        context="WNBA athlete photo contact sheet",
+    )
     identity_candidate_by_id = athlete_identity_candidates_by_athlete(identity_candidate_rows)
     identity_backfill_rows = read_csv("data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv")
     identity_backfills_by_id = athlete_identity_backfills_by_athlete(identity_backfill_rows)
@@ -2472,6 +2489,14 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
         "identity_review_packet_freshness_status": identity_packet_cue["status"],
         "identity_review_packet_freshness_detail": identity_packet_cue["detail"],
         "identity_review_packet_refresh_command": identity_packet_cue["run_command"],
+        "athlete_contact_sheet_status": clean(athlete_contact_manifest.get("status")) or "not_run",
+        "athlete_contact_sheet_rows": as_int(athlete_contact_manifest.get("athlete_rows")) or len(athlete_contact_rows),
+        "athlete_contact_sheet_teams": as_int(athlete_contact_manifest.get("team_rows")),
+        "athlete_contact_sheet_local_headshots": as_int(athlete_contact_manifest.get("local_headshots_present")),
+        "athlete_contact_sheet_intake_rows": len(athlete_contact_intake_rows),
+        "athlete_contact_sheet_freshness_status": athlete_contact_cue["status"],
+        "athlete_contact_sheet_freshness_detail": athlete_contact_cue["detail"],
+        "athlete_contact_sheet_refresh_command": athlete_contact_cue["run_command"],
         "identity_review_packets": identity_review_packets,
         "identity_review_packet_teams": identity_review_packet_teams,
         "identity_resolution_inbox_rows": len(identity_resolution_rows),
@@ -2489,6 +2514,8 @@ def athlete_photo_onboarding_panel(renderer: Dict[str, Any]) -> Dict[str, Any]:
             file_shortcut("Decision template CSV", "athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv", "Use this as the copy-safe row contract."),
             file_shortcut("Manifest", "athlete_photo_onboarding/athlete_photo_onboarding_manifest.json", "Check the generated run status and guardrails."),
             file_shortcut("WNBA identity audit", "data/asset_registry/wnba/athlete_identity_audit.md", "Review identity provenance risks before trusting any athlete crop."),
+            file_shortcut("WNBA athlete photo contact sheets", "data/asset_registry/wnba/wnba_athlete_photo_contact_sheet_index.md", "Open per-team local headshot boards with official roster/profile source candidates."),
+            file_shortcut("WNBA athlete photo review intake", "data/asset_registry/wnba/wnba_athlete_photo_review_intake.csv", "Human-edited approve/hold/revise worksheet; this generator does not apply decisions."),
             file_shortcut("WNBA identity audit data", "data/asset_registry/wnba/athlete_identity_audit.csv", "See per-athlete identity issue rows and evidence."),
             file_shortcut("Identity resolution workflow", "data/asset_registry/wnba/athlete_identity_resolution_workflow.md", "Follow the manual steps to close or hold identity issues."),
             file_shortcut("Identity review packet", "data/asset_registry/wnba/athlete_identity_review_packet.csv", "Start here for hold-first default/suspicious athlete-photo review rows."),
@@ -5814,6 +5841,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Athlete photo review", athlete_photo_panel["panel_status"], athlete_photo_panel["next_step"]),
         metric("Athlete photo variants", f"{athlete_photo_panel['review_variant_ready']}/{athlete_photo_panel['source_rows']}"),
         metric("Athlete contact sheets", athlete_photo_panel["contact_sheets"]),
+        metric("Athlete source boards", f"{athlete_photo_panel['athlete_contact_sheet_teams']}/{athlete_photo_panel['athlete_contact_sheet_rows']}"),
         metric("Studio bundles", len(studio)),
         metric("Handoff packets", handoff_counts.get("handoff_packets") or "0"),
         metric("Source registry", source_registry_status(source_registry_counts), source_registry_detail(source_registry_counts)),
@@ -7585,12 +7613,15 @@ def render_athlete_photo_onboarding_panel(panel: Dict[str, Any]) -> str:
             <div><span>Identity audit issues</span><strong>{html.escape(str(panel.get('identity_audit_issue_rows', 0)))}</strong></div>
             <div><span>Resolution candidates</span><strong>{html.escape(str(panel.get('identity_resolution_candidate_rows', 0)))}</strong></div>
             <div><span>Identity packet holds</span><strong>{html.escape(str(panel.get('identity_review_packet_hold_rows', 0)))}/{html.escape(str(panel.get('identity_review_packet_rows', 0)))}</strong></div>
+            <div><span>Athlete source boards</span><strong>{html.escape(str(panel.get('athlete_contact_sheet_teams', 0)))}/{html.escape(str(panel.get('athlete_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Photo review intake rows</span><strong>{html.escape(str(panel.get('athlete_contact_sheet_intake_rows', 0)))}</strong></div>
             <div><span>Resolution inbox rows</span><strong>{html.escape(str(panel.get('identity_resolution_inbox_rows', 0)))}</strong></div>
             <div><span>Closure/backfill rows</span><strong>{html.escape(str(panel.get('identity_closure_rows', 0)))}/{html.escape(str(panel.get('identity_provider_backfill_rows', 0)))}</strong></div>
             <div><span>Closure high rows</span><strong>{html.escape(str(panel.get('identity_closure_high_rows', 0)))}</strong></div>
             <div><span>Blank closure/backfill decisions</span><strong>{html.escape(str(panel.get('identity_closure_blank_decisions', 0)))}/{html.escape(str(panel.get('identity_provider_backfill_blank_decisions', 0)))}</strong></div>
           </div>
           {packet_freshness_html(panel, 'identity_review_packet', 'Identity review')}
+          {packet_freshness_html(panel, 'athlete_contact_sheet', 'Athlete photo contact sheets')}
           <div class="review-flow">
             <div><span>1</span><strong>Open source</strong><p>Compare source headshot and contact sheet by eye.</p></div>
             <div><span>2</span><strong>Verify identity</strong><p>Crop score is not identity proof; wrong-person risk must be held.</p></div>
@@ -8989,6 +9020,8 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Manifest status: {athlete_photo_panel.get('manifest_status') or 'not_run'}",
         f"- Review variants: {athlete_photo_panel.get('review_variant_ready', 0)}/{athlete_photo_panel.get('source_rows', 0)}",
         f"- Contact sheets: {athlete_photo_panel.get('contact_sheets', 0)}",
+        f"- Athlete source boards: {athlete_photo_panel.get('athlete_contact_sheet_teams', 0)} team board(s) / {athlete_photo_panel.get('athlete_contact_sheet_rows', 0)} athlete row(s)",
+        f"- Athlete source board intake rows: {athlete_photo_panel.get('athlete_contact_sheet_intake_rows', 0)}",
         f"- Identity audit: {athlete_photo_panel.get('identity_audit_status') or 'not_run'} ({athlete_photo_panel.get('identity_audit_issue_rows', 0)} issue row(s))",
         f"- Identity resolution: {athlete_photo_panel.get('identity_resolution_status') or 'not_run'} ({athlete_photo_panel.get('identity_resolution_inbox_rows', 0)} inbox row(s))",
         f"- Identity review packets: {athlete_photo_panel.get('identity_review_packet_rows', 0)} ({athlete_photo_panel.get('identity_review_packet_hold_rows', 0)} holds / {athlete_photo_panel.get('identity_review_packet_default_rows', 0)} default approvals)",
@@ -8999,6 +9032,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": athlete_photo_panel.get("identity_review_packet_refresh_command"),
             },
             "Identity review",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": athlete_photo_panel.get("athlete_contact_sheet_freshness_status"),
+                "detail": athlete_photo_panel.get("athlete_contact_sheet_freshness_detail"),
+                "run_command": athlete_photo_panel.get("athlete_contact_sheet_refresh_command"),
+            },
+            "Athlete photo contact sheets",
         ),
         f"- Closure/backfill: {athlete_photo_panel.get('identity_closure_status') or 'not_run'} ({athlete_photo_panel.get('identity_closure_rows', 0)}/{athlete_photo_panel.get('identity_provider_backfill_rows', 0)} row(s))",
         f"- Closure detail: high/critical={athlete_photo_panel.get('identity_closure_high_rows', 0)} | blank closure decisions={athlete_photo_panel.get('identity_closure_blank_decisions', 0)} | manual backfill review={athlete_photo_panel.get('identity_provider_backfill_manual_review_rows', 0)} | blank backfill decisions={athlete_photo_panel.get('identity_provider_backfill_blank_decisions', 0)}",
