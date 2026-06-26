@@ -5124,6 +5124,12 @@ def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
     for row in rows:
         href = clean(row.get("open_href"))
         open_link_html = f'<a class="tool-link" href="{html.escape(href)}">Open</a>' if href else '<span class="muted">Missing report</span>'
+        fallback_cue = clean(row.get("renderer_fallback_cue"))
+        fallback_line = (
+            f'<p class="muted"><strong>Fallback cue:</strong> {html.escape(short(fallback_cue, 190))}</p>'
+            if fallback_cue
+            else ""
+        )
         body.append(
             f"""
             <article class="asset-blocker-card">
@@ -5147,7 +5153,7 @@ def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
               <code>{html.escape(short(clean(row.get('asset_path')), 110))}</code>
               <p class="muted">{html.escape(short(clean(row.get('blocker_summary')) or clean(row.get('asset_readiness')), 190))}</p>
               <p class="muted">{html.escape(short(clean(row.get('evidence')), 190))}</p>
-              <p class="muted"><strong>Fallback cue:</strong> {html.escape(short(clean(row.get('renderer_fallback_cue')) or 'review-only fallback status not recorded', 190))}</p>
+              {fallback_line}
               <div class="asset-blocker-actions">
                 {open_link_html}
                 {pill(clean(row.get('approval_status')) or 'approval_review')}
@@ -6594,6 +6600,17 @@ def render_html(payload: Dict[str, Any]) -> str:
     return html_doc
 
 
+def asset_blocker_markdown_line(item: Dict[str, Any]) -> str:
+    fallback = clean(item.get("renderer_fallback_cue"))
+    fallback_part = f" | fallback: {fallback}" if fallback else ""
+    return (
+        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | "
+        f"{item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')}{fallback_part} | "
+        f"next: {item.get('manual_action')} | packet: {item.get('decision_lane') or 'manual_review'} / "
+        f"{item.get('default_operator_decision') or 'review_required'} / {item.get('asset_readiness') or 'review_required'}"
+    )
+
+
 def render_markdown(payload: Dict[str, Any]) -> str:
     lines = [
         "# HSD Daily Operator Command Center",
@@ -6646,7 +6663,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
-        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | fallback: {item.get('renderer_fallback_cue') or 'review-only fallback status not recorded'} | next: {item.get('manual_action')} | packet: {item.get('decision_lane') or 'manual_review'} / {item.get('default_operator_decision') or 'review_required'} / {item.get('asset_readiness') or 'review_required'}"
+        asset_blocker_markdown_line(item)
         for item in asset_panel.get("top_findings", [])[:8]
     )
     lines.extend(
