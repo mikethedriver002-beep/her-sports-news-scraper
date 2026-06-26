@@ -204,7 +204,17 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_athlete_photo_catalog_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_logo_asset_catalog_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_asset_availability_audit_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_wnba_athlete_identity_audit_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\validate_hsd_wnba_asset_registry_v1.py" -Optional' in runner
+    assert runner.index('Invoke-ScriptIfPresent $Python "scripts\\report_hsd_wnba_athlete_identity_audit_v1.py" -Optional') < runner.index('Invoke-ScriptIfPresent $Python "scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py" -Optional')
+    assert runner.index('Invoke-ScriptIfPresent $Python "scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py" -Optional') < runner.index('Invoke-ScriptIfPresent $Python "scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py" -Optional')
+    assert runner.index('Invoke-ScriptIfPresent $Python "scripts\\validate_hsd_wnba_asset_registry_v1.py" -Optional') < runner.index('Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional')
+    assert "data/asset_registry/wnba/logo_review_packets.csv" in runner
+    assert "data/asset_registry/wnba/athlete_identity_audit.md" in runner
+    assert "data/asset_registry/wnba/athlete_identity_review_packet.csv" in runner
+    assert "data/asset_registry/wnba/athlete_identity_resolution_manifest.json" in runner
     assert '$env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"' in runner
     assert '"decision-inbox" { Invoke-DecisionInboxStarterStage $python }' in runner
     assert '"identity-decision" { Invoke-IdentityDecisionServerStage $python }' in runner

@@ -263,6 +263,11 @@ def test_availability_audit_flags_assets_approvals_formats_and_renderer_fallback
     seed_logos(tmp_path)
     seed_renderer_fallback(tmp_path)
 
+    assert module.review_packet_lane("league_logo", "missing_or_unregistered_logo_asset", "WOMENS_SOCCER") == "logo_review"
+    assert module.review_packet_path("league_logo", "missing_or_unregistered_logo_asset", "WOMENS_SOCCER") == "data/asset_registry/logo_asset_catalog.md"
+    assert module.review_packet_title("league_logo", "missing_or_unregistered_logo_asset", "WOMENS_SOCCER", "WOMENS_SOCCER") == "League mark blocker: WOMENS_SOCCER"
+    assert module.review_packet_lane("team_logo", "logo_present_without_complete_approval", "WNBA") == "wnba_logo_review"
+
     report = module.build_audit(tmp_path)
     findings = {(row["finding"], row["entity_id"]) for row in report["findings"]}
     by_finding = {(row["finding"], row["entity_id"]): row for row in report["findings"]}

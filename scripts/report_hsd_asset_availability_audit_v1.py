@@ -191,23 +191,25 @@ def row(
     }
 
 
-def review_packet_path(asset_domain: str, finding: str) -> str:
+def review_packet_path(asset_domain: str, finding: str, league: str = "") -> str:
     if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
         return "data/asset_registry/wnba/athlete_identity_resolution_workflow.md"
     if asset_domain == "player_photo":
         return "data/asset_registry/wnba/athlete_photo_catalog.md"
     if asset_domain in {"team_logo", "league_logo"}:
-        return "data/asset_registry/wnba/logo_review_catalog_report.md"
+        if clean(league).upper() in {"", "WNBA"}:
+            return "data/asset_registry/wnba/logo_review_catalog_report.md"
+        return "data/asset_registry/logo_asset_catalog.md"
     return "data/asset_registry/asset_availability_audit.md"
 
 
-def review_packet_lane(asset_domain: str, finding: str) -> str:
+def review_packet_lane(asset_domain: str, finding: str, league: str = "") -> str:
     if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
         return "wnba_athlete_identity_resolution"
     if asset_domain == "player_photo":
         return "wnba_athlete_photo_onboarding"
     if asset_domain in {"team_logo", "league_logo"}:
-        return "wnba_logo_review"
+        return "wnba_logo_review" if clean(league).upper() in {"", "WNBA"} else "logo_review"
     return "renderer_fallback_review"
 
 
@@ -237,13 +239,14 @@ def review_packet_allowed_decisions(asset_domain: str, finding: str) -> str:
     return "verify_for_review_renders|hold|revise_asset"
 
 
-def review_packet_title(asset_domain: str, finding: str, entity: str) -> str:
+def review_packet_title(asset_domain: str, finding: str, entity: str, league: str = "") -> str:
     if asset_domain == "player_photo":
         return f"Player photo blocker: {entity}"
+    league_label = clean(league).upper()
     if asset_domain == "team_logo":
-        return f"WNBA team logo blocker: {entity}"
+        return f"{league_label or 'WNBA'} team logo blocker: {entity}" if league_label in {"", "WNBA"} else f"Team logo blocker: {entity}"
     if asset_domain == "league_logo":
-        return f"WNBA league mark blocker: {entity}"
+        return f"{league_label or 'WNBA'} league mark blocker: {entity}" if league_label in {"", "WNBA"} else f"League mark blocker: {entity}"
     if asset_domain == "renderer":
         return f"Renderer fallback review: {entity}"
     return f"Asset blocker: {entity} ({finding.replace('_', ' ')})"
@@ -323,6 +326,7 @@ def enrich_review_packet_fields(item: Dict[str, str], rank: int) -> Dict[str, st
     approval_status = clean(item.get("approval_status"))
     format_status = clean(item.get("format_status"))
     entity = clean(item.get("entity_name")) or clean(item.get("entity_id")) or "unknown_asset"
+    league = clean(item.get("league"))
     logo_readiness = clean(item.get("logo_readiness_status"))
     fallback_cue = clean(item.get("renderer_fallback_cue"))
     decision = review_packet_decision(asset_domain, finding, severity)
@@ -330,9 +334,9 @@ def enrich_review_packet_fields(item: Dict[str, str], rank: int) -> Dict[str, st
     enriched.update(
         {
             "review_packet_id": f"asset_review_{rank:04d}_{asset_domain or 'asset'}_{clean(item.get('entity_id')) or 'unknown'}",
-            "decision_lane": review_packet_lane(asset_domain, finding),
+            "decision_lane": review_packet_lane(asset_domain, finding, league),
             "default_operator_decision": decision,
-            "decision_packet_title": review_packet_title(asset_domain, finding, entity),
+            "decision_packet_title": review_packet_title(asset_domain, finding, entity, league),
             "allowed_operator_decisions": review_packet_allowed_decisions(asset_domain, finding),
             "decision_primary_action": clean(item.get("recommended_next_step")) or "manual_review_required_before_renderer_trust",
             "decision_hold_cue": review_packet_hold_cue(asset_domain, finding),
@@ -344,7 +348,7 @@ def enrich_review_packet_fields(item: Dict[str, str], rank: int) -> Dict[str, st
             "logo_readiness_status": logo_readiness,
             "renderer_fallback_cue": fallback_cue or (clean(item.get("renderer_coverage")) if asset_domain == "renderer" else ""),
             "operator_copy_target": review_packet_target(asset_domain, finding),
-            "manual_review_packet": review_packet_path(asset_domain, finding),
+            "manual_review_packet": review_packet_path(asset_domain, finding, league),
             "publish_ready": "false",
             "auto_approval": "false",
             "auto_publish": "false",
