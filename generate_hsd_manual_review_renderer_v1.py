@@ -2029,6 +2029,18 @@ def approved_athlete_photo_path(module: Dict[str, Any]) -> Path | None:
     return path
 
 
+def photo_first_eligible(module: Dict[str, Any]) -> bool:
+    if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
+        return False
+    if clean(module.get("athlete_photo_identity_review_status")) == "hold_identity_resolution_required":
+        return False
+    if clean(module.get("athlete_photo_identity_resolution_status")) in {"identity_resolution_not_cleared", "resolution_incomplete_or_hold"}:
+        return False
+    if clean(module.get("athlete_photo_blocker")):
+        return False
+    return approved_athlete_photo_path(module) is not None
+
+
 def athlete_photo_review_variant_path(module: Dict[str, Any], variant_id: str) -> Path | None:
     if clean(module.get("athlete_photo_status")) != "approved_local_headshot":
         return None
@@ -2311,7 +2323,7 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     if (
         format_id != "square_feed_1x1"
         and clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}
-        and approved_athlete_photo_path(stat_module) is not None
+        and photo_first_eligible(stat_module)
         and draw_photo_first_final_score_template(image, packet, template, format_spec, score, reference, stat_module)
     ):
         return
@@ -2543,8 +2555,7 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
 
 
 def athlete_photo_layout_for_format(content_module: Dict[str, Any], spec: Dict[str, Any]) -> Dict[str, str]:
-    status = clean(content_module.get("athlete_photo_status"))
-    if status != "approved_local_headshot":
+    if not photo_first_eligible(content_module):
         return {
             "athlete_photo_layout_mode": "safe_no_photo_fallback",
             "athlete_photo_layout_status": "photo_not_rendered",

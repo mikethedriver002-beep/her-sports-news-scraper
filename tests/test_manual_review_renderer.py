@@ -526,7 +526,12 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    content = {"athlete_photo_status": "approved_local_headshot"}
+    content = {
+        "athlete_photo_status": "approved_local_headshot",
+        "athlete_photo_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+        "athlete_photo_identity_review_status": "identity_resolution_cleared_for_review_renders",
+        "athlete_photo_identity_resolution_status": "identity_resolution_cleared_for_review_renders",
+    }
 
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_mode"] == "photo_first_final_score"
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_story_9x16", "height": 1920})["athlete_photo_layout_mode"] == "photo_first_final_score"
@@ -543,3 +548,26 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
         ]
         == "safe_no_photo_fallback"
     )
+
+
+def test_manual_review_renderer_keeps_partial_approved_module_out_of_photo_first_layout() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    content = {
+        "athlete_photo_status": "approved_local_headshot",
+        "athlete_photo_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+        "athlete_photo_identity_review_status": "hold_identity_resolution_required",
+        "athlete_photo_identity_resolution_status": "identity_resolution_not_cleared",
+        "athlete_photo_blocker": "Identity remains held.",
+    }
+
+    assert module.photo_first_eligible(content) is False
+    layout = module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})
+    assert layout["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
+    assert layout["athlete_photo_layout_status"] == "photo_not_rendered"
+    assert layout["athlete_photo_layout_detail"] == "Identity remains held."
