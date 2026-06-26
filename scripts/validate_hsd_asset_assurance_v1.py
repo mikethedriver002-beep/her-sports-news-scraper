@@ -30,6 +30,7 @@ FIELDS = [
     "asset_live_ready_pre_human",
     "asset_requires_visual_approval",
     "asset_release_lane",
+    "asset_fallback_review_cue",
     "team_asset_count",
     "team_exact_logo_count",
     "team_fallback_badge_count",
@@ -143,6 +144,16 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
     lines += [f"- `{value}`" for value in report.get("blockers") or []] or ["- None"]
     lines += ["", "## Warnings", ""]
     lines += [f"- `{value}`" for value in report.get("warnings") or []] or ["- None"]
+    cue_rows = [
+        row
+        for row in report.get("rows") or []
+        if clean(row.get("asset_release_lane")) in {"hsd_badge_review", "team_spotlight_review"}
+    ][:8]
+    lines += ["", "## Fallback Review Cues", ""]
+    lines += [
+        f"- `{clean(row.get('item_id')) or clean(row.get('source_id'))}` / `{clean(row.get('asset_release_lane'))}`: {clean(row.get('asset_fallback_review_cue')) or 'Human asset review remains required before any next step.'}"
+        for row in cue_rows
+    ] or ["- None"]
     (root / OUT_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

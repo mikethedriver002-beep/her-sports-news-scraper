@@ -105,6 +105,8 @@ def test_assurance_item_allows_hash_review_badge_lane():
     assert result["asset_live_candidate_eligible"] == "true"
     assert result["asset_live_ready_pre_human"] == "false"
     assert result["asset_release_lane"] == "hsd_badge_review"
+    assert "review-only stand-ins" in result["asset_fallback_review_cue"]
+    assert "publish-ready lane" in result["asset_fallback_review_cue"]
 
 
 def test_assurance_item_accepts_team_spotlight_route():
@@ -121,6 +123,8 @@ def test_assurance_item_accepts_team_spotlight_route():
     assert result["asset_render_safe"] == "true"
     assert result["asset_release_lane"] == "team_spotlight_review"
     assert result["asset_live_candidate_eligible"] == "true"
+    assert "non-player review route" in result["asset_fallback_review_cue"]
+    assert "does not approve athlete identity" in result["asset_fallback_review_cue"]
 
 
 def test_multisport_catalog_has_required_coverage():

@@ -722,12 +722,14 @@ def asset_audit_finding_rank(row: Dict[str, Any]) -> int:
         return 3
     if finding == "renderer_active_logo_fallback":
         return 4
-    if finding == "renderer_logo_audit_missing":
+    if finding in {"renderer_hsd_team_badge_review", "renderer_team_spotlight_fallback_review", "renderer_fixture_reference_asset_review"}:
         return 5
-    if finding == "missing_local_player_asset":
+    if finding == "renderer_logo_audit_missing":
         return 6
-    if "format" in finding or "dimension" in finding:
+    if finding == "missing_local_player_asset":
         return 7
+    if "format" in finding or "dimension" in finding:
+        return 8
     return 9
 
 
@@ -780,11 +782,12 @@ def asset_audit_decision_guidance(row: Dict[str, Any]) -> Dict[str, str]:
             "open_path": "data/asset_registry/wnba/logo_review_catalog_report.md",
         }
     if domain == "renderer":
+        fallback_cue = clean(row.get("renderer_fallback_cue"))
         return {
             "decision": "Verify renderer fallback",
             "tone": "neutral" if clean(row.get("severity")) == "info" else "warn",
-            "manual_action": "Run a local render/status pass to confirm whether active fallback badges are still present.",
-            "hold_cue": "Hold if a template is using text badges where exact approved assets are required.",
+            "manual_action": fallback_cue or "Run a local render/status pass to confirm whether active fallback badges are still present.",
+            "hold_cue": fallback_cue or "Hold if a template is using text badges where exact approved assets are required.",
             "revise_cue": "Revise the asset registry or template mapping only after source-backed review.",
             "open_path": "data/asset_registry/asset_availability_audit.md",
         }
@@ -938,7 +941,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "missing_player_asset_findings": as_int(finding_counts.get("missing_local_player_asset")),
         "team_logo_hold_findings": as_int(finding_counts.get("logo_present_without_complete_approval")) + as_int(finding_counts.get("suspicious_logo_source_or_approval")),
         "league_mark_hold_findings": as_int(finding_counts.get("missing_or_unregistered_logo_asset")),
-        "renderer_fallback_findings": as_int(finding_counts.get("renderer_active_logo_fallback")) + as_int(finding_counts.get("renderer_logo_audit_missing")),
+        "renderer_fallback_findings": (
+            as_int(finding_counts.get("renderer_active_logo_fallback"))
+            + as_int(finding_counts.get("renderer_logo_audit_missing"))
+            + as_int(finding_counts.get("renderer_hsd_team_badge_review"))
+            + as_int(finding_counts.get("renderer_team_spotlight_fallback_review"))
+            + as_int(finding_counts.get("renderer_fixture_reference_asset_review"))
+        ),
         "logo_review_packet_rows": len(logo_packet_rows),
         "logo_review_packet_unapproved_rows": sum(1 for row in logo_packet_rows if "unapproved" in clean(row.get("issue_type")).lower()),
         "logo_review_packet_source_drift_rows": sum(1 for row in logo_packet_rows if "source" in clean(row.get("issue_type")).lower() or "drift" in clean(row.get("issue_type")).lower()),
@@ -5138,6 +5147,7 @@ def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
               <code>{html.escape(short(clean(row.get('asset_path')), 110))}</code>
               <p class="muted">{html.escape(short(clean(row.get('blocker_summary')) or clean(row.get('asset_readiness')), 190))}</p>
               <p class="muted">{html.escape(short(clean(row.get('evidence')), 190))}</p>
+              <p class="muted"><strong>Fallback cue:</strong> {html.escape(short(clean(row.get('renderer_fallback_cue')) or 'review-only fallback status not recorded', 190))}</p>
               <div class="asset-blocker-actions">
                 {open_link_html}
                 {pill(clean(row.get('approval_status')) or 'approval_review')}
@@ -6636,7 +6646,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
-        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | next: {item.get('manual_action')} | packet: {item.get('decision_lane') or 'manual_review'} / {item.get('default_operator_decision') or 'review_required'} / {item.get('asset_readiness') or 'review_required'}"
+        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | fallback: {item.get('renderer_fallback_cue') or 'review-only fallback status not recorded'} | next: {item.get('manual_action')} | packet: {item.get('decision_lane') or 'manual_review'} / {item.get('default_operator_decision') or 'review_required'} / {item.get('asset_readiness') or 'review_required'}"
         for item in asset_panel.get("top_findings", [])[:8]
     )
     lines.extend(
