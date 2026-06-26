@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-26T23:23:48.694792+00:00`
+Generated: `2026-06-26T23:31:07.194114+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -8,16 +8,16 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Summary
 
-- Rows: `26`
+- Rows: `34`
 - League mark rows: `6`
-- Team logo rows: `20`
+- Team logo rows: `28`
 - Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`
 - Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`
 - Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false
 
 ## Scope Counts
 
-- `europe_top_flight`: `9`
+- `europe_top_flight`: `17`
 - `nwsl`: `17`
 
 ## Rows
@@ -45,6 +45,14 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - Arkema Premiere Ligue | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/premiere_ligue_france/league_mark.png | source_candidate=https://uk.fff.fr/ | action=manual_logo_or_mark_review_required
 - Serie A Women Athora | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/league_mark.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
 - Arsenal Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/arsenal_women/logo.png | source_candidate=https://www.arsenal.com/women | action=manual_logo_or_mark_review_required
+- Aston Villa Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/aston_villa_women/logo.png | source_candidate=https://www.avfc.co.uk/teams/womens | action=manual_logo_or_mark_review_required
+- Brighton & Hove Albion Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/brighton_hove_albion_women/logo.png | source_candidate=https://www.brightonandhovealbion.com/pages/en/womens-team | action=manual_logo_or_mark_review_required
 - Chelsea Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/chelsea_women/logo.png | source_candidate=https://www.chelseafc.com/en/teams/chelsea-women | action=manual_logo_or_mark_review_required
+- Everton Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/everton_women/logo.png | source_candidate=https://www.evertonfc.com/teams/women | action=manual_logo_or_mark_review_required
+- Leicester City Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/leicester_city_women/logo.png | source_candidate=https://www.lcfc.com/pages/en/women | action=manual_logo_or_mark_review_required
+- Liverpool Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/liverpool_women/logo.png | source_candidate=https://www.liverpoolfc.com/team/womens | action=manual_logo_or_mark_review_required
+- London City Lionesses | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/london_city_lionesses/logo.png | source_candidate=https://www.londoncitylionesses.com/ | action=manual_logo_or_mark_review_required
 - Manchester City Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/manchester_city_women/logo.png | source_candidate=https://www.mancity.com/teams/mcwfc | action=manual_logo_or_mark_review_required
 - Manchester United Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/manchester_united_women/logo.png | source_candidate=https://www.manutd.com/en/teams/women | action=manual_logo_or_mark_review_required
+- Tottenham Hotspur Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/tottenham_hotspur_women/logo.png | source_candidate=https://www.tottenhamhotspur.com/teams/women/ | action=manual_logo_or_mark_review_required
+- West Ham United Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/west_ham_united_women/logo.png | source_candidate=https://www.whufc.com/teams/women | action=manual_logo_or_mark_review_required
