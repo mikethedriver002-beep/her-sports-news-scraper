@@ -94,6 +94,65 @@ def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_
     assert clear["athlete_identity_artifact"] == "data/asset_registry/wnba/athlete_identity_audit.csv"
 
 
+def test_active_athlete_identity_includes_closure_packet_cues(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    packet_dir = Path("data/asset_registry/wnba")
+    packet_dir.mkdir(parents=True)
+    review_row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "display_name": "Breanna Stewart",
+        "identity_review_status": "hold_identity_review_required",
+        "identity_hold": "true",
+        "default_approval_present": "true",
+        "review_required": "true",
+        "hold_reason_codes": "approved_asset_still_has_pending_match_review",
+        "focused_evidence": "approved marker decision_source=default",
+    }
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_review_packet.csv",
+        [review_row],
+        list(review_row.keys()),
+    )
+    write_json(
+        "data/asset_registry/wnba/athlete_identity_closure_packet.json",
+        {"report": {"status": "manual_identity_closure_ready", "closure_rows": 1, "backfill_rows": 1}},
+    )
+    closure_row = {
+        "issue_key": "issue_high",
+        "severity": "high",
+        "issue_code": "approved_asset_still_has_pending_match_review",
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "operator_closure_decision": "",
+    }
+    backfill_row = {
+        "backfill_key": "backfill_provider",
+        "target_csv": "data/asset_registry/wnba/athletes.csv",
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "target_field": "provider_player_id",
+        "proposed_value": "1627668",
+        "backfill_status": "manual_review_required",
+        "operator_decision": "",
+    }
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_issue_closure_template.csv",
+        [closure_row],
+        list(closure_row.keys()),
+    )
+    write_csv_with_fields(
+        "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv",
+        [backfill_row],
+        list(backfill_row.keys()),
+    )
+
+    identity = command_center.active_athlete_identity_for_packet({"top_performers": "Breanna Stewart: PTS 20"})
+
+    assert identity["active_athlete_identity_status"] == "hold_identity_review_required"
+    assert "closure_rows=1" in identity["active_athlete_identity_closure_cues"]
+    assert "provider_backfill_rows=1" in identity["active_athlete_identity_closure_cues"]
+    assert identity["athlete_identity_closure_artifact"] == "data/asset_registry/wnba/athlete_identity_closure_packet.md"
+    assert identity["athlete_identity_backfill_artifact"] == "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"
+
+
 def test_command_center_generated_artifacts_point_to_current_output_when_latest_exists(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     run_dir = tmp_path / "run" / "files"
@@ -1824,7 +1883,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.62.0-identity-closure-summary"
+    assert payload["version"] == "hsd-operator-command-center-v3.63.0-render-handoff-closure-cues"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
