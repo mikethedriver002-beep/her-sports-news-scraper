@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.82.0-liberty-logo-intake-bridge"
+VERSION = "hsd-operator-command-center-v3.83.0-league-mark-intake-bridge"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -29,6 +29,8 @@ OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD = OUT_RENDER_HANDOFF_DIR / "manual_
 OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV = OUT_RENDER_HANDOFF_DIR / "manual_asset_source_board.csv"
 OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE = OUT_RENDER_HANDOFF_DIR / "manual_logo_verification_intake.md"
 OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE_CSV = OUT_RENDER_HANDOFF_DIR / "manual_logo_verification_intake.csv"
+OUT_RENDER_HANDOFF_LEAGUE_MARK_INTAKE = OUT_RENDER_HANDOFF_DIR / "manual_league_mark_context_intake.md"
+OUT_RENDER_HANDOFF_LEAGUE_MARK_INTAKE_CSV = OUT_RENDER_HANDOFF_DIR / "manual_league_mark_context_intake.csv"
 OUT_RENDER_HANDOFF_SOURCE_PROOF = OUT_RENDER_HANDOFF_DIR / "source_proof.md"
 OUT_RENDER_HANDOFF_PROMPT = OUT_RENDER_HANDOFF_DIR / "manual_renderer_prompt.md"
 OUT_RENDER_HANDOFF_MANIFEST = OUT_RENDER_HANDOFF_DIR / "handoff_manifest.json"
@@ -204,6 +206,40 @@ MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS = [
     "publishing",
 ]
 
+MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS = [
+    "league_mark_intake_id",
+    "packet_id",
+    "priority",
+    "asset_domain",
+    "entity_id",
+    "entity_name",
+    "selected_template_blocking_status",
+    "selected_template_blocking_reason",
+    "local_league_mark_path",
+    "official_source_candidate",
+    "current_registry_source",
+    "current_approval_status",
+    "source_policy_status",
+    "evidence_gap_status",
+    "manual_intake_files",
+    "manual_intake_files_detail",
+    "manual_review_packet",
+    "operator_copy_target",
+    "required_manual_checks",
+    "allowed_manual_outcomes",
+    "template_requirement_rule",
+    "cannot_clear_automatically_because",
+    "review_only",
+    "approval_state_change",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+    "publishing",
+]
+
 COMMAND_CENTER_GENERATED_ARTIFACTS = {
     "render_handoff_top_packet/active_asset_review_queue.md",
     "render_handoff_top_packet/active_asset_review_queue.csv",
@@ -211,6 +247,8 @@ COMMAND_CENTER_GENERATED_ARTIFACTS = {
     "render_handoff_top_packet/manual_asset_source_board.csv",
     "render_handoff_top_packet/manual_logo_verification_intake.md",
     "render_handoff_top_packet/manual_logo_verification_intake.csv",
+    "render_handoff_top_packet/manual_league_mark_context_intake.md",
+    "render_handoff_top_packet/manual_league_mark_context_intake.csv",
 }
 
 ARTIFACTS = [
@@ -230,6 +268,8 @@ ARTIFACTS = [
     ("Decision", "Top render manual asset source board data", "render_handoff_top_packet/manual_asset_source_board.csv"),
     ("Decision", "Top render manual logo verification intake", "render_handoff_top_packet/manual_logo_verification_intake.md"),
     ("Decision", "Top render manual logo verification intake data", "render_handoff_top_packet/manual_logo_verification_intake.csv"),
+    ("Decision", "Top render manual league-mark context intake", "render_handoff_top_packet/manual_league_mark_context_intake.md"),
+    ("Decision", "Top render manual league-mark context intake data", "render_handoff_top_packet/manual_league_mark_context_intake.csv"),
     ("Decision", "Top render source proof", "render_handoff_top_packet/source_proof.md"),
     ("Decision", "Top render manual prompt", "render_handoff_top_packet/manual_renderer_prompt.md"),
     ("Decision", "Top render draft preview", "render_handoff_top_packet/draft_preview.png"),
@@ -3363,9 +3403,10 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             "3. `active_asset_review_queue.md`",
             "4. `manual_asset_source_board.md`",
             "5. `manual_logo_verification_intake.md`",
-            "6. `source_proof.md`",
-            "7. `manual_renderer_prompt.md`",
-            "8. `handoff_manifest.json`",
+            "6. `manual_league_mark_context_intake.md`",
+            "7. `source_proof.md`",
+            "8. `manual_renderer_prompt.md`",
+            "9. `handoff_manifest.json`",
             "",
             "## Guardrails",
             "",
@@ -3570,6 +3611,16 @@ def add_asset_evidence_gap_fields(row: Dict[str, str], lookup: Mapping[str, Dict
         else clean(row.get("identity_confidence")) or "manual_identity_review_required"
     )
     enriched["cannot_clear_automatically_because"] = cannot_clear_automatically_reason(row, catalog_row)
+    if (
+        clean(row.get("asset_domain")) == "league_logo"
+        and clean(row.get("selected_template_blocking_status")) == "not_blocking_selected_template_league_mark_not_required"
+    ):
+        enriched["allowed_decisions"] = (
+            "verify_league_mark_for_review_only_renderer_use|hold_league_mark|"
+            "mark_not_required_for_selected_template|revise_league_mark_source_metadata"
+        )
+        enriched["primary_action"] = "fill_league_mark_context_intake_or_mark_not_required_for_selected_template"
+        enriched["operator_copy_target"] = "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
     return enriched
 
 
@@ -3926,6 +3977,64 @@ def manual_logo_verification_intake_rows(source_board_rows: List[Dict[str, str]]
     return rows
 
 
+def manual_league_mark_context_intake_rows(source_board_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, row in enumerate(source_board_rows, 1):
+        if clean(row.get("priority")) != "P2_league_mark_context" or clean(row.get("asset_domain")) != "league_logo":
+            continue
+        entity_id = clean(row.get("entity_id")) or "WNBA"
+        entity_name = clean(row.get("entity_name")) or entity_id
+        intake_row = {
+            "league_mark_intake_id": f"manual_league_mark_intake_{index:03d}_{entity_id.lower()}",
+            "packet_id": clean(row.get("packet_id")),
+            "priority": clean(row.get("priority")),
+            "asset_domain": clean(row.get("asset_domain")),
+            "entity_id": entity_id,
+            "entity_name": entity_name,
+            "selected_template_blocking_status": clean(row.get("selected_template_blocking_status"))
+            or "not_blocking_selected_template_league_mark_not_required",
+            "selected_template_blocking_reason": (
+                "Current selected final-score template uses team logo slots; the WNBA league mark remains optional "
+                "review-only context unless a future selected template explicitly requires a league mark."
+            ),
+            "local_league_mark_path": clean(row.get("current_local_asset")) or "assets/leagues/wnba/logo.png",
+            "official_source_candidate": clean(row.get("official_source_candidate")) or "https://www.wnba.com/",
+            "current_registry_source": clean(row.get("current_registry_source")) or "missing",
+            "current_approval_status": clean(row.get("manual_approval_status")) or "manual_review_required",
+            "source_policy_status": clean(row.get("source_policy_status")) or "official_source_needed_review_only",
+            "evidence_gap_status": clean(row.get("evidence_gap_status")) or "official_source_needed_review_only",
+            "manual_intake_files": "data/asset_registry/wnba/wnba_league_mark_review_intake.csv",
+            "manual_intake_files_detail": (
+                "Human operator records whether the WNBA league mark is verified, held, not required for the "
+                "selected template, or needs source metadata revision. This generator does not apply the decision."
+            ),
+            "manual_review_packet": clean(row.get("manual_review_packet")) or "data/asset_registry/wnba/logo_review_catalog_report.md",
+            "operator_copy_target": clean(row.get("operator_copy_target")) or "operator/assets/brand_logos/README.md",
+            "required_manual_checks": (
+                "confirm the selected template actually requires a league mark; if yes, verify an exact local WNBA "
+                "mark path and official/free source evidence before any later registry edit"
+            ),
+            "allowed_manual_outcomes": (
+                "verify_league_mark_for_review_only_renderer_use|hold_league_mark|"
+                "mark_not_required_for_selected_template|revise_league_mark_source_metadata"
+            ),
+            "template_requirement_rule": "non_blocking_until_selected_template_requires_league_mark",
+            "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because"))
+            or "The WNBA league mark needs human source/file review before any renderer trust change.",
+            "review_only": "true",
+            "approval_state_change": "false",
+            "publish_ready": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "paid_apis": "false",
+            "asset_downloads": "false",
+            "publishing": "false",
+        }
+        rows.append({field: clean(intake_row.get(field)) for field in MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS})
+    return rows
+
+
 def decision_stop_go_summary(
     packet: Dict[str, str] | None,
     active_rows: List[Dict[str, str]],
@@ -3977,6 +4086,7 @@ def decision_stop_go_summary(
         "active_queue_artifact": "render_handoff_top_packet/active_asset_review_queue.md",
         "manual_asset_source_board_artifact": "render_handoff_top_packet/manual_asset_source_board.md",
         "manual_logo_verification_intake_artifact": "render_handoff_top_packet/manual_logo_verification_intake.md",
+        "manual_league_mark_context_intake_artifact": "render_handoff_top_packet/manual_league_mark_context_intake.md",
         "next_step": next_step,
         "guardrail_summary": "review-only; no downloads; no auto-approval; no file movement; no publishing; no publish-ready lane",
     }
@@ -4030,6 +4140,15 @@ def decision_review_order_checklist(summary: Dict[str, Any]) -> List[Dict[str, s
             clean(summary.get("manual_logo_verification_intake_artifact")) or "render_handoff_top_packet/manual_logo_verification_intake.md",
             "Use the intake bridge to see the exact local logo path, official source candidate, current legacy source, and human-edited registry files.",
             "Keep it review-only; only a human-edited registry update can clear the selected-template logo blocker.",
+        )
+    if league_count:
+        add_step(
+            len(rows) + 1,
+            "Open Manual League-Mark Context Intake",
+            clean(summary.get("manual_league_mark_context_intake_artifact"))
+            or "render_handoff_top_packet/manual_league_mark_context_intake.md",
+            "Use the league-mark intake to decide whether WNBA is verified for review-only use, held, or simply not required by the selected template.",
+            "Keep it display/manual only; no asset is approved unless a human later edits the league-mark intake and registry files.",
         )
     if selected_count or league_count:
         add_step(
@@ -4177,6 +4296,68 @@ def render_manual_logo_verification_intake(packet: Dict[str, str] | None, rows: 
             f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`",
             f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
             f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
+            f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
+            f"- Guardrails: review_only={clean(row.get('review_only'))}; approval_state_change={clean(row.get('approval_state_change'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}; publishing={clean(row.get('publishing'))}",
+            "",
+        ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_manual_league_mark_context_intake(packet: Dict[str, str] | None, rows: List[Dict[str, str]]) -> str:
+    lines = [
+        "# Manual League-Mark Context Intake",
+        "",
+        f"Packet: `{clean(packet.get('packet_id')) if packet else ''}`",
+        f"Story: {clean(packet.get('title')) if packet else 'No active render packet'}",
+        "",
+        "Review-only bridge for optional WNBA league-mark context. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.",
+        "",
+        "## Guardrails",
+        "",
+        "- review_only=true",
+        "- approval_state_change=false",
+        "- publish_ready=false",
+        "- auto_approval=false",
+        "- auto_publish=false",
+        "- move_files=false",
+        "- paid_apis=false",
+        "- asset_downloads=false",
+        "- publishing=false",
+        "",
+    ]
+    if not rows:
+        lines += ["No league-mark context intake rows were available.", ""]
+        return "\n".join(lines)
+    lines += [
+        "## Summary",
+        "",
+        f"- Intake bridge rows: {len(rows)}",
+        "- Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`",
+        "- Selected-template rule: keep WNBA league mark optional/non-blocking unless the selected template explicitly requires it.",
+        "- Use this as review guidance only. The operator must make any registry edits manually after source and local-file review.",
+        "",
+        "## Rows",
+        "",
+    ]
+    for index, row in enumerate(rows, 1):
+        lines += [
+            f"### {index}. {clean(row.get('entity_name')) or clean(row.get('entity_id'))}",
+            "",
+            f"- League-mark status: `{clean(row.get('selected_template_blocking_status'))}`",
+            f"- Selected-template rule: {clean(row.get('selected_template_blocking_reason'))}",
+            f"- Local league-mark path: `{clean(row.get('local_league_mark_path')) or 'missing'}`",
+            f"- Official source candidate: {clean(row.get('official_source_candidate')) or 'manual lookup required'}",
+            f"- Current registry source: {clean(row.get('current_registry_source')) or 'missing'}",
+            f"- Current approval status: `{clean(row.get('current_approval_status'))}`",
+            f"- Source policy status: `{clean(row.get('source_policy_status'))}`",
+            f"- Evidence gap status: `{clean(row.get('evidence_gap_status'))}`",
+            f"- Human-edited manual intake file: `{clean(row.get('manual_intake_files'))}`",
+            f"- Manual intake detail: {clean(row.get('manual_intake_files_detail'))}",
+            f"- Manual review packet: `{clean(row.get('manual_review_packet'))}`",
+            f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`",
+            f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
+            f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
+            f"- Template requirement rule: `{clean(row.get('template_requirement_rule'))}`",
             f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
             f"- Guardrails: review_only={clean(row.get('review_only'))}; approval_state_change={clean(row.get('approval_state_change'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}; publishing={clean(row.get('publishing'))}",
             "",
@@ -4382,6 +4563,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
     manifest_active_asset_rows = active_asset_review_queue_rows(packet) if packet else []
     manifest_manual_source_rows = manual_asset_source_board_rows(manifest_active_asset_rows)
     manifest_logo_intake_rows = manual_logo_verification_intake_rows(manifest_manual_source_rows)
+    manifest_league_mark_intake_rows = manual_league_mark_context_intake_rows(manifest_manual_source_rows)
     write_text(OUT_RENDER_HANDOFF_README, render_handoff_readme(payload, packet))
     manifest = {
         "version": payload["version"],
@@ -4432,6 +4614,24 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                 "data/asset_registry/wnba/logo_sources.csv",
             ],
         },
+        "manual_league_mark_context_intake": {
+            "rows": len(manifest_league_mark_intake_rows),
+            "review_only": True,
+            "approval_state_change": False,
+            "asset_downloads": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+            "publish_ready": False,
+            "publishing": False,
+            "artifact": "manual_league_mark_context_intake.md",
+            "data_artifact": "manual_league_mark_context_intake.csv",
+            "human_intake_files": [
+                "data/asset_registry/wnba/wnba_league_mark_review_intake.csv",
+            ],
+            "template_requirement_rule": "non_blocking_until_selected_template_requires_league_mark",
+        },
         "files": [
             "README.md",
             "copy_sheet.md",
@@ -4444,6 +4644,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
             "manual_asset_source_board.csv",
             "manual_logo_verification_intake.md",
             "manual_logo_verification_intake.csv",
+            "manual_league_mark_context_intake.md",
+            "manual_league_mark_context_intake.csv",
             "source_proof.md",
             "manual_renderer_prompt.md",
             "handoff_manifest.json",
@@ -4503,12 +4705,15 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
         active_asset_rows = manifest_active_asset_rows
         manual_asset_source_rows = manifest_manual_source_rows
         manual_logo_intake_rows = manifest_logo_intake_rows
+        manual_league_mark_intake_rows = manifest_league_mark_intake_rows
         write_text(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE, render_active_asset_review_queue(packet, active_asset_rows))
         write_csv(OUT_RENDER_HANDOFF_ACTIVE_ASSET_QUEUE_CSV, active_asset_rows, ACTIVE_ASSET_REVIEW_QUEUE_FIELDS)
         write_text(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD, render_manual_asset_source_board(packet, manual_asset_source_rows))
         write_csv(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV, manual_asset_source_rows, MANUAL_ASSET_SOURCE_BOARD_FIELDS)
         write_text(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE, render_manual_logo_verification_intake(packet, manual_logo_intake_rows))
         write_csv(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE_CSV, manual_logo_intake_rows, MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS)
+        write_text(OUT_RENDER_HANDOFF_LEAGUE_MARK_INTAKE, render_manual_league_mark_context_intake(packet, manual_league_mark_intake_rows))
+        write_csv(OUT_RENDER_HANDOFF_LEAGUE_MARK_INTAKE_CSV, manual_league_mark_intake_rows, MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS)
         write_text(OUT_RENDER_HANDOFF_SOURCE_PROOF, render_handoff_source_proof(packet))
         write_text(OUT_RENDER_HANDOFF_PROMPT, render_manual_renderer_prompt(packet))
     else:
@@ -4518,6 +4723,8 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
         write_csv(OUT_RENDER_HANDOFF_MANUAL_ASSET_SOURCE_BOARD_CSV, [], MANUAL_ASSET_SOURCE_BOARD_FIELDS)
         write_text(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE, render_manual_logo_verification_intake(None, []))
         write_csv(OUT_RENDER_HANDOFF_LOGO_VERIFICATION_INTAKE_CSV, [], MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS)
+        write_text(OUT_RENDER_HANDOFF_LEAGUE_MARK_INTAKE, render_manual_league_mark_context_intake(None, []))
+        write_csv(OUT_RENDER_HANDOFF_LEAGUE_MARK_INTAKE_CSV, [], MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS)
     write_json(OUT_RENDER_HANDOFF_MANIFEST, manifest)
 
 
@@ -5424,6 +5631,7 @@ def build_payload() -> Dict[str, Any]:
     active_asset_rows = active_asset_review_queue_rows(top_render_packet) if top_render_packet else []
     manual_asset_source_board = manual_asset_source_board_rows(active_asset_rows)
     manual_logo_verification_intake = manual_logo_verification_intake_rows(manual_asset_source_board)
+    manual_league_mark_context_intake = manual_league_mark_context_intake_rows(manual_asset_source_board)
     stop_go_summary = decision_stop_go_summary(top_render_packet, active_asset_rows, manual_asset_source_board)
     review_order_checklist = decision_review_order_checklist(stop_go_summary)
     operator_decision_panel = operator_decision_ui_panel()
@@ -5596,6 +5804,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Review-order checklist", len(review_order_checklist)),
         metric("Manual asset source board", len(manual_asset_source_board)),
         metric("Manual logo intake bridge", len(manual_logo_verification_intake)),
+        metric("Manual league-mark intake bridge", len(manual_league_mark_context_intake)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
         metric("Asset audit", asset_readiness_panel["panel_status"], asset_readiness_panel["next_step"]),
@@ -5673,6 +5882,7 @@ def build_payload() -> Dict[str, Any]:
         "decision_review_order_checklist": review_order_checklist,
         "manual_asset_source_board": manual_asset_source_board,
         "manual_logo_verification_intake": manual_logo_verification_intake,
+        "manual_league_mark_context_intake": manual_league_mark_context_intake,
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
         "athlete_photo_onboarding_panel": athlete_photo_panel,
@@ -6083,6 +6293,60 @@ def render_manual_logo_verification_intake_panel(rows: Iterable[Dict[str, str]])
         <p class="muted">Human verification path for selected-template logo blockers. This only points to exact evidence and human-edited intake files; it does not approve assets or change registry state.</p>
         <div class="asset-blocker-grid">
           {render_manual_logo_verification_intake_cards(intake_rows)}
+        </div>
+      </div>
+    """
+
+
+def render_manual_league_mark_context_intake_cards(rows: Iterable[Dict[str, str]]) -> str:
+    body = []
+    for row in rows:
+        intake_link = open_link("render_handoff_top_packet/manual_league_mark_context_intake.md", "Open intake")
+        body.append(
+            f"""
+            <article class="asset-blocker-card manual-league-mark-intake-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">{html.escape(clean(row.get('priority')))} / optional league mark</span>
+                  <strong>{html.escape(clean(row.get('entity_name')) or clean(row.get('entity_id')))}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill(clean(row.get('current_approval_status')) or 'manual_review_required', 'warn')}
+                  {pill('non-blocking unless required', 'good')}
+                </div>
+              </div>
+              <div class="asset-guidance-grid">
+                <div><span>Local league-mark path</span><strong>{html.escape(short(clean(row.get('local_league_mark_path')) or 'missing', 135))}</strong></div>
+                <div><span>Official source candidate</span><strong>{html.escape(short(clean(row.get('official_source_candidate')) or 'manual lookup required', 135))}</strong></div>
+                <div><span>Current registry source</span><strong>{html.escape(short(clean(row.get('current_registry_source')) or 'missing', 135))}</strong></div>
+                <div><span>Human-edited intake</span><strong>{html.escape(short(clean(row.get('manual_intake_files')), 160))}</strong></div>
+                <div><span>Template rule</span><strong>{html.escape(short(clean(row.get('template_requirement_rule')), 135))}</strong></div>
+                <div><span>Evidence gap</span><strong>{html.escape(short(clean(row.get('evidence_gap_status')) or 'manual_evidence_review_required', 135))}</strong></div>
+              </div>
+              <p class="muted"><strong>Selected-template rule:</strong> {html.escape(short(clean(row.get('selected_template_blocking_reason')), 220))}</p>
+              <p class="muted"><strong>Required manual checks:</strong> {html.escape(short(clean(row.get('required_manual_checks')), 220))}</p>
+              <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')), 220))}</p>
+              <div class="asset-blocker-actions">
+                {intake_link}
+                {open_link(clean(row.get('manual_review_packet')) or 'data/asset_registry/wnba/logo_review_catalog_report.md', 'Open logo catalog')}
+                {pill('no downloads')}
+                {pill('no auto-approval')}
+                {pill('publish-ready: false')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No league-mark context intake rows found.</p>'
+
+
+def render_manual_league_mark_context_intake_panel(rows: Iterable[Dict[str, str]]) -> str:
+    intake_rows = list(rows)
+    return f"""
+      <div class="decision-desk-section">
+        <div class="row-kicker">Manual League-Mark Context Intake {pill(str(len(intake_rows)) + ' rows')} {pill('optional unless required')} {pill('approval change: false')}</div>
+        <p class="muted">Human review path for WNBA league-mark context. If a selected template does not require a league mark, this remains non-blocking review-only context.</p>
+        <div class="asset-blocker-grid">
+          {render_manual_league_mark_context_intake_cards(intake_rows)}
         </div>
       </div>
     """
@@ -7832,6 +8096,7 @@ def render_html(payload: Dict[str, Any]) -> str:
         {render_asset_readiness_panel(payload['asset_readiness_panel'])}
         {render_manual_asset_source_board_panel(payload.get('manual_asset_source_board', []))}
         {render_manual_logo_verification_intake_panel(payload.get('manual_logo_verification_intake', []))}
+        {render_manual_league_mark_context_intake_panel(payload.get('manual_league_mark_context_intake', []))}
         {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
         <h2>Manual visual QA decision</h2>
         {render_operator_decision_panel(payload['operator_decision_panel'])}
@@ -8698,6 +8963,22 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- Logo intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_logo_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_legacy_source={item.get('current_legacy_registry_source') or 'missing'} | status={item.get('current_unapproved_status') or 'manual_review_required'} | human_files={item.get('manual_intake_files')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
         for item in logo_intake[:8]
+    )
+    league_mark_intake = payload.get("manual_league_mark_context_intake", [])
+    lines += [
+        "",
+        "## Manual League-Mark Context Intake",
+        "",
+        f"- Intake bridge rows: {len(league_mark_intake)}",
+        "- Artifact: `render_handoff_top_packet/manual_league_mark_context_intake.md`",
+        "- Data: `render_handoff_top_packet/manual_league_mark_context_intake.csv`",
+        "- Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`",
+        "- Selected-template rule: WNBA league mark is optional/non-blocking unless the selected template explicitly requires it.",
+        "- Guardrails: review-only, approval_state_change=false, no downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
+    ]
+    lines.extend(
+        f"- League-mark intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_league_mark_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_registry_source={item.get('current_registry_source') or 'missing'} | status={item.get('current_approval_status') or 'manual_review_required'} | template_rule={item.get('template_requirement_rule')} | human_file={item.get('manual_intake_files')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
+        for item in league_mark_intake[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
     lines += [

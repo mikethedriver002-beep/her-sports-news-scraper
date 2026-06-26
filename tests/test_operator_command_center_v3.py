@@ -388,6 +388,7 @@ def test_decision_stop_go_summary_separates_blockers_from_context_rows() -> None
     assert summary["source_board_rows"] == 3
     assert summary["active_queue_artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
     assert summary["manual_asset_source_board_artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
+    assert summary["manual_league_mark_context_intake_artifact"] == "render_handoff_top_packet/manual_league_mark_context_intake.md"
     assert "no downloads" in summary["guardrail_summary"]
     assert "no auto-approval" in summary["guardrail_summary"]
     checklist = command_center.decision_review_order_checklist(summary)
@@ -395,12 +396,14 @@ def test_decision_stop_go_summary_separates_blockers_from_context_rows() -> None
         "Open active asset queue",
         "Open Manual Asset Source Board",
         "Open Manual Logo Verification Intake Bridge",
+        "Open Manual League-Mark Context Intake",
         "Open WNBA logo review catalog",
     ]
     assert checklist[0]["artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
     assert checklist[1]["artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
     assert checklist[2]["artifact"] == "render_handoff_top_packet/manual_logo_verification_intake.md"
-    assert checklist[3]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert checklist[3]["artifact"] == "render_handoff_top_packet/manual_league_mark_context_intake.md"
+    assert checklist[4]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
     assert all(row["review_only"] == "true" for row in checklist)
     assert all(row["approval_state_change"] == "false" for row in checklist)
     assert all(row["asset_downloads"] == "false" for row in checklist)
@@ -487,14 +490,17 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
     active_rows = command_center.active_asset_review_queue_rows(packet)
     board_rows = command_center.manual_asset_source_board_rows(active_rows)
     intake_rows = command_center.manual_logo_verification_intake_rows(board_rows)
+    league_mark_intake_rows = command_center.manual_league_mark_context_intake_rows(board_rows)
     summary = command_center.decision_stop_go_summary(packet, active_rows, board_rows)
     active_md = command_center.render_active_asset_review_queue(packet, active_rows)
     board_md = command_center.render_manual_asset_source_board(packet, board_rows)
     intake_md = command_center.render_manual_logo_verification_intake(packet, intake_rows)
+    league_intake_md = command_center.render_manual_league_mark_context_intake(packet, league_mark_intake_rows)
     html = (
         command_center.render_decision_stop_go_summary_panel(summary)
         + command_center.render_manual_asset_source_board_panel(board_rows)
         + command_center.render_manual_logo_verification_intake_panel(intake_rows)
+        + command_center.render_manual_league_mark_context_intake_panel(league_mark_intake_rows)
     )
 
     liberty_queue = next(row for row in active_rows if row["entity_name"] == "New York Liberty")
@@ -508,12 +514,16 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
     assert wnba_queue["local_asset_state"] == "missing_or_unregistered"
     assert wnba_queue["official_source_candidate"] == "https://www.wnba.com/"
     assert wnba_queue["evidence_gap_status"] == "official_source_needed_review_only"
+    assert wnba_queue["operator_copy_target"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
+    assert wnba_queue["primary_action"] == "fill_league_mark_context_intake_or_mark_not_required_for_selected_template"
+    assert "mark_not_required_for_selected_template" in wnba_queue["allowed_decisions"]
     assert "league-mark context only" in wnba_queue["cannot_clear_automatically_because"]
     assert "New York Liberty: present_unapproved_legacy_source_review" in summary["selected_template_evidence_gaps"]
     assert "WNBA: official_source_needed_review_only" in summary["league_mark_evidence_gaps"]
     assert "Cannot clear automatically because: New York Liberty is selected-template blocking" in active_md
     assert "Evidence gap status: `present_unapproved_legacy_source_review`" in board_md
     assert "Current registry source: https://upload.wikimedia.org/new-york-liberty-logo.png" in board_md
+    assert "Operator copy target: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`" in board_md
     assert len(intake_rows) == 1
     liberty_intake = intake_rows[0]
     assert liberty_intake["entity_name"] == "New York Liberty"
@@ -526,8 +536,18 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
     assert liberty_intake["asset_downloads"] == "false"
     assert "Manual Logo Verification Intake Bridge" in intake_md
     assert "Human-edited manual intake files: `data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv`" in intake_md
+    assert len(league_mark_intake_rows) == 1
+    wnba_intake = league_mark_intake_rows[0]
+    assert wnba_intake["entity_name"] == "WNBA"
+    assert wnba_intake["manual_intake_files"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
+    assert wnba_intake["template_requirement_rule"] == "non_blocking_until_selected_template_requires_league_mark"
+    assert "mark_not_required_for_selected_template" in wnba_intake["allowed_manual_outcomes"]
+    assert "Manual League-Mark Context Intake" in league_intake_md
+    assert "optional/non-blocking unless the selected template explicitly requires it" in league_intake_md
     assert "Cannot clear automatically because" in html
     assert "Manual Logo Verification Intake Bridge" in html
+    assert "Manual League-Mark Context Intake" in html
+    assert "non-blocking unless required" in html
     assert all(row["publish_ready"] == "false" for row in active_rows)
     assert all(row["auto_approval"] == "false" for row in active_rows)
     assert all(row["asset_downloads"] == "false" for row in active_rows)
@@ -560,6 +580,8 @@ def test_command_center_generated_artifacts_point_to_current_output_when_latest_
     (stale / "manual_asset_source_board.csv").write_text("stale,source\n", encoding="utf-8")
     (stale / "manual_logo_verification_intake.md").write_text("stale logo intake", encoding="utf-8")
     (stale / "manual_logo_verification_intake.csv").write_text("stale,logo\n", encoding="utf-8")
+    (stale / "manual_league_mark_context_intake.md").write_text("stale league mark intake", encoding="utf-8")
+    (stale / "manual_league_mark_context_intake.csv").write_text("stale,league\n", encoding="utf-8")
 
     by_path = {row["path"]: row for row in command_center.artifact_entries()}
 
@@ -569,18 +591,24 @@ def test_command_center_generated_artifacts_point_to_current_output_when_latest_
     board_csv_artifact = by_path["render_handoff_top_packet/manual_asset_source_board.csv"]
     intake_md_artifact = by_path["render_handoff_top_packet/manual_logo_verification_intake.md"]
     intake_csv_artifact = by_path["render_handoff_top_packet/manual_logo_verification_intake.csv"]
+    league_md_artifact = by_path["render_handoff_top_packet/manual_league_mark_context_intake.md"]
+    league_csv_artifact = by_path["render_handoff_top_packet/manual_league_mark_context_intake.csv"]
     assert md_artifact["status_detail"] == "Created with this command center run"
     assert csv_artifact["status_detail"] == "Created with this command center run"
     assert board_md_artifact["status_detail"] == "Created with this command center run"
     assert board_csv_artifact["status_detail"] == "Created with this command center run"
     assert intake_md_artifact["status_detail"] == "Created with this command center run"
     assert intake_csv_artifact["status_detail"] == "Created with this command center run"
+    assert league_md_artifact["status_detail"] == "Created with this command center run"
+    assert league_csv_artifact["status_detail"] == "Created with this command center run"
     assert md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.md").as_posix()
     assert csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.csv").as_posix()
     assert board_md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_asset_source_board.md").as_posix()
     assert board_csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_asset_source_board.csv").as_posix()
     assert intake_md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_logo_verification_intake.md").as_posix()
     assert intake_csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_logo_verification_intake.csv").as_posix()
+    assert league_md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_league_mark_context_intake.md").as_posix()
+    assert league_csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/manual_league_mark_context_intake.csv").as_posix()
     assert "latest" not in md_artifact["source_path"]
 
 
@@ -2306,7 +2334,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.82.0-liberty-logo-intake-bridge"
+    assert payload["version"] == "hsd-operator-command-center-v3.83.0-league-mark-intake-bridge"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2686,7 +2714,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
         and item["value"] == "hold_selected_template_manual_asset_review"
         for item in payload["metrics"]
     )
-    assert any(item["label"] == "Review-order checklist" and item["value"] == "4" for item in payload["metrics"])
+    assert any(item["label"] == "Review-order checklist" and item["value"] == "5" for item in payload["metrics"])
     assert payload["decision_stop_go_summary"]["panel_status"] == "hold_selected_template_manual_asset_review"
     assert payload["decision_stop_go_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert payload["decision_stop_go_summary"]["selected_template_blockers"] == 1
@@ -2702,18 +2730,26 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
         "Open active asset queue",
         "Open Manual Asset Source Board",
         "Open Manual Logo Verification Intake Bridge",
+        "Open Manual League-Mark Context Intake",
         "Open WNBA logo review catalog",
     ]
     assert payload["decision_review_order_checklist"][0]["artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
     assert payload["decision_review_order_checklist"][1]["artifact"] == "render_handoff_top_packet/manual_asset_source_board.md"
     assert payload["decision_review_order_checklist"][2]["artifact"] == "render_handoff_top_packet/manual_logo_verification_intake.md"
-    assert payload["decision_review_order_checklist"][3]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
+    assert payload["decision_review_order_checklist"][3]["artifact"] == "render_handoff_top_packet/manual_league_mark_context_intake.md"
+    assert payload["decision_review_order_checklist"][4]["artifact"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
     assert all(row["approval_state_change"] == "false" for row in payload["decision_review_order_checklist"])
     assert all(row["asset_downloads"] == "false" for row in payload["decision_review_order_checklist"])
     assert any(item["label"] == "Manual asset source board" and item["value"] == "3" for item in payload["metrics"])
     assert any(item["label"] == "Manual logo intake bridge" and item["value"] == "1" for item in payload["metrics"])
+    assert any(item["label"] == "Manual league-mark intake bridge" and item["value"] == "1" for item in payload["metrics"])
     assert len(payload["manual_asset_source_board"]) == 3
     assert {row["entity_name"] for row in payload["manual_asset_source_board"]} == {"New York Liberty", "WNBA", "Breanna Stewart"}
+    assert len(payload["manual_league_mark_context_intake"]) == 1
+    wnba_league_intake = payload["manual_league_mark_context_intake"][0]
+    assert wnba_league_intake["entity_name"] == "WNBA"
+    assert wnba_league_intake["manual_intake_files"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
+    assert wnba_league_intake["template_requirement_rule"] == "non_blocking_until_selected_template_requires_league_mark"
     liberty_source = next(row for row in payload["manual_asset_source_board"] if row["entity_name"] == "New York Liberty")
     breanna_source = next(row for row in payload["manual_asset_source_board"] if row["entity_name"] == "Breanna Stewart")
     assert liberty_source["priority"] == "P0_selected_template_hold"
@@ -3118,16 +3154,19 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Open active asset queue" in html
     assert "Open Manual Asset Source Board" in html
     assert "Open Manual Logo Verification Intake Bridge" in html
+    assert "Open Manual League-Mark Context Intake" in html
     assert "Open WNBA logo review catalog" in html
     assert "render_handoff_top_packet/active_asset_review_queue.md" in html
     assert "render_handoff_top_packet/manual_asset_source_board.md" in html
     assert "render_handoff_top_packet/manual_logo_verification_intake.md" in html
+    assert "render_handoff_top_packet/manual_league_mark_context_intake.md" in html
     assert "data/asset_registry/wnba/logo_review_catalog_report.md" in html
     assert "Open These In Order" in markdown
     assert "1. Open active asset queue" in markdown
     assert "2. Open Manual Asset Source Board" in markdown
     assert "3. Open Manual Logo Verification Intake Bridge" in markdown
-    assert "4. Open WNBA logo review catalog" in markdown
+    assert "4. Open Manual League-Mark Context Intake" in markdown
+    assert "5. Open WNBA logo review catalog" in markdown
     assert "approval_change=false" in markdown
     assert "downloads=false" in markdown
     assert "Manual Asset Source Board" in html
@@ -3135,6 +3174,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Manual Asset Source Board" in markdown
     assert "Manual Logo Verification Intake Bridge" in html
     assert "Manual Logo Verification Intake Bridge" in markdown
+    assert "Manual League-Mark Context Intake" in html
+    assert "Manual League-Mark Context Intake" in markdown
     assert "Source-board rows: 3" in markdown
     assert "Intake bridge rows: 1" in markdown
     assert "P0 selected-template holds: 1" in markdown
@@ -3161,6 +3202,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/manual_asset_source_board.csv").exists()
     assert Path("render_handoff_top_packet/manual_logo_verification_intake.md").exists()
     assert Path("render_handoff_top_packet/manual_logo_verification_intake.csv").exists()
+    assert Path("render_handoff_top_packet/manual_league_mark_context_intake.md").exists()
+    assert Path("render_handoff_top_packet/manual_league_mark_context_intake.csv").exists()
     assert Path("render_handoff_top_packet/source_proof.md").exists()
     assert Path("render_handoff_top_packet/manual_renderer_prompt.md").exists()
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
@@ -3174,6 +3217,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "do not approve assets or create a publish-ready lane" in readme
     assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in readme
     assert "5. `manual_logo_verification_intake.md`" in readme
+    assert "6. `manual_league_mark_context_intake.md`" in readme
     active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
     assert "Active Asset Review Queue" in active_queue
     assert "## Summary" in active_queue
@@ -3207,6 +3251,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Blocker summary: WNBA: missing league mark" in active_queue
     assert "Manual review packet: `data/asset_registry/wnba/logo_review_catalog_report.md`" in active_queue
     assert "Operator copy target: `operator/assets/brand_logos/README.md`" in active_queue
+    assert "Operator copy target: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`" in active_queue
     assert "Manual review packet: `data/asset_registry/wnba/athlete_identity_resolution_workflow.md`" in active_queue
     assert "Operator copy target: `operator/inbox/wnba_athlete_identity_resolution.csv`" in active_queue
     assert "Source check URL: https://example.test/liberty-logo.png" in active_queue
@@ -3243,6 +3288,18 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert logo_intake_rows[0]["entity_name"] == "New York Liberty"
     assert logo_intake_rows[0]["approval_state_change"] == "false"
     assert logo_intake_rows[0]["asset_downloads"] == "false"
+    league_intake = Path("render_handoff_top_packet/manual_league_mark_context_intake.md").read_text(encoding="utf-8")
+    assert "Manual League-Mark Context Intake" in league_intake
+    assert "Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`" in league_intake
+    assert "Selected-template rule: keep WNBA league mark optional/non-blocking unless the selected template explicitly requires it." in league_intake
+    assert "Template requirement rule: `non_blocking_until_selected_template_requires_league_mark`" in league_intake
+    assert "approval_state_change=false" in league_intake
+    league_intake_rows = list(csv.DictReader(Path("render_handoff_top_packet/manual_league_mark_context_intake.csv").open(encoding="utf-8")))
+    assert len(league_intake_rows) == 1
+    assert league_intake_rows[0]["entity_name"] == "WNBA"
+    assert league_intake_rows[0]["manual_intake_files"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
+    assert league_intake_rows[0]["approval_state_change"] == "false"
+    assert league_intake_rows[0]["asset_downloads"] == "false"
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
     assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
     liberty_queue = next(row for row in active_queue_rows if row["entity_name"] == "New York Liberty")
@@ -3268,10 +3325,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert wnba_queue["asset_readiness"] == "optional_league_logo_file_missing_review_only"
     assert wnba_queue["selected_template_blocking_status"] == "not_blocking_selected_template_league_mark_not_required"
     assert wnba_queue["blocker_summary"] == "WNBA: missing league mark; default decision=hold_league_mark; readiness=optional_league_logo_file_missing_review_only"
-    assert wnba_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
-    assert wnba_queue["primary_action"] == "supply_exact_local_logo_and_manual_registry_review"
+    assert wnba_queue["allowed_decisions"] == "verify_league_mark_for_review_only_renderer_use|hold_league_mark|mark_not_required_for_selected_template|revise_league_mark_source_metadata"
+    assert wnba_queue["primary_action"] == "fill_league_mark_context_intake_or_mark_not_required_for_selected_template"
     assert wnba_queue["manual_review_packet"] == "data/asset_registry/wnba/logo_review_catalog_report.md"
-    assert wnba_queue["operator_copy_target"] == "operator/assets/brand_logos/README.md"
+    assert wnba_queue["operator_copy_target"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
     assert wnba_queue["registered_path"] == "assets/leagues/wnba/logos/league/wnba.png"
     assert wnba_queue["source_target_path"] == "assets/leagues/wnba/logos/league/wnba.png"
     assert all(row["publish_ready"] == "false" for row in active_queue_rows)
@@ -3334,6 +3391,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_handoff_manifest["manual_logo_verification_intake"]["asset_downloads"] is False
     assert render_handoff_manifest["manual_logo_verification_intake"]["auto_approval"] is False
     assert "manual_logo_verification_intake.md" in render_handoff_manifest["files"]
+    assert render_handoff_manifest["manual_league_mark_context_intake"]["rows"] == 1
+    assert render_handoff_manifest["manual_league_mark_context_intake"]["review_only"] is True
+    assert render_handoff_manifest["manual_league_mark_context_intake"]["approval_state_change"] is False
+    assert render_handoff_manifest["manual_league_mark_context_intake"]["asset_downloads"] is False
+    assert render_handoff_manifest["manual_league_mark_context_intake"]["auto_approval"] is False
+    assert render_handoff_manifest["manual_league_mark_context_intake"]["template_requirement_rule"] == "non_blocking_until_selected_template_requires_league_mark"
+    assert "manual_league_mark_context_intake.md" in render_handoff_manifest["files"]
 
 
 def test_operator_command_center_identity_resolution_requires_full_renderer_clearance_contract(tmp_path, monkeypatch) -> None:
