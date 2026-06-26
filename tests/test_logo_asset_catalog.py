@@ -112,6 +112,8 @@ def test_logo_asset_catalog_is_review_only_and_reports_formats(tmp_path: Path, m
     assert rows["approved_team"]["approval_status"] == "approved"
     assert rows["approved_team"]["png_exists"] == "true"
     assert rows["approved_team"]["svg_exists"] == "true"
+    assert rows["approved_team"]["source_trust_status"] == "source_policy_not_registered_review_required"
+    assert rows["approved_team"]["operator_action"] == "manual_source_recheck_required_before_operator_trust"
     assert rows["review_team"]["approval_status"] == "unapproved_review_required"
     assert rows["review_team"]["fallback_status"] == "fallback_review_only_human_hold"
     assert rows["missing_team"]["approval_status"] == "not_registered"

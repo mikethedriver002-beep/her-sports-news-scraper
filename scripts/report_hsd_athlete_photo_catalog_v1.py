@@ -6,7 +6,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -120,15 +120,48 @@ def by_key(rows: Iterable[Mapping[str, str]], *fields: str) -> Dict[Tuple[str, .
     return out
 
 
+def matched_approved_registry_row(
+    image_row: Mapping[str, str],
+    approved_by_athlete: Mapping[Tuple[str, ...], Mapping[str, str]],
+) -> Mapping[str, str]:
+    athlete_id = clean(image_row.get("athlete_id"))
+    image_path = clean(image_row.get("file_path"))
+    approved = approved_by_athlete.get((athlete_id,), {})
+    if approved and clean(approved.get("approved_file")) == image_path:
+        return approved
+    return {}
+
+
+def manual_source_warnings(approved: Mapping[str, str]) -> List[str]:
+    if not approved:
+        return ["approved_assets_registry_missing_manual_review_required"]
+
+    warnings: List[str] = []
+    decision_source = clean(approved.get("decision_source")).lower()
+    if not decision_source or decision_source == "unknown":
+        warnings.append("unknown_decision_source_manual_review_required")
+    elif decision_source == "default" or decision_source.startswith("default_"):
+        warnings.append("default_decision_source_manual_recheck_required")
+
+    source_file = clean(approved.get("source_file")).lower()
+    if not source_file or source_file == "unknown":
+        warnings.append("source_file_missing_manual_review_required")
+
+    approved_at = clean(approved.get("approved_at_utc")).lower()
+    if not approved_at or approved_at == "unknown":
+        warnings.append("approved_timestamp_missing_manual_review_required")
+
+    return warnings
+
+
 def source_evidence_for(
     image_row: Mapping[str, str],
     approved_by_athlete: Mapping[Tuple[str, ...], Mapping[str, str]],
     review_by_athlete: Mapping[Tuple[str, ...], Mapping[str, str]],
 ) -> str:
     athlete_id = clean(image_row.get("athlete_id"))
-    image_path = clean(image_row.get("file_path"))
-    approved = approved_by_athlete.get((athlete_id,))
-    if approved and clean(approved.get("approved_file")) == image_path:
+    approved = matched_approved_registry_row(image_row, approved_by_athlete)
+    if approved:
         parts = [
             "approved_assets_registry",
             f"decision_source={clean(approved.get('decision_source')) or 'unknown'}",
@@ -179,6 +212,14 @@ def crop_notes(path: Path, asset_kind: str, status: str, registry_approved: bool
     return "; ".join(notes)
 
 
+def render_template_uses_for(status: str, approved_templates: str, source_warnings: List[str]) -> str:
+    if status == "approved" and not source_warnings:
+        return approved_templates
+    if status == "approved" and source_warnings:
+        return "review_only_manual_source_recheck_required: " + "; ".join(source_warnings)
+    return "review_only_not_renderable_until_approved"
+
+
 def build_catalog(
     athlete_rows: List[Mapping[str, str]],
     image_rows: List[Mapping[str, str]],
@@ -200,6 +241,11 @@ def build_catalog(
         marker_exists = marker.exists()
         status = status_for(path, marker, registry_approved)
         asset_kind = clean(image.get("image_type")) or "photo"
+        approved_registry_row = matched_approved_registry_row(image, approved_by_athlete)
+        source_warnings = manual_source_warnings(approved_registry_row) if status == "approved" else []
+        notes = crop_notes(path, asset_kind, status, registry_approved, marker_exists)
+        if source_warnings:
+            notes = "; ".join([notes, *source_warnings])
         rows.append({
             "athlete_id": athlete_id,
             "athlete_name": clean(image.get("display_name")) or clean(athlete.get("display_name")),
@@ -213,8 +259,8 @@ def build_catalog(
             "approved_marker_exists": "true" if marker_exists else "false",
             "status": status,
             "source_evidence": source_evidence_for(image, approved_by_athlete, review_by_athlete),
-            "crop_readiness_notes": crop_notes(path, asset_kind, status, registry_approved, marker_exists),
-            "render_template_uses": approved_templates if status == "approved" else "review_only_not_renderable_until_approved",
+            "crop_readiness_notes": notes,
+            "render_template_uses": render_template_uses_for(status, approved_templates, source_warnings),
             "review_only_policy": "catalog_only_no_auto_approval_no_file_movement",
         })
     return rows
@@ -247,6 +293,9 @@ def summarize(rows: List[Mapping[str, str]], template_uses: List[str], out_csv: 
 def write_markdown(path: Path, report: Mapping[str, Any], rows: List[Mapping[str, str]]) -> None:
     counts = report.get("status_counts") or {}
     approved = [row for row in rows if row.get("status") == "approved"]
+    manual_source_recheck = [
+        row for row in approved if clean(row.get("render_template_uses")).startswith("review_only_manual_source_recheck_required")
+    ]
     needs_review = [row for row in rows if row.get("status") != "approved"]
     lines = [
         "# HSD Athlete Photo Catalog v1",
@@ -265,6 +314,7 @@ def write_markdown(path: Path, report: Mapping[str, Any], rows: List[Mapping[str
         f"- approved: {counts.get('approved', 0)}",
         f"- unapproved: {counts.get('unapproved', 0)}",
         f"- missing: {counts.get('missing', 0)}",
+        f"- approved rows requiring manual source recheck: {len(manual_source_recheck)}",
         "",
         "## Template Slots Found",
         "",
@@ -273,13 +323,31 @@ def write_markdown(path: Path, report: Mapping[str, Any], rows: List[Mapping[str
         lines.append(f"- {item}")
     lines += [
         "",
-        "## Approved Headshot/Cutout Rows",
+        "## Registry-Approved Headshot/Cutout Rows",
         "",
     ]
     for row in approved[:40]:
-        lines.append(f"- {row.get('athlete_name')} | {row.get('team_id')} | {row.get('asset_kind')} | `{row.get('local_asset_path')}`")
+        lines.append(
+            f"- {row.get('athlete_name')} | {row.get('team_id')} | {row.get('asset_kind')} | "
+            f"`{row.get('local_asset_path')}` | {row.get('render_template_uses')}"
+        )
     if len(approved) > 40:
         lines.append(f"- ...and {len(approved) - 40} more approved rows in the CSV.")
+    lines += [
+        "",
+        "## Manual Source Recheck Sample",
+        "",
+    ]
+    if manual_source_recheck:
+        for row in manual_source_recheck[:40]:
+            lines.append(
+                f"- {row.get('athlete_name')} | {row.get('team_id')} | {row.get('asset_kind')} | "
+                f"`{row.get('local_asset_path')}` | {row.get('render_template_uses')}"
+            )
+        if len(manual_source_recheck) > 40:
+            lines.append(f"- ...and {len(manual_source_recheck) - 40} more source-recheck rows in the CSV.")
+    else:
+        lines.append("- None")
     lines += [
         "",
         "## Needs Review Sample",

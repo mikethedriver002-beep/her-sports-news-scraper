@@ -1,0 +1,17 @@
+team_id,league_id,team_name,city,team_site_url,nwsl_teams_index_url,official_status,manual_review_status,asset_registry_status,render_enabled,notes
+angel_city_fc,nwsl,Angel City FC,Los Angeles,https://www.angelcity.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+bay_fc,nwsl,Bay FC,Bay Area,https://bayfc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+boston_legacy_fc,nwsl,Boston Legacy FC,Boston,https://bostonlegacyfc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+chicago_stars_fc,nwsl,Chicago Stars FC,Chicago,https://chicagostars.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+denver_summit_fc,nwsl,Denver Summit FC,Denver,https://www.denversummitfc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+houston_dash,nwsl,Houston Dash,Houston,https://www.houstondynamofc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+kansas_city_current,nwsl,Kansas City Current,Kansas City,https://www.kansascitycurrent.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+gotham_fc,nwsl,Gotham FC,NY/NJ,https://www.gothamfc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+north_carolina_courage,nwsl,North Carolina Courage,Cary,https://www.nccourage.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+orlando_pride,nwsl,Orlando Pride,Orlando,https://www.orlandocitysc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+portland_thorns_fc,nwsl,Portland Thorns FC,Portland,https://www.thorns.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+racing_louisville_fc,nwsl,Racing Louisville FC,Louisville,https://www.racingloufc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+san_diego_wave_fc,nwsl,San Diego Wave FC,San Diego,https://sandiegowavefc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+seattle_reign,nwsl,Seattle Reign,Seattle,https://www.reignfc.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+utah_royals_fc,nwsl,Utah Royals FC,Sandy,https://www.rsl.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page
+washington_spirit,nwsl,Washington Spirit,Washington,https://washingtonspirit.com,https://www.nwslsoccer.com/teams/index,active,review_required,source_seeded,false,Seeded from official NWSL teams page

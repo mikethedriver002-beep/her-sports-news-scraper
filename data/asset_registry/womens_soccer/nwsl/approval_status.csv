@@ -1,0 +1,18 @@
+entity_type,entity_id,approval_scope,approval_status,approved_by,approved_at_utc,auto_approval_allowed,render_enabled,publish_ready,notes
+league,nwsl,league_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,angel_city_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,bay_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,boston_legacy_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,chicago_stars_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,denver_summit_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,houston_dash,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,kansas_city_current,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,gotham_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,north_carolina_courage,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,orlando_pride,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,portland_thorns_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,racing_louisville_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,san_diego_wave_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,seattle_reign,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,utah_royals_fc,team_identity,not_approved,,,,false,false,false,Manual review required before any use
+team,washington_spirit,team_identity,not_approved,,,,false,false,false,Manual review required before any use

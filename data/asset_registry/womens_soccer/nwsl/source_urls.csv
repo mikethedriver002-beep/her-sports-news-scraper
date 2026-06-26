@@ -1,0 +1,20 @@
+entity_type,entity_id,source_kind,source_url,source_domain,source_tier,manual_review_status,paid_source,download_allowed,approval_status,notes
+league,nwsl,league_about,https://www.nwslsoccer.com/about-the-nwsl,www.nwslsoccer.com,official,review_required,false,false,not_approved,Official league context only
+league,nwsl,teams_index,https://www.nwslsoccer.com/teams/index,www.nwslsoccer.com,official,review_required,false,false,not_approved,Official team list and team-site links
+league,nwsl,players_index,https://www.nwslsoccer.com/players/index,www.nwslsoccer.com,official,review_required,false,false,not_approved,Manual roster discovery starting point
+team,angel_city_fc,team_site,https://www.angelcity.com,www.angelcity.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,bay_fc,team_site,https://bayfc.com,bayfc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,boston_legacy_fc,team_site,https://bostonlegacyfc.com,bostonlegacyfc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,chicago_stars_fc,team_site,https://chicagostars.com,chicagostars.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,denver_summit_fc,team_site,https://www.denversummitfc.com,www.denversummitfc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,houston_dash,team_site,https://www.houstondynamofc.com,www.houstondynamofc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,kansas_city_current,team_site,https://www.kansascitycurrent.com,www.kansascitycurrent.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,gotham_fc,team_site,https://www.gothamfc.com,www.gothamfc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,north_carolina_courage,team_site,https://www.nccourage.com,www.nccourage.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,orlando_pride,team_site,https://www.orlandocitysc.com,www.orlandocitysc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,portland_thorns_fc,team_site,https://www.thorns.com,www.thorns.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,racing_louisville_fc,team_site,https://www.racingloufc.com,www.racingloufc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,san_diego_wave_fc,team_site,https://sandiegowavefc.com,sandiegowavefc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,seattle_reign,team_site,https://www.reignfc.com,www.reignfc.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,utah_royals_fc,team_site,https://www.rsl.com,www.rsl.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
+team,washington_spirit,team_site,https://washingtonspirit.com,washingtonspirit.com,official_team_site,review_required,false,false,not_approved,Linked from NWSL teams page
