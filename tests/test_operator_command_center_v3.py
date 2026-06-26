@@ -94,6 +94,26 @@ def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_
     assert clear["athlete_identity_artifact"] == "data/asset_registry/wnba/athlete_identity_audit.csv"
 
 
+def test_command_center_generated_artifacts_point_to_current_output_when_latest_exists(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    stale = Path("outputs/local/latest/files/render_handoff_top_packet")
+    stale.mkdir(parents=True)
+    (stale / "active_asset_review_queue.md").write_text("stale queue", encoding="utf-8")
+    (stale / "active_asset_review_queue.csv").write_text("stale,queue\n", encoding="utf-8")
+
+    by_path = {row["path"]: row for row in command_center.artifact_entries()}
+
+    md_artifact = by_path["render_handoff_top_packet/active_asset_review_queue.md"]
+    csv_artifact = by_path["render_handoff_top_packet/active_asset_review_queue.csv"]
+    assert md_artifact["status_detail"] == "Created with this command center run"
+    assert csv_artifact["status_detail"] == "Created with this command center run"
+    assert md_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.md").as_posix()
+    assert csv_artifact["source_path"] == command_center.output_path("render_handoff_top_packet/active_asset_review_queue.csv").as_posix()
+    assert "latest" not in md_artifact["source_path"]
+
+
 DECISION_FIELDS = [
     "decision_draft_id",
     "source_intake_id",
