@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.60.0-identity-resolution-closure-cues"
+VERSION = "hsd-operator-command-center-v3.61.0-asset-readiness-panel"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -699,6 +699,224 @@ def file_shortcut(label: str, path: str, purpose: str) -> Dict[str, Any]:
         "exists": found.exists(),
         "href": href_for_path(path) if found.exists() else "",
         "source_path": found.as_posix() if found.exists() else "",
+    }
+
+
+def asset_audit_severity_rank(value: Any) -> int:
+    return {"error": 0, "warning": 1, "info": 2}.get(clean(value).lower(), 3)
+
+
+def asset_audit_finding_rank(row: Dict[str, Any]) -> int:
+    finding = clean(row.get("finding"))
+    if finding == "suspicious_or_default_player_approval":
+        return 0
+    if finding == "logo_present_without_complete_approval":
+        return 1
+    if finding == "suspicious_logo_source_or_approval":
+        return 2
+    if finding == "missing_or_unregistered_logo_asset":
+        return 3
+    if finding == "renderer_active_logo_fallback":
+        return 4
+    if finding == "renderer_logo_audit_missing":
+        return 5
+    if finding == "missing_local_player_asset":
+        return 6
+    if "format" in finding or "dimension" in finding:
+        return 7
+    return 9
+
+
+def asset_audit_decision_guidance(row: Dict[str, Any]) -> Dict[str, str]:
+    finding = clean(row.get("finding"))
+    domain = clean(row.get("asset_domain"))
+    if finding == "suspicious_or_default_player_approval":
+        return {
+            "decision": "Verify identity",
+            "tone": "warn",
+            "manual_action": "Verify the athlete against official/free source evidence before allowing photo-first review renders.",
+            "hold_cue": "Hold the image if identity, source, or provider ID is not source-backed.",
+            "revise_cue": "Revise the local asset if the crop, player identity, or source file does not match.",
+            "open_path": "data/asset_registry/wnba/athlete_photo_catalog.md",
+        }
+    if domain == "player_photo":
+        return {
+            "decision": "Hold photo slot",
+            "tone": "bad",
+            "manual_action": "Keep this athlete photo slot disabled until a reviewed local asset and approval marker exist.",
+            "hold_cue": "Hold if the file is missing, unreadable, or crop identity is not proven.",
+            "revise_cue": "Revise by adding a review-only candidate through the asset onboarding workflow.",
+            "open_path": "data/asset_registry/wnba/athlete_photo_catalog.md",
+        }
+    if finding == "suspicious_logo_source_or_approval":
+        return {
+            "decision": "Revise source",
+            "tone": "warn",
+            "manual_action": "Replace or reverify the logo source against official/free team or league pages.",
+            "hold_cue": "Hold renderer trust while the source is blocked, stale, or non-official.",
+            "revise_cue": "Revise the registry source row after manual evidence review.",
+            "open_path": "data/asset_registry/wnba/logo_review_catalog_report.md",
+        }
+    if domain == "team_logo":
+        return {
+            "decision": "Verify logo",
+            "tone": "warn",
+            "manual_action": "Compare the local team logo against official/free source evidence before renderer trust.",
+            "hold_cue": "Hold if approval is incomplete or source evidence is not official enough.",
+            "revise_cue": "Revise local/source metadata before using the mark in branded renders.",
+            "open_path": "data/asset_registry/wnba/logo_review_catalog_report.md",
+        }
+    if domain == "league_logo":
+        return {
+            "decision": "Hold league mark",
+            "tone": "bad",
+            "manual_action": "Add a review-only league mark source and local slot before any template depends on it.",
+            "hold_cue": "Hold if the league mark is missing or unregistered.",
+            "revise_cue": "Revise by proposing official/free league mark evidence, not by inventing a mark.",
+            "open_path": "data/asset_registry/wnba/logo_review_catalog_report.md",
+        }
+    if domain == "renderer":
+        return {
+            "decision": "Verify renderer fallback",
+            "tone": "neutral" if clean(row.get("severity")) == "info" else "warn",
+            "manual_action": "Run a local render/status pass to confirm whether active fallback badges are still present.",
+            "hold_cue": "Hold if a template is using text badges where exact approved assets are required.",
+            "revise_cue": "Revise the asset registry or template mapping only after source-backed review.",
+            "open_path": "data/asset_registry/asset_availability_audit.md",
+        }
+    return {
+        "decision": "Review manually",
+        "tone": status_tone(row.get("severity")),
+        "manual_action": clean(row.get("recommended_next_step")) or "Review this asset finding before render work.",
+        "hold_cue": "Hold if source, identity, crop, format, or approval evidence is incomplete.",
+        "revise_cue": "Revise the source or local asset metadata through review-only workflows.",
+        "open_path": "data/asset_registry/asset_availability_audit.md",
+    }
+
+
+def normalize_asset_audit_finding(row: Dict[str, Any], rank: int) -> Dict[str, str]:
+    guidance = asset_audit_decision_guidance(row)
+    open_path = guidance["open_path"]
+    return {
+        "rank": str(rank),
+        "asset_domain": clean(row.get("asset_domain")) or "unknown",
+        "league": clean(row.get("league")),
+        "entity_type": clean(row.get("entity_type")),
+        "entity_id": clean(row.get("entity_id")),
+        "entity_name": clean(row.get("entity_name")) or clean(row.get("entity_id")) or "Unknown asset",
+        "asset_kind": clean(row.get("asset_kind")),
+        "asset_path": clean(row.get("asset_path")),
+        "finding": clean(row.get("finding")) or "review_required",
+        "severity": clean(row.get("severity")) or "review",
+        "approval_status": clean(row.get("approval_status")),
+        "format_status": clean(row.get("format_status")),
+        "dimension_status": clean(row.get("dimension_status")),
+        "renderer_coverage": clean(row.get("renderer_coverage")),
+        "recommended_next_step": clean(row.get("recommended_next_step")) or guidance["manual_action"],
+        "evidence": short(clean(row.get("evidence")), 260),
+        "decision": guidance["decision"],
+        "tone": guidance["tone"],
+        "manual_action": guidance["manual_action"],
+        "hold_cue": guidance["hold_cue"],
+        "revise_cue": guidance["revise_cue"],
+        "open_path": open_path,
+        "open_href": href_for_path(open_path) if find_existing_input(open_path).exists() else "",
+    }
+
+
+def top_asset_audit_findings(findings: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    sorted_findings = sorted(
+        findings,
+        key=lambda row: (
+            asset_audit_severity_rank(row.get("severity")),
+            asset_audit_finding_rank(row),
+            clean(row.get("asset_domain")),
+            clean(row.get("entity_name")),
+            clean(row.get("asset_kind")),
+        ),
+    )
+    selected: List[Dict[str, str]] = []
+    used_keys = set()
+    lanes = [
+        ("player_photo", "suspicious_or_default_player_approval"),
+        ("player_photo", ""),
+        ("team_logo", ""),
+        ("league_logo", ""),
+        ("renderer", ""),
+    ]
+    for domain, preferred_finding in lanes:
+        for row in sorted_findings:
+            if clean(row.get("asset_domain")) != domain:
+                continue
+            if preferred_finding and clean(row.get("finding")) != preferred_finding:
+                continue
+            key = (clean(row.get("asset_domain")), clean(row.get("entity_id")), clean(row.get("finding")), clean(row.get("asset_kind")))
+            if key in used_keys:
+                continue
+            used_keys.add(key)
+            selected.append(normalize_asset_audit_finding(row, len(selected) + 1))
+            break
+    if len(selected) < 8:
+        for row in sorted_findings:
+            key = (clean(row.get("asset_domain")), clean(row.get("entity_id")), clean(row.get("finding")), clean(row.get("asset_kind")))
+            if key in used_keys:
+                continue
+            used_keys.add(key)
+            selected.append(normalize_asset_audit_finding(row, len(selected) + 1))
+            if len(selected) >= 8:
+                break
+    return selected
+
+
+def asset_availability_readiness_panel() -> Dict[str, Any]:
+    audit = read_json("data/asset_registry/asset_availability_audit.json")
+    findings = audit.get("findings") if isinstance(audit.get("findings"), list) else []
+    severity_counts = audit.get("severity_counts") if isinstance(audit.get("severity_counts"), dict) else {}
+    domain_counts = audit.get("asset_domain_counts") if isinstance(audit.get("asset_domain_counts"), dict) else {}
+    finding_counts = audit.get("finding_counts") if isinstance(audit.get("finding_counts"), dict) else {}
+    policy = audit.get("policy") if isinstance(audit.get("policy"), dict) else {}
+    top_findings = top_asset_audit_findings(findings)
+    audit_exists = find_existing_input("data/asset_registry/asset_availability_audit.json").exists()
+    status = clean(audit.get("status")) if audit_exists else "not_run"
+    next_step = "Run .\\hsd.cmd run -Mode asset-audit before trusting athlete photos, team logos, league marks, or renderer fallbacks."
+    if top_findings:
+        first = top_findings[0]
+        next_step = f"{first.get('decision')}: {first.get('manual_action')}"
+    elif status in {"pass", "passed"}:
+        next_step = "No asset availability blockers found in the latest audit; still keep manual visual review before any next step."
+    return {
+        "panel_status": status,
+        "generated_at_utc": clean(audit.get("generated_at_utc")),
+        "finding_count": as_int(audit.get("finding_count")),
+        "error_count": as_int(severity_counts.get("error")),
+        "warning_count": as_int(severity_counts.get("warning")),
+        "info_count": as_int(severity_counts.get("info")),
+        "player_photo_findings": as_int(domain_counts.get("player_photo")),
+        "team_logo_findings": as_int(domain_counts.get("team_logo")),
+        "league_logo_findings": as_int(domain_counts.get("league_logo")),
+        "renderer_findings": as_int(domain_counts.get("renderer")),
+        "default_player_approval_findings": as_int(finding_counts.get("suspicious_or_default_player_approval")),
+        "missing_player_asset_findings": as_int(finding_counts.get("missing_local_player_asset")),
+        "team_logo_hold_findings": as_int(finding_counts.get("logo_present_without_complete_approval")) + as_int(finding_counts.get("suspicious_logo_source_or_approval")),
+        "league_mark_hold_findings": as_int(finding_counts.get("missing_or_unregistered_logo_asset")),
+        "renderer_fallback_findings": as_int(finding_counts.get("renderer_active_logo_fallback")) + as_int(finding_counts.get("renderer_logo_audit_missing")),
+        "top_findings": top_findings,
+        "next_step": next_step,
+        "policy": {
+            "no_paid_apis": bool(policy.get("no_paid_apis", True)),
+            "no_asset_downloads": bool(policy.get("no_asset_downloads", True)),
+            "no_auto_approval": bool(policy.get("no_auto_approval", True)),
+            "no_file_movement_into_publish_ready_lanes": bool(policy.get("no_file_movement_into_publish_ready_lanes", True)),
+            "no_publishing": bool(policy.get("no_publishing", True)),
+            "does_not_change_renderer_behavior": bool(policy.get("does_not_change_renderer_behavior", True)),
+        },
+        "file_shortcuts": [
+            file_shortcut("Asset availability audit", "data/asset_registry/asset_availability_audit.md", "Start here for highest-risk asset blockers and operator next steps."),
+            file_shortcut("Asset availability data", "data/asset_registry/asset_availability_audit.csv", "Filter all asset findings by domain, severity, entity, and finding type."),
+            file_shortcut("WNBA athlete photo catalog", "data/asset_registry/wnba/athlete_photo_catalog.md", "Review photo source, identity, crop, and approval readiness."),
+            file_shortcut("WNBA logo review catalog", "data/asset_registry/wnba/logo_review_catalog_report.md", "Review team logo source trust, approval holds, and missing league marks."),
+            file_shortcut("Logo asset catalog", "data/asset_registry/logo_asset_catalog.md", "Cross-check logo approval status and source policy."),
+        ],
     }
 
 
@@ -3487,6 +3705,7 @@ def build_payload() -> Dict[str, Any]:
     )
     render_handoff_summary = build_render_handoff_summary(render_prep_packets)
     operator_decision_panel = operator_decision_ui_panel()
+    asset_readiness_panel = asset_availability_readiness_panel()
     athlete_photo_panel = athlete_photo_onboarding_panel(read_json("manual_review_renderer_manifest.json"))
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
@@ -3653,6 +3872,10 @@ def build_payload() -> Dict[str, Any]:
         metric("Render handoff", render_handoff_summary.get("handoff_status", "not_created")),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
+        metric("Asset audit", asset_readiness_panel["panel_status"], asset_readiness_panel["next_step"]),
+        metric("Asset blockers", asset_readiness_panel["finding_count"]),
+        metric("Asset errors/warnings", f"{asset_readiness_panel['error_count']}/{asset_readiness_panel['warning_count']}"),
+        metric("Default photo approvals", asset_readiness_panel["default_player_approval_findings"]),
         metric("Athlete photo review", athlete_photo_panel["panel_status"], athlete_photo_panel["next_step"]),
         metric("Athlete photo variants", f"{athlete_photo_panel['review_variant_ready']}/{athlete_photo_panel['source_rows']}"),
         metric("Athlete contact sheets", athlete_photo_panel["contact_sheets"]),
@@ -3721,6 +3944,7 @@ def build_payload() -> Dict[str, Any]:
         "render_prep_packets": render_prep_packets,
         "render_handoff_summary": render_handoff_summary,
         "operator_decision_panel": operator_decision_panel,
+        "asset_readiness_panel": asset_readiness_panel,
         "athlete_photo_onboarding_panel": athlete_photo_panel,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
@@ -4812,6 +5036,101 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     """
 
 
+def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
+    body = []
+    for row in rows:
+        href = clean(row.get("open_href"))
+        open_link_html = f'<a class="tool-link" href="{html.escape(href)}">Open</a>' if href else '<span class="muted">Missing report</span>'
+        body.append(
+            f"""
+            <article class="asset-blocker-card">
+              <div class="asset-blocker-head">
+                <div>
+                  <span class="row-kicker">{html.escape(clean(row.get('asset_domain')))} / {html.escape(clean(row.get('asset_kind')) or clean(row.get('entity_type')))}</span>
+                  <strong>{html.escape(clean(row.get('entity_name')))}</strong>
+                </div>
+                <div class="asset-blocker-badges">
+                  {pill(clean(row.get('severity')) or 'review', status_tone(row.get('severity')))}
+                  {pill(clean(row.get('decision')) or 'review', clean(row.get('tone')) or 'warn')}
+                </div>
+              </div>
+              <p>{html.escape(short(clean(row.get('finding')).replace('_', ' '), 120))}</p>
+              <div class="asset-guidance-grid">
+                <div><span>Verify</span><strong>{html.escape(short(clean(row.get('manual_action')), 130))}</strong></div>
+                <div><span>Hold</span><strong>{html.escape(short(clean(row.get('hold_cue')), 130))}</strong></div>
+                <div><span>Revise</span><strong>{html.escape(short(clean(row.get('revise_cue')), 130))}</strong></div>
+              </div>
+              <code>{html.escape(short(clean(row.get('asset_path')), 110))}</code>
+              <p class="muted">{html.escape(short(clean(row.get('evidence')), 190))}</p>
+              <div class="asset-blocker-actions">
+                {open_link_html}
+                {pill(clean(row.get('approval_status')) or 'approval_review')}
+                {pill(clean(row.get('format_status')) or 'format_review')}
+                {pill(clean(row.get('renderer_coverage')) or 'renderer_review')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(body) or '<p class="empty">No asset blockers found in the latest audit.</p>'
+
+
+def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
+    policy = panel.get("policy") if isinstance(panel.get("policy"), dict) else {}
+    status_t = "good" if clean(panel.get("panel_status")) in {"pass", "passed"} else "warn" if clean(panel.get("panel_status")) == "review_required" else "neutral"
+    return f"""
+      <div class="asset-readiness-desk">
+        <div class="decision-cockpit-card asset-readiness-cockpit">
+          <div class="decision-cockpit-head">
+            <div>
+              <span class="row-kicker">Asset readiness</span>
+              <strong>{html.escape(clean(panel.get('panel_status')) or 'not_run')}</strong>
+              <p>{html.escape(clean(panel.get('next_step')))}</p>
+            </div>
+            <div class="decision-cockpit-actions">
+              {pill('asset-audit', status_t)}
+              {pill('review-only')}
+              {pill('publish-ready: false')}
+            </div>
+          </div>
+          <div class="decision-status-grid">
+            <div><span>Total findings</span><strong>{html.escape(str(panel.get('finding_count', 0)))}</strong></div>
+            <div><span>Errors / warnings</span><strong>{html.escape(str(panel.get('error_count', 0)))}/{html.escape(str(panel.get('warning_count', 0)))}</strong></div>
+            <div><span>Player-photo findings</span><strong>{html.escape(str(panel.get('player_photo_findings', 0)))}</strong></div>
+            <div><span>Team logo findings</span><strong>{html.escape(str(panel.get('team_logo_findings', 0)))}</strong></div>
+            <div><span>League mark findings</span><strong>{html.escape(str(panel.get('league_logo_findings', 0)))}</strong></div>
+            <div><span>Renderer findings</span><strong>{html.escape(str(panel.get('renderer_findings', 0)))}</strong></div>
+            <div><span>Default photo approvals</span><strong>{html.escape(str(panel.get('default_player_approval_findings', 0)))}</strong></div>
+            <div><span>Missing player assets</span><strong>{html.escape(str(panel.get('missing_player_asset_findings', 0)))}</strong></div>
+          </div>
+          <div class="review-flow">
+            <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
+            <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
+            <div><span>3</span><strong>Revise</strong><p>Use review-only asset workflows to fix source metadata or local asset slots.</p></div>
+          </div>
+        </div>
+        <div class="decision-desk-section">
+          <div class="row-kicker">Highest-risk asset blockers {pill(str(len(panel.get('top_findings', []))) + ' shown')} {pill('manual guidance only')}</div>
+          <div class="asset-blocker-grid">
+            {render_asset_blocker_cards(panel.get('top_findings', []))}
+          </div>
+        </div>
+        <div class="decision-desk-section">
+          <div class="row-kicker">Asset review files {pill('open before render trust')}</div>
+          <div class="decision-link-grid">
+            {render_decision_shortcuts(panel.get('file_shortcuts', []))}
+          </div>
+        </div>
+        <div class="safety-strip">
+          {pill('paid APIs off', 'good' if policy.get('no_paid_apis', True) else 'bad')}
+          {pill('asset downloads off', 'good' if policy.get('no_asset_downloads', True) else 'bad')}
+          {pill('auto-approval off', 'good' if policy.get('no_auto_approval', True) else 'bad')}
+          {pill('no file movement', 'good' if policy.get('no_file_movement_into_publish_ready_lanes', True) else 'bad')}
+          {pill('publishing off', 'good' if policy.get('no_publishing', True) else 'bad')}
+        </div>
+      </div>
+    """
+
+
 def render_athlete_photo_cards(rows: Iterable[Dict[str, Any]]) -> str:
     body = []
     for index, row in enumerate(rows):
@@ -5234,6 +5553,19 @@ def render_html(payload: Dict[str, Any]) -> str:
     .decision-option input {{ width:auto; }}
     .decision-copy-box {{ display:grid; gap:8px; border-top:1px solid var(--line); padding-top:12px; }}
     .decision-button-row {{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }}
+    .asset-readiness-desk {{ display:grid; gap:12px; margin-bottom:18px; padding-bottom:18px; border-bottom:2px solid #eceef4; }}
+    .asset-readiness-cockpit {{ border-left-color:#171719; }}
+    .asset-blocker-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }}
+    .asset-blocker-card {{ display:grid; gap:8px; border:1px solid var(--line); border-radius:8px; background:#fff; padding:10px; min-width:0; }}
+    .asset-blocker-head {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; }}
+    .asset-blocker-head strong {{ display:block; font-size:15px; overflow-wrap:anywhere; }}
+    .asset-blocker-badges,.asset-blocker-actions {{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }}
+    .asset-blocker-card p {{ color:#5e616a; font-size:12px; line-height:1.35; overflow-wrap:anywhere; }}
+    .asset-blocker-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+    .asset-guidance-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }}
+    .asset-guidance-grid div {{ border:1px solid #e5d493; background:#fff9df; border-radius:6px; padding:8px; min-width:0; }}
+    .asset-guidance-grid span {{ display:block; color:#5e616a; font-size:11px; font-weight:900; text-transform:uppercase; margin-bottom:4px; }}
+    .asset-guidance-grid strong {{ display:block; font-size:12px; line-height:1.25; overflow-wrap:anywhere; }}
     .athlete-photo-desk {{ display:grid; gap:12px; margin-bottom:18px; padding-bottom:18px; border-bottom:2px solid #eceef4; }}
     .athlete-photo-cockpit {{ border-left-color:#94dbc9; }}
     .athlete-photo-layout {{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr); gap:12px; align-items:start; }}
@@ -5264,6 +5596,7 @@ def render_html(payload: Dict[str, Any]) -> str:
       .render-comparison-grid {{ grid-template-columns:1fr; }}
       .decision-cockpit-head,.decision-signal-grid,.review-flow {{ grid-template-columns:1fr; }}
       .qa-cue-grid {{ grid-template-columns:1fr; }}
+      .asset-blocker-grid {{ grid-template-columns:1fr; }}
       .decision-link-grid {{ grid-template-columns:1fr; }}
       .decision {{ grid-template-columns:1fr; }}
       .metric-grid,.decision-status-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
@@ -5273,6 +5606,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     }}
     @media (max-width: 560px) {{
       .metric-grid,.decision-status-grid,.decision-form-grid {{ grid-template-columns:1fr; }}
+      .asset-guidance-grid {{ grid-template-columns:1fr; }}
       .athlete-photo-card {{ grid-template-columns:1fr; }}
       .athlete-photo-thumb {{ width:100%; height:220px; }}
       header h1 {{ font-size:23px; }}
@@ -5359,6 +5693,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     <section id="decision-panel" class="tab-panel">
       <div class="panel">
         <h2>Decision desk</h2>
+        {render_asset_readiness_panel(payload['asset_readiness_panel'])}
         {render_athlete_photo_onboarding_panel(payload['athlete_photo_onboarding_panel'])}
         <h2>Manual visual QA decision</h2>
         {render_operator_decision_panel(payload['operator_decision_panel'])}
@@ -6116,6 +6451,24 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     lines.extend(
         f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
+    )
+    asset_panel = payload["asset_readiness_panel"]
+    lines += [
+        "",
+        "## Asset Readiness Decision Desk",
+        "",
+        f"- Panel status: {asset_panel.get('panel_status') or 'not_run'}",
+        f"- Findings: {asset_panel.get('finding_count', 0)} ({asset_panel.get('error_count', 0)} errors / {asset_panel.get('warning_count', 0)} warnings)",
+        f"- Player-photo findings: {asset_panel.get('player_photo_findings', 0)}",
+        f"- Team logo findings: {asset_panel.get('team_logo_findings', 0)}",
+        f"- League mark findings: {asset_panel.get('league_logo_findings', 0)}",
+        f"- Renderer findings: {asset_panel.get('renderer_findings', 0)}",
+        f"- Next safe action: {asset_panel.get('next_step')}",
+        "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
+    ]
+    lines.extend(
+        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | next: {item.get('manual_action')}"
+        for item in asset_panel.get("top_findings", [])[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
     lines += [
