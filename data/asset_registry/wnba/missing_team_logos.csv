@@ -1,4 +1,1 @@
 team_id,team_name,required_asset,reason,recommended_path
-atlanta_dream,Atlanta Dream,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/atlanta_dream/logo.png
-new_york_liberty,New York Liberty,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/new_york_liberty/logo.png
-washington_mystics,Washington Mystics,primary_logo,required exact team logo file not found,assets/leagues/wnba/teams/washington_mystics/logo.png

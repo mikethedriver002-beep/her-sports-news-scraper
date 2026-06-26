@@ -8,6 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -35,6 +36,8 @@ ISSUE_FIELDS = [
     "provider_player_id",
     "asset_path",
     "approved_marker_path",
+    "source_url",
+    "source_provenance",
     "evidence",
     "recommendation",
     "review_only_policy",
@@ -97,6 +100,8 @@ def issue(
     provider_player_id: str = "",
     asset_path: str = "",
     approved_marker_path: str = "",
+    source_url: str = "",
+    source_provenance: str = "",
     evidence: str = "",
     recommendation: str = "",
 ) -> Dict[str, str]:
@@ -109,6 +114,8 @@ def issue(
         "provider_player_id": provider_player_id,
         "asset_path": asset_path,
         "approved_marker_path": approved_marker_path,
+        "source_url": source_url,
+        "source_provenance": source_provenance,
         "evidence": evidence,
         "recommendation": recommendation,
         "review_only_policy": REVIEW_ONLY_POLICY,
@@ -121,6 +128,41 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def parse_provider_id_from_text(value: Any) -> str:
+    text = clean(value)
+    if not text:
+        return ""
+    headshot_match = re.search(r"/260x190/(\d{4,10})\.png(?:$|\?)", text)
+    if headshot_match:
+        return headshot_match.group(1)
+    file_match = re.search(r"__(\d{4,10})\.png(?:$|\?)", text)
+    if file_match:
+        return file_match.group(1)
+    return ""
+
+
+def official_free_source_url(value: Any) -> bool:
+    url = clean(value)
+    if not url:
+        return False
+    host = urlparse(url).netloc.lower()
+    return host == "wnba.com" or host.endswith(".wnba.com")
+
+
+def source_provenance(athlete: Mapping[str, str], review: Mapping[str, str]) -> str:
+    parts: List[str] = []
+    athlete_source = clean(athlete.get("source_url"))
+    if athlete_source:
+        source_label = "official_wnba_roster_source" if official_free_source_url(athlete_source) else "non_official_or_unverified_athlete_source"
+        parts.append(f"{source_label}:{athlete_source}")
+    method = clean(review.get("match_method"))
+    confidence = clean(review.get("confidence"))
+    status = clean(review.get("status"))
+    if method or confidence or status:
+        parts.append(f"match_review method={method or 'blank'} confidence={confidence or 'blank'} status={status or 'blank'}")
+    return " | ".join(parts)
 
 
 def approval_decision_for(
@@ -196,6 +238,9 @@ def audit_approved_assets(
         review = review_by_athlete.get((athlete_id,), {})
         decision = approval_decision_for(approved, decisions_by_athlete)
         decision_source = clean(approved.get("decision_source"))
+        athlete_source_url = clean(athlete.get("source_url"))
+        provenance = source_provenance(athlete, review)
+        marker_payload: Mapping[str, Any] = {}
 
         if not asset.exists():
             issues.append(issue(
@@ -207,6 +252,8 @@ def audit_approved_assets(
                 provider_player_id=provider_player_id,
                 asset_path=asset_path,
                 approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
                 evidence="approved registry row points to a missing file",
                 recommendation="Remove renderer eligibility until the reviewed file is restored and rechecked.",
             ))
@@ -220,6 +267,8 @@ def audit_approved_assets(
                 provider_player_id=provider_player_id,
                 asset_path=asset_path,
                 approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
                 evidence="approved registry row points to a missing sibling marker",
                 recommendation="Keep this asset out of approved render slots until a human-reviewed marker exists.",
             ))
@@ -235,6 +284,8 @@ def audit_approved_assets(
                     provider_player_id=provider_player_id,
                     asset_path=asset_path,
                     approved_marker_path=marker_path,
+                    source_url=athlete_source_url,
+                    source_provenance=provenance,
                     evidence="marker exists but could not be parsed as JSON",
                     recommendation="Recheck the marker contents and identity evidence manually.",
                 ))
@@ -251,9 +302,92 @@ def audit_approved_assets(
                         provider_player_id=provider_player_id,
                         asset_path=asset_path,
                         approved_marker_path=marker_path,
+                        source_url=athlete_source_url,
+                        source_provenance=provenance,
                         evidence="approved marker decision_source=default",
                         recommendation="Replace wildcard/default provenance with an explicit per-athlete human decision before trusting identity.",
                     ))
+
+        if not athlete_source_url or not official_free_source_url(athlete_source_url):
+            issues.append(issue(
+                "medium",
+                "approved_asset_lacks_official_roster_source",
+                athlete_id=athlete_id,
+                display_name=display_name,
+                team_id=team_id,
+                provider_player_id=provider_player_id,
+                asset_path=asset_path,
+                approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
+                evidence=f"athletes.csv source_url={athlete_source_url or 'blank'}",
+                recommendation="Add a free official WNBA/team roster source before raising trust in this athlete photo.",
+            ))
+
+        parsed_provider_sources = {
+            "approved_assets.source_file": parse_provider_id_from_text(approved.get("source_file")),
+            "approved_marker.source_file": parse_provider_id_from_text(marker_payload.get("source_file")) if marker_payload else "",
+            "match_review.image_url": parse_provider_id_from_text(review.get("image_url")),
+        }
+        for source_name, parsed_provider_id in parsed_provider_sources.items():
+            if provider_player_id and parsed_provider_id and parsed_provider_id != provider_player_id:
+                issues.append(issue(
+                    "critical",
+                    "provider_player_id_disagrees_with_source_artifact",
+                    athlete_id=athlete_id,
+                    display_name=display_name,
+                    team_id=team_id,
+                    provider_player_id=provider_player_id,
+                    asset_path=asset_path,
+                    approved_marker_path=marker_path,
+                    source_url=athlete_source_url,
+                    source_provenance=provenance,
+                    evidence=f"{source_name} implies provider_player_id={parsed_provider_id}; approved registry has {provider_player_id}",
+                    recommendation="Hold this asset until provider ID evidence is reconciled against a trusted player/source page.",
+                ))
+
+        canonical_provider_sources = {
+            clean(athlete.get("provider_player_id")): "athletes.csv",
+            clean(image.get("provider_player_id")): "athlete_images.csv",
+            clean(review.get("provider_player_id")): "athlete_image_match_review.csv",
+        }
+        canonical_provider_sources.pop("", None)
+        if provider_player_id and provider_player_id not in canonical_provider_sources:
+            issues.append(issue(
+                "high",
+                "approved_provider_id_not_backed_by_canonical_registry",
+                athlete_id=athlete_id,
+                display_name=display_name,
+                team_id=team_id,
+                provider_player_id=provider_player_id,
+                asset_path=asset_path,
+                approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
+                evidence="approved provider_player_id is absent from athletes.csv, athlete_images.csv, and match_review.csv",
+                recommendation="Backfill only after a manual source-backed identity check confirms the athlete and provider ID.",
+            ))
+
+        review_method = clean(review.get("match_method"))
+        try:
+            confidence = float(clean(review.get("confidence")) or "0")
+        except ValueError:
+            confidence = 0.0
+        if "order" in review_method.lower() and confidence < 0.9:
+            issues.append(issue(
+                "high",
+                "order_matched_headshot_requires_source_backed_identity_review",
+                athlete_id=athlete_id,
+                display_name=display_name,
+                team_id=team_id,
+                provider_player_id=provider_player_id or clean(review.get("provider_player_id")),
+                asset_path=asset_path,
+                approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
+                evidence=f"match_method={review_method}; confidence={clean(review.get('confidence')) or 'blank'}; image_url={clean(review.get('image_url')) or 'blank'}",
+                recommendation="Verify the exact player page/headshot source by eye; roster-order matching alone is not strong enough for trusted athlete photos.",
+            ))
 
         if decision_source == "default":
             issues.append(issue(
@@ -265,6 +399,8 @@ def audit_approved_assets(
                 provider_player_id=provider_player_id,
                 asset_path=asset_path,
                 approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
                 evidence="approved assets registry decision_source=default",
                 recommendation="Replace wildcard/default provenance with an explicit per-athlete human decision before trusting identity.",
             ))
@@ -279,6 +415,8 @@ def audit_approved_assets(
                 provider_player_id=provider_player_id or clean(review.get("provider_player_id")),
                 asset_path=asset_path,
                 approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
                 evidence=f"match_review status=needs_human_approval; confidence={clean(review.get('confidence')) or 'unknown'}",
                 recommendation="Keep a per-athlete review note or decision row that closes the pending match-review state.",
             ))
@@ -293,6 +431,8 @@ def audit_approved_assets(
                 provider_player_id=provider_player_id or clean(decision.get("provider_player_id")),
                 asset_path=asset_path,
                 approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
                 evidence="approval_decisions.csv row has a blank decision and was approved by fallback/default logic",
                 recommendation="Record explicit approve/hold/reject decisions per athlete for identity-sensitive headshots.",
             ))
@@ -309,6 +449,8 @@ def audit_approved_assets(
                     provider_player_id=provider_player_id,
                     asset_path=asset_path,
                     approved_marker_path=marker_path,
+                    source_url=athlete_source_url,
+                    source_provenance=provenance,
                     evidence=f"athlete_images.csv provider_player_id is blank; approved registry has {provider_player_id}",
                     recommendation="Backfill the canonical image registry with the exact provider ID used to fetch the headshot.",
                 ))
@@ -322,6 +464,8 @@ def audit_approved_assets(
                     provider_player_id=provider_player_id,
                     asset_path=asset_path,
                     approved_marker_path=marker_path,
+                    source_url=athlete_source_url,
+                    source_provenance=provenance,
                     evidence=f"athlete_images file_path={clean(image.get('file_path'))}",
                     recommendation="Reconcile the canonical image row and approved assets row before renderer use.",
                 ))
@@ -335,6 +479,8 @@ def audit_approved_assets(
                     provider_player_id=provider_player_id,
                     asset_path=asset_path,
                     approved_marker_path=marker_path,
+                    source_url=athlete_source_url,
+                    source_provenance=provenance,
                     evidence=f"athlete_images approved={clean(image.get('approved')) or 'blank'}",
                     recommendation="Reconcile approval status across WNBA athlete registries.",
                 ))
@@ -348,6 +494,8 @@ def audit_approved_assets(
                 provider_player_id=provider_player_id,
                 asset_path=asset_path,
                 approved_marker_path=marker_path,
+                source_url=athlete_source_url,
+                source_provenance=provenance,
                 evidence="no athlete_images.csv headshot row for this approved asset",
                 recommendation="Add or repair the canonical headshot row before renderer use.",
             ))
@@ -438,7 +586,61 @@ def duplicate_display_name_issues(athlete_rows: List[Mapping[str, str]]) -> List
     return issues
 
 
-def summarize(issues: List[Mapping[str, str]], out_csv: Path, out_json: Path, out_md: Path) -> Dict[str, Any]:
+def coverage_summary(
+    athlete_rows: List[Mapping[str, str]],
+    image_rows: List[Mapping[str, str]],
+    approved_rows: List[Mapping[str, str]],
+    review_rows: List[Mapping[str, str]],
+) -> Dict[str, int]:
+    athletes = by_key(athlete_rows, "athlete_id")
+    images_by_athlete_kind = by_key(image_rows, "athlete_id", "image_type")
+    review_by_athlete = by_key(review_rows, "athlete_id")
+    approved_athlete_ids = {clean(row.get("athlete_id")) for row in approved_rows if clean(row.get("athlete_id"))}
+    headshot_rows = [row for row in image_rows if clean(row.get("image_type")) == "headshot"]
+
+    summary = {
+        "athlete_rows": len(athlete_rows),
+        "headshot_registry_rows": len(headshot_rows),
+        "approved_asset_rows": len(approved_rows),
+        "approved_unique_athletes": len(approved_athlete_ids),
+        "approved_with_official_roster_source_url": 0,
+        "approved_missing_athlete_provider_player_id": 0,
+        "approved_missing_image_provider_player_id": 0,
+        "approved_with_match_review_provider_player_id": 0,
+        "approved_with_order_match_review": 0,
+        "approved_with_pending_match_review": 0,
+        "approved_with_default_decision_source": 0,
+    }
+
+    for approved in approved_rows:
+        athlete_id = clean(approved.get("athlete_id"))
+        athlete = athletes.get((athlete_id,), {})
+        image = images_by_athlete_kind.get((athlete_id, "headshot"), {})
+        review = review_by_athlete.get((athlete_id,), {})
+        if official_free_source_url(athlete.get("source_url")):
+            summary["approved_with_official_roster_source_url"] += 1
+        if not clean(athlete.get("provider_player_id")):
+            summary["approved_missing_athlete_provider_player_id"] += 1
+        if not clean(image.get("provider_player_id")):
+            summary["approved_missing_image_provider_player_id"] += 1
+        if clean(review.get("provider_player_id")):
+            summary["approved_with_match_review_provider_player_id"] += 1
+        if "order" in clean(review.get("match_method")).lower():
+            summary["approved_with_order_match_review"] += 1
+        if clean(review.get("status")) == "needs_human_approval":
+            summary["approved_with_pending_match_review"] += 1
+        if clean(approved.get("decision_source")) == "default":
+            summary["approved_with_default_decision_source"] += 1
+    return summary
+
+
+def summarize(
+    issues: List[Mapping[str, str]],
+    out_csv: Path,
+    out_json: Path,
+    out_md: Path,
+    coverage: Mapping[str, int] | None = None,
+) -> Dict[str, Any]:
     by_severity: Dict[str, int] = {}
     by_code: Dict[str, int] = {}
     for item in issues:
@@ -459,6 +661,7 @@ def summarize(issues: List[Mapping[str, str]], out_csv: Path, out_json: Path, ou
         "issue_rows": len(issues),
         "severity_counts": dict(sorted(by_severity.items())),
         "issue_code_counts": dict(sorted(by_code.items())),
+        "coverage_summary": dict(sorted((coverage or {}).items())),
         "audit_csv": out_csv.as_posix(),
         "audit_json": out_json.as_posix(),
         "audit_md": out_md.as_posix(),
@@ -485,6 +688,13 @@ def write_markdown(path: Path, report: Mapping[str, Any], issues: List[Mapping[s
     ]
     for severity, count in (report.get("severity_counts") or {}).items():
         lines.append(f"- {severity}: {count}")
+    lines += ["", "## Coverage Summary", ""]
+    coverage = report.get("coverage_summary") or {}
+    if coverage:
+        for key, count in coverage.items():
+            lines.append(f"- {key}: {count}")
+    else:
+        lines.append("- Not available")
     lines += ["", "## Issue Codes", ""]
     for code, count in (report.get("issue_code_counts") or {}).items():
         lines.append(f"- {code}: {count}")
@@ -507,14 +717,19 @@ def main() -> None:
     out_csv = output_path(OUT_CSV)
     out_json = output_path(OUT_JSON)
     out_md = output_path(OUT_MD)
+    athlete_rows = read_csv(ATHLETES)
+    image_rows = read_csv(ATHLETE_IMAGES)
+    approved_rows = read_csv(APPROVED_ASSETS)
+    review_rows = read_csv(MATCH_REVIEW)
+    decision_rows = read_csv(APPROVAL_DECISIONS)
     issues = audit_approved_assets(
-        read_csv(ATHLETES),
-        read_csv(ATHLETE_IMAGES),
-        read_csv(APPROVED_ASSETS),
-        read_csv(MATCH_REVIEW),
-        read_csv(APPROVAL_DECISIONS),
+        athlete_rows,
+        image_rows,
+        approved_rows,
+        review_rows,
+        decision_rows,
     )
-    report = summarize(issues, out_csv, out_json, out_md)
+    report = summarize(issues, out_csv, out_json, out_md, coverage_summary(athlete_rows, image_rows, approved_rows, review_rows))
     write_run_csv(OUT_CSV, issues, ISSUE_FIELDS)
     write_json(OUT_JSON, {"report": report, "issues": issues}, indent=2)
     write_markdown(out_md, report, issues)

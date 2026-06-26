@@ -4,18 +4,136 @@
   "auto_download_allowed": false,
   "blockers": [],
   "expected_file_count": 7,
-  "generated_at_utc": "2026-06-26T00:23:12.697466+00:00",
+  "generated_at_utc": "2026-06-26T00:46:25.232053+00:00",
+  "league_source_kind_count": 7,
   "player_count": 0,
   "present_file_count": 7,
   "publish_ready": false,
   "registry_path": "data/asset_registry/womens_soccer/nwsl",
   "render_enabled": false,
+  "required_league_source_kind_count": 7,
+  "required_team_approval_scope_count": 3,
   "required_team_count": 16,
+  "required_team_source_kind_count": 5,
   "review_only": true,
-  "source_url_count": 19,
+  "source_url_count": 87,
   "status": "passed_womens_soccer_review_scaffold",
   "strict_exit_code": 0,
   "team_count": 16,
+  "team_source_coverage": {
+    "angel_city_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "bay_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "boston_legacy_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "chicago_stars_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "denver_summit_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "gotham_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "houston_dash": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "kansas_city_current": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "north_carolina_courage": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "orlando_pride": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "portland_thorns_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "racing_louisville_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "san_diego_wave_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "seattle_reign": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "utah_royals_fc": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ],
+    "washington_spirit": [
+      "logo_review_source",
+      "nwsl_roster",
+      "nwsl_schedule",
+      "nwsl_team_detail",
+      "team_site"
+    ]
+  },
   "version": "v1.0-womens-soccer-asset-registry-review-only",
   "warnings": [
     "players_csv_header_only_manual_intake"

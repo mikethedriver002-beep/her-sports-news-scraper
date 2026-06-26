@@ -127,6 +127,111 @@ def test_identity_audit_flags_marker_identity_mismatch(tmp_path: Path) -> None:
     assert "athlete_id" in mismatch[0]["evidence"]
 
 
+def test_identity_audit_flags_order_match_and_source_provenance_risks(tmp_path: Path) -> None:
+    module = load_module()
+    asset = tmp_path / "assets" / "leagues" / "wnba" / "athletes" / "new_york_liberty_breanna_stewart" / "headshot.png"
+    make_png_like(asset)
+    marker = make_marker(
+        asset,
+        athlete_id="new_york_liberty_breanna_stewart",
+        display_name="Breanna Stewart",
+        team_id="new_york_liberty",
+        provider_player_id="1630993",
+        source_file="downloads/new_york_liberty_breanna_stewart__1630993.png",
+        decision_source="approval_csv",
+    )
+
+    issues = module.audit_approved_assets(
+        athlete_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "display_name": "Breanna Stewart",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "",
+            "source_url": "https://example.com/roster",
+        }],
+        image_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "display_name": "Breanna Stewart",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "",
+            "image_type": "headshot",
+            "file_path": asset.as_posix(),
+            "approved": "true",
+        }],
+        approved_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "display_name": "Breanna Stewart",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "1630993",
+            "approved_file": asset.as_posix(),
+            "approved_marker": marker.as_posix(),
+            "source_file": "downloads/new_york_liberty_breanna_stewart__1630993.png",
+            "decision_source": "approval_csv",
+        }],
+        review_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "status": "needs_human_approval",
+            "confidence": "0.72",
+            "provider_player_id": "1630993",
+            "match_method": "roster_order_name_to_headshot_order",
+            "image_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/1630993.png",
+        }],
+        decision_rows=[],
+    )
+
+    by_code = {row["issue_code"]: row for row in issues}
+
+    assert "approved_asset_lacks_official_roster_source" in by_code
+    assert "order_matched_headshot_requires_source_backed_identity_review" in by_code
+    assert "missing_provider_player_id_in_image_registry" in by_code
+    assert by_code["order_matched_headshot_requires_source_backed_identity_review"]["source_url"] == "https://example.com/roster"
+    assert "roster_order_name_to_headshot_order" in by_code["order_matched_headshot_requires_source_backed_identity_review"]["source_provenance"]
+
+
+def test_identity_audit_flags_provider_id_source_artifact_mismatch(tmp_path: Path) -> None:
+    module = load_module()
+    asset = tmp_path / "assets" / "leagues" / "wnba" / "athletes" / "new_york_liberty_test_player" / "headshot.png"
+    make_png_like(asset)
+    marker = make_marker(asset, provider_player_id="1234", source_file="downloads/new_york_liberty_test_player__9999.png")
+
+    issues = module.audit_approved_assets(
+        athlete_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "display_name": "Test Player",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "1234",
+            "source_url": "https://liberty.wnba.com/roster",
+        }],
+        image_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "display_name": "Test Player",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "1234",
+            "image_type": "headshot",
+            "file_path": asset.as_posix(),
+            "approved": "true",
+        }],
+        approved_rows=[{
+            "athlete_id": "new_york_liberty_test_player",
+            "display_name": "Test Player",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "1234",
+            "approved_file": asset.as_posix(),
+            "approved_marker": marker.as_posix(),
+            "source_file": "downloads/new_york_liberty_test_player__9999.png",
+            "decision_source": "approval_csv",
+        }],
+        review_rows=[],
+        decision_rows=[],
+    )
+
+    mismatch = [row for row in issues if row["issue_code"] == "provider_player_id_disagrees_with_source_artifact"]
+
+    assert mismatch
+    assert mismatch[0]["severity"] == "critical"
+    assert "9999" in mismatch[0]["evidence"]
+
+
 def test_identity_audit_flags_duplicate_provider_and_hash(tmp_path: Path) -> None:
     module = load_module()
     first = tmp_path / "assets" / "leagues" / "wnba" / "athletes" / "team_one_player_one" / "headshot.png"
@@ -171,6 +276,44 @@ def test_identity_audit_flags_duplicate_provider_and_hash(tmp_path: Path) -> Non
 
     assert "provider_player_id_reused_across_athletes" in codes
     assert "exact_duplicate_approved_headshot_hash" in codes
+
+
+def test_identity_audit_coverage_summary_counts_source_and_provider_gaps() -> None:
+    module = load_module()
+
+    summary = module.coverage_summary(
+        athlete_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "display_name": "Breanna Stewart",
+            "team_id": "new_york_liberty",
+            "provider_player_id": "",
+            "source_url": "https://liberty.wnba.com/roster",
+        }],
+        image_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "image_type": "headshot",
+            "provider_player_id": "",
+        }],
+        approved_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "provider_player_id": "1630993",
+            "decision_source": "default",
+        }],
+        review_rows=[{
+            "athlete_id": "new_york_liberty_breanna_stewart",
+            "provider_player_id": "1630993",
+            "match_method": "roster_order_name_to_headshot_order",
+            "status": "needs_human_approval",
+        }],
+    )
+
+    assert summary["approved_asset_rows"] == 1
+    assert summary["approved_with_official_roster_source_url"] == 1
+    assert summary["approved_missing_athlete_provider_player_id"] == 1
+    assert summary["approved_missing_image_provider_player_id"] == 1
+    assert summary["approved_with_order_match_review"] == 1
+    assert summary["approved_with_pending_match_review"] == 1
+    assert summary["approved_with_default_decision_source"] == 1
 
 
 def test_identity_audit_main_writes_to_run_folder(tmp_path: Path, monkeypatch) -> None:

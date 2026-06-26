@@ -1522,7 +1522,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.57.0-athlete-identity-resolution-desk"
+    assert payload["version"] == "hsd-operator-command-center-v3.58.0-identity-resolution-ui"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1614,7 +1614,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_review_status"] == "hold_identity_review_required"
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_resolution_status"] == "resolution_not_recorded"
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_issue_codes"] == "approved_asset_still_has_pending_match_review"
+    assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_candidate_status"] == "no_resolution_candidate"
     assert "Athlete photo onboarding" in html
+    assert "Identity resolution" in html
+    assert "Verify, hold, revise, or backfill" in html
+    assert "operator/inbox/wnba_athlete_identity_resolution.csv" in html
+    assert "Backfill-only rows do not clear photo-first rendering." in html
     assert "Identity audit says hold" in html
     assert "approved_asset_still_has_pending_match_review" in html
     assert payload["briefing"]["source_state"] == "2 pass, 1 review, 0 fail across 3 sources."

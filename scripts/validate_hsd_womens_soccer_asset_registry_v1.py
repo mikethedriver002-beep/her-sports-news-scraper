@@ -5,7 +5,7 @@ import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 VERSION = "v1.0-womens-soccer-asset-registry-review-only"
 REGISTRY = Path("data/asset_registry/womens_soccer/nwsl")
@@ -110,6 +110,30 @@ FALSE_ONLY_FIELDS = {
 
 NOT_APPROVED_FIELDS = {"approval_status"}
 
+REQUIRED_LEAGUE_SOURCE_KINDS = {
+    "league_about",
+    "teams_index",
+    "players_index",
+    "schedule_regular_season",
+    "standings_index",
+    "team_stats_index",
+    "player_stats_index",
+}
+
+REQUIRED_TEAM_SOURCE_KINDS = {
+    "team_site",
+    "nwsl_team_detail",
+    "nwsl_roster",
+    "nwsl_schedule",
+    "logo_review_source",
+}
+
+REQUIRED_TEAM_APPROVAL_SCOPES = {
+    "team_identity",
+    "team_logo",
+    "team_roster_source",
+}
+
 
 def clean(value: Any) -> str:
     return str(value or "").strip()
@@ -181,7 +205,21 @@ def evaluate(root: Path) -> Dict[str, Any]:
                 value = clean(row.get(field)).lower()
                 if value in {"approved", "true", "auto_approved", "render_approved"}:
                     blockers.append(f"approval_not_review_only:{ident}:{field}={value}")
-            for url_field in ["source_url", "official_url", "teams_url", "players_url", "team_site_url", "roster_source_url"]:
+            url_fields = [
+                field
+                for field in row
+                if field.endswith("_url")
+                or field
+                in {
+                    "source_url",
+                    "official_url",
+                    "teams_url",
+                    "players_url",
+                    "team_site_url",
+                    "roster_source_url",
+                }
+            ]
+            for url_field in url_fields:
                 if url_field not in row:
                     continue
                 value = clean(row.get(url_field))
@@ -204,6 +242,47 @@ def evaluate(root: Path) -> Dict[str, Any]:
     for team_id in sorted(REQUIRED_NWSL_TEAMS - provider_team_rows):
         blockers.append(f"missing_manual_provider_id:{team_id}")
 
+    nwslsoccer_uuid_rows = {
+        clean(row.get("entity_id")): clean(row.get("provider_id"))
+        for row in rows_by_file.get("provider_ids.csv", [])
+        if clean(row.get("entity_type")) == "team" and clean(row.get("provider")) == "nwslsoccer_team_uuid"
+    }
+    for team_id in sorted(REQUIRED_NWSL_TEAMS - set(nwslsoccer_uuid_rows)):
+        blockers.append(f"missing_nwslsoccer_team_uuid:{team_id}")
+    for team_id, provider_id in sorted(nwslsoccer_uuid_rows.items()):
+        if team_id in REQUIRED_NWSL_TEAMS and not provider_id:
+            blockers.append(f"blank_nwslsoccer_team_uuid:{team_id}")
+
+    league_source_kinds = {
+        clean(row.get("source_kind"))
+        for row in rows_by_file.get("source_urls.csv", [])
+        if clean(row.get("entity_type")) == "league" and clean(row.get("entity_id")) == "nwsl"
+    }
+    for source_kind in sorted(REQUIRED_LEAGUE_SOURCE_KINDS - league_source_kinds):
+        blockers.append(f"missing_nwsl_league_source:{source_kind}")
+
+    team_source_map: Dict[str, Set[str]] = {team_id: set() for team_id in REQUIRED_NWSL_TEAMS}
+    for row in rows_by_file.get("source_urls.csv", []):
+        if clean(row.get("entity_type")) != "team":
+            continue
+        team_id = clean(row.get("entity_id"))
+        if team_id in team_source_map:
+            team_source_map[team_id].add(clean(row.get("source_kind")))
+    for team_id, source_kinds in sorted(team_source_map.items()):
+        for source_kind in sorted(REQUIRED_TEAM_SOURCE_KINDS - source_kinds):
+            blockers.append(f"missing_team_source:{team_id}:{source_kind}")
+
+    team_approval_scope_map: Dict[str, Set[str]] = {team_id: set() for team_id in REQUIRED_NWSL_TEAMS}
+    for row in rows_by_file.get("approval_status.csv", []):
+        if clean(row.get("entity_type")) != "team":
+            continue
+        team_id = clean(row.get("entity_id"))
+        if team_id in team_approval_scope_map:
+            team_approval_scope_map[team_id].add(clean(row.get("approval_scope")))
+    for team_id, scopes in sorted(team_approval_scope_map.items()):
+        for scope in sorted(REQUIRED_TEAM_APPROVAL_SCOPES - scopes):
+            blockers.append(f"missing_team_review_scope:{team_id}:{scope}")
+
     player_count = len(rows_by_file.get("players.csv", []))
     if player_count == 0:
         warnings.append("players_csv_header_only_manual_intake")
@@ -222,6 +301,14 @@ def evaluate(root: Path) -> Dict[str, Any]:
         "player_count": player_count,
         "source_url_count": len(rows_by_file.get("source_urls.csv", [])),
         "asset_slot_count": len(rows_by_file.get("asset_slots.csv", [])),
+        "league_source_kind_count": len(league_source_kinds),
+        "required_league_source_kind_count": len(REQUIRED_LEAGUE_SOURCE_KINDS),
+        "required_team_source_kind_count": len(REQUIRED_TEAM_SOURCE_KINDS),
+        "team_source_coverage": {
+            team_id: sorted(source_kinds)
+            for team_id, source_kinds in sorted(team_source_map.items())
+        },
+        "required_team_approval_scope_count": len(REQUIRED_TEAM_APPROVAL_SCOPES),
         "blockers": sorted(set(blockers)),
         "warnings": sorted(set(warnings)),
         "review_only": True,
@@ -244,6 +331,9 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         f"Required NWSL teams: `{report['team_count']}/{report['required_team_count']}`",
         f"Players: `{report['player_count']}`",
         f"Source URL rows: `{report['source_url_count']}`",
+        f"League source kinds: `{report['league_source_kind_count']}/{report['required_league_source_kind_count']}`",
+        f"Team source kinds required: `{report['required_team_source_kind_count']}`",
+        f"Team review scopes required: `{report['required_team_approval_scope_count']}`",
         f"Asset slot rows: `{report['asset_slot_count']}`",
         "Review only: `true`",
         "Auto-download allowed: `false`",

@@ -45,6 +45,18 @@ def write_upload_manifest(missing: List[Dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+def next_action(missing: List[Dict[str, str]], validation: Dict[str, object]) -> str:
+    operator_warnings = validation.get("operator_warnings") or []
+    source_path_warnings = validation.get("source_path_metadata_warnings") or []
+    if missing:
+        return "upload each exact primary team logo as logo.png into its recommended folder path"
+    if operator_warnings:
+        return "review unapproved local logos and source evidence before any manual approval"
+    if source_path_warnings:
+        return "review source/path metadata warnings and confirm registry paths remain intentional"
+    return "no missing WNBA team logo uploads required"
+
+
 def main() -> None:
     missing = read_csv(MISSING_TEAM_LOGOS)
     validation = {}
@@ -54,13 +66,17 @@ def main() -> None:
         except Exception:
             validation = {}
     write_upload_manifest(missing)
+    operator_warnings = validation.get("operator_warnings") or []
+    source_path_warnings = validation.get("source_path_metadata_warnings") or []
     report = {
         "version": "hsd-wnba-asset-gap-report-v1.1-logo-upload-pack",
         "generated_at_utc": now_iso(),
         "missing_team_logos": len(missing),
         "validation_status": validation.get("status", "unknown"),
+        "operator_warnings": len(operator_warnings),
+        "source_path_metadata_warnings": len(source_path_warnings),
         "logo_upload_manifest": UPLOAD_CSV.as_posix(),
-        "next_action": "upload each exact primary team logo as logo.png into its recommended folder path",
+        "next_action": next_action(missing, validation),
     }
     GAPS_JSON.write_text(json.dumps(report, indent=2), encoding="utf-8")
     lines = [
@@ -88,6 +104,18 @@ def main() -> None:
         for row in missing:
             target = row.get("recommended_path", "")
             lines.append(f"- `{target}`")
+    else:
+        lines.append("- None")
+    lines += ["", "## Operator warnings", ""]
+    if operator_warnings:
+        for item in operator_warnings:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- None")
+    lines += ["", "## Source/path metadata warnings", ""]
+    if source_path_warnings:
+        for item in source_path_warnings:
+            lines.append(f"- {item}")
     else:
         lines.append("- None")
     lines += ["", "## Next action", "", f"- {report['next_action']}"]
