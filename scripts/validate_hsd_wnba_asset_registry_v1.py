@@ -18,7 +18,7 @@ MISSING_TEAM_LOGOS = "data/asset_registry/wnba/missing_team_logos.csv"
 LOGO_REVIEW_PACKETS = "data/asset_registry/wnba/logo_review_packets.csv"
 REPORT_MD = "data/asset_registry/wnba/asset_registry_validation_report.md"
 REPORT_JSON = "data/asset_registry/wnba/asset_registry_validation.json"
-VERSION = "hsd-wnba-asset-registry-validator-v1.3-review-only-logo-decision-packets"
+VERSION = "hsd-wnba-asset-registry-validator-v1.4-logo-source-url-review-packets"
 LOGO_EXTENSIONS = {".png", ".svg", ".webp", ".jpg", ".jpeg"}
 MISSING_LOGO_FIELDS = [
     "team_id",
@@ -48,6 +48,7 @@ LOGO_REVIEW_PACKET_FIELDS = [
     "team_name",
     "issue_type",
     "issue_summary",
+    "source_url",
     "registered_path",
     "source_target_path",
     "primary_action",
@@ -123,6 +124,7 @@ def logo_review_packet(
     team_name: str,
     issue_type: str,
     issue_summary: str,
+    source_url: str,
     registered_path: str,
     source_target_path: str,
     *,
@@ -150,6 +152,7 @@ def logo_review_packet(
         "team_name": team_name or team_id,
         "issue_type": issue_type,
         "issue_summary": issue_summary,
+        "source_url": source_url,
         "registered_path": registered_path,
         "source_target_path": source_target_path,
         "primary_action": primary_action,
@@ -360,6 +363,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         logo = logos_by_id.get(tid, {})
         source = sources_by_id.get(tid, {})
         registered_path = clean(logo.get("file_path"))
+        source_url = clean(source.get("source_url"))
         source_target_path = clean(source.get("target_path"))
         logo_review_rows.append(
             logo_review_packet(
@@ -367,6 +371,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
                 team_name,
                 "unapproved_required_team_logo",
                 f"{tid}: local required logo exists but is not approved; human review required before enabling",
+                source_url,
                 registered_path,
                 source_target_path,
             )
@@ -382,6 +387,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         team_name = clean(teams_by_id.get(tid, {}).get("team_name")) or tid
         logo = logos_by_id.get(tid, {})
         source = sources_by_id.get(tid, {})
+        source_url = clean(source.get("source_url"))
         suffix = str(count) if count > 1 else ""
         logo_review_rows.append(
             logo_review_packet(
@@ -389,6 +395,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
                 team_name,
                 issue_type,
                 clean(warning.get("issue_summary")),
+                source_url,
                 clean(logo.get("file_path")),
                 clean(source.get("target_path")),
                 packet_suffix=suffix,

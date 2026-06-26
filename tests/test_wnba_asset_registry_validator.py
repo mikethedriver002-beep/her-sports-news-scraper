@@ -95,6 +95,7 @@ def test_validator_treats_existing_unapproved_logo_as_operator_review(tmp_path: 
     assert packet["team_id"] == "atlanta_dream"
     assert packet["issue_type"] == "unapproved_required_team_logo"
     assert packet["registered_path"] == "assets/leagues/wnba/teams/atlanta_dream/logo.png"
+    assert packet["source_url"] == "https://example.test/atlanta-dream-logo.png"
     assert packet["source_target_path"] == "assets/leagues/wnba/teams/atlanta_dream/logo.png"
     assert packet["allowed_decisions"] == "approve_after_manual_review|hold_logo_slot|revise_registry_metadata|request_exact_logo_evidence"
     assert packet["publish_ready"] == "false"
