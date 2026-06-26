@@ -2786,6 +2786,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Breanna Stewart: hold_identity_review_required" in asset_checklist
     assert "athlete_identity_review_packet.csv" in asset_checklist
     assert "Renderer fallback remains review-only" in asset_checklist
+    assert "HOLD this selected-template render if required team logos, source proof, format fit, or manual-path evidence is uncertain." in asset_checklist
+    assert "Keep future photo-first and optional league-mark issues review-only; they do not approve assets or create a publish-ready lane." in asset_checklist
+    assert "HOLD if any team, player, league, source, crop, or identity asset is uncertain." not in asset_checklist
     assert "Open news_fact_packets.csv" in Path("render_handoff_top_packet/source_proof.md").read_text(encoding="utf-8")
     manual_prompt = Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     assert "Use this prompt manually only" in manual_prompt
