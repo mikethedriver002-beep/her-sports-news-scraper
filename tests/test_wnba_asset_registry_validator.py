@@ -86,8 +86,23 @@ def test_validator_treats_existing_unapproved_logo_as_operator_review(tmp_path: 
     assert result["status"] == "operator_review"
     assert result["missing_required_team_logos"] == 0
     assert result["unapproved_required_team_logos"] == 1
+    assert result["logo_review_packet_rows"] == 1
     assert missing_rows == []
     assert "human review required" in result["operator_warnings"][0]
+    packet = result["logo_review_packets"][0]
+    assert packet["decision_packet_id"] == "asset_logo_review_atlanta_dream_unapproved_required_team_logo"
+    assert packet["decision_packet_title"] == "WNBA logo review: Atlanta Dream - unapproved required team logo"
+    assert packet["team_id"] == "atlanta_dream"
+    assert packet["issue_type"] == "unapproved_required_team_logo"
+    assert packet["registered_path"] == "assets/leagues/wnba/teams/atlanta_dream/logo.png"
+    assert packet["source_target_path"] == "assets/leagues/wnba/teams/atlanta_dream/logo.png"
+    assert packet["allowed_decisions"] == "approve_after_manual_review|hold_logo_slot|revise_registry_metadata|request_exact_logo_evidence"
+    assert packet["publish_ready"] == "false"
+    assert packet["auto_approval"] == "false"
+    assert packet["auto_publish"] == "false"
+    assert packet["move_files"] == "false"
+    assert packet["paid_apis"] == "false"
+    assert packet["asset_downloads"] == "false"
 
 
 def test_validator_reports_true_missing_required_logo(tmp_path: Path, monkeypatch) -> None:
@@ -187,7 +202,7 @@ def test_validator_writes_generated_reports_to_run_output_dir(tmp_path: Path, mo
                 "team_id": "missing_team",
                 "team_name": "Missing Team",
                 "source_url": "https://example.test/missing-team-logo.png",
-                "target_path": "assets/leagues/wnba/teams/missing_team/logo.png",
+                "target_path": "assets/leagues/wnba/teams/missing_team/logo.svg",
                 "source_note": "fixture_exact_logo_source",
             }
         ],
@@ -198,14 +213,23 @@ def test_validator_writes_generated_reports_to_run_output_dir(tmp_path: Path, mo
 
     run_registry = run_dir / "data" / "asset_registry" / "wnba"
     assert (run_registry / "missing_team_logos.csv").exists()
+    assert (run_registry / "logo_review_packets.csv").exists()
     assert (run_registry / "asset_registry_validation.json").exists()
     assert (run_registry / "asset_registry_validation_report.md").exists()
     assert not (root / "missing_team_logos.csv").exists()
+    assert not (root / "logo_review_packets.csv").exists()
     assert not (root / "asset_registry_validation.json").exists()
     assert not (root / "asset_registry_validation_report.md").exists()
+    packets = list(csv.DictReader((run_registry / "logo_review_packets.csv").open(newline="", encoding="utf-8")))
+    assert len(packets) == 1
+    assert packets[0]["issue_type"] == "source_target_path_registered_path_drift"
+    assert packets[0]["registered_path"] == "assets/leagues/wnba/teams/missing_team/logo.png"
+    assert packets[0]["source_target_path"] == "assets/leagues/wnba/teams/missing_team/logo.svg"
+    assert packets[0]["publish_ready"] == "false"
     report = json.loads((run_registry / "asset_registry_validation.json").read_text(encoding="utf-8"))
     assert report["status"] == "needs_assets"
     assert report["missing_required_team_logos"] == 1
+    assert report["logo_review_packet_rows"] == 1
 
 
 def test_validator_flags_duplicate_logo_bytes_and_source_path_drift(tmp_path: Path, monkeypatch) -> None:
@@ -267,6 +291,17 @@ def test_validator_flags_duplicate_logo_bytes_and_source_path_drift(tmp_path: Pa
     assert missing_rows == []
     assert any("duplicate logo file bytes across teams" in warning for warning in result["warnings"])
     assert any("alpha_team: source target_path differs" in warning for warning in result["source_path_metadata_warnings"])
+    drift_packets = [
+        packet
+        for packet in result["logo_review_packets"]
+        if packet["issue_type"] == "source_target_path_registered_path_drift"
+    ]
+    assert len(drift_packets) == 1
+    assert drift_packets[0]["decision_packet_id"] == "asset_logo_review_alpha_team_source_target_path_registered_path_drift"
+    assert drift_packets[0]["team_name"] == "Alpha Team"
+    assert drift_packets[0]["registered_path"] == "assets/leagues/wnba/teams/alpha_team/logo.png"
+    assert drift_packets[0]["source_target_path"] == "assets/leagues/wnba/teams/alpha_team/logo.svg"
+    assert drift_packets[0]["auto_publish"] == "false"
 
 
 def test_gap_report_preserves_missing_logo_decision_packet_fields(tmp_path: Path, monkeypatch) -> None:

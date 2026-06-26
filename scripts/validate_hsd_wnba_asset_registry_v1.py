@@ -15,6 +15,7 @@ from hsd_run_io import input_path, write_csv as write_run_csv, write_json, write
 
 ROOT = Path("data/asset_registry/wnba")
 MISSING_TEAM_LOGOS = "data/asset_registry/wnba/missing_team_logos.csv"
+LOGO_REVIEW_PACKETS = "data/asset_registry/wnba/logo_review_packets.csv"
 REPORT_MD = "data/asset_registry/wnba/asset_registry_validation_report.md"
 REPORT_JSON = "data/asset_registry/wnba/asset_registry_validation.json"
 VERSION = "hsd-wnba-asset-registry-validator-v1.3-review-only-logo-decision-packets"
@@ -39,6 +40,28 @@ MISSING_LOGO_FIELDS = [
     "auto_publish",
     "move_files",
     "paid_apis",
+]
+LOGO_REVIEW_PACKET_FIELDS = [
+    "decision_packet_id",
+    "decision_packet_title",
+    "team_id",
+    "team_name",
+    "issue_type",
+    "issue_summary",
+    "registered_path",
+    "source_target_path",
+    "primary_action",
+    "hold_cue",
+    "revise_cue",
+    "renderer_fallback_cue",
+    "allowed_decisions",
+    "review_only",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
 ]
 
 
@@ -95,6 +118,55 @@ def missing_logo_decision_packet(team_id: str, team_name: str, recommended_path:
     }
 
 
+def logo_review_packet(
+    team_id: str,
+    team_name: str,
+    issue_type: str,
+    issue_summary: str,
+    registered_path: str,
+    source_target_path: str,
+    *,
+    packet_suffix: str = "",
+) -> Dict[str, str]:
+    slug = decision_slug(team_id or team_name)
+    issue_slug = decision_slug(issue_type)
+    suffix = f"_{decision_slug(packet_suffix)}" if clean(packet_suffix) else ""
+    title_issue = issue_type.replace("_", " ")
+    if issue_type == "unapproved_required_team_logo":
+        primary_action = (
+            f"Review the required local team logo at {registered_path or 'the registered path'} against source evidence; "
+            "only a human operator may mark it approved."
+        )
+        hold_cue = "Hold WNBA templates that require the exact logo until the local file and source evidence are manually approved."
+    else:
+        primary_action = (
+            "Review the logo registry path and source target_path metadata; revise only after human evidence review."
+        )
+        hold_cue = "Hold renderer trust if path metadata is incomplete, drifting, unsupported, or not source-backed."
+    return {
+        "decision_packet_id": f"asset_logo_review_{slug}_{issue_slug}{suffix}",
+        "decision_packet_title": f"WNBA logo review: {team_name or team_id} - {title_issue}",
+        "team_id": team_id,
+        "team_name": team_name or team_id,
+        "issue_type": issue_type,
+        "issue_summary": issue_summary,
+        "registered_path": registered_path,
+        "source_target_path": source_target_path,
+        "primary_action": primary_action,
+        "hold_cue": hold_cue,
+        "revise_cue": "Revise team_logos.csv/logo_sources.csv only after human evidence review; do not invent, download, or substitute logos.",
+        "renderer_fallback_cue": "Renderer logo/text fallback remains review-only and must not be treated as approval for exact-logo WNBA templates.",
+        "allowed_decisions": "approve_after_manual_review|hold_logo_slot|revise_registry_metadata|request_exact_logo_evidence",
+        "review_only": "true",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "asset_downloads": "false",
+    }
+
+
 def duplicate_values(rows: Iterable[Mapping[str, str]], field: str) -> List[str]:
     values = [clean(row.get(field)) for row in rows if clean(row.get(field))]
     return sorted(value for value, count in Counter(values).items() if count > 1)
@@ -133,6 +205,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
     warnings: List[str] = []
     operator_warnings: List[str] = []
     source_path_warnings: List[str] = []
+    source_path_warning_rows: List[Dict[str, str]] = []
 
     team_ids = {clean(row.get("team_id")) for row in teams if clean(row.get("team_id"))}
     logo_ids = {clean(row.get("team_id")) for row in logos if clean(row.get("team_id"))}
@@ -141,6 +214,16 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
     teams_by_id = first_by_field(teams, "team_id")
     logos_by_id = first_by_field(logos, "team_id")
     sources_by_id = first_by_field(sources, "team_id")
+
+    def add_source_path_warning(team_id: str, issue_type: str, message: str) -> None:
+        source_path_warnings.append(message)
+        source_path_warning_rows.append(
+            {
+                "team_id": team_id,
+                "issue_type": issue_type,
+                "issue_summary": message,
+            }
+        )
 
     if not teams:
         issues.append("teams.csv is empty or missing")
@@ -182,12 +265,20 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         elif Path(file_path).suffix.lower() not in LOGO_EXTENSIONS:
             issues.append(f"{team_id}: registered logo path has unsupported extension: {file_path}")
         elif file_path not in canonical_logo_paths(team_id):
-            source_path_warnings.append(f"{team_id}: registered logo path is outside canonical WNBA team logo paths: {file_path}")
+            add_source_path_warning(
+                team_id,
+                "registered_path_outside_canonical_logo_paths",
+                f"{team_id}: registered logo path is outside canonical WNBA team logo paths: {file_path}",
+            )
 
         if declared_exists and not actual_exists:
             issues.append(f"{team_id}: file_exists=true but registered logo path does not exist: {file_path}")
         if not declared_exists and actual_exists:
-            source_path_warnings.append(f"{team_id}: file_exists=false but registered logo path exists: {file_path}")
+            add_source_path_warning(
+                team_id,
+                "registered_file_exists_metadata_drift",
+                f"{team_id}: file_exists=false but registered logo path exists: {file_path}",
+            )
         if approved and not actual_exists:
             issues.append(f"{team_id}: approved logo path does not exist: {file_path}")
         if required and not actual_exists:
@@ -215,24 +306,36 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         registered_path = clean(logo.get("file_path"))
 
         if not source:
-            source_path_warnings.append(f"{team_id}: missing logo_sources.csv row")
+            add_source_path_warning(team_id, "missing_logo_source_row", f"{team_id}: missing logo_sources.csv row")
             operator_warnings.append(f"{team_id}: source metadata missing; manual source evidence review required")
             continue
         if clean(source.get("team_name")) and clean(source.get("team_name")) != clean(team.get("team_name")):
-            source_path_warnings.append(f"{team_id}: source team_name differs from teams.csv")
+            add_source_path_warning(team_id, "source_team_name_drift", f"{team_id}: source team_name differs from teams.csv")
         if not source_url:
-            source_path_warnings.append(f"{team_id}: source_url missing")
+            add_source_path_warning(team_id, "source_url_missing", f"{team_id}: source_url missing")
             operator_warnings.append(f"{team_id}: source_url missing; manual source evidence review required")
         if not target_path:
-            source_path_warnings.append(f"{team_id}: source target_path missing")
+            add_source_path_warning(team_id, "source_target_path_missing", f"{team_id}: source target_path missing")
         elif Path(target_path).suffix.lower() not in LOGO_EXTENSIONS:
-            source_path_warnings.append(f"{team_id}: source target_path has unsupported extension: {target_path}")
+            add_source_path_warning(
+                team_id,
+                "source_target_path_unsupported_extension",
+                f"{team_id}: source target_path has unsupported extension: {target_path}",
+            )
         elif target_path not in canonical_logo_paths(team_id):
-            source_path_warnings.append(f"{team_id}: source target_path is outside canonical WNBA team logo paths: {target_path}")
+            add_source_path_warning(
+                team_id,
+                "source_target_path_outside_canonical_logo_paths",
+                f"{team_id}: source target_path is outside canonical WNBA team logo paths: {target_path}",
+            )
         if target_path and registered_path and target_path != registered_path:
-            source_path_warnings.append(f"{team_id}: source target_path differs from registered local logo path: source={target_path} registry={registered_path}")
+            add_source_path_warning(
+                team_id,
+                "source_target_path_registered_path_drift",
+                f"{team_id}: source target_path differs from registered local logo path: source={target_path} registry={registered_path}",
+            )
         if not source_note:
-            source_path_warnings.append(f"{team_id}: source_note missing")
+            add_source_path_warning(team_id, "source_note_missing", f"{team_id}: source_note missing")
         if boolish(logo.get("approved")) and (not source_url or not source_note):
             operator_warnings.append(f"{team_id}: approved logo lacks complete source metadata; manual source recheck required")
 
@@ -251,6 +354,46 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         }
         for tid in sorted(set(missing_required))
     ]
+    logo_review_rows: List[Dict[str, str]] = []
+    for tid in sorted(set(unapproved_required)):
+        team_name = clean(teams_by_id.get(tid, {}).get("team_name")) or tid
+        logo = logos_by_id.get(tid, {})
+        source = sources_by_id.get(tid, {})
+        registered_path = clean(logo.get("file_path"))
+        source_target_path = clean(source.get("target_path"))
+        logo_review_rows.append(
+            logo_review_packet(
+                tid,
+                team_name,
+                "unapproved_required_team_logo",
+                f"{tid}: local required logo exists but is not approved; human review required before enabling",
+                registered_path,
+                source_target_path,
+            )
+        )
+    source_warning_counts: Dict[Tuple[str, str], int] = defaultdict(int)
+    for warning in source_path_warning_rows:
+        tid = clean(warning.get("team_id"))
+        issue_type = clean(warning.get("issue_type"))
+        if not tid or not issue_type:
+            continue
+        source_warning_counts[(tid, issue_type)] += 1
+        count = source_warning_counts[(tid, issue_type)]
+        team_name = clean(teams_by_id.get(tid, {}).get("team_name")) or tid
+        logo = logos_by_id.get(tid, {})
+        source = sources_by_id.get(tid, {})
+        suffix = str(count) if count > 1 else ""
+        logo_review_rows.append(
+            logo_review_packet(
+                tid,
+                team_name,
+                issue_type,
+                clean(warning.get("issue_summary")),
+                clean(logo.get("file_path")),
+                clean(source.get("target_path")),
+                packet_suffix=suffix,
+            )
+        )
 
     status = "pass" if not issues else "fail"
     if missing_required:
@@ -269,7 +412,10 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
         "missing_required_team_logos": len(set(missing_required)),
         "unapproved_required_team_logos": len(set(unapproved_required)),
         "missing_logo_decision_packets": len(missing_rows),
+        "logo_review_packet_rows": len(logo_review_rows),
         "decision_packet_fields": MISSING_LOGO_FIELDS,
+        "logo_review_packet_fields": LOGO_REVIEW_PACKET_FIELDS,
+        "logo_review_packets": logo_review_rows,
         "duplicate_logo_paths": duplicate_paths,
         "source_path_metadata_warnings": source_path_warnings,
         "operator_warnings": operator_warnings,
@@ -287,6 +433,7 @@ def build_validation(root: Path = ROOT) -> Tuple[Dict[str, Any], List[Dict[str, 
 
 def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]]) -> None:
     write_run_csv(MISSING_TEAM_LOGOS, missing_rows, MISSING_LOGO_FIELDS)
+    write_run_csv(LOGO_REVIEW_PACKETS, list(result.get("logo_review_packets") or []), LOGO_REVIEW_PACKET_FIELDS)
     write_json(REPORT_JSON, result)
     lines = [
         "# HSD WNBA Asset Registry Validation",
@@ -305,6 +452,7 @@ def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]])
         f"- missing required team logos: {result['missing_required_team_logos']}",
         f"- unapproved required team logos: {result['unapproved_required_team_logos']}",
         f"- missing logo decision packets: {result['missing_logo_decision_packets']}",
+        f"- logo review packet rows: {result['logo_review_packet_rows']}",
         "",
         "## Issues",
         "",
@@ -317,6 +465,12 @@ def write_reports(result: Mapping[str, Any], missing_rows: List[Dict[str, str]])
     lines += ["", "## Source/path metadata warnings", ""]
     source_path_warnings = list(result.get("source_path_metadata_warnings") or [])
     lines += [f"- {item}" for item in source_path_warnings] if source_path_warnings else ["- None"]
+    lines += ["", "## Logo review packets", ""]
+    logo_review_rows = list(result.get("logo_review_packets") or [])
+    lines += [
+        f"- {row['team_name']} | {row['issue_type']} | packet `{row['decision_packet_id']}` | decisions `{row['allowed_decisions']}`"
+        for row in logo_review_rows
+    ] if logo_review_rows else ["- None"]
     lines += ["", "## Duplicate/logo warnings", ""]
     warnings = list(result.get("warnings") or [])
     duplicate_paths = list(result.get("duplicate_logo_paths") or [])

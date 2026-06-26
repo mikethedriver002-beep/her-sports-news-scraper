@@ -336,6 +336,27 @@ def seed_asset_availability_audit_files() -> None:
     (registry_dir / "logo_asset_catalog.md").write_text("# Logo Asset Catalog\n", encoding="utf-8")
     (wnba_dir / "athlete_photo_catalog.md").write_text("# WNBA Athlete Photo Catalog\n", encoding="utf-8")
     (wnba_dir / "logo_review_catalog_report.md").write_text("# WNBA Logo Review Catalog\n", encoding="utf-8")
+    logo_packet = {
+        "packet_id": "logo_packet_new_york_liberty_unapproved",
+        "decision_packet_title": "WNBA logo review: New York Liberty",
+        "team_id": "new_york_liberty",
+        "team_name": "New York Liberty",
+        "issue_type": "unapproved_required_logo",
+        "decision_review_status": "operator_logo_review_required",
+        "registered_path": "assets/leagues/wnba/logos/new_york_liberty/logo.png",
+        "source_target_path": "assets/leagues/wnba/teams/new_york_liberty/logo.svg",
+        "primary_action": "Review exact local logo source evidence before renderer trust.",
+        "hold_cue": "Hold the logo slot until source and local file are manually checked.",
+        "revise_cue": "Revise registry metadata only after human evidence review.",
+        "renderer_fallback_cue": "Renderer fallback remains review-only while logo trust is held.",
+        "allowed_decisions": "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+    write_csv_with_fields((wnba_dir / "logo_review_packets.csv").as_posix(), [logo_packet], list(logo_packet.keys()))
 
 
 def write_identity_resolution_inbox(**overrides: str) -> None:
@@ -1797,12 +1818,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Default photo approvals" and item["value"] == "1" for item in payload["metrics"])
     assert payload["asset_readiness_panel"]["panel_status"] == "review_required"
     assert payload["asset_readiness_panel"]["finding_count"] == 5
+    assert payload["asset_readiness_panel"]["logo_review_packet_rows"] == 1
+    assert payload["asset_readiness_panel"]["logo_review_packet_unapproved_rows"] == 1
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
     assert any(item["decision"] == "Verify logo" for item in payload["asset_readiness_panel"]["top_findings"])
     assert any(item["decision"] == "Hold league mark" for item in payload["asset_readiness_panel"]["top_findings"])
     assert any(item["decision"] == "Verify renderer fallback" for item in payload["asset_readiness_panel"]["top_findings"])
     assert "Asset readiness" in html
     assert "Highest-risk asset blockers" in html
+    assert "Focused logo review packets" in html
+    assert "WNBA logo review: New York Liberty" in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
     assert "data/asset_registry/asset_availability_audit.md" in html
@@ -2131,6 +2156,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/asset_availability_audit.md"]["run_command"] == ".\\hsd.cmd run -Mode asset-audit"
     assert artifact_by_path["data/asset_registry/wnba/athlete_photo_catalog.md"]["run_command"] == ".\\hsd.cmd run -Mode asset-audit"
     assert artifact_by_path["data/asset_registry/wnba/logo_review_catalog_report.md"]["run_command"] == ".\\hsd.cmd run -Mode asset-audit"
+    assert artifact_by_path["data/asset_registry/wnba/logo_review_packets.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
