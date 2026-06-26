@@ -35,11 +35,22 @@ def test_catalog_requires_file_marker_and_registry_approval(tmp_path):
             "source_file": "review.png",
             "approved_at_utc": "now",
         }],
-        review_rows=[{"athlete_id": "dallas_wings_test_player", "status": "needs_human_approval", "image_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/123.png"}],
+        review_rows=[{
+            "athlete_id": "dallas_wings_test_player",
+            "status": "needs_human_approval",
+            "image_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/123.png",
+            "confidence": "0.72",
+        }],
         template_uses=["Final Score With Player Photo (approved_player_photo_slot)"],
     )
 
     assert rows[0]["status"] == "approved"
+    assert rows[0]["provider_player_id"] == "123"
+    assert rows[0]["source_url"] == "https://cdn.wnba.com/headshots/wnba/latest/260x190/123.png"
+    assert rows[0]["identity_confidence"] == "0.72"
+    assert rows[0]["approval_status"] == "approved_marker_present_source_reviewed"
+    assert rows[0]["identity_review_status"] == "identity_review_ready"
+    assert rows[0]["missing_asset_reason"] == ""
     assert rows[0]["approved_marker_exists"] == "true"
     assert "Final Score With Player Photo" in rows[0]["render_template_uses"]
     assert rows[0]["review_only_policy"] == "catalog_only_no_auto_approval_no_file_movement"
@@ -75,6 +86,9 @@ def test_catalog_blocks_render_use_for_default_approval_provenance(tmp_path):
     )
 
     assert rows[0]["status"] == "approved"
+    assert rows[0]["provider_player_id"] == "123"
+    assert rows[0]["approval_status"] == "approved_marker_present_manual_source_recheck_required"
+    assert rows[0]["identity_review_status"] == "manual_source_recheck_required"
     assert rows[0]["render_template_uses"].startswith("review_only_manual_source_recheck_required")
     assert "default_decision_source_manual_recheck_required" in rows[0]["render_template_uses"]
     assert "default_decision_source_manual_recheck_required" in rows[0]["crop_readiness_notes"]
@@ -103,6 +117,10 @@ def test_catalog_keeps_file_without_marker_unapproved(tmp_path):
     )
 
     assert rows[0]["status"] == "unapproved"
+    assert rows[0]["source_url"] == "https://cdn.wnba.com/headshots/wnba/latest/260x190/123.png"
+    assert rows[0]["identity_confidence"] == "0.72"
+    assert rows[0]["approval_status"] == "file_present_not_approved_for_render"
+    assert rows[0]["identity_review_status"] == "needs_human_approval"
     assert rows[0]["approved_marker_exists"] == "false"
     assert rows[0]["render_template_uses"] == "review_only_not_renderable_until_approved"
     assert "registry_says_approved_but_marker_missing" in rows[0]["crop_readiness_notes"]
@@ -168,6 +186,15 @@ def test_catalog_schema_documents_review_only_statuses():
 
     assert schema["properties"]["report"]["properties"]["review_only"]["const"] is True
     assert row_props["status"]["enum"] == ["approved", "unapproved", "missing"]
+    assert row_props["approval_status"]["enum"] == [
+        "approved_marker_present_manual_source_recheck_required",
+        "approved_marker_present_source_reviewed",
+        "file_present_not_approved_for_render",
+        "missing_asset_not_renderable",
+    ]
+    assert "source_url" in row_props
+    assert "identity_confidence" in row_props
+    assert "missing_asset_reason" in row_props
     assert row_props["review_only_policy"]["const"] == "catalog_only_no_auto_approval_no_file_movement"
 
 

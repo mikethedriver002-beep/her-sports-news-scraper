@@ -1,0 +1,2 @@
+team_id,league_id,team_name,country,team_site_url,roster_url,schedule_url,crest_review_source_url,official_status,manual_review_status,asset_registry_status,render_enabled,notes
+uswnt,uswnt,U.S. Women's National Team,US,https://www.ussoccer.com/teams/uswnt,https://www.ussoccer.com/teams/uswnt/roster,https://www.ussoccer.com/schedule-tickets/uswnt,https://www.ussoccer.com/teams/uswnt,active,review_required,source_seeded,false,Seeded from official U.S. Soccer pages; URLs are review-only

@@ -1,0 +1,6 @@
+entity_type,entity_id,provider,provider_id,provider_url,source_url,manual_review_status,approval_status,notes
+league,uswnt,hsd_manual_registry,uswnt,,https://www.ussoccer.com/teams/uswnt,review_required,not_approved,Internal manual-safe slug only
+league,uswnt,ussoccer_team_slug,uswnt,https://www.ussoccer.com/teams/uswnt,https://www.ussoccer.com/teams/uswnt,review_required,not_approved,Official U.S. Soccer team URL slug only
+team,uswnt,hsd_manual_registry,uswnt,,https://www.ussoccer.com/teams/uswnt,review_required,not_approved,Internal manual-safe slug only
+team,uswnt,ussoccer_team_slug,uswnt,https://www.ussoccer.com/teams/uswnt,https://www.ussoccer.com/teams/uswnt,review_required,not_approved,Official U.S. Soccer team URL slug only
+player_template,__manual_player_id__,ussoccer_player_slug,,https://www.ussoccer.com/players,https://www.ussoccer.com/players,review_required,not_approved,Fill with specific official player profile slug during manual intake

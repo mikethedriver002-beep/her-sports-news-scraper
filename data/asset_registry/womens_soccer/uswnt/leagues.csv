@@ -1,0 +1,2 @@
+league_id,league_name,sport,level,country,official_url,teams_url,players_url,season_scope,source_status,manual_review_status,paid_source,auto_download_allowed,render_enabled,notes
+uswnt,U.S. Women's National Team,soccer,national_team,US,https://www.ussoccer.com/teams/uswnt,https://www.ussoccer.com/teams/uswnt,https://www.ussoccer.com/teams/uswnt/roster,2026,official_manual_seed,review_required,false,false,false,Official U.S. Soccer pages only no downloads or approvals

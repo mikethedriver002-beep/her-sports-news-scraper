@@ -3,7 +3,7 @@ param(
     [ValidateSet("doctor", "setup", "test", "run", "dashboard", "clean")]
     [string]$Command = "doctor",
 
-    [ValidateSet("full", "results", "news", "studio", "asset", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox", "identity-decision", "identity-decision-verify")]
+    [ValidateSet("full", "results", "news", "studio", "asset", "asset-audit", "stories", "handoff", "posts", "launch", "dashboards", "review", "render", "decision-inbox", "identity-decision", "identity-decision-verify")]
     [string]$Mode = "full",
 
     [switch]$UseNetwork,
@@ -605,6 +605,24 @@ function Invoke-AssetStage($Python) {
     Invoke-ScriptIfPresent $Python "generate_hsd_graphics_qa_v1.py" -Optional
 }
 
+function Invoke-AssetAuditStage($Python) {
+    Write-Section "Review-only asset availability audit"
+    Invoke-ScriptIfPresent $Python "scripts\report_hsd_athlete_photo_catalog_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\report_hsd_logo_asset_catalog_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\report_hsd_asset_availability_audit_v1.py" -Optional
+    if ($env:HSD_RUN_OUTPUT_DIR) {
+        $assetAuditStaticManifest = New-Object System.Collections.ArrayList
+        foreach ($relative in @(
+            "data/asset_registry/wnba/logo_review_catalog_report.md",
+            "data/asset_registry/wnba/logo_review_catalog.csv",
+            "data/asset_registry/wnba/logo_review_catalog.json"
+        )) {
+            Copy-IfPresent $relative $env:HSD_RUN_OUTPUT_DIR $assetAuditStaticManifest
+        }
+    }
+    Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional
+}
+
 function Invoke-HandoffStage($Python) {
     Write-Section "Manual handoff stage"
     Invoke-ScriptIfPresent $Python "generate_hsd_manual_workflow_merge_v1.py" -Optional
@@ -839,6 +857,15 @@ function Collect-HsdArtifacts($RunContext) {
         "identity_resolution_local_server.json",
         "identity_decision_live_writeback_verification.md",
         "identity_decision_live_writeback_verification.json",
+        "data/asset_registry/asset_availability_audit.md",
+        "data/asset_registry/asset_availability_audit.csv",
+        "data/asset_registry/asset_availability_audit.json",
+        "data/asset_registry/wnba/athlete_photo_catalog.md",
+        "data/asset_registry/wnba/athlete_photo_catalog.csv",
+        "data/asset_registry/wnba/athlete_photo_catalog.json",
+        "data/asset_registry/wnba/logo_review_catalog_report.md",
+        "data/asset_registry/wnba/logo_review_catalog.csv",
+        "data/asset_registry/wnba/logo_review_catalog.json",
         "bebe_daily_ops_plan.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
@@ -919,6 +946,7 @@ function Invoke-HsdRun {
             "news" { Invoke-NewsStage $python }
             "studio" { Invoke-StudioStage $python }
             "asset" { Invoke-AssetStage $python }
+            "asset-audit" { Invoke-AssetAuditStage $python }
             "stories" { Invoke-StoriesStage $python; Invoke-ReviewStage $python }
             "handoff" { Invoke-HandoffStage $python; Invoke-ReviewStage $python }
             "posts" { Invoke-PostsStage $python; Invoke-ReviewStage $python }

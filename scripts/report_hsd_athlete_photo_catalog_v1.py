@@ -30,12 +30,17 @@ CATALOG_FIELDS = [
     "team_id",
     "league",
     "provider_player_id",
+    "source_url",
+    "identity_confidence",
     "asset_kind",
     "local_asset_path",
     "file_exists",
     "approved_marker_path",
     "approved_marker_exists",
     "status",
+    "approval_status",
+    "identity_review_status",
+    "missing_asset_reason",
     "source_evidence",
     "crop_readiness_notes",
     "render_template_uses",
@@ -154,6 +159,71 @@ def manual_source_warnings(approved: Mapping[str, str]) -> List[str]:
     return warnings
 
 
+def matched_review_row(
+    image_row: Mapping[str, str],
+    review_by_athlete: Mapping[Tuple[str, ...], Mapping[str, str]],
+) -> Mapping[str, str]:
+    if clean(image_row.get("image_type")) != "headshot":
+        return {}
+    return review_by_athlete.get((clean(image_row.get("athlete_id")),), {})
+
+
+def provider_player_id_for(
+    image_row: Mapping[str, str],
+    athlete: Mapping[str, str],
+    approved: Mapping[str, str],
+    review: Mapping[str, str],
+) -> str:
+    return (
+        clean(image_row.get("provider_player_id"))
+        or clean(athlete.get("provider_player_id"))
+        or clean(approved.get("provider_player_id"))
+        or clean(review.get("provider_player_id"))
+    )
+
+
+def source_url_for(
+    athlete: Mapping[str, str],
+    approved: Mapping[str, str],
+    review: Mapping[str, str],
+) -> str:
+    return (
+        clean(review.get("image_url"))
+        or clean(athlete.get("source_url"))
+        or clean(approved.get("source_file"))
+    )
+
+
+def approval_status_for(status: str, source_warnings: List[str]) -> str:
+    if status == "approved" and source_warnings:
+        return "approved_marker_present_manual_source_recheck_required"
+    if status == "approved":
+        return "approved_marker_present_source_reviewed"
+    if status == "unapproved":
+        return "file_present_not_approved_for_render"
+    return "missing_asset_not_renderable"
+
+
+def identity_review_status_for(status: str, source_warnings: List[str], review: Mapping[str, str]) -> str:
+    if status == "approved" and source_warnings:
+        return "manual_source_recheck_required"
+    if status == "approved":
+        return "identity_review_ready"
+    if clean(review.get("status")):
+        return clean(review.get("status"))
+    return "missing_asset_review_required" if status == "missing" else "manual_identity_review_required"
+
+
+def missing_asset_reason_for(status: str, asset_kind: str, review: Mapping[str, str]) -> str:
+    if status != "missing":
+        return ""
+    if asset_kind == "cutout":
+        return "cutout_not_onboarded"
+    if review:
+        return "headshot_candidate_not_promoted_to_local_asset"
+    return "local_asset_file_missing"
+
+
 def source_evidence_for(
     image_row: Mapping[str, str],
     approved_by_athlete: Mapping[Tuple[str, ...], Mapping[str, str]],
@@ -169,7 +239,7 @@ def source_evidence_for(
             f"approved_at_utc={clean(approved.get('approved_at_utc')) or 'unknown'}",
         ]
         return "; ".join(parts)
-    review = review_by_athlete.get((athlete_id,)) if clean(image_row.get("image_type")) == "headshot" else None
+    review = matched_review_row(image_row, review_by_athlete)
     if review:
         parts = [
             "match_review_registry",
@@ -242,6 +312,7 @@ def build_catalog(
         status = status_for(path, marker, registry_approved)
         asset_kind = clean(image.get("image_type")) or "photo"
         approved_registry_row = matched_approved_registry_row(image, approved_by_athlete)
+        review_row = matched_review_row(image, review_by_athlete)
         source_warnings = manual_source_warnings(approved_registry_row) if status == "approved" else []
         notes = crop_notes(path, asset_kind, status, registry_approved, marker_exists)
         if source_warnings:
@@ -251,13 +322,18 @@ def build_catalog(
             "athlete_name": clean(image.get("display_name")) or clean(athlete.get("display_name")),
             "team_id": clean(image.get("team_id")) or clean(athlete.get("team_id")),
             "league": clean(athlete.get("league")) or "WNBA",
-            "provider_player_id": clean(image.get("provider_player_id")) or clean(athlete.get("provider_player_id")),
+            "provider_player_id": provider_player_id_for(image, athlete, approved_registry_row, review_row),
+            "source_url": source_url_for(athlete, approved_registry_row, review_row),
+            "identity_confidence": clean(review_row.get("confidence")),
             "asset_kind": asset_kind,
             "local_asset_path": path.as_posix(),
             "file_exists": "true" if path.exists() else "false",
             "approved_marker_path": marker.as_posix(),
             "approved_marker_exists": "true" if marker_exists else "false",
             "status": status,
+            "approval_status": approval_status_for(status, source_warnings),
+            "identity_review_status": identity_review_status_for(status, source_warnings, review_row),
+            "missing_asset_reason": missing_asset_reason_for(status, asset_kind, review_row),
             "source_evidence": source_evidence_for(image, approved_by_athlete, review_by_athlete),
             "crop_readiness_notes": notes,
             "render_template_uses": render_template_uses_for(status, approved_templates, source_warnings),

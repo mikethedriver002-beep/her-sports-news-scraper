@@ -181,10 +181,12 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert '"decision-inbox"' in wrapper
     assert '"identity-decision"' in wrapper
     assert '"identity-decision-verify"' in wrapper
+    assert '"asset-audit"' in wrapper
     assert "function Invoke-RenderStage" in runner
     assert "function Invoke-DecisionInboxStarterStage" in runner
     assert "function Invoke-IdentityDecisionServerStage" in runner
     assert "function Invoke-IdentityDecisionVerifyStage" in runner
+    assert "function Invoke-AssetAuditStage" in runner
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_review_renderer_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_render_visual_delta_v1.py" -Optional' in render_stage
     assert 'Invoke-ScriptIfPresent $Python "generate_hsd_manual_visual_qa_v1.py" -Optional' in render_stage
@@ -199,10 +201,14 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'Invoke-ScriptIfPresent $Python "create_hsd_manual_visual_qa_operator_decision_inbox_starter_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "serve_hsd_identity_resolution_ui_v1.py" -Optional' in runner
     assert 'Invoke-ScriptIfPresent $Python "scripts/verify_hsd_identity_decision_live_writeback_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_athlete_photo_catalog_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_logo_asset_catalog_v1.py" -Optional' in runner
+    assert 'Invoke-ScriptIfPresent $Python "scripts\\report_hsd_asset_availability_audit_v1.py" -Optional' in runner
     assert '$env:HSD_EXPLICIT_OPERATOR_INBOX_STARTER = "1"' in runner
     assert '"decision-inbox" { Invoke-DecisionInboxStarterStage $python }' in runner
     assert '"identity-decision" { Invoke-IdentityDecisionServerStage $python }' in runner
     assert '"identity-decision-verify" { Invoke-IdentityDecisionVerifyStage $python }' in runner
+    assert '"asset-audit" { Invoke-AssetAuditStage $python }' in runner
     assert 'operator/inbox/manual_visual_qa_operator_decisions.csv' in runner
     assert 'operator/inbox/wnba_athlete_identity_resolution.csv' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
@@ -238,6 +244,9 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert "manual_visual_qa_operator_decision_walkthrough.json" in runner
     assert "manual_visual_qa_operator_decision_inbox_starter.md" in runner
     assert "manual_visual_qa_operator_decision_inbox_starter.csv" in runner
+    assert "data/asset_registry/asset_availability_audit.md" in runner
+    assert "data/asset_registry/wnba/athlete_photo_catalog.md" in runner
+    assert "data/asset_registry/wnba/logo_review_catalog_report.md" in runner
     assert "manual_visual_qa_operator_decision_inbox_starter.json" in runner
     assert "identity_resolution_local_server.md" in runner
     assert "identity_resolution_local_server.json" in runner
@@ -247,6 +256,8 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert ".\\hsd.cmd run -Mode decision-inbox" in doc
     assert ".\\hsd.cmd run -Mode identity-decision" in doc
     assert ".\\hsd.cmd run -Mode identity-decision-verify" in doc
+    assert ".\\hsd.cmd run -Mode asset-audit" in doc
+    assert "review-only asset availability preflight" in doc
 
 
 def test_legacy_scraper_is_retired_from_active_local_runner() -> None:

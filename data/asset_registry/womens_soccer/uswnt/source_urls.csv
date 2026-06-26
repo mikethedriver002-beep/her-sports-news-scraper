@@ -1,0 +1,11 @@
+entity_type,entity_id,source_kind,source_url,source_domain,source_tier,manual_review_status,paid_source,download_allowed,approval_status,notes
+league,uswnt,team_home,https://www.ussoccer.com/teams/uswnt,www.ussoccer.com,official,review_required,false,false,not_approved,Official USWNT team page
+league,uswnt,current_roster,https://www.ussoccer.com/teams/uswnt/roster,www.ussoccer.com,official,review_required,false,false,not_approved,Official current roster page; roster membership changes and needs dated manual review
+league,uswnt,schedule_tickets,https://www.ussoccer.com/schedule-tickets/uswnt,www.ussoccer.com,official,review_required,false,false,not_approved,Official USWNT schedule and ticket page
+league,uswnt,all_matches,https://www.ussoccer.com/all-matches,www.ussoccer.com,official,review_required,false,false,not_approved,Official U.S. Soccer all-matches page for schedule/result cross-checking
+league,uswnt,players_index,https://www.ussoccer.com/players,www.ussoccer.com,official,review_required,false,false,not_approved,Official U.S. Soccer player index; use only for manual player profile lookup
+team,uswnt,team_site,https://www.ussoccer.com/teams/uswnt,www.ussoccer.com,official,review_required,false,false,not_approved,Official national team page
+team,uswnt,roster,https://www.ussoccer.com/teams/uswnt/roster,www.ussoccer.com,official,review_required,false,false,not_approved,Official roster source for manual player intake
+team,uswnt,schedule,https://www.ussoccer.com/schedule-tickets/uswnt,www.ussoccer.com,official,review_required,false,false,not_approved,Official schedule source
+team,uswnt,crest_review_source,https://www.ussoccer.com/teams/uswnt,www.ussoccer.com,official,review_required,false,false,not_approved,Official crest or federation identity review source only
+player_template,__manual_player_id__,player_profile,https://www.ussoccer.com/players,www.ussoccer.com,official,review_required,false,false,not_approved,Use specific official player profile URL after manual lookup; template only
