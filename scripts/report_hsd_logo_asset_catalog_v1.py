@@ -39,6 +39,8 @@ CATALOG_FIELDS = [
     "required",
     "missing_status",
     "fallback_status",
+    "logo_readiness_status",
+    "renderer_fallback_cue",
     "source_url",
     "source_note",
     "source_trust_status",
@@ -203,6 +205,41 @@ def fallback_status(status: str) -> str:
     return "fallback_review_only_human_hold"
 
 
+def logo_readiness_status(
+    status: str,
+    *,
+    blocked_match: str = "",
+    trust_status: str = "",
+    png_exists: bool = False,
+    svg_exists: bool = False,
+) -> str:
+    if status == "approved" and blocked_match:
+        return "approved_file_source_blocked_hold"
+    if status == "approved" and trust_status and trust_status != "registered_source_policy_no_block_match":
+        return "approved_file_source_recheck_required"
+    if status == "approved":
+        return "exact_logo_ready_for_review_renderer"
+    if status == "unapproved_review_required":
+        return "local_logo_manual_review_required"
+    if status == "not_registered":
+        if png_exists or svg_exists:
+            return "local_logo_exists_registry_row_required"
+        return "registry_row_required_before_logo_use"
+    if png_exists or svg_exists:
+        return "alternate_logo_format_exists_registry_repoint_review_required"
+    return "exact_logo_file_required_before_renderer_trust"
+
+
+def renderer_fallback_cue(status: str, readiness: str) -> str:
+    if readiness == "exact_logo_ready_for_review_renderer":
+        return "renderer_may_use_exact_local_logo_after_normal_visual_qa"
+    if status == "approved":
+        return "hold_renderer_logo_trust_until_source_recheck_closes"
+    if readiness == "alternate_logo_format_exists_registry_repoint_review_required":
+        return "text_badge_fallback_remains_review_only_until_registry_points_to_reviewed_file"
+    return "text_badge_or_placeholder_fallback_is_review_only_human_hold"
+
+
 def operator_action(status: str, blocked_match: str = "", trust_status: str = "") -> str:
     if blocked_match:
         return "replace_or_reverify_blocked_source_before_manual_approval"
@@ -240,6 +277,14 @@ def build_team_row(
     blocked_match = blocked_url_match(source_url, verified_policy)
     verified_status = verified_registry_status(verified_policy, blocked_match)
     trust_status = source_trust_status(source_url, verified_policy, blocked_match)
+    readiness_status = logo_readiness_status(
+        status,
+        blocked_match=blocked_match,
+        trust_status=trust_status,
+        png_exists=png_exists,
+        svg_exists=svg_exists,
+    )
+    fallback_cue = renderer_fallback_cue(status, readiness_status)
     evidence = "; ".join(
         part
         for part in [
@@ -250,6 +295,8 @@ def build_team_row(
             f"verified_registry_status={verified_status}",
             f"png_exists={bool_text(png_exists)}",
             f"svg_exists={bool_text(svg_exists)}",
+            f"logo_readiness_status={readiness_status}",
+            f"renderer_fallback_cue={fallback_cue}",
         ]
         if part
     )
@@ -270,6 +317,8 @@ def build_team_row(
         "required": clean(logo_row.get("required")) or "true",
         "missing_status": missing_status(status),
         "fallback_status": fallback_status(status),
+        "logo_readiness_status": readiness_status,
+        "renderer_fallback_cue": fallback_cue,
         "source_url": source_url,
         "source_note": source_note,
         "source_trust_status": trust_status,
@@ -290,6 +339,8 @@ def build_league_row(league: str, template_ids: List[str]) -> Dict[str, str]:
     svg_exists = file_exists(svg_path)
     local_path = png_path if png_exists else (svg_path if svg_exists else png_path)
     status = "unapproved_review_required" if png_exists or svg_exists else "missing"
+    readiness_status = "league_logo_local_manual_review_required" if png_exists or svg_exists else "optional_league_logo_file_missing_review_only"
+    fallback_cue = "league_mark_slot_stays_review_only_until_manual_source_and_file_review"
     return {
         "league": league_label(league),
         "entity_type": "league_logo",
@@ -307,12 +358,14 @@ def build_league_row(league: str, template_ids: List[str]) -> Dict[str, str]:
         "required": "false",
         "missing_status": "local_file_exists_manual_review_required" if status.startswith("unapproved") else "missing_local_league_logo_file",
         "fallback_status": "fallback_review_only_human_hold",
+        "logo_readiness_status": readiness_status,
+        "renderer_fallback_cue": fallback_cue,
         "source_url": "",
         "source_note": "league_logo_catalog_probe_no_auto_approval",
         "source_trust_status": "league_logo_source_not_registered_review_required",
         "verified_registry_status": "not_applicable",
         "blocked_url_match": "",
-        "evidence": f"png_exists={bool_text(png_exists)}; svg_exists={bool_text(svg_exists)}",
+        "evidence": f"png_exists={bool_text(png_exists)}; svg_exists={bool_text(svg_exists)}; logo_readiness_status={readiness_status}; renderer_fallback_cue={fallback_cue}",
         "render_template_ids": ";".join(template_ids),
         "template_scope": "current_review_mapping",
         "review_only": "true",
@@ -405,7 +458,8 @@ def write_markdown(report: Mapping[str, Any], path: Path) -> None:
             label = row.get("team_name") or row.get("league")
             lines.append(
                 f"- `{row.get('league')}` {row.get('entity_type')} `{label}`: "
-                f"`{row.get('approval_status')}`; path `{row.get('local_logo_path')}`; action `{row.get('operator_action')}`"
+                f"`{row.get('approval_status')}`; readiness `{row.get('logo_readiness_status')}`; "
+                f"fallback cue `{row.get('renderer_fallback_cue')}`; path `{row.get('local_logo_path')}`; action `{row.get('operator_action')}`"
             )
     else:
         lines.append("- None")

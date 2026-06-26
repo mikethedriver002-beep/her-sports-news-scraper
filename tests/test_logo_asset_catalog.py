@@ -114,12 +114,17 @@ def test_logo_asset_catalog_is_review_only_and_reports_formats(tmp_path: Path, m
     assert rows["approved_team"]["svg_exists"] == "true"
     assert rows["approved_team"]["source_trust_status"] == "source_policy_not_registered_review_required"
     assert rows["approved_team"]["operator_action"] == "manual_source_recheck_required_before_operator_trust"
+    assert rows["approved_team"]["logo_readiness_status"] == "approved_file_source_recheck_required"
+    assert rows["approved_team"]["renderer_fallback_cue"] == "hold_renderer_logo_trust_until_source_recheck_closes"
     assert rows["review_team"]["approval_status"] == "unapproved_review_required"
     assert rows["review_team"]["fallback_status"] == "fallback_review_only_human_hold"
+    assert rows["review_team"]["logo_readiness_status"] == "local_logo_manual_review_required"
     assert rows["missing_team"]["approval_status"] == "not_registered"
     assert rows["missing_team"]["operator_action"] == "add_manual_registry_row_after_evidence_review"
+    assert rows["missing_team"]["renderer_fallback_cue"] == "text_badge_or_placeholder_fallback_is_review_only_human_hold"
     assert rows["league_logo"]["entity_type"] == "league_logo"
     assert rows["league_logo"]["approval_status"] == "missing"
+    assert rows["league_logo"]["logo_readiness_status"] == "optional_league_logo_file_missing_review_only"
     assert rows["approved_team"]["render_template_ids"] == "game_recap_final_score.a.v1;last_night_in_the_w.a.v1"
 
 
@@ -190,6 +195,8 @@ def test_logo_asset_catalog_flags_verified_registry_blocked_sources(tmp_path: Pa
     assert portland["verified_registry_status"] == "blocked_source_url_match"
     assert portland["blocked_url_match"] == "wikipedia/en/c/cf/Portland_Fire_logo.svg"
     assert portland["operator_action"] == "replace_or_reverify_blocked_source_before_manual_approval"
+    assert portland["logo_readiness_status"] == "approved_file_source_blocked_hold"
+    assert portland["renderer_fallback_cue"] == "hold_renderer_logo_trust_until_source_recheck_closes"
     assert report["source_trust_status_counts"]["blocked_stale_source_review_required"] == 1
 
 

@@ -31,6 +31,14 @@ DEFAULT_OUT_JSON = "data/asset_registry/asset_availability_audit.json"
 DEFAULT_OUT_MD = "data/asset_registry/asset_availability_audit.md"
 
 AUDIT_FIELDS = [
+    "review_packet_id",
+    "decision_lane",
+    "default_operator_decision",
+    "decision_packet_title",
+    "allowed_operator_decisions",
+    "decision_primary_action",
+    "decision_hold_cue",
+    "decision_revise_cue",
     "asset_domain",
     "league",
     "entity_type",
@@ -44,7 +52,21 @@ AUDIT_FIELDS = [
     "format_status",
     "dimension_status",
     "renderer_coverage",
+    "source_confidence",
+    "identity_confidence",
+    "manual_approval_status",
+    "asset_readiness",
+    "logo_readiness_status",
+    "renderer_fallback_cue",
+    "operator_copy_target",
+    "manual_review_packet",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
     "recommended_next_step",
+    "blocker_summary",
     "evidence",
 ]
 
@@ -142,6 +164,8 @@ def row(
     format_status: str = "",
     dimension_status: str = "",
     renderer_coverage: str = "",
+    logo_readiness_status: str = "",
+    renderer_fallback_cue: str = "",
     recommended_next_step: str = "",
     evidence: str = "",
 ) -> Dict[str, str]:
@@ -159,9 +183,176 @@ def row(
         "format_status": format_status,
         "dimension_status": dimension_status,
         "renderer_coverage": renderer_coverage,
+        "logo_readiness_status": logo_readiness_status,
+        "renderer_fallback_cue": renderer_fallback_cue,
         "recommended_next_step": recommended_next_step,
         "evidence": evidence,
     }
+
+
+def review_packet_path(asset_domain: str, finding: str) -> str:
+    if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "data/asset_registry/wnba/athlete_identity_resolution_workflow.md"
+    if asset_domain == "player_photo":
+        return "data/asset_registry/wnba/athlete_photo_catalog.md"
+    if asset_domain in {"team_logo", "league_logo"}:
+        return "data/asset_registry/wnba/logo_review_catalog_report.md"
+    return "data/asset_registry/asset_availability_audit.md"
+
+
+def review_packet_lane(asset_domain: str, finding: str) -> str:
+    if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "wnba_athlete_identity_resolution"
+    if asset_domain == "player_photo":
+        return "wnba_athlete_photo_onboarding"
+    if asset_domain in {"team_logo", "league_logo"}:
+        return "wnba_logo_review"
+    return "renderer_fallback_review"
+
+
+def review_packet_decision(asset_domain: str, finding: str, severity: str) -> str:
+    if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "hold_identity"
+    if asset_domain == "player_photo":
+        return "hold_photo_slot"
+    if asset_domain == "league_logo":
+        return "hold_league_mark"
+    if asset_domain == "team_logo":
+        return "hold_or_verify_logo"
+    if asset_domain == "renderer":
+        return "verify_renderer_fallback"
+    return "review_required" if severity in {"error", "warning"} else "monitor"
+
+
+def review_packet_allowed_decisions(asset_domain: str, finding: str) -> str:
+    if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "verify_identity_for_review_renders|hold_identity|revise_asset"
+    if asset_domain == "player_photo":
+        return "verify_photo_for_review_renders|hold_photo_slot|revise_photo_asset"
+    if asset_domain in {"team_logo", "league_logo"}:
+        return "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
+    if asset_domain == "renderer":
+        return "confirm_no_active_fallback|hold_render|revise_asset_registry"
+    return "verify_for_review_renders|hold|revise_asset"
+
+
+def review_packet_title(asset_domain: str, finding: str, entity: str) -> str:
+    if asset_domain == "player_photo":
+        return f"Player photo blocker: {entity}"
+    if asset_domain == "team_logo":
+        return f"WNBA team logo blocker: {entity}"
+    if asset_domain == "league_logo":
+        return f"WNBA league mark blocker: {entity}"
+    if asset_domain == "renderer":
+        return f"Renderer fallback review: {entity}"
+    return f"Asset blocker: {entity} ({finding.replace('_', ' ')})"
+
+
+def review_packet_hold_cue(asset_domain: str, finding: str) -> str:
+    if asset_domain == "player_photo":
+        return "Hold if identity, source, approval marker, crop, format, or dimensions are incomplete."
+    if asset_domain in {"team_logo", "league_logo"}:
+        return "Hold if exact local logo evidence, source provenance, approval, format, or dimensions are incomplete."
+    if asset_domain == "renderer":
+        return "Hold if a text badge or generated fallback is standing in for an exact required logo."
+    return "Hold if source, approval, identity, format, or renderer evidence is incomplete."
+
+
+def review_packet_revise_cue(asset_domain: str, finding: str) -> str:
+    if asset_domain == "player_photo":
+        return "Revise through the review-only athlete-photo workflow before any renderer photo use."
+    if asset_domain in {"team_logo", "league_logo"}:
+        return "Revise local/source registry metadata only after human evidence review; do not download, invent, or substitute a logo."
+    if asset_domain == "renderer":
+        return "Revise upstream asset registry or template inputs after manual evidence review; do not change renderer trust automatically."
+    return "Revise through review-only asset workflows before renderer trust."
+
+
+def review_packet_source_confidence(finding: str, evidence: str, approval_status: str) -> str:
+    text = f"{finding} {evidence} {approval_status}".lower()
+    if "missing" in text or "empty_" in text:
+        return "source_missing_or_unregistered"
+    if "default" in text or "blocked" in text or "unknown" in text:
+        return "source_recheck_required"
+    if "approved" in text and "valid_" in text:
+        return "local_source_present_manual_crosscheck_required"
+    return "manual_source_review_required"
+
+
+def review_packet_identity_confidence(asset_domain: str, finding: str, evidence: str) -> str:
+    if asset_domain != "player_photo":
+        return "not_applicable"
+    text = f"{finding} {evidence}".lower()
+    if "default" in text or "suspicious" in text:
+        return "identity_hold_default_or_suspicious_approval"
+    if "missing" in text:
+        return "identity_unverified_asset_missing"
+    return "identity_manual_review_required"
+
+
+def review_packet_asset_readiness(asset_domain: str, finding: str, severity: str, approval_status: str, format_status: str) -> str:
+    if severity == "error":
+        return "blocked_until_asset_or_format_fixed"
+    if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "blocked_until_identity_resolution"
+    if asset_domain in {"team_logo", "league_logo"} and approval_status != "approved":
+        return "blocked_until_logo_review"
+    if asset_domain == "renderer":
+        return "review_renderer_fallback_before_trust"
+    if format_status and not format_status.startswith("valid_"):
+        return "review_format_before_renderer_use"
+    return "manual_review_required"
+
+
+def review_packet_target(asset_domain: str, finding: str) -> str:
+    if asset_domain == "player_photo" and finding == "suspicious_or_default_player_approval":
+        return "operator/inbox/wnba_athlete_identity_resolution.csv"
+    if asset_domain == "player_photo":
+        return "operator/inbox/athlete_photo_onboarding_decisions.csv"
+    if asset_domain in {"team_logo", "league_logo"}:
+        return "operator/assets/brand_logos/README.md"
+    return "data/asset_registry/asset_availability_audit.csv"
+
+
+def enrich_review_packet_fields(item: Dict[str, str], rank: int) -> Dict[str, str]:
+    asset_domain = clean(item.get("asset_domain"))
+    finding = clean(item.get("finding"))
+    severity = clean(item.get("severity"))
+    evidence = clean(item.get("evidence"))
+    approval_status = clean(item.get("approval_status"))
+    format_status = clean(item.get("format_status"))
+    entity = clean(item.get("entity_name")) or clean(item.get("entity_id")) or "unknown_asset"
+    logo_readiness = clean(item.get("logo_readiness_status"))
+    fallback_cue = clean(item.get("renderer_fallback_cue"))
+    decision = review_packet_decision(asset_domain, finding, severity)
+    enriched = dict(item)
+    enriched.update(
+        {
+            "review_packet_id": f"asset_review_{rank:04d}_{asset_domain or 'asset'}_{clean(item.get('entity_id')) or 'unknown'}",
+            "decision_lane": review_packet_lane(asset_domain, finding),
+            "default_operator_decision": decision,
+            "decision_packet_title": review_packet_title(asset_domain, finding, entity),
+            "allowed_operator_decisions": review_packet_allowed_decisions(asset_domain, finding),
+            "decision_primary_action": clean(item.get("recommended_next_step")) or "manual_review_required_before_renderer_trust",
+            "decision_hold_cue": review_packet_hold_cue(asset_domain, finding),
+            "decision_revise_cue": review_packet_revise_cue(asset_domain, finding),
+            "source_confidence": review_packet_source_confidence(finding, evidence, approval_status),
+            "identity_confidence": review_packet_identity_confidence(asset_domain, finding, evidence),
+            "manual_approval_status": "manual_review_required" if severity in {"error", "warning"} else "manual_monitoring",
+            "asset_readiness": logo_readiness or review_packet_asset_readiness(asset_domain, finding, severity, approval_status, format_status),
+            "logo_readiness_status": logo_readiness,
+            "renderer_fallback_cue": fallback_cue or (clean(item.get("renderer_coverage")) if asset_domain == "renderer" else ""),
+            "operator_copy_target": review_packet_target(asset_domain, finding),
+            "manual_review_packet": review_packet_path(asset_domain, finding),
+            "publish_ready": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "paid_apis": "false",
+            "blocker_summary": f"{entity}: {finding.replace('_', ' ')}; default decision={decision}; readiness={logo_readiness or review_packet_asset_readiness(asset_domain, finding, severity, approval_status, format_status)}",
+        }
+    )
+    return enriched
 
 
 def audit_player_photos(root: Path) -> List[Dict[str, str]]:
@@ -232,6 +423,8 @@ def audit_logos(root: Path, registry_root: Path, template_mapping: Path, verifie
             "format_status": probe["format_status"],
             "dimension_status": probe["dimension_status"],
             "renderer_coverage": clean(item.get("fallback_status")),
+            "logo_readiness_status": clean(item.get("logo_readiness_status")),
+            "renderer_fallback_cue": clean(item.get("renderer_fallback_cue")),
             "evidence": "; ".join(part for part in [clean(item.get("evidence")), clean(item.get("source_trust_status")), probe["evidence"]] if part),
         }
         if status in {"missing", "not_registered"}:
@@ -267,6 +460,7 @@ def audit_renderer_fallbacks(root: Path, logo_audit_path: Path, manifest_path: P
                 severity="warning",
                 approval_status="fallback_review_only",
                 renderer_coverage="active_renderer_text_badge_fallback",
+                renderer_fallback_cue="active_text_badge_fallback_review_only_hold_exact_logo_required",
                 recommended_next_step="verify exact approved logo coverage before live handoff",
                 evidence=json.dumps(item, sort_keys=True),
             ))
@@ -283,6 +477,7 @@ def audit_renderer_fallbacks(root: Path, logo_audit_path: Path, manifest_path: P
             severity="info",
             approval_status="not_applicable",
             renderer_coverage="not_observed",
+            renderer_fallback_cue="renderer_logo_audit_missing_run_status_before_trusting_logo_fallbacks",
             recommended_next_step="run renderer logo status after the next local render to confirm fallback coverage",
             evidence=f"missing={logo_audit_path.as_posix()}",
         ))
@@ -304,6 +499,7 @@ def audit_renderer_fallbacks(root: Path, logo_audit_path: Path, manifest_path: P
                 approval_status="fallback_review_only",
                 format_status="generated_local_fallback",
                 renderer_coverage=mode,
+                renderer_fallback_cue="generated_hsd_fallback_review_only_not_publish_ready",
                 recommended_next_step="keep fallback in review lane until exact asset or human visual approval is available",
                 evidence=f"render_safe={clean(item.get('render_safe'))}; live_ready_pre_human={clean(item.get('live_ready_pre_human'))}; reason={clean(item.get('reason'))}",
             ))
@@ -334,6 +530,7 @@ def build_audit(
         import os
 
         os.chdir(original)
+    findings = [enrich_review_packet_fields(item, index + 1) for index, item in enumerate(findings)]
     status = "review_required" if any(row["severity"] in {"error", "warning"} for row in findings) else "pass"
     return {
         "version": VERSION,
@@ -397,11 +594,28 @@ def write_markdown(report: Mapping[str, Any], path: Path) -> None:
             lines.append(f"- ...and {len(sample) - 80} more error/warning findings in the CSV.")
     else:
         lines.append("- None")
+    lines += ["", "## Focused Decision Packets", ""]
+    packet_sample = [item for item in findings if item.get("severity") in {"error", "warning"}]
+    if packet_sample:
+        for item in packet_sample[:80]:
+            lines.append(
+                f"- `{item.get('default_operator_decision')}` | `{item.get('decision_lane')}` | "
+                f"{item.get('decision_packet_title') or item.get('entity_name') or item.get('entity_id')} | readiness=`{item.get('asset_readiness')}` | "
+                f"source=`{item.get('source_confidence')}` | identity=`{item.get('identity_confidence')}` | "
+                f"copy=`{item.get('operator_copy_target')}` | action=`{item.get('decision_primary_action')}`"
+            )
+        if len(packet_sample) > 80:
+            lines.append(f"- ...and {len(packet_sample) - 80} more decision packet rows in the CSV.")
+    else:
+        lines.append("- None")
     lines += ["", "## Renderer Availability Notes", ""]
     renderer = [item for item in findings if item.get("asset_domain") == "renderer"]
     if renderer:
         for item in renderer[:40]:
-            lines.append(f"- `{item.get('severity')}` `{item.get('finding')}` | `{item.get('renderer_coverage')}` | {item.get('entity_name') or item.get('entity_id')}")
+            lines.append(
+                f"- `{item.get('severity')}` `{item.get('finding')}` | `{item.get('renderer_coverage')}` | "
+                f"{item.get('entity_name') or item.get('entity_id')} | cue `{item.get('renderer_fallback_cue')}`"
+            )
     else:
         lines.append("- No renderer fallback findings observed.")
     path.parent.mkdir(parents=True, exist_ok=True)

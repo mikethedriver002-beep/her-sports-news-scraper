@@ -812,6 +812,17 @@ def normalize_asset_audit_finding(row: Dict[str, Any], rank: int) -> Dict[str, s
         "format_status": clean(row.get("format_status")),
         "dimension_status": clean(row.get("dimension_status")),
         "renderer_coverage": clean(row.get("renderer_coverage")),
+        "review_packet_id": clean(row.get("review_packet_id")),
+        "decision_lane": clean(row.get("decision_lane")),
+        "default_operator_decision": clean(row.get("default_operator_decision")),
+        "source_confidence": clean(row.get("source_confidence")),
+        "identity_confidence": clean(row.get("identity_confidence")),
+        "manual_approval_status": clean(row.get("manual_approval_status")),
+        "asset_readiness": clean(row.get("asset_readiness")),
+        "renderer_fallback_cue": clean(row.get("renderer_fallback_cue")),
+        "operator_copy_target": clean(row.get("operator_copy_target")),
+        "manual_review_packet": clean(row.get("manual_review_packet")),
+        "blocker_summary": clean(row.get("blocker_summary")),
         "recommended_next_step": clean(row.get("recommended_next_step")) or guidance["manual_action"],
         "evidence": short(clean(row.get("evidence")), 260),
         "decision": guidance["decision"],
@@ -5059,14 +5070,17 @@ def render_asset_blocker_cards(rows: Iterable[Dict[str, Any]]) -> str:
                 <div><span>Verify</span><strong>{html.escape(short(clean(row.get('manual_action')), 130))}</strong></div>
                 <div><span>Hold</span><strong>{html.escape(short(clean(row.get('hold_cue')), 130))}</strong></div>
                 <div><span>Revise</span><strong>{html.escape(short(clean(row.get('revise_cue')), 130))}</strong></div>
+                <div><span>Packet</span><strong>{html.escape(short(clean(row.get('default_operator_decision')) or clean(row.get('decision_lane')) or 'manual_review_required', 130))}</strong></div>
               </div>
               <code>{html.escape(short(clean(row.get('asset_path')), 110))}</code>
+              <p class="muted">{html.escape(short(clean(row.get('blocker_summary')) or clean(row.get('asset_readiness')), 190))}</p>
               <p class="muted">{html.escape(short(clean(row.get('evidence')), 190))}</p>
               <div class="asset-blocker-actions">
                 {open_link_html}
                 {pill(clean(row.get('approval_status')) or 'approval_review')}
                 {pill(clean(row.get('format_status')) or 'format_review')}
                 {pill(clean(row.get('renderer_coverage')) or 'renderer_review')}
+                {pill(clean(row.get('asset_readiness')) or 'asset_review')}
               </div>
             </article>
             """
@@ -5562,7 +5576,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     .asset-blocker-badges,.asset-blocker-actions {{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }}
     .asset-blocker-card p {{ color:#5e616a; font-size:12px; line-height:1.35; overflow-wrap:anywhere; }}
     .asset-blocker-card code {{ display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
-    .asset-guidance-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }}
+    .asset-guidance-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }}
     .asset-guidance-grid div {{ border:1px solid #e5d493; background:#fff9df; border-radius:6px; padding:8px; min-width:0; }}
     .asset-guidance-grid span {{ display:block; color:#5e616a; font-size:11px; font-weight:900; text-transform:uppercase; margin-bottom:4px; }}
     .asset-guidance-grid strong {{ display:block; font-size:12px; line-height:1.25; overflow-wrap:anywhere; }}
@@ -6467,7 +6481,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
-        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | next: {item.get('manual_action')}"
+        f"- Asset blocker: {item.get('asset_domain')} | {item.get('severity')} | {item.get('decision')} | {item.get('entity_name')} | {item.get('finding')} | {item.get('asset_path')} | next: {item.get('manual_action')} | packet: {item.get('decision_lane') or 'manual_review'} / {item.get('default_operator_decision') or 'review_required'} / {item.get('asset_readiness') or 'review_required'}"
         for item in asset_panel.get("top_findings", [])[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
