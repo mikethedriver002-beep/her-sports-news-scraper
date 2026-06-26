@@ -53,6 +53,10 @@ RENDER_PREP_FIELDS = [
     "source_cue",
     "source_detail",
     "asset_requirement",
+    "active_logo_readiness_status",
+    "active_logo_review_cues",
+    "logo_review_artifact",
+    "renderer_fallback_cue",
     "asset_cue",
     "format_cue",
     "manual_path",
@@ -2588,16 +2592,99 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
 
 def manual_renderer_steps(packet: Dict[str, str]) -> str:
     template_label = clean(packet.get("selected_template_id")) or clean(packet.get("template_fit"))
+    active_logo_cues = (clean(packet.get("active_logo_review_cues")) or "no active logo hold cue recorded").replace(" | ", "; ")
     steps = [
         f"Open {packet.get('source_artifact')} and confirm the source/copy fields match this packet.",
         "Open operator_command_center.html and confirm the candidate is still not held by source, asset, or format blockers.",
         f"Use {template_label} at {packet.get('template_shape')}.",
         f"Confirm asset requirement: {packet.get('asset_requirement')}",
+        f"Confirm active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}; {active_logo_cues}",
         "Compare the draft against the linked Templates-hsd reference mockup/layout before recording any decision.",
         "Prepare the graphic manually in the renderer or design tool; do not auto-post or auto-publish.",
         "After visual review, record the decision in the normal manual QA or approval artifact before any human posting.",
     ]
     return " | ".join(steps)
+
+
+def active_logo_packet_text(packet: Dict[str, str]) -> str:
+    return " ".join(
+        clean(packet.get(key))
+        for key in ["title", "copy_headline", "copy_dek", "top_performers", "asset_requirement", "template_family", "renderer_family"]
+    ).lower()
+
+
+def active_logo_entity_aliases(entity_name: str, entity_id: str) -> List[str]:
+    aliases: List[str] = []
+    name = clean(entity_name).lower()
+    ident = clean(entity_id).replace("_", " ").lower()
+    for value in [name, ident]:
+        if value and value not in aliases:
+            aliases.append(value)
+        parts = re.findall(r"[a-z0-9]+", value)
+        if len(parts) >= 2 and parts[-1] not in aliases:
+            aliases.append(parts[-1])
+    return aliases
+
+
+def active_logo_entity_matches(packet_text: str, entity_name: str, entity_id: str) -> bool:
+    return any(re.search(rf"(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])", packet_text) for alias in active_logo_entity_aliases(entity_name, entity_id))
+
+
+def active_logo_readiness_for_packet(packet: Dict[str, str]) -> Dict[str, str]:
+    packet_text = active_logo_packet_text(packet)
+    cues: List[str] = []
+    fallback_cues: List[str] = []
+    audit_cue_found = False
+    logo_packet_cue_found = False
+    audit = read_json("data/asset_registry/asset_availability_audit.json")
+    findings = audit.get("findings") if isinstance(audit.get("findings"), list) else []
+    for item in findings:
+        domain = clean(item.get("asset_domain"))
+        if domain not in {"team_logo", "league_logo"}:
+            continue
+        entity_name = clean(item.get("entity_name")) or clean(item.get("entity_id"))
+        entity_id = clean(item.get("entity_id"))
+        league_mark = domain == "league_logo" and clean(item.get("entity_id")).lower() == "wnba" and "wnba" in packet_text
+        if not league_mark and not active_logo_entity_matches(packet_text, entity_name, entity_id):
+            continue
+        cue = (
+            f"{entity_name}: {clean(item.get('finding')) or 'logo_review_required'}; "
+            f"{clean(item.get('recommended_next_step')) or clean(item.get('decision_primary_action')) or 'manual logo review required'}"
+        )
+        if cue not in cues:
+            cues.append(cue)
+            audit_cue_found = True
+        fallback = clean(item.get("renderer_fallback_cue"))
+        if fallback and fallback not in fallback_cues:
+            fallback_cues.append(fallback)
+    for item in read_csv("data/asset_registry/wnba/logo_review_packets.csv"):
+        team_name = clean(item.get("team_name")) or clean(item.get("team_id"))
+        team_id = clean(item.get("team_id"))
+        if not active_logo_entity_matches(packet_text, team_name, team_id):
+            continue
+        cue = (
+            f"{team_name}: {clean(item.get('issue_type')) or 'logo_review_required'}; "
+            f"{clean(item.get('primary_action')) or clean(item.get('decision_primary_action')) or 'manual logo review required'}"
+        )
+        if cue not in cues:
+            cues.append(cue)
+            logo_packet_cue_found = True
+        fallback = clean(item.get("renderer_fallback_cue"))
+        if fallback and fallback not in fallback_cues:
+            fallback_cues.append(fallback)
+    status = "hold_logo_review_required" if cues else "logo_review_not_flagged"
+    if logo_packet_cue_found:
+        artifact = "data/asset_registry/wnba/logo_review_packets.csv"
+    elif audit_cue_found:
+        artifact = "data/asset_registry/asset_availability_audit.csv"
+    else:
+        artifact = "data/asset_registry/asset_availability_audit.csv"
+    return {
+        "active_logo_readiness_status": status,
+        "active_logo_review_cues": " | ".join(cues[:6]),
+        "logo_review_artifact": artifact,
+        "renderer_fallback_cue": " | ".join(fallback_cues[:4]),
+    }
 
 
 def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -2638,12 +2725,17 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "template_family": "",
             "reference_pack_id": "",
             **fit,
+            "active_logo_readiness_status": "",
+            "active_logo_review_cues": "",
+            "logo_review_artifact": "",
+            "renderer_fallback_cue": "",
             "manual_renderer_steps": "",
             "approval_gate": "human_visual_review_required_before_any_post",
             "auto_render_status": "not_rendered_by_generator",
             "publish_policy": "review_only_not_publish_ready",
             "paid_api_policy": "free_public_sources_only_no_paid_api",
         }
+        packet.update(active_logo_readiness_for_packet(packet))
         packet["manual_renderer_steps"] = manual_renderer_steps(packet)
         packets.append(packet)
     return packets
@@ -2772,6 +2864,10 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
             "",
             f"- Asset cue: `{clean(packet.get('asset_cue'))}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
+            f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
+            f"- Logo review artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
+            f"- Renderer fallback cue: {clean(packet.get('renderer_fallback_cue')) or 'none recorded'}",
             f"- Manual path: `{clean(packet.get('manual_path'))}`",
             f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
             "",
@@ -2841,6 +2937,9 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         "## Assets",
         "",
         f"- {clean(packet.get('asset_requirement'))}",
+        f"- Active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}",
+        f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
+        f"- Renderer fallback cue: {clean(packet.get('renderer_fallback_cue')) or 'none recorded'}",
         "",
         "## Steps",
         "",
@@ -2916,12 +3015,16 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "packet_id": packet.get("packet_id"),
                     "asset_cue": packet.get("asset_cue"),
                     "asset_requirement": packet.get("asset_requirement"),
+                    "active_logo_readiness_status": packet.get("active_logo_readiness_status"),
+                    "active_logo_review_cues": packet.get("active_logo_review_cues"),
+                    "logo_review_artifact": packet.get("logo_review_artifact"),
+                    "renderer_fallback_cue": packet.get("renderer_fallback_cue"),
                     "manual_path": packet.get("manual_path"),
                     "renderer_family": packet.get("renderer_family"),
                     "decision": "operator_review_required",
                 }
             ],
-            ["packet_id", "asset_cue", "asset_requirement", "manual_path", "renderer_family", "decision"],
+            ["packet_id", "asset_cue", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
         )
         write_text(OUT_RENDER_HANDOFF_SOURCE_PROOF, render_handoff_source_proof(packet))
         write_text(OUT_RENDER_HANDOFF_PROMPT, render_manual_renderer_prompt(packet))
@@ -6710,7 +6813,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
     )
     lines += ["", "## Render prep packets", ""]
     lines.extend(
-        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
+        f"- {item.get('packet_status') or 'review'} | score: {item.get('render_readiness_score') or '0'} | {item.get('title') or 'Untitled'} | template: {item.get('selected_template_id') or item.get('template_fit') or 'review'} | fit: {item.get('template_fit') or 'review'} | shape: {item.get('template_shape') or 'review'} | active logo: {item.get('active_logo_readiness_status') or 'logo_review_not_flagged'} | cues: {item.get('active_logo_review_cues') or 'none'} | artifact: render_prep_packets.md | gate: {item.get('approval_gate') or 'human review'}"
         for item in payload["render_prep_packets"]
     )
     asset_panel = payload["asset_readiness_panel"]
@@ -6960,6 +7063,10 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             f"- Template shape: `{clean(packet.get('template_shape'))}`",
             f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
+            f"- Active logo review cues: {clean(packet.get('active_logo_review_cues')) or 'none recorded'}",
+            f"- Logo review artifact: `{clean(packet.get('logo_review_artifact')) or 'data/asset_registry/asset_availability_audit.csv'}`",
+            f"- Renderer fallback cue: {clean(packet.get('renderer_fallback_cue')) or 'none recorded'}",
             f"- Approval gate: `{clean(packet.get('approval_gate'))}`",
             f"- Auto-render status: `{clean(packet.get('auto_render_status'))}`",
             f"- Publish policy: `{clean(packet.get('publish_policy'))}`",

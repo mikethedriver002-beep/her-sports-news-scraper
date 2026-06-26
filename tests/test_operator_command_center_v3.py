@@ -20,6 +20,40 @@ def write_csv(path: str, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+def test_active_logo_readiness_matches_team_nicknames_and_audit_artifact(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    audit_dir = Path("data/asset_registry")
+    audit_dir.mkdir(parents=True)
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "findings": [
+                {
+                    "asset_domain": "team_logo",
+                    "entity_name": "New York Liberty",
+                    "entity_id": "new_york_liberty",
+                    "finding": "logo_present_without_complete_approval",
+                    "recommended_next_step": "human_review_required_before_renderer_logo_use",
+                    "renderer_fallback_cue": "text_badge_or_placeholder_fallback_is_review_only_human_hold",
+                }
+            ]
+        },
+    )
+
+    packet = {
+        "title": "Liberty beat Aces",
+        "asset_requirement": "Use exact local WNBA team logos from the registry.",
+    }
+
+    readiness = command_center.active_logo_readiness_for_packet(packet)
+    assert readiness["active_logo_readiness_status"] == "hold_logo_review_required"
+    assert "New York Liberty: logo_present_without_complete_approval" in readiness["active_logo_review_cues"]
+    assert readiness["logo_review_artifact"] == "data/asset_registry/asset_availability_audit.csv"
+    assert "review_only_human_hold" in readiness["renderer_fallback_cue"]
+    assert command_center.active_logo_entity_matches("sky edge sun", "Chicago Sky", "chicago_sky")
+    assert not command_center.active_logo_entity_matches("sunday preview", "Connecticut Sun", "connecticut_sun")
+
+
 DECISION_FIELDS = [
     "decision_draft_id",
     "source_intake_id",
@@ -2047,6 +2081,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_prep_packets"][0]["stat_source_label"] == "Verified player/stat text available"
     assert "Confirm the named performer" in payload["render_prep_packets"][0]["stat_review_cue"]
     assert "exact local WNBA team logos" in payload["render_prep_packets"][0]["asset_requirement"]
+    assert payload["render_prep_packets"][0]["active_logo_readiness_status"] == "hold_logo_review_required"
+    assert "New York Liberty: unapproved_required_logo" in payload["render_prep_packets"][0]["active_logo_review_cues"]
+    assert "WNBA: missing_or_unregistered_logo_asset" in payload["render_prep_packets"][0]["active_logo_review_cues"]
+    assert payload["render_prep_packets"][0]["logo_review_artifact"] == "data/asset_registry/wnba/logo_review_packets.csv"
+    assert "Renderer fallback remains review-only" in payload["render_prep_packets"][0]["renderer_fallback_cue"]
+    assert "Confirm active logo readiness: hold_logo_review_required" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "Open news_fact_packets.csv" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["auto_render_status"] == "not_rendered_by_generator"
     assert payload["render_prep_packets"][0]["publish_policy"] == "review_only_not_publish_ready"
@@ -2416,6 +2456,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "hold_for_source_confirmation" in markdown
     assert "manual_review_artifact_ready:news_fact_packets.csv" in markdown
     assert "source confirmation required" in markdown
+    assert "active logo: hold_logo_review_required" in markdown
+    assert "New York Liberty: unapproved_required_logo" in markdown
 
     command_center.write_outputs(payload)
     assert Path("operator_command_center.html").exists()
@@ -2434,9 +2476,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
     assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
-    assert "exact local WNBA team logos" in Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
+    asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
+    assert "exact local WNBA team logos" in asset_checklist
+    assert "Active logo readiness: `hold_logo_review_required`" in asset_checklist
+    assert "New York Liberty: unapproved_required_logo" in asset_checklist
+    assert "WNBA: missing_or_unregistered_logo_asset" in asset_checklist
+    assert "Renderer fallback remains review-only" in asset_checklist
     assert "Open news_fact_packets.csv" in Path("render_handoff_top_packet/source_proof.md").read_text(encoding="utf-8")
-    assert "Use this prompt manually only" in Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
+    manual_prompt = Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
+    assert "Use this prompt manually only" in manual_prompt
+    assert "Active logo readiness: hold_logo_review_required" in manual_prompt
     render_prep_manifest = json.loads(Path("render_prep_packets.json").read_text(encoding="utf-8"))
     assert render_prep_manifest["guardrails"]["auto_render"] is False
     assert render_prep_manifest["guardrails"]["auto_publish"] is False
