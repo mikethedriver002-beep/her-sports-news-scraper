@@ -1,0 +1,2 @@
+league_id,league_name,sport,level,country,official_url,teams_url,players_url,season_scope,source_status,manual_review_status,paid_source,auto_download_allowed,render_enabled,notes
+nwsl,National Women's Soccer League,soccer,professional,US,https://www.nwslsoccer.com/about-the-nwsl,https://www.nwslsoccer.com/teams/index,https://www.nwslsoccer.com/players/index,2026,official_manual_seed,review_required,false,false,false,Official NWSL pages only no downloads or approvals

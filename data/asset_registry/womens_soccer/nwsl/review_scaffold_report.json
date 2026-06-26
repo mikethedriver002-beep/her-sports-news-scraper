@@ -1,0 +1,23 @@
+{
+  "asset_slot_count": 19,
+  "auto_approval_allowed": false,
+  "auto_download_allowed": false,
+  "blockers": [],
+  "expected_file_count": 7,
+  "generated_at_utc": "2026-06-26T00:23:12.697466+00:00",
+  "player_count": 0,
+  "present_file_count": 7,
+  "publish_ready": false,
+  "registry_path": "data/asset_registry/womens_soccer/nwsl",
+  "render_enabled": false,
+  "required_team_count": 16,
+  "review_only": true,
+  "source_url_count": 19,
+  "status": "passed_womens_soccer_review_scaffold",
+  "strict_exit_code": 0,
+  "team_count": 16,
+  "version": "v1.0-womens-soccer-asset-registry-review-only",
+  "warnings": [
+    "players_csv_header_only_manual_intake"
+  ]
+}

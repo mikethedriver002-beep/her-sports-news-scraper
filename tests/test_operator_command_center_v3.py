@@ -1522,7 +1522,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.56.0-athlete-photo-decision-desk"
+    assert payload["version"] == "hsd-operator-command-center-v3.57.0-athlete-identity-resolution-desk"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -1608,7 +1608,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Athlete photo review" and item["value"] == "hold_identity_review_required" for item in payload["metrics"])
     assert any(item["label"] == "Athlete photo variants" and item["value"] == "1/1" for item in payload["metrics"])
     assert payload["athlete_photo_onboarding_panel"]["identity_audit_status"] == "needs_identity_review"
+    assert payload["athlete_photo_onboarding_panel"]["identity_resolution_status"] == "not_run"
+    assert payload["athlete_photo_onboarding_panel"]["identity_resolution_inbox_rows"] == 0
+    assert payload["athlete_photo_onboarding_panel"]["identity_closure_status"] == "not_run"
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_review_status"] == "hold_identity_review_required"
+    assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_resolution_status"] == "resolution_not_recorded"
     assert payload["athlete_photo_onboarding_panel"]["review_rows"][0]["identity_issue_codes"] == "approved_asset_still_has_pending_match_review"
     assert "Athlete photo onboarding" in html
     assert "Identity audit says hold" in html
@@ -1898,6 +1902,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_contact_sheet_index.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["athlete_photo_onboarding/athlete_photo_onboarding_decision_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_athlete_photo_onboarding_v1.py"
     assert artifact_by_path["data/asset_registry/wnba/athlete_identity_audit.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_wnba_athlete_identity_audit_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/athlete_identity_resolution_workflow.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/athlete_identity_resolution_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/athlete_identity_closure_packet.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_athlete_identity_closure_packet_v1.py"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"

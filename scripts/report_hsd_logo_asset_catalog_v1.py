@@ -203,10 +203,12 @@ def fallback_status(status: str) -> str:
     return "fallback_review_only_human_hold"
 
 
-def operator_action(status: str, blocked_match: str = "") -> str:
+def operator_action(status: str, blocked_match: str = "", trust_status: str = "") -> str:
     if blocked_match:
         return "replace_or_reverify_blocked_source_before_manual_approval"
     if status == "approved":
+        if trust_status and trust_status != "registered_source_policy_no_block_match":
+            return "manual_source_recheck_required_before_operator_trust"
         return "catalog_only_no_action"
     if status == "unapproved_review_required":
         return "human_review_required_do_not_auto_enable"
@@ -277,7 +279,7 @@ def build_team_row(
         "render_template_ids": ";".join(template_ids),
         "template_scope": "current_review_mapping",
         "review_only": "true",
-        "operator_action": operator_action(status, blocked_match),
+        "operator_action": operator_action(status, blocked_match, trust_status),
     }
 
 
@@ -404,6 +406,22 @@ def write_markdown(report: Mapping[str, Any], path: Path) -> None:
             lines.append(
                 f"- `{row.get('league')}` {row.get('entity_type')} `{label}`: "
                 f"`{row.get('approval_status')}`; path `{row.get('local_logo_path')}`; action `{row.get('operator_action')}`"
+            )
+    else:
+        lines.append("- None")
+
+    lines += ["", "## Manual source recheck", ""]
+    source_recheck_rows = [
+        row
+        for row in rows
+        if row.get("approval_status") == "approved" and row.get("operator_action") != "catalog_only_no_action"
+    ]
+    if source_recheck_rows:
+        for row in source_recheck_rows:
+            lines.append(
+                f"- `{row.get('league')}` team_logo `{row.get('team_name')}`: "
+                f"`{row.get('source_trust_status')}`; source `{row.get('source_url')}`; "
+                f"action `{row.get('operator_action')}`"
             )
     else:
         lines.append("- None")

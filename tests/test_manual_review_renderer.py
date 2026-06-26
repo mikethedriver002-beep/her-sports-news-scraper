@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import csv
 from pathlib import Path
 
 from PIL import Image
@@ -10,6 +11,38 @@ from PIL import Image
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "generate_hsd_manual_review_renderer_v1.py"
+
+
+def write_identity_resolution_inbox(run_dir: Path, **overrides: str) -> None:
+    path = run_dir / "operator" / "inbox" / "wnba_athlete_identity_resolution.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        "athlete_id": "new_york_liberty_breanna_stewart",
+        "display_name": "Breanna Stewart",
+        "team_id": "new_york_liberty",
+        "provider_player_id": "1630993",
+        "asset_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+        "operator_decision": "identity_verified_approved_for_review_renders",
+        "identity_verified": "yes",
+        "provider_player_id_verified": "yes",
+        "approved_source_url": "https://www.wnba.com/player/1630993/breanna-stewart",
+        "secondary_source_url": "https://liberty.wnba.com/",
+        "backfill_provider_player_id": "",
+        "operator_notes": "Verified source-backed identity for review-only renderer eligibility.",
+        "operator_name": "Test Operator",
+        "reviewed_at_local": "2026-06-25T12:00:00",
+        "issue_resolution_status": "resolved",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+    row.update(overrides)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(row.keys()))
+        writer.writeheader()
+        writer.writerow(row)
 
 
 def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp_path: Path) -> None:
@@ -79,7 +112,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.18.0-athlete-photo-onboarding-variants"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.19.0-athlete-identity-resolution-gate"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -258,10 +291,14 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert selected["player_name"] == "Breanna Stewart"
     assert selected["headline"] == "STEWART LED LIBERTY"
     assert selected["matchup_note"] == "LIBERTY +11 vs ACES"
-    assert selected["athlete_photo_status"] == "approved_local_headshot"
-    assert selected["athlete_photo_approval_cue"] == "APPROVED PHOTO"
-    assert selected["athlete_photo_review_required"] is False
+    assert selected["athlete_photo_status"] == "athlete_photo_identity_hold"
+    assert selected["athlete_photo_approval_cue"] == "IDENTITY HOLD"
+    assert selected["athlete_photo_review_required"] is True
     assert selected["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
+    assert selected["athlete_photo_render_method"] == "safe_text_fallback_identity_hold"
+    assert selected["athlete_photo_identity_review_status"] == "hold_identity_resolution_required"
+    assert selected["athlete_photo_identity_resolution_status"] == "identity_resolution_missing"
+    assert "operator/inbox/wnba_athlete_identity_resolution.csv" in selected["athlete_photo_blocker"]
     assert "20 PTS / 6 REB / 4 AST" in selected["editorial_line"]
     microcopy = module.selected_editorial_microcopy({"copy_context": "4 source(s); publish_grade."}, score, selected)
     assert microcopy["selected_variant_id"] == "verified_player_ledger"
@@ -288,18 +325,48 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
     assert summary["content_module_game_shape"] == "clear_separation"
     assert summary["content_module_stat_strength"] == "lead_ledger"
-    assert summary["athlete_photo_status"] == "approved_local_headshot"
-    assert summary["athlete_photo_approval_cue"] == "APPROVED PHOTO"
-    assert summary["athlete_photo_review_required"] == "false"
+    assert summary["athlete_photo_status"] == "athlete_photo_identity_hold"
+    assert summary["athlete_photo_approval_cue"] == "IDENTITY HOLD"
+    assert summary["athlete_photo_review_required"] == "true"
     assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
     assert summary["athlete_photo_layout_options"] == "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback"
-    assert summary["athlete_photo_template_family"] == "approved_athlete_photo_final_score"
+    assert summary["athlete_photo_template_family"] == "logo_first_final_score_fallback"
+    assert summary["athlete_photo_identity_review_status"] == "hold_identity_resolution_required"
+    assert summary["athlete_photo_identity_resolution_status"] == "identity_resolution_missing"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
     assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
     assert summary["editorial_microcopy_game_shape"] == "clear_separation"
     assert len(summary["editorial_microcopy_variants"]) == 3
     assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Confirm the named performer" in summary["stat_review_cue"]
+
+
+def test_manual_review_renderer_identity_resolution_inbox_clears_default_marker_for_review_only(tmp_path: Path, monkeypatch) -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    run_dir = tmp_path / "run" / "files"
+    write_identity_resolution_inbox(run_dir)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    module._ATHLETE_PHOTO_ONBOARDING_CACHE = None
+    module._ATHLETE_IDENTITY_AUDIT_CACHE = None
+    module._ATHLETE_IDENTITY_RESOLUTION_CACHE = None
+
+    selected = module.select_verified_stat_module(
+        {"top_performers": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4"},
+        {"winner": "New York Liberty", "loser": "Las Vegas Aces", "winner_score": "87", "loser_score": "76"},
+    )
+
+    assert selected["athlete_photo_status"] == "approved_local_headshot"
+    assert selected["athlete_photo_approval_cue"] == "APPROVED PHOTO"
+    assert selected["athlete_photo_review_required"] is False
+    assert selected["athlete_photo_identity_review_status"] == "identity_resolution_cleared_for_review_renders"
+    assert selected["athlete_photo_identity_resolution_status"] == "identity_resolution_cleared_for_review_renders"
+    assert selected["athlete_photo_identity_resolution_evidence_url"] == "https://www.wnba.com/player/1630993/breanna-stewart"
 
 
 def test_manual_review_renderer_uses_run_scoped_athlete_photo_variant_metadata(tmp_path: Path, monkeypatch) -> None:
@@ -337,7 +404,10 @@ def test_manual_review_renderer_uses_run_scoped_athlete_photo_variant_metadata(t
         encoding="utf-8",
     )
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    write_identity_resolution_inbox(run_dir)
     module._ATHLETE_PHOTO_ONBOARDING_CACHE = None
+    module._ATHLETE_IDENTITY_AUDIT_CACHE = None
+    module._ATHLETE_IDENTITY_RESOLUTION_CACHE = None
 
     selected = module.select_verified_stat_module(
         {"top_performers": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4"},

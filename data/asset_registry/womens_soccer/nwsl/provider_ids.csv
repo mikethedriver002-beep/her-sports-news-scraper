@@ -1,0 +1,34 @@
+entity_type,entity_id,provider,provider_id,provider_url,source_url,manual_review_status,approval_status,notes
+league,nwsl,hsd_manual_registry,nwsl,,https://www.nwslsoccer.com/about-the-nwsl,review_required,not_approved,Internal manual-safe slug only
+team,angel_city_fc,hsd_manual_registry,angel_city_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,bay_fc,hsd_manual_registry,bay_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,boston_legacy_fc,hsd_manual_registry,boston_legacy_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,chicago_stars_fc,hsd_manual_registry,chicago_stars_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,denver_summit_fc,hsd_manual_registry,denver_summit_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,houston_dash,hsd_manual_registry,houston_dash,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,kansas_city_current,hsd_manual_registry,kansas_city_current,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,gotham_fc,hsd_manual_registry,gotham_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,north_carolina_courage,hsd_manual_registry,north_carolina_courage,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,orlando_pride,hsd_manual_registry,orlando_pride,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,portland_thorns_fc,hsd_manual_registry,portland_thorns_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,racing_louisville_fc,hsd_manual_registry,racing_louisville_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,san_diego_wave_fc,hsd_manual_registry,san_diego_wave_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,seattle_reign,hsd_manual_registry,seattle_reign,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,utah_royals_fc,hsd_manual_registry,utah_royals_fc,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,washington_spirit,hsd_manual_registry,washington_spirit,,https://www.nwslsoccer.com/teams/index,review_required,not_approved,Internal manual-safe slug only
+team,angel_city_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,bay_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,boston_legacy_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,chicago_stars_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,denver_summit_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,houston_dash,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,kansas_city_current,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,gotham_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,north_carolina_courage,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,orlando_pride,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,portland_thorns_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,racing_louisville_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,san_diego_wave_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,seattle_reign,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,utah_royals_fc,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified
+team,washington_spirit,nwslsoccer_team_uuid,,,https://www.nwslsoccer.com/teams/index,pending_manual_lookup,not_approved,Provider ID intentionally blank until manually verified

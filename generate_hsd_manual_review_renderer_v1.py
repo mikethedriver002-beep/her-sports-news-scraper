@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.18.0-athlete-photo-onboarding-variants"
+VERSION = "hsd-manual-review-renderer-v1.19.0-athlete-identity-resolution-gate"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -41,6 +41,8 @@ TEAM_LOGOS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "team_logos
 TEAM_COLORS_CSV = PROJECT_ROOT / "data" / "asset_registry" / "wnba" / "teams.csv"
 WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
 ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onboarding_metadata.json"
+ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
+ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -155,6 +157,8 @@ def read_json(path: Path) -> Dict[str, Any]:
 
 
 _ATHLETE_PHOTO_ONBOARDING_CACHE: Dict[str, Any] | None = None
+_ATHLETE_IDENTITY_AUDIT_CACHE: Dict[str, Any] | None = None
+_ATHLETE_IDENTITY_RESOLUTION_CACHE: List[Dict[str, str]] | None = None
 
 
 def athlete_photo_onboarding_metadata() -> Dict[str, Dict[str, str]]:
@@ -182,6 +186,130 @@ def athlete_photo_onboarding_row(athlete_id: str, source_headshot_path: str) -> 
     if clean(row.get("approval_scope")) != "review_only_derivative_from_approved_headshot":
         return {}
     return {str(key): clean(value) for key, value in row.items()}
+
+
+def athlete_identity_audit_issues() -> Dict[str, List[Dict[str, str]]]:
+    global _ATHLETE_IDENTITY_AUDIT_CACHE
+    if _ATHLETE_IDENTITY_AUDIT_CACHE is None:
+        path = input_path(ATHLETE_IDENTITY_AUDIT)
+        payload = read_json(path) if path.exists() else {}
+        issues = payload.get("issues") if isinstance(payload.get("issues"), list) else []
+        grouped: Dict[str, List[Dict[str, str]]] = {}
+        for issue in issues:
+            if not isinstance(issue, dict):
+                continue
+            athlete_id = clean(issue.get("athlete_id"))
+            if athlete_id:
+                grouped.setdefault(athlete_id, []).append({str(key): clean(value) for key, value in issue.items()})
+        _ATHLETE_IDENTITY_AUDIT_CACHE = grouped
+    return _ATHLETE_IDENTITY_AUDIT_CACHE
+
+
+def athlete_identity_resolution_rows() -> List[Dict[str, str]]:
+    global _ATHLETE_IDENTITY_RESOLUTION_CACHE
+    if _ATHLETE_IDENTITY_RESOLUTION_CACHE is None:
+        path = input_path(ATHLETE_IDENTITY_RESOLUTION_INBOX)
+        _ATHLETE_IDENTITY_RESOLUTION_CACHE = read_csv(path) if path.exists() else []
+    return _ATHLETE_IDENTITY_RESOLUTION_CACHE
+
+
+def guardrail_false(row: Dict[str, str], field: str) -> bool:
+    return clean(row.get(field)).lower() in {"", "0", "false", "no", "n"}
+
+
+def athlete_identity_resolution(athlete_id: str, asset_path: str, provider_player_id: str) -> Dict[str, str]:
+    matches = [
+        row for row in athlete_identity_resolution_rows()
+        if clean(row.get("athlete_id")) == clean(athlete_id)
+    ]
+    if asset_path:
+        exact = [row for row in matches if clean(row.get("asset_path")) in {"", clean(asset_path)}]
+        if exact:
+            matches = exact
+    if provider_player_id:
+        exact_provider = [
+            row for row in matches
+            if clean(row.get("provider_player_id")) in {"", clean(provider_player_id)}
+            or clean(row.get("backfill_provider_player_id")) in {"", clean(provider_player_id)}
+        ]
+        if exact_provider:
+            matches = exact_provider
+    if not matches:
+        return {"resolution_status": "identity_resolution_missing"}
+
+    row = matches[-1]
+    decision = clean(row.get("operator_decision"))
+    status = clean(row.get("issue_resolution_status"))
+    evidence = clean(row.get("approved_source_url"))
+    verified_identity = clean(row.get("identity_verified")).lower() == "yes"
+    verified_provider = clean(row.get("provider_player_id_verified")).lower() == "yes" or bool(clean(row.get("backfill_provider_player_id")))
+    named_operator = bool(clean(row.get("operator_name")))
+    reviewed_at = bool(clean(row.get("reviewed_at_local")))
+    notes = bool(clean(row.get("operator_notes")))
+    guardrails_ok = all(guardrail_false(row, field) for field in ["publish_ready", "auto_approval", "auto_publish", "move_files", "paid_apis"])
+    eligible = (
+        decision == "identity_verified_approved_for_review_renders"
+        and status in {"resolved", "closed_with_evidence", "identity_verified"}
+        and verified_identity
+        and verified_provider
+        and bool(evidence)
+        and named_operator
+        and reviewed_at
+        and notes
+        and guardrails_ok
+    )
+    return {
+        "resolution_status": "identity_resolution_cleared_for_review_renders" if eligible else "identity_resolution_not_cleared",
+        "resolution_decision": decision,
+        "issue_resolution_status": status,
+        "resolution_evidence_url": evidence,
+        "resolution_operator": clean(row.get("operator_name")),
+        "resolution_reviewed_at_local": clean(row.get("reviewed_at_local")),
+        "resolution_notes": clean(row.get("operator_notes")),
+        "resolution_provider_player_id": clean(row.get("backfill_provider_player_id")) or clean(row.get("provider_player_id")),
+        "resolution_source_file": ATHLETE_IDENTITY_RESOLUTION_INBOX,
+    }
+
+
+def athlete_identity_gate(
+    athlete_id: str,
+    *,
+    asset_path: str,
+    provider_player_id: str,
+    marker_payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    issues = athlete_identity_audit_issues().get(clean(athlete_id), [])
+    high = [row for row in issues if clean(row.get("severity")) in {"critical", "high"}]
+    codes = sorted({clean(row.get("issue_code")) for row in issues if clean(row.get("issue_code"))})
+    resolution = athlete_identity_resolution(athlete_id, asset_path, provider_player_id)
+    marker_default = clean(marker_payload.get("decision_source")) == "default"
+    if (high or marker_default) and clean(resolution.get("resolution_status")) != "identity_resolution_cleared_for_review_renders":
+        reason = "Identity audit has high-risk issue(s)." if high else "Approval marker uses default provenance."
+        return {
+            "status": "hold",
+            "identity_review_status": "hold_identity_resolution_required",
+            "identity_issue_count": str(len(issues) + (1 if marker_default and not issues else 0)),
+            "identity_high_issue_count": str(len(high) + (1 if marker_default and not high else 0)),
+            "identity_issue_codes": "|".join(codes + (["default_marker_provenance"] if marker_default and "default_marker_provenance" not in codes else [])),
+            "identity_resolution_status": clean(resolution.get("resolution_status")),
+            "identity_resolution_decision": clean(resolution.get("resolution_decision")),
+            "identity_resolution_source_file": ATHLETE_IDENTITY_RESOLUTION_INBOX,
+            "identity_resolution_evidence_url": clean(resolution.get("resolution_evidence_url")),
+            "blocker": f"{reason} Add a source-backed row to {ATHLETE_IDENTITY_RESOLUTION_INBOX} before photo-first renderer use.",
+        }
+    return {
+        "status": "clear",
+        "identity_review_status": clean(resolution.get("resolution_status")) or ("identity_audit_clear_or_not_run" if not issues else "identity_resolution_cleared_for_review_renders"),
+        "identity_issue_count": str(len(issues)),
+        "identity_high_issue_count": str(len(high)),
+        "identity_issue_codes": "|".join(codes),
+        "identity_resolution_status": clean(resolution.get("resolution_status")),
+        "identity_resolution_decision": clean(resolution.get("resolution_decision")),
+        "identity_resolution_source_file": clean(resolution.get("resolution_source_file")),
+        "identity_resolution_evidence_url": clean(resolution.get("resolution_evidence_url")),
+        "identity_resolution_operator": clean(resolution.get("resolution_operator")),
+        "identity_resolution_reviewed_at_local": clean(resolution.get("resolution_reviewed_at_local")),
+    }
 
 
 def read_csv(path: Path) -> List[Dict[str, str]]:
@@ -487,6 +615,14 @@ def asset_slots(packet: Dict[str, Any], template: Dict[str, str]) -> List[Dict[s
                 "review_variant_metadata_source": clean(photo.get("review_variant_metadata_source")),
                 "review_variant_policy": clean(photo.get("review_variant_policy")),
                 "review_variant_crop_readiness_score": clean(photo.get("review_variant_crop_readiness_score")),
+                "identity_review_status": clean(photo.get("identity_review_status")),
+                "identity_issue_count": clean(photo.get("identity_issue_count")),
+                "identity_high_issue_count": clean(photo.get("identity_high_issue_count")),
+                "identity_issue_codes": clean(photo.get("identity_issue_codes")),
+                "identity_resolution_status": clean(photo.get("identity_resolution_status")),
+                "identity_resolution_decision": clean(photo.get("identity_resolution_decision")),
+                "identity_resolution_source_file": clean(photo.get("identity_resolution_source_file")),
+                "identity_resolution_evidence_url": clean(photo.get("identity_resolution_evidence_url")),
             }
         aliases, logos = team_registry()
         for slot_id, team_name in [("primary_team_logo", score.get("winner")), ("secondary_team_logo", score.get("loser"))]:
@@ -833,6 +969,7 @@ def resolve_athlete_photo(player: str, team: str) -> Dict[str, Any]:
     marker_payload = read_json_file(marker) if marker.exists() else {}
     marker_player = clean(marker_payload.get("display_name"))
     marker_team = clean(marker_payload.get("team_id"))
+    provider_player_id = clean(marker_payload.get("provider_player_id"))
     marker_matches = bool(
         marker_payload
         and (not marker_player or norm(marker_player) == norm(player_name))
@@ -848,8 +985,43 @@ def resolve_athlete_photo(player: str, team: str) -> Dict[str, Any]:
         "approval_policy": clean(marker_payload.get("policy")) or "approved marker required before local render use",
         "approval_source_file": clean(marker_payload.get("source_file")),
         "approved_at_utc": clean(marker_payload.get("approved_at_utc")),
+        "provider_player_id": provider_player_id,
         "requirement": "Use only approved local athlete headshot/cutout assets; missing or unapproved images stay review-only fallbacks.",
     }
+    identity_gate = athlete_identity_gate(
+        athlete_id,
+        asset_path=relative_project_path(headshot),
+        provider_player_id=provider_player_id,
+        marker_payload=marker_payload,
+    )
+    base.update({
+        "identity_review_status": clean(identity_gate.get("identity_review_status")),
+        "identity_issue_count": clean(identity_gate.get("identity_issue_count")),
+        "identity_high_issue_count": clean(identity_gate.get("identity_high_issue_count")),
+        "identity_issue_codes": clean(identity_gate.get("identity_issue_codes")),
+        "identity_resolution_status": clean(identity_gate.get("identity_resolution_status")),
+        "identity_resolution_decision": clean(identity_gate.get("identity_resolution_decision")),
+        "identity_resolution_source_file": clean(identity_gate.get("identity_resolution_source_file")),
+        "identity_resolution_evidence_url": clean(identity_gate.get("identity_resolution_evidence_url")),
+        "identity_resolution_operator": clean(identity_gate.get("identity_resolution_operator")),
+        "identity_resolution_reviewed_at_local": clean(identity_gate.get("identity_resolution_reviewed_at_local")),
+    })
+    if headshot.exists() and marker.exists() and marker_matches and clean(identity_gate.get("status")) == "hold":
+        return {
+            **base,
+            "status": "athlete_photo_identity_hold",
+            "photo_review_required": True,
+            "photo_approval_cue": "IDENTITY HOLD",
+            "render_method": "safe_text_fallback_identity_hold",
+            "review_variant_status": "blocked_by_identity_resolution",
+            "review_variant_feed_path": "",
+            "review_variant_story_path": "",
+            "review_variant_square_path": "",
+            "review_variant_metadata_source": ATHLETE_PHOTO_ONBOARDING_METADATA,
+            "review_variant_policy": "identity_resolution_required_before_review_variant_use",
+            "review_variant_crop_readiness_score": "",
+            "blocker": clean(identity_gate.get("blocker")),
+        }
     if headshot.exists() and marker.exists() and marker_matches:
         variant = athlete_photo_onboarding_row(athlete_id, relative_project_path(headshot))
         return {
@@ -1134,6 +1306,14 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "athlete_photo_review_variant_metadata_source": clean(photo.get("review_variant_metadata_source")),
         "athlete_photo_review_variant_policy": clean(photo.get("review_variant_policy")),
         "athlete_photo_review_variant_crop_readiness_score": clean(photo.get("review_variant_crop_readiness_score")),
+        "athlete_photo_identity_review_status": clean(photo.get("identity_review_status")),
+        "athlete_photo_identity_issue_count": clean(photo.get("identity_issue_count")),
+        "athlete_photo_identity_high_issue_count": clean(photo.get("identity_high_issue_count")),
+        "athlete_photo_identity_issue_codes": clean(photo.get("identity_issue_codes")),
+        "athlete_photo_identity_resolution_status": clean(photo.get("identity_resolution_status")),
+        "athlete_photo_identity_resolution_decision": clean(photo.get("identity_resolution_decision")),
+        "athlete_photo_identity_resolution_source_file": clean(photo.get("identity_resolution_source_file")),
+        "athlete_photo_identity_resolution_evidence_url": clean(photo.get("identity_resolution_evidence_url")),
         "athlete_photo_layout_options": "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback",
         "callouts": stats[:3],
         "player_name": player,
@@ -2302,6 +2482,14 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "athlete_photo_review_variant_metadata_source": clean(stat_module.get("athlete_photo_review_variant_metadata_source")),
             "athlete_photo_review_variant_policy": clean(stat_module.get("athlete_photo_review_variant_policy")),
             "athlete_photo_review_variant_crop_readiness_score": clean(stat_module.get("athlete_photo_review_variant_crop_readiness_score")),
+            "athlete_photo_identity_review_status": clean(stat_module.get("athlete_photo_identity_review_status")),
+            "athlete_photo_identity_issue_count": clean(stat_module.get("athlete_photo_identity_issue_count")),
+            "athlete_photo_identity_high_issue_count": clean(stat_module.get("athlete_photo_identity_high_issue_count")),
+            "athlete_photo_identity_issue_codes": clean(stat_module.get("athlete_photo_identity_issue_codes")),
+            "athlete_photo_identity_resolution_status": clean(stat_module.get("athlete_photo_identity_resolution_status")),
+            "athlete_photo_identity_resolution_decision": clean(stat_module.get("athlete_photo_identity_resolution_decision")),
+            "athlete_photo_identity_resolution_source_file": clean(stat_module.get("athlete_photo_identity_resolution_source_file")),
+            "athlete_photo_identity_resolution_evidence_url": clean(stat_module.get("athlete_photo_identity_resolution_evidence_url")),
             "athlete_photo_layout_options": clean(stat_module.get("athlete_photo_layout_options")),
             "athlete_photo_template_family": "approved_athlete_photo_final_score"
             if clean(stat_module.get("athlete_photo_status")) == "approved_local_headshot"
@@ -2547,6 +2735,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
         f"- Athlete photo: `{clean(content_module.get('athlete_photo_status')) or 'not_applicable'}` / {clean(content_module.get('athlete_photo_approval_cue')) or 'n/a'}",
+        f"- Athlete identity: `{clean(content_module.get('athlete_photo_identity_review_status')) or 'not_applicable'}` / resolution=`{clean(content_module.get('athlete_photo_identity_resolution_status')) or 'not_recorded'}`",
         f"- Stat source confidence: `{clean(content_module.get('stat_source_confidence')) or 'not_applicable'}`",
         f"- Stat review cue: {clean(content_module.get('stat_review_cue')) or 'n/a'}",
         f"- Editorial microcopy: `{clean(content_module.get('editorial_microcopy_variant')) or 'not_selected'}` / {clean(content_module.get('editorial_microcopy_headline')) or 'n/a'}",
