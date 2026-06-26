@@ -2276,6 +2276,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/wnba/logo_review_catalog_report.md"]["run_command"] == ".\\hsd.cmd run -Mode asset-audit"
     assert artifact_by_path["data/asset_registry/wnba/logo_review_packets.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
+    assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.md"]["status_detail"] == "Created with this command center run"
+    assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.csv"]["status_detail"] == "Created with this command center run"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
     assert artifact_by_path["source_registry_patch_preview.md"]["status_detail"] == "Ready to open"
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"
@@ -2518,6 +2520,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert Path("render_handoff_top_packet/copy_sheet.csv").exists()
     assert Path("render_handoff_top_packet/asset_checklist.md").exists()
     assert Path("render_handoff_top_packet/asset_checklist.csv").exists()
+    assert Path("render_handoff_top_packet/active_asset_review_queue.md").exists()
+    assert Path("render_handoff_top_packet/active_asset_review_queue.csv").exists()
     assert Path("render_handoff_top_packet/source_proof.md").exists()
     assert Path("render_handoff_top_packet/manual_renderer_prompt.md").exists()
     assert Path("render_handoff_top_packet/handoff_manifest.json").exists()
@@ -2527,6 +2531,29 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Athlete identity: `hold_identity_review_required`" in readme
     assert "Breanna Stewart: hold_identity_review_required" in readme
     assert "do not approve assets or create a publish-ready lane" in readme
+    active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
+    assert "Active Asset Review Queue" in active_queue
+    assert "New York Liberty" in active_queue
+    assert "Breanna Stewart" in active_queue
+    assert "asset_downloads=false" in active_queue
+    active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))
+    assert {row["entity_name"] for row in active_queue_rows} == {"New York Liberty", "WNBA", "Breanna Stewart"}
+    liberty_queue = next(row for row in active_queue_rows if row["entity_name"] == "New York Liberty")
+    assert liberty_queue["registered_path"] == "assets/leagues/wnba/logos/new_york_liberty/logo.png"
+    assert liberty_queue["source_target_path"] == "assets/leagues/wnba/teams/new_york_liberty/logo.svg"
+    assert liberty_queue["allowed_decisions"] == "verify_logo_for_review_renders|hold_logo_slot|revise_logo_source_metadata"
+    breanna_queue = next(row for row in active_queue_rows if row["entity_name"] == "Breanna Stewart")
+    assert breanna_queue["asset_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
+    assert breanna_queue["source_check_url"] == "https://www.wnba.com/player/1627668/breanna-stewart"
+    wnba_queue = next(row for row in active_queue_rows if row["entity_name"] == "WNBA")
+    assert wnba_queue["registered_path"] == "assets/leagues/wnba/logos/league/wnba.png"
+    assert wnba_queue["source_target_path"] == "assets/leagues/wnba/logos/league/wnba.png"
+    assert all(row["publish_ready"] == "false" for row in active_queue_rows)
+    assert all(row["auto_approval"] == "false" for row in active_queue_rows)
+    assert all(row["auto_publish"] == "false" for row in active_queue_rows)
+    assert all(row["move_files"] == "false" for row in active_queue_rows)
+    assert all(row["paid_apis"] == "false" for row in active_queue_rows)
+    assert all(row["asset_downloads"] == "false" for row in active_queue_rows)
     assert "Manual Renderer Steps" in Path("render_prep_packets.md").read_text(encoding="utf-8")
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
     asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
