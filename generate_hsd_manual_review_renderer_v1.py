@@ -22,7 +22,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageFont = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.20.0-premium-hsd-render-backgrounds"
+VERSION = "hsd-manual-review-renderer-v1.21.0-calm-premium-backgrounds"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -43,10 +43,10 @@ WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
 ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onboarding_metadata.json"
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v2"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v3_calm"
 RENDER_BACKGROUND_CUES = (
-    "deep_hsd_ink_field,scoreboard_light_sweeps,team_accent_rim_light,"
-    "editorial_rule_grid,halftone_noise,review_only_brand_rails"
+    "deep_hsd_ink_field,quiet_score_zones,subtle_team_accent_rim_light,"
+    "soft_editorial_rule_grid,restrained_halftone_noise,review_only_brand_rails"
 )
 
 FORMAT_SPECS = [
@@ -835,12 +835,12 @@ def mix_rgb(a: tuple[int, int, int], b: tuple[int, int, int], amount: float) -> 
 
 def draw_editorial_halftone(draw: Any, width: int, height: int, accent: tuple[int, int, int], *, seed: int) -> None:
     randomizer = random.Random(seed)
-    for _ in range(360 if height > 1500 else 240):
+    for _ in range(90 if height > 1500 else 60):
         x = randomizer.randrange(0, width)
         y = randomizer.randrange(0, height)
         size = randomizer.randrange(1, 4)
-        alpha = randomizer.randrange(18, 66)
-        color = (*accent, alpha) if randomizer.random() < 0.42 else (248, 250, 255, alpha)
+        alpha = randomizer.randrange(7, 22)
+        color = (*accent, alpha) if randomizer.random() < 0.24 else (248, 250, 255, alpha)
         draw.rectangle((x, y, x + size, y + size), fill=color)
 
 
@@ -856,26 +856,26 @@ def draw_reference_background(
     draw = ImageDraw.Draw(image, "RGBA")
     primary = primary_accent or PALETTE["gold"]
     secondary = secondary_accent or PALETTE["blue"]
-    base_top = (5, 8, 16)
-    base_bottom = (12, 20, 36)
+    base_top = (3, 6, 13)
+    base_bottom = (8, 15, 28)
     for y in range(height):
         amount = y / max(1, height - 1)
         draw.line((0, y, width, y), fill=(*mix_rgb(base_top, base_bottom, amount), 255))
 
-    draw.polygon([(0, 0), (int(width * 0.60), 0), (int(width * 0.40), height), (0, height)], fill=(9, 13, 24, 146))
-    draw.polygon([(int(width * 0.48), 0), (width, 0), (width, int(height * 0.62)), (int(width * 0.34), int(height * 0.28))], fill=(*mix_rgb(secondary, (8, 12, 22), 0.72), 120))
-    draw.polygon([(0, int(height * 0.58)), (int(width * 0.31), int(height * 0.35)), (int(width * 0.66), height), (0, height)], fill=(*mix_rgb(primary, (9, 13, 24), 0.78), 112))
+    draw.polygon([(0, 0), (int(width * 0.58), 0), (int(width * 0.42), height), (0, height)], fill=(7, 11, 21, 124))
+    draw.polygon([(int(width * 0.50), 0), (width, 0), (width, int(height * 0.60)), (int(width * 0.36), int(height * 0.30))], fill=(*mix_rgb(secondary, (6, 10, 19), 0.82), 70))
+    draw.polygon([(0, int(height * 0.62)), (int(width * 0.32), int(height * 0.40)), (int(width * 0.64), height), (0, height)], fill=(*mix_rgb(primary, (7, 11, 21), 0.86), 58))
 
-    rail_alpha = 160 if tone == "final" else 116
-    for x in range(-height, width + height, 176):
-        draw.line((x, height + 80, x + int(height * 0.72), -60), fill=(*primary, rail_alpha), width=3)
-    for x in range(-height, width + height, 326):
-        draw.line((x, height + 160, x + int(height * 0.58), -30), fill=(*secondary, 118), width=2)
+    rail_alpha = 34 if tone == "final" else 26
+    for x in range(-height, width + height, 520):
+        draw.line((x, height + 60, x + int(height * 0.66), -70), fill=(*primary, rail_alpha), width=2)
+    for x in range(-height, width + height, 820):
+        draw.line((x, height + 140, x + int(height * 0.52), -40), fill=(*secondary, 22), width=1)
 
     for y in [int(height * 0.12), int(height * 0.285), int(height * 0.74), int(height * 0.88)]:
-        draw.line((30, y, width - 30, y), fill=(*primary, 92), width=2)
-    for x in range(86, width, 124):
-        draw.line((x, int(height * 0.18), x, int(height * 0.92)), fill=(248, 250, 255, 15), width=1)
+        draw.line((30, y, width - 30, y), fill=(*primary, 28), width=1)
+    for x in range(86, width, 170):
+        draw.line((x, int(height * 0.18), x, int(height * 0.92)), fill=(248, 250, 255, 4), width=1)
 
     for index, word in enumerate(["HER SPORTS DAILY", "FINAL SCORE", "REVIEW DRAFT"]):
         text_y = int(height * (0.18 + index * 0.29))
@@ -886,15 +886,15 @@ def draw_reference_background(
             "context",
             21,
             12,
-            (248, 250, 255, 38),
+            (248, 250, 255, 22),
             max_lines=1,
             align="right",
         )
 
-    draw.rectangle((0, 0, width, 14), fill=(*primary, 240))
-    draw.rectangle((0, 14, width, 24), fill=(*secondary, 190))
-    draw.rectangle((0, height - 82, width, height - 64), fill=(*primary, 190))
-    draw.rectangle((0, height - 64, width, height - 58), fill=(*secondary, 168))
+    draw.rectangle((0, 0, width, 14), fill=(*primary, 205))
+    draw.rectangle((0, 14, width, 24), fill=(*secondary, 150))
+    draw.rectangle((0, height - 82, width, height - 64), fill=(*primary, 178))
+    draw.rectangle((0, height - 64, width, height - 58), fill=(*secondary, 135))
 
     if photo_first:
         draw.line((54, int(height * 0.305), width - 54, int(height * 0.305)), fill=(*primary, 182), width=4)
@@ -903,6 +903,13 @@ def draw_reference_background(
         draw.rectangle((width - 18, int(height * 0.28), width, int(height * 0.62)), fill=(*secondary, 180))
 
     draw_editorial_halftone(draw, width, height, primary, seed=width * 17 + height * 31 + (11 if photo_first else 0))
+
+    quiet = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    quiet_draw = ImageDraw.Draw(quiet, "RGBA")
+    quiet_draw.rectangle((0, int(height * 0.105), width, int(height * 0.275)), fill=(0, 0, 0, 126))
+    quiet_draw.rectangle((0, int(height * 0.300), width, int(height * 0.690)), fill=(0, 0, 0, 116))
+    quiet_draw.rectangle((0, int(height * 0.705), width, int(height * 0.910)), fill=(0, 0, 0, 96))
+    image.alpha_composite(quiet)
 
 def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
     badge = template_spec.get("badge") if isinstance(template_spec.get("badge"), dict) else {}
@@ -1803,7 +1810,7 @@ def square_reference_spec() -> Dict[str, Any]:
         "canvas": {"width": 1080, "height": 1080},
         "badge": {"asset": "official_hsd_badge_reference.png", "x": 48, "y": 42, "w": 80, "h": 80},
         "zones": {
-            "title": {"x": 60, "y": 108, "w": 960, "h": 150},
+            "title": {"x": 60, "y": 116, "w": 960, "h": 132},
             "context_row": {"x": 60, "y": 282, "w": 960, "h": 58},
             "primary_logo_slot": {"x": 70, "y": 376, "w": 190, "h": 190},
             "primary_team": {"x": 292, "y": 386, "w": 330, "h": 92},
@@ -1846,15 +1853,15 @@ def draw_final_score_reference_title(image: Any, template_spec: Dict[str, Any], 
     width = max(360, right - left)
     is_square = format_id == "square_feed_1x1"
     is_story = format_id == "ig_story_9x16"
-    y = title_y + (-4 if not is_square else 2)
+    y = title_y + (-4 if not is_square else 0)
     h = max(92, title_h - (28 if is_square else 18))
     if is_story:
         first, second, start, minimum = "QUICK FINAL", "SCORE", 84, 44
     elif is_square:
-        first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 70, 38
+        first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 58, 34
     else:
         first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 80, 42
-    gap = 14 if not is_square else 10
+    gap = 14 if not is_square else 24
     draw = ImageDraw.Draw(image, "RGBA")
     chosen = font(minimum, True)
     first_size = text_size(draw, first, chosen)
@@ -1869,7 +1876,7 @@ def draw_final_score_reference_title(image: Any, template_spec: Dict[str, Any], 
             second_size = candidate_second
             break
     text_h = max(first_size[1], second_size[1])
-    y_cursor = y + max(0, (h - text_h) // 2) - (8 if not is_square else 4)
+    y_cursor = y + max(0, (h - text_h) // 2) - (8 if not is_square else 2)
     draw.text((left, y_cursor), first, font=chosen, fill=PALETTE["ink"], stroke_width=2, stroke_fill=(0, 0, 0))
     draw.text((left + first_size[0] + gap, y_cursor), second, font=chosen, fill=PALETTE["gold"], stroke_width=2, stroke_fill=(0, 0, 0))
 
