@@ -1923,7 +1923,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.75.0-handoff-template-scope"
+    assert payload["version"] == "hsd-operator-command-center-v3.76.0-asset-panel-packet-fallbacks"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -2015,8 +2015,18 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["logo_review_packet_rows"] == 1
     assert payload["asset_readiness_panel"]["logo_review_packet_unapproved_rows"] == 1
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
+    assert payload["asset_readiness_panel"]["top_findings"][0]["decision_lane"] == "wnba_athlete_identity_resolution"
+    assert payload["asset_readiness_panel"]["top_findings"][0]["default_operator_decision"] == "hold_identity"
+    assert payload["asset_readiness_panel"]["top_findings"][0]["identity_confidence"] == "identity_hold_default_or_suspicious_approval"
+    assert payload["asset_readiness_panel"]["top_findings"][0]["asset_readiness"] == "review_only_manual_source_recheck_required: default_decision_source_manual_recheck_required"
     assert any(item["decision"] == "Verify logo" for item in payload["asset_readiness_panel"]["top_findings"])
-    assert any(item["decision"] == "Hold league mark" for item in payload["asset_readiness_panel"]["top_findings"])
+    league_finding = next(item for item in payload["asset_readiness_panel"]["top_findings"] if item["decision"] == "Hold league mark")
+    assert league_finding["decision_lane"] == "wnba_logo_review"
+    assert league_finding["default_operator_decision"] == "hold_league_mark"
+    assert league_finding["source_confidence"] == "source_missing_or_unregistered"
+    assert league_finding["asset_readiness"] == "optional_league_logo_file_missing_review_only"
+    assert league_finding["blocker_summary"] == "WNBA: missing league mark; default decision=hold_league_mark; readiness=optional_league_logo_file_missing_review_only"
+    assert command_center.audit_decision_lane("league_logo", "missing_or_unregistered_logo_asset", "WOMENS_SOCCER") == "logo_review"
     assert any(item["decision"] == "Verify renderer fallback" for item in payload["asset_readiness_panel"]["top_findings"])
     assert "Asset readiness" in html
     assert "Highest-risk asset blockers" in html
@@ -2033,6 +2043,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "data/asset_registry/asset_availability_audit.md" in html
     assert "Asset Readiness Decision Desk" in markdown
     assert "review-only, no paid APIs, no asset downloads" in markdown
+    assert "packet: wnba_athlete_identity_resolution / hold_identity / review_only_manual_source_recheck_required: default_decision_source_manual_recheck_required" in markdown
+    assert "packet: wnba_logo_review / hold_league_mark / optional_league_logo_file_missing_review_only" in markdown
+    assert "packet: manual_review / review_required / review_required" not in markdown
     assert "Logo review packets: 1 (1 unapproved / 0 source drift)" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
