@@ -388,6 +388,11 @@ ARTIFACTS = [
     ("Graphics", "WNBA logo review catalog data", "data/asset_registry/wnba/logo_review_catalog.csv"),
     ("Graphics", "WNBA logo review catalog manifest", "data/asset_registry/wnba/logo_review_catalog.json"),
     ("Graphics", "WNBA logo review packets", "data/asset_registry/wnba/logo_review_packets.csv"),
+    ("Graphics", "WNBA team logo contact sheet", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md"),
+    ("Graphics", "WNBA team logo contact sheet image", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.png"),
+    ("Graphics", "WNBA team logo contact sheet data", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv"),
+    ("Graphics", "WNBA team logo review intake", "data/asset_registry/wnba/wnba_team_logo_review_intake.csv"),
+    ("Graphics", "WNBA team logo contact sheet manifest", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -433,6 +438,11 @@ RUN_COMMANDS = {
     "data/asset_registry/wnba/logo_review_catalog.csv": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/logo_review_catalog.json": ".\\hsd.cmd run -Mode asset-audit",
     "data/asset_registry/wnba/logo_review_packets.csv": ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py",
+    "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
+    "data/asset_registry/wnba/wnba_team_logo_contact_sheet.png": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
+    "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
+    "data/asset_registry/wnba/wnba_team_logo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
+    "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -1154,6 +1164,14 @@ def packet_freshness_html(panel: Mapping[str, Any], prefix: str, label: str) -> 
 def asset_availability_readiness_panel() -> Dict[str, Any]:
     audit = read_json("data/asset_registry/asset_availability_audit.json")
     logo_packet_rows = read_csv("data/asset_registry/wnba/logo_review_packets.csv")
+    logo_contact_manifest = read_json("data/asset_registry/wnba/wnba_team_logo_contact_sheet.json")
+    logo_contact_rows = read_csv("data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv")
+    logo_contact_cue = packet_freshness_cue(
+        "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md",
+        len(logo_contact_rows),
+        RUN_COMMANDS["data/asset_registry/wnba/wnba_team_logo_contact_sheet.md"],
+        context="WNBA team logo contact sheet",
+    )
     logo_packets = logo_review_packet_rows(logo_packet_rows)
     logo_packet_cue = packet_freshness_cue(
         "data/asset_registry/wnba/logo_review_packets.csv",
@@ -1203,6 +1221,11 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "logo_review_packet_freshness_status": logo_packet_cue["status"],
         "logo_review_packet_freshness_detail": logo_packet_cue["detail"],
         "logo_review_packet_refresh_command": logo_packet_cue["run_command"],
+        "logo_contact_sheet_status": clean(logo_contact_manifest.get("status")) if isinstance(logo_contact_manifest, dict) else "",
+        "logo_contact_sheet_rows": len(logo_contact_rows),
+        "logo_contact_sheet_freshness_status": logo_contact_cue["status"],
+        "logo_contact_sheet_freshness_detail": logo_contact_cue["detail"],
+        "logo_contact_sheet_refresh_command": logo_contact_cue["run_command"],
         "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
@@ -1220,6 +1243,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("WNBA athlete photo catalog", "data/asset_registry/wnba/athlete_photo_catalog.md", "Review photo source, identity, crop, and approval readiness."),
             file_shortcut("WNBA logo review catalog", "data/asset_registry/wnba/logo_review_catalog_report.md", "Review team logo source trust, approval holds, and missing league marks."),
             file_shortcut("WNBA logo review packets", "data/asset_registry/wnba/logo_review_packets.csv", "Review unapproved logos and source path drift rows before renderer trust."),
+            file_shortcut("WNBA team logo contact sheet", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md", "Open every active WNBA logo in one sweep-review board."),
+            file_shortcut("WNBA team logo review intake", "data/asset_registry/wnba/wnba_team_logo_review_intake.csv", "Human-edited approve/deny/hold worksheet; this generator does not apply decisions."),
             file_shortcut("Logo asset catalog", "data/asset_registry/logo_asset_catalog.md", "Cross-check logo approval status and source policy."),
         ],
     }
@@ -7079,8 +7104,10 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Default photo approvals</span><strong>{html.escape(str(panel.get('default_player_approval_findings', 0)))}</strong></div>
             <div><span>Missing player assets</span><strong>{html.escape(str(panel.get('missing_player_asset_findings', 0)))}</strong></div>
             <div><span>Logo review packets</span><strong>{html.escape(str(panel.get('logo_review_packet_rows', 0)))}</strong></div>
+            <div><span>Logo sweep rows</span><strong>{html.escape(str(panel.get('logo_contact_sheet_rows', 0)))}</strong></div>
           </div>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
+          {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
             <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
@@ -8614,6 +8641,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- League mark findings: {asset_panel.get('league_logo_findings', 0)}",
         f"- Renderer findings: {asset_panel.get('renderer_findings', 0)}",
         f"- Logo review packets: {asset_panel.get('logo_review_packet_rows', 0)} ({asset_panel.get('logo_review_packet_unapproved_rows', 0)} unapproved / {asset_panel.get('logo_review_packet_source_drift_rows', 0)} source drift)",
+        f"- Logo contact sheet rows: {asset_panel.get('logo_contact_sheet_rows', 0)}",
         packet_freshness_markdown(
             {
                 "status": asset_panel.get("logo_review_packet_freshness_status"),
@@ -8621,6 +8649,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("logo_review_packet_refresh_command"),
             },
             "Logo review",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("logo_contact_sheet_freshness_status"),
+                "detail": asset_panel.get("logo_contact_sheet_freshness_detail"),
+                "run_command": asset_panel.get("logo_contact_sheet_refresh_command"),
+            },
+            "Logo contact sheet",
         ),
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",

@@ -614,6 +614,7 @@ function Invoke-AssetAuditStage($Python) {
     Invoke-ScriptIfPresent $Python "scripts\generate_hsd_wnba_athlete_identity_resolution_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "scripts\generate_hsd_wnba_athlete_identity_closure_packet_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "scripts\validate_hsd_wnba_asset_registry_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\generate_hsd_wnba_logo_contact_sheet_v1.py" -Optional
     if ($env:HSD_RUN_OUTPUT_DIR) {
         $assetAuditStaticManifest = New-Object System.Collections.ArrayList
         foreach ($relative in @(
@@ -621,6 +622,11 @@ function Invoke-AssetAuditStage($Python) {
             "data/asset_registry/wnba/logo_review_catalog.csv",
             "data/asset_registry/wnba/logo_review_catalog.json",
             "data/asset_registry/wnba/logo_review_packets.csv",
+            "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md",
+            "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv",
+            "data/asset_registry/wnba/wnba_team_logo_contact_sheet.png",
+            "data/asset_registry/wnba/wnba_team_logo_review_intake.csv",
+            "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json",
             "data/asset_registry/wnba/athlete_identity_audit.md",
             "data/asset_registry/wnba/athlete_identity_audit.csv",
             "data/asset_registry/wnba/athlete_identity_audit.json",
