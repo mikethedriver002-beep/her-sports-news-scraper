@@ -16,6 +16,7 @@ Review-only scaffold for womens soccer asset tracking.
 - `foundation_inventory_report.md` summarizes what exists, what is missing, and what must be reviewed before integration.
 - `womens_soccer_logo_contact_sheet.md` is a review-only sweep board for NWSL logo/mark rows and the European top-flight pilot.
 - `womens_soccer_logo_review_intake.csv` is the human-edited approve/deny/hold worksheet. The generator creates and preserves it but does not apply approval state.
+- `womens_soccer_logo_review_walkthrough.md` explains the review order, which rows need human attention first, and the safest non-WSL Europe expansion path.
 - `nwsl/leagues.csv` tracks league-level source context.
 - `nwsl/teams.csv` tracks active NWSL team identity rows seeded from the official NWSL teams page.
 - `nwsl/players.csv` is a header-only manual intake table for future player rows.

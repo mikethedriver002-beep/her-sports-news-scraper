@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-26T23:31:07.194114+00:00`
+Generated: `2026-06-26T23:59:21.273424+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -12,6 +12,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - League mark rows: `6`
 - Team logo rows: `28`
 - Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`
+- Human review walkthrough: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md`
 - Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`
 - Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false
 
