@@ -7,7 +7,7 @@ import csv
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageStat
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -147,6 +147,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "team_accent_rim_light" in manifest["render_background_cues"]
     assert "soft_editorial_rule_grid" in manifest["render_background_cues"]
     assert "restrained_halftone_noise" in manifest["render_background_cues"]
+    assert "logo_first_score_atmosphere" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
@@ -299,6 +300,33 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     assert edge["game_shape"] == "clear_separation"
     assert "final margin" in edge["body"]
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
+
+
+def test_manual_review_renderer_logo_first_score_atmosphere_paints_depth() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1080), (2, 4, 9, 255))
+    before = image.copy()
+    module.draw_logo_first_score_atmosphere(
+        image,
+        module.square_reference_spec(),
+        (72, 144, 216),
+        (196, 30, 58),
+    )
+
+    score_stack = (42, 326, 1038, 840)
+    diff = ImageChops.difference(before.crop(score_stack), image.crop(score_stack))
+    assert diff.convert("RGB").getbbox()
+    assert ImageStat.Stat(diff.convert("L")).mean[0] > 2.0
+
+    title_quiet_zone = (48, 112, 1032, 244)
+    title_diff = ImageChops.difference(before.crop(title_quiet_zone), image.crop(title_quiet_zone))
+    assert not title_diff.getbbox()
 
 
 def test_manual_review_renderer_score_only_fallback_avoids_generic_result_copy() -> None:
