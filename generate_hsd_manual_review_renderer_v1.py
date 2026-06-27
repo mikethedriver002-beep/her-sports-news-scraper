@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.23.0-sports-editorial-depth"
+VERSION = "hsd-manual-review-renderer-v1.24.0-square-review-footer"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -49,7 +49,7 @@ RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
-    "stat_proof_rail,generated_preview_qa"
+    "square_compact_review_footer,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -1059,7 +1059,7 @@ def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
     return "badge_missing_text_fallback"
 
 
-def draw_reference_guardrail(image: Any) -> None:
+def draw_reference_guardrail(image: Any, *, compact_footer: bool = False) -> None:
     width, height = image.size
     draw = ImageDraw.Draw(image, "RGBA")
     label = REVIEW_DRAFT_FOOTER_LABEL
@@ -1067,9 +1067,16 @@ def draw_reference_guardrail(image: Any) -> None:
     if pill_w > 180:
         draw.rounded_rectangle((width - pill_w - 50, 76, width - 50, 122), radius=8, fill=(190, 39, 54, 232), outline=(241, 238, 229, 180), width=1)
         draw_reference_text(image, (width - pill_w - 38, 80, pill_w - 24, 36), REVIEW_DRAFT_PILL_LABEL, "context", 19, 12, PALETTE["ink"], max_lines=1, align="center")
-    strip_h = 64
-    draw.rectangle((0, height - strip_h, width, height), fill=(190, 39, 54, 244))
-    draw_reference_text(image, (24, height - strip_h + 12, width - 48, strip_h - 18), label, "context", 24, 14, PALETTE["ink"], max_lines=1, align="center")
+    strip_h = 44 if compact_footer else 64
+    top_y = height - strip_h
+    if compact_footer:
+        draw.rectangle((0, top_y - 10, width, top_y - 6), fill=(*PALETTE["gold"], 166))
+        draw.rectangle((0, top_y - 6, width, top_y), fill=(*PALETTE["blue"], 120))
+    draw.rectangle((0, top_y, width, height), fill=(190, 39, 54, 244 if not compact_footer else 232))
+    label_size = 19 if compact_footer else 24
+    label_min = 12 if compact_footer else 14
+    label_y = top_y + (8 if compact_footer else 12)
+    draw_reference_text(image, (24, label_y, width - 48, strip_h - 12), label, "context", label_size, label_min, PALETTE["ink"], max_lines=1, align="center")
 
 
 def team_registry() -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
@@ -2673,7 +2680,7 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
         headline=clean(microcopy.get("headline")) or prompt,
     )
 
-    draw_reference_guardrail(image)
+    draw_reference_guardrail(image, compact_footer=format_id == "square_feed_1x1")
 
 
 def draw_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], spec: Dict[str, Any], score: Dict[str, str]) -> None:
