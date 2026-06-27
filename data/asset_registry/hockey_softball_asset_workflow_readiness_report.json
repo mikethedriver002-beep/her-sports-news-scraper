@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_asset_workflow_readiness_ready",
-  "generated_at_utc": "2026-06-27T17:52:16.248547+00:00",
+  "generated_at_utc": "2026-06-27T19:00:45.489288+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -23,7 +23,10 @@
     "proposed_approved_marker_path_refs": 54,
     "local_candidate_files_present": 0,
     "approved_marker_files_present": 0,
-    "unsafe_intake_rows": 0
+    "unsafe_intake_rows": 0,
+    "source_candidate_only_rows": 74,
+    "local_asset_present_rows": 0,
+    "action_queue_rows": 74
   },
   "summaries": [
     {
@@ -53,6 +56,8 @@
       "team_board_files_present": 12,
       "logo_source_candidate_rows": 13,
       "athlete_source_candidate_rows": 36,
+      "source_candidate_only_rows": 49,
+      "local_asset_present_rows": 0,
       "proposed_headshot_path_refs": 36,
       "proposed_approved_marker_path_refs": 36,
       "local_candidate_files_present": 0,
@@ -88,6 +93,8 @@
       "team_board_files_present": 6,
       "logo_source_candidate_rows": 7,
       "athlete_source_candidate_rows": 18,
+      "source_candidate_only_rows": 25,
+      "local_asset_present_rows": 0,
       "proposed_headshot_path_refs": 18,
       "proposed_approved_marker_path_refs": 18,
       "local_candidate_files_present": 0,
@@ -102,5 +109,11 @@
       "walkthrough": "data/asset_registry/softball/softball_review_walkthrough.md",
       "workflow_board": "data/asset_registry/softball/softball_asset_workflow_board.md"
     }
-  ]
+  ],
+  "action_queue": {
+    "md": "data/asset_registry/hockey_softball_asset_review_action_queue.md",
+    "csv": "data/asset_registry/hockey_softball_asset_review_action_queue.csv",
+    "json": "data/asset_registry/hockey_softball_asset_review_action_queue.json",
+    "rows": 74
+  }
 }

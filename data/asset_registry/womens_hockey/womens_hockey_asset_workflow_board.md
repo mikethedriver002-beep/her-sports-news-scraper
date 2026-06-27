@@ -1,10 +1,16 @@
 # Women's Hockey Asset Workflow Board
 
-- Generated: `2026-06-27T17:52:16.248547+00:00`
+- Generated: `2026-06-27T19:00:45.489288+00:00`
 - League: `Professional Women's Hockey League`
 - Status: `review_only_workflow_ready`
 - Scope: review-only operator workflow board; it reads source/contact/intake artifacts and writes no assets.
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
+
+## Next Human Action
+
+- Open `data/asset_registry/hockey_softball_asset_review_action_queue.md` first.
+- Work the queue top-to-bottom: open the listed board/contact sheet, then fill only the listed human-intake fields.
+- Source-candidate-only athlete rows keep identity/local-file/approval fields held until a named athlete and local candidate asset exist.
 
 ## Review Order
 
@@ -22,6 +28,8 @@
 - Proposed `.approved` path refs: `36`; markers currently present: `0`.
 - Unsafe logo intake rows detected: `0`.
 - Unsafe athlete intake rows detected: `0`.
+- Source-candidate-only rows: `49`.
+- Local asset present rows: `0`.
 
 ## Logo Queue
 
