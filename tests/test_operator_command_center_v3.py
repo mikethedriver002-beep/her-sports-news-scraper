@@ -15,6 +15,8 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "breaking_public_signal_queue.md" in artifact_paths
     assert "breaking_public_signal_queue.csv" in artifact_paths
     assert "breaking_public_signal_manifest.json" in artifact_paths
+    assert "breaking_public_signal_confirmation_intake.md" in artifact_paths
+    assert "breaking_public_signal_confirmation_intake.csv" in artifact_paths
 
 
 def test_command_center_surfaces_breaking_public_signal_as_review_only_source_board(tmp_path, monkeypatch) -> None:
@@ -75,6 +77,8 @@ def test_command_center_surfaces_breaking_public_signal_as_review_only_source_bo
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
     assert row["auto_publish"] == "false"
+    assert row["promotion_target"] == "breaking_public_signal_confirmation_intake.csv"
+    assert "confirmation_intake.csv" in row["next_action"]
     assert row["render_readiness_band"] == "hold_for_source_confirmation"
 
 
