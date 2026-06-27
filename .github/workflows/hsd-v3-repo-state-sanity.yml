@@ -258,6 +258,9 @@ jobs:
             outputs/latest/HSD_QUALITY_GRAPHICS/**
             results_desk_v5_manifest.json
             results_desk_v5_report.md
+            game_intelligence_board_v1.csv
+            game_intelligence_board_v1.md
+            game_intelligence_board_v1.json
             source_accuracy_v5.json
             source_accuracy_v5.md
             duplicate_game_audit_v5.csv
