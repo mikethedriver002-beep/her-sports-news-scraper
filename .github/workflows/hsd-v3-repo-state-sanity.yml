@@ -265,6 +265,9 @@ jobs:
             stats_evidence_gap_board_v1.md
             stats_evidence_gap_board_v1.json
             stats_confirmation_intake_v1.csv
+            game_fact_confirmation_status_v1.csv
+            game_fact_confirmation_status_v1.md
+            game_fact_confirmation_status_v1.json
             game_source_confirmation_bridge_v1.csv
             game_source_confirmation_bridge_v1.md
             game_source_confirmation_bridge_v1.json
