@@ -35,6 +35,8 @@ Review-only scaffold for womens soccer asset tracking.
 - `europe_top_flight/leagues.csv` tracks source candidates for WSL, Liga F, Frauen-Bundesliga, Arkema Premiere Ligue, and Serie A Women.
 - `europe_top_flight/teams.csv` includes current WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema Premiere Ligue club source rows; the athlete contact-sheet packet now creates one review-only starter row and team board per club for manual expansion.
 - `europe_top_flight/source_urls.csv`, `provider_ids.csv`, `asset_slots.csv`, and `approval_status.csv` mirror the review-only registry pattern without automatic downloads, approvals, or render enablement.
+- `womens_soccer_athlete_photo_operator_board.md` is the generated NWSL-first operator queue: it separates real NWSL roster-metadata candidates from European starter placeholders, source domains, starter counts, and safe next actions.
 
 Run `python scripts/validate_hsd_womens_soccer_asset_registry_v1.py --root .` to refresh the review report.
 Run `python scripts/generate_hsd_womens_soccer_logo_contact_sheet_v1.py` to refresh the review-only logo contact sheet and human intake CSV.
+Run `python scripts/generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py` to refresh the review-only athlete candidate sheets, intake CSV, and operator board.
