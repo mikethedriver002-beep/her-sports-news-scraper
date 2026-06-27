@@ -48,7 +48,7 @@ RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
-    "review_only_brand_rails,generated_preview_qa"
+    "review_only_brand_rails,logo_first_score_atmosphere,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2453,10 +2453,10 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
 def draw_score_lanes(image: Any, template_spec: Dict[str, Any], primary_accent: tuple[int, int, int], secondary_accent: tuple[int, int, int]) -> None:
     draw = ImageDraw.Draw(image, "RGBA")
     lane_pairs = [
-        ("primary_logo_slot", "primary_score", (3, 5, 10, 176), (*primary_accent, 198)),
-        ("secondary_logo_slot", "secondary_score", (3, 5, 10, 168), (*secondary_accent, 185)),
+        ("primary_logo_slot", "primary_score", (3, 5, 10, 190), (*primary_accent, 224), True),
+        ("secondary_logo_slot", "secondary_score", (3, 5, 10, 178), (*secondary_accent, 204), False),
     ]
-    for logo_name, score_name, fill, accent in lane_pairs:
+    for logo_name, score_name, fill, accent, winner in lane_pairs:
         lx, ly, lw, lh = zone_box(template_spec, logo_name)
         sx, sy, sw, sh = zone_box(template_spec, score_name)
         if not lw or not sw:
@@ -2467,13 +2467,53 @@ def draw_score_lanes(image: Any, template_spec: Dict[str, Any], primary_accent: 
         y2 = min(image.size[1], max(ly + lh, sy + sh) - 10)
         lane_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
         lane_draw = ImageDraw.Draw(lane_layer, "RGBA")
-        lane_draw.rounded_rectangle((x1 + 8, y1 + 10, x2 + 8, y2 + 10), radius=22, fill=(0, 0, 0, 94))
+        lane_draw.rounded_rectangle((x1 + 12, y1 + 15, x2 + 12, y2 + 15), radius=24, fill=(0, 0, 0, 122 if winner else 104))
+        lane_draw.rounded_rectangle((x1 - 3, y1 - 3, x2 + 3, y2 + 3), radius=26, outline=(*accent[:3], 54), width=4)
         lane_draw.rounded_rectangle((x1, y1, x2, y2), radius=22, fill=fill, outline=accent, width=2)
-        lane_draw.rectangle((x1, y1 + 4, x1 + 12, y2 - 4), fill=accent)
-        lane_draw.rounded_rectangle((x1 + 6, y1 + 6, x2 - 6, y1 + 42), radius=17, fill=(255, 255, 255, 10))
-        lane_draw.line((x1 + max(190, lw + 28), y1 + 26, x1 + max(190, lw + 28), y2 - 24), fill=(255, 255, 255, 36), width=1)
-        lane_draw.line((x1 + 22, y2 - 11, x2 - 22, y2 - 11), fill=accent, width=2)
+        lane_draw.rectangle((x1, y1 + 4, x1 + 14, y2 - 4), fill=accent)
+        lane_draw.rounded_rectangle((x1 + 8, y1 + 8, x2 - 8, y1 + 48), radius=18, fill=(255, 255, 255, 14 if winner else 9))
+        lane_draw.rounded_rectangle((x2 - max(236, sw + 18), y1 + 18, x2 - 20, y2 - 18), radius=18, fill=(255, 255, 255, 16 if winner else 11), outline=(255, 255, 255, 28), width=1)
+        lane_draw.line((x1 + max(190, lw + 28), y1 + 26, x1 + max(190, lw + 28), y2 - 24), fill=(255, 255, 255, 48), width=1)
+        lane_draw.line((x1 + 22, y2 - 11, x2 - 22, y2 - 11), fill=accent, width=3 if winner else 2)
         image.alpha_composite(lane_layer)
+
+
+def draw_logo_first_score_atmosphere(image: Any, template_spec: Dict[str, Any], primary_accent: tuple[int, int, int], secondary_accent: tuple[int, int, int]) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    boxes = [
+        zone_box(template_spec, "primary_logo_slot"),
+        zone_box(template_spec, "primary_score"),
+        zone_box(template_spec, "secondary_logo_slot"),
+        zone_box(template_spec, "secondary_score"),
+    ]
+    active = [box for box in boxes if box[2] and box[3]]
+    if not active:
+        return
+    x1 = max(28, min(box[0] for box in active) - 34)
+    y1 = max(0, min(box[1] for box in active) - 36)
+    x2 = min(image.size[0] - 28, max(box[0] + box[2] for box in active) + 30)
+    y2 = min(image.size[1], max(box[1] + box[3] for box in active) + 34)
+
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    draw.rounded_rectangle((x1, y1, x2, y2), radius=30, fill=(1, 3, 8, 102), outline=(*primary_accent, 58), width=1)
+    draw.polygon(
+        [(x1, y1 + 8), (x1 + int((x2 - x1) * 0.58), y1 + 8), (x1 + int((x2 - x1) * 0.34), y2 - 4), (x1, y2 - 4)],
+        fill=(*primary_accent, 36),
+    )
+    draw.polygon(
+        [(x2, y1 + 16), (x2 - int((x2 - x1) * 0.50), y1 + 16), (x2 - int((x2 - x1) * 0.22), y2), (x2, y2)],
+        fill=(*secondary_accent, 32),
+    )
+    draw.rectangle((x1, y1 + 12, x1 + 16, y2 - 12), fill=(*primary_accent, 96))
+    draw.rectangle((x1, y1 + int((y2 - y1) * 0.48), x2, y1 + int((y2 - y1) * 0.48) + 2), fill=(*secondary_accent, 92))
+    draw.line((x1 + 26, y1 + 18, x2 - 26, y1 + 18), fill=(255, 255, 255, 28), width=1)
+    draw.line((x1 + 26, y2 - 18, x2 - 26, y2 - 18), fill=(255, 255, 255, 20), width=1)
+    if ImageFilter is not None:
+        glow = layer.filter(ImageFilter.GaussianBlur(16))
+        image.alpha_composite(glow)
+    image.alpha_composite(layer)
 
 
 def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], template: Dict[str, str], format_spec: Dict[str, Any], score: Dict[str, str], reference: Dict[str, Any]) -> None:
@@ -2501,6 +2541,7 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
 
     context_box = zone_box(template_spec, "context_row")
     draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
+    draw_logo_first_score_atmosphere(image, template_spec, winner_accent, loser_accent)
     draw_score_lanes(image, template_spec, winner_accent, loser_accent)
 
     draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, winner_accent, winner=True)
