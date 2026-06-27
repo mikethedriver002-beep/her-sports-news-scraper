@@ -267,6 +267,8 @@ def test_womens_soccer_logo_contact_sheet_builds_review_only_board(tmp_path: Pat
     assert review_rows[1]["priority_group"] == "P1_WSL_FOUNDATION"
     assert review_rows[1]["recommended_operator_decision"] == "hold_for_more_evidence"
     assert module.priority_for({"entity_type": "league", "entity_id": "premiere_ligue_france"})[1] == "P5_ARKEMA_PREMIERE_LIGUE_FOUNDATION"
+    assert module.source_domain("https://www.nwslsoccer.com/about-the-nwsl") == "www.nwslsoccer.com"
+    assert module.source_domain("") == "source pending"
     assert "Safest Non-WSL Europe Expansion" in walkthrough_md
     assert "All configured Europe top-flight league club source rows are now seeded" in walkthrough_md
     assert Path(png_path).exists()
