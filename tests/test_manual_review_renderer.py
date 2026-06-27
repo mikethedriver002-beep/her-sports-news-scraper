@@ -152,6 +152,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "soft_editorial_rule_grid" in manifest["render_background_cues"]
     assert "restrained_halftone_noise" in manifest["render_background_cues"]
     assert "logo_first_score_atmosphere" in manifest["render_background_cues"]
+    assert "stat_proof_rail" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
@@ -728,6 +729,47 @@ def test_manual_review_renderer_photo_first_stage_preserves_face_edge_signal() -
                 edges += 1
             checks += 1
     assert edges / checks >= 0.014
+
+
+def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    module.draw_photo_first_stat_strip(
+        image,
+        (58, 990, 964, 132),
+        {
+            "player_name": "Kamilla Cardoso",
+            "headline": "CARDOSO + STATEMENT MARGIN",
+            "editorial_line": "30 PTS / 8 REB / 1 AST in the CHICAGO SKY 124, PORTLAND FIRE 94 final.",
+            "callouts": [
+                {"value": "30", "label": "PTS"},
+                {"value": "8", "label": "REB"},
+                {"value": "1", "label": "AST"},
+            ],
+        },
+        (72, 144, 216),
+    )
+
+    assert "stat_proof_rail" in module.RENDER_BACKGROUND_CUES
+    crop = image.crop((60, 990, 1020, 1122)).convert("RGB")
+    data = crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    gold_pixels = 0
+    blue_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r >= 185 and g >= 145 and b <= 105:
+            gold_pixels += 1
+        if b >= 135 and 45 <= r <= 115 and 90 <= g <= 175:
+            blue_pixels += 1
+    assert gold_pixels / pixels > 0.006
+    assert blue_pixels / pixels > 0.006
 
 
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
