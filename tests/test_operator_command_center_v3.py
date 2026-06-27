@@ -4463,6 +4463,7 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "render_prep_packets.md" in runner
     assert "render_prep_packets.csv" in runner
     assert "render_prep_packets.json" in runner
+    assert "news_source_observations.csv" in runner
     assert "render_handoff_top_packet/README.md" in runner
     assert "render_handoff_top_packet/manual_renderer_prompt.md" in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
