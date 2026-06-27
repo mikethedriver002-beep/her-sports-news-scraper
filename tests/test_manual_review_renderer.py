@@ -138,6 +138,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["reference_pack"]["pack_id"] == "templates_hsd_20260625"
     assert manifest["reference_pack"]["guardrails"]["reference_only"] is True
     assert manifest["reference_pack"]["guardrails"]["auto_publish"] is False
+    assert manifest["preview_source_title"] == "Test Liberty result"
+    assert manifest["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert len(manifest["format_options"]) == 3
     assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v4_dimensional"
     assert "quiet_score_zones" in manifest["render_background_cues"]
@@ -213,6 +215,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert bright_square_title_ratio > 0.025
     report = report_path.read_text(encoding="utf-8")
     assert "Draft preview is for human review only" in report
+    assert "Preview source packet: `Test Liberty result`" in report
+    assert "Preview freshness: generated from the current handoff packet." in report
     assert "## Review Draft Formats" in report
     assert "templates_hsd_20260625" in report
     assert "hsd_game_recap_final_score_a" in report
