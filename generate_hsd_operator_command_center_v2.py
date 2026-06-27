@@ -1489,6 +1489,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_athlete_photo_contact_sheet_status": clean(womens_soccer_athlete_manifest.get("status")) if isinstance(womens_soccer_athlete_manifest, dict) else "",
         "womens_soccer_athlete_photo_contact_sheet_rows": len(womens_soccer_athlete_rows),
         "womens_soccer_athlete_photo_contact_sheet_team_boards": as_int(womens_soccer_athlete_manifest.get("team_boards")) if isinstance(womens_soccer_athlete_manifest, dict) else 0,
+        "womens_soccer_athlete_photo_starter_candidate_rows": as_int(womens_soccer_athlete_manifest.get("starter_candidate_rows")) if isinstance(womens_soccer_athlete_manifest, dict) else 0,
         "womens_soccer_athlete_photo_contact_sheet_generated_at": clean(womens_soccer_athlete_manifest.get("generated_at_utc")) if isinstance(womens_soccer_athlete_manifest, dict) else "",
         "womens_soccer_athlete_photo_contact_sheet_warning_count": len(womens_soccer_athlete_manifest.get("warnings", [])) if isinstance(womens_soccer_athlete_manifest, dict) and isinstance(womens_soccer_athlete_manifest.get("warnings"), list) else 0,
         "womens_soccer_athlete_photo_contact_sheet_freshness_status": womens_soccer_athlete_cue["status"],
@@ -1534,7 +1535,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer logo contact sheet", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md", "Review NWSL team logos and European top-flight league mark source candidates in one sweep board."),
             file_shortcut("Women's soccer logo review intake", "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv", "Human-edited approve/deny/hold worksheet; this generator does not apply decisions."),
             file_shortcut("Women's soccer logo review walkthrough", "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md", "Open the prioritized review order before filling the human intake worksheet."),
-            file_shortcut("Women's soccer athlete photo contact sheets", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md", "Review NWSL athlete photo candidate placeholders and public-source candidate rows by team."),
+            file_shortcut("Women's soccer athlete photo contact sheets", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md", "Review NWSL and European top-flight athlete photo candidate placeholders and public-source candidate rows by team."),
             file_shortcut("Women's soccer athlete photo contact sheet data", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv", "Machine-readable review-only athlete photo candidate rows."),
             file_shortcut("Women's soccer athlete photo review intake", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv", "Human-edited athlete photo candidate decisions; this generator does not download or approve photos."),
             file_shortcut("Women's soccer athlete photo manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json", "Freshness, warning, and guardrail metadata for the athlete photo contact-sheet packet."),
@@ -7782,6 +7783,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer review steps</span><strong>{html.escape(str(panel.get('womens_soccer_logo_review_walkthrough_rows', 0)))}</strong></div>
             <div><span>Soccer athlete candidates</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Soccer athlete boards</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_team_boards', 0)))}</strong></div>
+            <div><span>Soccer starter rows</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_starter_candidate_rows', 0)))}</strong></div>
             <div><span>Soccer athlete warnings</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey athlete candidates</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
@@ -9339,6 +9341,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer logo review walkthrough rows: {asset_panel.get('womens_soccer_logo_review_walkthrough_rows', 0)}",
         f"- Women's soccer athlete photo candidate rows: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_rows', 0)}",
         f"- Women's soccer athlete photo team boards: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_team_boards', 0)}",
+        f"- Women's soccer athlete starter rows: {asset_panel.get('womens_soccer_athlete_photo_starter_candidate_rows', 0)}",
         f"- Women's soccer athlete photo packet generated: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_generated_at') or 'missing'}",
         f"- Women's soccer athlete photo warnings: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)}",
         f"- Women's hockey logo contact sheet rows: {asset_panel.get('womens_hockey_logo_contact_sheet_rows', 0)}",
