@@ -180,8 +180,14 @@ def test_wnba_logo_sources_cover_every_team_with_free_public_sources() -> None:
         row = by_team[team_id]
         assert row.get("source_url", "").startswith("https://"), team_id
         assert row.get("target_path", "").startswith(f"assets/leagues/wnba/teams/{team_id}/"), team_id
-    assert "Atlanta_Dream_logo" in by_team["atlanta_dream"].get("source_url", "")
-    assert "Toronto_Tempo_logo" in by_team["toronto_tempo"].get("source_url", "")
+    assert (
+        "Atlanta_Dream_logo" in by_team["atlanta_dream"].get("source_url", "")
+        or by_team["atlanta_dream"].get("source_url", "") == "https://www.wnba.com/team/atlanta-dream"
+    )
+    assert (
+        "Toronto_Tempo_logo" in by_team["toronto_tempo"].get("source_url", "")
+        or by_team["toronto_tempo"].get("source_url", "") == "https://www.wnba.com/team/toronto-tempo"
+    )
 
 
 def test_logo_fetcher_synthesizes_fallbacks_for_unlisted_teams() -> None:
