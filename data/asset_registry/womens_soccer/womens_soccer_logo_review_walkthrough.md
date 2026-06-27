@@ -1,8 +1,8 @@
 # Women's Soccer Logo Review Walkthrough
 
-Generated: `2026-06-27T00:26:51.660627+00:00`
+Generated: `2026-06-27T00:33:51.202593+00:00`
 
-Display-only guide for reviewing the 64-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
+Display-only guide for reviewing the 76-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
 ## Open First
 
@@ -22,7 +22,9 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 - `P2_LIGA_F_TEAM_LOGOS`: `16` row(s)
 - `P3_FRAUEN_BUNDESLIGA_FOUNDATION`: `1` row(s)
 - `P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS`: `14` row(s)
-- `P4_REMAINING_EUROPE_LEAGUE_MARKS`: `2` row(s)
+- `P4_SERIE_A_WOMEN_FOUNDATION`: `1` row(s)
+- `P4_SERIE_A_WOMEN_TEAM_LOGOS`: `12` row(s)
+- `P5_REMAINING_EUROPE_LEAGUE_MARKS`: `1` row(s)
 
 ## P0 Review Order
 
@@ -57,7 +59,7 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 
 Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.
 
-Recommended order after Frauen-Bundesliga: Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.
+Recommended order after Serie A Women: Arkema Premiere Ligue. It should remain source-candidate only until a human reviews exact club pages and any local assets.
 
 ## All Rows
 
@@ -123,5 +125,17 @@ Recommended order after Frauen-Bundesliga: Serie A Women, then Arkema Premiere L
 - rank=60 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | TSG Hoffenheim Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=61 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | Union Berlin Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=62 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | VfL Wolfsburg Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=63 | P4_REMAINING_EUROPE_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=64 | P4_REMAINING_EUROPE_LEAGUE_MARKS | Serie A Women Athora | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=63 | P4_SERIE_A_WOMEN_FOUNDATION | Serie A Women Athora | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=64 | P4_SERIE_A_WOMEN_TEAM_LOGOS | AC Milan Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=65 | P4_SERIE_A_WOMEN_TEAM_LOGOS | AS Roma Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=66 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Como Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=67 | P4_SERIE_A_WOMEN_TEAM_LOGOS | FC Internazionale Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=68 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Fiorentina Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=69 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Genoa Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=70 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Juventus Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=71 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Lazio Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=72 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Napoli Femminile | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=73 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Parma Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=74 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Sassuolo Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=75 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Ternana Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=76 | P5_REMAINING_EUROPE_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence

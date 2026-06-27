@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-27T00:26:51.660627+00:00`
+Generated: `2026-06-27T00:33:51.202593+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -8,9 +8,9 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Summary
 
-- Rows: `64`
+- Rows: `76`
 - League mark rows: `6`
-- Team logo rows: `58`
+- Team logo rows: `70`
 - Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`
 - Human review walkthrough: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md`
 - Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`
@@ -18,7 +18,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Scope Counts
 
-- `europe_top_flight`: `47`
+- `europe_top_flight`: `59`
 - `nwsl`: `17`
 
 ## Rows
@@ -87,3 +87,15 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - VfL Wolfsburg Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/vfl_wolfsburg_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
 - 1. FC Köln Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/1_fc_koln_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
 - 1. FC Nürnberg Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/1_fc_nurnberg_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- AC Milan Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/ac_milan_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- AS Roma Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/as_roma_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Como Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/como_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- FC Internazionale Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/fc_internazionale_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Fiorentina Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/fiorentina_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Genoa Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/genoa_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Juventus Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/juventus_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Lazio Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/lazio_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Napoli Femminile | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/napoli_femminile/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Parma Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/parma_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Sassuolo Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/sassuolo_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- Ternana Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/ternana_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
