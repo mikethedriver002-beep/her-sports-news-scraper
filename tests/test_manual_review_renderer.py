@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.23.0-sports-editorial-depth"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.24.0-square-review-footer"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -152,6 +152,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "soft_editorial_rule_grid" in manifest["render_background_cues"]
     assert "restrained_halftone_noise" in manifest["render_background_cues"]
     assert "logo_first_score_atmosphere" in manifest["render_background_cues"]
+    assert "sports_editorial_depth_markers" in manifest["render_background_cues"]
+    assert "square_compact_review_footer" in manifest["render_background_cues"]
     assert "stat_proof_rail" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -852,6 +854,35 @@ def test_manual_review_renderer_square_title_lockup_is_visible() -> None:
     title_histogram = title_crop.histogram()
     bright_title_ratio = sum(title_histogram[190:]) / sum(title_histogram)
     assert bright_title_ratio > 0.025
+
+
+def test_manual_review_renderer_square_compact_footer_keeps_review_marker_without_full_red_band() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1080), (2, 4, 9, 255))
+    module.draw_reference_guardrail(image, compact_footer=True)
+
+    assert "square_compact_review_footer" in module.RENDER_BACKGROUND_CUES
+    footer_crop = image.crop((54, 1010, 1026, 1063)).convert("RGB")
+    data = footer_crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    red_pixels = 0
+    light_text_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r >= 135 and 18 <= g <= 75 and 28 <= b <= 90:
+            red_pixels += 1
+        if r >= 210 and g >= 210 and b >= 200:
+            light_text_pixels += 1
+
+    red_ratio = red_pixels / pixels
+    assert 0.22 <= red_ratio <= 0.64
+    assert light_text_pixels / pixels > 0.008
 
 
 def test_manual_review_renderer_keeps_partial_approved_module_out_of_photo_first_layout() -> None:
