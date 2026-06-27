@@ -3101,6 +3101,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_prep_packets"][0]["active_asset_stop_go"] == "hold_required_manual_asset_review"
     assert "source, format, and manual-path blockers are clear" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "active asset holds remain separate stop/go cues" in payload["render_prep_packets"][0]["manual_renderer_steps"]
+    assert "Confirm copy fit:" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "Confirm active asset stop/go: hold_required_manual_asset_review." in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert "Confirm active logo readiness: hold_logo_review_required" in payload["render_prep_packets"][0]["manual_renderer_steps"]
     assert payload["render_prep_packets"][0]["active_athlete_identity_status"] == "hold_identity_review_required"
@@ -3769,6 +3770,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Breanna Stewart: hold_identity_review_required" in asset_checklist
     assert "athlete_identity_review_packet.csv" in asset_checklist
     assert "Renderer fallback remains review-only" in asset_checklist
+
+
     assert "HOLD this selected-template render if required team logos, source proof, format fit, or manual-path evidence is uncertain." in asset_checklist
     assert "Keep future photo-first and optional league-mark issues review-only; they do not approve assets or create a publish-ready lane." in asset_checklist
     assert "HOLD if any team, player, league, source, crop, or identity asset is uncertain." not in asset_checklist
@@ -3816,6 +3819,36 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert render_handoff_manifest["manual_league_mark_context_intake"]["auto_approval"] is False
     assert render_handoff_manifest["manual_league_mark_context_intake"]["template_requirement_rule"] == "non_blocking_until_selected_template_requires_league_mark"
     assert "manual_league_mark_context_intake.md" in render_handoff_manifest["files"]
+
+
+def test_render_prep_packet_adds_final_score_copy_fit_cues(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    write_csv(
+        "news_fact_packets.csv",
+        [
+            {
+                "urgency": "P1",
+                "headline": "New York Liberty beat Las Vegas Aces",
+                "production_ready": "Yes",
+                "caption_hard_fact": "Verified final: New York Liberty 87, Las Vegas Aces 76.",
+                "source_count": "4",
+                "primary_source_count": "2",
+            }
+        ],
+    )
+
+    payload = command_center.build_payload()
+    packet = next(item for item in payload["render_prep_packets"] if item["title"] == "New York Liberty beat Las Vegas Aces")
+
+    assert packet["copy_suggested_title"] == "New York Liberty over Las Vegas Aces"
+    assert packet["copy_suggested_dek"] == "LIBERTY 87, ACES 76"
+    assert "title <=46 chars" in packet["copy_fit_cue"]
+    assert "score-first wording" in packet["copy_polish_note"]
+    sheet = command_center.render_handoff_copy_sheet(packet)
+    prompt = command_center.render_manual_renderer_prompt(packet)
+    assert "Suggested title fit: New York Liberty over Las Vegas Aces" in sheet
+    assert "Suggested dek fit: LIBERTY 87, ACES 76" in prompt
 
 
 def test_operator_command_center_identity_resolution_requires_full_renderer_clearance_contract(tmp_path, monkeypatch) -> None:
