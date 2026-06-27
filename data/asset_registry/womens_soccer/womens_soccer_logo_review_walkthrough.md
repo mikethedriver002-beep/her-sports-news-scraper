@@ -1,8 +1,8 @@
 # Women's Soccer Logo Review Walkthrough
 
-Generated: `2026-06-26T23:59:21.273424+00:00`
+Generated: `2026-06-27T00:15:02.425430+00:00`
 
-Display-only guide for reviewing the 34-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
+Display-only guide for reviewing the 50-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
 ## Open First
 
@@ -18,7 +18,9 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 - `P0_NWSL_TEAM_LOGOS`: `16` row(s)
 - `P1_WSL_FOUNDATION`: `1` row(s)
 - `P1_WSL_TEAM_LOGOS`: `12` row(s)
-- `P2_NON_WSL_LEAGUE_MARKS`: `4` row(s)
+- `P2_LIGA_F_FOUNDATION`: `1` row(s)
+- `P2_LIGA_F_TEAM_LOGOS`: `16` row(s)
+- `P3_REMAINING_EUROPE_LEAGUE_MARKS`: `3` row(s)
 
 ## P0 Review Order
 
@@ -53,7 +55,7 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 
 Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.
 
-Recommended order: Liga F, Frauen-Bundesliga, Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.
+Recommended order after Liga F: Frauen-Bundesliga, Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.
 
 ## All Rows
 
@@ -87,7 +89,23 @@ Recommended order: Liga F, Frauen-Bundesliga, Serie A Women, then Arkema Premier
 - rank=28 | P1_WSL_TEAM_LOGOS | Manchester United Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=29 | P1_WSL_TEAM_LOGOS | Tottenham Hotspur Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=30 | P1_WSL_TEAM_LOGOS | West Ham United Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=31 | P2_NON_WSL_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=32 | P2_NON_WSL_LEAGUE_MARKS | Google Pixel Womens Bundesliga | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=33 | P2_NON_WSL_LEAGUE_MARKS | Liga F Moeve | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=34 | P2_NON_WSL_LEAGUE_MARKS | Serie A Women Athora | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=31 | P2_LIGA_F_FOUNDATION | Liga F Moeve | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=32 | P2_LIGA_F_TEAM_LOGOS | Alhama CF ElPozo | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=33 | P2_LIGA_F_TEAM_LOGOS | Athletic Club | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=34 | P2_LIGA_F_TEAM_LOGOS | Atlético de Madrid | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=35 | P2_LIGA_F_TEAM_LOGOS | Costa Adeje Tenerife | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=36 | P2_LIGA_F_TEAM_LOGOS | Deportivo Abanca | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=37 | P2_LIGA_F_TEAM_LOGOS | DUX Logroño | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=38 | P2_LIGA_F_TEAM_LOGOS | FC Badalona Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=39 | P2_LIGA_F_TEAM_LOGOS | FC Barcelona | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=40 | P2_LIGA_F_TEAM_LOGOS | Granada CF | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=41 | P2_LIGA_F_TEAM_LOGOS | Levante UD | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=42 | P2_LIGA_F_TEAM_LOGOS | Madrid CFF | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=43 | P2_LIGA_F_TEAM_LOGOS | RCD Espanyol de Barcelona | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=44 | P2_LIGA_F_TEAM_LOGOS | Real Madrid CF | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=45 | P2_LIGA_F_TEAM_LOGOS | Real Sociedad | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=46 | P2_LIGA_F_TEAM_LOGOS | SD Eibar | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=47 | P2_LIGA_F_TEAM_LOGOS | Sevilla FC | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=48 | P3_REMAINING_EUROPE_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=49 | P3_REMAINING_EUROPE_LEAGUE_MARKS | Google Pixel Womens Bundesliga | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=50 | P3_REMAINING_EUROPE_LEAGUE_MARKS | Serie A Women Athora | status=not_approved | file_exists=false | decision=hold_for_more_evidence

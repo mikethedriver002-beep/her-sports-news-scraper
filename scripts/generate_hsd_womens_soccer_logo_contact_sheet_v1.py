@@ -330,7 +330,11 @@ def priority_for(row: Mapping[str, str]) -> Tuple[int, str, str]:
         return 30, "P1_WSL_FOUNDATION", "Review the WSL league mark before the WSL club-logo sweep."
     if league_id == "wsl_england":
         return 40, "P1_WSL_TEAM_LOGOS", "Review WSL club logos after the NWSL sweep; WSL has full club source rows."
-    return 50, "P2_NON_WSL_LEAGUE_MARKS", "Hold non-WSL Europe to league-mark source review until club rows are expanded one league at a time."
+    if league_id == "liga_f_spain" and entity_type == "league":
+        return 50, "P2_LIGA_F_FOUNDATION", "Review the Liga F league mark before the Liga F club-logo sweep."
+    if league_id == "liga_f_spain":
+        return 60, "P2_LIGA_F_TEAM_LOGOS", "Review Liga F club logos after WSL; exact club pages still require manual confirmation."
+    return 70, "P3_REMAINING_EUROPE_LEAGUE_MARKS", "Hold remaining Europe to league-mark source review until club rows are expanded one league at a time."
 
 
 def walkthrough_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
@@ -568,7 +572,7 @@ def render_walkthrough_markdown(rows: List[Mapping[str, str]], review_rows: List
         "",
         "Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.",
         "",
-        "Recommended order: Liga F, Frauen-Bundesliga, Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.",
+        "Recommended order after Liga F: Frauen-Bundesliga, Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.",
         "",
         "## All Rows",
         "",
