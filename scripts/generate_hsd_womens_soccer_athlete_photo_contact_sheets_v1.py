@@ -24,6 +24,15 @@ VERSION = "hsd-womens-soccer-athlete-photo-contact-sheets-v1-review-only"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_ROOT = Path("data/asset_registry/womens_soccer")
 ACTIVE_SCOPES = ["nwsl", "europe_top_flight"]
+LEAGUE_OPERATOR_ORDER = {
+    "nwsl": 10,
+    "wsl_england": 20,
+    "liga_f_spain": 30,
+    "frauen_bundesliga_germany": 40,
+    "serie_a_women_italy": 50,
+    "arkema_premiere_ligue_france": 60,
+    "premiere_ligue_france": 60,
+}
 TEAM_SHEET_ROOT = Path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
 MAX_VISUAL_ROWS_PER_TEAM = 12
 FONT_CACHE: Dict[Tuple[int, bool], Any] = {}
@@ -34,6 +43,9 @@ OUT_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_p
 OUT_INTAKE = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv")
 OUT_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json")
 CANDIDATES = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv")
+OUT_OPERATOR_BOARD_MD = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md")
+OUT_OPERATOR_BOARD_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv")
+OUT_OPERATOR_BOARD_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json")
 
 CANDIDATE_FIELDS = [
     "scope_id",
@@ -144,6 +156,32 @@ INTAKE_FIELDS = [
     "reviewed_by",
     "reviewed_at_local",
     "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+]
+
+OPERATOR_BOARD_FIELDS = [
+    "operator_rank",
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "candidate_rows",
+    "official_roster_candidate_rows",
+    "starter_candidate_rows",
+    "local_candidate_files_present",
+    "source_domains",
+    "highest_priority_source_tier",
+    "manual_intake_file",
+    "team_review_board_path",
+    "team_contact_sheet_path",
+    "operator_next_step",
+    "expansion_phase",
+    "review_only",
     "publish_ready",
     "auto_approval",
     "auto_publish",
@@ -450,6 +488,155 @@ def count_by_field(rows: Iterable[Mapping[str, str]], field: str) -> Dict[str, i
         key = clean(row.get(field)) or "unknown"
         counts[key] = counts.get(key, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def source_tier_priority(tier: str) -> int:
+    order = {
+        "official_public_roster_metadata": 0,
+        "official_candidate": 1,
+        "public_or_official_candidate": 2,
+    }
+    return order.get(clean(tier), 9)
+
+
+def team_operator_priority_key(row: Mapping[str, str]) -> Tuple[int, str, str]:
+    league_id = clean(row.get("league_id"))
+    return (
+        LEAGUE_OPERATOR_ORDER.get(league_id, 100),
+        clean(row.get("team_name")).lower(),
+        clean(row.get("team_id")),
+    )
+
+
+def operator_next_step(row: Mapping[str, str]) -> str:
+    official_rows = as_int(row.get("official_roster_candidate_rows"))
+    starter_rows = as_int(row.get("starter_candidate_rows"))
+    local_files = as_int(row.get("local_candidate_files_present"))
+    if official_rows:
+        return "Review NWSL roster-sourced candidate rows first; add local candidate files only after human source and rights review."
+    if starter_rows:
+        return "Use the team board to add athlete names and source URLs manually; keep rows held until a local file is supplied and reviewed."
+    if local_files:
+        return "Compare local candidate files to the source rows manually before any review-only renderer trust decision."
+    return "Hold this team in the candidate layer until a human adds a source-backed athlete row."
+
+
+def expansion_phase(row: Mapping[str, str]) -> str:
+    if clean(row.get("league_id")) == "nwsl":
+        return "phase_1_nwsl_roster_metadata"
+    return "phase_2_europe_top_flight_starter"
+
+
+def as_int(value: Any) -> int:
+    try:
+        return int(clean(value))
+    except Exception:
+        return 0
+
+
+def build_operator_board_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    grouped: Dict[Tuple[str, str], List[Mapping[str, str]]] = {}
+    for row in rows:
+        grouped.setdefault((clean(row.get("scope_id")), clean(row.get("team_id"))), []).append(row)
+
+    summaries: List[Dict[str, str]] = []
+    for (scope_id, team_id), team_rows_for_board in grouped.items():
+        first = team_rows_for_board[0]
+        source_domains = sorted({clean(row.get("source_domain")) for row in team_rows_for_board if clean(row.get("source_domain"))})
+        source_tiers = sorted(
+            {clean(row.get("source_tier")) for row in team_rows_for_board if clean(row.get("source_tier"))},
+            key=source_tier_priority,
+        )
+        summary = {
+            "operator_rank": "",
+            "scope_id": scope_id,
+            "league_id": clean(first.get("league_id")),
+            "team_id": team_id,
+            "team_name": clean(first.get("team_name")) or team_id,
+            "candidate_rows": str(len(team_rows_for_board)),
+            "official_roster_candidate_rows": str(sum(1 for row in team_rows_for_board if clean(row.get("candidate_status")) == "official_roster_source_candidate")),
+            "starter_candidate_rows": str(sum(1 for row in team_rows_for_board if clean(row.get("candidate_status")) == "operator_add_candidate")),
+            "local_candidate_files_present": str(sum(1 for row in team_rows_for_board if clean(row.get("local_candidate_exists")) == "true")),
+            "source_domains": ";".join(source_domains),
+            "highest_priority_source_tier": source_tiers[0] if source_tiers else "",
+            "manual_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+            "team_review_board_path": clean(first.get("team_review_board_path")),
+            "team_contact_sheet_path": clean(first.get("team_contact_sheet_path")),
+            "operator_next_step": "",
+            "expansion_phase": "",
+            "review_only": "true",
+            "publish_ready": "false",
+            "auto_approval": "false",
+            "auto_publish": "false",
+            "move_files": "false",
+            "paid_apis": "false",
+            "asset_downloads": "false",
+        }
+        summary["operator_next_step"] = operator_next_step(summary)
+        summary["expansion_phase"] = expansion_phase(summary)
+        summaries.append(summary)
+
+    summaries.sort(key=team_operator_priority_key)
+    for index, row in enumerate(summaries, start=1):
+        row["operator_rank"] = str(index)
+    return summaries
+
+
+def render_operator_board(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    total_candidates = sum(as_int(row.get("candidate_rows")) for row in rows)
+    official_candidates = sum(as_int(row.get("official_roster_candidate_rows")) for row in rows)
+    starter_candidates = sum(as_int(row.get("starter_candidate_rows")) for row in rows)
+    local_files = sum(as_int(row.get("local_candidate_files_present")) for row in rows)
+    league_counts: Dict[str, int] = {}
+    for row in rows:
+        league = clean(row.get("league_id")) or "unknown"
+        league_counts[league] = league_counts.get(league, 0) + as_int(row.get("candidate_rows"))
+    lines = [
+        "# Women's Soccer Athlete Photo Operator Board",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only operator board for women's soccer athlete source candidates. It prioritizes NWSL roster-metadata rows first and keeps WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema expansion as manual starter rows until a human adds athlete/source evidence.",
+        "",
+        "No paid APIs, asset downloads, headshot writes, `.approved` marker writes, approval-state changes, publish-ready movement, or publishing are performed by this generator.",
+        "",
+        "## Summary",
+        "",
+        f"- Team boards: `{len(rows)}`",
+        f"- Candidate rows: `{total_candidates}`",
+        f"- Official roster candidate rows: `{official_candidates}`",
+        f"- Starter rows needing operator input: `{starter_candidates}`",
+        f"- Local candidate files present: `{local_files}`",
+        "- Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`",
+        "- Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`",
+        "",
+        "## League Candidate Counts",
+        "",
+    ]
+    lines.extend(f"- {league}: `{count}`" for league, count in sorted(league_counts.items(), key=lambda item: (LEAGUE_OPERATOR_ORDER.get(item[0], 100), item[0])))
+    lines += [
+        "",
+        "## NWSL First Queue",
+        "",
+    ]
+    for row in rows:
+        if clean(row.get("league_id")) != "nwsl":
+            continue
+        lines.append(
+            f"- {row.get('operator_rank')}. {row.get('team_name')} | candidates={row.get('candidate_rows')} | official_roster={row.get('official_roster_candidate_rows')} | local_files={row.get('local_candidate_files_present')} | [board]({row.get('team_review_board_path')})"
+        )
+    lines += [
+        "",
+        "## Europe Expansion Queue",
+        "",
+    ]
+    for row in rows:
+        if clean(row.get("league_id")) == "nwsl":
+            continue
+        lines.append(
+            f"- {row.get('operator_rank')}. {row.get('team_name')} ({row.get('league_id')}) | starter_rows={row.get('starter_candidate_rows')} | source_domains={row.get('source_domains') or 'operator_fill_required'} | next={row.get('operator_next_step')} | [board]({row.get('team_review_board_path')})"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def build_rows() -> List[Dict[str, str]]:
@@ -765,9 +952,37 @@ def main() -> int:
             "sheet_path": sheet_path,
             "board_path": board_path.as_posix(),
         }
+    operator_board_rows = build_operator_board_rows(rows)
     write_csv(OUT_CSV, rows, CONTACT_FIELDS)
     write_csv(OUT_INTAKE, decisions, extended_fields(INTAKE_FIELDS, prior_intake_rows))
+    write_csv(OUT_OPERATOR_BOARD_CSV, operator_board_rows, OPERATOR_BOARD_FIELDS)
+    write_text(OUT_OPERATOR_BOARD_MD, render_operator_board(operator_board_rows, generated_at))
     write_text(OUT_INDEX, render_index(rows, team_outputs, generated_at))
+    operator_board_manifest = {
+        "version": VERSION,
+        "status": "operator_board_ready",
+        "generated_at_utc": generated_at,
+        "operator_board_rows": len(operator_board_rows),
+        "candidate_rows": len(rows),
+        "official_roster_candidate_rows": sum(as_int(row.get("official_roster_candidate_rows")) for row in operator_board_rows),
+        "starter_candidate_rows": sum(as_int(row.get("starter_candidate_rows")) for row in operator_board_rows),
+        "local_candidate_files_present": sum(as_int(row.get("local_candidate_files_present")) for row in operator_board_rows),
+        "operator_board_md": OUT_OPERATOR_BOARD_MD.as_posix(),
+        "operator_board_csv": OUT_OPERATOR_BOARD_CSV.as_posix(),
+        "candidate_csv": CANDIDATES.as_posix(),
+        "intake_csv": OUT_INTAKE.as_posix(),
+        "review_only": True,
+        "downloads_performed": False,
+        "approvals_applied": False,
+        "headshot_files_written": False,
+        "approved_markers_created": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+    }
+    write_json(OUT_OPERATOR_BOARD_JSON, operator_board_manifest)
     manifest = {
         "version": VERSION,
         "status": "contact_sheets_ready",
@@ -777,10 +992,16 @@ def main() -> int:
         "candidate_csv": CANDIDATES.as_posix(),
         "contact_sheet_csv": OUT_CSV.as_posix(),
         "intake_csv": OUT_INTAKE.as_posix(),
+        "operator_board_md": OUT_OPERATOR_BOARD_MD.as_posix(),
+        "operator_board_csv": OUT_OPERATOR_BOARD_CSV.as_posix(),
+        "operator_board_json": OUT_OPERATOR_BOARD_JSON.as_posix(),
         "index": OUT_INDEX.as_posix(),
         "scope_counts": count_by_field(rows, "scope_id"),
         "league_counts": count_by_field(rows, "league_id"),
         "starter_candidate_rows": sum(1 for row in rows if clean(row.get("candidate_status")) == "operator_add_candidate"),
+        "official_roster_candidate_rows": sum(1 for row in rows if clean(row.get("candidate_status")) == "official_roster_source_candidate"),
+        "local_candidate_files_present": sum(1 for row in rows if clean(row.get("local_candidate_exists")) == "true"),
+        "operator_board_rows": len(operator_board_rows),
         "warnings": warnings,
         "review_only": True,
         "downloads_performed": False,
@@ -790,7 +1011,7 @@ def main() -> int:
         "publish_ready": False,
     }
     write_json(OUT_JSON, manifest)
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "candidate_rows": len(rows), "team_boards": len(team_outputs), "index": OUT_INDEX.as_posix(), "intake": OUT_INTAKE.as_posix()}, indent=2))
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "candidate_rows": len(rows), "team_boards": len(team_outputs), "operator_board": OUT_OPERATOR_BOARD_MD.as_posix(), "index": OUT_INDEX.as_posix(), "intake": OUT_INTAKE.as_posix()}, indent=2))
     return 0
 
 

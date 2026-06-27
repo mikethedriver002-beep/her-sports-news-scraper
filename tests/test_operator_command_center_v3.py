@@ -565,8 +565,82 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "generated_at_utc": "2026-06-26T20:00:00+00:00",
             "candidate_rows": 1,
             "team_boards": 1,
+            "official_roster_candidate_rows": 0,
             "starter_candidate_rows": 1,
+            "local_candidate_files_present": 0,
+            "operator_board_rows": 1,
             "warnings": ["angel_city_fc:pillow_unavailable_contact_sheet_not_created"],
+            "review_only": True,
+            "downloads_performed": False,
+            "approvals_applied": False,
+        },
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv",
+        [
+            {
+                "operator_rank": "1",
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "candidate_rows": "1",
+                "official_roster_candidate_rows": "0",
+                "starter_candidate_rows": "1",
+                "local_candidate_files_present": "0",
+                "source_domains": "www.angelcity.com",
+                "highest_priority_source_tier": "public_or_official_candidate",
+                "manual_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+                "team_review_board_path": "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.md",
+                "team_contact_sheet_path": "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.png",
+                "operator_next_step": "Hold this team in the candidate layer until a human adds a source-backed athlete row.",
+                "expansion_phase": "phase_1_nwsl_roster_metadata",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        ],
+        [
+            "operator_rank",
+            "scope_id",
+            "league_id",
+            "team_id",
+            "team_name",
+            "candidate_rows",
+            "official_roster_candidate_rows",
+            "starter_candidate_rows",
+            "local_candidate_files_present",
+            "source_domains",
+            "highest_priority_source_tier",
+            "manual_intake_file",
+            "team_review_board_path",
+            "team_contact_sheet_path",
+            "operator_next_step",
+            "expansion_phase",
+            "review_only",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+            "asset_downloads",
+        ],
+    )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md").write_text("# Operator board\n", encoding="utf-8")
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json",
+        {
+            "status": "operator_board_ready",
+            "generated_at_utc": "2026-06-26T20:00:00+00:00",
+            "operator_board_rows": 1,
+            "candidate_rows": 1,
+            "official_roster_candidate_rows": 0,
+            "starter_candidate_rows": 1,
+            "local_candidate_files_present": 0,
             "review_only": True,
             "downloads_performed": False,
             "approvals_applied": False,
@@ -584,27 +658,40 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_logo_review_walkthrough_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_athlete_photo_contact_sheet_rows"] == 1
     assert panel["womens_soccer_athlete_photo_contact_sheet_team_boards"] == 1
+    assert panel["womens_soccer_athlete_photo_official_roster_candidate_rows"] == 0
     assert panel["womens_soccer_athlete_photo_starter_candidate_rows"] == 1
+    assert panel["womens_soccer_athlete_photo_local_candidate_files_present"] == 0
     assert panel["womens_soccer_athlete_photo_contact_sheet_status"] == "contact_sheets_ready"
     assert panel["womens_soccer_athlete_photo_contact_sheet_generated_at"] == "2026-06-26T20:00:00+00:00"
     assert panel["womens_soccer_athlete_photo_contact_sheet_warning_count"] == 1
     assert panel["womens_soccer_athlete_photo_contact_sheet_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_operator_board_rows"] == 1
+    assert panel["womens_soccer_athlete_operator_board_status"] == "operator_board_ready"
+    assert panel["womens_soccer_athlete_operator_board_generated_at"] == "2026-06-26T20:00:00+00:00"
+    assert panel["womens_soccer_athlete_operator_board_freshness_status"] == "packet_ready"
     assert any(item["label"] == "Women's soccer logo contact sheet" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer logo review intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer logo review walkthrough" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete photo contact sheets" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete photo contact sheet data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete photo review intake" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete operator board" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete operator board data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete operator board manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete photo manifest" for item in panel["file_shortcuts"])
     assert "Soccer logo sweep rows" in html
     assert "Soccer review steps" in html
     assert "Soccer athlete candidates" in html
+    assert "Soccer roster rows" in html
     assert "Soccer athlete boards" in html
     assert "Soccer starter rows" in html
+    assert "Soccer local files" in html
     assert "Soccer athlete warnings" in html
+    assert "Soccer operator board" in html
     assert "Women&#x27;s soccer logo contact sheet packet freshness" in html
     assert "Women&#x27;s soccer logo review walkthrough packet freshness" in html
     assert "Women&#x27;s soccer athlete photo contact sheets packet freshness" in html
+    assert "Women&#x27;s soccer athlete operator board packet freshness" in html
 
 
 def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_path, monkeypatch) -> None:
@@ -4099,6 +4186,39 @@ def test_command_center_surfaces_missing_asset_packet_freshness_cues(tmp_path, m
     assert "scripts\\generate_hsd_wnba_athlete_identity_resolution_v1.py" in athlete_panel["identity_review_packet_refresh_command"]
     assert "Identity review packet freshness" in athlete_html
     assert "packet_missing" in athlete_html
+
+
+def test_asset_readiness_panel_surfaces_missing_womens_soccer_operator_board_freshness(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("data/asset_registry").mkdir(parents=True)
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "status": "review_required",
+            "finding_count": 0,
+            "severity_counts": {},
+            "asset_domain_counts": {},
+            "finding_counts": {},
+            "findings": [],
+            "policy": {
+                "no_paid_apis": True,
+                "no_asset_downloads": True,
+                "no_auto_approval": True,
+                "no_file_movement_into_publish_ready_lanes": True,
+                "no_publishing": True,
+            },
+        },
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["womens_soccer_athlete_operator_board_rows"] == 0
+    assert panel["womens_soccer_athlete_operator_board_freshness_status"] == "packet_missing"
+    assert "active holds may still be visible" in panel["womens_soccer_athlete_operator_board_freshness_detail"]
+    assert panel["womens_soccer_athlete_operator_board_refresh_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py"
+    assert "Women&#x27;s soccer athlete operator board packet freshness" in html
+    assert "packet_missing" in html
 
 
 def test_athlete_photo_panel_surfaces_identity_closure_packet_breakdown(tmp_path, monkeypatch) -> None:

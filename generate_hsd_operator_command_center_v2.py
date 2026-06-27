@@ -269,6 +269,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json",
     "data/asset_registry/womens_soccer/athlete_photo_contact_sheets",
     "data/asset_registry/womens_soccer/nwsl/players.csv",
@@ -531,6 +534,9 @@ ARTIFACTS = [
     ("Graphics", "Women's soccer athlete photo contact sheet data", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv"),
     ("Graphics", "Women's soccer athlete photo review intake", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv"),
     ("Graphics", "Women's soccer athlete photo candidates", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv"),
+    ("Graphics", "Women's soccer athlete operator board", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md"),
+    ("Graphics", "Women's soccer athlete operator board data", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv"),
+    ("Graphics", "Women's soccer athlete operator board manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json"),
     ("Graphics", "Women's soccer athlete photo contact sheet manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json"),
     ("Graphics", "Women's soccer NWSL player registry", "data/asset_registry/womens_soccer/nwsl/players.csv"),
     ("Graphics", "Women's soccer NWSL roster candidate fetch report", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md"),
@@ -632,6 +638,9 @@ RUN_COMMANDS = {
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/womens_soccer/nwsl/players.csv": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
@@ -858,7 +867,7 @@ def read_csv(path: str) -> List[Dict[str, str]]:
     if not p.exists():
         return []
     try:
-        with p.open(newline="", encoding="utf-8", errors="replace") as f:
+        with p.open(newline="", encoding="utf-8-sig", errors="replace") as f:
             return list(csv.DictReader(f))
     except Exception:
         return []
@@ -1464,6 +1473,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     womens_soccer_logo_walkthrough_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv")
     womens_soccer_athlete_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json")
     womens_soccer_athlete_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv")
+    womens_soccer_athlete_operator_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json")
+    womens_soccer_athlete_operator_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv")
     hockey_softball_manifest = read_json("data/asset_registry/hockey_softball_asset_foundation_report.json")
     womens_hockey_logo_rows = read_csv("data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.csv")
     womens_hockey_athlete_manifest = read_json("data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_manifest.json")
@@ -1497,6 +1508,12 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         len(womens_soccer_athlete_rows),
         RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md"],
         context="women's soccer athlete photo contact sheets",
+    )
+    womens_soccer_athlete_operator_cue = packet_freshness_cue(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md",
+        len(womens_soccer_athlete_operator_rows),
+        RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md"],
+        context="women's soccer athlete operator board",
     )
     hockey_softball_cue = packet_freshness_cue(
         "data/asset_registry/hockey_softball_asset_foundation_report.md",
@@ -1595,9 +1612,20 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_athlete_photo_starter_candidate_rows": as_int(womens_soccer_athlete_manifest.get("starter_candidate_rows")) if isinstance(womens_soccer_athlete_manifest, dict) else 0,
         "womens_soccer_athlete_photo_contact_sheet_generated_at": clean(womens_soccer_athlete_manifest.get("generated_at_utc")) if isinstance(womens_soccer_athlete_manifest, dict) else "",
         "womens_soccer_athlete_photo_contact_sheet_warning_count": len(womens_soccer_athlete_manifest.get("warnings", [])) if isinstance(womens_soccer_athlete_manifest, dict) and isinstance(womens_soccer_athlete_manifest.get("warnings"), list) else 0,
+        "womens_soccer_athlete_photo_official_roster_candidate_rows": as_int(womens_soccer_athlete_manifest.get("official_roster_candidate_rows")) if isinstance(womens_soccer_athlete_manifest, dict) else sum(1 for row in womens_soccer_athlete_rows if clean(row.get("candidate_status")) == "official_roster_source_candidate"),
+        "womens_soccer_athlete_photo_local_candidate_files_present": as_int(womens_soccer_athlete_manifest.get("local_candidate_files_present")) if isinstance(womens_soccer_athlete_manifest, dict) else sum(1 for row in womens_soccer_athlete_rows if clean(row.get("local_candidate_exists")) == "true"),
         "womens_soccer_athlete_photo_contact_sheet_freshness_status": womens_soccer_athlete_cue["status"],
         "womens_soccer_athlete_photo_contact_sheet_freshness_detail": womens_soccer_athlete_cue["detail"],
         "womens_soccer_athlete_photo_contact_sheet_refresh_command": womens_soccer_athlete_cue["run_command"],
+        "womens_soccer_athlete_operator_board_status": clean(womens_soccer_athlete_operator_manifest.get("status")) if isinstance(womens_soccer_athlete_operator_manifest, dict) else "",
+        "womens_soccer_athlete_operator_board_rows": len(womens_soccer_athlete_operator_rows),
+        "womens_soccer_athlete_operator_board_generated_at": clean(womens_soccer_athlete_operator_manifest.get("generated_at_utc")) if isinstance(womens_soccer_athlete_operator_manifest, dict) else "",
+        "womens_soccer_athlete_operator_board_official_roster_candidate_rows": as_int(womens_soccer_athlete_operator_manifest.get("official_roster_candidate_rows")) if isinstance(womens_soccer_athlete_operator_manifest, dict) else 0,
+        "womens_soccer_athlete_operator_board_starter_candidate_rows": as_int(womens_soccer_athlete_operator_manifest.get("starter_candidate_rows")) if isinstance(womens_soccer_athlete_operator_manifest, dict) else 0,
+        "womens_soccer_athlete_operator_board_local_candidate_files_present": as_int(womens_soccer_athlete_operator_manifest.get("local_candidate_files_present")) if isinstance(womens_soccer_athlete_operator_manifest, dict) else 0,
+        "womens_soccer_athlete_operator_board_freshness_status": womens_soccer_athlete_operator_cue["status"],
+        "womens_soccer_athlete_operator_board_freshness_detail": womens_soccer_athlete_operator_cue["detail"],
+        "womens_soccer_athlete_operator_board_refresh_command": womens_soccer_athlete_operator_cue["run_command"],
         "hockey_softball_asset_foundation_status": clean(hockey_softball_manifest.get("status")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_asset_foundation_generated_at": clean(hockey_softball_manifest.get("generated_at_utc")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_source_review_helper_status": clean(hockey_softball_helper_manifest.get("status")) if isinstance(hockey_softball_helper_manifest, dict) else "",
@@ -1663,6 +1691,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer athlete photo contact sheets", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md", "Review NWSL and European top-flight athlete photo candidate placeholders and public-source candidate rows by team."),
             file_shortcut("Women's soccer athlete photo contact sheet data", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv", "Machine-readable review-only athlete photo candidate rows."),
             file_shortcut("Women's soccer athlete photo review intake", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv", "Human-edited athlete photo candidate decisions; this generator does not download or approve photos."),
+            file_shortcut("Women's soccer athlete operator board", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md", "NWSL-first review queue plus European starter placeholders, source domains, and safe next actions."),
+            file_shortcut("Women's soccer athlete operator board data", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv", "Machine-readable team-level NWSL-first operator queue."),
+            file_shortcut("Women's soccer athlete operator board manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json", "Freshness and guardrail metadata for the NWSL-first athlete operator board."),
             file_shortcut("Women's soccer athlete photo manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json", "Freshness, warning, and guardrail metadata for the athlete photo contact-sheet packet."),
             file_shortcut("Hockey/softball foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md", "Review PWHL and AUSL source-candidate scaffold counts and guardrails."),
             file_shortcut("Hockey/softball source review helper report", "data/asset_registry/hockey_softball_source_review_helper_report.md", "Review batch source-review prep counts and safety notes for the hockey and softball packets."),
@@ -7940,9 +7971,12 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer logo sweep rows</span><strong>{html.escape(str(panel.get('womens_soccer_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Soccer review steps</span><strong>{html.escape(str(panel.get('womens_soccer_logo_review_walkthrough_rows', 0)))}</strong></div>
             <div><span>Soccer athlete candidates</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Soccer roster rows</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_official_roster_candidate_rows', 0)))}</strong></div>
             <div><span>Soccer athlete boards</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_team_boards', 0)))}</strong></div>
             <div><span>Soccer starter rows</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_starter_candidate_rows', 0)))}</strong></div>
+            <div><span>Soccer local files</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_local_candidate_files_present', 0)))}</strong></div>
             <div><span>Soccer athlete warnings</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)))}</strong></div>
+            <div><span>Soccer operator board</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_operator_board_rows', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey athlete candidates</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey source slots</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)))}</strong></div>
@@ -7962,6 +7996,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_logo_contact_sheet', "Women's soccer logo contact sheet")}
           {packet_freshness_html(panel, 'womens_soccer_logo_review_walkthrough', "Women's soccer logo review walkthrough")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_photo_contact_sheet', "Women's soccer athlete photo contact sheets")}
+          {packet_freshness_html(panel, 'womens_soccer_athlete_operator_board', "Women's soccer athlete operator board")}
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
           {packet_freshness_html(panel, 'hockey_softball_source_review_helper', "Hockey/softball source review helper")}
           {packet_freshness_html(panel, 'hockey_softball_asset_workflow', "Hockey/softball asset workflow readiness")}
@@ -9507,10 +9542,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer logo contact sheet rows: {asset_panel.get('womens_soccer_logo_contact_sheet_rows', 0)}",
         f"- Women's soccer logo review walkthrough rows: {asset_panel.get('womens_soccer_logo_review_walkthrough_rows', 0)}",
         f"- Women's soccer athlete photo candidate rows: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_rows', 0)}",
+        f"- Women's soccer athlete official roster rows: {asset_panel.get('womens_soccer_athlete_photo_official_roster_candidate_rows', 0)}",
         f"- Women's soccer athlete photo team boards: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_team_boards', 0)}",
         f"- Women's soccer athlete starter rows: {asset_panel.get('womens_soccer_athlete_photo_starter_candidate_rows', 0)}",
+        f"- Women's soccer athlete local candidate files present: {asset_panel.get('womens_soccer_athlete_photo_local_candidate_files_present', 0)}",
         f"- Women's soccer athlete photo packet generated: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_generated_at') or 'missing'}",
         f"- Women's soccer athlete photo warnings: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)}",
+        f"- Women's soccer athlete operator board rows: {asset_panel.get('womens_soccer_athlete_operator_board_rows', 0)}",
+        f"- Women's soccer athlete operator board generated: {asset_panel.get('womens_soccer_athlete_operator_board_generated_at') or 'missing'}",
         f"- Women's hockey logo contact sheet rows: {asset_panel.get('womens_hockey_logo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete photo candidate rows: {asset_panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete source-review slot rows: {asset_panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)}",
@@ -9569,6 +9608,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("womens_soccer_athlete_photo_contact_sheet_refresh_command"),
             },
             "Women's soccer athlete photo contact sheets",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("womens_soccer_athlete_operator_board_freshness_status"),
+                "detail": asset_panel.get("womens_soccer_athlete_operator_board_freshness_detail"),
+                "run_command": asset_panel.get("womens_soccer_athlete_operator_board_refresh_command"),
+            },
+            "Women's soccer athlete operator board",
         ),
         packet_freshness_markdown(
             {

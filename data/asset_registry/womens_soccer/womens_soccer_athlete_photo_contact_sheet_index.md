@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Photo Contact Sheets
 
-Generated: `2026-06-27T13:48:16.155127+00:00`
+Generated: `2026-06-27T19:32:52.684589+00:00`
 
 Review-only candidate layer for women's soccer athlete photos. It keeps the NWSL roster candidate layer and extends the same CSV/intake/team-board workflow to WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema Premiere Ligue starter rows.
 No downloads or approvals are performed by this generator.

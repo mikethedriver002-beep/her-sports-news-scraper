@@ -37,6 +37,9 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     module.OUT_INTAKE = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_review_intake.csv"
     module.OUT_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_contact_sheet_manifest.json"
     module.CANDIDATES = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_candidates.csv"
+    module.OUT_OPERATOR_BOARD_MD = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.md"
+    module.OUT_OPERATOR_BOARD_CSV = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.csv"
+    module.OUT_OPERATOR_BOARD_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.json"
 
     root = tmp_path / "data" / "asset_registry" / "womens_soccer" / "nwsl"
     write_csv(
@@ -111,7 +114,25 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert not list(tmp_path.rglob("*.approved"))
     assert module.OUT_INDEX.exists()
     assert module.OUT_JSON.exists()
+    assert module.OUT_OPERATOR_BOARD_MD.exists()
+    assert module.OUT_OPERATOR_BOARD_CSV.exists()
+    assert module.OUT_OPERATOR_BOARD_JSON.exists()
     assert "No downloads or approvals" in module.OUT_INDEX.read_text(encoding="utf-8")
+    operator_board_text = module.OUT_OPERATOR_BOARD_MD.read_text(encoding="utf-8")
+    operator_rows = list(csv.DictReader(module.OUT_OPERATOR_BOARD_CSV.open(newline="", encoding="utf-8")))
+    operator_manifest = json.loads(module.OUT_OPERATOR_BOARD_JSON.read_text(encoding="utf-8"))
+    assert "NWSL First Queue" in operator_board_text
+    assert "No paid APIs" in operator_board_text
+    assert operator_rows[0]["league_id"] == "nwsl"
+    assert operator_rows[0]["review_only"] == "true"
+    assert operator_rows[0]["publish_ready"] == "false"
+    assert operator_rows[0]["asset_downloads"] == "false"
+    assert operator_manifest["status"] == "operator_board_ready"
+    assert operator_manifest["operator_board_rows"] == 1
+    assert operator_manifest["downloads_performed"] is False
+    assert operator_manifest["approvals_applied"] is False
+    assert operator_manifest["headshot_files_written"] is False
+    assert operator_manifest["approved_markers_created"] is False
     manifest = json.loads(module.OUT_JSON.read_text(encoding="utf-8"))
     assert manifest["version"] == module.VERSION
     assert manifest["status"] == "contact_sheets_ready"
@@ -125,6 +146,8 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert manifest["candidate_csv"] == module.CANDIDATES.as_posix()
     assert manifest["contact_sheet_csv"] == module.OUT_CSV.as_posix()
     assert manifest["intake_csv"] == module.OUT_INTAKE.as_posix()
+    assert manifest["operator_board_md"] == module.OUT_OPERATOR_BOARD_MD.as_posix()
+    assert manifest["operator_board_rows"] == 1
     assert Path(rows[0]["team_review_board_path"]).exists()
     if module.Image is not None:
         assert Path(rows[0]["team_contact_sheet_path"]).exists()
@@ -278,6 +301,7 @@ def test_womens_soccer_athlete_photo_contact_sheets_expand_roster_rows_without_s
     rows = list(csv.DictReader(module.OUT_CSV.open(newline="", encoding="utf-8")))
     candidates = list(csv.DictReader(module.CANDIDATES.open(newline="", encoding="utf-8")))
     manifest = json.loads(module.OUT_JSON.read_text(encoding="utf-8"))
+    operator_rows = list(csv.DictReader(module.OUT_OPERATOR_BOARD_CSV.open(newline="", encoding="utf-8")))
     board_text = (tmp_path / "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.md").read_text(encoding="utf-8")
 
     assert len(rows) == 3
@@ -290,6 +314,11 @@ def test_womens_soccer_athlete_photo_contact_sheets_expand_roster_rows_without_s
     assert rows[0]["team_contact_sheet_path"] == "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.png"
     assert manifest["candidate_rows"] == 3
     assert manifest["team_boards"] == 1
+    assert manifest["official_roster_candidate_rows"] == 3
+    assert manifest["operator_board_rows"] == 1
+    assert operator_rows[0]["official_roster_candidate_rows"] == "3"
+    assert operator_rows[0]["starter_candidate_rows"] == "0"
+    assert "NWSL roster-sourced candidate rows first" in operator_rows[0]["operator_next_step"]
     assert manifest["warnings"] == ["angel_city_fc:visual_preview_limited_to_2_of_3_rows"]
     assert "Visual PNG preview shows the first `2` rows only" in board_text
     assert "Sydney Leroux" in board_text
@@ -309,6 +338,9 @@ def test_womens_soccer_athlete_photo_contact_sheets_adds_europe_top_flight_start
     module.OUT_INTAKE = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_review_intake.csv"
     module.OUT_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_contact_sheet_manifest.json"
     module.CANDIDATES = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_candidates.csv"
+    module.OUT_OPERATOR_BOARD_MD = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.md"
+    module.OUT_OPERATOR_BOARD_CSV = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.csv"
+    module.OUT_OPERATOR_BOARD_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.json"
 
     nwsl = tmp_path / "data" / "asset_registry" / "womens_soccer" / "nwsl"
     write_csv(
@@ -478,6 +510,8 @@ def test_womens_soccer_athlete_photo_contact_sheets_adds_europe_top_flight_start
     intake = list(csv.DictReader(module.OUT_INTAKE.open(newline="", encoding="utf-8")))
     manifest = json.loads(module.OUT_JSON.read_text(encoding="utf-8"))
     index_text = module.OUT_INDEX.read_text(encoding="utf-8")
+    operator_board_text = module.OUT_OPERATOR_BOARD_MD.read_text(encoding="utf-8")
+    operator_rows = list(csv.DictReader(module.OUT_OPERATOR_BOARD_CSV.open(newline="", encoding="utf-8")))
     europe_rows = [row for row in rows if row["scope_id"] == "europe_top_flight"]
 
     assert len(rows) == 3
@@ -497,6 +531,11 @@ def test_womens_soccer_athlete_photo_contact_sheets_adds_europe_top_flight_start
     assert manifest["scope_counts"] == {"europe_top_flight": 2, "nwsl": 1}
     assert manifest["league_counts"] == {"liga_f_spain": 1, "nwsl": 1, "wsl_england": 1}
     assert manifest["starter_candidate_rows"] == 2
+    assert manifest["official_roster_candidate_rows"] == 1
+    assert manifest["operator_board_rows"] == 3
+    assert [row["league_id"] for row in operator_rows] == ["nwsl", "wsl_england", "liga_f_spain"]
+    assert "Europe Expansion Queue" in operator_board_text
+    assert "starter_rows=1" in operator_board_text
     assert "Scope Counts" in index_text
     assert "wsl_england" in index_text
     assert not list(tmp_path.rglob("headshot.png"))
