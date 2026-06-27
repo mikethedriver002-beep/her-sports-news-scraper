@@ -9,8 +9,9 @@ Europe WSL teams: `12/12`
 Europe Liga F teams: `16/16`
 Europe Frauen-Bundesliga teams: `14/14`
 Europe Serie A Women teams: `12/12`
-Europe source URL rows: `175`
-Europe asset slot rows: `60`
+Europe Arkema Premiere Ligue teams: `12/12`
+Europe source URL rows: `211`
+Europe asset slot rows: `72`
 League source kinds: `7/7`
 Team source kinds required: `5`
 Team review scopes required: `3`
@@ -28,5 +29,5 @@ Publish ready: `false`
 ## Warnings
 
 - `europe_players_csv_header_only_manual_intake`
+- `europe_team_logo_rows_require_human_review_before_approval`
 - `players_csv_header_only_manual_intake`
-- `remaining_europe_team_rows_require_manual_expansion`

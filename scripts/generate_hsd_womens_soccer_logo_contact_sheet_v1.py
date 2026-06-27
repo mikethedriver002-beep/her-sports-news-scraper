@@ -320,29 +320,34 @@ def intake_rows(
 
 def priority_for(row: Mapping[str, str]) -> Tuple[int, str, str]:
     scope = clean(row.get("scope_id"))
-    league_id = clean(row.get("league_id"))
     entity_type = clean(row.get("entity_type"))
+    league_id = clean(row.get("league_id"))
+    league_key = league_id or clean(row.get("entity_id"))
     if scope == "nwsl" and entity_type == "league":
         return 10, "P0_NWSL_FOUNDATION", "Review the NWSL league mark before a full NWSL team-logo sweep."
     if scope == "nwsl":
         return 20, "P0_NWSL_TEAM_LOGOS", "Review NWSL team logos first because NWSL is the only complete current league team set."
-    if league_id == "wsl_england" and entity_type == "league":
+    if league_key == "wsl_england" and entity_type == "league":
         return 30, "P1_WSL_FOUNDATION", "Review the WSL league mark before the WSL club-logo sweep."
     if league_id == "wsl_england":
         return 40, "P1_WSL_TEAM_LOGOS", "Review WSL club logos after the NWSL sweep; WSL has full club source rows."
-    if league_id == "liga_f_spain" and entity_type == "league":
+    if league_key == "liga_f_spain" and entity_type == "league":
         return 50, "P2_LIGA_F_FOUNDATION", "Review the Liga F league mark before the Liga F club-logo sweep."
     if league_id == "liga_f_spain":
         return 60, "P2_LIGA_F_TEAM_LOGOS", "Review Liga F club logos after WSL; exact club pages still require manual confirmation."
-    if league_id == "frauen_bundesliga_germany" and entity_type == "league":
+    if league_key == "frauen_bundesliga_germany" and entity_type == "league":
         return 70, "P3_FRAUEN_BUNDESLIGA_FOUNDATION", "Review the Frauen-Bundesliga league mark before the club-logo sweep."
     if league_id == "frauen_bundesliga_germany":
         return 80, "P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS", "Review Frauen-Bundesliga club logos after Liga F; exact club pages still require manual confirmation."
-    if league_id == "serie_a_women_italy" and entity_type == "league":
+    if league_key == "serie_a_women_italy" and entity_type == "league":
         return 90, "P4_SERIE_A_WOMEN_FOUNDATION", "Review the Serie A Women league mark before the club-logo sweep."
     if league_id == "serie_a_women_italy":
         return 100, "P4_SERIE_A_WOMEN_TEAM_LOGOS", "Review Serie A Women club logos after Frauen-Bundesliga; exact club pages still require manual confirmation."
-    return 110, "P5_REMAINING_EUROPE_LEAGUE_MARKS", "Hold remaining Europe to league-mark source review until club rows are expanded one league at a time."
+    if league_key in {"arkema_premiere_ligue_france", "premiere_ligue_france"} and entity_type == "league":
+        return 110, "P5_ARKEMA_PREMIERE_LIGUE_FOUNDATION", "Review the Arkema Premiere Ligue league mark before the club-logo sweep."
+    if league_id == "arkema_premiere_ligue_france":
+        return 120, "P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS", "Review Arkema Premiere Ligue club logos after Serie A Women; exact club pages still require manual confirmation."
+    return 130, "P6_OTHER_EUROPE_CONTEXT", "Hold any future Europe additions to league-mark source review until club rows are expanded one league at a time."
 
 
 def walkthrough_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
@@ -580,7 +585,7 @@ def render_walkthrough_markdown(rows: List[Mapping[str, str]], review_rows: List
         "",
         "Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.",
         "",
-        "Recommended order after Serie A Women: Arkema Premiere Ligue. It should remain source-candidate only until a human reviews exact club pages and any local assets.",
+        "All configured Europe top-flight league club source rows are now seeded. Next safest step: human-review exact club/logo sources and any local assets from this board before approval or renderer use.",
         "",
         "## All Rows",
         "",

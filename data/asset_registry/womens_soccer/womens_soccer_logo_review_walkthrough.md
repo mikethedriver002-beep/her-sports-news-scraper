@@ -1,8 +1,8 @@
 # Women's Soccer Logo Review Walkthrough
 
-Generated: `2026-06-27T00:33:51.202593+00:00`
+Generated: `2026-06-27T00:46:39.576116+00:00`
 
-Display-only guide for reviewing the 76-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
+Display-only guide for reviewing the 88-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
 ## Open First
 
@@ -24,7 +24,8 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 - `P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS`: `14` row(s)
 - `P4_SERIE_A_WOMEN_FOUNDATION`: `1` row(s)
 - `P4_SERIE_A_WOMEN_TEAM_LOGOS`: `12` row(s)
-- `P5_REMAINING_EUROPE_LEAGUE_MARKS`: `1` row(s)
+- `P5_ARKEMA_PREMIERE_LIGUE_FOUNDATION`: `1` row(s)
+- `P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS`: `12` row(s)
 
 ## P0 Review Order
 
@@ -59,7 +60,7 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 
 Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.
 
-Recommended order after Serie A Women: Arkema Premiere Ligue. It should remain source-candidate only until a human reviews exact club pages and any local assets.
+All configured Europe top-flight league club source rows are now seeded. Next safest step: human-review exact club/logo sources and any local assets from this board before approval or renderer use.
 
 ## All Rows
 
@@ -138,4 +139,16 @@ Recommended order after Serie A Women: Arkema Premiere Ligue. It should remain s
 - rank=73 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Parma Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=74 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Sassuolo Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=75 | P4_SERIE_A_WOMEN_TEAM_LOGOS | Ternana Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=76 | P5_REMAINING_EUROPE_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=76 | P5_ARKEMA_PREMIERE_LIGUE_FOUNDATION | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=77 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | AS Saint-Etienne Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=78 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | Dijon FCO Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=79 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | FC Fleury 91 Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=80 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | FC Nantes Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=81 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | Le Havre AC Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=82 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | MHSC Feminines | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=83 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | OL Lyonnes | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=84 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | Olympique Marseille Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=85 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | Paris FC Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=86 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | Paris Saint-Germain Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=87 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | RC Lens Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=88 | P5_ARKEMA_PREMIERE_LIGUE_TEAM_LOGOS | RC Strasbourg Alsace Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence

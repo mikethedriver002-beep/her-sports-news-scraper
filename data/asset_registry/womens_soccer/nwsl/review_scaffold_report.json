@@ -3,12 +3,14 @@
   "auto_approval_allowed": false,
   "auto_download_allowed": false,
   "blockers": [],
-  "europe_top_flight_asset_slot_count": 60,
+  "europe_top_flight_arkema_premiere_ligue_team_count": 12,
+  "europe_top_flight_asset_slot_count": 72,
   "europe_top_flight_frauen_bundesliga_team_count": 14,
   "europe_top_flight_league_count": 5,
   "europe_top_flight_liga_f_team_count": 16,
-  "europe_top_flight_pilot_team_count": 54,
+  "europe_top_flight_pilot_team_count": 66,
   "europe_top_flight_player_count": 0,
+  "europe_top_flight_required_arkema_premiere_ligue_team_count": 12,
   "europe_top_flight_required_frauen_bundesliga_team_count": 14,
   "europe_top_flight_required_league_count": 5,
   "europe_top_flight_required_liga_f_team_count": 16,
@@ -16,10 +18,10 @@
   "europe_top_flight_required_serie_a_women_team_count": 12,
   "europe_top_flight_required_wsl_team_count": 12,
   "europe_top_flight_serie_a_women_team_count": 12,
-  "europe_top_flight_source_url_count": 175,
+  "europe_top_flight_source_url_count": 211,
   "europe_top_flight_wsl_team_count": 12,
   "expected_file_count": 7,
-  "generated_at_utc": "2026-06-27T00:36:33.909856+00:00",
+  "generated_at_utc": "2026-06-27T00:46:39.531527+00:00",
   "league_source_kind_count": 7,
   "player_count": 0,
   "present_file_count": 7,
@@ -152,7 +154,7 @@
   "version": "v1.0-womens-soccer-asset-registry-review-only",
   "warnings": [
     "europe_players_csv_header_only_manual_intake",
-    "players_csv_header_only_manual_intake",
-    "remaining_europe_team_rows_require_manual_expansion"
+    "europe_team_logo_rows_require_human_review_before_approval",
+    "players_csv_header_only_manual_intake"
   ]
 }

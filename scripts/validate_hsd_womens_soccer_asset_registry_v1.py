@@ -209,6 +209,21 @@ REQUIRED_SERIE_A_WOMEN_TEAMS = {
     "ternana_women",
 }
 
+REQUIRED_ARKEMA_PREMIERE_LIGUE_TEAMS = {
+    "as_saint_etienne_women",
+    "dijon_fco_women",
+    "fc_fleury_91_women",
+    "fc_nantes_women",
+    "le_havre_ac_women",
+    "mhsc_feminines",
+    "ol_lyonnes",
+    "olympique_marseille_women",
+    "paris_fc_women",
+    "paris_saint_germain_women",
+    "rc_lens_women",
+    "rc_strasbourg_alsace_women",
+}
+
 
 def clean(value: Any) -> str:
     return str(value or "").strip()
@@ -360,6 +375,8 @@ def evaluate(root: Path) -> Dict[str, Any]:
         blockers.append(f"missing_required_frauen_bundesliga_team:{team_id}")
     for team_id in sorted(REQUIRED_SERIE_A_WOMEN_TEAMS - europe_teams):
         blockers.append(f"missing_required_serie_a_women_team:{team_id}")
+    for team_id in sorted(REQUIRED_ARKEMA_PREMIERE_LIGUE_TEAMS - europe_teams):
+        blockers.append(f"missing_required_arkema_premiere_ligue_team:{team_id}")
 
     europe_league_mark_rows = {
         clean(row.get("entity_id"))
@@ -382,6 +399,8 @@ def evaluate(root: Path) -> Dict[str, Any]:
         blockers.append(f"missing_frauen_bundesliga_team_logo_slot:{team_id}")
     for team_id in sorted(REQUIRED_SERIE_A_WOMEN_TEAMS - europe_team_logo_rows):
         blockers.append(f"missing_serie_a_women_team_logo_slot:{team_id}")
+    for team_id in sorted(REQUIRED_ARKEMA_PREMIERE_LIGUE_TEAMS - europe_team_logo_rows):
+        blockers.append(f"missing_arkema_premiere_ligue_team_logo_slot:{team_id}")
 
     team_asset_rows = {
         clean(row.get("entity_id"))
@@ -446,7 +465,7 @@ def evaluate(root: Path) -> Dict[str, Any]:
     europe_player_count = len(europe_rows_by_file.get("players.csv", []))
     if europe_player_count == 0:
         warnings.append("europe_players_csv_header_only_manual_intake")
-    warnings.append("remaining_europe_team_rows_require_manual_expansion")
+    warnings.append("europe_team_logo_rows_require_human_review_before_approval")
 
     status = "passed_womens_soccer_review_scaffold" if not blockers else "blocked_womens_soccer_review_scaffold"
     return {
@@ -472,6 +491,8 @@ def evaluate(root: Path) -> Dict[str, Any]:
         "europe_top_flight_frauen_bundesliga_team_count": len(europe_teams & REQUIRED_FRAUEN_BUNDESLIGA_TEAMS),
         "europe_top_flight_required_serie_a_women_team_count": len(REQUIRED_SERIE_A_WOMEN_TEAMS),
         "europe_top_flight_serie_a_women_team_count": len(europe_teams & REQUIRED_SERIE_A_WOMEN_TEAMS),
+        "europe_top_flight_required_arkema_premiere_ligue_team_count": len(REQUIRED_ARKEMA_PREMIERE_LIGUE_TEAMS),
+        "europe_top_flight_arkema_premiere_ligue_team_count": len(europe_teams & REQUIRED_ARKEMA_PREMIERE_LIGUE_TEAMS),
         "europe_top_flight_player_count": europe_player_count,
         "europe_top_flight_source_url_count": len(europe_rows_by_file.get("source_urls.csv", [])),
         "europe_top_flight_asset_slot_count": len(europe_rows_by_file.get("asset_slots.csv", [])),
@@ -512,6 +533,7 @@ def write_report(root: Path, report: Dict[str, Any]) -> None:
         f"Europe Liga F teams: `{report['europe_top_flight_liga_f_team_count']}/{report['europe_top_flight_required_liga_f_team_count']}`",
         f"Europe Frauen-Bundesliga teams: `{report['europe_top_flight_frauen_bundesliga_team_count']}/{report['europe_top_flight_required_frauen_bundesliga_team_count']}`",
         f"Europe Serie A Women teams: `{report['europe_top_flight_serie_a_women_team_count']}/{report['europe_top_flight_required_serie_a_women_team_count']}`",
+        f"Europe Arkema Premiere Ligue teams: `{report['europe_top_flight_arkema_premiere_ligue_team_count']}/{report['europe_top_flight_required_arkema_premiere_ligue_team_count']}`",
         f"Europe source URL rows: `{report['europe_top_flight_source_url_count']}`",
         f"Europe asset slot rows: `{report['europe_top_flight_asset_slot_count']}`",
         f"League source kinds: `{report['league_source_kind_count']}/{report['required_league_source_kind_count']}`",
