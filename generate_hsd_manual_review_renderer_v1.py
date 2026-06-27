@@ -14,15 +14,16 @@ from typing import Any, Dict, Iterable, List, Tuple
 from hsd_run_io import input_path, output_path, write_json, write_text
 
 try:
-    from PIL import Image, ImageDraw, ImageFilter, ImageFont
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageStat
 except Exception:  # pragma: no cover - validated by runtime status report
     Image = None
     ImageDraw = None
     ImageFilter = None
     ImageFont = None
+    ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.21.0-calm-premium-backgrounds"
+VERSION = "hsd-manual-review-renderer-v1.22.0-premium-editorial-backgrounds"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -43,10 +44,11 @@ WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
 ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onboarding_metadata.json"
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v3_calm"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
 RENDER_BACKGROUND_CUES = (
-    "deep_hsd_ink_field,quiet_score_zones,subtle_team_accent_rim_light,"
-    "soft_editorial_rule_grid,restrained_halftone_noise,review_only_brand_rails"
+    "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
+    "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
+    "review_only_brand_rails,generated_preview_qa"
 )
 
 FORMAT_SPECS = [
@@ -844,6 +846,34 @@ def draw_editorial_halftone(draw: Any, width: int, height: int, accent: tuple[in
         draw.rectangle((x, y, x + size, y + size), fill=color)
 
 
+def draw_soft_light_sweep(image: Any, points: List[Tuple[int, int]], color: tuple[int, int, int], alpha: int, blur: int) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    draw.polygon(points, fill=(*color, alpha))
+    if ImageFilter is not None:
+        layer = layer.filter(ImageFilter.GaussianBlur(blur))
+    image.alpha_composite(layer)
+
+
+def draw_vignette(image: Any, strength: int = 92) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    width, height = image.size
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    band_count = 14
+    for index in range(band_count):
+        inset_x = int((width * 0.035) * index)
+        inset_y = int((height * 0.030) * index)
+        alpha = max(0, strength - index * 7)
+        draw.rectangle((inset_x, inset_y, width - inset_x, height - inset_y), outline=(0, 0, 0, alpha), width=max(18, int(min(width, height) * 0.018)))
+    if ImageFilter is not None:
+        layer = layer.filter(ImageFilter.GaussianBlur(24))
+    image.alpha_composite(layer)
+
+
 def draw_reference_background(
     image: Any,
     tone: str = "final",
@@ -856,24 +886,46 @@ def draw_reference_background(
     draw = ImageDraw.Draw(image, "RGBA")
     primary = primary_accent or PALETTE["gold"]
     secondary = secondary_accent or PALETTE["blue"]
-    base_top = (3, 6, 13)
-    base_bottom = (8, 15, 28)
+    base_top = (2, 4, 9)
+    base_bottom = (11, 18, 32)
     for y in range(height):
         amount = y / max(1, height - 1)
-        draw.line((0, y, width, y), fill=(*mix_rgb(base_top, base_bottom, amount), 255))
+        mid_tint = mix_rgb(primary, secondary, 0.42)
+        base = mix_rgb(base_top, base_bottom, amount)
+        if 0.18 < amount < 0.82:
+            base = mix_rgb(base, mix_rgb(mid_tint, (3, 6, 13), 0.90), 0.14)
+        draw.line((0, y, width, y), fill=(*base, 255))
 
-    draw.polygon([(0, 0), (int(width * 0.58), 0), (int(width * 0.42), height), (0, height)], fill=(7, 11, 21, 124))
-    draw.polygon([(int(width * 0.50), 0), (width, 0), (width, int(height * 0.60)), (int(width * 0.36), int(height * 0.30))], fill=(*mix_rgb(secondary, (6, 10, 19), 0.82), 70))
-    draw.polygon([(0, int(height * 0.62)), (int(width * 0.32), int(height * 0.40)), (int(width * 0.64), height), (0, height)], fill=(*mix_rgb(primary, (7, 11, 21), 0.86), 58))
+    draw_soft_light_sweep(
+        image,
+        [(-90, int(height * 0.76)), (int(width * 0.28), int(height * 0.42)), (int(width * 0.62), height + 80), (-90, height + 80)],
+        primary,
+        70 if tone == "final" else 52,
+        38,
+    )
+    draw_soft_light_sweep(
+        image,
+        [(int(width * 0.56), -90), (width + 90, -90), (width + 90, int(height * 0.54)), (int(width * 0.34), int(height * 0.24))],
+        secondary,
+        58 if tone == "final" else 42,
+        46,
+    )
+    draw_soft_light_sweep(
+        image,
+        [(int(width * 0.10), int(height * 0.16)), (int(width * 0.94), int(height * 0.06)), (int(width * 0.82), int(height * 0.12)), (int(width * 0.14), int(height * 0.24))],
+        (248, 250, 255),
+        24,
+        20,
+    )
 
-    rail_alpha = 34 if tone == "final" else 26
+    rail_alpha = 24 if tone == "final" else 18
     for x in range(-height, width + height, 520):
-        draw.line((x, height + 60, x + int(height * 0.66), -70), fill=(*primary, rail_alpha), width=2)
+        draw.line((x, height + 60, x + int(height * 0.66), -70), fill=(*primary, rail_alpha), width=1)
     for x in range(-height, width + height, 820):
-        draw.line((x, height + 140, x + int(height * 0.52), -40), fill=(*secondary, 22), width=1)
+        draw.line((x, height + 140, x + int(height * 0.52), -40), fill=(*secondary, 16), width=1)
 
     for y in [int(height * 0.12), int(height * 0.285), int(height * 0.74), int(height * 0.88)]:
-        draw.line((30, y, width - 30, y), fill=(*primary, 28), width=1)
+        draw.line((30, y, width - 30, y), fill=(*primary, 22), width=1)
     for x in range(86, width, 170):
         draw.line((x, int(height * 0.18), x, int(height * 0.92)), fill=(248, 250, 255, 4), width=1)
 
@@ -891,25 +943,33 @@ def draw_reference_background(
             align="right",
         )
 
-    draw.rectangle((0, 0, width, 14), fill=(*primary, 205))
-    draw.rectangle((0, 14, width, 24), fill=(*secondary, 150))
-    draw.rectangle((0, height - 82, width, height - 64), fill=(*primary, 178))
-    draw.rectangle((0, height - 64, width, height - 58), fill=(*secondary, 135))
+    draw.rectangle((0, 0, width, 10), fill=(*primary, 172))
+    draw.rectangle((0, 10, width, 18), fill=(*secondary, 110))
+    draw.rectangle((0, height - 78, width, height - 64), fill=(*primary, 146))
+    draw.rectangle((0, height - 64, width, height - 58), fill=(*secondary, 98))
 
     if photo_first:
-        draw.line((54, int(height * 0.305), width - 54, int(height * 0.305)), fill=(*primary, 182), width=4)
-        draw.line((54, int(height * 0.72), width - 54, int(height * 0.72)), fill=(*secondary, 136), width=3)
-        draw.rectangle((0, int(height * 0.325), 18, int(height * 0.68)), fill=(*primary, 214))
-        draw.rectangle((width - 18, int(height * 0.28), width, int(height * 0.62)), fill=(*secondary, 180))
+        draw_soft_light_sweep(
+            image,
+            [(34, int(height * 0.30)), (int(width * 0.52), int(height * 0.25)), (int(width * 0.45), int(height * 0.35)), (34, int(height * 0.40))],
+            primary,
+            60,
+            18,
+        )
+        draw.line((54, int(height * 0.305), width - 54, int(height * 0.305)), fill=(*primary, 142), width=3)
+        draw.line((54, int(height * 0.72), width - 54, int(height * 0.72)), fill=(*secondary, 104), width=2)
+        draw.rectangle((0, int(height * 0.325), 12, int(height * 0.68)), fill=(*primary, 186))
+        draw.rectangle((width - 12, int(height * 0.28), width, int(height * 0.62)), fill=(*secondary, 150))
 
     draw_editorial_halftone(draw, width, height, primary, seed=width * 17 + height * 31 + (11 if photo_first else 0))
 
     quiet = Image.new("RGBA", image.size, (0, 0, 0, 0))
     quiet_draw = ImageDraw.Draw(quiet, "RGBA")
-    quiet_draw.rectangle((0, int(height * 0.105), width, int(height * 0.275)), fill=(0, 0, 0, 126))
-    quiet_draw.rectangle((0, int(height * 0.300), width, int(height * 0.690)), fill=(0, 0, 0, 116))
-    quiet_draw.rectangle((0, int(height * 0.705), width, int(height * 0.910)), fill=(0, 0, 0, 96))
+    quiet_draw.rectangle((0, int(height * 0.105), width, int(height * 0.275)), fill=(0, 0, 0, 136))
+    quiet_draw.rectangle((0, int(height * 0.300), width, int(height * 0.690)), fill=(0, 0, 0, 124 if photo_first else 118))
+    quiet_draw.rectangle((0, int(height * 0.705), width, int(height * 0.910)), fill=(0, 0, 0, 106))
     image.alpha_composite(quiet)
+    draw_vignette(image, 88 if photo_first else 78)
 
 def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
     badge = template_spec.get("badge") if isinstance(template_spec.get("badge"), dict) else {}
@@ -1855,10 +1915,33 @@ def draw_final_score_reference_title(image: Any, template_spec: Dict[str, Any], 
     is_story = format_id == "ig_story_9x16"
     y = title_y + (-4 if not is_square else 0)
     h = max(92, title_h - (28 if is_square else 18))
+    if is_square:
+        draw = ImageDraw.Draw(image, "RGBA")
+        line_gap = 4
+        first = "GAME RECAP"
+        second = "FINAL SCORE"
+        first_font = reference_font("display", 54)
+        second_font = reference_font("display", 46)
+        for first_size in range(54, 35, -2):
+            candidate_first = reference_font("display", first_size)
+            if text_size(draw, first, candidate_first)[0] <= width:
+                first_font = candidate_first
+                break
+        for second_size in range(46, 31, -2):
+            candidate_second = reference_font("display", second_size)
+            if text_size(draw, second, candidate_second)[0] <= width:
+                second_font = candidate_second
+                break
+        first_w, first_h = text_size(draw, first, first_font)
+        second_w, second_h = text_size(draw, second, second_font)
+        total_h = first_h + second_h + line_gap
+        y_cursor = y + max(0, (h - total_h) // 2) - 1
+        draw.text((left, y_cursor), first, font=first_font, fill=PALETTE["ink"], stroke_width=2, stroke_fill=(0, 0, 0))
+        draw.text((left, y_cursor + first_h + line_gap), second, font=second_font, fill=PALETTE["gold"], stroke_width=2, stroke_fill=(0, 0, 0))
+        draw.line((left + max(first_w, second_w) + 22, y_cursor + total_h - 8, right, y_cursor + total_h - 8), fill=(*PALETTE["gold"], 150), width=2)
+        return
     if is_story:
         first, second, start, minimum = "QUICK FINAL", "SCORE", 84, 44
-    elif is_square:
-        first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 58, 34
     else:
         first, second, start, minimum = "GAME RECAP", "FINAL SCORE", 80, 42
     gap = 14 if not is_square else 24
@@ -1975,6 +2058,23 @@ def prepared_athlete_photo_fill(path: Path, target_w: int, target_h: int) -> Any
         photo = photo.crop((left, 0, left + target_w, photo.height))
     if photo.height > target_h:
         top = max(0, int((photo.height - target_h) * 0.18))
+        photo = photo.crop((0, top, target_w, top + target_h))
+    return photo
+
+
+def prepared_athlete_photo_focus_fill(path: Path, target_w: int, target_h: int, *, focus_y: float = 0.42) -> Any:
+    photo = Image.open(path).convert("RGBA")
+    bbox = photo.getbbox()
+    if bbox:
+        photo = photo.crop(bbox)
+    scale = max(target_w / max(1, photo.width), target_h / max(1, photo.height))
+    photo = photo.resize((max(1, int(photo.width * scale)), max(1, int(photo.height * scale))), resample_filter())
+    if photo.width > target_w:
+        left = max(0, (photo.width - target_w) // 2)
+        photo = photo.crop((left, 0, left + target_w, photo.height))
+    if photo.height > target_h:
+        desired_focus_y = int(photo.height * max(0.18, min(0.64, focus_y)))
+        top = max(0, min(photo.height - target_h, desired_focus_y - int(target_h * 0.40)))
         photo = photo.crop((0, top, target_w, top + target_h))
     return photo
 
@@ -2158,7 +2258,7 @@ def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
     return int(raw[0]), int(raw[1]), int(raw[2]), int(raw[3])
 
 
-def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> bool:
+def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], focus_box: Tuple[int, int, int, int] | None = None) -> bool:
     _x, _y, _w, h = box
     variant_id = "photo_first_story" if h > 650 else "photo_first_feed"
     path = athlete_photo_render_source_path(module, variant_id)
@@ -2166,21 +2266,25 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
         return False
     x, y, w, h = box
     try:
-        photo = prepared_athlete_photo_fill(path, w - 28, h - 72)
+        focus_y = 0.42
+        if focus_box:
+            _fx, fy, _fw, fh = focus_box
+            focus_y = ((fy + fh / 2) - y) / max(1, h)
+        photo = prepared_athlete_photo_focus_fill(path, w - 28, h - 72, focus_y=focus_y)
     except Exception:
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    draw.rounded_rectangle((x + 12, y + 14, x + w + 12, y + h + 14), radius=30, fill=(0, 0, 0, 142))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 218), outline=(*accent, 250), width=3)
-    draw.rectangle((x, y + 34, x + 12, y + h - 32), fill=(*accent, 232))
-    draw.polygon([(x + 28, y + h - 152), (x + w - 20, y + h - 244), (x + w - 20, y + h - 20), (x + 28, y + h - 20)], fill=(*accent, 68))
-    draw.polygon([(x + 44, y + 92), (x + w - 26, y + 36), (x + w - 26, y + 112), (x + 44, y + 166)], fill=(255, 255, 255, 16))
-    draw.line((x + 30, y + 30, x + w - 28, y + 30), fill=(*accent, 205), width=3)
-    draw.line((x + 30, y + h - 78, x + w - 28, y + h - 78), fill=(*accent, 120), width=2)
+    draw.rounded_rectangle((x + 12, y + 14, x + w + 12, y + h + 14), radius=30, fill=(0, 0, 0, 130))
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 206), outline=(*accent, 230), width=3)
+    draw.rectangle((x, y + 34, x + 10, y + h - 32), fill=(*accent, 206))
+    draw.polygon([(x + 28, y + h - 152), (x + w - 20, y + h - 244), (x + w - 20, y + h - 20), (x + 28, y + h - 20)], fill=(*accent, 54))
+    draw.polygon([(x + 44, y + 92), (x + w - 26, y + 36), (x + w - 26, y + 112), (x + 44, y + 166)], fill=(255, 255, 255, 12))
+    draw.line((x + 30, y + 30, x + w - 28, y + 30), fill=(*accent, 176), width=3)
+    draw.line((x + 30, y + h - 78, x + w - 28, y + h - 78), fill=(*accent, 104), width=2)
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((x - 80, y + 26, x + w + 80, y + h + 92), fill=(*accent, 62))
+    glow_draw.ellipse((x - 80, y + 26, x + w + 80, y + h + 92), fill=(*accent, 50))
     if ImageFilter is not None:
         glow = glow.filter(ImageFilter.GaussianBlur(30))
     layer.alpha_composite(glow)
@@ -2192,7 +2296,7 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     mask_draw = ImageDraw.Draw(stage_mask)
     mask_draw.rounded_rectangle((x + 14, y + 38, x + w - 14, y + h - 18), radius=22, fill=255)
     layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 250), width=3)
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 228), width=3)
     label_w = min(w - 42, 234)
     draw.rounded_rectangle((x + 22, y + h - 58, x + 22 + label_w, y + h - 20), radius=8, fill=(3, 5, 10, 232), outline=(248, 250, 255, 150), width=1)
     image.alpha_composite(layer)
@@ -2272,13 +2376,14 @@ def draw_photo_first_final_score_template(
     draw_context_divider(image, zone_box(template_spec, "context_row"), "FINAL / WNBA / PHOTO-FIRST DRAFT")
     geometry = photo_first_layout_geometry(format_spec)
     photo_box = tuple_box(geometry["photo_stage_box"])
+    focus_box = tuple_box(geometry["photo_face_focus_box"])
     winner_box = tuple_box(geometry["winner_score_row_box"])
     loser_box = tuple_box(geometry["loser_score_row_box"])
     context_box = tuple_box(geometry["score_context_box"])
     stat_box = tuple_box(geometry["stat_strip_box"])
     hook_box = tuple_box(geometry["matchup_angle_box"])
 
-    photo_ok = draw_photo_first_athlete_stage(image, photo_box, stat_module, winner_accent)
+    photo_ok = draw_photo_first_athlete_stage(image, photo_box, stat_module, winner_accent, focus_box)
     if not photo_ok:
         return False
 
@@ -2308,7 +2413,7 @@ def draw_photo_first_final_score_template(
 
 def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "", callouts: List[Dict[str, str]] | None = None) -> None:
     x, y, w, h = box
-    compact = h < 112
+    compact = h <= 122
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 218), radius=14, width=2)
     callout_w = draw_module_callouts(image, (x + 18, y, w - 36, h), callouts or [], accent, compact=compact)
     text_w = max(220, w - 48 - (callout_w if compact else min(callout_w + 10, w // 3)))
@@ -2734,13 +2839,68 @@ def render_format(packet: Dict[str, Any], template: Dict[str, str], spec: Dict[s
     return output
 
 
+def preview_title_crop_box(format_id: str, width: int, height: int) -> Tuple[int, int, int, int]:
+    if format_id == "ig_story_9x16":
+        return (72, 148, width - 72, min(height, 348))
+    if format_id == "square_feed_1x1":
+        return (48, 102, width - 48, min(height, 258))
+    return (48, 110, width - 48, min(height, 304))
+
+
+def preview_qa_for_path(path: Path, spec: Dict[str, Any]) -> Dict[str, Any]:
+    row: Dict[str, Any] = {
+        "format_id": clean(spec.get("format_id")),
+        "path": path.as_posix(),
+        "status": "preview_qa_not_run",
+        "review_only": True,
+        "publish_ready": False,
+    }
+    if Image is None or ImageStat is None:
+        row["status"] = "preview_qa_unavailable_pillow_missing"
+        return row
+    try:
+        image = Image.open(path).convert("RGBA")
+        width, height = image.size
+        alpha_bbox = image.getbbox()
+        title_box = preview_title_crop_box(clean(spec.get("format_id")), width, height)
+        title_crop = image.convert("L").crop(title_box)
+        title_histogram = title_crop.histogram()
+        title_total = max(1, sum(title_histogram))
+        title_bright_ratio = sum(title_histogram[190:]) / title_total
+        stat = ImageStat.Stat(image.convert("L"))
+        luma_stddev = float(stat.stddev[0]) if stat.stddev else 0.0
+        expected_w = int(spec.get("width", 0))
+        expected_h = int(spec.get("height", 0))
+        ok = bool(alpha_bbox) and width == expected_w and height == expected_h and title_bright_ratio >= 0.018 and luma_stddev >= 8.0
+        row.update(
+            {
+                "status": "preview_qa_pass" if ok else "preview_qa_review_required",
+                "width": width,
+                "height": height,
+                "expected_width": expected_w,
+                "expected_height": expected_h,
+                "nonblank_bbox": list(alpha_bbox) if alpha_bbox else [],
+                "title_bright_ratio": round(title_bright_ratio, 4),
+                "luma_stddev": round(luma_stddev, 2),
+                "file_size_bytes": path.stat().st_size if path.exists() else 0,
+                "qa_policy": "generated_preview_visibility_only_not_asset_approval_or_publish_readiness",
+            }
+        )
+    except Exception as exc:
+        row["status"] = "preview_qa_error"
+        row["error"] = clean(exc)
+    return row
+
+
 def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
     OUT_PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     template = choose_template(packet)
     content_module = content_module_summary(packet, template)
     outputs = []
+    preview_qa = []
     for spec in FORMAT_SPECS:
         output = render_format(packet, template, spec)
+        qa_row = preview_qa_for_path(output, spec)
         reference = reference_for_format(spec, template)
         row = {
             "format_id": spec["format_id"],
@@ -2756,6 +2916,9 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         row.update(athlete_photo_layout_for_format(content_module, spec))
         row["render_background_style"] = RENDER_BACKGROUND_STYLE
         row["render_background_cues"] = RENDER_BACKGROUND_CUES
+        row["preview_qa_status"] = clean(qa_row.get("status"))
+        row["preview_qa_title_bright_ratio"] = qa_row.get("title_bright_ratio", "")
+        row["preview_qa_luma_stddev"] = qa_row.get("luma_stddev", "")
         if clean(row.get("athlete_photo_layout_mode")) == "photo_first_final_score":
             row["photo_first_template_geometry"] = photo_first_layout_geometry(spec)
             row["photo_first_art_direction"] = (
@@ -2763,6 +2926,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
                 "balanced_score_rails,verified_stat_strip,and_review_only_guardrails"
             )
         outputs.append(row)
+        preview_qa.append(qa_row)
     return {
         "template": template,
         "reference_pack": reference_pack_summary() if clean(template.get("reference_pack_id")) == REFERENCE_PACK_ID else {},
@@ -2770,6 +2934,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         "asset_slots": asset_slots(packet, template),
         "content_module": content_module,
         "team_visual_profiles": team_visual_profiles(packet, template),
+        "generated_preview_qa": preview_qa,
         "render_background_style": RENDER_BACKGROUND_STYLE,
         "render_background_cues": RENDER_BACKGROUND_CUES,
     }
@@ -2781,6 +2946,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
     template = render_result.get("template") if isinstance(render_result.get("template"), dict) else {}
     reference_pack = render_result.get("reference_pack") if isinstance(render_result.get("reference_pack"), dict) else {}
     formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
+    preview_qa = render_result.get("generated_preview_qa") if isinstance(render_result.get("generated_preview_qa"), list) else []
     slots = render_result.get("asset_slots") if isinstance(render_result.get("asset_slots"), list) else []
     content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
     team_profiles = render_result.get("team_visual_profiles") if isinstance(render_result.get("team_visual_profiles"), list) else []
@@ -2830,6 +2996,14 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
             )
     else:
         lines.append("- none")
+    lines += ["", "## Generated Preview QA", ""]
+    if preview_qa:
+        for item in preview_qa:
+            lines.append(
+                f"- `{clean(item.get('format_id'))}` | status=`{clean(item.get('status'))}` | title_bright_ratio=`{clean(item.get('title_bright_ratio'))}` | luma_stddev=`{clean(item.get('luma_stddev'))}` | publish_ready=`false`"
+            )
+    else:
+        lines.append("- not_run")
     if formats:
         lines += ["", "## Reference Assets", ""]
         for item in formats:
@@ -2866,7 +3040,16 @@ def main() -> None:
             "version": VERSION,
             "status": "blocked_missing_handoff",
             "preview_path": "",
-            "guardrails": {"manual_only": True, "auto_render": False, "auto_publish": False, "approved": False, "paid_apis": False},
+            "guardrails": {
+                "manual_only": True,
+                "review_only": True,
+                "auto_render": False,
+                "auto_publish": False,
+                "approved": False,
+                "paid_apis": False,
+                "move_files": False,
+                "publish_ready": False,
+            },
         }
         write_json(OUT_MANIFEST, manifest)
         write_text(OUT_REPORT, "\n".join(report_lines("blocked_missing_handoff", {}, "", "render_handoff_top_packet/handoff_manifest.json was not found.")))
@@ -2904,6 +3087,7 @@ def main() -> None:
         "selected_template": render_result.get("template", {}),
         "reference_pack": render_result.get("reference_pack", {}),
         "format_options": render_result.get("format_options", []),
+        "generated_preview_qa": render_result.get("generated_preview_qa", []),
         "asset_slots": render_result.get("asset_slots", []),
         "content_module": render_result.get("content_module", {}),
         "team_visual_profiles": render_result.get("team_visual_profiles", []),
