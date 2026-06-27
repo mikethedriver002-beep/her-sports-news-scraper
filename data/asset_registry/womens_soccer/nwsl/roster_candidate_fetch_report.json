@@ -1,0 +1,21 @@
+{
+  "version": "hsd-womens-soccer-nwsl-roster-candidates-v1-review-only",
+  "generated_at_utc": "2026-06-27T12:19:03.433112+00:00",
+  "status": "roster_candidates_ready",
+  "season_id": "nwsl::Football_Season::0b6761e4701749f593690c0f338da74c",
+  "teams_checked": 16,
+  "player_rows": 443,
+  "players_csv": "data/asset_registry/womens_soccer/nwsl/players.csv",
+  "warnings": [],
+  "guardrails": {
+    "review_only": true,
+    "downloads_performed": false,
+    "athlete_photo_downloads": false,
+    "approvals_applied": false,
+    "headshot_files_written": false,
+    "approved_markers_created": false,
+    "publish_ready": false,
+    "auto_publish": false,
+    "paid_apis": false
+  }
+}

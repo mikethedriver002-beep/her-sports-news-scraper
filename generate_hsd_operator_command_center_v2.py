@@ -4,6 +4,7 @@ import csv
 import html
 import json
 import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
@@ -251,6 +252,26 @@ COMMAND_CENTER_GENERATED_ARTIFACTS = {
     "render_handoff_top_packet/manual_league_mark_context_intake.csv",
 }
 
+MIRRORED_REVIEW_ARTIFACTS = [
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.png",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.json",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json",
+    "data/asset_registry/womens_soccer/athlete_photo_contact_sheets",
+    "data/asset_registry/womens_soccer/nwsl/players.csv",
+    "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md",
+    "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json",
+]
+
 ARTIFACTS = [
     ("Decision", "Operator status", "operator_status.md"),
     ("Decision", "Publish guard", "publish_guard_report.md"),
@@ -456,6 +477,9 @@ ARTIFACTS = [
     ("Graphics", "Women's soccer athlete photo review intake", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv"),
     ("Graphics", "Women's soccer athlete photo candidates", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv"),
     ("Graphics", "Women's soccer athlete photo contact sheet manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json"),
+    ("Graphics", "Women's soccer NWSL player registry", "data/asset_registry/womens_soccer/nwsl/players.csv"),
+    ("Graphics", "Women's soccer NWSL roster candidate fetch report", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md"),
+    ("Graphics", "Women's soccer NWSL roster candidate fetch manifest", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -526,6 +550,9 @@ RUN_COMMANDS = {
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_photo_contact_sheets_v1.py",
+    "data/asset_registry/womens_soccer/nwsl/players.csv": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
+    "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
+    "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -634,6 +661,28 @@ def clean(value: Any) -> str:
 
 def local_latest_path(path: str | Path) -> Path:
     return Path.cwd() / "outputs" / "local" / "latest" / "files" / Path(path)
+
+
+def mirror_review_artifacts_to_output() -> None:
+    output_root = output_path(".").resolve()
+    cwd = Path.cwd().resolve()
+    if output_root == cwd:
+        return
+    for raw_path in MIRRORED_REVIEW_ARTIFACTS:
+        source = Path(raw_path)
+        if not source.exists():
+            continue
+        destination = output_path(raw_path)
+        try:
+            if source.resolve() == destination.resolve():
+                continue
+        except Exception:
+            pass
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir():
+            shutil.copytree(source, destination, dirs_exist_ok=True)
+        else:
+            shutil.copy2(source, destination)
 
 
 def find_existing_input(path: str | Path) -> Path:
@@ -9536,6 +9585,7 @@ def write_outputs(payload: Dict[str, Any]) -> None:
 
 
 def main() -> None:
+    mirror_review_artifacts_to_output()
     payload = build_payload()
     write_outputs(payload)
     print(json.dumps({"version": VERSION, "html": OUT_HTML.as_posix(), "actions": len(payload["next_actions"])}, indent=2))

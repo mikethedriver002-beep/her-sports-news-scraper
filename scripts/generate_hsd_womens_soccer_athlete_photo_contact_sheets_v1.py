@@ -24,6 +24,9 @@ VERSION = "hsd-womens-soccer-athlete-photo-contact-sheets-v1-review-only"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_ROOT = Path("data/asset_registry/womens_soccer")
 ACTIVE_SCOPES = ["nwsl"]
+TEAM_SHEET_ROOT = Path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
+MAX_VISUAL_ROWS_PER_TEAM = 12
+FONT_CACHE: Dict[Tuple[int, bool], Any] = {}
 
 OUT_DIR = output_path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
 OUT_INDEX = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md")
@@ -187,6 +190,9 @@ def project_path(raw: Any) -> Path:
 
 
 def load_font(size: int, *, bold: bool = False) -> Any:
+    cache_key = (size, bold)
+    if cache_key in FONT_CACHE:
+        return FONT_CACHE[cache_key]
     if ImageFont is None:
         return None
     candidates = [
@@ -197,34 +203,31 @@ def load_font(size: int, *, bold: bool = False) -> Any:
         path = Path(raw)
         if path.exists():
             try:
-                return ImageFont.truetype(str(path), size)
+                font = ImageFont.truetype(str(path), size)
+                FONT_CACHE[cache_key] = font
+                return font
             except Exception:
                 pass
-    return ImageFont.load_default()
+    font = ImageFont.load_default()
+    FONT_CACHE[cache_key] = font
+    return font
 
 
 def team_contact_sheet_path(scope_id: str, team_id: str) -> str:
-    return (OUT_DIR / slug(scope_id) / f"{slug(team_id)}.png").as_posix()
+    return (TEAM_SHEET_ROOT / slug(scope_id) / f"{slug(team_id)}.png").as_posix()
 
 
 def team_review_board_path(scope_id: str, team_id: str) -> str:
-    return (OUT_DIR / slug(scope_id) / f"{slug(team_id)}.md").as_posix()
+    return (TEAM_SHEET_ROOT / slug(scope_id) / f"{slug(team_id)}.md").as_posix()
 
 
 def proposed_candidate_path(scope_id: str, league_id: str, team_id: str, player_id: str, candidate_id: str) -> str:
     player_slug = slug(player_id or "operator_fill_required")
     candidate_slug = slug(candidate_id or "candidate_001")
-    return (
-        Path("assets/leagues/womens_soccer")
-        / slug(scope_id)
-        / slug(league_id)
-        / "teams"
-        / slug(team_id)
-        / "athletes"
-        / player_slug
-        / "review_candidates"
-        / f"{candidate_slug}.png"
-    ).as_posix()
+    root = Path("assets/leagues/womens_soccer") / slug(scope_id)
+    if slug(league_id) and slug(league_id) != slug(scope_id):
+        root /= slug(league_id)
+    return (root / "teams" / slug(team_id) / "athletes" / player_slug / "review_candidates" / f"{candidate_slug}.png").as_posix()
 
 
 def preferred_sources(scope: str) -> Dict[Tuple[str, str], str]:
@@ -269,7 +272,97 @@ def team_rows(scope: str) -> List[Dict[str, str]]:
     return sorted(rows, key=lambda item: (item["league_id"], item["team_name"]))
 
 
+def player_rows(scope: str) -> List[Dict[str, str]]:
+    teams = by_key(team_rows(scope), "team_id")
+    rows: List[Dict[str, str]] = []
+    for row in read_csv(REGISTRY_ROOT / scope / "players.csv"):
+        team_id = clean(row.get("team_id"))
+        player_id = clean(row.get("player_id"))
+        display_name = clean(row.get("display_name"))
+        if not team_id or not player_id or not display_name:
+            continue
+        team = teams.get(team_id, {})
+        roster_source_url = clean(row.get("roster_source_url")) or clean(team.get("roster_source_url"))
+        rows.append(
+            {
+                "scope_id": scope,
+                "league_id": clean(row.get("league_id")) or clean(team.get("league_id")),
+                "team_id": team_id,
+                "team_name": clean(team.get("team_name")) or team_id,
+                "player_id": player_id,
+                "display_name": display_name,
+                "provider_player_id": clean(row.get("provider_player_id")),
+                "roster_source_url": roster_source_url,
+                "status": clean(row.get("status")) or "active_roster_source_candidate",
+                "manual_review_status": clean(row.get("manual_review_status")) or "identity_source_review_required",
+                "asset_registry_status": clean(row.get("asset_registry_status")) or "candidate_layer_only_no_asset_write",
+                "approval_status": clean(row.get("approval_status")) or "not_approved",
+                "notes": clean(row.get("notes")),
+            }
+        )
+    return sorted(rows, key=lambda item: (item["league_id"], item["team_name"], item["display_name"]))
+
+
+def player_candidate_rows() -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for scope in ACTIVE_SCOPES:
+        for index, player in enumerate(player_rows(scope), start=1):
+            source_url = clean(player.get("roster_source_url"))
+            player_id = clean(player.get("player_id"))
+            candidate_id = f"{player['team_id']}_{slug(player['display_name'])}_official_roster_candidate"
+            provider = clean(player.get("provider_player_id"))
+            rows.append(
+                {
+                    "scope_id": player["scope_id"],
+                    "league_id": player["league_id"],
+                    "team_id": player["team_id"],
+                    "team_name": player["team_name"],
+                    "player_id": player_id,
+                    "display_name": player["display_name"],
+                    "candidate_id": candidate_id,
+                    "candidate_rank": str(index),
+                    "candidate_status": "official_roster_source_candidate",
+                    "source_url": source_url,
+                    "source_domain": source_domain(source_url),
+                    "source_tier": "official_public_roster_metadata",
+                    "source_platform": "nwsl_public_roster_api",
+                    "source_kind": "roster_or_public_profile_candidate",
+                    "candidate_method": "official_roster_metadata_no_image_download",
+                    "page_title": f"{player['team_name']} roster",
+                    "canonical_url": source_url,
+                    "referring_roster_url": source_url,
+                    "photo_candidate_url": source_url,
+                    "local_candidate_path": proposed_candidate_path(player["scope_id"], player["league_id"], player["team_id"], player_id, candidate_id),
+                    "local_candidate_exists": "false",
+                    "image_width": "",
+                    "image_height": "",
+                    "file_sha256": "",
+                    "license_hint": "operator_rights_review_required",
+                    "rights_note": "review_only_fair_use_tolerant_candidate; roster metadata only; no image downloaded",
+                    "attribution_text": "NWSL public roster metadata",
+                    "identity_evidence_notes": f"Official roster metadata links {player['display_name']} to {player['team_name']}; provider={provider or 'missing'}; local image still required before approval.",
+                    "team_context_match": "official_roster_team_match",
+                    "jersey_context_notes": "",
+                    "identity_risk_flags": "local_photo_missing_identity_review_required",
+                    "manual_review_status": "source_candidate_ready_local_file_missing",
+                    "approval_status": "not_approved",
+                    "review_only": "true",
+                    "publish_ready": "false",
+                    "auto_approval": "false",
+                    "auto_publish": "false",
+                    "move_files": "false",
+                    "paid_apis": "false",
+                    "asset_downloads": "false",
+                    "notes": clean(player.get("notes")) or "Seeded from official public NWSL roster metadata; no photo asset fetched.",
+                }
+            )
+    return rows
+
+
 def starter_candidate_rows() -> List[Dict[str, str]]:
+    roster_rows = player_candidate_rows()
+    if roster_rows:
+        return roster_rows
     rows: List[Dict[str, str]] = []
     for scope in ACTIVE_SCOPES:
         for team in team_rows(scope):
@@ -325,9 +418,15 @@ def starter_candidate_rows() -> List[Dict[str, str]]:
 
 def ensure_candidate_csv() -> List[Dict[str, str]]:
     rows = read_csv(CANDIDATES)
-    if rows:
+    roster_rows = player_candidate_rows()
+    placeholder_only = bool(rows) and all(
+        clean(row.get("candidate_status")) == "operator_add_candidate"
+        or clean(row.get("display_name")) == "operator_add_player_candidate"
+        for row in rows
+    )
+    if rows and not (roster_rows and placeholder_only):
         return rows
-    rows = starter_candidate_rows()
+    rows = roster_rows or starter_candidate_rows()
     write_csv(CANDIDATES, rows, CANDIDATE_FIELDS)
     return rows
 
@@ -461,9 +560,17 @@ def ellipsize(draw: Any, text: str, font: Any, max_width: int) -> str:
     if text_width(draw, value, font) <= max_width:
         return value
     suffix = "..."
-    while value and text_width(draw, value + suffix, font) > max_width:
-        value = value[:-1]
-    return (value.rstrip() + suffix) if value else suffix
+    low, high = 0, len(value)
+    best = ""
+    while low <= high:
+        mid = (low + high) // 2
+        candidate = value[:mid].rstrip()
+        if text_width(draw, candidate + suffix, font) <= max_width:
+            best = candidate
+            low = mid + 1
+        else:
+            high = mid - 1
+    return (best + suffix) if best else suffix
 
 
 def draw_candidate_card(sheet: Any, draw: Any, row: Mapping[str, str], x: int, y: int, card_w: int, card_h: int) -> None:
@@ -506,11 +613,15 @@ def make_team_contact_sheet(scope_id: str, team_id: str, team_rows: List[Mapping
     if Image is None or ImageDraw is None:
         warnings.append(f"{team_id}:pillow_unavailable_contact_sheet_not_created")
         return out_path.as_posix(), warnings
+    preview_rows = list(team_rows[:MAX_VISUAL_ROWS_PER_TEAM])
+    hidden_rows = max(0, len(team_rows) - len(preview_rows))
+    if hidden_rows:
+        warnings.append(f"{team_id}:visual_preview_limited_to_{len(preview_rows)}_of_{len(team_rows)}_rows")
     cols = 2
     card_w, card_h = 650, 210
     margin = 28
-    header_h = 92
-    row_count = max(1, (len(team_rows) + cols - 1) // cols)
+    header_h = 116
+    row_count = max(1, (len(preview_rows) + cols - 1) // cols)
     width = margin * 2 + cols * card_w + 18
     height = margin * 2 + header_h + row_count * (card_h + 18)
     image = Image.new("RGB", (width, height), (246, 248, 250))
@@ -520,7 +631,9 @@ def make_team_contact_sheet(scope_id: str, team_id: str, team_rows: List[Mapping
     team_name = clean(team_rows[0].get("team_name")) if team_rows else team_id
     draw.text((margin, 20), f"{team_name} athlete photo candidates", fill=(12, 20, 28), font=font_title)
     draw.text((margin, 58), "Review-only candidate board. Add public/fair-use-tolerant source leads in the CSV; no photo downloads here.", fill=(74, 83, 94), font=font_body)
-    for index, row in enumerate(team_rows):
+    if hidden_rows:
+        draw.text((margin, 82), f"Visual preview shows first {len(preview_rows)} of {len(team_rows)} rows; Markdown and CSV list every candidate.", fill=(154, 99, 0), font=font_body)
+    for index, row in enumerate(preview_rows):
         col = index % cols
         row_i = index // cols
         x = margin + col * (card_w + 18)
@@ -544,6 +657,11 @@ def render_team_board(team_rows: List[Mapping[str, str]], sheet_path: str, gener
         "## Candidate Rows",
         "",
     ]
+    if len(team_rows) > MAX_VISUAL_ROWS_PER_TEAM:
+        lines += [
+            f"Visual PNG preview shows the first `{MAX_VISUAL_ROWS_PER_TEAM}` rows only so the packet stays fast. This Markdown board and the CSV include all `{len(team_rows)}` candidates.",
+            "",
+        ]
     for row in team_rows:
         lines.append(
             f"- {row.get('display_name')} | candidate={row.get('candidate_id')} | local_exists={row.get('local_candidate_exists')} | "
