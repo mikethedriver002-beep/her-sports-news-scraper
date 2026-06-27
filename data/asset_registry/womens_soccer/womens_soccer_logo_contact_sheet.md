@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-27T01:49:59.232849+00:00`
+Generated: `2026-06-27T02:34:29.358279+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
