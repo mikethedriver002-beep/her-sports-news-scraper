@@ -215,6 +215,76 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert cluster["auto_source_enablement"] == "false"
 
 
+def test_box_score_top_performers_match_the_same_game() -> None:
+    module = load_module()
+    box_text = """# WNBA Box-Score Enrichment Audit v5
+
+1. **Connecticut Sun beat Washington Mystics**
+   - ESPN event: 401857024
+   - Status: found
+   - Top performers: Olivia Nelson-Ododa (Connecticut Sun): PTS 12, REB 9 | Kiki Iriafen (Washington Mystics): PTS 11, REB 14
+
+2. **Chicago Sky beat Portland Fire**
+   - ESPN event: 401857025
+   - Status: found
+   - Top performers: Kamilla Cardoso (Chicago Sky): PTS 30, REB 8 | Sydney Taylor (Chicago Sky): PTS 29, REB 3
+"""
+    box_map = module.parse_box_score_summary(box_text)
+    candidate = base_candidate()
+    candidate.update(
+        {
+            "graphics_headline": "Chicago Sky beat Portland Fire",
+            "matchup": "Chicago Sky vs Portland Fire",
+            "winner": "Chicago Sky",
+            "loser": "Portland Fire",
+            "final_score": "Chicago Sky 92 - Portland Fire 85",
+        }
+    )
+
+    top_performers = module.find_top_performers(candidate, box_map)
+
+    assert "Kamilla Cardoso" in top_performers
+    assert "Olivia Nelson-Ododa" not in top_performers
+
+
+def test_box_score_top_performers_require_both_candidate_teams() -> None:
+    module = load_module()
+    box_map = module.parse_box_score_summary(
+        """1. **Connecticut Sun beat Washington Mystics**
+   - ESPN event: 401857024
+   - Status: found
+   - Top performers: Olivia Nelson-Ododa (Connecticut Sun): PTS 12, REB 9 | Kiki Iriafen (Washington Mystics): PTS 11, REB 14
+"""
+    )
+    candidate = base_candidate()
+    candidate.update(
+        {
+            "graphics_headline": "Portland Fire at Washington Mystics",
+            "matchup": "Portland Fire at Washington Mystics",
+            "winner": "",
+            "loser": "",
+            "final_score": "",
+        }
+    )
+
+    assert module.find_top_performers(candidate, box_map) == ""
+
+
+def test_news_sync_prefers_latest_local_results_over_stale_root(tmp_path, monkeypatch) -> None:
+    module = load_module()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("HSD_RUN_OUTPUT_DIR", raising=False)
+    latest = tmp_path / "outputs" / "local" / "latest" / "files"
+    latest.mkdir(parents=True)
+    (tmp_path / "top_womens_results.csv").write_text("headline\nstale-root\n", encoding="utf-8")
+    (latest / "top_womens_results.csv").write_text("headline\nfresh-latest\n", encoding="utf-8")
+
+    resolved, text = module.resolve_input("top_womens_results.csv")
+
+    assert resolved.resolve() == latest / "top_womens_results.csv"
+    assert "fresh-latest" in text
+
+
 def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, monkeypatch) -> None:
     run_dir = tmp_path / "run" / "files"
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))

@@ -725,6 +725,10 @@ function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
     if ($RunFilesDir -and $RunFilesDir -ne $env:HSD_RUN_OUTPUT_DIR) {
         $candidates += Resolve-HsdChildPath $RunFilesDir $Relative
     }
+    $latestFiles = Join-Path $Root.Path "outputs\local\latest\files"
+    if ($latestFiles -and $latestFiles -ne $env:HSD_RUN_OUTPUT_DIR -and $latestFiles -ne $RunFilesDir) {
+        $candidates += Resolve-HsdChildPath $latestFiles $Relative
+    }
     $candidates += Resolve-HsdChildPath $Root.Path $Relative
 
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
@@ -810,10 +814,22 @@ function Collect-HsdArtifacts($RunContext) {
         "morning_lead_promotion_recommendations.json",
         "top_womens_results.csv",
         "today_final_results.csv",
+        "game_intelligence_board_v1.md",
+        "game_intelligence_board_v1.csv",
+        "game_intelligence_board_v1.json",
+        "stats_evidence_gap_board_v1.md",
+        "stats_evidence_gap_board_v1.csv",
+        "stats_evidence_gap_board_v1.json",
+        "stats_confirmation_intake_v1.csv",
         "results_dashboard/index.html",
         "news_fact_packets.csv",
         "news_daily_plan.md",
         "news_sync_hub.md",
+        "breaking_public_signal_queue.md",
+        "breaking_public_signal_queue.csv",
+        "breaking_public_signal_manifest.json",
+        "breaking_public_signal_confirmation_intake.md",
+        "breaking_public_signal_confirmation_intake.csv",
         "studio_bundle_queue.csv",
         "studio_bundle_packets.md",
         "studio_dashboard/index.html",
