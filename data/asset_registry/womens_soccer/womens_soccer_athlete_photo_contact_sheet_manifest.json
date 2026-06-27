@@ -1,13 +1,26 @@
 {
   "version": "hsd-womens-soccer-athlete-photo-contact-sheets-v1-review-only",
   "status": "contact_sheets_ready",
-  "generated_at_utc": "2026-06-27T12:30:52.373430+00:00",
-  "candidate_rows": 443,
-  "team_boards": 16,
+  "generated_at_utc": "2026-06-27T13:48:16.155127+00:00",
+  "candidate_rows": 509,
+  "team_boards": 82,
   "candidate_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv",
   "contact_sheet_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv",
   "intake_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
   "index": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md",
+  "scope_counts": {
+    "europe_top_flight": 66,
+    "nwsl": 443
+  },
+  "league_counts": {
+    "arkema_premiere_ligue_france": 12,
+    "frauen_bundesliga_germany": 14,
+    "liga_f_spain": 16,
+    "nwsl": 443,
+    "serie_a_women_italy": 12,
+    "wsl_england": 12
+  },
+  "starter_candidate_rows": 66,
   "warnings": [
     "angel_city_fc:visual_preview_limited_to_12_of_26_rows",
     "bay_fc:visual_preview_limited_to_12_of_30_rows",

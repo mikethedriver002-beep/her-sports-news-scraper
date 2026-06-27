@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - reported in manifest
 VERSION = "hsd-womens-soccer-athlete-photo-contact-sheets-v1-review-only"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_ROOT = Path("data/asset_registry/womens_soccer")
-ACTIVE_SCOPES = ["nwsl"]
+ACTIVE_SCOPES = ["nwsl", "europe_top_flight"]
 TEAM_SHEET_ROOT = Path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
 MAX_VISUAL_ROWS_PER_TEAM = 12
 FONT_CACHE: Dict[Tuple[int, bool], Any] = {}
@@ -359,76 +359,97 @@ def player_candidate_rows() -> List[Dict[str, str]]:
     return rows
 
 
-def starter_candidate_rows() -> List[Dict[str, str]]:
-    roster_rows = player_candidate_rows()
-    if roster_rows:
-        return roster_rows
+def starter_candidate_row(team: Mapping[str, str]) -> Dict[str, str]:
+    source_url = clean(team.get("roster_source_url")) or clean(team.get("team_source_url"))
+    candidate_id = f"{team['team_id']}_operator_add_candidate"
+    return {
+        "scope_id": team["scope_id"],
+        "league_id": team["league_id"],
+        "team_id": team["team_id"],
+        "team_name": team["team_name"],
+        "player_id": "",
+        "display_name": "operator_add_player_candidate",
+        "candidate_id": candidate_id,
+        "candidate_rank": "999",
+        "candidate_status": "operator_add_candidate",
+        "source_url": source_url,
+        "source_domain": source_domain(source_url),
+        "source_tier": "public_or_official_candidate",
+        "source_platform": "manual_research",
+        "source_kind": "roster_or_public_profile_candidate",
+        "candidate_method": "manual_candidate_layer_placeholder",
+        "page_title": f"{team['team_name']} roster source review",
+        "canonical_url": source_url,
+        "referring_roster_url": source_url,
+        "photo_candidate_url": "",
+        "local_candidate_path": proposed_candidate_path(team["scope_id"], team["league_id"], team["team_id"], "", candidate_id),
+        "local_candidate_exists": "false",
+        "image_width": "",
+        "image_height": "",
+        "file_sha256": "",
+        "license_hint": "operator_review_required",
+        "rights_note": "review_only_fair_use_tolerant_candidate; no renderer approval",
+        "attribution_text": "",
+        "identity_evidence_notes": "Add exact player name, current team evidence, and source URL before approval.",
+        "team_context_match": "operator_fill_required",
+        "jersey_context_notes": "",
+        "identity_risk_flags": "missing_player_identity_candidate",
+        "manual_review_status": "operator_fill_required",
+        "approval_status": "not_approved",
+        "review_only": "true",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+        "asset_downloads": "false",
+        "notes": "Starter row only; replace with one row per athlete photo candidate.",
+    }
+
+
+def starter_candidate_rows(excluded_team_keys: set[Tuple[str, str]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for scope in ACTIVE_SCOPES:
         for team in team_rows(scope):
-            source_url = clean(team.get("roster_source_url")) or clean(team.get("team_source_url"))
-            candidate_id = f"{team['team_id']}_operator_add_candidate"
-            rows.append(
-                {
-                    "scope_id": team["scope_id"],
-                    "league_id": team["league_id"],
-                    "team_id": team["team_id"],
-                    "team_name": team["team_name"],
-                    "player_id": "",
-                    "display_name": "operator_add_player_candidate",
-                    "candidate_id": candidate_id,
-                    "candidate_rank": "999",
-                    "candidate_status": "operator_add_candidate",
-                    "source_url": source_url,
-                    "source_domain": source_domain(source_url),
-                    "source_tier": "public_or_official_candidate",
-                    "source_platform": "manual_research",
-                    "source_kind": "roster_or_public_profile_candidate",
-                    "candidate_method": "manual_candidate_layer_placeholder",
-                    "page_title": "",
-                    "canonical_url": source_url,
-                    "referring_roster_url": source_url,
-                    "photo_candidate_url": "",
-                    "local_candidate_path": proposed_candidate_path(team["scope_id"], team["league_id"], team["team_id"], "", candidate_id),
-                    "local_candidate_exists": "false",
-                    "image_width": "",
-                    "image_height": "",
-                    "file_sha256": "",
-                    "license_hint": "operator_review_required",
-                    "rights_note": "review_only_fair_use_tolerant_candidate; no renderer approval",
-                    "attribution_text": "",
-                    "identity_evidence_notes": "Add exact player name, current team evidence, and source URL before approval.",
-                    "team_context_match": "operator_fill_required",
-                    "jersey_context_notes": "",
-                    "identity_risk_flags": "missing_player_identity_candidate",
-                    "manual_review_status": "operator_fill_required",
-                    "approval_status": "not_approved",
-                    "review_only": "true",
-                    "publish_ready": "false",
-                    "auto_approval": "false",
-                    "auto_publish": "false",
-                    "move_files": "false",
-                    "paid_apis": "false",
-                    "asset_downloads": "false",
-                    "notes": "Starter row only; replace with one row per athlete photo candidate.",
-                }
-            )
+            key = (clean(team.get("scope_id")), clean(team.get("team_id")))
+            if key not in excluded_team_keys:
+                rows.append(starter_candidate_row(team))
     return rows
+
+
+def generated_candidate_rows() -> List[Dict[str, str]]:
+    roster_rows = player_candidate_rows()
+    roster_team_keys = {(clean(row.get("scope_id")), clean(row.get("team_id"))) for row in roster_rows}
+    return roster_rows + starter_candidate_rows(roster_team_keys)
 
 
 def ensure_candidate_csv() -> List[Dict[str, str]]:
-    rows = read_csv(CANDIDATES)
-    roster_rows = player_candidate_rows()
-    placeholder_only = bool(rows) and all(
+    existing_rows = read_csv(CANDIDATES)
+    generated_rows = generated_candidate_rows()
+    placeholder_only = bool(existing_rows) and all(
         clean(row.get("candidate_status")) == "operator_add_candidate"
         or clean(row.get("display_name")) == "operator_add_player_candidate"
-        for row in rows
+        for row in existing_rows
     )
-    if rows and not (roster_rows and placeholder_only):
-        return rows
-    rows = roster_rows or starter_candidate_rows()
+    if existing_rows and not generated_rows:
+        return existing_rows
+    generated_by_id = {clean(row.get("candidate_id")): row for row in generated_rows if clean(row.get("candidate_id"))}
+    rows = list(generated_rows)
+    if existing_rows and not placeholder_only:
+        for row in existing_rows:
+            candidate_id = clean(row.get("candidate_id"))
+            if candidate_id and candidate_id not in generated_by_id:
+                rows.append(row)
     write_csv(CANDIDATES, rows, CANDIDATE_FIELDS)
     return rows
+
+
+def count_by_field(rows: Iterable[Mapping[str, str]], field: str) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for row in rows:
+        key = clean(row.get(field)) or "unknown"
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def build_rows() -> List[Dict[str, str]]:
@@ -673,27 +694,47 @@ def render_team_board(team_rows: List[Mapping[str, str]], sheet_path: str, gener
 
 def render_index(rows: List[Mapping[str, str]], team_outputs: Mapping[str, Mapping[str, str]], generated_at: str) -> str:
     local_count = sum(1 for row in rows if clean(row.get("local_candidate_exists")) == "true")
+    starter_count = sum(1 for row in rows if clean(row.get("candidate_status")) == "operator_add_candidate")
+    scope_counts = count_by_field(rows, "scope_id")
+    league_counts = count_by_field(rows, "league_id")
     lines = [
         "# Women's Soccer Athlete Photo Contact Sheets",
         "",
         f"Generated: `{generated_at}`",
         "",
-        "Review-only candidate layer for women's soccer athlete photos. Start with NWSL boards, then expand the same CSV shape to WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema Premiere Ligue.",
+        "Review-only candidate layer for women's soccer athlete photos. It keeps the NWSL roster candidate layer and extends the same CSV/intake/team-board workflow to WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema Premiere Ligue starter rows.",
         "No downloads or approvals are performed by this generator.",
         "",
         "## Summary",
         "",
         f"- Candidate rows: `{len(rows)}`",
         f"- Team boards: `{len(team_outputs)}`",
+        f"- Starter rows needing operator athlete names: `{starter_count}`",
         f"- Local candidate files present: `{local_count}`",
         "- Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`",
         "- Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`",
         "- Allowed decisions: `approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate`",
         "- Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false",
         "",
-        "## Boards",
+        "## Scope Counts",
         "",
     ]
+    lines.extend(f"- {scope}: `{count}`" for scope, count in scope_counts.items())
+    lines.extend(
+        [
+            "",
+            "## League Counts",
+            "",
+        ]
+    )
+    lines.extend(f"- {league}: `{count}`" for league, count in league_counts.items())
+    lines.extend(
+        [
+            "",
+            "## Boards",
+            "",
+        ]
+    )
     for key in sorted(team_outputs):
         info = team_outputs[key]
         lines.append(f"- {info.get('team_name')} | rows={info.get('rows')} | [board]({Path(info.get('board_path', '')).as_posix()}) | [contact sheet]({Path(info.get('sheet_path', '')).as_posix()})")
@@ -737,6 +778,9 @@ def main() -> int:
         "contact_sheet_csv": OUT_CSV.as_posix(),
         "intake_csv": OUT_INTAKE.as_posix(),
         "index": OUT_INDEX.as_posix(),
+        "scope_counts": count_by_field(rows, "scope_id"),
+        "league_counts": count_by_field(rows, "league_id"),
+        "starter_candidate_rows": sum(1 for row in rows if clean(row.get("candidate_status")) == "operator_add_candidate"),
         "warnings": warnings,
         "review_only": True,
         "downloads_performed": False,

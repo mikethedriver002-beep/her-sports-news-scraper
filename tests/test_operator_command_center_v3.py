@@ -435,6 +435,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "generated_at_utc": "2026-06-26T20:00:00+00:00",
             "candidate_rows": 1,
             "team_boards": 1,
+            "starter_candidate_rows": 1,
             "warnings": ["angel_city_fc:pillow_unavailable_contact_sheet_not_created"],
             "review_only": True,
             "downloads_performed": False,
@@ -453,6 +454,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_logo_review_walkthrough_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_athlete_photo_contact_sheet_rows"] == 1
     assert panel["womens_soccer_athlete_photo_contact_sheet_team_boards"] == 1
+    assert panel["womens_soccer_athlete_photo_starter_candidate_rows"] == 1
     assert panel["womens_soccer_athlete_photo_contact_sheet_status"] == "contact_sheets_ready"
     assert panel["womens_soccer_athlete_photo_contact_sheet_generated_at"] == "2026-06-26T20:00:00+00:00"
     assert panel["womens_soccer_athlete_photo_contact_sheet_warning_count"] == 1
@@ -468,6 +470,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Soccer review steps" in html
     assert "Soccer athlete candidates" in html
     assert "Soccer athlete boards" in html
+    assert "Soccer starter rows" in html
     assert "Soccer athlete warnings" in html
     assert "Women&#x27;s soccer logo contact sheet packet freshness" in html
     assert "Women&#x27;s soccer logo review walkthrough packet freshness" in html

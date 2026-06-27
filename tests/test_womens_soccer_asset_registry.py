@@ -23,7 +23,7 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert report["status"] == "passed_womens_soccer_review_scaffold"
     assert report["team_count"] == len(REQUIRED_NWSL_TEAMS)
     assert report["required_team_count"] == 16
-    assert report["player_count"] == 0
+    assert report["player_count"] == 443
     assert report["source_url_count"] == 87
     assert report["europe_top_flight_league_count"] == len(REQUIRED_EUROPE_TOP_FLIGHT_LEAGUES)
     assert report["europe_top_flight_required_league_count"] == 5
@@ -56,7 +56,7 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert report["render_enabled"] is False
     assert report["publish_ready"] is False
     assert not report["blockers"]
-    assert "players_csv_header_only_manual_intake" in report["warnings"]
+    assert "players_csv_header_only_manual_intake" not in report["warnings"]
     assert "europe_players_csv_header_only_manual_intake" in report["warnings"]
     assert "europe_team_logo_rows_require_human_review_before_approval" not in report["warnings"]
 
