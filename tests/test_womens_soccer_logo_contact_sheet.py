@@ -45,6 +45,9 @@ def test_womens_soccer_logo_contact_sheet_builds_review_only_board(tmp_path: Pat
     module.OUT_PNG = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_logo_contact_sheet.png"
     module.OUT_INTAKE = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_logo_review_intake.csv"
     module.OUT_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_logo_contact_sheet.json"
+    module.OUT_WALKTHROUGH_MD = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_logo_review_walkthrough.md"
+    module.OUT_WALKTHROUGH_CSV = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_logo_review_walkthrough.csv"
+    module.OUT_WALKTHROUGH_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_logo_review_walkthrough.json"
     module.REGISTRY_SCOPES = ["nwsl", "europe_top_flight"]
 
     logo_path = tmp_path / "assets" / "leagues" / "womens_soccer" / "nwsl" / "teams" / "angel_city_fc" / "logo.png"
@@ -240,6 +243,8 @@ def test_womens_soccer_logo_contact_sheet_builds_review_only_board(tmp_path: Pat
         },
     )
     png_path, warnings = module.make_contact_sheet(rows, module.OUT_PNG)
+    review_rows = module.walkthrough_rows(rows)
+    walkthrough_md = module.render_walkthrough_markdown(rows, review_rows, "2026-06-26T20:00:00+00:00")
 
     assert warnings == []
     assert len(rows) == 2
@@ -254,4 +259,13 @@ def test_womens_soccer_logo_contact_sheet_builds_review_only_board(tmp_path: Pat
     assert decisions[0]["approval_scope"] == "review_only_renderer_womens_soccer_logo_trust_manual_intake"
     assert decisions[0]["publish_ready"] == "false"
     assert decisions[0]["move_files"] == "false"
+    assert review_rows[0]["priority_group"] == "P0_NWSL_TEAM_LOGOS"
+    assert review_rows[0]["recommended_operator_decision"] == "approve_for_review_only_renderer_use"
+    assert review_rows[0]["approval_precondition"] == "local_asset_present_manual_source_identity_review_required"
+    assert review_rows[0]["auto_approval"] == "false"
+    assert review_rows[0]["asset_downloads"] == "false"
+    assert review_rows[1]["priority_group"] == "P1_WSL_FOUNDATION"
+    assert review_rows[1]["recommended_operator_decision"] == "hold_for_more_evidence"
+    assert "Safest Non-WSL Europe Expansion" in walkthrough_md
+    assert "Liga F" in walkthrough_md
     assert Path(png_path).exists()

@@ -1,0 +1,26 @@
+{
+  "version": "hsd-womens-soccer-logo-contact-sheet-v1-review-only",
+  "generated_at_utc": "2026-06-26T23:59:21.273424+00:00",
+  "review_only": true,
+  "status": "walkthrough_ready",
+  "row_count": 34,
+  "priority_counts": {
+    "P0_NWSL_FOUNDATION": 1,
+    "P0_NWSL_TEAM_LOGOS": 16,
+    "P1_WSL_FOUNDATION": 1,
+    "P1_WSL_TEAM_LOGOS": 12,
+    "P2_NON_WSL_LEAGUE_MARKS": 4
+  },
+  "contact_sheet": "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md",
+  "human_intake_csv": "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv",
+  "walkthrough_data": "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv",
+  "guardrails": {
+    "publish_ready": false,
+    "auto_approval": false,
+    "auto_publish": false,
+    "move_files": false,
+    "paid_apis": false,
+    "asset_downloads": false,
+    "publishing": false
+  }
+}

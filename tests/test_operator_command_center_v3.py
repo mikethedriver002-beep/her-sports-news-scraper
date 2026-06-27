@@ -229,6 +229,50 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
         "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json",
         {"status": "contact_sheet_ready", "row_count": 2, "review_only": True},
     )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv",
+        [
+            {
+                "review_rank": "1",
+                "priority_group": "P0_NWSL_TEAM_LOGOS",
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "entity_type": "team",
+                "entity_id": "angel_city_fc",
+                "display_name": "Angel City FC",
+                "current_approval_status": "not_approved",
+                "logo_file_exists": "false",
+                "approval_precondition": "local_asset_missing_source_only_review",
+                "recommended_operator_decision": "hold_for_more_evidence",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "asset_downloads": "false",
+            }
+        ],
+        [
+            "review_rank",
+            "priority_group",
+            "scope_id",
+            "league_id",
+            "entity_type",
+            "entity_id",
+            "display_name",
+            "current_approval_status",
+            "logo_file_exists",
+            "approval_precondition",
+            "recommended_operator_decision",
+            "review_only",
+            "publish_ready",
+            "auto_approval",
+            "asset_downloads",
+        ],
+    )
+    Path("data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md").write_text("# Walkthrough\n", encoding="utf-8")
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.json",
+        {"status": "walkthrough_ready", "row_count": 1, "review_only": True},
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -236,10 +280,16 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_logo_contact_sheet_rows"] == 2
     assert panel["womens_soccer_logo_contact_sheet_status"] == "contact_sheet_ready"
     assert panel["womens_soccer_logo_contact_sheet_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_logo_review_walkthrough_rows"] == 1
+    assert panel["womens_soccer_logo_review_walkthrough_status"] == "walkthrough_ready"
+    assert panel["womens_soccer_logo_review_walkthrough_freshness_status"] == "packet_ready"
     assert any(item["label"] == "Women's soccer logo contact sheet" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer logo review intake" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer logo review walkthrough" for item in panel["file_shortcuts"])
     assert "Soccer logo sweep rows" in html
+    assert "Soccer review steps" in html
     assert "Women&#x27;s soccer logo contact sheet packet freshness" in html
+    assert "Women&#x27;s soccer logo review walkthrough packet freshness" in html
 
 
 def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_path, monkeypatch) -> None:

@@ -28,6 +28,9 @@ OUT_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_cont
 OUT_PNG = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.png")
 OUT_INTAKE = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv")
 OUT_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.json")
+OUT_WALKTHROUGH_MD = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md")
+OUT_WALKTHROUGH_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv")
+OUT_WALKTHROUGH_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.json")
 
 REGISTRY_ROOT = Path("data/asset_registry/womens_soccer")
 REGISTRY_SCOPES = ["nwsl", "europe_top_flight"]
@@ -85,6 +88,28 @@ INTAKE_FIELDS = [
     "auto_publish",
     "move_files",
     "paid_apis",
+    "asset_downloads",
+]
+
+WALKTHROUGH_FIELDS = [
+    "review_rank",
+    "priority_group",
+    "scope_id",
+    "league_id",
+    "entity_type",
+    "entity_id",
+    "display_name",
+    "current_approval_status",
+    "logo_file_exists",
+    "approval_precondition",
+    "recommended_operator_decision",
+    "review_instruction",
+    "local_logo_path",
+    "official_source_candidate",
+    "human_intake_file",
+    "review_only",
+    "publish_ready",
+    "auto_approval",
     "asset_downloads",
 ]
 
@@ -293,6 +318,70 @@ def intake_rows(
     return output
 
 
+def priority_for(row: Mapping[str, str]) -> Tuple[int, str, str]:
+    scope = clean(row.get("scope_id"))
+    league_id = clean(row.get("league_id"))
+    entity_type = clean(row.get("entity_type"))
+    if scope == "nwsl" and entity_type == "league":
+        return 10, "P0_NWSL_FOUNDATION", "Review the NWSL league mark before a full NWSL team-logo sweep."
+    if scope == "nwsl":
+        return 20, "P0_NWSL_TEAM_LOGOS", "Review NWSL team logos first because NWSL is the only complete current league team set."
+    if league_id == "wsl_england" and entity_type == "league":
+        return 30, "P1_WSL_FOUNDATION", "Review the WSL league mark before the WSL club-logo sweep."
+    if league_id == "wsl_england":
+        return 40, "P1_WSL_TEAM_LOGOS", "Review WSL club logos after the NWSL sweep; WSL has full club source rows."
+    return 50, "P2_NON_WSL_LEAGUE_MARKS", "Hold non-WSL Europe to league-mark source review until club rows are expanded one league at a time."
+
+
+def walkthrough_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    ordered = sorted(
+        rows,
+        key=lambda row: (
+            priority_for(row)[0],
+            clean(row.get("display_name")).lower(),
+            clean(row.get("entity_id")),
+        ),
+    )
+    output: List[Dict[str, str]] = []
+    for index, row in enumerate(ordered, start=1):
+        _, priority_group, instruction = priority_for(row)
+        file_exists = clean(row.get("logo_file_exists")).lower() == "true"
+        status = clean(row.get("current_approval_status")) or "not_approved"
+        if status == "approved":
+            precondition = "already_approved_recheck_only"
+            decision = "hold_for_more_evidence"
+        elif not file_exists:
+            precondition = "local_asset_missing_source_only_review"
+            decision = "hold_for_more_evidence"
+        else:
+            precondition = "local_asset_present_manual_source_identity_review_required"
+            decision = "approve_for_review_only_renderer_use"
+        output.append(
+            {
+                "review_rank": str(index),
+                "priority_group": priority_group,
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "entity_type": clean(row.get("entity_type")),
+                "entity_id": clean(row.get("entity_id")),
+                "display_name": clean(row.get("display_name")),
+                "current_approval_status": status,
+                "logo_file_exists": clean(row.get("logo_file_exists")) or "false",
+                "approval_precondition": precondition,
+                "recommended_operator_decision": decision,
+                "review_instruction": instruction,
+                "local_logo_path": clean(row.get("local_logo_path")),
+                "official_source_candidate": clean(row.get("official_source_candidate")),
+                "human_intake_file": clean(row.get("human_intake_file")),
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "asset_downloads": "false",
+            }
+        )
+    return output
+
+
 def load_font(size: int, *, bold: bool = False) -> Any:
     if ImageFont is None:
         return None
@@ -412,6 +501,7 @@ def render_markdown(rows: List[Mapping[str, str]], png_path: str, generated_at: 
         f"- League mark rows: `{league_rows}`",
         f"- Team logo rows: `{team_rows}`",
         "- Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`",
+        "- Human review walkthrough: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md`",
         "- Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`",
         "- Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false",
         "",
@@ -430,14 +520,79 @@ def render_markdown(rows: List[Mapping[str, str]], png_path: str, generated_at: 
     return "\n".join(lines) + "\n"
 
 
+def render_walkthrough_markdown(rows: List[Mapping[str, str]], review_rows: List[Mapping[str, str]], generated_at: str) -> str:
+    priority_counts: Dict[str, int] = {}
+    for row in review_rows:
+        key = clean(row.get("priority_group"))
+        priority_counts[key] = priority_counts.get(key, 0) + 1
+    first_rows = [row for row in review_rows if clean(row.get("priority_group")).startswith("P0_")]
+    lines = [
+        "# Women's Soccer Logo Review Walkthrough",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        f"Display-only guide for reviewing the {len(rows)}-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.",
+        "",
+        "## Open First",
+        "",
+        "- Contact sheet: `data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md`",
+        "- Intake worksheet: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`",
+        "- Walkthrough data: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv`",
+        "",
+        "## Rows That Need Human Review First",
+        "",
+        "Start with P0 because NWSL is the complete current league set. Use `hold_for_more_evidence` when the local logo path is still missing, even if the source candidate looks right.",
+        "",
+    ]
+    for key in sorted(priority_counts):
+        lines.append(f"- `{key}`: `{priority_counts[key]}` row(s)")
+    lines += ["", "## P0 Review Order", ""]
+    for row in first_rows:
+        lines.append(
+            f"{row.get('review_rank')}. {row.get('display_name')} | {row.get('entity_type')} | "
+            f"precondition={row.get('approval_precondition')} | recommended_decision={row.get('recommended_operator_decision')} | "
+            f"source={row.get('official_source_candidate')}"
+        )
+    lines += [
+        "",
+        "## How To Fill The Intake CSV",
+        "",
+        "- `operator_decision`: use `approve_for_review_only_renderer_use`, `deny_logo_asset`, `hold_for_more_evidence`, or `revise_source_metadata`.",
+        "- `source_reviewed`: enter `yes` only after you open the official/team source candidate yourself.",
+        "- `identity_match`: enter `yes` only when the logo/mark clearly matches the listed league or club.",
+        "- `source_url_to_record`: paste the exact source page you reviewed.",
+        "- `registry_action`: use `hold_no_registry_state_change` unless you are intentionally providing a human approval decision in a follow-up prompt.",
+        "- Guardrails stay false: `publish_ready`, `auto_approval`, `auto_publish`, `move_files`, `paid_apis`, and `asset_downloads`.",
+        "",
+        "## Safest Non-WSL Europe Expansion",
+        "",
+        "Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.",
+        "",
+        "Recommended order: Liga F, Frauen-Bundesliga, Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.",
+        "",
+        "## All Rows",
+        "",
+    ]
+    for row in review_rows:
+        lines.append(
+            f"- rank={row.get('review_rank')} | {row.get('priority_group')} | {row.get('display_name')} | "
+            f"status={row.get('current_approval_status')} | file_exists={row.get('logo_file_exists')} | "
+            f"decision={row.get('recommended_operator_decision')}"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = now_iso()
     rows = build_rows()
     png_path, warnings = make_contact_sheet(rows)
     decisions = intake_rows(rows)
+    review_rows = walkthrough_rows(rows)
     write_csv(OUT_CSV, rows, CONTACT_FIELDS)
     write_csv(OUT_INTAKE, decisions, INTAKE_FIELDS)
+    write_csv(OUT_WALKTHROUGH_CSV, review_rows, WALKTHROUGH_FIELDS)
     write_text(OUT_MD, render_markdown(rows, png_path, generated_at))
+    write_text(OUT_WALKTHROUGH_MD, render_walkthrough_markdown(rows, review_rows, generated_at))
     manifest = {
         "version": VERSION,
         "generated_at_utc": generated_at,
@@ -449,6 +604,8 @@ def main() -> int:
         "contact_sheet": OUT_PNG.as_posix(),
         "contact_sheet_data": OUT_CSV.as_posix(),
         "human_intake_csv": OUT_INTAKE.as_posix(),
+        "human_review_walkthrough": OUT_WALKTHROUGH_MD.as_posix(),
+        "human_review_walkthrough_data": OUT_WALKTHROUGH_CSV.as_posix(),
         "warnings": warnings,
         "guardrails": {
             "publish_ready": False,
@@ -461,6 +618,24 @@ def main() -> int:
         },
     }
     write_json(OUT_JSON, manifest)
+    write_json(
+        OUT_WALKTHROUGH_JSON,
+        {
+            "version": VERSION,
+            "generated_at_utc": generated_at,
+            "review_only": True,
+            "status": "walkthrough_ready" if review_rows else "no_rows",
+            "row_count": len(review_rows),
+            "priority_counts": {
+                key: sum(1 for row in review_rows if clean(row.get("priority_group")) == key)
+                for key in sorted({clean(row.get("priority_group")) for row in review_rows})
+            },
+            "contact_sheet": OUT_MD.as_posix(),
+            "human_intake_csv": OUT_INTAKE.as_posix(),
+            "walkthrough_data": OUT_WALKTHROUGH_CSV.as_posix(),
+            "guardrails": manifest["guardrails"],
+        },
+    )
     print(
         json.dumps(
             {

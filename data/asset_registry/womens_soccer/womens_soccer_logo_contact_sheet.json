@@ -1,6 +1,6 @@
 {
   "version": "hsd-womens-soccer-logo-contact-sheet-v1-review-only",
-  "generated_at_utc": "2026-06-26T23:31:07.194114+00:00",
+  "generated_at_utc": "2026-06-26T23:59:21.273424+00:00",
   "review_only": true,
   "status": "contact_sheet_ready",
   "row_count": 34,
@@ -9,6 +9,8 @@
   "contact_sheet": "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.png",
   "contact_sheet_data": "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv",
   "human_intake_csv": "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv",
+  "human_review_walkthrough": "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md",
+  "human_review_walkthrough_data": "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.csv",
   "warnings": [],
   "guardrails": {
     "publish_ready": false,
