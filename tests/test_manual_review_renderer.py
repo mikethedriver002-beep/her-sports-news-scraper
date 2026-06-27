@@ -214,7 +214,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     bright_square_title_ratio = sum(square_title_histogram[200:]) / sum(square_title_histogram)
     assert bright_square_title_ratio > 0.025
     report = report_path.read_text(encoding="utf-8")
-    assert "Draft preview is for human review only" in report
+    assert "Renderer state: Review draft created" in report
+    assert "Review draft is for human review only" in report
     assert "Preview source packet: `Test Liberty result`" in report
     assert "Preview freshness: generated from the current handoff packet." in report
     assert "## Review Draft Formats" in report
@@ -275,7 +276,10 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     assert module.game_shape({**score, "winner_score": "78", "loser_score": "76"})["game_shape"] == "close_finish"
     assert module.game_shape({**score, "winner_score": "102", "loser_score": "74"})["game_shape"] == "statement_margin"
     assert module.source_count(packet) == "4"
-    assert module.source_quality_label(packet) == "PUBLISH-GRADE"
+    assert module.source_quality_label(packet) == "SOURCE-READY"
+    assert module.REVIEW_DRAFT_PILL_LABEL == "REVIEW DRAFT ONLY"
+    assert module.REVIEW_DRAFT_FOOTER_LABEL == "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
+    assert "publish" not in module.REVIEW_DRAFT_FOOTER_LABEL.lower()
     assert module.final_score_callouts(packet, score) == [
         {"label": "MARGIN", "value": "+11"},
         {"label": "TOTAL", "value": "163"},
@@ -284,15 +288,16 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     microcopy = module.selected_editorial_microcopy(packet, score, {"status": "fallback_game_edge_no_verified_stat_text"})
     assert microcopy["selected_variant_id"] == "score_only_hold"
     assert microcopy["headline"] == "LIBERTY +11 FINAL"
-    assert microcopy["context"] == "LIBERTY +11 vs ACES; 163 combined points"
+    assert microcopy["context"] == "LIBERTY 87, ACES 76; +11 margin; 163 total points"
     assert microcopy["game_shape"] == "clear_separation"
     assert "No verified player stat line" in microcopy["body"]
     assert "why/how" in microcopy["review_cue"]
+    assert all("publish" not in item["body"].lower() for item in microcopy["variants"])
     edge = module.game_edge_module(score)
     assert edge["headline"] == "CONTROL WINDOW"
     assert edge["eyebrow"] == "SCORE-DERIVED EDGE"
     assert edge["game_shape"] == "clear_separation"
-    assert "scoreboard its shape" in edge["body"]
+    assert "final margin" in edge["body"]
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
 
 
@@ -339,7 +344,7 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_pa
     assert selected["status"] == "verified_player_stat_module"
     assert selected["player_name"] == "Breanna Stewart"
     assert selected["headline"] == "STEWART LED LIBERTY"
-    assert selected["matchup_note"] == "LIBERTY +11 vs ACES"
+    assert selected["matchup_note"] == "LIBERTY 87, ACES 76"
     assert selected["athlete_photo_status"] in {"approved_local_headshot", "athlete_photo_identity_hold"}
     assert selected["athlete_photo_approval_cue"] in {"APPROVED PHOTO", "IDENTITY HOLD"}
     assert selected["athlete_photo_review_required"] is (selected["athlete_photo_status"] != "approved_local_headshot")
@@ -354,8 +359,8 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_pa
     assert microcopy["selected_variant_id"] == "verified_player_ledger"
     assert microcopy["headline"] == "STEWART + CLEAR SEPARATION"
     assert microcopy["game_shape"] == "clear_separation"
-    assert "Stewart's verified 20 PTS, 6 REB, 4 AST" in microcopy["body"]
-    assert "clear separation" in microcopy["body"]
+    assert "Stewart added 20 PTS, 6 REB, 4 AST" in microcopy["body"]
+    assert "liberty 87, aces 76" in microcopy["body"]
     assert selected["callouts"][:3] == [
         {"label": "PTS", "value": "20"},
         {"label": "REB", "value": "6"},
@@ -372,7 +377,7 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_pa
     assert summary["content_module_mode"] == "verified_player_stats"
     assert summary["content_module_player"] == "Breanna Stewart"
     assert summary["content_module_title"] == "STEWART LED LIBERTY"
-    assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
+    assert summary["content_module_matchup_note"] == "LIBERTY 87, ACES 76"
     assert summary["content_module_game_shape"] == "clear_separation"
     assert summary["content_module_stat_strength"] == "lead_ledger"
     assert summary["athlete_photo_status"] == selected["athlete_photo_status"]

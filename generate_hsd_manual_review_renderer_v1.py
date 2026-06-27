@@ -50,6 +50,8 @@ RENDER_BACKGROUND_CUES = (
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
     "review_only_brand_rails,generated_preview_qa"
 )
+REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
+REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -1007,11 +1009,11 @@ def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
 def draw_reference_guardrail(image: Any) -> None:
     width, height = image.size
     draw = ImageDraw.Draw(image, "RGBA")
-    label = "DRAFT REVIEW ONLY - NOT APPROVED - NO AUTO-PUBLISH"
+    label = REVIEW_DRAFT_FOOTER_LABEL
     pill_w = min(326, width - 760)
     if pill_w > 180:
         draw.rounded_rectangle((width - pill_w - 50, 76, width - 50, 122), radius=8, fill=(190, 39, 54, 232), outline=(241, 238, 229, 180), width=1)
-        draw_reference_text(image, (width - pill_w - 38, 80, pill_w - 24, 36), "DRAFT REVIEW ONLY", "context", 19, 12, PALETTE["ink"], max_lines=1, align="center")
+        draw_reference_text(image, (width - pill_w - 38, 80, pill_w - 24, 36), REVIEW_DRAFT_PILL_LABEL, "context", 19, 12, PALETTE["ink"], max_lines=1, align="center")
     strip_h = 64
     draw.rectangle((0, height - strip_h, width, height), fill=(190, 39, 54, 244))
     draw_reference_text(image, (24, height - strip_h + 12, width - 48, strip_h - 18), label, "context", 24, 14, PALETTE["ink"], max_lines=1, align="center")
@@ -1268,7 +1270,7 @@ def source_count(packet: Dict[str, Any]) -> str:
 def source_quality_label(packet: Dict[str, Any]) -> str:
     text = " ".join(clean(packet.get(key)) for key in ["copy_context", "source_detail", "source_cue"]).lower()
     if "publish_grade" in text or "publish grade" in text:
-        return "PUBLISH-GRADE"
+        return "SOURCE-READY"
     if "confidence_ready" in text or "source_confidence_ready" in text:
         return "SOURCE CHECKED"
     return "SOURCE REVIEW"
@@ -1386,11 +1388,9 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
     stat_text = ", ".join(f"{item['value']} {item['label']}" for item in stats[:3])
     stat_line = " / ".join(f"{item['value']} {item['label']}" for item in stats[:3])
     team_text = f" ({short_team(team)})" if team else ""
-    matchup_note = f"{winner_short} {score.get('winner_score')} - {loser_short} {score.get('loser_score')}"
+    matchup_note = f"{winner_short} {score.get('winner_score')}, {loser_short} {score.get('loser_score')}"
     shape = game_shape(score)
     photo = resolve_athlete_photo(player, team or score.get("winner", ""))
-    if margin is not None:
-        matchup_note = f"{winner_short} +{margin} vs {loser_short}"
     if clean(shape.get("game_shape")) == "close_finish":
         headline = f"{last_name(player)} + CLOSE FINISH" if player else clean(shape.get("game_shape_label"))
     elif clean(shape.get("game_shape")) == "statement_margin":
@@ -1402,7 +1402,7 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "eyebrow": "PLAYER LEDGER" if strength == "lead_ledger" else "STAT NOTE",
         "headline": headline,
         "body": f"{player}{team_text}: {stat_text}.",
-        "editorial_line": f"{stat_line} in the {matchup_note} final." if strength == "lead_ledger" else f"Supporting stat context for the {matchup_note} final.",
+        "editorial_line": f"{stat_line} in the {matchup_note} final." if strength == "lead_ledger" else f"Supporting stat context from the {matchup_note} final.",
         "matchup_note": matchup_note,
         "game_shape": clean(shape.get("game_shape")),
         "game_shape_label": clean(shape.get("game_shape_label")),
@@ -1463,7 +1463,7 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
         body = f"{short_team(winner)} created just enough late separation to make {short_team(loser)} chase."
     elif margin <= 14:
         headline = "CONTROL WINDOW"
-        body = f"{short_team(winner)} owned the stretch that gave the scoreboard its shape."
+        body = f"{short_team(winner)} turned the final margin into the story."
     else:
         headline = "NO-CHASE FINAL"
         body = f"{short_team(winner)} built the gap early enough that {short_team(loser)} never found the counter."
@@ -1479,13 +1479,13 @@ def scoreline_context(score: Dict[str, str]) -> str:
     loser = short_team(score.get("loser", ""))
     margin = score_margin(score)
     total = score_total(score)
-    parts = []
+    winner_score = clean(score.get("winner_score"))
+    loser_score = clean(score.get("loser_score"))
+    parts = [f"{winner} {winner_score}, {loser} {loser_score}" if winner_score and loser_score else f"{winner} over {loser}"]
     if margin is not None:
-        parts.append(f"{winner} +{margin} vs {loser}")
-    else:
-        parts.append(f"{winner} over {loser}")
+        parts.append(f"+{margin} margin")
     if total is not None:
-        parts.append(f"{total} combined points")
+        parts.append(f"{total} total points")
     return "; ".join(parts)
 
 
@@ -1501,19 +1501,17 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
     winner = short_team(score.get("winner", ""))
     loser = short_team(score.get("loser", ""))
     margin = score_margin(score)
-    total = score_total(score)
     source_label = source_quality_label(packet)
     shape = game_shape(score)
     shape_label = clean(shape.get("game_shape_label")) or "FINAL RESULT"
     variants: List[Dict[str, str]] = []
     margin_text = f"+{margin}" if margin is not None else "final-score"
-    total_text = f"{total}-point total" if total is not None else "verified final"
     variants.append(
         {
             "variant_id": "scoreline_spine",
             "label": "Scoreline spine",
             "headline": clean(shape.get("angle_label")) or f"{winner} {margin_text} FINAL",
-            "body": f"{shape_label}: {winner} over {loser}; anchor the angle to the {margin_text} margin and {total_text}.",
+            "body": f"{scoreline_context(score)}. Keep the angle on the {shape_label.lower()} until source proof supports more.",
         }
     )
     if clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}:
@@ -1525,7 +1523,7 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
                     "variant_id": "verified_player_ledger",
                     "label": "Verified player ledger",
                     "headline": f"{last_name(player)} + {shape_label}" if player else shape_label,
-                    "body": f"{last_name(player).title()}'s verified {stat_line.replace(' / ', ', ')} frames the {shape_label.lower()}.",
+                    "body": f"{last_name(player).title()} added {stat_line.replace(' / ', ', ')} in the {shape_label.lower()}: {scoreline_context(score).lower()}.",
                 }
             )
         else:
@@ -1534,7 +1532,7 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
                     "variant_id": "verified_supporting_stat_note",
                     "label": "Verified supporting stat note",
                     "headline": clean(shape.get("angle_label")) or f"{winner} {margin_text} FINAL",
-                    "body": f"{last_name(player).title()}'s verified {stat_line.replace(' / ', ', ')} is supporting context; keep the main angle on the {shape_label.lower()}.",
+                    "body": f"{last_name(player).title()}'s {stat_line.replace(' / ', ', ')} stays as supporting context; keep the main angle on the {shape_label.lower()}.",
                 }
             )
     else:
@@ -1551,7 +1549,7 @@ def editorial_microcopy_variants(packet: Dict[str, Any], score: Dict[str, str], 
             "variant_id": "operator_angle_check",
             "label": "Operator angle check",
             "headline": review_prompt(score),
-            "body": f"{source_label} review: use this as the manual question, not an automated claim. Add the why only after the source packet supports it.",
+            "body": f"{source_label}: hold this as an editor question until the source packet supports the why.",
         }
     )
     return variants
@@ -1811,11 +1809,11 @@ def draw_review_chrome(draw: Any, width: int, height: int, template: Dict[str, s
     draw.rectangle((0, 24, width, 34), fill=gold)
     draw_rounded(draw, (54, 70, width - 54, 146), 0, (255, 255, 255), PALETTE["line"], 2)
     draw.text((82, 88), "HER SPORTS DAILY", font=font(30, True), fill=(24, 28, 36))
-    draw_right_text(draw, width - 82, 88, "DRAFT REVIEW ONLY", font(28, True), red)
+    draw_right_text(draw, width - 82, 88, REVIEW_DRAFT_PILL_LABEL, font(28, True), red)
     draw_chip(draw, 82, 162, template["angle_label"], gold, (19, 31, 49), 22)
     draw_chip(draw, 82 + 132, 162, format_label.upper(), (232, 239, 249), PALETTE["blue"], 20)
     draw.rectangle((54, height - 64, width - 54, height - 36), fill=red)
-    draw.text((70, height - 62), "NOT APPROVED - NOT PUBLISH READY - AUTO-RENDER OFF - AUTO-PUBLISH OFF", font=font(20, True), fill=ink)
+    draw.text((70, height - 62), REVIEW_DRAFT_FOOTER_LABEL, font=font(20, True), fill=ink)
 
 
 def draw_brand_pattern(draw: Any, width: int, height: int, tone: str) -> None:
@@ -2946,6 +2944,15 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def report_status_label(status: str) -> str:
+    labels = {
+        "draft_preview_created": "Review draft created",
+        "blocked_missing_handoff": "Review draft blocked: missing handoff",
+        "blocked_preview_not_created": "Review draft blocked: preview not created",
+    }
+    return labels.get(clean(status), clean(status).replace("_", " ").title() or "Not run")
+
+
 def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reason: str = "", render_result: Dict[str, Any] | None = None) -> List[str]:
     packet = manifest.get("packet") if isinstance(manifest.get("packet"), dict) else {}
     render_result = render_result or {}
@@ -2960,13 +2967,13 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         "# HSD Manual Review Renderer",
         "",
         f"Version: `{VERSION}`",
-        f"Status: `{status}`",
+        f"Renderer state: {report_status_label(status)}",
         f"Generated: `{datetime.now(timezone.utc).isoformat()}`",
         "",
         "## Guardrails",
         "",
         "- Manual-only mode.",
-        "- Draft preview is for human review only.",
+        "- Review draft is for human review only.",
         "- Does not publish.",
         "- Does not approve the image.",
         "- Does not call paid APIs.",
