@@ -653,3 +653,27 @@ def test_command_center_surfaces_hockey_softball_source_review_helper(tmp_path: 
     assert "Hockey/softball source review helper report" in shortcut_labels
     assert "Women's hockey review walkthrough" in shortcut_labels
     assert "Softball review walkthrough" in shortcut_labels
+
+
+def test_command_center_tolerates_missing_or_empty_hockey_softball_helper_report(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path))
+    command_center = load_command_center_module()
+
+    missing_panel = command_center.asset_availability_readiness_panel()
+    assert missing_panel["hockey_softball_source_review_helper_status"] == ""
+    assert missing_panel["hockey_softball_source_review_helper_generated_at"] == ""
+    assert missing_panel["hockey_softball_source_review_helper_freshness_status"] == "packet_missing"
+
+    report_dir = tmp_path / "data" / "asset_registry"
+    report_dir.mkdir(parents=True)
+    (report_dir / "hockey_softball_source_review_helper_report.md").write_text("# Empty helper\n", encoding="utf-8")
+    (report_dir / "hockey_softball_source_review_helper_report.json").write_text(
+        json.dumps({"status": "helper_empty", "generated_at_local": "2026-06-27 10:00 local", "summaries": None}),
+        encoding="utf-8",
+    )
+
+    empty_panel = command_center.asset_availability_readiness_panel()
+    assert empty_panel["hockey_softball_source_review_helper_status"] == "helper_empty"
+    assert empty_panel["hockey_softball_source_review_helper_generated_at"] == "2026-06-27 10:00 local"
+    assert empty_panel["hockey_softball_source_review_helper_freshness_status"] == "packet_empty"

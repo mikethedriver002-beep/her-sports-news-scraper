@@ -1352,6 +1352,19 @@ def packet_freshness_html(panel: Mapping[str, Any], prefix: str, label: str) -> 
     """
 
 
+def hockey_softball_helper_summary_rows(manifest: Mapping[str, Any] | None) -> int:
+    if not isinstance(manifest, dict):
+        return 0
+    summaries = manifest.get("summaries")
+    if not isinstance(summaries, list):
+        return 0
+    return sum(
+        as_int(row.get("logo_contact_rows")) + as_int(row.get("athlete_contact_rows"))
+        for row in summaries
+        if isinstance(row, dict)
+    )
+
+
 def asset_availability_readiness_panel() -> Dict[str, Any]:
     audit = read_json("data/asset_registry/asset_availability_audit.json")
     logo_packet_rows = read_csv("data/asset_registry/wnba/logo_review_packets.csv")
@@ -1403,11 +1416,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     )
     hockey_softball_helper_cue = packet_freshness_cue(
         "data/asset_registry/hockey_softball_source_review_helper_report.md",
-        sum(
-            as_int(row.get("logo_contact_rows")) + as_int(row.get("athlete_contact_rows"))
-            for row in (hockey_softball_helper_manifest.get("summaries") if isinstance(hockey_softball_helper_manifest, dict) else [])
-            if isinstance(row, dict)
-        ),
+        hockey_softball_helper_summary_rows(hockey_softball_helper_manifest),
         RUN_COMMANDS["data/asset_registry/hockey_softball_source_review_helper_report.md"],
         context="hockey/softball source review helper",
     )
