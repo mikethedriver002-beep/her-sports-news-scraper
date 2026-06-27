@@ -219,6 +219,7 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "final_score_stat_proof_v1.csv",
         "final_score_stat_proof_v1.md",
         "final_score_stat_proof_v1.json",
+        "final_score_stat_proof_confirmation_intake_v1.csv",
     ]:
         assert artifact in results
         assert artifact in command_center
@@ -372,6 +373,7 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     assert {row["player_team"] for row in stat_rows} == {"Indiana Fever", "New York Liberty"}
     assert all(row["proof_status"] == "named_stat_line_source_backed_operator_verify" for row in stat_rows)
     assert all("stats_evidence_gap_board_v1.csv event_uid=event_confirmed" in row["exact_next_file_or_intake"] for row in stat_rows)
+    assert all(row["operator_note_path"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=") for row in confirmed_rows)
     assert all(row["review_only"] == "Yes" for row in rows)
     assert all(row["approval_state_change"] == "none" for row in rows)
     assert all(row["publish_action"] == "none_artifact_only" for row in rows)
@@ -381,6 +383,19 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     assert missing_stat["proof_status"] == "named_stat_line_missing_manual_box_score_confirmation_required"
     assert missing_stat["manual_box_score_confirmation_needed"] == "Yes"
     assert "stats_confirmation_intake_v1.csv" in missing_stat["exact_next_file_or_intake"]
+
+    confirmation_rows = module.final_score_stat_proof_confirmation_rows(rows)
+    assert len(confirmation_rows) == len(rows)
+    by_proof = {row["proof_id"]: row for row in confirmation_rows}
+    assert set(by_proof) == {row["proof_id"] for row in rows}
+    assert all(row["operator_checked_source_url"] == "" for row in confirmation_rows)
+    assert all(row["operator_confirmation_status"] == "" for row in confirmation_rows)
+    assert all(row["operator_notes"] == "" for row in confirmation_rows)
+    assert all(row["review_only"] == "Yes" for row in confirmation_rows)
+    assert all(row["approval_state_change"] == "none" for row in confirmation_rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in confirmation_rows)
+    assert "Verify final score" in by_proof[score["proof_id"]]["operator_review_task"]
+    assert "Verify named player" in by_proof[stat_rows[0]["proof_id"]]["operator_review_task"]
 
     summary = module.final_score_stat_proof_summary(rows)
     assert summary["final_score_rows"] == 2
