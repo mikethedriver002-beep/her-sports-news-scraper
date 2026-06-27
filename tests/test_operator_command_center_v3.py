@@ -164,6 +164,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "matching_official_evidence_urls": "[\"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
                 "manual_confirmation_gap": "Current artifacts provide a review cue only; operator must still verify the cited source URL.",
                 "exact_source_or_intake_row_to_open": "Open game_intelligence_board_v1.csv row_id=event-sky-fire, then open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky.",
+                "score_stat_proof_status": "score_and_named_player_stat_proof_present_operator_verify",
+                "score_stat_proof_artifacts": "final_score_stat_proof_v1.csv proof_id=proof-sky-player",
+                "score_stat_proof_source_urls": "[\"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
+                "score_stat_manual_confirmation_cue": "Proof rows are source-backed review cues; operator must still verify the cited source URL.",
+                "exact_score_stat_proof_row_or_source_to_open": "Open final_score_stat_proof_v1.csv proof_id=proof-sky-player; then verify source URL https://www.espn.com/wnba/game/_/gameId/401857025.",
+                "named_player_stat_proof_examples": "Kamilla Cardoso (Chicago Sky): PTS 30, REB 8",
             }
         ],
         [
@@ -173,16 +179,23 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "matching_official_evidence_urls",
             "manual_confirmation_gap",
             "exact_source_or_intake_row_to_open",
+            "score_stat_proof_status",
+            "score_stat_proof_artifacts",
+            "score_stat_proof_source_urls",
+            "score_stat_manual_confirmation_cue",
+            "exact_score_stat_proof_row_or_source_to_open",
+            "named_player_stat_proof_examples",
         ],
     )
 
     rows = command_center.source_discovery_board()
     row = rows[0]
 
-    assert row["story_opportunity_source_coverage"] == "matching_news_and_free_result_evidence_operator_verify"
-    assert "game_intelligence_board_v1.csv row_id=event-sky-fire" in row["evidence_source"]
-    assert "row_id=event-sky-fire" in row["next_action"]
-    assert row["story_opportunity_second_source_action"].startswith("Open game_intelligence_board_v1.csv")
+    assert row["story_opportunity_source_coverage"] == "score_and_named_player_stat_proof_present_operator_verify"
+    assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
+    assert "proof_id=proof-sky-player" in row["next_action"]
+    assert row["story_opportunity_second_source_action"].startswith("Open final_score_stat_proof_v1.csv")
+    assert "source-backed review cues" in row["story_opportunity_readiness_note"]
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
 

@@ -214,7 +214,40 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
             "source_domain": "www.espn.com",
         }
     ]
-    clusters = module.breaking_signal_cluster_rows([row, duplicate], packets=[packet], game_rows=game_rows, intake_rows=intake)
+    proof_rows = [
+        {
+            "proof_id": "proof-final-liberty",
+            "event_uid": "event-liberty-aces",
+            "matchup": "Las Vegas Aces at New York Liberty",
+            "fact_type": "final_score",
+            "fact_value": "Las Vegas Aces 80 - New York Liberty 88",
+            "proof_status": "score_source_backed_operator_verify",
+            "manual_box_score_confirmation_needed": "No",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401000001",
+            "evidence_artifact_row": "stats_evidence_gap_board_v1.csv event_uid=event-liberty-aces",
+            "exact_next_file_or_intake": "Open final_score_stat_proof_v1.csv proof_id=proof-final-liberty; then verify the source URL.",
+        },
+        {
+            "proof_id": "proof-player-liberty",
+            "event_uid": "event-liberty-aces",
+            "matchup": "Las Vegas Aces at New York Liberty",
+            "fact_type": "named_player_stat_line",
+            "fact_value": "Sabrina Ionescu (New York Liberty): PTS 24, AST 8",
+            "named_player": "Sabrina Ionescu",
+            "proof_status": "named_stat_line_source_backed_operator_verify",
+            "manual_box_score_confirmation_needed": "No",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401000001",
+            "evidence_artifact_row": "stats_evidence_gap_board_v1.csv event_uid=event-liberty-aces; top_performers item 1",
+            "exact_next_file_or_intake": "Open final_score_stat_proof_v1.csv proof_id=proof-player-liberty; then verify the named player stat line.",
+        },
+    ]
+    clusters = module.breaking_signal_cluster_rows(
+        [row, duplicate],
+        packets=[packet],
+        game_rows=game_rows,
+        proof_rows=proof_rows,
+        intake_rows=intake,
+    )
     cluster = clusters[0]
     assert cluster["story_count"] == "2"
     assert cluster["source_diversity"] == "multi_domain"
@@ -227,11 +260,21 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "game_intelligence_board_v1.csv row_id=event-liberty-aces" in cluster["matching_official_evidence_artifacts"]
     assert "breaking_public_signal_confirmation_intake.csv confirmation_id=" in cluster["exact_source_or_intake_row_to_open"]
     assert "operator must still verify" in cluster["manual_confirmation_gap"].lower()
+    assert cluster["score_stat_proof_status"] == "score_and_named_player_stat_proof_present_operator_verify"
+    assert cluster["named_player_stat_proof_count"] == "1"
+    assert "Sabrina Ionescu" in cluster["named_player_stat_proof_examples"]
+    assert "final_score_stat_proof_v1.csv proof_id=proof-player-liberty" in cluster["exact_score_stat_proof_row_or_source_to_open"]
+    assert "stats_evidence_gap_board_v1.csv event_uid=event-liberty-aces" in cluster["score_stat_proof_artifacts"]
     assert "breaking_public_signal_confirmation_intake.csv" in cluster["exact_manual_next_action"]
     assert cluster["review_only"] == "true"
     assert cluster["publish_ready"] == "false"
     assert cluster["auto_publish"] == "false"
     assert cluster["auto_source_enablement"] == "false"
+
+    missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], intake_rows=intake)[0]
+    assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
+    assert "No matching final-score/stat proof row found" in missing_proof_cluster["score_stat_manual_confirmation_cue"]
+    assert "final_score_stat_proof_v1.csv" in missing_proof_cluster["exact_score_stat_proof_row_or_source_to_open"]
 
 
 def test_box_score_top_performers_match_the_same_game() -> None:
