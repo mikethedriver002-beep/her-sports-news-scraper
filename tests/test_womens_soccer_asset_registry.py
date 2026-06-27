@@ -58,14 +58,13 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert not report["blockers"]
     assert "players_csv_header_only_manual_intake" in report["warnings"]
     assert "europe_players_csv_header_only_manual_intake" in report["warnings"]
-    assert "europe_team_logo_rows_require_human_review_before_approval" in report["warnings"]
+    assert "europe_team_logo_rows_require_human_review_before_approval" not in report["warnings"]
 
 
 def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
     base = ROOT / "data" / "asset_registry" / "womens_soccer"
     text = "\n".join(path.read_text(encoding="utf-8") for path in sorted(base.glob("*/*.csv")))
     forbidden = [
-        ",true,approved",
         "render_enabled,true",
         "publish_ready,true",
         "paid_source,true",
@@ -99,3 +98,5 @@ def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
     assert "nwsl_schedule" in text
     assert "nwslsoccer_team_uuid" in text
     assert "review_required,not_approved" in text
+    assert "team_logo,approved,Mike" in text
+    assert "team_identity,not_approved" in text

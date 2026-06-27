@@ -232,14 +232,14 @@ def clean(value: Any) -> str:
 def read_rows(path: Path) -> List[Dict[str, str]]:
     if not path.exists():
         return []
-    with path.open(newline="", encoding="utf-8", errors="replace") as handle:
+    with path.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
         return list(csv.DictReader(handle))
 
 
 def header(path: Path) -> List[str]:
     if not path.exists():
         return []
-    with path.open(newline="", encoding="utf-8", errors="replace") as handle:
+    with path.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
         reader = csv.reader(handle)
         return next(reader, [])
 
@@ -249,6 +249,45 @@ def row_identity(file_name: str, index: int, row: Dict[str, str]) -> str:
     entity_id = clean(row.get("entity_id") or row.get("team_id") or row.get("league_id") or row.get("player_id"))
     suffix = f":{entity_type}:{entity_id}" if entity_type or entity_id else f":row_{index + 1}"
     return f"{file_name}{suffix}"
+
+
+def approval_status_is_allowed(file_name: str, row: Dict[str, str]) -> bool:
+    value = clean(row.get("approval_status")).lower()
+    if value not in {"approved", "true", "auto_approved", "render_approved"}:
+        return True
+    if value != "approved":
+        return False
+    entity_type = clean(row.get("entity_type"))
+    if file_name == "approval_status.csv":
+        scope = clean(row.get("approval_scope"))
+        allowed_scope = (
+            entity_type == "team" and scope == "team_logo"
+        ) or (
+            entity_type == "league" and scope == "league_mark"
+        )
+        return (
+            allowed_scope
+            and bool(clean(row.get("approved_by")))
+            and bool(clean(row.get("approved_at_utc")))
+            and clean(row.get("auto_approval_allowed")).lower() == "false"
+            and clean(row.get("render_enabled")).lower() == "false"
+            and clean(row.get("publish_ready")).lower() == "false"
+        )
+    if file_name == "asset_slots.csv":
+        slot = clean(row.get("asset_slot"))
+        allowed_slot = (
+            entity_type == "team" and slot == "primary_logo"
+        ) or (
+            entity_type == "league" and slot in {"league_mark", "federation_mark"}
+        )
+        return (
+            allowed_slot
+            and clean(row.get("file_exists")).lower() == "true"
+            and clean(row.get("auto_download_allowed")).lower() == "false"
+            and clean(row.get("render_enabled")).lower() == "false"
+            and clean(row.get("publish_ready")).lower() == "false"
+        )
+    return False
 
 
 def values(rows_by_file: Dict[str, List[Dict[str, str]]], file_name: str, field: str) -> Iterable[str]:
@@ -295,7 +334,7 @@ def evaluate(root: Path) -> Dict[str, Any]:
                     blockers.append(f"unsafe_truthy_field:{ident}:{field}={value}")
             for field in NOT_APPROVED_FIELDS & set(row):
                 value = clean(row.get(field)).lower()
-                if value in {"approved", "true", "auto_approved", "render_approved"}:
+                if value in {"approved", "true", "auto_approved", "render_approved"} and not approval_status_is_allowed(file_name, row):
                     blockers.append(f"approval_not_review_only:{ident}:{field}={value}")
             url_fields = [
                 field
@@ -337,7 +376,7 @@ def evaluate(root: Path) -> Dict[str, Any]:
                     blockers.append(f"unsafe_truthy_field:{ident}:{field}={value}")
             for field in NOT_APPROVED_FIELDS & set(row):
                 value = clean(row.get(field)).lower()
-                if value in {"approved", "true", "auto_approved", "render_approved"}:
+                if value in {"approved", "true", "auto_approved", "render_approved"} and not approval_status_is_allowed(file_name, row):
                     blockers.append(f"approval_not_review_only:{ident}:{field}={value}")
             url_fields = [
                 field
@@ -465,7 +504,12 @@ def evaluate(root: Path) -> Dict[str, Any]:
     europe_player_count = len(europe_rows_by_file.get("players.csv", []))
     if europe_player_count == 0:
         warnings.append("europe_players_csv_header_only_manual_intake")
-    warnings.append("europe_team_logo_rows_require_human_review_before_approval")
+    if any(
+        clean(row.get("approval_status")).lower() != "approved"
+        for row in europe_rows_by_file.get("asset_slots.csv", [])
+        if clean(row.get("entity_type")) == "team" and clean(row.get("asset_slot")) == "primary_logo"
+    ):
+        warnings.append("europe_team_logo_rows_require_human_review_before_approval")
 
     status = "passed_womens_soccer_review_scaffold" if not blockers else "blocked_womens_soccer_review_scaffold"
     return {

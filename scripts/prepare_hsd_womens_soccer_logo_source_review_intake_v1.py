@@ -62,7 +62,7 @@ def clean(value: Any) -> str:
 def read_csv(path: Path) -> Tuple[List[Dict[str, str]], List[str]]:
     if not path.exists():
         return [], []
-    with path.open(newline="", encoding="utf-8", errors="replace") as handle:
+    with path.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
         reader = csv.DictReader(handle)
         return list(reader), list(reader.fieldnames or [])
 

@@ -142,7 +142,7 @@ def read_csv(path: str | Path) -> List[Dict[str, str]]:
     resolved = input_path(path)
     if not resolved.exists():
         return []
-    with resolved.open(newline="", encoding="utf-8", errors="replace") as handle:
+    with resolved.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
         return list(csv.DictReader(handle))
 
 
