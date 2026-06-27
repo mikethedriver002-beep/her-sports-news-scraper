@@ -599,26 +599,31 @@ def test_hockey_softball_source_review_helper_prefills_intakes_and_walkthroughs(
 
     assert hockey_athlete["operator_decision"] == "hold_identity"
     assert hockey_athlete["identity_verified"] == "no"
-    assert hockey_athlete["source_reviewed"] == "yes"
+    assert hockey_athlete["source_reviewed"] == "no"
     assert hockey_athlete["local_file_reviewed"] == "no"
-    assert hockey_athlete["source_allowed_for_review_only"] == "yes"
-    assert hockey_athlete["rights_reviewed"] == "yes"
+    assert hockey_athlete["source_allowed_for_review_only"] == "no"
+    assert hockey_athlete["rights_reviewed"] == "no"
+    assert hockey_athlete["source_url_to_record"] == ""
     assert hockey_athlete["registry_action"] == "hold_no_registry_state_change_until_local_candidate_asset_exists"
-    assert "identity stays held" in hockey_athlete["operator_notes"]
-    assert hockey_athlete["reviewed_by"] == "Mike"
+    assert "Pending manual source and rights review" in hockey_athlete["operator_notes"]
+    assert hockey_athlete["reviewed_by"] == ""
+    assert hockey_athlete["reviewed_at_local"] == ""
     assert hockey_athlete["operator_priority"] == "P1"
     assert softball_athlete["operator_decision"] == "hold_identity"
     assert softball_athlete["identity_verified"] == "no"
-    assert softball_athlete["source_reviewed"] == "yes"
+    assert softball_athlete["source_reviewed"] == "no"
     assert softball_athlete["local_file_reviewed"] == "no"
-    assert softball_athlete["source_allowed_for_review_only"] == "yes"
-    assert softball_athlete["rights_reviewed"] == "yes"
+    assert softball_athlete["source_allowed_for_review_only"] == "no"
+    assert softball_athlete["rights_reviewed"] == "no"
+    assert softball_athlete["source_url_to_record"] == ""
     assert softball_athlete["registry_action"] == "hold_no_registry_state_change_until_local_candidate_asset_exists"
-    assert softball_athlete["reviewed_by"] == "Mike"
+    assert softball_athlete["reviewed_by"] == ""
+    assert softball_athlete["reviewed_at_local"] == ""
     assert softball_athlete["operator_priority"] == "P1"
 
     assert "Review Order" in (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md").read_text(encoding="utf-8")
-    assert "source_reviewed=yes" in (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md").read_text(encoding="utf-8")
+    assert "source_reviewed=no" in (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md").read_text(encoding="utf-8")
+    assert "he may batch-mark `source_reviewed=yes`" in (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md").read_text(encoding="utf-8")
     assert "identity_verified=no" in (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md").read_text(encoding="utf-8")
     assert "Test Team" in (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md").read_text(encoding="utf-8")
     assert "Review Order" in (tmp_path / "data/asset_registry/softball/softball_review_walkthrough.md").read_text(encoding="utf-8")

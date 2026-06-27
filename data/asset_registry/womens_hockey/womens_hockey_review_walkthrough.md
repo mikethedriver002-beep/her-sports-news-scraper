@@ -1,6 +1,6 @@
 # Women's Hockey Review Walkthrough
 
-Generated: `2026-06-27 13:45 Cuba Daylight Time`
+Generated: `2026-06-27 13:52 Cuba Daylight Time`
 
 Review-only walkthrough for the logo and athlete candidate packets. It does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -69,7 +69,8 @@ Review-only walkthrough for the logo and athlete candidate packets. It does not 
 ## How To Fill The Intake CSV
 
 - Logo rows: keep `source_reviewed=yes` and `identity_match=yes` only after you manually open the source candidate page and confirm the mark matches the league or club.
-- Athlete source rows: `source_reviewed=yes` means you manually opened the roster/profile/index page and confirmed it is a usable source candidate.
+- Athlete source rows: the generator leaves `source_reviewed=no`, `source_allowed_for_review_only=no`, `rights_reviewed=no`, `reviewed_by` blank, and `reviewed_at_local` blank for placeholder source slots.
+- After Mike manually opens the roster/profile/index page and confirms source/rights posture, he may batch-mark `source_reviewed=yes`, `source_allowed_for_review_only=yes`, `rights_reviewed=yes`, `reviewed_by`, and `reviewed_at_local` in the intake CSV.
 - Athlete identity rows: keep `identity_verified=no` when the row is still an `operator_add_player_*` source slot or has no concrete `player_id` and player name.
 - Athlete local file rows: keep `local_file_reviewed=no` until Mike manually supplies and reviews the local candidate file.
 - Athlete hold boundary: `registry_action` must stay `hold_no_registry_state_change_until_local_candidate_asset_exists` unless a later explicit human-edited intake file supplies named identity evidence and local asset review.

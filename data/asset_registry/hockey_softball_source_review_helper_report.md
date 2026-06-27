@@ -1,7 +1,7 @@
 # Hockey/Softball Source Review Intake Helper Report
 
 - Status: `hockey_softball_source_review_helper_ready`
-- Generated: `2026-06-27 13:45 Cuba Daylight Time`
+- Generated: `2026-06-27 13:52 Cuba Daylight Time`
 - Reviewed by: `Mike source-review sweep`
 - Overwrite: `false`
 - Guardrails: no paid APIs, no downloads, no auto-approval, no `headshot.png` writes, no `.approved` markers, no publish-ready movement, no publishing.

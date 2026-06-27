@@ -160,6 +160,10 @@ def has_named_athlete_identity(row: Mapping[str, str]) -> bool:
     return bool(player_id and display_name and not display_name.startswith("operator_add_player"))
 
 
+def is_placeholder_source_slot(row: Mapping[str, str]) -> bool:
+    return not has_named_athlete_identity(row) and clean(row.get("local_candidate_exists")).lower() != "true"
+
+
 def merged_row(row: Mapping[str, str], prior: Mapping[str, str] | None = None) -> Dict[str, str]:
     output = {field: clean(row.get(field)) for field in row.keys()}
     if prior:
@@ -223,27 +227,42 @@ def prepare_athlete_rows(
         prior = prior_by_key.get(key_for_athlete(row))
         output = merged_row(row, prior)
         already_reviewed = clean(output.get("identity_verified")).lower() == "yes" and clean(output.get("source_reviewed")).lower() == "yes"
-        if overwrite or not already_reviewed:
-            identity_verified = "yes" if has_named_athlete_identity(row) else "no"
-            identity_note = (
-                "Named athlete identity can be source-reviewed; local file still required before approval-state change."
-                if identity_verified == "yes"
-                else "Source can be reviewed, but identity stays held until the row names a concrete athlete and local candidate asset exists."
-            )
+        placeholder_source_slot = is_placeholder_source_slot(row)
+        if overwrite or not already_reviewed or placeholder_source_slot:
+            identity_verified = "no" if placeholder_source_slot else ("yes" if has_named_athlete_identity(row) else "no")
+            if placeholder_source_slot:
+                source_reviewed = "no"
+                source_allowed_for_review_only = "no"
+                rights_reviewed = "no"
+                source_url_to_record = ""
+                reviewed_by_value = ""
+                reviewed_at_local_value = ""
+                identity_note = (
+                    "Pending manual source and rights review; after Mike opens the source page, he may mark source_reviewed/source_allowed/rights_reviewed manually. "
+                    "Identity and approval still stay held until a named athlete and local candidate asset exist."
+                )
+            else:
+                source_reviewed = "yes"
+                source_allowed_for_review_only = "yes"
+                rights_reviewed = "yes"
+                source_url_to_record = clean(row.get("source_url"))
+                reviewed_by_value = reviewed_by
+                reviewed_at_local_value = reviewed_at_local
+                identity_note = "Named athlete identity can be source-reviewed; local file still required before approval-state change."
             output.update(
                 {
                     "sport_family": sport_key,
                     "operator_decision": "hold_identity",
                     "identity_verified": identity_verified,
-                    "source_reviewed": "yes",
+                    "source_reviewed": source_reviewed,
                     "local_file_reviewed": "no",
-                    "source_allowed_for_review_only": "yes",
-                    "rights_reviewed": "yes",
-                    "source_url_to_record": clean(row.get("source_url")),
+                    "source_allowed_for_review_only": source_allowed_for_review_only,
+                    "rights_reviewed": rights_reviewed,
+                    "source_url_to_record": source_url_to_record,
                     "registry_action": "hold_no_registry_state_change_until_local_candidate_asset_exists",
                     "operator_notes": f"{identity_note} No approval-state change.",
-                    "reviewed_by": reviewed_by,
-                    "reviewed_at_local": reviewed_at_local,
+                    "reviewed_by": reviewed_by_value,
+                    "reviewed_at_local": reviewed_at_local_value,
                     "approval_scope": f"review_only_renderer_{sport_key}_athlete_photo_trust_manual_intake",
                 }
             )
@@ -298,7 +317,8 @@ def render_walkthrough(
             "## How To Fill The Intake CSV",
             "",
             "- Logo rows: keep `source_reviewed=yes` and `identity_match=yes` only after you manually open the source candidate page and confirm the mark matches the league or club.",
-            "- Athlete source rows: `source_reviewed=yes` means you manually opened the roster/profile/index page and confirmed it is a usable source candidate.",
+            "- Athlete source rows: the generator leaves `source_reviewed=no`, `source_allowed_for_review_only=no`, `rights_reviewed=no`, `reviewed_by` blank, and `reviewed_at_local` blank for placeholder source slots.",
+            "- After Mike manually opens the roster/profile/index page and confirms source/rights posture, he may batch-mark `source_reviewed=yes`, `source_allowed_for_review_only=yes`, `rights_reviewed=yes`, `reviewed_by`, and `reviewed_at_local` in the intake CSV.",
             "- Athlete identity rows: keep `identity_verified=no` when the row is still an `operator_add_player_*` source slot or has no concrete `player_id` and player name.",
             "- Athlete local file rows: keep `local_file_reviewed=no` until Mike manually supplies and reviews the local candidate file.",
             "- Athlete hold boundary: `registry_action` must stay `hold_no_registry_state_change_until_local_candidate_asset_exists` unless a later explicit human-edited intake file supplies named identity evidence and local asset review.",

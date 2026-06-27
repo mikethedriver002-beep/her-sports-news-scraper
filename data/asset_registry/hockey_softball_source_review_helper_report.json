@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-source-review-intake-prepare-v1-review-only",
   "status": "hockey_softball_source_review_helper_ready",
-  "generated_at_local": "2026-06-27 13:45 Cuba Daylight Time",
+  "generated_at_local": "2026-06-27 13:52 Cuba Daylight Time",
   "reviewed_by": "Mike source-review sweep",
   "overwrite": false,
   "guardrails": {
