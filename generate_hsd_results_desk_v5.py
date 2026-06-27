@@ -10,6 +10,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+from urllib.parse import urlparse
 
 import requests
 
@@ -36,6 +37,9 @@ MANUAL_REVIEW_FILE = "manual_review_queue.csv"
 SOURCE_HEALTH_FILE = "source_health_report.csv"
 BOX_SCORE_AUDIT_FILE = "wnba_box_score_audit.csv"
 BOX_SCORE_SUMMARY_FILE = "wnba_box_score_summary.md"
+GAME_INTELLIGENCE_BOARD_FILE = "game_intelligence_board_v1.csv"
+GAME_INTELLIGENCE_REPORT_FILE = "game_intelligence_board_v1.md"
+GAME_INTELLIGENCE_MANIFEST_FILE = "game_intelligence_board_v1.json"
 GRAPHICS_QUEUE_FILE = "results_graphics_queue.md"
 RECOMMENDATIONS_FILE = "daily_results_recommendations.md"
 HUB_FILE = "results_system_hub.md"
@@ -83,11 +87,49 @@ EVENT_FIELDS = [
 
 DUP_FIELDS = ["canonical_key", "source_count", "source_names", "score_variants", "date", "teams", "decision"]
 STALE_FIELDS = ["source_name", "source_event_id", "canonical_key", "scheduled_date_local", "status_norm", "source_url", "reason"]
-EXPECTED_FIELDS = ["date", "league", "home_team", "away_team", "expected_key", "matched", "matched_event_uid", "reason"]
+EXPECTED_FIELDS = ["date", "league", "sport", "home_team", "away_team", "expected_key", "source_name", "source_url", "matched", "matched_event_uid", "reason"]
+GAME_INTELLIGENCE_FIELDS = [
+    "row_id",
+    "row_type",
+    "attention_bucket",
+    "game_date",
+    "league",
+    "sport",
+    "home_team",
+    "away_team",
+    "status",
+    "final_score",
+    "recap_candidate",
+    "stats_context_status",
+    "stats_context",
+    "missing_evidence",
+    "selected_source",
+    "source_count",
+    "source_confidence",
+    "source_confidence_reason",
+    "source_url",
+    "source_domain",
+    "retrieved_at_utc",
+    "manual_review_status",
+    "review_only",
+    "approval_state_change",
+    "publish_action",
+]
 
 
 def clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+def source_domain(url: Any) -> str:
+    raw = clean(url)
+    if not raw:
+        return ""
+    try:
+        parsed = urlparse(raw if "://" in raw else f"https://{raw}")
+        return parsed.netloc.lower()
+    except Exception:
+        return ""
 
 
 def low(value: Any) -> str:
@@ -142,6 +184,10 @@ def normalize_status(value: Any) -> str:
         return "scheduled"
     if any(x in s for x in ["postponed", "cancelled", "canceled", "suspended", "abandoned"]):
         return "not_played"
+    if re.search(r"\b(mon|tue|wed|thu|fri|sat|sun)(day)?\b.*\b\d{1,2}:\d{2}\s*[ap]\.?m", s):
+        return "scheduled"
+    if re.search(r"\b\d{1,2}:\d{2}\s*[ap]\.?m\b", s) and any(tz in s for tz in [" et", " edt", " est", " ct", " cdt", " cst", " mt", " mdt", " mst", " pt", " pdt", " pst"]):
+        return "scheduled"
     return s or "unknown"
 
 
@@ -176,6 +222,10 @@ def safe_int(value: Any, default: int | None = None) -> int | None:
 
 def score_present(home_score: Any, away_score: Any) -> bool:
     return clean(home_score) != "" and clean(away_score) != ""
+
+
+def score_values_valid(home_score: Any, away_score: Any) -> bool:
+    return safe_int(home_score) is not None and safe_int(away_score) is not None
 
 
 def score_winner(home: str, away: str, home_score: Any, away_score: Any) -> Tuple[str, str]:
@@ -473,7 +523,7 @@ def missing_games_alert(expected_rows: List[Dict[str, str]], events: List[Dict[s
     event_by_key = {clean(e.get("canonical_key")): e for e in events if clean(e.get("canonical_key"))}; rows: List[Dict[str, str]] = []
     for row in expected_rows:
         key = expected_key(row); matched = key in event_by_key; event = event_by_key.get(key, {})
-        rows.append({"date": clean(row.get("date") or row.get("scheduled_date_local") or row.get("event_date_local")), "league": clean(row.get("league") or "WNBA"), "home_team": clean(row.get("home_team") or row.get("home_team_name")), "away_team": clean(row.get("away_team") or row.get("away_team_name")), "expected_key": key, "matched": "Yes" if matched else "No", "matched_event_uid": clean(event.get("event_uid")), "reason": "matched" if matched else "missing_from_free_sources_or_outside_window"})
+        rows.append({"date": clean(row.get("date") or row.get("scheduled_date_local") or row.get("event_date_local")), "league": clean(row.get("league") or "WNBA"), "sport": clean(row.get("sport") or "basketball"), "home_team": clean(row.get("home_team") or row.get("home_team_name")), "away_team": clean(row.get("away_team") or row.get("away_team_name")), "expected_key": key, "source_name": clean(row.get("source_name")), "source_url": clean(row.get("source_url")), "matched": "Yes" if matched else "No", "matched_event_uid": clean(event.get("event_uid")), "reason": "matched" if matched else "missing_from_free_sources_or_outside_window"})
     summary = {"expected_fixture_file_present": bool(expected_rows), "expected_games": len(expected_rows), "matched": sum(1 for row in rows if row.get("matched") == "Yes"), "missing": sum(1 for row in rows if row.get("matched") == "No")}
     return rows, summary
 
@@ -504,15 +554,23 @@ def extract_espn_top_performers(summary: Dict[str, Any]) -> List[str]:
 
 
 def audit_wnba_box_scores(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    if low(os.environ.get("HSD_WNBA_BOX_AUDIT", "true")) in {"0", "false", "no"}: return []
+    eligible = [e for e in events if e.get("league_norm") == "WNBA" and e.get("espn_event_id")]
+    for event in eligible:
+        event["box_score_audit_status"] = "not_audited_sample_cap"
+    if low(os.environ.get("HSD_WNBA_BOX_AUDIT", "true")) in {"0", "false", "no"}:
+        for event in eligible:
+            event["box_score_audit_status"] = "disabled"
+        return []
     rows: List[Dict[str, Any]] = []
-    for event in [e for e in events if e.get("league_norm") == "WNBA" and e.get("espn_event_id")][:10]:
+    for event in eligible[:10]:
         event_id = event.get("espn_event_id"); url = "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary"
         try:
             r = requests.get(url, params={"event": event_id}, headers={"User-Agent": "HerSportsDailyResultsDesk/5.0"}, timeout=30); status = r.status_code; r.raise_for_status(); performers = extract_espn_top_performers(r.json()); audit_status = "found" if performers else "summary_found_no_performers"
+            event["box_score_audit_status"] = audit_status
             if performers: event["box_score_top_performers"] = " | ".join(performers); event["slide_3_context"] = f"Box-score context available: {event['box_score_top_performers']}"
             rows.append({"event_uid": event.get("event_uid"), "espn_event_id": event_id, "graphics_headline": event.get("graphics_headline"), "league_norm": event.get("league_norm"), "http_status": status, "audit_status": audit_status, "top_performers": event.get("box_score_top_performers", ""), "source_url": f"https://www.espn.com/wnba/game/_/gameId/{event_id}", "notes": ""})
         except Exception as exc:
+            event["box_score_audit_status"] = "error"
             rows.append({"event_uid": event.get("event_uid"), "espn_event_id": event_id, "graphics_headline": event.get("graphics_headline"), "league_norm": event.get("league_norm"), "http_status": 0, "audit_status": "error", "top_performers": "", "source_url": f"https://www.espn.com/wnba/game/_/gameId/{event_id}", "notes": str(exc)})
         time.sleep(REQUEST_SLEEP_SECONDS)
     return rows
@@ -573,6 +631,234 @@ def missing_games_md(summary: Dict[str, Any], rows: List[Dict[str, str]]) -> str
     return "\n".join(lines) + "\n"
 
 
+def game_attention_bucket(event: Dict[str, Any]) -> str:
+    status = clean(event.get("status_norm"))
+    if event.get("include_in_graphics"):
+        return "recap_candidate"
+    if status == "final":
+        return "final_result"
+    if status == "live":
+        return "live_watch"
+    if status == "scheduled":
+        return "upcoming_game"
+    return status or "review"
+
+
+def stats_context_for(event: Dict[str, Any]) -> Tuple[str, str]:
+    performers = clean(event.get("box_score_top_performers"))
+    if performers:
+        return "free_box_score_context_found", performers
+    for key in ["top_performers_json", "team_stats_json", "player_stats_json"]:
+        value = clean(event.get(key))
+        if value:
+            return "source_stats_present", value
+    status = clean(event.get("status_norm"))
+    audit_status = clean(event.get("box_score_audit_status"))
+    if audit_status == "not_audited_sample_cap":
+        return "box_score_not_checked_sample_cap", ""
+    if audit_status == "disabled":
+        return "box_score_audit_disabled", ""
+    if audit_status == "error":
+        return "box_score_audit_error", ""
+    if status == "final":
+        return "missing_free_box_score_context", ""
+    if status == "scheduled":
+        return "not_expected_pre_game", ""
+    return "not_available_yet", ""
+
+
+def confidence_reason_summary(event: Dict[str, Any]) -> str:
+    raw = clean(event.get("confidence_reason_json"))
+    if not raw:
+        return ""
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return raw[:240]
+    adjustments = data.get("adjustments") or []
+    parts = [f"base_source={data.get('base_source', '')}", f"final={data.get('final_confidence', '')}"]
+    if adjustments:
+        parts.append("adjustments=" + ",".join(clean(item[0]) for item in adjustments if item))
+    return "; ".join(part for part in parts if part)
+
+
+def missing_evidence_for(event: Dict[str, Any], stats_status: str) -> str:
+    missing: List[str] = []
+    if not clean(event.get("source_url")):
+        missing.append("source_url")
+    if clean(event.get("status_norm")) == "final" and not score_values_valid(event.get("home_score"), event.get("away_score")):
+        missing.append("final_score")
+    if stats_status == "missing_free_box_score_context":
+        missing.append("box_score_or_top_performer_context")
+    if stats_status == "box_score_not_checked_sample_cap":
+        missing.append("box_score_audit_limit")
+    if stats_status == "box_score_audit_error":
+        missing.append("box_score_audit_error")
+    if event.get("score_conflict"):
+        missing.append("score_conflict_resolution")
+    if event.get("manual_review"):
+        missing.append("manual_review_clearance")
+    try:
+        if float(event.get("confidence") or 0) < 0.82:
+            missing.append("higher_confidence_source_or_cross_check")
+    except Exception:
+        missing.append("confidence_parse")
+    return "; ".join(missing) if missing else "none"
+
+
+def selected_observation_by_key(observations: List[Dict[str, str]]) -> Dict[Tuple[str, str], Dict[str, str]]:
+    selected: Dict[Tuple[str, str], Dict[str, str]] = {}
+    for obs in observations:
+        key = (clean(obs.get("canonical_key")), clean(obs.get("source_name")))
+        if not key[0]:
+            continue
+        current = selected.get(key)
+        if current is None or int(obs.get("source_priority") or 0) > int(current.get("source_priority") or 0):
+            selected[key] = obs
+    return selected
+
+
+def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict[str, str]], expected_rows: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    obs_by_key = selected_observation_by_key(observations)
+    rows: List[Dict[str, Any]] = []
+    for event in events:
+        stats_status, stats_context = stats_context_for(event)
+        obs = obs_by_key.get((clean(event.get("canonical_key")), clean(event.get("selected_source"))), {})
+        source_url = clean(event.get("source_url"))
+        bucket = game_attention_bucket(event)
+        row_type = "game_event"
+        if bucket == "upcoming_game":
+            row_type = "upcoming_game"
+        elif bucket == "final_result":
+            row_type = "final_result"
+        elif bucket == "recap_candidate":
+            row_type = "recap_candidate"
+        elif bucket == "live_watch":
+            row_type = "live_game"
+        rows.append(
+            {
+                "row_id": clean(event.get("event_uid")),
+                "row_type": row_type,
+                "attention_bucket": bucket,
+                "game_date": clean(event.get("scheduled_date_local")),
+                "league": clean(event.get("league_norm")),
+                "sport": clean(event.get("sport_norm")),
+                "home_team": clean(event.get("home_team_display")),
+                "away_team": clean(event.get("away_team_display")),
+                "status": clean(event.get("status_norm")),
+                "final_score": clean(event.get("final_score_display")),
+                "recap_candidate": "Yes" if event.get("include_in_graphics") else "No",
+                "stats_context_status": stats_status,
+                "stats_context": stats_context,
+                "missing_evidence": missing_evidence_for(event, stats_status),
+                "selected_source": clean(event.get("selected_source")),
+                "source_count": clean(event.get("source_count")),
+                "source_confidence": f"{float(event.get('confidence') or 0):.2f}",
+                "source_confidence_reason": confidence_reason_summary(event),
+                "source_url": source_url,
+                "source_domain": source_domain(source_url),
+                "retrieved_at_utc": clean(obs.get("fetched_at_utc")) or now_iso(),
+                "manual_review_status": "review_only_recap_candidate" if event.get("include_in_graphics") else "manual_review_required" if event.get("manual_review") else "review_only_monitor",
+                "review_only": "Yes",
+                "approval_state_change": "none",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    for expected in expected_rows:
+        if clean(expected.get("matched")) != "No":
+            continue
+        source_url = clean(expected.get("source_url"))
+        missing_bits = ["free_source_observation_match"]
+        if clean(expected.get("date")) <= datetime.now(timezone.utc).date().isoformat():
+            missing_bits.extend(["final_score", "stats_context"])
+        else:
+            missing_bits.append("scheduled_game_observation")
+        rows.append(
+            {
+                "row_id": clean(expected.get("expected_key")),
+                "row_type": "missing_expected_game",
+                "attention_bucket": "missing_source_evidence",
+                "game_date": clean(expected.get("date")),
+                "league": clean(expected.get("league")),
+                "sport": clean(expected.get("sport") or "basketball"),
+                "home_team": clean(expected.get("home_team")),
+                "away_team": clean(expected.get("away_team")),
+                "status": clean(expected.get("reason")) or "missing_from_free_sources_or_outside_window",
+                "final_score": "",
+                "recap_candidate": "No",
+                "stats_context_status": "missing_game_observation",
+                "stats_context": "",
+                "missing_evidence": "; ".join(missing_bits),
+                "selected_source": clean(expected.get("source_name")),
+                "source_count": "0",
+                "source_confidence": "0.00",
+                "source_confidence_reason": "expected game was not matched by current free-source observations",
+                "source_url": source_url,
+                "source_domain": source_domain(source_url),
+                "retrieved_at_utc": now_iso(),
+                "manual_review_status": "manual_review_required_missing_source_evidence",
+                "review_only": "Yes",
+                "approval_state_change": "none",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    rows.sort(key=lambda row: (row.get("game_date", ""), row.get("attention_bucket", ""), row.get("away_team", "")))
+    return rows
+
+
+def game_intelligence_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def count_where(field: str, value: str) -> int:
+        return sum(1 for row in rows if clean(row.get(field)) == value)
+
+    return {
+        "version": "v1-review-only-game-intelligence-board",
+        "generated_at_utc": now_iso(),
+        "review_only": True,
+        "paid_sources_required": False,
+        "approval_state_changes": False,
+        "publish_actions": False,
+        "rows": len(rows),
+        "upcoming_games": count_where("row_type", "upcoming_game"),
+        "live_games": count_where("row_type", "live_game"),
+        "final_results": count_where("status", "final"),
+        "recap_candidates": count_where("row_type", "recap_candidate"),
+        "missing_expected_games": count_where("row_type", "missing_expected_game"),
+        "missing_stats_context": count_where("stats_context_status", "missing_free_box_score_context"),
+    }
+
+
+def game_intelligence_report_md(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Game Intelligence Board v1",
+        "",
+        f"Generated: `{summary['generated_at_utc']}`",
+        "",
+        "## Policy",
+        "",
+        "- Review-only, artifact-only output.",
+        "- No paid APIs, credentials, source enablement, approvals, publishing, or publish-ready movement.",
+        "- Every row keeps source confidence, source URL/domain, retrieval timestamp, and manual-review status visible.",
+        "",
+        "## Counts",
+        "",
+    ]
+    for key in ["rows", "upcoming_games", "live_games", "final_results", "recap_candidates", "missing_expected_games", "missing_stats_context"]:
+        lines.append(f"- {key}: `{summary.get(key)}`")
+    lines.extend(["", "## Operator Rows", ""])
+    if not rows:
+        lines.append("No game rows are available from the current free/public or manual sources.")
+    if len(rows) > 80:
+        lines.append(f"Showing first 80 of {len(rows)} rows. Open `game_intelligence_board_v1.csv` for the full board.")
+    for row in rows[:80]:
+        matchup = f"{row.get('away_team')} at {row.get('home_team')}".strip()
+        lines.append(f"- **{row.get('attention_bucket')}** | {row.get('game_date')} | {row.get('league')} | {matchup}")
+        lines.append(f"  - status={row.get('status')} | confidence={row.get('source_confidence')} | review={row.get('manual_review_status')}")
+        lines.append(f"  - stats={row.get('stats_context_status')} | missing={row.get('missing_evidence')}")
+        if row.get("source_url"):
+            lines.append(f"  - source={row.get('source_url')}")
+    return "\n".join(lines) + "\n"
+
+
 def v5_hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[str, str]], health: List[Dict[str, Any]], iso_dates: List[str]) -> str:
     women = [e for e in events if e.get("gender_scope") == "women"]; finals = [e for e in women if e.get("status_norm") == "final"]; graphics = [e for e in events if e.get("include_in_graphics")]; review = [e for e in events if e.get("manual_review") and e.get("gender_scope") == "women"]
     return "\n".join(["# Her Sports Daily Results Desk v5 Hub", "", f"Run ID: `{run_id}`", f"Generated: `{now_iso()}`", f"Date window: `{', '.join(iso_dates)}`", "", "## Source strategy", "", "- Free/public sources only.", "- Active source: ESPN public WNBA scoreboard endpoint.", "- Optional fallback: local/manual seed CSVs.", "- Paid API keys are not required and are not read by v5.", "", "## Run summary", "", f"- Raw source observations: {len(observations)}", f"- Reconciled events: {len(events)}", f"- Women's events surfaced: {len(women)}", f"- Women's finals: {len(finals)}", f"- Graphics-ready results: {len(graphics)}", f"- Manual review items: {len(review)}", "", "## Accuracy gates", "", "- Duplicate groups are written to `duplicate_game_audit_v5.csv`.", "- Stale/out-of-window observations are written to `stale_source_audit_v5.csv`.", "- Expected-game fixtures, when provided, are checked in `missing_games_alert_v5.*`.", "- No player stats are invented."]) + "\n"
@@ -589,12 +875,12 @@ def main() -> None:
     observations, health = free_source_observations(run_id, compact_dates); stale_rows = stale_audit(observations, iso_dates); duplicate_rows = duplicate_audit(observations)
     events = apply_strict_date_window_gate(reconcile(run_id, observations), iso_dates); box_audit_rows = audit_wnba_box_scores(events)
     all_events = events; womens = [e for e in events if e.get("gender_scope") == "women" and e.get("include_in_dashboard")]; finals = [e for e in events if e.get("gender_scope") == "women" and e.get("status_norm") == "final" and float(e.get("confidence") or 0) >= 0.70]; top = womens[:50]; review = [e for e in events if e.get("gender_scope") == "women" and e.get("manual_review")]
-    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary)
+    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows)
     write_csv(OBSERVATIONS_FILE, observations, OBS_FIELDS); write_csv(RECONCILED_FILE, events, EVENT_FIELDS); write_csv(RESULTS_BOARD_FILE, all_events, EVENT_FIELDS); write_csv(WOMENS_RESULTS_FILE, womens, EVENT_FIELDS); write_csv(FINAL_RESULTS_FILE, finals, EVENT_FIELDS); write_csv(TOP_RESULTS_FILE, top, EVENT_FIELDS); write_csv(MANUAL_REVIEW_FILE, review, EVENT_FIELDS)
-    write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS)
-    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates))
-    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows))
-    manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix()}}
+    write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS); write_csv(GAME_INTELLIGENCE_BOARD_FILE, intelligence_rows, GAME_INTELLIGENCE_FIELDS)
+    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates)); write_text(GAME_INTELLIGENCE_REPORT_FILE, game_intelligence_report_md(intelligence_summary, intelligence_rows))
+    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows)); write_json(GAME_INTELLIGENCE_MANIFEST_FILE, {"summary": intelligence_summary, "rows": intelligence_rows})
+    manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "game_intelligence_rows": len(intelligence_rows), "game_intelligence_recap_candidates": intelligence_summary.get("recap_candidates", 0), "game_intelligence_missing_stats_context": intelligence_summary.get("missing_stats_context", 0), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix(), "game_intelligence": GAME_INTELLIGENCE_MANIFEST_FILE}}
     write_json(MANIFEST_FILE, manifest); write_json(V5_MANIFEST, manifest); write_text(V5_REPORT, report_md(run_id, manifest))
     print("Created Results Desk v5 outputs"); print(json.dumps(manifest["counts"], indent=2))
 

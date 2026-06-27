@@ -360,6 +360,9 @@ ARTIFACTS = [
     ("Sources", "Lead promotion recommendation manifest", "morning_lead_promotion_recommendations.json"),
     ("Results", "Results manifest", "results_desk_v5_manifest.json"),
     ("Results", "Results report", "results_desk_v5_report.md"),
+    ("Results", "Game intelligence board", "game_intelligence_board_v1.md"),
+    ("Results", "Game intelligence board data", "game_intelligence_board_v1.csv"),
+    ("Results", "Game intelligence board manifest", "game_intelligence_board_v1.json"),
     ("Results", "Source accuracy", "source_accuracy_v5.md"),
     ("Results", "Missing games alert", "missing_games_alert_v5.md"),
     ("Results", "Top women's results", "top_womens_results.csv"),
@@ -459,6 +462,9 @@ ARTIFACTS = [
 ]
 
 RUN_COMMANDS = {
+    "game_intelligence_board_v1.md": ".\\hsd.cmd run -Mode results",
+    "game_intelligence_board_v1.csv": ".\\hsd.cmd run -Mode results",
+    "game_intelligence_board_v1.json": ".\\hsd.cmd run -Mode results",
     "results_dashboard/index.html": ".\\hsd.cmd run -Mode dashboards",
     "studio_dashboard/index.html": ".\\hsd.cmd run -Mode dashboards",
     "graphics_upload_pack_status.csv": ".\\hsd.cmd run -Mode asset",

@@ -1,8 +1,20 @@
+import importlib.util
 from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
 
 
 def read(path: str) -> str:
-    return Path(path).read_text(encoding="utf-8", errors="replace")
+    return (REPO / path).read_text(encoding="utf-8", errors="replace")
+
+
+def load_results_desk():
+    path = REPO / "generate_hsd_results_desk_v5.py"
+    spec = importlib.util.spec_from_file_location("generate_hsd_results_desk_v5_test", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_independent_wnba_schedule_verifier_is_wired() -> None:
@@ -27,6 +39,177 @@ def test_multisport_review_modules_are_wired_and_review_only() -> None:
     assert "tennis_wta" in script
     assert "lpga_golf" in script
     assert "hsd-pipeline-review-lite-v3.8.0-results-v5-multisport-review" in lite
+
+
+def test_game_intelligence_board_is_review_only_and_source_backed() -> None:
+    module = load_results_desk()
+    event = {
+        "event_uid": "event_1",
+        "canonical_key": "basketball|2026-06-24|indiana fever|new york liberty",
+        "selected_source": "espn_wnba_public",
+        "source_count": 1,
+        "sport_norm": "basketball",
+        "league_norm": "WNBA",
+        "gender_scope": "women",
+        "scheduled_date_local": "2026-06-24",
+        "home_team_display": "New York Liberty",
+        "away_team_display": "Indiana Fever",
+        "final_score_display": "Indiana Fever 88 - New York Liberty 84",
+        "status_norm": "final",
+        "home_score": "84",
+        "away_score": "88",
+        "include_in_graphics": True,
+        "manual_review": False,
+        "score_conflict": False,
+        "confidence": 0.92,
+        "confidence_reason_json": '{"base_source":"espn_wnba_public","final_confidence":0.92,"adjustments":[["final_state",0.08]]}',
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+        "box_score_top_performers": "",
+    }
+    upcoming_event = {
+        **event,
+        "event_uid": "event_2",
+        "canonical_key": "basketball|2026-06-25|atlanta dream|chicago sky",
+        "scheduled_date_local": "2026-06-25",
+        "home_team_display": "Chicago Sky",
+        "away_team_display": "Atlanta Dream",
+        "final_score_display": "Atlanta Dream at Chicago Sky",
+        "status_norm": module.normalize_status("Sat, June 27th at 8:00 PM EDT"),
+        "home_score": "",
+        "away_score": "",
+        "include_in_graphics": False,
+        "confidence": 0.84,
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/402",
+        "box_score_top_performers": "",
+    }
+    live_event = {
+        **upcoming_event,
+        "event_uid": "event_3",
+        "canonical_key": "basketball|2026-06-25|connecticut sun|washington mystics",
+        "home_team_display": "Connecticut Sun",
+        "away_team_display": "Washington Mystics",
+        "status_norm": "live",
+        "home_score": "N/A",
+        "away_score": "88",
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/403",
+    }
+    capped_event = {
+        **event,
+        "event_uid": "event_4",
+        "canonical_key": "basketball|2026-06-25|dallas wings|las vegas aces",
+        "home_team_display": "Las Vegas Aces",
+        "away_team_display": "Dallas Wings",
+        "box_score_audit_status": "not_audited_sample_cap",
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/404",
+    }
+    observations = [
+        {
+            "canonical_key": event["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-24T12:00:00+00:00",
+        },
+        {
+            "canonical_key": upcoming_event["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-25T12:00:00+00:00",
+        },
+        {
+            "canonical_key": live_event["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-25T13:00:00+00:00",
+        },
+        {
+            "canonical_key": capped_event["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-25T14:00:00+00:00",
+        }
+    ]
+    expected_rows = [
+        {
+            "date": "2026-06-24",
+            "league": "WNBA",
+            "sport": "basketball",
+            "home_team": "Chicago Sky",
+            "away_team": "Atlanta Dream",
+            "expected_key": "basketball|2026-06-24|atlanta dream|chicago sky",
+            "source_name": "manual_reviewed_expected_seed",
+            "source_url": "manual_expected_games.csv",
+            "matched": "No",
+            "reason": "missing_from_free_sources_or_outside_window",
+        },
+        {
+            "date": "2099-06-24",
+            "league": "WNBA",
+            "sport": "basketball",
+            "home_team": "Seattle Storm",
+            "away_team": "Phoenix Mercury",
+            "expected_key": "basketball|2099-06-24|phoenix mercury|seattle storm",
+            "source_name": "manual_reviewed_expected_seed",
+            "source_url": "manual_expected_games.csv",
+            "matched": "No",
+            "reason": "missing_from_free_sources_or_outside_window",
+        }
+    ]
+
+    rows = module.game_intelligence_rows([event, upcoming_event, live_event, capped_event], observations, expected_rows)
+    by_type = {row["row_type"]: row for row in rows}
+
+    recap = by_type["recap_candidate"]
+    assert recap["review_only"] == "Yes"
+    assert recap["publish_action"] == "none_artifact_only"
+    assert recap["approval_state_change"] == "none"
+    assert recap["source_domain"] == "www.espn.com"
+    assert recap["retrieved_at_utc"] == "2026-06-24T12:00:00+00:00"
+    assert recap["stats_context_status"] == "missing_free_box_score_context"
+    assert "box_score_or_top_performer_context" in recap["missing_evidence"]
+    assert recap["manual_review_status"] == "review_only_recap_candidate"
+
+    missing = by_type["missing_expected_game"]
+    assert missing["attention_bucket"] == "missing_source_evidence"
+    assert missing["manual_review_status"] == "manual_review_required_missing_source_evidence"
+    assert missing["source_confidence"] == "0.00"
+
+    upcoming = by_type["upcoming_game"]
+    assert upcoming["status"] == "scheduled"
+    assert upcoming["stats_context_status"] == "not_expected_pre_game"
+
+    live = by_type["live_game"]
+    assert live["attention_bucket"] == "live_watch"
+    assert live["row_type"] == "live_game"
+
+    capped = [row for row in rows if row["row_id"] == "event_4"][0]
+    assert capped["stats_context_status"] == "box_score_not_checked_sample_cap"
+    assert "box_score_audit_limit" in capped["missing_evidence"]
+
+    future_missing = [row for row in rows if row["game_date"] == "2099-06-24"][0]
+    assert "scheduled_game_observation" in future_missing["missing_evidence"]
+    assert "final_score" not in future_missing["missing_evidence"]
+
+    summary = module.game_intelligence_summary(rows)
+    assert summary["final_results"] == 2
+    assert summary["recap_candidates"] == 2
+    assert summary["upcoming_games"] == 1
+    assert summary["live_games"] == 1
+
+    report = module.game_intelligence_report_md(module.game_intelligence_summary(rows * 41), rows * 41)
+    assert "Showing first 80 of" in report
+
+
+def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -> None:
+    results = read("generate_hsd_results_desk_v5.py")
+    command_center = read("generate_hsd_operator_command_center_v2.py")
+    lite = read("generate_hsd_pipeline_review_lite_v1.py")
+    workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
+
+    for artifact in ["game_intelligence_board_v1.csv", "game_intelligence_board_v1.md", "game_intelligence_board_v1.json"]:
+        assert artifact in results
+        assert artifact in command_center
+        assert artifact in lite
+        assert artifact in workflow
 
 
 def test_template_law_and_top_priority_specs_exist() -> None:
