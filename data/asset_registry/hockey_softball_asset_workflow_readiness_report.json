@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_asset_workflow_readiness_ready",
-  "generated_at_utc": "2026-06-27T19:00:45.489288+00:00",
+  "generated_at_utc": "2026-06-27T22:34:58.410929+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -26,7 +26,11 @@
     "unsafe_intake_rows": 0,
     "source_candidate_only_rows": 74,
     "local_asset_present_rows": 0,
-    "action_queue_rows": 74
+    "action_queue_rows": 74,
+    "batch_source_review_rows": 74,
+    "batch_source_review_now_rows": 54,
+    "batch_source_review_next_rows": 10,
+    "batch_source_review_local_asset_needed_later_rows": 74
   },
   "summaries": [
     {
@@ -115,5 +119,13 @@
     "csv": "data/asset_registry/hockey_softball_asset_review_action_queue.csv",
     "json": "data/asset_registry/hockey_softball_asset_review_action_queue.json",
     "rows": 74
+  },
+  "batch_source_review_helper": {
+    "md": "data/asset_registry/hockey_softball_batch_source_review_helper.md",
+    "csv": "data/asset_registry/hockey_softball_batch_source_review_helper.csv",
+    "json": "data/asset_registry/hockey_softball_batch_source_review_helper.json",
+    "rows": 74,
+    "source_review_now_rows": 54,
+    "next_rows": 10
   }
 }
