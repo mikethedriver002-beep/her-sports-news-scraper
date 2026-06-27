@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-27T17:20:53.297840+00:00`
+- Generated: `2026-06-27T17:52:16.248547+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First
@@ -13,19 +13,19 @@
 
 ## Review-Only Totals
 
-- Workflow rows: `38`
+- Workflow rows: `74`
 - Logo contact rows: `20`
-- Athlete candidate rows: `18`
-- Proposed headshot path refs: `18`
-- Proposed `.approved` path refs: `18`
+- Athlete candidate rows: `54`
+- Proposed headshot path refs: `54`
+- Proposed `.approved` path refs: `54`
 - Local candidate files present: `0`
 - Approved markers present: `0`
 - Unsafe intake rows detected: `0`
 
 ## Sport Boards
 
-- Women's Hockey / Professional Women's Hockey League: workflow_rows=25, logo_rows=13, athlete_rows=12, board=`data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`
-- Softball / Athletes Unlimited Softball League: workflow_rows=13, logo_rows=7, athlete_rows=6, board=`data/asset_registry/softball/softball_asset_workflow_board.md`
+- Women's Hockey / Professional Women's Hockey League: workflow_rows=49, logo_rows=13, athlete_rows=36, board=`data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`
+- Softball / Athletes Unlimited Softball League: workflow_rows=25, logo_rows=7, athlete_rows=18, board=`data/asset_registry/softball/softball_asset_workflow_board.md`
 
 ## Operator Note
 

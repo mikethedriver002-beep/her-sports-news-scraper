@@ -1,6 +1,6 @@
 # Softball Asset Workflow Board
 
-- Generated: `2026-06-27T17:20:53.297840+00:00`
+- Generated: `2026-06-27T17:52:16.248547+00:00`
 - League: `Athletes Unlimited Softball League`
 - Status: `review_only_workflow_ready`
 - Scope: review-only operator workflow board; it reads source/contact/intake artifacts and writes no assets.
@@ -18,8 +18,8 @@
 
 - `local_candidate_path` values are proposed manual target paths only; this report does not create `headshot.png` files.
 - `approved_marker_path` values are proposed manual marker paths only; this report does not create `.approved` markers.
-- Proposed headshot path refs: `6`; files currently present: `0`.
-- Proposed `.approved` path refs: `6`; markers currently present: `0`.
+- Proposed headshot path refs: `18`; files currently present: `0`.
+- Proposed `.approved` path refs: `18`; markers currently present: `0`.
 - Unsafe logo intake rows detected: `0`.
 - Unsafe athlete intake rows detected: `0`.
 
@@ -36,8 +36,20 @@
 ## Athlete Team Boards
 
 1. Carolina Blaze | board=`data/asset_registry/softball/athlete_photo_contact_sheets/carolina_blaze.md` | roster=https://theausl.com/blaze/roster
-2. Chicago Bandits | board=`data/asset_registry/softball/athlete_photo_contact_sheets/chicago_bandits.md` | roster=https://theausl.com/bandits/roster
-3. Oklahoma City Spark | board=`data/asset_registry/softball/athlete_photo_contact_sheets/oklahoma_city_spark.md` | roster=https://theausl.com/spark/roster
-4. Portland Cascade | board=`data/asset_registry/softball/athlete_photo_contact_sheets/portland_cascade.md` | roster=https://theausl.com/cascade/roster
-5. Texas Volts | board=`data/asset_registry/softball/athlete_photo_contact_sheets/texas_volts.md` | roster=https://theausl.com/volts/roster
-6. Utah Talons | board=`data/asset_registry/softball/athlete_photo_contact_sheets/utah_talons.md` | roster=https://theausl.com/talons/roster
+2. Carolina Blaze | board=`data/asset_registry/softball/athlete_photo_contact_sheets/carolina_blaze.md` | roster=https://theausl.com/blaze/
+3. Carolina Blaze | board=`data/asset_registry/softball/athlete_photo_contact_sheets/carolina_blaze.md` | roster=https://theausl.com/players/
+4. Chicago Bandits | board=`data/asset_registry/softball/athlete_photo_contact_sheets/chicago_bandits.md` | roster=https://theausl.com/bandits/roster
+5. Chicago Bandits | board=`data/asset_registry/softball/athlete_photo_contact_sheets/chicago_bandits.md` | roster=https://theausl.com/bandits/
+6. Chicago Bandits | board=`data/asset_registry/softball/athlete_photo_contact_sheets/chicago_bandits.md` | roster=https://theausl.com/players/
+7. Oklahoma City Spark | board=`data/asset_registry/softball/athlete_photo_contact_sheets/oklahoma_city_spark.md` | roster=https://theausl.com/spark/roster
+8. Oklahoma City Spark | board=`data/asset_registry/softball/athlete_photo_contact_sheets/oklahoma_city_spark.md` | roster=https://theausl.com/spark/
+9. Oklahoma City Spark | board=`data/asset_registry/softball/athlete_photo_contact_sheets/oklahoma_city_spark.md` | roster=https://theausl.com/players/
+10. Portland Cascade | board=`data/asset_registry/softball/athlete_photo_contact_sheets/portland_cascade.md` | roster=https://theausl.com/cascade/roster
+11. Portland Cascade | board=`data/asset_registry/softball/athlete_photo_contact_sheets/portland_cascade.md` | roster=https://theausl.com/cascade/
+12. Portland Cascade | board=`data/asset_registry/softball/athlete_photo_contact_sheets/portland_cascade.md` | roster=https://theausl.com/players/
+13. Texas Volts | board=`data/asset_registry/softball/athlete_photo_contact_sheets/texas_volts.md` | roster=https://theausl.com/volts/roster
+14. Texas Volts | board=`data/asset_registry/softball/athlete_photo_contact_sheets/texas_volts.md` | roster=https://theausl.com/volts/
+15. Texas Volts | board=`data/asset_registry/softball/athlete_photo_contact_sheets/texas_volts.md` | roster=https://theausl.com/players/
+16. Utah Talons | board=`data/asset_registry/softball/athlete_photo_contact_sheets/utah_talons.md` | roster=https://theausl.com/talons/roster
+17. Utah Talons | board=`data/asset_registry/softball/athlete_photo_contact_sheets/utah_talons.md` | roster=https://theausl.com/talons/
+18. Utah Talons | board=`data/asset_registry/softball/athlete_photo_contact_sheets/utah_talons.md` | roster=https://theausl.com/players/

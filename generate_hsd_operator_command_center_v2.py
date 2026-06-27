@@ -1584,6 +1584,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_hockey_logo_contact_sheet_rows": len(womens_hockey_logo_rows),
         "womens_hockey_athlete_photo_contact_sheet_rows": len(womens_hockey_athlete_rows),
         "womens_hockey_athlete_photo_contact_sheet_team_boards": as_int(womens_hockey_athlete_manifest.get("team_boards")) if isinstance(womens_hockey_athlete_manifest, dict) else 0,
+        "womens_hockey_athlete_photo_source_review_slot_rows": as_int(womens_hockey_athlete_manifest.get("source_review_slot_rows")) if isinstance(womens_hockey_athlete_manifest, dict) else 0,
         "womens_hockey_review_walkthrough_rows": len(womens_hockey_logo_rows) + len(womens_hockey_athlete_rows),
         "womens_hockey_asset_workflow_rows": as_int(womens_hockey_workflow_summary.get("workflow_rows")),
         "womens_hockey_proposed_headshot_path_refs": as_int(womens_hockey_workflow_summary.get("proposed_headshot_path_refs")),
@@ -1591,6 +1592,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "softball_logo_contact_sheet_rows": len(softball_logo_rows),
         "softball_athlete_photo_contact_sheet_rows": len(softball_athlete_rows),
         "softball_athlete_photo_contact_sheet_team_boards": as_int(softball_athlete_manifest.get("team_boards")) if isinstance(softball_athlete_manifest, dict) else 0,
+        "softball_athlete_photo_source_review_slot_rows": as_int(softball_athlete_manifest.get("source_review_slot_rows")) if isinstance(softball_athlete_manifest, dict) else 0,
         "softball_review_walkthrough_rows": len(softball_logo_rows) + len(softball_athlete_rows),
         "softball_asset_workflow_rows": as_int(softball_workflow_summary.get("workflow_rows")),
         "softball_proposed_headshot_path_refs": as_int(softball_workflow_summary.get("proposed_headshot_path_refs")),
@@ -7892,10 +7894,12 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer athlete warnings</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey athlete candidates</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Hockey source slots</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)))}</strong></div>
             <div><span>Hockey walkthrough rows</span><strong>{html.escape(str(panel.get('womens_hockey_review_walkthrough_rows', 0)))}</strong></div>
             <div><span>Hockey workflow rows</span><strong>{html.escape(str(panel.get('womens_hockey_asset_workflow_rows', 0)))}</strong></div>
             <div><span>Softball logo rows</span><strong>{html.escape(str(panel.get('softball_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Softball athlete candidates</span><strong>{html.escape(str(panel.get('softball_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Softball source slots</span><strong>{html.escape(str(panel.get('softball_athlete_photo_source_review_slot_rows', 0)))}</strong></div>
             <div><span>Softball walkthrough rows</span><strong>{html.escape(str(panel.get('softball_review_walkthrough_rows', 0)))}</strong></div>
             <div><span>Softball workflow rows</span><strong>{html.escape(str(panel.get('softball_asset_workflow_rows', 0)))}</strong></div>
           </div>
@@ -9454,11 +9458,13 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer athlete photo warnings: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)}",
         f"- Women's hockey logo contact sheet rows: {asset_panel.get('womens_hockey_logo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete photo candidate rows: {asset_panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)}",
+        f"- Women's hockey athlete source-review slot rows: {asset_panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)}",
         f"- Women's hockey walkthrough rows: {asset_panel.get('womens_hockey_review_walkthrough_rows', 0)}",
         f"- Women's hockey workflow rows: {asset_panel.get('womens_hockey_asset_workflow_rows', 0)}",
         f"- Women's hockey proposed headshot path refs: {asset_panel.get('womens_hockey_proposed_headshot_path_refs', 0)}",
         f"- Softball logo contact sheet rows: {asset_panel.get('softball_logo_contact_sheet_rows', 0)}",
         f"- Softball athlete photo candidate rows: {asset_panel.get('softball_athlete_photo_contact_sheet_rows', 0)}",
+        f"- Softball athlete source-review slot rows: {asset_panel.get('softball_athlete_photo_source_review_slot_rows', 0)}",
         f"- Softball walkthrough rows: {asset_panel.get('softball_review_walkthrough_rows', 0)}",
         f"- Softball workflow rows: {asset_panel.get('softball_asset_workflow_rows', 0)}",
         f"- Softball proposed headshot path refs: {asset_panel.get('softball_proposed_headshot_path_refs', 0)}",

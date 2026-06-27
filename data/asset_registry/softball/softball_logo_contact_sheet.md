@@ -2,7 +2,7 @@
 
 Review-only board for league/team logo source candidates.
 
-- Generated: `2026-06-27T12:48:24.217647+00:00`
+- Generated: `2026-06-27T17:45:32.813942+00:00`
 - Rows: `7`
 - No downloads, no auto-approval, no publish-ready movement.
 - Human intake: `data/asset_registry/softball/softball_logo_review_intake.csv`

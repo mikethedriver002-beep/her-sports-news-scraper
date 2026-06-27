@@ -1,10 +1,12 @@
 # Athletes Unlimited Softball League Athlete Photo Candidate Layer
 
-Review-only athlete candidate layer seeded from official roster page candidates.
+Review-only athlete candidate layer seeded from official roster, team-profile, and league player-index source candidates.
 
-- Generated: `2026-06-27T12:48:24.217647+00:00`
-- Candidate rows: `6`
-- No downloads or approvals. `headshot.png` and `.approved` are never written by this generator.
+- Generated: `2026-06-27T17:45:32.813942+00:00`
+- Candidate rows: `18`
+- Team boards: `6`
+- No downloads or approvals. `headshot.png` and `.approved` are proposed manual target paths only and are never written by this generator.
+- Source pages can be marked reviewed after a manual source sweep; player identity and registry approval stay held until a named athlete and local candidate asset exist.
 - Human intake: `data/asset_registry/softball/softball_athlete_photo_review_intake.csv`
 
 ## Team Boards

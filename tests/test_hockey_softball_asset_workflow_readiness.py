@@ -64,11 +64,11 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "publish_ready_movement": False,
         "publishing": False,
     }
-    assert report["totals"]["workflow_rows"] == 38
+    assert report["totals"]["workflow_rows"] == 74
     assert report["totals"]["logo_contact_rows"] == 20
-    assert report["totals"]["athlete_candidate_rows"] == 18
-    assert report["totals"]["proposed_headshot_path_refs"] == 18
-    assert report["totals"]["proposed_approved_marker_path_refs"] == 18
+    assert report["totals"]["athlete_candidate_rows"] == 54
+    assert report["totals"]["proposed_headshot_path_refs"] == 54
+    assert report["totals"]["proposed_approved_marker_path_refs"] == 54
     assert report["totals"]["local_candidate_files_present"] == 0
     assert report["totals"]["approved_marker_files_present"] == 0
     assert report["totals"]["unsafe_intake_rows"] == 0
@@ -94,11 +94,13 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
 
     assert panel["hockey_softball_asset_workflow_status"] == "hockey_softball_asset_workflow_readiness_ready"
     assert panel["hockey_softball_asset_workflow_freshness_status"] == "packet_ready"
-    assert panel["hockey_softball_asset_workflow_rows"] == 38
-    assert panel["womens_hockey_asset_workflow_rows"] == 25
-    assert panel["softball_asset_workflow_rows"] == 13
-    assert panel["womens_hockey_proposed_headshot_path_refs"] == 12
-    assert panel["softball_proposed_headshot_path_refs"] == 6
+    assert panel["hockey_softball_asset_workflow_rows"] == 74
+    assert panel["womens_hockey_asset_workflow_rows"] == 49
+    assert panel["softball_asset_workflow_rows"] == 25
+    assert panel["womens_hockey_proposed_headshot_path_refs"] == 36
+    assert panel["softball_proposed_headshot_path_refs"] == 18
+    assert panel["womens_hockey_athlete_photo_source_review_slot_rows"] == 36
+    assert panel["softball_athlete_photo_source_review_slot_rows"] == 18
     shortcut_labels = {shortcut["label"] for shortcut in panel["file_shortcuts"]}
     assert "Hockey/softball asset workflow readiness" in shortcut_labels
     assert "Women's hockey asset workflow board" in shortcut_labels
