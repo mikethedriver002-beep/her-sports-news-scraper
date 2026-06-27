@@ -302,6 +302,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/hockey_softball_source_review_helper_report.json",
     "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md",
     "data/asset_registry/hockey_softball_asset_workflow_readiness_report.json",
+    "data/asset_registry/hockey_softball_asset_review_action_queue.md",
+    "data/asset_registry/hockey_softball_asset_review_action_queue.csv",
+    "data/asset_registry/hockey_softball_asset_review_action_queue.json",
     "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md",
     "data/asset_registry/softball/softball_asset_workflow_board.md",
 ]
@@ -545,6 +548,8 @@ ARTIFACTS = [
     ("Graphics", "Softball review walkthrough", "data/asset_registry/softball/softball_review_walkthrough.md"),
     ("Graphics", "Hockey/softball source review helper report", "data/asset_registry/hockey_softball_source_review_helper_report.md"),
     ("Graphics", "Hockey/softball asset workflow readiness", "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md"),
+    ("Graphics", "Hockey/softball asset review action queue", "data/asset_registry/hockey_softball_asset_review_action_queue.md"),
+    ("Graphics", "Hockey/softball asset review action queue data", "data/asset_registry/hockey_softball_asset_review_action_queue.csv"),
     ("Graphics", "Women's hockey asset workflow board", "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md"),
     ("Graphics", "Softball asset workflow board", "data/asset_registry/softball/softball_asset_workflow_board.md"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
@@ -650,6 +655,9 @@ RUN_COMMANDS = {
     "data/asset_registry/hockey_softball_source_review_helper_report.json": ".\\.venv\\Scripts\\python.exe scripts\\prepare_hsd_hockey_softball_source_review_intake_v1.py",
     "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_asset_workflow_readiness_report.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_asset_review_action_queue.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_asset_review_action_queue.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_asset_review_action_queue.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/softball/softball_asset_workflow_board.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
@@ -1465,6 +1473,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     softball_athlete_rows = read_csv("data/asset_registry/softball/softball_athlete_photo_contact_sheet.csv")
     hockey_softball_helper_manifest = read_json("data/asset_registry/hockey_softball_source_review_helper_report.json")
     hockey_softball_workflow_manifest = read_json("data/asset_registry/hockey_softball_asset_workflow_readiness_report.json")
+    hockey_softball_action_queue_manifest = read_json("data/asset_registry/hockey_softball_asset_review_action_queue.json")
     logo_contact_cue = packet_freshness_cue(
         "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md",
         len(logo_contact_rows),
@@ -1506,6 +1515,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         hockey_softball_workflow_summary_rows(hockey_softball_workflow_manifest),
         RUN_COMMANDS["data/asset_registry/hockey_softball_asset_workflow_readiness_report.md"],
         context="hockey/softball asset workflow readiness",
+    )
+    hockey_softball_action_queue_rows = as_int(hockey_softball_action_queue_manifest.get("rows")) if isinstance(hockey_softball_action_queue_manifest, dict) else 0
+    hockey_softball_action_queue_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_asset_review_action_queue.md",
+        hockey_softball_action_queue_rows,
+        RUN_COMMANDS["data/asset_registry/hockey_softball_asset_review_action_queue.md"],
+        context="hockey/softball asset review action queue",
     )
     womens_hockey_workflow_summary = hockey_softball_workflow_sport_summary(hockey_softball_workflow_manifest, "womens_hockey")
     softball_workflow_summary = hockey_softball_workflow_sport_summary(hockey_softball_workflow_manifest, "softball")
@@ -1589,6 +1605,11 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_asset_workflow_status": clean(hockey_softball_workflow_manifest.get("status")) if isinstance(hockey_softball_workflow_manifest, dict) else "",
         "hockey_softball_asset_workflow_generated_at": clean(hockey_softball_workflow_manifest.get("generated_at_utc")) if isinstance(hockey_softball_workflow_manifest, dict) else "",
         "hockey_softball_asset_workflow_rows": hockey_softball_workflow_summary_rows(hockey_softball_workflow_manifest),
+        "hockey_softball_asset_review_action_queue_status": clean(hockey_softball_action_queue_manifest.get("status")) if isinstance(hockey_softball_action_queue_manifest, dict) else "",
+        "hockey_softball_asset_review_action_queue_generated_at": clean(hockey_softball_action_queue_manifest.get("generated_at_utc")) if isinstance(hockey_softball_action_queue_manifest, dict) else "",
+        "hockey_softball_asset_review_action_queue_rows": hockey_softball_action_queue_rows,
+        "hockey_softball_asset_review_action_queue_source_candidate_only_rows": as_int(hockey_softball_action_queue_manifest.get("source_candidate_only_rows")) if isinstance(hockey_softball_action_queue_manifest, dict) else 0,
+        "hockey_softball_asset_review_action_queue_local_asset_present_rows": as_int(hockey_softball_action_queue_manifest.get("local_asset_present_rows")) if isinstance(hockey_softball_action_queue_manifest, dict) else 0,
         "womens_hockey_logo_contact_sheet_rows": len(womens_hockey_logo_rows),
         "womens_hockey_athlete_photo_contact_sheet_rows": len(womens_hockey_athlete_rows),
         "womens_hockey_athlete_photo_contact_sheet_team_boards": as_int(womens_hockey_athlete_manifest.get("team_boards")) if isinstance(womens_hockey_athlete_manifest, dict) else 0,
@@ -1614,6 +1635,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_asset_workflow_freshness_status": hockey_softball_workflow_cue["status"],
         "hockey_softball_asset_workflow_freshness_detail": hockey_softball_workflow_cue["detail"],
         "hockey_softball_asset_workflow_refresh_command": hockey_softball_workflow_cue["run_command"],
+        "hockey_softball_asset_review_action_queue_freshness_status": hockey_softball_action_queue_cue["status"],
+        "hockey_softball_asset_review_action_queue_freshness_detail": hockey_softball_action_queue_cue["detail"],
+        "hockey_softball_asset_review_action_queue_refresh_command": hockey_softball_action_queue_cue["run_command"],
         "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
@@ -1643,6 +1667,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Hockey/softball foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md", "Review PWHL and AUSL source-candidate scaffold counts and guardrails."),
             file_shortcut("Hockey/softball source review helper report", "data/asset_registry/hockey_softball_source_review_helper_report.md", "Review batch source-review prep counts and safety notes for the hockey and softball packets."),
             file_shortcut("Hockey/softball asset workflow readiness", "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md", "Open the logo/contact-sheet/intake review order and athlete candidate path clarity board."),
+            file_shortcut("Hockey/softball asset review action queue", "data/asset_registry/hockey_softball_asset_review_action_queue.md", "Start here for exact board, contact sheet, intake CSV, fields to fill, fields to leave blank, and hold-only fields."),
             file_shortcut("Women's hockey logo contact sheet", "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md", "Review PWHL league/team logo source candidates before filling manual intake."),
             file_shortcut("Women's hockey athlete contact sheets", "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md", "Review PWHL athlete candidate placeholders by team; no photos are downloaded."),
             file_shortcut("Women's hockey review walkthrough", "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md", "Open the hockey logo and athlete review order before touching the intake CSVs."),
@@ -7928,6 +7953,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Softball source slots</span><strong>{html.escape(str(panel.get('softball_athlete_photo_source_review_slot_rows', 0)))}</strong></div>
             <div><span>Softball walkthrough rows</span><strong>{html.escape(str(panel.get('softball_review_walkthrough_rows', 0)))}</strong></div>
             <div><span>Softball workflow rows</span><strong>{html.escape(str(panel.get('softball_asset_workflow_rows', 0)))}</strong></div>
+            <div><span>H/S action queue</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_action_queue_rows', 0)))}</strong></div>
+            <div><span>H/S source-only</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_action_queue_source_candidate_only_rows', 0)))}</strong></div>
+            <div><span>H/S local assets</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_action_queue_local_asset_present_rows', 0)))}</strong></div>
           </div>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
@@ -7937,6 +7965,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
           {packet_freshness_html(panel, 'hockey_softball_source_review_helper', "Hockey/softball source review helper")}
           {packet_freshness_html(panel, 'hockey_softball_asset_workflow', "Hockey/softball asset workflow readiness")}
+          {packet_freshness_html(panel, 'hockey_softball_asset_review_action_queue', "Hockey/softball asset review action queue")}
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
             <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
@@ -9497,6 +9526,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball asset foundation generated: {asset_panel.get('hockey_softball_asset_foundation_generated_at') or 'missing'}",
         f"- Hockey/softball source review helper generated: {asset_panel.get('hockey_softball_source_review_helper_generated_at') or 'missing'}",
         f"- Hockey/softball asset workflow generated: {asset_panel.get('hockey_softball_asset_workflow_generated_at') or 'missing'}",
+        f"- Hockey/softball asset review action queue rows: {asset_panel.get('hockey_softball_asset_review_action_queue_rows', 0)}",
+        f"- Hockey/softball source-candidate-only rows: {asset_panel.get('hockey_softball_asset_review_action_queue_source_candidate_only_rows', 0)}",
+        f"- Hockey/softball local asset present rows: {asset_panel.get('hockey_softball_asset_review_action_queue_local_asset_present_rows', 0)}",
+        f"- Hockey/softball asset review action queue generated: {asset_panel.get('hockey_softball_asset_review_action_queue_generated_at') or 'missing'}",
         packet_freshness_markdown(
             {
                 "status": asset_panel.get("logo_review_packet_freshness_status"),
@@ -9560,6 +9593,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_asset_workflow_refresh_command"),
             },
             "Hockey/softball asset workflow readiness",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_asset_review_action_queue_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_asset_review_action_queue_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_asset_review_action_queue_refresh_command"),
+            },
+            "Hockey/softball asset review action queue",
         ),
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
