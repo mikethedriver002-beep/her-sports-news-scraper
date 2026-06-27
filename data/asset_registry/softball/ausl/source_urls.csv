@@ -1,0 +1,22 @@
+entity_type,entity_id,source_kind,source_url,source_domain,source_tier,manual_review_status,paid_source,download_allowed,approval_status,notes
+league,ausl,league_home,https://theausl.com/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only league source candidate; no automatic fetch
+league,ausl,teams_index,https://theausl.com/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team list source candidate; no automatic fetch
+league,ausl,players_index,https://theausl.com/players/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete candidate source; no automatic fetch
+team,carolina_blaze,team_home,https://theausl.com/blaze/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team identity source candidate; no automatic fetch
+team,carolina_blaze,roster,https://theausl.com/blaze/roster,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete layer source candidate; operator verifies before adding players
+team,carolina_blaze,logo_review_source,https://theausl.com/blaze/,theausl.com,official_candidate,review_required,false,false,not_approved,operator may use page for visual logo evidence; no asset download by script
+team,chicago_bandits,team_home,https://theausl.com/bandits/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team identity source candidate; no automatic fetch
+team,chicago_bandits,roster,https://theausl.com/bandits/roster,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete layer source candidate; operator verifies before adding players
+team,chicago_bandits,logo_review_source,https://theausl.com/bandits/,theausl.com,official_candidate,review_required,false,false,not_approved,operator may use page for visual logo evidence; no asset download by script
+team,oklahoma_city_spark,team_home,https://theausl.com/spark/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team identity source candidate; no automatic fetch
+team,oklahoma_city_spark,roster,https://theausl.com/spark/roster,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete layer source candidate; operator verifies before adding players
+team,oklahoma_city_spark,logo_review_source,https://theausl.com/spark/,theausl.com,official_candidate,review_required,false,false,not_approved,operator may use page for visual logo evidence; no asset download by script
+team,portland_cascade,team_home,https://theausl.com/cascade/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team identity source candidate; no automatic fetch
+team,portland_cascade,roster,https://theausl.com/cascade/roster,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete layer source candidate; operator verifies before adding players
+team,portland_cascade,logo_review_source,https://theausl.com/cascade/,theausl.com,official_candidate,review_required,false,false,not_approved,operator may use page for visual logo evidence; no asset download by script
+team,texas_volts,team_home,https://theausl.com/volts/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team identity source candidate; no automatic fetch
+team,texas_volts,roster,https://theausl.com/volts/roster,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete layer source candidate; operator verifies before adding players
+team,texas_volts,logo_review_source,https://theausl.com/volts/,theausl.com,official_candidate,review_required,false,false,not_approved,operator may use page for visual logo evidence; no asset download by script
+team,utah_talons,team_home,https://theausl.com/talons/,theausl.com,official_candidate,review_required,false,false,not_approved,review-only team identity source candidate; no automatic fetch
+team,utah_talons,roster,https://theausl.com/talons/roster,theausl.com,official_candidate,review_required,false,false,not_approved,review-only athlete layer source candidate; operator verifies before adding players
+team,utah_talons,logo_review_source,https://theausl.com/talons/,theausl.com,official_candidate,review_required,false,false,not_approved,operator may use page for visual logo evidence; no asset download by script

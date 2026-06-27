@@ -1,0 +1,7 @@
+league_id,team_id,team_name,city,country,official_team_url,official_roster_url,manual_review_status,render_enabled,publish_ready
+ausl,carolina_blaze,Carolina Blaze,Durham,US,https://theausl.com/blaze/,https://theausl.com/blaze/roster,review_required,false,false
+ausl,chicago_bandits,Chicago Bandits,Rosemont,US,https://theausl.com/bandits/,https://theausl.com/bandits/roster,review_required,false,false
+ausl,oklahoma_city_spark,Oklahoma City Spark,Oklahoma City,US,https://theausl.com/spark/,https://theausl.com/spark/roster,review_required,false,false
+ausl,portland_cascade,Portland Cascade,Portland,US,https://theausl.com/cascade/,https://theausl.com/cascade/roster,review_required,false,false
+ausl,texas_volts,Texas Volts,Austin,US,https://theausl.com/volts/,https://theausl.com/volts/roster,review_required,false,false
+ausl,utah_talons,Utah Talons,Salt Lake City,US,https://theausl.com/talons/,https://theausl.com/talons/roster,review_required,false,false

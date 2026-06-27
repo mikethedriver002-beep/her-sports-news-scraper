@@ -1,0 +1,32 @@
+{
+  "version": "hsd-hockey-softball-asset-foundation-v1-review-only",
+  "status": "hockey_softball_asset_foundation_ready",
+  "generated_at_utc": "2026-06-27T12:48:24.217647+00:00",
+  "guardrails": {
+    "paid_apis": false,
+    "automatic_downloads": false,
+    "auto_approval": false,
+    "headshot_png_writes": false,
+    "approved_marker_writes": false,
+    "publish_ready_movement": false,
+    "publishing": false
+  },
+  "foundations": [
+    {
+      "sport_family": "womens_hockey",
+      "league_id": "pwhl",
+      "team_rows": 12,
+      "source_rows": 39,
+      "logo_rows": 13,
+      "athlete_candidate_rows": 12
+    },
+    {
+      "sport_family": "softball",
+      "league_id": "ausl",
+      "team_rows": 6,
+      "source_rows": 21,
+      "logo_rows": 7,
+      "athlete_candidate_rows": 6
+    }
+  ]
+}

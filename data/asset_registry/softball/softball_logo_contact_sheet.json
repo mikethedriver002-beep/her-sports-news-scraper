@@ -1,0 +1,15 @@
+{
+  "version": "hsd-hockey-softball-asset-foundation-v1-review-only",
+  "status": "logo_contact_sheet_ready",
+  "sport_family": "softball",
+  "league_id": "ausl",
+  "generated_at_utc": "2026-06-27T12:48:24.217647+00:00",
+  "rows": 7,
+  "downloads_performed": false,
+  "approvals_applied": false,
+  "publish_ready": false,
+  "logo_contact_sheet_csv": "data/asset_registry/softball/softball_logo_contact_sheet.csv",
+  "logo_review_intake_csv": "data/asset_registry/softball/softball_logo_review_intake.csv",
+  "logo_contact_sheet_md": "data/asset_registry/softball/softball_logo_contact_sheet.md",
+  "logo_contact_sheet_png": "data/asset_registry/softball/softball_logo_contact_sheet.png"
+}
