@@ -29,6 +29,7 @@ KEY_FILES = [
     "docs/HSD_MORNING_SOURCE_DISCOVERY_BOARD.md",
     "results_desk_v5_manifest.json", "results_desk_v5_report.md", "source_accuracy_v5.json", "source_accuracy_v5.md",
     "game_intelligence_board_v1.csv", "game_intelligence_board_v1.md", "game_intelligence_board_v1.json",
+    "stats_evidence_gap_board_v1.csv", "stats_evidence_gap_board_v1.md", "stats_evidence_gap_board_v1.json", "stats_confirmation_intake_v1.csv",
     "expected_games_v5_manifest.json", "expected_games_v5_report.md", "config/hsd_expected_games_v5.csv",
     "independent_schedule_verification_v5.csv", "independent_schedule_verification_v5.json", "independent_schedule_verification_v5.md",
     "multisport_results_observations_v5.csv", "multisport_results_modules_v5.json", "multisport_results_modules_v5.md",
