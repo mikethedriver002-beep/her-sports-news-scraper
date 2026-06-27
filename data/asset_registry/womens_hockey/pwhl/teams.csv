@@ -1,0 +1,13 @@
+league_id,team_id,team_name,city,country,official_team_url,official_roster_url,manual_review_status,render_enabled,publish_ready
+pwhl,boston_fleet,Boston Fleet,Boston,US,https://www.thepwhl.com/en/teams/boston-fleet,https://www.thepwhl.com/en/teams/boston-fleet/roster,review_required,false,false
+pwhl,detroit,PWHL Detroit,Detroit,US,https://www.thepwhl.com/en/teams/detroit,https://www.thepwhl.com/en/teams/detroit/roster,review_required,false,false
+pwhl,hamilton,PWHL Hamilton,Hamilton,Canada,https://www.thepwhl.com/en/teams/hamilton,https://www.thepwhl.com/en/teams/hamilton/roster,review_required,false,false
+pwhl,las_vegas,PWHL Las Vegas,Las Vegas,US,https://www.thepwhl.com/en/teams/las-vegas,https://www.thepwhl.com/en/teams/las-vegas/roster,review_required,false,false
+pwhl,minnesota_frost,Minnesota Frost,Minnesota,US,https://www.thepwhl.com/en/teams/minnesota-frost,https://www.thepwhl.com/en/teams/minnesota-frost/roster,review_required,false,false
+pwhl,montreal_victoire,Montreal Victoire,Montreal,Canada,https://www.thepwhl.com/en/teams/montreal-victoire,https://www.thepwhl.com/en/teams/montreal-victoire/roster,review_required,false,false
+pwhl,new_york_sirens,New York Sirens,New York,US,https://www.thepwhl.com/en/teams/new-york-sirens,https://www.thepwhl.com/en/teams/new-york-sirens/roster,review_required,false,false
+pwhl,ottawa_charge,Ottawa Charge,Ottawa,Canada,https://www.thepwhl.com/en/teams/ottawa-charge,https://www.thepwhl.com/en/teams/ottawa-charge/roster,review_required,false,false
+pwhl,san_jose,PWHL San Jose,San Jose,US,https://www.thepwhl.com/en/teams/san-jose,https://www.thepwhl.com/en/teams/san-jose/roster,review_required,false,false
+pwhl,seattle_torrent,Seattle Torrent,Seattle,US,https://www.thepwhl.com/en/teams/seattle-torrent,https://www.thepwhl.com/en/teams/seattle-torrent/roster,review_required,false,false
+pwhl,toronto_sceptres,Toronto Sceptres,Toronto,Canada,https://www.thepwhl.com/en/teams/toronto-sceptres,https://www.thepwhl.com/en/teams/toronto-sceptres/roster,review_required,false,false
+pwhl,vancouver_goldeneyes,Vancouver Goldeneyes,Vancouver,Canada,https://www.thepwhl.com/en/teams/vancouver-goldeneyes,https://www.thepwhl.com/en/teams/vancouver-goldeneyes/roster,review_required,false,false

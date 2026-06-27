@@ -1,0 +1,17 @@
+{
+  "version": "hsd-hockey-softball-asset-foundation-v1-review-only",
+  "status": "athlete_candidate_layer_ready",
+  "sport_family": "womens_hockey",
+  "league_id": "pwhl",
+  "generated_at_utc": "2026-06-27T12:48:24.217647+00:00",
+  "candidate_rows": 12,
+  "team_boards": 12,
+  "downloads_performed": false,
+  "approvals_applied": false,
+  "headshot_files_written": false,
+  "approved_markers_created": false,
+  "publish_ready": false,
+  "athlete_contact_sheet_csv": "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet.csv",
+  "athlete_review_intake_csv": "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_review_intake.csv",
+  "athlete_contact_sheet_index": "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"
+}

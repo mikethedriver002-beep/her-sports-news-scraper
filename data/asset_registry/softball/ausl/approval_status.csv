@@ -1,0 +1,20 @@
+entity_type,entity_id,approval_scope,approval_status,approved_by,approved_at_utc,auto_approval_allowed,render_enabled,publish_ready,notes
+league,ausl,league_mark,not_approved,,,false,false,false,manual review required
+team,carolina_blaze,team_identity,not_approved,,,false,false,false,manual review required
+team,carolina_blaze,team_logo,not_approved,,,false,false,false,manual review required
+team,carolina_blaze,team_roster_source,not_approved,,,false,false,false,manual review required
+team,chicago_bandits,team_identity,not_approved,,,false,false,false,manual review required
+team,chicago_bandits,team_logo,not_approved,,,false,false,false,manual review required
+team,chicago_bandits,team_roster_source,not_approved,,,false,false,false,manual review required
+team,oklahoma_city_spark,team_identity,not_approved,,,false,false,false,manual review required
+team,oklahoma_city_spark,team_logo,not_approved,,,false,false,false,manual review required
+team,oklahoma_city_spark,team_roster_source,not_approved,,,false,false,false,manual review required
+team,portland_cascade,team_identity,not_approved,,,false,false,false,manual review required
+team,portland_cascade,team_logo,not_approved,,,false,false,false,manual review required
+team,portland_cascade,team_roster_source,not_approved,,,false,false,false,manual review required
+team,texas_volts,team_identity,not_approved,,,false,false,false,manual review required
+team,texas_volts,team_logo,not_approved,,,false,false,false,manual review required
+team,texas_volts,team_roster_source,not_approved,,,false,false,false,manual review required
+team,utah_talons,team_identity,not_approved,,,false,false,false,manual review required
+team,utah_talons,team_logo,not_approved,,,false,false,false,manual review required
+team,utah_talons,team_roster_source,not_approved,,,false,false,false,manual review required
