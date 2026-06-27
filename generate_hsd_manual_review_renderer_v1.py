@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.22.0-premium-editorial-backgrounds"
+VERSION = "hsd-manual-review-renderer-v1.23.0-sports-editorial-depth"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -48,7 +48,8 @@ RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
-    "review_only_brand_rails,logo_first_score_atmosphere,stat_proof_rail,generated_preview_qa"
+    "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
+    "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -859,6 +860,57 @@ def draw_soft_light_sweep(image: Any, points: List[Tuple[int, int]], color: tupl
     image.alpha_composite(layer)
 
 
+def draw_sports_editorial_depth_markers(
+    image: Any,
+    primary: tuple[int, int, int],
+    secondary: tuple[int, int, int],
+    *,
+    photo_first: bool = False,
+) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    width, height = image.size
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    gold = PALETTE["gold"]
+    horizon_y = int(height * (0.720 if photo_first else 0.735))
+
+    for offset in range(-220, width + 180, 34):
+        alpha = 24 if offset % 68 == 0 else 13
+        draw.line((offset, height + 30, offset + int(width * 0.52), horizon_y), fill=(*gold, alpha), width=1)
+    for offset in range(-160, width + 220, 42):
+        draw.line((offset, int(height * 0.245), offset + int(width * 0.34), int(height * 0.050)), fill=(*secondary, 12), width=1)
+
+    glow_y = int(height * (0.718 if photo_first else 0.760))
+    draw.ellipse(
+        (int(width * 0.05), glow_y - 34, int(width * 0.47), glow_y + 34),
+        fill=(*primary, 38 if photo_first else 28),
+    )
+    draw.ellipse(
+        (int(width * 0.50), glow_y - 30, int(width * 0.94), glow_y + 30),
+        fill=(*secondary, 32 if photo_first else 24),
+    )
+    draw.line((54, glow_y, width - 54, glow_y), fill=(*gold, 84), width=2)
+    draw.line((74, glow_y + 7, width - 74, glow_y + 7), fill=(248, 250, 255, 18), width=1)
+
+    randomizer = random.Random(width * 23 + height * 19 + (97 if photo_first else 31))
+    for side in (0, 1):
+        cluster_x = int(width * (0.08 if side == 0 else 0.92))
+        cluster_y = int(height * (0.34 if side == 0 else 0.23))
+        for _ in range(56 if photo_first else 44):
+            spread_x = randomizer.randrange(0, max(48, int(width * 0.14)))
+            spread_y = randomizer.randrange(0, max(60, int(height * 0.16)))
+            x = cluster_x + (-spread_x if side == 0 else spread_x)
+            y = cluster_y + spread_y
+            size = randomizer.randrange(1, 3)
+            draw.rectangle((x, y, x + size, y + size), fill=(*gold, randomizer.randrange(18, 46)))
+
+    if ImageFilter is not None:
+        glow = layer.filter(ImageFilter.GaussianBlur(10))
+        image.alpha_composite(glow)
+    image.alpha_composite(layer)
+
+
 def draw_vignette(image: Any, strength: int = 92) -> None:
     if Image is None or ImageDraw is None:
         return
@@ -919,6 +971,7 @@ def draw_reference_background(
         24,
         20,
     )
+    draw_sports_editorial_depth_markers(image, primary, secondary, photo_first=photo_first)
 
     rail_alpha = 24 if tone == "final" else 18
     for x in range(-height, width + height, 520):
