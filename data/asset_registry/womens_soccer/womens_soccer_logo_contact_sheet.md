@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-27T00:15:02.425430+00:00`
+Generated: `2026-06-27T00:26:51.660627+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -8,9 +8,9 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Summary
 
-- Rows: `50`
+- Rows: `64`
 - League mark rows: `6`
-- Team logo rows: `44`
+- Team logo rows: `58`
 - Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`
 - Human review walkthrough: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md`
 - Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`
@@ -18,7 +18,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Scope Counts
 
-- `europe_top_flight`: `33`
+- `europe_top_flight`: `47`
 - `nwsl`: `17`
 
 ## Rows
@@ -42,7 +42,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - Washington Spirit | scope=nwsl | type=team | status=not_approved | local=assets/leagues/womens_soccer/nwsl/teams/washington_spirit/logo.png | source_candidate=https://www.nwslsoccer.com/teams/c31d72afc09f42ee86418633aa41390a/washington-spirit/index | action=manual_logo_or_mark_review_required
 - Barclays Women's Super League | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/league_mark.png | source_candidate=https://www.wslfootball.com/ | action=manual_logo_or_mark_review_required
 - Liga F Moeve | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/league_mark.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
-- Google Pixel Womens Bundesliga | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/league_mark.png | source_candidate=https://www.dfb.de/en/women/womens-bundesliga | action=manual_logo_or_mark_review_required
+- Google Pixel Womens Bundesliga | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/league_mark.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
 - Arkema Premiere Ligue | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/premiere_ligue_france/league_mark.png | source_candidate=https://uk.fff.fr/ | action=manual_logo_or_mark_review_required
 - Serie A Women Athora | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/league_mark.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
 - Arsenal Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/arsenal_women/logo.png | source_candidate=https://www.arsenal.com/women | action=manual_logo_or_mark_review_required
@@ -73,3 +73,17 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - Real Sociedad | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/real_sociedad/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
 - SD Eibar | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/sd_eibar/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
 - Sevilla FC | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/sevilla_fc/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Bayer 04 Leverkusen Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/bayer_04_leverkusen_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- Eintracht Frankfurt Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/eintracht_frankfurt_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- FC Bayern Munich Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/fc_bayern_munich_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- FC Carl Zeiss Jena Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/fc_carl_zeiss_jena_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- Hamburger SV Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/hamburger_sv_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- RB Leipzig Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/rb_leipzig_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- SC Freiburg Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/sc_freiburg_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- SGS Essen | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/sgs_essen/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- SV Werder Bremen Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/sv_werder_bremen_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- TSG Hoffenheim Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/tsg_hoffenheim_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- Union Berlin Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/union_berlin_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- VfL Wolfsburg Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/vfl_wolfsburg_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- 1. FC Köln Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/1_fc_koln_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
+- 1. FC Nürnberg Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/teams/1_fc_nurnberg_women/logo.png | source_candidate=https://frauen-bundesliga.dfb.de/google-pixel-frauen-bundesliga/ergebnisse-und-tabelle/ | action=manual_logo_or_mark_review_required
