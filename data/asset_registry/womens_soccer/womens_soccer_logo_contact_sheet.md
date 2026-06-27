@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-27T00:33:51.202593+00:00`
+Generated: `2026-06-27T00:46:39.576116+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -8,9 +8,9 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Summary
 
-- Rows: `76`
+- Rows: `88`
 - League mark rows: `6`
-- Team logo rows: `70`
+- Team logo rows: `82`
 - Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`
 - Human review walkthrough: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md`
 - Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`
@@ -18,7 +18,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Scope Counts
 
-- `europe_top_flight`: `59`
+- `europe_top_flight`: `71`
 - `nwsl`: `17`
 
 ## Rows
@@ -99,3 +99,15 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - Parma Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/parma_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
 - Sassuolo Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/sassuolo_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
 - Ternana Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/teams/ternana_women/logo.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
+- AS Saint-Etienne Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/as_saint_etienne_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- Dijon FCO Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/dijon_fco_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- FC Fleury 91 Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/fc_fleury_91_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- FC Nantes Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/fc_nantes_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- Le Havre AC Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/le_havre_ac_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- MHSC Feminines | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/mhsc_feminines/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- OL Lyonnes | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/ol_lyonnes/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- Olympique Marseille Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/olympique_marseille_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- Paris FC Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/paris_fc_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- Paris Saint-Germain Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/paris_saint_germain_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- RC Lens Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/rc_lens_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
+- RC Strasbourg Alsace Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/arkema_premiere_ligue_france/teams/rc_strasbourg_alsace_women/logo.png | source_candidate=https://epreuves.fff.fr/competition/engagement/436476-arkema-premiere-ligue/phase/1/1/accueil | action=manual_logo_or_mark_review_required
