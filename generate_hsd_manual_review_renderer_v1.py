@@ -1935,10 +1935,16 @@ def draw_final_score_reference_title(image: Any, template_spec: Dict[str, Any], 
         first_w, first_h = text_size(draw, first, first_font)
         second_w, second_h = text_size(draw, second, second_font)
         total_h = first_h + second_h + line_gap
+        center_x = left + width // 2
         y_cursor = y + max(0, (h - total_h) // 2) - 1
-        draw.text((left, y_cursor), first, font=first_font, fill=PALETTE["ink"], stroke_width=2, stroke_fill=(0, 0, 0))
-        draw.text((left, y_cursor + first_h + line_gap), second, font=second_font, fill=PALETTE["gold"], stroke_width=2, stroke_fill=(0, 0, 0))
-        draw.line((left + max(first_w, second_w) + 22, y_cursor + total_h - 8, right, y_cursor + total_h - 8), fill=(*PALETTE["gold"], 150), width=2)
+        first_x = center_x - first_w // 2
+        second_x = center_x - second_w // 2
+        block_w = max(first_w, second_w)
+        draw.text((first_x, y_cursor), first, font=first_font, fill=PALETTE["ink"], stroke_width=2, stroke_fill=(0, 0, 0))
+        draw.text((second_x, y_cursor + first_h + line_gap), second, font=second_font, fill=PALETTE["gold"], stroke_width=2, stroke_fill=(0, 0, 0))
+        line_left = center_x - block_w // 2
+        line_right = center_x + block_w // 2
+        draw.line((line_left, y_cursor + total_h - 8, line_right, y_cursor + total_h - 8), fill=(*PALETTE["gold"], 140), width=2)
         return
     if is_story:
         first, second, start, minimum = "QUICK FINAL", "SCORE", 84, 44
@@ -2968,6 +2974,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         "",
         "## Output",
         "",
+        f"- Preview source packet: `{clean(packet.get('title')) or 'none'}`",
+        "- Preview freshness: generated from the current handoff packet.",
         f"- Preview: `{preview_path or 'not_created'}`",
         f"- Story: `{clean(packet.get('title')) or 'none'}`",
         f"- Template: `{clean(template.get('template_id')) or 'not_selected'}`",
@@ -3093,6 +3101,8 @@ def main() -> None:
         "team_visual_profiles": render_result.get("team_visual_profiles", []),
         "render_background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "render_background_cues": clean(render_result.get("render_background_cues")) or RENDER_BACKGROUND_CUES,
+        "preview_source_title": clean(packet.get("title")),
+        "preview_freshness_status": "generated_from_current_handoff_packet",
         "guardrails": {
             "manual_only": True,
             "review_only": True,
