@@ -245,15 +245,17 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert report.exists()
     assert signal_manifest.exists()
     rows = list(csv.DictReader(queue.open(newline="", encoding="utf-8")))
-    assert rows[0]["review_only"] == "true"
-    assert rows[0]["publish_ready"] == "false"
-    assert rows[0]["auto_publish"] == "false"
-    assert rows[0]["auto_source_enablement"] == "false"
+    assert rows
+    assert all(row["review_only"] == "true" for row in rows)
+    assert all(row["publish_ready"] == "false" for row in rows)
+    assert all(row["auto_publish"] == "false" for row in rows)
+    assert all(row["auto_source_enablement"] == "false" for row in rows)
+    assert any(row["headline"] == "Breaking: Liberty announce star guard injury update" for row in rows)
     signal_payload = json.loads(signal_manifest.read_text(encoding="utf-8"))
     news_payload = json.loads(news_manifest.read_text(encoding="utf-8"))
     assert signal_payload["review_only"] is True
     assert signal_payload["publish_ready"] is False
-    assert signal_payload["counts"]["rows"] == 1
+    assert signal_payload["counts"]["rows"] == len(rows)
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
-    assert news_payload["counts"]["breaking_public_signal_rows"] == 1
-    assert news_payload["counts"]["breaking_public_signal_review_only"] == 1
+    assert news_payload["counts"]["breaking_public_signal_rows"] == len(rows)
+    assert news_payload["counts"]["breaking_public_signal_review_only"] == len(rows)
