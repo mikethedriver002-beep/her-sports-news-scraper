@@ -18,6 +18,9 @@ REPORT_JSON = Path("data/asset_registry/hockey_softball_asset_workflow_readiness
 ACTION_QUEUE_MD = Path("data/asset_registry/hockey_softball_asset_review_action_queue.md")
 ACTION_QUEUE_CSV = Path("data/asset_registry/hockey_softball_asset_review_action_queue.csv")
 ACTION_QUEUE_JSON = Path("data/asset_registry/hockey_softball_asset_review_action_queue.json")
+BATCH_SOURCE_REVIEW_MD = Path("data/asset_registry/hockey_softball_batch_source_review_helper.md")
+BATCH_SOURCE_REVIEW_CSV = Path("data/asset_registry/hockey_softball_batch_source_review_helper.csv")
+BATCH_SOURCE_REVIEW_JSON = Path("data/asset_registry/hockey_softball_batch_source_review_helper.json")
 
 ACTION_QUEUE_FIELDS = [
     "priority",
@@ -40,6 +43,30 @@ ACTION_QUEUE_FIELDS = [
     "fields_to_keep_blank_until_review",
     "fields_that_must_remain_hold",
     "next_human_action",
+    "guardrail_note",
+]
+
+BATCH_SOURCE_REVIEW_FIELDS = [
+    "review_order",
+    "batch_position",
+    "batch_bucket",
+    "sport_family",
+    "sport_label",
+    "asset_domain",
+    "display_name",
+    "candidate_id",
+    "review_state",
+    "source_url",
+    "evidence_to_open",
+    "board_to_open",
+    "intake_to_fill",
+    "fields_mike_can_fill_now",
+    "fields_to_keep_blank_or_held",
+    "do_not_touch",
+    "local_asset_present",
+    "current_source_reviewed",
+    "current_identity_status",
+    "local_asset_needed_later",
     "guardrail_note",
 ]
 
@@ -287,6 +314,7 @@ def render_sport_board(
         "## Next Human Action",
         "",
         "- Open `data/asset_registry/hockey_softball_asset_review_action_queue.md` first.",
+        "- For a faster source-review sweep, open `data/asset_registry/hockey_softball_batch_source_review_helper.md` and work the next 10 `source_review_now` rows.",
         "- Work the queue top-to-bottom: open the listed board/contact sheet, then fill only the listed human-intake fields.",
         "- Source-candidate-only athlete rows keep identity/local-file/approval fields held until a named athlete and local candidate asset exist.",
         "",
@@ -338,6 +366,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Foundation: `data/asset_registry/hockey_softball_asset_foundation_report.md`",
         "- Source review helper: `data/asset_registry/hockey_softball_source_review_helper_report.md`",
         "- Review action queue: `data/asset_registry/hockey_softball_asset_review_action_queue.md`",
+        "- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
         "",
@@ -354,6 +383,10 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Action queue rows: `{report['totals']['action_queue_rows']}`",
         f"- Source-candidate-only rows: `{report['totals']['source_candidate_only_rows']}`",
         f"- Local asset present rows: `{report['totals']['local_asset_present_rows']}`",
+        f"- Batch source-review helper rows: `{report['totals']['batch_source_review_rows']}`",
+        f"- Source-reviewable now rows: `{report['totals']['batch_source_review_now_rows']}`",
+        f"- Next batch rows: `{report['totals']['batch_source_review_next_rows']}`",
+        f"- Local asset needed later rows: `{report['totals']['batch_source_review_local_asset_needed_later_rows']}`",
         "",
         "## Sport Boards",
         "",
@@ -419,6 +452,147 @@ def render_action_queue(action_rows: list[Dict[str, str]], generated_at: str) ->
     return "\n".join(lines)
 
 
+def batch_source_review_bucket(row: Mapping[str, str]) -> str:
+    if not clean(row.get("source_url")):
+        return "source_missing_hold"
+    if clean(row.get("local_asset_present")).lower() == "yes":
+        return "local_asset_present_manual_identity_review"
+    if clean(row.get("review_state")) == "approved_marker_present_manual_audit_required":
+        return "marker_present_manual_audit_required"
+    if clean(row.get("current_source_reviewed")).lower() != "yes":
+        return "source_review_now"
+    return "source_already_reviewed_wait_for_local_asset"
+
+
+def batch_source_review_sort_key(row: Mapping[str, str]) -> tuple[int, str, str, str, str]:
+    bucket_order = {
+        "source_review_now": 0,
+        "source_already_reviewed_wait_for_local_asset": 1,
+        "local_asset_present_manual_identity_review": 2,
+        "marker_present_manual_audit_required": 3,
+        "source_missing_hold": 4,
+    }
+    bucket = batch_source_review_bucket(row)
+    return (
+        bucket_order.get(bucket, 9),
+        clean(row.get("sport_family")),
+        clean(row.get("asset_domain")),
+        clean(row.get("entity_id")),
+        clean(row.get("display_name")),
+    )
+
+
+def batch_source_review_rows(action_rows: list[Dict[str, str]], *, next_limit: int = 10) -> list[Dict[str, str]]:
+    ranked_rows = sorted(action_rows, key=batch_source_review_sort_key)
+    next_review_seen = 0
+    rows: list[Dict[str, str]] = []
+    for index, row in enumerate(ranked_rows, start=1):
+        bucket = batch_source_review_bucket(row)
+        batch_position = ""
+        if bucket == "source_review_now" and next_review_seen < next_limit:
+            next_review_seen += 1
+            batch_position = f"next_{next_review_seen:02d}"
+        fields_now = "none"
+        fields_hold = clean(row.get("fields_that_must_remain_hold"))
+        do_not_touch = "local asset files; approval_status; registry_action; publish_ready; auto_approval; auto_publish; move_files; paid_apis; asset_downloads"
+        if bucket == "source_review_now":
+            fields_now = clean(row.get("fields_to_fill_after_manual_review"))
+            fields_hold = clean(row.get("fields_that_must_remain_hold"))
+            do_not_touch = (
+                "operator_decision; identity_verified; local_file_reviewed; approval_status; registry_action; "
+                "local_candidate_path; approved_marker_path; headshot.png; .approved; publish_ready; auto_approval; auto_publish; move_files"
+            )
+        elif bucket == "source_already_reviewed_wait_for_local_asset":
+            fields_now = "none unless Mike is correcting a human-entered source review after reopening the source page"
+            fields_hold = clean(row.get("fields_that_must_remain_hold"))
+        elif bucket == "local_asset_present_manual_identity_review":
+            fields_now = "none from this source-review batch; use a separate visual identity review before any approval-state change"
+        elif bucket == "marker_present_manual_audit_required":
+            fields_now = "none; investigate marker separately and keep approval state unchanged"
+        elif bucket == "source_missing_hold":
+            fields_hold = f"source_url_to_record; reviewed_by; reviewed_at_local; {clean(row.get('fields_that_must_remain_hold'))}"
+        rows.append(
+            {
+                "review_order": str(index),
+                "batch_position": batch_position,
+                "batch_bucket": bucket,
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "asset_domain": clean(row.get("asset_domain")),
+                "display_name": clean(row.get("display_name")),
+                "candidate_id": clean(row.get("candidate_id")),
+                "review_state": clean(row.get("review_state")),
+                "source_url": clean(row.get("source_url")),
+                "evidence_to_open": clean(row.get("source_url")),
+                "board_to_open": clean(row.get("board_to_open")),
+                "intake_to_fill": clean(row.get("intake_to_fill")),
+                "fields_mike_can_fill_now": fields_now,
+                "fields_to_keep_blank_or_held": fields_hold,
+                "do_not_touch": do_not_touch,
+                "local_asset_present": clean(row.get("local_asset_present")) or "no",
+                "current_source_reviewed": clean(row.get("current_source_reviewed")) or "no",
+                "current_identity_status": clean(row.get("current_identity_status")) or "no",
+                "local_asset_needed_later": "no" if clean(row.get("local_asset_present")).lower() == "yes" else "yes",
+                "guardrail_note": "review-only; no downloads; no approval-state changes; no headshot or marker writes",
+            }
+        )
+    return rows
+
+
+def render_batch_source_review_helper(batch_rows: list[Dict[str, str]], generated_at: str, *, next_limit: int = 10) -> str:
+    source_now = [row for row in batch_rows if row["batch_bucket"] == "source_review_now"]
+    already_reviewed = [row for row in batch_rows if row["batch_bucket"] == "source_already_reviewed_wait_for_local_asset"]
+    local_later = [row for row in batch_rows if row["local_asset_needed_later"] == "yes"]
+    next_rows = [row for row in batch_rows if row["batch_position"]][:next_limit]
+    lines = [
+        "# Hockey/Softball Batch Source Review Helper",
+        "",
+        f"- Generated: `{generated_at}`",
+        f"- Rows: `{len(batch_rows)}`",
+        f"- Source-reviewable now: `{len(source_now)}`",
+        f"- Already source-reviewed or waiting on local assets: `{len(already_reviewed)}`",
+        f"- Local assets needed later: `{len(local_later)}`",
+        f"- Next batch rows shown: `{len(next_rows)}`",
+        "- Guardrails: review-only, no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` marker writes, no publish-ready movement, no publishing.",
+        "",
+        "## Batch Rules",
+        "",
+        "1. Open each `evidence_to_open` URL manually.",
+        "2. If the page is the expected official/team/roster/profile source, fill only `fields_mike_can_fill_now` in `intake_to_fill`.",
+        "3. Keep every value in `fields_to_keep_blank_or_held` unchanged until visual identity/local asset review exists.",
+        "4. Do not touch anything listed in `do_not_touch` during a source-review batch.",
+        "5. Stop on any row where the source page is stale, missing, paywalled, ambiguous, or mismatched.",
+        "",
+        "## Next 10 Source-Review Rows",
+        "",
+    ]
+    if not next_rows:
+        lines.append("- No rows currently require batch source review. Keep the packet held until new source candidates or local assets exist.")
+    for row in next_rows:
+        lines.extend(
+            [
+                f"### {row['batch_position']} - {row['sport_label']} / {row['display_name']}",
+                "",
+                f"- Bucket: `{row['batch_bucket']}`",
+                f"- Evidence source to open: `{row['evidence_to_open']}`",
+                f"- Board: `{row['board_to_open']}`",
+                f"- Intake to fill: `{row['intake_to_fill']}`",
+                f"- Fields Mike can fill now: `{row['fields_mike_can_fill_now']}`",
+                f"- Keep blank or held: `{row['fields_to_keep_blank_or_held']}`",
+                f"- Do not touch: `{row['do_not_touch']}`",
+                "",
+            ]
+        )
+    lines.extend(["", "## Bucket Counts", ""])
+    buckets = sorted({row["batch_bucket"] for row in batch_rows})
+    for bucket in buckets:
+        lines.append(f"- {bucket}: `{sum(1 for row in batch_rows if row['batch_bucket'] == bucket)}`")
+    lines.extend(["", "## CSV Workflow", "", f"- Open `{BATCH_SOURCE_REVIEW_CSV.as_posix()}` and filter `batch_bucket=source_review_now` to continue past the first {next_limit} rows."])
+    lines.append("- Keep `local_asset_needed_later=yes` rows out of visual identity or approval review until a human supplies a local candidate asset.")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def main() -> int:
     generated_at = generated_at_utc()
     summaries = [summarize_sport(sport_key, sport, generated_at) for sport_key, sport in SPORTS.items()]
@@ -446,6 +620,19 @@ def main() -> int:
         "local_asset_present_rows": sum(int(row["local_asset_present_rows"]) for row in summaries),
         "action_queue_rows": len(action_rows),
     }
+    batch_rows = batch_source_review_rows(action_rows)
+    source_review_now_rows = sum(1 for row in batch_rows if row["batch_bucket"] == "source_review_now")
+    batch_next_rows = sum(1 for row in batch_rows if row["batch_position"])
+    local_asset_needed_later_rows = sum(1 for row in batch_rows if row["local_asset_needed_later"] == "yes")
+    already_source_reviewed_rows = sum(1 for row in batch_rows if row["batch_bucket"] == "source_already_reviewed_wait_for_local_asset")
+    totals.update(
+        {
+            "batch_source_review_rows": len(batch_rows),
+            "batch_source_review_now_rows": source_review_now_rows,
+            "batch_source_review_next_rows": batch_next_rows,
+            "batch_source_review_local_asset_needed_later_rows": local_asset_needed_later_rows,
+        }
+    )
     report = {
         "version": VERSION,
         "status": "hockey_softball_asset_workflow_readiness_ready",
@@ -459,6 +646,14 @@ def main() -> int:
             "json": ACTION_QUEUE_JSON.as_posix(),
             "rows": len(action_rows),
         },
+        "batch_source_review_helper": {
+            "md": BATCH_SOURCE_REVIEW_MD.as_posix(),
+            "csv": BATCH_SOURCE_REVIEW_CSV.as_posix(),
+            "json": BATCH_SOURCE_REVIEW_JSON.as_posix(),
+            "rows": len(batch_rows),
+            "source_review_now_rows": source_review_now_rows,
+            "next_rows": batch_next_rows,
+        },
     }
     action_payload = {
         "version": VERSION,
@@ -470,9 +665,24 @@ def main() -> int:
         "local_asset_present_rows": totals["local_asset_present_rows"],
         "action_rows": action_rows,
     }
+    batch_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_batch_source_review_helper_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(batch_rows),
+        "source_review_now_rows": source_review_now_rows,
+        "already_source_reviewed_wait_for_local_asset_rows": already_source_reviewed_rows,
+        "local_asset_needed_later_rows": local_asset_needed_later_rows,
+        "next_review_rows": [row for row in batch_rows if row["batch_position"]],
+        "batch_rows": batch_rows,
+    }
     write_csv(ACTION_QUEUE_CSV, action_rows, ACTION_QUEUE_FIELDS)
     write_json(ACTION_QUEUE_JSON, action_payload)
     write_text(ACTION_QUEUE_MD, render_action_queue(action_rows, generated_at))
+    write_csv(BATCH_SOURCE_REVIEW_CSV, batch_rows, BATCH_SOURCE_REVIEW_FIELDS)
+    write_json(BATCH_SOURCE_REVIEW_JSON, batch_payload)
+    write_text(BATCH_SOURCE_REVIEW_MD, render_batch_source_review_helper(batch_rows, generated_at))
     write_json(REPORT_JSON, report)
     write_text(REPORT_MD, render_report(report))
     print(json.dumps({"status": report["status"], "workflow_rows": totals["workflow_rows"]}, indent=2))

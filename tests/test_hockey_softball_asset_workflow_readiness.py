@@ -76,11 +76,23 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["action_queue_rows"] == 74
     assert report["totals"]["source_candidate_only_rows"] == 74
     assert report["totals"]["local_asset_present_rows"] == 0
+    assert report["totals"]["batch_source_review_rows"] == 74
+    assert report["totals"]["batch_source_review_now_rows"] == 54
+    assert report["totals"]["batch_source_review_next_rows"] == 10
+    assert report["totals"]["batch_source_review_local_asset_needed_later_rows"] == 74
     assert report["action_queue"] == {
         "md": "data/asset_registry/hockey_softball_asset_review_action_queue.md",
         "csv": "data/asset_registry/hockey_softball_asset_review_action_queue.csv",
         "json": "data/asset_registry/hockey_softball_asset_review_action_queue.json",
         "rows": 74,
+    }
+    assert report["batch_source_review_helper"] == {
+        "md": "data/asset_registry/hockey_softball_batch_source_review_helper.md",
+        "csv": "data/asset_registry/hockey_softball_batch_source_review_helper.csv",
+        "json": "data/asset_registry/hockey_softball_batch_source_review_helper.json",
+        "rows": 74,
+        "source_review_now_rows": 54,
+        "next_rows": 10,
     }
 
     action_queue_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_action_queue.json"
@@ -107,16 +119,40 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert len(csv_rows) == 74
     assert list(csv_rows[0].keys()) == workflow.ACTION_QUEUE_FIELDS
     assert csv_rows[0]["fields_to_keep_blank_until_review"] == "reviewed_by; reviewed_at_local; source_url_to_record"
+    batch_path = tmp_path / "data/asset_registry/hockey_softball_batch_source_review_helper.json"
+    batch_helper = json.loads(batch_path.read_text(encoding="utf-8"))
+    assert batch_helper["status"] == "hockey_softball_batch_source_review_helper_ready"
+    assert batch_helper["rows"] == 74
+    assert batch_helper["source_review_now_rows"] == 54
+    assert batch_helper["local_asset_needed_later_rows"] == 74
+    assert len(batch_helper["next_review_rows"]) == 10
+    assert all(row["batch_bucket"] == "source_review_now" for row in batch_helper["next_review_rows"])
+    assert all(row["asset_domain"] == "athlete_photo" for row in batch_helper["next_review_rows"])
+    assert batch_helper["next_review_rows"][0]["batch_position"] == "next_01"
+    assert "source_reviewed" in batch_helper["next_review_rows"][0]["fields_mike_can_fill_now"]
+    assert "identity_verified" in batch_helper["next_review_rows"][0]["fields_to_keep_blank_or_held"]
+    assert "headshot.png" in batch_helper["next_review_rows"][0]["do_not_touch"]
+    batch_csv_path = tmp_path / "data/asset_registry/hockey_softball_batch_source_review_helper.csv"
+    with batch_csv_path.open(newline="", encoding="utf-8") as handle:
+        batch_csv_rows = list(csv.DictReader(handle))
+    assert len(batch_csv_rows) == 74
+    assert list(batch_csv_rows[0].keys()) == workflow.BATCH_SOURCE_REVIEW_FIELDS
+    assert sum(1 for row in batch_csv_rows if row["batch_position"]) == 10
 
     hockey_board = (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md").read_text(encoding="utf-8")
     softball_board = (tmp_path / "data/asset_registry/softball/softball_asset_workflow_board.md").read_text(encoding="utf-8")
     action_queue_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_action_queue.md").read_text(encoding="utf-8")
+    batch_helper_board = (tmp_path / "data/asset_registry/hockey_softball_batch_source_review_helper.md").read_text(encoding="utf-8")
     assert "## How To Work This Queue" in action_queue_board
     assert "fields_to_keep_blank_until_review" in action_queue_board
     assert "no automatic downloads" in action_queue_board
+    assert "## Next 10 Source-Review Rows" in batch_helper_board
+    assert "Fields Mike can fill now" in batch_helper_board
+    assert "Do not touch" in batch_helper_board
     assert "## Review Order" in hockey_board
     assert "## Next Human Action" in hockey_board
     assert "hockey_softball_asset_review_action_queue.md" in hockey_board
+    assert "hockey_softball_batch_source_review_helper.md" in hockey_board
     assert "proposed manual target paths only" in hockey_board
     assert "PWHL San Jose" in hockey_board
     assert "Athletes Unlimited Softball League" in softball_board
@@ -153,6 +189,34 @@ def test_action_queue_source_only_count_uses_local_asset_presence() -> None:
     assert "- Local asset present rows: `0`" in board
 
 
+def test_batch_source_review_bucket_classifies_hold_paths() -> None:
+    workflow = load_module(WORKFLOW_SCRIPT, "report_hsd_hockey_softball_asset_workflow_readiness_v1")
+    base = {
+        "source_url": "https://example.com/source",
+        "local_asset_present": "no",
+        "review_state": "source_candidate_only_local_asset_missing",
+        "current_source_reviewed": "no",
+    }
+
+    assert workflow.batch_source_review_bucket(base) == "source_review_now"
+    assert workflow.batch_source_review_bucket({**base, "current_source_reviewed": "yes"}) == "source_already_reviewed_wait_for_local_asset"
+    assert workflow.batch_source_review_bucket({**base, "local_asset_present": "yes"}) == "local_asset_present_manual_identity_review"
+    assert workflow.batch_source_review_bucket({**base, "review_state": "approved_marker_present_manual_audit_required"}) == "marker_present_manual_audit_required"
+    assert workflow.batch_source_review_bucket({**base, "source_url": ""}) == "source_missing_hold"
+
+
+def test_unsafe_intake_rows_flags_non_hold_or_truthy_guardrails() -> None:
+    workflow = load_module(WORKFLOW_SCRIPT, "report_hsd_hockey_softball_asset_workflow_readiness_v1")
+
+    assert workflow.unsafe_intake_rows(
+        [
+            {"registry_action": "hold_no_registry_state_change_until_local_asset_exists", "publish_ready": "false"},
+            {"registry_action": "approve_asset", "publish_ready": "false"},
+            {"registry_action": "hold_no_registry_state_change_until_local_asset_exists", "auto_publish": "yes"},
+        ]
+    ) == 2
+
+
 def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_path: Path, monkeypatch) -> None:
     seed_hockey_softball_review_packet(tmp_path, monkeypatch)
     workflow = load_module(WORKFLOW_SCRIPT, "report_hsd_hockey_softball_asset_workflow_readiness_v1")
@@ -169,6 +233,12 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_asset_review_action_queue_rows"] == 74
     assert panel["hockey_softball_asset_review_action_queue_source_candidate_only_rows"] == 74
     assert panel["hockey_softball_asset_review_action_queue_local_asset_present_rows"] == 0
+    assert panel["hockey_softball_batch_source_review_status"] == "hockey_softball_batch_source_review_helper_ready"
+    assert panel["hockey_softball_batch_source_review_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_batch_source_review_rows"] == 74
+    assert panel["hockey_softball_batch_source_review_now_rows"] == 54
+    assert panel["hockey_softball_batch_source_review_next_rows"] == 10
+    assert panel["hockey_softball_batch_source_review_local_asset_needed_later_rows"] == 74
     assert panel["womens_hockey_asset_workflow_rows"] == 49
     assert panel["softball_asset_workflow_rows"] == 25
     assert panel["womens_hockey_proposed_headshot_path_refs"] == 36
@@ -178,6 +248,7 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     shortcut_labels = {shortcut["label"] for shortcut in panel["file_shortcuts"]}
     assert "Hockey/softball asset workflow readiness" in shortcut_labels
     assert "Hockey/softball asset review action queue" in shortcut_labels
+    assert "Hockey/softball batch source review helper" in shortcut_labels
     assert "Women's hockey asset workflow board" in shortcut_labels
     assert "Softball asset workflow board" in shortcut_labels
 
@@ -194,6 +265,9 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert missing_panel["hockey_softball_asset_review_action_queue_status"] == ""
     assert missing_panel["hockey_softball_asset_review_action_queue_generated_at"] == ""
     assert missing_panel["hockey_softball_asset_review_action_queue_freshness_status"] == "packet_missing"
+    assert missing_panel["hockey_softball_batch_source_review_status"] == ""
+    assert missing_panel["hockey_softball_batch_source_review_generated_at"] == ""
+    assert missing_panel["hockey_softball_batch_source_review_freshness_status"] == "packet_missing"
 
     report_dir = tmp_path / "data" / "asset_registry"
     report_dir.mkdir(parents=True)
@@ -207,6 +281,11 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
         json.dumps({"status": "action_queue_empty", "generated_at_utc": "2026-06-27T15:05:00+00:00", "action_rows": None}),
         encoding="utf-8",
     )
+    (report_dir / "hockey_softball_batch_source_review_helper.md").write_text("# Empty batch helper\n", encoding="utf-8")
+    (report_dir / "hockey_softball_batch_source_review_helper.json").write_text(
+        json.dumps({"status": "batch_empty", "generated_at_utc": "2026-06-27T15:10:00+00:00", "batch_rows": None}),
+        encoding="utf-8",
+    )
 
     empty_panel = command_center.asset_availability_readiness_panel()
     assert empty_panel["hockey_softball_asset_workflow_status"] == "workflow_empty"
@@ -216,3 +295,7 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert empty_panel["hockey_softball_asset_review_action_queue_generated_at"] == "2026-06-27T15:05:00+00:00"
     assert empty_panel["hockey_softball_asset_review_action_queue_freshness_status"] == "packet_empty"
     assert empty_panel["hockey_softball_asset_review_action_queue_rows"] == 0
+    assert empty_panel["hockey_softball_batch_source_review_status"] == "batch_empty"
+    assert empty_panel["hockey_softball_batch_source_review_generated_at"] == "2026-06-27T15:10:00+00:00"
+    assert empty_panel["hockey_softball_batch_source_review_freshness_status"] == "packet_empty"
+    assert empty_panel["hockey_softball_batch_source_review_rows"] == 0

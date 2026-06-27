@@ -1,6 +1,6 @@
 # Softball Asset Workflow Board
 
-- Generated: `2026-06-27T19:00:45.489288+00:00`
+- Generated: `2026-06-27T22:34:58.410929+00:00`
 - League: `Athletes Unlimited Softball League`
 - Status: `review_only_workflow_ready`
 - Scope: review-only operator workflow board; it reads source/contact/intake artifacts and writes no assets.
@@ -9,6 +9,7 @@
 ## Next Human Action
 
 - Open `data/asset_registry/hockey_softball_asset_review_action_queue.md` first.
+- For a faster source-review sweep, open `data/asset_registry/hockey_softball_batch_source_review_helper.md` and work the next 10 `source_review_now` rows.
 - Work the queue top-to-bottom: open the listed board/contact sheet, then fill only the listed human-intake fields.
 - Source-candidate-only athlete rows keep identity/local-file/approval fields held until a named athlete and local candidate asset exist.
 

@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-27T19:00:45.489288+00:00`
+- Generated: `2026-06-27T22:34:58.410929+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First
@@ -9,6 +9,7 @@
 - Foundation: `data/asset_registry/hockey_softball_asset_foundation_report.md`
 - Source review helper: `data/asset_registry/hockey_softball_source_review_helper_report.md`
 - Review action queue: `data/asset_registry/hockey_softball_asset_review_action_queue.md`
+- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`
 - Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`
 - Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`
 
@@ -25,6 +26,10 @@
 - Action queue rows: `74`
 - Source-candidate-only rows: `74`
 - Local asset present rows: `0`
+- Batch source-review helper rows: `74`
+- Source-reviewable now rows: `54`
+- Next batch rows: `10`
+- Local asset needed later rows: `74`
 
 ## Sport Boards
 
