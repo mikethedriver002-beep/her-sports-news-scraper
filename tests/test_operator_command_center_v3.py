@@ -9,6 +9,75 @@ import generate_hsd_operator_command_center_v2 as command_center
 REPO = Path(__file__).resolve().parents[1]
 
 
+def test_command_center_links_breaking_public_signal_artifacts() -> None:
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+
+    assert "breaking_public_signal_queue.md" in artifact_paths
+    assert "breaking_public_signal_queue.csv" in artifact_paths
+    assert "breaking_public_signal_manifest.json" in artifact_paths
+
+
+def test_command_center_surfaces_breaking_public_signal_as_review_only_source_board(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    write_csv_with_fields(
+        "breaking_public_signal_queue.csv",
+        [
+            {
+                "candidate_id": "candidate-breaking-1",
+                "headline": "Breaking: Liberty announce injury update",
+                "urgency_band": "P0_breaking_review",
+                "breaking_score": "88",
+                "why_urgent": "breaking-language match: breaking, injury",
+                "public_signal_status": "candidate_public_signal_review_only",
+                "public_signal_confidence": "low",
+                "public_signal_count": "1",
+                "public_signal_summary": "Public community discussion needs review",
+                "signal_timestamp_utc": "2026-06-26T12:00:00+00:00",
+                "source_urls": "[\"https://liberty.wnba.com/news/injury-update\"]",
+                "source_domains": "liberty.wnba.com",
+                "limitations": "Metadata and source-observation scaffold only; no paid API or private data.",
+                "human_review_cue": "Operator must verify official confirmation.",
+                "manual_review_required": "true",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_publish": "false",
+            }
+        ],
+        [
+            "candidate_id",
+            "headline",
+            "urgency_band",
+            "breaking_score",
+            "why_urgent",
+            "public_signal_status",
+            "public_signal_confidence",
+            "public_signal_count",
+            "public_signal_summary",
+            "signal_timestamp_utc",
+            "source_urls",
+            "source_domains",
+            "limitations",
+            "human_review_cue",
+            "manual_review_required",
+            "review_only",
+            "publish_ready",
+            "auto_publish",
+        ],
+    )
+
+    rows = command_center.source_discovery_board()
+    row = rows[0]
+
+    assert row["lane"] == "social_discovery"
+    assert row["posture"] == "discovery_only"
+    assert row["story_opportunity_confidence_tier"] == "discovery_only"
+    assert row["story_opportunity_confirmation_cue"] == "needs_official_confirmation"
+    assert row["review_only"] == "true"
+    assert row["publish_ready"] == "false"
+    assert row["auto_publish"] == "false"
+    assert row["render_readiness_band"] == "hold_for_source_confirmation"
+
+
 def write_json(path: str, payload: dict) -> None:
     Path(path).write_text(json.dumps(payload), encoding="utf-8")
 

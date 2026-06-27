@@ -367,6 +367,9 @@ ARTIFACTS = [
     ("Results", "Results drill-down dashboard", "results_dashboard/index.html"),
     ("News", "News fact packets", "news_fact_packets.csv"),
     ("News", "News daily plan", "news_daily_plan.md"),
+    ("News", "Breaking public signal queue", "breaking_public_signal_queue.md"),
+    ("News", "Breaking public signal data", "breaking_public_signal_queue.csv"),
+    ("News", "Breaking public signal manifest", "breaking_public_signal_manifest.json"),
     ("News", "News sync hub", "news_sync_hub.md"),
     ("Planning", "Multi-post daily board", "multi_post_daily_board.md"),
     ("Planning", "Post slot status", "post_slot_status.csv"),
@@ -2766,6 +2769,83 @@ def source_discovery_board() -> List[Dict[str, str]]:
             "freshness_source": clean(row.get("freshness_source")),
             "freshness_score": clean(row.get("freshness_score")),
             "quality_reason": short(clean(row.get("quality_reason")), 190),
+        }
+        item.update(
+            score_render_readiness(
+                item,
+                item_type="Story opportunity",
+                headline=item["title"],
+                artifact=item["artifact"],
+            )
+        )
+        rows.append(item)
+    rows.extend(breaking_public_signal_board_rows())
+    return rows
+
+
+def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, row in enumerate(read_csv("breaking_public_signal_queue.csv")[:8], 1):
+        signal_status = clean(row.get("public_signal_status"))
+        urgent_band = clean(row.get("urgency_band"))
+        if signal_status != "candidate_public_signal_review_only" and urgent_band not in {"P0_breaking_review", "P1_urgent_review"}:
+            continue
+        title = first_present(row.get("headline"), default="Untitled breaking/public-signal review")
+        source_domains = clean(row.get("source_domains"))
+        public_summary = clean(row.get("public_signal_summary"))
+        why_urgent = clean(row.get("why_urgent"))
+        item = {
+            "rank": f"B{index}",
+            "lane": "social_discovery" if signal_status == "candidate_public_signal_review_only" else "breaking_news_review",
+            "status": "review_only",
+            "posture": "discovery_only",
+            "band": "yellow",
+            "source": "Breaking/public signal queue",
+            "title": title,
+            "detail": short(first_present(public_summary, why_urgent), 260),
+            "next_action": short(
+                first_present(row.get("human_review_cue"), default="Verify provenance, recency, and confirmation before editorial use."),
+                180,
+            ),
+            "artifact": "breaking_public_signal_queue.csv",
+            "url": "",
+            "evidence_title": title,
+            "evidence_published_at": clean(row.get("signal_timestamp_utc")),
+            "evidence_description": short(public_summary, 260),
+            "evidence_preview": short(why_urgent, 260),
+            "evidence_source": "breaking_public_signal_queue.csv",
+            "story_opportunity_id": clean(row.get("candidate_id")),
+            "story_opportunity_title": title,
+            "story_opportunity_size": clean(row.get("public_signal_count")),
+            "story_opportunity_sources": source_domains,
+            "story_opportunity_urls": clean(row.get("source_urls")),
+            "story_opportunity_reason": short(why_urgent, 220),
+            "story_opportunity_angle": urgent_band,
+            "story_opportunity_recommended_path": "manual_story_candidate",
+            "story_opportunity_path_reason": "Breaking/public signal is review-only until confirmed by official, wire, primary, or operator-verified evidence.",
+            "story_opportunity_confidence_tier": "discovery_only",
+            "story_opportunity_source_coverage": "discovery_source_only",
+            "story_opportunity_confirmation_cue": "needs_official_confirmation",
+            "story_opportunity_asset_cue": "asset_not_required_for_news_packet",
+            "story_opportunity_readiness_note": short(clean(row.get("limitations")), 220),
+            "story_opportunity_second_source_id": "",
+            "story_opportunity_second_source_url": "",
+            "story_opportunity_second_source_lane": "official_or_wire_confirmation_required",
+            "story_opportunity_second_source_reason": "Public/community signal cannot confirm a breaking story by itself.",
+            "story_opportunity_second_source_action": "Find official, wire, primary, or operator-verified confirmation before any story path.",
+            "promotion": "monitor_only",
+            "promotion_priority": urgent_band,
+            "promotion_target": "breaking_public_signal_queue.csv",
+            "promotion_next_step": short(first_present(row.get("human_review_cue"), default="Keep monitoring; do not publish from public signal alone."), 180),
+            "quality_score": clean(row.get("breaking_score")),
+            "freshness_label": "signal_timestamp",
+            "freshness_source": clean(row.get("signal_timestamp_utc")),
+            "freshness_score": "",
+            "quality_reason": short(why_urgent, 190),
+            "manual_review_required": clean(row.get("manual_review_required")) or "true",
+            "review_only": clean(row.get("review_only")) or "true",
+            "publish_ready": clean(row.get("publish_ready")) or "false",
+            "auto_publish": clean(row.get("auto_publish")) or "false",
         }
         item.update(
             score_render_readiness(
