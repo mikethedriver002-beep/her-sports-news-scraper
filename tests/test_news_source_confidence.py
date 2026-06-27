@@ -149,7 +149,7 @@ def test_default_registry_keeps_free_official_coverage_available() -> None:
 def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None:
     module = load_module()
     candidate = base_candidate()
-    candidate["graphics_headline"] = "Breaking: Liberty announce star guard injury"
+    candidate["graphics_headline"] = "Breaking: New York Liberty beat Las Vegas Aces after injury update"
     observations = [
         {
             "usable_context": "Yes",
@@ -201,13 +201,32 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     duplicate["source_domains"] = "espn.com"
     duplicate["source_urls"] = "[\"https://www.espn.com/wnba/story/_/id/test\"]"
     duplicate["public_signal_count"] = "1"
-    clusters = module.breaking_signal_cluster_rows([row, duplicate])
+    game_rows = [
+        {
+            "row_id": "event-liberty-aces",
+            "status": "final",
+            "recap_candidate": "Yes",
+            "home_team": "New York Liberty",
+            "away_team": "Las Vegas Aces",
+            "final_score": "Las Vegas Aces 80 - New York Liberty 88",
+            "selected_source": "espn_wnba_public",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401000001",
+            "source_domain": "www.espn.com",
+        }
+    ]
+    clusters = module.breaking_signal_cluster_rows([row, duplicate], packets=[packet], game_rows=game_rows, intake_rows=intake)
     cluster = clusters[0]
     assert cluster["story_count"] == "2"
     assert cluster["source_diversity"] == "multi_domain"
     assert cluster["source_domain_count"] == "3"
     assert cluster["public_signal_count"] == "2"
     assert cluster["official_confirmation_status"] == "official_or_primary_signal_present_operator_verify"
+    assert cluster["matching_official_evidence_status"] == "matching_news_and_free_result_evidence_operator_verify"
+    assert cluster["matching_official_evidence_count"] == "2"
+    assert "news_fact_packets.csv candidate_id=" in cluster["matching_official_evidence_artifacts"]
+    assert "game_intelligence_board_v1.csv row_id=event-liberty-aces" in cluster["matching_official_evidence_artifacts"]
+    assert "breaking_public_signal_confirmation_intake.csv confirmation_id=" in cluster["exact_source_or_intake_row_to_open"]
+    assert "operator must still verify" in cluster["manual_confirmation_gap"].lower()
     assert "breaking_public_signal_confirmation_intake.csv" in cluster["exact_manual_next_action"]
     assert cluster["review_only"] == "true"
     assert cluster["publish_ready"] == "false"

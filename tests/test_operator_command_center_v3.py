@@ -98,6 +98,86 @@ def test_command_center_surfaces_breaking_public_signal_as_review_only_source_bo
     assert row["render_readiness_band"] == "hold_for_source_confirmation"
 
 
+def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    write_csv_with_fields(
+        "breaking_public_signal_queue.csv",
+        [
+            {
+                "candidate_id": "candidate-breaking-1",
+                "headline": "Chicago Sky beat Portland Fire",
+                "urgency_band": "P0_breaking_review",
+                "breaking_score": "88",
+                "why_urgent": "source confidence 92/100",
+                "public_signal_status": "not_captured",
+                "public_signal_confidence": "none",
+                "public_signal_count": "0",
+                "public_signal_summary": "",
+                "signal_timestamp_utc": "2026-06-26T12:00:00+00:00",
+                "source_urls": "[\"https://sky.wnba.com/news/recap\"]",
+                "source_domains": "sky.wnba.com",
+                "limitations": "Review-only.",
+                "human_review_cue": "Operator must verify official confirmation.",
+                "manual_review_required": "true",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_publish": "false",
+            }
+        ],
+        [
+            "candidate_id",
+            "headline",
+            "urgency_band",
+            "breaking_score",
+            "why_urgent",
+            "public_signal_status",
+            "public_signal_confidence",
+            "public_signal_count",
+            "public_signal_summary",
+            "signal_timestamp_utc",
+            "source_urls",
+            "source_domains",
+            "limitations",
+            "human_review_cue",
+            "manual_review_required",
+            "review_only",
+            "publish_ready",
+            "auto_publish",
+        ],
+    )
+    write_csv_with_fields(
+        "breaking_public_signal_clusters.csv",
+        [
+            {
+                "candidate_ids": "candidate-breaking-1",
+                "matching_official_evidence_status": "matching_news_and_free_result_evidence_operator_verify",
+                "matching_official_evidence_artifacts": "game_intelligence_board_v1.csv row_id=event-sky-fire",
+                "matching_official_evidence_urls": "[\"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
+                "manual_confirmation_gap": "Current artifacts provide a review cue only; operator must still verify the cited source URL.",
+                "exact_source_or_intake_row_to_open": "Open game_intelligence_board_v1.csv row_id=event-sky-fire, then open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky.",
+            }
+        ],
+        [
+            "candidate_ids",
+            "matching_official_evidence_status",
+            "matching_official_evidence_artifacts",
+            "matching_official_evidence_urls",
+            "manual_confirmation_gap",
+            "exact_source_or_intake_row_to_open",
+        ],
+    )
+
+    rows = command_center.source_discovery_board()
+    row = rows[0]
+
+    assert row["story_opportunity_source_coverage"] == "matching_news_and_free_result_evidence_operator_verify"
+    assert "game_intelligence_board_v1.csv row_id=event-sky-fire" in row["evidence_source"]
+    assert "row_id=event-sky-fire" in row["next_action"]
+    assert row["story_opportunity_second_source_action"].startswith("Open game_intelligence_board_v1.csv")
+    assert row["review_only"] == "true"
+    assert row["publish_ready"] == "false"
+
+
 def write_json(path: str, payload: dict) -> None:
     Path(path).write_text(json.dumps(payload), encoding="utf-8")
 
