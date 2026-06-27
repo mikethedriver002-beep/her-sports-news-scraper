@@ -1,0 +1,638 @@
+{
+  "version": "hsd-womens-soccer-logo-source-review-intake-prepare-v1",
+  "generated_at_local": "2026-06-27 sprint prep",
+  "contact_rows": 88,
+  "intake_rows": 88,
+  "prepared_rows": 88,
+  "created_local_logo_directories": 88,
+  "operator_decision": "hold_for_more_evidence",
+  "registry_action": "hold_no_registry_state_change_until_local_logo_asset_exists",
+  "approval_state_changed": false,
+  "asset_files_created": false,
+  "guardrails": {
+    "publish_ready": false,
+    "auto_approval": false,
+    "auto_publish": false,
+    "move_files": false,
+    "paid_apis": false,
+    "asset_downloads": false
+  },
+  "prepared": [
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "league",
+      "entity_id": "nwsl",
+      "display_name": "National Women's Soccer League"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "angel_city_fc",
+      "display_name": "Angel City FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "bay_fc",
+      "display_name": "Bay FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "boston_legacy_fc",
+      "display_name": "Boston Legacy FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "chicago_stars_fc",
+      "display_name": "Chicago Stars FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "denver_summit_fc",
+      "display_name": "Denver Summit FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "houston_dash",
+      "display_name": "Houston Dash"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "kansas_city_current",
+      "display_name": "Kansas City Current"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "gotham_fc",
+      "display_name": "Gotham FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "north_carolina_courage",
+      "display_name": "North Carolina Courage"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "orlando_pride",
+      "display_name": "Orlando Pride"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "portland_thorns_fc",
+      "display_name": "Portland Thorns FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "racing_louisville_fc",
+      "display_name": "Racing Louisville FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "san_diego_wave_fc",
+      "display_name": "San Diego Wave FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "seattle_reign",
+      "display_name": "Seattle Reign"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "utah_royals_fc",
+      "display_name": "Utah Royals FC"
+    },
+    {
+      "scope_id": "nwsl",
+      "league_id": "nwsl",
+      "entity_type": "team",
+      "entity_id": "washington_spirit",
+      "display_name": "Washington Spirit"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "league",
+      "entity_id": "wsl_england",
+      "display_name": "Barclays Women's Super League"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "league",
+      "entity_id": "liga_f_spain",
+      "display_name": "Liga F Moeve"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "league",
+      "entity_id": "frauen_bundesliga_germany",
+      "display_name": "Google Pixel Womens Bundesliga"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "premiere_ligue_france",
+      "entity_type": "league",
+      "entity_id": "premiere_ligue_france",
+      "display_name": "Arkema Premiere Ligue"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "league",
+      "entity_id": "serie_a_women_italy",
+      "display_name": "Serie A Women Athora"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "arsenal_women",
+      "display_name": "Arsenal Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "aston_villa_women",
+      "display_name": "Aston Villa Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "brighton_hove_albion_women",
+      "display_name": "Brighton & Hove Albion Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "chelsea_women",
+      "display_name": "Chelsea Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "everton_women",
+      "display_name": "Everton Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "leicester_city_women",
+      "display_name": "Leicester City Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "liverpool_women",
+      "display_name": "Liverpool Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "london_city_lionesses",
+      "display_name": "London City Lionesses"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "manchester_city_women",
+      "display_name": "Manchester City Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "manchester_united_women",
+      "display_name": "Manchester United Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "tottenham_hotspur_women",
+      "display_name": "Tottenham Hotspur Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "wsl_england",
+      "entity_type": "team",
+      "entity_id": "west_ham_united_women",
+      "display_name": "West Ham United Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "alhama_cf_elpozo",
+      "display_name": "Alhama CF ElPozo"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "athletic_club",
+      "display_name": "Athletic Club"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "atletico_de_madrid",
+      "display_name": "Atl\u00e9tico de Madrid"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "costa_adeje_tenerife",
+      "display_name": "Costa Adeje Tenerife"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "deportivo_abanca",
+      "display_name": "Deportivo Abanca"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "dux_logrono",
+      "display_name": "DUX Logro\u00f1o"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "fc_badalona_women",
+      "display_name": "FC Badalona Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "fc_barcelona",
+      "display_name": "FC Barcelona"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "granada_cf",
+      "display_name": "Granada CF"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "levante_ud",
+      "display_name": "Levante UD"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "madrid_cff",
+      "display_name": "Madrid CFF"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "rcd_espanyol_de_barcelona",
+      "display_name": "RCD Espanyol de Barcelona"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "real_madrid_cf",
+      "display_name": "Real Madrid CF"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "real_sociedad",
+      "display_name": "Real Sociedad"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "sd_eibar",
+      "display_name": "SD Eibar"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "liga_f_spain",
+      "entity_type": "team",
+      "entity_id": "sevilla_fc",
+      "display_name": "Sevilla FC"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "bayer_04_leverkusen_women",
+      "display_name": "Bayer 04 Leverkusen Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "eintracht_frankfurt_women",
+      "display_name": "Eintracht Frankfurt Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "fc_bayern_munich_women",
+      "display_name": "FC Bayern Munich Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "fc_carl_zeiss_jena_women",
+      "display_name": "FC Carl Zeiss Jena Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "hamburger_sv_women",
+      "display_name": "Hamburger SV Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "rb_leipzig_women",
+      "display_name": "RB Leipzig Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "sc_freiburg_women",
+      "display_name": "SC Freiburg Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "sgs_essen",
+      "display_name": "SGS Essen"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "sv_werder_bremen_women",
+      "display_name": "SV Werder Bremen Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "tsg_hoffenheim_women",
+      "display_name": "TSG Hoffenheim Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "union_berlin_women",
+      "display_name": "Union Berlin Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "vfl_wolfsburg_women",
+      "display_name": "VfL Wolfsburg Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "1_fc_koln_women",
+      "display_name": "1. FC K\u00f6ln Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "frauen_bundesliga_germany",
+      "entity_type": "team",
+      "entity_id": "1_fc_nurnberg_women",
+      "display_name": "1. FC N\u00fcrnberg Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "ac_milan_women",
+      "display_name": "AC Milan Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "as_roma_women",
+      "display_name": "AS Roma Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "como_women",
+      "display_name": "Como Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "fc_internazionale_women",
+      "display_name": "FC Internazionale Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "fiorentina_women",
+      "display_name": "Fiorentina Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "genoa_women",
+      "display_name": "Genoa Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "juventus_women",
+      "display_name": "Juventus Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "lazio_women",
+      "display_name": "Lazio Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "napoli_femminile",
+      "display_name": "Napoli Femminile"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "parma_women",
+      "display_name": "Parma Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "sassuolo_women",
+      "display_name": "Sassuolo Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "serie_a_women_italy",
+      "entity_type": "team",
+      "entity_id": "ternana_women",
+      "display_name": "Ternana Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "as_saint_etienne_women",
+      "display_name": "AS Saint-Etienne Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "dijon_fco_women",
+      "display_name": "Dijon FCO Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "fc_fleury_91_women",
+      "display_name": "FC Fleury 91 Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "fc_nantes_women",
+      "display_name": "FC Nantes Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "le_havre_ac_women",
+      "display_name": "Le Havre AC Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "mhsc_feminines",
+      "display_name": "MHSC Feminines"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "ol_lyonnes",
+      "display_name": "OL Lyonnes"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "olympique_marseille_women",
+      "display_name": "Olympique Marseille Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "paris_fc_women",
+      "display_name": "Paris FC Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "paris_saint_germain_women",
+      "display_name": "Paris Saint-Germain Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "rc_lens_women",
+      "display_name": "RC Lens Women"
+    },
+    {
+      "scope_id": "europe_top_flight",
+      "league_id": "arkema_premiere_ligue_france",
+      "entity_type": "team",
+      "entity_id": "rc_strasbourg_alsace_women",
+      "display_name": "RC Strasbourg Alsace Women"
+    }
+  ]
+}

@@ -7,7 +7,7 @@ Generated for workstream 3 review-only asset cataloging.
 - `data/asset_registry/womens_soccer/nwsl/` exists with league, team, player, source URL, provider ID, asset slot, approval status, and review report files.
 - NWSL coverage is seeded for 16 teams, with official NWSL team detail, roster, schedule, team-site, and logo review source rows.
 - NWSL player intake exists as a header-only `players.csv`; no player identities or player photos are approved.
-- NWSL asset slots include proposed league/team logo paths only. No files are downloaded, moved, render-enabled, or publish-ready.
+- NWSL asset slots include proposed league/team logo paths only. Candidate files may exist only as review-only local assets; none are moved, render-enabled, approved, or publish-ready.
 - `data/asset_registry/womens_soccer/uswnt/` now exists with matching review-only structures for USWNT national-team cataloging.
 - USWNT player intake exists as a header-only `players.csv`, plus a player headshot template slot that requires official profile/manual review before use.
 
@@ -23,7 +23,7 @@ Generated for workstream 3 review-only asset cataloging.
 
 - No player rows are populated for NWSL or USWNT.
 - No player photo files are present or approved.
-- No logo files are downloaded for the womens soccer registry paths.
+- Review-only logo candidate files can exist for sanctioned womens soccer registry paths after explicit operator request, but none are approved, render-enabled, or publish-ready.
 - USWNT roster membership is time-sensitive and must be reviewed against a dated official roster page before player rows are added.
 - Existing asset assurance configs still reference older `data/asset_registry/nwsl/...` paths, so this foundation is not wired into render or assurance code.
 - There is no unified validator for the new USWNT folder; the current validator covers NWSL only.
@@ -32,6 +32,6 @@ Generated for workstream 3 review-only asset cataloging.
 
 - Add manual player rows only after an operator verifies official NWSL roster pages or official U.S. Soccer player profiles.
 - For each player, record the official profile or roster source URL before adding a proposed `player_headshot` slot.
-- Add logo review notes from official league/team pages, then have an operator decide whether a local asset can be introduced.
+- Add logo review notes from official, public, or operator-reviewed source pages, then have an operator decide whether a local candidate can be approved.
 - Extend the validator/reporting layer to cover both `nwsl` and `uswnt` folders without enabling renders or publishing.
 - Update downstream asset assurance configs only after human approval of source rows and target paths.
