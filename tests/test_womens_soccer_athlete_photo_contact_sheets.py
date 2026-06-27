@@ -146,3 +146,152 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert rerun_intake[0]["source_language_note"] == "Espana"
     assert rerun_intake[0]["publish_ready"] == "false"
     assert rerun_intake[0]["auto_approval"] == "false"
+
+
+def test_womens_soccer_athlete_photo_contact_sheets_expand_roster_rows_without_slow_full_png(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    monkeypatch.chdir(tmp_path)
+    module.PROJECT_ROOT = tmp_path
+    module.REGISTRY_ROOT = Path("data/asset_registry/womens_soccer")
+    module.TEAM_SHEET_ROOT = Path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
+    module.MAX_VISUAL_ROWS_PER_TEAM = 2
+    module.OUT_DIR = tmp_path / "data" / "asset_registry" / "womens_soccer" / "athlete_photo_contact_sheets"
+    module.OUT_INDEX = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_contact_sheet_index.md"
+    module.OUT_CSV = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_contact_sheet.csv"
+    module.OUT_INTAKE = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_review_intake.csv"
+    module.OUT_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_contact_sheet_manifest.json"
+    module.CANDIDATES = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_candidates.csv"
+
+    root = tmp_path / "data" / "asset_registry" / "womens_soccer" / "nwsl"
+    write_csv(
+        root / "leagues.csv",
+        [
+            {
+                "league_id": "nwsl",
+                "league_name": "National Women's Soccer League",
+                "official_url": "https://www.nwslsoccer.com/",
+                "teams_url": "https://www.nwslsoccer.com/teams/index",
+                "paid_source": "false",
+                "auto_download_allowed": "false",
+                "render_enabled": "false",
+            }
+        ],
+        ["league_id", "league_name", "official_url", "teams_url", "paid_source", "auto_download_allowed", "render_enabled"],
+    )
+    write_csv(
+        root / "teams.csv",
+        [
+            {
+                "team_id": "angel_city_fc",
+                "league_id": "nwsl",
+                "team_name": "Angel City FC",
+                "city": "Los Angeles",
+                "team_site_url": "https://www.angelcity.com/",
+                "manual_review_status": "review_required",
+                "render_enabled": "false",
+            }
+        ],
+        ["team_id", "league_id", "team_name", "city", "team_site_url", "manual_review_status", "render_enabled"],
+    )
+    write_csv(
+        root / "source_urls.csv",
+        [
+            {
+                "entity_type": "team",
+                "entity_id": "angel_city_fc",
+                "source_kind": "nwsl_roster",
+                "source_url": "https://www.nwslsoccer.com/teams/angel-city-fc/roster",
+                "source_domain": "www.nwslsoccer.com",
+                "source_tier": "official_candidate",
+                "manual_review_status": "review_required",
+                "paid_source": "false",
+                "download_allowed": "false",
+                "approval_status": "not_approved",
+                "notes": "review only",
+            }
+        ],
+        ["entity_type", "entity_id", "source_kind", "source_url", "source_domain", "source_tier", "manual_review_status", "paid_source", "download_allowed", "approval_status", "notes"],
+    )
+    write_csv(
+        root / "players.csv",
+        [
+            {
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "player_id": "angel_city_fc_player_001",
+                "provider_player_id": "1001",
+                "display_name": "Alyssa Thompson",
+                "roster_source_url": "https://www.nwslsoccer.com/teams/angel-city-fc/roster",
+                "manual_review_status": "identity_source_review_required",
+                "approval_status": "not_approved",
+            },
+            {
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "player_id": "angel_city_fc_player_002",
+                "provider_player_id": "1002",
+                "display_name": "Claire Emslie",
+                "roster_source_url": "https://www.nwslsoccer.com/teams/angel-city-fc/roster",
+                "manual_review_status": "identity_source_review_required",
+                "approval_status": "not_approved",
+            },
+            {
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "player_id": "angel_city_fc_player_003",
+                "provider_player_id": "1003",
+                "display_name": "Sydney Leroux",
+                "roster_source_url": "https://www.nwslsoccer.com/teams/angel-city-fc/roster",
+                "manual_review_status": "identity_source_review_required",
+                "approval_status": "not_approved",
+            },
+        ],
+        [
+            "league_id",
+            "team_id",
+            "player_id",
+            "provider_player_id",
+            "display_name",
+            "roster_source_url",
+            "manual_review_status",
+            "approval_status",
+        ],
+    )
+    write_csv(
+        module.CANDIDATES,
+        [
+            {
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "player_id": "",
+                "display_name": "operator_add_player_candidate",
+                "candidate_id": "angel_city_fc_operator_add_candidate",
+                "candidate_status": "operator_add_candidate",
+            }
+        ],
+        module.CANDIDATE_FIELDS,
+    )
+
+    assert module.main() == 0
+    rows = list(csv.DictReader(module.OUT_CSV.open(newline="", encoding="utf-8")))
+    candidates = list(csv.DictReader(module.CANDIDATES.open(newline="", encoding="utf-8")))
+    manifest = json.loads(module.OUT_JSON.read_text(encoding="utf-8"))
+    board_text = (tmp_path / "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.md").read_text(encoding="utf-8")
+
+    assert len(rows) == 3
+    assert len(candidates) == 3
+    assert {row["display_name"] for row in rows} == {"Alyssa Thompson", "Claire Emslie", "Sydney Leroux"}
+    assert all(row["candidate_status"] == "official_roster_source_candidate" for row in rows)
+    assert all("/nwsl/nwsl/" not in row["local_candidate_path"] for row in rows)
+    assert all(row["asset_downloads"] == "false" for row in rows)
+    assert all(row["auto_approval"] == "false" for row in rows)
+    assert rows[0]["team_contact_sheet_path"] == "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.png"
+    assert manifest["candidate_rows"] == 3
+    assert manifest["team_boards"] == 1
+    assert manifest["warnings"] == ["angel_city_fc:visual_preview_limited_to_2_of_3_rows"]
+    assert "Visual PNG preview shows the first `2` rows only" in board_text
+    assert "Sydney Leroux" in board_text
+    assert not list(tmp_path.rglob("headshot.png"))
+    assert not list(tmp_path.rglob("*.approved"))
