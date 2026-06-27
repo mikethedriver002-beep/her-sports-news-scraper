@@ -1,8 +1,8 @@
 # Women's Soccer Logo Review Walkthrough
 
-Generated: `2026-06-27T00:15:02.425430+00:00`
+Generated: `2026-06-27T00:26:51.660627+00:00`
 
-Display-only guide for reviewing the 50-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
+Display-only guide for reviewing the 64-row women's soccer logo contact sheet. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
 ## Open First
 
@@ -20,7 +20,9 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 - `P1_WSL_TEAM_LOGOS`: `12` row(s)
 - `P2_LIGA_F_FOUNDATION`: `1` row(s)
 - `P2_LIGA_F_TEAM_LOGOS`: `16` row(s)
-- `P3_REMAINING_EUROPE_LEAGUE_MARKS`: `3` row(s)
+- `P3_FRAUEN_BUNDESLIGA_FOUNDATION`: `1` row(s)
+- `P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS`: `14` row(s)
+- `P4_REMAINING_EUROPE_LEAGUE_MARKS`: `2` row(s)
 
 ## P0 Review Order
 
@@ -55,7 +57,7 @@ Start with P0 because NWSL is the complete current league set. Use `hold_for_mor
 
 Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.
 
-Recommended order after Liga F: Frauen-Bundesliga, Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.
+Recommended order after Frauen-Bundesliga: Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.
 
 ## All Rows
 
@@ -106,6 +108,20 @@ Recommended order after Liga F: Frauen-Bundesliga, Serie A Women, then Arkema Pr
 - rank=45 | P2_LIGA_F_TEAM_LOGOS | Real Sociedad | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=46 | P2_LIGA_F_TEAM_LOGOS | SD Eibar | status=not_approved | file_exists=false | decision=hold_for_more_evidence
 - rank=47 | P2_LIGA_F_TEAM_LOGOS | Sevilla FC | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=48 | P3_REMAINING_EUROPE_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=49 | P3_REMAINING_EUROPE_LEAGUE_MARKS | Google Pixel Womens Bundesliga | status=not_approved | file_exists=false | decision=hold_for_more_evidence
-- rank=50 | P3_REMAINING_EUROPE_LEAGUE_MARKS | Serie A Women Athora | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=48 | P3_FRAUEN_BUNDESLIGA_FOUNDATION | Google Pixel Womens Bundesliga | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=49 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | 1. FC Köln Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=50 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | 1. FC Nürnberg Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=51 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | Bayer 04 Leverkusen Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=52 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | Eintracht Frankfurt Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=53 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | FC Bayern Munich Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=54 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | FC Carl Zeiss Jena Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=55 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | Hamburger SV Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=56 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | RB Leipzig Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=57 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | SC Freiburg Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=58 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | SGS Essen | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=59 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | SV Werder Bremen Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=60 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | TSG Hoffenheim Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=61 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | Union Berlin Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=62 | P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS | VfL Wolfsburg Women | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=63 | P4_REMAINING_EUROPE_LEAGUE_MARKS | Arkema Premiere Ligue | status=not_approved | file_exists=false | decision=hold_for_more_evidence
+- rank=64 | P4_REMAINING_EUROPE_LEAGUE_MARKS | Serie A Women Athora | status=not_approved | file_exists=false | decision=hold_for_more_evidence

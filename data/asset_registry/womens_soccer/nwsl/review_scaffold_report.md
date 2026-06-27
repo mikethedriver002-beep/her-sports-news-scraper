@@ -7,8 +7,9 @@ Source URL rows: `87`
 Europe top-flight leagues: `5/5`
 Europe WSL teams: `12/12`
 Europe Liga F teams: `16/16`
-Europe source URL rows: `97`
-Europe asset slot rows: `34`
+Europe Frauen-Bundesliga teams: `14/14`
+Europe source URL rows: `139`
+Europe asset slot rows: `48`
 League source kinds: `7/7`
 Team source kinds required: `5`
 Team review scopes required: `3`
@@ -26,5 +27,5 @@ Publish ready: `false`
 ## Warnings
 
 - `europe_players_csv_header_only_manual_intake`
-- `non_wsl_liga_f_europe_team_rows_require_manual_expansion`
+- `non_wsl_liga_f_frauen_bundesliga_europe_team_rows_require_manual_expansion`
 - `players_csv_header_only_manual_intake`
