@@ -32,7 +32,7 @@ Review-only scaffold for womens soccer asset tracking.
 - `uswnt/asset_slots.csv` tracks proposed crest and player-headshot template paths only.
 - `uswnt/approval_status.csv` keeps approval state separate from source discovery.
 - `europe_top_flight/leagues.csv` tracks source candidates for WSL, Liga F, Frauen-Bundesliga, Arkema Premiere Ligue, and Serie A Women.
-- `europe_top_flight/teams.csv` includes current WSL, Liga F, and Frauen-Bundesliga club source rows; remaining European team and athlete expansion remains manual and review-only.
+- `europe_top_flight/teams.csv` includes current WSL, Liga F, Frauen-Bundesliga, and Serie A Women club source rows; remaining European team and athlete expansion remains manual and review-only.
 - `europe_top_flight/source_urls.csv`, `provider_ids.csv`, `asset_slots.csv`, and `approval_status.csv` mirror the review-only registry pattern without downloads, approvals, or render enablement.
 
 Run `python scripts/validate_hsd_womens_soccer_asset_registry_v1.py --root .` to refresh the review report.

@@ -338,7 +338,11 @@ def priority_for(row: Mapping[str, str]) -> Tuple[int, str, str]:
         return 70, "P3_FRAUEN_BUNDESLIGA_FOUNDATION", "Review the Frauen-Bundesliga league mark before the club-logo sweep."
     if league_id == "frauen_bundesliga_germany":
         return 80, "P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS", "Review Frauen-Bundesliga club logos after Liga F; exact club pages still require manual confirmation."
-    return 90, "P4_REMAINING_EUROPE_LEAGUE_MARKS", "Hold remaining Europe to league-mark source review until club rows are expanded one league at a time."
+    if league_id == "serie_a_women_italy" and entity_type == "league":
+        return 90, "P4_SERIE_A_WOMEN_FOUNDATION", "Review the Serie A Women league mark before the club-logo sweep."
+    if league_id == "serie_a_women_italy":
+        return 100, "P4_SERIE_A_WOMEN_TEAM_LOGOS", "Review Serie A Women club logos after Frauen-Bundesliga; exact club pages still require manual confirmation."
+    return 110, "P5_REMAINING_EUROPE_LEAGUE_MARKS", "Hold remaining Europe to league-mark source review until club rows are expanded one league at a time."
 
 
 def walkthrough_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
@@ -576,7 +580,7 @@ def render_walkthrough_markdown(rows: List[Mapping[str, str]], review_rows: List
         "",
         "Expand one league per PR. For each league, add official club source rows first, then proposed logo slots, then not-approved manual review scopes, then regenerate this board. Do not download logos, do not approve rows, and do not render-enable slots.",
         "",
-        "Recommended order after Frauen-Bundesliga: Serie A Women, then Arkema Premiere Ligue. Each should remain source-candidate only until a human reviews exact club pages and any local assets.",
+        "Recommended order after Serie A Women: Arkema Premiere Ligue. It should remain source-candidate only until a human reviews exact club pages and any local assets.",
         "",
         "## All Rows",
         "",

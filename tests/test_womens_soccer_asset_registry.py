@@ -11,6 +11,7 @@ from validate_hsd_womens_soccer_asset_registry_v1 import (
     REQUIRED_FRAUEN_BUNDESLIGA_TEAMS,
     REQUIRED_LIGA_F_TEAMS,
     REQUIRED_NWSL_TEAMS,
+    REQUIRED_SERIE_A_WOMEN_TEAMS,
     REQUIRED_WSL_TEAMS,
     evaluate,
 )
@@ -31,10 +32,12 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert report["europe_top_flight_required_liga_f_team_count"] == 16
     assert report["europe_top_flight_frauen_bundesliga_team_count"] == len(REQUIRED_FRAUEN_BUNDESLIGA_TEAMS)
     assert report["europe_top_flight_required_frauen_bundesliga_team_count"] == 14
-    assert report["europe_top_flight_pilot_team_count"] == len(REQUIRED_WSL_TEAMS) + len(REQUIRED_LIGA_F_TEAMS) + len(REQUIRED_FRAUEN_BUNDESLIGA_TEAMS)
+    assert report["europe_top_flight_serie_a_women_team_count"] == len(REQUIRED_SERIE_A_WOMEN_TEAMS)
+    assert report["europe_top_flight_required_serie_a_women_team_count"] == 12
+    assert report["europe_top_flight_pilot_team_count"] == len(REQUIRED_WSL_TEAMS) + len(REQUIRED_LIGA_F_TEAMS) + len(REQUIRED_FRAUEN_BUNDESLIGA_TEAMS) + len(REQUIRED_SERIE_A_WOMEN_TEAMS)
     assert report["europe_top_flight_player_count"] == 0
-    assert report["europe_top_flight_source_url_count"] >= 139
-    assert report["europe_top_flight_asset_slot_count"] == 48
+    assert report["europe_top_flight_source_url_count"] >= 175
+    assert report["europe_top_flight_asset_slot_count"] == 60
     assert report["league_source_kind_count"] == report["required_league_source_kind_count"]
     assert report["required_team_source_kind_count"] == 5
     for team_id in REQUIRED_NWSL_TEAMS:
@@ -52,7 +55,7 @@ def test_womens_soccer_registry_is_review_only_and_covers_nwsl() -> None:
     assert not report["blockers"]
     assert "players_csv_header_only_manual_intake" in report["warnings"]
     assert "europe_players_csv_header_only_manual_intake" in report["warnings"]
-    assert "non_wsl_liga_f_frauen_bundesliga_europe_team_rows_require_manual_expansion" in report["warnings"]
+    assert "remaining_europe_team_rows_require_manual_expansion" in report["warnings"]
 
 
 def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
@@ -81,6 +84,9 @@ def test_womens_soccer_registry_does_not_wire_renders_or_paid_sources() -> None:
     assert "fc_bayern_munich_women" in text
     assert "vfl_wolfsburg_women" in text
     assert "union_berlin_women" in text
+    assert "juventus_women" in text
+    assert "as_roma_women" in text
+    assert "ternana_women" in text
     assert "europe_top_flight/wsl_england/teams/arsenal_women/logo.png" in text
     assert "logo_review_source" in text
     assert "nwsl_roster" in text

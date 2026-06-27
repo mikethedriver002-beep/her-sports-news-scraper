@@ -1,9 +1,9 @@
 {
   "version": "hsd-womens-soccer-logo-contact-sheet-v1-review-only",
-  "generated_at_utc": "2026-06-27T00:26:51.660627+00:00",
+  "generated_at_utc": "2026-06-27T00:33:51.202593+00:00",
   "review_only": true,
   "status": "walkthrough_ready",
-  "row_count": 64,
+  "row_count": 76,
   "priority_counts": {
     "P0_NWSL_FOUNDATION": 1,
     "P0_NWSL_TEAM_LOGOS": 16,
@@ -13,7 +13,9 @@
     "P2_LIGA_F_TEAM_LOGOS": 16,
     "P3_FRAUEN_BUNDESLIGA_FOUNDATION": 1,
     "P3_FRAUEN_BUNDESLIGA_TEAM_LOGOS": 14,
-    "P4_REMAINING_EUROPE_LEAGUE_MARKS": 2
+    "P4_SERIE_A_WOMEN_FOUNDATION": 1,
+    "P4_SERIE_A_WOMEN_TEAM_LOGOS": 12,
+    "P5_REMAINING_EUROPE_LEAGUE_MARKS": 1
   },
   "contact_sheet": "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md",
   "human_intake_csv": "data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv",
