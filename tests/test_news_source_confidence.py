@@ -241,11 +241,26 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
             "exact_next_file_or_intake": "Open final_score_stat_proof_v1.csv proof_id=proof-player-liberty; then verify the named player stat line.",
         },
     ]
+    proof_confirmation_rows = [
+        {
+            "proof_id": "proof-final-liberty",
+            "fact_type": "final_score",
+            "operator_checked_source_url": "",
+            "operator_confirmation_status": "",
+        },
+        {
+            "proof_id": "proof-player-liberty",
+            "fact_type": "named_player_stat_line",
+            "operator_checked_source_url": "",
+            "operator_confirmation_status": "",
+        },
+    ]
     clusters = module.breaking_signal_cluster_rows(
         [row, duplicate],
         packets=[packet],
         game_rows=game_rows,
         proof_rows=proof_rows,
+        proof_confirmation_rows=proof_confirmation_rows,
         intake_rows=intake,
     )
     cluster = clusters[0]
@@ -265,16 +280,25 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "Sabrina Ionescu" in cluster["named_player_stat_proof_examples"]
     assert "final_score_stat_proof_v1.csv proof_id=proof-player-liberty" in cluster["exact_score_stat_proof_row_or_source_to_open"]
     assert "stats_evidence_gap_board_v1.csv event_uid=event-liberty-aces" in cluster["score_stat_proof_artifacts"]
+    assert "breaking_public_signal_confirmation_intake.csv confirmation_id=" in cluster["breaking_claim_confirmation_target"]
+    assert cluster["score_proof_confirmation_target"] == "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-final-liberty"
+    assert cluster["named_player_stat_proof_confirmation_targets"] == "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-player-liberty"
+    assert cluster["score_stat_confirmation_status"] == "operator_input_required_in_score_stat_proof_confirmation_intake"
+    assert "operator_checked_source_url plus operator_confirmation_status" in cluster["exact_human_confirmation_next_action"]
+    assert "final-score proof" in cluster["exact_human_confirmation_next_action"]
+    assert "named-player stat proof" in cluster["exact_human_confirmation_next_action"]
     assert "breaking_public_signal_confirmation_intake.csv" in cluster["exact_manual_next_action"]
     assert cluster["review_only"] == "true"
     assert cluster["publish_ready"] == "false"
     assert cluster["auto_publish"] == "false"
     assert cluster["auto_source_enablement"] == "false"
 
-    missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], intake_rows=intake)[0]
+    missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
     assert "No matching final-score/stat proof row found" in missing_proof_cluster["score_stat_manual_confirmation_cue"]
     assert "final_score_stat_proof_v1.csv" in missing_proof_cluster["exact_score_stat_proof_row_or_source_to_open"]
+    assert missing_proof_cluster["score_stat_confirmation_status"] == "no_score_stat_proof_to_confirm"
+    assert "No final-score proof confirmation target matched" in missing_proof_cluster["exact_human_confirmation_next_action"]
 
 
 def test_box_score_top_performers_match_the_same_game() -> None:
@@ -395,6 +419,8 @@ def test_game_source_confirmation_bridge_links_game_stats_and_cluster_rows() -> 
     assert "game_intelligence_board_v1.csv row_id=event-sky-fire" in row["exact_next_row_or_source_to_open"]
     assert "stats_evidence_gap_board_v1.csv event_uid=event-sky-fire" in row["exact_next_row_or_source_to_open"]
     assert "breaking_public_signal_clusters.csv cluster_id=signal-cluster-sky" in row["exact_next_row_or_source_to_open"]
+    assert "final_score_stat_proof_confirmation_intake_v1.csv" in row["exact_next_row_or_source_to_open"]
+    assert "final_score_stat_proof_confirmation_intake_v1.csv for final score and named-player stat proof" in row["operator_confirmation_target"]
     assert row["manual_confirmation_needed"] == "true"
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"

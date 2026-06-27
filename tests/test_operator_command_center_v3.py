@@ -171,6 +171,10 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "score_stat_manual_confirmation_cue": "Proof rows are source-backed review cues; operator must still verify the cited source URL.",
                 "exact_score_stat_proof_row_or_source_to_open": "Open final_score_stat_proof_v1.csv proof_id=proof-sky-player; then verify source URL https://www.espn.com/wnba/game/_/gameId/401857025.",
                 "named_player_stat_proof_examples": "Kamilla Cardoso (Chicago Sky): PTS 30, REB 8",
+                "score_stat_confirmation_status": "operator_input_required_in_score_stat_proof_confirmation_intake",
+                "score_proof_confirmation_target": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score",
+                "named_player_stat_proof_confirmation_targets": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-player",
+                "exact_human_confirmation_next_action": "Open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky and fill operator_checked_url plus operator_confirmation_result for the breaking claim/source URL. Open final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score and fill operator_checked_source_url plus operator_confirmation_status for the final-score proof. Open final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-player and fill operator_checked_source_url plus operator_confirmation_status for named-player stat proof.",
             }
         ],
         [
@@ -186,6 +190,10 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "score_stat_manual_confirmation_cue",
             "exact_score_stat_proof_row_or_source_to_open",
             "named_player_stat_proof_examples",
+            "score_stat_confirmation_status",
+            "score_proof_confirmation_target",
+            "named_player_stat_proof_confirmation_targets",
+            "exact_human_confirmation_next_action",
         ],
     )
 
@@ -194,9 +202,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
 
     assert row["story_opportunity_source_coverage"] == "score_and_named_player_stat_proof_present_operator_verify"
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
-    assert "proof_id=proof-sky-player" in row["next_action"]
-    assert row["story_opportunity_second_source_action"].startswith("Open final_score_stat_proof_v1.csv")
-    assert "source-backed review cues" in row["story_opportunity_readiness_note"]
+    assert "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score" in row["next_action"]
+    assert row["story_opportunity_second_source_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
+    assert "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score" in row["story_opportunity_readiness_note"]
+    assert "operator_checked_source_url plus operator_confirmation_status" in row["story_opportunity_second_source_action"]
+    assert "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score" in row["story_opportunity_second_source_url"]
+    assert row["story_opportunity_second_source_reason"] == "operator_input_required_in_score_stat_proof_confirmation_intake"
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
 

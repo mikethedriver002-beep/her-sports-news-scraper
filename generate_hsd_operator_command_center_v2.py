@@ -3087,7 +3087,19 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
         proof_urls = clean(cluster.get("score_stat_proof_source_urls"))
         proof_cue = clean(cluster.get("score_stat_manual_confirmation_cue"))
         proof_next = clean(cluster.get("exact_score_stat_proof_row_or_source_to_open"))
+        human_next = clean(cluster.get("exact_human_confirmation_next_action"))
+        breaking_confirmation_target = clean(cluster.get("breaking_claim_confirmation_target"))
+        score_confirmation_status = clean(cluster.get("score_stat_confirmation_status"))
+        score_confirmation_target = clean(cluster.get("score_proof_confirmation_target"))
+        named_confirmation_targets = clean(cluster.get("named_player_stat_proof_confirmation_targets"))
         proof_examples = clean(cluster.get("named_player_stat_proof_examples"))
+        compact_human_next = ""
+        if human_next:
+            compact_human_next = "Confirm breaking: {breaking}; score: {score}; named stats: {named}.".format(
+                breaking=first_present(breaking_confirmation_target, default="breaking_public_signal_confirmation_intake.csv"),
+                score=first_present(score_confirmation_target, default="final_score_stat_proof_confirmation_intake_v1.csv score proof row"),
+                named=first_present(named_confirmation_targets, default="final_score_stat_proof_confirmation_intake_v1.csv named stat proof rows"),
+            )
         source_domains = clean(row.get("source_domains"))
         public_summary = clean(row.get("public_signal_summary"))
         why_urgent = clean(row.get("why_urgent"))
@@ -3099,9 +3111,9 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "band": "yellow",
             "source": "Breaking/public signal queue",
             "title": title,
-            "detail": short(first_present(proof_cue, confirmation_gap, public_summary, why_urgent), 260),
+            "detail": short(first_present(human_next, proof_cue, confirmation_gap, public_summary, why_urgent), 260),
             "next_action": short(
-                first_present(proof_next, exact_next, default="Open breaking_public_signal_clusters.md, then fill breaking_public_signal_confirmation_intake.csv with the confirmation check."),
+                first_present(compact_human_next, human_next, proof_next, exact_next, default="Open breaking_public_signal_clusters.md, then fill breaking_public_signal_confirmation_intake.csv with the confirmation check."),
                 180,
             ),
             "artifact": "breaking_public_signal_queue.csv",
@@ -3109,7 +3121,7 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "evidence_title": title,
             "evidence_published_at": clean(row.get("signal_timestamp_utc")),
             "evidence_description": short(public_summary, 260),
-            "evidence_preview": short(first_present(proof_status, proof_examples, evidence_status, why_urgent), 260),
+            "evidence_preview": short(first_present(score_confirmation_status, proof_status, proof_examples, evidence_status, why_urgent), 260),
             "evidence_source": first_present(proof_artifacts, evidence_artifacts, default="breaking_public_signal_queue.csv"),
             "story_opportunity_id": clean(row.get("candidate_id")),
             "story_opportunity_title": title,
@@ -3124,12 +3136,12 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "story_opportunity_source_coverage": first_present(proof_status, evidence_status, default="discovery_source_only"),
             "story_opportunity_confirmation_cue": "needs_official_confirmation",
             "story_opportunity_asset_cue": "asset_not_required_for_news_packet",
-            "story_opportunity_readiness_note": short(first_present(proof_cue, confirmation_gap, row.get("limitations")), 220),
+            "story_opportunity_readiness_note": short(first_present(compact_human_next, human_next, proof_cue, confirmation_gap, row.get("limitations")), 220),
             "story_opportunity_second_source_id": "",
-            "story_opportunity_second_source_url": first_present(proof_urls, cluster.get("matching_official_evidence_urls"), default=""),
+            "story_opportunity_second_source_url": first_present(score_confirmation_target, named_confirmation_targets, proof_urls, cluster.get("matching_official_evidence_urls"), default=""),
             "story_opportunity_second_source_lane": "official_or_wire_confirmation_required",
-            "story_opportunity_second_source_reason": first_present(proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
-            "story_opportunity_second_source_action": first_present(proof_next, exact_next, default="Fill breaking_public_signal_confirmation_intake.csv with official, wire, primary, or operator-verified confirmation before any story path."),
+            "story_opportunity_second_source_reason": first_present(score_confirmation_status, proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
+            "story_opportunity_second_source_action": first_present(human_next, proof_next, exact_next, default="Fill breaking_public_signal_confirmation_intake.csv with official, wire, primary, or operator-verified confirmation before any story path."),
             "promotion": "monitor_only",
             "promotion_priority": urgent_band,
             "promotion_target": "breaking_public_signal_clusters.csv",
