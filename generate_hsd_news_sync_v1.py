@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.0-breaking-public-signal"
+VERSION = "news-sync-v1.9.1-breaking-confirmation-intake"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -51,6 +51,8 @@ NEWS_MANUAL_REVIEW_CSV = "news_manual_review_queue.csv"
 BREAKING_PUBLIC_SIGNAL_CSV = "breaking_public_signal_queue.csv"
 BREAKING_PUBLIC_SIGNAL_MD = "breaking_public_signal_queue.md"
 BREAKING_PUBLIC_SIGNAL_JSON = "breaking_public_signal_manifest.json"
+BREAKING_CONFIRMATION_INTAKE_CSV = "breaking_public_signal_confirmation_intake.csv"
+BREAKING_CONFIRMATION_INTAKE_MD = "breaking_public_signal_confirmation_intake.md"
 NEWS_SYNC_HUB_MD = "news_sync_hub.md"
 NEWS_MANIFEST_JSON = "news_sync_manifest.json"
 NEWS_INPUT_STATUS_CSV = "news_input_status_report.csv"
@@ -112,6 +114,19 @@ BREAKING_PUBLIC_SIGNAL_FIELDS = [
     "source_domains", "retrieval_method", "limitations", "human_review_cue",
     "manual_review_required", "review_only", "publish_ready", "auto_publish",
     "auto_source_enablement", "approval_state_change",
+]
+
+BREAKING_CONFIRMATION_INTAKE_FIELDS = [
+    "confirmation_id", "run_id", "candidate_id", "headline", "urgency_band",
+    "breaking_score", "required_confirmation_type", "confirmation_status",
+    "source_confidence_tier", "source_publish_grade", "public_signal_status",
+    "public_signal_confidence", "source_domains", "source_urls",
+    "official_source_search_hint", "wire_source_search_hint",
+    "operator_checked_url", "operator_checked_domain",
+    "operator_confirmation_result", "operator_confirmed_at_utc",
+    "operator_notes", "limitations", "manual_review_required", "review_only",
+    "publish_ready", "auto_publish", "auto_source_enablement",
+    "approval_state_change",
 ]
 
 INPUT_STATUS_FIELDS = [
@@ -2408,6 +2423,92 @@ def markdown_breaking_public_signal(rows: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def required_confirmation_type(row: Dict[str, Any]) -> str:
+    if clean(row.get("source_publish_grade")) == "publish_grade":
+        return "operator_verify_primary_or_official_source"
+    if clean(row.get("public_signal_status")) == "candidate_public_signal_review_only":
+        return "official_or_wire_confirmation_required"
+    return "second_source_or_operator_confirmation_required"
+
+
+def confirmation_search_hint(row: Dict[str, Any], source_type: str) -> str:
+    parts = [
+        clean(row.get("league")),
+        clean(row.get("sport")),
+        clean(row.get("headline")),
+    ]
+    suffix = "official news confirmation" if source_type == "official" else "wire report confirmation"
+    return clean(" ".join([part for part in parts if part] + [suffix]))
+
+
+def breaking_confirmation_intake_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    intake: List[Dict[str, Any]] = []
+    for row in rows:
+        confirmation_id = "confirm_" + stable_id(row.get("run_id"), row.get("candidate_id"), row.get("headline"))
+        intake.append(
+            {
+                "confirmation_id": confirmation_id,
+                "run_id": clean(row.get("run_id")),
+                "candidate_id": clean(row.get("candidate_id")),
+                "headline": clean(row.get("headline")),
+                "urgency_band": clean(row.get("urgency_band")),
+                "breaking_score": clean(row.get("breaking_score")),
+                "required_confirmation_type": required_confirmation_type(row),
+                "confirmation_status": "operator_input_required",
+                "source_confidence_tier": clean(row.get("source_confidence_tier")),
+                "source_publish_grade": clean(row.get("source_publish_grade")),
+                "public_signal_status": clean(row.get("public_signal_status")),
+                "public_signal_confidence": clean(row.get("public_signal_confidence")),
+                "source_domains": clean(row.get("source_domains")),
+                "source_urls": clean(row.get("source_urls")),
+                "official_source_search_hint": confirmation_search_hint(row, "official"),
+                "wire_source_search_hint": confirmation_search_hint(row, "wire"),
+                "operator_checked_url": "",
+                "operator_checked_domain": "",
+                "operator_confirmation_result": "",
+                "operator_confirmed_at_utc": "",
+                "operator_notes": "",
+                "limitations": "Manual intake only; does not update source registry, enable sources, approve copy, publish, or create a publish-ready lane.",
+                "manual_review_required": "true",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_publish": "false",
+                "auto_source_enablement": "false",
+                "approval_state_change": "false",
+            }
+        )
+    return intake
+
+
+def markdown_breaking_confirmation_intake(rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Breaking/Public Signal Confirmation Intake",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        "Manual review bridge only. Fill the CSV after checking official, wire, primary, or operator-verified evidence. This file does not approve, publish, or enable sources.",
+        "",
+    ]
+    if not rows:
+        lines.extend(["No breaking/public-signal rows need confirmation intake.", ""])
+        return "\n".join(lines)
+
+    for row in rows[:20]:
+        lines.extend([
+            f"## {row.get('urgency_band')} - {row.get('headline')}",
+            "",
+            f"- Confirmation status: `{row.get('confirmation_status')}`",
+            f"- Required confirmation: `{row.get('required_confirmation_type')}`",
+            f"- Official search hint: {row.get('official_source_search_hint')}",
+            f"- Wire search hint: {row.get('wire_source_search_hint')}",
+            f"- Current domains: {row.get('source_domains') or 'none captured'}",
+            f"- Operator fill-in fields: `operator_checked_url`, `operator_confirmation_result`, `operator_notes`",
+            f"- Guardrails: review_only={row.get('review_only')}, publish_ready={row.get('publish_ready')}, auto_source_enablement={row.get('auto_source_enablement')}, auto_publish={row.get('auto_publish')}",
+            "",
+        ])
+    return "\n".join(lines) + "\n"
+
+
 def markdown_brief_queue(packets: List[Dict[str, Any]], observations_by_candidate: Dict[str, List[Dict[str, Any]]]) -> str:
     lines = [
         "# Her Sports Daily News Brief Queue v1",
@@ -2734,6 +2835,7 @@ def main() -> None:
         packets.append(packet)
 
     breaking_signal_rows = build_breaking_public_signal_rows(packets, observations_by_candidate, run_id)
+    confirmation_intake_rows = breaking_confirmation_intake_rows(breaking_signal_rows)
     manual_packets = [p for p in packets if p.get("manual_review") == "Yes"]
 
     write_csv(NEWS_INPUT_STATUS_CSV, input_status, INPUT_STATUS_FIELDS)
@@ -2742,12 +2844,14 @@ def main() -> None:
     write_csv(NEWS_FACT_PACKETS_CSV, packets, PACKET_FIELDS)
     write_csv(NEWS_MANUAL_REVIEW_CSV, manual_packets, PACKET_FIELDS)
     write_csv(BREAKING_PUBLIC_SIGNAL_CSV, breaking_signal_rows, BREAKING_PUBLIC_SIGNAL_FIELDS)
+    write_csv(BREAKING_CONFIRMATION_INTAKE_CSV, confirmation_intake_rows, BREAKING_CONFIRMATION_INTAKE_FIELDS)
 
     write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
     write_run_text(NEWS_SOCIAL_PACKETS_MD, markdown_social_packets(packets))
     write_run_text(NEWS_GRAPHICS_HANDOFF_MD, markdown_graphics_handoff(packets))
     write_run_text(NEWS_DAILY_PLAN_MD, markdown_daily_plan(packets))
     write_run_text(BREAKING_PUBLIC_SIGNAL_MD, markdown_breaking_public_signal(breaking_signal_rows))
+    write_run_text(BREAKING_CONFIRMATION_INTAKE_MD, markdown_breaking_confirmation_intake(confirmation_intake_rows))
     write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
     write_run_json(
         BREAKING_PUBLIC_SIGNAL_JSON,
@@ -2763,8 +2867,14 @@ def main() -> None:
                 "rows": len(breaking_signal_rows),
                 "p0_breaking_review": len([row for row in breaking_signal_rows if row.get("urgency_band") == "P0_breaking_review"]),
                 "with_public_signal": len([row for row in breaking_signal_rows if row.get("public_signal_count") not in {"", "0"}]),
+                "confirmation_intake_rows": len(confirmation_intake_rows),
             },
-            "outputs": [BREAKING_PUBLIC_SIGNAL_CSV, BREAKING_PUBLIC_SIGNAL_MD],
+            "outputs": [
+                BREAKING_PUBLIC_SIGNAL_CSV,
+                BREAKING_PUBLIC_SIGNAL_MD,
+                BREAKING_CONFIRMATION_INTAKE_CSV,
+                BREAKING_CONFIRMATION_INTAKE_MD,
+            ],
         },
     )
 
@@ -2794,6 +2904,8 @@ def main() -> None:
             BREAKING_PUBLIC_SIGNAL_CSV,
             BREAKING_PUBLIC_SIGNAL_MD,
             BREAKING_PUBLIC_SIGNAL_JSON,
+            BREAKING_CONFIRMATION_INTAKE_CSV,
+            BREAKING_CONFIRMATION_INTAKE_MD,
             NEWS_SYNC_HUB_MD,
         ],
         "counts": {
@@ -2807,6 +2919,7 @@ def main() -> None:
             "packets_missing_event_date": len([p for p in packets if not clean(p.get("event_date"))]),
             "breaking_public_signal_rows": len(breaking_signal_rows),
             "breaking_public_signal_review_only": len([row for row in breaking_signal_rows if row.get("review_only") == "true"]),
+            "breaking_confirmation_intake_rows": len(confirmation_intake_rows),
         },
         "settings": {
             "max_must_post": MAX_MUST_POST,

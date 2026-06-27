@@ -185,6 +185,17 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "no paid API" in row["limitations"]
     assert "liberty.wnba.com" in row["source_domains"]
 
+    intake = module.breaking_confirmation_intake_rows(rows)
+    intake_row = intake[0]
+    assert intake_row["confirmation_status"] == "operator_input_required"
+    assert intake_row["required_confirmation_type"] == "operator_verify_primary_or_official_source"
+    assert "official news confirmation" in intake_row["official_source_search_hint"]
+    assert intake_row["operator_checked_url"] == ""
+    assert intake_row["review_only"] == "true"
+    assert intake_row["publish_ready"] == "false"
+    assert intake_row["auto_publish"] == "false"
+    assert intake_row["auto_source_enablement"] == "false"
+
 
 def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, monkeypatch) -> None:
     run_dir = tmp_path / "run" / "files"
@@ -240,22 +251,37 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     queue = run_dir / "breaking_public_signal_queue.csv"
     report = run_dir / "breaking_public_signal_queue.md"
     signal_manifest = run_dir / "breaking_public_signal_manifest.json"
+    confirmation_csv = run_dir / "breaking_public_signal_confirmation_intake.csv"
+    confirmation_md = run_dir / "breaking_public_signal_confirmation_intake.md"
     news_manifest = run_dir / "news_sync_manifest.json"
     assert queue.exists()
     assert report.exists()
     assert signal_manifest.exists()
+    assert confirmation_csv.exists()
+    assert confirmation_md.exists()
     rows = list(csv.DictReader(queue.open(newline="", encoding="utf-8")))
+    confirmation_rows = list(csv.DictReader(confirmation_csv.open(newline="", encoding="utf-8")))
     assert rows
+    assert confirmation_rows
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["publish_ready"] == "false" for row in rows)
     assert all(row["auto_publish"] == "false" for row in rows)
     assert all(row["auto_source_enablement"] == "false" for row in rows)
+    assert all(row["confirmation_status"] == "operator_input_required" for row in confirmation_rows)
+    assert all(row["operator_checked_url"] == "" for row in confirmation_rows)
+    assert all(row["review_only"] == "true" for row in confirmation_rows)
+    assert all(row["publish_ready"] == "false" for row in confirmation_rows)
+    assert all(row["auto_publish"] == "false" for row in confirmation_rows)
+    assert all(row["auto_source_enablement"] == "false" for row in confirmation_rows)
     assert any(row["headline"] == "Breaking: Liberty announce star guard injury update" for row in rows)
     signal_payload = json.loads(signal_manifest.read_text(encoding="utf-8"))
     news_payload = json.loads(news_manifest.read_text(encoding="utf-8"))
     assert signal_payload["review_only"] is True
     assert signal_payload["publish_ready"] is False
     assert signal_payload["counts"]["rows"] == len(rows)
+    assert signal_payload["counts"]["confirmation_intake_rows"] == len(confirmation_rows)
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
+    assert "breaking_public_signal_confirmation_intake.csv" in news_payload["outputs"]
     assert news_payload["counts"]["breaking_public_signal_rows"] == len(rows)
     assert news_payload["counts"]["breaking_public_signal_review_only"] == len(rows)
+    assert news_payload["counts"]["breaking_confirmation_intake_rows"] == len(confirmation_rows)
