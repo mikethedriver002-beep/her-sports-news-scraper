@@ -1,0 +1,636 @@
+from __future__ import annotations
+
+import csv
+import json
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Mapping, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hsd_run_io import input_path, output_path, write_csv, write_json, write_text
+
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except Exception:  # pragma: no cover - reported in manifest
+    Image = None
+    ImageDraw = None
+    ImageFont = None
+
+
+VERSION = "hsd-womens-soccer-athlete-photo-contact-sheets-v1-review-only"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REGISTRY_ROOT = Path("data/asset_registry/womens_soccer")
+ACTIVE_SCOPES = ["nwsl"]
+
+OUT_DIR = output_path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
+OUT_INDEX = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md")
+OUT_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv")
+OUT_INTAKE = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv")
+OUT_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json")
+CANDIDATES = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv")
+
+CANDIDATE_FIELDS = [
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_id",
+    "display_name",
+    "candidate_id",
+    "candidate_rank",
+    "candidate_status",
+    "source_url",
+    "source_domain",
+    "source_tier",
+    "source_platform",
+    "source_kind",
+    "candidate_method",
+    "page_title",
+    "canonical_url",
+    "referring_roster_url",
+    "photo_candidate_url",
+    "local_candidate_path",
+    "local_candidate_exists",
+    "image_width",
+    "image_height",
+    "file_sha256",
+    "license_hint",
+    "rights_note",
+    "attribution_text",
+    "identity_evidence_notes",
+    "team_context_match",
+    "jersey_context_notes",
+    "identity_risk_flags",
+    "manual_review_status",
+    "approval_status",
+    "review_only",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+    "notes",
+]
+
+CONTACT_FIELDS = [
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_id",
+    "display_name",
+    "candidate_id",
+    "candidate_status",
+    "registry_status",
+    "local_candidate_path",
+    "local_candidate_exists",
+    "approved_marker_path",
+    "approved_marker_exists",
+    "current_approval_status",
+    "identity_review_status",
+    "source_url",
+    "source_domain",
+    "source_tier",
+    "source_kind",
+    "source_platform",
+    "photo_candidate_url",
+    "license_hint",
+    "rights_note",
+    "identity_evidence_notes",
+    "identity_risk_flags",
+    "allowed_decisions",
+    "human_intake_file",
+    "team_contact_sheet_path",
+    "team_review_board_path",
+    "review_only",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+]
+
+INTAKE_FIELDS = [
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_id",
+    "display_name",
+    "candidate_id",
+    "local_candidate_path",
+    "source_url",
+    "photo_candidate_url",
+    "current_approval_status",
+    "identity_review_status",
+    "allowed_decisions",
+    "operator_decision",
+    "identity_verified",
+    "source_reviewed",
+    "local_file_reviewed",
+    "source_allowed_for_review_only",
+    "rights_reviewed",
+    "source_url_to_record",
+    "registry_action",
+    "operator_notes",
+    "reviewed_by",
+    "reviewed_at_local",
+    "approval_scope",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+]
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def clean(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+def slug(value: Any) -> str:
+    return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", clean(value).lower())).strip("_") or "unknown"
+
+
+def source_domain(url: str) -> str:
+    match = re.match(r"^https?://([^/]+)", clean(url))
+    return match.group(1).lower() if match else ""
+
+
+def read_csv(path: str | Path) -> List[Dict[str, str]]:
+    resolved = input_path(path)
+    if not resolved.exists():
+        return []
+    with resolved.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
+        return list(csv.DictReader(handle))
+
+
+def by_key(rows: Iterable[Mapping[str, str]], key: str) -> Dict[str, Mapping[str, str]]:
+    return {clean(row.get(key)): row for row in rows if clean(row.get(key))}
+
+
+def project_path(raw: Any) -> Path:
+    path = Path(clean(raw))
+    if path.is_absolute():
+        return path
+    return PROJECT_ROOT / path
+
+
+def load_font(size: int, *, bold: bool = False) -> Any:
+    if ImageFont is None:
+        return None
+    candidates = [
+        "C:/Windows/Fonts/arialbd.ttf" if bold else "C:/Windows/Fonts/arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    for raw in candidates:
+        path = Path(raw)
+        if path.exists():
+            try:
+                return ImageFont.truetype(str(path), size)
+            except Exception:
+                pass
+    return ImageFont.load_default()
+
+
+def team_contact_sheet_path(scope_id: str, team_id: str) -> str:
+    return (OUT_DIR / slug(scope_id) / f"{slug(team_id)}.png").as_posix()
+
+
+def team_review_board_path(scope_id: str, team_id: str) -> str:
+    return (OUT_DIR / slug(scope_id) / f"{slug(team_id)}.md").as_posix()
+
+
+def proposed_candidate_path(scope_id: str, league_id: str, team_id: str, player_id: str, candidate_id: str) -> str:
+    player_slug = slug(player_id or "operator_fill_required")
+    candidate_slug = slug(candidate_id or "candidate_001")
+    return (
+        Path("assets/leagues/womens_soccer")
+        / slug(scope_id)
+        / slug(league_id)
+        / "teams"
+        / slug(team_id)
+        / "athletes"
+        / player_slug
+        / "review_candidates"
+        / f"{candidate_slug}.png"
+    ).as_posix()
+
+
+def preferred_sources(scope: str) -> Dict[Tuple[str, str], str]:
+    output: Dict[Tuple[str, str], str] = {}
+    priority = ["roster", "nwsl_roster", "team_site", "players_index", "logo_review_source"]
+    for row in read_csv(REGISTRY_ROOT / scope / "source_urls.csv"):
+        entity_type = clean(row.get("entity_type"))
+        entity_id = clean(row.get("entity_id"))
+        source_kind = clean(row.get("source_kind"))
+        source_url = clean(row.get("source_url"))
+        if not source_url:
+            continue
+        key = (entity_type, entity_id)
+        current_kind = output.get((entity_type, entity_id, "_kind"), "")
+        if key not in output or (source_kind in priority and (current_kind not in priority or priority.index(source_kind) < priority.index(current_kind))):
+            output[key] = source_url
+            output[(entity_type, entity_id, "_kind")] = source_kind
+    return output
+
+
+def team_rows(scope: str) -> List[Dict[str, str]]:
+    leagues = by_key(read_csv(REGISTRY_ROOT / scope / "leagues.csv"), "league_id")
+    sources = preferred_sources(scope)
+    rows: List[Dict[str, str]] = []
+    for row in read_csv(REGISTRY_ROOT / scope / "teams.csv"):
+        team_id = clean(row.get("team_id"))
+        league_id = clean(row.get("league_id"))
+        if not team_id or not league_id:
+            continue
+        league = leagues.get(league_id, {})
+        rows.append(
+            {
+                "scope_id": scope,
+                "league_id": league_id,
+                "league_name": clean(league.get("league_name")) or league_id,
+                "team_id": team_id,
+                "team_name": clean(row.get("team_name")) or team_id,
+                "team_source_url": clean(row.get("team_site_url")) or sources.get(("team", team_id), ""),
+                "roster_source_url": sources.get(("team", team_id), "") or clean(row.get("team_site_url")),
+            }
+        )
+    return sorted(rows, key=lambda item: (item["league_id"], item["team_name"]))
+
+
+def starter_candidate_rows() -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for scope in ACTIVE_SCOPES:
+        for team in team_rows(scope):
+            source_url = clean(team.get("roster_source_url")) or clean(team.get("team_source_url"))
+            candidate_id = f"{team['team_id']}_operator_add_candidate"
+            rows.append(
+                {
+                    "scope_id": team["scope_id"],
+                    "league_id": team["league_id"],
+                    "team_id": team["team_id"],
+                    "team_name": team["team_name"],
+                    "player_id": "",
+                    "display_name": "operator_add_player_candidate",
+                    "candidate_id": candidate_id,
+                    "candidate_rank": "999",
+                    "candidate_status": "operator_add_candidate",
+                    "source_url": source_url,
+                    "source_domain": source_domain(source_url),
+                    "source_tier": "public_or_official_candidate",
+                    "source_platform": "manual_research",
+                    "source_kind": "roster_or_public_profile_candidate",
+                    "candidate_method": "manual_candidate_layer_placeholder",
+                    "page_title": "",
+                    "canonical_url": source_url,
+                    "referring_roster_url": source_url,
+                    "photo_candidate_url": "",
+                    "local_candidate_path": proposed_candidate_path(team["scope_id"], team["league_id"], team["team_id"], "", candidate_id),
+                    "local_candidate_exists": "false",
+                    "image_width": "",
+                    "image_height": "",
+                    "file_sha256": "",
+                    "license_hint": "operator_review_required",
+                    "rights_note": "review_only_fair_use_tolerant_candidate; no renderer approval",
+                    "attribution_text": "",
+                    "identity_evidence_notes": "Add exact player name, current team evidence, and source URL before approval.",
+                    "team_context_match": "operator_fill_required",
+                    "jersey_context_notes": "",
+                    "identity_risk_flags": "missing_player_identity_candidate",
+                    "manual_review_status": "operator_fill_required",
+                    "approval_status": "not_approved",
+                    "review_only": "true",
+                    "publish_ready": "false",
+                    "auto_approval": "false",
+                    "auto_publish": "false",
+                    "move_files": "false",
+                    "paid_apis": "false",
+                    "asset_downloads": "false",
+                    "notes": "Starter row only; replace with one row per athlete photo candidate.",
+                }
+            )
+    return rows
+
+
+def ensure_candidate_csv() -> List[Dict[str, str]]:
+    rows = read_csv(CANDIDATES)
+    if rows:
+        return rows
+    rows = starter_candidate_rows()
+    write_csv(CANDIDATES, rows, CANDIDATE_FIELDS)
+    return rows
+
+
+def build_rows() -> List[Dict[str, str]]:
+    candidates = ensure_candidate_csv()
+    output: List[Dict[str, str]] = []
+    for row in candidates:
+        local_path = clean(row.get("local_candidate_path"))
+        scope_id = clean(row.get("scope_id"))
+        team_id = clean(row.get("team_id"))
+        marker_path = f"{local_path}.approved" if local_path else ""
+        output.append(
+            {
+                "scope_id": scope_id,
+                "league_id": clean(row.get("league_id")),
+                "team_id": team_id,
+                "team_name": clean(row.get("team_name")) or team_id,
+                "player_id": clean(row.get("player_id")),
+                "display_name": clean(row.get("display_name")) or "operator_add_player_candidate",
+                "candidate_id": clean(row.get("candidate_id")),
+                "candidate_status": clean(row.get("candidate_status")) or "operator_add_candidate",
+                "registry_status": "candidate_layer_only_no_player_registry_write",
+                "local_candidate_path": local_path,
+                "local_candidate_exists": str(project_path(local_path).exists()).lower() if local_path else "false",
+                "approved_marker_path": marker_path,
+                "approved_marker_exists": str(project_path(marker_path).exists()).lower() if marker_path else "false",
+                "current_approval_status": clean(row.get("approval_status")) or "not_approved",
+                "identity_review_status": clean(row.get("manual_review_status")) or "operator_fill_required",
+                "source_url": clean(row.get("source_url")),
+                "source_domain": clean(row.get("source_domain")) or source_domain(clean(row.get("source_url"))),
+                "source_tier": clean(row.get("source_tier")),
+                "source_kind": clean(row.get("source_kind")),
+                "source_platform": clean(row.get("source_platform")),
+                "photo_candidate_url": clean(row.get("photo_candidate_url")),
+                "license_hint": clean(row.get("license_hint")),
+                "rights_note": clean(row.get("rights_note")),
+                "identity_evidence_notes": clean(row.get("identity_evidence_notes")),
+                "identity_risk_flags": clean(row.get("identity_risk_flags")) or "identity_review_required",
+                "allowed_decisions": "approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate",
+                "human_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+                "team_contact_sheet_path": team_contact_sheet_path(scope_id, team_id),
+                "team_review_board_path": team_review_board_path(scope_id, team_id),
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        )
+    return sorted(output, key=lambda item: (item["scope_id"], item["league_id"], item["team_name"], item["display_name"], item["candidate_id"]))
+
+
+def existing_intake_rows() -> List[Dict[str, str]]:
+    return read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv")
+
+
+def existing_intake_by_candidate(rows: Iterable[Mapping[str, str]] | None = None) -> Dict[str, Mapping[str, str]]:
+    return by_key(rows or existing_intake_rows(), "candidate_id")
+
+
+def extended_fields(base_fields: List[str], rows: Iterable[Mapping[str, str]]) -> List[str]:
+    fields = list(base_fields)
+    seen = set(fields)
+    for row in rows:
+        for field in row.keys():
+            if field and field not in seen:
+                fields.append(field)
+                seen.add(field)
+    return fields
+
+
+def intake_rows(rows: Iterable[Mapping[str, str]], existing: Mapping[str, Mapping[str, str]] | None = None) -> List[Dict[str, str]]:
+    existing = existing or existing_intake_by_candidate()
+    output: List[Dict[str, str]] = []
+    for row in rows:
+        prior = existing.get(clean(row.get("candidate_id")), {})
+        merged = {field: clean(value) for field, value in prior.items() if field not in INTAKE_FIELDS}
+        merged.update(
+            {
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "player_id": clean(row.get("player_id")),
+                "display_name": clean(row.get("display_name")),
+                "candidate_id": clean(row.get("candidate_id")),
+                "local_candidate_path": clean(row.get("local_candidate_path")),
+                "source_url": clean(row.get("source_url")),
+                "photo_candidate_url": clean(row.get("photo_candidate_url")),
+                "current_approval_status": clean(row.get("current_approval_status")),
+                "identity_review_status": clean(row.get("identity_review_status")),
+                "allowed_decisions": clean(row.get("allowed_decisions")),
+                "operator_decision": clean(prior.get("operator_decision")) or "operator_fill_required",
+                "identity_verified": clean(prior.get("identity_verified")) or "operator_fill_required",
+                "source_reviewed": clean(prior.get("source_reviewed")) or "operator_fill_required",
+                "local_file_reviewed": clean(prior.get("local_file_reviewed")) or "operator_fill_required",
+                "source_allowed_for_review_only": clean(prior.get("source_allowed_for_review_only")) or "operator_fill_required",
+                "rights_reviewed": clean(prior.get("rights_reviewed")) or "operator_fill_required",
+                "source_url_to_record": clean(prior.get("source_url_to_record")),
+                "registry_action": clean(prior.get("registry_action")) or "candidate_layer_only_no_registry_state_change",
+                "operator_notes": clean(prior.get("operator_notes")),
+                "reviewed_by": clean(prior.get("reviewed_by")),
+                "reviewed_at_local": clean(prior.get("reviewed_at_local")),
+                "approval_scope": "review_only_renderer_womens_soccer_athlete_photo_trust_manual_intake",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        )
+        output.append(merged)
+    return output
+
+
+def text_width(draw: Any, text: str, font: Any) -> int:
+    if hasattr(draw, "textbbox"):
+        box = draw.textbbox((0, 0), text, font=font)
+        return int(box[2] - box[0])
+    return int(draw.textlength(text, font=font))
+
+
+def ellipsize(draw: Any, text: str, font: Any, max_width: int) -> str:
+    value = clean(text)
+    if not value:
+        return ""
+    if text_width(draw, value, font) <= max_width:
+        return value
+    suffix = "..."
+    while value and text_width(draw, value + suffix, font) > max_width:
+        value = value[:-1]
+    return (value.rstrip() + suffix) if value else suffix
+
+
+def draw_candidate_card(sheet: Any, draw: Any, row: Mapping[str, str], x: int, y: int, card_w: int, card_h: int) -> None:
+    font_name = load_font(20, bold=True)
+    font_small = load_font(14)
+    font_tiny = load_font(12)
+    draw.rounded_rectangle((x, y, x + card_w, y + card_h), radius=10, fill=(255, 255, 255), outline=(212, 220, 228), width=2)
+    local_path = project_path(row.get("local_candidate_path"))
+    if local_path.exists() and Image is not None:
+        try:
+            image = Image.open(local_path).convert("RGBA")
+            scale = min(116 / max(1, image.width), 96 / max(1, image.height))
+            resized = image.resize((max(1, int(image.width * scale)), max(1, int(image.height * scale))), Image.Resampling.LANCZOS)
+            canvas = Image.new("RGBA", (116, 96), (255, 255, 255, 0))
+            canvas.alpha_composite(resized, ((116 - resized.width) // 2, (96 - resized.height) // 2))
+            sheet.paste(canvas, (x + 16, y + 42), canvas)
+        except Exception:
+            draw.rectangle((x + 16, y + 42, x + 132, y + 138), fill=(236, 240, 244), outline=(180, 188, 196))
+            draw.text((x + 34, y + 82), "render failed", fill=(130, 38, 38), font=font_tiny)
+    else:
+        draw.rectangle((x + 16, y + 42, x + 132, y + 138), fill=(236, 240, 244), outline=(180, 188, 196))
+        draw.text((x + 30, y + 78), "missing local", fill=(130, 38, 38), font=font_tiny)
+        draw.text((x + 30, y + 96), "candidate", fill=(130, 38, 38), font=font_tiny)
+
+    text_x = x + 150
+    text_w = card_w - 166
+    draw.text((x + 16, y + 14), ellipsize(draw, clean(row.get("display_name")), font_name, card_w - 32), fill=(12, 20, 28), font=font_name)
+    draw.text((text_x, y + 46), ellipsize(draw, f"Status: {clean(row.get('identity_review_status'))}", font_small, text_w), fill=(154, 99, 0), font=font_small)
+    draw.text((text_x, y + 68), ellipsize(draw, f"Risk: {clean(row.get('identity_risk_flags'))}", font_tiny, text_w), fill=(74, 83, 94), font=font_tiny)
+    draw.text((text_x, y + 88), ellipsize(draw, f"Source: {clean(row.get('source_url'))}", font_tiny, text_w), fill=(74, 83, 94), font=font_tiny)
+    draw.text((text_x, y + 108), ellipsize(draw, f"Photo: {clean(row.get('photo_candidate_url')) or 'operator fill required'}", font_tiny, text_w), fill=(74, 83, 94), font=font_tiny)
+    draw.text((x + 16, y + 154), ellipsize(draw, f"Local candidate: {clean(row.get('local_candidate_path'))}", font_tiny, card_w - 32), fill=(74, 83, 94), font=font_tiny)
+    draw.text((x + 16, y + 174), ellipsize(draw, "No downloads, no approval markers, no headshot.png writes.", font_tiny, card_w - 32), fill=(74, 83, 94), font=font_tiny)
+
+
+def make_team_contact_sheet(scope_id: str, team_id: str, team_rows: List[Mapping[str, str]]) -> Tuple[str, List[str]]:
+    warnings: List[str] = []
+    out_path = output_path(team_contact_sheet_path(scope_id, team_id))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if Image is None or ImageDraw is None:
+        warnings.append(f"{team_id}:pillow_unavailable_contact_sheet_not_created")
+        return out_path.as_posix(), warnings
+    cols = 2
+    card_w, card_h = 650, 210
+    margin = 28
+    header_h = 92
+    row_count = max(1, (len(team_rows) + cols - 1) // cols)
+    width = margin * 2 + cols * card_w + 18
+    height = margin * 2 + header_h + row_count * (card_h + 18)
+    image = Image.new("RGB", (width, height), (246, 248, 250))
+    draw = ImageDraw.Draw(image)
+    font_title = load_font(32, bold=True)
+    font_body = load_font(16)
+    team_name = clean(team_rows[0].get("team_name")) if team_rows else team_id
+    draw.text((margin, 20), f"{team_name} athlete photo candidates", fill=(12, 20, 28), font=font_title)
+    draw.text((margin, 58), "Review-only candidate board. Add public/fair-use-tolerant source leads in the CSV; no photo downloads here.", fill=(74, 83, 94), font=font_body)
+    for index, row in enumerate(team_rows):
+        col = index % cols
+        row_i = index // cols
+        x = margin + col * (card_w + 18)
+        y = margin + header_h + row_i * (card_h + 18)
+        draw_candidate_card(image, draw, row, x, y, card_w, card_h)
+    image.save(out_path)
+    return out_path.as_posix(), warnings
+
+
+def render_team_board(team_rows: List[Mapping[str, str]], sheet_path: str, generated_at: str) -> str:
+    team_name = clean(team_rows[0].get("team_name")) if team_rows else "Unknown team"
+    lines = [
+        f"# {team_name} Women's Soccer Athlete Photo Candidates",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only board. Candidate URLs may come from official, public, or fair-use-tolerant sources, but this packet does not download athlete photos, approve identities, write `headshot.png`, create `.approved` markers, move files, publish, or create a publish-ready lane.",
+        "",
+        f"![{team_name} athlete photo candidates]({Path(sheet_path).name})",
+        "",
+        "## Candidate Rows",
+        "",
+    ]
+    for row in team_rows:
+        lines.append(
+            f"- {row.get('display_name')} | candidate={row.get('candidate_id')} | local_exists={row.get('local_candidate_exists')} | "
+            f"source={row.get('source_url') or 'operator_fill_required'} | photo={row.get('photo_candidate_url') or 'operator_fill_required'} | "
+            f"risk={row.get('identity_risk_flags')}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def render_index(rows: List[Mapping[str, str]], team_outputs: Mapping[str, Mapping[str, str]], generated_at: str) -> str:
+    local_count = sum(1 for row in rows if clean(row.get("local_candidate_exists")) == "true")
+    lines = [
+        "# Women's Soccer Athlete Photo Contact Sheets",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only candidate layer for women's soccer athlete photos. Start with NWSL boards, then expand the same CSV shape to WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema Premiere Ligue.",
+        "No downloads or approvals are performed by this generator.",
+        "",
+        "## Summary",
+        "",
+        f"- Candidate rows: `{len(rows)}`",
+        f"- Team boards: `{len(team_outputs)}`",
+        f"- Local candidate files present: `{local_count}`",
+        "- Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`",
+        "- Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`",
+        "- Allowed decisions: `approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate`",
+        "- Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false",
+        "",
+        "## Boards",
+        "",
+    ]
+    for key in sorted(team_outputs):
+        info = team_outputs[key]
+        lines.append(f"- {info.get('team_name')} | rows={info.get('rows')} | [board]({Path(info.get('board_path', '')).as_posix()}) | [contact sheet]({Path(info.get('sheet_path', '')).as_posix()})")
+    return "\n".join(lines) + "\n"
+
+
+def main() -> int:
+    generated_at = now_iso()
+    rows = build_rows()
+    prior_intake_rows = existing_intake_rows()
+    existing = existing_intake_by_candidate(prior_intake_rows)
+    decisions = intake_rows(rows, existing)
+    team_outputs: Dict[str, Dict[str, str]] = {}
+    warnings: List[str] = []
+    grouped: Dict[Tuple[str, str], List[Mapping[str, str]]] = {}
+    for row in rows:
+        grouped.setdefault((clean(row.get("scope_id")), clean(row.get("team_id"))), []).append(row)
+    for (scope_id, team_id), team_rows_for_board in sorted(grouped.items()):
+        sheet_path, sheet_warnings = make_team_contact_sheet(scope_id, team_id, team_rows_for_board)
+        warnings.extend(sheet_warnings)
+        board_path = output_path(team_review_board_path(scope_id, team_id))
+        write_text(board_path, render_team_board(team_rows_for_board, sheet_path, generated_at))
+        team_outputs[f"{scope_id}:{team_id}"] = {
+            "scope_id": scope_id,
+            "team_id": team_id,
+            "team_name": clean(team_rows_for_board[0].get("team_name")),
+            "rows": str(len(team_rows_for_board)),
+            "sheet_path": sheet_path,
+            "board_path": board_path.as_posix(),
+        }
+    write_csv(OUT_CSV, rows, CONTACT_FIELDS)
+    write_csv(OUT_INTAKE, decisions, extended_fields(INTAKE_FIELDS, prior_intake_rows))
+    write_text(OUT_INDEX, render_index(rows, team_outputs, generated_at))
+    manifest = {
+        "version": VERSION,
+        "status": "contact_sheets_ready",
+        "generated_at_utc": generated_at,
+        "candidate_rows": len(rows),
+        "team_boards": len(team_outputs),
+        "candidate_csv": CANDIDATES.as_posix(),
+        "contact_sheet_csv": OUT_CSV.as_posix(),
+        "intake_csv": OUT_INTAKE.as_posix(),
+        "index": OUT_INDEX.as_posix(),
+        "warnings": warnings,
+        "review_only": True,
+        "downloads_performed": False,
+        "approvals_applied": False,
+        "headshot_files_written": False,
+        "approved_markers_created": False,
+        "publish_ready": False,
+    }
+    write_json(OUT_JSON, manifest)
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "candidate_rows": len(rows), "team_boards": len(team_outputs), "index": OUT_INDEX.as_posix(), "intake": OUT_INTAKE.as_posix()}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
