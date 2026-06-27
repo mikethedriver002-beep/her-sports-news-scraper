@@ -268,6 +268,9 @@ jobs:
             game_fact_confirmation_status_v1.csv
             game_fact_confirmation_status_v1.md
             game_fact_confirmation_status_v1.json
+            final_score_stat_proof_v1.csv
+            final_score_stat_proof_v1.md
+            final_score_stat_proof_v1.json
             game_source_confirmation_bridge_v1.csv
             game_source_confirmation_bridge_v1.md
             game_source_confirmation_bridge_v1.json

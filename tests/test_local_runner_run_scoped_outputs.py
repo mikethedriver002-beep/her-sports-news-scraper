@@ -65,6 +65,9 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "game_fact_confirmation_status_v1.md",
         "game_fact_confirmation_status_v1.csv",
         "game_fact_confirmation_status_v1.json",
+        "final_score_stat_proof_v1.md",
+        "final_score_stat_proof_v1.csv",
+        "final_score_stat_proof_v1.json",
         "game_source_confirmation_bridge_v1.md",
         "game_source_confirmation_bridge_v1.csv",
         "game_source_confirmation_bridge_v1.json",
@@ -129,6 +132,15 @@ def test_local_runner_collects_game_fact_confirmation_status_for_latest() -> Non
     assert '"game_fact_confirmation_status_v1.md"' in collector
     assert '"game_fact_confirmation_status_v1.csv"' in collector
     assert '"game_fact_confirmation_status_v1.json"' in collector
+
+
+def test_local_runner_collects_final_score_stat_proof_for_latest() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    collector = runner[runner.index("function Collect-HsdArtifacts") : runner.index("function Invoke-HsdRun")]
+
+    assert '"final_score_stat_proof_v1.md"' in collector
+    assert '"final_score_stat_proof_v1.csv"' in collector
+    assert '"final_score_stat_proof_v1.json"' in collector
 
 
 def test_review_stage_refreshes_source_registry_audit_for_command_center() -> None:
