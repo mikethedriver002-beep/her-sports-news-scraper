@@ -62,6 +62,9 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "studio_dashboard/**",
         "news_dashboard/**",
         "news_fact_packets.csv",
+        "game_source_confirmation_bridge_v1.md",
+        "game_source_confirmation_bridge_v1.csv",
+        "game_source_confirmation_bridge_v1.json",
         "studio_bundle_*",
         "bebe_*",
         "manual_workflow_*",
@@ -105,6 +108,15 @@ def test_local_run_manifest_preserves_free_manual_policy() -> None:
     assert "paid_apis_disabled = $true" in text
     assert '$env:HSD_PAID_APIS_DISABLED = "1"' in text
     assert '$env:HSD_SOURCE_COST_MODE = "free_first"' in text
+
+
+def test_local_runner_collects_game_source_confirmation_bridge_for_latest() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    collector = runner[runner.index("function Collect-HsdArtifacts") : runner.index("function Invoke-HsdRun")]
+
+    assert '"game_source_confirmation_bridge_v1.md"' in collector
+    assert '"game_source_confirmation_bridge_v1.csv"' in collector
+    assert '"game_source_confirmation_bridge_v1.json"' in collector
 
 
 def test_review_stage_refreshes_source_registry_audit_for_command_center() -> None:
