@@ -9,6 +9,19 @@ import generate_hsd_operator_command_center_v2 as command_center
 REPO = Path(__file__).resolve().parents[1]
 
 
+def test_command_center_prefers_latest_local_artifacts_over_stale_root(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("HSD_RUN_OUTPUT_DIR", raising=False)
+    latest = tmp_path / "outputs" / "local" / "latest" / "files"
+    latest.mkdir(parents=True)
+    (tmp_path / "news_fact_packets.csv").write_text("headline\nstale-root\n", encoding="utf-8")
+    (latest / "news_fact_packets.csv").write_text("headline\nfresh-latest\n", encoding="utf-8")
+
+    resolved = command_center.find_existing_input("news_fact_packets.csv")
+
+    assert resolved.resolve() == latest / "news_fact_packets.csv"
+
+
 def test_command_center_links_breaking_public_signal_artifacts() -> None:
     artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
 

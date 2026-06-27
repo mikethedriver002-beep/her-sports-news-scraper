@@ -272,20 +272,37 @@ def load_json(path: str, default: Any) -> Any:
 
 def candidate_input_paths(path: str) -> List[Path]:
     """
-    News Sync v1.1 searches both root outputs and archived latest outputs.
+    News Sync searches current run outputs, latest local artifacts, root outputs,
+    and archived results outputs in freshness order.
 
-    This fixes the first-run failure mode where News Sync ran successfully
-    but found 0 candidates because it did not locate Results Desk files.
+    This avoids local mode attaching stale root-level results after the runner
+    has already collected a fresher Results Desk run under outputs/local/latest.
     """
     p = Path(path)
-    names = input_candidates(path)
+    if p.is_absolute():
+        return [p]
+
+    names: List[Path] = []
+    run_root = os.environ.get("HSD_RUN_OUTPUT_DIR", "").strip()
+    if run_root:
+        names.append(Path(run_root) / p)
+    names.append(Path("outputs") / "local" / "latest" / "files" / p)
+    names.extend(input_candidates(path))
     if not p.is_absolute():
         names.extend([
             Path("results_run_history") / "latest" / path,
             Path("results_run_history") / "latest" / p.name,
             Path("results_run_history") / p.name,
         ])
-    return names
+
+    deduped: List[Path] = []
+    seen = set()
+    for candidate in names:
+        key = candidate.as_posix()
+        if key not in seen:
+            seen.add(key)
+            deduped.append(candidate)
+    return deduped
 
 
 def resolve_input(path: str) -> Tuple[Path, str]:
@@ -1047,6 +1064,25 @@ def clean_top_performer_text(value: str) -> str:
     return value
 
 
+BOX_SCORE_TEAM_NAMES = (
+    "Atlanta Dream",
+    "Chicago Sky",
+    "Connecticut Sun",
+    "Dallas Wings",
+    "Golden State Valkyries",
+    "Indiana Fever",
+    "Las Vegas Aces",
+    "Los Angeles Sparks",
+    "Minnesota Lynx",
+    "New York Liberty",
+    "Phoenix Mercury",
+    "Portland Fire",
+    "Seattle Storm",
+    "Toronto Tempo",
+    "Washington Mystics",
+)
+
+
 
 def parse_graphics_queue(text: str, run_id: str) -> List[Dict[str, Any]]:
     """
@@ -1288,31 +1324,41 @@ def parse_box_score_summary(text: str) -> Dict[str, str]:
     if not text.strip():
         return out
 
-    # The file varies across versions, so parse broadly.
-    chunks = re.split(r"\n(?=##|\d+\.|\- \*\*)", text)
+    # Parse by game section so one event's stats cannot bleed into another.
+    chunks = re.split(r"\n(?=(?:##\s+|\d+\.\s+\*\*))", text)
     for chunk in chunks:
         ch = clean(chunk)
         if not ch:
             continue
 
-        # look for known player-stat-rich lines
-        if any(name in ch for name in ["A'ja", "Arike", "Paige", "Natasha", "DeWanna", "Jackie", "Jessica", "Olivia"]):
-            # key by teams if present, otherwise by first sentence
-            key = ""
-            team_hits = []
-            for team in [
-                "Dallas", "Los Angeles", "Phoenix", "Portland", "Minnesota", "Seattle",
-                "Las Vegas", "Golden State", "Chicago", "Connecticut"
-            ]:
-                if team.lower() in ch.lower():
-                    team_hits.append(team)
-            if len(team_hits) >= 2:
-                key = " ".join(team_hits[:2]).lower()
-            else:
-                key = clean(ch[:80]).lower()
-            out[key] = ch
+        performer_match = re.search(r"\bTop performers:\s*(.+?)(?=\n\s*\n|\Z)", chunk, flags=re.I | re.S)
+        if not performer_match:
+            continue
+
+        title_match = re.search(r"^\s*(?:\d+\.\s*)?\*\*(.+?)\*\*", chunk, flags=re.M)
+        if not title_match:
+            title_match = re.search(r"^\s*##\s+(.+)$", chunk, flags=re.M)
+        title = clean(title_match.group(1)) if title_match else ""
+        team_hits = [team for team in BOX_SCORE_TEAM_NAMES if team.lower() in ch.lower()]
+        key = clean(" ".join([title, " ".join(team_hits)])).lower()
+        if not key:
+            key = clean(ch[:120]).lower()
+        out[key] = clean_top_performer_text(performer_match.group(1))
 
     return out
+
+
+def candidate_team_token_groups(candidate: Dict[str, Any]) -> List[set[str]]:
+    team_values = [clean(candidate.get("winner")), clean(candidate.get("loser"))]
+    if not all(team_values):
+        headline_winner, headline_loser = infer_winner_loser_from_headline(candidate.get("graphics_headline", ""))
+        team_values = [clean(headline_winner), clean(headline_loser)]
+    if not all(team_values):
+        matchup = clean(candidate.get("matchup"))
+        pieces = [clean(part) for part in re.split(r"\s+(?:vs\.?|at|beat)\s+", matchup, maxsplit=1, flags=re.I)]
+        if len(pieces) == 2:
+            team_values = pieces
+    return [token_set(value) for value in team_values if token_set(value)]
 
 
 def find_top_performers(candidate: Dict[str, Any], box_map: Dict[str, str]) -> str:
@@ -1322,19 +1368,25 @@ def find_top_performers(candidate: Dict[str, Any], box_map: Dict[str, str]) -> s
         candidate.get("final_score", ""),
         candidate.get("slide3_context", ""),
     ]).lower()
+    team_groups = candidate_team_token_groups(candidate)
 
     best = ""
     best_score = 0
     for key, val in box_map.items():
-        score = 0
-        for token in key.split():
-            if len(token) >= 4 and token in blob:
-                score += 1
+        key_tokens = token_set(key)
+        if len(team_groups) >= 2:
+            if not all(group & key_tokens for group in team_groups[:2]):
+                continue
+            score = sum(len(group & key_tokens) for group in team_groups[:2])
+        else:
+            score = sum(1 for token in key_tokens if len(token) >= 4 and token in blob)
+            if score < 2:
+                continue
         if score > best_score:
             best_score = score
             best = val
 
-    if best_score >= 1:
+    if best_score >= 2:
         return clean_top_performer_text(best)
     return ""
 

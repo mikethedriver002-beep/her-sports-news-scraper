@@ -755,14 +755,30 @@ def mirror_review_artifacts_to_output() -> None:
 
 
 def find_existing_input(path: str | Path) -> Path:
-    candidates = input_candidates(path)
+    p = Path(path)
+    if p.is_absolute():
+        return p
+
+    candidates: List[Path] = []
+    run_root = output_path(".").resolve()
+    cwd = Path.cwd().resolve()
+    if run_root != cwd:
+        candidates.append(run_root / p)
     latest = local_latest_path(path)
-    if latest not in candidates:
-        candidates.append(latest)
+    candidates.append(latest)
+    candidates.extend(input_candidates(path))
+
+    deduped: List[Path] = []
+    seen = set()
     for candidate in candidates:
+        key = candidate.as_posix()
+        if key not in seen:
+            seen.add(key)
+            deduped.append(candidate)
+    for candidate in deduped:
         if candidate.exists():
             return candidate
-    return candidates[0]
+    return deduped[0]
 
 
 def href_for_path(path: str) -> str:
