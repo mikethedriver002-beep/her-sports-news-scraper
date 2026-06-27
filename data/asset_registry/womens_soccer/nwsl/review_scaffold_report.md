@@ -6,8 +6,9 @@ Players: `0`
 Source URL rows: `87`
 Europe top-flight leagues: `5/5`
 Europe WSL teams: `12/12`
-Europe source URL rows: `49`
-Europe asset slot rows: `18`
+Europe Liga F teams: `16/16`
+Europe source URL rows: `97`
+Europe asset slot rows: `34`
 League source kinds: `7/7`
 Team source kinds required: `5`
 Team review scopes required: `3`
@@ -25,5 +26,5 @@ Publish ready: `false`
 ## Warnings
 
 - `europe_players_csv_header_only_manual_intake`
-- `non_wsl_europe_team_rows_require_manual_expansion`
+- `non_wsl_liga_f_europe_team_rows_require_manual_expansion`
 - `players_csv_header_only_manual_intake`

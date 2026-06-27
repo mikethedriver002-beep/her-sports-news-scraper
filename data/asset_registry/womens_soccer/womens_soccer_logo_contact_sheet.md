@@ -1,6 +1,6 @@
 # Women's Soccer Logo Contact Sheet
 
-Generated: `2026-06-26T23:59:21.273424+00:00`
+Generated: `2026-06-27T00:15:02.425430+00:00`
 
 Review-only sweep board for NWSL team logos plus a European top-flight source-candidate pilot. This file does not approve assets, download files, move files, publish, or create a publish-ready lane.
 
@@ -8,9 +8,9 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Summary
 
-- Rows: `34`
+- Rows: `50`
 - League mark rows: `6`
-- Team logo rows: `28`
+- Team logo rows: `44`
 - Human-edited intake CSV: `data/asset_registry/womens_soccer/womens_soccer_logo_review_intake.csv`
 - Human review walkthrough: `data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.md`
 - Allowed decisions: `approve_for_review_only_renderer_use|deny_logo_asset|hold_for_more_evidence|revise_source_metadata`
@@ -18,7 +18,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 
 ## Scope Counts
 
-- `europe_top_flight`: `17`
+- `europe_top_flight`: `33`
 - `nwsl`: `17`
 
 ## Rows
@@ -41,7 +41,7 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - Utah Royals FC | scope=nwsl | type=team | status=not_approved | local=assets/leagues/womens_soccer/nwsl/teams/utah_royals_fc/logo.png | source_candidate=https://www.nwslsoccer.com/teams/acffc559cf7d485a9c05fa23ab57054b/utah-royals-fc/index | action=manual_logo_or_mark_review_required
 - Washington Spirit | scope=nwsl | type=team | status=not_approved | local=assets/leagues/womens_soccer/nwsl/teams/washington_spirit/logo.png | source_candidate=https://www.nwslsoccer.com/teams/c31d72afc09f42ee86418633aa41390a/washington-spirit/index | action=manual_logo_or_mark_review_required
 - Barclays Women's Super League | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/league_mark.png | source_candidate=https://www.wslfootball.com/ | action=manual_logo_or_mark_review_required
-- Liga F Moeve | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/league_mark.png | source_candidate=https://www.laliga.com/en-GB/liga-f | action=manual_logo_or_mark_review_required
+- Liga F Moeve | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/league_mark.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
 - Google Pixel Womens Bundesliga | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/frauen_bundesliga_germany/league_mark.png | source_candidate=https://www.dfb.de/en/women/womens-bundesliga | action=manual_logo_or_mark_review_required
 - Arkema Premiere Ligue | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/premiere_ligue_france/league_mark.png | source_candidate=https://uk.fff.fr/ | action=manual_logo_or_mark_review_required
 - Serie A Women Athora | scope=europe_top_flight | type=league | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/serie_a_women_italy/league_mark.png | source_candidate=https://www.figc.it/it/femminile/ | action=manual_logo_or_mark_review_required
@@ -57,3 +57,19 @@ Review-only sweep board for NWSL team logos plus a European top-flight source-ca
 - Manchester United Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/manchester_united_women/logo.png | source_candidate=https://www.manutd.com/en/teams/women | action=manual_logo_or_mark_review_required
 - Tottenham Hotspur Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/tottenham_hotspur_women/logo.png | source_candidate=https://www.tottenhamhotspur.com/teams/women/ | action=manual_logo_or_mark_review_required
 - West Ham United Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/wsl_england/teams/west_ham_united_women/logo.png | source_candidate=https://www.whufc.com/teams/women | action=manual_logo_or_mark_review_required
+- Alhama CF ElPozo | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/alhama_cf_elpozo/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Athletic Club | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/athletic_club/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Atlético de Madrid | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/atletico_de_madrid/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Costa Adeje Tenerife | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/costa_adeje_tenerife/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Deportivo Abanca | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/deportivo_abanca/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- DUX Logroño | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/dux_logrono/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- FC Badalona Women | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/fc_badalona_women/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- FC Barcelona | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/fc_barcelona/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Granada CF | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/granada_cf/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Levante UD | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/levante_ud/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Madrid CFF | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/madrid_cff/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- RCD Espanyol de Barcelona | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/rcd_espanyol_de_barcelona/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Real Madrid CF | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/real_madrid_cf/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Real Sociedad | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/real_sociedad/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- SD Eibar | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/sd_eibar/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
+- Sevilla FC | scope=europe_top_flight | type=team | status=not_approved | local=assets/leagues/womens_soccer/europe_top_flight/liga_f_spain/teams/sevilla_fc/logo.png | source_candidate=https://www.laliga.com/en-GB/futbol-femenino | action=manual_logo_or_mark_review_required
