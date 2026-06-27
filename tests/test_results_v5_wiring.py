@@ -220,6 +220,8 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "final_score_stat_proof_v1.md",
         "final_score_stat_proof_v1.json",
         "final_score_stat_proof_confirmation_intake_v1.csv",
+        "final_score_stat_proof_review_walkthrough_v1.md",
+        "final_score_stat_proof_review_order_v1.csv",
     ]:
         assert artifact in results
         assert artifact in command_center
@@ -396,6 +398,20 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     assert all(row["publish_action"] == "none_artifact_only" for row in confirmation_rows)
     assert "Verify final score" in by_proof[score["proof_id"]]["operator_review_task"]
     assert "Verify named player" in by_proof[stat_rows[0]["proof_id"]]["operator_review_task"]
+
+    review_rows = module.final_score_stat_proof_review_order_rows(rows)
+    assert len(review_rows) == len(rows)
+    assert review_rows[0]["review_phase"] == "1_manual_box_score_gap"
+    assert all(row["proof_row_to_open"].startswith("final_score_stat_proof_v1.csv proof_id=") for row in review_rows)
+    assert all(row["intake_row_to_record"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=") for row in review_rows)
+    assert all("operator_confirmation_status" in row["operator_decision_fields"] for row in review_rows)
+    assert all(row["review_only"] == "Yes" for row in review_rows)
+    assert all(row["approval_state_change"] == "none" for row in review_rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in review_rows)
+    walkthrough = module.final_score_stat_proof_review_walkthrough_md(review_rows)
+    assert "Review Order" in walkthrough
+    assert "final_score_stat_proof_confirmation_intake_v1.csv" in walkthrough
+    assert "does not approve anything" in walkthrough
 
     summary = module.final_score_stat_proof_summary(rows)
     assert summary["final_score_rows"] == 2
