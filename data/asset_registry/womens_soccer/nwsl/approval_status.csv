@@ -2,50 +2,51 @@ entity_type,entity_id,approval_scope,approval_status,approved_by,approved_at_utc
 league,nwsl,league_identity,not_approved,,,false,false,false,Manual review required before any use
 league,nwsl,source_registry,not_approved,,,false,false,false,Manual review required before source trust changes
 team,angel_city_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,angel_city_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,angel_city_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/9587b8ce40624165903b6bc9fd252634/angel-city-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,angel_city_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,bay_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,bay_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,bay_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/19674698cec24f53af8866cd21abaf8f/bay-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,bay_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,boston_legacy_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,boston_legacy_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,boston_legacy_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/d2d8efe548734dfd8bc667b5a52a079a/boston-legacy-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,boston_legacy_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,chicago_stars_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,chicago_stars_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,chicago_stars_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/269e825b853f4b43a9d38390aa92bf6e/chicago-stars-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,chicago_stars_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,denver_summit_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,denver_summit_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,denver_summit_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/cbfcacbef5bc4a278442c00926ac9ebc/denver-summit-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,denver_summit_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,houston_dash,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,houston_dash,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,houston_dash,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/ca3f464d6b794a9087d441d75961403f/houston-dash/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,houston_dash,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,kansas_city_current,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,kansas_city_current,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,kansas_city_current,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/2c1699409ff84c9eb491aeaca3d3edde/kansas-city-current/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,kansas_city_current,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,gotham_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,gotham_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,gotham_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/c83f2ca05aa84c738b5373f0d2a31b39/gotham-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,gotham_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,north_carolina_courage,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,north_carolina_courage,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,north_carolina_courage,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/fb41ef4439dd495098cb6d40415767cc/north-carolina-courage/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,north_carolina_courage,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,orlando_pride,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,orlando_pride,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,orlando_pride,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/c3e9513e280b41e5bfbb8230076e8c43/orlando-pride/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,orlando_pride,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,portland_thorns_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,portland_thorns_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,portland_thorns_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/96ba7b37bd8544a1a7329183459150ff/portland-thorns-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,portland_thorns_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,racing_louisville_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,racing_louisville_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,racing_louisville_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/ac29701756da44a08457762380c10733/racing-louisville-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,racing_louisville_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,san_diego_wave_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,san_diego_wave_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,san_diego_wave_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/ca719042b34443c4bcfe380ca4850eaf/san-diego-wave-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,san_diego_wave_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,seattle_reign,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,seattle_reign,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,seattle_reign,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/1151140adfc24339ba1c93cb0b6b0238/seattle-reign/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,seattle_reign,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,utah_royals_fc,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,utah_royals_fc,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,utah_royals_fc,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/acffc559cf7d485a9c05fa23ab57054b/utah-royals-fc/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,utah_royals_fc,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
 team,washington_spirit,team_identity,not_approved,,,false,false,false,Manual review required before any use
-team,washington_spirit,team_logo,not_approved,,,false,false,false,Manual review required before any use
+team,washington_spirit,team_logo,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/teams/c31d72afc09f42ee86418633aa41390a/washington-spirit/index; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane
 team,washington_spirit,team_roster_source,not_approved,,,false,false,false,Manual review required before any use
+league,nwsl,league_mark,approved,Mike,2026-06-27T02:58:21.640483+00:00,false,false,false,Human-approved for review-only renderer logo/mark use from women soccer logo contact sheet; source=https://www.nwslsoccer.com/about-the-nwsl; decision_source=human_reviewed_womens_soccer_logo_contact_sheet; policy=manual_intake_only_no_auto_approval_no_publish_ready_lane

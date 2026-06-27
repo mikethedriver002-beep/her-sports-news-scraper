@@ -29,5 +29,4 @@ Publish ready: `false`
 ## Warnings
 
 - `europe_players_csv_header_only_manual_intake`
-- `europe_team_logo_rows_require_human_review_before_approval`
 - `players_csv_header_only_manual_intake`

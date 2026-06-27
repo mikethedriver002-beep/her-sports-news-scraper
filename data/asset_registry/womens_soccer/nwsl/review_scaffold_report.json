@@ -21,7 +21,7 @@
   "europe_top_flight_source_url_count": 211,
   "europe_top_flight_wsl_team_count": 12,
   "expected_file_count": 7,
-  "generated_at_utc": "2026-06-27T02:32:56.800629+00:00",
+  "generated_at_utc": "2026-06-27T02:58:45.469407+00:00",
   "league_source_kind_count": 7,
   "player_count": 0,
   "present_file_count": 7,
@@ -154,7 +154,6 @@
   "version": "v1.0-womens-soccer-asset-registry-review-only",
   "warnings": [
     "europe_players_csv_header_only_manual_intake",
-    "europe_team_logo_rows_require_human_review_before_approval",
     "players_csv_header_only_manual_intake"
   ]
 }
