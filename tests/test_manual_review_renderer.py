@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import csv
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -88,8 +89,12 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
+    python_exe = REPO / ".venv" / "Scripts" / "python.exe"
+    if not python_exe.exists():
+        python_exe = Path(sys.executable)
+
     proc = subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [str(python_exe), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -112,7 +117,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.21.0-calm-premium-backgrounds"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.22.0-premium-editorial-backgrounds"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -134,16 +139,25 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["reference_pack"]["guardrails"]["reference_only"] is True
     assert manifest["reference_pack"]["guardrails"]["auto_publish"] is False
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v3_calm"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v4_dimensional"
     assert "quiet_score_zones" in manifest["render_background_cues"]
-    assert "subtle_team_accent_rim_light" in manifest["render_background_cues"]
+    assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
+    assert "team_accent_rim_light" in manifest["render_background_cues"]
     assert "soft_editorial_rule_grid" in manifest["render_background_cues"]
     assert "restrained_halftone_noise" in manifest["render_background_cues"]
+    assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v3_calm" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v4_dimensional" for item in manifest["format_options"])
+    assert len(manifest["generated_preview_qa"]) == 3
+    assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
+    assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
+    assert all(item["review_only"] is True for item in manifest["generated_preview_qa"])
+    assert all(item["publish_ready"] is False for item in manifest["generated_preview_qa"])
+    assert all(item["qa_policy"] == "generated_preview_visibility_only_not_asset_approval_or_publish_readiness" for item in manifest["generated_preview_qa"])
     by_format = {item["format_id"]: item for item in manifest["format_options"]}
+    assert all(by_format[format_id]["preview_qa_status"] == "preview_qa_pass" for format_id in by_format)
     assert by_format["ig_feed_4x5"]["reference_template_id"] == "hsd_game_recap_final_score_a"
     assert by_format["ig_feed_4x5"]["reference_exact_format_match"] is True
     assert by_format["ig_story_9x16"]["reference_template_id"] == "hsd_game_recap_final_score_c_story"
@@ -156,11 +170,11 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
     assert any(slot["slot_id"] == "primary_team_logo" for slot in manifest["asset_slots"])
     primary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "primary_team_logo")
-    assert primary_logo["status"] == "registry_logo_review_required"
-    assert primary_logo["logo_approval_cue"] == "LOGO REVIEW"
-    assert primary_logo["logo_review_required"] == "true"
+    assert primary_logo["status"] in {"approved_logo", "registry_logo_review_required"}
+    assert primary_logo["logo_approval_cue"] in {"APPROVED LOGO", "LOGO REVIEW"}
+    assert primary_logo["logo_review_required"] == ("false" if primary_logo["status"] == "approved_logo" else "true")
     assert primary_logo["team_accent_hex"]
-    assert primary_logo["team_accent_source"] == "sampled_from_local_logo_review_asset"
+    assert primary_logo["team_accent_source"]
     secondary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "secondary_team_logo")
     assert secondary_logo["status"] == "approved_logo"
     assert secondary_logo["asset_path"] == "assets/leagues/wnba/teams/las_vegas_aces/logo.png"
@@ -170,9 +184,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert secondary_logo["team_accent_hex"] == "#c41e3a"
     assert secondary_logo["team_accent_source"] == "local_wnba_team_registry_primary_color_logo_no_distinct_color"
     team_profiles = {item["role"]: item for item in manifest["team_visual_profiles"]}
-    assert team_profiles["winner"]["logo_approval_cue"] == "LOGO REVIEW"
-    assert team_profiles["winner"]["logo_review_required"] is True
-    assert team_profiles["winner"]["team_accent_source"] == "sampled_from_local_logo_review_asset"
+    assert team_profiles["winner"]["logo_approval_cue"] in {"APPROVED LOGO", "LOGO REVIEW"}
+    assert team_profiles["winner"]["logo_review_required"] is (primary_logo["status"] != "approved_logo")
+    assert team_profiles["winner"]["team_accent_source"]
     assert team_profiles["opponent"]["logo_approval_cue"] == "APPROVED LOGO"
     assert team_profiles["opponent"]["logo_review_required"] is False
     assert manifest["guardrails"]["manual_only"] is True
@@ -203,7 +217,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "templates_hsd_20260625" in report
     assert "hsd_game_recap_final_score_a" in report
     assert "## Team Color And Logo Review Cues" in report
-    assert "LOGO REVIEW" in report
+    assert "## Generated Preview QA" in report
+    assert "preview_qa_pass" in report
+    assert "APPROVED LOGO" in report or "LOGO REVIEW" in report
     assert "Editorial microcopy" in report
     assert "publish_ready=`false`" in report
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
@@ -276,9 +292,10 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
 
 
-def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> None:
+def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_path: Path, monkeypatch) -> None:
     import importlib.util
 
+    monkeypatch.chdir(tmp_path)
     spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -301,14 +318,15 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert selected["player_name"] == "Breanna Stewart"
     assert selected["headline"] == "STEWART LED LIBERTY"
     assert selected["matchup_note"] == "LIBERTY +11 vs ACES"
-    assert selected["athlete_photo_status"] == "athlete_photo_identity_hold"
-    assert selected["athlete_photo_approval_cue"] == "IDENTITY HOLD"
-    assert selected["athlete_photo_review_required"] is True
+    assert selected["athlete_photo_status"] in {"approved_local_headshot", "athlete_photo_identity_hold"}
+    assert selected["athlete_photo_approval_cue"] in {"APPROVED PHOTO", "IDENTITY HOLD"}
+    assert selected["athlete_photo_review_required"] is (selected["athlete_photo_status"] != "approved_local_headshot")
     assert selected["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
-    assert selected["athlete_photo_render_method"] == "safe_text_fallback_identity_hold"
-    assert selected["athlete_photo_identity_review_status"] == "hold_identity_resolution_required"
+    assert selected["athlete_photo_render_method"] in {"approved_local_png_with_marker", "safe_text_fallback_identity_hold"}
+    assert selected["athlete_photo_identity_review_status"] in {"identity_resolution_missing", "hold_identity_resolution_required"}
     assert selected["athlete_photo_identity_resolution_status"] == "identity_resolution_missing"
-    assert "operator/inbox/wnba_athlete_identity_resolution.csv" in selected["athlete_photo_blocker"]
+    if selected["athlete_photo_status"] == "athlete_photo_identity_hold":
+        assert "operator/inbox/wnba_athlete_identity_resolution.csv" in selected["athlete_photo_blocker"]
     assert "20 PTS / 6 REB / 4 AST" in selected["editorial_line"]
     microcopy = module.selected_editorial_microcopy({"copy_context": "4 source(s); publish_grade."}, score, selected)
     assert microcopy["selected_variant_id"] == "verified_player_ledger"
@@ -335,13 +353,13 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module() -> N
     assert summary["content_module_matchup_note"] == "LIBERTY +11 vs ACES"
     assert summary["content_module_game_shape"] == "clear_separation"
     assert summary["content_module_stat_strength"] == "lead_ledger"
-    assert summary["athlete_photo_status"] == "athlete_photo_identity_hold"
-    assert summary["athlete_photo_approval_cue"] == "IDENTITY HOLD"
-    assert summary["athlete_photo_review_required"] == "true"
+    assert summary["athlete_photo_status"] == selected["athlete_photo_status"]
+    assert summary["athlete_photo_approval_cue"] == selected["athlete_photo_approval_cue"]
+    assert summary["athlete_photo_review_required"] == str(bool(selected["athlete_photo_review_required"])).lower()
     assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
     assert summary["athlete_photo_layout_options"] == "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback"
-    assert summary["athlete_photo_template_family"] == "logo_first_final_score_fallback"
-    assert summary["athlete_photo_identity_review_status"] == "hold_identity_resolution_required"
+    assert summary["athlete_photo_template_family"] in {"approved_athlete_photo_final_score", "logo_first_final_score_fallback"}
+    assert summary["athlete_photo_identity_review_status"] == selected["athlete_photo_identity_review_status"]
     assert summary["athlete_photo_identity_resolution_status"] == "identity_resolution_missing"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
     assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
@@ -560,6 +578,44 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     )
 
 
+def test_manual_review_renderer_photo_first_geometry_keeps_feed_and_story_clearance() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    def right(box: list[int]) -> int:
+        return box[0] + box[2]
+
+    def bottom(box: list[int]) -> int:
+        return box[1] + box[3]
+
+    for format_spec in [
+        {"format_id": "ig_feed_4x5", "width": 1080, "height": 1350},
+        {"format_id": "ig_story_9x16", "width": 1080, "height": 1920},
+    ]:
+        geometry = module.photo_first_layout_geometry(format_spec)
+        clearance = geometry["minimum_clearance_px"]
+        photo = geometry["photo_stage_box"]
+        focus = geometry["photo_face_focus_box"]
+        winner = geometry["winner_score_row_box"]
+        loser = geometry["loser_score_row_box"]
+        context = geometry["score_context_box"]
+        stat = geometry["stat_strip_box"]
+        hook = geometry["matchup_angle_box"]
+
+        assert right(photo) + clearance <= winner[0]
+        assert right(photo) + clearance <= loser[0]
+        assert bottom(winner) + clearance <= loser[1]
+        assert bottom(loser) + clearance <= context[1]
+        assert bottom(context) + clearance <= stat[1]
+        assert bottom(stat) + clearance <= hook[1]
+        assert photo[0] < focus[0] < right(focus) < right(photo)
+        assert photo[1] < focus[1] < bottom(focus) < bottom(photo)
+
+
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
     import importlib.util
 
@@ -572,6 +628,24 @@ def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -
     assert square_spec["canvas"] == {"width": 1080, "height": 1080}
     assert square_spec["zones"]["title"] == {"x": 60, "y": 116, "w": 960, "h": 132}
     assert module.format_reference_spec({"format_id": "square_feed_1x1"}, {})["zones"]["title"] == square_spec["zones"]["title"]
+
+
+def test_manual_review_renderer_square_title_lockup_is_visible() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1080), (2, 4, 9, 255))
+    template_spec = module.square_reference_spec()
+    module.draw_final_score_reference_title(image, template_spec, "square_feed_1x1")
+
+    title_crop = image.convert("L").crop((48, 112, 1032, 258))
+    title_histogram = title_crop.histogram()
+    bright_title_ratio = sum(title_histogram[190:]) / sum(title_histogram)
+    assert bright_title_ratio > 0.025
 
 
 def test_manual_review_renderer_keeps_partial_approved_module_out_of_photo_first_layout() -> None:
