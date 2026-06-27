@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.1-breaking-confirmation-intake"
+VERSION = "news-sync-v1.9.2-breaking-signal-clusters"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -53,6 +53,8 @@ BREAKING_PUBLIC_SIGNAL_MD = "breaking_public_signal_queue.md"
 BREAKING_PUBLIC_SIGNAL_JSON = "breaking_public_signal_manifest.json"
 BREAKING_CONFIRMATION_INTAKE_CSV = "breaking_public_signal_confirmation_intake.csv"
 BREAKING_CONFIRMATION_INTAKE_MD = "breaking_public_signal_confirmation_intake.md"
+BREAKING_SIGNAL_CLUSTERS_CSV = "breaking_public_signal_clusters.csv"
+BREAKING_SIGNAL_CLUSTERS_MD = "breaking_public_signal_clusters.md"
 NEWS_SYNC_HUB_MD = "news_sync_hub.md"
 NEWS_MANIFEST_JSON = "news_sync_manifest.json"
 NEWS_INPUT_STATUS_CSV = "news_input_status_report.csv"
@@ -126,6 +128,17 @@ BREAKING_CONFIRMATION_INTAKE_FIELDS = [
     "operator_confirmation_result", "operator_confirmed_at_utc",
     "operator_notes", "limitations", "manual_review_required", "review_only",
     "publish_ready", "auto_publish", "auto_source_enablement",
+    "approval_state_change",
+]
+
+BREAKING_SIGNAL_CLUSTER_FIELDS = [
+    "cluster_id", "run_id", "cluster_headline", "story_count", "candidate_ids",
+    "urgency_band", "max_breaking_score", "official_confirmation_status",
+    "source_diversity", "source_domain_count", "source_domains", "source_urls",
+    "public_signal_count", "public_signal_confidence", "freshness_status",
+    "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
+    "limitations", "exact_manual_next_action", "manual_review_required",
+    "review_only", "publish_ready", "auto_publish", "auto_source_enablement",
     "approval_state_change",
 ]
 
@@ -2509,6 +2522,160 @@ def markdown_breaking_confirmation_intake(rows: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_json_list(value: Any) -> List[str]:
+    text = clean(value)
+    if not text:
+        return []
+    try:
+        data = json.loads(text)
+    except Exception:
+        return []
+    if not isinstance(data, list):
+        return []
+    return [clean(item) for item in data if clean(item)]
+
+
+def breaking_cluster_key(row: Dict[str, Any]) -> str:
+    headline = norm(row.get("headline"))
+    headline = re.sub(r"^(breaking|update|confirmed|report):\s*", "", headline)
+    headline = re.sub(r"\b(final|score|result)\b", "", headline)
+    headline = re.sub(r"\b\d{1,3}\b", "", headline)
+    headline = re.sub(r"[^a-z0-9]+", " ", headline)
+    return clean(headline)[:120] or stable_id(row.get("candidate_id"), row.get("headline"))
+
+
+def strongest_urgency_band(rows: List[Dict[str, Any]]) -> str:
+    rank = {"P0_breaking_review": 0, "P1_urgent_review": 1, "P2_monitor_review": 2, "P3_watch_review": 3}
+    bands = [clean(row.get("urgency_band")) for row in rows if clean(row.get("urgency_band"))]
+    return sorted(bands, key=lambda band: rank.get(band, 99))[0] if bands else "P3_watch_review"
+
+
+def public_signal_confidence_rollup(rows: List[Dict[str, Any]]) -> str:
+    confidences = {clean(row.get("public_signal_confidence")) for row in rows}
+    if "medium" in confidences or len(rows) >= 2:
+        return "medium"
+    if "low" in confidences:
+        return "low"
+    return "none"
+
+
+def official_confirmation_status(rows: List[Dict[str, Any]], domains: List[str]) -> str:
+    grades = {clean(row.get("source_publish_grade")) for row in rows}
+    tiers = {clean(row.get("source_confidence_tier")) for row in rows}
+    if "publish_grade" in grades or "publish_grade" in tiers:
+        return "official_or_primary_signal_present_operator_verify"
+    if "review_before_publish" in grades or "review_grade" in tiers:
+        return "review_grade_signal_present_needs_operator_verification"
+    if any(domain.endswith((".wnba.com", ".nwsl.com", ".wta.com", ".lpga.com", ".ncaa.com", ".ussoccer.com")) for domain in domains):
+        return "official_domain_seen_operator_verify"
+    return "missing_official_confirmation"
+
+
+def freshness_status_for_timestamps(timestamps: List[datetime]) -> str:
+    if not timestamps:
+        return "timestamp_missing"
+    newest = max(timestamps)
+    age_hours = max(0.0, (datetime.now(timezone.utc) - newest).total_seconds() / 3600)
+    if age_hours <= 6:
+        return "fresh_last_6h"
+    if age_hours <= 24:
+        return "fresh_last_24h"
+    if age_hours <= 72:
+        return "monitor_72h"
+    return "stale_recheck_required"
+
+
+def exact_manual_next_action(status: str) -> str:
+    if status == "missing_official_confirmation":
+        return "Open breaking_public_signal_confirmation_intake.csv, find an official/wire/primary confirmation URL, and record operator_checked_url plus operator_confirmation_result."
+    return "Open breaking_public_signal_confirmation_intake.csv, verify the current source URL/domain still confirms the claim, and record operator_checked_url plus operator_notes."
+
+
+def breaking_signal_cluster_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(breaking_cluster_key(row), []).append(row)
+
+    clusters: List[Dict[str, Any]] = []
+    for key, group in grouped.items():
+        domains = sorted({
+            clean(domain)
+            for row in group
+            for domain in clean(row.get("source_domains")).split(";")
+            if clean(domain)
+        })
+        urls = []
+        for row in group:
+            for url in parse_json_list(row.get("source_urls")):
+                if url not in urls:
+                    urls.append(url)
+        timestamps = [dt for dt in (parse_event_datetime(row.get("signal_timestamp_utc")) for row in group) if dt]
+        max_score = max([int(clean(row.get("breaking_score")) or 0) for row in group] or [0])
+        public_count = sum(int(clean(row.get("public_signal_count")) or 0) for row in group)
+        status = official_confirmation_status(group, domains)
+        clusters.append(
+            {
+                "cluster_id": "signal_cluster_" + stable_id(key, "|".join(sorted(clean(row.get("candidate_id")) for row in group))),
+                "run_id": clean(group[0].get("run_id")),
+                "cluster_headline": clean(group[0].get("headline")),
+                "story_count": str(len(group)),
+                "candidate_ids": "; ".join(sorted({clean(row.get("candidate_id")) for row in group if clean(row.get("candidate_id"))})),
+                "urgency_band": strongest_urgency_band(group),
+                "max_breaking_score": str(max_score),
+                "official_confirmation_status": status,
+                "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
+                "source_domain_count": str(len(domains)),
+                "source_domains": "; ".join(domains[:12]),
+                "source_urls": json.dumps(urls[:12], ensure_ascii=False),
+                "public_signal_count": str(public_count),
+                "public_signal_confidence": public_signal_confidence_rollup(group),
+                "freshness_status": freshness_status_for_timestamps(timestamps),
+                "oldest_signal_timestamp_utc": min(timestamps).isoformat() if timestamps else "",
+                "newest_signal_timestamp_utc": max(timestamps).isoformat() if timestamps else "",
+                "limitations": "Cluster groups review-only metadata observations only; it does not confirm claims, update sources, approve copy, publish, or create a publish-ready lane.",
+                "exact_manual_next_action": exact_manual_next_action(status),
+                "manual_review_required": "true",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_publish": "false",
+                "auto_source_enablement": "false",
+                "approval_state_change": "false",
+            }
+        )
+    clusters.sort(key=lambda row: (-int(row.get("max_breaking_score") or 0), row.get("cluster_headline", "")))
+    return clusters
+
+
+def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Breaking/Public Signal Clusters",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        "Review-only cluster summary. Use this to spot repeated story/source observations and decide the next manual confirmation step.",
+        "",
+    ]
+    if not rows:
+        lines.extend(["No breaking/public-signal clusters available.", ""])
+        return "\n".join(lines)
+
+    for row in rows[:20]:
+        lines.extend([
+            f"## {row.get('urgency_band')} - {row.get('cluster_headline')}",
+            "",
+            f"- Cluster size: `{row.get('story_count')}` row(s)",
+            f"- Max breaking score: `{row.get('max_breaking_score')}/100`",
+            f"- Official confirmation: `{row.get('official_confirmation_status')}`",
+            f"- Source diversity: `{row.get('source_diversity')}` / domains: {row.get('source_domains') or 'none captured'}",
+            f"- Public signal: `{row.get('public_signal_confidence')}` / count: `{row.get('public_signal_count')}`",
+            f"- Freshness: `{row.get('freshness_status')}` / newest: `{row.get('newest_signal_timestamp_utc') or 'missing'}`",
+            f"- Manual next action: {row.get('exact_manual_next_action')}",
+            f"- Limitations: {row.get('limitations')}",
+            "",
+        ])
+    return "\n".join(lines) + "\n"
+
+
 def markdown_brief_queue(packets: List[Dict[str, Any]], observations_by_candidate: Dict[str, List[Dict[str, Any]]]) -> str:
     lines = [
         "# Her Sports Daily News Brief Queue v1",
@@ -2836,6 +3003,7 @@ def main() -> None:
 
     breaking_signal_rows = build_breaking_public_signal_rows(packets, observations_by_candidate, run_id)
     confirmation_intake_rows = breaking_confirmation_intake_rows(breaking_signal_rows)
+    cluster_rows = breaking_signal_cluster_rows(breaking_signal_rows)
     manual_packets = [p for p in packets if p.get("manual_review") == "Yes"]
 
     write_csv(NEWS_INPUT_STATUS_CSV, input_status, INPUT_STATUS_FIELDS)
@@ -2845,6 +3013,7 @@ def main() -> None:
     write_csv(NEWS_MANUAL_REVIEW_CSV, manual_packets, PACKET_FIELDS)
     write_csv(BREAKING_PUBLIC_SIGNAL_CSV, breaking_signal_rows, BREAKING_PUBLIC_SIGNAL_FIELDS)
     write_csv(BREAKING_CONFIRMATION_INTAKE_CSV, confirmation_intake_rows, BREAKING_CONFIRMATION_INTAKE_FIELDS)
+    write_csv(BREAKING_SIGNAL_CLUSTERS_CSV, cluster_rows, BREAKING_SIGNAL_CLUSTER_FIELDS)
 
     write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
     write_run_text(NEWS_SOCIAL_PACKETS_MD, markdown_social_packets(packets))
@@ -2852,6 +3021,7 @@ def main() -> None:
     write_run_text(NEWS_DAILY_PLAN_MD, markdown_daily_plan(packets))
     write_run_text(BREAKING_PUBLIC_SIGNAL_MD, markdown_breaking_public_signal(breaking_signal_rows))
     write_run_text(BREAKING_CONFIRMATION_INTAKE_MD, markdown_breaking_confirmation_intake(confirmation_intake_rows))
+    write_run_text(BREAKING_SIGNAL_CLUSTERS_MD, markdown_breaking_signal_clusters(cluster_rows))
     write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
     write_run_json(
         BREAKING_PUBLIC_SIGNAL_JSON,
@@ -2868,12 +3038,15 @@ def main() -> None:
                 "p0_breaking_review": len([row for row in breaking_signal_rows if row.get("urgency_band") == "P0_breaking_review"]),
                 "with_public_signal": len([row for row in breaking_signal_rows if row.get("public_signal_count") not in {"", "0"}]),
                 "confirmation_intake_rows": len(confirmation_intake_rows),
+                "cluster_rows": len(cluster_rows),
             },
             "outputs": [
                 BREAKING_PUBLIC_SIGNAL_CSV,
                 BREAKING_PUBLIC_SIGNAL_MD,
                 BREAKING_CONFIRMATION_INTAKE_CSV,
                 BREAKING_CONFIRMATION_INTAKE_MD,
+                BREAKING_SIGNAL_CLUSTERS_CSV,
+                BREAKING_SIGNAL_CLUSTERS_MD,
             ],
         },
     )
@@ -2906,6 +3079,8 @@ def main() -> None:
             BREAKING_PUBLIC_SIGNAL_JSON,
             BREAKING_CONFIRMATION_INTAKE_CSV,
             BREAKING_CONFIRMATION_INTAKE_MD,
+            BREAKING_SIGNAL_CLUSTERS_CSV,
+            BREAKING_SIGNAL_CLUSTERS_MD,
             NEWS_SYNC_HUB_MD,
         ],
         "counts": {
@@ -2920,6 +3095,7 @@ def main() -> None:
             "breaking_public_signal_rows": len(breaking_signal_rows),
             "breaking_public_signal_review_only": len([row for row in breaking_signal_rows if row.get("review_only") == "true"]),
             "breaking_confirmation_intake_rows": len(confirmation_intake_rows),
+            "breaking_signal_cluster_rows": len(cluster_rows),
         },
         "settings": {
             "max_must_post": MAX_MUST_POST,

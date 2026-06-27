@@ -196,6 +196,24 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert intake_row["auto_publish"] == "false"
     assert intake_row["auto_source_enablement"] == "false"
 
+    duplicate = dict(row)
+    duplicate["candidate_id"] = "candidate-2"
+    duplicate["source_domains"] = "espn.com"
+    duplicate["source_urls"] = "[\"https://www.espn.com/wnba/story/_/id/test\"]"
+    duplicate["public_signal_count"] = "1"
+    clusters = module.breaking_signal_cluster_rows([row, duplicate])
+    cluster = clusters[0]
+    assert cluster["story_count"] == "2"
+    assert cluster["source_diversity"] == "multi_domain"
+    assert cluster["source_domain_count"] == "3"
+    assert cluster["public_signal_count"] == "2"
+    assert cluster["official_confirmation_status"] == "official_or_primary_signal_present_operator_verify"
+    assert "breaking_public_signal_confirmation_intake.csv" in cluster["exact_manual_next_action"]
+    assert cluster["review_only"] == "true"
+    assert cluster["publish_ready"] == "false"
+    assert cluster["auto_publish"] == "false"
+    assert cluster["auto_source_enablement"] == "false"
+
 
 def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, monkeypatch) -> None:
     run_dir = tmp_path / "run" / "files"
@@ -253,16 +271,22 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     signal_manifest = run_dir / "breaking_public_signal_manifest.json"
     confirmation_csv = run_dir / "breaking_public_signal_confirmation_intake.csv"
     confirmation_md = run_dir / "breaking_public_signal_confirmation_intake.md"
+    clusters_csv = run_dir / "breaking_public_signal_clusters.csv"
+    clusters_md = run_dir / "breaking_public_signal_clusters.md"
     news_manifest = run_dir / "news_sync_manifest.json"
     assert queue.exists()
     assert report.exists()
     assert signal_manifest.exists()
     assert confirmation_csv.exists()
     assert confirmation_md.exists()
+    assert clusters_csv.exists()
+    assert clusters_md.exists()
     rows = list(csv.DictReader(queue.open(newline="", encoding="utf-8")))
     confirmation_rows = list(csv.DictReader(confirmation_csv.open(newline="", encoding="utf-8")))
+    cluster_rows = list(csv.DictReader(clusters_csv.open(newline="", encoding="utf-8")))
     assert rows
     assert confirmation_rows
+    assert cluster_rows
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["publish_ready"] == "false" for row in rows)
     assert all(row["auto_publish"] == "false" for row in rows)
@@ -273,6 +297,10 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all(row["publish_ready"] == "false" for row in confirmation_rows)
     assert all(row["auto_publish"] == "false" for row in confirmation_rows)
     assert all(row["auto_source_enablement"] == "false" for row in confirmation_rows)
+    assert all(row["review_only"] == "true" for row in cluster_rows)
+    assert all(row["publish_ready"] == "false" for row in cluster_rows)
+    assert all(row["auto_publish"] == "false" for row in cluster_rows)
+    assert all(row["auto_source_enablement"] == "false" for row in cluster_rows)
     assert any(row["headline"] == "Breaking: Liberty announce star guard injury update" for row in rows)
     signal_payload = json.loads(signal_manifest.read_text(encoding="utf-8"))
     news_payload = json.loads(news_manifest.read_text(encoding="utf-8"))
@@ -280,8 +308,11 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert signal_payload["publish_ready"] is False
     assert signal_payload["counts"]["rows"] == len(rows)
     assert signal_payload["counts"]["confirmation_intake_rows"] == len(confirmation_rows)
+    assert signal_payload["counts"]["cluster_rows"] == len(cluster_rows)
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
     assert "breaking_public_signal_confirmation_intake.csv" in news_payload["outputs"]
+    assert "breaking_public_signal_clusters.csv" in news_payload["outputs"]
     assert news_payload["counts"]["breaking_public_signal_rows"] == len(rows)
     assert news_payload["counts"]["breaking_public_signal_review_only"] == len(rows)
     assert news_payload["counts"]["breaking_confirmation_intake_rows"] == len(confirmation_rows)
+    assert news_payload["counts"]["breaking_signal_cluster_rows"] == len(cluster_rows)
