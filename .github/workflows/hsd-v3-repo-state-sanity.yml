@@ -261,6 +261,10 @@ jobs:
             game_intelligence_board_v1.csv
             game_intelligence_board_v1.md
             game_intelligence_board_v1.json
+            stats_evidence_gap_board_v1.csv
+            stats_evidence_gap_board_v1.md
+            stats_evidence_gap_board_v1.json
+            stats_confirmation_intake_v1.csv
             source_accuracy_v5.json
             source_accuracy_v5.md
             duplicate_game_audit_v5.csv

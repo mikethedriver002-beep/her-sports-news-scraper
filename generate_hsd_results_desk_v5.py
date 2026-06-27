@@ -40,6 +40,10 @@ BOX_SCORE_SUMMARY_FILE = "wnba_box_score_summary.md"
 GAME_INTELLIGENCE_BOARD_FILE = "game_intelligence_board_v1.csv"
 GAME_INTELLIGENCE_REPORT_FILE = "game_intelligence_board_v1.md"
 GAME_INTELLIGENCE_MANIFEST_FILE = "game_intelligence_board_v1.json"
+STATS_EVIDENCE_GAP_BOARD_FILE = "stats_evidence_gap_board_v1.csv"
+STATS_EVIDENCE_GAP_REPORT_FILE = "stats_evidence_gap_board_v1.md"
+STATS_EVIDENCE_GAP_MANIFEST_FILE = "stats_evidence_gap_board_v1.json"
+STATS_CONFIRMATION_INTAKE_FILE = "stats_confirmation_intake_v1.csv"
 GRAPHICS_QUEUE_FILE = "results_graphics_queue.md"
 RECOMMENDATIONS_FILE = "daily_results_recommendations.md"
 HUB_FILE = "results_system_hub.md"
@@ -111,6 +115,49 @@ GAME_INTELLIGENCE_FIELDS = [
     "source_domain",
     "retrieved_at_utc",
     "manual_review_status",
+    "review_only",
+    "approval_state_change",
+    "publish_action",
+]
+STATS_EVIDENCE_FIELDS = [
+    "event_uid",
+    "game_date",
+    "league",
+    "sport",
+    "matchup",
+    "status",
+    "recap_candidate",
+    "final_score",
+    "stats_evidence_status",
+    "box_score_audit_status",
+    "top_performers",
+    "missing_stat_evidence",
+    "manual_confirmation_needed",
+    "operator_next_step",
+    "confirmation_source_url",
+    "confirmation_source_domain",
+    "selected_score_source",
+    "score_source_url",
+    "source_confidence",
+    "retrieved_at_utc",
+    "review_only",
+    "approval_state_change",
+    "publish_action",
+]
+STATS_CONFIRMATION_FIELDS = [
+    "event_uid",
+    "game_date",
+    "league",
+    "matchup",
+    "status",
+    "final_score",
+    "manual_confirmation_needed",
+    "operator_next_step",
+    "confirmation_source_url",
+    "operator_checked_url",
+    "operator_confirmation_status",
+    "operator_confirmed_stats",
+    "operator_notes",
     "review_only",
     "approval_state_change",
     "publish_action",
@@ -859,6 +906,180 @@ def game_intelligence_report_md(summary: Dict[str, Any], rows: List[Dict[str, An
     return "\n".join(lines) + "\n"
 
 
+def stats_evidence_status(event: Dict[str, Any], stats_status: str) -> Tuple[str, str, str]:
+    audit_status = clean(event.get("box_score_audit_status"))
+    if stats_status == "free_box_score_context_found":
+        return "confirmed_free_public_box_score", "No", "Review stats text against source before writing copy."
+    if stats_status == "source_stats_present":
+        return "source_stats_present_manual_review", "Yes", "Confirm manually supplied stats and source URL before using in copy."
+    if stats_status == "box_score_not_checked_sample_cap":
+        return "box_score_audit_capped", "Yes", "Open the confirmation source and record whether box-score/top-performer evidence is present."
+    if stats_status == "box_score_audit_disabled":
+        return "box_score_audit_disabled", "Yes", "Run the box-score audit or manually confirm stats from the source URL."
+    if stats_status == "box_score_audit_error":
+        return "box_score_audit_error", "Yes", "Retry the public source or manually confirm stats from the source URL."
+    if stats_status == "missing_free_box_score_context":
+        if audit_status == "summary_found_no_performers":
+            return "box_score_summary_no_performers", "Yes", "Open the source box score and confirm whether usable stat context exists."
+        return "missing_box_score_or_top_performer_context", "Yes", "Find a free/public box score or leave stats out of copy."
+    if clean(event.get("status_norm")) != "final":
+        return "not_final_stats_optional", "No", "No final-stat confirmation expected yet."
+    return "stats_evidence_unknown", "Yes", "Manually confirm whether stat context is available."
+
+
+def stats_missing_evidence(status: str, stats_status: str) -> str:
+    if status == "confirmed_free_public_box_score":
+        return "none"
+    if status == "source_stats_present_manual_review":
+        return "operator_confirmation_of_manual_stats"
+    if status == "box_score_summary_no_performers":
+        return "top_performer_context"
+    if status == "box_score_audit_capped":
+        return "box_score_audit_not_run_for_this_row"
+    if status == "box_score_audit_disabled":
+        return "box_score_audit_disabled"
+    if status == "box_score_audit_error":
+        return "box_score_audit_retry_or_manual_source_check"
+    if status == "missing_box_score_or_top_performer_context":
+        return "box_score_or_top_performer_context"
+    if status == "not_final_stats_optional":
+        return "none"
+    return clean(stats_status) or "stats_evidence"
+
+
+def stats_evidence_gap_rows(events: List[Dict[str, Any]], observations: List[Dict[str, str]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    obs_by_key = selected_observation_by_key(observations)
+    rows: List[Dict[str, Any]] = []
+    intake: List[Dict[str, Any]] = []
+    focus_events = [
+        event
+        for event in events
+        if clean(event.get("status_norm")) == "final" or bool(event.get("include_in_graphics"))
+    ]
+    for event in focus_events:
+        stats_status, stats_context = stats_context_for(event)
+        status, manual_needed, next_step = stats_evidence_status(event, stats_status)
+        source_url = clean(event.get("source_url"))
+        obs = obs_by_key.get((clean(event.get("canonical_key")), clean(event.get("selected_source"))), {})
+        matchup = f"{clean(event.get('away_team_display'))} at {clean(event.get('home_team_display'))}".strip()
+        row = {
+            "event_uid": clean(event.get("event_uid")),
+            "game_date": clean(event.get("scheduled_date_local")),
+            "league": clean(event.get("league_norm")),
+            "sport": clean(event.get("sport_norm")),
+            "matchup": matchup,
+            "status": clean(event.get("status_norm")),
+            "recap_candidate": "Yes" if event.get("include_in_graphics") else "No",
+            "final_score": clean(event.get("final_score_display")),
+            "stats_evidence_status": status,
+            "box_score_audit_status": clean(event.get("box_score_audit_status")),
+            "top_performers": stats_context if stats_status in {"free_box_score_context_found", "source_stats_present"} else "",
+            "missing_stat_evidence": stats_missing_evidence(status, stats_status),
+            "manual_confirmation_needed": manual_needed,
+            "operator_next_step": next_step,
+            "confirmation_source_url": source_url,
+            "confirmation_source_domain": source_domain(source_url),
+            "selected_score_source": clean(event.get("selected_source")),
+            "score_source_url": source_url,
+            "source_confidence": f"{float(event.get('confidence') or 0):.2f}",
+            "retrieved_at_utc": clean(obs.get("fetched_at_utc")) or now_iso(),
+            "review_only": "Yes",
+            "approval_state_change": "none",
+            "publish_action": "none_artifact_only",
+        }
+        rows.append(row)
+        if manual_needed == "Yes":
+            intake.append(
+                {
+                    "event_uid": row["event_uid"],
+                    "game_date": row["game_date"],
+                    "league": row["league"],
+                    "matchup": row["matchup"],
+                    "status": row["status"],
+                    "final_score": row["final_score"],
+                    "manual_confirmation_needed": "Yes",
+                    "operator_next_step": next_step,
+                    "confirmation_source_url": source_url,
+                    "operator_checked_url": "",
+                    "operator_confirmation_status": "",
+                    "operator_confirmed_stats": "",
+                    "operator_notes": "",
+                    "review_only": "Yes",
+                    "approval_state_change": "none",
+                    "publish_action": "none_artifact_only",
+                }
+            )
+    rows.sort(key=lambda row: (row.get("manual_confirmation_needed") != "Yes", row.get("game_date", ""), row.get("matchup", "")))
+    intake.sort(key=lambda row: (row.get("game_date", ""), row.get("matchup", "")))
+    return rows, intake
+
+
+def stats_evidence_gap_summary(rows: List[Dict[str, Any]], intake: List[Dict[str, Any]]) -> Dict[str, Any]:
+    counts: Dict[str, int] = defaultdict(int)
+    for row in rows:
+        counts[clean(row.get("stats_evidence_status"))] += 1
+    return {
+        "version": "v1-review-only-stats-evidence-gap-board",
+        "generated_at_utc": now_iso(),
+        "review_only": True,
+        "paid_sources_required": False,
+        "approval_state_changes": False,
+        "publish_actions": False,
+        "rows": len(rows),
+        "manual_confirmation_rows": len(intake),
+        "confirmed_free_public_box_score": counts.get("confirmed_free_public_box_score", 0),
+        "missing_or_manual_confirmation": len(intake),
+        "status_counts": dict(sorted(counts.items())),
+    }
+
+
+def stats_evidence_gap_report_md(summary: Dict[str, Any], rows: List[Dict[str, Any]], intake: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Stats Evidence Gap Board v1",
+        "",
+        f"Generated: `{summary['generated_at_utc']}`",
+        "",
+        "## Policy",
+        "",
+        "- Review-only, artifact-only stats evidence board.",
+        "- No paid APIs, credentials, source enablement, story/render approval changes, publishing, or publish-ready movement.",
+        "- Operator confirmation rows are manual intake only; blank fields are for human review notes.",
+        "",
+        "## Counts",
+        "",
+        f"- final_or_recap_rows: `{summary['rows']}`",
+        f"- confirmed_free_public_box_score: `{summary['confirmed_free_public_box_score']}`",
+        f"- manual_confirmation_rows: `{summary['manual_confirmation_rows']}`",
+        "",
+        "## Manual Confirmation Needed",
+        "",
+    ]
+    if not intake:
+        lines.append("No final/recap stat evidence gaps require manual confirmation in this run.")
+    else:
+        by_id = {row.get("event_uid"): row for row in rows}
+        for item in intake[:80]:
+            row = by_id.get(item.get("event_uid"), {})
+            lines.append(f"- **{item.get('matchup')}** | {item.get('game_date')} | {row.get('stats_evidence_status')}")
+            lines.append(f"  - missing={row.get('missing_stat_evidence')} | score={item.get('final_score')}")
+            lines.append(f"  - next={item.get('operator_next_step')}")
+            if item.get("confirmation_source_url"):
+                lines.append(f"  - source={item.get('confirmation_source_url')}")
+    if len(intake) > 80:
+        lines.append(f"Showing first 80 of {len(intake)} intake rows. Open `stats_confirmation_intake_v1.csv` for the full intake.")
+    lines.extend(["", "## Confirmed Evidence Rows", ""])
+    confirmed = [row for row in rows if row.get("stats_evidence_status") == "confirmed_free_public_box_score"]
+    if not confirmed:
+        lines.append("No final/recap rows have confirmed free/public box-score context yet.")
+    for row in confirmed[:40]:
+        lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | confidence={row.get('source_confidence')}")
+        lines.append(f"  - performers={row.get('top_performers') or 'none'}")
+        lines.append(f"  - source={row.get('confirmation_source_url')}")
+    if len(confirmed) > 40:
+        lines.append(f"Showing first 40 of {len(confirmed)} confirmed rows. Open `stats_evidence_gap_board_v1.csv` for the full board.")
+    return "\n".join(lines) + "\n"
+
+
 def v5_hub_md(run_id: str, events: List[Dict[str, Any]], observations: List[Dict[str, str]], health: List[Dict[str, Any]], iso_dates: List[str]) -> str:
     women = [e for e in events if e.get("gender_scope") == "women"]; finals = [e for e in women if e.get("status_norm") == "final"]; graphics = [e for e in events if e.get("include_in_graphics")]; review = [e for e in events if e.get("manual_review") and e.get("gender_scope") == "women"]
     return "\n".join(["# Her Sports Daily Results Desk v5 Hub", "", f"Run ID: `{run_id}`", f"Generated: `{now_iso()}`", f"Date window: `{', '.join(iso_dates)}`", "", "## Source strategy", "", "- Free/public sources only.", "- Active source: ESPN public WNBA scoreboard endpoint.", "- Optional fallback: local/manual seed CSVs.", "- Paid API keys are not required and are not read by v5.", "", "## Run summary", "", f"- Raw source observations: {len(observations)}", f"- Reconciled events: {len(events)}", f"- Women's events surfaced: {len(women)}", f"- Women's finals: {len(finals)}", f"- Graphics-ready results: {len(graphics)}", f"- Manual review items: {len(review)}", "", "## Accuracy gates", "", "- Duplicate groups are written to `duplicate_game_audit_v5.csv`.", "- Stale/out-of-window observations are written to `stale_source_audit_v5.csv`.", "- Expected-game fixtures, when provided, are checked in `missing_games_alert_v5.*`.", "- No player stats are invented."]) + "\n"
@@ -875,12 +1096,12 @@ def main() -> None:
     observations, health = free_source_observations(run_id, compact_dates); stale_rows = stale_audit(observations, iso_dates); duplicate_rows = duplicate_audit(observations)
     events = apply_strict_date_window_gate(reconcile(run_id, observations), iso_dates); box_audit_rows = audit_wnba_box_scores(events)
     all_events = events; womens = [e for e in events if e.get("gender_scope") == "women" and e.get("include_in_dashboard")]; finals = [e for e in events if e.get("gender_scope") == "women" and e.get("status_norm") == "final" and float(e.get("confidence") or 0) >= 0.70]; top = womens[:50]; review = [e for e in events if e.get("gender_scope") == "women" and e.get("manual_review")]
-    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows)
+    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows); stats_gap_rows, stats_confirmation_rows = stats_evidence_gap_rows(events, observations); stats_gap_summary = stats_evidence_gap_summary(stats_gap_rows, stats_confirmation_rows)
     write_csv(OBSERVATIONS_FILE, observations, OBS_FIELDS); write_csv(RECONCILED_FILE, events, EVENT_FIELDS); write_csv(RESULTS_BOARD_FILE, all_events, EVENT_FIELDS); write_csv(WOMENS_RESULTS_FILE, womens, EVENT_FIELDS); write_csv(FINAL_RESULTS_FILE, finals, EVENT_FIELDS); write_csv(TOP_RESULTS_FILE, top, EVENT_FIELDS); write_csv(MANUAL_REVIEW_FILE, review, EVENT_FIELDS)
-    write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS); write_csv(GAME_INTELLIGENCE_BOARD_FILE, intelligence_rows, GAME_INTELLIGENCE_FIELDS)
-    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates)); write_text(GAME_INTELLIGENCE_REPORT_FILE, game_intelligence_report_md(intelligence_summary, intelligence_rows))
-    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows)); write_json(GAME_INTELLIGENCE_MANIFEST_FILE, {"summary": intelligence_summary, "rows": intelligence_rows})
-    manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "game_intelligence_rows": len(intelligence_rows), "game_intelligence_recap_candidates": intelligence_summary.get("recap_candidates", 0), "game_intelligence_missing_stats_context": intelligence_summary.get("missing_stats_context", 0), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix(), "game_intelligence": GAME_INTELLIGENCE_MANIFEST_FILE}}
+    write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS); write_csv(GAME_INTELLIGENCE_BOARD_FILE, intelligence_rows, GAME_INTELLIGENCE_FIELDS); write_csv(STATS_EVIDENCE_GAP_BOARD_FILE, stats_gap_rows, STATS_EVIDENCE_FIELDS); write_csv(STATS_CONFIRMATION_INTAKE_FILE, stats_confirmation_rows, STATS_CONFIRMATION_FIELDS)
+    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates)); write_text(GAME_INTELLIGENCE_REPORT_FILE, game_intelligence_report_md(intelligence_summary, intelligence_rows)); write_text(STATS_EVIDENCE_GAP_REPORT_FILE, stats_evidence_gap_report_md(stats_gap_summary, stats_gap_rows, stats_confirmation_rows))
+    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows)); write_json(GAME_INTELLIGENCE_MANIFEST_FILE, {"summary": intelligence_summary, "rows": intelligence_rows}); write_json(STATS_EVIDENCE_GAP_MANIFEST_FILE, {"summary": stats_gap_summary, "rows": stats_gap_rows, "confirmation_intake": stats_confirmation_rows})
+    manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "game_intelligence_rows": len(intelligence_rows), "game_intelligence_recap_candidates": intelligence_summary.get("recap_candidates", 0), "game_intelligence_missing_stats_context": intelligence_summary.get("missing_stats_context", 0), "stats_evidence_gap_rows": len(stats_gap_rows), "stats_confirmation_intake_rows": len(stats_confirmation_rows), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix(), "game_intelligence": GAME_INTELLIGENCE_MANIFEST_FILE, "stats_evidence_gap": STATS_EVIDENCE_GAP_MANIFEST_FILE}}
     write_json(MANIFEST_FILE, manifest); write_json(V5_MANIFEST, manifest); write_text(V5_REPORT, report_md(run_id, manifest))
     print("Created Results Desk v5 outputs"); print(json.dumps(manifest["counts"], indent=2))
 

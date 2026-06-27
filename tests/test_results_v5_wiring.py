@@ -205,11 +205,122 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
     lite = read("generate_hsd_pipeline_review_lite_v1.py")
     workflow = read(".github/workflows/hsd-v3-repo-state-sanity.yml")
 
-    for artifact in ["game_intelligence_board_v1.csv", "game_intelligence_board_v1.md", "game_intelligence_board_v1.json"]:
+    for artifact in [
+        "game_intelligence_board_v1.csv",
+        "game_intelligence_board_v1.md",
+        "game_intelligence_board_v1.json",
+        "stats_evidence_gap_board_v1.csv",
+        "stats_evidence_gap_board_v1.md",
+        "stats_evidence_gap_board_v1.json",
+        "stats_confirmation_intake_v1.csv",
+    ]:
         assert artifact in results
         assert artifact in command_center
         assert artifact in lite
         assert artifact in workflow
+
+
+def test_stats_evidence_gap_board_and_confirmation_intake_are_review_only() -> None:
+    module = load_results_desk()
+    base = {
+        "scheduled_date_local": "2026-06-24",
+        "league_norm": "WNBA",
+        "sport_norm": "basketball",
+        "status_norm": "final",
+        "home_team_display": "New York Liberty",
+        "away_team_display": "Indiana Fever",
+        "final_score_display": "Indiana Fever 88 - New York Liberty 84",
+        "include_in_graphics": True,
+        "selected_source": "espn_wnba_public",
+        "confidence": 0.92,
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+    }
+    confirmed = {
+        **base,
+        "event_uid": "event_confirmed",
+        "canonical_key": "basketball|2026-06-24|indiana fever|new york liberty",
+        "box_score_audit_status": "found",
+        "box_score_top_performers": "Player One (Indiana Fever): PTS 24, REB 8",
+    }
+    capped = {
+        **base,
+        "event_uid": "event_capped",
+        "canonical_key": "basketball|2026-06-24|atlanta dream|chicago sky",
+        "home_team_display": "Chicago Sky",
+        "away_team_display": "Atlanta Dream",
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/402",
+        "box_score_audit_status": "not_audited_sample_cap",
+        "box_score_top_performers": "",
+    }
+    missing = {
+        **base,
+        "event_uid": "event_missing",
+        "canonical_key": "basketball|2026-06-24|dallas wings|las vegas aces",
+        "home_team_display": "Las Vegas Aces",
+        "away_team_display": "Dallas Wings",
+        "source_url": "https://www.espn.com/wnba/game/_/gameId/403",
+        "box_score_audit_status": "summary_found_no_performers",
+        "box_score_top_performers": "",
+    }
+    scheduled = {
+        **base,
+        "event_uid": "event_scheduled",
+        "canonical_key": "basketball|2026-06-25|phoenix mercury|seattle storm",
+        "status_norm": "scheduled",
+        "include_in_graphics": False,
+        "box_score_top_performers": "",
+    }
+    observations = [
+        {
+            "canonical_key": confirmed["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-24T12:00:00+00:00",
+        },
+        {
+            "canonical_key": capped["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-24T13:00:00+00:00",
+        },
+        {
+            "canonical_key": missing["canonical_key"],
+            "source_name": "espn_wnba_public",
+            "source_priority": "95",
+            "fetched_at_utc": "2026-06-24T14:00:00+00:00",
+        },
+    ]
+
+    rows, intake = module.stats_evidence_gap_rows([confirmed, capped, missing, scheduled], observations)
+    by_id = {row["event_uid"]: row for row in rows}
+
+    assert set(by_id) == {"event_confirmed", "event_capped", "event_missing"}
+    assert by_id["event_confirmed"]["stats_evidence_status"] == "confirmed_free_public_box_score"
+    assert by_id["event_confirmed"]["manual_confirmation_needed"] == "No"
+    assert by_id["event_confirmed"]["top_performers"] == "Player One (Indiana Fever): PTS 24, REB 8"
+    assert by_id["event_confirmed"]["review_only"] == "Yes"
+    assert by_id["event_confirmed"]["approval_state_change"] == "none"
+    assert by_id["event_confirmed"]["publish_action"] == "none_artifact_only"
+
+    assert by_id["event_capped"]["stats_evidence_status"] == "box_score_audit_capped"
+    assert by_id["event_capped"]["manual_confirmation_needed"] == "Yes"
+    assert by_id["event_capped"]["missing_stat_evidence"] == "box_score_audit_not_run_for_this_row"
+    assert by_id["event_missing"]["stats_evidence_status"] == "box_score_summary_no_performers"
+    assert by_id["event_missing"]["manual_confirmation_needed"] == "Yes"
+    assert by_id["event_missing"]["missing_stat_evidence"] == "top_performer_context"
+
+    assert [row["event_uid"] for row in intake] == ["event_capped", "event_missing"]
+    assert all(row["operator_checked_url"] == "" for row in intake)
+    assert all(row["operator_confirmation_status"] == "" for row in intake)
+    assert all(row["review_only"] == "Yes" for row in intake)
+
+    summary = module.stats_evidence_gap_summary(rows, intake)
+    assert summary["rows"] == 3
+    assert summary["confirmed_free_public_box_score"] == 1
+    assert summary["manual_confirmation_rows"] == 2
+    report = module.stats_evidence_gap_report_md(summary, rows, intake)
+    assert "Manual Confirmation Needed" in report
+    assert "No paid APIs" in report
 
 
 def test_template_law_and_top_priority_specs_exist() -> None:
