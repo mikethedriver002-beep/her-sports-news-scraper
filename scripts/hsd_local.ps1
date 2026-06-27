@@ -828,6 +828,8 @@ function Collect-HsdArtifacts($RunContext) {
         "final_score_stat_proof_v1.csv",
         "final_score_stat_proof_v1.json",
         "final_score_stat_proof_confirmation_intake_v1.csv",
+        "final_score_stat_proof_review_walkthrough_v1.md",
+        "final_score_stat_proof_review_order_v1.csv",
         "results_dashboard/index.html",
         "news_fact_packets.csv",
         "news_daily_plan.md",

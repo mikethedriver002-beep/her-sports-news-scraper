@@ -272,6 +272,8 @@ jobs:
             final_score_stat_proof_v1.md
             final_score_stat_proof_v1.json
             final_score_stat_proof_confirmation_intake_v1.csv
+            final_score_stat_proof_review_walkthrough_v1.md
+            final_score_stat_proof_review_order_v1.csv
             game_source_confirmation_bridge_v1.csv
             game_source_confirmation_bridge_v1.md
             game_source_confirmation_bridge_v1.json

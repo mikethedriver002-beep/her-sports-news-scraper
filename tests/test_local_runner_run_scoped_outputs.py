@@ -69,6 +69,8 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "final_score_stat_proof_v1.csv",
         "final_score_stat_proof_v1.json",
         "final_score_stat_proof_confirmation_intake_v1.csv",
+        "final_score_stat_proof_review_walkthrough_v1.md",
+        "final_score_stat_proof_review_order_v1.csv",
         "game_source_confirmation_bridge_v1.md",
         "game_source_confirmation_bridge_v1.csv",
         "game_source_confirmation_bridge_v1.json",
@@ -143,6 +145,8 @@ def test_local_runner_collects_final_score_stat_proof_for_latest() -> None:
     assert '"final_score_stat_proof_v1.csv"' in collector
     assert '"final_score_stat_proof_v1.json"' in collector
     assert '"final_score_stat_proof_confirmation_intake_v1.csv"' in collector
+    assert '"final_score_stat_proof_review_walkthrough_v1.md"' in collector
+    assert '"final_score_stat_proof_review_order_v1.csv"' in collector
 
 
 def test_review_stage_refreshes_source_registry_audit_for_command_center() -> None:
