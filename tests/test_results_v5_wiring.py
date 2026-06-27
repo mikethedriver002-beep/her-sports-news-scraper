@@ -213,11 +213,113 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "stats_evidence_gap_board_v1.md",
         "stats_evidence_gap_board_v1.json",
         "stats_confirmation_intake_v1.csv",
+        "game_fact_confirmation_status_v1.csv",
+        "game_fact_confirmation_status_v1.md",
+        "game_fact_confirmation_status_v1.json",
     ]:
         assert artifact in results
         assert artifact in command_center
         assert artifact in lite
         assert artifact in workflow
+
+
+def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> None:
+    module = load_results_desk()
+    intelligence_rows = [
+        {
+            "row_id": "event_confirmed",
+            "row_type": "recap_candidate",
+            "attention_bucket": "recap_candidate",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "sport": "basketball",
+            "home_team": "New York Liberty",
+            "away_team": "Indiana Fever",
+            "status": "final",
+            "final_score": "Indiana Fever 88 - New York Liberty 84",
+            "recap_candidate": "Yes",
+            "source_confidence": "0.92",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+            "source_domain": "www.espn.com",
+            "missing_evidence": "none",
+            "retrieved_at_utc": "2026-06-24T12:00:00+00:00",
+        },
+        {
+            "row_id": "event_scheduled",
+            "row_type": "upcoming_game",
+            "attention_bucket": "upcoming_game",
+            "game_date": "2026-06-25",
+            "league": "WNBA",
+            "sport": "basketball",
+            "home_team": "Chicago Sky",
+            "away_team": "Atlanta Dream",
+            "status": "scheduled",
+            "final_score": "Atlanta Dream at Chicago Sky",
+            "recap_candidate": "No",
+            "source_confidence": "0.84",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/402",
+            "source_domain": "www.espn.com",
+            "missing_evidence": "none",
+        },
+        {
+            "row_id": "expected_missing",
+            "row_type": "missing_expected_game",
+            "attention_bucket": "missing_source_evidence",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "sport": "basketball",
+            "home_team": "Las Vegas Aces",
+            "away_team": "Dallas Wings",
+            "status": "missing_from_free_sources_or_outside_window",
+            "final_score": "",
+            "recap_candidate": "No",
+            "source_confidence": "0.00",
+            "source_url": "manual_expected_games.csv",
+            "source_domain": "",
+            "missing_evidence": "free_source_observation_match; final_score; stats_context",
+        },
+    ]
+    stats_rows = [
+        {
+            "event_uid": "event_confirmed",
+            "stats_evidence_status": "confirmed_free_public_box_score",
+            "manual_confirmation_needed": "No",
+            "confirmation_source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+        }
+    ]
+
+    rows = module.game_fact_confirmation_status_rows(intelligence_rows, stats_rows)
+    by_id = {row["event_uid"]: row for row in rows}
+
+    confirmed = by_id["event_confirmed"]
+    assert confirmed["schedule_fact_status"] == "schedule_source_confirmed_free_public_operator_verify"
+    assert confirmed["result_fact_status"] == "final_score_source_confirmed_free_public_operator_verify"
+    assert confirmed["stats_fact_status"] == "stats_source_confirmed_free_public_operator_verify"
+    assert confirmed["overall_confirmation_status"] == "source_confirmed_operator_verify_before_use"
+    assert confirmed["missing_confirmation"] == "none"
+    assert "game_intelligence_board_v1.csv row_id=event_confirmed" in confirmed["exact_next_file_or_intake"]
+    assert "stats_evidence_gap_board_v1.csv event_uid=event_confirmed" in confirmed["exact_next_file_or_intake"]
+    assert confirmed["review_only"] == "Yes"
+    assert confirmed["approval_state_change"] == "none"
+    assert confirmed["publish_action"] == "none_artifact_only"
+
+    scheduled = by_id["event_scheduled"]
+    assert scheduled["result_fact_status"] == "not_final_result_pending"
+    assert scheduled["stats_fact_status"] == "not_final_stats_optional"
+    assert scheduled["overall_confirmation_status"] == "schedule_confirmed_result_pending"
+
+    missing = by_id["expected_missing"]
+    assert missing["overall_confirmation_status"] == "manual_verification_required"
+    assert "schedule_source" in missing["missing_confirmation"]
+    assert "missing_games_alert_v5.csv" in missing["exact_next_file_or_intake"]
+    assert missing["manual_review_required"] == "Yes"
+
+    summary = module.game_fact_confirmation_status_summary(rows)
+    assert summary["rows"] == 3
+    assert summary["manual_verification_required"] == 1
+    report = module.game_fact_confirmation_status_report_md(summary, rows)
+    assert "Rows Needing Manual Verification" in report
+    assert "No paid APIs" in report
 
 
 def test_stats_evidence_gap_board_and_confirmation_intake_are_review_only() -> None:
