@@ -4,6 +4,7 @@ import csv
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -11,6 +12,11 @@ from PIL import Image, ImageDraw
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "generate_hsd_render_visual_delta_v1.py"
+
+
+def python_executable() -> str:
+    bundled = REPO / ".venv" / "Scripts" / "python.exe"
+    return str(bundled if bundled.exists() else Path(sys.executable))
 
 
 def make_reference(path: Path, size: tuple[int, int] = (360, 450), *, shifted: bool = False) -> None:
@@ -35,7 +41,7 @@ def run_delta(tmp_path: Path, manifest: dict) -> tuple[dict, list[dict[str, str]
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
     proc = subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [python_executable(), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,

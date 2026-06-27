@@ -3007,6 +3007,21 @@ def report_status_label(status: str) -> str:
     return labels.get(clean(status), clean(status).replace("_", " ").title() or "Not run")
 
 
+def preview_freshness_detail(source_manifest: Dict[str, Any], generated_at_utc: str, preview_path: str) -> Dict[str, str]:
+    source_generated_at = clean(source_manifest.get("generated_at_utc"))
+    return {
+        "preview_freshness_status": "generated_from_current_handoff_packet",
+        "preview_freshness_detail": (
+            "Renderer read the handoff manifest and created this review-only preview in the current output scope; "
+            "manual review is still required before any later step."
+        ),
+        "renderer_generated_at_utc": generated_at_utc,
+        "source_handoff_generated_at_utc": source_generated_at,
+        "preview_decision_cue": "Use this preview only when renderer_generated_at_utc is at or after source_handoff_generated_at_utc; otherwise rerun the renderer.",
+        "preview_output_scope": preview_path,
+    }
+
+
 def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reason: str = "", render_result: Dict[str, Any] | None = None) -> List[str]:
     packet = manifest.get("packet") if isinstance(manifest.get("packet"), dict) else {}
     render_result = render_result or {}
@@ -3038,6 +3053,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Preview source packet: `{clean(packet.get('title')) or 'none'}`",
         "- Preview freshness: generated from the current handoff packet.",
         f"- Preview: `{preview_path or 'not_created'}`",
+        f"- Source handoff generated: `{clean(manifest.get('generated_at_utc')) or 'not_recorded'}`",
         f"- Story: `{clean(packet.get('title')) or 'none'}`",
         f"- Template: `{clean(template.get('template_id')) or 'not_selected'}`",
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
@@ -3050,6 +3066,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Stat review cue: {clean(content_module.get('stat_review_cue')) or 'n/a'}",
         f"- Editorial microcopy: `{clean(content_module.get('editorial_microcopy_variant')) or 'not_selected'}` / {clean(content_module.get('editorial_microcopy_headline')) or 'n/a'}",
         f"- Editorial review cue: {clean(content_module.get('editorial_microcopy_review_cue')) or 'n/a'}",
+        "- Preview decision cue: use only if the renderer manifest time is at or after the source handoff time; otherwise rerun the renderer.",
         f"- Reason: {reason or 'n/a'}",
         "",
         "## Review Draft Formats",
@@ -3139,9 +3156,11 @@ def main() -> None:
         status = "blocked_preview_not_created"
         reason = str(exc)
 
+    generated_at_utc = datetime.now(timezone.utc).isoformat()
+    freshness = preview_freshness_detail(source_manifest, generated_at_utc, preview)
     manifest = {
         "version": VERSION,
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": generated_at_utc,
         "status": status,
         "input_handoff_dir": handoff.as_posix(),
         "output_handoff_dir": OUT_DIR.as_posix(),
@@ -3163,7 +3182,7 @@ def main() -> None:
         "render_background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "render_background_cues": clean(render_result.get("render_background_cues")) or RENDER_BACKGROUND_CUES,
         "preview_source_title": clean(packet.get("title")),
-        "preview_freshness_status": "generated_from_current_handoff_packet",
+        **freshness,
         "guardrails": {
             "manual_only": True,
             "review_only": True,
