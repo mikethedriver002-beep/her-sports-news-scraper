@@ -1,0 +1,18 @@
+{
+  "version": "hsd-womens-soccer-athlete-photo-contact-sheets-v1-review-only",
+  "status": "contact_sheets_ready",
+  "generated_at_utc": "2026-06-27T03:12:02.173701+00:00",
+  "candidate_rows": 16,
+  "team_boards": 16,
+  "candidate_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv",
+  "contact_sheet_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv",
+  "intake_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+  "index": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md",
+  "warnings": [],
+  "review_only": true,
+  "downloads_performed": false,
+  "approvals_applied": false,
+  "headshot_files_written": false,
+  "approved_markers_created": false,
+  "publish_ready": false
+}

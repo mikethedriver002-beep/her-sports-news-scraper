@@ -273,6 +273,101 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
         "data/asset_registry/womens_soccer/womens_soccer_logo_review_walkthrough.json",
         {"status": "walkthrough_ready", "row_count": 1, "review_only": True},
     )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv",
+        [
+            {
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "player_id": "",
+                "display_name": "operator_add_player_candidate",
+                "candidate_id": "angel_city_fc_operator_add_candidate",
+                "candidate_status": "operator_add_candidate",
+                "registry_status": "candidate_layer_only_no_player_registry_write",
+                "local_candidate_path": "assets/leagues/womens_soccer/nwsl/nwsl/teams/angel_city_fc/athletes/operator_fill_required/review_candidates/angel_city_fc_operator_add_candidate.png",
+                "local_candidate_exists": "false",
+                "approved_marker_path": "",
+                "approved_marker_exists": "false",
+                "current_approval_status": "not_approved",
+                "identity_review_status": "operator_fill_required",
+                "source_url": "https://www.angelcity.com/club/roster",
+                "source_domain": "www.angelcity.com",
+                "source_tier": "public_or_official_candidate",
+                "source_kind": "roster_or_public_profile_candidate",
+                "source_platform": "manual_research",
+                "photo_candidate_url": "",
+                "license_hint": "operator_review_required",
+                "rights_note": "review_only_fair_use_tolerant_candidate; no renderer approval",
+                "identity_evidence_notes": "Add exact player name before approval.",
+                "identity_risk_flags": "missing_player_identity_candidate",
+                "allowed_decisions": "approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate",
+                "human_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+                "team_contact_sheet_path": "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.png",
+                "team_review_board_path": "data/asset_registry/womens_soccer/athlete_photo_contact_sheets/nwsl/angel_city_fc.md",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        ],
+        [
+            "scope_id",
+            "league_id",
+            "team_id",
+            "team_name",
+            "player_id",
+            "display_name",
+            "candidate_id",
+            "candidate_status",
+            "registry_status",
+            "local_candidate_path",
+            "local_candidate_exists",
+            "approved_marker_path",
+            "approved_marker_exists",
+            "current_approval_status",
+            "identity_review_status",
+            "source_url",
+            "source_domain",
+            "source_tier",
+            "source_kind",
+            "source_platform",
+            "photo_candidate_url",
+            "license_hint",
+            "rights_note",
+            "identity_evidence_notes",
+            "identity_risk_flags",
+            "allowed_decisions",
+            "human_intake_file",
+            "team_contact_sheet_path",
+            "team_review_board_path",
+            "review_only",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+            "asset_downloads",
+        ],
+    )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_index.md").write_text("# Athlete sheets\n", encoding="utf-8")
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json",
+        {
+            "status": "contact_sheets_ready",
+            "generated_at_utc": "2026-06-26T20:00:00+00:00",
+            "candidate_rows": 1,
+            "team_boards": 1,
+            "warnings": ["angel_city_fc:pillow_unavailable_contact_sheet_not_created"],
+            "review_only": True,
+            "downloads_performed": False,
+            "approvals_applied": False,
+        },
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -283,13 +378,27 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_logo_review_walkthrough_rows"] == 1
     assert panel["womens_soccer_logo_review_walkthrough_status"] == "walkthrough_ready"
     assert panel["womens_soccer_logo_review_walkthrough_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_photo_contact_sheet_rows"] == 1
+    assert panel["womens_soccer_athlete_photo_contact_sheet_team_boards"] == 1
+    assert panel["womens_soccer_athlete_photo_contact_sheet_status"] == "contact_sheets_ready"
+    assert panel["womens_soccer_athlete_photo_contact_sheet_generated_at"] == "2026-06-26T20:00:00+00:00"
+    assert panel["womens_soccer_athlete_photo_contact_sheet_warning_count"] == 1
+    assert panel["womens_soccer_athlete_photo_contact_sheet_freshness_status"] == "packet_ready"
     assert any(item["label"] == "Women's soccer logo contact sheet" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer logo review intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer logo review walkthrough" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo contact sheets" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo contact sheet data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo review intake" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo manifest" for item in panel["file_shortcuts"])
     assert "Soccer logo sweep rows" in html
     assert "Soccer review steps" in html
+    assert "Soccer athlete candidates" in html
+    assert "Soccer athlete boards" in html
+    assert "Soccer athlete warnings" in html
     assert "Women&#x27;s soccer logo contact sheet packet freshness" in html
     assert "Women&#x27;s soccer logo review walkthrough packet freshness" in html
+    assert "Women&#x27;s soccer athlete photo contact sheets packet freshness" in html
 
 
 def test_active_athlete_identity_statuses_distinguish_hold_review_and_clear(tmp_path, monkeypatch) -> None:
