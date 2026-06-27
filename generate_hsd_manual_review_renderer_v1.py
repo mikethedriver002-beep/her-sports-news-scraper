@@ -48,7 +48,7 @@ RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
-    "review_only_brand_rails,logo_first_score_atmosphere,generated_preview_qa"
+    "review_only_brand_rails,logo_first_score_atmosphere,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2145,16 +2145,31 @@ def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int],
         return 0, "safe_no_photo_fallback"
 
 
+def draw_stat_proof_rail(image: Any, box: Tuple[int, int, int, int], accent: tuple[int, int, int], *, compact: bool = False) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    x, y, w, h = box
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    rail_h = 5 if compact else 7
+    split_x = x + int(w * 0.72)
+    draw.rounded_rectangle((x + 12, y + 6, split_x, y + 6 + rail_h), radius=rail_h // 2, fill=(*accent, 214))
+    draw.rounded_rectangle((split_x - 4, y + 6, x + w - 12, y + 6 + rail_h), radius=rail_h // 2, fill=(247, 203, 84, 190))
+    draw.rectangle((x + 2, y + 2, x + 10, y + h - 2), fill=(*accent, 224))
+    draw.rectangle((x + 10, y + 2, x + 14, y + h - 2), fill=(247, 203, 84, 164))
+    image.alpha_composite(layer)
+
+
 def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
     x, y, w, h = box
     compact = h < 112
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16 if not compact else 12, width=2)
     draw = ImageDraw.Draw(image, "RGBA")
-    draw.rectangle((x + 2, y + 2, x + 10, y + h - 2), fill=(*accent, 235))
+    draw_stat_proof_rail(image, box, accent, compact=compact)
     draw.line((x + 24, y + 38, x + w - 24, y + 38), fill=(*accent, 96), width=1)
     player = clean(module.get("player_name"))
     matchup = clean(module.get("matchup_note"))
-    source_label = "VERIFIED STAT TEXT"
+    source_label = "STAT PROOF CHECK"
     photo_offset, photo_layout_mode = draw_approved_athlete_photo_tile(image, box, module, accent, compact=compact)
     module["athlete_photo_layout_mode"] = photo_layout_mode
     if compact:
@@ -2356,11 +2371,11 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     x, y, w, h = box
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16, width=2)
     draw = ImageDraw.Draw(image, "RGBA")
-    draw.rectangle((x + 2, y + 2, x + 11, y + h - 2), fill=(*accent, 238))
+    draw_stat_proof_rail(image, box, accent, compact=h < 132)
     chip_w = min(338, max(260, w // 3))
     draw_premium_stat_chips(image, (x + w - chip_w - 22, y + 18, chip_w, h - 36), module.get("callouts") or [], accent, compact=h < 132)
     player = clean(module.get("player_name"))
-    source_label = "VERIFIED STAT TEXT"
+    source_label = "STAT PROOF CHECK"
     heading = clean(module.get("headline")) or (f"{last_name(player)} LEDGER" if player else "PLAYER LEDGER")
     text_w = max(390, w - chip_w - 72)
     draw_reference_text(image, (x + 28, y + 15, text_w, 24), f"PHOTO-FIRST / {source_label}", "context", 19, 11, accent, max_lines=1)
