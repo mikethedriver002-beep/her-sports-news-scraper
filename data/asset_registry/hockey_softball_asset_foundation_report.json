@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-foundation-v1-review-only",
   "status": "hockey_softball_asset_foundation_ready",
-  "generated_at_utc": "2026-06-27T12:48:24.217647+00:00",
+  "generated_at_utc": "2026-06-27T17:45:32.813942+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -18,7 +18,7 @@
       "team_rows": 12,
       "source_rows": 39,
       "logo_rows": 13,
-      "athlete_candidate_rows": 12
+      "athlete_candidate_rows": 36
     },
     {
       "sport_family": "softball",
@@ -26,7 +26,7 @@
       "team_rows": 6,
       "source_rows": 21,
       "logo_rows": 7,
-      "athlete_candidate_rows": 6
+      "athlete_candidate_rows": 18
     }
   ]
 }

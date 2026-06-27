@@ -154,6 +154,12 @@ def key_for_athlete(row: Mapping[str, str]) -> tuple[str, str, str]:
     return clean(row.get("team_id")), clean(row.get("candidate_id")), clean(row.get("player_id"))
 
 
+def has_named_athlete_identity(row: Mapping[str, str]) -> bool:
+    display_name = clean(row.get("display_name")).lower()
+    player_id = clean(row.get("player_id"))
+    return bool(player_id and display_name and not display_name.startswith("operator_add_player"))
+
+
 def merged_row(row: Mapping[str, str], prior: Mapping[str, str] | None = None) -> Dict[str, str]:
     output = {field: clean(row.get(field)) for field in row.keys()}
     if prior:
@@ -218,18 +224,24 @@ def prepare_athlete_rows(
         output = merged_row(row, prior)
         already_reviewed = clean(output.get("identity_verified")).lower() == "yes" and clean(output.get("source_reviewed")).lower() == "yes"
         if overwrite or not already_reviewed:
+            identity_verified = "yes" if has_named_athlete_identity(row) else "no"
+            identity_note = (
+                "Named athlete identity can be source-reviewed; local file still required before approval-state change."
+                if identity_verified == "yes"
+                else "Source can be reviewed, but identity stays held until the row names a concrete athlete and local candidate asset exists."
+            )
             output.update(
                 {
                     "sport_family": sport_key,
                     "operator_decision": "hold_identity",
-                    "identity_verified": "yes",
+                    "identity_verified": identity_verified,
                     "source_reviewed": "yes",
                     "local_file_reviewed": "no",
                     "source_allowed_for_review_only": "yes",
                     "rights_reviewed": "yes",
                     "source_url_to_record": clean(row.get("source_url")),
-                    "registry_action": "hold_no_registry_state_change",
-                    "operator_notes": "Source and identity prefilled for human review-order sweep; no approval-state change.",
+                    "registry_action": "hold_no_registry_state_change_until_local_candidate_asset_exists",
+                    "operator_notes": f"{identity_note} No approval-state change.",
                     "reviewed_by": reviewed_by,
                     "reviewed_at_local": reviewed_at_local,
                     "approval_scope": f"review_only_renderer_{sport_key}_athlete_photo_trust_manual_intake",
@@ -286,7 +298,11 @@ def render_walkthrough(
             "## How To Fill The Intake CSV",
             "",
             "- Logo rows: keep `source_reviewed=yes` and `identity_match=yes` only after you manually open the source candidate page and confirm the mark matches the league or club.",
-            "- Athlete rows: keep `identity_verified=yes`, `source_reviewed=yes`, `local_file_reviewed=no`, `source_allowed_for_review_only=yes`, and `rights_reviewed=yes` only after you manually verify the roster/source evidence.",
+            "- Athlete source rows: `source_reviewed=yes` means you manually opened the roster/profile/index page and confirmed it is a usable source candidate.",
+            "- Athlete identity rows: keep `identity_verified=no` when the row is still an `operator_add_player_*` source slot or has no concrete `player_id` and player name.",
+            "- Athlete local file rows: keep `local_file_reviewed=no` until Mike manually supplies and reviews the local candidate file.",
+            "- Athlete hold boundary: `registry_action` must stay `hold_no_registry_state_change_until_local_candidate_asset_exists` unless a later explicit human-edited intake file supplies named identity evidence and local asset review.",
+            "- Logo rows can complete source/identity match review before a local asset exists, but the registry action still remains hold-only until the asset is manually supplied and reviewed.",
             "- `source_url_to_record` should be the exact source page you reviewed.",
             "- `registry_action` must remain a hold-only action; do not change approval state from this helper.",
             "- Guardrails stay false: `publish_ready`, `auto_approval`, `auto_publish`, `move_files`, `paid_apis`, and `asset_downloads`.",

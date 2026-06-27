@@ -80,6 +80,19 @@ def test_hockey_softball_foundation_generates_review_only_scaffolds(tmp_path: Pa
         assert forbidden not in registry_text
     assert "https://www.thepwhl.com/en/teams/seattle-torrent" in registry_text
     assert "https://theausl.com/volts/" in registry_text
+    hockey_candidates = read_csv(tmp_path / "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet.csv")
+    softball_candidates = read_csv(tmp_path / "data/asset_registry/softball/softball_athlete_photo_contact_sheet.csv")
+    assert len(hockey_candidates) == 36
+    assert len(softball_candidates) == 18
+    assert {row["candidate_status"] for row in hockey_candidates} == {
+        "official_roster_source_review_slot",
+        "official_team_profile_source_review_slot",
+        "official_league_player_index_review_slot",
+    }
+    assert all(row["local_candidate_exists"] == "false" for row in hockey_candidates + softball_candidates)
+    hockey_board = (tmp_path / "data/asset_registry/womens_hockey/athlete_photo_contact_sheets/seattle_torrent.md").read_text(encoding="utf-8")
+    assert "Candidate rows: `3`" in hockey_board
+    assert "league_player_index_candidate" in hockey_board
     assert not list(tmp_path.rglob("headshot.png"))
     assert not list(tmp_path.rglob("*.approved"))
 
@@ -119,6 +132,9 @@ def test_hockey_softball_foundation_preserves_human_notes_but_forces_guardrails(
     assert logo_manifest["publish_ready"] is False
     assert athlete_manifest["headshot_files_written"] is False
     assert athlete_manifest["approved_markers_created"] is False
+    assert athlete_manifest["candidate_rows"] == 18
+    assert athlete_manifest["team_boards"] == 6
+    assert athlete_manifest["source_review_slot_rows"] == 18
 
 
 def test_command_center_surfaces_hockey_softball_asset_foundation(tmp_path: Path, monkeypatch) -> None:
@@ -134,9 +150,11 @@ def test_command_center_surfaces_hockey_softball_asset_foundation(tmp_path: Path
     assert panel["hockey_softball_asset_foundation_status"] == "hockey_softball_asset_foundation_ready"
     assert panel["hockey_softball_asset_foundation_freshness_status"] == "packet_ready"
     assert panel["womens_hockey_logo_contact_sheet_rows"] == 13
-    assert panel["womens_hockey_athlete_photo_contact_sheet_rows"] == 12
+    assert panel["womens_hockey_athlete_photo_contact_sheet_rows"] == 36
+    assert panel["womens_hockey_athlete_photo_source_review_slot_rows"] == 36
     assert panel["softball_logo_contact_sheet_rows"] == 7
-    assert panel["softball_athlete_photo_contact_sheet_rows"] == 6
+    assert panel["softball_athlete_photo_contact_sheet_rows"] == 18
+    assert panel["softball_athlete_photo_source_review_slot_rows"] == 18
     shortcut_labels = {shortcut["label"] for shortcut in panel["file_shortcuts"]}
     assert "Hockey/softball foundation report" in shortcut_labels
     assert "Women's hockey logo contact sheet" in shortcut_labels

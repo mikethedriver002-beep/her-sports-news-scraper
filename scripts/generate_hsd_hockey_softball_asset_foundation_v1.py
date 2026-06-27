@@ -151,11 +151,17 @@ ATHLETE_FIELDS = [
     "player_id",
     "display_name",
     "candidate_id",
+    "candidate_rank",
     "candidate_status",
     "source_url",
     "source_domain",
     "source_tier",
+    "source_platform",
     "source_kind",
+    "candidate_method",
+    "page_title",
+    "canonical_url",
+    "referring_roster_url",
     "photo_candidate_url",
     "local_candidate_path",
     "local_candidate_exists",
@@ -163,6 +169,11 @@ ATHLETE_FIELDS = [
     "approved_marker_exists",
     "identity_review_status",
     "approval_status",
+    "license_hint",
+    "rights_note",
+    "attribution_text",
+    "identity_evidence_notes",
+    "identity_risk_flags",
     "allowed_decisions",
     "human_intake_file",
     "team_review_board_path",
@@ -207,6 +218,42 @@ ATHLETE_INTAKE_FIELDS = [
     "move_files",
     "paid_apis",
     "asset_downloads",
+]
+
+ATHLETE_SOURCE_CANDIDATE_SLOTS = [
+    {
+        "suffix": "roster_source_candidate_01",
+        "display_name": "operator_add_player_from_team_roster",
+        "candidate_status": "official_roster_source_review_slot",
+        "source_kind": "roster_or_public_profile_candidate",
+        "source_platform": "official_team_roster_page",
+        "candidate_method": "manual_roster_source_slot_no_image_download",
+        "page_title": "team roster source review",
+        "identity_review_status": "source_review_ready_identity_not_filled",
+        "identity_evidence_notes": "Operator can mark source_reviewed after opening the roster page; player identity and local file review must remain hold until a concrete athlete and local candidate asset exist.",
+    },
+    {
+        "suffix": "team_profile_source_candidate_02",
+        "display_name": "operator_add_player_from_team_profile_source",
+        "candidate_status": "official_team_profile_source_review_slot",
+        "source_kind": "team_profile_source_candidate",
+        "source_platform": "official_team_page",
+        "candidate_method": "manual_team_profile_source_slot_no_image_download",
+        "page_title": "team profile source review",
+        "identity_review_status": "source_review_ready_identity_not_filled",
+        "identity_evidence_notes": "Operator can use the team page as context/source evidence; approval stays held until a named athlete and reviewed local candidate asset exist.",
+    },
+    {
+        "suffix": "league_player_index_candidate_03",
+        "display_name": "operator_add_player_from_league_player_index",
+        "candidate_status": "official_league_player_index_review_slot",
+        "source_kind": "league_player_index_candidate",
+        "source_platform": "official_league_player_index",
+        "candidate_method": "manual_league_player_index_slot_no_image_download",
+        "page_title": "league player index source review",
+        "identity_review_status": "source_review_ready_identity_not_filled",
+        "identity_evidence_notes": "Operator can mark the source as reviewed after opening the league player index; identity and asset approval remain held until a named athlete row has local candidate evidence.",
+    },
 ]
 
 
@@ -610,40 +657,58 @@ def build_athlete_rows(foundation: Mapping[str, Any], registry: Mapping[str, Lis
     source_rows = source_lookup(registry["source_urls"])
     rows = []
     for team_id, team_name, _city, _country, _url in foundation["teams"]:
-        source_url = source_rows.get(("team", team_id, "roster"), "")
-        rows.append(
-            {
-                "sport_family": sport,
-                "league_id": league_id,
-                "team_id": team_id,
-                "team_name": team_name,
-                "player_id": "",
-                "display_name": "operator_add_player_candidate",
-                "candidate_id": f"{team_id}_operator_add_candidate",
-                "candidate_status": "operator_add_candidate",
-                "source_url": source_url,
-                "source_domain": source_domain(source_url),
-                "source_tier": "official_candidate",
-                "source_kind": "roster",
-                "photo_candidate_url": "",
-                "local_candidate_path": f"{foundation['asset_root']}/athletes/{team_id}/operator_add_candidate/headshot.png",
-                "local_candidate_exists": "false",
-                "approved_marker_path": f"{foundation['asset_root']}/athletes/{team_id}/operator_add_candidate/.approved",
-                "approved_marker_exists": "false",
-                "identity_review_status": "operator_add_identity_evidence",
-                "approval_status": "not_approved",
-                "allowed_decisions": "approve_for_review_only_renderer_use|deny_photo_candidate|hold_identity|revise_source_metadata",
-                "human_intake_file": f"{artifact_root}/{sport}_athlete_photo_review_intake.csv",
-                "team_review_board_path": f"{artifact_root}/athlete_photo_contact_sheets/{team_id}.md",
-                "review_only": "true",
-                "publish_ready": "false",
-                "auto_approval": "false",
-                "auto_publish": "false",
-                "move_files": "false",
-                "paid_apis": "false",
-                "asset_downloads": "false",
-            }
-        )
+        source_by_kind = {
+            "roster_or_public_profile_candidate": source_rows.get(("team", team_id, "roster"), ""),
+            "team_profile_source_candidate": source_rows.get(("team", team_id, "team_home"), ""),
+            "league_player_index_candidate": foundation["players_url"],
+        }
+        for rank, slot in enumerate(ATHLETE_SOURCE_CANDIDATE_SLOTS, start=1):
+            candidate_id = f"{team_id}_{slot['suffix']}"
+            source_url = source_by_kind[slot["source_kind"]]
+            rows.append(
+                {
+                    "sport_family": sport,
+                    "league_id": league_id,
+                    "team_id": team_id,
+                    "team_name": team_name,
+                    "player_id": "",
+                    "display_name": slot["display_name"],
+                    "candidate_id": candidate_id,
+                    "candidate_rank": str(rank),
+                    "candidate_status": slot["candidate_status"],
+                    "source_url": source_url,
+                    "source_domain": source_domain(source_url),
+                    "source_tier": "official_candidate",
+                    "source_platform": slot["source_platform"],
+                    "source_kind": slot["source_kind"],
+                    "candidate_method": slot["candidate_method"],
+                    "page_title": f"{team_name} {slot['page_title']}",
+                    "canonical_url": source_url,
+                    "referring_roster_url": source_rows.get(("team", team_id, "roster"), ""),
+                    "photo_candidate_url": "",
+                    "local_candidate_path": f"{foundation['asset_root']}/athletes/{team_id}/{candidate_id}/headshot.png",
+                    "local_candidate_exists": "false",
+                    "approved_marker_path": f"{foundation['asset_root']}/athletes/{team_id}/{candidate_id}/.approved",
+                    "approved_marker_exists": "false",
+                    "identity_review_status": slot["identity_review_status"],
+                    "approval_status": "not_approved",
+                    "license_hint": "operator_rights_review_required",
+                    "rights_note": "review_only_source_candidate; no image downloaded; no renderer approval",
+                    "attribution_text": "",
+                    "identity_evidence_notes": slot["identity_evidence_notes"],
+                    "identity_risk_flags": "named_athlete_and_local_candidate_asset_missing",
+                    "allowed_decisions": "hold_identity|revise_source_metadata|deny_photo_candidate",
+                    "human_intake_file": f"{artifact_root}/{sport}_athlete_photo_review_intake.csv",
+                    "team_review_board_path": f"{artifact_root}/athlete_photo_contact_sheets/{team_id}.md",
+                    "review_only": "true",
+                    "publish_ready": "false",
+                    "auto_approval": "false",
+                    "auto_publish": "false",
+                    "move_files": "false",
+                    "paid_apis": "false",
+                    "asset_downloads": "false",
+                }
+            )
     return rows
 
 
@@ -749,39 +814,60 @@ def render_athlete_index(rows: List[Dict[str, str]], foundation: Mapping[str, An
     lines = [
         f"# {foundation['league_name']} Athlete Photo Candidate Layer",
         "",
-        "Review-only athlete candidate layer seeded from official roster page candidates.",
+        "Review-only athlete candidate layer seeded from official roster, team-profile, and league player-index source candidates.",
         "",
         f"- Generated: `{generated_at}`",
         f"- Candidate rows: `{len(rows)}`",
-        "- No downloads or approvals. `headshot.png` and `.approved` are never written by this generator.",
+        f"- Team boards: `{len({row['team_id'] for row in rows})}`",
+        "- No downloads or approvals. `headshot.png` and `.approved` are proposed manual target paths only and are never written by this generator.",
+        "- Source pages can be marked reviewed after a manual source sweep; player identity and registry approval stay held until a named athlete and local candidate asset exist.",
         f"- Human intake: `{foundation['artifact_root'].as_posix()}/{foundation['sport_family']}_athlete_photo_review_intake.csv`",
         "",
         "## Team Boards",
         "",
     ]
+    seen = set()
     for row in rows:
+        if row["team_id"] in seen:
+            continue
+        seen.add(row["team_id"])
         lines.append(f"- {row['team_name']} | [board]({row['team_review_board_path']}) | {row['source_url']}")
     return "\n".join(lines) + "\n"
 
 
 def write_team_boards(rows: List[Dict[str, str]]) -> None:
+    rows_by_board: Dict[str, List[Dict[str, str]]] = {}
     for row in rows:
-        text = "\n".join(
-            [
-                f"# {row['team_name']} Athlete Candidate Board",
-                "",
-                "Review-only placeholder for an operator-supplied athlete/photo candidate.",
-                "",
-                f"- Candidate ID: `{row['candidate_id']}`",
-                f"- Roster source candidate: `{row['source_url']}`",
-                f"- Local candidate path: `{row['local_candidate_path']}`",
-                f"- Approved marker path: `{row['approved_marker_path']}`",
-                "- Required action: human fills the intake CSV before any registry state can change.",
-                "- Guardrails: no downloads, no auto-approval, no publish-ready movement.",
-                "",
-            ]
-        )
-        write_text(row["team_review_board_path"], text)
+        rows_by_board.setdefault(row["team_review_board_path"], []).append(row)
+    for board_path, team_rows in rows_by_board.items():
+        first = team_rows[0]
+        lines = [
+            f"# {first['team_name']} Athlete Candidate Board",
+            "",
+            "Review-only source-candidate board for operator-supplied athlete/photo candidates.",
+            "",
+            f"- Candidate rows: `{len(team_rows)}`",
+            "- Source review can confirm the roster/profile/index page was opened and relevant.",
+            "- Identity review must stay held until the row names a concrete athlete and points to reviewed evidence.",
+            "- Local file review must stay `no` until Mike manually supplies a candidate file.",
+            "- Guardrails: no downloads, no auto-approval, no `.approved` markers, no publish-ready movement.",
+            "",
+            "## Candidate Rows",
+            "",
+        ]
+        for index, row in enumerate(sorted(team_rows, key=lambda item: clean(item.get("candidate_rank"))), start=1):
+            lines.extend(
+                [
+                    f"{index}. `{row['candidate_id']}` | {row['display_name']}",
+                    f"   - Source kind: `{row['source_kind']}`",
+                    f"   - Source candidate: `{row['source_url']}`",
+                    f"   - Local candidate path: `{row['local_candidate_path']}`",
+                    f"   - Approved marker path: `{row['approved_marker_path']}`",
+                    f"   - Hold reason: {row['identity_evidence_notes']}",
+                ]
+            )
+        lines.append("")
+        write_text(board_path, "\n".join(lines))
 
 
 def write_foundation(foundation: Mapping[str, Any], generated_at: str) -> Dict[str, Any]:
@@ -846,7 +932,9 @@ def write_foundation(foundation: Mapping[str, Any], generated_at: str) -> Dict[s
             "league_id": foundation["league_id"],
             "generated_at_utc": generated_at,
             "candidate_rows": len(athlete_rows),
-            "team_boards": len(athlete_rows),
+            "team_boards": len({row["team_id"] for row in athlete_rows}),
+            "source_review_slot_rows": sum(1 for row in athlete_rows if row["candidate_status"].endswith("_review_slot")),
+            "starter_candidate_rows": sum(1 for row in athlete_rows if row["candidate_status"] == "operator_add_candidate"),
             "downloads_performed": False,
             "approvals_applied": False,
             "headshot_files_written": False,
