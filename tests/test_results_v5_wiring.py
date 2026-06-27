@@ -216,6 +216,9 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "game_fact_confirmation_status_v1.csv",
         "game_fact_confirmation_status_v1.md",
         "game_fact_confirmation_status_v1.json",
+        "final_score_stat_proof_v1.csv",
+        "final_score_stat_proof_v1.md",
+        "final_score_stat_proof_v1.json",
     ]:
         assert artifact in results
         assert artifact in command_center
@@ -319,6 +322,72 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert summary["manual_verification_required"] == 1
     report = module.game_fact_confirmation_status_report_md(summary, rows)
     assert "Rows Needing Manual Verification" in report
+    assert "No paid APIs" in report
+
+
+def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
+    module = load_results_desk()
+    stats_rows = [
+        {
+            "event_uid": "event_confirmed",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Indiana Fever at New York Liberty",
+            "status": "final",
+            "recap_candidate": "Yes",
+            "final_score": "Indiana Fever 88 - New York Liberty 84",
+            "stats_evidence_status": "confirmed_free_public_box_score",
+            "top_performers": "Player One (Indiana Fever): PTS 24, REB 8 | Player Two (New York Liberty): PTS 20, AST 7",
+            "confirmation_source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+            "confirmation_source_domain": "www.espn.com",
+            "source_confidence": "0.92",
+        },
+        {
+            "event_uid": "event_missing",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Dallas Wings at Las Vegas Aces",
+            "status": "final",
+            "recap_candidate": "Yes",
+            "final_score": "Dallas Wings 72 - Las Vegas Aces 80",
+            "stats_evidence_status": "missing_box_score_or_top_performer_context",
+            "top_performers": "",
+            "confirmation_source_url": "https://www.espn.com/wnba/game/_/gameId/402",
+            "confirmation_source_domain": "www.espn.com",
+            "source_confidence": "0.84",
+        },
+    ]
+
+    rows = module.final_score_stat_proof_rows(stats_rows)
+    confirmed_rows = [row for row in rows if row["event_uid"] == "event_confirmed"]
+    missing_rows = [row for row in rows if row["event_uid"] == "event_missing"]
+
+    assert len(confirmed_rows) == 3
+    score = [row for row in confirmed_rows if row["fact_type"] == "final_score"][0]
+    assert score["proof_status"] == "score_source_backed_operator_verify"
+    assert score["manual_box_score_confirmation_needed"] == "No"
+
+    stat_rows = [row for row in confirmed_rows if row["fact_type"] == "named_player_stat_line"]
+    assert {row["named_player"] for row in stat_rows} == {"Player One", "Player Two"}
+    assert {row["player_team"] for row in stat_rows} == {"Indiana Fever", "New York Liberty"}
+    assert all(row["proof_status"] == "named_stat_line_source_backed_operator_verify" for row in stat_rows)
+    assert all("stats_evidence_gap_board_v1.csv event_uid=event_confirmed" in row["exact_next_file_or_intake"] for row in stat_rows)
+    assert all(row["review_only"] == "Yes" for row in rows)
+    assert all(row["approval_state_change"] == "none" for row in rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in rows)
+
+    assert len(missing_rows) == 2
+    missing_stat = [row for row in missing_rows if row["fact_type"] == "named_player_stat_line"][0]
+    assert missing_stat["proof_status"] == "named_stat_line_missing_manual_box_score_confirmation_required"
+    assert missing_stat["manual_box_score_confirmation_needed"] == "Yes"
+    assert "stats_confirmation_intake_v1.csv" in missing_stat["exact_next_file_or_intake"]
+
+    summary = module.final_score_stat_proof_summary(rows)
+    assert summary["final_score_rows"] == 2
+    assert summary["named_player_stat_rows"] == 3
+    assert summary["manual_box_score_confirmation_needed"] == 1
+    report = module.final_score_stat_proof_report_md(summary, rows)
+    assert "Manual Box-Score Confirmation Needed" in report
     assert "No paid APIs" in report
 
 
