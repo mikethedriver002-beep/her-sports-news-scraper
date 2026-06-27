@@ -28,6 +28,7 @@ INPUT_RESULTS_HUB = os.environ.get("HSD_RESULTS_HUB", "results_system_hub.md")
 INPUT_RESULTS_TOP_CSV = os.environ.get("HSD_RESULTS_TOP_CSV", "top_womens_results.csv")
 INPUT_RESULTS_RECONCILED_CSV = os.environ.get("HSD_RESULTS_RECONCILED_CSV", "reconciled_events.csv")
 INPUT_RESULTS_FINALS_CSV = os.environ.get("HSD_RESULTS_FINALS_CSV", "today_final_results.csv")
+INPUT_GAME_INTELLIGENCE_CSV = os.environ.get("HSD_GAME_INTELLIGENCE_BOARD", "game_intelligence_board_v1.csv")
 
 SOURCE_REGISTRY_FILE = os.environ.get("HSD_NEWS_SOURCE_REGISTRY", "news_source_registry.json")
 ANGLE_RULES_FILE = os.environ.get("HSD_NEWS_ANGLE_RULES", "news_angle_rules.json")
@@ -134,6 +135,10 @@ BREAKING_CONFIRMATION_INTAKE_FIELDS = [
 BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "cluster_id", "run_id", "cluster_headline", "story_count", "candidate_ids",
     "urgency_band", "max_breaking_score", "official_confirmation_status",
+    "matching_official_evidence_status", "matching_official_evidence_count",
+    "matching_official_evidence_sources", "matching_official_evidence_urls",
+    "matching_official_evidence_artifacts", "manual_confirmation_gap",
+    "exact_source_or_intake_row_to_open",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -2611,6 +2616,41 @@ def public_signal_confidence_rollup(rows: List[Dict[str, Any]]) -> str:
     return "none"
 
 
+OFFICIAL_RESULT_DOMAINS = (
+    "wnba.com",
+    "nwsl.com",
+    "wta.com",
+    "lpga.com",
+    "ncaa.com",
+    "ussoccer.com",
+)
+
+WIRE_RESULT_DOMAINS = (
+    "apnews.com",
+    "reuters.com",
+)
+
+
+def source_domain_from_url(url: Any) -> str:
+    text = clean(url)
+    if not text:
+        return ""
+    try:
+        return clean(urlparse(text).netloc).lower()
+    except Exception:
+        return ""
+
+
+def is_official_or_wire_domain(domain: Any) -> bool:
+    text = clean(domain).lower()
+    return any(text == d or text.endswith("." + d) for d in OFFICIAL_RESULT_DOMAINS + WIRE_RESULT_DOMAINS)
+
+
+def is_free_result_domain(domain: Any) -> bool:
+    text = clean(domain).lower()
+    return is_official_or_wire_domain(text) or text.endswith("espn.com") or text.endswith("cbssports.com")
+
+
 def official_confirmation_status(rows: List[Dict[str, Any]], domains: List[str]) -> str:
     grades = {clean(row.get("source_publish_grade")) for row in rows}
     tiers = {clean(row.get("source_confidence_tier")) for row in rows}
@@ -2643,7 +2683,145 @@ def exact_manual_next_action(status: str) -> str:
     return "Open breaking_public_signal_confirmation_intake.csv, verify the current source URL/domain still confirms the claim, and record operator_checked_url plus operator_notes."
 
 
-def breaking_signal_cluster_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def packet_confirmation_evidence(packet: Dict[str, Any]) -> List[Dict[str, str]]:
+    urls = parse_json_list(packet.get("source_urls_json"))
+    domains = sorted({source_domain_from_url(url) for url in urls if source_domain_from_url(url)})
+    official_urls = [url for url in urls if is_official_or_wire_domain(source_domain_from_url(url))]
+    free_urls = [url for url in urls if is_free_result_domain(source_domain_from_url(url))]
+    if not official_urls and not free_urls:
+        return []
+    status = "official_or_wire_news_packet_evidence" if official_urls else "free_news_packet_evidence"
+    return [
+        {
+            "artifact": "news_fact_packets.csv",
+            "row_ref": f"candidate_id={clean(packet.get('candidate_id'))}",
+            "candidate_id": clean(packet.get("candidate_id")),
+            "headline": clean(packet.get("headline")),
+            "status": status,
+            "source": "; ".join(domains[:8]) or clean(packet.get("source_confidence_tier")),
+            "url": json.dumps((official_urls or free_urls or urls)[:6], ensure_ascii=False),
+            "review_note": "Operator must open the cited source URL and verify that it still confirms the cluster claim.",
+        }
+    ]
+
+
+def game_row_matches_cluster(row: Dict[str, Any], cluster_headline: str, candidate_ids: List[str]) -> bool:
+    headline_blob = norm(cluster_headline)
+    home = norm(row.get("home_team"))
+    away = norm(row.get("away_team"))
+    if home and away and home in headline_blob and away in headline_blob:
+        return True
+    row_text = norm(" ".join([
+        row.get("row_id", ""),
+        row.get("home_team", ""),
+        row.get("away_team", ""),
+        row.get("final_score", ""),
+    ]))
+    return any(cid and cid in row_text for cid in candidate_ids)
+
+
+def game_confirmation_evidence(row: Dict[str, Any], cluster_headline: str, candidate_ids: List[str]) -> List[Dict[str, str]]:
+    if not game_row_matches_cluster(row, cluster_headline, candidate_ids):
+        return []
+    if clean(row.get("status")).lower() != "final" and clean(row.get("recap_candidate")) != "Yes":
+        return []
+    url = clean(row.get("source_url"))
+    domain = clean(row.get("source_domain")) or source_domain_from_url(url)
+    if not url or not is_free_result_domain(domain):
+        return []
+    return [
+        {
+            "artifact": "game_intelligence_board_v1.csv",
+            "row_ref": f"row_id={clean(row.get('row_id'))}",
+            "candidate_id": "",
+            "headline": cluster_headline,
+            "status": "free_result_game_board_evidence_operator_verify",
+            "source": clean(row.get("selected_source")) or domain,
+            "url": json.dumps([url], ensure_ascii=False),
+            "review_note": "Free/public result evidence only; operator must verify final score, teams, and recency before editorial use.",
+        }
+    ]
+
+
+def confirmation_evidence_rows(
+    packets: List[Dict[str, Any]],
+    game_rows: List[Dict[str, Any]],
+    cluster_headline: str,
+    candidate_ids: List[str],
+) -> List[Dict[str, str]]:
+    evidence: List[Dict[str, str]] = []
+    candidate_set = {cid for cid in candidate_ids if cid}
+    for packet in packets:
+        if clean(packet.get("candidate_id")) in candidate_set:
+            evidence.extend(packet_confirmation_evidence(packet))
+    for row in game_rows:
+        evidence.extend(game_confirmation_evidence(row, cluster_headline, candidate_ids))
+    return evidence
+
+
+def evidence_rollup_status(evidence: List[Dict[str, str]]) -> str:
+    statuses = {clean(row.get("status")) for row in evidence}
+    has_news = any(clean(row.get("artifact")) == "news_fact_packets.csv" for row in evidence)
+    has_game = any(clean(row.get("artifact")) == "game_intelligence_board_v1.csv" for row in evidence)
+    if has_news and has_game:
+        return "matching_news_and_free_result_evidence_operator_verify"
+    if "official_or_wire_news_packet_evidence" in statuses:
+        return "matching_official_or_wire_news_evidence_operator_verify"
+    if has_game:
+        return "matching_free_result_evidence_operator_verify"
+    if evidence:
+        return "matching_free_public_evidence_operator_verify"
+    return "no_matching_current_artifact_evidence_operator_confirmation_required"
+
+
+def evidence_urls_json(evidence: List[Dict[str, str]]) -> str:
+    urls: List[str] = []
+    for row in evidence:
+        for url in parse_json_list(row.get("url")):
+            if url not in urls:
+                urls.append(url)
+    return json.dumps(urls[:12], ensure_ascii=False)
+
+
+def cluster_confirmation_gap(status: str) -> str:
+    if status == "no_matching_current_artifact_evidence_operator_confirmation_required":
+        return "No current news/game artifact match was found; operator must add an official, wire, primary, or operator-verified URL in the confirmation intake before any story path."
+    return "Current artifacts provide a review cue only; operator must still verify the cited source URL, final/result facts, and recency in the confirmation intake."
+
+
+def intake_row_ref_for_cluster(intake_rows: List[Dict[str, Any]], candidate_ids: List[str]) -> str:
+    candidate_set = {cid for cid in candidate_ids if cid}
+    for row in intake_rows:
+        if clean(row.get("candidate_id")) in candidate_set:
+            return f"confirmation_id={clean(row.get('confirmation_id'))}"
+    if candidate_ids:
+        return f"candidate_id={candidate_ids[0]}"
+    return "first matching headline row"
+
+
+def source_or_intake_row_action(evidence: List[Dict[str, str]], intake_rows: List[Dict[str, Any]], candidate_ids: List[str]) -> str:
+    intake_ref = intake_row_ref_for_cluster(intake_rows, candidate_ids)
+    if evidence:
+        first = evidence[0]
+        return (
+            f"Open {first.get('artifact')} {first.get('row_ref')}, verify the cited URL/facts manually, "
+            f"then open breaking_public_signal_confirmation_intake.csv {intake_ref} and record operator_checked_url plus operator_confirmation_result."
+        )
+    return (
+        f"Open breaking_public_signal_confirmation_intake.csv {intake_ref}, add an official/wire/primary confirmation URL, "
+        "and record operator_confirmation_result before any editorial use."
+    )
+
+
+def breaking_signal_cluster_rows(
+    rows: List[Dict[str, Any]],
+    packets: Optional[List[Dict[str, Any]]] = None,
+    game_rows: Optional[List[Dict[str, Any]]] = None,
+    intake_rows: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    packets = packets or []
+    game_rows = game_rows or []
+    intake_rows = intake_rows or []
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for row in rows:
         grouped.setdefault(breaking_cluster_key(row), []).append(row)
@@ -2665,16 +2843,30 @@ def breaking_signal_cluster_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, A
         max_score = max([int(clean(row.get("breaking_score")) or 0) for row in group] or [0])
         public_count = sum(int(clean(row.get("public_signal_count")) or 0) for row in group)
         status = official_confirmation_status(group, domains)
+        candidate_ids = sorted({clean(row.get("candidate_id")) for row in group if clean(row.get("candidate_id"))})
+        evidence = confirmation_evidence_rows(packets, game_rows, clean(group[0].get("headline")), candidate_ids)
+        evidence_status = evidence_rollup_status(evidence)
         clusters.append(
             {
                 "cluster_id": "signal_cluster_" + stable_id(key, "|".join(sorted(clean(row.get("candidate_id")) for row in group))),
                 "run_id": clean(group[0].get("run_id")),
                 "cluster_headline": clean(group[0].get("headline")),
                 "story_count": str(len(group)),
-                "candidate_ids": "; ".join(sorted({clean(row.get("candidate_id")) for row in group if clean(row.get("candidate_id"))})),
+                "candidate_ids": "; ".join(candidate_ids),
                 "urgency_band": strongest_urgency_band(group),
                 "max_breaking_score": str(max_score),
                 "official_confirmation_status": status,
+                "matching_official_evidence_status": evidence_status,
+                "matching_official_evidence_count": str(len(evidence)),
+                "matching_official_evidence_sources": "; ".join(clean(row.get("source")) for row in evidence if clean(row.get("source")))[:500],
+                "matching_official_evidence_urls": evidence_urls_json(evidence),
+                "matching_official_evidence_artifacts": "; ".join(
+                    f"{clean(row.get('artifact'))} {clean(row.get('row_ref'))}".strip()
+                    for row in evidence
+                    if clean(row.get("artifact")) or clean(row.get("row_ref"))
+                )[:500],
+                "manual_confirmation_gap": cluster_confirmation_gap(evidence_status),
+                "exact_source_or_intake_row_to_open": source_or_intake_row_action(evidence, intake_rows, candidate_ids),
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
                 "source_domains": "; ".join(domains[:12]),
@@ -2718,6 +2910,10 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"- Cluster size: `{row.get('story_count')}` row(s)",
             f"- Max breaking score: `{row.get('max_breaking_score')}/100`",
             f"- Official confirmation: `{row.get('official_confirmation_status')}`",
+            f"- Matching official/free evidence: `{row.get('matching_official_evidence_status')}` / count: `{row.get('matching_official_evidence_count')}`",
+            f"- Evidence artifacts: {row.get('matching_official_evidence_artifacts') or 'none matched'}",
+            f"- Manual confirmation gap: {row.get('manual_confirmation_gap')}",
+            f"- Exact row to open: {row.get('exact_source_or_intake_row_to_open')}",
             f"- Source diversity: `{row.get('source_diversity')}` / domains: {row.get('source_domains') or 'none captured'}",
             f"- Public signal: `{row.get('public_signal_confidence')}` / count: `{row.get('public_signal_count')}`",
             f"- Freshness: `{row.get('freshness_status')}` / newest: `{row.get('newest_signal_timestamp_utc') or 'missing'}`",
@@ -2993,6 +3189,7 @@ def main() -> None:
     top_csv_path, top_csv_rows = resolve_csv_input(INPUT_RESULTS_TOP_CSV)
     reconciled_csv_path, reconciled_csv_rows = resolve_csv_input(INPUT_RESULTS_RECONCILED_CSV)
     finals_csv_path, finals_csv_rows = resolve_csv_input(INPUT_RESULTS_FINALS_CSV)
+    game_intelligence_path, game_intelligence_rows = resolve_csv_input(INPUT_GAME_INTELLIGENCE_CSV)
 
     csv_sources = [
         ("top_womens_results.csv", top_csv_rows),
@@ -3008,6 +3205,7 @@ def main() -> None:
         input_status_row_csv("top_womens_results_csv", INPUT_RESULTS_TOP_CSV, top_csv_rows, top_csv_path),
         input_status_row_csv("reconciled_events_csv", INPUT_RESULTS_RECONCILED_CSV, reconciled_csv_rows, reconciled_csv_path),
         input_status_row_csv("today_final_results_csv", INPUT_RESULTS_FINALS_CSV, finals_csv_rows, finals_csv_path),
+        input_status_row_csv("game_intelligence_board_csv", INPUT_GAME_INTELLIGENCE_CSV, game_intelligence_rows, game_intelligence_path),
     ]
 
     csv_candidates = candidates_from_result_csvs(run_id, csv_sources)
@@ -3055,7 +3253,12 @@ def main() -> None:
 
     breaking_signal_rows = build_breaking_public_signal_rows(packets, observations_by_candidate, run_id)
     confirmation_intake_rows = breaking_confirmation_intake_rows(breaking_signal_rows)
-    cluster_rows = breaking_signal_cluster_rows(breaking_signal_rows)
+    cluster_rows = breaking_signal_cluster_rows(
+        breaking_signal_rows,
+        packets=packets,
+        game_rows=game_intelligence_rows,
+        intake_rows=confirmation_intake_rows,
+    )
     manual_packets = [p for p in packets if p.get("manual_review") == "Yes"]
 
     write_csv(NEWS_INPUT_STATUS_CSV, input_status, INPUT_STATUS_FIELDS)
@@ -3091,6 +3294,10 @@ def main() -> None:
                 "with_public_signal": len([row for row in breaking_signal_rows if row.get("public_signal_count") not in {"", "0"}]),
                 "confirmation_intake_rows": len(confirmation_intake_rows),
                 "cluster_rows": len(cluster_rows),
+                "clusters_with_matching_current_artifact_evidence": len([
+                    row for row in cluster_rows
+                    if clean(row.get("matching_official_evidence_status")) != "no_matching_current_artifact_evidence_operator_confirmation_required"
+                ]),
             },
             "outputs": [
                 BREAKING_PUBLIC_SIGNAL_CSV,
