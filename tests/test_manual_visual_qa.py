@@ -4,6 +4,7 @@ import csv
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -11,6 +12,11 @@ from PIL import Image, ImageDraw, ImageFont
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "generate_hsd_manual_visual_qa_v1.py"
+
+
+def python_executable() -> str:
+    bundled = REPO / ".venv" / "Scripts" / "python.exe"
+    return str(bundled if bundled.exists() else Path(sys.executable))
 
 
 def make_preview(path: Path, *, size: tuple[int, int] = (1080, 1350)) -> None:
@@ -145,7 +151,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
     proc = subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [python_executable(), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -181,6 +187,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "lower_module_text_zone" in check_ids
     assert "photo_first_template_readiness" in check_ids
     assert "player_ledger_readability" in check_ids
+    assert "preview_freshness_current_handoff" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
     assert all(row["operator_decision"] == "operator_fill_required" for row in rows)
@@ -205,7 +212,7 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
     proc = subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [python_executable(), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -263,7 +270,7 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
     proc = subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [python_executable(), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -278,6 +285,46 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     assert checks["photo_first_face_visibility"]["qa_result"] == "pass"
     assert checks["photo_first_text_clearance"]["qa_result"] == "pass"
     assert "minimum_clearance" in checks["photo_first_text_clearance"]["evidence"]
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
+
+
+def test_manual_visual_qa_holds_stale_preview_against_newer_handoff(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_reference_style_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
+
+    handoff_manifest = json.loads((handoff_dir / "handoff_manifest.json").read_text(encoding="utf-8"))
+    handoff_manifest["generated_at_utc"] = "2026-06-27T17:38:08+00:00"
+    handoff_manifest["packet"] = {"packet_id": "render_prep_1_current-story"}
+    (handoff_dir / "handoff_manifest.json").write_text(json.dumps(handoff_manifest), encoding="utf-8")
+
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["generated_at_utc"] = "2026-06-27T17:11:43+00:00"
+    renderer_manifest["packet_id"] = "render_prep_1_current-story"
+    renderer_manifest["selected_template"] = {"template_id": "hsd_game_recap_final_score_a", "template_family": "game_recap_final_score"}
+    renderer_manifest["reference_pack"] = {"pack_id": "templates_hsd_20260625"}
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
+
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [python_executable(), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    freshness_check = next(check for check in manifest["checks"] if check["check_id"] == "preview_freshness_current_handoff")
+    assert manifest["status"] == "hold_for_manual_review"
+    assert freshness_check["qa_result"] == "hold"
+    assert "fresh_after_handoff=False" in freshness_check["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 
@@ -310,7 +357,7 @@ def test_manual_visual_qa_holds_wrong_dimensions_without_approval(tmp_path: Path
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
 
     proc = subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [python_executable(), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,

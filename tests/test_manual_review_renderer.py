@@ -74,6 +74,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     (latest_handoff / "handoff_manifest.json").write_text(
         json.dumps(
             {
+                "generated_at_utc": "2026-06-27T17:38:08+00:00",
                 "handoff_status": "ready_for_manual_review",
                 "guardrails": {"review_only": True, "auto_render": False, "auto_publish": False, "paid_apis": False},
                 "packet": packet,
@@ -140,6 +141,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["reference_pack"]["guardrails"]["auto_publish"] is False
     assert manifest["preview_source_title"] == "Test Liberty result"
     assert manifest["preview_freshness_status"] == "generated_from_current_handoff_packet"
+    assert manifest["source_handoff_generated_at_utc"] == "2026-06-27T17:38:08+00:00"
+    assert manifest["renderer_generated_at_utc"]
+    assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
     assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v4_dimensional"
     assert "quiet_score_zones" in manifest["render_background_cues"]
@@ -223,6 +227,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Review draft is for human review only" in report
     assert "Preview source packet: `Test Liberty result`" in report
     assert "Preview freshness: generated from the current handoff packet." in report
+    assert "Source handoff generated: `2026-06-27T17:38:08+00:00`" in report
+    assert "Preview decision cue" in report
     assert "## Review Draft Formats" in report
     assert "templates_hsd_20260625" in report
     assert "hsd_game_recap_final_score_a" in report

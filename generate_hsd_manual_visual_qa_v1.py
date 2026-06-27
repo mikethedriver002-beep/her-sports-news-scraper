@@ -53,6 +53,19 @@ def clean(value: Any) -> str:
     return " ".join(str(value or "").replace("\n", " ").split()).strip()
 
 
+def parse_utc_timestamp(value: Any) -> datetime | None:
+    text = clean(value)
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
 def repo_root() -> Path:
     return Path.cwd().resolve()
 
@@ -146,6 +159,45 @@ def add_check(checks: List[Dict[str, Any]], check_id: str, label: str, passed: b
             "evidence": evidence,
             "approval_policy": "manual approve/hold required; this report never approves or publishes",
         }
+    )
+
+
+def add_preview_freshness_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any], handoff_manifest: Dict[str, Any]) -> None:
+    packet = handoff_manifest.get("packet") if isinstance(handoff_manifest.get("packet"), dict) else {}
+    renderer_packet_id = clean(renderer_manifest.get("packet_id"))
+    handoff_packet_id = clean(packet.get("packet_id"))
+    renderer_generated = parse_utc_timestamp(renderer_manifest.get("generated_at_utc"))
+    handoff_generated = parse_utc_timestamp(handoff_manifest.get("generated_at_utc"))
+
+    packet_matches = bool(renderer_packet_id and handoff_packet_id and renderer_packet_id == handoff_packet_id)
+    if not renderer_packet_id or not handoff_packet_id:
+        packet_matches = True
+
+    if renderer_generated and handoff_generated:
+        fresh_enough = renderer_generated >= handoff_generated
+        passed = packet_matches and fresh_enough
+        evidence = (
+            f"renderer_packet={renderer_packet_id or 'not_recorded'}; handoff_packet={handoff_packet_id or 'not_recorded'}; "
+            f"renderer_generated_at_utc={renderer_generated.isoformat()}; "
+            f"handoff_generated_at_utc={handoff_generated.isoformat()}; "
+            f"fresh_after_handoff={fresh_enough}."
+        )
+        add_check(checks, "preview_freshness_current_handoff", "Preview freshness vs current handoff", passed, evidence)
+        return
+
+    evidence = (
+        f"renderer_packet={renderer_packet_id or 'not_recorded'}; handoff_packet={handoff_packet_id or 'not_recorded'}; "
+        f"renderer_generated_at_utc={clean(renderer_manifest.get('generated_at_utc')) or 'not_recorded'}; "
+        f"handoff_generated_at_utc={clean(handoff_manifest.get('generated_at_utc')) or 'not_recorded'}; "
+        "timestamp comparison unavailable, so human review must confirm the preview belongs to the current handoff."
+    )
+    add_check(
+        checks,
+        "preview_freshness_current_handoff",
+        "Preview freshness vs current handoff",
+        packet_matches,
+        evidence,
+        result="pass_human_review_required" if packet_matches else "hold",
     )
 
 
@@ -746,6 +798,7 @@ def main() -> None:
         add_photo_first_template_checks(checks, renderer_manifest, None)
         add_player_ledger_readability_check(checks, renderer_manifest, None)
     add_renderer_metadata_checks(checks, renderer_manifest)
+    add_preview_freshness_check(checks, renderer_manifest, handoff_manifest)
     add_check(
         checks,
         "approval_guardrails",
