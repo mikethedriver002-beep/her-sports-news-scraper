@@ -255,12 +255,29 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
             "operator_confirmation_status": "",
         },
     ]
+    proof_review_order_rows = [
+        {
+            "review_order": "1",
+            "review_phase": "2_final_score_source_check",
+            "fact_type": "final_score",
+            "proof_row_to_open": "final_score_stat_proof_v1.csv proof_id=proof-final-liberty",
+            "intake_row_to_record": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-final-liberty",
+        },
+        {
+            "review_order": "2",
+            "review_phase": "3_named_player_stat_source_check",
+            "fact_type": "named_player_stat_line",
+            "proof_row_to_open": "final_score_stat_proof_v1.csv proof_id=proof-player-liberty",
+            "intake_row_to_record": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-player-liberty",
+        },
+    ]
     clusters = module.breaking_signal_cluster_rows(
         [row, duplicate],
         packets=[packet],
         game_rows=game_rows,
         proof_rows=proof_rows,
         proof_confirmation_rows=proof_confirmation_rows,
+        proof_review_order_rows=proof_review_order_rows,
         intake_rows=intake,
     )
     cluster = clusters[0]
@@ -287,6 +304,13 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "operator_checked_source_url plus operator_confirmation_status" in cluster["exact_human_confirmation_next_action"]
     assert "final-score proof" in cluster["exact_human_confirmation_next_action"]
     assert "named-player stat proof" in cluster["exact_human_confirmation_next_action"]
+    assert cluster["score_stat_review_order_status"] == "review_order_rows_present_operator_follow_walkthrough"
+    assert cluster["score_stat_review_walkthrough_target"] == "final_score_stat_proof_review_walkthrough_v1.md"
+    assert "final_score_stat_proof_review_order_v1.csv review_order=1" in cluster["first_score_stat_review_order_target"]
+    assert "proof-final-liberty" in cluster["first_score_stat_review_order_target"]
+    assert "review_order=2" in cluster["score_stat_review_order_targets"]
+    assert "final_score_stat_proof_review_walkthrough_v1.md" in cluster["exact_review_walkthrough_next_action"]
+    assert "final_score_stat_proof_confirmation_intake_v1.csv" in cluster["exact_review_walkthrough_next_action"]
     assert "breaking_public_signal_confirmation_intake.csv" in cluster["exact_manual_next_action"]
     assert cluster["review_only"] == "true"
     assert cluster["publish_ready"] == "false"
@@ -299,6 +323,8 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "final_score_stat_proof_v1.csv" in missing_proof_cluster["exact_score_stat_proof_row_or_source_to_open"]
     assert missing_proof_cluster["score_stat_confirmation_status"] == "no_score_stat_proof_to_confirm"
     assert "No final-score proof confirmation target matched" in missing_proof_cluster["exact_human_confirmation_next_action"]
+    assert missing_proof_cluster["score_stat_review_order_status"] == "no_score_stat_proof_to_order"
+    assert "final_score_stat_proof_review_walkthrough_v1.md" in missing_proof_cluster["exact_review_walkthrough_next_action"]
 
 
 def test_box_score_top_performers_match_the_same_game() -> None:
@@ -421,6 +447,9 @@ def test_game_source_confirmation_bridge_links_game_stats_and_cluster_rows() -> 
     assert "breaking_public_signal_clusters.csv cluster_id=signal-cluster-sky" in row["exact_next_row_or_source_to_open"]
     assert "final_score_stat_proof_confirmation_intake_v1.csv" in row["exact_next_row_or_source_to_open"]
     assert "final_score_stat_proof_confirmation_intake_v1.csv for final score and named-player stat proof" in row["operator_confirmation_target"]
+    source_urls = json.loads(row["news_or_cluster_source_urls"])
+    assert source_urls == list(dict.fromkeys(source_urls))
+    assert source_urls.count("https://sky.wnba.com/news/recap") == 1
     assert row["manual_confirmation_needed"] == "true"
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"

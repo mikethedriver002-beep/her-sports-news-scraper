@@ -177,6 +177,10 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "score_proof_confirmation_target": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score",
                 "named_player_stat_proof_confirmation_targets": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-player",
                 "exact_human_confirmation_next_action": "Open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky and fill operator_checked_url plus operator_confirmation_result for the breaking claim/source URL. Open final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score and fill operator_checked_source_url plus operator_confirmation_status for the final-score proof. Open final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-player and fill operator_checked_source_url plus operator_confirmation_status for named-player stat proof.",
+                "score_stat_review_order_status": "review_order_rows_present_operator_follow_walkthrough",
+                "first_score_stat_review_order_target": "final_score_stat_proof_review_order_v1.csv review_order=5; phase=2_final_score_source_check; proof=final_score_stat_proof_v1.csv proof_id=proof-sky-score; record=final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score",
+                "score_stat_review_walkthrough_target": "final_score_stat_proof_review_walkthrough_v1.md",
+                "exact_review_walkthrough_next_action": "Open final_score_stat_proof_review_walkthrough_v1.md; start at final_score_stat_proof_review_order_v1.csv review_order=5; record checks in final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score.",
             }
         ],
         [
@@ -196,6 +200,10 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "score_proof_confirmation_target",
             "named_player_stat_proof_confirmation_targets",
             "exact_human_confirmation_next_action",
+            "score_stat_review_order_status",
+            "first_score_stat_review_order_target",
+            "score_stat_review_walkthrough_target",
+            "exact_review_walkthrough_next_action",
         ],
     )
 
@@ -204,12 +212,13 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
 
     assert row["story_opportunity_source_coverage"] == "score_and_named_player_stat_proof_present_operator_verify"
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
-    assert "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score" in row["next_action"]
-    assert row["story_opportunity_second_source_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
-    assert "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score" in row["story_opportunity_readiness_note"]
-    assert "operator_checked_source_url plus operator_confirmation_status" in row["story_opportunity_second_source_action"]
-    assert "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score" in row["story_opportunity_second_source_url"]
-    assert row["story_opportunity_second_source_reason"] == "operator_input_required_in_score_stat_proof_confirmation_intake"
+    assert "final_score_stat_proof_review_walkthrough_v1.md" in row["next_action"]
+    assert "review_order=5" in row["next_action"]
+    assert row["story_opportunity_second_source_action"].startswith("Open final_score_stat_proof_review_walkthrough_v1.md")
+    assert "final_score_stat_proof_review_walkthrough_v1.md" in row["story_opportunity_readiness_note"]
+    assert "proof_id=proof-sky-score in final_score_stat_proof_confirmation_intake_v1.csv" in row["story_opportunity_readiness_note"]
+    assert "final_score_stat_proof_review_order_v1.csv review_order=5" in row["story_opportunity_second_source_url"]
+    assert row["story_opportunity_second_source_reason"] == "review_order_rows_present_operator_follow_walkthrough"
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
 

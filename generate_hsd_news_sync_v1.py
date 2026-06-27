@@ -35,6 +35,11 @@ INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV = os.environ.get(
     "HSD_FINAL_SCORE_STAT_PROOF_CONFIRMATION_INTAKE",
     "final_score_stat_proof_confirmation_intake_v1.csv",
 )
+INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV = os.environ.get(
+    "HSD_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER",
+    "final_score_stat_proof_review_order_v1.csv",
+)
+FINAL_SCORE_STAT_PROOF_REVIEW_WALKTHROUGH_MD = "final_score_stat_proof_review_walkthrough_v1.md"
 
 SOURCE_REGISTRY_FILE = os.environ.get("HSD_NEWS_SOURCE_REGISTRY", "news_source_registry.json")
 ANGLE_RULES_FILE = os.environ.get("HSD_NEWS_ANGLE_RULES", "news_angle_rules.json")
@@ -155,6 +160,9 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "breaking_claim_confirmation_target", "score_proof_confirmation_target",
     "named_player_stat_proof_confirmation_targets",
     "score_stat_confirmation_status", "exact_human_confirmation_next_action",
+    "score_stat_review_order_status", "score_stat_review_order_targets",
+    "first_score_stat_review_order_target", "score_stat_review_walkthrough_target",
+    "exact_review_walkthrough_next_action",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -2974,6 +2982,100 @@ def exact_human_confirmation_action(
     return " ".join(steps)
 
 
+def proof_id_from_review_order_row(row: Dict[str, Any]) -> str:
+    text = " ".join([
+        clean(row.get("proof_row_to_open")),
+        clean(row.get("intake_row_to_record")),
+        clean(row.get("proof_id")),
+    ])
+    match = re.search(r"\bproof_id=([A-Za-z0-9_-]+)", text)
+    if match:
+        return match.group(1)
+    return clean(row.get("proof_id"))
+
+
+def review_order_rows_for_proof_ids(
+    proof_ids: List[str],
+    review_order_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    wanted = set(proof_ids)
+    matches = [row for row in review_order_rows if proof_id_from_review_order_row(row) in wanted]
+    def order_value(row: Dict[str, Any]) -> int:
+        try:
+            return int(clean(row.get("review_order")) or "9999")
+        except Exception:
+            return 9999
+
+    matches.sort(key=order_value)
+    return matches
+
+
+def review_order_target(row: Dict[str, Any]) -> str:
+    review_order = clean(row.get("review_order"))
+    phase = clean(row.get("review_phase"))
+    intake = clean(row.get("intake_row_to_record"))
+    proof = clean(row.get("proof_row_to_open"))
+    bits = []
+    if review_order:
+        bits.append(f"final_score_stat_proof_review_order_v1.csv review_order={review_order}")
+    if phase:
+        bits.append(f"phase={phase}")
+    if proof:
+        bits.append(f"proof={proof}")
+    if intake:
+        bits.append(f"record={intake}")
+    return "; ".join(bits)
+
+
+def review_order_targets_for_rows(rows: List[Dict[str, Any]], limit: int = 4) -> str:
+    targets = [review_order_target(row) for row in rows if review_order_target(row)]
+    if not targets:
+        return ""
+    visible = targets[:limit]
+    suffix = f"; +{len(targets) - limit} more" if len(targets) > limit else ""
+    return "; ".join(visible) + suffix
+
+
+def review_order_status(proof_rows: List[Dict[str, Any]], order_rows: List[Dict[str, Any]]) -> str:
+    proof_ids = proof_ids_by_type(proof_rows, "final_score") + proof_ids_by_type(proof_rows, "named_player_stat_line")
+    if not proof_ids:
+        return "no_score_stat_proof_to_order"
+    if not order_rows:
+        return "missing_review_order_rows_for_score_stat_proof"
+    if len({proof_id_from_review_order_row(row) for row in order_rows}) < len(set(proof_ids)):
+        return "partial_review_order_rows_for_score_stat_proof"
+    return "review_order_rows_present_operator_follow_walkthrough"
+
+
+def first_review_order_target(order_rows: List[Dict[str, Any]]) -> str:
+    if not order_rows:
+        return ""
+    score_first = next((row for row in order_rows if clean(row.get("fact_type")) == "final_score"), order_rows[0])
+    return review_order_target(score_first)
+
+
+def exact_review_walkthrough_action(
+    order_status: str,
+    first_target: str,
+    order_targets: str,
+) -> str:
+    if order_status == "no_score_stat_proof_to_order":
+        return (
+            "No score/stat proof row matched this breaking cluster; open final_score_stat_proof_review_walkthrough_v1.md "
+            "and confirm whether this item belongs in the proof review order before using score/stat claims."
+        )
+    if not first_target:
+        return (
+            "Open final_score_stat_proof_review_walkthrough_v1.md, then search final_score_stat_proof_review_order_v1.csv "
+            "for this matchup; if no row exists, record the missing proof path before using score/stat claims."
+        )
+    return (
+        f"Open {FINAL_SCORE_STAT_PROOF_REVIEW_WALKTHROUGH_MD}; start at {first_target}; "
+        f"then continue through these cluster proof rows: {order_targets or first_target}. "
+        "Record human checks only in the listed final_score_stat_proof_confirmation_intake_v1.csv rows."
+    )
+
+
 def evidence_rollup_status(evidence: List[Dict[str, str]]) -> str:
     statuses = {clean(row.get("status")) for row in evidence}
     has_news = any(clean(row.get("artifact")) == "news_fact_packets.csv" for row in evidence)
@@ -3034,12 +3136,14 @@ def breaking_signal_cluster_rows(
     game_rows: Optional[List[Dict[str, Any]]] = None,
     proof_rows: Optional[List[Dict[str, Any]]] = None,
     proof_confirmation_rows: Optional[List[Dict[str, Any]]] = None,
+    proof_review_order_rows: Optional[List[Dict[str, Any]]] = None,
     intake_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     packets = packets or []
     game_rows = game_rows or []
     proof_rows = proof_rows or []
     proof_confirmation_rows = proof_confirmation_rows or []
+    proof_review_order_rows = proof_review_order_rows or []
     intake_rows = intake_rows or []
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for row in rows:
@@ -3068,6 +3172,11 @@ def breaking_signal_cluster_rows(
         matched_proof_rows = proof_rows_for_cluster(proof_rows, clean(group[0].get("headline")), evidence)
         proof_status = proof_status_for_rows(matched_proof_rows)
         named_proof_rows = [row for row in matched_proof_rows if clean(row.get("fact_type")) == "named_player_stat_line"]
+        proof_ids = proof_ids_by_type(matched_proof_rows, "final_score") + proof_ids_by_type(matched_proof_rows, "named_player_stat_line")
+        matched_review_order_rows = review_order_rows_for_proof_ids(proof_ids, proof_review_order_rows)
+        review_status = review_order_status(matched_proof_rows, matched_review_order_rows)
+        review_targets = review_order_targets_for_rows(matched_review_order_rows)
+        first_review_target = first_review_order_target(matched_review_order_rows)
         breaking_target = f"breaking_public_signal_confirmation_intake.csv {intake_row_ref_for_cluster(intake_rows, candidate_ids)}"
         score_targets = proof_confirmation_targets_for_ids(
             proof_ids_by_type(matched_proof_rows, "final_score"),
@@ -3117,6 +3226,15 @@ def breaking_signal_cluster_rows(
                     score_target=score_target,
                     named_targets=named_target,
                     score_stat_status=score_stat_status,
+                ),
+                "score_stat_review_order_status": review_status,
+                "score_stat_review_order_targets": review_targets,
+                "first_score_stat_review_order_target": first_review_target,
+                "score_stat_review_walkthrough_target": FINAL_SCORE_STAT_PROOF_REVIEW_WALKTHROUGH_MD,
+                "exact_review_walkthrough_next_action": exact_review_walkthrough_action(
+                    review_status,
+                    first_review_target,
+                    review_targets,
                 ),
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
@@ -3173,6 +3291,9 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"- Human confirmation targets: breaking claim `{row.get('breaking_claim_confirmation_target') or 'missing'}`; score proof `{row.get('score_proof_confirmation_target') or 'missing'}`; named-player stat proof `{row.get('named_player_stat_proof_confirmation_targets') or 'missing'}`",
             f"- Human confirmation status: `{row.get('score_stat_confirmation_status')}`",
             f"- Exact human confirmation next action: {row.get('exact_human_confirmation_next_action')}",
+            f"- Review walkthrough: `{row.get('score_stat_review_walkthrough_target') or 'missing'}` / status: `{row.get('score_stat_review_order_status')}`",
+            f"- First review-order row: {row.get('first_score_stat_review_order_target') or 'missing'}",
+            f"- Exact walkthrough next action: {row.get('exact_review_walkthrough_next_action')}",
             f"- Source diversity: `{row.get('source_diversity')}` / domains: {row.get('source_domains') or 'none captured'}",
             f"- Public signal: `{row.get('public_signal_confidence')}` / count: `{row.get('public_signal_count')}`",
             f"- Freshness: `{row.get('freshness_status')}` / newest: `{row.get('newest_signal_timestamp_utc') or 'missing'}`",
@@ -3221,6 +3342,13 @@ def news_packet_for_cluster(cluster_row: Dict[str, Any], packets: List[Dict[str,
     return {}
 
 
+def append_unique_urls(urls: List[str], values: List[str]) -> None:
+    for value in values:
+        url = clean(value)
+        if url and url not in urls:
+            urls.append(url)
+
+
 def game_source_confirmation_bridge_rows(
     *,
     run_id: str,
@@ -3247,14 +3375,12 @@ def game_source_confirmation_bridge_rows(
         stats_ref = f"event_uid={clean(stats.get('event_uid'))}" if stats else ""
         source_urls = []
         if cluster:
-            source_urls.extend(parse_json_list(cluster.get("matching_official_evidence_urls")))
+            append_unique_urls(source_urls, parse_json_list(cluster.get("matching_official_evidence_urls")))
         if packet:
-            source_urls.extend(parse_json_list(packet.get("source_urls_json")))
-        if game_url and game_url not in source_urls:
-            source_urls.append(game_url)
+            append_unique_urls(source_urls, parse_json_list(packet.get("source_urls_json")))
+        append_unique_urls(source_urls, [game_url])
         stats_url = clean(stats.get("confirmation_source_url"))
-        if stats_url and stats_url not in source_urls:
-            source_urls.append(stats_url)
+        append_unique_urls(source_urls, [stats_url])
         next_parts = [
             f"Open game_intelligence_board_v1.csv row_id={row_id}" if row_id else "Open game_intelligence_board_v1.csv matching this game",
         ]
@@ -3608,6 +3734,7 @@ def main() -> None:
     stats_evidence_path, stats_evidence_rows = resolve_csv_input(INPUT_STATS_EVIDENCE_CSV)
     proof_path, proof_rows = resolve_csv_input(INPUT_FINAL_SCORE_STAT_PROOF_CSV)
     proof_confirmation_path, proof_confirmation_rows = resolve_csv_input(INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV)
+    proof_review_order_path, proof_review_order_rows = resolve_csv_input(INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV)
 
     csv_sources = [
         ("top_womens_results.csv", top_csv_rows),
@@ -3631,6 +3758,12 @@ def main() -> None:
             INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV,
             proof_confirmation_rows,
             proof_confirmation_path,
+        ),
+        input_status_row_csv(
+            "final_score_stat_proof_review_order_csv",
+            INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV,
+            proof_review_order_rows,
+            proof_review_order_path,
         ),
     ]
 
@@ -3685,6 +3818,7 @@ def main() -> None:
         game_rows=game_intelligence_rows,
         proof_rows=proof_rows,
         proof_confirmation_rows=proof_confirmation_rows,
+        proof_review_order_rows=proof_review_order_rows,
         intake_rows=confirmation_intake_rows,
     )
     game_source_bridge_rows = game_source_confirmation_bridge_rows(
@@ -3768,6 +3902,10 @@ def main() -> None:
                     row for row in cluster_rows
                     if clean(row.get("score_proof_confirmation_target")) or clean(row.get("named_player_stat_proof_confirmation_targets"))
                 ]),
+                "clusters_with_score_stat_review_order_targets": len([
+                    row for row in cluster_rows
+                    if clean(row.get("first_score_stat_review_order_target"))
+                ]),
             },
             "outputs": [
                 BREAKING_PUBLIC_SIGNAL_CSV,
@@ -3799,6 +3937,7 @@ def main() -> None:
             "stats_evidence_gap_board_csv": INPUT_STATS_EVIDENCE_CSV,
             "final_score_stat_proof_csv": INPUT_FINAL_SCORE_STAT_PROOF_CSV,
             "final_score_stat_proof_confirmation_intake_csv": INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV,
+            "final_score_stat_proof_review_order_csv": INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV,
         },
         "outputs": [
             NEWS_INPUT_STATUS_CSV,
@@ -3846,6 +3985,10 @@ def main() -> None:
             "breaking_signal_clusters_with_score_stat_confirmation_targets": len([
                 row for row in cluster_rows
                 if clean(row.get("score_proof_confirmation_target")) or clean(row.get("named_player_stat_proof_confirmation_targets"))
+            ]),
+            "breaking_signal_clusters_with_score_stat_review_order_targets": len([
+                row for row in cluster_rows
+                if clean(row.get("first_score_stat_review_order_target"))
             ]),
             "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
         },
