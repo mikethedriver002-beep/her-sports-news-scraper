@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import csv
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -32,6 +34,14 @@ def base_candidate() -> dict:
         "event_date": "2026-06-24",
         "event_date_confidence": "exact_from_results_record",
     }
+
+
+def write_csv(path: Path, rows: list[dict[str, str]], fields: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def test_results_desk_final_scores_are_publish_grade_source_facts() -> None:
@@ -134,3 +144,116 @@ def test_default_registry_keeps_free_official_coverage_available() -> None:
         "toronto tempo",
         "washington mystics",
     } <= set(registry["team_sources"])
+
+
+def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None:
+    module = load_module()
+    candidate = base_candidate()
+    candidate["graphics_headline"] = "Breaking: Liberty announce star guard injury"
+    observations = [
+        {
+            "usable_context": "Yes",
+            "publish_use": "publish_grade",
+            "source_type": "official_team",
+            "url": "https://liberty.wnba.com/news/injury-update",
+            "domain": "liberty.wnba.com",
+            "context_signal": "Official team source available",
+        },
+        {
+            "usable_context": "Partial",
+            "publish_use": "discovery_only",
+            "source_type": "community_public",
+            "url": "https://example.com/public-thread",
+            "domain": "example.com",
+            "context_signal": "Public community discussion needs review",
+        },
+    ]
+
+    packet = module.build_fact_packet(candidate, observations, {}, module.angle_rules_defaults(), "run-1")
+    rows = module.build_breaking_public_signal_rows([packet], {packet["candidate_id"]: observations}, "run-1")
+    row = rows[0]
+
+    assert row["urgency_band"] in {"P0_breaking_review", "P1_urgent_review"}
+    assert row["public_signal_status"] == "candidate_public_signal_review_only"
+    assert row["public_signal_confidence"] == "low"
+    assert row["manual_review_required"] == "true"
+    assert row["review_only"] == "true"
+    assert row["publish_ready"] == "false"
+    assert row["auto_publish"] == "false"
+    assert row["auto_source_enablement"] == "false"
+    assert row["approval_state_change"] == "false"
+    assert "no paid API" in row["limitations"]
+    assert "liberty.wnba.com" in row["source_domains"]
+
+
+def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, monkeypatch) -> None:
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    monkeypatch.setenv("HSD_NEWS_ENABLE_FETCH", "false")
+    write_csv(
+        run_dir / "top_womens_results.csv",
+        [
+            {
+                "gender_scope": "women",
+                "status_norm": "final",
+                "final_score_display": "New York Liberty 88 - Las Vegas Aces 80",
+                "graphics_headline": "Breaking: Liberty announce star guard injury update",
+                "caption_seed": "Liberty beat Aces after injury update",
+                "sport_norm": "basketball",
+                "league_norm": "WNBA",
+                "editorial_bucket": "Must Post",
+                "content_action": "Make First",
+                "editorial_rank": "99",
+                "outcome_type": "win",
+                "winner": "New York Liberty",
+                "loser": "Las Vegas Aces",
+                "matchup": "New York Liberty vs Las Vegas Aces",
+                "scheduled_date_local": "2026-06-26",
+                "source_url": "https://liberty.wnba.com/news/injury-update",
+                "manual_review": "No",
+            }
+        ],
+        [
+            "gender_scope",
+            "status_norm",
+            "final_score_display",
+            "graphics_headline",
+            "caption_seed",
+            "sport_norm",
+            "league_norm",
+            "editorial_bucket",
+            "content_action",
+            "editorial_rank",
+            "outcome_type",
+            "winner",
+            "loser",
+            "matchup",
+            "scheduled_date_local",
+            "source_url",
+            "manual_review",
+        ],
+    )
+    module = load_module()
+
+    module.main()
+
+    queue = run_dir / "breaking_public_signal_queue.csv"
+    report = run_dir / "breaking_public_signal_queue.md"
+    signal_manifest = run_dir / "breaking_public_signal_manifest.json"
+    news_manifest = run_dir / "news_sync_manifest.json"
+    assert queue.exists()
+    assert report.exists()
+    assert signal_manifest.exists()
+    rows = list(csv.DictReader(queue.open(newline="", encoding="utf-8")))
+    assert rows[0]["review_only"] == "true"
+    assert rows[0]["publish_ready"] == "false"
+    assert rows[0]["auto_publish"] == "false"
+    assert rows[0]["auto_source_enablement"] == "false"
+    signal_payload = json.loads(signal_manifest.read_text(encoding="utf-8"))
+    news_payload = json.loads(news_manifest.read_text(encoding="utf-8"))
+    assert signal_payload["review_only"] is True
+    assert signal_payload["publish_ready"] is False
+    assert signal_payload["counts"]["rows"] == 1
+    assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
+    assert news_payload["counts"]["breaking_public_signal_rows"] == 1
+    assert news_payload["counts"]["breaking_public_signal_review_only"] == 1

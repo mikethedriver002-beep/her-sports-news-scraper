@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.8.4-source-confidence"
+VERSION = "news-sync-v1.9.0-breaking-public-signal"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -48,6 +48,9 @@ NEWS_SOCIAL_PACKETS_MD = "news_social_packets.md"
 NEWS_GRAPHICS_HANDOFF_MD = "news_graphics_handoff.md"
 NEWS_DAILY_PLAN_MD = "news_daily_plan.md"
 NEWS_MANUAL_REVIEW_CSV = "news_manual_review_queue.csv"
+BREAKING_PUBLIC_SIGNAL_CSV = "breaking_public_signal_queue.csv"
+BREAKING_PUBLIC_SIGNAL_MD = "breaking_public_signal_queue.md"
+BREAKING_PUBLIC_SIGNAL_JSON = "breaking_public_signal_manifest.json"
 NEWS_SYNC_HUB_MD = "news_sync_hub.md"
 NEWS_MANIFEST_JSON = "news_sync_manifest.json"
 NEWS_INPUT_STATUS_CSV = "news_input_status_report.csv"
@@ -98,6 +101,17 @@ PACKET_FIELDS = [
     "source_run_timestamp",
     "event_date_confidence",
     "event_date_required"
+]
+
+BREAKING_PUBLIC_SIGNAL_FIELDS = [
+    "run_id", "candidate_id", "headline", "sport", "league", "queue_section",
+    "breaking_score", "urgency_band", "why_urgent", "source_confidence_score",
+    "source_confidence_tier", "source_publish_grade", "source_confidence_reason",
+    "public_signal_status", "public_signal_confidence", "public_signal_count",
+    "public_signal_summary", "signal_timestamp_utc", "source_urls",
+    "source_domains", "retrieval_method", "limitations", "human_review_cue",
+    "manual_review_required", "review_only", "publish_ready", "auto_publish",
+    "auto_source_enablement", "approval_state_change",
 ]
 
 INPUT_STATUS_FIELDS = [
@@ -2197,6 +2211,203 @@ def build_fact_packet(candidate: Dict[str, Any], observations: List[Dict[str, An
     }
 
 
+BREAKING_TERMS = {
+    "breaking": 18,
+    "announces": 10,
+    "announced": 10,
+    "trade": 16,
+    "traded": 16,
+    "signing": 12,
+    "signs": 12,
+    "waived": 12,
+    "transfer": 12,
+    "injury": 16,
+    "injured": 16,
+    "out indefinitely": 18,
+    "suspended": 16,
+    "retires": 14,
+    "retirement": 14,
+    "coach": 10,
+    "fired": 16,
+    "record": 10,
+    "upset": 12,
+    "comeback": 10,
+}
+
+
+def observation_use(observation: Dict[str, Any]) -> str:
+    return clean(observation.get("publish_use")) or publish_use_for_source(observation.get("source_type"))
+
+
+def public_signal_observations(observations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [
+        obs for obs in observations
+        if observation_use(obs) == "discovery_only"
+        or source_trust_band(obs.get("source_type")) == "yellow"
+        or any(token in norm(obs.get("source_type")) for token in ["social", "community", "fan", "discovery"])
+    ]
+
+
+def breaking_public_signal_row(
+    packet: Dict[str, Any],
+    observations: List[Dict[str, Any]],
+    run_id: str,
+) -> Dict[str, Any]:
+    headline_blob = norm(" ".join([
+        packet.get("headline", ""),
+        packet.get("dek", ""),
+        packet.get("context_signal", ""),
+        packet.get("review_flags", ""),
+    ]))
+    reasons: List[str] = []
+    score = 0
+
+    queue_section = clean(packet.get("queue_section"))
+    if queue_section == "MUST POST":
+        score += 30
+        reasons.append("Results Desk marked Must Post")
+    elif queue_section == "STRONG MAYBE":
+        score += 18
+        reasons.append("Results Desk marked Strong Maybe")
+
+    try:
+        source_score = int(packet.get("source_confidence_score") or 0)
+    except Exception:
+        source_score = 0
+    if source_score:
+        score += min(25, max(0, source_score // 4))
+        reasons.append(f"source confidence {source_score}/100")
+
+    if clean(packet.get("source_publish_grade")) == "publish_grade":
+        score += 12
+        reasons.append("publish-grade source confidence available")
+    elif clean(packet.get("source_publish_grade")) == "review_before_publish":
+        score += 8
+        reasons.append("review-grade source confidence available")
+
+    if clean(packet.get("event_date")):
+        score += 8
+        reasons.append("dated item")
+    if clean(packet.get("source_count")) not in {"", "0"}:
+        score += 8
+        reasons.append(f"{packet.get('source_count')} usable source observation(s)")
+
+    matched_terms = [term for term in BREAKING_TERMS if term in headline_blob]
+    if matched_terms:
+        term_score = min(24, sum(BREAKING_TERMS[term] for term in matched_terms[:3]))
+        score += term_score
+        reasons.append("breaking-language match: " + ", ".join(matched_terms[:4]))
+
+    public_obs = public_signal_observations(observations)
+    if public_obs:
+        score += min(10, 4 + len(public_obs) * 2)
+        reasons.append(f"{len(public_obs)} review-only public/community signal observation(s)")
+
+    score = min(100, score)
+    if score >= 75:
+        band = "P0_breaking_review"
+    elif score >= 60:
+        band = "P1_urgent_review"
+    elif score >= 40:
+        band = "P2_monitor_review"
+    else:
+        band = "P3_watch_review"
+
+    usable_obs = [obs for obs in observations if obs.get("usable_context") in {"Yes", "Partial"}]
+    source_urls = [clean(obs.get("url")) for obs in usable_obs if clean(obs.get("url"))]
+    source_domains = sorted({clean(obs.get("domain")) for obs in usable_obs if clean(obs.get("domain"))})
+
+    if public_obs:
+        public_signal_status = "candidate_public_signal_review_only"
+        public_signal_confidence = "medium" if len(public_obs) >= 2 else "low"
+        public_signal_summary = "; ".join(
+            clean(obs.get("context_signal")) or clean(obs.get("notes")) or clean(obs.get("source_name"))
+            for obs in public_obs[:3]
+        )
+        retrieval_method = "public_metadata_observation"
+    else:
+        public_signal_status = "not_captured"
+        public_signal_confidence = "none"
+        public_signal_summary = "No public/community signal captured; use source observations only."
+        retrieval_method = "source_metadata_observation" if observations else "not_attempted"
+
+    return {
+        "run_id": run_id,
+        "candidate_id": clean(packet.get("candidate_id")),
+        "headline": clean(packet.get("headline")),
+        "sport": clean(packet.get("sport")),
+        "league": clean(packet.get("league")),
+        "queue_section": queue_section,
+        "breaking_score": str(score),
+        "urgency_band": band,
+        "why_urgent": "; ".join(reasons) if reasons else "No urgent signal beyond normal news packet review",
+        "source_confidence_score": clean(packet.get("source_confidence_score")),
+        "source_confidence_tier": clean(packet.get("source_confidence_tier")),
+        "source_publish_grade": clean(packet.get("source_publish_grade")),
+        "source_confidence_reason": clean(packet.get("source_confidence_reason")),
+        "public_signal_status": public_signal_status,
+        "public_signal_confidence": public_signal_confidence,
+        "public_signal_count": str(len(public_obs)),
+        "public_signal_summary": public_signal_summary,
+        "signal_timestamp_utc": utc_now(),
+        "source_urls": json.dumps(source_urls[:12], ensure_ascii=False),
+        "source_domains": "; ".join(source_domains[:12]),
+        "retrieval_method": retrieval_method,
+        "limitations": "Metadata and source-observation scaffold only; no paid API, private data, follower metrics, engagement scraping, login-only content, or auto-confirmation.",
+        "human_review_cue": "Operator must verify source provenance, recency, and public-signal meaning before any editorial use.",
+        "manual_review_required": "true",
+        "review_only": "true",
+        "publish_ready": "false",
+        "auto_publish": "false",
+        "auto_source_enablement": "false",
+        "approval_state_change": "false",
+    }
+
+
+def build_breaking_public_signal_rows(
+    packets: List[Dict[str, Any]],
+    observations_by_candidate: Dict[str, List[Dict[str, Any]]],
+    run_id: str,
+) -> List[Dict[str, Any]]:
+    rows = [
+        breaking_public_signal_row(packet, observations_by_candidate.get(packet.get("candidate_id"), []), run_id)
+        for packet in packets
+    ]
+    rows.sort(key=lambda row: (-int(row.get("breaking_score") or 0), row.get("headline", "")))
+    return rows
+
+
+def markdown_breaking_public_signal(rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Breaking News + Public Signal Queue",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        "Review-only intelligence scaffold. This file does not approve sources, publish copy, or move anything into a publish-ready lane.",
+        "",
+    ]
+    if not rows:
+        lines.extend(["No news packets available for breaking/public-signal review.", ""])
+        return "\n".join(lines)
+
+    for row in rows[:20]:
+        lines.extend([
+            f"## {row.get('urgency_band')} - {row.get('headline')}",
+            "",
+            f"- Breaking score: `{row.get('breaking_score')}/100`",
+            f"- Why urgent: {row.get('why_urgent')}",
+            f"- Source confidence: `{row.get('source_confidence_tier')}` / `{row.get('source_publish_grade')}` / `{row.get('source_confidence_score')}`",
+            f"- Public signal: `{row.get('public_signal_status')}` / `{row.get('public_signal_confidence')}`",
+            f"- Signal timestamp: `{row.get('signal_timestamp_utc')}`",
+            f"- Source domains: {row.get('source_domains') or 'none captured'}",
+            f"- Retrieval method: `{row.get('retrieval_method')}`",
+            f"- Human review: {row.get('human_review_cue')}",
+            f"- Limitations: {row.get('limitations')}",
+            "",
+        ])
+    return "\n".join(lines) + "\n"
+
+
 def markdown_brief_queue(packets: List[Dict[str, Any]], observations_by_candidate: Dict[str, List[Dict[str, Any]]]) -> str:
     lines = [
         "# Her Sports Daily News Brief Queue v1",
@@ -2522,6 +2733,7 @@ def main() -> None:
         packet = build_fact_packet(candidate, obs, box_map, angle_rules, run_id)
         packets.append(packet)
 
+    breaking_signal_rows = build_breaking_public_signal_rows(packets, observations_by_candidate, run_id)
     manual_packets = [p for p in packets if p.get("manual_review") == "Yes"]
 
     write_csv(NEWS_INPUT_STATUS_CSV, input_status, INPUT_STATUS_FIELDS)
@@ -2529,12 +2741,32 @@ def main() -> None:
     write_csv(NEWS_SOURCE_OBS_CSV, all_observations, SOURCE_OBS_FIELDS)
     write_csv(NEWS_FACT_PACKETS_CSV, packets, PACKET_FIELDS)
     write_csv(NEWS_MANUAL_REVIEW_CSV, manual_packets, PACKET_FIELDS)
+    write_csv(BREAKING_PUBLIC_SIGNAL_CSV, breaking_signal_rows, BREAKING_PUBLIC_SIGNAL_FIELDS)
 
     write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
     write_run_text(NEWS_SOCIAL_PACKETS_MD, markdown_social_packets(packets))
     write_run_text(NEWS_GRAPHICS_HANDOFF_MD, markdown_graphics_handoff(packets))
     write_run_text(NEWS_DAILY_PLAN_MD, markdown_daily_plan(packets))
+    write_run_text(BREAKING_PUBLIC_SIGNAL_MD, markdown_breaking_public_signal(breaking_signal_rows))
     write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
+    write_run_json(
+        BREAKING_PUBLIC_SIGNAL_JSON,
+        {
+            "version": VERSION,
+            "run_id": run_id,
+            "generated_at_utc": utc_now(),
+            "review_only": True,
+            "publish_ready": False,
+            "auto_publish": False,
+            "auto_source_enablement": False,
+            "counts": {
+                "rows": len(breaking_signal_rows),
+                "p0_breaking_review": len([row for row in breaking_signal_rows if row.get("urgency_band") == "P0_breaking_review"]),
+                "with_public_signal": len([row for row in breaking_signal_rows if row.get("public_signal_count") not in {"", "0"}]),
+            },
+            "outputs": [BREAKING_PUBLIC_SIGNAL_CSV, BREAKING_PUBLIC_SIGNAL_MD],
+        },
+    )
 
     manifest = {
         "version": VERSION,
@@ -2559,6 +2791,9 @@ def main() -> None:
             NEWS_GRAPHICS_HANDOFF_MD,
             NEWS_DAILY_PLAN_MD,
             NEWS_MANUAL_REVIEW_CSV,
+            BREAKING_PUBLIC_SIGNAL_CSV,
+            BREAKING_PUBLIC_SIGNAL_MD,
+            BREAKING_PUBLIC_SIGNAL_JSON,
             NEWS_SYNC_HUB_MD,
         ],
         "counts": {
@@ -2570,6 +2805,8 @@ def main() -> None:
             "production_ready": len([p for p in packets if p.get("production_ready") == "Yes"]),
             "packets_with_event_date": len([p for p in packets if clean(p.get("event_date"))]),
             "packets_missing_event_date": len([p for p in packets if not clean(p.get("event_date"))]),
+            "breaking_public_signal_rows": len(breaking_signal_rows),
+            "breaking_public_signal_review_only": len([row for row in breaking_signal_rows if row.get("review_only") == "true"]),
         },
         "settings": {
             "max_must_post": MAX_MUST_POST,
