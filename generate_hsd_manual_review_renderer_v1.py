@@ -1450,23 +1450,23 @@ def game_edge_module(score: Dict[str, str]) -> Dict[str, str]:
     if margin is None:
         return {
             "eyebrow": "SCORE-DERIVED EDGE",
-            "headline": "FINAL RESULT",
-            "body": f"{winner} finished ahead of {loser}.",
+            "headline": "FINAL BOARD",
+            "body": f"{short_team(winner)} finished ahead; keep the why on hold until source proof supports it.",
             "game_shape": clean(shape.get("game_shape")),
             "game_shape_label": clean(shape.get("game_shape_label")),
         }
     if margin <= 3:
-        headline = "DOWN TO THE WIRE"
-        body = f"{short_team(winner)} finished {margin} point{'s' if margin != 1 else ''} clear of {short_team(loser)}."
+        headline = "LAST-SWING FINAL"
+        body = f"{short_team(winner)} held the final possession window against {short_team(loser)}."
     elif margin <= 7:
         headline = "LATE SEPARATION"
-        body = f"{short_team(winner)} created a {margin}-point final margin over {short_team(loser)}."
+        body = f"{short_team(winner)} created just enough late separation to make {short_team(loser)} chase."
     elif margin <= 14:
-        headline = "CLEAR EDGE"
-        body = f"{short_team(winner)} finished with a {margin}-point advantage over {short_team(loser)}."
+        headline = "CONTROL WINDOW"
+        body = f"{short_team(winner)} owned the stretch that gave the scoreboard its shape."
     else:
-        headline = "STATEMENT WIN"
-        body = f"{short_team(winner)} closed with a {margin}-point victory over {short_team(loser)}."
+        headline = "NO-CHASE FINAL"
+        body = f"{short_team(winner)} built the gap early enough that {short_team(loser)} never found the counter."
     return {"eyebrow": "SCORE-DERIVED EDGE", "headline": headline, "body": body, "game_shape": clean(shape.get("game_shape")), "game_shape_label": clean(shape.get("game_shape_label"))}
 
 

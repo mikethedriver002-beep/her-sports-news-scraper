@@ -285,11 +285,29 @@ def test_manual_review_renderer_builds_source_safe_final_score_callouts() -> Non
     assert "No verified player stat line" in microcopy["body"]
     assert "why/how" in microcopy["review_cue"]
     edge = module.game_edge_module(score)
-    assert edge["headline"] == "CLEAR EDGE"
+    assert edge["headline"] == "CONTROL WINDOW"
     assert edge["eyebrow"] == "SCORE-DERIVED EDGE"
     assert edge["game_shape"] == "clear_separation"
-    assert "11-point advantage" in edge["body"]
+    assert "scoreboard its shape" in edge["body"]
     assert module.review_prompt(score) == "WHAT FUELED LIBERTY'S SEPARATION?"
+
+
+def test_manual_review_renderer_score_only_fallback_avoids_generic_result_copy() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    score = {"winner": "Phoenix Mercury", "loser": "Seattle Storm", "winner_score": "103", "loser_score": "74"}
+    edge = module.game_edge_module(score)
+    public = f"{edge['headline']} {edge['body']}".lower()
+
+    assert edge["headline"] == "NO-CHASE FINAL"
+    assert "statement win" not in public
+    assert "point victory" not in public
+    assert "margin" not in public
 
 
 def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_path: Path, monkeypatch) -> None:

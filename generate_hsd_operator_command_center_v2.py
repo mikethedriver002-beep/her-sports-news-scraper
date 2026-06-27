@@ -53,6 +53,10 @@ RENDER_PREP_FIELDS = [
     "copy_headline",
     "copy_dek",
     "copy_context",
+    "copy_suggested_title",
+    "copy_suggested_dek",
+    "copy_fit_cue",
+    "copy_polish_note",
     "top_performers",
     "stat_module_status",
     "stat_source_confidence",
@@ -3202,6 +3206,42 @@ def final_score_template_fit() -> Dict[str, str]:
     }
 
 
+def no_mid_word_trim(value: Any, limit: int) -> str:
+    text = clean(value)
+    if len(text) <= limit:
+        return text
+    trimmed = text[:limit].rstrip(" ,.;:!?-")
+    if " " in trimmed:
+        trimmed = trimmed.rsplit(" ", 1)[0].rstrip(" ,.;:!?-")
+    return trimmed
+
+
+def final_score_copy_polish(enriched: Dict[str, str], row: Dict[str, str], fit: Dict[str, str]) -> Dict[str, str]:
+    headline = clean(enriched.get("copy_headline")) or clean(row.get("title"))
+    dek = clean(enriched.get("copy_dek"))
+    if clean(fit.get("template_family")) != "game_recap_final_score":
+        return {
+            "copy_suggested_title": no_mid_word_trim(headline, 58),
+            "copy_suggested_dek": no_mid_word_trim(dek, 118),
+            "copy_fit_cue": "Keep the visible headline under 58 characters and the dek under 118; tighten before manual render if either wraps awkwardly.",
+            "copy_polish_note": "Use source-backed verbs and remove generic filler before visual review.",
+        }
+
+    scoreline = ""
+    score_match = re.search(r"([A-Z][A-Za-z .'-]+)\s+(\d{2,3})\s*,\s*([A-Z][A-Za-z .'-]+)\s+(\d{2,3})", dek)
+    if score_match:
+        winner, winner_score, loser, loser_score = [clean(item) for item in score_match.groups()]
+        winner_short = winner.split()[-1].upper()
+        loser_short = loser.split()[-1].upper()
+        scoreline = f"{winner_short} {winner_score}, {loser_short} {loser_score}"
+    return {
+        "copy_suggested_title": no_mid_word_trim(headline.replace(" beat ", " over "), 46),
+        "copy_suggested_dek": no_mid_word_trim(scoreline or dek, 96),
+        "copy_fit_cue": "Final-score fit: title <=46 chars, dek <=96 chars; lead with the result, then let verified stat text or source proof add the why.",
+        "copy_polish_note": "Avoid generic 'final read' language; use score-first wording until a verified player/stat module supports a sharper angle.",
+    }
+
+
 def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str, str]:
     title = clean(row.get("title"))
     for packet in payload.get("news_fact_packets", []):
@@ -3275,6 +3315,7 @@ def manual_renderer_steps(packet: Dict[str, str]) -> str:
         f"Confirm active asset stop/go: {clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}.",
         f"Use {template_label} at {packet.get('template_shape')}.",
         f"Confirm asset requirement: {packet.get('asset_requirement')}",
+        f"Confirm copy fit: {clean(packet.get('copy_fit_cue')) or 'Tighten headline/dek before manual render if they wrap awkwardly.'}",
         f"Confirm active logo readiness: {clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}; {active_logo_cues}",
         f"Confirm active athlete identity: {clean(packet.get('active_athlete_identity_status')) or 'athlete_identity_not_flagged'}; {active_athlete_cues}",
         "Compare the draft against the linked Templates-hsd reference mockup/layout before recording any decision.",
@@ -3524,6 +3565,7 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
         fit = template_fit_for_path(row.get("recommended_path", ""), row.get("source", ""))
         if looks_like_final_score(enriched, row):
             fit = final_score_template_fit()
+        copy_polish = final_score_copy_polish(enriched, row, fit)
         packet = {
             "packet_id": f"render_prep_{clean(row.get('rank')) or len(packets) + 1}_{packet_slug(row.get('title'))}",
             "packet_status": "ready_for_manual_render_review" if band == "render_ready_review" else "review_before_manual_render",
@@ -3541,6 +3583,7 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "copy_headline": enriched["copy_headline"],
             "copy_dek": enriched["copy_dek"],
             "copy_context": enriched["copy_context"],
+            **copy_polish,
             "top_performers": clean(enriched.get("top_performers")),
             "stat_module_status": clean(enriched.get("stat_module_status")) or "no_verified_stat_text",
             "stat_source_confidence": clean(enriched.get("stat_source_confidence")),
@@ -3737,6 +3780,10 @@ def render_handoff_copy_sheet(packet: Dict[str, str]) -> str:
             "",
             f"- Headline: {clean(packet.get('copy_headline'))}",
             f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+            f"- Suggested title fit: {clean(packet.get('copy_suggested_title')) or clean(packet.get('copy_headline'))}",
+            f"- Suggested dek fit: {clean(packet.get('copy_suggested_dek')) or clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+            f"- Fit cue: {clean(packet.get('copy_fit_cue')) or 'Tighten headline/dek before manual render if they wrap awkwardly.'}",
+            f"- Polish note: {clean(packet.get('copy_polish_note')) or 'Use source-backed verbs and remove generic filler before visual review.'}",
             f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
             f"- Verified performer/stat text: {clean(packet.get('top_performers')) or 'none provided'}",
             f"- Stat module status: `{clean(packet.get('stat_module_status')) or 'no_verified_stat_text'}`",
@@ -4816,6 +4863,10 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         "",
         f"- Headline: {clean(packet.get('copy_headline'))}",
         f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+        f"- Suggested title fit: {clean(packet.get('copy_suggested_title')) or clean(packet.get('copy_headline'))}",
+        f"- Suggested dek fit: {clean(packet.get('copy_suggested_dek')) or clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+        f"- Fit cue: {clean(packet.get('copy_fit_cue')) or 'Tighten headline/dek before manual render if they wrap awkwardly.'}",
+        f"- Polish note: {clean(packet.get('copy_polish_note')) or 'Use source-backed verbs and remove generic filler before visual review.'}",
         f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
         f"- Verified performer/stat text: {clean(packet.get('top_performers')) or 'none provided'}",
         f"- Stat source confidence: {clean(packet.get('stat_source_confidence')) or 'not_scored'}",
@@ -4971,6 +5022,10 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "headline": packet.get("copy_headline"),
                     "dek": packet.get("copy_dek"),
                     "context": packet.get("copy_context"),
+                    "suggested_title": packet.get("copy_suggested_title"),
+                    "suggested_dek": packet.get("copy_suggested_dek"),
+                    "fit_cue": packet.get("copy_fit_cue"),
+                    "polish_note": packet.get("copy_polish_note"),
                     "top_performers": packet.get("top_performers"),
                     "stat_module_status": packet.get("stat_module_status"),
                     "stat_source_confidence": packet.get("stat_source_confidence"),
@@ -4984,7 +5039,7 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "approval_gate": packet.get("approval_gate"),
                 }
             ],
-            ["packet_id", "headline", "dek", "context", "top_performers", "stat_module_status", "stat_source_confidence", "stat_source_label", "stat_review_cue", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
+            ["packet_id", "headline", "dek", "context", "suggested_title", "suggested_dek", "fit_cue", "polish_note", "top_performers", "stat_module_status", "stat_source_confidence", "stat_source_label", "stat_review_cue", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
         )
         write_text(OUT_RENDER_HANDOFF_ASSETS, render_handoff_asset_checklist(packet))
         write_csv(
@@ -9630,6 +9685,10 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             "",
             f"- Headline: {clean(packet.get('copy_headline'))}",
             f"- Dek: {clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+            f"- Suggested title fit: {clean(packet.get('copy_suggested_title')) or clean(packet.get('copy_headline'))}",
+            f"- Suggested dek fit: {clean(packet.get('copy_suggested_dek')) or clean(packet.get('copy_dek')) or 'Operator fill-in after source review.'}",
+            f"- Fit cue: {clean(packet.get('copy_fit_cue')) or 'Tighten headline/dek before manual render if they wrap awkwardly.'}",
+            f"- Polish note: {clean(packet.get('copy_polish_note')) or 'Use source-backed verbs and remove generic filler before visual review.'}",
             f"- Context: {clean(packet.get('copy_context')) or 'Operator fill-in after source review.'}",
             f"- Source detail: {clean(packet.get('source_detail')) or 'n/a'}",
             "",
