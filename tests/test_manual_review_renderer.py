@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.22.0-premium-editorial-backgrounds"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.23.0-sports-editorial-depth"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -770,6 +770,56 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
             blue_pixels += 1
     assert gold_pixels / pixels > 0.006
     assert blue_pixels / pixels > 0.006
+
+
+def test_manual_review_renderer_background_draws_editorial_depth_markers_without_washing_title() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    marker_image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    module.draw_sports_editorial_depth_markers(marker_image, (72, 144, 216), (192, 35, 48), photo_first=True)
+
+    assert "sports_editorial_depth_markers" in module.RENDER_BACKGROUND_CUES
+    left_depth = marker_image.crop((54, 930, 507, 1000)).convert("RGB")
+    right_depth = marker_image.crop((540, 930, 1026, 1000)).convert("RGB")
+    left_data = left_depth.tobytes()
+    right_data = right_depth.tobytes()
+    left_pixels = max(1, len(left_data) // 3)
+    right_pixels = max(1, len(right_data) // 3)
+    warm_pixels = 0
+    blue_bias_pixels = 0
+    red_bias_pixels = 0
+    for index in range(0, len(left_data), 3):
+        r, g, b = left_data[index], left_data[index + 1], left_data[index + 2]
+        if r >= 45 and g >= 38 and b <= 60 and r >= g:
+            warm_pixels += 1
+        if b > r and b >= 35 and g >= 25:
+            blue_bias_pixels += 1
+    for index in range(0, len(right_data), 3):
+        r, g, b = right_data[index], right_data[index + 1], right_data[index + 2]
+        if r >= 45 and g >= 38 and b <= 60 and r >= g:
+            warm_pixels += 1
+        if r > b and r >= 35 and g <= 45:
+            red_bias_pixels += 1
+    assert warm_pixels / (left_pixels + right_pixels) > 0.020
+    assert blue_bias_pixels / left_pixels > 0.20
+    assert red_bias_pixels / right_pixels > 0.20
+
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    module.draw_reference_background(image, "final", (72, 144, 216), (192, 35, 48), photo_first=True)
+    title_crop = image.crop((50, 130, 1030, 285)).convert("RGB")
+    title_data = title_crop.tobytes()
+    title_pixels = max(1, len(title_data) // 3)
+    title_dark = 0
+    for index in range(0, len(title_data), 3):
+        r, g, b = title_data[index], title_data[index + 1], title_data[index + 2]
+        if (r + g + b) / 3 <= 54:
+            title_dark += 1
+    assert title_dark / title_pixels > 0.70
 
 
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
