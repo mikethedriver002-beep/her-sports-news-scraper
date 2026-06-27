@@ -206,6 +206,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     title_histogram = title_crop.histogram()
     bright_title_ratio = sum(title_histogram[200:]) / sum(title_histogram)
     assert bright_title_ratio > 0.03
+    context_crop = image.convert("L").crop((55, 320, 1030, 405))
+    context_histogram = context_crop.histogram()
+    bright_context_ratio = sum(context_histogram[190:]) / sum(context_histogram)
+    assert bright_context_ratio > 0.04
     story = Image.open(review_drafts / "draft_preview_story.png")
     square = Image.open(review_drafts / "draft_preview_square.png")
     assert story.size == (1080, 1920)
@@ -669,6 +673,55 @@ def test_manual_review_renderer_photo_first_geometry_keeps_feed_and_story_cleara
         assert bottom(stat) + clearance <= hook[1]
         assert photo[0] < focus[0] < right(focus) < right(photo)
         assert photo[1] < focus[1] < bottom(focus) < bottom(photo)
+        for row, winner in [(winner, True), (loser, False)]:
+            team_text_box = module.photo_first_score_team_text_box(tuple(row), winner=winner)
+            score_plate_left = row[0] + row[2] - 178 - 14
+            assert team_text_box[0] + team_text_box[2] <= score_plate_left - 20
+            assert team_text_box[2] >= 128
+
+
+def test_manual_review_renderer_photo_first_stage_preserves_face_edge_signal() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    drawn = module.draw_photo_first_athlete_stage(
+        image,
+        tuple(geometry["photo_stage_box"]),
+        {
+            "player_name": "Breanna Stewart",
+            "athlete_photo_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+            "athlete_photo_status": "approved_local_headshot",
+        },
+        (72, 144, 216),
+        tuple(geometry["photo_face_focus_box"]),
+    )
+
+    assert drawn is True
+    x, y, w, h = geometry["photo_face_focus_box"]
+    crop = image.crop((x, y, x + w, y + h)).convert("L")
+    data = crop.tobytes()
+    edges = 0
+    checks = 0
+    for row_y in range(0, crop.height, 2):
+        row = row_y * crop.width
+        for col_x in range(0, crop.width - 2, 2):
+            if abs(data[row + col_x] - data[row + col_x + 2]) >= 55:
+                edges += 1
+            checks += 1
+    for row_y in range(0, crop.height - 2, 2):
+        row = row_y * crop.width
+        next_row = (row_y + 2) * crop.width
+        for col_x in range(0, crop.width, 2):
+            if abs(data[row + col_x] - data[next_row + col_x]) >= 55:
+                edges += 1
+            checks += 1
+    assert edges / checks >= 0.014
 
 
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
