@@ -286,6 +286,7 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_review_intake.csv",
     "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_manifest.json",
     "data/asset_registry/womens_hockey/athlete_photo_contact_sheets",
+    "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md",
     "data/asset_registry/softball/softball_logo_contact_sheet.md",
     "data/asset_registry/softball/softball_logo_contact_sheet.png",
     "data/asset_registry/softball/softball_logo_contact_sheet.csv",
@@ -296,6 +297,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/softball/softball_athlete_photo_review_intake.csv",
     "data/asset_registry/softball/softball_athlete_photo_contact_sheet_manifest.json",
     "data/asset_registry/softball/athlete_photo_contact_sheets",
+    "data/asset_registry/softball/softball_review_walkthrough.md",
+    "data/asset_registry/hockey_softball_source_review_helper_report.md",
+    "data/asset_registry/hockey_softball_source_review_helper_report.json",
 ]
 
 ARTIFACTS = [
@@ -511,10 +515,13 @@ ARTIFACTS = [
     ("Graphics", "Women's hockey logo review intake", "data/asset_registry/womens_hockey/womens_hockey_logo_review_intake.csv"),
     ("Graphics", "Women's hockey athlete photo contact sheets", "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"),
     ("Graphics", "Women's hockey athlete photo review intake", "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_review_intake.csv"),
+    ("Graphics", "Women's hockey review walkthrough", "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md"),
     ("Graphics", "Softball logo contact sheet", "data/asset_registry/softball/softball_logo_contact_sheet.md"),
     ("Graphics", "Softball logo review intake", "data/asset_registry/softball/softball_logo_review_intake.csv"),
     ("Graphics", "Softball athlete photo contact sheets", "data/asset_registry/softball/softball_athlete_photo_contact_sheet_index.md"),
     ("Graphics", "Softball athlete photo review intake", "data/asset_registry/softball/softball_athlete_photo_review_intake.csv"),
+    ("Graphics", "Softball review walkthrough", "data/asset_registry/softball/softball_review_walkthrough.md"),
+    ("Graphics", "Hockey/softball source review helper report", "data/asset_registry/hockey_softball_source_review_helper_report.md"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
     ("Graphics", "Logo asset catalog data", "data/asset_registry/logo_asset_catalog.csv"),
     ("Review", "Lite review zip", "hsd_pipeline_lite_review.zip"),
@@ -601,6 +608,10 @@ RUN_COMMANDS = {
     "data/asset_registry/softball/softball_athlete_photo_contact_sheet_index.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/softball/softball_athlete_photo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/softball/softball_athlete_photo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
+    "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md": ".\\.venv\\Scripts\\python.exe scripts\\prepare_hsd_hockey_softball_source_review_intake_v1.py",
+    "data/asset_registry/softball/softball_review_walkthrough.md": ".\\.venv\\Scripts\\python.exe scripts\\prepare_hsd_hockey_softball_source_review_intake_v1.py",
+    "data/asset_registry/hockey_softball_source_review_helper_report.md": ".\\.venv\\Scripts\\python.exe scripts\\prepare_hsd_hockey_softball_source_review_intake_v1.py",
+    "data/asset_registry/hockey_softball_source_review_helper_report.json": ".\\.venv\\Scripts\\python.exe scripts\\prepare_hsd_hockey_softball_source_review_intake_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "data/asset_registry/logo_asset_catalog.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
     "multi_post_daily_board.md": ".\\hsd.cmd run -Mode posts",
@@ -1359,6 +1370,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     softball_logo_rows = read_csv("data/asset_registry/softball/softball_logo_contact_sheet.csv")
     softball_athlete_manifest = read_json("data/asset_registry/softball/softball_athlete_photo_contact_sheet_manifest.json")
     softball_athlete_rows = read_csv("data/asset_registry/softball/softball_athlete_photo_contact_sheet.csv")
+    hockey_softball_helper_manifest = read_json("data/asset_registry/hockey_softball_source_review_helper_report.json")
     logo_contact_cue = packet_freshness_cue(
         "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md",
         len(logo_contact_rows),
@@ -1388,6 +1400,16 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         len(womens_hockey_logo_rows) + len(womens_hockey_athlete_rows) + len(softball_logo_rows) + len(softball_athlete_rows),
         RUN_COMMANDS["data/asset_registry/hockey_softball_asset_foundation_report.md"],
         context="hockey/softball asset foundation",
+    )
+    hockey_softball_helper_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_source_review_helper_report.md",
+        sum(
+            as_int(row.get("logo_contact_rows")) + as_int(row.get("athlete_contact_rows"))
+            for row in (hockey_softball_helper_manifest.get("summaries") if isinstance(hockey_softball_helper_manifest, dict) else [])
+            if isinstance(row, dict)
+        ),
+        RUN_COMMANDS["data/asset_registry/hockey_softball_source_review_helper_report.md"],
+        context="hockey/softball source review helper",
     )
     logo_packets = logo_review_packet_rows(logo_packet_rows)
     logo_packet_cue = packet_freshness_cue(
@@ -1463,15 +1485,22 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_athlete_photo_contact_sheet_refresh_command": womens_soccer_athlete_cue["run_command"],
         "hockey_softball_asset_foundation_status": clean(hockey_softball_manifest.get("status")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_asset_foundation_generated_at": clean(hockey_softball_manifest.get("generated_at_utc")) if isinstance(hockey_softball_manifest, dict) else "",
+        "hockey_softball_source_review_helper_status": clean(hockey_softball_helper_manifest.get("status")) if isinstance(hockey_softball_helper_manifest, dict) else "",
+        "hockey_softball_source_review_helper_generated_at": clean(hockey_softball_helper_manifest.get("generated_at_local")) if isinstance(hockey_softball_helper_manifest, dict) else "",
         "womens_hockey_logo_contact_sheet_rows": len(womens_hockey_logo_rows),
         "womens_hockey_athlete_photo_contact_sheet_rows": len(womens_hockey_athlete_rows),
         "womens_hockey_athlete_photo_contact_sheet_team_boards": as_int(womens_hockey_athlete_manifest.get("team_boards")) if isinstance(womens_hockey_athlete_manifest, dict) else 0,
+        "womens_hockey_review_walkthrough_rows": len(womens_hockey_logo_rows) + len(womens_hockey_athlete_rows),
         "softball_logo_contact_sheet_rows": len(softball_logo_rows),
         "softball_athlete_photo_contact_sheet_rows": len(softball_athlete_rows),
         "softball_athlete_photo_contact_sheet_team_boards": as_int(softball_athlete_manifest.get("team_boards")) if isinstance(softball_athlete_manifest, dict) else 0,
+        "softball_review_walkthrough_rows": len(softball_logo_rows) + len(softball_athlete_rows),
         "hockey_softball_asset_foundation_freshness_status": hockey_softball_cue["status"],
         "hockey_softball_asset_foundation_freshness_detail": hockey_softball_cue["detail"],
         "hockey_softball_asset_foundation_refresh_command": hockey_softball_cue["run_command"],
+        "hockey_softball_source_review_helper_freshness_status": hockey_softball_helper_cue["status"],
+        "hockey_softball_source_review_helper_freshness_detail": hockey_softball_helper_cue["detail"],
+        "hockey_softball_source_review_helper_refresh_command": hockey_softball_helper_cue["run_command"],
         "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
@@ -1499,10 +1528,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer athlete photo review intake", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv", "Human-edited athlete photo candidate decisions; this generator does not download or approve photos."),
             file_shortcut("Women's soccer athlete photo manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json", "Freshness, warning, and guardrail metadata for the athlete photo contact-sheet packet."),
             file_shortcut("Hockey/softball foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md", "Review PWHL and AUSL source-candidate scaffold counts and guardrails."),
+            file_shortcut("Hockey/softball source review helper report", "data/asset_registry/hockey_softball_source_review_helper_report.md", "Review batch source-review prep counts and safety notes for the hockey and softball packets."),
             file_shortcut("Women's hockey logo contact sheet", "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md", "Review PWHL league/team logo source candidates before filling manual intake."),
             file_shortcut("Women's hockey athlete contact sheets", "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md", "Review PWHL athlete candidate placeholders by team; no photos are downloaded."),
+            file_shortcut("Women's hockey review walkthrough", "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md", "Open the hockey logo and athlete review order before touching the intake CSVs."),
             file_shortcut("Softball logo contact sheet", "data/asset_registry/softball/softball_logo_contact_sheet.md", "Review AUSL league/team logo source candidates before filling manual intake."),
             file_shortcut("Softball athlete contact sheets", "data/asset_registry/softball/softball_athlete_photo_contact_sheet_index.md", "Review AUSL athlete candidate placeholders by team; no photos are downloaded."),
+            file_shortcut("Softball review walkthrough", "data/asset_registry/softball/softball_review_walkthrough.md", "Open the softball logo and athlete review order before touching the intake CSVs."),
             file_shortcut("Logo asset catalog", "data/asset_registry/logo_asset_catalog.md", "Cross-check logo approval status and source policy."),
         ],
     }
@@ -7742,8 +7774,10 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer athlete warnings</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey athlete candidates</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Hockey walkthrough rows</span><strong>{html.escape(str(panel.get('womens_hockey_review_walkthrough_rows', 0)))}</strong></div>
             <div><span>Softball logo rows</span><strong>{html.escape(str(panel.get('softball_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Softball athlete candidates</span><strong>{html.escape(str(panel.get('softball_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
+            <div><span>Softball walkthrough rows</span><strong>{html.escape(str(panel.get('softball_review_walkthrough_rows', 0)))}</strong></div>
           </div>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
@@ -7751,6 +7785,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_logo_review_walkthrough', "Women's soccer logo review walkthrough")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_photo_contact_sheet', "Women's soccer athlete photo contact sheets")}
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
+          {packet_freshness_html(panel, 'hockey_softball_source_review_helper', "Hockey/softball source review helper")}
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
             <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
@@ -9297,9 +9332,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer athlete photo warnings: {asset_panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)}",
         f"- Women's hockey logo contact sheet rows: {asset_panel.get('womens_hockey_logo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete photo candidate rows: {asset_panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)}",
+        f"- Women's hockey walkthrough rows: {asset_panel.get('womens_hockey_review_walkthrough_rows', 0)}",
         f"- Softball logo contact sheet rows: {asset_panel.get('softball_logo_contact_sheet_rows', 0)}",
         f"- Softball athlete photo candidate rows: {asset_panel.get('softball_athlete_photo_contact_sheet_rows', 0)}",
+        f"- Softball walkthrough rows: {asset_panel.get('softball_review_walkthrough_rows', 0)}",
         f"- Hockey/softball asset foundation generated: {asset_panel.get('hockey_softball_asset_foundation_generated_at') or 'missing'}",
+        f"- Hockey/softball source review helper generated: {asset_panel.get('hockey_softball_source_review_helper_generated_at') or 'missing'}",
         packet_freshness_markdown(
             {
                 "status": asset_panel.get("logo_review_packet_freshness_status"),
@@ -9347,6 +9385,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_asset_foundation_refresh_command"),
             },
             "Hockey/softball asset foundation",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_source_review_helper_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_source_review_helper_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_source_review_helper_refresh_command"),
+            },
+            "Hockey/softball source review helper",
         ),
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
