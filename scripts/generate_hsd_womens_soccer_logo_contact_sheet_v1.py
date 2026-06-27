@@ -7,6 +7,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Tuple
+from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -445,6 +446,39 @@ def ellipsize(draw: Any, text: str, font: Any, max_width: int) -> str:
     return (value.rstrip() + suffix) if value else suffix
 
 
+def source_domain(value: str) -> str:
+    parsed = urlparse(clean(value))
+    return parsed.netloc or "source pending"
+
+
+def draw_centered_text(draw: Any, box: Tuple[int, int, int, int], text: str, font: Any, fill: Tuple[int, int, int]) -> None:
+    left, top, right, bottom = box
+    if hasattr(draw, "textbbox"):
+        text_box = draw.textbbox((0, 0), text, font=font)
+        width = int(text_box[2] - text_box[0])
+        height = int(text_box[3] - text_box[1])
+    else:
+        width = text_width(draw, text, font)
+        height = 14
+    draw.text((left + max(0, (right - left - width) // 2), top + max(0, (bottom - top - height) // 2)), text, fill=fill, font=font)
+
+
+def group_color(priority_group: str) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
+    if priority_group.startswith("P0"):
+        return (218, 239, 236), (22, 94, 82)
+    if priority_group.startswith("P1"):
+        return (226, 235, 249), (42, 85, 150)
+    if priority_group.startswith("P2"):
+        return (251, 232, 218), (149, 74, 20)
+    if priority_group.startswith("P3"):
+        return (236, 231, 246), (89, 70, 140)
+    if priority_group.startswith("P4"):
+        return (235, 240, 224), (79, 103, 43)
+    if priority_group.startswith("P5"):
+        return (248, 231, 236), (138, 56, 83)
+    return (239, 241, 243), (76, 86, 96)
+
+
 def make_contact_sheet(rows: List[Mapping[str, str]], out_path: Path = OUT_PNG) -> Tuple[str, List[str]]:
     warnings: List[str] = []
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -465,32 +499,39 @@ def make_contact_sheet(rows: List[Mapping[str, str]], out_path: Path = OUT_PNG) 
     font_body = load_font(18)
     font_small = load_font(14)
     draw.text((margin, 24), "Women's Soccer Logo and Mark Review Contact Sheet", fill=(17, 24, 32), font=font_title)
-    draw.text((margin, 62), "Review-only board. Human decisions belong in womens_soccer_logo_review_intake.csv.", fill=(70, 80, 88), font=font_body)
+    draw.text((margin, 62), "Source-review board. Missing local assets stay held until a human records evidence in the intake CSV.", fill=(70, 80, 88), font=font_body)
 
     for index, row in enumerate(rows):
         col = index % cols
         row_i = index // cols
         x = margin + col * card_w
         y = margin + header_h + row_i * card_h
-        draw.rounded_rectangle((x + 8, y + 8, x + card_w - 14, y + card_h - 14), radius=10, fill=(255, 255, 255), outline=(215, 222, 224), width=2)
+        _, priority_group, review_instruction = priority_for(row)
+        band_fill, band_text = group_color(priority_group)
+        card_box = (x + 8, y + 8, x + card_w - 14, y + card_h - 14)
+        draw.rounded_rectangle(card_box, radius=10, fill=(255, 255, 255), outline=(215, 222, 224), width=2)
+        draw.rounded_rectangle((x + 8, y + 8, x + card_w - 14, y + 42), radius=10, fill=band_fill, outline=band_fill)
+        draw.text((x + 20, y + 17), ellipsize(draw, priority_group.replace("_", " "), font_small, card_w - 48), fill=band_text, font=font_small)
         logo_path = project_path(row.get("logo_image_path"))
         if logo_path.exists():
             try:
                 logo = fit_image(logo_path, 198, 126)
-                image.paste(logo, (x + 84, y + 24), logo)
+                image.paste(logo, (x + 84, y + 54), logo)
             except Exception as exc:
                 warnings.append(f"{row.get('scope_id')}:{row.get('entity_id')}:logo_render_failed:{exc}")
-                draw.text((x + 102, y + 74), "logo render failed", fill=(138, 43, 43), font=font_small)
+                draw.text((x + 102, y + 94), "logo render failed", fill=(138, 43, 43), font=font_small)
         else:
-            draw.rectangle((x + 96, y + 42, x + 274, y + 132), fill=(237, 240, 241), outline=(180, 188, 191))
-            draw.text((x + 124, y + 76), "asset not local", fill=(138, 75, 20), font=font_small)
+            draw.rounded_rectangle((x + 40, y + 58, x + card_w - 46, y + 136), radius=8, fill=(250, 247, 240), outline=(218, 187, 143))
+            draw_centered_text(draw, (x + 40, y + 64, x + card_w - 46, y + 92), "SOURCE-ONLY REVIEW", font_small, (138, 75, 20))
+            draw_centered_text(draw, (x + 40, y + 94, x + card_w - 46, y + 124), "local logo file missing", font_small, (88, 94, 98))
         status = clean(row.get("current_approval_status")) or "review"
         text_max = card_w - 50
-        draw.text((x + 24, y + 166), ellipsize(draw, clean(row.get("display_name")), font_body, text_max), fill=(17, 24, 32), font=font_body)
-        draw.text((x + 24, y + 194), f"{clean(row.get('scope_id'))} | {clean(row.get('entity_type'))}", fill=(70, 80, 88), font=font_small)
-        draw.text((x + 24, y + 218), f"Status: {status}", fill=(150, 94, 0), font=font_small)
-        draw.text((x + 24, y + 240), ellipsize(draw, f"Path: {clean(row.get('local_logo_path'))}", font_small, text_max), fill=(70, 80, 88), font=font_small)
-        draw.text((x + 24, y + 262), ellipsize(draw, f"Source: {clean(row.get('official_source_candidate'))}", font_small, text_max), fill=(70, 80, 88), font=font_small)
+        draw.text((x + 24, y + 150), ellipsize(draw, clean(row.get("display_name")), font_body, text_max), fill=(17, 24, 32), font=font_body)
+        draw.text((x + 24, y + 178), f"{clean(row.get('league_name')) or clean(row.get('scope_id'))} | {clean(row.get('entity_type'))}", fill=(70, 80, 88), font=font_small)
+        draw.text((x + 24, y + 202), f"Status: {status} | source reviewed: no", fill=(150, 94, 0), font=font_small)
+        draw.text((x + 24, y + 224), ellipsize(draw, f"Action: {review_instruction}", font_small, text_max), fill=(70, 80, 88), font=font_small)
+        draw.text((x + 24, y + 246), ellipsize(draw, f"Source domain: {source_domain(row.get('official_source_candidate', ''))}", font_small, text_max), fill=(70, 80, 88), font=font_small)
+        draw.text((x + 24, y + 268), ellipsize(draw, f"Intake: {clean(row.get('human_intake_file'))}", font_small, text_max), fill=(70, 80, 88), font=font_small)
 
     image.save(out_path)
     return out_path.as_posix(), warnings
