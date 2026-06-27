@@ -289,6 +289,77 @@ def test_box_score_top_performers_require_both_candidate_teams() -> None:
     assert module.find_top_performers(candidate, box_map) == ""
 
 
+def test_game_source_confirmation_bridge_links_game_stats_and_cluster_rows() -> None:
+    module = load_module()
+    game_rows = [
+        {
+            "row_id": "event-sky-fire",
+            "game_date": "2026-06-26",
+            "league": "WNBA",
+            "home_team": "Chicago Sky",
+            "away_team": "Portland Fire",
+            "status": "final",
+            "final_score": "Portland Fire 94 - Chicago Sky 124",
+            "recap_candidate": "Yes",
+            "selected_source": "espn_wnba_public",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401857025",
+            "source_domain": "www.espn.com",
+        }
+    ]
+    stats_rows = [
+        {
+            "event_uid": "event-sky-fire",
+            "stats_evidence_status": "confirmed_free_public_box_score",
+            "confirmation_source_url": "https://www.espn.com/wnba/game/_/gameId/401857025",
+            "top_performers": "Kamilla Cardoso (Chicago Sky): PTS 30, REB 8",
+        }
+    ]
+    packets = [
+        {
+            "candidate_id": "candidate-sky",
+            "headline": "Chicago Sky beat Portland Fire",
+            "source_urls_json": "[\"https://sky.wnba.com/news/recap\"]",
+        }
+    ]
+    clusters = [
+        {
+            "cluster_id": "signal-cluster-sky",
+            "cluster_headline": "Chicago Sky beat Portland Fire",
+            "candidate_ids": "candidate-sky",
+            "matching_official_evidence_status": "matching_news_and_free_result_evidence_operator_verify",
+            "matching_official_evidence_artifacts": "news_fact_packets.csv candidate_id=candidate-sky; game_intelligence_board_v1.csv row_id=event-sky-fire",
+            "matching_official_evidence_urls": "[\"https://sky.wnba.com/news/recap\", \"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
+        }
+    ]
+
+    rows = module.game_source_confirmation_bridge_rows(
+        run_id="run-1",
+        game_rows=game_rows,
+        stats_rows=stats_rows,
+        cluster_rows=clusters,
+        packets=packets,
+    )
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["game_row_ref"] == "row_id=event-sky-fire"
+    assert row["stats_row_ref"] == "event_uid=event-sky-fire"
+    assert row["cluster_row_ref"] == "cluster_id=signal-cluster-sky"
+    assert row["news_packet_ref"] == "candidate_id=candidate-sky"
+    assert row["official_free_game_evidence_status"] == "official_or_free_game_evidence_present_operator_verify"
+    assert row["stats_evidence_status"] == "confirmed_free_public_box_score"
+    assert row["cross_signal_status"] == "matching_news_and_free_result_evidence_operator_verify"
+    assert "game_intelligence_board_v1.csv row_id=event-sky-fire" in row["exact_next_row_or_source_to_open"]
+    assert "stats_evidence_gap_board_v1.csv event_uid=event-sky-fire" in row["exact_next_row_or_source_to_open"]
+    assert "breaking_public_signal_clusters.csv cluster_id=signal-cluster-sky" in row["exact_next_row_or_source_to_open"]
+    assert row["manual_confirmation_needed"] == "true"
+    assert row["review_only"] == "true"
+    assert row["publish_ready"] == "false"
+    assert row["auto_publish"] == "false"
+    assert row["auto_source_enablement"] == "false"
+    assert row["approval_state_change"] == "false"
+
+
 def test_news_sync_prefers_latest_local_results_over_stale_root(tmp_path, monkeypatch) -> None:
     module = load_module()
     monkeypatch.chdir(tmp_path)
@@ -362,6 +433,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     confirmation_md = run_dir / "breaking_public_signal_confirmation_intake.md"
     clusters_csv = run_dir / "breaking_public_signal_clusters.csv"
     clusters_md = run_dir / "breaking_public_signal_clusters.md"
+    bridge_csv = run_dir / "game_source_confirmation_bridge_v1.csv"
+    bridge_md = run_dir / "game_source_confirmation_bridge_v1.md"
+    bridge_json = run_dir / "game_source_confirmation_bridge_v1.json"
     news_manifest = run_dir / "news_sync_manifest.json"
     assert queue.exists()
     assert report.exists()
@@ -370,9 +444,13 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert confirmation_md.exists()
     assert clusters_csv.exists()
     assert clusters_md.exists()
+    assert bridge_csv.exists()
+    assert bridge_md.exists()
+    assert bridge_json.exists()
     rows = list(csv.DictReader(queue.open(newline="", encoding="utf-8")))
     confirmation_rows = list(csv.DictReader(confirmation_csv.open(newline="", encoding="utf-8")))
     cluster_rows = list(csv.DictReader(clusters_csv.open(newline="", encoding="utf-8")))
+    bridge_rows = list(csv.DictReader(bridge_csv.open(newline="", encoding="utf-8")))
     assert rows
     assert confirmation_rows
     assert cluster_rows
@@ -390,6 +468,10 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all(row["publish_ready"] == "false" for row in cluster_rows)
     assert all(row["auto_publish"] == "false" for row in cluster_rows)
     assert all(row["auto_source_enablement"] == "false" for row in cluster_rows)
+    assert all(row["review_only"] == "true" for row in bridge_rows)
+    assert all(row["publish_ready"] == "false" for row in bridge_rows)
+    assert all(row["auto_publish"] == "false" for row in bridge_rows)
+    assert all(row["auto_source_enablement"] == "false" for row in bridge_rows)
     assert any(row["headline"] == "Breaking: Liberty announce star guard injury update" for row in rows)
     signal_payload = json.loads(signal_manifest.read_text(encoding="utf-8"))
     news_payload = json.loads(news_manifest.read_text(encoding="utf-8"))
@@ -401,7 +483,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
     assert "breaking_public_signal_confirmation_intake.csv" in news_payload["outputs"]
     assert "breaking_public_signal_clusters.csv" in news_payload["outputs"]
+    assert "game_source_confirmation_bridge_v1.csv" in news_payload["outputs"]
     assert news_payload["counts"]["breaking_public_signal_rows"] == len(rows)
     assert news_payload["counts"]["breaking_public_signal_review_only"] == len(rows)
     assert news_payload["counts"]["breaking_confirmation_intake_rows"] == len(confirmation_rows)
     assert news_payload["counts"]["breaking_signal_cluster_rows"] == len(cluster_rows)
+    assert news_payload["counts"]["game_source_confirmation_bridge_rows"] == len(bridge_rows)

@@ -29,6 +29,7 @@ INPUT_RESULTS_TOP_CSV = os.environ.get("HSD_RESULTS_TOP_CSV", "top_womens_result
 INPUT_RESULTS_RECONCILED_CSV = os.environ.get("HSD_RESULTS_RECONCILED_CSV", "reconciled_events.csv")
 INPUT_RESULTS_FINALS_CSV = os.environ.get("HSD_RESULTS_FINALS_CSV", "today_final_results.csv")
 INPUT_GAME_INTELLIGENCE_CSV = os.environ.get("HSD_GAME_INTELLIGENCE_BOARD", "game_intelligence_board_v1.csv")
+INPUT_STATS_EVIDENCE_CSV = os.environ.get("HSD_STATS_EVIDENCE_GAP_BOARD", "stats_evidence_gap_board_v1.csv")
 
 SOURCE_REGISTRY_FILE = os.environ.get("HSD_NEWS_SOURCE_REGISTRY", "news_source_registry.json")
 ANGLE_RULES_FILE = os.environ.get("HSD_NEWS_ANGLE_RULES", "news_angle_rules.json")
@@ -56,6 +57,9 @@ BREAKING_CONFIRMATION_INTAKE_CSV = "breaking_public_signal_confirmation_intake.c
 BREAKING_CONFIRMATION_INTAKE_MD = "breaking_public_signal_confirmation_intake.md"
 BREAKING_SIGNAL_CLUSTERS_CSV = "breaking_public_signal_clusters.csv"
 BREAKING_SIGNAL_CLUSTERS_MD = "breaking_public_signal_clusters.md"
+GAME_SOURCE_CONFIRMATION_BRIDGE_CSV = "game_source_confirmation_bridge_v1.csv"
+GAME_SOURCE_CONFIRMATION_BRIDGE_MD = "game_source_confirmation_bridge_v1.md"
+GAME_SOURCE_CONFIRMATION_BRIDGE_JSON = "game_source_confirmation_bridge_v1.json"
 NEWS_SYNC_HUB_MD = "news_sync_hub.md"
 NEWS_MANIFEST_JSON = "news_sync_manifest.json"
 NEWS_INPUT_STATUS_CSV = "news_input_status_report.csv"
@@ -145,6 +149,18 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "limitations", "exact_manual_next_action", "manual_review_required",
     "review_only", "publish_ready", "auto_publish", "auto_source_enablement",
     "approval_state_change",
+]
+
+GAME_SOURCE_CONFIRMATION_BRIDGE_FIELDS = [
+    "bridge_id", "run_id", "game_row_ref", "game_date", "league", "matchup",
+    "final_score", "recap_candidate", "official_free_game_evidence_status",
+    "game_source_url", "game_source_domain", "stats_evidence_status",
+    "stats_row_ref", "stats_source_url", "top_performers",
+    "cross_signal_status", "cluster_row_ref", "news_packet_ref",
+    "news_or_cluster_source_urls", "manual_confirmation_needed",
+    "exact_next_row_or_source_to_open", "operator_confirmation_target",
+    "limitations", "manual_review_required", "review_only", "publish_ready",
+    "auto_publish", "auto_source_enablement", "approval_state_change",
 ]
 
 INPUT_STATUS_FIELDS = [
@@ -2924,6 +2940,160 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def stats_row_for_game(game_row: Dict[str, Any], stats_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    row_id = clean(game_row.get("row_id"))
+    if row_id:
+        for row in stats_rows:
+            if clean(row.get("event_uid")) == row_id:
+                return row
+    game_matchup = norm(" ".join([game_row.get("away_team", ""), game_row.get("home_team", "")]))
+    for row in stats_rows:
+        matchup = norm(row.get("matchup"))
+        if game_matchup and all(part in matchup for part in [norm(game_row.get("away_team")), norm(game_row.get("home_team"))] if part):
+            return row
+    return {}
+
+
+def cluster_for_game_row(game_row: Dict[str, Any], cluster_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    row_id = clean(game_row.get("row_id"))
+    if row_id:
+        for row in cluster_rows:
+            if f"row_id={row_id}" in clean(row.get("matching_official_evidence_artifacts")):
+                return row
+    home = norm(game_row.get("home_team"))
+    away = norm(game_row.get("away_team"))
+    for row in cluster_rows:
+        headline = norm(row.get("cluster_headline"))
+        if home and away and home in headline and away in headline:
+            return row
+    return {}
+
+
+def news_packet_for_cluster(cluster_row: Dict[str, Any], packets: List[Dict[str, Any]]) -> Dict[str, Any]:
+    candidate_ids = [cid for cid in clean(cluster_row.get("candidate_ids")).split(";") if cid]
+    candidate_set = set(candidate_ids)
+    for packet in packets:
+        if clean(packet.get("candidate_id")) in candidate_set:
+            return packet
+    return {}
+
+
+def game_source_confirmation_bridge_rows(
+    *,
+    run_id: str,
+    game_rows: List[Dict[str, Any]],
+    stats_rows: List[Dict[str, Any]],
+    cluster_rows: List[Dict[str, Any]],
+    packets: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for game in game_rows:
+        if clean(game.get("status")).lower() != "final" and clean(game.get("recap_candidate")) != "Yes":
+            continue
+        row_id = clean(game.get("row_id"))
+        stats = stats_row_for_game(game, stats_rows)
+        cluster = cluster_for_game_row(game, cluster_rows)
+        packet = news_packet_for_cluster(cluster, packets) if cluster else {}
+        game_url = clean(game.get("source_url"))
+        game_domain = clean(game.get("source_domain")) or source_domain_from_url(game_url)
+        game_status = "official_or_free_game_evidence_present_operator_verify" if game_url and is_free_result_domain(game_domain) else "missing_official_or_free_game_evidence"
+        stats_status = clean(stats.get("stats_evidence_status")) or "missing_stats_evidence_row"
+        cross_status = clean(cluster.get("matching_official_evidence_status")) or "missing_cross_signal_cluster"
+        cluster_ref = f"cluster_id={clean(cluster.get('cluster_id'))}" if cluster else ""
+        packet_ref = f"candidate_id={clean(packet.get('candidate_id'))}" if packet else ""
+        stats_ref = f"event_uid={clean(stats.get('event_uid'))}" if stats else ""
+        source_urls = []
+        if cluster:
+            source_urls.extend(parse_json_list(cluster.get("matching_official_evidence_urls")))
+        if packet:
+            source_urls.extend(parse_json_list(packet.get("source_urls_json")))
+        if game_url and game_url not in source_urls:
+            source_urls.append(game_url)
+        stats_url = clean(stats.get("confirmation_source_url"))
+        if stats_url and stats_url not in source_urls:
+            source_urls.append(stats_url)
+        next_parts = [
+            f"Open game_intelligence_board_v1.csv row_id={row_id}" if row_id else "Open game_intelligence_board_v1.csv matching this game",
+        ]
+        if stats_ref:
+            next_parts.append(f"open stats_evidence_gap_board_v1.csv {stats_ref}")
+        else:
+            next_parts.append("open stats_confirmation_intake_v1.csv and add/check the missing stat evidence row")
+        if cluster_ref:
+            next_parts.append(f"open breaking_public_signal_clusters.csv {cluster_ref}")
+        else:
+            next_parts.append("open breaking_public_signal_clusters.csv and confirm whether a current news cluster exists")
+        if packet_ref:
+            next_parts.append(f"open news_fact_packets.csv {packet_ref}")
+        next_parts.append("record operator confirmation in the relevant confirmation intake before editorial use")
+        rows.append(
+            {
+                "bridge_id": "game_confirm_" + stable_id(run_id, row_id, game.get("final_score")),
+                "run_id": run_id,
+                "game_row_ref": f"row_id={row_id}" if row_id else "",
+                "game_date": clean(game.get("game_date")),
+                "league": clean(game.get("league")),
+                "matchup": f"{clean(game.get('away_team'))} at {clean(game.get('home_team'))}".strip(),
+                "final_score": clean(game.get("final_score")),
+                "recap_candidate": clean(game.get("recap_candidate")),
+                "official_free_game_evidence_status": game_status,
+                "game_source_url": game_url,
+                "game_source_domain": game_domain,
+                "stats_evidence_status": stats_status,
+                "stats_row_ref": stats_ref,
+                "stats_source_url": stats_url,
+                "top_performers": clean(stats.get("top_performers")),
+                "cross_signal_status": cross_status,
+                "cluster_row_ref": cluster_ref,
+                "news_packet_ref": packet_ref,
+                "news_or_cluster_source_urls": json.dumps(source_urls[:12], ensure_ascii=False),
+                "manual_confirmation_needed": "true",
+                "exact_next_row_or_source_to_open": "; then ".join(next_parts) + ".",
+                "operator_confirmation_target": "breaking_public_signal_confirmation_intake.csv or stats_confirmation_intake_v1.csv",
+                "limitations": "Review-only bridge across existing artifacts; it does not confirm claims, approve stats/stories/renders/sources, publish, or create a publish-ready lane.",
+                "manual_review_required": "true",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_publish": "false",
+                "auto_source_enablement": "false",
+                "approval_state_change": "false",
+            }
+        )
+    rows.sort(key=lambda row: (row.get("cross_signal_status") == "missing_cross_signal_cluster", row.get("game_date", ""), row.get("matchup", "")))
+    return rows
+
+
+def markdown_game_source_confirmation_bridge(rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Game Source Confirmation Bridge v1",
+        "",
+        f"Generated: {utc_now()}",
+        "",
+        "Review-only bridge across game, stat, and breaking/news artifacts. It tells the operator what to open next; it does not approve anything.",
+        "",
+    ]
+    if not rows:
+        lines.extend(["No final/recap game rows are available for confirmation bridging.", ""])
+        return "\n".join(lines) + "\n"
+    for row in rows[:60]:
+        lines.extend(
+            [
+                f"## {row.get('matchup')} | {row.get('game_date')}",
+                "",
+                f"- Game evidence: `{row.get('official_free_game_evidence_status')}` / {row.get('game_source_url') or 'missing'}",
+                f"- Stat evidence: `{row.get('stats_evidence_status')}` / {row.get('stats_row_ref') or 'missing'}",
+                f"- Cross-signal evidence: `{row.get('cross_signal_status')}` / {row.get('cluster_row_ref') or 'missing'}",
+                f"- News packet: `{row.get('news_packet_ref') or 'missing'}`",
+                f"- Exact next row/source: {row.get('exact_next_row_or_source_to_open')}",
+                f"- Guardrail: review_only={row.get('review_only')} publish_ready={row.get('publish_ready')} auto_publish={row.get('auto_publish')} approval_state_change={row.get('approval_state_change')}",
+                "",
+            ]
+        )
+    if len(rows) > 60:
+        lines.append(f"Showing first 60 of {len(rows)} rows. Open `game_source_confirmation_bridge_v1.csv` for the full bridge.")
+    return "\n".join(lines) + "\n"
+
+
 def markdown_brief_queue(packets: List[Dict[str, Any]], observations_by_candidate: Dict[str, List[Dict[str, Any]]]) -> str:
     lines = [
         "# Her Sports Daily News Brief Queue v1",
@@ -3190,6 +3360,7 @@ def main() -> None:
     reconciled_csv_path, reconciled_csv_rows = resolve_csv_input(INPUT_RESULTS_RECONCILED_CSV)
     finals_csv_path, finals_csv_rows = resolve_csv_input(INPUT_RESULTS_FINALS_CSV)
     game_intelligence_path, game_intelligence_rows = resolve_csv_input(INPUT_GAME_INTELLIGENCE_CSV)
+    stats_evidence_path, stats_evidence_rows = resolve_csv_input(INPUT_STATS_EVIDENCE_CSV)
 
     csv_sources = [
         ("top_womens_results.csv", top_csv_rows),
@@ -3206,6 +3377,7 @@ def main() -> None:
         input_status_row_csv("reconciled_events_csv", INPUT_RESULTS_RECONCILED_CSV, reconciled_csv_rows, reconciled_csv_path),
         input_status_row_csv("today_final_results_csv", INPUT_RESULTS_FINALS_CSV, finals_csv_rows, finals_csv_path),
         input_status_row_csv("game_intelligence_board_csv", INPUT_GAME_INTELLIGENCE_CSV, game_intelligence_rows, game_intelligence_path),
+        input_status_row_csv("stats_evidence_gap_board_csv", INPUT_STATS_EVIDENCE_CSV, stats_evidence_rows, stats_evidence_path),
     ]
 
     csv_candidates = candidates_from_result_csvs(run_id, csv_sources)
@@ -3259,6 +3431,13 @@ def main() -> None:
         game_rows=game_intelligence_rows,
         intake_rows=confirmation_intake_rows,
     )
+    game_source_bridge_rows = game_source_confirmation_bridge_rows(
+        run_id=run_id,
+        game_rows=game_intelligence_rows,
+        stats_rows=stats_evidence_rows,
+        cluster_rows=cluster_rows,
+        packets=packets,
+    )
     manual_packets = [p for p in packets if p.get("manual_review") == "Yes"]
 
     write_csv(NEWS_INPUT_STATUS_CSV, input_status, INPUT_STATUS_FIELDS)
@@ -3269,6 +3448,7 @@ def main() -> None:
     write_csv(BREAKING_PUBLIC_SIGNAL_CSV, breaking_signal_rows, BREAKING_PUBLIC_SIGNAL_FIELDS)
     write_csv(BREAKING_CONFIRMATION_INTAKE_CSV, confirmation_intake_rows, BREAKING_CONFIRMATION_INTAKE_FIELDS)
     write_csv(BREAKING_SIGNAL_CLUSTERS_CSV, cluster_rows, BREAKING_SIGNAL_CLUSTER_FIELDS)
+    write_csv(GAME_SOURCE_CONFIRMATION_BRIDGE_CSV, game_source_bridge_rows, GAME_SOURCE_CONFIRMATION_BRIDGE_FIELDS)
 
     write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
     write_run_text(NEWS_SOCIAL_PACKETS_MD, markdown_social_packets(packets))
@@ -3277,7 +3457,28 @@ def main() -> None:
     write_run_text(BREAKING_PUBLIC_SIGNAL_MD, markdown_breaking_public_signal(breaking_signal_rows))
     write_run_text(BREAKING_CONFIRMATION_INTAKE_MD, markdown_breaking_confirmation_intake(confirmation_intake_rows))
     write_run_text(BREAKING_SIGNAL_CLUSTERS_MD, markdown_breaking_signal_clusters(cluster_rows))
+    write_run_text(GAME_SOURCE_CONFIRMATION_BRIDGE_MD, markdown_game_source_confirmation_bridge(game_source_bridge_rows))
     write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
+    write_run_json(
+        GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
+        {
+            "version": "v1-review-only-game-source-confirmation-bridge",
+            "run_id": run_id,
+            "generated_at_utc": utc_now(),
+            "review_only": True,
+            "publish_ready": False,
+            "auto_publish": False,
+            "auto_source_enablement": False,
+            "approval_state_change": False,
+            "counts": {
+                "rows": len(game_source_bridge_rows),
+                "with_game_evidence": len([row for row in game_source_bridge_rows if row.get("official_free_game_evidence_status") == "official_or_free_game_evidence_present_operator_verify"]),
+                "with_stats_evidence": len([row for row in game_source_bridge_rows if clean(row.get("stats_evidence_status")) not in {"", "missing_stats_evidence_row"}]),
+                "with_cross_signal_cluster": len([row for row in game_source_bridge_rows if clean(row.get("cross_signal_status")) != "missing_cross_signal_cluster"]),
+            },
+            "rows": game_source_bridge_rows,
+        },
+    )
     write_run_json(
         BREAKING_PUBLIC_SIGNAL_JSON,
         {
@@ -3294,6 +3495,7 @@ def main() -> None:
                 "with_public_signal": len([row for row in breaking_signal_rows if row.get("public_signal_count") not in {"", "0"}]),
                 "confirmation_intake_rows": len(confirmation_intake_rows),
                 "cluster_rows": len(cluster_rows),
+                "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
                 "clusters_with_matching_current_artifact_evidence": len([
                     row for row in cluster_rows
                     if clean(row.get("matching_official_evidence_status")) != "no_matching_current_artifact_evidence_operator_confirmation_required"
@@ -3306,6 +3508,9 @@ def main() -> None:
                 BREAKING_CONFIRMATION_INTAKE_MD,
                 BREAKING_SIGNAL_CLUSTERS_CSV,
                 BREAKING_SIGNAL_CLUSTERS_MD,
+                GAME_SOURCE_CONFIRMATION_BRIDGE_CSV,
+                GAME_SOURCE_CONFIRMATION_BRIDGE_MD,
+                GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
             ],
         },
     )
@@ -3322,6 +3527,8 @@ def main() -> None:
             "top_womens_results_csv": INPUT_RESULTS_TOP_CSV,
             "reconciled_events_csv": INPUT_RESULTS_RECONCILED_CSV,
             "today_final_results_csv": INPUT_RESULTS_FINALS_CSV,
+            "game_intelligence_board_csv": INPUT_GAME_INTELLIGENCE_CSV,
+            "stats_evidence_gap_board_csv": INPUT_STATS_EVIDENCE_CSV,
         },
         "outputs": [
             NEWS_INPUT_STATUS_CSV,
@@ -3340,6 +3547,9 @@ def main() -> None:
             BREAKING_CONFIRMATION_INTAKE_MD,
             BREAKING_SIGNAL_CLUSTERS_CSV,
             BREAKING_SIGNAL_CLUSTERS_MD,
+            GAME_SOURCE_CONFIRMATION_BRIDGE_CSV,
+            GAME_SOURCE_CONFIRMATION_BRIDGE_MD,
+            GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
             NEWS_SYNC_HUB_MD,
         ],
         "counts": {
@@ -3355,6 +3565,7 @@ def main() -> None:
             "breaking_public_signal_review_only": len([row for row in breaking_signal_rows if row.get("review_only") == "true"]),
             "breaking_confirmation_intake_rows": len(confirmation_intake_rows),
             "breaking_signal_cluster_rows": len(cluster_rows),
+            "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
         },
         "settings": {
             "max_must_post": MAX_MUST_POST,

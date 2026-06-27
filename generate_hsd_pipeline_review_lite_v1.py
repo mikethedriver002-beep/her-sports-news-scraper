@@ -38,7 +38,7 @@ KEY_FILES = [
     "install_report.md", "install_report.json", "contract_validation_report.md", "pipeline_outcome.md", "pipeline_stop_reason.md",
     "results_contract_report.md", "results_contract_v2.csv", "manual_story_inbox_report.md", "story_candidates_manual.csv", "story_candidates_manual.jsonl",
     "discovery_sources_report.md", "story_candidates_discovery.csv", "story_candidates_discovery.jsonl", "daily_slate_plan.md", "daily_slate_plan.csv", "daily_slate_guard_report.md",
-    "latest_results_run_summary.md", "news_fact_packets.csv", "latest_news_sync_run_summary.md",
+    "latest_results_run_summary.md", "news_fact_packets.csv", "game_source_confirmation_bridge_v1.csv", "game_source_confirmation_bridge_v1.md", "game_source_confirmation_bridge_v1.json", "latest_news_sync_run_summary.md",
     "multi_post_daily_board.md", "multi_post_daily_board.json", "post_slot_status.csv",
     "ig_feed_queue.csv", "ig_story_queue.csv", "threads_queue.csv", "caption_bank.md", "first_comment_hooks.md",
     "launch_command_center.md", "launch_daily_runbook.md", "launch_graphics_chat_brief.md",
