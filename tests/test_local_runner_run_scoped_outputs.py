@@ -224,6 +224,9 @@ def test_manual_render_mode_is_explicit_review_only() -> None:
     assert 'operator/inbox/wnba_athlete_identity_resolution.csv' in runner
     assert '"render" { Invoke-RenderStage $python }' in runner
     assert "render_handoff_top_packet/draft_preview.png" in runner
+    assert "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png" in runner
+    assert "render_handoff_top_packet/review_drafts/draft_preview_story.png" in runner
+    assert "render_handoff_top_packet/review_drafts/draft_preview_square.png" in runner
     assert "render_handoff_top_packet/active_asset_review_queue.md" in runner
     assert "render_handoff_top_packet/active_asset_review_queue.csv" in runner
     assert "manual_review_renderer_report.md" in runner
