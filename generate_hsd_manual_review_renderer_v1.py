@@ -2262,6 +2262,16 @@ def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
     return int(raw[0]), int(raw[1]), int(raw[2]), int(raw[3])
 
 
+def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
+    x, y, w, h = box
+    logo_size = min(h - 30, 104 if winner else 92)
+    score_box = (x + w - 178, y - 6, 150, h + 14)
+    text_x = x + logo_size + 52
+    score_plate_left = score_box[0] - 14
+    text_w = max(128, min(max(128, w - logo_size - 232), score_plate_left - text_x - 20))
+    return (text_x, y + 48, text_w, h - 68)
+
+
 def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], focus_box: Tuple[int, int, int, int] | None = None) -> bool:
     _x, _y, _w, h = box
     variant_id = "photo_first_story" if h > 650 else "photo_first_feed"
@@ -2275,6 +2285,8 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
             _fx, fy, _fw, fh = focus_box
             focus_y = ((fy + fh / 2) - y) / max(1, h)
         photo = prepared_athlete_photo_focus_fill(path, w - 28, h - 72, focus_y=focus_y)
+        if ImageFilter is not None:
+            photo = photo.filter(ImageFilter.UnsharpMask(radius=1.1, percent=170, threshold=2))
     except Exception:
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -2333,8 +2345,9 @@ def draw_photo_first_score_row(
     logo_size = min(h - 30, 104 if winner else 92)
     logo_box = (x + 22, y + (h - logo_size) // 2 + 10, logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
-    draw_reference_text(image, (x + logo_size + 52, y + 48, max(220, w - logo_size - 232), h - 68), short_team(team), "context", 40 if winner else 34, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
     score_box = (x + w - 178, y - 6, 150, h + 14)
+    team_text_box = photo_first_score_team_text_box(box, winner=winner)
+    draw_reference_text(image, team_text_box, short_team(team), "context", 40 if winner else 34, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
     draw.rounded_rectangle((score_box[0] - 14, y + 18, x + w - 18, y + h - 18), radius=18, fill=(255, 255, 255, 18), outline=(*accent, 92), width=1)
     draw_reference_text(image, score_box, score_value, "score", 114 if winner else 96, 52, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
 
@@ -2540,8 +2553,8 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     draw_final_score_reference_title(image, template_spec, format_id)
 
     context_box = zone_box(template_spec, "context_row")
-    draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
     draw_logo_first_score_atmosphere(image, template_spec, winner_accent, loser_accent)
+    draw_context_divider(image, context_box, "FINAL / WNBA / SOURCE CHECKED")
     draw_score_lanes(image, template_spec, winner_accent, loser_accent)
 
     draw_team_logo_slot(image, score["winner"], zone_box(template_spec, "primary_logo_slot"), aliases, logos, winner_accent, winner=True)
