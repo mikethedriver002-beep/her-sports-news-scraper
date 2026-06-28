@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.29.0-photo-first-score-polish"
+VERSION = "hsd-manual-review-renderer-v1.30.0-photo-first-depth-stage"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -45,14 +45,14 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v5_photo_first_depth_stage"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
-    "square_athlete_focal_panel,stat_proof_rail,generated_preview_qa"
+    "square_athlete_focal_panel,photo_first_focal_depth_stage,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2437,6 +2437,76 @@ def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
     return int(raw[0]), int(raw[1]), int(raw[2]), int(raw[3])
 
 
+def draw_photo_first_focal_depth_stage(
+    image: Any,
+    geometry: Dict[str, Any],
+    primary: tuple[int, int, int],
+    secondary: tuple[int, int, int],
+) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    width, height = image.size
+    photo = tuple_box(geometry["photo_stage_box"])
+    winner = tuple_box(geometry["winner_score_row_box"])
+    loser = tuple_box(geometry["loser_score_row_box"])
+    stat = tuple_box(geometry["stat_strip_box"])
+    hook = tuple_box(geometry["matchup_angle_box"])
+
+    px, py, pw, ph = photo
+    wx, wy, ww, wh = winner
+    _lx, ly, _lw, lh = loser
+    sx, sy, sw, sh = stat
+    hx, hy, hw, hh = hook
+    stage_left = max(0, min(px, sx, hx) - 24)
+    stage_right = min(width, max(wx + ww, sx + sw, hx + hw) + 24)
+    stage_top = max(0, min(py, wy) - 46)
+    stage_bottom = min(height, max(py + ph, hy + hh) + 28)
+
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    draw.rounded_rectangle(
+        (stage_left, stage_top, stage_right, stage_bottom),
+        radius=34,
+        fill=(0, 0, 0, 42),
+        outline=(*primary, 36),
+        width=1,
+    )
+    draw.polygon(
+        [
+            (stage_left + 18, stage_top + int((stage_bottom - stage_top) * 0.18)),
+            (px + pw + 86, stage_top + 18),
+            (stage_right - 34, stage_bottom - 54),
+            (stage_left + 44, stage_bottom - 12),
+        ],
+        fill=(*primary, 30),
+    )
+    draw.polygon(
+        [
+            (px + pw - 24, stage_top + 8),
+            (stage_right - 10, stage_top + 42),
+            (stage_right - 42, ly + lh + 38),
+            (px + pw + 20, ly + lh + 12),
+        ],
+        fill=(*secondary, 24),
+    )
+    draw.rectangle((px - 8, py + 10, px + 16, py + ph - 8), fill=(*primary, 130))
+    draw.rectangle((wx - 10, wy + 2, wx + 10, wy + wh - 2), fill=(*primary, 102))
+    draw.rectangle((wx - 10, ly + 2, wx + 10, ly + lh - 2), fill=(*secondary, 112))
+    draw.line((stage_left + 22, sy - 16, stage_right - 22, sy - 16), fill=(*PALETTE["gold"], 150), width=4)
+    draw.line((stage_left + 28, sy - 8, stage_right - 28, sy - 8), fill=(248, 250, 255, 30), width=1)
+
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow, "RGBA")
+    glow_draw.ellipse((px - 88, py - 74, px + pw + 96, py + ph + 116), fill=(*primary, 66))
+    glow_draw.ellipse((wx - 96, wy - 70, wx + ww + 70, ly + lh + 96), fill=(*secondary, 34))
+    glow_draw.ellipse((sx + int(sw * 0.40), sy - 42, sx + sw + 80, sy + sh + 76), fill=(*PALETTE["gold"], 28))
+    if ImageFilter is not None:
+        glow = glow.filter(ImageFilter.GaussianBlur(34))
+        layer = layer.filter(ImageFilter.GaussianBlur(0.6))
+    image.alpha_composite(glow)
+    image.alpha_composite(layer)
+
+
 def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
     logo_size = min(h - 30, 104 if winner else 92)
@@ -2588,11 +2658,12 @@ def draw_photo_first_final_score_template(
     format_id = clean(format_spec.get("format_id"))
     is_story = height > 1500
 
+    geometry = photo_first_layout_geometry(format_spec)
     draw_reference_background(image, "final", winner_accent, loser_accent, photo_first=True)
+    draw_photo_first_focal_depth_stage(image, geometry, winner_accent, loser_accent)
     draw_reference_badge(image, template_spec)
     draw_final_score_reference_title(image, template_spec, format_id)
     draw_context_divider(image, zone_box(template_spec, "context_row"), "FINAL / WNBA / PHOTO-FIRST DRAFT")
-    geometry = photo_first_layout_geometry(format_spec)
     photo_box = tuple_box(geometry["photo_stage_box"])
     focus_box = tuple_box(geometry["photo_face_focus_box"])
     winner_box = tuple_box(geometry["winner_score_row_box"])
