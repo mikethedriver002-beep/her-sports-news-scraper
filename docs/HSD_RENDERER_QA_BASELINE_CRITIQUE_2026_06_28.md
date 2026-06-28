@@ -28,7 +28,7 @@ Review-only baseline for future renderer/game-intelligence PRs. This document do
 
 3. Current draft is logo-first; no athlete-led render is proven.
    - Evidence: manifest reports `safe_no_photo_fallback` and `photo_not_rendered` for feed, story, and square. The selected Chicago/Portland packet has `no_verified_stat_text`, `score_only_fallback_manual_context_required`, and content module `game_edge_fallback`.
-   - Acceptance check: future athlete-led PRs should show at least one review-only athlete-led feed/story/square proof, or explicitly explain why the selected packet cannot render an athlete without manual identity/source evidence.
+   - Acceptance check: a release-ready HSD visual render needs an athlete/human editorial focal point when eligible source proof and an approved local athlete asset exist. Logo-first score-only rendering remains `REVISE/HOLD` for visual readiness under that criterion. Future athlete-led PRs should show at least one review-only athlete-led feed/story/square proof, or explicitly explain why the selected packet cannot render an athlete without manual identity/source evidence.
 
 4. Background polish still reads as generic scaffolding, not premium sports editorial.
    - Evidence: background style is labeled `hsd_premium_sports_editorial_v4_dimensional`, but the visible diagonal shards, low-contrast grid, and heavy red/blue panels compete with the score block rather than supporting it.
@@ -43,11 +43,11 @@ Review-only baseline for future renderer/game-intelligence PRs. This document do
 - Grid: team rows, logo boxes, and score boxes align to a visible grid across feed/story/square; no row appears shifted or squeezed relative to its partner.
 - Score: score numerals are large enough to anchor the graphic but do not overpower team names or lower proof modules.
 - Copy: lower proof/context cards keep readable body copy without relying on ellipsis for the primary editorial claim.
-- Athlete path: renderer manifest proves either `photo_rendered`/review-variant usage or a clear `photo_not_rendered` reason tied to missing verified stat/athlete evidence.
+- Athlete path: renderer manifest proves either `photo_rendered`/review-variant usage or a clear `photo_not_rendered` reason tied to missing verified stat/athlete evidence. If eligible source proof and an approved local athlete asset exist, a logo-first score-only render is a `REVISE/HOLD` blocker for visual readiness.
 - Background: visual QA or PR notes explicitly compare background polish against the premium editorial target, not just pass/fail image nonblankness.
 - Overlay: review-only markers stay present, but footer/top badge footprint does not consume the working editorial hierarchy.
 - Guardrails: every future improvement remains review-only, with `auto_publish=false`, `publish_ready=false`, no downloads, and no approval-state changes.
 
 ## Current Go/No-Go Read
 
-The current draft is technically openable and fresh, but it should not be treated as a visual-quality benchmark. It is a review-only baseline showing what future renderer and games packets need to beat: cleaner grid discipline, stronger editorial hierarchy, quieter overlays, more premium background depth, and a demonstrated athlete-led path when evidence supports one.
+The current draft is technically openable and fresh, but it should not be treated as a visual-quality benchmark. It remains `REVISE/HOLD` for athlete/human editorial focal-point readiness if eligible source proof and an approved local athlete asset are available. This is a review-only baseline showing what future renderer and games packets need to beat: cleaner grid discipline, stronger editorial hierarchy, quieter overlays, more premium background depth, and a demonstrated athlete-led path when evidence supports one.
