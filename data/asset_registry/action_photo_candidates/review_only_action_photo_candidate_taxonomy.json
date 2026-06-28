@@ -1,0 +1,50 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "source_categories": {
+    "official_team_gallery": "Official team/club gallery, recap, or photo surface.",
+    "official_league_gallery": "Official league gallery, recap, or photo surface.",
+    "official_federation_or_tournament": "Official federation, tournament, NCAA, or championship photo surface.",
+    "verification_only_player_page": "Roster, player profile, media guide, or stats page used only as an identity anchor.",
+    "editorial_wire": "Getty, AP, Reuters, Imagn, or similar editorial marketplace lead.",
+    "reputable_newsroom_gallery": "Reputable newsroom, local beat, regional broadcaster, or public media gallery.",
+    "official_social": "Official athlete, team, league, federation, or tournament social post.",
+    "third_party_creator_public": "Independent photographer, portfolio, Flickr, SmugMug, or creator-owned public lead.",
+    "gray_area_public_lead": "Fan, repost, archive, forum, or weak-provenance public lead for parking only."
+  },
+  "rights_classes": {
+    "official_review_needed": "Official source found; no publish-ready rights are assumed.",
+    "official_partner_licensed_manual_review": "Official surface using partner/licensed imagery such as Getty or similar.",
+    "editorial_wire_rights_sensitive": "Editorial marketplace or wire source; licensing review is mandatory.",
+    "newsroom_photo_rights_sensitive": "Newsroom or beat outlet image; rights/provenance review is mandatory.",
+    "social_uncleared": "Social discovery lead; rights remain unclear.",
+    "third_party_creator_uncleared": "Independent creator lead; provenance and permission remain unclear.",
+    "gray_area_lead_only": "Weak chain of title; review-only lead, not a download candidate.",
+    "reject_do_not_pursue": "Restricted, deceptive, missing provenance, or clearly unusable."
+  },
+  "identity_confidence": {
+    "confirmed_official": "Caption/source identity and official roster/player anchor match cleanly.",
+    "strong_context": "Jersey, team, event, teammate/opponent context strongly align.",
+    "probable": "Likely but incomplete identity match.",
+    "weak": "Low-confidence match due to obstructed, old, low-res, or thin evidence.",
+    "mismatch_or_unknown": "Conflicting details or insufficient evidence."
+  },
+  "manual_review_statuses": {
+    "not_reviewed": "Generated/default state; no human decision yet.",
+    "pending_more_info": "Human needs more identity, event, rights, or source evidence.",
+    "escalated_rights_review": "Needs specialized rights/licensing review.",
+    "rejected": "Do not pursue this lead further.",
+    "approved_for_download": "Human approved quarantine download only; not asset approval."
+  },
+  "download_blocked_rights_classes": [
+    "gray_area_lead_only",
+    "reject_do_not_pursue",
+    "social_uncleared",
+    "third_party_creator_uncleared"
+  ],
+  "download_ready_identity_confidence": [
+    "confirmed_official",
+    "strong_context"
+  ],
+  "credit_not_visible_placeholder": "credit_not_visible_manual_review",
+  "guardrail": "URL-first, evidence-first, review-only candidate metadata; no downloads, approvals, or publish-ready claims."
+}
