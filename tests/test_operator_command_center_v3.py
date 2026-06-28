@@ -209,6 +209,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "game_source_confirmation_limitations": "Single ESPN public scoreboard row; not a paid API, but not a human approval or publish-ready confirmation.",
                 "game_source_confirmation_tier_target": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
                 "game_source_confirmation_tier_cue": "single_free_public_scoreboard_operator_verify; this is useful free public scoreboard evidence, but it is not official, multi-source, human-approved, or publish-ready confirmation. Verify the listed source URL and add official/wire/operator-checked confirmation when available.",
+                "game_source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+                "game_source_freshness_age_minutes": "33",
+                "game_source_retrieved_at_utc": "2026-06-28T12:01:53+00:00",
+                "game_source_freshness_note": "Evidence was retrieved within 3 hours; operator still verifies source facts before use.",
+                "game_source_freshness_target": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
+                "game_source_freshness_cue": "evidence_fresh_under_3h_operator_verify; retrieved_at_utc=2026-06-28T12:01:53+00:00; age_minutes=33. Fresh enough for review triage, but operator must still open the source URL and confirm facts before any story or render use.",
             }
         ],
         [
@@ -254,6 +260,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "game_source_confirmation_limitations",
             "game_source_confirmation_tier_target",
             "game_source_confirmation_tier_cue",
+            "game_source_freshness_status",
+            "game_source_freshness_age_minutes",
+            "game_source_retrieved_at_utc",
+            "game_source_freshness_note",
+            "game_source_freshness_target",
+            "game_source_freshness_cue",
         ],
     )
 
@@ -265,6 +277,11 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "proof_card_ready_for_manual_review" in row["story_opportunity_source_coverage"]
     assert "game_source_tier=single_free_public_scoreboard_operator_verify" in row["story_opportunity_source_coverage"]
     assert "not official, multi-source, human-approved, or publish-ready confirmation" in row["story_opportunity_source_coverage"]
+    assert "game_source_freshness=evidence_fresh_under_3h_operator_verify" in row["story_opportunity_source_coverage"]
+    assert "Fresh enough for review triage" in row["story_opportunity_source_coverage"]
+    assert row["freshness_label"] == "signal_and_game_source_timestamp"
+    assert row["freshness_source"] == "2026-06-28T12:01:53+00:00"
+    assert row["freshness_score"] == "evidence_fresh_under_3h_operator_verify"
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
     assert row["next_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert "manual_confirmation_intake_first" in row["detail"]

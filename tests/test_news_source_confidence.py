@@ -278,6 +278,10 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
             "source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
             "source_confirmation_limitations": "Single ESPN public scoreboard row; not a paid API, but not a human approval or publish-ready confirmation.",
             "source_domain": "www.espn.com",
+            "retrieved_at_utc": "2026-06-28T12:01:53+00:00",
+            "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+            "source_freshness_age_minutes": "42",
+            "source_freshness_note": "Evidence was retrieved within 3 hours; operator still verifies source facts before use.",
             "recap_render_readiness": "athlete_led_manual_render_candidate",
             "story_proof_card_row_to_open": "story_proof_card_v1.csv event_id=event-liberty-aces; candidate_id=story-card-liberty",
             "exact_next_file_or_intake": "Open game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces; then open story_proof_card_v1.csv event_id=event-liberty-aces; candidate_id=story-card-liberty.",
@@ -340,10 +344,18 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "not a human approval or publish-ready confirmation" in cluster["game_source_confirmation_limitations"]
     assert cluster["game_source_confirmation_tier_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
     assert "not official, multi-source, human-approved, or publish-ready confirmation" in cluster["game_source_confirmation_tier_cue"]
+    assert cluster["game_source_freshness_status"] == "evidence_fresh_under_3h_operator_verify"
+    assert cluster["game_source_freshness_age_minutes"] == "42"
+    assert cluster["game_source_retrieved_at_utc"] == "2026-06-28T12:01:53+00:00"
+    assert "retrieved within 3 hours" in cluster["game_source_freshness_note"]
+    assert cluster["game_source_freshness_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
+    assert "Fresh enough for review triage" in cluster["game_source_freshness_cue"]
     assert cluster["verification_priority_status"] == "manual_confirmation_intake_first"
     assert "source_class_support official=present_operator_verify" in cluster["verification_priority_summary"]
     assert "game_source_tier=single_free_public_scoreboard_operator_verify" in cluster["verification_priority_summary"]
+    assert "game_source_freshness=evidence_fresh_under_3h_operator_verify" in cluster["verification_priority_summary"]
     assert "source_tier_limit=single_free_public_scoreboard_operator_verify" in cluster["verification_priority_summary"]
+    assert "source_freshness_limit=evidence_fresh_under_3h_operator_verify" in cluster["verification_priority_summary"]
     assert cluster["verification_priority_target"].startswith("breaking_public_signal_confirmation_intake.csv")
     assert cluster["verification_priority_next_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert "Public/community signal is review-only discovery context count=2 confidence=medium" in cluster["public_signal_limitations_cue"]
@@ -389,9 +401,30 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert partial_cluster["official_source_corroboration"] == "missing_official_source_operator_add_to_intake"
     assert partial_cluster["verification_priority_status"] == "official_source_confirmation_first"
     assert partial_cluster["game_source_confirmation_tier"] == "single_free_public_scoreboard_operator_verify"
+    assert partial_cluster["game_source_freshness_status"] == "evidence_fresh_under_3h_operator_verify"
     assert partial_cluster["verification_priority_target"] == "breaking_public_signal_confirmation_intake.csv candidate_id=candidate-2"
     assert "official team/league, wire, primary, or operator-checked source URL" in partial_cluster["verification_priority_next_action"]
     assert "Public/community signal is review-only discovery context count=1 confidence=low" in partial_cluster["public_signal_limitations_cue"]
+
+    stale_game_fact_confirmation_rows = [dict(game_fact_confirmation_rows[0])]
+    stale_game_fact_confirmation_rows[0]["source_freshness_status"] = "evidence_stale_over_24h_manual_check"
+    stale_game_fact_confirmation_rows[0]["source_freshness_age_minutes"] = "1800"
+    stale_game_fact_confirmation_rows[0]["source_freshness_note"] = "Evidence is older than 24 hours; re-open the source before use."
+    stale_cluster = module.breaking_signal_cluster_rows(
+        [duplicate],
+        packets=[],
+        game_rows=game_rows,
+        proof_rows=proof_rows,
+        proof_confirmation_rows=proof_confirmation_rows,
+        proof_review_order_rows=proof_review_order_rows,
+        game_fact_confirmation_rows=stale_game_fact_confirmation_rows,
+        story_proof_card_rows=story_proof_card_rows,
+        intake_rows=intake,
+    )[0]
+    assert stale_cluster["verification_priority_status"] == "source_freshness_recheck_first"
+    assert stale_cluster["verification_priority_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
+    assert "re-check the source URL timestamp/recency" in stale_cluster["verification_priority_next_action"]
+    assert "evidence_stale_over_24h_manual_check" in stale_cluster["game_source_freshness_cue"]
 
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"

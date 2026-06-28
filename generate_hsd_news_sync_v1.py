@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.5-breaking-source-tier-cues"
+VERSION = "news-sync-v1.9.6-breaking-source-freshness-cues"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -183,6 +183,9 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "public_signal_limitations_cue",
     "game_source_confirmation_tier", "game_source_confirmation_limitations",
     "game_source_confirmation_tier_target", "game_source_confirmation_tier_cue",
+    "game_source_freshness_status", "game_source_freshness_age_minutes",
+    "game_source_retrieved_at_utc", "game_source_freshness_note",
+    "game_source_freshness_target", "game_source_freshness_cue",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -3259,6 +3262,53 @@ def game_source_confirmation_tier_cue(game_fact_rows: List[Dict[str, Any]]) -> D
     }
 
 
+def game_source_freshness_cue(game_fact_rows: List[Dict[str, Any]]) -> Dict[str, str]:
+    game_fact = game_fact_rows[0] if game_fact_rows else {}
+    if not game_fact:
+        return {
+            "game_source_freshness_status": "game_source_freshness_missing_current_artifact",
+            "game_source_freshness_age_minutes": "",
+            "game_source_retrieved_at_utc": "",
+            "game_source_freshness_note": "No matching game_fact_confirmation_status_v1.csv freshness row was found for this breaking cluster.",
+            "game_source_freshness_target": "",
+            "game_source_freshness_cue": "Open the breaking confirmation intake and record a current source URL check before treating this as breaking news.",
+        }
+    event_id = clean(game_fact.get("event_uid"))
+    status = clean(game_fact.get("source_freshness_status")) or "source_freshness_unknown_operator_verify"
+    age_minutes = clean(game_fact.get("source_freshness_age_minutes"))
+    retrieved_at = clean(game_fact.get("retrieved_at_utc"))
+    note = clean(game_fact.get("source_freshness_note")) or "Operator must verify source recency before use."
+    target = f"game_fact_confirmation_status_v1.csv event_uid={event_id}" if event_id else "game_fact_confirmation_status_v1.csv matching event"
+    if status.startswith("evidence_fresh_under_3h"):
+        cue = (
+            f"{status}; retrieved_at_utc={retrieved_at or 'missing'}; age_minutes={age_minutes or 'unknown'}. "
+            "Fresh enough for review triage, but operator must still open the source URL and confirm facts before any story or render use."
+        )
+    elif status.startswith("evidence_stale") or "stale" in status:
+        cue = (
+            f"{status}; retrieved_at_utc={retrieved_at or 'missing'}; age_minutes={age_minutes or 'unknown'}. "
+            "Re-open the source URL and record a current check before using this as breaking evidence."
+        )
+    elif status.startswith("no_matched_source_timestamp") or status.startswith("source_freshness_unknown") or not retrieved_at:
+        cue = (
+            f"{status}; source timestamp is missing or unclear. Open the source URL manually, record the checked time/result, "
+            "and keep this cluster in review-only hold until recency is confirmed."
+        )
+    else:
+        cue = (
+            f"{status}; retrieved_at_utc={retrieved_at or 'missing'}; age_minutes={age_minutes or 'unknown'}. "
+            "Operator must verify the source timestamp and facts before editorial use."
+        )
+    return {
+        "game_source_freshness_status": status,
+        "game_source_freshness_age_minutes": age_minutes,
+        "game_source_retrieved_at_utc": retrieved_at,
+        "game_source_freshness_note": note,
+        "game_source_freshness_target": target,
+        "game_source_freshness_cue": cue,
+    }
+
+
 def source_proof_readiness_cue(
     *,
     evidence: List[Dict[str, str]],
@@ -3272,6 +3322,8 @@ def source_proof_readiness_cue(
     source_tier = game_source_confirmation_tier_cue(game_fact_rows)
     tier = clean(source_tier.get("game_source_confirmation_tier"))
     tier_limitations = clean(source_tier.get("game_source_confirmation_limitations"))
+    source_freshness = game_source_freshness_cue(game_fact_rows)
+    freshness_status = clean(source_freshness.get("game_source_freshness_status"))
     named_example = clean(named_proof_rows[0].get("fact_value")) if named_proof_rows else ""
     if story:
         event_id = clean(story.get("event_id"))
@@ -3295,7 +3347,7 @@ def source_proof_readiness_cue(
             f"copy={copy_unlock or 'manual_review_required'}; "
             f"renderability={renderability or 'review'}; "
             f"athlete={athlete or 'none'}; source={source_cue or 'operator_verify_source_url'}; "
-            f"game_source_tier={tier or 'missing'}"
+            f"game_source_tier={tier or 'missing'}; game_source_freshness={freshness_status or 'missing'}"
         )
         next_action = clean(story.get("smallest_next_action")) or (
             f"Open {target or 'story_proof_card_v1.csv'}, verify the source URL, then record the check in the listed manual intake row."
@@ -3314,6 +3366,7 @@ def source_proof_readiness_cue(
             f"{clean(game_fact.get('overall_confirmation_status')) or 'game_fact_confirmation_present_operator_verify'}; "
             f"source={clean(game_fact.get('source_domain')) or 'source_domain_missing'}; "
             f"tier={tier or 'missing'}; "
+            f"freshness={freshness_status or 'missing'}; "
             f"readiness={clean(game_fact.get('recap_render_readiness')) or 'review'}; "
             f"story_card={story_target or 'missing_story_proof_card_row'}; "
             f"limits={tier_limitations or 'operator_verify_source_url'}"
@@ -3361,6 +3414,7 @@ def urgency_review_reason(
     *,
     urgency_band: str,
     freshness_status: str,
+    source_freshness_status: str,
     max_score: int,
     ladder_status: str,
     proof_readiness_status: str,
@@ -3369,7 +3423,11 @@ def urgency_review_reason(
     named_count: int,
     missing_confirmation_cue: str,
 ) -> str:
-    why_now = f"{urgency_band or 'review'} score={max_score}/100; freshness={freshness_status or 'timestamp_missing'}"
+    why_now = (
+        f"{urgency_band or 'review'} score={max_score}/100; "
+        f"signal_freshness={freshness_status or 'timestamp_missing'}; "
+        f"source_freshness={source_freshness_status or 'missing'}"
+    )
     hsd_care = (
         f"source/proof readiness={proof_readiness_status or proof_status or 'missing'}; "
         f"named_player_stat_rows={named_count}"
@@ -3395,6 +3453,7 @@ def verification_priority_cue(
     ladder: Dict[str, str],
     proof_readiness: Dict[str, str],
     source_tier: Dict[str, str],
+    source_freshness: Dict[str, str],
     public_count: int,
     public_confidence: str,
     breaking_target: str,
@@ -3407,9 +3466,13 @@ def verification_priority_cue(
     proof_target = clean(proof_readiness.get("story_proof_card_target")) or clean(proof_readiness.get("game_fact_confirmation_target"))
     tier = clean(source_tier.get("game_source_confirmation_tier"))
     tier_cue = clean(source_tier.get("game_source_confirmation_tier_cue"))
+    source_freshness_status = clean(source_freshness.get("game_source_freshness_status"))
+    source_freshness_cue = clean(source_freshness.get("game_source_freshness_cue"))
+    source_freshness_target = clean(source_freshness.get("game_source_freshness_target"))
     source_support = (
         f"source_class_support official={official or 'missing'}; reputable_free={reputable or 'missing'}; "
         f"proof_readiness={proof_status or 'missing'}; game_source_tier={tier or 'missing'}; "
+        f"game_source_freshness={source_freshness_status or 'missing'}; "
         f"public_signal={public_count}:{clean(public_confidence) or 'none'}"
     )
     if clean(freshness_status) in {"timestamp_missing", "stale_recheck_required"}:
@@ -3418,6 +3481,16 @@ def verification_priority_cue(
         action = (
             f"Open {breaking_target}; re-check source URL recency and timestamp before using this as breaking news. "
             "Record the stale/missing timestamp result in the confirmation intake."
+        )
+    elif source_freshness_status in {
+        "no_matched_source_timestamp_manual_check",
+        "source_freshness_unknown_operator_verify",
+    } or "stale" in source_freshness_status:
+        status = "source_freshness_recheck_first"
+        target = source_freshness_target or breaking_target
+        action = (
+            f"Open {target}; re-check the source URL timestamp/recency before using this as breaking news. "
+            "Record the current check in breaking_public_signal_confirmation_intake.csv or the listed proof intake row."
         )
     elif official.startswith("missing_official_source"):
         status = "official_source_confirmation_first"
@@ -3441,7 +3514,10 @@ def verification_priority_cue(
         status = "verification_cues_ready_for_operator_review"
         target = proof_target or breaking_target
         action = clean(proof_readiness.get("source_proof_readiness_next_action")) or exact_source_action
-    summary = f"{status}; {source_support}; source_tier_limit={tier_cue or 'operator_verify_source_url'}; public_limit={public_cue}"
+    summary = (
+        f"{status}; {source_support}; source_tier_limit={tier_cue or 'operator_verify_source_url'}; "
+        f"source_freshness_limit={source_freshness_cue or 'operator_verify_source_timestamp'}; public_limit={public_cue}"
+    )
     return {
         "verification_priority_status": status,
         "verification_priority_summary": summary,
@@ -3564,6 +3640,7 @@ def breaking_signal_cluster_rows(
         matched_game_fact_rows = game_fact_rows_for_events(event_ids, game_fact_confirmation_rows)
         matched_story_proof_rows = story_proof_rows_for_events(event_ids, story_proof_card_rows)
         source_tier = game_source_confirmation_tier_cue(matched_game_fact_rows)
+        source_freshness = game_source_freshness_cue(matched_game_fact_rows)
         proof_readiness = source_proof_readiness_cue(
             evidence=evidence,
             proof_status=proof_status,
@@ -3580,6 +3657,7 @@ def breaking_signal_cluster_rows(
         urgency_reason = urgency_review_reason(
             urgency_band=strongest_urgency_band(group),
             freshness_status=freshness,
+            source_freshness_status=source_freshness.get("game_source_freshness_status", ""),
             max_score=max_score,
             ladder_status=ladder.get("corroboration_ladder_status", ""),
             proof_readiness_status=proof_readiness.get("source_proof_readiness_status", ""),
@@ -3595,6 +3673,7 @@ def breaking_signal_cluster_rows(
             ladder=ladder,
             proof_readiness=proof_readiness,
             source_tier=source_tier,
+            source_freshness=source_freshness,
             public_count=public_count,
             public_confidence=public_confidence,
             breaking_target=breaking_target,
@@ -3663,6 +3742,7 @@ def breaking_signal_cluster_rows(
                 **proof_readiness,
                 **verification_priority,
                 **source_tier,
+                **source_freshness,
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
                 "source_domains": "; ".join(domains[:12]),
@@ -3734,6 +3814,9 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"- Game source tier: `{row.get('game_source_confirmation_tier') or 'missing'}`",
             f"- Game source tier limitation: {row.get('game_source_confirmation_limitations') or 'missing'}",
             f"- Game source tier cue: {row.get('game_source_confirmation_tier_cue') or 'operator verification required'}",
+            f"- Game source freshness: `{row.get('game_source_freshness_status') or 'missing'}` / retrieved: `{row.get('game_source_retrieved_at_utc') or 'missing'}` / age minutes: `{row.get('game_source_freshness_age_minutes') or 'unknown'}`",
+            f"- Game source freshness target: {row.get('game_source_freshness_target') or 'missing'}",
+            f"- Game source freshness cue: {row.get('game_source_freshness_cue') or 'operator freshness check required'}",
             f"- Source/proof readiness: `{row.get('source_proof_readiness_status')}`",
             f"- Source/proof summary: {row.get('source_proof_readiness_summary') or 'missing'}",
             f"- Story proof target: {row.get('story_proof_card_target') or 'missing'}",
@@ -4387,6 +4470,15 @@ def main() -> None:
                     row for row in cluster_rows
                     if clean(row.get("game_source_confirmation_tier"))
                     and clean(row.get("game_source_confirmation_tier")) != "game_source_tier_missing_from_current_artifacts"
+                ]),
+                "clusters_with_game_source_freshness": len([
+                    row for row in cluster_rows
+                    if clean(row.get("game_source_freshness_status"))
+                    and clean(row.get("game_source_freshness_status")) != "game_source_freshness_missing_current_artifact"
+                ]),
+                "clusters_requiring_source_freshness_recheck": len([
+                    row for row in cluster_rows
+                    if clean(row.get("verification_priority_status")) == "source_freshness_recheck_first"
                 ]),
             },
             "outputs": [
