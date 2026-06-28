@@ -1019,6 +1019,78 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_verification_next_actions.md").write_text("# Next actions\n", encoding="utf-8")
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_verification_next_actions.csv",
+        [
+            {
+                "worksheet_rank": "1",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "first_action_bucket": "1_roster_verification",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "angel_city_fc",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+            {
+                "worksheet_rank": "2",
+                "team_id": "bay_fc",
+                "team_name": "Bay FC",
+                "first_action_bucket": "3_missing_local_candidate_asset",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "bay_fc",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+        ],
+        [
+            "worksheet_rank",
+            "team_id",
+            "team_name",
+            "first_action_bucket",
+            "download_approved",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "review_only",
+            "approval_state_change",
+            "asset_downloads",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_verification_next_actions.json",
+        {
+            "status": "athlete_verification_next_actions_ready",
+            "generated_at_utc": "2026-06-27T21:10:00+00:00",
+            "worksheet_rows": 2,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 2,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -1056,6 +1128,12 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_athlete_verification_queue_missing_local_candidate_rows"] == 3
     assert panel["womens_soccer_athlete_verification_queue_generated_at"] == "2026-06-27T21:00:00+00:00"
     assert panel["womens_soccer_athlete_verification_queue_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_next_actions_status"] == "athlete_verification_next_actions_ready"
+    assert panel["womens_soccer_athlete_next_actions_rows"] == 2
+    assert panel["womens_soccer_athlete_next_actions_download_approved_yes_rows"] == 0
+    assert panel["womens_soccer_athlete_next_actions_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_athlete_next_actions_generated_at"] == "2026-06-27T21:10:00+00:00"
+    assert panel["womens_soccer_athlete_next_actions_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_external_research_status"] == "external_research_intake_ready"
     assert panel["womens_soccer_external_research_rows"] == 3
     assert panel["womens_soccer_external_research_nwsl_rows"] == 2
@@ -1079,6 +1157,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer athlete verification queue" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete verification queue data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete verification queue manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete verification next actions" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete verification next actions data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete verification next actions manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer NWSL external research source" for item in panel["file_shortcuts"])
@@ -1100,6 +1181,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Soccer verify Europe" in html
     assert "Soccer verify P0" in html
     assert "Soccer verify local gaps" in html
+    assert "Soccer next actions" in html
+    assert "Soccer next-action yes" in html
+    assert "Soccer next-action blanks" in html
     assert "Soccer research rows" in html
     assert "Soccer research NWSL" in html
     assert "Soccer research Europe" in html
@@ -1111,6 +1195,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Women&#x27;s soccer athlete operator board packet freshness" in html
     assert "Women&#x27;s soccer athlete photo download intake packet freshness" in html
     assert "Women&#x27;s soccer athlete verification queue packet freshness" in html
+    assert "Women&#x27;s soccer athlete verification next actions packet freshness" in html
     assert "Women&#x27;s soccer external research intake packet freshness" in html
 
 

@@ -1,0 +1,30 @@
+{
+  "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
+  "status": "athlete_verification_next_actions_ready",
+  "generated_at_utc": "2026-06-28T07:44:28.324566+00:00",
+  "worksheet_rows": 16,
+  "download_approved_yes_rows": 0,
+  "blank_source_url_rows": 16,
+  "first_action_bucket_counts": {
+    "1_roster_verification": 6,
+    "3_missing_local_candidate_asset": 10
+  },
+  "source_verification_bucket_counts": {
+    "gray_area_or_reputable_media_manual_verify": 1,
+    "official_source_manual_verify": 10,
+    "source_metadata_manual_verify": 5
+  },
+  "worksheet_md": "data/asset_registry/womens_soccer/womens_soccer_athlete_verification_next_actions.md",
+  "worksheet_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_verification_next_actions.csv",
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}

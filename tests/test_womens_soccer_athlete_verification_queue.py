@@ -193,6 +193,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     rows = read_csv(root / "womens_soccer_athlete_verification_queue.csv")
     manifest = json.loads((root / "womens_soccer_athlete_verification_queue.json").read_text(encoding="utf-8"))
     markdown = (root / "womens_soccer_athlete_verification_queue.md").read_text(encoding="utf-8")
+    worksheet = read_csv(root / "womens_soccer_athlete_verification_next_actions.csv")
+    worksheet_manifest = json.loads((root / "womens_soccer_athlete_verification_next_actions.json").read_text(encoding="utf-8"))
+    worksheet_markdown = (root / "womens_soccer_athlete_verification_next_actions.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -202,10 +205,23 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert manifest["gray_area_rows"] == 1
     assert manifest["missing_local_candidate_rows"] == 4
     assert manifest["download_approved_yes_rows"] == 0
+    assert manifest["first_action_bucket_counts"] == {
+        "1_roster_verification": 1,
+        "2_source_verification_gray_or_reputable": 1,
+        "3_missing_local_candidate_asset": 1,
+    }
+    assert manifest["next_action_rows"] == 2
+    assert manifest["next_action_download_approved_yes_rows"] == 0
+    assert manifest["next_action_blank_source_url_rows"] == 2
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
+    assert by_team["angel_city_fc"]["first_action_bucket"] == "1_roster_verification"
+    assert by_team["angel_city_fc"]["source_verification_bucket"] == "official_source_manual_verify"
+    assert by_team["angel_city_fc"]["download_law_status"] == "future_quarantine_download_intake_required"
     assert by_team["bay_fc"]["queue_bucket"] == "p1_nwsl_local_candidate_assets_missing"
+    assert by_team["bay_fc"]["first_action_bucket"] == "3_missing_local_candidate_asset"
     assert by_team["all_teams"]["queue_bucket"] == "p1_europe_gray_area_source_review"
+    assert by_team["all_teams"]["first_action_bucket"] == "2_source_verification_gray_or_reputable"
     assert by_team["all_teams"]["render_readiness"] == "not_render_ready_source_candidate_only"
     for row in rows:
         assert row["review_only"] == "true"
@@ -221,3 +237,19 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert row["paid_apis"] == "false"
     assert "does not download images" in markdown
     assert "Europe rows as source-map candidates only" in markdown
+    assert worksheet_manifest["status"] == "athlete_verification_next_actions_ready"
+    assert worksheet_manifest["worksheet_rows"] == 2
+    assert worksheet_manifest["download_approved_yes_rows"] == 0
+    assert worksheet_manifest["blank_source_url_rows"] == 2
+    assert [row["team_id"] for row in worksheet] == ["angel_city_fc", "bay_fc"]
+    for row in worksheet:
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"]
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["operator_decision"] == ""
+        assert row["asset_downloads"] == "false"
+        assert row["approval_state_change"] == "false"
+    assert "Generated rows default to `download_approved=no`" in worksheet_markdown
