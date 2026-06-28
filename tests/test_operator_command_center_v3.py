@@ -1209,6 +1209,90 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md").write_text("# Review triage\n", encoding="utf-8")
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv",
+        [
+            {
+                "triage_rank": "1",
+                "primary_manual_action": "official_roster_check",
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "download_approved": "no",
+                "source_url": "",
+                "candidate_entity_id": "angel_city_fc",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+            {
+                "triage_rank": "2",
+                "primary_manual_action": "gray_area_reputable_lead_review",
+                "scope_id": "europe_top_flight",
+                "league_id": "wsl_england",
+                "team_id": "all_teams",
+                "team_name": "WSL England",
+                "download_approved": "no",
+                "source_url": "",
+                "candidate_entity_id": "wsl_england",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+        ],
+        [
+            "triage_rank",
+            "primary_manual_action",
+            "scope_id",
+            "league_id",
+            "team_id",
+            "team_name",
+            "download_approved",
+            "source_url",
+            "candidate_entity_id",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "review_only",
+            "approval_state_change",
+            "asset_downloads",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.json",
+        {
+            "status": "athlete_review_triage_ready",
+            "generated_at_utc": "2026-06-27T21:30:00+00:00",
+            "triage_rows": 2,
+            "nwsl_rows": 1,
+            "europe_rows": 1,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 2,
+            "blank_entity_id_rows": 2,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -1262,6 +1346,14 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_athlete_source_priority_blank_source_url_rows"] == 2
     assert panel["womens_soccer_athlete_source_priority_generated_at"] == "2026-06-27T21:20:00+00:00"
     assert panel["womens_soccer_athlete_source_priority_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_review_triage_status"] == "athlete_review_triage_ready"
+    assert panel["womens_soccer_athlete_review_triage_rows"] == 2
+    assert panel["womens_soccer_athlete_review_triage_nwsl_rows"] == 1
+    assert panel["womens_soccer_athlete_review_triage_europe_rows"] == 1
+    assert panel["womens_soccer_athlete_review_triage_download_approved_yes_rows"] == 0
+    assert panel["womens_soccer_athlete_review_triage_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_athlete_review_triage_generated_at"] == "2026-06-27T21:30:00+00:00"
+    assert panel["womens_soccer_athlete_review_triage_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_external_research_status"] == "external_research_intake_ready"
     assert panel["womens_soccer_external_research_rows"] == 3
     assert panel["womens_soccer_external_research_nwsl_rows"] == 2
@@ -1291,6 +1383,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer athlete source priority" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete source priority data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete source priority manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete review triage" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete review triage data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete review triage manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer NWSL external research source" for item in panel["file_shortcuts"])
@@ -1318,6 +1413,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Soccer source priority" in html
     assert "Soccer source verify" in html
     assert "Soccer source gray" in html
+    assert "Soccer triage rows" in html
+    assert "Soccer triage NWSL" in html
+    assert "Soccer triage blanks" in html
     assert "Soccer research rows" in html
     assert "Soccer research NWSL" in html
     assert "Soccer research Europe" in html
@@ -1331,6 +1429,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Women&#x27;s soccer athlete verification queue packet freshness" in html
     assert "Women&#x27;s soccer athlete verification next actions packet freshness" in html
     assert "Women&#x27;s soccer athlete source priority packet freshness" in html
+    assert "Women&#x27;s soccer athlete review triage packet freshness" in html
     assert "Women&#x27;s soccer external research intake packet freshness" in html
 
 

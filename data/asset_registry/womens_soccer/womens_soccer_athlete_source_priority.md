@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Source Priority
 
-Generated: `2026-06-28T09:51:02.854604+00:00`
+Generated: `2026-06-28T12:33:24.848580+00:00`
 
 Review-only source-candidate worksheet built from imported external research intake rows. It keeps source candidates separate from future download intake: `source_candidate_url` is advisory metadata, while the download-law `source_url` field remains blank and `download_approved=no` unless a human edits intake later.
 
