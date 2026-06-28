@@ -38,6 +38,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "game_fact_confirmation_status_v1.md" in artifact_paths
     assert "game_fact_confirmation_status_v1.csv" in artifact_paths
     assert "game_fact_confirmation_status_v1.json" in artifact_paths
+    assert "game_source_confirmation_next_action_v1.md" in artifact_paths
+    assert "game_source_confirmation_next_action_v1.csv" in artifact_paths
+    assert "game_source_confirmation_next_action_v1.json" in artifact_paths
     assert "final_score_stat_proof_v1.md" in artifact_paths
     assert "final_score_stat_proof_v1.csv" in artifact_paths
     assert "final_score_stat_proof_v1.json" in artifact_paths

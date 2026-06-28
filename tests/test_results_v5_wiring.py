@@ -262,6 +262,9 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "game_fact_confirmation_status_v1.csv",
         "game_fact_confirmation_status_v1.md",
         "game_fact_confirmation_status_v1.json",
+        "game_source_confirmation_next_action_v1.csv",
+        "game_source_confirmation_next_action_v1.md",
+        "game_source_confirmation_next_action_v1.json",
         "final_score_stat_proof_v1.csv",
         "final_score_stat_proof_v1.md",
         "final_score_stat_proof_v1.json",
@@ -427,6 +430,88 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert summary["manual_verification_required"] == 1
     report = module.game_fact_confirmation_status_report_md(summary, rows)
     assert "Rows Needing Manual Verification" in report
+    assert "No paid APIs" in report
+
+
+def test_game_source_confirmation_next_action_board_prioritizes_manual_and_freshness_reviews() -> None:
+    module = load_results_desk()
+    fact_rows = [
+        {
+            "event_uid": "event_confirmed",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Indiana Fever at New York Liberty",
+            "game_status": "final",
+            "recap_candidate": "Yes",
+            "overall_confirmation_status": "source_confirmed_operator_verify_before_use",
+            "result_fact_status": "final_score_source_confirmed_free_public_operator_verify",
+            "source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
+            "source_freshness_status": "evidence_stale_over_24h_manual_check",
+            "source_freshness_age_minutes": "1445",
+            "source_freshness_note": "Evidence is over 24 hours old; operator should reopen the source or rerun Results before use.",
+            "missing_confirmation": "none",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+            "source_domain": "www.espn.com",
+            "story_proof_card_row_to_open": "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789",
+            "proof_manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456",
+            "exact_next_file_or_intake": "Open game_fact_confirmation_status_v1.csv event_uid=event_confirmed.",
+        },
+        {
+            "event_uid": "expected_missing",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Dallas Wings at Las Vegas Aces",
+            "game_status": "missing_from_free_sources_or_outside_window",
+            "recap_candidate": "No",
+            "overall_confirmation_status": "manual_verification_required",
+            "result_fact_status": "result_or_final_score_missing_manual_review_required",
+            "source_confirmation_tier": "source_missing_manual_confirmation_required",
+            "source_freshness_status": "no_matched_source_timestamp_manual_check",
+            "missing_confirmation": "schedule_source; result_or_final_score; stats_or_box_score",
+            "source_url": "manual_expected_games.csv",
+            "source_domain": "",
+            "exact_next_file_or_intake": "Open game_intelligence_board_v1.csv row_id=expected_missing; then open missing_games_alert_v5.csv.",
+        },
+        {
+            "event_uid": "event_scheduled",
+            "game_date": "2026-06-25",
+            "league": "WNBA",
+            "matchup": "Atlanta Dream at Chicago Sky",
+            "game_status": "scheduled",
+            "recap_candidate": "No",
+            "overall_confirmation_status": "schedule_confirmed_result_pending",
+            "result_fact_status": "not_final_result_pending",
+            "source_confirmation_tier": "single_free_public_schedule_source_result_pending",
+            "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+            "source_freshness_age_minutes": "14",
+            "missing_confirmation": "none",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/402",
+            "source_domain": "www.espn.com",
+        },
+    ]
+
+    rows = module.game_source_confirmation_next_action_rows(fact_rows)
+    by_id = {row["event_uid"]: row for row in rows}
+
+    assert rows[0]["event_uid"] == "expected_missing"
+    assert by_id["expected_missing"]["review_priority"] == "P0_manual_confirmation_required"
+    assert by_id["expected_missing"]["missing_expected_game_flag"] == "Yes"
+    assert by_id["expected_missing"]["official_or_public_source_cue"] == "no_matched_free_public_source_manual_confirmation_required"
+    assert "missing_games_alert_v5.csv" in by_id["expected_missing"]["source_confirmation_next_action"]
+    assert by_id["event_confirmed"]["review_priority"] == "P1_source_freshness_or_lag_check"
+    assert by_id["event_confirmed"]["proof_row_to_open"] == "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789"
+    assert "confirm the source is current" in by_id["event_confirmed"]["source_confirmation_next_action"]
+    assert by_id["event_scheduled"]["review_priority"] == "P3_result_pending_monitor"
+    assert by_id["event_scheduled"]["source_enablement"] == "none_existing_local_artifacts_only"
+    assert all(row["review_only"] == "Yes" for row in rows)
+    assert all(row["approval_state_change"] == "none" for row in rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in rows)
+
+    summary = module.game_source_confirmation_next_action_summary(rows)
+    assert summary["manual_confirmation_required"] == 1
+    assert summary["freshness_or_lag_check"] == 1
+    report = module.game_source_confirmation_next_action_report_md(summary, rows)
+    assert "Review-only, artifact-only source confirmation triage" in report
     assert "No paid APIs" in report
 
 
