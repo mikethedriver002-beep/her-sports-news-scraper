@@ -200,6 +200,11 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "story_proof_card_target": "story_proof_card_v1.csv event_id=event-sky-fire; candidate_id=story-card-sky; manual_intake=final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-player",
                 "game_fact_confirmation_target": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
                 "source_proof_readiness_next_action": "Open story_proof_card_v1.md, verify the official source URL, record the check in the manual intake row.",
+                "verification_priority_status": "manual_confirmation_intake_first",
+                "verification_priority_summary": "manual_confirmation_intake_first; source_class_support official=present_operator_verify domains=sky.wnba.com; reputable_free=present_operator_verify domains=www.espn.com; proof_readiness=story_proof_card_ready_operator_verify; public_signal=0:none; public_limit=No public/community signal captured; do not infer public reaction or use social context as confirmation.",
+                "verification_priority_target": "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky",
+                "verification_priority_next_action": "Open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky; record operator_checked_url and operator_confirmation_result before any story path. Then continue to the listed proof/readiness artifact rows.",
+                "public_signal_limitations_cue": "No public/community signal captured; do not infer public reaction or use social context as confirmation.",
             }
         ],
         [
@@ -236,6 +241,11 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "story_proof_card_target",
             "game_fact_confirmation_target",
             "source_proof_readiness_next_action",
+            "verification_priority_status",
+            "verification_priority_summary",
+            "verification_priority_target",
+            "verification_priority_next_action",
+            "public_signal_limitations_cue",
         ],
     )
 
@@ -246,17 +256,17 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "reputable_free=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert "proof_card_ready_for_manual_review" in row["story_opportunity_source_coverage"]
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
-    assert row["next_action"].startswith("Open story_proof_card_v1.md")
-    assert "story_proof_card_ready_operator_verify" in row["detail"]
+    assert row["next_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
+    assert "manual_confirmation_intake_first" in row["detail"]
     assert row["story_opportunity_confidence_tier"] == "official_and_reputable_artifact_cues_present_operator_verify"
     assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
-    assert row["story_opportunity_confirmation_cue"] == "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake"
-    assert "none_captured_public_signal_not_used_for_confirmation" in row["evidence_description"]
+    assert row["story_opportunity_confirmation_cue"] == "manual_confirmation_intake_first"
+    assert "No public/community signal captured" in row["evidence_description"]
     assert "https://sky.wnba.com/news/recap" in row["story_opportunity_urls"]
-    assert "story_proof_card_v1.csv event_id=event-sky-fire" in row["story_opportunity_second_source_url"]
-    assert row["story_opportunity_second_source_reason"] == "story_proof_card_ready_operator_verify"
-    assert row["story_opportunity_second_source_action"].startswith("Open story_proof_card_v1.md")
-    assert row["story_opportunity_readiness_note"].startswith("Open story_proof_card_v1.md")
+    assert "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky" in row["story_opportunity_second_source_url"]
+    assert row["story_opportunity_second_source_reason"] == "manual_confirmation_intake_first"
+    assert row["story_opportunity_second_source_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
+    assert row["story_opportunity_readiness_note"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
 

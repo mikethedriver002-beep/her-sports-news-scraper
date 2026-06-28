@@ -333,6 +333,11 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "story_proof_card_v1.csv event_id=event-liberty-aces" in cluster["story_proof_card_target"]
     assert cluster["game_fact_confirmation_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
     assert cluster["source_proof_readiness_next_action"].startswith("Open story_proof_card_v1.md")
+    assert cluster["verification_priority_status"] == "manual_confirmation_intake_first"
+    assert "source_class_support official=present_operator_verify" in cluster["verification_priority_summary"]
+    assert cluster["verification_priority_target"].startswith("breaking_public_signal_confirmation_intake.csv")
+    assert cluster["verification_priority_next_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
+    assert "Public/community signal is review-only discovery context count=2 confidence=medium" in cluster["public_signal_limitations_cue"]
     assert "breaking_public_signal_confirmation_intake.csv confirmation_id=" in cluster["exact_source_or_intake_row_to_open"]
     assert "operator must still verify" in cluster["manual_confirmation_gap"].lower()
     assert cluster["score_stat_proof_status"] == "score_and_named_player_stat_proof_present_operator_verify"
@@ -360,6 +365,24 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert cluster["auto_publish"] == "false"
     assert cluster["auto_source_enablement"] == "false"
 
+    partial_cluster = module.breaking_signal_cluster_rows(
+        [duplicate],
+        packets=[],
+        game_rows=game_rows,
+        proof_rows=proof_rows,
+        proof_confirmation_rows=proof_confirmation_rows,
+        proof_review_order_rows=proof_review_order_rows,
+        game_fact_confirmation_rows=game_fact_confirmation_rows,
+        story_proof_card_rows=story_proof_card_rows,
+        intake_rows=intake,
+    )[0]
+    assert partial_cluster["corroboration_ladder_status"] == "partial_corroboration_operator_verify"
+    assert partial_cluster["official_source_corroboration"] == "missing_official_source_operator_add_to_intake"
+    assert partial_cluster["verification_priority_status"] == "official_source_confirmation_first"
+    assert partial_cluster["verification_priority_target"] == "breaking_public_signal_confirmation_intake.csv candidate_id=candidate-2"
+    assert "official team/league, wire, primary, or operator-checked source URL" in partial_cluster["verification_priority_next_action"]
+    assert "Public/community signal is review-only discovery context count=1 confidence=low" in partial_cluster["public_signal_limitations_cue"]
+
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
     assert "No matching final-score/stat proof row found" in missing_proof_cluster["score_stat_manual_confirmation_cue"]
@@ -368,6 +391,7 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "No final-score proof confirmation target matched" in missing_proof_cluster["exact_human_confirmation_next_action"]
     assert missing_proof_cluster["score_stat_review_order_status"] == "no_score_stat_proof_to_order"
     assert "final_score_stat_proof_review_walkthrough_v1.md" in missing_proof_cluster["exact_review_walkthrough_next_action"]
+    assert missing_proof_cluster["verification_priority_status"] == "source_proof_readiness_gap_first"
 
 
 def test_box_score_top_performers_match_the_same_game() -> None:
