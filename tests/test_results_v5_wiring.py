@@ -156,6 +156,32 @@ def test_game_intelligence_board_is_review_only_and_source_backed() -> None:
     ]
 
     rows = module.game_intelligence_rows([event, upcoming_event, live_event, capped_event], observations, expected_rows)
+    rows = module.enrich_game_intelligence_rows_with_proof_cues(
+        rows,
+        [
+            {
+                "event_uid": "event_1",
+                "story_proof_card_row_to_open": "story_proof_card_v1.csv event_id=event_1; candidate_id=card123",
+                "named_stat_review_order_row": "final_score_stat_proof_review_order_v1.csv review_order=2; proof_id=stat123",
+                "proof_manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat123",
+                "source_confirmation_cue": "free_public_box_score_stat_source_present_operator_verify",
+                "recap_render_readiness": "athlete_led_manual_render_candidate",
+                "exact_next_file_or_intake": "Open proof card and record source check.",
+            },
+            {
+                "event_uid": "event_2",
+                "source_confirmation_cue": "free_public_schedule_source_present_result_pending",
+                "recap_render_readiness": "result_pending_not_render_ready",
+                "exact_next_file_or_intake": "Open schedule source.",
+            },
+            {
+                "event_uid": "basketball|2026-06-24|atlanta dream|chicago sky",
+                "source_confirmation_cue": "manual_source_confirmation_required",
+                "recap_render_readiness": "not_recap_or_render_candidate",
+                "exact_next_file_or_intake": "Open missing_games_alert_v5.csv.",
+            },
+        ],
+    )
     by_type = {row["row_type"]: row for row in rows}
 
     recap = by_type["recap_candidate"]
@@ -167,15 +193,25 @@ def test_game_intelligence_board_is_review_only_and_source_backed() -> None:
     assert recap["stats_context_status"] == "missing_free_box_score_context"
     assert "box_score_or_top_performer_context" in recap["missing_evidence"]
     assert recap["manual_review_status"] == "review_only_recap_candidate"
+    assert recap["game_fact_status_row_to_open"] == "game_fact_confirmation_status_v1.csv event_uid=event_1"
+    assert recap["story_proof_card_row_to_open"] == "story_proof_card_v1.csv event_id=event_1; candidate_id=card123"
+    assert recap["proof_review_order_row_to_open"] == "final_score_stat_proof_review_order_v1.csv review_order=2; proof_id=stat123"
+    assert recap["proof_manual_intake_path"] == "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat123"
+    assert recap["source_confirmation_cue"] == "free_public_box_score_stat_source_present_operator_verify"
+    assert recap["recap_render_readiness"] == "athlete_led_manual_render_candidate"
+    assert recap["operator_next_review_step"] == "Open proof card and record source check."
 
     missing = by_type["missing_expected_game"]
     assert missing["attention_bucket"] == "missing_source_evidence"
     assert missing["manual_review_status"] == "manual_review_required_missing_source_evidence"
     assert missing["source_confidence"] == "0.00"
+    assert missing["source_confirmation_cue"] == "manual_source_confirmation_required"
 
     upcoming = by_type["upcoming_game"]
     assert upcoming["status"] == "scheduled"
     assert upcoming["stats_context_status"] == "not_expected_pre_game"
+    assert upcoming["source_confirmation_cue"] == "free_public_schedule_source_present_result_pending"
+    assert upcoming["recap_render_readiness"] == "result_pending_not_render_ready"
 
     live = by_type["live_game"]
     assert live["attention_bucket"] == "live_watch"
