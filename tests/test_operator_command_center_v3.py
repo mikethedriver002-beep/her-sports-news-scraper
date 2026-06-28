@@ -223,6 +223,71 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert row["publish_ready"] == "false"
 
 
+def test_render_prep_uses_breaking_cluster_player_angle_only_with_proof_files(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("final_score_stat_proof_v1.csv").write_text("proof_id\nproof-sky-player\n", encoding="utf-8")
+    Path("final_score_stat_proof_review_order_v1.csv").write_text("review_order\n5\n", encoding="utf-8")
+    payload = {
+        "render_readiness_queue": [
+            {
+                "rank": "1",
+                "band": "render_ready_review",
+                "blockers": "none",
+                "score": "100",
+                "title": "Chicago Sky beat Portland Fire",
+                "recommended_path": "News packet",
+                "source": "News packet",
+                "artifact": "news_fact_packets.csv",
+            }
+        ],
+        "news_fact_packets": [
+            {
+                "candidate_id": "candidate-sky",
+                "headline": "Chicago Sky beat Portland Fire",
+                "caption_hard_fact": "Chicago Sky beat Portland Fire. Verified final: Chicago Sky 124, Portland Fire 94.",
+                "source_count": "6",
+                "source_publish_grade": "publish_grade",
+                "source_confidence_score": "100",
+                "source_confidence_reason": "score-only packet",
+                "top_performers": "",
+            }
+        ],
+        "breaking_public_signal_clusters": [
+            {
+                "candidate_ids": "candidate-sky",
+                "cluster_headline": "Chicago Sky beat Portland Fire",
+                "named_player_stat_proof_examples": "Kamilla Cardoso (Chicago Sky): PTS 30, REB 8 | Sydney Taylor (Chicago Sky): PTS 29, REB 3",
+                "score_stat_proof_status": "score_and_named_player_stat_proof_present_operator_verify",
+                "score_stat_proof_source_urls": "[\"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
+                "score_stat_review_order_status": "review_order_rows_present_operator_follow_walkthrough",
+                "first_score_stat_review_order_target": "final_score_stat_proof_review_order_v1.csv review_order=5; proof=final_score_stat_proof_v1.csv proof_id=proof-sky-player",
+                "score_stat_review_walkthrough_target": "final_score_stat_proof_review_walkthrough_v1.md",
+            }
+        ],
+    }
+
+    packet = command_center.build_render_prep_packets(payload)[0]
+
+    assert "Kamilla Cardoso" in packet["top_performers"]
+    assert "Sydney Taylor" in packet["top_performers"]
+    assert packet["stat_module_status"] == "named_player_stat_proof_text_available"
+    assert packet["stat_source_confidence"] == "cluster_named_player_proof_ready_manual_crosscheck_required"
+    assert packet["stat_source_label"] == "Named-player proof from breaking/public-signal cluster"
+    assert "breaking_public_signal_clusters.csv" in packet["source_detail"]
+    assert "final_score_stat_proof_review_walkthrough_v1.md" in packet["stat_review_cue"]
+    source_proof = command_center.render_handoff_source_proof(packet)
+    assert "Performer/stat evidence: Kamilla Cardoso" in source_proof
+    assert "cluster_named_player_proof_ready_manual_crosscheck_required" in source_proof
+
+    Path("final_score_stat_proof_review_order_v1.csv").unlink()
+    payload["breaking_public_signal_clusters"][0]["score_stat_review_order_status"] = "missing_review_order_rows_for_score_stat_proof"
+    payload["breaking_public_signal_clusters"][0]["first_score_stat_review_order_target"] = ""
+    fallback_packet = command_center.build_render_prep_packets(payload)[0]
+
+    assert fallback_packet["top_performers"] == ""
+    assert fallback_packet["stat_source_confidence"] == "score_only_fallback_manual_context_required"
+
+
 def write_json(path: str, payload: dict) -> None:
     Path(path).write_text(json.dumps(payload), encoding="utf-8")
 
