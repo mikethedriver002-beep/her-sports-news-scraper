@@ -32,6 +32,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "breaking_public_signal_confirmation_intake.csv" in artifact_paths
     assert "breaking_public_signal_clusters.md" in artifact_paths
     assert "breaking_public_signal_clusters.csv" in artifact_paths
+    assert "breaking_public_signal_next_action_v1.md" in artifact_paths
+    assert "breaking_public_signal_next_action_v1.csv" in artifact_paths
+    assert "breaking_public_signal_next_action_v1.json" in artifact_paths
     assert "game_source_confirmation_bridge_v1.md" in artifact_paths
     assert "game_source_confirmation_bridge_v1.csv" in artifact_paths
     assert "game_source_confirmation_bridge_v1.json" in artifact_paths
@@ -102,7 +105,6 @@ def test_command_center_surfaces_breaking_public_signal_as_review_only_source_bo
             "auto_publish",
         ],
     )
-
     rows = command_center.source_discovery_board()
     row = rows[0]
 
@@ -170,6 +172,7 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
         "breaking_public_signal_clusters.csv",
         [
             {
+                "cluster_id": "signal-cluster-sky",
                 "candidate_ids": "candidate-breaking-1",
                 "matching_official_evidence_status": "matching_news_and_free_result_evidence_operator_verify",
                 "matching_official_evidence_artifacts": "game_intelligence_board_v1.csv row_id=event-sky-fire",
@@ -221,6 +224,7 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             }
         ],
         [
+            "cluster_id",
             "candidate_ids",
             "matching_official_evidence_status",
             "matching_official_evidence_artifacts",
@@ -271,6 +275,63 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "game_source_freshness_cue",
         ],
     )
+    write_csv_with_fields(
+        "breaking_public_signal_next_action_v1.csv",
+        [
+            {
+                "action_rank": "1",
+                "cluster_id": "signal-cluster-sky",
+                "cluster_headline": "Chicago Sky beat Portland Fire",
+                "urgency_band": "P0_breaking_review",
+                "review_priority": "P1_official_confirmation_required",
+                "verification_priority_status": "manual_confirmation_intake_first",
+                "confirmation_state": "official_and_reputable_artifact_cues_present_operator_verify",
+                "official_reputable_gray_area_cue": "official_or_primary_evidence_present_operator_verify; present_operator_verify domains=sky.wnba.com",
+                "source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
+                "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+                "source_freshness_age_minutes": "33",
+                "source_domain_lead": "sky.wnba.com",
+                "public_signal_confidence": "none",
+                "public_signal_count": "0",
+                "evidence_urls": "[\"https://sky.wnba.com/news/recap\", \"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
+                "source_or_intake_row_to_open": "Open game_intelligence_board_v1.csv row_id=event-sky-fire, then open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky.",
+                "freshness_or_proof_row_to_open": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
+                "manual_confirmation_target": "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky",
+                "operator_next_action": "Open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky; record operator_checked_url and operator_confirmation_result before any story path.",
+                "review_limitations": "Review-only triage; public/community signal and free public source evidence do not confirm a breaking claim without human operator verification.",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "source_enablement": "false",
+                "publish_action": "none_artifact_only",
+            }
+        ],
+        [
+            "action_rank",
+            "cluster_id",
+            "cluster_headline",
+            "urgency_band",
+            "review_priority",
+            "verification_priority_status",
+            "confirmation_state",
+            "official_reputable_gray_area_cue",
+            "source_confirmation_tier",
+            "source_freshness_status",
+            "source_freshness_age_minutes",
+            "source_domain_lead",
+            "public_signal_confidence",
+            "public_signal_count",
+            "evidence_urls",
+            "source_or_intake_row_to_open",
+            "freshness_or_proof_row_to_open",
+            "manual_confirmation_target",
+            "operator_next_action",
+            "review_limitations",
+            "review_only",
+            "approval_state_change",
+            "source_enablement",
+            "publish_action",
+        ],
+    )
 
     rows = command_center.source_discovery_board()
     row = rows[0]
@@ -282,6 +343,8 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "not official, multi-source, human-approved, or publish-ready confirmation" in row["story_opportunity_source_coverage"]
     assert "game_source_freshness=evidence_fresh_under_3h_operator_verify" in row["story_opportunity_source_coverage"]
     assert "Fresh enough for review triage" in row["story_opportunity_source_coverage"]
+    assert "breaking_next_action=P1_official_confirmation_required" in row["story_opportunity_source_coverage"]
+    assert "official_or_primary_evidence_present_operator_verify" in row["story_opportunity_source_coverage"]
     assert row["freshness_label"] == "signal_and_game_source_timestamp"
     assert row["freshness_source"] == "2026-06-28T12:01:53+00:00"
     assert row["freshness_score"] == "evidence_fresh_under_3h_operator_verify"
@@ -294,7 +357,7 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "No public/community signal captured" in row["evidence_description"]
     assert "https://sky.wnba.com/news/recap" in row["story_opportunity_urls"]
     assert "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky" in row["story_opportunity_second_source_url"]
-    assert row["story_opportunity_second_source_reason"] == "manual_confirmation_intake_first"
+    assert row["story_opportunity_second_source_reason"] == "P1_official_confirmation_required"
     assert row["story_opportunity_second_source_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert row["story_opportunity_readiness_note"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert row["review_only"] == "true"

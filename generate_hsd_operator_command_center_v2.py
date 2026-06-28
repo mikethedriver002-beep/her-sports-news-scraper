@@ -519,6 +519,9 @@ ARTIFACTS = [
     ("News", "Breaking confirmation intake data", "breaking_public_signal_confirmation_intake.csv"),
     ("News", "Breaking public signal clusters", "breaking_public_signal_clusters.md"),
     ("News", "Breaking public signal cluster data", "breaking_public_signal_clusters.csv"),
+    ("News", "Breaking public signal next actions", "breaking_public_signal_next_action_v1.md"),
+    ("News", "Breaking public signal next action data", "breaking_public_signal_next_action_v1.csv"),
+    ("News", "Breaking public signal next action manifest", "breaking_public_signal_next_action_v1.json"),
     ("News", "Game source confirmation bridge", "game_source_confirmation_bridge_v1.md"),
     ("News", "Game source confirmation bridge data", "game_source_confirmation_bridge_v1.csv"),
     ("News", "Game source confirmation bridge manifest", "game_source_confirmation_bridge_v1.json"),
@@ -3541,11 +3544,21 @@ def source_discovery_board() -> List[Dict[str, str]]:
 def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     clusters_by_candidate: Dict[str, Dict[str, str]] = {}
+    next_actions_by_candidate: Dict[str, Dict[str, str]] = {}
     for cluster in read_csv("breaking_public_signal_clusters.csv"):
         for candidate_id in clean(cluster.get("candidate_ids")).split(";"):
             candidate_id = clean(candidate_id)
             if candidate_id and candidate_id not in clusters_by_candidate:
                 clusters_by_candidate[candidate_id] = cluster
+    next_actions_by_cluster_id = {
+        clean(row.get("cluster_id")): row
+        for row in read_csv("breaking_public_signal_next_action_v1.csv")
+        if clean(row.get("cluster_id"))
+    }
+    for candidate_id, cluster in clusters_by_candidate.items():
+        next_action_row = next_actions_by_cluster_id.get(clean(cluster.get("cluster_id")))
+        if next_action_row:
+            next_actions_by_candidate[candidate_id] = next_action_row
     for index, row in enumerate(read_csv("breaking_public_signal_queue.csv")[:8], 1):
         signal_status = clean(row.get("public_signal_status"))
         urgent_band = clean(row.get("urgency_band"))
@@ -3553,6 +3566,10 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             continue
         title = first_present(row.get("headline"), default="Untitled breaking/public-signal review")
         cluster = clusters_by_candidate.get(clean(row.get("candidate_id")), {})
+        next_action_row = next_actions_by_candidate.get(clean(row.get("candidate_id")), {})
+        breaking_next_action_priority = clean(next_action_row.get("review_priority"))
+        breaking_next_action_operator = clean(next_action_row.get("operator_next_action"))
+        breaking_next_action_cue = clean(next_action_row.get("official_reputable_gray_area_cue"))
         evidence_status = clean(cluster.get("matching_official_evidence_status"))
         evidence_artifacts = clean(cluster.get("matching_official_evidence_artifacts"))
         exact_next = clean(cluster.get("exact_source_or_intake_row_to_open"))
@@ -3619,6 +3636,14 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             ]
             freshness_summary = "; ".join(bit for bit in freshness_bits if bit)
             coverage_summary = f"{coverage_summary} | {freshness_summary}" if coverage_summary else freshness_summary
+        if breaking_next_action_priority or breaking_next_action_cue:
+            next_action_bits = [
+                f"breaking_next_action={breaking_next_action_priority or 'review'}",
+                breaking_next_action_cue,
+                f"domain={clean(next_action_row.get('source_domain_lead'))}" if clean(next_action_row.get("source_domain_lead")) else "",
+            ]
+            next_action_summary = "; ".join(bit for bit in next_action_bits if bit)
+            coverage_summary = f"{coverage_summary} | {next_action_summary}" if coverage_summary else next_action_summary
         compact_human_next = ""
         if human_next:
             compact_human_next = "Confirm breaking: {breaking}; score: {score}; named stats: {named}.".format(
@@ -3658,7 +3683,7 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "title": title,
             "detail": short(first_present(verification_priority_summary, urgency_review_reason, proof_readiness_summary, ladder_summary, review_walkthrough_next, human_next, proof_cue, confirmation_gap, public_summary, why_urgent), 260),
             "next_action": short(
-                first_present(verification_priority_next, proof_readiness_next, compact_walkthrough_next, compact_human_next, human_next, proof_next, exact_next, default="Open breaking_public_signal_clusters.md, then fill breaking_public_signal_confirmation_intake.csv with the confirmation check."),
+                first_present(breaking_next_action_operator, verification_priority_next, proof_readiness_next, compact_walkthrough_next, compact_human_next, human_next, proof_next, exact_next, default="Open breaking_public_signal_clusters.md, then fill breaking_public_signal_confirmation_intake.csv with the confirmation check."),
                 180,
             ),
             "artifact": "breaking_public_signal_queue.csv",
@@ -3685,8 +3710,8 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "story_opportunity_second_source_id": "",
             "story_opportunity_second_source_url": first_present(verification_priority_target, story_proof_target, game_fact_target, ladder_urls, review_order_target, score_confirmation_target, named_confirmation_targets, proof_urls, cluster.get("matching_official_evidence_urls"), default=""),
             "story_opportunity_second_source_lane": "official_or_wire_confirmation_required",
-            "story_opportunity_second_source_reason": first_present(verification_priority_status, game_source_freshness_status, game_source_tier, proof_readiness_status, official_corroboration, reputable_corroboration, review_order_status, score_confirmation_status, proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
-            "story_opportunity_second_source_action": first_present(verification_priority_next, game_source_freshness_cue, proof_readiness_next, review_walkthrough_next, human_next, proof_next, exact_next, default="Fill breaking_public_signal_confirmation_intake.csv with official, wire, primary, or operator-verified confirmation before any story path."),
+            "story_opportunity_second_source_reason": first_present(breaking_next_action_priority, verification_priority_status, game_source_freshness_status, game_source_tier, proof_readiness_status, official_corroboration, reputable_corroboration, review_order_status, score_confirmation_status, proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
+            "story_opportunity_second_source_action": first_present(breaking_next_action_operator, verification_priority_next, game_source_freshness_cue, proof_readiness_next, review_walkthrough_next, human_next, proof_next, exact_next, default="Fill breaking_public_signal_confirmation_intake.csv with official, wire, primary, or operator-verified confirmation before any story path."),
             "promotion": "monitor_only",
             "promotion_priority": urgent_band,
             "promotion_target": "breaking_public_signal_clusters.csv",
