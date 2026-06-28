@@ -226,6 +226,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     source_rows = read_csv(root / "womens_soccer_athlete_source_priority.csv")
     source_manifest = json.loads((root / "womens_soccer_athlete_source_priority.json").read_text(encoding="utf-8"))
     source_markdown = (root / "womens_soccer_athlete_source_priority.md").read_text(encoding="utf-8")
+    triage_rows = read_csv(root / "womens_soccer_athlete_review_triage.csv")
+    triage_manifest = json.loads((root / "womens_soccer_athlete_review_triage.json").read_text(encoding="utf-8"))
+    triage_markdown = (root / "womens_soccer_athlete_review_triage.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -248,6 +251,14 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert manifest["source_priority_gray_or_reputable_rows"] == 1
     assert manifest["source_priority_download_approved_yes_rows"] == 0
     assert manifest["source_priority_blank_source_url_rows"] == 4
+    assert manifest["review_triage_rows"] == 3
+    assert manifest["review_triage_download_approved_yes_rows"] == 0
+    assert manifest["review_triage_blank_source_url_rows"] == 3
+    assert manifest["review_triage_primary_action_counts"] == {
+        "gray_area_reputable_lead_review": 1,
+        "identity_verification": 1,
+        "official_roster_check": 1,
+    }
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
     assert by_team["angel_city_fc"]["first_action_bucket"] == "1_roster_verification"
@@ -341,3 +352,40 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert "duplicate_same_source_page" in chelsea_row["issue_type"]
     assert "source_candidate_url` is advisory metadata" in source_markdown
     assert "download-law `source_url` field remains blank" in source_markdown
+    assert triage_manifest["status"] == "athlete_review_triage_ready"
+    assert triage_manifest["triage_rows"] == 3
+    assert triage_manifest["nwsl_rows"] == 2
+    assert triage_manifest["europe_rows"] == 1
+    assert triage_manifest["download_approved_yes_rows"] == 0
+    assert triage_manifest["blank_source_url_rows"] == 3
+    assert triage_manifest["blank_entity_id_rows"] == 3
+    assert triage_manifest["primary_manual_action_counts"] == {
+        "gray_area_reputable_lead_review": 1,
+        "identity_verification": 1,
+        "official_roster_check": 1,
+    }
+    assert [row["primary_manual_action"] for row in triage_rows] == [
+        "official_roster_check",
+        "gray_area_reputable_lead_review",
+        "identity_verification",
+    ]
+    assert len({(row["scope_id"], row["league_id"], row["team_id"]) for row in triage_rows}) == len(triage_rows)
+    by_triage_team = {row["team_id"]: row for row in triage_rows}
+    assert by_triage_team["angel_city_fc"]["action_flags"].startswith("official_roster_check")
+    assert "identity_verification" in by_triage_team["bay_fc"]["action_flags"]
+    assert "future_quarantine_download_intake_prep" in by_triage_team["bay_fc"]["action_flags"]
+    assert "gray_area_reputable_lead_review" in by_triage_team["all_teams"]["action_flags"]
+    for row in triage_rows:
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["candidate_entity_id"]
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["asset_downloads"] == "false"
+        assert row["approval_state_change"] == "false"
+        assert row["publish_ready"] == "false"
+    assert "Review-only operator triage worksheet" in triage_markdown
+    assert "generated local-download-law fields stay `download_approved=no`" in triage_markdown

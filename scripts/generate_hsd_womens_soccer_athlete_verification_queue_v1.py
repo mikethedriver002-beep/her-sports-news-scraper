@@ -29,6 +29,9 @@ OUT_NEXT_ACTIONS_JSON = output_path(ROOT / "womens_soccer_athlete_verification_n
 OUT_SOURCE_PRIORITY_MD = output_path(ROOT / "womens_soccer_athlete_source_priority.md")
 OUT_SOURCE_PRIORITY_CSV = output_path(ROOT / "womens_soccer_athlete_source_priority.csv")
 OUT_SOURCE_PRIORITY_JSON = output_path(ROOT / "womens_soccer_athlete_source_priority.json")
+OUT_REVIEW_TRIAGE_MD = output_path(ROOT / "womens_soccer_athlete_review_triage.md")
+OUT_REVIEW_TRIAGE_CSV = output_path(ROOT / "womens_soccer_athlete_review_triage.csv")
+OUT_REVIEW_TRIAGE_JSON = output_path(ROOT / "womens_soccer_athlete_review_triage.json")
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -156,6 +159,50 @@ SOURCE_PRIORITY_FIELDS = [
     "safe_next_action",
     "download_approved",
     "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+REVIEW_TRIAGE_FIELDS = [
+    "triage_rank",
+    "primary_manual_action",
+    "action_flags",
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "queue_rank",
+    "queue_bucket",
+    "first_action_bucket",
+    "candidate_rows",
+    "missing_local_candidate_rows",
+    "source_priority_rows",
+    "official_source_candidate_rows",
+    "operator_verify_required_source_rows",
+    "gray_or_reputable_source_rows",
+    "named_player_source_rows",
+    "advisory_source_domains",
+    "advisory_source_candidate_urls",
+    "render_readiness",
+    "safe_next_action",
+    "download_approved",
+    "source_url",
+    "candidate_entity_id",
     "entity_id",
     "rights_class",
     "identity_confidence",
@@ -850,6 +897,217 @@ def render_source_priority(rows: List[Mapping[str, str]], generated_at: str) -> 
     return "\n".join(lines) + "\n"
 
 
+def source_rows_for_queue(row: Mapping[str, str], source_rows: List[Mapping[str, str]]) -> List[Mapping[str, str]]:
+    scope_id = clean(row.get("scope_id"))
+    league_id = clean(row.get("league_id"))
+    team_id = clean(row.get("team_id"))
+    if scope_id == "nwsl":
+        return [
+            source
+            for source in source_rows
+            if clean(source.get("scope_id")) == "nwsl"
+            and (
+                clean(source.get("team_id")) == team_id
+                or clean(source.get("candidate_entity_id")) == team_id
+            )
+        ]
+    return [
+        source
+        for source in source_rows
+        if clean(source.get("scope_id")) == "europe_top_flight" and clean(source.get("league_id")) == league_id
+    ]
+
+
+def preview_values(rows: Iterable[Mapping[str, str]], field: str, limit: int = 5) -> str:
+    values = []
+    for row in rows:
+        value = clean(row.get(field))
+        if value and value not in values:
+            values.append(value)
+        if len(values) >= limit:
+            break
+    return " | ".join(values)
+
+
+def triage_action_flags(row: Mapping[str, str], matched_sources: List[Mapping[str, str]]) -> List[str]:
+    flags: List[str] = []
+    if clean(row.get("queue_bucket")) == "p0_nwsl_roster_verification_first":
+        flags.append("official_roster_check")
+    if any(clean(source.get("player_name")) for source in matched_sources):
+        flags.append("identity_verification")
+    if any(clean(source.get("operator_verify_required")).lower() == "yes" for source in matched_sources):
+        flags.append("source_candidate_review")
+    if any(clean(source.get("source_review_bucket")) == "2_gray_area_or_reputable_manual_verify" for source in matched_sources) or as_int(row.get("gray_area_rows")):
+        flags.append("gray_area_reputable_lead_review")
+    if as_int(row.get("missing_local_candidate_rows")):
+        flags.append("missing_local_asset")
+        flags.append("future_quarantine_download_intake_prep")
+    if not flags:
+        flags.append("source_metadata_watch")
+    return flags
+
+
+def primary_manual_action(flags: List[str]) -> str:
+    priority = [
+        "official_roster_check",
+        "gray_area_reputable_lead_review",
+        "identity_verification",
+        "source_candidate_review",
+        "missing_local_asset",
+        "future_quarantine_download_intake_prep",
+        "source_metadata_watch",
+    ]
+    for flag in priority:
+        if flag in flags:
+            return flag
+    return flags[0]
+
+
+def triage_safe_next_action(primary: str, scope_id: str) -> str:
+    if primary == "official_roster_check":
+        return "Open official NWSL/team roster sources and verify current roster metadata only; no candidate-state writeback."
+    if primary == "gray_area_reputable_lead_review":
+        return "Review gray-area or reputable public leads as manual leads only; require official confirmation before current-roster use."
+    if primary == "identity_verification":
+        return "Verify named player identity against official source metadata before any future intake or asset work."
+    if primary == "source_candidate_review":
+        return "Open advisory source-candidate pages manually and classify source quality; keep Europe source-candidate-only."
+    if primary == "missing_local_asset":
+        return "Confirm missing local review assets and prepare human-edited quarantine intake only if a later download is approved."
+    if primary == "future_quarantine_download_intake_prep":
+        return "Prepare future human intake fields only; generated rows do not authorize downloads."
+    if scope_id == "europe_top_flight":
+        return "Keep Europe source-map rows as metadata candidates only; not render-ready."
+    return "Keep as review-only metadata watch; no downloads, approvals, or publishing."
+
+
+def review_triage_rows(queue_rows: List[Mapping[str, str]], source_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    output: List[Dict[str, str]] = []
+    for row in queue_rows:
+        matched_sources = source_rows_for_queue(row, source_rows)
+        flags = triage_action_flags(row, matched_sources)
+        primary = primary_manual_action(flags)
+        official_sources = [
+            source
+            for source in matched_sources
+            if clean(source.get("source_candidate_level")) == "official_source_candidate"
+            or clean(source.get("official_status")).startswith("official")
+        ]
+        gray_sources = [
+            source
+            for source in matched_sources
+            if clean(source.get("source_review_bucket")) == "2_gray_area_or_reputable_manual_verify"
+        ]
+        entity_id = clean(row.get("team_id")) if clean(row.get("team_id")) != "all_teams" else clean(row.get("league_id"))
+        output.append(
+            {
+                "triage_rank": "0",
+                "primary_manual_action": primary,
+                "action_flags": "|".join(flags),
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "queue_rank": clean(row.get("queue_rank")),
+                "queue_bucket": clean(row.get("queue_bucket")),
+                "first_action_bucket": clean(row.get("first_action_bucket")),
+                "candidate_rows": clean(row.get("candidate_rows")),
+                "missing_local_candidate_rows": clean(row.get("missing_local_candidate_rows")),
+                "source_priority_rows": str(len(matched_sources)),
+                "official_source_candidate_rows": str(len(official_sources)),
+                "operator_verify_required_source_rows": str(sum(1 for source in matched_sources if clean(source.get("operator_verify_required")).lower() == "yes")),
+                "gray_or_reputable_source_rows": str(len(gray_sources)),
+                "named_player_source_rows": str(sum(1 for source in matched_sources if clean(source.get("player_name")))),
+                "advisory_source_domains": preview_values(matched_sources, "source_domain"),
+                "advisory_source_candidate_urls": preview_values(matched_sources, "source_candidate_url", limit=3),
+                "render_readiness": clean(row.get("render_readiness")),
+                "safe_next_action": triage_safe_next_action(primary, clean(row.get("scope_id"))),
+                "download_approved": "no",
+                "source_url": "",
+                "candidate_entity_id": entity_id,
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                **guardrails(),
+            }
+        )
+    priority = {
+        "official_roster_check": 10,
+        "gray_area_reputable_lead_review": 20,
+        "identity_verification": 30,
+        "source_candidate_review": 40,
+        "missing_local_asset": 50,
+        "future_quarantine_download_intake_prep": 60,
+        "source_metadata_watch": 70,
+    }
+    output.sort(
+        key=lambda row: (
+            priority.get(row["primary_manual_action"], 999),
+            LEAGUE_ORDER.get(row["league_id"], 999),
+            as_int(row.get("queue_rank")),
+            clean(row.get("team_name")),
+        )
+    )
+    for index, row in enumerate(output, start=1):
+        row["triage_rank"] = str(index)
+    return output
+
+
+def render_review_triage(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    bucket_counts = count_by(rows, "primary_manual_action")
+    lines = [
+        "# Women's Soccer Athlete Review Triage",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only operator triage worksheet built from the verification queue and source-priority rows. Advisory source candidates remain in `advisory_source_candidate_urls`; generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.",
+        "",
+        "## Summary",
+        "",
+        f"- Triage rows: `{len(rows)}`",
+        f"- NWSL rows: `{sum(1 for row in rows if clean(row.get('scope_id')) == 'nwsl')}`",
+        f"- Europe rows: `{sum(1 for row in rows if clean(row.get('scope_id')) == 'europe_top_flight')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Primary Manual Actions",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in bucket_counts.items())
+    lines += [
+        "",
+        "## Safe Operator Path",
+        "",
+        "- Work official NWSL roster checks first.",
+        "- Treat gray-area and reputable public leads as manual review leads only, never as official/current roster confirmation.",
+        "- Keep Europe rows source-candidate-only and not render-ready unless a later human intake and local assets support them.",
+        "- Do not copy advisory source candidates into download-law `source_url` without a later human-edited intake row.",
+        "",
+        "## Worksheet Preview",
+        "",
+        "| Rank | Action | Scope | League | Team | Sources | Named Players | Missing Local | Safe Next Action |",
+        "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for row in rows[:35]:
+        lines.append(
+            "| {rank} | {action} | {scope} | {league} | {team} | {sources} | {players} | {missing} | {safe_action} |".format(
+                rank=clean(row.get("triage_rank")),
+                action=clean(row.get("primary_manual_action")),
+                scope=clean(row.get("scope_id")),
+                league=clean(row.get("league_id")),
+                team=clean(row.get("team_name")).replace("|", "/"),
+                sources=clean(row.get("source_priority_rows")),
+                players=clean(row.get("named_player_source_rows")),
+                missing=clean(row.get("missing_local_candidate_rows")),
+                safe_action=clean(row.get("safe_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = now_iso()
     rows = build_queue()
@@ -857,12 +1115,15 @@ def main() -> int:
     external_rows = read_csv(EXTERNAL_RESEARCH_CSV)
     action_rows = next_action_rows(rows, download_rows)
     source_rows = source_priority_rows(rows, external_rows)
+    triage_rows = review_triage_rows(rows, source_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, generated_at))
     write_csv(OUT_NEXT_ACTIONS_CSV, action_rows, NEXT_ACTION_FIELDS)
     write_text(OUT_NEXT_ACTIONS_MD, render_next_actions(action_rows, generated_at))
     write_csv(OUT_SOURCE_PRIORITY_CSV, source_rows, SOURCE_PRIORITY_FIELDS)
     write_text(OUT_SOURCE_PRIORITY_MD, render_source_priority(source_rows, generated_at))
+    write_csv(OUT_REVIEW_TRIAGE_CSV, triage_rows, REVIEW_TRIAGE_FIELDS)
+    write_text(OUT_REVIEW_TRIAGE_MD, render_review_triage(triage_rows, generated_at))
     manifest = {
         "version": VERSION,
         "status": "athlete_verification_queue_ready",
@@ -891,6 +1152,12 @@ def main() -> int:
         "source_priority_gray_or_reputable_rows": sum(1 for row in source_rows if clean(row.get("source_review_bucket")) == "2_gray_area_or_reputable_manual_verify"),
         "source_priority_download_approved_yes_rows": sum(1 for row in source_rows if clean(row.get("download_approved")).lower() == "yes"),
         "source_priority_blank_source_url_rows": sum(1 for row in source_rows if not clean(row.get("source_url"))),
+        "review_triage_md": OUT_REVIEW_TRIAGE_MD.as_posix(),
+        "review_triage_csv": OUT_REVIEW_TRIAGE_CSV.as_posix(),
+        "review_triage_rows": len(triage_rows),
+        "review_triage_download_approved_yes_rows": sum(1 for row in triage_rows if clean(row.get("download_approved")).lower() == "yes"),
+        "review_triage_blank_source_url_rows": sum(1 for row in triage_rows if not clean(row.get("source_url"))),
+        "review_triage_primary_action_counts": count_by(triage_rows, "primary_manual_action"),
         "inputs": [CONTACT_CSV.as_posix(), OPERATOR_BOARD_CSV.as_posix(), DOWNLOAD_INTAKE_CSV.as_posix(), EXTERNAL_RESEARCH_CSV.as_posix()],
         "review_only": True,
         "approval_state_change": False,
@@ -962,7 +1229,35 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "queue": OUT_MD.as_posix()}, indent=2))
+    write_json(
+        OUT_REVIEW_TRIAGE_JSON,
+        {
+            "version": VERSION,
+            "status": "athlete_review_triage_ready",
+            "generated_at_utc": generated_at,
+            "triage_rows": len(triage_rows),
+            "nwsl_rows": sum(1 for row in triage_rows if clean(row.get("scope_id")) == "nwsl"),
+            "europe_rows": sum(1 for row in triage_rows if clean(row.get("scope_id")) == "europe_top_flight"),
+            "download_approved_yes_rows": sum(1 for row in triage_rows if clean(row.get("download_approved")).lower() == "yes"),
+            "blank_source_url_rows": sum(1 for row in triage_rows if not clean(row.get("source_url"))),
+            "blank_entity_id_rows": sum(1 for row in triage_rows if not clean(row.get("entity_id"))),
+            "primary_manual_action_counts": count_by(triage_rows, "primary_manual_action"),
+            "worksheet_md": OUT_REVIEW_TRIAGE_MD.as_posix(),
+            "worksheet_csv": OUT_REVIEW_TRIAGE_CSV.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "queue": OUT_MD.as_posix()}, indent=2))
     return 0
 
 

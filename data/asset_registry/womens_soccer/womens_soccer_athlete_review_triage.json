@@ -1,0 +1,31 @@
+{
+  "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
+  "status": "athlete_review_triage_ready",
+  "generated_at_utc": "2026-06-28T12:33:24.848580+00:00",
+  "triage_rows": 21,
+  "nwsl_rows": 16,
+  "europe_rows": 5,
+  "download_approved_yes_rows": 0,
+  "blank_source_url_rows": 21,
+  "blank_entity_id_rows": 21,
+  "primary_manual_action_counts": {
+    "gray_area_reputable_lead_review": 5,
+    "identity_verification": 2,
+    "missing_local_asset": 5,
+    "official_roster_check": 6,
+    "source_candidate_review": 3
+  },
+  "worksheet_md": "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md",
+  "worksheet_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv",
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
