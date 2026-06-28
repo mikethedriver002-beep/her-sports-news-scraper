@@ -408,8 +408,17 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     review_rows = module.final_score_stat_proof_review_order_rows(rows)
     assert len(review_rows) == len(rows)
     assert review_rows[0]["review_phase"] == "1_manual_box_score_gap"
+    missing_review = [row for row in review_rows if row["event_uid"] == "event_missing" and row["fact_type"] == "named_player_stat_line"][0]
+    player_one_review = [row for row in review_rows if row["named_player"] == "Player One"][0]
+    score_review = [row for row in review_rows if row["event_uid"] == "event_confirmed" and row["fact_type"] == "final_score"][0]
+    assert missing_review["source_confirmation_cue"] == "free_public_box_score_stat_source_needed_manual_check"
+    assert player_one_review["player_team"] == "Indiana Fever"
+    assert player_one_review["stat_line"] == "PTS 24, REB 8"
+    assert player_one_review["source_confirmation_cue"] == "free_public_box_score_stat_source_present_operator_verify"
+    assert score_review["source_confirmation_cue"] == "free_public_final_score_source_present_operator_verify"
     assert all(row["proof_row_to_open"].startswith("final_score_stat_proof_v1.csv proof_id=") for row in review_rows)
     assert all(row["intake_row_to_record"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=") for row in review_rows)
+    assert all(row["story_proof_card_row_to_open"].startswith("story_proof_card_v1.csv event_id=") for row in review_rows)
     assert all("operator_confirmation_status" in row["operator_decision_fields"] for row in review_rows)
     assert all(row["review_only"] == "Yes" for row in review_rows)
     assert all(row["approval_state_change"] == "none" for row in review_rows)
@@ -506,6 +515,9 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     assert proof_card["named_stat_proof"] == "PTS 24, REB 8"
     assert proof_card["official_source_url"] == "https://www.espn.com/wnba/game/_/gameId/401"
     assert proof_card["named_stat_proof_row"].startswith("final_score_stat_proof_v1.csv proof_id=")
+    assert proof_card["final_score_review_order_row"].startswith("final_score_stat_proof_review_order_v1.csv review_order=")
+    assert proof_card["named_stat_review_order_row"].startswith("final_score_stat_proof_review_order_v1.csv review_order=")
+    assert proof_card["source_confirmation_cue"] == "free_public_box_score_stat_source_present_operator_verify"
     assert proof_card["manual_intake_path"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=")
     assert proof_card["operator_checked_source_url"] == ""
     assert proof_card["operator_notes"] == ""

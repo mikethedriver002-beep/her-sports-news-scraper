@@ -255,14 +255,19 @@ FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FIELDS = [
     "fact_type",
     "fact_label",
     "fact_value",
+    "named_player",
+    "player_team",
+    "stat_line",
     "proof_status",
     "source_check_status",
+    "source_confirmation_cue",
     "manual_box_score_confirmation_needed",
     "source_url",
     "source_domain",
     "proof_row_to_open",
     "evidence_artifact_row",
     "intake_row_to_record",
+    "story_proof_card_row_to_open",
     "operator_next_step",
     "operator_decision_fields",
     "render_review_cue",
@@ -342,8 +347,11 @@ STORY_PROOF_CARD_FIELDS = [
     "athlete_render_handoff_fields",
     "game_fact_row",
     "final_score_proof_row",
+    "final_score_review_order_row",
     "proof_review_order_row",
+    "named_stat_review_order_row",
     "manual_intake_path",
+    "source_confirmation_cue",
     "smallest_next_action",
     "human_confirmation_needed",
     "missing_blockers",
@@ -1637,6 +1645,13 @@ def final_score_stat_proof_review_order_rows(proof_rows: List[Dict[str, Any]]) -
         fact_type = clean(proof.get("fact_type"))
         source_url = clean(proof.get("source_url"))
         source_check_status = "source_url_present_operator_verify" if source_url else "source_url_missing_human_source_required"
+        source_confirmation_cue = "free_public_source_url_present_operator_verify" if source_url else "free_public_source_needed_manual_check"
+        if fact_type == "named_player_stat_line" and source_url:
+            source_confirmation_cue = "free_public_box_score_stat_source_present_operator_verify"
+        if fact_type == "final_score" and source_url:
+            source_confirmation_cue = "free_public_final_score_source_present_operator_verify"
+        if manual_needed == "Yes" and fact_type == "named_player_stat_line":
+            source_confirmation_cue = "free_public_box_score_stat_source_needed_manual_check"
         next_step = "Open the source URL, compare the final score or stat text to the proof row, then record the check in the intake row."
         if manual_needed == "Yes":
             next_step = "Open the evidence row and intake row, find a free/public box-score source manually, then record the check without approving or publishing."
@@ -1653,14 +1668,19 @@ def final_score_stat_proof_review_order_rows(proof_rows: List[Dict[str, Any]]) -
                 "fact_type": fact_type,
                 "fact_label": clean(proof.get("fact_label")),
                 "fact_value": clean(proof.get("fact_value")),
+                "named_player": clean(proof.get("named_player")),
+                "player_team": clean(proof.get("player_team")),
+                "stat_line": clean(proof.get("stat_line")),
                 "proof_status": clean(proof.get("proof_status")),
                 "source_check_status": source_check_status,
+                "source_confirmation_cue": source_confirmation_cue,
                 "manual_box_score_confirmation_needed": manual_needed,
                 "source_url": source_url,
                 "source_domain": clean(proof.get("source_domain")),
                 "proof_row_to_open": f"final_score_stat_proof_v1.csv proof_id={clean(proof.get('proof_id'))}",
                 "evidence_artifact_row": clean(proof.get("evidence_artifact_row")),
                 "intake_row_to_record": f"final_score_stat_proof_confirmation_intake_v1.csv proof_id={clean(proof.get('proof_id'))}",
+                "story_proof_card_row_to_open": f"story_proof_card_v1.csv event_id={clean(proof.get('event_uid'))}; proof_id={clean(proof.get('proof_id'))}",
                 "operator_next_step": next_step,
                 "operator_decision_fields": "operator_checked_source_url, operator_confirmation_status, operator_notes",
                 "render_review_cue": render_cue,
@@ -1938,6 +1958,7 @@ def story_proof_card_rows(
         selected_proof_id = clean(selected_named.get("proof_id")) or proof_id_from_reference(athlete.get("proof_row_to_open"))
         review_order = order_by_proof.get(selected_proof_id, {})
         score_proof_id = clean(score.get("proof_id"))
+        score_review_order = order_by_proof.get(score_proof_id, {})
         source_url = clean(fact.get("source_url")) or clean(score.get("source_url")) or clean(athlete.get("source_url"))
         cross_check = clean(fact.get("stats_source_url"))
         named_stat = clean(athlete.get("stat_line")) or clean(selected_named.get("stat_line")) or clean(selected_named.get("fact_value"))
@@ -1955,6 +1976,11 @@ def story_proof_card_rows(
             blockers.append("named_stat_proof_missing_or_unverified")
         if not athlete_ready:
             blockers.append(clean(athlete.get("missing_blockers")) or "athlete_render_candidate_missing")
+        score_review_order_ref = clean(score_review_order.get("review_order")) and f"final_score_stat_proof_review_order_v1.csv review_order={clean(score_review_order.get('review_order'))}; proof_id={score_proof_id}"
+        named_review_order_ref = clean(athlete.get("review_order_row_to_open")) or (clean(review_order.get("review_order")) and f"final_score_stat_proof_review_order_v1.csv review_order={clean(review_order.get('review_order'))}; proof_id={selected_proof_id}")
+        source_confirmation_cue = clean(review_order.get("source_confirmation_cue")) or clean(score_review_order.get("source_confirmation_cue"))
+        if not source_confirmation_cue:
+            source_confirmation_cue = "free_public_source_url_present_operator_verify" if source_url else "free_public_source_needed_manual_check"
         action = "Open story_proof_card_v1.md, verify the official source URL, record the check in the manual intake row, then hand the athlete fields to the renderer lane."
         if blockers:
             action = "Clear blocker(s): {blockers}; then record source confirmation in the manual intake row.".format(blockers="; ".join(blockers))
@@ -1991,8 +2017,11 @@ def story_proof_card_rows(
                 "athlete_render_handoff_fields": clean(athlete.get("exact_renderer_handoff_fields")),
                 "game_fact_row": f"game_fact_confirmation_status_v1.csv event_uid={event_uid}",
                 "final_score_proof_row": score_proof_id and f"final_score_stat_proof_v1.csv proof_id={score_proof_id}",
-                "proof_review_order_row": clean(athlete.get("review_order_row_to_open")) or (clean(review_order.get("review_order")) and f"final_score_stat_proof_review_order_v1.csv review_order={clean(review_order.get('review_order'))}; proof_id={selected_proof_id}"),
+                "final_score_review_order_row": score_review_order_ref,
+                "proof_review_order_row": named_review_order_ref,
+                "named_stat_review_order_row": named_review_order_ref,
                 "manual_intake_path": manual_intake,
+                "source_confirmation_cue": source_confirmation_cue,
                 "smallest_next_action": action,
                 "human_confirmation_needed": "Yes",
                 "missing_blockers": ";".join(blockers) if blockers else "none_manual_source_check_still_required",
@@ -2059,9 +2088,12 @@ def story_proof_card_report_md(summary: Dict[str, Any], rows: List[Dict[str, Any
         lines.append(f"- **{row.get('candidate_rank')}. {row.get('matchup')}** | {row.get('proof_status')} | {row.get('renderability_state')}")
         lines.append(f"  - claim={row.get('claim')}")
         lines.append(f"  - source={row.get('official_source_url')}")
+        lines.append(f"  - source_cue={row.get('source_confirmation_cue')}")
         lines.append(f"  - named_stat={row.get('named_stat_proof') or 'missing'}")
         lines.append(f"  - athlete_image={row.get('athlete_photo_path') or 'missing'}")
         lines.append(f"  - proof={row.get('final_score_proof_row')} | named={row.get('named_stat_proof_row')}")
+        lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'}")
+        lines.append(f"  - review_order_named={row.get('named_stat_review_order_row') or 'missing'}")
         lines.append(f"  - record={row.get('manual_intake_path')}")
         lines.append(f"  - next={row.get('smallest_next_action')}")
     return "\n".join(lines) + "\n"
