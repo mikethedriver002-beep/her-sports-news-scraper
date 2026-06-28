@@ -232,6 +232,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     candidate_rows = read_csv(root / "womens_soccer_athlete_candidate_next_action_board.csv")
     candidate_manifest = json.loads((root / "womens_soccer_athlete_candidate_next_action_board.json").read_text(encoding="utf-8"))
     candidate_markdown = (root / "womens_soccer_athlete_candidate_next_action_board.md").read_text(encoding="utf-8")
+    photo_rows = read_csv(root / "womens_soccer_athlete_photo_review_readiness_board.csv")
+    photo_manifest = json.loads((root / "womens_soccer_athlete_photo_review_readiness_board.json").read_text(encoding="utf-8"))
+    photo_markdown = (root / "womens_soccer_athlete_photo_review_readiness_board.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -269,6 +272,14 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         "duplicate_transfer_check": 1,
         "gray_area_reputable_media_lead": 1,
         "roster_source_verify": 2,
+    }
+    assert manifest["photo_review_readiness_rows"] == 4
+    assert manifest["photo_review_readiness_download_approved_yes_rows"] == 0
+    assert manifest["photo_review_readiness_blank_source_url_rows"] == 4
+    assert manifest["photo_review_readiness_bucket_counts"] == {
+        "nwsl_roster_verify_before_photo_review": 2,
+        "park_gray_area_lead_no_photo_use": 1,
+        "resolve_duplicate_transfer_before_photo_review": 1,
     }
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
@@ -445,3 +456,49 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert row["publish_ready"] == "false"
     assert "Review-only board" in candidate_markdown
     assert "`source_candidate_url` remains advisory metadata" in candidate_markdown
+    assert photo_manifest["status"] == "athlete_photo_review_readiness_ready"
+    assert photo_manifest["photo_readiness_rows"] == 4
+    assert photo_manifest["nwsl_rows"] == 2
+    assert photo_manifest["europe_rows"] == 2
+    assert photo_manifest["download_approved_yes_rows"] == 0
+    assert photo_manifest["blank_source_url_rows"] == 4
+    assert photo_manifest["blank_entity_id_rows"] == 4
+    assert photo_manifest["readiness_bucket_counts"] == {
+        "nwsl_roster_verify_before_photo_review": 2,
+        "park_gray_area_lead_no_photo_use": 1,
+        "resolve_duplicate_transfer_before_photo_review": 1,
+    }
+    assert [row["photo_review_readiness_bucket"] for row in photo_rows] == [
+        "nwsl_roster_verify_before_photo_review",
+        "nwsl_roster_verify_before_photo_review",
+        "resolve_duplicate_transfer_before_photo_review",
+        "park_gray_area_lead_no_photo_use",
+    ]
+    assert len(
+        {
+            (
+                row["photo_review_readiness_bucket"],
+                row["league_id"],
+                row["candidate_entity_id"],
+                row["source_candidate_url"],
+            )
+            for row in photo_rows
+        }
+    ) == len(photo_rows)
+    for row in photo_rows:
+        assert row["source_candidate_url"]
+        assert "womens_soccer_athlete_candidate_next_action_board.csv#row=" in row["candidate_action_row_ref"]
+        assert "womens_soccer_athlete_source_priority.csv#row=" in row["source_priority_row_ref"]
+        assert row["future_download_intake_status"] == "human_edited_intake_required_no_generated_authorization"
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["asset_downloads"] == "false"
+        assert row["approval_state_change"] == "false"
+        assert row["publish_ready"] == "false"
+    assert "Photo Review Readiness Board" in photo_markdown
+    assert "Generated local-download-law fields stay `download_approved=no`" in photo_markdown

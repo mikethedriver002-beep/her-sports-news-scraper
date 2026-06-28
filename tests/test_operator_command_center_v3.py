@@ -1464,6 +1464,108 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_readiness_board.md").write_text(
+        "# Photo readiness\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_readiness_board.csv",
+        [
+            {
+                "photo_readiness_rank": "1",
+                "photo_review_readiness_bucket": "nwsl_roster_verify_before_photo_review",
+                "manual_action_group": "roster_source_verify",
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "player_name": "Angel Player",
+                "source_candidate_url": "https://www.angelcity.com/club/roster",
+                "candidate_action_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv#row=1",
+                "source_priority_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv#row=1",
+                "candidate_entity_id": "nwsl:angel_city_fc:angel_player",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+            {
+                "photo_readiness_rank": "2",
+                "photo_review_readiness_bucket": "park_gray_area_lead_no_photo_use",
+                "manual_action_group": "gray_area_reputable_media_lead",
+                "scope_id": "europe_top_flight",
+                "league_id": "wsl_england",
+                "team_id": "all_teams",
+                "team_name": "WSL England",
+                "player_name": "Gray Lead",
+                "source_candidate_url": "https://example.org/wsl",
+                "candidate_action_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv#row=2",
+                "source_priority_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv#row=2",
+                "candidate_entity_id": "wsl_england:gray_lead",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+        ],
+        [
+            "photo_readiness_rank",
+            "photo_review_readiness_bucket",
+            "manual_action_group",
+            "scope_id",
+            "league_id",
+            "team_id",
+            "team_name",
+            "player_name",
+            "source_candidate_url",
+            "candidate_action_row_ref",
+            "source_priority_row_ref",
+            "candidate_entity_id",
+            "download_approved",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "review_only",
+            "approval_state_change",
+            "asset_downloads",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_readiness_board.json",
+        {
+            "status": "athlete_photo_review_readiness_ready",
+            "generated_at_utc": "2026-06-27T21:50:00+00:00",
+            "photo_readiness_rows": 2,
+            "nwsl_rows": 1,
+            "europe_rows": 1,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 2,
+            "blank_entity_id_rows": 2,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -1533,6 +1635,14 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_athlete_candidate_actions_blank_source_url_rows"] == 2
     assert panel["womens_soccer_athlete_candidate_actions_generated_at"] == "2026-06-27T21:40:00+00:00"
     assert panel["womens_soccer_athlete_candidate_actions_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_photo_readiness_status"] == "athlete_photo_review_readiness_ready"
+    assert panel["womens_soccer_athlete_photo_readiness_rows"] == 2
+    assert panel["womens_soccer_athlete_photo_readiness_nwsl_rows"] == 1
+    assert panel["womens_soccer_athlete_photo_readiness_europe_rows"] == 1
+    assert panel["womens_soccer_athlete_photo_readiness_download_approved_yes_rows"] == 0
+    assert panel["womens_soccer_athlete_photo_readiness_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_athlete_photo_readiness_generated_at"] == "2026-06-27T21:50:00+00:00"
+    assert panel["womens_soccer_athlete_photo_readiness_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_external_research_status"] == "external_research_intake_ready"
     assert panel["womens_soccer_external_research_rows"] == 3
     assert panel["womens_soccer_external_research_nwsl_rows"] == 2
@@ -1568,6 +1678,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer athlete candidate next-action board" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete candidate next-action board data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete candidate next-action board manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo review readiness board" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo review readiness board data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete photo review readiness board manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer NWSL external research source" for item in panel["file_shortcuts"])
@@ -1601,6 +1714,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Soccer candidate actions" in html
     assert "Soccer candidate NWSL" in html
     assert "Soccer candidate blanks" in html
+    assert "Soccer photo readiness" in html
+    assert "Soccer photo NWSL" in html
+    assert "Soccer photo blanks" in html
     assert "Soccer research rows" in html
     assert "Soccer research NWSL" in html
     assert "Soccer research Europe" in html
@@ -1616,6 +1732,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Women&#x27;s soccer athlete source priority packet freshness" in html
     assert "Women&#x27;s soccer athlete review triage packet freshness" in html
     assert "Women&#x27;s soccer athlete candidate next-action board packet freshness" in html
+    assert "Women&#x27;s soccer athlete photo review readiness board packet freshness" in html
     assert "Women&#x27;s soccer external research intake packet freshness" in html
 
 
