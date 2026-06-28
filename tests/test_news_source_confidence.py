@@ -426,6 +426,25 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "re-check the source URL timestamp/recency" in stale_cluster["verification_priority_next_action"]
     assert "evidence_stale_over_24h_manual_check" in stale_cluster["game_source_freshness_cue"]
 
+    action_rows = module.breaking_signal_next_action_rows([cluster, stale_cluster])
+    by_cluster_id = {row["cluster_id"]: row for row in action_rows}
+    assert action_rows[0]["cluster_id"] == stale_cluster["cluster_id"]
+    assert action_rows[0]["review_priority"] == "P0_freshness_recheck_first"
+    assert by_cluster_id[cluster["cluster_id"]]["review_priority"] == "P2_reputable_or_gray_area_source_verify"
+    assert "official_or_primary_evidence_present_operator_verify" in by_cluster_id[cluster["cluster_id"]]["official_reputable_gray_area_cue"]
+    assert by_cluster_id[cluster["cluster_id"]]["source_domain_lead"] == "liberty.wnba.com"
+    assert "breaking_public_signal_confirmation_intake.csv" in action_rows[0]["operator_next_action"]
+    assert all(row["review_only"] == "true" for row in action_rows)
+    assert all(row["approval_state_change"] == "false" for row in action_rows)
+    assert all(row["source_enablement"] == "false" for row in action_rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in action_rows)
+    action_summary = module.breaking_signal_next_action_summary(action_rows)
+    assert action_summary["freshness_recheck_first"] == 1
+    assert action_summary["reputable_gray_area_source_verify"] == 1
+    action_report = module.markdown_breaking_signal_next_action(action_summary, action_rows)
+    assert "Review-only, artifact-only breaking/public-signal triage" in action_report
+    assert "No paid APIs" in action_report
+
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
     assert "No matching final-score/stat proof row found" in missing_proof_cluster["score_stat_manual_confirmation_cue"]
@@ -641,6 +660,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     confirmation_md = run_dir / "breaking_public_signal_confirmation_intake.md"
     clusters_csv = run_dir / "breaking_public_signal_clusters.csv"
     clusters_md = run_dir / "breaking_public_signal_clusters.md"
+    next_actions_csv = run_dir / "breaking_public_signal_next_action_v1.csv"
+    next_actions_md = run_dir / "breaking_public_signal_next_action_v1.md"
+    next_actions_json = run_dir / "breaking_public_signal_next_action_v1.json"
     bridge_csv = run_dir / "game_source_confirmation_bridge_v1.csv"
     bridge_md = run_dir / "game_source_confirmation_bridge_v1.md"
     bridge_json = run_dir / "game_source_confirmation_bridge_v1.json"
@@ -652,12 +674,16 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert confirmation_md.exists()
     assert clusters_csv.exists()
     assert clusters_md.exists()
+    assert next_actions_csv.exists()
+    assert next_actions_md.exists()
+    assert next_actions_json.exists()
     assert bridge_csv.exists()
     assert bridge_md.exists()
     assert bridge_json.exists()
     rows = list(csv.DictReader(queue.open(newline="", encoding="utf-8")))
     confirmation_rows = list(csv.DictReader(confirmation_csv.open(newline="", encoding="utf-8")))
     cluster_rows = list(csv.DictReader(clusters_csv.open(newline="", encoding="utf-8")))
+    next_action_rows = list(csv.DictReader(next_actions_csv.open(newline="", encoding="utf-8")))
     bridge_rows = list(csv.DictReader(bridge_csv.open(newline="", encoding="utf-8")))
     assert rows
     assert confirmation_rows
@@ -676,6 +702,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all(row["publish_ready"] == "false" for row in cluster_rows)
     assert all(row["auto_publish"] == "false" for row in cluster_rows)
     assert all(row["auto_source_enablement"] == "false" for row in cluster_rows)
+    assert all(row["review_only"] == "true" for row in next_action_rows)
+    assert all(row["source_enablement"] == "false" for row in next_action_rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in next_action_rows)
     assert all(row["review_only"] == "true" for row in bridge_rows)
     assert all(row["publish_ready"] == "false" for row in bridge_rows)
     assert all(row["auto_publish"] == "false" for row in bridge_rows)
@@ -688,12 +717,15 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert signal_payload["counts"]["rows"] == len(rows)
     assert signal_payload["counts"]["confirmation_intake_rows"] == len(confirmation_rows)
     assert signal_payload["counts"]["cluster_rows"] == len(cluster_rows)
+    assert signal_payload["counts"]["breaking_next_action_rows"] == len(next_action_rows)
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
     assert "breaking_public_signal_confirmation_intake.csv" in news_payload["outputs"]
     assert "breaking_public_signal_clusters.csv" in news_payload["outputs"]
+    assert "breaking_public_signal_next_action_v1.csv" in news_payload["outputs"]
     assert "game_source_confirmation_bridge_v1.csv" in news_payload["outputs"]
     assert news_payload["counts"]["breaking_public_signal_rows"] == len(rows)
     assert news_payload["counts"]["breaking_public_signal_review_only"] == len(rows)
     assert news_payload["counts"]["breaking_confirmation_intake_rows"] == len(confirmation_rows)
     assert news_payload["counts"]["breaking_signal_cluster_rows"] == len(cluster_rows)
+    assert news_payload["counts"]["breaking_signal_next_action_rows"] == len(next_action_rows)
     assert news_payload["counts"]["game_source_confirmation_bridge_rows"] == len(bridge_rows)

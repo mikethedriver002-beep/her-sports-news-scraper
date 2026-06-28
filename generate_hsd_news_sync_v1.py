@@ -7,6 +7,7 @@ import json
 import os
 import re
 import time
+from collections import defaultdict
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,7 +20,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.6-breaking-source-freshness-cues"
+VERSION = "news-sync-v1.9.7-breaking-next-action-board"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -75,6 +76,9 @@ BREAKING_CONFIRMATION_INTAKE_CSV = "breaking_public_signal_confirmation_intake.c
 BREAKING_CONFIRMATION_INTAKE_MD = "breaking_public_signal_confirmation_intake.md"
 BREAKING_SIGNAL_CLUSTERS_CSV = "breaking_public_signal_clusters.csv"
 BREAKING_SIGNAL_CLUSTERS_MD = "breaking_public_signal_clusters.md"
+BREAKING_SIGNAL_NEXT_ACTION_CSV = "breaking_public_signal_next_action_v1.csv"
+BREAKING_SIGNAL_NEXT_ACTION_MD = "breaking_public_signal_next_action_v1.md"
+BREAKING_SIGNAL_NEXT_ACTION_JSON = "breaking_public_signal_next_action_v1.json"
 GAME_SOURCE_CONFIRMATION_BRIDGE_CSV = "game_source_confirmation_bridge_v1.csv"
 GAME_SOURCE_CONFIRMATION_BRIDGE_MD = "game_source_confirmation_bridge_v1.md"
 GAME_SOURCE_CONFIRMATION_BRIDGE_JSON = "game_source_confirmation_bridge_v1.json"
@@ -192,6 +196,20 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "limitations", "exact_manual_next_action", "manual_review_required",
     "review_only", "publish_ready", "auto_publish", "auto_source_enablement",
     "approval_state_change",
+]
+
+BREAKING_SIGNAL_NEXT_ACTION_FIELDS = [
+    "action_rank", "cluster_id", "cluster_headline", "urgency_band",
+    "review_priority", "verification_priority_status",
+    "confirmation_state", "official_reputable_gray_area_cue",
+    "source_confirmation_tier", "source_freshness_status",
+    "source_freshness_age_minutes", "source_domain_lead",
+    "public_signal_confidence", "public_signal_count",
+    "evidence_urls", "source_or_intake_row_to_open",
+    "freshness_or_proof_row_to_open", "manual_confirmation_target",
+    "operator_next_action", "review_limitations",
+    "review_only", "approval_state_change", "source_enablement",
+    "publish_action",
 ]
 
 GAME_SOURCE_CONFIRMATION_BRIDGE_FIELDS = [
@@ -3877,6 +3895,198 @@ def append_unique_urls(urls: List[str], values: List[str]) -> None:
             urls.append(url)
 
 
+def first_clean_value(*values: Any) -> str:
+    for value in values:
+        text = clean(value)
+        if text:
+            return text
+    return ""
+
+
+def breaking_evidence_domain_lead(row: Dict[str, Any]) -> str:
+    urls: List[str] = []
+    for key in ["corroboration_evidence_urls", "matching_official_evidence_urls", "source_urls"]:
+        urls.extend(parse_json_list(row.get(key)))
+    domains = [source_domain_from_url(url) for url in urls if source_domain_from_url(url)]
+    if domains:
+        return domains[0]
+    source_domains = [clean(part) for part in clean(row.get("source_domains")).split(";") if clean(part)]
+    if source_domains:
+        return source_domains[0]
+    return clean(row.get("matching_official_evidence_sources"))
+
+
+def breaking_evidence_cue(row: Dict[str, Any]) -> str:
+    official = clean(row.get("official_source_corroboration"))
+    reputable = clean(row.get("reputable_source_corroboration"))
+    public = clean(row.get("public_signal_corroboration"))
+    if official.startswith("present_operator_verify"):
+        return f"official_or_primary_evidence_present_operator_verify; {official}"
+    if reputable.startswith("present_operator_verify"):
+        return f"reputable_or_gray_area_public_evidence_present_operator_verify; {reputable}"
+    if public.startswith("public_or_community_signal_present"):
+        return f"public_or_community_signal_only_review_not_confirmation; {public}"
+    return "missing_official_reputable_or_gray_area_evidence_operator_add_to_intake"
+
+
+def breaking_next_action_priority(row: Dict[str, Any]) -> str:
+    verification = clean(row.get("verification_priority_status"))
+    source_freshness = clean(row.get("game_source_freshness_status"))
+    official = clean(row.get("official_source_corroboration"))
+    reputable = clean(row.get("reputable_source_corroboration"))
+    public_count = int(clean(row.get("public_signal_count")) or 0)
+    tier = clean(row.get("game_source_confirmation_tier"))
+    if verification in {"freshness_recheck_first", "source_freshness_recheck_first"} or "stale" in source_freshness:
+        return "P0_freshness_recheck_first"
+    if official.startswith("missing_official_source") or verification == "official_source_confirmation_first":
+        return "P1_official_confirmation_required"
+    if reputable.startswith("present_operator_verify") or tier.startswith("single_free_public"):
+        return "P2_reputable_or_gray_area_source_verify"
+    if public_count > 0:
+        return "P3_public_signal_review_only"
+    return "P4_cluster_audit_no_fix"
+
+
+def breaking_next_action_text(row: Dict[str, Any], priority: str) -> str:
+    if priority == "P0_freshness_recheck_first":
+        target = clean(row.get("game_source_freshness_target")) or clean(row.get("verification_priority_target")) or clean(row.get("breaking_claim_confirmation_target"))
+        return (
+            f"Open {target or BREAKING_CONFIRMATION_INTAKE_CSV}; re-check source URL recency, then record the result in "
+            "breaking_public_signal_confirmation_intake.csv or the listed proof intake before any story/render use."
+        )
+    if priority == "P1_official_confirmation_required":
+        return clean(row.get("verification_priority_next_action")) or (
+            f"Open {clean(row.get('breaking_claim_confirmation_target')) or BREAKING_CONFIRMATION_INTAKE_CSV}; add official, wire, primary, or operator-checked confirmation before editorial use."
+        )
+    if priority == "P2_reputable_or_gray_area_source_verify":
+        target = clean(row.get("verification_priority_target")) or clean(row.get("game_source_confirmation_tier_target")) or clean(row.get("breaking_claim_confirmation_target"))
+        return f"Open {target or BREAKING_SIGNAL_CLUSTERS_CSV}; verify the reputable/free public source URL and keep the row review-only until human confirmation is recorded."
+    if priority == "P3_public_signal_review_only":
+        return (
+            f"Open {clean(row.get('breaking_claim_confirmation_target')) or BREAKING_CONFIRMATION_INTAKE_CSV}; public/community signal is context only and cannot confirm the claim."
+        )
+    return f"Open {BREAKING_SIGNAL_CLUSTERS_CSV} cluster_id={clean(row.get('cluster_id'))}; audit only if this becomes a story candidate."
+
+
+def breaking_signal_next_action_rows(cluster_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for cluster in cluster_rows:
+        priority = breaking_next_action_priority(cluster)
+        proof_target = first_clean_value(
+            cluster.get("game_source_freshness_target"),
+            cluster.get("story_proof_card_target"),
+            cluster.get("game_fact_confirmation_target"),
+            cluster.get("first_score_stat_review_order_target"),
+            cluster.get("score_proof_confirmation_target"),
+            cluster.get("named_player_stat_proof_confirmation_targets"),
+        )
+        rows.append(
+            {
+                "action_rank": "",
+                "cluster_id": clean(cluster.get("cluster_id")),
+                "cluster_headline": clean(cluster.get("cluster_headline")),
+                "urgency_band": clean(cluster.get("urgency_band")),
+                "review_priority": priority,
+                "verification_priority_status": clean(cluster.get("verification_priority_status")),
+                "confirmation_state": clean(cluster.get("corroboration_ladder_status")),
+                "official_reputable_gray_area_cue": breaking_evidence_cue(cluster),
+                "source_confirmation_tier": clean(cluster.get("game_source_confirmation_tier")),
+                "source_freshness_status": clean(cluster.get("game_source_freshness_status")),
+                "source_freshness_age_minutes": clean(cluster.get("game_source_freshness_age_minutes")),
+                "source_domain_lead": breaking_evidence_domain_lead(cluster),
+                "public_signal_confidence": clean(cluster.get("public_signal_confidence")),
+                "public_signal_count": clean(cluster.get("public_signal_count")) or "0",
+                "evidence_urls": clean(cluster.get("corroboration_evidence_urls")) or clean(cluster.get("matching_official_evidence_urls")) or clean(cluster.get("source_urls")),
+                "source_or_intake_row_to_open": clean(cluster.get("exact_source_or_intake_row_to_open")),
+                "freshness_or_proof_row_to_open": proof_target,
+                "manual_confirmation_target": clean(cluster.get("verification_priority_target")) or clean(cluster.get("breaking_claim_confirmation_target")),
+                "operator_next_action": breaking_next_action_text(cluster, priority),
+                "review_limitations": "Review-only triage; public/community signal and free public source evidence do not confirm a breaking claim without human operator verification.",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "source_enablement": "false",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    priority_order = {
+        "P0_freshness_recheck_first": 0,
+        "P1_official_confirmation_required": 1,
+        "P2_reputable_or_gray_area_source_verify": 2,
+        "P3_public_signal_review_only": 3,
+        "P4_cluster_audit_no_fix": 4,
+    }
+    rows.sort(
+        key=lambda row: (
+            priority_order.get(row.get("review_priority"), 9),
+            -int(clean(row.get("public_signal_count")) or "0"),
+            row.get("cluster_headline", ""),
+        )
+    )
+    for index, row in enumerate(rows, start=1):
+        row["action_rank"] = str(index)
+    return rows
+
+
+def breaking_signal_next_action_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    counts: Dict[str, int] = defaultdict(int)
+    for row in rows:
+        counts[clean(row.get("review_priority"))] += 1
+    return {
+        "version": "v1-review-only-breaking-public-signal-next-action",
+        "generated_at_utc": utc_now(),
+        "review_only": True,
+        "paid_sources_required": False,
+        "approval_state_changes": False,
+        "source_enablement": False,
+        "publish_actions": False,
+        "rows": len(rows),
+        "freshness_recheck_first": counts.get("P0_freshness_recheck_first", 0),
+        "official_confirmation_required": counts.get("P1_official_confirmation_required", 0),
+        "reputable_gray_area_source_verify": counts.get("P2_reputable_or_gray_area_source_verify", 0),
+        "public_signal_review_only": counts.get("P3_public_signal_review_only", 0),
+        "cluster_audit_no_fix": counts.get("P4_cluster_audit_no_fix", 0),
+        "priority_counts": dict(sorted(counts.items())),
+    }
+
+
+def markdown_breaking_signal_next_action(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Breaking/Public Signal Next Actions v1",
+        "",
+        f"Generated: `{summary['generated_at_utc']}`",
+        "",
+        "## Policy",
+        "",
+        "- Review-only, artifact-only breaking/public-signal triage.",
+        "- No paid APIs, downloads, source enablement, approvals, publishing, or publish-ready movement.",
+        "- Rows are advisory only; operator decisions remain in the listed confirmation intake or proof artifact.",
+        "",
+        "## Counts",
+        "",
+    ]
+    for key in [
+        "rows",
+        "freshness_recheck_first",
+        "official_confirmation_required",
+        "reputable_gray_area_source_verify",
+        "public_signal_review_only",
+        "cluster_audit_no_fix",
+    ]:
+        lines.append(f"- {key}: `{summary.get(key)}`")
+    lines.extend(["", "## Review Order", ""])
+    if not rows:
+        lines.append("No breaking/public-signal next-action rows were generated in this run.")
+    for row in rows[:80]:
+        lines.append(f"{row.get('action_rank')}. **{row.get('cluster_headline')}** | {row.get('urgency_band')} | {row.get('review_priority')}")
+        lines.append(f"   - status={row.get('verification_priority_status')} | confirmation={row.get('confirmation_state')} | evidence={row.get('official_reputable_gray_area_cue')}")
+        lines.append(f"   - tier={row.get('source_confirmation_tier') or 'missing'} | freshness={row.get('source_freshness_status') or 'missing'} | age_min={row.get('source_freshness_age_minutes') or 'n/a'} | domain={row.get('source_domain_lead') or 'missing'}")
+        lines.append(f"   - open={row.get('source_or_intake_row_to_open') or 'missing'} | proof_or_freshness={row.get('freshness_or_proof_row_to_open') or 'missing'} | intake={row.get('manual_confirmation_target') or 'missing'}")
+        lines.append(f"   - next={row.get('operator_next_action')}")
+    if len(rows) > 80:
+        lines.append(f"Showing first 80 of {len(rows)} rows. Open `{BREAKING_SIGNAL_NEXT_ACTION_CSV}` for the full board.")
+    return "\n".join(lines) + "\n"
+
+
 def game_source_confirmation_bridge_rows(
     *,
     run_id: str,
@@ -4365,6 +4575,8 @@ def main() -> None:
         story_proof_card_rows=story_proof_card_rows,
         intake_rows=confirmation_intake_rows,
     )
+    breaking_next_action_rows = breaking_signal_next_action_rows(cluster_rows)
+    breaking_next_action_summary = breaking_signal_next_action_summary(breaking_next_action_rows)
     game_source_bridge_rows = game_source_confirmation_bridge_rows(
         run_id=run_id,
         game_rows=game_intelligence_rows,
@@ -4382,6 +4594,7 @@ def main() -> None:
     write_csv(BREAKING_PUBLIC_SIGNAL_CSV, breaking_signal_rows, BREAKING_PUBLIC_SIGNAL_FIELDS)
     write_csv(BREAKING_CONFIRMATION_INTAKE_CSV, confirmation_intake_rows, BREAKING_CONFIRMATION_INTAKE_FIELDS)
     write_csv(BREAKING_SIGNAL_CLUSTERS_CSV, cluster_rows, BREAKING_SIGNAL_CLUSTER_FIELDS)
+    write_csv(BREAKING_SIGNAL_NEXT_ACTION_CSV, breaking_next_action_rows, BREAKING_SIGNAL_NEXT_ACTION_FIELDS)
     write_csv(GAME_SOURCE_CONFIRMATION_BRIDGE_CSV, game_source_bridge_rows, GAME_SOURCE_CONFIRMATION_BRIDGE_FIELDS)
 
     write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
@@ -4391,7 +4604,15 @@ def main() -> None:
     write_run_text(BREAKING_PUBLIC_SIGNAL_MD, markdown_breaking_public_signal(breaking_signal_rows))
     write_run_text(BREAKING_CONFIRMATION_INTAKE_MD, markdown_breaking_confirmation_intake(confirmation_intake_rows))
     write_run_text(BREAKING_SIGNAL_CLUSTERS_MD, markdown_breaking_signal_clusters(cluster_rows))
+    write_run_text(BREAKING_SIGNAL_NEXT_ACTION_MD, markdown_breaking_signal_next_action(breaking_next_action_summary, breaking_next_action_rows))
     write_run_text(GAME_SOURCE_CONFIRMATION_BRIDGE_MD, markdown_game_source_confirmation_bridge(game_source_bridge_rows))
+    write_run_json(
+        BREAKING_SIGNAL_NEXT_ACTION_JSON,
+        {
+            "summary": breaking_next_action_summary,
+            "rows": breaking_next_action_rows,
+        },
+    )
     write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
     write_run_json(
         GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
@@ -4429,6 +4650,7 @@ def main() -> None:
                 "with_public_signal": len([row for row in breaking_signal_rows if row.get("public_signal_count") not in {"", "0"}]),
                 "confirmation_intake_rows": len(confirmation_intake_rows),
                 "cluster_rows": len(cluster_rows),
+                "breaking_next_action_rows": len(breaking_next_action_rows),
                 "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
                 "clusters_with_matching_current_artifact_evidence": len([
                     row for row in cluster_rows
@@ -4480,6 +4702,8 @@ def main() -> None:
                     row for row in cluster_rows
                     if clean(row.get("verification_priority_status")) == "source_freshness_recheck_first"
                 ]),
+                "breaking_next_actions_official_confirmation_required": breaking_next_action_summary.get("official_confirmation_required", 0),
+                "breaking_next_actions_freshness_recheck_first": breaking_next_action_summary.get("freshness_recheck_first", 0),
             },
             "outputs": [
                 BREAKING_PUBLIC_SIGNAL_CSV,
@@ -4488,6 +4712,9 @@ def main() -> None:
                 BREAKING_CONFIRMATION_INTAKE_MD,
                 BREAKING_SIGNAL_CLUSTERS_CSV,
                 BREAKING_SIGNAL_CLUSTERS_MD,
+                BREAKING_SIGNAL_NEXT_ACTION_CSV,
+                BREAKING_SIGNAL_NEXT_ACTION_MD,
+                BREAKING_SIGNAL_NEXT_ACTION_JSON,
                 GAME_SOURCE_CONFIRMATION_BRIDGE_CSV,
                 GAME_SOURCE_CONFIRMATION_BRIDGE_MD,
                 GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
@@ -4532,6 +4759,9 @@ def main() -> None:
             BREAKING_CONFIRMATION_INTAKE_MD,
             BREAKING_SIGNAL_CLUSTERS_CSV,
             BREAKING_SIGNAL_CLUSTERS_MD,
+            BREAKING_SIGNAL_NEXT_ACTION_CSV,
+            BREAKING_SIGNAL_NEXT_ACTION_MD,
+            BREAKING_SIGNAL_NEXT_ACTION_JSON,
             GAME_SOURCE_CONFIRMATION_BRIDGE_CSV,
             GAME_SOURCE_CONFIRMATION_BRIDGE_MD,
             GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
@@ -4550,6 +4780,7 @@ def main() -> None:
             "breaking_public_signal_review_only": len([row for row in breaking_signal_rows if row.get("review_only") == "true"]),
             "breaking_confirmation_intake_rows": len(confirmation_intake_rows),
             "breaking_signal_cluster_rows": len(cluster_rows),
+            "breaking_signal_next_action_rows": len(breaking_next_action_rows),
             "breaking_signal_clusters_with_score_stat_proof": len([
                 row for row in cluster_rows
                 if clean(row.get("score_stat_proof_status")) not in {"", "no_matching_score_stat_proof_operator_confirmation_required"}
