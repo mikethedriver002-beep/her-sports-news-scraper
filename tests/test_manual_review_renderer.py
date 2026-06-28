@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.43.0-photo-first-score-rail-soften"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.44.0-photo-first-lower-stage-integrated"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -161,7 +161,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v17_photo_first_score_rail_soften"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v18_photo_first_lower_stage_integrated"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -188,11 +188,13 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_subtle_logo_identifiers" in manifest["render_background_cues"]
     assert "photo_first_editorial_nameplate" in manifest["render_background_cues"]
     assert "compact_square_photo_footer" in manifest["render_background_cues"]
+    assert "photo_first_integrated_stat_band" in manifest["render_background_cues"]
+    assert "photo_first_context_stage_bridge" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v17_photo_first_score_rail_soften" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v18_photo_first_lower_stage_integrated" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -253,7 +255,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v17_photo_first_score_rail_soften"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v18_photo_first_lower_stage_integrated"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["focal_priority"] == "non_athlete_fallback"
     assert visual_board["athlete_focal_contract"] == "logo_score_fallback_not_athlete_led"
@@ -322,7 +324,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v17_photo_first_score_rail_soften`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v18_photo_first_lower_stage_integrated`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Focal priority: `non_athlete_fallback`" in board
     assert "Athlete focal contract: `logo_score_fallback_not_athlete_led`" in board
@@ -844,7 +846,7 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
     assert geometry["template_family"] == "approved_athlete_photo_final_score"
     assert geometry["photo_stage_box"] == [58, 392, 382, 560]
-    assert geometry["stat_strip_box"] == [58, 990, 964, 132]
+    assert geometry["stat_strip_box"] == [58, 976, 964, 112]
     assert geometry["minimum_clearance_px"] == 24
     assert geometry["athlete_visual_status"] == "athlete_supports_result"
     assert geometry["athlete_visual_share"] <= module.PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE
@@ -852,8 +854,8 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     assert square_geometry["photo_stage_box"] == [60, 366, 286, 360]
     assert square_geometry["winner_score_row_box"] == [374, 360, 646, 124]
     assert square_geometry["loser_score_row_box"] == [374, 504, 646, 108]
-    assert square_geometry["stat_strip_box"] == [60, 748, 960, 96]
-    assert square_geometry["matchup_angle_box"] == [60, 862, 960, 112]
+    assert square_geometry["stat_strip_box"] == [60, 752, 960, 78]
+    assert square_geometry["matchup_angle_box"] == [60, 854, 960, 94]
     assert square_geometry["athlete_visual_status"] == "athlete_supports_result"
     for box in (
         square_geometry["photo_stage_box"],
@@ -1088,18 +1090,19 @@ def test_manual_review_renderer_photo_first_context_rail_has_score_hierarchy() -
     module.draw_photo_first_score_context_rail(image, box, "FEVER 111, SPARKS 87 / 198 PTS", (216, 48, 48), (232, 192, 48))
 
     assert "photo_first_context_score_rail" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_context_stage_bridge" in module.RENDER_BACKGROUND_CUES
     x, y, w, h = box
     crop = image.crop((x, y, x + w, y + h)).convert("RGB")
     data = crop.tobytes()
     pixels = max(1, len(data) // 3)
-    red_spine_pixels = 0
+    accent_bridge_pixels = 0
     gold_rule_pixels = 0
     light_text_pixels = 0
     dark_rail_pixels = 0
     for index in range(0, len(data), 3):
         r, g, b = data[index], data[index + 1], data[index + 2]
         if r >= 120 and g <= 90 and b <= 90:
-            red_spine_pixels += 1
+            accent_bridge_pixels += 1
         if r >= 150 and g >= 120 and b <= 90:
             gold_rule_pixels += 1
         if r >= 190 and g >= 190 and b >= 180:
@@ -1107,7 +1110,7 @@ def test_manual_review_renderer_photo_first_context_rail_has_score_hierarchy() -
         if r <= 18 and g <= 22 and b <= 32:
             dark_rail_pixels += 1
 
-    assert red_spine_pixels / pixels > 0.015
+    assert accent_bridge_pixels / pixels > 0.004
     assert gold_rule_pixels / pixels > 0.006
     assert light_text_pixels / pixels > 0.025
     assert dark_rail_pixels / pixels > 0.45
@@ -1269,7 +1272,7 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
     image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
     module.draw_photo_first_stat_strip(
         image,
-        (58, 990, 964, 132),
+        (58, 976, 964, 112),
         {
             "player_name": "Kamilla Cardoso",
             "headline": "CARDOSO + STATEMENT MARGIN",
@@ -1284,19 +1287,24 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
     )
 
     assert "stat_proof_rail" in module.RENDER_BACKGROUND_CUES
-    crop = image.crop((60, 990, 1020, 1122)).convert("RGB")
+    assert "photo_first_integrated_stat_band" in module.RENDER_BACKGROUND_CUES
+    crop = image.crop((60, 976, 1020, 1088)).convert("RGB")
     data = crop.tobytes()
     pixels = max(1, len(data) // 3)
     gold_pixels = 0
     blue_pixels = 0
+    dense_panel_pixels = 0
     for index in range(0, len(data), 3):
         r, g, b = data[index], data[index + 1], data[index + 2]
         if r >= 185 and g >= 145 and b <= 105:
             gold_pixels += 1
         if b >= 135 and 45 <= r <= 115 and 90 <= g <= 175:
             blue_pixels += 1
-    assert gold_pixels / pixels > 0.006
-    assert blue_pixels / pixels > 0.006
+        if r <= 12 and g <= 15 and b <= 24:
+            dense_panel_pixels += 1
+    assert gold_pixels / pixels > 0.003
+    assert blue_pixels / pixels > 0.002
+    assert dense_panel_pixels / pixels < 0.82
 
 
 def test_manual_review_renderer_background_draws_editorial_depth_markers_without_washing_title() -> None:
@@ -1365,7 +1373,7 @@ def test_manual_review_renderer_photo_first_depth_stage_adds_focal_atmosphere() 
     assert "photo_first_subject_glow_bridge" in module.RENDER_BACKGROUND_CUES
     athlete_crop = image.crop((40, 330, 500, 975)).convert("RGB")
     score_crop = image.crop((480, 360, 1040, 792)).convert("RGB")
-    shelf_crop = image.crop((56, 966, 1024, 995)).convert("RGB")
+    shelf_crop = image.crop((56, 952, 1024, 982)).convert("RGB")
     bridge_crop = image.crop((420, 420, 800, 820)).convert("RGB")
     athlete_data = athlete_crop.tobytes()
     score_data = score_crop.tobytes()

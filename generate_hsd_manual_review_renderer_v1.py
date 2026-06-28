@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.43.0-photo-first-score-rail-soften"
+VERSION = "hsd-manual-review-renderer-v1.44.0-photo-first-lower-stage-integrated"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v17_photo_first_score_rail_soften"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v18_photo_first_lower_stage_integrated"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -60,6 +60,7 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_editorial_stage_depth,photo_first_score_type_grid_polish,photo_first_type_scale,"
     "photo_first_athlete_visual_cap,photo_first_editorial_score_rails,"
     "photo_first_subtle_logo_identifiers,compact_square_photo_footer,"
+    "photo_first_integrated_stat_band,photo_first_context_stage_bridge,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -2663,24 +2664,24 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         score_top = 360
         score_h = 124
         score_gap = 20
-        stat_box = [60, 748, 960, 96]
-        hook_box = [60, 862, 960, 112]
+        stat_box = [60, 752, 960, 78]
+        hook_box = [60, 854, 960, 94]
         context_extra_gap = 28
     elif is_story:
         photo_box = [72, 535, 386, 670]
         score_top = 520
         score_h = 206
         score_gap = 24
-        stat_box = [72, 1246, 936, 168]
-        hook_box = [72, 1440, 936, 172]
+        stat_box = [72, 1232, 936, 130]
+        hook_box = [72, 1396, 936, 132]
         context_extra_gap = 36
     else:
         photo_box = [58, 392, 382, 560]
         score_top = 398
         score_h = 176
         score_gap = 24
-        stat_box = [58, 990, 964, 132]
-        hook_box = [58, 1148, 964, 112]
+        stat_box = [58, 976, 964, 112]
+        hook_box = [58, 1118, 964, 104]
         context_extra_gap = 36
     score_x = photo_box[0] + photo_box[2] + 28
     score_w = width - score_x - photo_box[0]
@@ -2994,14 +2995,13 @@ def draw_photo_first_score_context_rail(
     draw = ImageDraw.Draw(image, "RGBA")
     shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow, "RGBA")
-    shadow_draw.rounded_rectangle((x + 5, y + 8, x + w + 5, y + h + 8), radius=13, fill=(0, 0, 0, 98))
+    shadow_draw.rounded_rectangle((x + 4, y + 7, x + w + 4, y + h + 7), radius=13, fill=(0, 0, 0, 56))
     if ImageFilter is not None:
         shadow = shadow.filter(ImageFilter.GaussianBlur(5))
     image.alpha_composite(shadow)
-    draw.rounded_rectangle((x, y + 2, x + w, y + h - 2), radius=13, fill=(2, 4, 9, 188), outline=(*primary, 132), width=1)
-    draw.rectangle((x + 1, y + 9, x + 9, y + h - 9), fill=(*primary, 178))
-    draw.rectangle((x + w - 10, y + 9, x + w - 2, y + h - 9), fill=(*secondary, 118))
-    draw.line((x + 18, y + 9, x + w - 18, y + 9), fill=(*PALETTE["gold"], 122), width=2)
+    draw.rounded_rectangle((x, y + 2, x + w, y + h - 2), radius=13, fill=(2, 4, 9, 132), outline=(*primary, 72), width=1)
+    draw.line((x + 2, y + 12, x + 2, y + h - 12), fill=(*primary, 136), width=4)
+    draw.line((x + 18, y + 9, x + w - 18, y + 9), fill=(*PALETTE["gold"], 94), width=1)
     context_type = photo_first_type_spec("context_rail", compact=h <= 54)
     draw_reference_text(
         image,
@@ -3018,11 +3018,20 @@ def draw_photo_first_score_context_rail(
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], canvas_copy: Dict[str, str] | None = None) -> None:
     x, y, w, h = box
-    compact = h < 112
-    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 194), radius=16, width=1)
+    compact = h < 104
     draw = ImageDraw.Draw(image, "RGBA")
-    draw_stat_proof_rail(image, box, accent, compact=h < 132)
-    draw.line((x + 24, y + 15, x + w - 24, y + 15), fill=(*PALETTE["gold"], 78), width=2)
+    wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    wash_draw = ImageDraw.Draw(wash, "RGBA")
+    wash_draw.rounded_rectangle((x + 8, y + 8, x + w - 8, y + h + 8), radius=22, fill=(0, 0, 0, 58))
+    if ImageFilter is not None:
+        wash = wash.filter(ImageFilter.GaussianBlur(7))
+    image.alpha_composite(wash)
+    band = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    band_draw = ImageDraw.Draw(band, "RGBA")
+    band_draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(18, 30, 48, 120), outline=(*accent, 72), width=1)
+    band_draw.line((x + 26, y + 12, x + w - 26, y + 12), fill=(*PALETTE["gold"], 88), width=1)
+    band_draw.line((x + 15, y + 20, x + 15, y + h - 18), fill=(*accent, 192), width=4)
+    image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
     athlete_line = clean(copy.get("athlete_line")) or clean(module.get("body")) or (f"{last_name(player).title()} led the final." if player else "Final score confirmed.")
@@ -3031,7 +3040,7 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     stat_type = photo_first_type_spec("stat", compact=compact)
     draw_reference_text(
         image,
-        (x + 28, y + (24 if not compact else 18), w - 56, 42 if not compact else 34),
+        (x + 32, y + (20 if not compact else 15), w - 64, 40 if not compact else 30),
         athlete_line,
         athlete_type["font"],
         athlete_type["resolved_size"],
@@ -3043,7 +3052,7 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     )
     draw_reference_text(
         image,
-        (x + 28, y + (76 if not compact else 54), w - 56, 34 if not compact else 28),
+        (x + 32, y + (64 if not compact else 45), w - 64, 32 if not compact else 24),
         stat_line,
         stat_type["font"],
         stat_type["resolved_size"],
@@ -3053,9 +3062,6 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
         uppercase=False,
         stroke=stat_type["stroke"],
     )
-    if compact:
-        return
-    draw.line((x + 28, y + h - 20, x + w - 28, y + h - 20), fill=(248, 250, 255, 24), width=1)
 
 
 def draw_photo_first_final_score_template(
@@ -3988,7 +3994,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
             row["photo_first_athlete_visual_status"] = row["photo_first_template_geometry"].get("athlete_visual_status")
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
-                "balanced_score_rails,verified_stat_strip,and_review_only_guardrails"
+                "balanced_score_rails,integrated_lower_stat_band,and_review_only_guardrails"
             )
             row["public_render_canvas_text"] = public_canvas_text
             row["public_render_review_marker_count"] = 1
