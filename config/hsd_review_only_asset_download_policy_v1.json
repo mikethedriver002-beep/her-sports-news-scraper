@@ -1,0 +1,47 @@
+{
+  "policy_version": "hsd-review-only-asset-download-policy-v1",
+  "status": "review_only_quarantine_candidates",
+  "automatic_asset_downloads_allowed": false,
+  "human_intake_required": true,
+  "canonical_intake_path": "operator/inbox/review_only_asset_download_intake.csv",
+  "sanctioned_quarantine_dir": "data/assets/quarantine/review_only_candidates",
+  "required_human_intake_fields": [
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use"
+  ],
+  "download_gate": {
+    "download_approved_value": "yes",
+    "missing_required_metadata_action": "block_download",
+    "empty_required_metadata_action": "block_download",
+    "non_quarantine_destination_action": "block_download"
+  },
+  "approval_separation": {
+    "download_approval_is_asset_approval": false,
+    "auto_approve_assets": false,
+    "create_approved_markers": false,
+    "write_headshot_files": false,
+    "write_team_logo_files": false,
+    "move_to_publish_ready_lane": false,
+    "publish": false,
+    "auto_publish": false
+  },
+  "allowed_destination_roots": [
+    "data/assets/quarantine/review_only_candidates"
+  ],
+  "blocked_destination_roots": [
+    "data/assets/approved",
+    "data/assets/operator_approved",
+    "assets/leagues",
+    "operator/assets/team_logos",
+    "operator/assets/player_images"
+  ],
+  "notes": [
+    "This policy permits only human-approved quarantine downloads for review-only candidates.",
+    "A later downloader must validate this policy before fetching bytes.",
+    "Asset approval remains a separate human-edited intake workflow."
+  ]
+}
