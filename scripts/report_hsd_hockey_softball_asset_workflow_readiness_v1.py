@@ -29,6 +29,9 @@ NEXT_DECISION_WORKSHEET_JSON = Path("data/asset_registry/hockey_softball_next_de
 SOURCE_PRIORITY_MD = Path("data/asset_registry/hockey_softball_source_priority_worksheet.md")
 SOURCE_PRIORITY_CSV = Path("data/asset_registry/hockey_softball_source_priority_worksheet.csv")
 SOURCE_PRIORITY_JSON = Path("data/asset_registry/hockey_softball_source_priority_worksheet.json")
+REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
+REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
+REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_triage.json")
 QUARANTINE_DOWNLOAD_INTAKE_MD = Path("data/asset_registry/hockey_softball_quarantine_download_intake.md")
 QUARANTINE_DOWNLOAD_INTAKE_CSV = Path("data/asset_registry/hockey_softball_quarantine_download_intake.csv")
 QUARANTINE_DOWNLOAD_INTAKE_JSON = Path("data/asset_registry/hockey_softball_quarantine_download_intake.json")
@@ -148,6 +151,47 @@ SOURCE_PRIORITY_FIELDS = [
     "linked_first_action_bucket",
     "linked_missing_local_candidate_asset",
     "linked_review_state",
+    "render_readiness",
+    "safe_next_action",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+REVIEW_TRIAGE_FIELDS = [
+    "triage_rank",
+    "primary_manual_action",
+    "action_flags",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "asset_domain",
+    "candidate_entity_id",
+    "display_name",
+    "source_priority_rows",
+    "official_source_candidate_rows",
+    "operator_verify_required_source_rows",
+    "source_reviewed_waiting_for_local_asset_rows",
+    "missing_local_candidate_asset_rows",
+    "candidate_id_preview",
+    "advisory_source_domains",
+    "advisory_source_candidate_urls",
     "render_readiness",
     "safe_next_action",
     "download_approved",
@@ -534,6 +578,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`",
         "- Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`",
         "- Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`",
+        "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
@@ -565,6 +610,10 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Source priority operator-verify rows: `{report['totals']['source_priority_operator_verify_required_rows']}`",
         f"- Source priority download-approved yes rows: `{report['totals']['source_priority_download_approved_yes_rows']}`",
         f"- Source priority blank source_url rows: `{report['totals']['source_priority_blank_source_url_rows']}`",
+        f"- Review triage rows: `{report['totals']['review_triage_rows']}`",
+        f"- Review triage operator-verify source rows: `{report['totals']['review_triage_operator_verify_required_source_rows']}`",
+        f"- Review triage download-approved yes rows: `{report['totals']['review_triage_download_approved_yes_rows']}`",
+        f"- Review triage blank source_url rows: `{report['totals']['review_triage_blank_source_url_rows']}`",
         f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
         f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
@@ -1192,6 +1241,229 @@ def render_source_priority(rows: list[Dict[str, str]], generated_at: str) -> str
     return "\n".join(lines) + "\n"
 
 
+def review_triage_group_key(row: Mapping[str, str]) -> tuple[str, str, str]:
+    return (
+        clean(row.get("sport_family")),
+        clean(row.get("asset_domain")),
+        clean(row.get("candidate_entity_id")),
+    )
+
+
+def preview_unique(rows: Iterable[Mapping[str, str]], field: str, limit: int = 3) -> str:
+    values: list[str] = []
+    for row in rows:
+        value = clean(row.get(field))
+        if value and value not in values:
+            values.append(value)
+    overflow = len(values) - limit
+    preview = values[:limit]
+    if overflow > 0:
+        preview.append(f"+{overflow} more")
+    return " | ".join(preview)
+
+
+def review_triage_action_flags(rows: list[Mapping[str, str]]) -> list[str]:
+    flags: list[str] = []
+    asset_domain = clean(rows[0].get("asset_domain")) if rows else ""
+    source_buckets = {clean(row.get("source_review_bucket")) for row in rows}
+    if "1_official_league_or_team_manual_verify" in source_buckets:
+        flags.append("official_team_logo_source_check" if asset_domain == "logo" else "official_roster_team_source_check")
+    if any(clean(row.get("operator_verify_required")).lower() == "yes" for row in rows):
+        flags.append("source_candidate_review")
+        if asset_domain == "athlete_photo":
+            flags.append("identity_source_verification")
+    if "2_source_reviewed_waiting_for_local_asset" in source_buckets:
+        flags.append("source_reviewed_waiting_for_local_asset")
+    if any(clean(row.get("linked_missing_local_candidate_asset")).lower() == "yes" for row in rows):
+        flags.append("missing_local_asset")
+        flags.append("future_quarantine_download_intake_prep")
+    if not flags:
+        flags.append("source_metadata_watch")
+    return flags
+
+
+def review_triage_primary_action(flags: list[str]) -> str:
+    priority = [
+        "official_roster_team_source_check",
+        "official_team_logo_source_check",
+        "source_candidate_review",
+        "identity_source_verification",
+        "source_reviewed_waiting_for_local_asset",
+        "missing_local_asset",
+        "future_quarantine_download_intake_prep",
+        "source_metadata_watch",
+    ]
+    for flag in priority:
+        if flag in flags:
+            return flag
+    return flags[0]
+
+
+def review_triage_safe_next_action(primary: str, asset_domain: str) -> str:
+    if primary == "official_roster_team_source_check":
+        return "Open the official roster/team source candidates, mark source review only after manual verification, and keep identity/download fields blank."
+    if primary == "official_team_logo_source_check":
+        return "Open the official league/team logo source candidate and verify source quality only; no logo files are downloaded or approved."
+    if primary == "source_candidate_review":
+        return "Review advisory source_candidate_url values manually; record source-review evidence only and leave local-download-law fields blank."
+    if primary == "identity_source_verification":
+        return "Hold identity match until named local candidate assets exist; this row only confirms source evidence."
+    if primary == "source_reviewed_waiting_for_local_asset":
+        return "Do not restamp source review; wait for a human-supplied local candidate asset or later quarantine-download intake."
+    if primary == "missing_local_asset":
+        return "Confirm the local review asset is missing and prepare future human intake only if Mike later approves quarantine download metadata."
+    if primary == "future_quarantine_download_intake_prep":
+        return "Leave generated download-law fields blank/no; a later human-edited intake is required before any quarantine download tool can run."
+    if asset_domain == "logo":
+        return "Keep logo source metadata review-only; no logo approval or publish-ready movement."
+    return "Keep as review-only source metadata; no downloads, approvals, headshot writes, or publishing."
+
+
+def review_triage_sort_key(row: Mapping[str, str]) -> tuple[int, str, str, str]:
+    action_order = {
+        "official_roster_team_source_check": 0,
+        "official_team_logo_source_check": 1,
+        "source_candidate_review": 2,
+        "identity_source_verification": 3,
+        "source_reviewed_waiting_for_local_asset": 4,
+        "missing_local_asset": 5,
+        "future_quarantine_download_intake_prep": 6,
+        "source_metadata_watch": 7,
+    }
+    sport_order = {"womens_hockey": "0", "softball": "1"}
+    return (
+        action_order.get(clean(row.get("primary_manual_action")), 99),
+        sport_order.get(clean(row.get("sport_family")), "9"),
+        clean(row.get("asset_domain")),
+        clean(row.get("candidate_entity_id")),
+    )
+
+
+def review_triage_rows(source_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    grouped: dict[tuple[str, str, str], list[Dict[str, str]]] = {}
+    for row in source_rows:
+        grouped.setdefault(review_triage_group_key(row), []).append(row)
+
+    rows: list[Dict[str, str]] = []
+    for grouped_rows in grouped.values():
+        first = grouped_rows[0]
+        flags = review_triage_action_flags(grouped_rows)
+        primary = review_triage_primary_action(flags)
+        official_sources = [
+            row
+            for row in grouped_rows
+            if clean(row.get("official_status")).startswith("official")
+            or clean(row.get("source_review_bucket")) in {"1_official_league_or_team_manual_verify", "2_source_reviewed_waiting_for_local_asset"}
+        ]
+        operator_verify_sources = [row for row in grouped_rows if clean(row.get("operator_verify_required")).lower() == "yes"]
+        source_reviewed_rows = [row for row in grouped_rows if clean(row.get("source_review_bucket")) == "2_source_reviewed_waiting_for_local_asset"]
+        missing_local_rows = [row for row in grouped_rows if clean(row.get("linked_missing_local_candidate_asset")).lower() == "yes"]
+        asset_domain = clean(first.get("asset_domain"))
+        rows.append(
+            {
+                "triage_rank": "0",
+                "primary_manual_action": primary,
+                "action_flags": "|".join(flags),
+                "sport_family": clean(first.get("sport_family")),
+                "sport_label": clean(first.get("sport_label")),
+                "league_name": clean(first.get("league_name")),
+                "asset_domain": asset_domain,
+                "candidate_entity_id": clean(first.get("candidate_entity_id")),
+                "display_name": clean(first.get("display_name")),
+                "source_priority_rows": str(len(grouped_rows)),
+                "official_source_candidate_rows": str(len(official_sources)),
+                "operator_verify_required_source_rows": str(len(operator_verify_sources)),
+                "source_reviewed_waiting_for_local_asset_rows": str(len(source_reviewed_rows)),
+                "missing_local_candidate_asset_rows": str(len(missing_local_rows)),
+                "candidate_id_preview": preview_unique(grouped_rows, "candidate_id"),
+                "advisory_source_domains": preview_unique(grouped_rows, "source_domain"),
+                "advisory_source_candidate_urls": preview_unique(grouped_rows, "source_candidate_url"),
+                "render_readiness": "not_render_ready_review_only",
+                "safe_next_action": review_triage_safe_next_action(primary, asset_domain),
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    rows.sort(key=review_triage_sort_key)
+    for index, row in enumerate(rows, start=1):
+        row["triage_rank"] = str(index)
+    return rows
+
+
+def render_review_triage(rows: list[Dict[str, str]], generated_at: str) -> str:
+    action_counts = Counter(row["primary_manual_action"] for row in rows)
+    lines = [
+        "# Hockey/Softball Asset Review Triage",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only operator triage worksheet built from hockey/softball source-priority rows. Advisory source candidates remain in `advisory_source_candidate_urls`; generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.",
+        "",
+        "## Summary",
+        "",
+        f"- Triage rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Logo rows: `{sum(1 for row in rows if clean(row.get('asset_domain')) == 'logo')}`",
+        f"- Athlete rows: `{sum(1 for row in rows if clean(row.get('asset_domain')) == 'athlete_photo')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Primary Manual Actions",
+        "",
+    ]
+    lines.extend(f"- {action}: `{count}`" for action, count in sorted(action_counts.items()))
+    lines.extend(
+        [
+            "",
+            "## Safe Operator Path",
+            "",
+            "- Work `official_roster_team_source_check` rows first; they group official PWHL/AUSL roster/team source candidates by team.",
+            "- Work logo rows as source-reviewed or source-check holds only; this worksheet does not approve logo identity or write local logo files.",
+            "- Treat `advisory_source_candidate_urls` as evidence to open manually, not as download-law `source_url` values.",
+            "- Keep `download_approved=no` and leave `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` blank in generated rows.",
+            "- Do not download assets, write headshots/logos, create `.approved` markers, move files, or publish from this worksheet.",
+            "",
+            "## Worksheet Preview",
+            "",
+            "| Rank | Action | Sport | Asset | Entity | Source Rows | Verify Sources | Missing Local | Safe Next Action |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |",
+        ]
+    )
+    for row in rows[:38]:
+        lines.append(
+            "| {rank} | {action} | {sport} | {asset} | {entity} | {sources} | {verify} | {missing} | {safe_action} |".format(
+                rank=clean(row.get("triage_rank")),
+                action=clean(row.get("primary_manual_action")),
+                sport=clean(row.get("sport_family")),
+                asset=clean(row.get("asset_domain")),
+                entity=clean(row.get("candidate_entity_id")).replace("|", "/"),
+                sources=clean(row.get("source_priority_rows")),
+                verify=clean(row.get("operator_verify_required_source_rows")),
+                missing=clean(row.get("missing_local_candidate_asset_rows")),
+                safe_action=clean(row.get("safe_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def proposed_quarantine_path(row: Mapping[str, str]) -> str:
     return (
         SANCTIONED_QUARANTINE_ROOT
@@ -1378,6 +1650,12 @@ def main() -> int:
     source_priority_blank_source_url_rows = sum(1 for row in source_priority if not clean(row.get("source_url")))
     source_priority_athlete_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "athlete_photo")
     source_priority_logo_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "logo")
+    review_triage = review_triage_rows(source_priority)
+    review_triage_logo_rows = sum(1 for row in review_triage if clean(row.get("asset_domain")) == "logo")
+    review_triage_athlete_rows = sum(1 for row in review_triage if clean(row.get("asset_domain")) == "athlete_photo")
+    review_triage_download_approved_yes_rows = sum(1 for row in review_triage if clean(row.get("download_approved")).lower() == "yes")
+    review_triage_blank_source_url_rows = sum(1 for row in review_triage if not clean(row.get("source_url")))
+    review_triage_operator_verify_source_rows = sum(int(row["operator_verify_required_source_rows"]) for row in review_triage)
     quarantine_download_rows = quarantine_download_intake_rows(action_rows)
     quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
     quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
@@ -1397,6 +1675,12 @@ def main() -> int:
             "source_priority_operator_verify_required_rows": source_priority_operator_verify_rows,
             "source_priority_download_approved_yes_rows": source_priority_download_approved_yes_rows,
             "source_priority_blank_source_url_rows": source_priority_blank_source_url_rows,
+            "review_triage_rows": len(review_triage),
+            "review_triage_logo_rows": review_triage_logo_rows,
+            "review_triage_athlete_rows": review_triage_athlete_rows,
+            "review_triage_operator_verify_required_source_rows": review_triage_operator_verify_source_rows,
+            "review_triage_download_approved_yes_rows": review_triage_download_approved_yes_rows,
+            "review_triage_blank_source_url_rows": review_triage_blank_source_url_rows,
             "quarantine_download_intake_rows": len(quarantine_download_rows),
             "quarantine_download_logo_rows": quarantine_download_logo_rows,
             "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
@@ -1446,6 +1730,17 @@ def main() -> int:
             "operator_verify_required_rows": source_priority_operator_verify_rows,
             "download_approved_yes_rows": source_priority_download_approved_yes_rows,
             "blank_source_url_rows": source_priority_blank_source_url_rows,
+        },
+        "review_triage": {
+            "md": REVIEW_TRIAGE_MD.as_posix(),
+            "csv": REVIEW_TRIAGE_CSV.as_posix(),
+            "json": REVIEW_TRIAGE_JSON.as_posix(),
+            "rows": len(review_triage),
+            "logo_rows": review_triage_logo_rows,
+            "athlete_rows": review_triage_athlete_rows,
+            "operator_verify_required_source_rows": review_triage_operator_verify_source_rows,
+            "download_approved_yes_rows": review_triage_download_approved_yes_rows,
+            "blank_source_url_rows": review_triage_blank_source_url_rows,
         },
         "quarantine_download_intake": {
             "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
@@ -1539,6 +1834,35 @@ def main() -> int:
         "paid_apis": False,
         "source_priority_rows_detail": source_priority,
     }
+    review_triage_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_asset_review_triage_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "triage_rows": len(review_triage),
+        "logo_rows": review_triage_logo_rows,
+        "athlete_rows": review_triage_athlete_rows,
+        "womens_hockey_rows": sum(1 for row in review_triage if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in review_triage if clean(row.get("sport_family")) == "softball"),
+        "operator_verify_required_source_rows": review_triage_operator_verify_source_rows,
+        "download_approved_yes_rows": review_triage_download_approved_yes_rows,
+        "blank_source_url_rows": review_triage_blank_source_url_rows,
+        "primary_manual_action_counts": dict(sorted(Counter(row["primary_manual_action"] for row in review_triage).items())),
+        "worksheet_md": REVIEW_TRIAGE_MD.as_posix(),
+        "worksheet_csv": REVIEW_TRIAGE_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "triage_rows_detail": review_triage,
+    }
     quarantine_download_payload = {
         "version": VERSION,
         "status": "hockey_softball_quarantine_download_intake_ready",
@@ -1574,6 +1898,9 @@ def main() -> int:
     write_csv(SOURCE_PRIORITY_CSV, source_priority, SOURCE_PRIORITY_FIELDS)
     write_json(SOURCE_PRIORITY_JSON, source_priority_payload)
     write_text(SOURCE_PRIORITY_MD, render_source_priority(source_priority, generated_at))
+    write_csv(REVIEW_TRIAGE_CSV, review_triage, REVIEW_TRIAGE_FIELDS)
+    write_json(REVIEW_TRIAGE_JSON, review_triage_payload)
+    write_text(REVIEW_TRIAGE_MD, render_review_triage(review_triage, generated_at))
     write_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV, quarantine_download_rows, QUARANTINE_DOWNLOAD_INTAKE_FIELDS)
     write_json(QUARANTINE_DOWNLOAD_INTAKE_JSON, quarantine_download_payload)
     write_text(QUARANTINE_DOWNLOAD_INTAKE_MD, render_quarantine_download_intake(quarantine_download_rows, generated_at))
