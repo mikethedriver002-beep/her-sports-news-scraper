@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Photo Operator Board
 
-Generated: `2026-06-27T19:32:52.684589+00:00`
+Generated: `2026-06-28T03:49:32.909912+00:00`
 
 Review-only operator board for women's soccer athlete source candidates. It prioritizes NWSL roster-metadata rows first and keeps WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema expansion as manual starter rows until a human adds athlete/source evidence.
 
@@ -15,6 +15,8 @@ No paid APIs, asset downloads, headshot writes, `.approved` marker writes, appro
 - Local candidate files present: `0`
 - Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`
 - Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`
+- Download intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv`
+- Download intake rule: rows default to `download_approved=no`; a future quarantine-only download step would require human-edited `download_approved=yes`, source URL, entity ID, rights class, identity confidence, intended review-only use, and a separate approval step.
 
 ## League Candidate Counts
 
