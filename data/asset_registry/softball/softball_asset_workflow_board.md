@@ -1,6 +1,6 @@
 # Softball Asset Workflow Board
 
-- Generated: `2026-06-27T22:34:58.410929+00:00`
+- Generated: `2026-06-28T00:00:00+00:00`
 - League: `Athletes Unlimited Softball League`
 - Status: `review_only_workflow_ready`
 - Scope: review-only operator workflow board; it reads source/contact/intake artifacts and writes no assets.

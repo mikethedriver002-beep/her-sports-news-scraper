@@ -4,7 +4,6 @@ import json
 import re
 import sys
 from collections import Counter
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 from urllib.parse import urlparse
@@ -15,6 +14,7 @@ from hsd_run_io import input_path, read_csv, read_json, write_csv, write_json, w
 
 
 VERSION = "hsd-hockey-softball-asset-workflow-readiness-v1-review-only"
+TEMPLATE_GENERATED_AT_UTC = "2026-06-28T00:00:00+00:00"
 REPORT_MD = Path("data/asset_registry/hockey_softball_asset_workflow_readiness_report.md")
 REPORT_JSON = Path("data/asset_registry/hockey_softball_asset_workflow_readiness_report.json")
 ACTION_QUEUE_MD = Path("data/asset_registry/hockey_softball_asset_review_action_queue.md")
@@ -411,7 +411,7 @@ def clean(value: Any) -> str:
 
 
 def generated_at_utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return TEMPLATE_GENERATED_AT_UTC
 
 
 def is_truthy(value: Any) -> bool:

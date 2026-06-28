@@ -1,6 +1,6 @@
 # Hockey/Softball Source Verification Checklist
 
-Generated: `2026-06-28T20:05:12.001259+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Review-only checklist for opening the grouped official PWHL/AUSL source candidates behind athlete-photo review rows. It does not download images, approve assets, write headshots, create `.approved` markers, move files, or publish.
 Rows are source-candidate leads only. Official roster/team pages must be opened manually before any human marks source review fields; generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.
