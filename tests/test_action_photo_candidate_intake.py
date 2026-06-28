@@ -37,11 +37,13 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
     external_research_rows = read_csv(root / "review_only_action_photo_external_research_source_map.csv")
     queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
+    research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
     external_research_manifest = json.loads((root / "review_only_action_photo_external_research_source_map.json").read_text(encoding="utf-8"))
     queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
+    research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
@@ -51,6 +53,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
     external_research_md = (root / "review_only_action_photo_external_research_source_map.md").read_text(encoding="utf-8")
     queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
+    research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -68,6 +71,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["external_research_source_map_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_queue_rows"] == 10
     assert manifest["action_photo_candidate_queue_validation_issue_count"] == 0
+    assert manifest["action_photo_candidate_research_packet_rows"] == 10
+    assert manifest["action_photo_candidate_research_packet_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -341,6 +346,73 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "Concrete candidate-research queue" in queue_md
     assert "Fill `candidate_photo_url`, `evidence_url`, `evidence_summary`, and `identity_anchor_url`" in queue_md
     assert "`download_approved=yes` remains human-edited only" in queue_md
+    assert research_packet_manifest["status"] == "action_photo_candidate_research_packet_ready"
+    assert research_packet_manifest["research_task_rows"] == 10
+    assert research_packet_manifest["queue_rows_covered"] == 10
+    assert research_packet_manifest["validation_issue_count"] == 0
+    assert research_packet_manifest["download_approved_yes_rows"] == 0
+    assert research_packet_manifest["blank_candidate_photo_url_rows"] == 10
+    assert research_packet_manifest["blank_evidence_url_rows"] == 10
+    assert research_packet_manifest["blank_evidence_summary_rows"] == 10
+    assert research_packet_manifest["blank_identity_anchor_url_rows"] == 10
+    assert research_packet_manifest["blank_source_url_rows"] == 10
+    assert research_packet_manifest["blank_entity_id_rows"] == 10
+    assert research_packet_manifest["blank_rights_class_rows"] == 10
+    assert research_packet_manifest["blank_identity_confidence_rows"] == 10
+    assert research_packet_manifest["blank_intended_review_only_use_rows"] == 10
+    assert research_packet_manifest["blank_notes_rows"] == 10
+    assert research_packet_manifest["operator_verify_required_yes_rows"] == 10
+    assert research_packet_manifest["review_only_rows"] == 10
+    assert research_packet_manifest["publish_ready_rows"] == 0
+    assert set(research_packet_manifest["researcher_lanes"]) == {"chatgpt_pro", "gemini_pro", "manual_research"}
+    assert set(research_packet_manifest["candidate_queue_ids"]) == {row["candidate_queue_id"] for row in queue_rows}
+    expected_paste_back_schema = [
+        "candidate_queue_id",
+        "candidate_photo_url",
+        "evidence_url",
+        "evidence_summary",
+        "identity_anchor_url",
+        "source_url",
+        "entity_id",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+        "notes",
+        "operator_verify_required",
+    ]
+    assert research_packet_manifest["paste_back_schema"] == expected_paste_back_schema
+    assert len({row["research_task_id"] for row in research_packet_rows}) == len(research_packet_rows)
+    assert {row["candidate_queue_id"] for row in research_packet_rows} == {row["candidate_queue_id"] for row in queue_rows}
+    for row in research_packet_rows:
+        assert row["research_task_id"].startswith("APR")
+        assert row["researcher_lane"] in {"chatgpt_pro", "gemini_pro", "manual_research"}
+        assert row["candidate_queue_id"] in {queue_row["candidate_queue_id"] for queue_row in queue_rows}
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["rights_posture_metadata"] in taxonomy["rights_classes"]
+        assert "Return CSV in a code block" in row["copy_ready_prompt"]
+        assert "candidate_queue_id,candidate_photo_url,evidence_url,evidence_summary,identity_anchor_url,source_url,entity_id,rights_class,identity_confidence,intended_review_only_use,notes,operator_verify_required" in row["copy_ready_prompt"]
+        assert "Do not download images" in row["copy_ready_prompt"]
+        assert "do not claim approval" in row["copy_ready_prompt"]
+        assert "do not mark render-ready" in row["copy_ready_prompt"]
+        assert row["paste_back_schema"] == ",".join(expected_paste_back_schema)
+        assert row["candidate_photo_url"] == ""
+        assert row["evidence_url"] == ""
+        assert row["evidence_summary"] == ""
+        assert row["identity_anchor_url"] == ""
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["notes"] == ""
+        assert row["operator_verify_required"] == "yes"
+        assert row["download_approved"] == "no"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+    assert "What Mike Sends To ChatGPT/Gemini" in research_packet_md
+    assert "What Mike Pastes Back" in research_packet_md
+    assert "`download_approved=yes` remains human-edited only" in research_packet_md
+    assert "Do not download images" in research_packet_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -611,3 +683,64 @@ def test_action_photo_candidate_queue_validator_blocks_unsafe_rows() -> None:
     assert ("manual_review_status", "generated_queue_rows_must_start_not_reviewed") in issue_pairs
     assert ("review_only", "candidate_queue_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "candidate_queue_rows_must_not_be_publish_ready") in issue_pairs
+
+
+def test_action_photo_research_packet_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    queue_rows = module.action_photo_candidate_queue_rows()
+    invalid_rows = [
+        {
+            "research_task_id": "APRBAD",
+            "researcher_lane": "auto_downloader",
+            "candidate_queue_id": "APQ999",
+            "sport": "basketball",
+            "league_entity": "WNBA",
+            "target_entity_or_player": "operator_fill_player_or_team",
+            "source_family": "unknown",
+            "source_category": "free_web_image",
+            "source_url_or_search_macro": "player photo",
+            "action_moment_type": "drive",
+            "render_fit_potential": "high",
+            "rights_posture_metadata": "reuse_ok",
+            "copy_ready_prompt": "Find and download a photo.",
+            "paste_back_schema": "candidate_queue_id,candidate_photo_url",
+            "candidate_photo_url": "https://example.com/photo.jpg",
+            "evidence_url": "https://example.com/evidence",
+            "evidence_summary": "found it",
+            "identity_anchor_url": "https://example.com/roster",
+            "source_url": "https://example.com/photo.jpg",
+            "entity_id": "wnba:player",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "notes": "ready",
+            "operator_verify_required": "no",
+            "download_approved": "yes",
+            "manual_next_action": "publish",
+            "review_only": "false",
+            "publish_ready": "true",
+        }
+    ]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_research_packet_rows(invalid_rows, queue_rows)}
+
+    assert ("candidate_queue_id", "candidate_queue_id_not_in_queue") in issue_pairs
+    assert ("researcher_lane", "invalid_researcher_lane") in issue_pairs
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("rights_posture_metadata", "invalid_rights_posture_metadata") in issue_pairs
+    assert ("copy_ready_prompt", "copy_ready_prompt_missing_required_guardrail") in issue_pairs
+    assert ("paste_back_schema", "paste_back_schema_mismatch") in issue_pairs
+    assert ("candidate_photo_url", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("evidence_url", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("evidence_summary", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("identity_anchor_url", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("source_url", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("notes", "generated_research_result_field_must_stay_blank") in issue_pairs
+    assert ("operator_verify_required", "operator_verify_required_must_default_yes") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "research_packet_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "research_packet_rows_must_not_be_publish_ready") in issue_pairs
