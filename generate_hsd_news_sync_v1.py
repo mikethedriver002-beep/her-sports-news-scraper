@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.3-breaking-proof-readiness-cues"
+VERSION = "news-sync-v1.9.4-breaking-verification-priority-cues"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -178,6 +178,9 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "urgency_review_reason", "source_proof_readiness_status",
     "source_proof_readiness_summary", "story_proof_card_target",
     "game_fact_confirmation_target", "source_proof_readiness_next_action",
+    "verification_priority_status", "verification_priority_summary",
+    "verification_priority_target", "verification_priority_next_action",
+    "public_signal_limitations_cue",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -3334,6 +3337,74 @@ def urgency_review_reason(
     return f"Why now: {why_now}. Why HSD should care: {hsd_care}. Trust cue: {trust}. Missing: {missing}."
 
 
+def public_signal_limitations_cue(public_count: int, public_confidence: str) -> str:
+    confidence = clean(public_confidence) or "none"
+    if public_count > 0:
+        return (
+            f"Public/community signal is review-only discovery context count={public_count} confidence={confidence}; "
+            "it cannot confirm the breaking claim, source facts, score, stats, injuries, quotes, or public consensus by itself."
+        )
+    return "No public/community signal captured; do not infer public reaction or use social context as confirmation."
+
+
+def verification_priority_cue(
+    *,
+    freshness_status: str,
+    ladder: Dict[str, str],
+    proof_readiness: Dict[str, str],
+    public_count: int,
+    public_confidence: str,
+    breaking_target: str,
+    exact_source_action: str,
+) -> Dict[str, str]:
+    official = clean(ladder.get("official_source_corroboration"))
+    reputable = clean(ladder.get("reputable_source_corroboration"))
+    public_cue = public_signal_limitations_cue(public_count, public_confidence)
+    proof_status = clean(proof_readiness.get("source_proof_readiness_status"))
+    proof_target = clean(proof_readiness.get("story_proof_card_target")) or clean(proof_readiness.get("game_fact_confirmation_target"))
+    source_support = (
+        f"source_class_support official={official or 'missing'}; reputable_free={reputable or 'missing'}; "
+        f"proof_readiness={proof_status or 'missing'}; public_signal={public_count}:{clean(public_confidence) or 'none'}"
+    )
+    if clean(freshness_status) in {"timestamp_missing", "stale_recheck_required"}:
+        status = "freshness_recheck_first"
+        target = breaking_target
+        action = (
+            f"Open {breaking_target}; re-check source URL recency and timestamp before using this as breaking news. "
+            "Record the stale/missing timestamp result in the confirmation intake."
+        )
+    elif official.startswith("missing_official_source"):
+        status = "official_source_confirmation_first"
+        target = breaking_target
+        action = (
+            f"Open {breaking_target}; add or verify an official team/league, wire, primary, or operator-checked source URL "
+            "before any story, render, or editorial use."
+        )
+    elif proof_status.startswith("missing_") or proof_status == "artifact_evidence_only_operator_verify":
+        status = "source_proof_readiness_gap_first"
+        target = proof_target or breaking_target
+        action = clean(proof_readiness.get("source_proof_readiness_next_action")) or exact_source_action
+    elif clean(ladder.get("missing_confirmation_cue")):
+        status = "manual_confirmation_intake_first"
+        target = breaking_target
+        action = (
+            f"Open {breaking_target}; record operator_checked_url and operator_confirmation_result before any story path. "
+            "Then continue to the listed proof/readiness artifact rows."
+        )
+    else:
+        status = "verification_cues_ready_for_operator_review"
+        target = proof_target or breaking_target
+        action = clean(proof_readiness.get("source_proof_readiness_next_action")) or exact_source_action
+    summary = f"{status}; {source_support}; public_limit={public_cue}"
+    return {
+        "verification_priority_status": status,
+        "verification_priority_summary": summary,
+        "verification_priority_target": target,
+        "verification_priority_next_action": action,
+        "public_signal_limitations_cue": public_cue,
+    }
+
+
 def evidence_rollup_status(evidence: List[Dict[str, str]]) -> str:
     statuses = {clean(row.get("status")) for row in evidence}
     has_news = any(clean(row.get("artifact")) == "news_fact_packets.csv" for row in evidence)
@@ -3471,6 +3542,16 @@ def breaking_signal_cluster_rows(
             missing_confirmation_cue=ladder.get("missing_confirmation_cue", ""),
         )
         breaking_target = f"breaking_public_signal_confirmation_intake.csv {intake_row_ref_for_cluster(intake_rows, candidate_ids)}"
+        source_action = source_or_intake_row_action(evidence, intake_rows, candidate_ids)
+        verification_priority = verification_priority_cue(
+            freshness_status=freshness,
+            ladder=ladder,
+            proof_readiness=proof_readiness,
+            public_count=public_count,
+            public_confidence=public_confidence,
+            breaking_target=breaking_target,
+            exact_source_action=source_action,
+        )
         score_targets = proof_confirmation_targets_for_ids(
             proof_ids_by_type(matched_proof_rows, "final_score"),
             proof_confirmation_rows,
@@ -3502,7 +3583,7 @@ def breaking_signal_cluster_rows(
                     if clean(row.get("artifact")) or clean(row.get("row_ref"))
                 )[:500],
                 "manual_confirmation_gap": cluster_confirmation_gap(evidence_status),
-                "exact_source_or_intake_row_to_open": source_or_intake_row_action(evidence, intake_rows, candidate_ids),
+                "exact_source_or_intake_row_to_open": source_action,
                 "score_stat_proof_status": proof_status,
                 "named_player_stat_proof_count": str(len(named_proof_rows)),
                 "named_player_stat_proof_examples": " | ".join(clean(row.get("fact_value")) for row in named_proof_rows[:3] if clean(row.get("fact_value")))[:700],
@@ -3532,6 +3613,7 @@ def breaking_signal_cluster_rows(
                 **ladder,
                 "urgency_review_reason": urgency_reason,
                 **proof_readiness,
+                **verification_priority,
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
                 "source_domains": "; ".join(domains[:12]),
@@ -3596,6 +3678,10 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"  - Public/community: {row.get('public_signal_corroboration') or 'none captured'}",
             f"  - Missing confirmation cue: {row.get('missing_confirmation_cue') or 'operator confirmation required'}",
             f"- Urgency/trust reason: {row.get('urgency_review_reason') or 'missing'}",
+            f"- Verification priority: `{row.get('verification_priority_status')}`",
+            f"- Verification priority target: {row.get('verification_priority_target') or 'missing'}",
+            f"- Verification priority next action: {row.get('verification_priority_next_action') or 'operator confirmation required'}",
+            f"- Public/community limitation: {row.get('public_signal_limitations_cue') or 'public signal is review-only and non-confirming'}",
             f"- Source/proof readiness: `{row.get('source_proof_readiness_status')}`",
             f"- Source/proof summary: {row.get('source_proof_readiness_summary') or 'missing'}",
             f"- Story proof target: {row.get('story_proof_card_target') or 'missing'}",
@@ -4236,6 +4322,14 @@ def main() -> None:
                 "clusters_with_story_proof_readiness": len([
                     row for row in cluster_rows
                     if clean(row.get("source_proof_readiness_status")) == "story_proof_card_ready_operator_verify"
+                ]),
+                "clusters_with_verification_priority": len([
+                    row for row in cluster_rows
+                    if clean(row.get("verification_priority_status"))
+                ]),
+                "clusters_requiring_official_source_first": len([
+                    row for row in cluster_rows
+                    if clean(row.get("verification_priority_status")) == "official_source_confirmation_first"
                 ]),
             },
             "outputs": [
