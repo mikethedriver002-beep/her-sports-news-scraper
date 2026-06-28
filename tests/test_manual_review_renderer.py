@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.29.0-photo-first-score-polish"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.30.0-photo-first-depth-stage"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -157,7 +157,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v4_dimensional"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v5_photo_first_depth_stage"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -173,7 +173,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v4_dimensional" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v5_photo_first_depth_stage" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -991,6 +991,50 @@ def test_manual_review_renderer_background_draws_editorial_depth_markers_without
         if (r + g + b) / 3 <= 54:
             title_dark += 1
     assert title_dark / title_pixels > 0.70
+
+
+def test_manual_review_renderer_photo_first_depth_stage_adds_focal_atmosphere() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    module.draw_photo_first_focal_depth_stage(image, geometry, (72, 144, 216), (192, 35, 48))
+
+    assert "photo_first_focal_depth_stage" in module.RENDER_BACKGROUND_CUES
+    athlete_crop = image.crop((40, 330, 500, 975)).convert("RGB")
+    score_crop = image.crop((480, 360, 1040, 792)).convert("RGB")
+    shelf_crop = image.crop((56, 966, 1024, 995)).convert("RGB")
+    athlete_data = athlete_crop.tobytes()
+    score_data = score_crop.tobytes()
+    shelf_data = shelf_crop.tobytes()
+    athlete_pixels = max(1, len(athlete_data) // 3)
+    score_pixels = max(1, len(score_data) // 3)
+    shelf_pixels = max(1, len(shelf_data) // 3)
+
+    blue_depth = 0
+    red_depth = 0
+    gold_shelf = 0
+    for index in range(0, len(athlete_data), 3):
+        r, g, b = athlete_data[index], athlete_data[index + 1], athlete_data[index + 2]
+        if b > r and b >= 24 and g >= 18:
+            blue_depth += 1
+    for index in range(0, len(score_data), 3):
+        r, g, b = score_data[index], score_data[index + 1], score_data[index + 2]
+        if r > b and r >= 18 and g <= 34:
+            red_depth += 1
+    for index in range(0, len(shelf_data), 3):
+        r, g, b = shelf_data[index], shelf_data[index + 1], shelf_data[index + 2]
+        if r >= 48 and g >= 38 and b <= 105:
+            gold_shelf += 1
+
+    assert blue_depth / athlete_pixels > 0.25
+    assert red_depth / score_pixels > 0.08
+    assert gold_shelf / shelf_pixels > 0.015
 
 
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
