@@ -241,6 +241,7 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     make_photo_first_preview(handoff_dir / "draft_preview.png")
     write_guardrail_inputs(run_dir)
     renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["render_background_cues"] = "photo_first_editorial_score_rails,photo_first_subtle_logo_identifiers"
     renderer_manifest["format_options"] = [
         {
             "format_id": "ig_feed_4x5",
@@ -281,6 +282,8 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     assert proc.returncode == 0, proc.stderr
     manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
     checks = {check["check_id"]: check for check in manifest["checks"]}
+    assert checks["score_team_text_zone"]["check_label"] == "Photo-first editorial score-rail readable signal"
+    assert "min 0.035" in checks["score_team_text_zone"]["evidence"]
     assert checks["photo_first_crop_signal"]["qa_result"] == "pass"
     assert checks["photo_first_face_visibility"]["qa_result"] == "pass"
     assert checks["photo_first_text_clearance"]["qa_result"] == "pass"
