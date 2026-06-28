@@ -1,0 +1,42 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "status": "womens_soccer_action_photo_starter_ready",
+  "generated_at_utc": "2026-06-28T00:00:00+00:00",
+  "starter_rows": 10,
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "expansion_lanes": [
+    "future_uswnt",
+    "future_wsl_liga_f_arkema",
+    "nwsl_first"
+  ],
+  "source_categories": [
+    "editorial_wire",
+    "gray_area_public_lead",
+    "official_federation_or_tournament",
+    "official_league_gallery",
+    "official_social",
+    "official_team_gallery",
+    "reputable_newsroom_gallery",
+    "third_party_creator_public",
+    "verification_only_player_page"
+  ],
+  "download_approved_yes_rows": 0,
+  "blank_source_url_rows": 10,
+  "blank_entity_id_rows": 10,
+  "blank_rights_class_rows": 10,
+  "blank_identity_confidence_rows": 10,
+  "blank_intended_review_only_use_rows": 10,
+  "review_only_rows": 10,
+  "publish_ready_rows": 0,
+  "worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+  "worksheet_md": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
+  "review_only": true,
+  "asset_downloads": false,
+  "approval_state_change": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}

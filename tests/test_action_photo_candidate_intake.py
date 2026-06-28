@@ -34,14 +34,17 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     rows = read_csv(root / "review_only_action_photo_candidate_intake.csv")
     source_map_rows = read_csv(root / "review_only_action_photo_source_map_template.csv")
     entity_source_rows = read_csv(root / "review_only_action_photo_sport_entity_source_map.csv")
+    womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
+    womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
     checklist_md = (root / "review_only_action_photo_human_review_checklist.md").read_text(encoding="utf-8")
     source_map_md = (root / "review_only_action_photo_source_map_template.md").read_text(encoding="utf-8")
     entity_source_md = (root / "review_only_action_photo_sport_entity_source_map.md").read_text(encoding="utf-8")
+    womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -53,6 +56,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["source_map_rows"] == 9
     assert manifest["sport_entity_source_map_rows"] == 19
     assert manifest["sport_entity_source_map_validation_issue_count"] == 0
+    assert manifest["womens_soccer_action_photo_starter_rows"] == 10
+    assert manifest["womens_soccer_action_photo_starter_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -141,6 +146,57 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "ChatGPT Pro, Gemini, and manual researchers" in entity_source_md
     assert "does not fetch, download, approve, or publish image assets" in entity_source_md
     assert "Keep `allowed_for_download_approved_yes=false`" in entity_source_md
+    assert womens_soccer_manifest["status"] == "womens_soccer_action_photo_starter_ready"
+    assert womens_soccer_manifest["starter_rows"] == 10
+    assert womens_soccer_manifest["download_approved_yes_rows"] == 0
+    assert womens_soccer_manifest["blank_source_url_rows"] == 10
+    assert womens_soccer_manifest["blank_entity_id_rows"] == 10
+    assert womens_soccer_manifest["blank_rights_class_rows"] == 10
+    assert womens_soccer_manifest["blank_identity_confidence_rows"] == 10
+    assert womens_soccer_manifest["blank_intended_review_only_use_rows"] == 10
+    assert womens_soccer_manifest["review_only_rows"] == 10
+    assert womens_soccer_manifest["publish_ready_rows"] == 0
+    assert {"nwsl_first", "future_uswnt", "future_wsl_liga_f_arkema"} == set(womens_soccer_manifest["expansion_lanes"])
+    assert {
+        "official_league_gallery",
+        "official_team_gallery",
+        "verification_only_player_page",
+        "editorial_wire",
+        "reputable_newsroom_gallery",
+        "official_social",
+        "third_party_creator_public",
+        "gray_area_public_lead",
+        "official_federation_or_tournament",
+    } == set(womens_soccer_manifest["source_categories"])
+    womens_soccer_keys = {
+        (row["league_or_entity"], row["team_or_scope"], row["source_category"], row["source_url_or_search_macro"])
+        for row in womens_soccer_rows
+    }
+    assert len(womens_soccer_keys) == len(womens_soccer_rows)
+    assert sum(1 for row in womens_soccer_rows if row["expansion_lane"] == "nwsl_first") == 8
+    assert any(row["league_or_entity"] == "USWNT" for row in womens_soccer_rows)
+    assert any(row["league_or_entity"] == "Europe top flight" for row in womens_soccer_rows)
+    for row in womens_soccer_rows:
+        assert row["sport"] == "soccer"
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["source_url_or_search_macro"]
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["download_approved"] == "no"
+        assert row["allowed_for_download_approved_yes"] == "false"
+        assert row["manual_review_status"] == "not_reviewed"
+        assert row["manual_reviewer"] == ""
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["publish_action"] == "none_artifact_only"
+        assert row["roster_truth_status"] == "not_asserted_manual_verification_required"
+    assert "NWSL-first URL/evidence starter" in womens_soccer_md
+    assert "does not fetch, download, approve, assert current roster truth" in womens_soccer_md
+    assert "Keep generated local-download-law fields blank/no" in womens_soccer_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -258,3 +314,53 @@ def test_action_photo_sport_entity_source_map_validator_blocks_unsafe_rows() -> 
     assert ("allowed_for_download_approved_yes", "source_map_never_download_approved") in issue_pairs
     assert ("review_only", "source_map_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "source_map_must_not_be_publish_ready") in issue_pairs
+
+
+def test_womens_soccer_action_photo_starter_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = [
+        {
+            "starter_rank": "WSAP99",
+            "sport": "soccer",
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "bad",
+            "source_priority": "P0",
+            "source_category": "free_web_image",
+            "source_name": "unknown",
+            "source_url_or_search_macro": '"athlete NWSL photo"',
+            "source_domain": "",
+            "evidence_use": "lead",
+            "identity_anchor_use": "none",
+            "rights_review_note": "none",
+            "roster_truth_status": "asserted_current_roster",
+            "source_url": "https://example.com/photo",
+            "entity_id": "nwsl:player",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "download_approved": "yes",
+            "allowed_for_download_approved_yes": "true",
+            "manual_next_action": "download it",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approve",
+            "publish_action": "publish",
+        }
+    ]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_womens_soccer_starter_rows(invalid_rows)}
+
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("allowed_for_download_approved_yes", "starter_rows_never_download_approved") in issue_pairs
+    assert ("review_only", "starter_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "starter_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "starter_rows_must_not_change_approval_state") in issue_pairs
+    assert ("publish_action", "starter_rows_must_not_publish") in issue_pairs
+    assert ("roster_truth_status", "roster_truth_must_not_be_asserted") in issue_pairs
