@@ -1,6 +1,6 @@
 # Review-Only Action Photo Candidate Intake
 
-Generated: `2026-06-28T19:18:57.609143+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Human-editable intake for future action/moment photo candidates. This packet stores research metadata only. It does not download image files, approve assets, write headshots, create `.approved` markers, move files, publish, or create a publish-ready lane.
 

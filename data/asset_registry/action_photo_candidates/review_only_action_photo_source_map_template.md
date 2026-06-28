@@ -1,6 +1,6 @@
 # Review-Only Action Photo Source Map Template
 
-Generated: `2026-06-28T19:18:57.609143+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Use this template for ChatGPT Pro, Gemini, or manual research sweeps. Collect URLs and evidence only. Do not download image files, claim approval, fill `download_approved=yes`, or mark anything render-ready.
 

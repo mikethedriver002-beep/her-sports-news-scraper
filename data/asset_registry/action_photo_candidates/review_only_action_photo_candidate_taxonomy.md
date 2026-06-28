@@ -1,6 +1,6 @@
 # Review-Only Action Photo Candidate Taxonomy
 
-Generated: `2026-06-28T19:18:57.609143+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Use these controlled vocabularies for URL-first/evidence-first action photo candidate rows. They classify review leads only; they do not grant download, asset approval, or render readiness.
 

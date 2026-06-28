@@ -4,7 +4,6 @@ import csv
 import json
 import re
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
@@ -14,6 +13,7 @@ from hsd_run_io import output_path, write_csv, write_json, write_text
 
 
 VERSION = "hsd-action-photo-candidate-intake-v1-review-only"
+TEMPLATE_CREATED_AT_UTC = "2026-06-28T00:00:00+00:00"
 ROOT = Path("data/asset_registry/action_photo_candidates")
 OUT_CSV = output_path(ROOT / "review_only_action_photo_candidate_intake.csv")
 OUT_MD = output_path(ROOT / "review_only_action_photo_candidate_intake.md")
@@ -144,10 +144,6 @@ FIELDS = [
 
 def clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def slug(value: str) -> str:
@@ -573,7 +569,7 @@ def render_source_map(rows: List[Mapping[str, str]], generated_at: str) -> str:
 
 
 def main() -> int:
-    generated_at = now_iso()
+    generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
     issues = validate_rows(rows)
     source_rows = source_map_rows()

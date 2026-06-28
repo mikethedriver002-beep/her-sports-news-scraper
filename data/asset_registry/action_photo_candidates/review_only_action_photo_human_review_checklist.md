@@ -1,6 +1,6 @@
 # Review-Only Action Photo Human Review Checklist
 
-Generated: `2026-06-28T19:18:57.609143+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Work each row in this order: identity, event context, rights posture, suitability, then workflow disposition. The output is a review decision on a lead, not asset approval.
 
