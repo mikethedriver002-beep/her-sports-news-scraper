@@ -38,6 +38,9 @@ OUT_CANDIDATE_QUEUE_JSON = output_path(ROOT / "review_only_action_photo_candidat
 OUT_RESEARCH_PACKET_CSV = output_path(ROOT / "review_only_action_photo_candidate_research_packet_v1.csv")
 OUT_RESEARCH_PACKET_MD = output_path(ROOT / "review_only_action_photo_candidate_research_packet_v1.md")
 OUT_RESEARCH_PACKET_JSON = output_path(ROOT / "review_only_action_photo_candidate_research_packet_v1.json")
+OUT_RESEARCH_RETURN_INTAKE_CSV = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.csv")
+OUT_RESEARCH_RETURN_INTAKE_MD = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.md")
+OUT_RESEARCH_RETURN_INTAKE_JSON = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -239,6 +242,27 @@ ACTION_PHOTO_RESEARCH_PACKET_FIELDS = [
     "operator_verify_required",
     "download_approved",
     "manual_next_action",
+    "review_only",
+    "publish_ready",
+]
+ACTION_PHOTO_RESEARCH_RETURN_INTAKE_FIELDS = [
+    "candidate_queue_id",
+    "candidate_photo_url",
+    "evidence_url",
+    "evidence_summary",
+    "identity_anchor_url",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "notes",
+    "operator_verify_required",
+    "manual_reviewer",
+    "manual_review_status",
+    "manual_next_action",
+    "download_approved",
+    "quarantine_target_hint",
     "review_only",
     "publish_ready",
 ]
@@ -2193,6 +2217,149 @@ def render_action_photo_research_packet(rows: List[Mapping[str, str]], issues: L
     return "\n".join(lines).rstrip() + "\n"
 
 
+def action_photo_research_return_intake_rows(queue_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for row in queue_rows:
+        rows.append(
+            {
+                "candidate_queue_id": clean(row.get("candidate_queue_id")),
+                "candidate_photo_url": "",
+                "evidence_url": "",
+                "evidence_summary": "",
+                "identity_anchor_url": "",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "notes": "",
+                "operator_verify_required": "yes",
+                "manual_reviewer": "",
+                "manual_review_status": "not_reviewed",
+                "manual_next_action": "Paste returned URL/evidence fields here; keep download_approved=no until a human fills all local-download-law fields and any later file goes to quarantine.",
+                "download_approved": "no",
+                "quarantine_target_hint": clean(row.get("quarantine_target_hint")),
+                "review_only": "true",
+                "publish_ready": "false",
+            }
+        )
+    return rows
+
+
+def has_research_return_data(row: Mapping[str, str]) -> bool:
+    return any(
+        clean(row.get(field))
+        for field in [
+            "candidate_photo_url",
+            "evidence_url",
+            "evidence_summary",
+            "identity_anchor_url",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "notes",
+            "manual_reviewer",
+        ]
+    )
+
+
+def validate_action_photo_research_return_intake_rows(
+    rows: Iterable[Mapping[str, str]],
+    queue_rows: Iterable[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    queue_ids = {clean(row.get("candidate_queue_id")) for row in queue_rows}
+    seen_queue_ids = set()
+    blocked_language_terms = ["approved", "approval", "render-ready", "render ready", "publish-ready", "publish ready"]
+    rows_list = list(rows)
+    for index, row in enumerate(rows_list, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_RESEARCH_RETURN_INTAKE_FIELDS}
+        queue_id = normalized["candidate_queue_id"]
+        if not queue_id:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "required_candidate_queue_id_blank"})
+        elif queue_id not in queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "candidate_queue_id_not_in_queue"})
+        if queue_id in seen_queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "duplicate_candidate_queue_id_in_return_intake"})
+        seen_queue_ids.add(queue_id)
+        if normalized["rights_class"] and normalized["rights_class"] not in RIGHTS_CLASSES:
+            issues.append({"row": str(index), "field": "rights_class", "issue": "invalid_controlled_vocabulary"})
+        if normalized["identity_confidence"] and normalized["identity_confidence"] not in IDENTITY_CONFIDENCE:
+            issues.append({"row": str(index), "field": "identity_confidence", "issue": "invalid_controlled_vocabulary"})
+        pasted_data = has_research_return_data(normalized)
+        if pasted_data:
+            for field in ["evidence_url", "source_url", "identity_anchor_url", "rights_class", "identity_confidence"]:
+                if not normalized[field]:
+                    issues.append({"row": str(index), "field": field, "issue": "required_when_research_return_pasted"})
+        if normalized["download_approved"] == "yes":
+            for field in REQUIRED_DOWNLOAD_FIELDS:
+                if not normalized[field]:
+                    issues.append({"row": str(index), "field": field, "issue": "required_when_download_approved_yes"})
+        elif normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "download_approved_must_be_no_or_human_yes"})
+        if not normalized["quarantine_target_hint"].startswith(QUARANTINE_ROOT + "/"):
+            issues.append({"row": str(index), "field": "quarantine_target_hint", "issue": "quarantine_hint_must_stay_in_review_only_root"})
+        if normalized["operator_verify_required"] not in {"yes", "no", ""}:
+            issues.append({"row": str(index), "field": "operator_verify_required", "issue": "operator_verify_required_must_be_yes_no_or_blank"})
+        if normalized["manual_review_status"] not in {"not_reviewed", "needs_operator_verify", "ready_for_human_download_decision", "held_for_rights_or_identity", "rejected_do_not_pursue", ""}:
+            issues.append({"row": str(index), "field": "manual_review_status", "issue": "invalid_manual_review_status"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "research_return_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "research_return_rows_must_not_be_publish_ready"})
+        for field in ["evidence_summary", "intended_review_only_use", "notes", "manual_review_status"]:
+            value = normalized[field].lower()
+            if any(term in value for term in blocked_language_terms):
+                issues.append({"row": str(index), "field": field, "issue": "approval_or_render_ready_language_not_allowed"})
+    missing_ids = sorted(queue_ids - seen_queue_ids)
+    for missing_id in missing_ids:
+        issues.append({"row": "0", "field": "candidate_queue_id", "issue": f"queue_id_missing_from_return_intake:{missing_id}"})
+    return issues
+
+
+def render_action_photo_research_return_intake(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Review-Only Action Photo Research Return Intake v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Human-editable paste-back worksheet for URL/evidence rows returned from the action-photo research packet. This intake is the safe landing zone before any quarantine download decision; it does not download images, approve assets, change approval state, or make anything render-ready.",
+        "",
+        "## What To Paste Back",
+        "",
+        "Paste returned ChatGPT/Gemini/manual research values into `candidate_photo_url`, `evidence_url`, `evidence_summary`, `identity_anchor_url`, `source_url`, `entity_id`, `rights_class`, `identity_confidence`, `intended_review_only_use`, `notes`, and `operator_verify_required`. Leave generated rows blank until real research is returned.",
+        "",
+        "## Human-Only Law",
+        "",
+        "`download_approved=yes` remains human-edited only after `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` are filled. Any later file must land in `data/assets/quarantine/review_only_candidates/`. Download approval is not asset approval, and render-ready status remains separate.",
+        "",
+        "## Validation Checks",
+        "",
+        "- Unknown or duplicate `candidate_queue_id`",
+        "- Pasted return rows missing `evidence_url`, `source_url`, `identity_anchor_url`, `rights_class`, or `identity_confidence`",
+        "- `download_approved=yes` without all local-download-law fields",
+        "- `publish_ready=true`",
+        "- Approval, publish-ready, or render-ready language in pasted notes/status fields",
+        "",
+        "## Summary",
+        "",
+        f"- Intake rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with pasted return data: `{sum(1 for row in rows if has_research_return_data(row))}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Queue IDs",
+        "",
+    ]
+    for row in rows:
+        lines.append(f"- `{clean(row.get('candidate_queue_id'))}` -> {clean(row.get('manual_next_action'))}")
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -2208,6 +2375,8 @@ def main() -> int:
     candidate_queue_issues = validate_action_photo_candidate_queue_rows(candidate_queue_rows)
     research_packet_rows = action_photo_research_packet_rows(candidate_queue_rows)
     research_packet_issues = validate_action_photo_research_packet_rows(research_packet_rows, candidate_queue_rows)
+    research_return_rows = action_photo_research_return_intake_rows(candidate_queue_rows)
+    research_return_issues = validate_action_photo_research_return_intake_rows(research_return_rows, candidate_queue_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -2394,11 +2563,53 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_RESEARCH_RETURN_INTAKE_CSV, research_return_rows, ACTION_PHOTO_RESEARCH_RETURN_INTAKE_FIELDS)
+    write_text(OUT_RESEARCH_RETURN_INTAKE_MD, render_action_photo_research_return_intake(research_return_rows, research_return_issues, generated_at))
+    write_json(
+        OUT_RESEARCH_RETURN_INTAKE_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_research_return_intake_ready" if not research_return_issues else "action_photo_research_return_intake_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "return_intake_rows": len(research_return_rows),
+            "queue_rows_covered": len({row["candidate_queue_id"] for row in research_return_rows}),
+            "validation_issue_count": len(research_return_issues),
+            "validation_issues": research_return_issues,
+            "candidate_queue_ids": sorted({row["candidate_queue_id"] for row in research_return_rows}),
+            "rows_with_pasted_return_data": sum(1 for row in research_return_rows if has_research_return_data(row)),
+            "download_approved_yes_rows": sum(1 for row in research_return_rows if row["download_approved"] == "yes"),
+            "blank_candidate_photo_url_rows": sum(1 for row in research_return_rows if not row["candidate_photo_url"]),
+            "blank_evidence_url_rows": sum(1 for row in research_return_rows if not row["evidence_url"]),
+            "blank_evidence_summary_rows": sum(1 for row in research_return_rows if not row["evidence_summary"]),
+            "blank_identity_anchor_url_rows": sum(1 for row in research_return_rows if not row["identity_anchor_url"]),
+            "blank_source_url_rows": sum(1 for row in research_return_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in research_return_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in research_return_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in research_return_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in research_return_rows if not row["intended_review_only_use"]),
+            "blank_notes_rows": sum(1 for row in research_return_rows if not row["notes"]),
+            "operator_verify_required_yes_rows": sum(1 for row in research_return_rows if row["operator_verify_required"] == "yes"),
+            "manual_reviewer_blank_rows": sum(1 for row in research_return_rows if not row["manual_reviewer"]),
+            "manual_review_status_not_reviewed_rows": sum(1 for row in research_return_rows if row["manual_review_status"] == "not_reviewed"),
+            "review_only_rows": sum(1 for row in research_return_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in research_return_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+            "worksheet_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -2419,7 +2630,9 @@ def main() -> int:
             "action_photo_candidate_queue_validation_issue_count": len(candidate_queue_issues),
             "action_photo_candidate_research_packet_rows": len(research_packet_rows),
             "action_photo_candidate_research_packet_validation_issue_count": len(research_packet_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues),
+            "action_photo_research_return_intake_rows": len(research_return_rows),
+            "action_photo_research_return_intake_validation_issue_count": len(research_return_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -2443,6 +2656,9 @@ def main() -> int:
             "action_photo_candidate_research_packet_csv": OUT_RESEARCH_PACKET_CSV.as_posix(),
             "action_photo_candidate_research_packet_md": OUT_RESEARCH_PACKET_MD.as_posix(),
             "action_photo_candidate_research_packet_json": OUT_RESEARCH_PACKET_JSON.as_posix(),
+            "action_photo_research_return_intake_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+            "action_photo_research_return_intake_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
+            "action_photo_research_return_intake_json": OUT_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -2456,8 +2672,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues else 0
 
 
 if __name__ == "__main__":
