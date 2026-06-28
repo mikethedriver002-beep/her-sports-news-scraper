@@ -33,12 +33,15 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     root = tmp_path / "data/asset_registry/action_photo_candidates"
     rows = read_csv(root / "review_only_action_photo_candidate_intake.csv")
     source_map_rows = read_csv(root / "review_only_action_photo_source_map_template.csv")
+    entity_source_rows = read_csv(root / "review_only_action_photo_sport_entity_source_map.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
+    entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
     checklist_md = (root / "review_only_action_photo_human_review_checklist.md").read_text(encoding="utf-8")
     source_map_md = (root / "review_only_action_photo_source_map_template.md").read_text(encoding="utf-8")
+    entity_source_md = (root / "review_only_action_photo_sport_entity_source_map.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -48,6 +51,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["rights_class_count"] == 8
     assert manifest["identity_confidence_count"] == 5
     assert manifest["source_map_rows"] == 9
+    assert manifest["sport_entity_source_map_rows"] == 19
+    assert manifest["sport_entity_source_map_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -105,6 +110,37 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert {row["source_category"] for row in source_map_rows} == set(taxonomy["source_categories"])
     assert "Collect URLs and evidence only" in source_map_md
     assert "Do not download image files" in source_map_md
+    assert entity_source_manifest["status"] == "action_photo_sport_entity_source_map_ready"
+    assert entity_source_manifest["source_map_rows"] == 19
+    assert entity_source_manifest["download_approved_yes_allowed_rows"] == 0
+    assert entity_source_manifest["review_only_rows"] == 19
+    assert entity_source_manifest["publish_ready_rows"] == 0
+    assert set(entity_source_manifest["source_categories"]) == set(taxonomy["source_categories"])
+    assert {"basketball", "soccer", "college basketball", "college soccer", "softball", "tennis", "golf", "hockey", "multi-sport"} <= set(entity_source_manifest["sports"])
+    assert "WNBA" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "NWSL" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "USWNT" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "NCAA women's basketball" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "NCAA women's soccer" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "NCAA softball" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "WTA / Grand Slam / tournament" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "LPGA / tournament" in {row["league_or_entity"] for row in entity_source_rows}
+    assert "PWHL" in {row["league_or_entity"] for row in entity_source_rows}
+    entity_keys = {
+        (row["sport"], row["league_or_entity"], row["source_category"], row["source_url_or_search_macro"])
+        for row in entity_source_rows
+    }
+    assert len(entity_keys) == len(entity_source_rows)
+    for row in entity_source_rows:
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["source_url_or_search_macro"]
+        assert row["allowed_for_download_approved_yes"] == "false"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert "download" not in row["manual_next_action"].lower() or "do not download" in row["manual_next_action"].lower()
+    assert "ChatGPT Pro, Gemini, and manual researchers" in entity_source_md
+    assert "does not fetch, download, approve, or publish image assets" in entity_source_md
+    assert "Keep `allowed_for_download_approved_yes=false`" in entity_source_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -193,3 +229,32 @@ def test_action_photo_candidate_intake_validator_blocks_invalid_taxonomy_values(
     assert ("rights_class", "invalid_controlled_vocabulary") in issue_pairs
     assert ("identity_confidence", "invalid_controlled_vocabulary") in issue_pairs
     assert ("manual_review_status", "invalid_controlled_vocabulary") in issue_pairs
+
+
+def test_action_photo_sport_entity_source_map_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = [
+        {
+            "sport": "basketball",
+            "league_or_entity": "WNBA",
+            "source_priority": "P0",
+            "source_category": "free_web_image",
+            "source_name": "unknown",
+            "source_url_or_search_macro": '"athlete action photo"',
+            "source_domain": "",
+            "evidence_use": "lead",
+            "rights_review_note": "none",
+            "identity_anchor_use": "none",
+            "allowed_for_download_approved_yes": "true",
+            "manual_next_action": "download it",
+            "review_only": "false",
+            "publish_ready": "true",
+        }
+    ]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_entity_source_map_rows(invalid_rows)}
+
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("allowed_for_download_approved_yes", "source_map_never_download_approved") in issue_pairs
+    assert ("review_only", "source_map_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "source_map_must_not_be_publish_ready") in issue_pairs
