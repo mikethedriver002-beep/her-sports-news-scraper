@@ -1,0 +1,31 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "status": "action_photo_candidate_intake_ready",
+  "generated_at_utc": "2026-06-28T18:03:21.279620+00:00",
+  "intake_rows": 3,
+  "download_approved_yes_rows": 0,
+  "blank_source_url_rows": 3,
+  "quarantine_root": "data/assets/quarantine/review_only_candidates",
+  "required_download_fields": [
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use"
+  ],
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.md",
+  "worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.csv",
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
