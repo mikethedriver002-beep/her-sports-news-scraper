@@ -23,6 +23,9 @@ EXTERNAL_RESEARCH_CSV = ROOT / "external_research/womens_soccer_external_researc
 OUT_MD = output_path(ROOT / "womens_soccer_athlete_verification_queue.md")
 OUT_CSV = output_path(ROOT / "womens_soccer_athlete_verification_queue.csv")
 OUT_JSON = output_path(ROOT / "womens_soccer_athlete_verification_queue.json")
+OUT_NEXT_ACTIONS_MD = output_path(ROOT / "womens_soccer_athlete_verification_next_actions.md")
+OUT_NEXT_ACTIONS_CSV = output_path(ROOT / "womens_soccer_athlete_verification_next_actions.csv")
+OUT_NEXT_ACTIONS_JSON = output_path(ROOT / "womens_soccer_athlete_verification_next_actions.json")
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -40,6 +43,7 @@ FIELDS = [
     "league_id",
     "team_id",
     "team_name",
+    "first_action_bucket",
     "candidate_rows",
     "official_roster_candidate_rows",
     "starter_candidate_rows",
@@ -56,13 +60,58 @@ FIELDS = [
     "operator_verify_required_rows",
     "source_domains",
     "source_status_mix",
+    "source_verification_bucket",
     "roster_verification_status",
     "local_asset_blocker",
+    "download_law_status",
+    "future_download_required_fields",
     "render_readiness",
     "safe_next_action",
     "manual_intake_file",
     "download_intake_file",
     "research_board_file",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+NEXT_ACTION_FIELDS = [
+    "worksheet_rank",
+    "queue_rank",
+    "first_action_bucket",
+    "source_verification_bucket",
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "queue_bucket",
+    "p0_external_rows",
+    "p1_external_rows",
+    "gray_area_rows",
+    "official_external_rows",
+    "non_official_external_rows",
+    "candidate_rows",
+    "missing_local_candidate_rows",
+    "download_intake_rows",
+    "download_approved_yes_rows",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_folder",
+    "operator_decision",
+    "operator_notes",
+    "safe_next_action",
     "review_only",
     "approval_state_change",
     "candidate_state_change",
@@ -169,6 +218,40 @@ def status_mix(rows: Iterable[Mapping[str, str]]) -> str:
     return "|".join(f"{key}:{value}" for key, value in counts.items())
 
 
+def source_bucket(official_rows: int, non_official_rows: int, gray_rows: int, source_domains_value: str) -> str:
+    if gray_rows:
+        return "gray_area_or_reputable_media_manual_verify"
+    if non_official_rows:
+        return "non_official_source_manual_verify"
+    if official_rows:
+        return "official_source_manual_verify"
+    if source_domains_value:
+        return "source_metadata_manual_verify"
+    return "source_missing"
+
+
+def download_law_status(download_approved_yes_rows: int, missing_local_rows: int) -> str:
+    if download_approved_yes_rows:
+        return "human_intake_yes_present_still_requires_separate_review_step"
+    if missing_local_rows:
+        return "future_quarantine_download_intake_required"
+    return "download_not_needed_for_current_review_step"
+
+
+def required_download_fields() -> str:
+    return "download_approved|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use"
+
+
+def first_action_for_queue(queue_bucket: str, source_verification_bucket: str, missing_local_rows: int) -> str:
+    if queue_bucket == "p0_nwsl_roster_verification_first":
+        return "1_roster_verification"
+    if "gray_area" in source_verification_bucket or "non_official" in source_verification_bucket:
+        return "2_source_verification_gray_or_reputable"
+    if missing_local_rows:
+        return "3_missing_local_candidate_asset"
+    return "4_metadata_watch"
+
+
 def build_queue() -> List[Dict[str, str]]:
     contact_rows = read_csv(CONTACT_CSV)
     operator_rows = read_csv(OPERATOR_BOARD_CSV)
@@ -212,6 +295,9 @@ def build_queue() -> List[Dict[str, str]]:
             safe_action = "Keep candidate metadata review-only; no asset writeback."
         if scope_id != "nwsl":
             continue
+        source_domains_value = source_domains(list(team_contact_rows) + matched_external)
+        source_verification_value = source_bucket(official_external, non_official, gray, source_domains_value)
+        first_action_value = first_action_for_queue(bucket, source_verification_value, missing_local)
         rows.append(
             {
                 "queue_bucket": bucket,
@@ -219,6 +305,7 @@ def build_queue() -> List[Dict[str, str]]:
                 "league_id": league_id,
                 "team_id": team_id,
                 "team_name": team_name,
+                "first_action_bucket": first_action_value,
                 "candidate_rows": str(candidate_rows),
                 "official_roster_candidate_rows": str(official_rows),
                 "starter_candidate_rows": str(starter_rows),
@@ -233,10 +320,13 @@ def build_queue() -> List[Dict[str, str]]:
                 "official_external_rows": str(official_external),
                 "non_official_external_rows": str(non_official),
                 "operator_verify_required_rows": str(verify_required),
-                "source_domains": source_domains(list(team_contact_rows) + matched_external),
+                "source_domains": source_domains_value,
                 "source_status_mix": status_mix(matched_external),
+                "source_verification_bucket": source_verification_value,
                 "roster_verification_status": roster_status,
                 "local_asset_blocker": "local_candidate_assets_missing" if missing_local else "none",
+                "download_law_status": download_law_status(download_yes, missing_local),
+                "future_download_required_fields": required_download_fields(),
                 "render_readiness": "not_render_ready_review_only",
                 "safe_next_action": safe_action,
                 "manual_intake_file": clean(operator.get("manual_intake_file")) or "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
@@ -270,6 +360,9 @@ def build_queue() -> List[Dict[str, str]]:
         else:
             bucket = "p2_europe_official_source_map_ready"
             safe_action = "Use as official source-map metadata for future player research only; not render-ready."
+        source_domains_value = source_domains(contact_league_rows + matched_external)
+        source_verification_value = source_bucket(official_external, non_official, gray, source_domains_value)
+        missing_download_yes = sum(1 for row in download_league_rows if clean(row.get("download_approved")).lower() == "yes")
         rows.append(
             {
                 "queue_bucket": bucket,
@@ -277,13 +370,14 @@ def build_queue() -> List[Dict[str, str]]:
                 "league_id": league_id,
                 "team_id": "all_teams",
                 "team_name": league_id.replace("_", " ").title(),
+                "first_action_bucket": first_action_for_queue(bucket, source_verification_value, missing_local),
                 "candidate_rows": str(candidate_rows),
                 "official_roster_candidate_rows": "0",
                 "starter_candidate_rows": str(starter_rows),
                 "local_candidate_files_present": str(local_files),
                 "missing_local_candidate_rows": str(missing_local),
                 "download_intake_rows": str(len(download_league_rows)),
-                "download_approved_yes_rows": str(sum(1 for row in download_league_rows if clean(row.get("download_approved")).lower() == "yes")),
+                "download_approved_yes_rows": str(missing_download_yes),
                 "external_research_rows": str(len(matched_external)),
                 "p0_external_rows": "0",
                 "p1_external_rows": str(no_verify + verify_required),
@@ -291,10 +385,13 @@ def build_queue() -> List[Dict[str, str]]:
                 "official_external_rows": str(official_external),
                 "non_official_external_rows": str(non_official),
                 "operator_verify_required_rows": str(verify_required),
-                "source_domains": source_domains(contact_league_rows + matched_external),
+                "source_domains": source_domains_value,
                 "source_status_mix": status_mix(matched_external),
+                "source_verification_bucket": source_verification_value,
                 "roster_verification_status": "europe_source_map_review_required",
                 "local_asset_blocker": "starter_placeholders_missing_local_assets" if missing_local else "none",
+                "download_law_status": download_law_status(missing_download_yes, missing_local),
+                "future_download_required_fields": required_download_fields(),
                 "render_readiness": "not_render_ready_source_candidate_only",
                 "safe_next_action": safe_action,
                 "manual_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
@@ -372,11 +469,106 @@ def render_markdown(rows: List[Mapping[str, str]], generated_at: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def next_action_rows(queue_rows: List[Mapping[str, str]], download_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    downloads_by_team = group_by(download_rows, "team_id")
+    nwsl_rows = [row for row in queue_rows if clean(row.get("scope_id")) == "nwsl"]
+    output: List[Dict[str, str]] = []
+    for index, row in enumerate(nwsl_rows, start=1):
+        team_downloads = downloads_by_team.get(clean(row.get("team_id")), [])
+        quarantine_folder = clean(team_downloads[0].get("quarantine_folder")) if team_downloads else "data/assets/quarantine/review_only_candidates"
+        output.append(
+            {
+                "worksheet_rank": str(index),
+                "queue_rank": clean(row.get("queue_rank")),
+                "first_action_bucket": clean(row.get("first_action_bucket")),
+                "source_verification_bucket": clean(row.get("source_verification_bucket")),
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "queue_bucket": clean(row.get("queue_bucket")),
+                "p0_external_rows": clean(row.get("p0_external_rows")),
+                "p1_external_rows": clean(row.get("p1_external_rows")),
+                "gray_area_rows": clean(row.get("gray_area_rows")),
+                "official_external_rows": clean(row.get("official_external_rows")),
+                "non_official_external_rows": clean(row.get("non_official_external_rows")),
+                "candidate_rows": clean(row.get("candidate_rows")),
+                "missing_local_candidate_rows": clean(row.get("missing_local_candidate_rows")),
+                "download_intake_rows": clean(row.get("download_intake_rows")),
+                "download_approved_yes_rows": clean(row.get("download_approved_yes_rows")),
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": clean(row.get("team_id")),
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "quarantine_folder": quarantine_folder,
+                "operator_decision": "",
+                "operator_notes": "",
+                "safe_next_action": clean(row.get("safe_next_action")),
+                **guardrails(),
+            }
+        )
+    return output
+
+
+def render_next_actions(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    bucket_counts = count_by(rows, "first_action_bucket")
+    lines = [
+        "# Women's Soccer Athlete Verification Next Actions",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only NWSL-first worksheet for turning the verification queue into manual operator steps. Generated human-decision fields stay blank or `download_approved=no`; this artifact does not download, approve, publish, write headshots, create markers, or change candidate state.",
+        "",
+        "## Summary",
+        "",
+        f"- Worksheet rows: `{len(rows)}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Missing local candidate asset rows represented: `{sum(as_int(row.get('missing_local_candidate_rows')) for row in rows)}`",
+        "",
+        "## First Action Buckets",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in bucket_counts.items())
+    lines += [
+        "",
+        "## Local-Download Law Fields",
+        "",
+        "- Required future fields are present: `download_approved`, `source_url`, `entity_id`, `rights_class`, `identity_confidence`, `intended_review_only_use`.",
+        "- Generated rows default to `download_approved=no` and leave human decision fields blank.",
+        "- A separate human-edited intake and review step is still required before any quarantine-only download.",
+        "",
+        "## Worksheet Preview",
+        "",
+        "| Rank | Team | First Action | Source Check | Candidates | Missing Local | Download Approved | Safe Next Action |",
+        "| --- | --- | --- | --- | ---: | ---: | --- | --- |",
+    ]
+    for row in rows[:25]:
+        lines.append(
+            "| {rank} | {team} | {first_action} | {source_check} | {candidates} | {missing} | {download_approved} | {action} |".format(
+                rank=clean(row.get("worksheet_rank")),
+                team=clean(row.get("team_name")).replace("|", "/"),
+                first_action=clean(row.get("first_action_bucket")),
+                source_check=clean(row.get("source_verification_bucket")),
+                candidates=clean(row.get("candidate_rows")),
+                missing=clean(row.get("missing_local_candidate_rows")),
+                download_approved=clean(row.get("download_approved")),
+                action=clean(row.get("safe_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = now_iso()
     rows = build_queue()
+    download_rows = read_csv(DOWNLOAD_INTAKE_CSV)
+    action_rows = next_action_rows(rows, download_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, generated_at))
+    write_csv(OUT_NEXT_ACTIONS_CSV, action_rows, NEXT_ACTION_FIELDS)
+    write_text(OUT_NEXT_ACTIONS_MD, render_next_actions(action_rows, generated_at))
     manifest = {
         "version": VERSION,
         "status": "athlete_verification_queue_ready",
@@ -389,8 +581,15 @@ def main() -> int:
         "gray_area_rows": sum(as_int(row.get("gray_area_rows")) for row in rows),
         "missing_local_candidate_rows": sum(as_int(row.get("missing_local_candidate_rows")) for row in rows),
         "download_approved_yes_rows": sum(as_int(row.get("download_approved_yes_rows")) for row in rows),
+        "first_action_bucket_counts": count_by(rows, "first_action_bucket"),
+        "source_verification_bucket_counts": count_by(rows, "source_verification_bucket"),
         "queue_md": OUT_MD.as_posix(),
         "queue_csv": OUT_CSV.as_posix(),
+        "next_actions_md": OUT_NEXT_ACTIONS_MD.as_posix(),
+        "next_actions_csv": OUT_NEXT_ACTIONS_CSV.as_posix(),
+        "next_action_rows": len(action_rows),
+        "next_action_download_approved_yes_rows": sum(1 for row in action_rows if clean(row.get("download_approved")).lower() == "yes"),
+        "next_action_blank_source_url_rows": sum(1 for row in action_rows if not clean(row.get("source_url"))),
         "inputs": [CONTACT_CSV.as_posix(), OPERATOR_BOARD_CSV.as_posix(), DOWNLOAD_INTAKE_CSV.as_posix(), EXTERNAL_RESEARCH_CSV.as_posix()],
         "review_only": True,
         "approval_state_change": False,
@@ -405,7 +604,33 @@ def main() -> int:
         "paid_apis": False,
     }
     write_json(OUT_JSON, manifest)
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "queue": OUT_MD.as_posix()}, indent=2))
+    write_json(
+        OUT_NEXT_ACTIONS_JSON,
+        {
+            "version": VERSION,
+            "status": "athlete_verification_next_actions_ready",
+            "generated_at_utc": generated_at,
+            "worksheet_rows": len(action_rows),
+            "download_approved_yes_rows": sum(1 for row in action_rows if clean(row.get("download_approved")).lower() == "yes"),
+            "blank_source_url_rows": sum(1 for row in action_rows if not clean(row.get("source_url"))),
+            "first_action_bucket_counts": count_by(action_rows, "first_action_bucket"),
+            "source_verification_bucket_counts": count_by(action_rows, "source_verification_bucket"),
+            "worksheet_md": OUT_NEXT_ACTIONS_MD.as_posix(),
+            "worksheet_csv": OUT_NEXT_ACTIONS_CSV.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "queue": OUT_MD.as_posix()}, indent=2))
     return 0
 
 
