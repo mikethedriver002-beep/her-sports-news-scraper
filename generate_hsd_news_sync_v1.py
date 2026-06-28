@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.2-breaking-signal-clusters"
+VERSION = "news-sync-v1.9.3-breaking-proof-readiness-cues"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -38,6 +38,14 @@ INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV = os.environ.get(
 INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV = os.environ.get(
     "HSD_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER",
     "final_score_stat_proof_review_order_v1.csv",
+)
+INPUT_GAME_FACT_CONFIRMATION_STATUS_CSV = os.environ.get(
+    "HSD_GAME_FACT_CONFIRMATION_STATUS",
+    "game_fact_confirmation_status_v1.csv",
+)
+INPUT_STORY_PROOF_CARD_CSV = os.environ.get(
+    "HSD_STORY_PROOF_CARD",
+    "story_proof_card_v1.csv",
 )
 FINAL_SCORE_STAT_PROOF_REVIEW_WALKTHROUGH_MD = "final_score_stat_proof_review_walkthrough_v1.md"
 
@@ -167,6 +175,9 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "official_source_corroboration", "reputable_source_corroboration",
     "public_signal_corroboration", "missing_confirmation_cue",
     "corroboration_evidence_urls",
+    "urgency_review_reason", "source_proof_readiness_status",
+    "source_proof_readiness_summary", "story_proof_card_target",
+    "game_fact_confirmation_target", "source_proof_readiness_next_action",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -3180,6 +3191,149 @@ def exact_review_walkthrough_action(
     )
 
 
+def event_ids_from_evidence(evidence: List[Dict[str, str]]) -> List[str]:
+    ids: List[str] = []
+    for row in evidence:
+        text = " ".join([clean(row.get("row_ref")), clean(row.get("artifact"))])
+        for match in re.findall(r"\b(?:row_id|event_uid|event_id)=([A-Za-z0-9_-]+)", text):
+            if match not in ids:
+                ids.append(match)
+    return ids
+
+
+def game_fact_rows_for_events(event_ids: List[str], rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    wanted = set(event_ids)
+    return [row for row in rows if clean(row.get("event_uid")) in wanted]
+
+
+def story_proof_rows_for_events(event_ids: List[str], rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    wanted = set(event_ids)
+    matches = [row for row in rows if clean(row.get("event_id")) in wanted]
+
+    def rank_value(row: Dict[str, Any]) -> int:
+        try:
+            return int(clean(row.get("candidate_rank")) or "9999")
+        except Exception:
+            return 9999
+
+    matches.sort(key=rank_value)
+    return matches
+
+
+def source_proof_readiness_cue(
+    *,
+    evidence: List[Dict[str, str]],
+    proof_status: str,
+    named_proof_rows: List[Dict[str, Any]],
+    game_fact_rows: List[Dict[str, Any]],
+    story_proof_rows: List[Dict[str, Any]],
+) -> Dict[str, str]:
+    story = story_proof_rows[0] if story_proof_rows else {}
+    game_fact = game_fact_rows[0] if game_fact_rows else {}
+    named_example = clean(named_proof_rows[0].get("fact_value")) if named_proof_rows else ""
+    if story:
+        event_id = clean(story.get("event_id"))
+        candidate_id = clean(story.get("candidate_id"))
+        athlete = clean(story.get("athlete_name"))
+        renderability = clean(story.get("renderability_state"))
+        proof_card_status = clean(story.get("proof_status"))
+        copy_unlock = clean(story.get("copy_unlock_level"))
+        manual_intake = clean(story.get("manual_intake_path"))
+        source_cue = clean(story.get("source_confirmation_cue"))
+        target = "; ".join(
+            bit for bit in [
+                f"story_proof_card_v1.csv event_id={event_id}" if event_id else "story_proof_card_v1.csv",
+                f"candidate_id={candidate_id}" if candidate_id else "",
+                f"manual_intake={manual_intake}" if manual_intake else "",
+            ]
+            if bit
+        )
+        summary = (
+            f"{proof_card_status or 'story_proof_card_present_operator_verify'}; "
+            f"copy={copy_unlock or 'manual_review_required'}; "
+            f"renderability={renderability or 'review'}; "
+            f"athlete={athlete or 'none'}; source={source_cue or 'operator_verify_source_url'}"
+        )
+        next_action = clean(story.get("smallest_next_action")) or (
+            f"Open {target or 'story_proof_card_v1.csv'}, verify the source URL, then record the check in the listed manual intake row."
+        )
+        return {
+            "source_proof_readiness_status": "story_proof_card_ready_operator_verify",
+            "source_proof_readiness_summary": summary,
+            "story_proof_card_target": target,
+            "game_fact_confirmation_target": clean(story.get("game_fact_row")),
+            "source_proof_readiness_next_action": next_action,
+        }
+    if game_fact:
+        event_id = clean(game_fact.get("event_uid"))
+        story_target = clean(game_fact.get("story_proof_card_row_to_open"))
+        summary = (
+            f"{clean(game_fact.get('overall_confirmation_status')) or 'game_fact_confirmation_present_operator_verify'}; "
+            f"source={clean(game_fact.get('source_domain')) or 'source_domain_missing'}; "
+            f"readiness={clean(game_fact.get('recap_render_readiness')) or 'review'}; "
+            f"story_card={story_target or 'missing_story_proof_card_row'}"
+        )
+        next_action = clean(game_fact.get("exact_next_file_or_intake")) or (
+            f"Open game_fact_confirmation_status_v1.csv event_uid={event_id}, then follow the listed proof intake rows before editorial use."
+        )
+        return {
+            "source_proof_readiness_status": "game_fact_confirmation_ready_operator_verify",
+            "source_proof_readiness_summary": summary,
+            "story_proof_card_target": story_target,
+            "game_fact_confirmation_target": f"game_fact_confirmation_status_v1.csv event_uid={event_id}" if event_id else "",
+            "source_proof_readiness_next_action": next_action,
+        }
+    if clean(proof_status) != "no_matching_score_stat_proof_operator_confirmation_required":
+        summary = (
+            f"{proof_status}; named_player_rows={len(named_proof_rows)}; "
+            f"example={named_example or 'none'}; story_card=missing_operator_open_game_or_story_proof_artifact"
+        )
+        return {
+            "source_proof_readiness_status": "score_stat_proof_only_operator_verify",
+            "source_proof_readiness_summary": summary,
+            "story_proof_card_target": "",
+            "game_fact_confirmation_target": "",
+            "source_proof_readiness_next_action": "Open final_score_stat_proof_v1.csv and final_score_stat_proof_confirmation_intake_v1.csv for the matched proof rows; no story_proof_card_v1.csv row matched this cluster.",
+        }
+    if evidence:
+        return {
+            "source_proof_readiness_status": "artifact_evidence_only_operator_verify",
+            "source_proof_readiness_summary": "Current news/game artifact evidence matched, but no story proof card or score/stat proof row matched this cluster.",
+            "story_proof_card_target": "",
+            "game_fact_confirmation_target": "",
+            "source_proof_readiness_next_action": "Open the matching evidence artifact, then record breaking-claim confirmation before using this item editorially.",
+        }
+    return {
+        "source_proof_readiness_status": "missing_source_proof_readiness_operator_confirmation_required",
+        "source_proof_readiness_summary": "No matching story proof card, game fact confirmation row, or score/stat proof row was found for this breaking cluster.",
+        "story_proof_card_target": "",
+        "game_fact_confirmation_target": "",
+        "source_proof_readiness_next_action": "Add or verify official, wire, primary, or operator-checked source evidence in breaking_public_signal_confirmation_intake.csv before any story path.",
+    }
+
+
+def urgency_review_reason(
+    *,
+    urgency_band: str,
+    freshness_status: str,
+    max_score: int,
+    ladder_status: str,
+    proof_readiness_status: str,
+    proof_status: str,
+    public_confidence: str,
+    named_count: int,
+    missing_confirmation_cue: str,
+) -> str:
+    why_now = f"{urgency_band or 'review'} score={max_score}/100; freshness={freshness_status or 'timestamp_missing'}"
+    hsd_care = (
+        f"source/proof readiness={proof_readiness_status or proof_status or 'missing'}; "
+        f"named_player_stat_rows={named_count}"
+    )
+    trust = f"corroboration={ladder_status or 'missing'}; public_signal={public_confidence or 'none'}"
+    missing = missing_confirmation_cue or "human_confirmation_required_before_story_use"
+    return f"Why now: {why_now}. Why HSD should care: {hsd_care}. Trust cue: {trust}. Missing: {missing}."
+
+
 def evidence_rollup_status(evidence: List[Dict[str, str]]) -> str:
     statuses = {clean(row.get("status")) for row in evidence}
     has_news = any(clean(row.get("artifact")) == "news_fact_packets.csv" for row in evidence)
@@ -3241,6 +3395,8 @@ def breaking_signal_cluster_rows(
     proof_rows: Optional[List[Dict[str, Any]]] = None,
     proof_confirmation_rows: Optional[List[Dict[str, Any]]] = None,
     proof_review_order_rows: Optional[List[Dict[str, Any]]] = None,
+    game_fact_confirmation_rows: Optional[List[Dict[str, Any]]] = None,
+    story_proof_card_rows: Optional[List[Dict[str, Any]]] = None,
     intake_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     packets = packets or []
@@ -3248,6 +3404,8 @@ def breaking_signal_cluster_rows(
     proof_rows = proof_rows or []
     proof_confirmation_rows = proof_confirmation_rows or []
     proof_review_order_rows = proof_review_order_rows or []
+    game_fact_confirmation_rows = game_fact_confirmation_rows or []
+    story_proof_card_rows = story_proof_card_rows or []
     intake_rows = intake_rows or []
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for row in rows:
@@ -3285,11 +3443,33 @@ def breaking_signal_cluster_rows(
         matched_proof_rows = proof_rows_for_cluster(proof_rows, clean(group[0].get("headline")), evidence)
         proof_status = proof_status_for_rows(matched_proof_rows)
         named_proof_rows = [row for row in matched_proof_rows if clean(row.get("fact_type")) == "named_player_stat_line"]
+        event_ids = event_ids_from_evidence(evidence)
+        matched_game_fact_rows = game_fact_rows_for_events(event_ids, game_fact_confirmation_rows)
+        matched_story_proof_rows = story_proof_rows_for_events(event_ids, story_proof_card_rows)
+        proof_readiness = source_proof_readiness_cue(
+            evidence=evidence,
+            proof_status=proof_status,
+            named_proof_rows=named_proof_rows,
+            game_fact_rows=matched_game_fact_rows,
+            story_proof_rows=matched_story_proof_rows,
+        )
         proof_ids = proof_ids_by_type(matched_proof_rows, "final_score") + proof_ids_by_type(matched_proof_rows, "named_player_stat_line")
         matched_review_order_rows = review_order_rows_for_proof_ids(proof_ids, proof_review_order_rows)
         review_status = review_order_status(matched_proof_rows, matched_review_order_rows)
         review_targets = review_order_targets_for_rows(matched_review_order_rows)
         first_review_target = first_review_order_target(matched_review_order_rows)
+        freshness = freshness_status_for_timestamps(timestamps)
+        urgency_reason = urgency_review_reason(
+            urgency_band=strongest_urgency_band(group),
+            freshness_status=freshness,
+            max_score=max_score,
+            ladder_status=ladder.get("corroboration_ladder_status", ""),
+            proof_readiness_status=proof_readiness.get("source_proof_readiness_status", ""),
+            proof_status=proof_status,
+            public_confidence=public_confidence,
+            named_count=len(named_proof_rows),
+            missing_confirmation_cue=ladder.get("missing_confirmation_cue", ""),
+        )
         breaking_target = f"breaking_public_signal_confirmation_intake.csv {intake_row_ref_for_cluster(intake_rows, candidate_ids)}"
         score_targets = proof_confirmation_targets_for_ids(
             proof_ids_by_type(matched_proof_rows, "final_score"),
@@ -3350,13 +3530,15 @@ def breaking_signal_cluster_rows(
                     review_targets,
                 ),
                 **ladder,
+                "urgency_review_reason": urgency_reason,
+                **proof_readiness,
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
                 "source_domains": "; ".join(domains[:12]),
                 "source_urls": json.dumps(urls[:12], ensure_ascii=False),
                 "public_signal_count": str(public_count),
                 "public_signal_confidence": public_confidence,
-                "freshness_status": freshness_status_for_timestamps(timestamps),
+                "freshness_status": freshness,
                 "oldest_signal_timestamp_utc": min(timestamps).isoformat() if timestamps else "",
                 "newest_signal_timestamp_utc": max(timestamps).isoformat() if timestamps else "",
                 "limitations": "Cluster groups review-only metadata observations only; it does not confirm claims, update sources, approve copy, publish, or create a publish-ready lane.",
@@ -3413,6 +3595,12 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"  - Reputable/free: {row.get('reputable_source_corroboration') or 'missing'}",
             f"  - Public/community: {row.get('public_signal_corroboration') or 'none captured'}",
             f"  - Missing confirmation cue: {row.get('missing_confirmation_cue') or 'operator confirmation required'}",
+            f"- Urgency/trust reason: {row.get('urgency_review_reason') or 'missing'}",
+            f"- Source/proof readiness: `{row.get('source_proof_readiness_status')}`",
+            f"- Source/proof summary: {row.get('source_proof_readiness_summary') or 'missing'}",
+            f"- Story proof target: {row.get('story_proof_card_target') or 'missing'}",
+            f"- Game fact confirmation target: {row.get('game_fact_confirmation_target') or 'missing'}",
+            f"- Source/proof next action: {row.get('source_proof_readiness_next_action') or 'operator confirmation required'}",
             f"- Source diversity: `{row.get('source_diversity')}` / domains: {row.get('source_domains') or 'none captured'}",
             f"- Public signal: `{row.get('public_signal_confidence')}` / count: `{row.get('public_signal_count')}`",
             f"- Freshness: `{row.get('freshness_status')}` / newest: `{row.get('newest_signal_timestamp_utc') or 'missing'}`",
@@ -3854,6 +4042,8 @@ def main() -> None:
     proof_path, proof_rows = resolve_csv_input(INPUT_FINAL_SCORE_STAT_PROOF_CSV)
     proof_confirmation_path, proof_confirmation_rows = resolve_csv_input(INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV)
     proof_review_order_path, proof_review_order_rows = resolve_csv_input(INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV)
+    game_fact_confirmation_path, game_fact_confirmation_rows = resolve_csv_input(INPUT_GAME_FACT_CONFIRMATION_STATUS_CSV)
+    story_proof_card_path, story_proof_card_rows = resolve_csv_input(INPUT_STORY_PROOF_CARD_CSV)
 
     csv_sources = [
         ("top_womens_results.csv", top_csv_rows),
@@ -3883,6 +4073,18 @@ def main() -> None:
             INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV,
             proof_review_order_rows,
             proof_review_order_path,
+        ),
+        input_status_row_csv(
+            "game_fact_confirmation_status_csv",
+            INPUT_GAME_FACT_CONFIRMATION_STATUS_CSV,
+            game_fact_confirmation_rows,
+            game_fact_confirmation_path,
+        ),
+        input_status_row_csv(
+            "story_proof_card_csv",
+            INPUT_STORY_PROOF_CARD_CSV,
+            story_proof_card_rows,
+            story_proof_card_path,
         ),
     ]
 
@@ -3938,6 +4140,8 @@ def main() -> None:
         proof_rows=proof_rows,
         proof_confirmation_rows=proof_confirmation_rows,
         proof_review_order_rows=proof_review_order_rows,
+        game_fact_confirmation_rows=game_fact_confirmation_rows,
+        story_proof_card_rows=story_proof_card_rows,
         intake_rows=confirmation_intake_rows,
     )
     game_source_bridge_rows = game_source_confirmation_bridge_rows(
@@ -4029,6 +4233,10 @@ def main() -> None:
                     row for row in cluster_rows
                     if clean(row.get("corroboration_ladder_status"))
                 ]),
+                "clusters_with_story_proof_readiness": len([
+                    row for row in cluster_rows
+                    if clean(row.get("source_proof_readiness_status")) == "story_proof_card_ready_operator_verify"
+                ]),
             },
             "outputs": [
                 BREAKING_PUBLIC_SIGNAL_CSV,
@@ -4061,6 +4269,8 @@ def main() -> None:
             "final_score_stat_proof_csv": INPUT_FINAL_SCORE_STAT_PROOF_CSV,
             "final_score_stat_proof_confirmation_intake_csv": INPUT_FINAL_SCORE_STAT_PROOF_CONFIRMATION_CSV,
             "final_score_stat_proof_review_order_csv": INPUT_FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_CSV,
+            "game_fact_confirmation_status_csv": INPUT_GAME_FACT_CONFIRMATION_STATUS_CSV,
+            "story_proof_card_csv": INPUT_STORY_PROOF_CARD_CSV,
         },
         "outputs": [
             NEWS_INPUT_STATUS_CSV,

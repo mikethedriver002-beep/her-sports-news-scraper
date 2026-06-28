@@ -194,6 +194,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "public_signal_corroboration": "none_captured_public_signal_not_used_for_confirmation",
                 "missing_confirmation_cue": "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake",
                 "corroboration_evidence_urls": "[\"https://sky.wnba.com/news/recap\", \"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
+                "urgency_review_reason": "Why now: P1_urgent_review score=68/100; freshness=fresh_last_6h. Why HSD should care: source/proof readiness=story_proof_card_ready_operator_verify; named_player_stat_rows=1. Trust cue: corroboration=official_and_reputable_artifact_cues_present_operator_verify; public_signal=none. Missing: human_confirmation_still_required_in_breaking_public_signal_confirmation_intake.",
+                "source_proof_readiness_status": "story_proof_card_ready_operator_verify",
+                "source_proof_readiness_summary": "proof_card_ready_for_manual_review; copy=score_and_named_stat_copy_review_ready; renderability=athlete_led_manual_render_candidate; athlete=Kamilla Cardoso; source=free_public_box_score_stat_source_present_operator_verify",
+                "story_proof_card_target": "story_proof_card_v1.csv event_id=event-sky-fire; candidate_id=story-card-sky; manual_intake=final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-player",
+                "game_fact_confirmation_target": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
+                "source_proof_readiness_next_action": "Open story_proof_card_v1.md, verify the official source URL, record the check in the manual intake row.",
             }
         ],
         [
@@ -224,6 +230,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "public_signal_corroboration",
             "missing_confirmation_cue",
             "corroboration_evidence_urls",
+            "urgency_review_reason",
+            "source_proof_readiness_status",
+            "source_proof_readiness_summary",
+            "story_proof_card_target",
+            "game_fact_confirmation_target",
+            "source_proof_readiness_next_action",
         ],
     )
 
@@ -232,19 +244,19 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
 
     assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert "reputable_free=present_operator_verify" in row["story_opportunity_source_coverage"]
+    assert "proof_card_ready_for_manual_review" in row["story_opportunity_source_coverage"]
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
-    assert "final_score_stat_proof_review_walkthrough_v1.md" in row["next_action"]
-    assert "review_order=5" in row["next_action"]
+    assert row["next_action"].startswith("Open story_proof_card_v1.md")
+    assert "story_proof_card_ready_operator_verify" in row["detail"]
     assert row["story_opportunity_confidence_tier"] == "official_and_reputable_artifact_cues_present_operator_verify"
     assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert row["story_opportunity_confirmation_cue"] == "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake"
     assert "none_captured_public_signal_not_used_for_confirmation" in row["evidence_description"]
     assert "https://sky.wnba.com/news/recap" in row["story_opportunity_urls"]
-    assert "https://www.espn.com/wnba/game/_/gameId/401857025" in row["story_opportunity_second_source_url"]
-    assert row["story_opportunity_second_source_reason"] == "present_operator_verify domains=sky.wnba.com"
-    assert row["story_opportunity_second_source_action"].startswith("Open final_score_stat_proof_review_walkthrough_v1.md")
-    assert "official_and_reputable_artifact_cues_present_operator_verify" in row["story_opportunity_readiness_note"]
-    assert "human_confirmation_still_required" in row["story_opportunity_readiness_note"]
+    assert "story_proof_card_v1.csv event_id=event-sky-fire" in row["story_opportunity_second_source_url"]
+    assert row["story_opportunity_second_source_reason"] == "story_proof_card_ready_operator_verify"
+    assert row["story_opportunity_second_source_action"].startswith("Open story_proof_card_v1.md")
+    assert row["story_opportunity_readiness_note"].startswith("Open story_proof_card_v1.md")
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
 
