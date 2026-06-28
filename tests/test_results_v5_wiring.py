@@ -444,7 +444,10 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
             "game_status": "final",
             "recap_candidate": "Yes",
             "overall_confirmation_status": "source_confirmed_operator_verify_before_use",
+            "source_confidence": "0.92",
+            "schedule_fact_status": "schedule_source_confirmed_free_public_operator_verify",
             "result_fact_status": "final_score_source_confirmed_free_public_operator_verify",
+            "stats_fact_status": "stats_source_confirmed_free_public_operator_verify",
             "source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
             "source_freshness_status": "evidence_stale_over_24h_manual_check",
             "source_freshness_age_minutes": "1445",
@@ -454,6 +457,7 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
             "source_domain": "www.espn.com",
             "story_proof_card_row_to_open": "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789",
             "proof_manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456",
+            "recap_render_readiness": "athlete_led_manual_render_candidate",
             "exact_next_file_or_intake": "Open game_fact_confirmation_status_v1.csv event_uid=event_confirmed.",
         },
         {
@@ -464,7 +468,10 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
             "game_status": "missing_from_free_sources_or_outside_window",
             "recap_candidate": "No",
             "overall_confirmation_status": "manual_verification_required",
+            "source_confidence": "0.00",
+            "schedule_fact_status": "schedule_source_missing_or_low_confidence_manual_review_required",
             "result_fact_status": "result_or_final_score_missing_manual_review_required",
+            "stats_fact_status": "stats_evidence_row_missing_manual_review_required",
             "source_confirmation_tier": "source_missing_manual_confirmation_required",
             "source_freshness_status": "no_matched_source_timestamp_manual_check",
             "missing_confirmation": "schedule_source; result_or_final_score; stats_or_box_score",
@@ -480,7 +487,10 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
             "game_status": "scheduled",
             "recap_candidate": "No",
             "overall_confirmation_status": "schedule_confirmed_result_pending",
+            "source_confidence": "0.84",
+            "schedule_fact_status": "schedule_source_confirmed_free_public_operator_verify",
             "result_fact_status": "not_final_result_pending",
+            "stats_fact_status": "not_final_stats_optional",
             "source_confirmation_tier": "single_free_public_schedule_source_result_pending",
             "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
             "source_freshness_age_minutes": "14",
@@ -495,13 +505,22 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
 
     assert rows[0]["event_uid"] == "expected_missing"
     assert by_id["expected_missing"]["review_priority"] == "P0_manual_confirmation_required"
+    assert by_id["expected_missing"]["source_confidence"] == "0.00"
+    assert by_id["expected_missing"]["schedule_fact_status"] == "schedule_source_missing_or_low_confidence_manual_review_required"
+    assert by_id["expected_missing"]["stats_fact_status"] == "stats_evidence_row_missing_manual_review_required"
     assert by_id["expected_missing"]["missing_expected_game_flag"] == "Yes"
+    assert by_id["expected_missing"]["recap_render_human_review_gate"] == "blocked_manual_source_confirmation_required"
     assert by_id["expected_missing"]["official_or_public_source_cue"] == "no_matched_free_public_source_manual_confirmation_required"
     assert "missing_games_alert_v5.csv" in by_id["expected_missing"]["source_confirmation_next_action"]
     assert by_id["event_confirmed"]["review_priority"] == "P1_source_freshness_or_lag_check"
+    assert by_id["event_confirmed"]["source_confidence"] == "0.92"
+    assert by_id["event_confirmed"]["result_fact_status"] == "final_score_source_confirmed_free_public_operator_verify"
+    assert by_id["event_confirmed"]["recap_render_readiness"] == "athlete_led_manual_render_candidate"
+    assert by_id["event_confirmed"]["recap_render_human_review_gate"] == "blocked_source_freshness_check_required"
     assert by_id["event_confirmed"]["proof_row_to_open"] == "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789"
     assert "confirm the source is current" in by_id["event_confirmed"]["source_confirmation_next_action"]
     assert by_id["event_scheduled"]["review_priority"] == "P3_result_pending_monitor"
+    assert by_id["event_scheduled"]["recap_render_human_review_gate"] == "blocked_result_pending_not_recap_or_render_ready"
     assert by_id["event_scheduled"]["source_enablement"] == "none_existing_local_artifacts_only"
     assert all(row["review_only"] == "Yes" for row in rows)
     assert all(row["approval_state_change"] == "none" for row in rows)
@@ -510,9 +529,13 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
     summary = module.game_source_confirmation_next_action_summary(rows)
     assert summary["manual_confirmation_required"] == 1
     assert summary["freshness_or_lag_check"] == 1
+    assert summary["blocked_before_recap_render"] == 3
+    assert "blocked_source_freshness_check_required" in summary["gate_counts"]
     report = module.game_source_confirmation_next_action_report_md(summary, rows)
     assert "Review-only, artifact-only source confirmation triage" in report
     assert "No paid APIs" in report
+    assert "confidence=0.92" in report
+    assert "gate=blocked_source_freshness_check_required" in report
 
 
 def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:

@@ -238,6 +238,10 @@ GAME_SOURCE_CONFIRMATION_NEXT_ACTION_FIELDS = [
     "recap_candidate",
     "review_priority",
     "confirmation_state",
+    "source_confidence",
+    "schedule_fact_status",
+    "result_fact_status",
+    "stats_fact_status",
     "source_confirmation_tier",
     "source_freshness_status",
     "source_freshness_age_minutes",
@@ -245,6 +249,8 @@ GAME_SOURCE_CONFIRMATION_NEXT_ACTION_FIELDS = [
     "missing_expected_game_flag",
     "conflict_or_lag_note",
     "official_or_public_source_cue",
+    "recap_render_readiness",
+    "recap_render_human_review_gate",
     "source_url",
     "source_domain",
     "source_row_to_open",
@@ -1715,6 +1721,22 @@ def source_confirmation_lag_note(row: Dict[str, Any]) -> str:
     return "No fix is required in this run beyond normal operator source review."
 
 
+def recap_render_human_review_gate(row: Dict[str, Any], priority: str) -> str:
+    missing = clean(row.get("missing_confirmation"))
+    readiness = clean(row.get("recap_render_readiness"))
+    if priority == "P0_manual_confirmation_required" or missing not in ("", "none"):
+        return "blocked_manual_source_confirmation_required"
+    if priority == "P1_source_freshness_or_lag_check":
+        return "blocked_source_freshness_check_required"
+    if priority == "P3_result_pending_monitor":
+        return "blocked_result_pending_not_recap_or_render_ready"
+    if clean(row.get("recap_candidate")) == "Yes" or clean(row.get("game_status")) == "final":
+        if readiness:
+            return f"{readiness}_human_review_required"
+        return "recap_or_render_candidate_human_review_required"
+    return "not_recap_or_render_candidate"
+
+
 def source_confirmation_next_action_text(row: Dict[str, Any], priority: str) -> str:
     event_uid = clean(row.get("event_uid"))
     source_row = f"game_fact_confirmation_status_v1.csv event_uid={event_uid}" if event_uid else "game_fact_confirmation_status_v1.csv"
@@ -1753,6 +1775,10 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
                 "recap_candidate": clean(item.get("recap_candidate")),
                 "review_priority": priority,
                 "confirmation_state": clean(item.get("overall_confirmation_status")),
+                "source_confidence": clean(item.get("source_confidence")),
+                "schedule_fact_status": clean(item.get("schedule_fact_status")),
+                "result_fact_status": clean(item.get("result_fact_status")),
+                "stats_fact_status": clean(item.get("stats_fact_status")),
                 "source_confirmation_tier": clean(item.get("source_confirmation_tier")),
                 "source_freshness_status": clean(item.get("source_freshness_status")),
                 "source_freshness_age_minutes": clean(item.get("source_freshness_age_minutes")),
@@ -1760,6 +1786,8 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
                 "missing_expected_game_flag": missing_expected,
                 "conflict_or_lag_note": source_confirmation_lag_note(item),
                 "official_or_public_source_cue": source_confirmation_public_cue(item),
+                "recap_render_readiness": clean(item.get("recap_render_readiness")),
+                "recap_render_human_review_gate": recap_render_human_review_gate(item, priority),
                 "source_url": clean(item.get("source_url")),
                 "source_domain": clean(item.get("source_domain")),
                 "source_row_to_open": f"game_fact_confirmation_status_v1.csv event_uid={event_uid}" if event_uid else "game_fact_confirmation_status_v1.csv",
@@ -1787,8 +1815,10 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
 
 def game_source_confirmation_next_action_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     counts: Dict[str, int] = defaultdict(int)
+    gate_counts: Dict[str, int] = defaultdict(int)
     for row in rows:
         counts[clean(row.get("review_priority"))] += 1
+        gate_counts[clean(row.get("recap_render_human_review_gate"))] += 1
     return {
         "version": "v1-review-only-game-source-confirmation-next-action",
         "generated_at_utc": now_iso(),
@@ -1803,7 +1833,10 @@ def game_source_confirmation_next_action_summary(rows: List[Dict[str, Any]]) -> 
         "final_recap_source_review": counts.get("P2_final_recap_source_review", 0),
         "result_pending_monitor": counts.get("P3_result_pending_monitor", 0),
         "source_audit_no_fix": counts.get("P4_source_audit_no_fix", 0),
+        "recap_render_human_review_required": sum(value for key, value in gate_counts.items() if key.endswith("_human_review_required")),
+        "blocked_before_recap_render": sum(value for key, value in gate_counts.items() if key.startswith("blocked_")),
         "priority_counts": dict(sorted(counts.items())),
+        "gate_counts": dict(sorted(gate_counts.items())),
     }
 
 
@@ -1822,15 +1855,17 @@ def game_source_confirmation_next_action_report_md(summary: Dict[str, Any], rows
         "## Counts",
         "",
     ]
-    for key in ["rows", "manual_confirmation_required", "freshness_or_lag_check", "result_pending_monitor", "final_recap_source_review", "source_audit_no_fix"]:
+    for key in ["rows", "manual_confirmation_required", "freshness_or_lag_check", "final_recap_source_review", "result_pending_monitor", "source_audit_no_fix", "recap_render_human_review_required", "blocked_before_recap_render"]:
         lines.append(f"- {key}: `{summary.get(key)}`")
     lines.extend(["", "## Review Order", ""])
     if not rows:
         lines.append("No game source confirmation rows were generated in this run.")
     for row in rows[:80]:
         lines.append(f"{row.get('action_rank')}. **{row.get('matchup')}** | {row.get('game_date')} | {row.get('review_priority')}")
-        lines.append(f"   - state={row.get('confirmation_state')} | tier={row.get('source_confirmation_tier')} | freshness={row.get('source_freshness_status')} | age_min={row.get('source_freshness_age_minutes') or 'n/a'}")
+        lines.append(f"   - state={row.get('confirmation_state')} | confidence={row.get('source_confidence') or 'n/a'} | tier={row.get('source_confirmation_tier')} | freshness={row.get('source_freshness_status')} | age_min={row.get('source_freshness_age_minutes') or 'n/a'}")
+        lines.append(f"   - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
         lines.append(f"   - missing={row.get('missing_confirmation')} | source_cue={row.get('official_or_public_source_cue')} | lag={row.get('conflict_or_lag_note')}")
+        lines.append(f"   - recap_render={row.get('recap_render_readiness') or 'n/a'} | gate={row.get('recap_render_human_review_gate')}")
         lines.append(f"   - open={row.get('source_row_to_open')} | proof={row.get('proof_row_to_open') or 'not required'} | intake={row.get('manual_intake_path') or 'not required'}")
         lines.append(f"   - next={row.get('source_confirmation_next_action')}")
     if len(rows) > 80:
