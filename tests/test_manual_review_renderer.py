@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.25.0-square-context-hierarchy"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.27.0-square-athlete-proof-panel"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -127,6 +127,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["content_module"]["content_module_mode"] == "game_edge_fallback"
     assert manifest["content_module"]["content_module_status"] == "fallback_game_edge_no_verified_stat_text"
     assert manifest["content_module"]["content_module_fallback_label"] == "SCORE-DERIVED EDGE"
+    assert manifest["content_module"]["athlete_led_render_status"] == "athlete_led_blocked_missing_verified_player_context"
+    assert "athlete_name" in manifest["content_module"]["athlete_led_missing_fields"]
+    assert "verified stat/story context" in manifest["content_module"]["athlete_led_missing_fields"]
+    assert "No athlete-led preview produced" in manifest["content_module"]["athlete_led_blocker"]
     assert manifest["content_module"]["stat_source_confidence"] == "score_only_fallback_manual_context_required"
     assert manifest["content_module"]["editorial_microcopy_status"] == "source_safe_editorial_microcopy_ready"
     assert manifest["content_module"]["editorial_microcopy_variant"] == "score_only_hold"
@@ -155,6 +159,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "sports_editorial_depth_markers" in manifest["render_background_cues"]
     assert "square_compact_review_footer" in manifest["render_background_cues"]
     assert "square_context_score_hierarchy" in manifest["render_background_cues"]
+    assert "proof_artifact_athlete_led_bridge" in manifest["render_background_cues"]
     assert "stat_proof_rail" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -418,21 +423,108 @@ def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_pa
     )
     assert summary["content_module_mode"] == "verified_player_stats"
     assert summary["content_module_player"] == "Breanna Stewart"
-    assert summary["content_module_title"] == "STEWART LED LIBERTY"
-    assert summary["content_module_matchup_note"] == "LIBERTY 87, ACES 76"
-    assert summary["content_module_game_shape"] == "clear_separation"
+
+
+def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proof_athlete(tmp_path: Path, monkeypatch) -> None:
+    import importlib.util
+
+    monkeypatch.chdir(tmp_path)
+    proof_path = tmp_path / "final_score_stat_proof_v1.csv"
+    with proof_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "proof_id",
+                "event_uid",
+                "matchup",
+                "recap_candidate",
+                "fact_type",
+                "fact_value",
+                "named_player",
+                "player_team",
+                "stat_line",
+                "proof_status",
+                "source_url",
+                "source_domain",
+                "operator_note_path",
+                "limitations",
+                "review_only",
+                "approval_state_change",
+                "publish_action",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "proof_id": "proof_kamilla_cardoso",
+                "event_uid": "event_d24648ed698733c7",
+                "matchup": "Portland Fire at Chicago Sky",
+                "recap_candidate": "Yes",
+                "fact_type": "named_player_stat_line",
+                "fact_value": "Kamilla Cardoso (Chicago Sky): PTS 30, REB 8, AST 1, BLK 1",
+                "named_player": "Kamilla Cardoso",
+                "player_team": "Chicago Sky",
+                "stat_line": "PTS 30, REB 8, AST 1, BLK 1",
+                "proof_status": "named_stat_line_source_backed_operator_verify",
+                "source_url": "https://www.espn.com/wnba/game/_/gameId/401857025",
+                "source_domain": "www.espn.com",
+                "operator_note_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof_kamilla_cardoso",
+                "limitations": "Review-only stat proof derived from current box-score context; operator must verify the source before editorial or render use.",
+                "review_only": "Yes",
+                "approval_state_change": "none",
+                "publish_action": "none_artifact_only",
+            }
+        )
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    packet = {
+        "copy_headline": "Chicago Sky beat Portland Fire",
+        "copy_dek": "Chicago Sky beat Portland Fire. Verified final: Chicago Sky 124, Portland Fire 94.",
+        "top_performers": "",
+    }
+    score = module.parse_final_score(packet)
+
+    selected = module.select_verified_stat_module(packet, score)
+    assert selected["status"] == "verified_player_stat_module"
+    assert selected["player_name"] == "Kamilla Cardoso"
+    assert selected["proof_artifact_bridge_used"] == "true"
+    assert selected["proof_source"] == "final_score_stat_proof_v1.csv"
+    assert selected["proof_id"] == "proof_kamilla_cardoso"
+    assert selected["athlete_led_render_status"] == "athlete_led_review_preview_ready"
+    assert selected["athlete_led_missing_fields"] == ""
+    assert selected["athlete_photo_status"] == "approved_local_headshot"
+    assert selected["athlete_photo_path"] == "assets/leagues/wnba/athletes/chicago_sky_kamilla_cardoso/headshot.png"
+
+    summary = module.content_module_summary(packet, {"tone": "result"})
+    assert summary["content_module_mode"] == "verified_player_stats"
+    assert summary["content_module_player"] == "Kamilla Cardoso"
+    assert summary["proof_artifact_bridge_used"] == "true"
+    assert summary["proof_source"] == "final_score_stat_proof_v1.csv"
+    assert summary["athlete_led_render_status"] == "athlete_led_review_preview_ready"
+    assert summary["athlete_photo_template_family"] == "approved_athlete_photo_final_score"
+    feed_layout = module.athlete_photo_layout_for_format(summary, {"format_id": "ig_feed_4x5", "height": 1350})
+    square_layout = module.athlete_photo_layout_for_format(summary, {"format_id": "square_feed_1x1", "height": 1080})
+    assert feed_layout["athlete_photo_layout_mode"] == "photo_first_final_score"
+    assert square_layout["athlete_photo_layout_mode"] == "square_photo_first_score_panel"
+    assert summary["content_module_title"] == "CARDOSO + STATEMENT MARGIN"
+    assert summary["content_module_matchup_note"] == "CHICAGO SKY 124, PORTLAND FIRE 94"
+    assert summary["content_module_game_shape"] == "statement_margin"
     assert summary["content_module_stat_strength"] == "lead_ledger"
     assert summary["athlete_photo_status"] == selected["athlete_photo_status"]
     assert summary["athlete_photo_approval_cue"] == selected["athlete_photo_approval_cue"]
     assert summary["athlete_photo_review_required"] == str(bool(selected["athlete_photo_review_required"])).lower()
-    assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png"
-    assert summary["athlete_photo_layout_options"] == "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback"
+    assert summary["athlete_photo_path"] == "assets/leagues/wnba/athletes/chicago_sky_kamilla_cardoso/headshot.png"
+    assert summary["athlete_photo_layout_options"] == "photo_first_final_score,square_photo_first_score_panel,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback"
     assert summary["athlete_photo_template_family"] in {"approved_athlete_photo_final_score", "logo_first_final_score_fallback"}
     assert summary["athlete_photo_identity_review_status"] == selected["athlete_photo_identity_review_status"]
     assert summary["athlete_photo_identity_resolution_status"] == "identity_resolution_missing"
     assert summary["editorial_microcopy_variant"] == "verified_player_ledger"
-    assert summary["editorial_microcopy_headline"] == "STEWART + CLEAR SEPARATION"
-    assert summary["editorial_microcopy_game_shape"] == "clear_separation"
+    assert summary["editorial_microcopy_headline"] == "CARDOSO + STATEMENT MARGIN"
+    assert summary["editorial_microcopy_game_shape"] == "statement_margin"
     assert len(summary["editorial_microcopy_variants"]) == 3
     assert summary["stat_source_confidence"] == "verified_stat_text_ready_manual_crosscheck_required"
     assert "Confirm the named performer" in summary["stat_review_cue"]
@@ -633,12 +725,30 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_mode"] == "photo_first_final_score"
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_story_9x16", "height": 1920})["athlete_photo_layout_mode"] == "photo_first_final_score"
     assert module.athlete_photo_layout_for_format(content, {"format_id": "ig_feed_4x5", "height": 1350})["athlete_photo_layout_status"] == "approved_photo_first_template"
-    assert module.athlete_photo_layout_for_format(content, {"format_id": "square_feed_1x1", "height": 1080})["athlete_photo_layout_mode"] == "compact_headshot_chip"
+    assert module.athlete_photo_layout_for_format(content, {"format_id": "square_feed_1x1", "height": 1080})["athlete_photo_layout_mode"] == "square_photo_first_score_panel"
     geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
     assert geometry["template_family"] == "approved_athlete_photo_final_score"
     assert geometry["photo_stage_box"] == [58, 372, 408, 590]
     assert geometry["stat_strip_box"] == [58, 990, 964, 132]
     assert geometry["minimum_clearance_px"] == 24
+    square_geometry = module.photo_first_layout_geometry({"format_id": "square_feed_1x1", "width": 1080, "height": 1080})
+    assert square_geometry["photo_stage_box"] == [60, 346, 308, 384]
+    assert square_geometry["winner_score_row_box"] == [396, 360, 624, 124]
+    assert square_geometry["loser_score_row_box"] == [396, 504, 624, 108]
+    assert square_geometry["stat_strip_box"] == [60, 748, 960, 96]
+    assert square_geometry["matchup_angle_box"] == [60, 862, 960, 112]
+    for box in (
+        square_geometry["photo_stage_box"],
+        square_geometry["winner_score_row_box"],
+        square_geometry["loser_score_row_box"],
+        square_geometry["score_context_box"],
+        square_geometry["stat_strip_box"],
+        square_geometry["matchup_angle_box"],
+    ):
+        assert box[0] >= 0
+        assert box[1] >= 0
+        assert box[0] + box[2] <= 1080
+        assert box[1] + box[3] <= 1080
     assert (
         module.athlete_photo_layout_for_format({"athlete_photo_status": "athlete_photo_missing", "athlete_photo_blocker": "missing"}, {"format_id": "ig_feed_4x5", "height": 1350})[
             "athlete_photo_layout_mode"

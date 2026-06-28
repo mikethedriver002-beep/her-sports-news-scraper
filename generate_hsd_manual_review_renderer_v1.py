@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.25.0-square-context-hierarchy"
+VERSION = "hsd-manual-review-renderer-v1.27.0-square-athlete-proof-panel"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -44,12 +44,14 @@ WNBA_ATHLETE_ROOT = PROJECT_ROOT / "assets" / "leagues" / "wnba" / "athletes"
 ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onboarding_metadata.json"
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
+FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
 RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
-    "square_compact_review_footer,square_context_score_hierarchy,stat_proof_rail,generated_preview_qa"
+    "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
+    "square_athlete_focal_panel,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -1397,6 +1399,62 @@ def parse_verified_stat_performers(packet: Dict[str, Any]) -> List[Dict[str, Any
     return performers
 
 
+def proof_artifact_stat_performers(packet: Dict[str, Any], score: Dict[str, str]) -> List[Dict[str, Any]]:
+    winner = clean(score.get("winner"))
+    loser = clean(score.get("loser"))
+    if not winner or not loser:
+        return []
+    winner_norm = norm(winner)
+    loser_norm = norm(loser)
+    candidates: List[Dict[str, Any]] = []
+    for row in read_csv(input_path(FINAL_SCORE_STAT_PROOF_CSV)):
+        if clean(row.get("fact_type")) != "named_player_stat_line":
+            continue
+        if clean(row.get("recap_candidate")).lower() not in {"yes", "true", "1"}:
+            continue
+        if clean(row.get("review_only")).lower() not in {"yes", "true", "1"}:
+            continue
+        if clean(row.get("publish_action")).lower() not in {"", "none", "none_artifact_only"}:
+            continue
+        matchup_norm = norm(row.get("matchup"))
+        if winner_norm not in matchup_norm or loser_norm not in matchup_norm:
+            continue
+        stats = parse_stat_pairs(row.get("stat_line") or row.get("fact_value"))
+        player = clean(row.get("named_player"))
+        team = clean(row.get("player_team"))
+        if player and team and stats:
+            candidates.append(
+                {
+                    "name": player,
+                    "team": team,
+                    "stats": stats,
+                    "source_text": clean(row.get("fact_value")) or f"{player} ({team}): {clean(row.get('stat_line'))}",
+                    "proof_id": clean(row.get("proof_id")),
+                    "proof_source": FINAL_SCORE_STAT_PROOF_CSV,
+                    "proof_status": clean(row.get("proof_status")),
+                    "proof_review_only": clean(row.get("review_only")),
+                    "proof_source_url": clean(row.get("source_url")),
+                    "proof_source_domain": clean(row.get("source_domain")),
+                    "proof_operator_note_path": clean(row.get("operator_note_path")),
+                    "proof_limitations": clean(row.get("limitations")),
+                }
+            )
+    return candidates
+
+
+def athlete_led_missing_fields(packet: Dict[str, Any], stat_module: Dict[str, Any]) -> List[str]:
+    missing: List[str] = []
+    if not verified_stat_text(packet) and not clean(stat_module.get("proof_source")):
+        missing.append("athlete_name")
+        missing.append("verified stat/story context")
+    elif not clean(stat_module.get("player_name")):
+        missing.append("athlete_name")
+    photo_status = clean(stat_module.get("athlete_photo_status")) or clean(stat_module.get("status"))
+    if photo_status != "approved_local_headshot":
+        missing.append("approved local image/cutout path")
+    return list(dict.fromkeys(missing))
+
+
 def stat_number(stats: List[Dict[str, str]], label: str) -> int:
     for item in stats:
         if clean(item.get("label")).upper() == label:
@@ -1426,8 +1484,20 @@ def last_name(name: str) -> str:
 
 def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -> Dict[str, Any]:
     performers = parse_verified_stat_performers(packet)
+    proof_bridge_used = False
     if not performers:
-        return {"status": "fallback_game_edge_no_verified_stat_text"}
+        performers = proof_artifact_stat_performers(packet, score)
+        proof_bridge_used = bool(performers)
+    if not performers:
+        return {
+            "status": "fallback_game_edge_no_verified_stat_text",
+            "athlete_led_render_status": "athlete_led_blocked_missing_verified_player_context",
+            "athlete_led_missing_fields": "athlete_name, approved local image/cutout path, verified stat/story context",
+            "athlete_led_blocker": (
+                "No athlete-led preview produced: handoff lacks athlete_name/top_performers, "
+                "approved local image/cutout path, and verified stat/story context."
+            ),
+        }
     winner_norm = norm(score.get("winner"))
     winner_short_norm = norm(short_team(score.get("winner", "")))
     preferred = [
@@ -1457,6 +1527,8 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         headline = f"{last_name(player)} + STATEMENT MARGIN" if player else clean(shape.get("game_shape_label"))
     if strength != "lead_ledger":
         headline = f"{last_name(player)} STAT NOTE" if player else "VERIFIED STAT NOTE"
+    athlete_led_ready = clean(photo.get("status")) == "approved_local_headshot" and strength == "lead_ledger"
+    proof_source = clean(selected.get("proof_source"))
     return {
         "status": "verified_player_stat_module" if strength == "lead_ledger" else "verified_supporting_stat_module",
         "eyebrow": "PLAYER LEDGER" if strength == "lead_ledger" else "STAT NOTE",
@@ -1491,11 +1563,23 @@ def select_verified_stat_module(packet: Dict[str, Any], score: Dict[str, str]) -
         "athlete_photo_identity_resolution_decision": clean(photo.get("identity_resolution_decision")),
         "athlete_photo_identity_resolution_source_file": clean(photo.get("identity_resolution_source_file")),
         "athlete_photo_identity_resolution_evidence_url": clean(photo.get("identity_resolution_evidence_url")),
-        "athlete_photo_layout_options": "photo_first_final_score,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback",
+        "athlete_photo_layout_options": "photo_first_final_score,square_photo_first_score_panel,compact_headshot_chip,logo_first_fallback,safe_no_photo_fallback",
         "callouts": stats[:3],
         "player_name": player,
         "team": team,
         "source_text": clean(selected.get("source_text")),
+        "proof_artifact_bridge_used": str(bool(proof_bridge_used)).lower(),
+        "proof_id": clean(selected.get("proof_id")),
+        "proof_source": proof_source,
+        "proof_status": clean(selected.get("proof_status")),
+        "proof_review_only": clean(selected.get("proof_review_only")),
+        "proof_source_url": clean(selected.get("proof_source_url")),
+        "proof_source_domain": clean(selected.get("proof_source_domain")),
+        "proof_operator_note_path": clean(selected.get("proof_operator_note_path")),
+        "proof_limitations": clean(selected.get("proof_limitations")),
+        "athlete_led_render_status": "athlete_led_review_preview_ready" if athlete_led_ready else "athlete_led_blocked_missing_approved_photo_or_lead_stat",
+        "athlete_led_missing_fields": ", ".join(athlete_led_missing_fields(packet, {**photo, "player_name": player, "proof_source": proof_source})),
+        "athlete_led_blocker": "" if athlete_led_ready else (clean(photo.get("blocker")) or "Athlete-led preview needs a lead verified stat and approved local athlete image."),
         "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required" if strength == "lead_ledger" else "verified_low_stat_context_manual_crosscheck_required",
         "stat_source_label": "Verified player/stat text available" if strength == "lead_ledger" else "Verified stat context available",
         "stat_review_cue": "Confirm the named performer and stat line against source proof before approval." if strength == "lead_ledger" else "Use this as supporting context only; do not make the player the lead unless source proof supports a stronger angle.",
@@ -1829,7 +1913,8 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
     cue_x = x + (w - cue_w) // 2
     cue_y = y + h - cue_h - 18
     draw.rounded_rectangle((cue_x, cue_y, cue_x + cue_w, cue_y + cue_h), radius=6, fill=cue_fill, outline=cue_outline, width=1)
-    draw_reference_text(image, (cue_x + 8, cue_y + 3, cue_w - 16, cue_h - 4), approval_cue, "context", 10, 8, PALETTE["ink"], max_lines=1, align="center")
+    visual_cue = "LOGO CHECK" if result.get("approved") else approval_cue
+    draw_reference_text(image, (cue_x + 8, cue_y + 3, cue_w - 16, cue_h - 4), visual_cue, "context", 10, 8, PALETTE["ink"], max_lines=1, align="center")
     return {
         "team": clean(team),
         "team_id": clean(result.get("team_id")),
@@ -2177,7 +2262,7 @@ def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int],
             layer.alpha_composite(photo, (photo_x, photo_y))
             draw.rounded_rectangle(card, radius=18, outline=(*accent, 245), width=2)
             image.alpha_composite(layer)
-            draw_reference_text(image, (left + 10, y + h - 33, slot_w - 20, 18), "APPROVED PHOTO", "context", 10, 7, PALETTE["ink"], max_lines=1, align="center")
+            draw_reference_text(image, (left + 10, y + h - 33, slot_w - 20, 18), "PHOTO CHECK", "context", 10, 7, PALETTE["ink"], max_lines=1, align="center")
             return slot_w + 36, "premium_headshot_left"
 
         size = max(44 if compact else 84, min(h - 20, 62 if compact else 112))
@@ -2199,7 +2284,7 @@ def draw_approved_athlete_photo_tile(image: Any, box: Tuple[int, int, int, int],
         draw.rounded_rectangle((left, top, left + size, top + size), radius=radius, outline=(*accent, 245), width=2)
         image.alpha_composite(layer)
         if not compact:
-            draw_reference_text(image, (left, top + size - 19, size, 16), "APPROVED PHOTO", "context", 9, 7, PALETTE["ink"], max_lines=1, align="center")
+            draw_reference_text(image, (left, top + size - 19, size, 16), "PHOTO CHECK", "context", 9, 7, PALETTE["ink"], max_lines=1, align="center")
         return size + (34 if compact else 42), "compact_headshot_chip"
     except Exception:
         return 0, "safe_no_photo_fallback"
@@ -2300,27 +2385,41 @@ def athlete_photo_render_source_path(module: Dict[str, Any], variant_id: str) ->
 
 def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     width, height = int(format_spec.get("width", 1080)), int(format_spec.get("height", 1350))
+    format_id = clean(format_spec.get("format_id"))
     is_story = height > 1500
-    if is_story:
+    is_square = format_id == "square_feed_1x1" or height <= 1100
+    if is_square:
+        photo_box = [60, 346, 308, 384]
+        score_top = 360
+        score_h = 124
+        score_gap = 20
+        stat_box = [60, 748, 960, 96]
+        hook_box = [60, 862, 960, 112]
+        context_extra_gap = 28
+    elif is_story:
         photo_box = [72, 505, 410, 710]
         score_top = 520
         score_h = 206
+        score_gap = 24
         stat_box = [72, 1246, 936, 168]
         hook_box = [72, 1440, 936, 172]
+        context_extra_gap = 36
     else:
         photo_box = [58, 372, 408, 590]
         score_top = 398
         score_h = 176
+        score_gap = 24
         stat_box = [58, 990, 964, 132]
         hook_box = [58, 1148, 964, 112]
+        context_extra_gap = 36
     score_x = photo_box[0] + photo_box[2] + 28
     score_w = width - score_x - photo_box[0]
     winner_row = [score_x, score_top, score_w, score_h]
-    loser_row = [score_x, score_top + score_h + 24, score_w, score_h - 16]
-    context_box = [score_x, score_top + score_h * 2 + 36, score_w, 54]
+    loser_row = [score_x, score_top + score_h + score_gap, score_w, score_h - 16]
+    context_box = [score_x, score_top + score_h * 2 + context_extra_gap, score_w, 54]
     return {
         "template_family": "approved_athlete_photo_final_score",
-        "format_id": clean(format_spec.get("format_id")),
+        "format_id": format_id,
         "photo_stage_box": photo_box,
         "photo_face_focus_box": [photo_box[0] + 48, photo_box[1] + int(photo_box[3] * 0.34), photo_box[2] - 96, int(photo_box[3] * 0.32)],
         "winner_score_row_box": winner_row,
@@ -2392,7 +2491,7 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     draw.rounded_rectangle((x + 22, y + h - 58, x + 22 + label_w, y + h - 20), radius=8, fill=(3, 5, 10, 232), outline=(248, 250, 255, 150), width=1)
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
-    variant_label = "APPROVED SOURCE / REVIEW CROP" if clean(module.get("athlete_photo_review_variant_status")) == "review_variant_available" else "APPROVED PHOTO"
+    variant_label = "SOURCE PHOTO / REVIEW CROP" if clean(module.get("athlete_photo_review_variant_status")) == "review_variant_available" else "PHOTO CHECK"
     draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "PLAYER FOCUS", "context", 19, 10, accent, max_lines=1, align="left")
     draw_reference_text(image, (x + 36, y + 58, w - 72, 42), player, "context", 26, 14, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
     draw_reference_text(image, (x + 30, y + h - 52, label_w - 16, 28), variant_label, "context", 13, 8, accent, max_lines=1, align="center")
@@ -2429,17 +2528,20 @@ def draw_photo_first_score_row(
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
     x, y, w, h = box
+    compact = h < 112
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16, width=2)
     draw = ImageDraw.Draw(image, "RGBA")
     draw_stat_proof_rail(image, box, accent, compact=h < 132)
     chip_w = min(338, max(260, w // 3))
-    draw_premium_stat_chips(image, (x + w - chip_w - 22, y + 18, chip_w, h - 36), module.get("callouts") or [], accent, compact=h < 132)
+    draw_premium_stat_chips(image, (x + w - chip_w - 22, y + (18 if not compact else 20), chip_w, h - (36 if not compact else 32)), module.get("callouts") or [], accent, compact=h < 132)
     player = clean(module.get("player_name"))
     source_label = "STAT PROOF CHECK"
     heading = clean(module.get("headline")) or (f"{last_name(player)} LEDGER" if player else "PLAYER LEDGER")
     text_w = max(390, w - chip_w - 72)
-    draw_reference_text(image, (x + 28, y + 15, text_w, 24), f"PHOTO-FIRST / {source_label}", "context", 19, 11, accent, max_lines=1)
-    draw_reference_text(image, (x + 28, y + 42, text_w, 46), heading, "display", 40, 22, PALETTE["ink"], max_lines=1)
+    draw_reference_text(image, (x + 28, y + (15 if not compact else 14), text_w, 24), f"PHOTO-FIRST / {source_label}", "context", 19, 11, accent, max_lines=1)
+    draw_reference_text(image, (x + 28, y + (42 if not compact else 40), text_w, 46), heading, "display", 40 if not compact else 34, 22, PALETTE["ink"], max_lines=1)
+    if compact:
+        return
     draw_reference_text(image, (x + 28, y + 88, text_w, max(34, h - 94)), clean(module.get("editorial_line")) or clean(module.get("body")), "body", 23, 13, (235, 239, 247), max_lines=2, uppercase=False)
 
 
@@ -2616,8 +2718,7 @@ def draw_reference_final_score_template(image: Any, packet: Dict[str, Any], temp
     stat_module = select_verified_stat_module(packet, score)
     format_id = clean(format_spec.get("format_id"))
     if (
-        format_id != "square_feed_1x1"
-        and clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}
+        clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}
         and photo_first_eligible(stat_module)
         and draw_photo_first_final_score_template(image, packet, template, format_spec, score, reference, stat_module)
     ):
@@ -2774,6 +2875,18 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "content_module_stat_count": str(len(stat_module.get("callouts") or [])),
             "content_module_player": clean(stat_module.get("player_name")),
             "content_module_source_text": clean(stat_module.get("source_text")),
+            "proof_artifact_bridge_used": clean(stat_module.get("proof_artifact_bridge_used")),
+            "proof_id": clean(stat_module.get("proof_id")),
+            "proof_source": clean(stat_module.get("proof_source")),
+            "proof_status": clean(stat_module.get("proof_status")),
+            "proof_review_only": clean(stat_module.get("proof_review_only")),
+            "proof_source_url": clean(stat_module.get("proof_source_url")),
+            "proof_source_domain": clean(stat_module.get("proof_source_domain")),
+            "proof_operator_note_path": clean(stat_module.get("proof_operator_note_path")),
+            "proof_limitations": clean(stat_module.get("proof_limitations")),
+            "athlete_led_render_status": clean(stat_module.get("athlete_led_render_status")),
+            "athlete_led_missing_fields": clean(stat_module.get("athlete_led_missing_fields")),
+            "athlete_led_blocker": clean(stat_module.get("athlete_led_blocker")),
             "athlete_photo_status": clean(stat_module.get("athlete_photo_status")),
             "athlete_photo_path": clean(stat_module.get("athlete_photo_path")),
             "athlete_photo_approval_marker_path": clean(stat_module.get("athlete_photo_approval_marker_path")),
@@ -2828,6 +2941,11 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "content_module_stat_count": "0",
         "content_module_player": "",
         "content_module_source_text": "",
+        "proof_artifact_bridge_used": clean(stat_module.get("proof_artifact_bridge_used")) or "false",
+        "proof_source": clean(stat_module.get("proof_source")),
+        "athlete_led_render_status": clean(stat_module.get("athlete_led_render_status")) or "athlete_led_blocked_missing_verified_player_context",
+        "athlete_led_missing_fields": clean(stat_module.get("athlete_led_missing_fields")) or "athlete_name, approved local image/cutout path, verified stat/story context",
+        "athlete_led_blocker": clean(stat_module.get("athlete_led_blocker")) or "No athlete-led preview produced: handoff lacks athlete_name/top_performers, approved local image/cutout path, and verified stat/story context.",
         "athlete_photo_status": "athlete_photo_not_applicable",
         "athlete_photo_approval_cue": "NO PLAYER SELECTED",
         "athlete_photo_review_required": "true",
@@ -2860,10 +2978,10 @@ def athlete_photo_layout_for_format(content_module: Dict[str, Any], spec: Dict[s
         }
     if clean(spec.get("format_id")) == "square_feed_1x1" or int(spec.get("height", 0)) <= 1100:
         return {
-            "athlete_photo_layout_mode": "compact_headshot_chip",
-            "athlete_photo_layout_status": "approved_photo_compact_layout",
-            "athlete_photo_layout_detail": "Approved local headshot uses a compact chip to preserve the square score layout.",
-            "athlete_photo_template_family": "compact_athlete_photo_score_fallback",
+            "athlete_photo_layout_mode": "square_photo_first_score_panel",
+            "athlete_photo_layout_status": "approved_photo_first_square_template",
+            "athlete_photo_layout_detail": "Approved local headshot becomes a square-native focal panel with compact score rails and proof module.",
+            "athlete_photo_template_family": "approved_square_athlete_photo_final_score",
         }
     return {
         "athlete_photo_layout_mode": "photo_first_final_score",
@@ -3136,6 +3254,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
+        f"- Athlete-led render: `{clean(content_module.get('athlete_led_render_status')) or 'not_evaluated'}` missing=`{clean(content_module.get('athlete_led_missing_fields')) or 'none'}`",
+        f"- Athlete proof bridge: used=`{clean(content_module.get('proof_artifact_bridge_used')) or 'false'}` source=`{clean(content_module.get('proof_source')) or 'handoff'}` proof_id=`{clean(content_module.get('proof_id')) or 'n/a'}`",
         f"- Athlete photo: `{clean(content_module.get('athlete_photo_status')) or 'not_applicable'}` / {clean(content_module.get('athlete_photo_approval_cue')) or 'n/a'}",
         f"- Athlete identity: `{clean(content_module.get('athlete_photo_identity_review_status')) or 'not_applicable'}` / resolution=`{clean(content_module.get('athlete_photo_identity_resolution_status')) or 'not_recorded'}`",
         f"- Stat source confidence: `{clean(content_module.get('stat_source_confidence')) or 'not_applicable'}`",
