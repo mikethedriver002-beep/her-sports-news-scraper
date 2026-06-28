@@ -2190,7 +2190,7 @@ def render_action_photo_research_packet(rows: List[Mapping[str, str]], issues: L
                 "",
             ]
         )
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def main() -> int:
