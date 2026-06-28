@@ -247,6 +247,12 @@ ASSET_REVIEW_READINESS_FIELDS = [
     "future_download_intake_file",
     "render_readiness",
     "asset_review_blocker",
+    "source_identity_gap",
+    "team_entity_name_check",
+    "local_candidate_asset_gap",
+    "source_candidate_scope",
+    "human_fields_to_fill_now",
+    "human_fields_to_keep_blank",
     "future_download_intake_status",
     "next_manual_action",
     "download_approved",
@@ -673,6 +679,8 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Asset review readiness rows: `{report['totals']['asset_review_readiness_rows']}`",
         f"- Asset review readiness download-approved yes rows: `{report['totals']['asset_review_readiness_download_approved_yes_rows']}`",
         f"- Asset review readiness blank source_url rows: `{report['totals']['asset_review_readiness_blank_source_url_rows']}`",
+        f"- Asset review readiness source/identity gap rows: `{report['totals']['asset_review_readiness_source_identity_gap_rows']}`",
+        f"- Asset review readiness local candidate gap rows: `{report['totals']['asset_review_readiness_local_candidate_gap_rows']}`",
         f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
         f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
@@ -1618,6 +1626,66 @@ def asset_review_readiness_next_action(row: Mapping[str, str], bucket: str) -> s
     return "No fix required from this generated board; keep review-only guardrails and do not approve or publish."
 
 
+def asset_review_source_identity_gap(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "official_roster_source_verify_before_photo_review":
+        return "official_roster_or_team_source_not_manually_confirmed_for_named_photo_review"
+    if bucket == "local_logo_candidate_needed_before_logo_review":
+        return "logo_source_metadata_reviewed_but_visual_logo_identity_not_reviewable_without_local_candidate"
+    if bucket == "local_athlete_candidate_needed_before_photo_review":
+        return "athlete_identity_not_reviewable_without_named_local_photo_candidate"
+    if bucket == "future_quarantine_download_intake_prep":
+        return "future_download_metadata_not_human_authorized"
+    return "no_source_identity_gap_from_generated_board"
+
+
+def asset_review_team_entity_check(row: Mapping[str, str], bucket: str) -> str:
+    entity = clean(row.get("candidate_entity_id"))
+    if bucket == "official_roster_source_verify_before_photo_review":
+        return f"confirm_candidate_entity_id_matches_official_team_or_roster_context_before_marking_source_reviewed:{entity}"
+    if bucket == "local_logo_candidate_needed_before_logo_review":
+        return f"confirm_local_logo_candidate_later_matches_entity_before_any_logo_identity_review:{entity}"
+    return f"confirm_entity_context_before_any_future_manual_asset_action:{entity}"
+
+
+def asset_review_local_candidate_gap(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "official_roster_source_verify_before_photo_review":
+        return "named_local_athlete_photo_candidate_missing"
+    if bucket == "local_logo_candidate_needed_before_logo_review":
+        return "local_logo_candidate_file_missing"
+    if bucket == "local_athlete_candidate_needed_before_photo_review":
+        return "named_local_athlete_photo_candidate_missing"
+    if bucket == "future_quarantine_download_intake_prep":
+        return "human_approved_quarantine_candidate_missing"
+    return "no_local_candidate_gap_from_generated_board"
+
+
+def asset_review_source_candidate_scope(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "official_roster_source_verify_before_photo_review":
+        return "advisory_source_candidate_only_not_roster_truth_until_manual_official_confirmation"
+    if bucket == "local_logo_candidate_needed_before_logo_review":
+        return "source_reviewed_metadata_only_not_visual_logo_approval"
+    return "review_only_candidate_context_not_asset_approval"
+
+
+def asset_review_fields_to_fill_now(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "official_roster_source_verify_before_photo_review":
+        return "after_manual_source_open_only:source_reviewed;source_allowed_for_review_only;rights_reviewed;operator_notes"
+    if bucket == "local_logo_candidate_needed_before_logo_review":
+        return "none_from_generated_board;wait_for_human_local_logo_candidate_or_human_download_intake"
+    if bucket == "local_athlete_candidate_needed_before_photo_review":
+        return "none_from_generated_board;wait_for_named_local_photo_candidate_or_human_download_intake"
+    if bucket == "future_quarantine_download_intake_prep":
+        return "none_from_generated_board;future_download_fields_require_human_edited_intake"
+    return "none_from_generated_board"
+
+
+def asset_review_fields_to_keep_blank(row: Mapping[str, str], bucket: str) -> str:
+    return (
+        "download_approved;source_url;entity_id;rights_class;identity_confidence;"
+        "intended_review_only_use;operator_decision;reviewed_by;reviewed_at_local"
+    )
+
+
 def asset_review_readiness_rows(triage_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
     rows: list[Dict[str, str]] = []
     for triage in triage_rows:
@@ -1645,6 +1713,12 @@ def asset_review_readiness_rows(triage_rows: list[Dict[str, str]]) -> list[Dict[
                 "future_download_intake_file": clean(triage.get("future_download_intake_file")),
                 "render_readiness": clean(triage.get("render_readiness")),
                 "asset_review_blocker": asset_review_blocker(triage, bucket),
+                "source_identity_gap": asset_review_source_identity_gap(triage, bucket),
+                "team_entity_name_check": asset_review_team_entity_check(triage, bucket),
+                "local_candidate_asset_gap": asset_review_local_candidate_gap(triage, bucket),
+                "source_candidate_scope": asset_review_source_candidate_scope(triage, bucket),
+                "human_fields_to_fill_now": asset_review_fields_to_fill_now(triage, bucket),
+                "human_fields_to_keep_blank": asset_review_fields_to_keep_blank(triage, bucket),
                 "future_download_intake_status": "human_edited_intake_required_no_generated_authorization",
                 "next_manual_action": asset_review_readiness_next_action(triage, bucket),
                 "download_approved": "no",
@@ -1690,6 +1764,16 @@ def asset_review_readiness_rows(triage_rows: list[Dict[str, str]]) -> list[Dict[
 
 def render_asset_review_readiness(rows: list[Dict[str, str]], generated_at: str) -> str:
     bucket_counts = Counter(row["asset_review_readiness_bucket"] for row in rows)
+    source_identity_gap_rows = sum(
+        1
+        for row in rows
+        if clean(row.get("source_identity_gap")) not in {"", "no_source_identity_gap_from_generated_board"}
+    )
+    local_candidate_gap_rows = sum(
+        1
+        for row in rows
+        if clean(row.get("local_candidate_asset_gap")) not in {"", "no_local_candidate_gap_from_generated_board"}
+    )
     lines = [
         "# Hockey/Softball Asset Review Readiness Board",
         "",
@@ -1707,6 +1791,8 @@ def render_asset_review_readiness(rows: list[Dict[str, str]], generated_at: str)
         f"- Logo rows: `{sum(1 for row in rows if clean(row.get('asset_domain')) == 'logo')}`",
         f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
         f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        f"- Source/identity gap cue rows: `{source_identity_gap_rows}`",
+        f"- Local candidate gap cue rows: `{local_candidate_gap_rows}`",
         "",
         "## Readiness Buckets",
         "",
@@ -1720,26 +1806,31 @@ def render_asset_review_readiness(rows: list[Dict[str, str]], generated_at: str)
             "- Verify official roster/team source rows before preparing any athlete photo review intake.",
             "- Treat broad public, reputable, licensed/news/photo, and gray-area links as review-only research leads unless official confirmation exists.",
             "- Use `review_board_to_open` for context and `manual_intake_file_to_open` only for human-entered review notes.",
+            "- Use `source_identity_gap`, `team_entity_name_check`, and `local_candidate_asset_gap` to decide what blocks the row before touching intake fields.",
+            "- Use `human_fields_to_fill_now` and `human_fields_to_keep_blank` so source review does not drift into identity, download, or approval state.",
             "- Future quarantine-download intake requires a later human-edited row; generated rows do not authorize download or approval.",
             "",
             "## Board Preview",
             "",
-            "| Rank | Readiness Bucket | Sport | Asset | Entity | Source Tier | Board | Intake | Blocker | Next Manual Action |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| Rank | Readiness Bucket | Sport | Asset | Entity | Triage Row | Board | Intake | Gap Cue | Team/Entity Check | Fill Now | Keep Blank | Next Manual Action |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for row in rows[:38]:
         lines.append(
-            "| {rank} | {bucket} | {sport} | {asset} | {entity} | {tier} | {board} | {intake} | {blocker} | {action} |".format(
+            "| {rank} | {bucket} | {sport} | {asset} | {entity} | {triage_row} | {board} | {intake} | {gap} | {team_check} | {fill_now} | {keep_blank} | {action} |".format(
                 rank=clean(row.get("readiness_rank")),
                 bucket=clean(row.get("asset_review_readiness_bucket")),
                 sport=clean(row.get("sport_family")),
                 asset=clean(row.get("asset_domain")),
                 entity=clean(row.get("candidate_entity_id")).replace("|", "/"),
-                tier=clean(row.get("source_tier")).replace("|", "/"),
+                triage_row=clean(row.get("triage_row_ref")).replace("|", "/"),
                 board=clean(row.get("review_board_to_open")).replace("|", "/"),
                 intake=clean(row.get("manual_intake_file_to_open")).replace("|", "/"),
-                blocker=clean(row.get("asset_review_blocker")).replace("|", "/"),
+                gap=clean(row.get("source_identity_gap")).replace("|", "/"),
+                team_check=clean(row.get("team_entity_name_check")).replace("|", "/"),
+                fill_now=clean(row.get("human_fields_to_fill_now")).replace("|", "/"),
+                keep_blank=clean(row.get("human_fields_to_keep_blank")).replace("|", "/"),
                 action=clean(row.get("next_manual_action")).replace("|", "/"),
             )
         )
@@ -1943,6 +2034,17 @@ def main() -> int:
     asset_review_readiness_athlete_rows = sum(1 for row in asset_review_readiness if clean(row.get("asset_domain")) == "athlete_photo")
     asset_review_readiness_download_approved_yes_rows = sum(1 for row in asset_review_readiness if clean(row.get("download_approved")).lower() == "yes")
     asset_review_readiness_blank_source_url_rows = sum(1 for row in asset_review_readiness if not clean(row.get("source_url")))
+    asset_review_readiness_source_identity_gap_rows = sum(
+        1
+        for row in asset_review_readiness
+        if clean(row.get("source_identity_gap")) not in {"", "no_source_identity_gap_from_generated_board"}
+    )
+    asset_review_readiness_team_entity_check_rows = sum(1 for row in asset_review_readiness if clean(row.get("team_entity_name_check")))
+    asset_review_readiness_local_candidate_gap_rows = sum(
+        1
+        for row in asset_review_readiness
+        if clean(row.get("local_candidate_asset_gap")) not in {"", "no_local_candidate_gap_from_generated_board"}
+    )
     quarantine_download_rows = quarantine_download_intake_rows(action_rows)
     quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
     quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
@@ -1973,6 +2075,9 @@ def main() -> int:
             "asset_review_readiness_athlete_rows": asset_review_readiness_athlete_rows,
             "asset_review_readiness_download_approved_yes_rows": asset_review_readiness_download_approved_yes_rows,
             "asset_review_readiness_blank_source_url_rows": asset_review_readiness_blank_source_url_rows,
+            "asset_review_readiness_source_identity_gap_rows": asset_review_readiness_source_identity_gap_rows,
+            "asset_review_readiness_team_entity_check_rows": asset_review_readiness_team_entity_check_rows,
+            "asset_review_readiness_local_candidate_gap_rows": asset_review_readiness_local_candidate_gap_rows,
             "quarantine_download_intake_rows": len(quarantine_download_rows),
             "quarantine_download_logo_rows": quarantine_download_logo_rows,
             "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
@@ -2043,6 +2148,9 @@ def main() -> int:
             "athlete_rows": asset_review_readiness_athlete_rows,
             "download_approved_yes_rows": asset_review_readiness_download_approved_yes_rows,
             "blank_source_url_rows": asset_review_readiness_blank_source_url_rows,
+            "source_identity_gap_rows": asset_review_readiness_source_identity_gap_rows,
+            "team_entity_check_rows": asset_review_readiness_team_entity_check_rows,
+            "local_candidate_gap_rows": asset_review_readiness_local_candidate_gap_rows,
         },
         "quarantine_download_intake": {
             "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
@@ -2178,6 +2286,9 @@ def main() -> int:
         "softball_rows": sum(1 for row in asset_review_readiness if clean(row.get("sport_family")) == "softball"),
         "download_approved_yes_rows": asset_review_readiness_download_approved_yes_rows,
         "blank_source_url_rows": asset_review_readiness_blank_source_url_rows,
+        "source_identity_gap_rows": asset_review_readiness_source_identity_gap_rows,
+        "team_entity_check_rows": asset_review_readiness_team_entity_check_rows,
+        "local_candidate_gap_rows": asset_review_readiness_local_candidate_gap_rows,
         "readiness_bucket_counts": dict(sorted(Counter(row["asset_review_readiness_bucket"] for row in asset_review_readiness).items())),
         "worksheet_md": ASSET_REVIEW_READINESS_MD.as_posix(),
         "worksheet_csv": ASSET_REVIEW_READINESS_CSV.as_posix(),

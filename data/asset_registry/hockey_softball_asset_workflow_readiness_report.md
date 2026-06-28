@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-28T16:29:38.362354+00:00`
+- Generated: `2026-06-28T17:59:16.169700+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First
@@ -52,6 +52,8 @@
 - Asset review readiness rows: `38`
 - Asset review readiness download-approved yes rows: `0`
 - Asset review readiness blank source_url rows: `38`
+- Asset review readiness source/identity gap rows: `38`
+- Asset review readiness local candidate gap rows: `38`
 - Quarantine download intake rows: `74`
 - Quarantine download-approved yes rows: `0`
 
