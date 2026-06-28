@@ -21,6 +21,9 @@ ACTION_QUEUE_JSON = Path("data/asset_registry/hockey_softball_asset_review_actio
 BATCH_SOURCE_REVIEW_MD = Path("data/asset_registry/hockey_softball_batch_source_review_helper.md")
 BATCH_SOURCE_REVIEW_CSV = Path("data/asset_registry/hockey_softball_batch_source_review_helper.csv")
 BATCH_SOURCE_REVIEW_JSON = Path("data/asset_registry/hockey_softball_batch_source_review_helper.json")
+NEXT_DECISION_WORKSHEET_MD = Path("data/asset_registry/hockey_softball_next_decision_worksheet.md")
+NEXT_DECISION_WORKSHEET_CSV = Path("data/asset_registry/hockey_softball_next_decision_worksheet.csv")
+NEXT_DECISION_WORKSHEET_JSON = Path("data/asset_registry/hockey_softball_next_decision_worksheet.json")
 
 ACTION_QUEUE_FIELDS = [
     "priority",
@@ -67,6 +70,38 @@ BATCH_SOURCE_REVIEW_FIELDS = [
     "current_source_reviewed",
     "current_identity_status",
     "local_asset_needed_later",
+    "guardrail_note",
+]
+
+NEXT_DECISION_WORKSHEET_FIELDS = [
+    "worksheet_order",
+    "worksheet_section",
+    "sport_family",
+    "sport_label",
+    "asset_domain",
+    "display_name",
+    "candidate_id",
+    "review_state",
+    "source_to_open",
+    "board_to_open",
+    "contact_sheet_to_open",
+    "intake_to_fill",
+    "intake_row_key",
+    "fields_mike_can_fill_now",
+    "fields_that_must_stay_blank",
+    "fields_that_must_remain_hold",
+    "operator_source_reviewed",
+    "operator_source_allowed_for_review_only",
+    "operator_identity_match",
+    "operator_rights_reviewed",
+    "operator_decision",
+    "source_url_to_record",
+    "operator_notes",
+    "reviewed_by",
+    "reviewed_at_local",
+    "local_asset_present",
+    "local_asset_needed_later",
+    "do_not_touch",
     "guardrail_note",
 ]
 
@@ -367,6 +402,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Source review helper: `data/asset_registry/hockey_softball_source_review_helper_report.md`",
         "- Review action queue: `data/asset_registry/hockey_softball_asset_review_action_queue.md`",
         "- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`",
+        "- Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
         "",
@@ -387,6 +423,9 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Source-reviewable now rows: `{report['totals']['batch_source_review_now_rows']}`",
         f"- Next batch rows: `{report['totals']['batch_source_review_next_rows']}`",
         f"- Local asset needed later rows: `{report['totals']['batch_source_review_local_asset_needed_later_rows']}`",
+        f"- Next decision worksheet rows: `{report['totals']['next_decision_worksheet_rows']}`",
+        f"- Next decision logo rows: `{report['totals']['next_decision_logo_rows']}`",
+        f"- Next decision athlete rows: `{report['totals']['next_decision_athlete_rows']}`",
         "",
         "## Sport Boards",
         "",
@@ -539,6 +578,102 @@ def batch_source_review_rows(action_rows: list[Dict[str, str]], *, next_limit: i
     return rows
 
 
+def next_decision_worksheet_rows(
+    action_rows: list[Dict[str, str]],
+    *,
+    logo_limit: int = 6,
+    athlete_limit: int = 6,
+) -> list[Dict[str, str]]:
+    logo_review_now = [
+        row
+        for row in action_rows
+        if clean(row.get("asset_domain")) == "logo" and clean(row.get("current_source_reviewed")).lower() != "yes"
+    ]
+    logo_wait_rows = [
+        row
+        for row in action_rows
+        if clean(row.get("asset_domain")) == "logo"
+        and clean(row.get("current_source_reviewed")).lower() == "yes"
+        and clean(row.get("local_asset_present")).lower() != "yes"
+    ]
+    logo_rows = logo_review_now[:logo_limit]
+    if len(logo_rows) < logo_limit:
+        logo_rows.extend(logo_wait_rows[: logo_limit - len(logo_rows)])
+    athlete_rows = [
+        row
+        for row in action_rows
+        if clean(row.get("asset_domain")) == "athlete_photo" and clean(row.get("current_source_reviewed")).lower() != "yes"
+    ][:athlete_limit]
+    selected: list[tuple[str, Dict[str, str]]] = []
+    for row in logo_rows:
+        if clean(row.get("current_source_reviewed")).lower() == "yes":
+            selected.append(("logo_wait_for_local_asset_after_source_review", row))
+        else:
+            selected.append(("logo_source_identity_review", row))
+    selected.extend(("athlete_source_only_review", row) for row in athlete_rows)
+    rows: list[Dict[str, str]] = []
+    for index, (section, row) in enumerate(selected, start=1):
+        asset_domain = clean(row.get("asset_domain"))
+        local_asset_present = clean(row.get("local_asset_present")) or "no"
+        if asset_domain == "logo":
+            if clean(row.get("current_source_reviewed")).lower() == "yes":
+                fields_now = "none; source and identity are already recorded in the logo intake, so wait for a manually supplied local logo asset before any approval-state review"
+                fields_blank = "generated worksheet cells stay blank; do not restamp reviewed_by/reviewed_at_local unless Mike is correcting the logo intake after reopening the source"
+            else:
+                fields_now = "operator_decision; source_reviewed; identity_match; source_url_to_record; operator_notes; reviewed_by; reviewed_at_local"
+                fields_blank = "generated worksheet cells stay blank until Mike manually opens the source; local asset path and registry action stay held until a local logo asset exists"
+            do_not_touch = "local logo files; approval_status; registry_action; publish_ready; auto_approval; auto_publish; move_files; paid_apis; asset_downloads"
+        else:
+            fields_now = "source_reviewed; source_allowed_for_review_only; rights_reviewed; source_url_to_record; operator_notes; reviewed_by; reviewed_at_local"
+            fields_blank = "operator_decision; identity_verified; local_file_reviewed; approval_status; registry_action; local_candidate_path; approved_marker_path until named athlete evidence and a local candidate asset exist"
+            do_not_touch = (
+                "operator_decision; identity_verified; local_file_reviewed; approval_status; registry_action; "
+                "local_candidate_path; approved_marker_path; headshot.png; .approved; publish_ready; auto_approval; auto_publish; move_files"
+            )
+        rows.append(
+            {
+                "worksheet_order": f"ND{index:02d}",
+                "worksheet_section": section,
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "asset_domain": asset_domain,
+                "display_name": clean(row.get("display_name")),
+                "candidate_id": clean(row.get("candidate_id")),
+                "review_state": clean(row.get("review_state")),
+                "source_to_open": clean(row.get("source_url")),
+                "board_to_open": clean(row.get("board_to_open")),
+                "contact_sheet_to_open": clean(row.get("contact_sheet_to_open")),
+                "intake_to_fill": clean(row.get("intake_to_fill")),
+                "intake_row_key": "; ".join(
+                    part
+                    for part in [
+                        f"sport_family={clean(row.get('sport_family'))}",
+                        f"entity_id={clean(row.get('entity_id'))}",
+                        f"candidate_id={clean(row.get('candidate_id'))}",
+                    ]
+                    if not part.endswith("=")
+                ),
+                "fields_mike_can_fill_now": fields_now,
+                "fields_that_must_stay_blank": fields_blank,
+                "fields_that_must_remain_hold": clean(row.get("fields_that_must_remain_hold")),
+                "operator_source_reviewed": "",
+                "operator_source_allowed_for_review_only": "",
+                "operator_identity_match": "",
+                "operator_rights_reviewed": "",
+                "operator_decision": "",
+                "source_url_to_record": "",
+                "operator_notes": "",
+                "reviewed_by": "",
+                "reviewed_at_local": "",
+                "local_asset_present": local_asset_present,
+                "local_asset_needed_later": "no" if local_asset_present.lower() == "yes" else "yes",
+                "do_not_touch": do_not_touch,
+                "guardrail_note": "review-only worksheet; generated human-decision cells are blank; no downloads; no approval-state changes; no headshot or marker writes",
+            }
+        )
+    return rows
+
+
 def render_batch_source_review_helper(batch_rows: list[Dict[str, str]], generated_at: str, *, next_limit: int = 10) -> str:
     source_now = [row for row in batch_rows if row["batch_bucket"] == "source_review_now"]
     already_reviewed = [row for row in batch_rows if row["batch_bucket"] == "source_already_reviewed_wait_for_local_asset"]
@@ -593,6 +728,62 @@ def render_batch_source_review_helper(batch_rows: list[Dict[str, str]], generate
     return "\n".join(lines)
 
 
+def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str) -> str:
+    logo_rows = [row for row in rows if row["asset_domain"] == "logo"]
+    athlete_rows = [row for row in rows if row["asset_domain"] == "athlete_photo"]
+    lines = [
+        "# Hockey/Softball Next Decision Worksheet",
+        "",
+        f"- Generated: `{generated_at}`",
+        f"- Rows: `{len(rows)}`",
+        f"- Logo decision rows: `{len(logo_rows)}`",
+        f"- Athlete source-only rows: `{len(athlete_rows)}`",
+        "- Guardrails: review-only worksheet, no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` marker writes, no publish-ready movement, no publishing.",
+        "",
+        "## How To Use",
+        "",
+        "1. Open each `source_to_open` manually, then the linked `board_to_open` if context is needed.",
+        "2. Use the worksheet CSV for the next human pass; every generated human-decision cell is intentionally blank.",
+        "3. For logo rows, Mike may fill the listed source/identity fields after manual source review, but registry action stays hold-only until a local logo asset exists.",
+        "4. For athlete rows, Mike may fill source/rights fields after opening the source page, but identity/local-file/approval fields stay blank or held until a named athlete and local candidate asset exist.",
+        "5. Do not download assets, write headshots, create `.approved` markers, move files, or publish from this worksheet.",
+        "",
+        "## Next Decision Rows",
+        "",
+    ]
+    if not rows:
+        lines.append("- No next decision rows are available; rerun the workflow readiness generator after source candidates or local assets change.")
+    for row in rows:
+        lines.extend(
+            [
+                f"### {row['worksheet_order']} - {row['sport_label']} / {row['asset_domain']} / {row['display_name']}",
+                "",
+                f"- Section: `{row['worksheet_section']}`",
+                f"- Source to open: `{row['source_to_open']}`",
+                f"- Board: `{row['board_to_open']}`",
+                f"- Intake: `{row['intake_to_fill']}`",
+                f"- Row key: `{row['intake_row_key']}`",
+                f"- Mike can fill now after manual review: `{row['fields_mike_can_fill_now']}`",
+                f"- Must stay blank: `{row['fields_that_must_stay_blank']}`",
+                f"- Must remain hold: `{row['fields_that_must_remain_hold']}`",
+                f"- Do not touch: `{row['do_not_touch']}`",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## CSV Reminder",
+            "",
+            f"- Worksheet CSV: `{NEXT_DECISION_WORKSHEET_CSV.as_posix()}`",
+            "- Blank `operator_*`, `source_url_to_record`, `reviewed_by`, and `reviewed_at_local` cells are intentional generated blanks for Mike's manual pass.",
+            "- This worksheet is advisory and does not write back to logo or athlete review intake files.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def main() -> int:
     generated_at = generated_at_utc()
     summaries = [summarize_sport(sport_key, sport, generated_at) for sport_key, sport in SPORTS.items()]
@@ -633,6 +824,16 @@ def main() -> int:
             "batch_source_review_local_asset_needed_later_rows": local_asset_needed_later_rows,
         }
     )
+    next_decision_rows = next_decision_worksheet_rows(action_rows)
+    next_decision_logo_rows = sum(1 for row in next_decision_rows if row["asset_domain"] == "logo")
+    next_decision_athlete_rows = sum(1 for row in next_decision_rows if row["asset_domain"] == "athlete_photo")
+    totals.update(
+        {
+            "next_decision_worksheet_rows": len(next_decision_rows),
+            "next_decision_logo_rows": next_decision_logo_rows,
+            "next_decision_athlete_rows": next_decision_athlete_rows,
+        }
+    )
     report = {
         "version": VERSION,
         "status": "hockey_softball_asset_workflow_readiness_ready",
@@ -653,6 +854,14 @@ def main() -> int:
             "rows": len(batch_rows),
             "source_review_now_rows": source_review_now_rows,
             "next_rows": batch_next_rows,
+        },
+        "next_decision_worksheet": {
+            "md": NEXT_DECISION_WORKSHEET_MD.as_posix(),
+            "csv": NEXT_DECISION_WORKSHEET_CSV.as_posix(),
+            "json": NEXT_DECISION_WORKSHEET_JSON.as_posix(),
+            "rows": len(next_decision_rows),
+            "logo_rows": next_decision_logo_rows,
+            "athlete_rows": next_decision_athlete_rows,
         },
     }
     action_payload = {
@@ -677,12 +886,36 @@ def main() -> int:
         "next_review_rows": [row for row in batch_rows if row["batch_position"]],
         "batch_rows": batch_rows,
     }
+    next_decision_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_next_decision_worksheet_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(next_decision_rows),
+        "logo_rows": next_decision_logo_rows,
+        "athlete_rows": next_decision_athlete_rows,
+        "blank_human_decision_fields": [
+            "operator_source_reviewed",
+            "operator_source_allowed_for_review_only",
+            "operator_identity_match",
+            "operator_rights_reviewed",
+            "operator_decision",
+            "source_url_to_record",
+            "operator_notes",
+            "reviewed_by",
+            "reviewed_at_local",
+        ],
+        "worksheet_rows": next_decision_rows,
+    }
     write_csv(ACTION_QUEUE_CSV, action_rows, ACTION_QUEUE_FIELDS)
     write_json(ACTION_QUEUE_JSON, action_payload)
     write_text(ACTION_QUEUE_MD, render_action_queue(action_rows, generated_at))
     write_csv(BATCH_SOURCE_REVIEW_CSV, batch_rows, BATCH_SOURCE_REVIEW_FIELDS)
     write_json(BATCH_SOURCE_REVIEW_JSON, batch_payload)
     write_text(BATCH_SOURCE_REVIEW_MD, render_batch_source_review_helper(batch_rows, generated_at))
+    write_csv(NEXT_DECISION_WORKSHEET_CSV, next_decision_rows, NEXT_DECISION_WORKSHEET_FIELDS)
+    write_json(NEXT_DECISION_WORKSHEET_JSON, next_decision_payload)
+    write_text(NEXT_DECISION_WORKSHEET_MD, render_next_decision_worksheet(next_decision_rows, generated_at))
     write_json(REPORT_JSON, report)
     write_text(REPORT_MD, render_report(report))
     print(json.dumps({"status": report["status"], "workflow_rows": totals["workflow_rows"]}, indent=2))
