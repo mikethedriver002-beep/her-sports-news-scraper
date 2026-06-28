@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.28.0-visual-mode-contract"
+VERSION = "hsd-manual-review-renderer-v1.29.0-photo-first-score-polish"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -2440,11 +2440,18 @@ def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
 def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
     logo_size = min(h - 30, 104 if winner else 92)
-    score_box = (x + w - 178, y - 6, 150, h + 14)
+    score_box = photo_first_score_slab_box(box, winner=winner)
     text_x = x + logo_size + 52
-    score_plate_left = score_box[0] - 14
-    text_w = max(128, min(max(128, w - logo_size - 232), score_plate_left - text_x - 20))
+    text_w = max(128, min(max(128, w - logo_size - 252), score_box[0] - text_x - 26))
     return (text_x, y + 48, text_w, h - 68)
+
+
+def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
+    x, y, w, h = box
+    compact = h <= 130
+    slab_w = min(176 if not compact else 154, max(132, int(w * (0.29 if compact else 0.27))))
+    inset_y = 18 if not compact else 14
+    return (x + w - slab_w - 26, y + inset_y, slab_w, h - inset_y * 2)
 
 
 def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], focus_box: Tuple[int, int, int, int] | None = None) -> bool:
@@ -2511,20 +2518,36 @@ def draw_photo_first_score_row(
     winner: bool = False,
 ) -> None:
     x, y, w, h = box
+    compact = h <= 130
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 226 if winner else 210), radius=18, width=2)
     draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((x + 1, y + 1, x + 10, y + h - 1), fill=(*accent, 118 if winner else 86))
+    draw.line((x + 24, y + h - 20, x + w - 28, y + h - 20), fill=(*accent, 72 if winner else 54), width=1)
     label = "WINNER" if winner else "FINAL"
-    label_w = 96 if winner else 74
-    draw.rounded_rectangle((x + 20, y + 16, x + 20 + label_w, y + 42), radius=7, fill=(*accent, 230), outline=(248, 250, 255, 128), width=1)
-    draw_reference_text(image, (x + 29, y + 19, label_w - 18, 20), label, "context", 12, 8, (2, 4, 9), max_lines=1, align="center")
-    logo_size = min(h - 30, 104 if winner else 92)
-    logo_box = (x + 22, y + (h - logo_size) // 2 + 10, logo_size, logo_size)
+    label_w = 94 if winner else 70
+    label_y = y + (15 if not compact else 13)
+    draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + 24), radius=6, fill=(*accent, 214), outline=(248, 250, 255, 116), width=1)
+    draw_reference_text(image, (x + 33, label_y + 3, label_w - 18, 18), label, "context", 10, 8, (2, 4, 9), max_lines=1, align="center")
+    logo_size = min(h - 34, 96 if winner else 84)
+    logo_box = (x + 26, y + (h - logo_size) // 2 + (12 if not compact else 10), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
-    score_box = (x + w - 178, y - 6, 150, h + 14)
+    score_box = photo_first_score_slab_box(box, winner=winner)
     team_text_box = photo_first_score_team_text_box(box, winner=winner)
-    draw_reference_text(image, team_text_box, short_team(team), "context", 40 if winner else 34, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
-    draw.rounded_rectangle((score_box[0] - 14, y + 18, x + w - 18, y + h - 18), radius=18, fill=(255, 255, 255, 18), outline=(*accent, 92), width=1)
-    draw_reference_text(image, score_box, score_value, "score", 114 if winner else 96, 52, PALETTE["ink"], max_lines=1, align="right", stroke=2, stroke_fill=(0, 0, 0))
+    draw_reference_text(image, team_text_box, short_team(team), "context", 38 if winner and not compact else 33 if winner else 32, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+
+    sx, sy, sw, sh = score_box
+    slab_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(slab_shadow, "RGBA")
+    shadow_draw.rounded_rectangle((sx + 5, sy + 6, sx + sw + 5, sy + sh + 6), radius=20, fill=(0, 0, 0, 118))
+    if ImageFilter is not None:
+        slab_shadow = slab_shadow.filter(ImageFilter.GaussianBlur(5))
+    image.alpha_composite(slab_shadow)
+    slab_fill = mix_rgb((248, 250, 255), accent, 0.10 if winner else 0.06)
+    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=18, fill=(*slab_fill, 244), outline=(*accent, 210), width=2)
+    draw.rectangle((sx + 10, sy + 10, sx + 16, sy + sh - 10), fill=(*accent, 180))
+    draw.rounded_rectangle((sx + 20, sy + 12, sx + sw - 12, sy + sh - 12), radius=12, outline=(2, 4, 9, 34), width=1)
+    score_size = 84 if compact else 104 if winner else 90
+    draw_reference_text(image, (sx + 22, sy + 4, sw - 34, sh - 8), score_value, "score", score_size, 46 if compact else 54, (2, 4, 9), max_lines=1, align="center", stroke=1, stroke_fill=(248, 250, 255))
 
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
