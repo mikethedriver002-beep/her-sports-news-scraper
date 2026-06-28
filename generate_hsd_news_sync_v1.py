@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.4-breaking-verification-priority-cues"
+VERSION = "news-sync-v1.9.5-breaking-source-tier-cues"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -181,6 +181,8 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "verification_priority_status", "verification_priority_summary",
     "verification_priority_target", "verification_priority_next_action",
     "public_signal_limitations_cue",
+    "game_source_confirmation_tier", "game_source_confirmation_limitations",
+    "game_source_confirmation_tier_target", "game_source_confirmation_tier_cue",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -3223,6 +3225,40 @@ def story_proof_rows_for_events(event_ids: List[str], rows: List[Dict[str, Any]]
     return matches
 
 
+def game_source_confirmation_tier_cue(game_fact_rows: List[Dict[str, Any]]) -> Dict[str, str]:
+    game_fact = game_fact_rows[0] if game_fact_rows else {}
+    if not game_fact:
+        return {
+            "game_source_confirmation_tier": "game_source_tier_missing_from_current_artifacts",
+            "game_source_confirmation_limitations": "No matching game_fact_confirmation_status_v1.csv row was found for this breaking cluster.",
+            "game_source_confirmation_tier_target": "",
+            "game_source_confirmation_tier_cue": "Open the breaking confirmation intake and add official, wire, primary, or operator-checked source evidence before editorial use.",
+        }
+    event_id = clean(game_fact.get("event_uid"))
+    tier = clean(game_fact.get("source_confirmation_tier")) or "source_tier_not_recorded_operator_verify"
+    limitations = clean(game_fact.get("source_confirmation_limitations")) or "Operator must verify the source URL before use."
+    target = f"game_fact_confirmation_status_v1.csv event_uid={event_id}" if event_id else "game_fact_confirmation_status_v1.csv matching event"
+    if tier.startswith("single_free_public_scoreboard"):
+        cue = (
+            f"{tier}; this is useful free public scoreboard evidence, but it is not official, multi-source, human-approved, "
+            "or publish-ready confirmation. Verify the listed source URL and add official/wire/operator-checked confirmation when available."
+        )
+    elif tier.startswith("single_free_public_schedule"):
+        cue = (
+            f"{tier}; schedule/source context is review-only and result/stat use remains pending until the game is final and manually checked."
+        )
+    elif tier.startswith("source_missing"):
+        cue = f"{tier}; add official, wire, primary, or operator-checked source evidence before using this as breaking news."
+    else:
+        cue = f"{tier}; operator must still verify the source URL and limitations before story, render, or editorial use."
+    return {
+        "game_source_confirmation_tier": tier,
+        "game_source_confirmation_limitations": limitations,
+        "game_source_confirmation_tier_target": target,
+        "game_source_confirmation_tier_cue": cue,
+    }
+
+
 def source_proof_readiness_cue(
     *,
     evidence: List[Dict[str, str]],
@@ -3233,6 +3269,9 @@ def source_proof_readiness_cue(
 ) -> Dict[str, str]:
     story = story_proof_rows[0] if story_proof_rows else {}
     game_fact = game_fact_rows[0] if game_fact_rows else {}
+    source_tier = game_source_confirmation_tier_cue(game_fact_rows)
+    tier = clean(source_tier.get("game_source_confirmation_tier"))
+    tier_limitations = clean(source_tier.get("game_source_confirmation_limitations"))
     named_example = clean(named_proof_rows[0].get("fact_value")) if named_proof_rows else ""
     if story:
         event_id = clean(story.get("event_id"))
@@ -3255,7 +3294,8 @@ def source_proof_readiness_cue(
             f"{proof_card_status or 'story_proof_card_present_operator_verify'}; "
             f"copy={copy_unlock or 'manual_review_required'}; "
             f"renderability={renderability or 'review'}; "
-            f"athlete={athlete or 'none'}; source={source_cue or 'operator_verify_source_url'}"
+            f"athlete={athlete or 'none'}; source={source_cue or 'operator_verify_source_url'}; "
+            f"game_source_tier={tier or 'missing'}"
         )
         next_action = clean(story.get("smallest_next_action")) or (
             f"Open {target or 'story_proof_card_v1.csv'}, verify the source URL, then record the check in the listed manual intake row."
@@ -3273,8 +3313,10 @@ def source_proof_readiness_cue(
         summary = (
             f"{clean(game_fact.get('overall_confirmation_status')) or 'game_fact_confirmation_present_operator_verify'}; "
             f"source={clean(game_fact.get('source_domain')) or 'source_domain_missing'}; "
+            f"tier={tier or 'missing'}; "
             f"readiness={clean(game_fact.get('recap_render_readiness')) or 'review'}; "
-            f"story_card={story_target or 'missing_story_proof_card_row'}"
+            f"story_card={story_target or 'missing_story_proof_card_row'}; "
+            f"limits={tier_limitations or 'operator_verify_source_url'}"
         )
         next_action = clean(game_fact.get("exact_next_file_or_intake")) or (
             f"Open game_fact_confirmation_status_v1.csv event_uid={event_id}, then follow the listed proof intake rows before editorial use."
@@ -3352,6 +3394,7 @@ def verification_priority_cue(
     freshness_status: str,
     ladder: Dict[str, str],
     proof_readiness: Dict[str, str],
+    source_tier: Dict[str, str],
     public_count: int,
     public_confidence: str,
     breaking_target: str,
@@ -3362,9 +3405,12 @@ def verification_priority_cue(
     public_cue = public_signal_limitations_cue(public_count, public_confidence)
     proof_status = clean(proof_readiness.get("source_proof_readiness_status"))
     proof_target = clean(proof_readiness.get("story_proof_card_target")) or clean(proof_readiness.get("game_fact_confirmation_target"))
+    tier = clean(source_tier.get("game_source_confirmation_tier"))
+    tier_cue = clean(source_tier.get("game_source_confirmation_tier_cue"))
     source_support = (
         f"source_class_support official={official or 'missing'}; reputable_free={reputable or 'missing'}; "
-        f"proof_readiness={proof_status or 'missing'}; public_signal={public_count}:{clean(public_confidence) or 'none'}"
+        f"proof_readiness={proof_status or 'missing'}; game_source_tier={tier or 'missing'}; "
+        f"public_signal={public_count}:{clean(public_confidence) or 'none'}"
     )
     if clean(freshness_status) in {"timestamp_missing", "stale_recheck_required"}:
         status = "freshness_recheck_first"
@@ -3395,7 +3441,7 @@ def verification_priority_cue(
         status = "verification_cues_ready_for_operator_review"
         target = proof_target or breaking_target
         action = clean(proof_readiness.get("source_proof_readiness_next_action")) or exact_source_action
-    summary = f"{status}; {source_support}; public_limit={public_cue}"
+    summary = f"{status}; {source_support}; source_tier_limit={tier_cue or 'operator_verify_source_url'}; public_limit={public_cue}"
     return {
         "verification_priority_status": status,
         "verification_priority_summary": summary,
@@ -3517,6 +3563,7 @@ def breaking_signal_cluster_rows(
         event_ids = event_ids_from_evidence(evidence)
         matched_game_fact_rows = game_fact_rows_for_events(event_ids, game_fact_confirmation_rows)
         matched_story_proof_rows = story_proof_rows_for_events(event_ids, story_proof_card_rows)
+        source_tier = game_source_confirmation_tier_cue(matched_game_fact_rows)
         proof_readiness = source_proof_readiness_cue(
             evidence=evidence,
             proof_status=proof_status,
@@ -3547,6 +3594,7 @@ def breaking_signal_cluster_rows(
             freshness_status=freshness,
             ladder=ladder,
             proof_readiness=proof_readiness,
+            source_tier=source_tier,
             public_count=public_count,
             public_confidence=public_confidence,
             breaking_target=breaking_target,
@@ -3614,6 +3662,7 @@ def breaking_signal_cluster_rows(
                 "urgency_review_reason": urgency_reason,
                 **proof_readiness,
                 **verification_priority,
+                **source_tier,
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
                 "source_domains": "; ".join(domains[:12]),
@@ -3682,6 +3731,9 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"- Verification priority target: {row.get('verification_priority_target') or 'missing'}",
             f"- Verification priority next action: {row.get('verification_priority_next_action') or 'operator confirmation required'}",
             f"- Public/community limitation: {row.get('public_signal_limitations_cue') or 'public signal is review-only and non-confirming'}",
+            f"- Game source tier: `{row.get('game_source_confirmation_tier') or 'missing'}`",
+            f"- Game source tier limitation: {row.get('game_source_confirmation_limitations') or 'missing'}",
+            f"- Game source tier cue: {row.get('game_source_confirmation_tier_cue') or 'operator verification required'}",
             f"- Source/proof readiness: `{row.get('source_proof_readiness_status')}`",
             f"- Source/proof summary: {row.get('source_proof_readiness_summary') or 'missing'}",
             f"- Story proof target: {row.get('story_proof_card_target') or 'missing'}",
@@ -4330,6 +4382,11 @@ def main() -> None:
                 "clusters_requiring_official_source_first": len([
                     row for row in cluster_rows
                     if clean(row.get("verification_priority_status")) == "official_source_confirmation_first"
+                ]),
+                "clusters_with_game_source_confirmation_tier": len([
+                    row for row in cluster_rows
+                    if clean(row.get("game_source_confirmation_tier"))
+                    and clean(row.get("game_source_confirmation_tier")) != "game_source_tier_missing_from_current_artifacts"
                 ]),
             },
             "outputs": [

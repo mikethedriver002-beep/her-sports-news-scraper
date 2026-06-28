@@ -275,6 +275,8 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
         {
             "event_uid": "event-liberty-aces",
             "overall_confirmation_status": "source_confirmed_operator_verify_before_use",
+            "source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
+            "source_confirmation_limitations": "Single ESPN public scoreboard row; not a paid API, but not a human approval or publish-ready confirmation.",
             "source_domain": "www.espn.com",
             "recap_render_readiness": "athlete_led_manual_render_candidate",
             "story_proof_card_row_to_open": "story_proof_card_v1.csv event_id=event-liberty-aces; candidate_id=story-card-liberty",
@@ -330,11 +332,18 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert cluster["source_proof_readiness_status"] == "story_proof_card_ready_operator_verify"
     assert "proof_card_ready_for_manual_review" in cluster["source_proof_readiness_summary"]
     assert "Sabrina Ionescu" in cluster["source_proof_readiness_summary"]
+    assert "game_source_tier=single_free_public_scoreboard_operator_verify" in cluster["source_proof_readiness_summary"]
     assert "story_proof_card_v1.csv event_id=event-liberty-aces" in cluster["story_proof_card_target"]
     assert cluster["game_fact_confirmation_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
     assert cluster["source_proof_readiness_next_action"].startswith("Open story_proof_card_v1.md")
+    assert cluster["game_source_confirmation_tier"] == "single_free_public_scoreboard_operator_verify"
+    assert "not a human approval or publish-ready confirmation" in cluster["game_source_confirmation_limitations"]
+    assert cluster["game_source_confirmation_tier_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
+    assert "not official, multi-source, human-approved, or publish-ready confirmation" in cluster["game_source_confirmation_tier_cue"]
     assert cluster["verification_priority_status"] == "manual_confirmation_intake_first"
     assert "source_class_support official=present_operator_verify" in cluster["verification_priority_summary"]
+    assert "game_source_tier=single_free_public_scoreboard_operator_verify" in cluster["verification_priority_summary"]
+    assert "source_tier_limit=single_free_public_scoreboard_operator_verify" in cluster["verification_priority_summary"]
     assert cluster["verification_priority_target"].startswith("breaking_public_signal_confirmation_intake.csv")
     assert cluster["verification_priority_next_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert "Public/community signal is review-only discovery context count=2 confidence=medium" in cluster["public_signal_limitations_cue"]
@@ -379,6 +388,7 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert partial_cluster["corroboration_ladder_status"] == "partial_corroboration_operator_verify"
     assert partial_cluster["official_source_corroboration"] == "missing_official_source_operator_add_to_intake"
     assert partial_cluster["verification_priority_status"] == "official_source_confirmation_first"
+    assert partial_cluster["game_source_confirmation_tier"] == "single_free_public_scoreboard_operator_verify"
     assert partial_cluster["verification_priority_target"] == "breaking_public_signal_confirmation_intake.csv candidate_id=candidate-2"
     assert "official team/league, wire, primary, or operator-checked source URL" in partial_cluster["verification_priority_next_action"]
     assert "Public/community signal is review-only discovery context count=1 confidence=low" in partial_cluster["public_signal_limitations_cue"]

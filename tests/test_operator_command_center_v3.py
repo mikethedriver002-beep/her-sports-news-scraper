@@ -205,6 +205,10 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "verification_priority_target": "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky",
                 "verification_priority_next_action": "Open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky; record operator_checked_url and operator_confirmation_result before any story path. Then continue to the listed proof/readiness artifact rows.",
                 "public_signal_limitations_cue": "No public/community signal captured; do not infer public reaction or use social context as confirmation.",
+                "game_source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
+                "game_source_confirmation_limitations": "Single ESPN public scoreboard row; not a paid API, but not a human approval or publish-ready confirmation.",
+                "game_source_confirmation_tier_target": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
+                "game_source_confirmation_tier_cue": "single_free_public_scoreboard_operator_verify; this is useful free public scoreboard evidence, but it is not official, multi-source, human-approved, or publish-ready confirmation. Verify the listed source URL and add official/wire/operator-checked confirmation when available.",
             }
         ],
         [
@@ -246,6 +250,10 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "verification_priority_target",
             "verification_priority_next_action",
             "public_signal_limitations_cue",
+            "game_source_confirmation_tier",
+            "game_source_confirmation_limitations",
+            "game_source_confirmation_tier_target",
+            "game_source_confirmation_tier_cue",
         ],
     )
 
@@ -255,6 +263,8 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert "reputable_free=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert "proof_card_ready_for_manual_review" in row["story_opportunity_source_coverage"]
+    assert "game_source_tier=single_free_public_scoreboard_operator_verify" in row["story_opportunity_source_coverage"]
+    assert "not official, multi-source, human-approved, or publish-ready confirmation" in row["story_opportunity_source_coverage"]
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
     assert row["next_action"].startswith("Open breaking_public_signal_confirmation_intake.csv")
     assert "manual_confirmation_intake_first" in row["detail"]
