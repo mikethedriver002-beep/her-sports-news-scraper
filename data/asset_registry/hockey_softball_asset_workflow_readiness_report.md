@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-28T08:07:54.725582+00:00`
+- Generated: `2026-06-28T08:19:23.450540+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First

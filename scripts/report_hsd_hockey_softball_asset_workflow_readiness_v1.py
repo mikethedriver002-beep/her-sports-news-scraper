@@ -93,8 +93,8 @@ NEXT_DECISION_WORKSHEET_FIELDS = [
     "missing_local_candidate_asset",
     "download_law_status",
     "download_approved",
-    "download_source_url",
-    "download_entity_id",
+    "source_url",
+    "entity_id",
     "rights_class",
     "identity_confidence",
     "intended_review_only_use",
@@ -772,8 +772,8 @@ def next_decision_worksheet_rows(action_rows: list[Dict[str, str]]) -> list[Dict
                 "missing_local_candidate_asset": missing_local,
                 "download_law_status": download_law,
                 "download_approved": "no",
-                "download_source_url": "",
-                "download_entity_id": "",
+                "source_url": "",
+                "entity_id": "",
                 "rights_class": "",
                 "identity_confidence": "",
                 "intended_review_only_use": "",
@@ -914,7 +914,7 @@ def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str
             "",
             f"- Required future fields: `{future_download_required_fields()}`.",
             f"- Quarantine folder: `{SANCTIONED_QUARANTINE_ROOT.as_posix()}`.",
-            "- Generated rows keep `download_approved=no`; `download_source_url`, `download_entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` stay blank for human intake.",
+            "- Generated rows keep `download_approved=no`; `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` stay blank for human intake.",
             "- This worksheet does not trigger downloads and does not write quarantine files.",
         "",
         "## Next Decision Rows",
@@ -1131,8 +1131,8 @@ def main() -> int:
     next_decision_blank_download_metadata_rows = sum(
         1
         for row in next_decision_rows
-        if not clean(row.get("download_source_url"))
-        and not clean(row.get("download_entity_id"))
+        if not clean(row.get("source_url"))
+        and not clean(row.get("entity_id"))
         and not clean(row.get("rights_class"))
         and not clean(row.get("identity_confidence"))
         and not clean(row.get("intended_review_only_use"))

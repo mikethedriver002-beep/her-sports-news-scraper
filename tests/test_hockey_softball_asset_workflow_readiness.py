@@ -221,7 +221,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert all(
         row[field] == ""
         for row in worksheet["worksheet_rows"]
-        for field in ["download_source_url", "download_entity_id", "rights_class", "identity_confidence", "intended_review_only_use"]
+        for field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use"]
     )
     assert all(row["guardrail_note"].startswith("review-only worksheet") for row in worksheet["worksheet_rows"])
     assert all(row[field] == "" for row in worksheet["worksheet_rows"] for field in blank_fields)
@@ -295,7 +295,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "## First Action Buckets" in next_decision_board
     assert "1_source_verification" in next_decision_board
     assert "## Future Quarantine-Download Fields" in next_decision_board
-    assert "download_source_url" in next_decision_board
+    assert "source_url" in next_decision_board
     assert "every generated human-decision cell is intentionally blank" in next_decision_board
     assert "does not write back to logo or athlete review intake files" in next_decision_board
     assert "Default download_approved value: `no`" in download_board

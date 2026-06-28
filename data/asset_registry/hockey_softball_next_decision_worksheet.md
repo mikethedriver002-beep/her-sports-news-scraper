@@ -1,6 +1,6 @@
 # Hockey/Softball Next Decision Worksheet
 
-- Generated: `2026-06-28T08:07:54.725582+00:00`
+- Generated: `2026-06-28T08:19:23.450540+00:00`
 - Rows: `74`
 - Logo decision rows: `20`
 - Athlete source-only rows: `54`
@@ -32,7 +32,7 @@
 
 - Required future fields: `download_approved|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use`.
 - Quarantine folder: `data/assets/quarantine/review_only_candidates`.
-- Generated rows keep `download_approved=no`; `download_source_url`, `download_entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` stay blank for human intake.
+- Generated rows keep `download_approved=no`; `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` stay blank for human intake.
 - This worksheet does not trigger downloads and does not write quarantine files.
 
 ## Next Decision Rows
