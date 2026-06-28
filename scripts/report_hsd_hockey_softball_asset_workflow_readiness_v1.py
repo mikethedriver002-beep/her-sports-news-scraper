@@ -184,7 +184,11 @@ REVIEW_TRIAGE_FIELDS = [
     "asset_domain",
     "candidate_entity_id",
     "display_name",
+    "candidate_next_action_bucket",
+    "source_tier",
     "source_priority_rows",
+    "source_priority_rank_range",
+    "source_priority_csv_filter",
     "official_source_candidate_rows",
     "operator_verify_required_source_rows",
     "source_reviewed_waiting_for_local_asset_rows",
@@ -192,6 +196,9 @@ REVIEW_TRIAGE_FIELDS = [
     "candidate_id_preview",
     "advisory_source_domains",
     "advisory_source_candidate_urls",
+    "review_board_to_open",
+    "manual_intake_file_to_open",
+    "future_download_intake_file",
     "render_readiness",
     "safe_next_action",
     "download_approved",
@@ -1299,6 +1306,37 @@ def review_triage_primary_action(flags: list[str]) -> str:
     return flags[0]
 
 
+def candidate_next_action_bucket(primary: str, asset_domain: str, flags: list[str]) -> str:
+    if primary == "official_roster_team_source_check":
+        return "official_roster_team_source_verify"
+    if asset_domain == "logo" and "source_reviewed_waiting_for_local_asset" in flags:
+        return "local_logo_candidate_needed"
+    if asset_domain == "athlete_photo" and "missing_local_asset" in flags:
+        return "local_athlete_candidate_needed"
+    if "source_candidate_review" in flags:
+        return "source_candidate_review"
+    if "future_quarantine_download_intake_prep" in flags:
+        return "future_quarantine_download_intake_prep"
+    return "no_fix_audit"
+
+
+def source_priority_rank_range(rows: list[Mapping[str, str]]) -> str:
+    ranks = sorted(int(clean(row.get("source_priority_rank")) or "0") for row in rows if clean(row.get("source_priority_rank")).isdigit())
+    if not ranks:
+        return ""
+    if len(ranks) == 1:
+        return str(ranks[0])
+    return f"{ranks[0]}-{ranks[-1]}"
+
+
+def review_triage_file_paths(sport_family: str, asset_domain: str) -> tuple[str, str]:
+    sport = SPORTS.get(sport_family, {})
+    if asset_domain == "logo":
+        return sport.get("logo_contact_sheet", Path("")).with_suffix(".md").as_posix(), sport.get("logo_intake", Path("")).as_posix()
+    athlete_board = sport.get("athlete_contact_sheet", Path("")).with_name(f"{sport_family}_athlete_photo_contact_sheet_index.md")
+    return athlete_board.as_posix(), sport.get("athlete_intake", Path("")).as_posix()
+
+
 def review_triage_safe_next_action(primary: str, asset_domain: str) -> str:
     if primary == "official_roster_team_source_check":
         return "Open the official roster/team source candidates, mark source review only after manual verification, and keep identity/download fields blank."
@@ -1359,18 +1397,29 @@ def review_triage_rows(source_rows: list[Dict[str, str]]) -> list[Dict[str, str]
         source_reviewed_rows = [row for row in grouped_rows if clean(row.get("source_review_bucket")) == "2_source_reviewed_waiting_for_local_asset"]
         missing_local_rows = [row for row in grouped_rows if clean(row.get("linked_missing_local_candidate_asset")).lower() == "yes"]
         asset_domain = clean(first.get("asset_domain"))
+        sport_family = clean(first.get("sport_family"))
+        review_board_to_open, manual_intake_file_to_open = review_triage_file_paths(sport_family, asset_domain)
+        bucket = candidate_next_action_bucket(primary, asset_domain, flags)
         rows.append(
             {
                 "triage_rank": "0",
                 "primary_manual_action": primary,
                 "action_flags": "|".join(flags),
-                "sport_family": clean(first.get("sport_family")),
+                "sport_family": sport_family,
                 "sport_label": clean(first.get("sport_label")),
                 "league_name": clean(first.get("league_name")),
                 "asset_domain": asset_domain,
                 "candidate_entity_id": clean(first.get("candidate_entity_id")),
                 "display_name": clean(first.get("display_name")),
+                "candidate_next_action_bucket": bucket,
+                "source_tier": preview_unique(grouped_rows, "source_priority"),
                 "source_priority_rows": str(len(grouped_rows)),
+                "source_priority_rank_range": source_priority_rank_range(grouped_rows),
+                "source_priority_csv_filter": "sport_family={sport};asset_domain={asset};candidate_entity_id={entity}".format(
+                    sport=sport_family,
+                    asset=asset_domain,
+                    entity=clean(first.get("candidate_entity_id")),
+                ),
                 "official_source_candidate_rows": str(len(official_sources)),
                 "operator_verify_required_source_rows": str(len(operator_verify_sources)),
                 "source_reviewed_waiting_for_local_asset_rows": str(len(source_reviewed_rows)),
@@ -1378,6 +1427,9 @@ def review_triage_rows(source_rows: list[Dict[str, str]]) -> list[Dict[str, str]
                 "candidate_id_preview": preview_unique(grouped_rows, "candidate_id"),
                 "advisory_source_domains": preview_unique(grouped_rows, "source_domain"),
                 "advisory_source_candidate_urls": preview_unique(grouped_rows, "source_candidate_url"),
+                "review_board_to_open": review_board_to_open,
+                "manual_intake_file_to_open": manual_intake_file_to_open,
+                "future_download_intake_file": QUARANTINE_DOWNLOAD_INTAKE_CSV.as_posix(),
                 "render_readiness": "not_render_ready_review_only",
                 "safe_next_action": review_triage_safe_next_action(primary, asset_domain),
                 "download_approved": "no",
@@ -1409,6 +1461,7 @@ def review_triage_rows(source_rows: list[Dict[str, str]]) -> list[Dict[str, str]
 
 def render_review_triage(rows: list[Dict[str, str]], generated_at: str) -> str:
     action_counts = Counter(row["primary_manual_action"] for row in rows)
+    bucket_counts = Counter(row["candidate_next_action_bucket"] for row in rows)
     lines = [
         "# Hockey/Softball Asset Review Triage",
         "",
@@ -1426,9 +1479,17 @@ def render_review_triage(rows: list[Dict[str, str]], generated_at: str) -> str:
         f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
         f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
         "",
-        "## Primary Manual Actions",
+        "## Candidate Next-Action Buckets",
         "",
     ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in sorted(bucket_counts.items()))
+    lines.extend(
+        [
+        "",
+        "## Primary Manual Actions",
+        "",
+        ]
+    )
     lines.extend(f"- {action}: `{count}`" for action, count in sorted(action_counts.items()))
     lines.extend(
         [
@@ -1438,26 +1499,29 @@ def render_review_triage(rows: list[Dict[str, str]], generated_at: str) -> str:
             "- Work `official_roster_team_source_check` rows first; they group official PWHL/AUSL roster/team source candidates by team.",
             "- Work logo rows as source-reviewed or source-check holds only; this worksheet does not approve logo identity or write local logo files.",
             "- Treat `advisory_source_candidate_urls` as evidence to open manually, not as download-law `source_url` values.",
+            "- Use `source_priority_csv_filter` to jump back to the exact source-priority source rows behind each triage row.",
+            "- Open `review_board_to_open` for context and use `manual_intake_file_to_open` only for human-entered review notes.",
             "- Keep `download_approved=no` and leave `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` blank in generated rows.",
             "- Do not download assets, write headshots/logos, create `.approved` markers, move files, or publish from this worksheet.",
             "",
             "## Worksheet Preview",
             "",
-            "| Rank | Action | Sport | Asset | Entity | Source Rows | Verify Sources | Missing Local | Safe Next Action |",
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |",
+            "| Rank | Bucket | Sport | Asset | Entity | Source Tier | Source Rows | Review Board | Manual Intake | Safe Next Action |",
+            "| --- | --- | --- | --- | --- | --- | ---: | --- | --- | --- |",
         ]
     )
     for row in rows[:38]:
         lines.append(
-            "| {rank} | {action} | {sport} | {asset} | {entity} | {sources} | {verify} | {missing} | {safe_action} |".format(
+            "| {rank} | {bucket} | {sport} | {asset} | {entity} | {tier} | {sources} | {board} | {intake} | {safe_action} |".format(
                 rank=clean(row.get("triage_rank")),
-                action=clean(row.get("primary_manual_action")),
+                bucket=clean(row.get("candidate_next_action_bucket")),
                 sport=clean(row.get("sport_family")),
                 asset=clean(row.get("asset_domain")),
                 entity=clean(row.get("candidate_entity_id")).replace("|", "/"),
+                tier=clean(row.get("source_tier")).replace("|", "/"),
                 sources=clean(row.get("source_priority_rows")),
-                verify=clean(row.get("operator_verify_required_source_rows")),
-                missing=clean(row.get("missing_local_candidate_asset_rows")),
+                board=clean(row.get("review_board_to_open")).replace("|", "/"),
+                intake=clean(row.get("manual_intake_file_to_open")).replace("|", "/"),
                 safe_action=clean(row.get("safe_next_action")).replace("|", "/"),
             )
         )
@@ -1847,6 +1911,7 @@ def main() -> int:
         "operator_verify_required_source_rows": review_triage_operator_verify_source_rows,
         "download_approved_yes_rows": review_triage_download_approved_yes_rows,
         "blank_source_url_rows": review_triage_blank_source_url_rows,
+        "candidate_next_action_bucket_counts": dict(sorted(Counter(row["candidate_next_action_bucket"] for row in review_triage).items())),
         "primary_manual_action_counts": dict(sorted(Counter(row["primary_manual_action"] for row in review_triage).items())),
         "worksheet_md": REVIEW_TRIAGE_MD.as_posix(),
         "worksheet_csv": REVIEW_TRIAGE_CSV.as_posix(),
