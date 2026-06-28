@@ -308,6 +308,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.json",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.md",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.json",
     "data/asset_registry/womens_soccer/external_research/nwsl_correction_enrichment_report.csv",
     "data/asset_registry/womens_soccer/external_research/europe_official_source_map.csv",
     "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md",
@@ -625,6 +628,9 @@ ARTIFACTS = [
     ("Graphics", "Women's soccer athlete review triage", "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md"),
     ("Graphics", "Women's soccer athlete review triage data", "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv"),
     ("Graphics", "Women's soccer athlete review triage manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.json"),
+    ("Graphics", "Women's soccer athlete candidate next-action board", "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.md"),
+    ("Graphics", "Women's soccer athlete candidate next-action board data", "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv"),
+    ("Graphics", "Women's soccer athlete candidate next-action board manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.json"),
     ("Graphics", "Women's soccer external research intake", "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md"),
     ("Graphics", "Women's soccer external research intake data", "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv"),
     ("Graphics", "Women's soccer external research intake manifest", "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json"),
@@ -777,6 +783,9 @@ RUN_COMMANDS = {
     "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_external_research_intake_v1.py",
     "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_external_research_intake_v1.py",
     "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_external_research_intake_v1.py",
@@ -1653,6 +1662,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     womens_soccer_athlete_source_priority_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv")
     womens_soccer_athlete_review_triage_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.json")
     womens_soccer_athlete_review_triage_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv")
+    womens_soccer_athlete_candidate_actions_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.json")
+    womens_soccer_athlete_candidate_actions_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv")
     womens_soccer_external_research_manifest = read_json("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json")
     womens_soccer_external_research_rows = read_csv("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv")
     hockey_softball_manifest = read_json("data/asset_registry/hockey_softball_asset_foundation_report.json")
@@ -1730,6 +1741,12 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         len(womens_soccer_athlete_review_triage_rows),
         RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md"],
         context="women's soccer athlete review triage",
+    )
+    womens_soccer_athlete_candidate_actions_cue = packet_freshness_cue(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.md",
+        len(womens_soccer_athlete_candidate_actions_rows),
+        RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.md"],
+        context="women's soccer athlete candidate next-action board",
     )
     womens_soccer_external_research_cue = packet_freshness_cue(
         "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md",
@@ -1938,6 +1955,16 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_athlete_review_triage_freshness_status": womens_soccer_athlete_review_triage_cue["status"],
         "womens_soccer_athlete_review_triage_freshness_detail": womens_soccer_athlete_review_triage_cue["detail"],
         "womens_soccer_athlete_review_triage_refresh_command": womens_soccer_athlete_review_triage_cue["run_command"],
+        "womens_soccer_athlete_candidate_actions_status": clean(womens_soccer_athlete_candidate_actions_manifest.get("status")) if isinstance(womens_soccer_athlete_candidate_actions_manifest, dict) else "",
+        "womens_soccer_athlete_candidate_actions_rows": len(womens_soccer_athlete_candidate_actions_rows),
+        "womens_soccer_athlete_candidate_actions_nwsl_rows": as_int(womens_soccer_athlete_candidate_actions_manifest.get("nwsl_rows")) if isinstance(womens_soccer_athlete_candidate_actions_manifest, dict) else sum(1 for row in womens_soccer_athlete_candidate_actions_rows if clean(row.get("scope_id")) == "nwsl"),
+        "womens_soccer_athlete_candidate_actions_europe_rows": as_int(womens_soccer_athlete_candidate_actions_manifest.get("europe_rows")) if isinstance(womens_soccer_athlete_candidate_actions_manifest, dict) else sum(1 for row in womens_soccer_athlete_candidate_actions_rows if clean(row.get("scope_id")) == "europe_top_flight"),
+        "womens_soccer_athlete_candidate_actions_download_approved_yes_rows": as_int(womens_soccer_athlete_candidate_actions_manifest.get("download_approved_yes_rows")) if isinstance(womens_soccer_athlete_candidate_actions_manifest, dict) else sum(1 for row in womens_soccer_athlete_candidate_actions_rows if clean(row.get("download_approved")).lower() == "yes"),
+        "womens_soccer_athlete_candidate_actions_blank_source_url_rows": as_int(womens_soccer_athlete_candidate_actions_manifest.get("blank_source_url_rows")) if isinstance(womens_soccer_athlete_candidate_actions_manifest, dict) else sum(1 for row in womens_soccer_athlete_candidate_actions_rows if not clean(row.get("source_url"))),
+        "womens_soccer_athlete_candidate_actions_generated_at": clean(womens_soccer_athlete_candidate_actions_manifest.get("generated_at_utc")) if isinstance(womens_soccer_athlete_candidate_actions_manifest, dict) else "",
+        "womens_soccer_athlete_candidate_actions_freshness_status": womens_soccer_athlete_candidate_actions_cue["status"],
+        "womens_soccer_athlete_candidate_actions_freshness_detail": womens_soccer_athlete_candidate_actions_cue["detail"],
+        "womens_soccer_athlete_candidate_actions_refresh_command": womens_soccer_athlete_candidate_actions_cue["run_command"],
         "womens_soccer_external_research_status": clean(womens_soccer_external_research_manifest.get("status")) if isinstance(womens_soccer_external_research_manifest, dict) else "",
         "womens_soccer_external_research_rows": len(womens_soccer_external_research_rows),
         "womens_soccer_external_research_nwsl_rows": as_int(womens_soccer_external_research_manifest.get("nwsl_rows")) if isinstance(womens_soccer_external_research_manifest, dict) else sum(1 for row in womens_soccer_external_research_rows if clean(row.get("research_lane")) == "nwsl_correction_enrichment"),
@@ -2091,6 +2118,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer athlete review triage", "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.md", "Manual action triage worksheet combining verification queue and source-priority rows; no download, approval, or publish writeback."),
             file_shortcut("Women's soccer athlete review triage data", "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.csv", "Machine-readable triage worksheet with advisory source candidates and blank/no future download-law fields."),
             file_shortcut("Women's soccer athlete review triage manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_review_triage.json", "Freshness, counts, and guardrail metadata for the review triage worksheet."),
+            file_shortcut("Women's soccer athlete candidate next-action board", "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.md", "Source-candidate action board grouped by manual work type; review-only and no download/approval writeback."),
+            file_shortcut("Women's soccer athlete candidate next-action board data", "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv", "Machine-readable candidate next-action board with exact source row refs and blank/no download-law fields."),
+            file_shortcut("Women's soccer athlete candidate next-action board manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.json", "Freshness, counts, and guardrail metadata for the candidate next-action board."),
             file_shortcut("Women's soccer external research intake", "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md", "Advisory NWSL correction/enrichment and Europe source-map rows for source metadata review only."),
             file_shortcut("Women's soccer external research intake data", "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv", "Machine-readable operator buckets for external research rows; no candidate-state or approval writeback."),
             file_shortcut("Women's soccer NWSL external research source", "data/asset_registry/womens_soccer/external_research/nwsl_correction_enrichment_report.csv", "Raw advisory NWSL correction/enrichment research from ChatGPT Pro."),
@@ -8747,6 +8777,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer triage rows</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_review_triage_rows', 0)))}</strong></div>
             <div><span>Soccer triage NWSL</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_review_triage_nwsl_rows', 0)))}</strong></div>
             <div><span>Soccer triage blanks</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_review_triage_blank_source_url_rows', 0)))}</strong></div>
+            <div><span>Soccer candidate actions</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_candidate_actions_rows', 0)))}</strong></div>
+            <div><span>Soccer candidate NWSL</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_candidate_actions_nwsl_rows', 0)))}</strong></div>
+            <div><span>Soccer candidate blanks</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_candidate_actions_blank_source_url_rows', 0)))}</strong></div>
             <div><span>Soccer research rows</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_rows', 0)))}</strong></div>
             <div><span>Soccer research NWSL</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_nwsl_rows', 0)))}</strong></div>
             <div><span>Soccer research Europe</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_europe_rows', 0)))}</strong></div>
@@ -8796,6 +8829,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_athlete_next_actions', "Women's soccer athlete verification next actions")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_source_priority', "Women's soccer athlete source priority")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_review_triage', "Women's soccer athlete review triage")}
+          {packet_freshness_html(panel, 'womens_soccer_athlete_candidate_actions', "Women's soccer athlete candidate next-action board")}
           {packet_freshness_html(panel, 'womens_soccer_external_research', "Women's soccer external research intake")}
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
           {packet_freshness_html(panel, 'hockey_softball_foundation_coverage', "Hockey/softball foundation coverage index")}
@@ -10381,6 +10415,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer athlete review triage download-approved yes rows: {asset_panel.get('womens_soccer_athlete_review_triage_download_approved_yes_rows', 0)}",
         f"- Women's soccer athlete review triage blank source-url rows: {asset_panel.get('womens_soccer_athlete_review_triage_blank_source_url_rows', 0)}",
         f"- Women's soccer athlete review triage generated: {asset_panel.get('womens_soccer_athlete_review_triage_generated_at') or 'missing'}",
+        f"- Women's soccer athlete candidate next-action rows: {asset_panel.get('womens_soccer_athlete_candidate_actions_rows', 0)}",
+        f"- Women's soccer athlete candidate next-action NWSL rows: {asset_panel.get('womens_soccer_athlete_candidate_actions_nwsl_rows', 0)}",
+        f"- Women's soccer athlete candidate next-action Europe rows: {asset_panel.get('womens_soccer_athlete_candidate_actions_europe_rows', 0)}",
+        f"- Women's soccer athlete candidate next-action download-approved yes rows: {asset_panel.get('womens_soccer_athlete_candidate_actions_download_approved_yes_rows', 0)}",
+        f"- Women's soccer athlete candidate next-action blank source-url rows: {asset_panel.get('womens_soccer_athlete_candidate_actions_blank_source_url_rows', 0)}",
+        f"- Women's soccer athlete candidate next-action generated: {asset_panel.get('womens_soccer_athlete_candidate_actions_generated_at') or 'missing'}",
         f"- Women's soccer external research rows: {asset_panel.get('womens_soccer_external_research_rows', 0)}",
         f"- Women's soccer external research NWSL rows: {asset_panel.get('womens_soccer_external_research_nwsl_rows', 0)}",
         f"- Women's soccer external research Europe rows: {asset_panel.get('womens_soccer_external_research_europe_rows', 0)}",
@@ -10528,6 +10568,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("womens_soccer_athlete_review_triage_refresh_command"),
             },
             "Women's soccer athlete review triage",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("womens_soccer_athlete_candidate_actions_freshness_status"),
+                "detail": asset_panel.get("womens_soccer_athlete_candidate_actions_freshness_detail"),
+                "run_command": asset_panel.get("womens_soccer_athlete_candidate_actions_refresh_command"),
+            },
+            "Women's soccer athlete candidate next-action board",
         ),
         packet_freshness_markdown(
             {
