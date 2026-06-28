@@ -3660,6 +3660,12 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
         breaking_next_action_priority = clean(next_action_row.get("review_priority"))
         breaking_next_action_operator = clean(next_action_row.get("operator_next_action"))
         breaking_next_action_cue = clean(next_action_row.get("official_reputable_gray_area_cue"))
+        breaking_next_action_why_urgent = clean(next_action_row.get("why_story_looks_urgent"))
+        breaking_next_action_source_confidence = clean(next_action_row.get("source_confidence_tier"))
+        breaking_next_action_source_reason = clean(next_action_row.get("source_confidence_reason"))
+        breaking_next_action_signal_time = clean(next_action_row.get("signal_timestamp_utc"))
+        breaking_next_action_retrieval = clean(next_action_row.get("retrieval_method"))
+        breaking_next_action_limitations = clean(next_action_row.get("public_signal_limitations_cue"))
         evidence_status = clean(cluster.get("matching_official_evidence_status"))
         evidence_artifacts = clean(cluster.get("matching_official_evidence_artifacts"))
         exact_next = clean(cluster.get("exact_source_or_intake_row_to_open"))
@@ -3731,6 +3737,9 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
                 f"breaking_next_action={breaking_next_action_priority or 'review'}",
                 breaking_next_action_cue,
                 f"domain={clean(next_action_row.get('source_domain_lead'))}" if clean(next_action_row.get("source_domain_lead")) else "",
+                f"source_confidence={breaking_next_action_source_confidence}" if breaking_next_action_source_confidence else "",
+                f"retrieval={breaking_next_action_retrieval}" if breaking_next_action_retrieval else "",
+                f"signal_time={breaking_next_action_signal_time}" if breaking_next_action_signal_time else "",
             ]
             next_action_summary = "; ".join(bit for bit in next_action_bits if bit)
             coverage_summary = f"{coverage_summary} | {next_action_summary}" if coverage_summary else next_action_summary
@@ -3780,15 +3789,15 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "url": "",
             "evidence_title": title,
             "evidence_published_at": clean(row.get("signal_timestamp_utc")),
-            "evidence_description": short(first_present(public_signal_limitations, public_corroboration, public_summary), 260),
-            "evidence_preview": short(first_present(verification_priority_status, verification_priority_summary, game_source_freshness_cue, game_source_tier_cue, proof_readiness_status, proof_readiness_summary, ladder_status, ladder_summary, review_order_status, score_confirmation_status, proof_status, proof_examples, evidence_status, why_urgent), 260),
+            "evidence_description": short(first_present(breaking_next_action_limitations, public_signal_limitations, public_corroboration, public_summary), 260),
+            "evidence_preview": short(first_present(breaking_next_action_why_urgent, breaking_next_action_source_reason, verification_priority_status, verification_priority_summary, game_source_freshness_cue, game_source_tier_cue, proof_readiness_status, proof_readiness_summary, ladder_status, ladder_summary, review_order_status, score_confirmation_status, proof_status, proof_examples, evidence_status, why_urgent), 260),
             "evidence_source": first_present(proof_artifacts, evidence_artifacts, default="breaking_public_signal_queue.csv"),
             "story_opportunity_id": clean(row.get("candidate_id")),
             "story_opportunity_title": title,
             "story_opportunity_size": clean(row.get("public_signal_count")),
             "story_opportunity_sources": source_domains,
             "story_opportunity_urls": first_present(ladder_urls, proof_urls, cluster.get("matching_official_evidence_urls"), row.get("source_urls")),
-            "story_opportunity_reason": short(first_present(verification_priority_summary, urgency_review_reason, proof_readiness_summary, ladder_summary, why_urgent), 220),
+            "story_opportunity_reason": short(first_present(breaking_next_action_why_urgent, verification_priority_summary, urgency_review_reason, proof_readiness_summary, ladder_summary, why_urgent), 220),
             "story_opportunity_angle": first_present(verification_priority_status, proof_readiness_status, ladder_status, urgent_band),
             "story_opportunity_recommended_path": "manual_story_candidate",
             "story_opportunity_path_reason": "Breaking/public signal is review-only until the confirmation intake records official, wire, primary, or operator-verified evidence.",
@@ -3800,7 +3809,7 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "story_opportunity_second_source_id": "",
             "story_opportunity_second_source_url": first_present(verification_priority_target, story_proof_target, game_fact_target, ladder_urls, review_order_target, score_confirmation_target, named_confirmation_targets, proof_urls, cluster.get("matching_official_evidence_urls"), default=""),
             "story_opportunity_second_source_lane": "official_or_wire_confirmation_required",
-            "story_opportunity_second_source_reason": first_present(breaking_next_action_priority, verification_priority_status, game_source_freshness_status, game_source_tier, proof_readiness_status, official_corroboration, reputable_corroboration, review_order_status, score_confirmation_status, proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
+            "story_opportunity_second_source_reason": first_present(breaking_next_action_priority, breaking_next_action_source_confidence, verification_priority_status, game_source_freshness_status, game_source_tier, proof_readiness_status, official_corroboration, reputable_corroboration, review_order_status, score_confirmation_status, proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
             "story_opportunity_second_source_action": first_present(breaking_next_action_operator, verification_priority_next, game_source_freshness_cue, proof_readiness_next, review_walkthrough_next, human_next, proof_next, exact_next, default="Fill breaking_public_signal_confirmation_intake.csv with official, wire, primary, or operator-verified confirmation before any story path."),
             "promotion": "monitor_only",
             "promotion_priority": urgent_band,

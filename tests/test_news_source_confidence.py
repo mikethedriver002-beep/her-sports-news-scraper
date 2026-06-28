@@ -426,13 +426,19 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "re-check the source URL timestamp/recency" in stale_cluster["verification_priority_next_action"]
     assert "evidence_stale_over_24h_manual_check" in stale_cluster["game_source_freshness_cue"]
 
-    action_rows = module.breaking_signal_next_action_rows([cluster, stale_cluster])
+    action_rows = module.breaking_signal_next_action_rows([cluster, stale_cluster], [row, duplicate])
     by_cluster_id = {row["cluster_id"]: row for row in action_rows}
     assert action_rows[0]["cluster_id"] == stale_cluster["cluster_id"]
     assert action_rows[0]["review_priority"] == "P0_freshness_recheck_first"
     assert by_cluster_id[cluster["cluster_id"]]["review_priority"] == "P2_reputable_or_gray_area_source_verify"
     assert "official_or_primary_evidence_present_operator_verify" in by_cluster_id[cluster["cluster_id"]]["official_reputable_gray_area_cue"]
     assert by_cluster_id[cluster["cluster_id"]]["source_domain_lead"] == "liberty.wnba.com"
+    assert "Why now:" in by_cluster_id[cluster["cluster_id"]]["why_story_looks_urgent"]
+    assert by_cluster_id[cluster["cluster_id"]]["source_confidence_tier"] == row["source_confidence_tier"]
+    assert by_cluster_id[cluster["cluster_id"]]["source_confidence_reason"] == row["source_confidence_reason"]
+    assert by_cluster_id[cluster["cluster_id"]]["signal_timestamp_utc"]
+    assert by_cluster_id[cluster["cluster_id"]]["retrieval_method"] == "public_metadata_observation"
+    assert "Public/community signal is review-only discovery context" in by_cluster_id[cluster["cluster_id"]]["public_signal_limitations_cue"]
     assert "breaking_public_signal_confirmation_intake.csv" in action_rows[0]["operator_next_action"]
     assert all(row["review_only"] == "true" for row in action_rows)
     assert all(row["approval_state_change"] == "false" for row in action_rows)
@@ -444,6 +450,8 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     action_report = module.markdown_breaking_signal_next_action(action_summary, action_rows)
     assert "Review-only, artifact-only breaking/public-signal triage" in action_report
     assert "No paid APIs" in action_report
+    assert "source_confidence=" in action_report
+    assert "public_signal=medium count=2" in action_report
 
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
@@ -705,6 +713,14 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all(row["review_only"] == "true" for row in next_action_rows)
     assert all(row["source_enablement"] == "false" for row in next_action_rows)
     assert all(row["publish_action"] == "none_artifact_only" for row in next_action_rows)
+    assert all("why_story_looks_urgent" in row for row in next_action_rows)
+    assert all("source_confidence_tier" in row for row in next_action_rows)
+    assert all("source_confidence_reason" in row for row in next_action_rows)
+    assert all("signal_timestamp_utc" in row for row in next_action_rows)
+    assert all("retrieval_method" in row for row in next_action_rows)
+    assert all("public_signal_limitations_cue" in row for row in next_action_rows)
+    assert any(row["why_story_looks_urgent"] for row in next_action_rows)
+    assert any(row["source_confidence_tier"] for row in next_action_rows)
     assert all(row["review_only"] == "true" for row in bridge_rows)
     assert all(row["publish_ready"] == "false" for row in bridge_rows)
     assert all(row["auto_publish"] == "false" for row in bridge_rows)

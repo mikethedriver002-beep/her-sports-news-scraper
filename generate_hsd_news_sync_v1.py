@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.7-breaking-next-action-board"
+VERSION = "news-sync-v1.9.8-breaking-next-action-trust-cues"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -204,7 +204,10 @@ BREAKING_SIGNAL_NEXT_ACTION_FIELDS = [
     "confirmation_state", "official_reputable_gray_area_cue",
     "source_confirmation_tier", "source_freshness_status",
     "source_freshness_age_minutes", "source_domain_lead",
+    "why_story_looks_urgent", "source_confidence_tier",
+    "source_confidence_reason", "signal_timestamp_utc", "retrieval_method",
     "public_signal_confidence", "public_signal_count",
+    "public_signal_limitations_cue",
     "evidence_urls", "source_or_intake_row_to_open",
     "freshness_or_proof_row_to_open", "manual_confirmation_target",
     "operator_next_action", "review_limitations",
@@ -3968,9 +3971,34 @@ def breaking_next_action_text(row: Dict[str, Any], priority: str) -> str:
     return f"Open {BREAKING_SIGNAL_CLUSTERS_CSV} cluster_id={clean(row.get('cluster_id'))}; audit only if this becomes a story candidate."
 
 
-def breaking_signal_next_action_rows(cluster_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def breaking_signal_queue_by_candidate(signal_rows: Optional[List[Dict[str, Any]]]) -> Dict[str, Dict[str, Any]]:
+    lookup: Dict[str, Dict[str, Any]] = {}
+    for row in signal_rows or []:
+        candidate_id = clean(row.get("candidate_id"))
+        if candidate_id and candidate_id not in lookup:
+            lookup[candidate_id] = row
+    return lookup
+
+
+def first_breaking_signal_for_cluster(
+    cluster: Dict[str, Any],
+    signal_rows_by_candidate: Dict[str, Dict[str, Any]],
+) -> Dict[str, Any]:
+    for candidate_id in clean(cluster.get("candidate_ids")).split(";"):
+        candidate_id = clean(candidate_id)
+        if candidate_id and candidate_id in signal_rows_by_candidate:
+            return signal_rows_by_candidate[candidate_id]
+    return {}
+
+
+def breaking_signal_next_action_rows(
+    cluster_rows: List[Dict[str, Any]],
+    signal_rows: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    signal_rows_by_candidate = breaking_signal_queue_by_candidate(signal_rows)
     rows: List[Dict[str, Any]] = []
     for cluster in cluster_rows:
+        signal = first_breaking_signal_for_cluster(cluster, signal_rows_by_candidate)
         priority = breaking_next_action_priority(cluster)
         proof_target = first_clean_value(
             cluster.get("game_source_freshness_target"),
@@ -3994,8 +4022,14 @@ def breaking_signal_next_action_rows(cluster_rows: List[Dict[str, Any]]) -> List
                 "source_freshness_status": clean(cluster.get("game_source_freshness_status")),
                 "source_freshness_age_minutes": clean(cluster.get("game_source_freshness_age_minutes")),
                 "source_domain_lead": breaking_evidence_domain_lead(cluster),
+                "why_story_looks_urgent": clean(cluster.get("urgency_review_reason")) or clean(signal.get("why_urgent")),
+                "source_confidence_tier": clean(signal.get("source_confidence_tier")),
+                "source_confidence_reason": clean(signal.get("source_confidence_reason")),
+                "signal_timestamp_utc": clean(signal.get("signal_timestamp_utc")) or clean(cluster.get("newest_signal_timestamp_utc")),
+                "retrieval_method": clean(signal.get("retrieval_method")),
                 "public_signal_confidence": clean(cluster.get("public_signal_confidence")),
                 "public_signal_count": clean(cluster.get("public_signal_count")) or "0",
+                "public_signal_limitations_cue": clean(cluster.get("public_signal_limitations_cue")) or clean(signal.get("limitations")),
                 "evidence_urls": clean(cluster.get("corroboration_evidence_urls")) or clean(cluster.get("matching_official_evidence_urls")) or clean(cluster.get("source_urls")),
                 "source_or_intake_row_to_open": clean(cluster.get("exact_source_or_intake_row_to_open")),
                 "freshness_or_proof_row_to_open": proof_target,
@@ -4079,7 +4113,10 @@ def markdown_breaking_signal_next_action(summary: Dict[str, Any], rows: List[Dic
     for row in rows[:80]:
         lines.append(f"{row.get('action_rank')}. **{row.get('cluster_headline')}** | {row.get('urgency_band')} | {row.get('review_priority')}")
         lines.append(f"   - status={row.get('verification_priority_status')} | confirmation={row.get('confirmation_state')} | evidence={row.get('official_reputable_gray_area_cue')}")
+        lines.append(f"   - why_urgent={row.get('why_story_looks_urgent') or 'missing'}")
         lines.append(f"   - tier={row.get('source_confirmation_tier') or 'missing'} | freshness={row.get('source_freshness_status') or 'missing'} | age_min={row.get('source_freshness_age_minutes') or 'n/a'} | domain={row.get('source_domain_lead') or 'missing'}")
+        lines.append(f"   - source_confidence={row.get('source_confidence_tier') or 'missing'} | reason={row.get('source_confidence_reason') or 'missing'} | signal_time={row.get('signal_timestamp_utc') or 'missing'} | retrieval={row.get('retrieval_method') or 'missing'}")
+        lines.append(f"   - public_signal={row.get('public_signal_confidence') or 'none'} count={row.get('public_signal_count') or '0'} | limit={row.get('public_signal_limitations_cue') or row.get('review_limitations')}")
         lines.append(f"   - open={row.get('source_or_intake_row_to_open') or 'missing'} | proof_or_freshness={row.get('freshness_or_proof_row_to_open') or 'missing'} | intake={row.get('manual_confirmation_target') or 'missing'}")
         lines.append(f"   - next={row.get('operator_next_action')}")
     if len(rows) > 80:
@@ -4575,7 +4612,7 @@ def main() -> None:
         story_proof_card_rows=story_proof_card_rows,
         intake_rows=confirmation_intake_rows,
     )
-    breaking_next_action_rows = breaking_signal_next_action_rows(cluster_rows)
+    breaking_next_action_rows = breaking_signal_next_action_rows(cluster_rows, breaking_signal_rows)
     breaking_next_action_summary = breaking_signal_next_action_summary(breaking_next_action_rows)
     game_source_bridge_rows = game_source_confirmation_bridge_rows(
         run_id=run_id,

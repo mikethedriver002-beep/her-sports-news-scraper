@@ -291,8 +291,14 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
                 "source_freshness_age_minutes": "33",
                 "source_domain_lead": "sky.wnba.com",
+                "why_story_looks_urgent": "Why now: P0_breaking_review score=82/100; freshness=fresh_last_6h. Why HSD should care: official and reputable source evidence exist. Missing: human confirmation still required.",
+                "source_confidence_tier": "publish_grade",
+                "source_confidence_reason": "Official team source plus reputable public scoreboard; operator still verifies before use.",
+                "signal_timestamp_utc": "2026-06-28T12:01:53+00:00",
+                "retrieval_method": "source_metadata_observation",
                 "public_signal_confidence": "none",
                 "public_signal_count": "0",
+                "public_signal_limitations_cue": "No public/community signal captured; do not infer public reaction or use social context as confirmation.",
                 "evidence_urls": "[\"https://sky.wnba.com/news/recap\", \"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
                 "source_or_intake_row_to_open": "Open game_intelligence_board_v1.csv row_id=event-sky-fire, then open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky.",
                 "freshness_or_proof_row_to_open": "game_fact_confirmation_status_v1.csv event_uid=event-sky-fire",
@@ -318,8 +324,14 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "source_freshness_status",
             "source_freshness_age_minutes",
             "source_domain_lead",
+            "why_story_looks_urgent",
+            "source_confidence_tier",
+            "source_confidence_reason",
+            "signal_timestamp_utc",
+            "retrieval_method",
             "public_signal_confidence",
             "public_signal_count",
+            "public_signal_limitations_cue",
             "evidence_urls",
             "source_or_intake_row_to_open",
             "freshness_or_proof_row_to_open",
@@ -345,6 +357,9 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "Fresh enough for review triage" in row["story_opportunity_source_coverage"]
     assert "breaking_next_action=P1_official_confirmation_required" in row["story_opportunity_source_coverage"]
     assert "official_or_primary_evidence_present_operator_verify" in row["story_opportunity_source_coverage"]
+    assert "source_confidence=publish_grade" in row["story_opportunity_source_coverage"]
+    assert "retrieval=source_metadata_observation" in row["story_opportunity_source_coverage"]
+    assert "signal_time=2026-06-28T12:01:53+00:00" in row["story_opportunity_source_coverage"]
     assert row["freshness_label"] == "signal_and_game_source_timestamp"
     assert row["freshness_source"] == "2026-06-28T12:01:53+00:00"
     assert row["freshness_score"] == "evidence_fresh_under_3h_operator_verify"
@@ -354,6 +369,7 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert row["story_opportunity_confidence_tier"] == "official_and_reputable_artifact_cues_present_operator_verify"
     assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert row["story_opportunity_confirmation_cue"] == "manual_confirmation_intake_first"
+    assert row["evidence_preview"].startswith("Why now: P0_breaking_review")
     assert "No public/community signal captured" in row["evidence_description"]
     assert "https://sky.wnba.com/news/recap" in row["story_opportunity_urls"]
     assert "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky" in row["story_opportunity_second_source_url"]
