@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_asset_workflow_readiness_ready",
-  "generated_at_utc": "2026-06-28T06:27:39.296763+00:00",
+  "generated_at_utc": "2026-06-28T08:07:54.725582+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -31,9 +31,12 @@
     "batch_source_review_now_rows": 54,
     "batch_source_review_next_rows": 10,
     "batch_source_review_local_asset_needed_later_rows": 74,
-    "next_decision_worksheet_rows": 12,
-    "next_decision_logo_rows": 6,
-    "next_decision_athlete_rows": 6,
+    "next_decision_worksheet_rows": 74,
+    "next_decision_logo_rows": 20,
+    "next_decision_athlete_rows": 54,
+    "next_decision_missing_local_candidate_asset_rows": 74,
+    "next_decision_download_approved_yes_rows": 0,
+    "next_decision_blank_download_metadata_rows": 74,
     "quarantine_download_intake_rows": 74,
     "quarantine_download_logo_rows": 20,
     "quarantine_download_athlete_rows": 54,
@@ -140,9 +143,12 @@
     "md": "data/asset_registry/hockey_softball_next_decision_worksheet.md",
     "csv": "data/asset_registry/hockey_softball_next_decision_worksheet.csv",
     "json": "data/asset_registry/hockey_softball_next_decision_worksheet.json",
-    "rows": 12,
-    "logo_rows": 6,
-    "athlete_rows": 6
+    "rows": 74,
+    "logo_rows": 20,
+    "athlete_rows": 54,
+    "missing_local_candidate_asset_rows": 74,
+    "download_approved_yes_rows": 0,
+    "blank_download_metadata_rows": 74
   },
   "quarantine_download_intake": {
     "md": "data/asset_registry/hockey_softball_quarantine_download_intake.md",

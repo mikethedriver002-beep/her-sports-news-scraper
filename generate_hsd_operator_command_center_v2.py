@@ -1879,6 +1879,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_next_decision_worksheet_rows": hockey_softball_next_decision_rows,
         "hockey_softball_next_decision_worksheet_logo_rows": as_int(hockey_softball_next_decision_manifest.get("logo_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
         "hockey_softball_next_decision_worksheet_athlete_rows": as_int(hockey_softball_next_decision_manifest.get("athlete_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
+        "hockey_softball_next_decision_worksheet_missing_local_rows": as_int(hockey_softball_next_decision_manifest.get("missing_local_candidate_asset_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
+        "hockey_softball_next_decision_worksheet_download_approved_yes_rows": as_int(hockey_softball_next_decision_manifest.get("download_approved_yes_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
+        "hockey_softball_next_decision_worksheet_blank_download_metadata_rows": as_int(hockey_softball_next_decision_manifest.get("blank_download_metadata_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
         "hockey_softball_quarantine_download_intake_status": clean(hockey_softball_quarantine_download_manifest.get("status")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else "",
         "hockey_softball_quarantine_download_intake_generated_at": clean(hockey_softball_quarantine_download_manifest.get("generated_at_utc")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else "",
         "hockey_softball_quarantine_download_intake_rows": hockey_softball_quarantine_download_rows,
@@ -8589,6 +8592,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S worksheet</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_rows', 0)))}</strong></div>
             <div><span>H/S worksheet logos</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_logo_rows', 0)))}</strong></div>
             <div><span>H/S worksheet athletes</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_athlete_rows', 0)))}</strong></div>
+            <div><span>H/S worksheet missing local</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_missing_local_rows', 0)))}</strong></div>
+            <div><span>H/S worksheet dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>H/S worksheet blank dl fields</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_blank_download_metadata_rows', 0)))}</strong></div>
             <div><span>H/S download gate</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_intake_rows', 0)))}</strong></div>
             <div><span>H/S download yes</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_approved_yes_rows', 0)))}</strong></div>
           </div>
@@ -10211,6 +10217,9 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball next decision worksheet rows: {asset_panel.get('hockey_softball_next_decision_worksheet_rows', 0)}",
         f"- Hockey/softball next decision logo rows: {asset_panel.get('hockey_softball_next_decision_worksheet_logo_rows', 0)}",
         f"- Hockey/softball next decision athlete rows: {asset_panel.get('hockey_softball_next_decision_worksheet_athlete_rows', 0)}",
+        f"- Hockey/softball next decision missing-local rows: {asset_panel.get('hockey_softball_next_decision_worksheet_missing_local_rows', 0)}",
+        f"- Hockey/softball next decision download-approved yes rows: {asset_panel.get('hockey_softball_next_decision_worksheet_download_approved_yes_rows', 0)}",
+        f"- Hockey/softball next decision blank download-metadata rows: {asset_panel.get('hockey_softball_next_decision_worksheet_blank_download_metadata_rows', 0)}",
         f"- Hockey/softball next decision worksheet generated: {asset_panel.get('hockey_softball_next_decision_worksheet_generated_at') or 'missing'}",
         f"- Hockey/softball quarantine download intake rows: {asset_panel.get('hockey_softball_quarantine_download_intake_rows', 0)}",
         f"- Hockey/softball quarantine download logo rows: {asset_panel.get('hockey_softball_quarantine_download_intake_logo_rows', 0)}",

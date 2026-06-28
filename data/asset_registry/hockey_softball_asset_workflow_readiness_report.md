@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-28T06:27:39.296763+00:00`
+- Generated: `2026-06-28T08:07:54.725582+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First
@@ -32,9 +32,12 @@
 - Source-reviewable now rows: `54`
 - Next batch rows: `10`
 - Local asset needed later rows: `74`
-- Next decision worksheet rows: `12`
-- Next decision logo rows: `6`
-- Next decision athlete rows: `6`
+- Next decision worksheet rows: `74`
+- Next decision logo rows: `20`
+- Next decision athlete rows: `54`
+- Next decision missing-local rows: `74`
+- Next decision download-approved yes rows: `0`
+- Next decision blank download-metadata rows: `74`
 - Quarantine download intake rows: `74`
 - Quarantine download-approved yes rows: `0`
 
