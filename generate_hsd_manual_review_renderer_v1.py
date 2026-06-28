@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.31.0-visual-comparison-board"
+VERSION = "hsd-manual-review-renderer-v1.32.0-photo-first-score-lock"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,14 +46,15 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v5_photo_first_depth_stage"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v6_photo_first_score_lock"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
-    "square_athlete_focal_panel,photo_first_focal_depth_stage,stat_proof_rail,generated_preview_qa"
+    "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
+    "compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2520,9 +2521,10 @@ def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: b
 def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
     compact = h <= 130
-    slab_w = min(176 if not compact else 154, max(132, int(w * (0.29 if compact else 0.27))))
-    inset_y = 18 if not compact else 14
-    return (x + w - slab_w - 26, y + inset_y, slab_w, h - inset_y * 2)
+    slab_w = min(168 if not compact else 146, max(132, int(w * (0.28 if compact else 0.27))))
+    inset_y = 20 if not compact else 14
+    right_inset = 30 if not compact else 28
+    return (x + w - slab_w - right_inset, y + inset_y, slab_w, h - inset_y * 2)
 
 
 def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], focus_box: Tuple[int, int, int, int] | None = None) -> bool:
@@ -2609,16 +2611,33 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     slab_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(slab_shadow, "RGBA")
-    shadow_draw.rounded_rectangle((sx + 5, sy + 6, sx + sw + 5, sy + sh + 6), radius=20, fill=(0, 0, 0, 118))
+    shadow_draw.rounded_rectangle((sx + 4, sy + 6, sx + sw + 4, sy + sh + 6), radius=18, fill=(0, 0, 0, 122))
     if ImageFilter is not None:
         slab_shadow = slab_shadow.filter(ImageFilter.GaussianBlur(5))
     image.alpha_composite(slab_shadow)
-    slab_fill = mix_rgb((248, 250, 255), accent, 0.10 if winner else 0.06)
-    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=18, fill=(*slab_fill, 244), outline=(*accent, 210), width=2)
-    draw.rectangle((sx + 10, sy + 10, sx + 16, sy + sh - 10), fill=(*accent, 180))
-    draw.rounded_rectangle((sx + 20, sy + 12, sx + sw - 12, sy + sh - 12), radius=12, outline=(2, 4, 9, 34), width=1)
-    score_size = 84 if compact else 104 if winner else 90
-    draw_reference_text(image, (sx + 22, sy + 4, sw - 34, sh - 8), score_value, "score", score_size, 46 if compact else 54, (2, 4, 9), max_lines=1, align="center", stroke=1, stroke_fill=(248, 250, 255))
+    slab_fill = mix_rgb((236, 241, 249), accent, 0.08 if winner else 0.05)
+    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=17, fill=(*slab_fill, 246), outline=(*accent, 224), width=2)
+    draw.rectangle((sx + 8, sy + 10, sx + 15, sy + sh - 10), fill=(*accent, 210))
+    draw.line((sx + 20, sy + 10, sx + sw - 14, sy + 10), fill=(255, 255, 255, 115), width=1)
+    draw.line((sx + 20, sy + sh - 11, sx + sw - 14, sy + sh - 11), fill=(2, 4, 9, 42), width=1)
+    cell = (sx + 25, sy + 12, sx + sw - 11, sy + sh - 12)
+    draw.rounded_rectangle(cell, radius=12, fill=(247, 249, 253, 238), outline=(2, 4, 9, 84), width=1)
+    draw.line((cell[0] + 3, cell[1] + 2, cell[2] - 3, cell[1] + 2), fill=(255, 255, 255, 138), width=1)
+    score_size = min(80 if compact else (94 if winner else 86), max(58, int((cell[2] - cell[0]) * 0.82)), max(58, int((cell[3] - cell[1]) * 0.90)))
+    min_score_size = 46 if compact else 52
+    draw_reference_text(
+        image,
+        (cell[0] + 3, cell[1] - 1, cell[2] - cell[0] - 6, cell[3] - cell[1] + 2),
+        score_value,
+        "score",
+        score_size,
+        min_score_size,
+        (2, 4, 9),
+        max_lines=1,
+        align="center",
+        stroke=1,
+        stroke_fill=(248, 250, 255),
+    )
 
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
@@ -2697,7 +2716,7 @@ def draw_photo_first_final_score_template(
         loser_accent,
         headline=clean(microcopy.get("headline")) or review_prompt(score),
     )
-    draw_reference_guardrail(image)
+    draw_reference_guardrail(image, compact_footer=format_id == "square_feed_1x1")
     return True
 
 
