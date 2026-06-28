@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.32.0-photo-first-score-lock"
+VERSION = "hsd-manual-review-renderer-v1.33.0-photo-first-focal-stage"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v6_photo_first_score_lock"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v7_photo_first_focal_stage"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -54,7 +54,7 @@ RENDER_BACKGROUND_CUES = (
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
-    "compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
+    "photo_first_editorial_nameplate,compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2527,6 +2527,20 @@ def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool =
     return (x + w - slab_w - right_inset, y + inset_y, slab_w, h - inset_y * 2)
 
 
+def photo_first_stage_caption(module: Dict[str, Any]) -> str:
+    callouts = module.get("callouts") if isinstance(module.get("callouts"), list) else []
+    parts = [
+        f"{clean(item.get('value'))} {clean(item.get('label')).upper()}".strip()
+        for item in callouts
+        if isinstance(item, dict) and clean(item.get("value")) and clean(item.get("label"))
+    ]
+    if parts:
+        return " / ".join(parts[:2])
+    if clean(module.get("athlete_photo_review_variant_status")) == "review_variant_available":
+        return "SOURCE PHOTO / REVIEW CROP"
+    return "REVIEW-ONLY PHOTO"
+
+
 def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], focus_box: Tuple[int, int, int, int] | None = None) -> bool:
     _x, _y, _w, h = box
     variant_id = "photo_first_story" if h > 650 else "photo_first_feed"
@@ -2547,7 +2561,7 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
     draw.rounded_rectangle((x + 12, y + 14, x + w + 12, y + h + 14), radius=30, fill=(0, 0, 0, 130))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 206), outline=(*accent, 230), width=3)
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 218), outline=(*accent, 236), width=3)
     draw.rectangle((x, y + 34, x + 10, y + h - 32), fill=(*accent, 206))
     draw.polygon([(x + 28, y + h - 152), (x + w - 20, y + h - 244), (x + w - 20, y + h - 20), (x + 28, y + h - 20)], fill=(*accent, 54))
     draw.polygon([(x + 44, y + 92), (x + w - 26, y + 36), (x + w - 26, y + 112), (x + 44, y + 166)], fill=(255, 255, 255, 12))
@@ -2567,15 +2581,19 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     mask_draw = ImageDraw.Draw(stage_mask)
     mask_draw.rounded_rectangle((x + 14, y + 38, x + w - 14, y + h - 18), radius=22, fill=255)
     layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 228), width=3)
-    label_w = min(w - 42, 234)
-    draw.rounded_rectangle((x + 22, y + h - 58, x + 22 + label_w, y + h - 20), radius=8, fill=(3, 5, 10, 232), outline=(248, 250, 255, 150), width=1)
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 238), width=3)
+    plate_x = x + 22
+    plate_y = y + h - 66
+    plate_w = min(w - 44, 270)
+    draw.rounded_rectangle((plate_x + 4, plate_y + 5, plate_x + plate_w + 4, plate_y + 43), radius=9, fill=(0, 0, 0, 122))
+    draw.rounded_rectangle((plate_x, plate_y, plate_x + plate_w, plate_y + 38), radius=9, fill=(3, 5, 10, 232), outline=(*PALETTE["gold"], 180), width=1)
+    draw.line((plate_x + 12, plate_y + 5, plate_x + plate_w - 12, plate_y + 5), fill=(*accent, 174), width=2)
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
-    variant_label = "SOURCE PHOTO / REVIEW CROP" if clean(module.get("athlete_photo_review_variant_status")) == "review_variant_available" else "PHOTO CHECK"
-    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "PLAYER FOCUS", "context", 19, 10, accent, max_lines=1, align="left")
+    variant_label = photo_first_stage_caption(module)
+    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "PHOTO-FIRST FOCUS", "context", 18, 10, accent, max_lines=1, align="left")
     draw_reference_text(image, (x + 36, y + 58, w - 72, 42), player, "context", 26, 14, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
-    draw_reference_text(image, (x + 30, y + h - 52, label_w - 16, 28), variant_label, "context", 13, 8, accent, max_lines=1, align="center")
+    draw_reference_text(image, (plate_x + 12, plate_y + 8, plate_w - 24, 24), variant_label, "context", 15, 9, PALETTE["gold"], max_lines=1, align="center")
     return True
 
 
