@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_asset_workflow_readiness_ready",
-  "generated_at_utc": "2026-06-28T17:59:16.169700+00:00",
+  "generated_at_utc": "2026-06-28T20:05:12.001259+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -43,6 +43,12 @@
     "source_priority_operator_verify_required_rows": 54,
     "source_priority_download_approved_yes_rows": 0,
     "source_priority_blank_source_url_rows": 74,
+    "source_verification_checklist_rows": 18,
+    "source_verification_checklist_womens_hockey_rows": 12,
+    "source_verification_checklist_softball_rows": 6,
+    "source_verification_checklist_download_approved_yes_rows": 0,
+    "source_verification_checklist_blank_source_url_rows": 18,
+    "source_verification_checklist_blank_human_review_rows": 18,
     "review_triage_rows": 38,
     "review_triage_logo_rows": 20,
     "review_triage_athlete_rows": 18,
@@ -180,6 +186,17 @@
     "operator_verify_required_rows": 54,
     "download_approved_yes_rows": 0,
     "blank_source_url_rows": 74
+  },
+  "source_verification_checklist": {
+    "md": "data/asset_registry/hockey_softball_source_verification_checklist.md",
+    "csv": "data/asset_registry/hockey_softball_source_verification_checklist.csv",
+    "json": "data/asset_registry/hockey_softball_source_verification_checklist.json",
+    "rows": 18,
+    "womens_hockey_rows": 12,
+    "softball_rows": 6,
+    "download_approved_yes_rows": 0,
+    "blank_source_url_rows": 18,
+    "blank_human_review_rows": 18
   },
   "review_triage": {
     "md": "data/asset_registry/hockey_softball_asset_review_triage.md",
