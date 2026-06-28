@@ -1758,6 +1758,14 @@ def seed_manual_visual_qa_decision_files() -> None:
                 "editorial_microcopy_headline": "STEWART + CLEAR SEPARATION",
                 "editorial_microcopy_body": "Stewart's verified 20 PTS, 6 REB, 4 AST frames the clear separation.",
                 "editorial_microcopy_review_cue": "Copy is score/stat-derived only; verify source proof before adding why/how claims.",
+                "visual_mode": "photo_first_performer",
+                "hero_asset_required": "approved_local_athlete_photo",
+                "focal_entity_type": "athlete",
+                "score_lock_variant": "final_score_locked_photo_first",
+                "proof_strip_variant": "player_stat_proof_strip",
+                "copy_unlock_state": "verified_stat_copy_locked_manual_review",
+                "background_family": "hsd_premium_sports_editorial",
+                "template_fit_reason": "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing.",
             },
             "format_options": [
                 {
@@ -1776,6 +1784,14 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "athlete_photo_layout_mode": "photo_first_final_score",
                     "athlete_photo_layout_status": "approved_photo_first_template",
                     "athlete_photo_layout_detail": "Approved local headshot becomes the main editorial visual with score lanes and verified stat modules kept review-only.",
+                    "visual_mode": "photo_first_performer",
+                    "hero_asset_required": "approved_local_athlete_photo",
+                    "focal_entity_type": "athlete",
+                    "score_lock_variant": "final_score_locked_photo_first",
+                    "proof_strip_variant": "player_stat_proof_strip",
+                    "copy_unlock_state": "verified_stat_copy_locked_manual_review",
+                    "background_family": "hsd_premium_sports_editorial",
+                    "template_fit_reason": "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing.",
                 },
                 {
                     "format_id": "ig_story_9x16",
@@ -1793,6 +1809,14 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "athlete_photo_layout_mode": "photo_first_final_score",
                     "athlete_photo_layout_status": "approved_photo_first_template",
                     "athlete_photo_layout_detail": "Approved local headshot becomes the main editorial visual with score lanes and verified stat modules kept review-only.",
+                    "visual_mode": "photo_first_performer",
+                    "hero_asset_required": "approved_local_athlete_photo",
+                    "focal_entity_type": "athlete",
+                    "score_lock_variant": "final_score_locked_photo_first",
+                    "proof_strip_variant": "player_stat_proof_strip",
+                    "copy_unlock_state": "verified_stat_copy_locked_manual_review",
+                    "background_family": "hsd_premium_sports_editorial",
+                    "template_fit_reason": "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing.",
                 },
                 {
                     "format_id": "square_feed_1x1",
@@ -1807,9 +1831,17 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "reference_derivation": "square_review_draft_derived_from_imported_4x5_layout",
                     "reference_public_mockup_path": reference_public.as_posix(),
                     "reference_layout_path": reference_layout.as_posix(),
-                    "athlete_photo_layout_mode": "compact_headshot_chip",
-                    "athlete_photo_layout_status": "approved_photo_compact_layout",
-                    "athlete_photo_layout_detail": "Approved local headshot uses a compact chip to preserve the square score layout.",
+                    "athlete_photo_layout_mode": "square_photo_first_score_panel",
+                    "athlete_photo_layout_status": "approved_photo_first_square_template",
+                    "athlete_photo_layout_detail": "Approved local headshot becomes a square-native focal panel with compact score rails and proof module.",
+                    "visual_mode": "photo_first_performer_square",
+                    "hero_asset_required": "approved_local_athlete_photo",
+                    "focal_entity_type": "athlete",
+                    "score_lock_variant": "final_score_locked_square_photo_panel",
+                    "proof_strip_variant": "player_stat_proof_strip",
+                    "copy_unlock_state": "verified_stat_copy_locked_manual_review",
+                    "background_family": "hsd_premium_sports_editorial",
+                    "template_fit_reason": "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing.",
                 },
             ],
             "asset_slots": [
@@ -3037,6 +3069,70 @@ def seed_daily_ops_files() -> None:
     seed_asset_availability_audit_files()
 
 
+def test_operator_command_center_render_gallery_preserves_blocked_visual_mode_contract(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    review_drafts = Path("render_handoff_top_packet/review_drafts")
+    review_drafts.mkdir(parents=True, exist_ok=True)
+    format_paths = {
+        "ig_feed_4x5": review_drafts / "draft_preview_ig_feed.png",
+        "ig_story_9x16": review_drafts / "draft_preview_story.png",
+        "square_feed_1x1": review_drafts / "draft_preview_square.png",
+    }
+    for path in format_paths.values():
+        path.write_bytes(b"review-only draft")
+    renderer = {
+        "content_module": {
+            "content_module_mode": "game_edge_fallback",
+            "athlete_led_render_status": "athlete_led_blocked_missing_verified_player_context",
+            "athlete_led_missing_fields": "athlete_name, approved local image/cutout path, verified stat/story context",
+            "visual_mode": "no_photo_premium_result",
+        },
+        "format_options": [
+            {
+                "format_id": format_id,
+                "path": path.as_posix(),
+                "width": 1080,
+                "height": 1920 if format_id == "ig_story_9x16" else (1080 if format_id == "square_feed_1x1" else 1350),
+                "athlete_photo_layout_mode": "safe_no_photo_fallback",
+                "athlete_photo_layout_status": "photo_not_rendered",
+                "athlete_photo_layout_detail": "No verified player/stat module selected for this final-score draft.",
+                "visual_mode": "no_photo_premium_result",
+                "hero_asset_required": "approved_local_athlete_photo_missing",
+                "focal_entity_type": "team_matchup",
+                "score_lock_variant": "final_score_locked_logo_first",
+                "proof_strip_variant": "score_edge_only",
+                "copy_unlock_state": "score_only_copy_locked_manual_review",
+                "background_family": "hsd_premium_sports_editorial",
+                "template_fit_reason": "Photo-first route blocked; missing athlete_name, approved local image/cutout path, verified stat/story context.",
+            }
+            for format_id, path in format_paths.items()
+        ],
+        "asset_slots": [],
+    }
+
+    gallery = command_center.build_render_gallery(
+        renderer,
+        {"status": "human_review_required", "summary": {"pass_count": 0, "check_count": 0}},
+        {},
+        {},
+        {},
+    )
+
+    assert {row["format_id"] for row in gallery} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
+    assert all(row["visual_mode"] == "no_photo_premium_result" for row in gallery)
+    assert all(row["photo_layout_mode"] == "safe_no_photo_fallback" for row in gallery)
+    assert all(row["hero_asset_required"] == "approved_local_athlete_photo_missing" for row in gallery)
+    assert all(row["focal_entity_type"] == "team_matchup" for row in gallery)
+    assert all(row["score_lock_variant"] == "final_score_locked_logo_first" for row in gallery)
+    assert all(row["proof_strip_variant"] == "score_edge_only" for row in gallery)
+    assert all(row["copy_unlock_state"] == "score_only_copy_locked_manual_review" for row in gallery)
+    assert all(row["background_family"] == "hsd_premium_sports_editorial" for row in gallery)
+    assert all(row["publish_ready"] == "false" for row in gallery)
+    assert all(row["auto_approval"] == "false" for row in gallery)
+    assert all(row["auto_publish"] == "false" for row in gallery)
+    assert all(row["move_files"] == "false" for row in gallery)
+
+
 def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     seed_daily_ops_files()
@@ -3046,7 +3142,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     html = command_center.render_html(payload)
     markdown = command_center.render_markdown(payload)
 
-    assert payload["version"] == "hsd-operator-command-center-v3.84.0-athlete-photo-contact-sheets"
+    assert payload["version"] == "hsd-operator-command-center-v3.85.0-render-visual-mode-contract"
     assert payload["decision"]["automation"] == "OFF / artifact-only"
     assert payload["decision"]["free_source_mode"] == "Free public sources only"
     assert "no graphics upload pack is ready" in payload["decision"]["callout"]
@@ -3399,6 +3495,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_prep_packets"][0]["stat_source_label"] == "Verified player/stat text available"
     assert "Confirm the named performer" in payload["render_prep_packets"][0]["stat_review_cue"]
     assert "exact local WNBA team logos" in payload["render_prep_packets"][0]["asset_requirement"]
+    assert "approved local athlete headshot" in payload["render_prep_packets"][0]["asset_requirement"]
+    assert payload["render_prep_packets"][0]["visual_mode"] == "photo_first_performer"
+    assert payload["render_prep_packets"][0]["hero_asset_required"] == "approved_local_athlete_photo"
+    assert payload["render_prep_packets"][0]["focal_entity_type"] == "athlete"
+    assert payload["render_prep_packets"][0]["score_lock_variant"] == "final_score_locked_photo_first"
+    assert payload["render_prep_packets"][0]["proof_strip_variant"] == "player_stat_proof_strip"
+    assert payload["render_prep_packets"][0]["copy_unlock_state"] == "verified_stat_copy_locked_manual_review"
+    assert payload["render_prep_packets"][0]["background_family"] == "hsd_premium_sports_editorial"
+    assert "photo-first performer routing" in payload["render_prep_packets"][0]["template_fit_reason"]
     assert payload["render_prep_packets"][0]["active_logo_readiness_status"] == "hold_logo_review_required"
     assert "New York Liberty: unapproved_required_logo" in payload["render_prep_packets"][0]["active_logo_review_cues"]
     assert "WNBA: missing_or_unregistered_logo_asset" in payload["render_prep_packets"][0]["active_logo_review_cues"]
@@ -3421,6 +3526,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["render_handoff_summary"]["handoff_status"] == "ready_for_manual_review"
     assert payload["render_handoff_summary"]["title"] == "New York Liberty beat Las Vegas Aces"
     assert payload["render_handoff_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
+    assert payload["render_handoff_summary"]["visual_mode"] == "photo_first_performer"
+    assert payload["render_handoff_summary"]["hero_asset_required"] == "approved_local_athlete_photo"
+    assert payload["render_handoff_summary"]["focal_entity_type"] == "athlete"
+    assert payload["render_handoff_summary"]["score_lock_variant"] == "final_score_locked_photo_first"
+    assert payload["render_handoff_summary"]["proof_strip_variant"] == "player_stat_proof_strip"
+    assert payload["render_handoff_summary"]["copy_unlock_state"] == "verified_stat_copy_locked_manual_review"
+    assert payload["render_handoff_summary"]["background_family"] == "hsd_premium_sports_editorial"
     assert payload["render_handoff_summary"]["readme"] == "render_handoff_top_packet/README.md"
     assert "render_handoff_top_packet/manual_renderer_prompt.md" in payload["render_handoff_summary"]["files"]
     assert payload["render_handoff_summary"]["guardrails"]["review_only"] is True
@@ -3440,10 +3552,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Review-order checklist" and item["value"] == "5" for item in payload["metrics"])
     assert payload["decision_stop_go_summary"]["panel_status"] == "hold_selected_template_manual_asset_review"
     assert payload["decision_stop_go_summary"]["active_asset_stop_go"] == "hold_required_manual_asset_review"
-    assert payload["decision_stop_go_summary"]["selected_template_blockers"] == 1
-    assert payload["decision_stop_go_summary"]["selected_template_entities"] == "New York Liberty"
-    assert payload["decision_stop_go_summary"]["future_photo_first_holds"] == 1
-    assert payload["decision_stop_go_summary"]["future_photo_first_entities"] == "Breanna Stewart"
+    assert payload["decision_stop_go_summary"]["selected_template_blockers"] == 2
+    assert payload["decision_stop_go_summary"]["selected_template_entities"] == "New York Liberty | Breanna Stewart"
+    assert payload["decision_stop_go_summary"]["future_photo_first_holds"] == 0
+    assert payload["decision_stop_go_summary"]["future_photo_first_entities"] == "none"
     assert payload["decision_stop_go_summary"]["league_mark_context_holds"] == 1
     assert payload["decision_stop_go_summary"]["league_mark_context_entities"] == "WNBA"
     assert payload["decision_stop_go_summary"]["active_queue_artifact"] == "render_handoff_top_packet/active_asset_review_queue.md"
@@ -3478,7 +3590,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert liberty_source["priority"] == "P0_selected_template_hold"
     assert liberty_source["official_source_candidate"] == "https://example.test/liberty-logo.png"
     assert liberty_source["manual_search_query"] == '"New York Liberty" official logo PNG WNBA'
-    assert breanna_source["priority"] == "P1_future_photo_first_hold"
+    assert breanna_source["priority"] == "P0_selected_template_hold"
     assert breanna_source["official_source_candidate"] == "https://www.wnba.com/player/1627668/breanna-stewart"
     assert all(row["review_only"] == "true" for row in payload["manual_asset_source_board"])
     assert all(row["manual_approval_required"] == "true" for row in payload["manual_asset_source_board"])
@@ -3527,6 +3639,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert feed_gallery["photo_layout_mode"] == "photo_first_final_score"
     assert feed_gallery["photo_layout_status"] == "approved_photo_first_template"
     assert "main editorial visual" in feed_gallery["photo_layout_detail"]
+    assert feed_gallery["visual_mode"] == "photo_first_performer"
+    assert feed_gallery["hero_asset_required"] == "approved_local_athlete_photo"
+    assert feed_gallery["focal_entity_type"] == "athlete"
+    assert feed_gallery["score_lock_variant"] == "final_score_locked_photo_first"
+    assert feed_gallery["proof_strip_variant"] == "player_stat_proof_strip"
+    assert feed_gallery["copy_unlock_state"] == "verified_stat_copy_locked_manual_review"
+    assert feed_gallery["background_family"] == "hsd_premium_sports_editorial"
+    assert "photo-first result routing" in feed_gallery["template_fit_reason"]
     assert feed_gallery["source_status"] == "source_confidence_ready"
     assert feed_gallery["qa_cue_status"] == "qa_passed_manual_review_required"
     assert feed_gallery["visual_delta_status"] == "visual_delta_aligned_review"
@@ -3539,7 +3659,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "score/stat-derived" in feed_gallery["stat_module_detail"]
     assert [cue["label"] for cue in feed_gallery["cue_rows"]] == ["Template", "Logos", "Photo", "Source", "Stats", "QA", "Visual delta", "Manual revision"]
     assert payload["operator_decision_panel"]["render_gallery"][2]["template_status"] == "derived_reference_review"
-    assert payload["operator_decision_panel"]["render_gallery"][2]["photo_layout_mode"] == "compact_headshot_chip"
+    assert payload["operator_decision_panel"]["render_gallery"][2]["photo_layout_mode"] == "square_photo_first_score_panel"
+    assert payload["operator_decision_panel"]["render_gallery"][2]["visual_mode"] == "photo_first_performer_square"
+    assert payload["operator_decision_panel"]["render_gallery"][2]["score_lock_variant"] == "final_score_locked_square_photo_panel"
     assert payload["operator_decision_panel"]["render_gallery"][2]["visual_delta_status"] == "visual_delta_manual_warning"
     assert payload["operator_decision_panel"]["render_gallery"][2]["revision_status"] == "manual_revision_recommended"
     assert any(item["label"] == "QA report" and item["exists"] is True for item in payload["operator_decision_panel"]["file_shortcuts"])
@@ -3869,8 +3991,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Future photo-first holds" in html
     assert "League-mark context" in html
     assert "What Blocks This Render Now" in markdown
-    assert "Selected-template blockers: 1 (New York Liberty)" in markdown
-    assert "Future photo-first holds: 1 (Breanna Stewart)" in markdown
+    assert "Selected-template blockers: 2 (New York Liberty | Breanna Stewart)" in markdown
+    assert "Future photo-first holds: 0 (none)" in markdown
     assert "League-mark context: 1 (WNBA)" in markdown
     assert "Active queue: `render_handoff_top_packet/active_asset_review_queue.md`" in markdown
     assert "Manual source board: `render_handoff_top_packet/manual_asset_source_board.md`" in markdown
@@ -3903,8 +4025,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Manual League-Mark Context Intake" in markdown
     assert "Source-board rows: 3" in markdown
     assert "Intake bridge rows: 1" in markdown
-    assert "P0 selected-template holds: 1" in markdown
-    assert "Future photo-first holds: 1" in markdown
+    assert "P0 selected-template holds: 2" in markdown
+    assert "Future photo-first holds: 0" in markdown
     assert "Legacy reference: `D:\\Her Sports Daily` asset-index/DDG packet structure only; current board is review-only." in markdown
     assert "Source board row: P0_selected_template_hold | team_logo | New York Liberty" in markdown
     assert "downloads=false | approval=false | publish_ready=false" in markdown
@@ -3937,21 +4059,24 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Logo readiness: `hold_logo_review_required`" in readme
     assert "Athlete identity: `hold_identity_review_required`" in readme
     assert "Active asset stop/go: `hold_required_manual_asset_review`" in readme
-    assert "Active queue scope: `3` rows; selected-template blockers `1` (New York Liberty); future photo-first holds `1` (Breanna Stewart); league-mark context holds `1` (WNBA)." in readme
+    assert "Active queue scope: `3` rows; selected-template blockers `2` (New York Liberty | Breanna Stewart); future photo-first holds `0` (none); league-mark context holds `1` (WNBA)." in readme
     assert "Breanna Stewart: hold_identity_review_required" in readme
     assert "do not approve assets or create a publish-ready lane" in readme
-    assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in readme
+    assert "Visual mode: `photo_first_performer`" in readme
+    assert "Hero asset required: `approved_local_athlete_photo`" in readme
+    assert "Focal entity: `athlete`" in readme
+    assert "Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use." in readme
     assert "5. `manual_logo_verification_intake.md`" in readme
     assert "6. `manual_league_mark_context_intake.md`" in readme
     active_queue = Path("render_handoff_top_packet/active_asset_review_queue.md").read_text(encoding="utf-8")
     assert "Active Asset Review Queue" in active_queue
     assert "## Summary" in active_queue
     assert "Total review rows: 3" in active_queue
-    assert "Blocking selected template now: 1" in active_queue
-    assert "Future photo-first holds: 1" in active_queue
+    assert "Blocking selected template now: 2" in active_queue
+    assert "Future photo-first holds: 0" in active_queue
     assert "League-mark context holds: 1" in active_queue
     assert "Blocking entities: New York Liberty" in active_queue
-    assert "Future photo-first entities: Breanna Stewart" in active_queue
+    assert "Future photo-first entities: none" in active_queue
     assert "League-mark context entities: WNBA" in active_queue
     assert "Immediate manual path: clear the blocking selected-template rows first; future photo-first and league-mark context holds stay review-only." in active_queue
     assert "New York Liberty" in active_queue
@@ -3968,7 +4093,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Review-only policy: manual_identity_resolution_only_no_auto_approval_no_file_movement_no_publish_ready_lane" in active_queue
     assert "Selected template blocker: `blocking_selected_template_logo_review`" in active_queue
     assert "Selected template blocker: `not_blocking_selected_template_league_mark_not_required`" in active_queue
-    assert "Selected template blocker: `not_blocking_selected_template_photo_not_required`" in active_queue
+    assert "Selected template blocker: `blocking_selected_template_identity_review`" in active_queue
     assert "Decision lane: `wnba_logo_review`" in active_queue
     assert "Source confidence: `source_missing_or_unregistered`" in active_queue
     assert "Manual approval status: `manual_review_required`" in active_queue
@@ -4067,7 +4192,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "New York Liberty beat Las Vegas Aces" in Path("render_handoff_top_packet/copy_sheet.md").read_text(encoding="utf-8")
     asset_checklist = Path("render_handoff_top_packet/asset_checklist.md").read_text(encoding="utf-8")
     assert "exact local WNBA team logos" in asset_checklist
-    assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in asset_checklist
+    assert "Visual mode: `photo_first_performer`" in asset_checklist
+    assert "Hero asset required: `approved_local_athlete_photo`" in asset_checklist
+    assert "Focal entity: `athlete`" in asset_checklist
+    assert "Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use." in asset_checklist
     assert "Active logo readiness: `hold_logo_review_required`" in asset_checklist
     assert "Active asset stop/go: `hold_required_manual_asset_review`" in asset_checklist
     assert "New York Liberty: unapproved_required_logo" in asset_checklist
@@ -4085,7 +4213,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     manual_prompt = Path("render_handoff_top_packet/manual_renderer_prompt.md").read_text(encoding="utf-8")
     assert "Use this prompt manually only" in manual_prompt
     assert "Active asset stop/go: hold_required_manual_asset_review" in manual_prompt
-    assert "Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues." in manual_prompt
+    assert "Visual mode: photo_first_performer" in manual_prompt
+    assert "Hero asset required: approved_local_athlete_photo" in manual_prompt
+    assert "Focal entity: athlete" in manual_prompt
+    assert "Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use." in manual_prompt
     assert "Review order: clear selected-template blockers first; future photo-first and league-mark context holds stay review-only." in manual_prompt
     assert "Active logo readiness: hold_logo_review_required" in manual_prompt
     assert "Active athlete identity: hold_identity_review_required" in manual_prompt

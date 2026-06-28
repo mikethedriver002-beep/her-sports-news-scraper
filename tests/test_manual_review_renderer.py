@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.27.0-square-athlete-proof-panel"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.28.0-visual-mode-contract"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -131,6 +131,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "athlete_name" in manifest["content_module"]["athlete_led_missing_fields"]
     assert "verified stat/story context" in manifest["content_module"]["athlete_led_missing_fields"]
     assert "No athlete-led preview produced" in manifest["content_module"]["athlete_led_blocker"]
+    assert manifest["content_module"]["visual_mode"] == "no_photo_premium_result"
+    assert manifest["content_module"]["hero_asset_required"] == "approved_local_athlete_photo_missing"
+    assert manifest["content_module"]["focal_entity_type"] == "team_matchup"
+    assert manifest["content_module"]["score_lock_variant"] == "final_score_locked_logo_first"
+    assert manifest["content_module"]["proof_strip_variant"] == "score_edge_only"
+    assert manifest["content_module"]["copy_unlock_state"] == "score_only_copy_locked_manual_review"
+    assert manifest["content_module"]["background_family"] == "hsd_premium_sports_editorial"
+    assert "Photo-first route blocked" in manifest["content_module"]["template_fit_reason"]
     assert manifest["content_module"]["stat_source_confidence"] == "score_only_fallback_manual_context_required"
     assert manifest["content_module"]["editorial_microcopy_status"] == "source_safe_editorial_microcopy_ready"
     assert manifest["content_module"]["editorial_microcopy_variant"] == "score_only_hold"
@@ -183,6 +191,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert by_format["ig_feed_4x5"]["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
     assert by_format["ig_story_9x16"]["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
     assert by_format["square_feed_1x1"]["athlete_photo_layout_mode"] == "safe_no_photo_fallback"
+    assert all(item["visual_mode"] == "no_photo_premium_result" for item in manifest["format_options"])
+    assert all(item["hero_asset_required"] == "approved_local_athlete_photo_missing" for item in manifest["format_options"])
+    assert all(item["focal_entity_type"] == "team_matchup" for item in manifest["format_options"])
     assert any(slot["slot_id"] == "primary_photo" and slot["status"] == "not_required_for_review_draft" for slot in manifest["asset_slots"])
     assert any(slot["slot_id"] == "primary_team_logo" for slot in manifest["asset_slots"])
     primary_logo = next(slot for slot in manifest["asset_slots"] if slot["slot_id"] == "primary_team_logo")
@@ -244,6 +255,10 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "## Team Color And Logo Review Cues" in report
     assert "## Generated Preview QA" in report
     assert "preview_qa_pass" in report
+    assert "Visual mode: `no_photo_premium_result`" in report
+    assert "Visual contract: score_lock=`final_score_locked_logo_first`" in report
+    assert "Template fit reason: Photo-first route blocked" in report
+    assert "visual_mode=`no_photo_premium_result`" in report
     assert "APPROVED LOGO" in report or "LOGO REVIEW" in report
     assert "Editorial microcopy" in report
     assert "publish_ready=`false`" in report
@@ -505,11 +520,23 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert summary["proof_artifact_bridge_used"] == "true"
     assert summary["proof_source"] == "final_score_stat_proof_v1.csv"
     assert summary["athlete_led_render_status"] == "athlete_led_review_preview_ready"
+    assert summary["visual_mode"] == "photo_first_performer"
+    assert summary["hero_asset_required"] == "approved_local_athlete_photo"
+    assert summary["focal_entity_type"] == "athlete"
+    assert summary["score_lock_variant"] == "final_score_locked_photo_first"
+    assert summary["proof_strip_variant"] == "player_stat_proof_strip"
+    assert summary["copy_unlock_state"] == "verified_stat_copy_locked_manual_review"
+    assert summary["background_family"] == "hsd_premium_sports_editorial"
+    assert "photo-first result routing" in summary["template_fit_reason"]
     assert summary["athlete_photo_template_family"] == "approved_athlete_photo_final_score"
     feed_layout = module.athlete_photo_layout_for_format(summary, {"format_id": "ig_feed_4x5", "height": 1350})
     square_layout = module.athlete_photo_layout_for_format(summary, {"format_id": "square_feed_1x1", "height": 1080})
     assert feed_layout["athlete_photo_layout_mode"] == "photo_first_final_score"
     assert square_layout["athlete_photo_layout_mode"] == "square_photo_first_score_panel"
+    assert module.visual_mode_contract(summary, feed_layout)["visual_mode"] == "photo_first_performer"
+    square_contract = module.visual_mode_contract(summary, square_layout)
+    assert square_contract["visual_mode"] == "photo_first_performer_square"
+    assert square_contract["score_lock_variant"] == "final_score_locked_square_photo_panel"
     assert summary["content_module_title"] == "CARDOSO + STATEMENT MARGIN"
     assert summary["content_module_matchup_note"] == "CHICAGO SKY 124, PORTLAND FIRE 94"
     assert summary["content_module_game_shape"] == "statement_margin"
