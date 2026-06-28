@@ -144,7 +144,10 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "operator_bucket": "p0_nwsl_operator_verify_first",
                 "league_id": "nwsl",
                 "team_name": "angel_city_fc",
+                "player_name": "Angel Player",
+                "issue_type": "roster_verify",
                 "source_domain": "www.angelcity.com",
+                "source_url": "https://www.angelcity.com/club/roster",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -153,7 +156,10 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "operator_bucket": "p1_metadata_candidate_only",
                 "league_id": "nwsl",
                 "team_name": "bay_fc",
+                "player_name": "Bay Player",
+                "issue_type": "source_verify",
                 "source_domain": "bayfc.com",
+                "source_url": "https://bayfc.com/roster",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -162,7 +168,22 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "operator_bucket": "europe_operator_verify_required",
                 "league_id": "wsl_england",
                 "team_name": "Chelsea Women",
+                "player_name": "",
+                "issue_type": "official_roster",
                 "source_domain": "www.chelseafc.com",
+                "source_url": "https://www.chelseafc.com/en/teams/women",
+                "official_status": "official_team",
+                "operator_verify_required": "yes",
+            },
+            {
+                "research_lane": "europe_official_source_map",
+                "operator_bucket": "europe_operator_verify_required",
+                "league_id": "wsl_england",
+                "team_name": "Chelsea Women",
+                "player_name": "Chelsea Player",
+                "issue_type": "duplicate_same_source_page",
+                "source_domain": "www.chelseafc.com",
+                "source_url": "https://www.chelseafc.com/en/teams/women",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -171,7 +192,10 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "operator_bucket": "europe_gray_area_manual_verification_only",
                 "league_id": "wsl_england",
                 "team_name": "Backup",
+                "player_name": "",
+                "issue_type": "gray_area_backup",
                 "source_domain": "example.org",
+                "source_url": "https://example.org/wsl",
                 "official_status": "gray_area_public_source",
                 "operator_verify_required": "yes",
             },
@@ -181,7 +205,10 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
             "operator_bucket",
             "league_id",
             "team_name",
+            "player_name",
+            "issue_type",
             "source_domain",
+            "source_url",
             "official_status",
             "operator_verify_required",
         ],
@@ -196,6 +223,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     worksheet = read_csv(root / "womens_soccer_athlete_verification_next_actions.csv")
     worksheet_manifest = json.loads((root / "womens_soccer_athlete_verification_next_actions.json").read_text(encoding="utf-8"))
     worksheet_markdown = (root / "womens_soccer_athlete_verification_next_actions.md").read_text(encoding="utf-8")
+    source_rows = read_csv(root / "womens_soccer_athlete_source_priority.csv")
+    source_manifest = json.loads((root / "womens_soccer_athlete_source_priority.json").read_text(encoding="utf-8"))
+    source_markdown = (root / "womens_soccer_athlete_source_priority.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -213,6 +243,11 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert manifest["next_action_rows"] == 2
     assert manifest["next_action_download_approved_yes_rows"] == 0
     assert manifest["next_action_blank_source_url_rows"] == 2
+    assert manifest["source_priority_rows"] == 4
+    assert manifest["source_priority_operator_verify_required_rows"] == 4
+    assert manifest["source_priority_gray_or_reputable_rows"] == 1
+    assert manifest["source_priority_download_approved_yes_rows"] == 0
+    assert manifest["source_priority_blank_source_url_rows"] == 4
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
     assert by_team["angel_city_fc"]["first_action_bucket"] == "1_roster_verification"
@@ -245,7 +280,8 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     for row in worksheet:
         assert row["download_approved"] == "no"
         assert row["source_url"] == ""
-        assert row["entity_id"]
+        assert row["candidate_entity_id"]
+        assert row["entity_id"] == ""
         assert row["rights_class"] == ""
         assert row["identity_confidence"] == ""
         assert row["intended_review_only_use"] == ""
@@ -253,3 +289,55 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert row["asset_downloads"] == "false"
         assert row["approval_state_change"] == "false"
     assert "Generated rows default to `download_approved=no`" in worksheet_markdown
+    assert source_manifest["status"] == "athlete_source_priority_ready"
+    assert source_manifest["source_priority_rows"] == 4
+    assert source_manifest["nwsl_source_rows"] == 2
+    assert source_manifest["europe_source_rows"] == 2
+    assert source_manifest["operator_verify_required_rows"] == 4
+    assert source_manifest["gray_or_reputable_manual_verify_rows"] == 1
+    assert source_manifest["download_approved_yes_rows"] == 0
+    assert source_manifest["blank_source_url_rows"] == 4
+    assert source_manifest["source_review_bucket_counts"] == {
+        "1_nwsl_p0_roster_source_check": 1,
+        "2_gray_area_or_reputable_manual_verify": 1,
+        "3_operator_verify_required_official": 2,
+    }
+    assert len(
+        {
+            (
+                row["league_id"],
+                row["candidate_entity_id"],
+                row["source_candidate_url"],
+            )
+            for row in source_rows
+        }
+    ) == len(source_rows)
+    assert [row["source_review_bucket"] for row in source_rows] == [
+        "1_nwsl_p0_roster_source_check",
+        "2_gray_area_or_reputable_manual_verify",
+        "3_operator_verify_required_official",
+        "3_operator_verify_required_official",
+    ]
+    for row in source_rows:
+        assert row["source_candidate_url"]
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["candidate_entity_id"]
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["operator_decision"] == ""
+        assert row["review_only"] == "true"
+        assert row["asset_downloads"] == "false"
+        assert row["approval_state_change"] == "false"
+        assert row["publish_ready"] == "false"
+    assert source_rows[0]["team_id"] == "angel_city_fc"
+    assert source_rows[0]["linked_queue_bucket"] == "p0_nwsl_roster_verification_first"
+    assert source_rows[1]["render_readiness"] == "not_render_ready_source_candidate_only"
+    chelsea_row = next(row for row in source_rows if row["team_name"] == "Chelsea Women")
+    assert chelsea_row["player_name"] == "Chelsea Player"
+    assert "official_roster" in chelsea_row["issue_type"]
+    assert "duplicate_same_source_page" in chelsea_row["issue_type"]
+    assert "source_candidate_url` is advisory metadata" in source_markdown
+    assert "download-law `source_url` field remains blank" in source_markdown

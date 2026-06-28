@@ -1,0 +1,43 @@
+{
+  "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
+  "status": "athlete_source_priority_ready",
+  "generated_at_utc": "2026-06-28T09:51:02.854604+00:00",
+  "source_priority_rows": 95,
+  "nwsl_source_rows": 24,
+  "europe_source_rows": 71,
+  "operator_verify_required_rows": 55,
+  "gray_or_reputable_manual_verify_rows": 8,
+  "download_approved_yes_rows": 0,
+  "blank_source_url_rows": 95,
+  "source_review_bucket_counts": {
+    "1_nwsl_p0_roster_source_check": 12,
+    "2_gray_area_or_reputable_manual_verify": 8,
+    "3_operator_verify_required_official": 35,
+    "4_official_metadata_candidate": 40
+  },
+  "source_candidate_level_counts": {
+    "gray_area_manual_verify": 8,
+    "official_source_candidate": 87
+  },
+  "league_counts": {
+    "arkema_premiere_ligue_france": 13,
+    "frauen_bundesliga_germany": 15,
+    "liga_f_spain": 17,
+    "nwsl": 24,
+    "serie_a_women_italy": 13,
+    "wsl_england": 13
+  },
+  "worksheet_md": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.md",
+  "worksheet_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv",
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
