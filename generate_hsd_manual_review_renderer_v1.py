@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.41.0-score-type-grid-polish"
+VERSION = "hsd-manual-review-renderer-v1.42.0-photo-first-type-cap"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v15_score_type_grid_polish"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v16_photo_first_type_cap"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -57,7 +57,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_editorial_nameplate,photo_first_portrait_spotlight,photo_first_score_type_lockup,"
     "photo_first_context_score_rail,photo_first_subject_glow_bridge,photo_first_soft_focal_frame,"
     "photo_first_athlete_primary_focal_contract,photo_first_premium_score_stage,"
-    "photo_first_editorial_stage_depth,photo_first_score_type_grid_polish,compact_square_photo_footer,"
+    "photo_first_editorial_stage_depth,photo_first_score_type_grid_polish,photo_first_type_scale,"
+    "photo_first_athlete_visual_cap,compact_square_photo_footer,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -76,6 +77,86 @@ PUBLIC_RENDER_BANNED_CANVAS_PHRASES = [
     "ASSET READY",
     "HUMAN CHECK REQUIRED",
 ]
+PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE = 0.40
+PHOTO_FIRST_FINAL_SCORE_ACTIVE_TYPE_LEVELS = ("label", "headline", "score", "support")
+PHOTO_FIRST_FINAL_SCORE_TYPE_SCALE = {
+    "kicker": {
+        "level": "label",
+        "font": "context",
+        "size": 38,
+        "square_size": 30,
+        "min": 20,
+        "square_min": 18,
+        "stroke": 0,
+    },
+    "headline": {
+        "level": "headline",
+        "font": "display",
+        "size": 48,
+        "square_size": 34,
+        "min": 24,
+        "stroke": 1,
+    },
+    "team": {
+        "level": "support",
+        "font": "context",
+        "winner_size": 36,
+        "winner_compact_size": 32,
+        "size": 31,
+        "compact_size": 30,
+        "min": 17,
+        "stroke": 0,
+    },
+    "score": {
+        "level": "score",
+        "font": "score",
+        "winner_size": 94,
+        "size": 86,
+        "compact_size": 80,
+        "min": 52,
+        "compact_min": 46,
+        "stroke": 0,
+    },
+    "chip_label": {
+        "level": "label",
+        "font": "context",
+        "size": 13,
+        "compact_size": 11,
+        "min": 9,
+        "stroke": 0,
+    },
+    "context_rail": {
+        "level": "support",
+        "font": "context",
+        "size": 24,
+        "compact_size": 22,
+        "min": 12,
+        "stroke": 0,
+    },
+    "athlete_line": {
+        "level": "support",
+        "font": "display",
+        "size": 32,
+        "compact_size": 25,
+        "min": 17,
+        "stroke": 0,
+    },
+    "stat": {
+        "level": "support",
+        "font": "context",
+        "size": 28,
+        "compact_size": 21,
+        "min": 14,
+        "stroke": 0,
+    },
+    "review_marker": {
+        "level": "label",
+        "font": "context",
+        "size": 15,
+        "min": 10,
+        "stroke": 0,
+    },
+}
 
 FORMAT_SPECS = [
     {"format_id": "ig_feed_4x5", "filename": "draft_preview_ig_feed.png", "width": 1080, "height": 1350, "primary": True},
@@ -1088,18 +1169,20 @@ def draw_reference_guardrail(image: Any, *, compact_footer: bool = False) -> Non
     draw = ImageDraw.Draw(image, "RGBA")
     pill_w = min(250, width - 790)
     if pill_w > 180:
+        marker_type = photo_first_type_spec("review_marker")
         draw.rounded_rectangle((width - pill_w - 50, 76, width - 50, 116), radius=8, fill=(190, 39, 54, 218), outline=(241, 238, 229, 150), width=1)
         draw_reference_text(
             image,
             (width - pill_w - 38, 81, pill_w - 24, 29),
             "Review Draft Only",
-            "context",
-            15,
-            10,
+            marker_type["font"],
+            marker_type["resolved_size"],
+            marker_type["resolved_min"],
             PALETTE["ink"],
             max_lines=1,
             align="center",
             uppercase=False,
+            stroke=marker_type["stroke"],
         )
 
 
@@ -2207,33 +2290,34 @@ def draw_photo_first_public_header(image: Any, template_spec: Dict[str, Any], fo
     left = max(title_x, badge_right + 40)
     width = max(360, title_x + title_w - left)
     is_square = format_id == "square_feed_1x1"
-    kicker_size = 38 if not is_square else 30
-    result_size = 48 if not is_square else 34
+    kicker_type = photo_first_type_spec("kicker", square=is_square)
+    headline_type = photo_first_type_spec("headline", square=is_square)
     result_y = title_y + (54 if not is_square else 48)
     draw = ImageDraw.Draw(image, "RGBA")
     draw_reference_text(
         image,
         (left, title_y + (4 if not is_square else 0), width, 42),
         clean(canvas_copy.get("kicker")) or "WNBA FINAL",
-        "context",
-        kicker_size,
-        20,
+        kicker_type["font"],
+        kicker_type["resolved_size"],
+        kicker_type["resolved_min"],
         PALETTE["gold"],
         max_lines=1,
         align="left",
+        stroke=kicker_type["stroke"],
     )
     draw_reference_text(
         image,
         (left, result_y, width, max(42, title_h - 50)),
         clean(canvas_copy.get("result_line")),
-        "display",
-        result_size,
-        24,
+        headline_type["font"],
+        headline_type["resolved_size"],
+        headline_type["resolved_min"],
         PALETTE["ink"],
         max_lines=2 if is_square else 1,
         align="left",
         uppercase=False,
-        stroke=1,
+        stroke=headline_type["stroke"],
         stroke_fill=(0, 0, 0),
     )
     rule_y = min(title_y + title_h - 10, result_y + max(42, title_h - 50) + 3)
@@ -2511,13 +2595,70 @@ def athlete_photo_render_source_path(module: Dict[str, Any], variant_id: str) ->
     return athlete_photo_review_variant_path(module, variant_id) or approved_athlete_photo_path(module)
 
 
+def photo_first_type_spec(key: str, *, compact: bool = False, square: bool = False, winner: bool = False) -> Dict[str, Any]:
+    spec = dict(PHOTO_FIRST_FINAL_SCORE_TYPE_SCALE.get(key, {}))
+    if not spec:
+        return {"level": "support", "font": "context", "size": 18, "min": 12, "stroke": 0}
+    size = spec.get("size", 18)
+    if winner and compact and spec.get("winner_compact_size"):
+        size = spec.get("winner_compact_size")
+    elif winner and spec.get("winner_size"):
+        size = spec.get("winner_size")
+    elif compact and spec.get("compact_size"):
+        size = spec.get("compact_size")
+    elif square and spec.get("square_size"):
+        size = spec.get("square_size")
+    min_size = spec.get("min", 12)
+    if compact and spec.get("compact_min"):
+        min_size = spec.get("compact_min")
+    elif square and spec.get("square_min"):
+        min_size = spec.get("square_min")
+    spec["resolved_size"] = int(size)
+    spec["resolved_min"] = int(min_size)
+    spec["stroke"] = int(spec.get("stroke", 0))
+    return spec
+
+
+def box_area(box: List[int]) -> int:
+    return max(0, int(box[2])) * max(0, int(box[3]))
+
+
+def photo_first_stage_bbox(geometry: Dict[str, Any]) -> List[int]:
+    boxes = [
+        geometry["photo_stage_box"],
+        geometry["winner_score_row_box"],
+        geometry["loser_score_row_box"],
+        geometry["score_context_box"],
+        geometry["stat_strip_box"],
+    ]
+    left = min(int(box[0]) for box in boxes)
+    top = min(int(box[1]) for box in boxes)
+    right = max(int(box[0]) + int(box[2]) for box in boxes)
+    bottom = max(int(box[1]) + int(box[3]) for box in boxes)
+    return [left, top, right - left, bottom - top]
+
+
+def photo_first_athlete_visual_contract(geometry: Dict[str, Any]) -> Dict[str, Any]:
+    stage_box = photo_first_stage_bbox(geometry)
+    stage_area = max(1, box_area(stage_box))
+    photo_area = box_area(geometry["photo_stage_box"])
+    visual_share = round(photo_area / stage_area, 3)
+    return {
+        "athlete_visual_max_share": PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE,
+        "athlete_visual_share": visual_share,
+        "athlete_visual_status": "athlete_supports_result" if visual_share <= PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE else "athlete_over_cap_manual_review",
+        "athlete_visual_stage_box": stage_box,
+        "athlete_visual_policy": "final-score photo-first cards keep the person image under 40 percent of the active result stage so score and headline remain dominant.",
+    }
+
+
 def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     width, height = int(format_spec.get("width", 1080)), int(format_spec.get("height", 1350))
     format_id = clean(format_spec.get("format_id"))
     is_story = height > 1500
     is_square = format_id == "square_feed_1x1" or height <= 1100
     if is_square:
-        photo_box = [60, 346, 308, 384]
+        photo_box = [60, 366, 286, 360]
         score_top = 360
         score_h = 124
         score_gap = 20
@@ -2525,7 +2666,7 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         hook_box = [60, 862, 960, 112]
         context_extra_gap = 28
     elif is_story:
-        photo_box = [72, 505, 410, 710]
+        photo_box = [72, 535, 386, 670]
         score_top = 520
         score_h = 206
         score_gap = 24
@@ -2533,7 +2674,7 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         hook_box = [72, 1440, 936, 172]
         context_extra_gap = 36
     else:
-        photo_box = [58, 372, 408, 590]
+        photo_box = [58, 392, 382, 560]
         score_top = 398
         score_h = 176
         score_gap = 24
@@ -2545,7 +2686,7 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     winner_row = [score_x, score_top, score_w, score_h]
     loser_row = [score_x, score_top + score_h + score_gap, score_w, score_h - 16]
     context_box = [score_x, score_top + score_h * 2 + context_extra_gap, score_w, 54]
-    return {
+    geometry = {
         "template_family": "approved_athlete_photo_final_score",
         "format_id": format_id,
         "photo_stage_box": photo_box,
@@ -2558,6 +2699,8 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         "minimum_clearance_px": 24,
         "text_clearance_policy": "photo-first stage, score lanes, stat strip, and matchup module must remain visually separated; human review still required.",
     }
+    geometry.update(photo_first_athlete_visual_contract(geometry))
+    return geometry
 
 
 def tuple_box(raw: List[int]) -> Tuple[int, int, int, int]:
@@ -2778,13 +2921,36 @@ def draw_photo_first_score_row(
     label_y = y + (14 if not compact else 12)
     draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + label_h), radius=7, fill=(*accent, 174), outline=(248, 250, 255, 70), width=1)
     label_color = PALETTE["ink"] if winner else (2, 4, 9)
-    draw_reference_text(image, (x + 32, label_y + 4, label_w - 16, label_h - 7), label, "context", 13 if not compact else 11, 9, label_color, max_lines=1, align="center", stroke=1, stroke_fill=(0, 0, 0) if winner else (248, 250, 255))
+    label_type = photo_first_type_spec("chip_label", compact=compact)
+    draw_reference_text(
+        image,
+        (x + 32, label_y + 4, label_w - 16, label_h - 7),
+        label,
+        label_type["font"],
+        label_type["resolved_size"],
+        label_type["resolved_min"],
+        label_color,
+        max_lines=1,
+        align="center",
+        stroke=label_type["stroke"],
+    )
     logo_size = min(h - 42, 90 if winner else 78)
     logo_box = (x + 26, y + (h - logo_size) // 2 + (12 if not compact else 10), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
     score_box = photo_first_score_slab_box(box, winner=winner)
     team_text_box = photo_first_score_team_text_box(box, winner=winner)
-    draw_reference_text(image, team_text_box, short_team(team), "context", 36 if winner and not compact else 32 if winner else 31, 17, PALETTE["ink"] if winner else (216, 224, 238), max_lines=2, stroke=1, stroke_fill=(0, 0, 0))
+    team_type = photo_first_type_spec("team", compact=compact, winner=winner)
+    draw_reference_text(
+        image,
+        team_text_box,
+        short_team(team),
+        team_type["font"],
+        team_type["resolved_size"],
+        team_type["resolved_min"],
+        PALETTE["ink"] if winner else (216, 224, 238),
+        max_lines=2,
+        stroke=team_type["stroke"],
+    )
 
     sx, sy, sw, sh = score_box
     slab_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -2802,20 +2968,20 @@ def draw_photo_first_score_row(
     draw.rounded_rectangle(cell, radius=8, fill=(247, 249, 253, 218), outline=(248, 250, 255, 58), width=1)
     draw.line((cell[0] + 5, cell[1] + 2, cell[2] - 5, cell[1] + 2), fill=(255, 255, 255, 92), width=1)
     draw.line((cell[0] + 6, cell[3] - 3, cell[2] - 6, cell[3] - 3), fill=(*accent, 74), width=1)
-    score_size = min(80 if compact else (94 if winner else 86), max(58, int((cell[2] - cell[0]) * 0.82)), max(58, int((cell[3] - cell[1]) * 0.90)))
-    min_score_size = 46 if compact else 52
+    score_type = photo_first_type_spec("score", compact=compact, winner=winner)
+    score_size = min(score_type["resolved_size"], max(58, int((cell[2] - cell[0]) * 0.82)), max(58, int((cell[3] - cell[1]) * 0.90)))
+    min_score_size = score_type["resolved_min"]
     draw_reference_text(
         image,
         (cell[0] + 3, cell[1] - 2, cell[2] - cell[0] - 6, cell[3] - cell[1] + 3),
         score_value,
-        "score",
+        score_type["font"],
         score_size,
         min_score_size,
         (2, 4, 9),
         max_lines=1,
         align="center",
-        stroke=1,
-        stroke_fill=(248, 250, 255),
+        stroke=score_type["stroke"],
     )
 
 
@@ -2838,7 +3004,18 @@ def draw_photo_first_score_context_rail(
     draw.rectangle((x + 1, y + 9, x + 9, y + h - 9), fill=(*primary, 178))
     draw.rectangle((x + w - 10, y + 9, x + w - 2, y + h - 9), fill=(*secondary, 118))
     draw.line((x + 18, y + 9, x + w - 18, y + 9), fill=(*PALETTE["gold"], 122), width=2)
-    draw_reference_text(image, (x + 22, y + 9, w - 44, h - 16), text, "context", 22 if h <= 54 else 24, 12, PALETTE["ink"], max_lines=1, stroke=1, stroke_fill=(0, 0, 0))
+    context_type = photo_first_type_spec("context_rail", compact=h <= 54)
+    draw_reference_text(
+        image,
+        (x + 22, y + 9, w - 44, h - 16),
+        text,
+        context_type["font"],
+        context_type["resolved_size"],
+        context_type["resolved_min"],
+        PALETTE["ink"],
+        max_lines=1,
+        stroke=context_type["stroke"],
+    )
 
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], canvas_copy: Dict[str, str] | None = None) -> None:
@@ -2852,29 +3029,31 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     copy = canvas_copy or {}
     athlete_line = clean(copy.get("athlete_line")) or clean(module.get("body")) or (f"{last_name(player).title()} led the final." if player else "Final score confirmed.")
     stat_line = clean(copy.get("stat_line")) or public_stat_line(module.get("callouts") or [])
+    athlete_type = photo_first_type_spec("athlete_line", compact=compact)
+    stat_type = photo_first_type_spec("stat", compact=compact)
     draw_reference_text(
         image,
         (x + 28, y + (24 if not compact else 18), w - 56, 42 if not compact else 34),
         athlete_line,
-        "display",
-        32 if not compact else 25,
-        17,
+        athlete_type["font"],
+        athlete_type["resolved_size"],
+        athlete_type["resolved_min"],
         PALETTE["ink"],
         max_lines=1 if compact else 2,
         uppercase=False,
-        stroke=1,
-        stroke_fill=(0, 0, 0),
+        stroke=athlete_type["stroke"],
     )
     draw_reference_text(
         image,
         (x + 28, y + (76 if not compact else 54), w - 56, 34 if not compact else 28),
         stat_line,
-        "context",
-        28 if not compact else 21,
-        14,
+        stat_type["font"],
+        stat_type["resolved_size"],
+        stat_type["resolved_min"],
         PALETTE["gold"],
         max_lines=1,
         uppercase=False,
+        stroke=stat_type["stroke"],
     )
     if compact:
         return
@@ -3804,6 +3983,11 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         row["preview_qa_luma_stddev"] = qa_row.get("luma_stddev", "")
         if clean(row.get("athlete_photo_layout_mode")) in {"photo_first_final_score", "square_photo_first_score_panel"}:
             row["photo_first_template_geometry"] = photo_first_layout_geometry(spec)
+            row["photo_first_type_levels_active"] = ",".join(PHOTO_FIRST_FINAL_SCORE_ACTIVE_TYPE_LEVELS)
+            row["photo_first_type_scale_contract"] = "final-score public canvas uses named label/headline/score/support levels; small support text uses no heavy outline."
+            row["photo_first_athlete_visual_max_share"] = row["photo_first_template_geometry"].get("athlete_visual_max_share")
+            row["photo_first_athlete_visual_share"] = row["photo_first_template_geometry"].get("athlete_visual_share")
+            row["photo_first_athlete_visual_status"] = row["photo_first_template_geometry"].get("athlete_visual_status")
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
                 "balanced_score_rails,verified_stat_strip,and_review_only_guardrails"
