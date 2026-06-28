@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
@@ -87,6 +88,18 @@ NEXT_DECISION_WORKSHEET_FIELDS = [
     "display_name",
     "candidate_id",
     "review_state",
+    "first_action_bucket",
+    "source_verification_bucket",
+    "missing_local_candidate_asset",
+    "download_law_status",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_folder",
+    "future_download_required_fields",
     "source_to_open",
     "board_to_open",
     "contact_sheet_to_open",
@@ -496,6 +509,9 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Next decision worksheet rows: `{report['totals']['next_decision_worksheet_rows']}`",
         f"- Next decision logo rows: `{report['totals']['next_decision_logo_rows']}`",
         f"- Next decision athlete rows: `{report['totals']['next_decision_athlete_rows']}`",
+        f"- Next decision missing-local rows: `{report['totals']['next_decision_missing_local_candidate_asset_rows']}`",
+        f"- Next decision download-approved yes rows: `{report['totals']['next_decision_download_approved_yes_rows']}`",
+        f"- Next decision blank download-metadata rows: `{report['totals']['next_decision_blank_download_metadata_rows']}`",
         f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
         f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
@@ -650,43 +666,82 @@ def batch_source_review_rows(action_rows: list[Dict[str, str]], *, next_limit: i
     return rows
 
 
-def next_decision_worksheet_rows(
-    action_rows: list[Dict[str, str]],
-    *,
-    logo_limit: int = 6,
-    athlete_limit: int = 6,
-) -> list[Dict[str, str]]:
-    logo_review_now = [
-        row
-        for row in action_rows
-        if clean(row.get("asset_domain")) == "logo" and clean(row.get("current_source_reviewed")).lower() != "yes"
-    ]
-    logo_wait_rows = [
-        row
-        for row in action_rows
-        if clean(row.get("asset_domain")) == "logo"
-        and clean(row.get("current_source_reviewed")).lower() == "yes"
-        and clean(row.get("local_asset_present")).lower() != "yes"
-    ]
-    logo_rows = logo_review_now[:logo_limit]
-    if len(logo_rows) < logo_limit:
-        logo_rows.extend(logo_wait_rows[: logo_limit - len(logo_rows)])
-    athlete_rows = [
-        row
-        for row in action_rows
-        if clean(row.get("asset_domain")) == "athlete_photo" and clean(row.get("current_source_reviewed")).lower() != "yes"
-    ][:athlete_limit]
-    selected: list[tuple[str, Dict[str, str]]] = []
-    for row in logo_rows:
-        if clean(row.get("current_source_reviewed")).lower() == "yes":
-            selected.append(("logo_wait_for_local_asset_after_source_review", row))
-        else:
-            selected.append(("logo_source_identity_review", row))
-    selected.extend(("athlete_source_only_review", row) for row in athlete_rows)
+def next_decision_first_action_bucket(row: Mapping[str, str]) -> str:
+    if not clean(row.get("source_url")):
+        return "0_source_missing_hold"
+    if clean(row.get("current_source_reviewed")).lower() != "yes":
+        return "1_source_verification"
+    if clean(row.get("local_asset_present")).lower() != "yes":
+        return "2_missing_local_candidate_asset"
+    return "3_local_asset_identity_review"
+
+
+def next_decision_source_verification_bucket(row: Mapping[str, str]) -> str:
+    source_url = clean(row.get("source_url")).lower()
+    if not source_url:
+        return "source_missing"
+    if clean(row.get("current_source_reviewed")).lower() == "yes":
+        return "source_reviewed_waiting_for_local_asset"
+    if "thepwhl.com" in source_url or "theausl.com" in source_url:
+        return "official_league_or_team_source_manual_verify"
+    return "public_source_manual_verify"
+
+
+def next_decision_download_law_status(row: Mapping[str, str]) -> str:
+    if clean(row.get("local_asset_present")).lower() == "yes":
+        return "download_not_needed_for_current_review_step"
+    return "future_quarantine_download_intake_required"
+
+
+def next_decision_sort_key(row: Mapping[str, str]) -> tuple[int, str, str, str, str]:
+    bucket_order = {
+        "0_source_missing_hold": 0,
+        "1_source_verification": 1,
+        "2_missing_local_candidate_asset": 2,
+        "3_local_asset_identity_review": 3,
+    }
+    sport_order = {"womens_hockey": "0", "softball": "1"}
+    first_action = next_decision_first_action_bucket(row)
+    return (
+        bucket_order.get(first_action, 9),
+        sport_order.get(clean(row.get("sport_family")), "9"),
+        clean(row.get("asset_domain")),
+        clean(row.get("entity_id")),
+        clean(row.get("candidate_id")),
+    )
+
+
+def next_decision_section(row: Mapping[str, str]) -> str:
+    asset_domain = clean(row.get("asset_domain"))
+    first_action = next_decision_first_action_bucket(row)
+    if first_action == "0_source_missing_hold":
+        return "source_missing_hold"
+    if asset_domain == "logo" and first_action == "1_source_verification":
+        return "logo_source_identity_review"
+    if asset_domain == "logo":
+        return "logo_wait_for_local_asset_after_source_review"
+    if first_action == "1_source_verification":
+        return "athlete_source_only_review"
+    if first_action == "2_missing_local_candidate_asset":
+        return "athlete_wait_for_local_asset_after_source_review"
+    return "local_asset_identity_review"
+
+
+def future_download_required_fields() -> str:
+    return "download_approved|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use"
+
+
+def next_decision_worksheet_rows(action_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    selected = sorted(action_rows, key=next_decision_sort_key)
     rows: list[Dict[str, str]] = []
-    for index, (section, row) in enumerate(selected, start=1):
+    for index, row in enumerate(selected, start=1):
+        section = next_decision_section(row)
         asset_domain = clean(row.get("asset_domain"))
         local_asset_present = clean(row.get("local_asset_present")) or "no"
+        first_action = next_decision_first_action_bucket(row)
+        source_bucket = next_decision_source_verification_bucket(row)
+        download_law = next_decision_download_law_status(row)
+        missing_local = "no" if local_asset_present.lower() == "yes" else "yes"
         if asset_domain == "logo":
             if clean(row.get("current_source_reviewed")).lower() == "yes":
                 fields_now = "none; source and identity are already recorded in the logo intake, so wait for a manually supplied local logo asset before any approval-state review"
@@ -712,6 +767,18 @@ def next_decision_worksheet_rows(
                 "display_name": clean(row.get("display_name")),
                 "candidate_id": clean(row.get("candidate_id")),
                 "review_state": clean(row.get("review_state")),
+                "first_action_bucket": first_action,
+                "source_verification_bucket": source_bucket,
+                "missing_local_candidate_asset": missing_local,
+                "download_law_status": download_law,
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+                "future_download_required_fields": future_download_required_fields(),
                 "source_to_open": clean(row.get("source_url")),
                 "board_to_open": clean(row.get("board_to_open")),
                 "contact_sheet_to_open": clean(row.get("contact_sheet_to_open")),
@@ -738,7 +805,7 @@ def next_decision_worksheet_rows(
                 "reviewed_by": "",
                 "reviewed_at_local": "",
                 "local_asset_present": local_asset_present,
-                "local_asset_needed_later": "no" if local_asset_present.lower() == "yes" else "yes",
+                "local_asset_needed_later": missing_local,
                 "do_not_touch": do_not_touch,
                 "guardrail_note": "review-only worksheet; generated human-decision cells are blank; no downloads; no approval-state changes; no headshot or marker writes",
             }
@@ -803,6 +870,10 @@ def render_batch_source_review_helper(batch_rows: list[Dict[str, str]], generate
 def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str) -> str:
     logo_rows = [row for row in rows if row["asset_domain"] == "logo"]
     athlete_rows = [row for row in rows if row["asset_domain"] == "athlete_photo"]
+    first_action_counts = Counter(row["first_action_bucket"] for row in rows)
+    source_bucket_counts = Counter(row["source_verification_bucket"] for row in rows)
+    missing_local_rows = [row for row in rows if row["missing_local_candidate_asset"] == "yes"]
+    download_yes_rows = [row for row in rows if row["download_approved"] == "yes"]
     lines = [
         "# Hockey/Softball Next Decision Worksheet",
         "",
@@ -810,19 +881,46 @@ def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str
         f"- Rows: `{len(rows)}`",
         f"- Logo decision rows: `{len(logo_rows)}`",
         f"- Athlete source-only rows: `{len(athlete_rows)}`",
+        f"- Missing local candidate asset rows: `{len(missing_local_rows)}`",
+        f"- Download-approved yes rows: `{len(download_yes_rows)}`",
         "- Guardrails: review-only worksheet, no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` marker writes, no publish-ready movement, no publishing.",
         "",
         "## How To Use",
         "",
         "1. Open each `source_to_open` manually, then the linked `board_to_open` if context is needed.",
         "2. Use the worksheet CSV for the next human pass; every generated human-decision cell is intentionally blank.",
-        "3. For logo rows, Mike may fill the listed source/identity fields after manual source review, but registry action stays hold-only until a local logo asset exists.",
-        "4. For athlete rows, Mike may fill source/rights fields after opening the source page, but identity/local-file/approval fields stay blank or held until a named athlete and local candidate asset exist.",
-        "5. Do not download assets, write headshots, create `.approved` markers, move files, or publish from this worksheet.",
+        "3. Work `1_source_verification` rows first, then `2_missing_local_candidate_asset` rows that are already source-reviewed but still waiting for a local candidate asset.",
+        "4. Future quarantine-download metadata fields default to `download_approved=no` or blank; Mike must fill them in a human-edited intake before any later quarantine-only download workflow can act.",
+        "5. For logo rows, Mike may fill the listed source/identity fields after manual source review, but registry action stays hold-only until a local logo asset exists.",
+        "6. For athlete rows, Mike may fill source/rights fields after opening the source page, but identity/local-file/approval fields stay blank or held until a named athlete and local candidate asset exist.",
+        "7. Do not download assets, write headshots, create `.approved` markers, move files, or publish from this worksheet.",
+        "",
+        "## First Action Buckets",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in sorted(first_action_counts.items()))
+    lines.extend(
+        [
+            "",
+            "## Source Verification Buckets",
+            "",
+        ]
+    )
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in sorted(source_bucket_counts.items()))
+    lines.extend(
+        [
+            "",
+            "## Future Quarantine-Download Fields",
+            "",
+            f"- Required future fields: `{future_download_required_fields()}`.",
+            f"- Quarantine folder: `{SANCTIONED_QUARANTINE_ROOT.as_posix()}`.",
+            "- Generated rows keep `download_approved=no`; `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` stay blank for human intake.",
+            "- This worksheet does not trigger downloads and does not write quarantine files.",
         "",
         "## Next Decision Rows",
         "",
-    ]
+        ]
+    )
     if not rows:
         lines.append("- No next decision rows are available; rerun the workflow readiness generator after source candidates or local assets change.")
     for row in rows:
@@ -831,6 +929,9 @@ def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str
                 f"### {row['worksheet_order']} - {row['sport_label']} / {row['asset_domain']} / {row['display_name']}",
                 "",
                 f"- Section: `{row['worksheet_section']}`",
+                f"- First action: `{row['first_action_bucket']}`",
+                f"- Source bucket: `{row['source_verification_bucket']}`",
+                f"- Download law: `{row['download_law_status']}` (download_approved: `{row['download_approved']}`)",
                 f"- Source to open: `{row['source_to_open']}`",
                 f"- Board: `{row['board_to_open']}`",
                 f"- Intake: `{row['intake_to_fill']}`",
@@ -1023,6 +1124,19 @@ def main() -> int:
     next_decision_rows = next_decision_worksheet_rows(action_rows)
     next_decision_logo_rows = sum(1 for row in next_decision_rows if row["asset_domain"] == "logo")
     next_decision_athlete_rows = sum(1 for row in next_decision_rows if row["asset_domain"] == "athlete_photo")
+    next_decision_first_action_counts = dict(sorted(Counter(row["first_action_bucket"] for row in next_decision_rows).items()))
+    next_decision_source_verification_counts = dict(sorted(Counter(row["source_verification_bucket"] for row in next_decision_rows).items()))
+    next_decision_missing_local_rows = sum(1 for row in next_decision_rows if row["missing_local_candidate_asset"] == "yes")
+    next_decision_download_approved_yes_rows = sum(1 for row in next_decision_rows if row["download_approved"] == "yes")
+    next_decision_blank_download_metadata_rows = sum(
+        1
+        for row in next_decision_rows
+        if not clean(row.get("source_url"))
+        and not clean(row.get("entity_id"))
+        and not clean(row.get("rights_class"))
+        and not clean(row.get("identity_confidence"))
+        and not clean(row.get("intended_review_only_use"))
+    )
     quarantine_download_rows = quarantine_download_intake_rows(action_rows)
     quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
     quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
@@ -1033,6 +1147,9 @@ def main() -> int:
             "next_decision_worksheet_rows": len(next_decision_rows),
             "next_decision_logo_rows": next_decision_logo_rows,
             "next_decision_athlete_rows": next_decision_athlete_rows,
+            "next_decision_missing_local_candidate_asset_rows": next_decision_missing_local_rows,
+            "next_decision_download_approved_yes_rows": next_decision_download_approved_yes_rows,
+            "next_decision_blank_download_metadata_rows": next_decision_blank_download_metadata_rows,
             "quarantine_download_intake_rows": len(quarantine_download_rows),
             "quarantine_download_logo_rows": quarantine_download_logo_rows,
             "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
@@ -1068,6 +1185,9 @@ def main() -> int:
             "rows": len(next_decision_rows),
             "logo_rows": next_decision_logo_rows,
             "athlete_rows": next_decision_athlete_rows,
+            "missing_local_candidate_asset_rows": next_decision_missing_local_rows,
+            "download_approved_yes_rows": next_decision_download_approved_yes_rows,
+            "blank_download_metadata_rows": next_decision_blank_download_metadata_rows,
         },
         "quarantine_download_intake": {
             "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
@@ -1111,6 +1231,13 @@ def main() -> int:
         "rows": len(next_decision_rows),
         "logo_rows": next_decision_logo_rows,
         "athlete_rows": next_decision_athlete_rows,
+        "first_action_bucket_counts": next_decision_first_action_counts,
+        "source_verification_bucket_counts": next_decision_source_verification_counts,
+        "missing_local_candidate_asset_rows": next_decision_missing_local_rows,
+        "download_approved_yes_rows": next_decision_download_approved_yes_rows,
+        "blank_download_metadata_rows": next_decision_blank_download_metadata_rows,
+        "future_download_required_fields": future_download_required_fields().split("|"),
+        "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
         "blank_human_decision_fields": [
             "operator_source_reviewed",
             "operator_source_allowed_for_review_only",

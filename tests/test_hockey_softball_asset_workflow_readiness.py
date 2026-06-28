@@ -80,9 +80,12 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["batch_source_review_now_rows"] == 54
     assert report["totals"]["batch_source_review_next_rows"] == 10
     assert report["totals"]["batch_source_review_local_asset_needed_later_rows"] == 74
-    assert report["totals"]["next_decision_worksheet_rows"] == 12
-    assert report["totals"]["next_decision_logo_rows"] == 6
-    assert report["totals"]["next_decision_athlete_rows"] == 6
+    assert report["totals"]["next_decision_worksheet_rows"] == 74
+    assert report["totals"]["next_decision_logo_rows"] == 20
+    assert report["totals"]["next_decision_athlete_rows"] == 54
+    assert report["totals"]["next_decision_missing_local_candidate_asset_rows"] == 74
+    assert report["totals"]["next_decision_download_approved_yes_rows"] == 0
+    assert report["totals"]["next_decision_blank_download_metadata_rows"] == 74
     assert report["totals"]["quarantine_download_intake_rows"] == 74
     assert report["totals"]["quarantine_download_logo_rows"] == 20
     assert report["totals"]["quarantine_download_athlete_rows"] == 54
@@ -106,9 +109,12 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "md": "data/asset_registry/hockey_softball_next_decision_worksheet.md",
         "csv": "data/asset_registry/hockey_softball_next_decision_worksheet.csv",
         "json": "data/asset_registry/hockey_softball_next_decision_worksheet.json",
-        "rows": 12,
-        "logo_rows": 6,
-        "athlete_rows": 6,
+        "rows": 74,
+        "logo_rows": 20,
+        "athlete_rows": 54,
+        "missing_local_candidate_asset_rows": 74,
+        "download_approved_yes_rows": 0,
+        "blank_download_metadata_rows": 74,
     }
     assert report["quarantine_download_intake"] == {
         "md": "data/asset_registry/hockey_softball_quarantine_download_intake.md",
@@ -168,9 +174,29 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     worksheet_path = tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.json"
     worksheet = json.loads(worksheet_path.read_text(encoding="utf-8"))
     assert worksheet["status"] == "hockey_softball_next_decision_worksheet_ready"
-    assert worksheet["rows"] == 12
-    assert worksheet["logo_rows"] == 6
-    assert worksheet["athlete_rows"] == 6
+    assert worksheet["rows"] == 74
+    assert worksheet["logo_rows"] == 20
+    assert worksheet["athlete_rows"] == 54
+    assert worksheet["first_action_bucket_counts"] == {
+        "1_source_verification": 54,
+        "2_missing_local_candidate_asset": 20,
+    }
+    assert worksheet["source_verification_bucket_counts"] == {
+        "official_league_or_team_source_manual_verify": 54,
+        "source_reviewed_waiting_for_local_asset": 20,
+    }
+    assert worksheet["missing_local_candidate_asset_rows"] == 74
+    assert worksheet["download_approved_yes_rows"] == 0
+    assert worksheet["blank_download_metadata_rows"] == 74
+    assert worksheet["future_download_required_fields"] == [
+        "download_approved",
+        "source_url",
+        "entity_id",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+    ]
+    assert worksheet["quarantine_folder"] == "data/assets/quarantine/review_only_candidates"
     blank_fields = set(worksheet["blank_human_decision_fields"])
     assert {
         "operator_source_reviewed",
@@ -184,6 +210,19 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "reviewed_at_local",
     } <= blank_fields
     assert all(row["local_asset_needed_later"] == "yes" for row in worksheet["worksheet_rows"])
+    assert all(row["missing_local_candidate_asset"] == "yes" for row in worksheet["worksheet_rows"])
+    assert all(row["download_approved"] == "no" for row in worksheet["worksheet_rows"])
+    assert all(row["quarantine_folder"] == "data/assets/quarantine/review_only_candidates" for row in worksheet["worksheet_rows"])
+    assert all(
+        row["future_download_required_fields"]
+        == "download_approved|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use"
+        for row in worksheet["worksheet_rows"]
+    )
+    assert all(
+        row[field] == ""
+        for row in worksheet["worksheet_rows"]
+        for field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use"]
+    )
     assert all(row["guardrail_note"].startswith("review-only worksheet") for row in worksheet["worksheet_rows"])
     assert all(row[field] == "" for row in worksheet["worksheet_rows"] for field in blank_fields)
     assert {row["worksheet_section"] for row in worksheet["worksheet_rows"]} == {
@@ -192,6 +231,11 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     }
     logo_worksheet_row = next(row for row in worksheet["worksheet_rows"] if row["asset_domain"] == "logo")
     athlete_worksheet_row = next(row for row in worksheet["worksheet_rows"] if row["asset_domain"] == "athlete_photo")
+    assert athlete_worksheet_row["first_action_bucket"] == "1_source_verification"
+    assert athlete_worksheet_row["source_verification_bucket"] == "official_league_or_team_source_manual_verify"
+    assert athlete_worksheet_row["download_law_status"] == "future_quarantine_download_intake_required"
+    assert logo_worksheet_row["first_action_bucket"] == "2_missing_local_candidate_asset"
+    assert logo_worksheet_row["source_verification_bucket"] == "source_reviewed_waiting_for_local_asset"
     assert logo_worksheet_row["fields_mike_can_fill_now"].startswith("none; source and identity are already recorded")
     assert "do not restamp reviewed_by/reviewed_at_local" in logo_worksheet_row["fields_that_must_stay_blank"]
     assert "source_allowed_for_review_only" in athlete_worksheet_row["fields_mike_can_fill_now"]
@@ -200,7 +244,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     worksheet_csv_path = tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.csv"
     with worksheet_csv_path.open(newline="", encoding="utf-8") as handle:
         worksheet_csv_rows = list(csv.DictReader(handle))
-    assert len(worksheet_csv_rows) == 12
+    assert len(worksheet_csv_rows) == 74
     assert list(worksheet_csv_rows[0].keys()) == workflow.NEXT_DECISION_WORKSHEET_FIELDS
     download_path = tmp_path / "data/asset_registry/hockey_softball_quarantine_download_intake.json"
     download_manifest = json.loads(download_path.read_text(encoding="utf-8"))
@@ -248,6 +292,10 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "Fields Mike can fill now" in batch_helper_board
     assert "Do not touch" in batch_helper_board
     assert "## Next Decision Rows" in next_decision_board
+    assert "## First Action Buckets" in next_decision_board
+    assert "1_source_verification" in next_decision_board
+    assert "## Future Quarantine-Download Fields" in next_decision_board
+    assert "source_url" in next_decision_board
     assert "every generated human-decision cell is intentionally blank" in next_decision_board
     assert "does not write back to logo or athlete review intake files" in next_decision_board
     assert "Default download_approved value: `no`" in download_board
@@ -345,9 +393,12 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_batch_source_review_local_asset_needed_later_rows"] == 74
     assert panel["hockey_softball_next_decision_worksheet_status"] == "hockey_softball_next_decision_worksheet_ready"
     assert panel["hockey_softball_next_decision_worksheet_freshness_status"] == "packet_ready"
-    assert panel["hockey_softball_next_decision_worksheet_rows"] == 12
-    assert panel["hockey_softball_next_decision_worksheet_logo_rows"] == 6
-    assert panel["hockey_softball_next_decision_worksheet_athlete_rows"] == 6
+    assert panel["hockey_softball_next_decision_worksheet_rows"] == 74
+    assert panel["hockey_softball_next_decision_worksheet_logo_rows"] == 20
+    assert panel["hockey_softball_next_decision_worksheet_athlete_rows"] == 54
+    assert panel["hockey_softball_next_decision_worksheet_missing_local_rows"] == 74
+    assert panel["hockey_softball_next_decision_worksheet_download_approved_yes_rows"] == 0
+    assert panel["hockey_softball_next_decision_worksheet_blank_download_metadata_rows"] == 74
     assert panel["hockey_softball_quarantine_download_intake_status"] == "hockey_softball_quarantine_download_intake_ready"
     assert panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_ready"
     assert panel["hockey_softball_quarantine_download_intake_rows"] == 74
