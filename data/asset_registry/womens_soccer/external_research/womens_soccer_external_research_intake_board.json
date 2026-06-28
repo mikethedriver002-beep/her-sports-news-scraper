@@ -1,0 +1,97 @@
+{
+  "version": "hsd-womens-soccer-external-research-intake-v1-review-only",
+  "status": "external_research_intake_ready",
+  "generated_at_utc": "2026-06-28T04:40:17.049783+00:00",
+  "nwsl_rows": 37,
+  "europe_rows": 71,
+  "board_rows": 108,
+  "operator_bucket_counts": {
+    "europe_gray_area_manual_verification_only": 7,
+    "europe_official_no_verify_metadata_candidate": 40,
+    "europe_operator_verify_required": 24,
+    "p0_nwsl_operator_verify_first": 14,
+    "p1_metadata_candidate_only": 22,
+    "p3_gray_area_manual_verification_only": 1
+  },
+  "nwsl_issue_counts": {
+    "expired_replacement_player_candidate": 1,
+    "gray_area_public_backup_candidate": 1,
+    "loan_duplicate_needs_status_metadata": 2,
+    "loan_status_missing": 3,
+    "missing_player_profile_candidate": 10,
+    "player_profile_candidate_gap": 1,
+    "public_display_alias_review": 6,
+    "source_domain_change_candidate": 4,
+    "source_url_enrichment_needed": 1,
+    "stale_or_short_term_candidate": 1,
+    "stale_player_candidate": 2,
+    "stale_team_assignment_duplicate_identity": 5
+  },
+  "nwsl_source_priority_counts": {
+    "P0": 14,
+    "P1": 22,
+    "P3": 1
+  },
+  "nwsl_official_status_counts": {
+    "non_official_reputable_media": 1,
+    "official_league": 2,
+    "official_team": 34
+  },
+  "nwsl_confidence_counts": {
+    "high": 34,
+    "low": 1,
+    "medium": 2
+  },
+  "europe_league_counts": {
+    "arkema_premiere_ligue_france": 13,
+    "frauen_bundesliga_germany": 15,
+    "liga_f_spain": 17,
+    "serie_a_women_italy": 13,
+    "wsl_england": 13
+  },
+  "europe_source_priority_counts": {
+    "P0_OFFICIAL_CLUB_PAGE": 2,
+    "P0_OFFICIAL_CLUB_ROSTER": 23,
+    "P0_OFFICIAL_FEDERATION_ROSTER": 11,
+    "P0_OFFICIAL_LEAGUE_ROSTER": 16,
+    "P0_OFFICIAL_LEAGUE_TEAM": 12,
+    "P1_NON_OFFICIAL_ROSTER_BACKUP": 2,
+    "P2_GRAY_AREA_LEAGUE_BACKUP": 2,
+    "P2_NON_OFFICIAL_LEAGUE_BACKUP": 3
+  },
+  "europe_official_status_counts": {
+    "gray_area_public_source": 2,
+    "non_official_public_database": 5,
+    "official_federation": 11,
+    "official_league": 28,
+    "official_team": 25
+  },
+  "europe_operator_verify_counts": {
+    "no": 40,
+    "yes": 31
+  },
+  "europe_confidence_counts": {
+    "high": 54,
+    "low_medium": 2,
+    "medium": 9,
+    "medium_high": 4,
+    "medium_low": 2
+  },
+  "gray_area_rows": 8,
+  "sam_kerr_reuters_gray_area_only": true,
+  "input_csvs": [
+    "data/asset_registry/womens_soccer/external_research/nwsl_correction_enrichment_report.csv",
+    "data/asset_registry/womens_soccer/external_research/europe_official_source_map.csv"
+  ],
+  "board_md": "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md",
+  "board_csv": "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv",
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "publishing": false,
+  "paid_apis": false
+}
