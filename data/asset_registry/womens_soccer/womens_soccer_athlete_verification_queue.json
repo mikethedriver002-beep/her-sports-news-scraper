@@ -1,0 +1,36 @@
+{
+  "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
+  "status": "athlete_verification_queue_ready",
+  "generated_at_utc": "2026-06-28T06:08:36.369810+00:00",
+  "queue_rows": 21,
+  "nwsl_team_rows": 16,
+  "europe_league_rows": 5,
+  "queue_bucket_counts": {
+    "p0_nwsl_roster_verification_first": 6,
+    "p1_europe_gray_area_source_review": 5,
+    "p1_nwsl_local_candidate_assets_missing": 10
+  },
+  "p0_nwsl_roster_verification_rows": 6,
+  "gray_area_rows": 8,
+  "missing_local_candidate_rows": 509,
+  "download_approved_yes_rows": 0,
+  "queue_md": "data/asset_registry/womens_soccer/womens_soccer_athlete_verification_queue.md",
+  "queue_csv": "data/asset_registry/womens_soccer/womens_soccer_athlete_verification_queue.csv",
+  "inputs": [
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv",
+    "data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv"
+  ],
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
