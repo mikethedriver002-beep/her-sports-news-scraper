@@ -225,6 +225,9 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "athlete_render_candidate_board_v1.csv",
         "athlete_render_candidate_board_v1.md",
         "athlete_render_candidate_board_v1.json",
+        "story_proof_card_v1.csv",
+        "story_proof_card_v1.md",
+        "story_proof_card_v1.json",
     ]:
         assert artifact in results
         assert artifact in command_center
@@ -450,6 +453,7 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     assert ready["proof_row_to_open"].startswith("final_score_stat_proof_v1.csv proof_id=")
     assert ready["intake_row_to_record"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=")
     assert "athlete_image=" in ready["exact_renderer_handoff_fields"]
+    assert ready["story_proof_card_row_to_open"].startswith("story_proof_card_v1.csv event_id=event_confirmed")
     assert ready["operator_checked_source_url"] == ""
     assert ready["operator_asset_review_notes"] == ""
     assert ready["review_only"] == "Yes"
@@ -465,6 +469,63 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     candidate_report = module.athlete_render_candidate_report_md(candidate_summary, candidate_rows)
     assert "Athlete Render Candidate Board" in candidate_report
     assert "No paid APIs" in candidate_report
+
+    fact_rows = [
+        {
+            "event_uid": "event_confirmed",
+            "game_date": "2026-06-24",
+            "matchup": "Indiana Fever at New York Liberty",
+            "schedule_fact_status": "schedule_source_confirmed_free_public_operator_verify",
+            "result_fact_status": "final_score_source_confirmed_free_public_operator_verify",
+            "stats_fact_status": "stats_source_confirmed_free_public_operator_verify",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+            "source_domain": "www.espn.com",
+            "stats_source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+        },
+        {
+            "event_uid": "event_missing",
+            "game_date": "2026-06-24",
+            "matchup": "Dallas Wings at Las Vegas Aces",
+            "schedule_fact_status": "schedule_source_confirmed_free_public_operator_verify",
+            "result_fact_status": "final_score_source_confirmed_free_public_operator_verify",
+            "stats_fact_status": "missing_box_score_or_top_performer_context",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/402",
+            "source_domain": "www.espn.com",
+            "stats_source_url": "",
+        },
+    ]
+    proof_cards = module.story_proof_card_rows(fact_rows, rows, review_rows, candidate_rows)
+    assert len(proof_cards) == 2
+    proof_card = proof_cards[0]
+    assert proof_card["event_id"] == "event_confirmed"
+    assert proof_card["proof_status"] == "proof_card_ready_for_manual_review"
+    assert proof_card["renderability_state"] == "athlete_led_manual_render_candidate"
+    assert proof_card["copy_unlock_level"] == "score_and_named_stat_copy_review_ready"
+    assert proof_card["asset_unlock_state"] == "approved_local_athlete_photo_available"
+    assert proof_card["athlete_name"] == "Player One"
+    assert proof_card["named_stat_proof"] == "PTS 24, REB 8"
+    assert proof_card["official_source_url"] == "https://www.espn.com/wnba/game/_/gameId/401"
+    assert proof_card["named_stat_proof_row"].startswith("final_score_stat_proof_v1.csv proof_id=")
+    assert proof_card["manual_intake_path"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=")
+    assert proof_card["operator_checked_source_url"] == ""
+    assert proof_card["operator_notes"] == ""
+    assert proof_card["review_only"] == "Yes"
+    assert proof_card["approval_state_change"] == "none"
+    assert proof_card["auto_approval"] == "No"
+    assert proof_card["publish_action"] == "none_artifact_only"
+    assert proof_card["publish_ready"] == "No"
+    assert proof_card["asset_downloads"] == "No"
+    assert "download_approval_is_not_asset_approval" in proof_card["asset_download_policy"]
+    assert proof_card["asset_approval_state_change"] == "none"
+    assert proof_card["source_enablement"] == "none_existing_local_artifacts_only"
+    blocked_card = [card for card in proof_cards if card["event_id"] == "event_missing"][0]
+    assert blocked_card["proof_status"] == "proof_card_needs_human_confirmation"
+    assert "athlete_render_candidate_missing" in blocked_card["missing_blockers"]
+    proof_summary = module.story_proof_card_summary(proof_cards)
+    assert proof_summary["athlete_led_manual_render_candidates"] == 1
+    proof_report = module.story_proof_card_report_md(proof_summary, proof_cards)
+    assert "Story Proof Card" in proof_report
+    assert "automatic downloads" in proof_report
 
     summary = module.final_score_stat_proof_summary(rows)
     assert summary["final_score_rows"] == 2

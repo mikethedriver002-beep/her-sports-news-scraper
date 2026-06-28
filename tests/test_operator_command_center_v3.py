@@ -47,6 +47,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "athlete_render_candidate_board_v1.md" in artifact_paths
     assert "athlete_render_candidate_board_v1.csv" in artifact_paths
     assert "athlete_render_candidate_board_v1.json" in artifact_paths
+    assert "story_proof_card_v1.md" in artifact_paths
+    assert "story_proof_card_v1.csv" in artifact_paths
+    assert "story_proof_card_v1.json" in artifact_paths
 
 
 def test_command_center_surfaces_breaking_public_signal_as_review_only_source_board(tmp_path, monkeypatch) -> None:

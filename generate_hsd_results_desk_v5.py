@@ -56,6 +56,9 @@ FINAL_SCORE_STAT_PROOF_WALKTHROUGH_FILE = "final_score_stat_proof_review_walkthr
 ATHLETE_RENDER_CANDIDATE_BOARD_FILE = "athlete_render_candidate_board_v1.csv"
 ATHLETE_RENDER_CANDIDATE_REPORT_FILE = "athlete_render_candidate_board_v1.md"
 ATHLETE_RENDER_CANDIDATE_MANIFEST_FILE = "athlete_render_candidate_board_v1.json"
+STORY_PROOF_CARD_FILE = "story_proof_card_v1.csv"
+STORY_PROOF_CARD_REPORT_FILE = "story_proof_card_v1.md"
+STORY_PROOF_CARD_MANIFEST_FILE = "story_proof_card_v1.json"
 GRAPHICS_QUEUE_FILE = "results_graphics_queue.md"
 RECOMMENDATIONS_FILE = "daily_results_recommendations.md"
 HUB_FILE = "results_system_hub.md"
@@ -297,6 +300,7 @@ ATHLETE_RENDER_CANDIDATE_FIELDS = [
     "render_candidate_title",
     "render_candidate_dek",
     "exact_renderer_handoff_fields",
+    "story_proof_card_row_to_open",
     "handoff_action",
     "missing_blockers",
     "operator_next_step",
@@ -310,6 +314,50 @@ ATHLETE_RENDER_CANDIDATE_FIELDS = [
     "asset_downloads",
     "move_files",
     "publish_ready",
+]
+STORY_PROOF_CARD_FIELDS = [
+    "candidate_id",
+    "candidate_rank",
+    "claim",
+    "event_id",
+    "game_date",
+    "matchup",
+    "official_source_url",
+    "cross_check_source_url",
+    "wire_source_url_if_present",
+    "source_domain",
+    "proof_status",
+    "schedule_result_status",
+    "named_stat_proof_status",
+    "named_stat_proof",
+    "named_stat_proof_row",
+    "athlete_name",
+    "athlete_team",
+    "athlete_photo_path",
+    "athlete_photo_marker_path",
+    "copy_unlock_level",
+    "asset_unlock_state",
+    "renderability_state",
+    "athlete_render_candidate_id",
+    "athlete_render_handoff_fields",
+    "game_fact_row",
+    "final_score_proof_row",
+    "proof_review_order_row",
+    "manual_intake_path",
+    "smallest_next_action",
+    "human_confirmation_needed",
+    "missing_blockers",
+    "operator_checked_source_url",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "auto_approval",
+    "publish_action",
+    "publish_ready",
+    "asset_downloads",
+    "asset_download_policy",
+    "asset_approval_state_change",
+    "source_enablement",
 ]
 
 
@@ -1727,13 +1775,15 @@ def athlete_render_candidate_rows(
         order = order_by_proof.get(proof_id, {})
         stat_line = clean(proof.get("stat_line"))
         title = f"{player} leads {player_team}" if player and player_team else clean(proof.get("matchup"))
+        event_uid = clean(proof.get("event_uid"))
+        candidate_id = stable_id(proof_id, player, local_path)
         rows.append(
             {
-                "candidate_id": stable_id(proof_id, player, local_path),
+                "candidate_id": candidate_id,
                 "candidate_rank": "",
                 "candidate_status": candidate_status,
                 "rank_score": points_from_stat_line(stat_line),
-                "event_uid": clean(proof.get("event_uid")),
+                "event_uid": event_uid,
                 "game_date": clean(proof.get("game_date")),
                 "matchup": clean(proof.get("matchup")),
                 "athlete_name": player,
@@ -1758,6 +1808,7 @@ def athlete_render_candidate_rows(
                 "render_candidate_title": title,
                 "render_candidate_dek": f"{stat_line} in {clean(proof.get('matchup'))}" if stat_line else clean(proof.get("matchup")),
                 "exact_renderer_handoff_fields": f"title={title}; dek={stat_line}; athlete_image={local_path}; source_url={clean(proof.get('source_url'))}; proof_id={proof_id}",
+                "story_proof_card_row_to_open": f"story_proof_card_v1.csv event_id={event_uid}; athlete_render_candidate_id={candidate_id}",
                 "handoff_action": "Manual athlete-led render candidate only; verify proof source and local asset row before using this image path.",
                 "missing_blockers": ";".join(blockers) if blockers else "none_manual_source_check_still_required",
                 "operator_next_step": "Open proof row, source URL, review-order row, and asset catalog row; then record the source check in the intake row before any manual render use.",
@@ -1838,6 +1889,184 @@ def athlete_render_candidate_report_md(summary: Dict[str, Any], rows: List[Dict[
     return "\n".join(lines) + "\n"
 
 
+def proof_id_from_reference(value: Any) -> str:
+    match = re.search(r"proof_id=([A-Za-z0-9_-]+)", clean(value))
+    return match.group(1) if match else ""
+
+
+def story_proof_card_rows(
+    fact_rows: List[Dict[str, Any]],
+    stat_proof_rows: List[Dict[str, Any]],
+    review_order_rows: List[Dict[str, Any]],
+    athlete_candidate_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    score_by_event: Dict[str, Dict[str, Any]] = {}
+    named_proofs_by_event: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for row in stat_proof_rows:
+        event_uid = clean(row.get("event_uid"))
+        if clean(row.get("fact_type")) == "final_score":
+            score_by_event[event_uid] = row
+        elif clean(row.get("fact_type")) == "named_player_stat_line" and clean(row.get("named_player")):
+            named_proofs_by_event[event_uid].append(row)
+    order_by_proof: Dict[str, Dict[str, Any]] = {}
+    for row in review_order_rows:
+        proof_id = proof_id_from_reference(row.get("proof_row_to_open"))
+        if proof_id:
+            order_by_proof[proof_id] = row
+    athlete_by_event: Dict[str, Dict[str, Any]] = {}
+    for row in athlete_candidate_rows:
+        event_uid = clean(row.get("event_uid"))
+        if event_uid and event_uid not in athlete_by_event:
+            athlete_by_event[event_uid] = row
+    cards: List[Dict[str, Any]] = []
+    for fact in fact_rows:
+        event_uid = clean(fact.get("event_uid"))
+        result_status = clean(fact.get("result_fact_status"))
+        stats_status = clean(fact.get("stats_fact_status"))
+        if "final_score" not in result_status and "stats_source_confirmed" not in stats_status:
+            continue
+        score = score_by_event.get(event_uid, {})
+        athlete = athlete_by_event.get(event_uid, {})
+        athlete_status = clean(athlete.get("candidate_status"))
+        named_proofs = named_proofs_by_event.get(event_uid, [])
+        selected_named = {}
+        if clean(athlete.get("proof_row_to_open")):
+            athlete_proof_id = proof_id_from_reference(athlete.get("proof_row_to_open"))
+            selected_named = next((row for row in named_proofs if clean(row.get("proof_id")) == athlete_proof_id), {})
+        if not selected_named and named_proofs:
+            selected_named = named_proofs[0]
+        selected_proof_id = clean(selected_named.get("proof_id")) or proof_id_from_reference(athlete.get("proof_row_to_open"))
+        review_order = order_by_proof.get(selected_proof_id, {})
+        score_proof_id = clean(score.get("proof_id"))
+        source_url = clean(fact.get("source_url")) or clean(score.get("source_url")) or clean(athlete.get("source_url"))
+        cross_check = clean(fact.get("stats_source_url"))
+        named_stat = clean(athlete.get("stat_line")) or clean(selected_named.get("stat_line")) or clean(selected_named.get("fact_value"))
+        athlete_ready = athlete_status == "athlete_render_candidate_ready_for_manual_review"
+        score_ready = clean(score.get("proof_status")) == "score_source_backed_operator_verify"
+        named_ready = clean(selected_named.get("proof_status")) == "named_stat_line_source_backed_operator_verify" or athlete_ready
+        proof_status = "proof_card_ready_for_manual_review" if score_ready and named_ready else "proof_card_needs_human_confirmation"
+        copy_unlock = "score_and_named_stat_copy_review_ready" if score_ready and named_ready else "score_only_or_manual_copy_review_required"
+        asset_unlock = "approved_local_athlete_photo_available" if athlete_ready else "athlete_asset_missing_or_manual_review_required"
+        renderability = "athlete_led_manual_render_candidate" if athlete_ready and named_ready else "not_athlete_renderable_until_blockers_clear"
+        blockers: List[str] = []
+        if not score_ready:
+            blockers.append("final_score_proof_missing_or_unverified")
+        if not named_ready:
+            blockers.append("named_stat_proof_missing_or_unverified")
+        if not athlete_ready:
+            blockers.append(clean(athlete.get("missing_blockers")) or "athlete_render_candidate_missing")
+        action = "Open story_proof_card_v1.md, verify the official source URL, record the check in the manual intake row, then hand the athlete fields to the renderer lane."
+        if blockers:
+            action = "Clear blocker(s): {blockers}; then record source confirmation in the manual intake row.".format(blockers="; ".join(blockers))
+        manual_intake = clean(athlete.get("intake_row_to_record")) or (score_proof_id and f"final_score_stat_proof_confirmation_intake_v1.csv proof_id={score_proof_id}") or "final_score_stat_proof_confirmation_intake_v1.csv"
+        claim_parts = [clean(fact.get("matchup")), clean(score.get("fact_value"))]
+        if named_stat:
+            claim_parts.append(named_stat)
+        claim = " | ".join(part for part in claim_parts if part)
+        cards.append(
+            {
+                "candidate_id": stable_id(event_uid, selected_proof_id or score_proof_id, athlete.get("candidate_id")),
+                "candidate_rank": "",
+                "claim": claim,
+                "event_id": event_uid,
+                "game_date": clean(fact.get("game_date")),
+                "matchup": clean(fact.get("matchup")),
+                "official_source_url": source_url,
+                "cross_check_source_url": cross_check if cross_check != source_url else "",
+                "wire_source_url_if_present": "",
+                "source_domain": clean(fact.get("source_domain")) or source_domain(source_url),
+                "proof_status": proof_status,
+                "schedule_result_status": f"{clean(fact.get('schedule_fact_status'))}; {clean(fact.get('result_fact_status'))}",
+                "named_stat_proof_status": clean(selected_named.get("proof_status")) or ("athlete_candidate_stat_proof_available" if athlete_ready else "named_stat_proof_missing"),
+                "named_stat_proof": named_stat,
+                "named_stat_proof_row": clean(athlete.get("proof_row_to_open")) or (selected_proof_id and f"final_score_stat_proof_v1.csv proof_id={selected_proof_id}"),
+                "athlete_name": clean(athlete.get("athlete_name")) or clean(selected_named.get("named_player")),
+                "athlete_team": clean(athlete.get("player_team")) or clean(selected_named.get("player_team")),
+                "athlete_photo_path": clean(athlete.get("local_athlete_image_path")),
+                "athlete_photo_marker_path": clean(athlete.get("approved_marker_path")),
+                "copy_unlock_level": copy_unlock,
+                "asset_unlock_state": asset_unlock,
+                "renderability_state": renderability,
+                "athlete_render_candidate_id": clean(athlete.get("candidate_id")),
+                "athlete_render_handoff_fields": clean(athlete.get("exact_renderer_handoff_fields")),
+                "game_fact_row": f"game_fact_confirmation_status_v1.csv event_uid={event_uid}",
+                "final_score_proof_row": score_proof_id and f"final_score_stat_proof_v1.csv proof_id={score_proof_id}",
+                "proof_review_order_row": clean(athlete.get("review_order_row_to_open")) or (clean(review_order.get("review_order")) and f"final_score_stat_proof_review_order_v1.csv review_order={clean(review_order.get('review_order'))}; proof_id={selected_proof_id}"),
+                "manual_intake_path": manual_intake,
+                "smallest_next_action": action,
+                "human_confirmation_needed": "Yes",
+                "missing_blockers": ";".join(blockers) if blockers else "none_manual_source_check_still_required",
+                "operator_checked_source_url": "",
+                "operator_notes": "",
+                "review_only": "Yes",
+                "approval_state_change": "none",
+                "auto_approval": "No",
+                "publish_action": "none_artifact_only",
+                "publish_ready": "No",
+                "asset_downloads": "No",
+                "asset_download_policy": "no_automatic_downloads; review_only_asset_download_intake_required_for_candidate_downloads; download_approval_is_not_asset_approval",
+                "asset_approval_state_change": "none",
+                "source_enablement": "none_existing_local_artifacts_only",
+            }
+        )
+    cards.sort(key=lambda row: (row.get("renderability_state") != "athlete_led_manual_render_candidate", row.get("game_date", ""), row.get("matchup", "")))
+    for index, row in enumerate(cards, 1):
+        row["candidate_rank"] = str(index)
+    return cards
+
+
+def story_proof_card_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    athlete_ready = [row for row in rows if row.get("renderability_state") == "athlete_led_manual_render_candidate"]
+    return {
+        "version": "v1-review-only-story-proof-card",
+        "generated_at_utc": now_iso(),
+        "review_only": True,
+        "paid_sources_required": False,
+        "asset_downloads": False,
+        "approval_state_changes": False,
+        "publish_actions": False,
+        "rows": len(rows),
+        "athlete_led_manual_render_candidates": len(athlete_ready),
+        "blocked_or_score_only": len(rows) - len(athlete_ready),
+        "top_candidate_id": athlete_ready[0].get("candidate_id") if athlete_ready else "",
+        "top_candidate_claim": athlete_ready[0].get("claim") if athlete_ready else "",
+        "top_candidate_next_action": athlete_ready[0].get("smallest_next_action") if athlete_ready else "",
+    }
+
+
+def story_proof_card_report_md(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Story Proof Card v1",
+        "",
+        f"Generated: `{summary['generated_at_utc']}`",
+        "",
+        "## Policy",
+        "",
+        "- Review-only, artifact-only proof cards.",
+        "- No paid APIs, source enablement, automatic downloads, asset approvals, story approvals, render approvals, publishing, or publish-ready movement.",
+        "- Asset download approval, if ever needed, must come from human-edited `operator/inbox/review_only_asset_download_intake.csv`; download approval is not asset approval.",
+        "- Human confirmation fields stay blank in generated rows.",
+        "",
+        "## Counts",
+        "",
+    ]
+    for key in ["rows", "athlete_led_manual_render_candidates", "blocked_or_score_only", "top_candidate_claim"]:
+        lines.append(f"- {key}: `{summary.get(key)}`")
+    lines.extend(["", "## Proof Cards", ""])
+    if not rows:
+        lines.append("No story proof cards were available in this run.")
+    for row in rows[:40]:
+        lines.append(f"- **{row.get('candidate_rank')}. {row.get('matchup')}** | {row.get('proof_status')} | {row.get('renderability_state')}")
+        lines.append(f"  - claim={row.get('claim')}")
+        lines.append(f"  - source={row.get('official_source_url')}")
+        lines.append(f"  - named_stat={row.get('named_stat_proof') or 'missing'}")
+        lines.append(f"  - athlete_image={row.get('athlete_photo_path') or 'missing'}")
+        lines.append(f"  - proof={row.get('final_score_proof_row')} | named={row.get('named_stat_proof_row')}")
+        lines.append(f"  - record={row.get('manual_intake_path')}")
+        lines.append(f"  - next={row.get('smallest_next_action')}")
+    return "\n".join(lines) + "\n"
+
+
 def final_score_stat_proof_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     counts: Dict[str, int] = defaultdict(int)
     for row in rows:
@@ -1912,12 +2141,12 @@ def main() -> None:
     observations, health = free_source_observations(run_id, compact_dates); stale_rows = stale_audit(observations, iso_dates); duplicate_rows = duplicate_audit(observations)
     events = apply_strict_date_window_gate(reconcile(run_id, observations), iso_dates); box_audit_rows = audit_wnba_box_scores(events)
     all_events = events; womens = [e for e in events if e.get("gender_scope") == "women" and e.get("include_in_dashboard")]; finals = [e for e in events if e.get("gender_scope") == "women" and e.get("status_norm") == "final" and float(e.get("confidence") or 0) >= 0.70]; top = womens[:50]; review = [e for e in events if e.get("gender_scope") == "women" and e.get("manual_review")]
-    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows); stats_gap_rows, stats_confirmation_rows = stats_evidence_gap_rows(events, observations); stats_gap_summary = stats_evidence_gap_summary(stats_gap_rows, stats_confirmation_rows); fact_status_rows = game_fact_confirmation_status_rows(intelligence_rows, stats_gap_rows); fact_status_summary = game_fact_confirmation_status_summary(fact_status_rows); stat_proof_rows = final_score_stat_proof_rows(stats_gap_rows); stat_proof_summary = final_score_stat_proof_summary(stat_proof_rows); stat_proof_confirmation_rows = final_score_stat_proof_confirmation_rows(stat_proof_rows); stat_proof_review_order_rows = final_score_stat_proof_review_order_rows(stat_proof_rows); athlete_render_candidate_rows_data = athlete_render_candidate_rows(stat_proof_rows, stat_proof_review_order_rows, read_csv(Path("data/asset_registry/wnba/athlete_photo_catalog.csv"))); athlete_render_candidate_summary_data = athlete_render_candidate_summary(athlete_render_candidate_rows_data)
+    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows); stats_gap_rows, stats_confirmation_rows = stats_evidence_gap_rows(events, observations); stats_gap_summary = stats_evidence_gap_summary(stats_gap_rows, stats_confirmation_rows); fact_status_rows = game_fact_confirmation_status_rows(intelligence_rows, stats_gap_rows); fact_status_summary = game_fact_confirmation_status_summary(fact_status_rows); stat_proof_rows = final_score_stat_proof_rows(stats_gap_rows); stat_proof_summary = final_score_stat_proof_summary(stat_proof_rows); stat_proof_confirmation_rows = final_score_stat_proof_confirmation_rows(stat_proof_rows); stat_proof_review_order_rows = final_score_stat_proof_review_order_rows(stat_proof_rows); athlete_render_candidate_rows_data = athlete_render_candidate_rows(stat_proof_rows, stat_proof_review_order_rows, read_csv(Path("data/asset_registry/wnba/athlete_photo_catalog.csv"))); athlete_render_candidate_summary_data = athlete_render_candidate_summary(athlete_render_candidate_rows_data); story_proof_card_rows_data = story_proof_card_rows(fact_status_rows, stat_proof_rows, stat_proof_review_order_rows, athlete_render_candidate_rows_data); story_proof_card_summary_data = story_proof_card_summary(story_proof_card_rows_data)
     write_csv(OBSERVATIONS_FILE, observations, OBS_FIELDS); write_csv(RECONCILED_FILE, events, EVENT_FIELDS); write_csv(RESULTS_BOARD_FILE, all_events, EVENT_FIELDS); write_csv(WOMENS_RESULTS_FILE, womens, EVENT_FIELDS); write_csv(FINAL_RESULTS_FILE, finals, EVENT_FIELDS); write_csv(TOP_RESULTS_FILE, top, EVENT_FIELDS); write_csv(MANUAL_REVIEW_FILE, review, EVENT_FIELDS)
-    write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS); write_csv(GAME_INTELLIGENCE_BOARD_FILE, intelligence_rows, GAME_INTELLIGENCE_FIELDS); write_csv(STATS_EVIDENCE_GAP_BOARD_FILE, stats_gap_rows, STATS_EVIDENCE_FIELDS); write_csv(STATS_CONFIRMATION_INTAKE_FILE, stats_confirmation_rows, STATS_CONFIRMATION_FIELDS); write_csv(GAME_FACT_CONFIRMATION_STATUS_FILE, fact_status_rows, GAME_FACT_CONFIRMATION_STATUS_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_FILE, stat_proof_rows, FINAL_SCORE_STAT_PROOF_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_CONFIRMATION_INTAKE_FILE, stat_proof_confirmation_rows, FINAL_SCORE_STAT_PROOF_CONFIRMATION_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FILE, stat_proof_review_order_rows, FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FIELDS); write_csv(ATHLETE_RENDER_CANDIDATE_BOARD_FILE, athlete_render_candidate_rows_data, ATHLETE_RENDER_CANDIDATE_FIELDS)
-    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates)); write_text(GAME_INTELLIGENCE_REPORT_FILE, game_intelligence_report_md(intelligence_summary, intelligence_rows)); write_text(STATS_EVIDENCE_GAP_REPORT_FILE, stats_evidence_gap_report_md(stats_gap_summary, stats_gap_rows, stats_confirmation_rows)); write_text(GAME_FACT_CONFIRMATION_STATUS_REPORT_FILE, game_fact_confirmation_status_report_md(fact_status_summary, fact_status_rows)); write_text(FINAL_SCORE_STAT_PROOF_REPORT_FILE, final_score_stat_proof_report_md(stat_proof_summary, stat_proof_rows)); write_text(FINAL_SCORE_STAT_PROOF_WALKTHROUGH_FILE, final_score_stat_proof_review_walkthrough_md(stat_proof_review_order_rows)); write_text(ATHLETE_RENDER_CANDIDATE_REPORT_FILE, athlete_render_candidate_report_md(athlete_render_candidate_summary_data, athlete_render_candidate_rows_data))
-    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows)); write_json(GAME_INTELLIGENCE_MANIFEST_FILE, {"summary": intelligence_summary, "rows": intelligence_rows}); write_json(STATS_EVIDENCE_GAP_MANIFEST_FILE, {"summary": stats_gap_summary, "rows": stats_gap_rows, "confirmation_intake": stats_confirmation_rows}); write_json(GAME_FACT_CONFIRMATION_STATUS_MANIFEST_FILE, {"summary": fact_status_summary, "rows": fact_status_rows}); write_json(FINAL_SCORE_STAT_PROOF_MANIFEST_FILE, {"summary": stat_proof_summary, "rows": stat_proof_rows, "confirmation_intake": stat_proof_confirmation_rows, "review_order": stat_proof_review_order_rows}); write_json(ATHLETE_RENDER_CANDIDATE_MANIFEST_FILE, {"summary": athlete_render_candidate_summary_data, "rows": athlete_render_candidate_rows_data})
-    manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "game_intelligence_rows": len(intelligence_rows), "game_intelligence_recap_candidates": intelligence_summary.get("recap_candidates", 0), "game_intelligence_missing_stats_context": intelligence_summary.get("missing_stats_context", 0), "stats_evidence_gap_rows": len(stats_gap_rows), "stats_confirmation_intake_rows": len(stats_confirmation_rows), "game_fact_confirmation_status_rows": len(fact_status_rows), "game_fact_manual_verification_required": fact_status_summary.get("manual_verification_required", 0), "final_score_stat_proof_rows": len(stat_proof_rows), "final_score_stat_proof_manual_confirmation_needed": stat_proof_summary.get("manual_box_score_confirmation_needed", 0), "final_score_stat_proof_confirmation_intake_rows": len(stat_proof_confirmation_rows), "final_score_stat_proof_review_order_rows": len(stat_proof_review_order_rows), "athlete_render_candidate_rows": len(athlete_render_candidate_rows_data), "athlete_render_candidate_ready": athlete_render_candidate_summary_data.get("ready_for_manual_review", 0), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix(), "game_intelligence": GAME_INTELLIGENCE_MANIFEST_FILE, "stats_evidence_gap": STATS_EVIDENCE_GAP_MANIFEST_FILE, "game_fact_confirmation_status": GAME_FACT_CONFIRMATION_STATUS_MANIFEST_FILE, "final_score_stat_proof": FINAL_SCORE_STAT_PROOF_MANIFEST_FILE, "final_score_stat_proof_confirmation_intake": FINAL_SCORE_STAT_PROOF_CONFIRMATION_INTAKE_FILE, "final_score_stat_proof_review_order": FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FILE, "final_score_stat_proof_review_walkthrough": FINAL_SCORE_STAT_PROOF_WALKTHROUGH_FILE, "athlete_render_candidate_board": ATHLETE_RENDER_CANDIDATE_BOARD_FILE, "athlete_render_candidate_report": ATHLETE_RENDER_CANDIDATE_REPORT_FILE, "athlete_render_candidate_manifest": ATHLETE_RENDER_CANDIDATE_MANIFEST_FILE}}
+    write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS); write_csv(GAME_INTELLIGENCE_BOARD_FILE, intelligence_rows, GAME_INTELLIGENCE_FIELDS); write_csv(STATS_EVIDENCE_GAP_BOARD_FILE, stats_gap_rows, STATS_EVIDENCE_FIELDS); write_csv(STATS_CONFIRMATION_INTAKE_FILE, stats_confirmation_rows, STATS_CONFIRMATION_FIELDS); write_csv(GAME_FACT_CONFIRMATION_STATUS_FILE, fact_status_rows, GAME_FACT_CONFIRMATION_STATUS_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_FILE, stat_proof_rows, FINAL_SCORE_STAT_PROOF_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_CONFIRMATION_INTAKE_FILE, stat_proof_confirmation_rows, FINAL_SCORE_STAT_PROOF_CONFIRMATION_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FILE, stat_proof_review_order_rows, FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FIELDS); write_csv(ATHLETE_RENDER_CANDIDATE_BOARD_FILE, athlete_render_candidate_rows_data, ATHLETE_RENDER_CANDIDATE_FIELDS); write_csv(STORY_PROOF_CARD_FILE, story_proof_card_rows_data, STORY_PROOF_CARD_FIELDS)
+    write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates)); write_text(GAME_INTELLIGENCE_REPORT_FILE, game_intelligence_report_md(intelligence_summary, intelligence_rows)); write_text(STATS_EVIDENCE_GAP_REPORT_FILE, stats_evidence_gap_report_md(stats_gap_summary, stats_gap_rows, stats_confirmation_rows)); write_text(GAME_FACT_CONFIRMATION_STATUS_REPORT_FILE, game_fact_confirmation_status_report_md(fact_status_summary, fact_status_rows)); write_text(FINAL_SCORE_STAT_PROOF_REPORT_FILE, final_score_stat_proof_report_md(stat_proof_summary, stat_proof_rows)); write_text(FINAL_SCORE_STAT_PROOF_WALKTHROUGH_FILE, final_score_stat_proof_review_walkthrough_md(stat_proof_review_order_rows)); write_text(ATHLETE_RENDER_CANDIDATE_REPORT_FILE, athlete_render_candidate_report_md(athlete_render_candidate_summary_data, athlete_render_candidate_rows_data)); write_text(STORY_PROOF_CARD_REPORT_FILE, story_proof_card_report_md(story_proof_card_summary_data, story_proof_card_rows_data))
+    write_json(SOURCE_ACCURACY_JSON, accuracy); write_text(SOURCE_ACCURACY_MD, write_source_accuracy_md(accuracy)); write_json(MISSING_ALERT_JSON, {"summary": expected_summary, "rows": expected_rows}); write_text(MISSING_ALERT_MD, missing_games_md(expected_summary, expected_rows)); write_json(GAME_INTELLIGENCE_MANIFEST_FILE, {"summary": intelligence_summary, "rows": intelligence_rows}); write_json(STATS_EVIDENCE_GAP_MANIFEST_FILE, {"summary": stats_gap_summary, "rows": stats_gap_rows, "confirmation_intake": stats_confirmation_rows}); write_json(GAME_FACT_CONFIRMATION_STATUS_MANIFEST_FILE, {"summary": fact_status_summary, "rows": fact_status_rows}); write_json(FINAL_SCORE_STAT_PROOF_MANIFEST_FILE, {"summary": stat_proof_summary, "rows": stat_proof_rows, "confirmation_intake": stat_proof_confirmation_rows, "review_order": stat_proof_review_order_rows}); write_json(ATHLETE_RENDER_CANDIDATE_MANIFEST_FILE, {"summary": athlete_render_candidate_summary_data, "rows": athlete_render_candidate_rows_data}); write_json(STORY_PROOF_CARD_MANIFEST_FILE, {"summary": story_proof_card_summary_data, "rows": story_proof_card_rows_data})
+    manifest = {"version": VERSION, "run_id": run_id, "generated_at_utc": now_iso(), "sources": allowed_sources(), "date_window": iso_dates, "free_only": True, "paid_sources_required": False, "counts": {"observations": len(observations), "reconciled_events": len(events), "women_events": len(womens), "final_women_events": len(finals), "manual_review": len(review), "graphics_ready": sum(1 for e in events if e.get("include_in_graphics")), "must_post": sum(1 for e in events if e.get("editorial_bucket") == "Must Post"), "strong_maybe": sum(1 for e in events if e.get("editorial_bucket") == "Strong Maybe"), "watchlist": sum(1 for e in events if e.get("editorial_bucket") == "Watchlist"), "carryover_archived": sum(1 for e in events if e.get("is_carryover") == "Yes"), "wnba_box_audit_rows": len(box_audit_rows), "game_intelligence_rows": len(intelligence_rows), "game_intelligence_recap_candidates": intelligence_summary.get("recap_candidates", 0), "game_intelligence_missing_stats_context": intelligence_summary.get("missing_stats_context", 0), "stats_evidence_gap_rows": len(stats_gap_rows), "stats_confirmation_intake_rows": len(stats_confirmation_rows), "game_fact_confirmation_status_rows": len(fact_status_rows), "game_fact_manual_verification_required": fact_status_summary.get("manual_verification_required", 0), "final_score_stat_proof_rows": len(stat_proof_rows), "final_score_stat_proof_manual_confirmation_needed": stat_proof_summary.get("manual_box_score_confirmation_needed", 0), "final_score_stat_proof_confirmation_intake_rows": len(stat_proof_confirmation_rows), "final_score_stat_proof_review_order_rows": len(stat_proof_review_order_rows), "athlete_render_candidate_rows": len(athlete_render_candidate_rows_data), "athlete_render_candidate_ready": athlete_render_candidate_summary_data.get("ready_for_manual_review", 0), "story_proof_card_rows": len(story_proof_card_rows_data), "story_proof_card_athlete_led_candidates": story_proof_card_summary_data.get("athlete_led_manual_render_candidates", 0), "duplicate_groups": len(duplicate_rows), "stale_observations": len(stale_rows), "expected_games": expected_summary.get("expected_games", 0), "missing_expected_games": expected_summary.get("missing", 0)}, "source_health": health, "v5_audit_files": {"source_accuracy": SOURCE_ACCURACY_JSON.as_posix(), "duplicates": DUPLICATE_AUDIT.as_posix(), "stale": STALE_AUDIT.as_posix(), "missing_games": MISSING_ALERT_JSON.as_posix(), "game_intelligence": GAME_INTELLIGENCE_MANIFEST_FILE, "stats_evidence_gap": STATS_EVIDENCE_GAP_MANIFEST_FILE, "game_fact_confirmation_status": GAME_FACT_CONFIRMATION_STATUS_MANIFEST_FILE, "final_score_stat_proof": FINAL_SCORE_STAT_PROOF_MANIFEST_FILE, "final_score_stat_proof_confirmation_intake": FINAL_SCORE_STAT_PROOF_CONFIRMATION_INTAKE_FILE, "final_score_stat_proof_review_order": FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FILE, "final_score_stat_proof_review_walkthrough": FINAL_SCORE_STAT_PROOF_WALKTHROUGH_FILE, "athlete_render_candidate_board": ATHLETE_RENDER_CANDIDATE_BOARD_FILE, "athlete_render_candidate_report": ATHLETE_RENDER_CANDIDATE_REPORT_FILE, "athlete_render_candidate_manifest": ATHLETE_RENDER_CANDIDATE_MANIFEST_FILE, "story_proof_card": STORY_PROOF_CARD_FILE, "story_proof_card_report": STORY_PROOF_CARD_REPORT_FILE, "story_proof_card_manifest": STORY_PROOF_CARD_MANIFEST_FILE}}
     write_json(MANIFEST_FILE, manifest); write_json(V5_MANIFEST, manifest); write_text(V5_REPORT, report_md(run_id, manifest))
     print("Created Results Desk v5 outputs"); print(json.dumps(manifest["counts"], indent=2))
 
