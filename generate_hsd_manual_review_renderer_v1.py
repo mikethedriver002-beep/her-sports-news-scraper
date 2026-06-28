@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.45.0-photo-first-editorial-stage-v2"
+VERSION = "hsd-manual-review-renderer-v1.46.0-photo-first-editorial-corridor"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v19_photo_first_editorial_stage_v2"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v20_photo_first_editorial_corridor"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -62,6 +62,7 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_subtle_logo_identifiers,compact_square_photo_footer,"
     "photo_first_integrated_stat_band,photo_first_context_stage_bridge,"
     "photo_first_open_score_lockup,photo_first_soft_athlete_stage,"
+    "photo_first_editorial_focal_corridor,photo_first_calm_background_zones,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -985,38 +986,77 @@ def draw_sports_editorial_depth_markers(
     horizon_y = int(height * (0.720 if photo_first else 0.735))
 
     for offset in range(-220, width + 180, 34):
-        alpha = 24 if offset % 68 == 0 else 13
+        alpha = (15 if offset % 68 == 0 else 8) if photo_first else (24 if offset % 68 == 0 else 13)
         draw.line((offset, height + 30, offset + int(width * 0.52), horizon_y), fill=(*gold, alpha), width=1)
     for offset in range(-160, width + 220, 42):
-        draw.line((offset, int(height * 0.245), offset + int(width * 0.34), int(height * 0.050)), fill=(*secondary, 12), width=1)
+        draw.line((offset, int(height * 0.245), offset + int(width * 0.34), int(height * 0.050)), fill=(*secondary, 7 if photo_first else 12), width=1)
 
     glow_y = int(height * (0.718 if photo_first else 0.760))
     draw.ellipse(
         (int(width * 0.05), glow_y - 34, int(width * 0.47), glow_y + 34),
-        fill=(*primary, 38 if photo_first else 28),
+        fill=(*primary, 24 if photo_first else 28),
     )
     draw.ellipse(
         (int(width * 0.50), glow_y - 30, int(width * 0.94), glow_y + 30),
-        fill=(*secondary, 32 if photo_first else 24),
+        fill=(*secondary, 20 if photo_first else 24),
     )
-    draw.line((54, glow_y, width - 54, glow_y), fill=(*gold, 84), width=2)
-    draw.line((74, glow_y + 7, width - 74, glow_y + 7), fill=(248, 250, 255, 18), width=1)
+    draw.line((54, glow_y, width - 54, glow_y), fill=(*gold, 50 if photo_first else 84), width=1 if photo_first else 2)
+    draw.line((74, glow_y + 7, width - 74, glow_y + 7), fill=(248, 250, 255, 10 if photo_first else 18), width=1)
 
     randomizer = random.Random(width * 23 + height * 19 + (97 if photo_first else 31))
     for side in (0, 1):
         cluster_x = int(width * (0.08 if side == 0 else 0.92))
         cluster_y = int(height * (0.34 if side == 0 else 0.23))
-        for _ in range(56 if photo_first else 44):
+        for _ in range(32 if photo_first else 44):
             spread_x = randomizer.randrange(0, max(48, int(width * 0.14)))
             spread_y = randomizer.randrange(0, max(60, int(height * 0.16)))
             x = cluster_x + (-spread_x if side == 0 else spread_x)
             y = cluster_y + spread_y
             size = randomizer.randrange(1, 3)
-            draw.rectangle((x, y, x + size, y + size), fill=(*gold, randomizer.randrange(18, 46)))
+            draw.rectangle((x, y, x + size, y + size), fill=(*gold, randomizer.randrange(9, 25) if photo_first else randomizer.randrange(18, 46)))
 
     if ImageFilter is not None:
         glow = layer.filter(ImageFilter.GaussianBlur(10))
         image.alpha_composite(glow)
+    image.alpha_composite(layer)
+
+
+def draw_photo_first_editorial_focal_corridor(image: Any) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    width, height = image.size
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    draw.rounded_rectangle(
+        (int(width * 0.035), int(height * 0.275), int(width * 0.970), int(height * 0.780)),
+        radius=34,
+        fill=(1, 4, 11, 58),
+    )
+    draw.rounded_rectangle(
+        (int(width * 0.380), int(height * 0.300), int(width * 0.965), int(height * 0.655)),
+        radius=28,
+        fill=(1, 3, 9, 66),
+    )
+    draw.polygon(
+        [
+            (int(width * 0.020), int(height * 0.340)),
+            (int(width * 0.385), int(height * 0.265)),
+            (int(width * 0.470), int(height * 0.710)),
+            (int(width * 0.050), int(height * 0.790)),
+        ],
+        fill=(2, 6, 14, 42),
+    )
+    draw.polygon(
+        [
+            (int(width * 0.420), int(height * 0.395)),
+            (int(width * 0.965), int(height * 0.360)),
+            (int(width * 0.900), int(height * 0.610)),
+            (int(width * 0.405), int(height * 0.665)),
+        ],
+        fill=(6, 9, 16, 42),
+    )
+    if ImageFilter is not None:
+        layer = layer.filter(ImageFilter.GaussianBlur(10))
     image.alpha_composite(layer)
 
 
@@ -1063,33 +1103,35 @@ def draw_reference_background(
         image,
         [(-90, int(height * 0.76)), (int(width * 0.28), int(height * 0.42)), (int(width * 0.62), height + 80), (-90, height + 80)],
         primary,
-        70 if tone == "final" else 52,
+        (44 if photo_first else 70) if tone == "final" else 52,
         38,
     )
     draw_soft_light_sweep(
         image,
         [(int(width * 0.56), -90), (width + 90, -90), (width + 90, int(height * 0.54)), (int(width * 0.34), int(height * 0.24))],
         secondary,
-        58 if tone == "final" else 42,
+        (36 if photo_first else 58) if tone == "final" else 42,
         46,
     )
     draw_soft_light_sweep(
         image,
         [(int(width * 0.10), int(height * 0.16)), (int(width * 0.94), int(height * 0.06)), (int(width * 0.82), int(height * 0.12)), (int(width * 0.14), int(height * 0.24))],
         (248, 250, 255),
-        24,
+        16 if photo_first else 24,
         20,
     )
     draw_sports_editorial_depth_markers(image, primary, secondary, photo_first=photo_first)
+    if photo_first:
+        draw_photo_first_editorial_focal_corridor(image)
 
-    rail_alpha = 24 if tone == "final" else 18
+    rail_alpha = (12 if photo_first else 24) if tone == "final" else 18
     for x in range(-height, width + height, 520):
         draw.line((x, height + 60, x + int(height * 0.66), -70), fill=(*primary, rail_alpha), width=1)
     for x in range(-height, width + height, 820):
-        draw.line((x, height + 140, x + int(height * 0.52), -40), fill=(*secondary, 16), width=1)
+        draw.line((x, height + 140, x + int(height * 0.52), -40), fill=(*secondary, 8 if photo_first else 16), width=1)
 
     for y in [int(height * 0.12), int(height * 0.285), int(height * 0.74), int(height * 0.88)]:
-        draw.line((30, y, width - 30, y), fill=(*primary, 22), width=1)
+        draw.line((30, y, width - 30, y), fill=(*primary, 10 if photo_first else 22), width=1)
     for x in range(86, width, 170):
         draw.line((x, int(height * 0.18), x, int(height * 0.92)), fill=(248, 250, 255, 4), width=1)
 
@@ -2751,7 +2793,7 @@ def draw_photo_first_focal_depth_stage(
             (stage_right - 34, stage_bottom - 54),
             (stage_left + 44, stage_bottom - 12),
         ],
-        fill=(*primary, 30),
+        fill=(*primary, 20),
     )
     draw.polygon(
         [
@@ -2760,7 +2802,7 @@ def draw_photo_first_focal_depth_stage(
             (stage_right - 42, ly + lh + 38),
             (px + pw + 20, ly + lh + 12),
         ],
-        fill=(*secondary, 24),
+        fill=(*secondary, 16),
     )
     draw.polygon(
         [
@@ -2769,7 +2811,7 @@ def draw_photo_first_focal_depth_stage(
             (wx + int(ww * 0.88), ly + lh + 20),
             (px + int(pw * 0.70), py + int(ph * 0.92)),
         ],
-        fill=(*primary, 36),
+        fill=(*primary, 24),
     )
     draw.polygon(
         [
@@ -2778,22 +2820,22 @@ def draw_photo_first_focal_depth_stage(
             (wx + int(ww * 0.82), ly + int(lh * 0.78)),
             (px + int(pw * 0.58), py + int(ph * 0.76)),
         ],
-        fill=(*PALETTE["gold"], 32),
+        fill=(*PALETTE["gold"], 20),
     )
-    draw.rectangle((px - 8, py + 10, px + 16, py + ph - 8), fill=(*primary, 130))
-    draw.rectangle((wx - 10, wy + 2, wx + 10, wy + wh - 2), fill=(*primary, 102))
-    draw.rectangle((wx - 10, ly + 2, wx + 10, ly + lh - 2), fill=(*secondary, 112))
-    draw.line((stage_left + 22, sy - 16, stage_right - 22, sy - 16), fill=(*PALETTE["gold"], 150), width=4)
-    draw.line((stage_left + 28, sy - 8, stage_right - 28, sy - 8), fill=(248, 250, 255, 30), width=1)
+    draw.rectangle((px - 8, py + 10, px + 13, py + ph - 8), fill=(*primary, 92))
+    draw.rectangle((wx - 9, wy + 2, wx + 7, wy + wh - 2), fill=(*primary, 78))
+    draw.rectangle((wx - 9, ly + 2, wx + 7, ly + lh - 2), fill=(*secondary, 84))
+    draw.line((stage_left + 32, sy - 16, stage_right - 32, sy - 16), fill=(*PALETTE["gold"], 88), width=2)
+    draw.line((stage_left + 42, sy - 8, stage_right - 42, sy - 8), fill=(248, 250, 255, 16), width=1)
 
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((px - 110, py - 96, px + pw + 152, py + ph + 132), fill=(*primary, 76))
-    glow_draw.ellipse((px + 28, py + int(ph * 0.12), px + pw + 88, py + int(ph * 0.76)), fill=(248, 250, 255, 30))
-    glow_draw.ellipse((px + int(pw * 0.40), py + int(ph * 0.28), wx + int(ww * 0.84), ly + lh + 62), fill=(*primary, 44))
-    glow_draw.ellipse((px + int(pw * 0.56), py + int(ph * 0.40), wx + int(ww * 0.92), ly + lh + 90), fill=(*PALETTE["gold"], 38))
-    glow_draw.ellipse((wx - 96, wy - 70, wx + ww + 70, ly + lh + 96), fill=(*secondary, 34))
-    glow_draw.ellipse((sx + int(sw * 0.40), sy - 42, sx + sw + 80, sy + sh + 76), fill=(*PALETTE["gold"], 28))
+    glow_draw.ellipse((px - 110, py - 96, px + pw + 152, py + ph + 132), fill=(*primary, 58))
+    glow_draw.ellipse((px + 28, py + int(ph * 0.12), px + pw + 88, py + int(ph * 0.76)), fill=(248, 250, 255, 24))
+    glow_draw.ellipse((px + int(pw * 0.40), py + int(ph * 0.28), wx + int(ww * 0.84), ly + lh + 62), fill=(*primary, 30))
+    glow_draw.ellipse((px + int(pw * 0.56), py + int(ph * 0.40), wx + int(ww * 0.92), ly + lh + 90), fill=(*PALETTE["gold"], 24))
+    glow_draw.ellipse((wx - 96, wy - 70, wx + ww + 70, ly + lh + 96), fill=(*secondary, 22))
+    glow_draw.ellipse((sx + int(sw * 0.40), sy - 42, sx + sw + 80, sy + sh + 76), fill=(*PALETTE["gold"], 18))
     if ImageFilter is not None:
         glow = glow.filter(ImageFilter.GaussianBlur(34))
         layer = layer.filter(ImageFilter.GaussianBlur(0.6))
