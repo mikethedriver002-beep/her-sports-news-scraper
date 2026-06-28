@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.36.0-photo-first-subject-glow"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.37.0-photo-first-focal-frame"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -161,7 +161,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v10_photo_first_subject_glow"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v11_photo_first_focal_frame"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -177,13 +177,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_score_type_lockup" in manifest["render_background_cues"]
     assert "photo_first_context_score_rail" in manifest["render_background_cues"]
     assert "photo_first_subject_glow_bridge" in manifest["render_background_cues"]
+    assert "photo_first_soft_focal_frame" in manifest["render_background_cues"]
     assert "photo_first_editorial_nameplate" in manifest["render_background_cues"]
     assert "compact_square_photo_footer" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v10_photo_first_subject_glow" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v11_photo_first_focal_frame" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -244,7 +245,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v10_photo_first_subject_glow"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v11_photo_first_focal_frame"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert "manual visual QA intake" in visual_board["next_manual_review_step"] or "hold" in visual_board["next_manual_review_step"]
     assert {item["format_id"] for item in visual_board["rows"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -304,7 +305,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v10_photo_first_subject_glow`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v11_photo_first_focal_frame`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "draft_preview_ig_feed.png" in board
     assert "draft_preview_story.png" in board
@@ -1109,6 +1110,7 @@ def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> N
 
     assert drawn is True
     assert "photo_first_portrait_spotlight" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_soft_focal_frame" in module.RENDER_BACKGROUND_CUES
     x, y, w, h = geometry["photo_stage_box"]
     stage_crop = image.crop((x + 8, y + 34, x + w - 8, y + h - 14)).convert("RGB")
     data = stage_crop.tobytes()
@@ -1116,6 +1118,7 @@ def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> N
     bright_portrait_pixels = 0
     blue_spotlight_pixels = 0
     gold_rim_pixels = 0
+    soft_frame_pixels = 0
     for index in range(0, len(data), 3):
         r, g, b = data[index], data[index + 1], data[index + 2]
         if r >= 170 and g >= 135 and b >= 110:
@@ -1124,10 +1127,13 @@ def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> N
             blue_spotlight_pixels += 1
         if r >= 170 and 115 <= g <= 215 and b <= 115:
             gold_rim_pixels += 1
+        if r >= 185 and g >= 165 and 70 <= b <= 170:
+            soft_frame_pixels += 1
 
     assert bright_portrait_pixels / pixels > 0.145
-    assert blue_spotlight_pixels / pixels > 0.010
+    assert blue_spotlight_pixels / pixels > 0.008
     assert gold_rim_pixels / pixels > 0.003
+    assert soft_frame_pixels / pixels > 0.002
 
 
 def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
