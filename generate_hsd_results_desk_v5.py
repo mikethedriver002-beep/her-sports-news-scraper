@@ -126,6 +126,8 @@ GAME_INTELLIGENCE_FIELDS = [
     "source_count",
     "source_confidence",
     "source_confidence_reason",
+    "source_confirmation_tier",
+    "source_confirmation_limitations",
     "source_url",
     "source_domain",
     "retrieved_at_utc",
@@ -198,6 +200,8 @@ GAME_FACT_CONFIRMATION_STATUS_FIELDS = [
     "stats_fact_status",
     "overall_confirmation_status",
     "source_confidence",
+    "source_confirmation_tier",
+    "source_confirmation_limitations",
     "source_url",
     "source_domain",
     "stats_source_url",
@@ -983,6 +987,42 @@ def selected_observation_by_key(observations: List[Dict[str, str]]) -> Dict[Tupl
     return selected
 
 
+def source_confirmation_tier(source_url: Any, source_count: Any, selected_source: Any, status: Any, missing_evidence: Any = "") -> Tuple[str, str]:
+    url = clean(source_url)
+    count = int(clean(source_count) or "0") if clean(source_count).isdigit() else 0
+    source = clean(selected_source)
+    missing = clean(missing_evidence)
+    if not url or "free_source_observation_match" in missing:
+        return (
+            "source_missing_manual_confirmation_required",
+            "No matched free/public game observation is present for this row; operator must confirm manually before use.",
+        )
+    if not url.lower().startswith(("http://", "https://")):
+        return (
+            "manual_or_local_source_operator_verify",
+            "Source points to a local/manual artifact rather than a live free/public URL; operator must verify the row before use.",
+        )
+    if count > 1:
+        return (
+            "multi_source_free_public_cross_check_operator_verify",
+            "Multiple free/public observations contributed to this row; operator still verifies the listed source and any conflict notes before use.",
+        )
+    if source == "espn_wnba_public" or "espn.com" in source_domain(url):
+        if clean(status) == "scheduled":
+            return (
+                "single_free_public_schedule_source_result_pending",
+                "Single ESPN public scoreboard schedule row; result, box score, and recap use remain pending until the game is final.",
+            )
+        return (
+            "single_free_public_scoreboard_operator_verify",
+            "Single ESPN public scoreboard row; not a paid API, but not a human approval or publish-ready confirmation.",
+        )
+    return (
+        "single_free_public_or_manual_source_operator_verify",
+        "Single source row is present; operator must confirm the source class and facts before use.",
+    )
+
+
 def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict[str, str]], expected_rows: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     obs_by_key = selected_observation_by_key(observations)
     rows: List[Dict[str, Any]] = []
@@ -991,6 +1031,7 @@ def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict
         obs = obs_by_key.get((clean(event.get("canonical_key")), clean(event.get("selected_source"))), {})
         source_url = clean(event.get("source_url"))
         bucket = game_attention_bucket(event)
+        tier, limitations = source_confirmation_tier(source_url, event.get("source_count"), event.get("selected_source"), event.get("status_norm"), missing_evidence_for(event, stats_status))
         row_type = "game_event"
         if bucket == "upcoming_game":
             row_type = "upcoming_game"
@@ -1020,6 +1061,8 @@ def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict
                 "source_count": clean(event.get("source_count")),
                 "source_confidence": f"{float(event.get('confidence') or 0):.2f}",
                 "source_confidence_reason": confidence_reason_summary(event),
+                "source_confirmation_tier": tier,
+                "source_confirmation_limitations": limitations,
                 "source_url": source_url,
                 "source_domain": source_domain(source_url),
                 "retrieved_at_utc": clean(obs.get("fetched_at_utc")) or now_iso(),
@@ -1058,6 +1101,8 @@ def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict
                 "source_count": "0",
                 "source_confidence": "0.00",
                 "source_confidence_reason": "expected game was not matched by current free-source observations",
+                "source_confirmation_tier": "source_missing_manual_confirmation_required",
+                "source_confirmation_limitations": "Expected game seed has no matched free/public observation in this run; operator must confirm schedule/result manually.",
                 "source_url": source_url,
                 "source_domain": source_domain(source_url),
                 "retrieved_at_utc": now_iso(),
@@ -1118,6 +1163,7 @@ def game_intelligence_report_md(summary: Dict[str, Any], rows: List[Dict[str, An
         matchup = f"{row.get('away_team')} at {row.get('home_team')}".strip()
         lines.append(f"- **{row.get('attention_bucket')}** | {row.get('game_date')} | {row.get('league')} | {matchup}")
         lines.append(f"  - status={row.get('status')} | confidence={row.get('source_confidence')} | review={row.get('manual_review_status')}")
+        lines.append(f"  - source_tier={row.get('source_confirmation_tier')} | limits={row.get('source_confirmation_limitations')}")
         lines.append(f"  - stats={row.get('stats_context_status')} | missing={row.get('missing_evidence')}")
         lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
         lines.append(f"  - fact_status={row.get('game_fact_status_row_to_open') or 'missing'} | proof={row.get('proof_review_order_row_to_open') or 'missing'}")
@@ -1399,6 +1445,13 @@ def game_fact_confirmation_status_rows(intelligence_rows: List[Dict[str, Any]], 
         missing = game_fact_missing_confirmation(schedule_status, result_status, stats_status)
         overall = game_fact_overall_status(schedule_status, result_status, stats_status, missing)
         matchup = f"{clean(item.get('away_team'))} at {clean(item.get('home_team'))}".strip()
+        tier, limitations = source_confirmation_tier(
+            item.get("source_url"),
+            clean(item.get("source_count")) or ("0" if "free_source_observation_match" in clean(item.get("missing_evidence")) else "1"),
+            item.get("selected_source"),
+            item.get("status"),
+            item.get("missing_evidence"),
+        )
         rows.append(
             {
                 "event_uid": event_uid,
@@ -1414,6 +1467,8 @@ def game_fact_confirmation_status_rows(intelligence_rows: List[Dict[str, Any]], 
                 "stats_fact_status": stats_status,
                 "overall_confirmation_status": overall,
                 "source_confidence": clean(item.get("source_confidence")),
+                "source_confirmation_tier": clean(item.get("source_confirmation_tier")) or tier,
+                "source_confirmation_limitations": clean(item.get("source_confirmation_limitations")) or limitations,
                 "source_url": clean(item.get("source_url")),
                 "source_domain": clean(item.get("source_domain")),
                 "stats_source_url": clean(stats_row.get("confirmation_source_url")),
@@ -1473,6 +1528,7 @@ def game_fact_confirmation_status_report_md(summary: Dict[str, Any], rows: List[
     for row in needs[:80]:
         lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | {row.get('game_status')} | missing={row.get('missing_confirmation')}")
         lines.append(f"  - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
+        lines.append(f"  - source_tier={row.get('source_confirmation_tier')} | limits={row.get('source_confirmation_limitations')}")
         lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
         lines.append(f"  - proof_card={row.get('story_proof_card_row_to_open') or 'missing'}")
         lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'} | review_order_named={row.get('named_stat_review_order_row') or 'missing'}")
@@ -1483,6 +1539,7 @@ def game_fact_confirmation_status_report_md(summary: Dict[str, Any], rows: List[
     for row in [item for item in rows if item.get("overall_confirmation_status") != "manual_verification_required"][:40]:
         lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | {row.get('overall_confirmation_status')}")
         lines.append(f"  - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
+        lines.append(f"  - source_tier={row.get('source_confirmation_tier')} | limits={row.get('source_confirmation_limitations')}")
         lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
         lines.append(f"  - proof_card={row.get('story_proof_card_row_to_open') or 'missing'}")
         lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'} | review_order_named={row.get('named_stat_review_order_row') or 'missing'}")
