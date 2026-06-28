@@ -926,6 +926,7 @@ function Collect-HsdArtifacts($RunContext) {
         "data/asset_registry/wnba/athlete_identity_issue_closure_template.csv",
         "data/asset_registry/wnba/athlete_identity_provider_id_backfill_template.csv",
         "bebe_daily_ops_plan.md",
+        "bebe_priority_board.md",
         "bebe_posting_schedule_today.md",
         "manual_workflow_handoff.md",
         "manual_workflow_pack_status.csv",

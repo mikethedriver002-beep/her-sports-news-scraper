@@ -4430,6 +4430,53 @@ def test_operator_command_center_does_not_refresh_handoff_as_side_effect(tmp_pat
     assert not Path("unexpected_refresh_marker.txt").exists()
 
 
+def test_operator_command_center_uses_live_cue_for_volatile_renderer_snippets(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("manual_review_renderer_manifest.json").write_text(
+        json.dumps(
+            {
+                "version": "hsd-manual-review-renderer-v1.24.0-stale",
+                "generated_at_utc": "2026-06-27T23:06:06+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    artifacts = command_center.artifact_entries()
+    manifest_row = next(row for row in artifacts if row["path"] == "manual_review_renderer_manifest.json")
+
+    assert manifest_row["exists"] is True
+    assert manifest_row["snippet"] == "Renderer artifact is volatile; open the linked file for the current review-only report."
+    assert "v1.24" not in manifest_row["snippet"]
+
+
+def test_operator_command_center_preserves_handoff_timestamp_when_packet_unchanged(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    payload = command_center.build_payload()
+    packet = payload["render_prep_packets"][0]
+    manifest_packet = dict(packet)
+    manifest_packet["raw_blockers"] = packet.get("blockers") or "none"
+    manifest_packet["blockers"] = command_center.display_render_blockers(packet)
+    original_generated_at = "2026-06-27T23:50:22.891751+00:00"
+    handoff_dir = Path("render_handoff_top_packet")
+    handoff_dir.mkdir(parents=True, exist_ok=True)
+    (handoff_dir / "handoff_manifest.json").write_text(
+        json.dumps(
+            {
+                "generated_at_utc": original_generated_at,
+                "packet": manifest_packet,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    command_center.write_render_handoff_outputs(payload)
+
+    manifest = json.loads((handoff_dir / "handoff_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["generated_at_utc"] == original_generated_at
+
+
 def test_operator_command_center_infers_legacy_packet_source_grade(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     seed_daily_ops_files()
@@ -4460,6 +4507,7 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "operator_command_center.html" in runner
     assert "operator_command_center.md" in runner
     assert "operator_command_center.json" in runner
+    assert "bebe_priority_board.md" in runner
     assert "render_prep_packets.md" in runner
     assert "render_prep_packets.csv" in runner
     assert "render_prep_packets.json" in runner
