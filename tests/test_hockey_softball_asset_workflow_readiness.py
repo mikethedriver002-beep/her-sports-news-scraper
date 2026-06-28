@@ -80,6 +80,9 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["batch_source_review_now_rows"] == 54
     assert report["totals"]["batch_source_review_next_rows"] == 10
     assert report["totals"]["batch_source_review_local_asset_needed_later_rows"] == 74
+    assert report["totals"]["next_decision_worksheet_rows"] == 12
+    assert report["totals"]["next_decision_logo_rows"] == 6
+    assert report["totals"]["next_decision_athlete_rows"] == 6
     assert report["action_queue"] == {
         "md": "data/asset_registry/hockey_softball_asset_review_action_queue.md",
         "csv": "data/asset_registry/hockey_softball_asset_review_action_queue.csv",
@@ -93,6 +96,14 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "rows": 74,
         "source_review_now_rows": 54,
         "next_rows": 10,
+    }
+    assert report["next_decision_worksheet"] == {
+        "md": "data/asset_registry/hockey_softball_next_decision_worksheet.md",
+        "csv": "data/asset_registry/hockey_softball_next_decision_worksheet.csv",
+        "json": "data/asset_registry/hockey_softball_next_decision_worksheet.json",
+        "rows": 12,
+        "logo_rows": 6,
+        "athlete_rows": 6,
     }
 
     action_queue_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_action_queue.json"
@@ -138,17 +149,58 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert len(batch_csv_rows) == 74
     assert list(batch_csv_rows[0].keys()) == workflow.BATCH_SOURCE_REVIEW_FIELDS
     assert sum(1 for row in batch_csv_rows if row["batch_position"]) == 10
+    worksheet_path = tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.json"
+    worksheet = json.loads(worksheet_path.read_text(encoding="utf-8"))
+    assert worksheet["status"] == "hockey_softball_next_decision_worksheet_ready"
+    assert worksheet["rows"] == 12
+    assert worksheet["logo_rows"] == 6
+    assert worksheet["athlete_rows"] == 6
+    blank_fields = set(worksheet["blank_human_decision_fields"])
+    assert {
+        "operator_source_reviewed",
+        "operator_source_allowed_for_review_only",
+        "operator_identity_match",
+        "operator_rights_reviewed",
+        "operator_decision",
+        "source_url_to_record",
+        "operator_notes",
+        "reviewed_by",
+        "reviewed_at_local",
+    } <= blank_fields
+    assert all(row["local_asset_needed_later"] == "yes" for row in worksheet["worksheet_rows"])
+    assert all(row["guardrail_note"].startswith("review-only worksheet") for row in worksheet["worksheet_rows"])
+    assert all(row[field] == "" for row in worksheet["worksheet_rows"] for field in blank_fields)
+    assert {row["worksheet_section"] for row in worksheet["worksheet_rows"]} == {
+        "logo_wait_for_local_asset_after_source_review",
+        "athlete_source_only_review",
+    }
+    logo_worksheet_row = next(row for row in worksheet["worksheet_rows"] if row["asset_domain"] == "logo")
+    athlete_worksheet_row = next(row for row in worksheet["worksheet_rows"] if row["asset_domain"] == "athlete_photo")
+    assert logo_worksheet_row["fields_mike_can_fill_now"].startswith("none; source and identity are already recorded")
+    assert "do not restamp reviewed_by/reviewed_at_local" in logo_worksheet_row["fields_that_must_stay_blank"]
+    assert "source_allowed_for_review_only" in athlete_worksheet_row["fields_mike_can_fill_now"]
+    assert "identity_verified" in athlete_worksheet_row["fields_that_must_stay_blank"]
+    assert "headshot.png" in athlete_worksheet_row["do_not_touch"]
+    worksheet_csv_path = tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.csv"
+    with worksheet_csv_path.open(newline="", encoding="utf-8") as handle:
+        worksheet_csv_rows = list(csv.DictReader(handle))
+    assert len(worksheet_csv_rows) == 12
+    assert list(worksheet_csv_rows[0].keys()) == workflow.NEXT_DECISION_WORKSHEET_FIELDS
 
     hockey_board = (tmp_path / "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md").read_text(encoding="utf-8")
     softball_board = (tmp_path / "data/asset_registry/softball/softball_asset_workflow_board.md").read_text(encoding="utf-8")
     action_queue_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_action_queue.md").read_text(encoding="utf-8")
     batch_helper_board = (tmp_path / "data/asset_registry/hockey_softball_batch_source_review_helper.md").read_text(encoding="utf-8")
+    next_decision_board = (tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.md").read_text(encoding="utf-8")
     assert "## How To Work This Queue" in action_queue_board
     assert "fields_to_keep_blank_until_review" in action_queue_board
     assert "no automatic downloads" in action_queue_board
     assert "## Next 10 Source-Review Rows" in batch_helper_board
     assert "Fields Mike can fill now" in batch_helper_board
     assert "Do not touch" in batch_helper_board
+    assert "## Next Decision Rows" in next_decision_board
+    assert "every generated human-decision cell is intentionally blank" in next_decision_board
+    assert "does not write back to logo or athlete review intake files" in next_decision_board
     assert "## Review Order" in hockey_board
     assert "## Next Human Action" in hockey_board
     assert "hockey_softball_asset_review_action_queue.md" in hockey_board
@@ -239,6 +291,11 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_batch_source_review_now_rows"] == 54
     assert panel["hockey_softball_batch_source_review_next_rows"] == 10
     assert panel["hockey_softball_batch_source_review_local_asset_needed_later_rows"] == 74
+    assert panel["hockey_softball_next_decision_worksheet_status"] == "hockey_softball_next_decision_worksheet_ready"
+    assert panel["hockey_softball_next_decision_worksheet_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_next_decision_worksheet_rows"] == 12
+    assert panel["hockey_softball_next_decision_worksheet_logo_rows"] == 6
+    assert panel["hockey_softball_next_decision_worksheet_athlete_rows"] == 6
     assert panel["womens_hockey_asset_workflow_rows"] == 49
     assert panel["softball_asset_workflow_rows"] == 25
     assert panel["womens_hockey_proposed_headshot_path_refs"] == 36
@@ -249,6 +306,8 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert "Hockey/softball asset workflow readiness" in shortcut_labels
     assert "Hockey/softball asset review action queue" in shortcut_labels
     assert "Hockey/softball batch source review helper" in shortcut_labels
+    assert "Hockey/softball next decision worksheet" in shortcut_labels
+    assert "Hockey/softball next decision worksheet data" in shortcut_labels
     assert "Women's hockey asset workflow board" in shortcut_labels
     assert "Softball asset workflow board" in shortcut_labels
 
@@ -268,6 +327,9 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert missing_panel["hockey_softball_batch_source_review_status"] == ""
     assert missing_panel["hockey_softball_batch_source_review_generated_at"] == ""
     assert missing_panel["hockey_softball_batch_source_review_freshness_status"] == "packet_missing"
+    assert missing_panel["hockey_softball_next_decision_worksheet_status"] == ""
+    assert missing_panel["hockey_softball_next_decision_worksheet_generated_at"] == ""
+    assert missing_panel["hockey_softball_next_decision_worksheet_freshness_status"] == "packet_missing"
 
     report_dir = tmp_path / "data" / "asset_registry"
     report_dir.mkdir(parents=True)
@@ -286,6 +348,11 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
         json.dumps({"status": "batch_empty", "generated_at_utc": "2026-06-27T15:10:00+00:00", "batch_rows": None}),
         encoding="utf-8",
     )
+    (report_dir / "hockey_softball_next_decision_worksheet.md").write_text("# Empty worksheet\n", encoding="utf-8")
+    (report_dir / "hockey_softball_next_decision_worksheet.json").write_text(
+        json.dumps({"status": "worksheet_empty", "generated_at_utc": "2026-06-27T15:15:00+00:00", "worksheet_rows": None}),
+        encoding="utf-8",
+    )
 
     empty_panel = command_center.asset_availability_readiness_panel()
     assert empty_panel["hockey_softball_asset_workflow_status"] == "workflow_empty"
@@ -299,3 +366,7 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert empty_panel["hockey_softball_batch_source_review_generated_at"] == "2026-06-27T15:10:00+00:00"
     assert empty_panel["hockey_softball_batch_source_review_freshness_status"] == "packet_empty"
     assert empty_panel["hockey_softball_batch_source_review_rows"] == 0
+    assert empty_panel["hockey_softball_next_decision_worksheet_status"] == "worksheet_empty"
+    assert empty_panel["hockey_softball_next_decision_worksheet_generated_at"] == "2026-06-27T15:15:00+00:00"
+    assert empty_panel["hockey_softball_next_decision_worksheet_freshness_status"] == "packet_empty"
+    assert empty_panel["hockey_softball_next_decision_worksheet_rows"] == 0
