@@ -1,6 +1,6 @@
 # Hockey/Softball Asset Review Triage
 
-Generated: `2026-06-28T15:24:16.388024+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Review-only operator triage worksheet built from hockey/softball source-priority rows. Advisory source candidates remain in `advisory_source_candidate_urls`; generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.
 

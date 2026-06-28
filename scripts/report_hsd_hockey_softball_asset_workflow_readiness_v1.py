@@ -4,7 +4,6 @@ import json
 import re
 import sys
 from collections import Counter
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
 from urllib.parse import urlparse
@@ -15,6 +14,7 @@ from hsd_run_io import input_path, read_csv, read_json, write_csv, write_json, w
 
 
 VERSION = "hsd-hockey-softball-asset-workflow-readiness-v1-review-only"
+TEMPLATE_GENERATED_AT_UTC = "2026-06-28T00:00:00+00:00"
 REPORT_MD = Path("data/asset_registry/hockey_softball_asset_workflow_readiness_report.md")
 REPORT_JSON = Path("data/asset_registry/hockey_softball_asset_workflow_readiness_report.json")
 ACTION_QUEUE_MD = Path("data/asset_registry/hockey_softball_asset_review_action_queue.md")
@@ -29,6 +29,9 @@ NEXT_DECISION_WORKSHEET_JSON = Path("data/asset_registry/hockey_softball_next_de
 SOURCE_PRIORITY_MD = Path("data/asset_registry/hockey_softball_source_priority_worksheet.md")
 SOURCE_PRIORITY_CSV = Path("data/asset_registry/hockey_softball_source_priority_worksheet.csv")
 SOURCE_PRIORITY_JSON = Path("data/asset_registry/hockey_softball_source_priority_worksheet.json")
+SOURCE_VERIFICATION_CHECKLIST_MD = Path("data/asset_registry/hockey_softball_source_verification_checklist.md")
+SOURCE_VERIFICATION_CHECKLIST_CSV = Path("data/asset_registry/hockey_softball_source_verification_checklist.csv")
+SOURCE_VERIFICATION_CHECKLIST_JSON = Path("data/asset_registry/hockey_softball_source_verification_checklist.json")
 REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
 REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
 REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_triage.json")
@@ -162,6 +165,54 @@ SOURCE_PRIORITY_FIELDS = [
     "rights_class",
     "identity_confidence",
     "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+SOURCE_VERIFICATION_CHECKLIST_FIELDS = [
+    "verification_order",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "candidate_entity_id",
+    "asset_domain",
+    "verification_bucket",
+    "league_player_index_url",
+    "team_roster_url",
+    "team_profile_url",
+    "source_priority_rank_range",
+    "source_priority_csv_filter",
+    "source_priority_file",
+    "review_board_to_open",
+    "manual_intake_file_to_open",
+    "official_source_domain",
+    "source_candidate_scope",
+    "source_identity_check",
+    "roster_truth_status",
+    "local_asset_gap",
+    "human_fields_to_fill_now",
+    "human_fields_to_keep_blank",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_source_reviewed",
+    "operator_source_allowed_for_review_only",
+    "operator_identity_match",
+    "operator_rights_reviewed",
     "operator_decision",
     "operator_notes",
     "review_only",
@@ -360,7 +411,7 @@ def clean(value: Any) -> str:
 
 
 def generated_at_utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return TEMPLATE_GENERATED_AT_UTC
 
 
 def is_truthy(value: Any) -> bool:
@@ -639,6 +690,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`",
         "- Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`",
         "- Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`",
+        "- Source verification checklist: `data/asset_registry/hockey_softball_source_verification_checklist.md`",
         "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
@@ -672,6 +724,8 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Source priority operator-verify rows: `{report['totals']['source_priority_operator_verify_required_rows']}`",
         f"- Source priority download-approved yes rows: `{report['totals']['source_priority_download_approved_yes_rows']}`",
         f"- Source priority blank source_url rows: `{report['totals']['source_priority_blank_source_url_rows']}`",
+        f"- Source verification checklist rows: `{report['totals']['source_verification_checklist_rows']}`",
+        f"- Source verification checklist blank source_url rows: `{report['totals']['source_verification_checklist_blank_source_url_rows']}`",
         f"- Review triage rows: `{report['totals']['review_triage_rows']}`",
         f"- Review triage operator-verify source rows: `{report['totals']['review_triage_operator_verify_required_source_rows']}`",
         f"- Review triage download-approved yes rows: `{report['totals']['review_triage_download_approved_yes_rows']}`",
@@ -1303,6 +1357,144 @@ def render_source_priority(rows: list[Dict[str, str]], generated_at: str) -> str
                 candidate=clean(row.get("candidate_id")).replace("|", "/"),
                 url=clean(row.get("source_candidate_url")).replace("|", "%7C"),
                 action=clean(row.get("safe_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
+def review_board_for_source_verification(sport_family: str) -> str:
+    if sport_family == "womens_hockey":
+        return "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"
+    if sport_family == "softball":
+        return "data/asset_registry/softball/softball_athlete_photo_contact_sheet_index.md"
+    return ""
+
+
+def manual_intake_for_source_verification(sport_family: str) -> str:
+    if sport_family == "womens_hockey":
+        return "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_review_intake.csv"
+    if sport_family == "softball":
+        return "data/asset_registry/softball/softball_athlete_photo_review_intake.csv"
+    return ""
+
+
+def source_verification_checklist_rows(source_priority: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    grouped: dict[tuple[str, str], list[Dict[str, str]]] = {}
+    for row in source_priority:
+        if clean(row.get("asset_domain")) != "athlete_photo":
+            continue
+        if clean(row.get("source_review_bucket")) != "1_official_league_or_team_manual_verify":
+            continue
+        grouped.setdefault((clean(row.get("sport_family")), clean(row.get("candidate_entity_id"))), []).append(row)
+
+    rows: list[Dict[str, str]] = []
+    for (sport_family, entity_id), source_rows in sorted(grouped.items()):
+        source_rows.sort(key=lambda item: int(clean(item.get("source_priority_rank")) or "0"))
+        by_level = {clean(item.get("source_candidate_level")): clean(item.get("source_candidate_url")) for item in source_rows}
+        ranks = [int(clean(item.get("source_priority_rank")) or "0") for item in source_rows]
+        rank_range = f"{min(ranks)}-{max(ranks)}" if ranks else ""
+        source_domains = sorted({clean(item.get("source_domain")) for item in source_rows if clean(item.get("source_domain"))})
+        sport_label = clean(source_rows[0].get("sport_label")) if source_rows else ""
+        league_name = clean(source_rows[0].get("league_name")) if source_rows else SPORTS.get(sport_family, {}).get("league_label", "")
+        rows.append(
+            {
+                "verification_order": "0",
+                "sport_family": sport_family,
+                "sport_label": sport_label,
+                "league_name": league_name,
+                "candidate_entity_id": entity_id,
+                "asset_domain": "athlete_photo",
+                "verification_bucket": "official_roster_team_source_check",
+                "league_player_index_url": by_level.get("athlete_league_player_index_source_candidate", ""),
+                "team_roster_url": by_level.get("athlete_roster_source_candidate", ""),
+                "team_profile_url": by_level.get("athlete_team_profile_source_candidate", ""),
+                "source_priority_rank_range": rank_range,
+                "source_priority_csv_filter": f"sport_family={sport_family};asset_domain=athlete_photo;candidate_entity_id={entity_id}",
+                "source_priority_file": SOURCE_PRIORITY_CSV.as_posix(),
+                "review_board_to_open": review_board_for_source_verification(sport_family),
+                "manual_intake_file_to_open": manual_intake_for_source_verification(sport_family),
+                "official_source_domain": ";".join(source_domains),
+                "source_candidate_scope": "advisory_official_source_candidates_not_roster_truth_until_manual_confirmation",
+                "source_identity_check": "confirm_team_or_roster_context_before_marking_source_reviewed",
+                "roster_truth_status": "not_confirmed_by_generated_artifact",
+                "local_asset_gap": "named_local_athlete_photo_candidate_missing",
+                "human_fields_to_fill_now": "after_manual_source_open_only:source_reviewed;source_allowed_for_review_only;rights_reviewed;operator_notes",
+                "human_fields_to_keep_blank": "download_approved;source_url;entity_id;rights_class;identity_confidence;intended_review_only_use;operator_decision;reviewed_by;reviewed_at_local",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_source_reviewed": "",
+                "operator_source_allowed_for_review_only": "",
+                "operator_identity_match": "",
+                "operator_rights_reviewed": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    sport_order = {"womens_hockey": "0", "softball": "1"}
+    rows.sort(key=lambda row: (sport_order.get(clean(row.get("sport_family")), "9"), clean(row.get("candidate_entity_id"))))
+    for index, row in enumerate(rows, start=1):
+        row["verification_order"] = f"SV{index:02d}"
+    return rows
+
+
+def render_source_verification_checklist(rows: list[Dict[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Hockey/Softball Source Verification Checklist",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only checklist for opening the grouped official PWHL/AUSL source candidates behind athlete-photo review rows. It does not download images, approve assets, write headshots, create `.approved` markers, move files, or publish.",
+        "Rows are source-candidate leads only. Official roster/team pages must be opened manually before any human marks source review fields; generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.",
+        "",
+        "## Summary",
+        "",
+        f"- Verification rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Operator Steps",
+        "",
+        "- Open `league_player_index_url`, `team_roster_url`, and `team_profile_url` manually where present.",
+        "- Confirm the page is the expected official league/team context for `candidate_entity_id`; source candidates are not roster truth until manual confirmation.",
+        "- If the source is valid, use `manual_intake_file_to_open` for human-entered source-review notes only.",
+        "- Keep identity, local candidate, download-law, approval, and publish fields blank/held until a local candidate asset and separate human review exist.",
+        "",
+        "## Checklist Preview",
+        "",
+        "| Order | Sport | Entity | Source Ranks | League Index | Team Roster | Team Profile | Board | Intake | Fill Now | Keep Blank |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {order} | {sport} | {entity} | {ranks} | {league_url} | {roster_url} | {profile_url} | {board} | {intake} | {fill_now} | {keep_blank} |".format(
+                order=clean(row.get("verification_order")),
+                sport=clean(row.get("sport_family")),
+                entity=clean(row.get("candidate_entity_id")).replace("|", "/"),
+                ranks=clean(row.get("source_priority_rank_range")),
+                league_url=clean(row.get("league_player_index_url")).replace("|", "/"),
+                roster_url=clean(row.get("team_roster_url")).replace("|", "/"),
+                profile_url=clean(row.get("team_profile_url")).replace("|", "/"),
+                board=clean(row.get("review_board_to_open")).replace("|", "/"),
+                intake=clean(row.get("manual_intake_file_to_open")).replace("|", "/"),
+                fill_now=clean(row.get("human_fields_to_fill_now")).replace("|", "/"),
+                keep_blank=clean(row.get("human_fields_to_keep_blank")).replace("|", "/"),
             )
         )
     return "\n".join(lines) + "\n"
@@ -2023,6 +2215,19 @@ def main() -> int:
     source_priority_blank_source_url_rows = sum(1 for row in source_priority if not clean(row.get("source_url")))
     source_priority_athlete_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "athlete_photo")
     source_priority_logo_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "logo")
+    source_verification_checklist = source_verification_checklist_rows(source_priority)
+    source_verification_checklist_download_approved_yes_rows = sum(
+        1 for row in source_verification_checklist if clean(row.get("download_approved")).lower() == "yes"
+    )
+    source_verification_checklist_blank_source_url_rows = sum(1 for row in source_verification_checklist if not clean(row.get("source_url")))
+    source_verification_checklist_blank_human_review_rows = sum(
+        1
+        for row in source_verification_checklist
+        if not clean(row.get("operator_source_reviewed"))
+        and not clean(row.get("operator_source_allowed_for_review_only"))
+        and not clean(row.get("operator_identity_match"))
+        and not clean(row.get("operator_rights_reviewed"))
+    )
     review_triage = review_triage_rows(source_priority)
     review_triage_logo_rows = sum(1 for row in review_triage if clean(row.get("asset_domain")) == "logo")
     review_triage_athlete_rows = sum(1 for row in review_triage if clean(row.get("asset_domain")) == "athlete_photo")
@@ -2064,6 +2269,16 @@ def main() -> int:
             "source_priority_operator_verify_required_rows": source_priority_operator_verify_rows,
             "source_priority_download_approved_yes_rows": source_priority_download_approved_yes_rows,
             "source_priority_blank_source_url_rows": source_priority_blank_source_url_rows,
+            "source_verification_checklist_rows": len(source_verification_checklist),
+            "source_verification_checklist_womens_hockey_rows": sum(
+                1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"
+            ),
+            "source_verification_checklist_softball_rows": sum(
+                1 for row in source_verification_checklist if clean(row.get("sport_family")) == "softball"
+            ),
+            "source_verification_checklist_download_approved_yes_rows": source_verification_checklist_download_approved_yes_rows,
+            "source_verification_checklist_blank_source_url_rows": source_verification_checklist_blank_source_url_rows,
+            "source_verification_checklist_blank_human_review_rows": source_verification_checklist_blank_human_review_rows,
             "review_triage_rows": len(review_triage),
             "review_triage_logo_rows": review_triage_logo_rows,
             "review_triage_athlete_rows": review_triage_athlete_rows,
@@ -2127,6 +2342,17 @@ def main() -> int:
             "operator_verify_required_rows": source_priority_operator_verify_rows,
             "download_approved_yes_rows": source_priority_download_approved_yes_rows,
             "blank_source_url_rows": source_priority_blank_source_url_rows,
+        },
+        "source_verification_checklist": {
+            "md": SOURCE_VERIFICATION_CHECKLIST_MD.as_posix(),
+            "csv": SOURCE_VERIFICATION_CHECKLIST_CSV.as_posix(),
+            "json": SOURCE_VERIFICATION_CHECKLIST_JSON.as_posix(),
+            "rows": len(source_verification_checklist),
+            "womens_hockey_rows": sum(1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"),
+            "softball_rows": sum(1 for row in source_verification_checklist if clean(row.get("sport_family")) == "softball"),
+            "download_approved_yes_rows": source_verification_checklist_download_approved_yes_rows,
+            "blank_source_url_rows": source_verification_checklist_blank_source_url_rows,
+            "blank_human_review_rows": source_verification_checklist_blank_human_review_rows,
         },
         "review_triage": {
             "md": REVIEW_TRIAGE_MD.as_posix(),
@@ -2244,6 +2470,32 @@ def main() -> int:
         "paid_apis": False,
         "source_priority_rows_detail": source_priority,
     }
+    source_verification_checklist_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_source_verification_checklist_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(source_verification_checklist),
+        "womens_hockey_rows": sum(1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in source_verification_checklist if clean(row.get("sport_family")) == "softball"),
+        "download_approved_yes_rows": source_verification_checklist_download_approved_yes_rows,
+        "blank_source_url_rows": source_verification_checklist_blank_source_url_rows,
+        "blank_human_review_rows": source_verification_checklist_blank_human_review_rows,
+        "worksheet_md": SOURCE_VERIFICATION_CHECKLIST_MD.as_posix(),
+        "worksheet_csv": SOURCE_VERIFICATION_CHECKLIST_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "verification_rows_detail": source_verification_checklist,
+    }
     review_triage_payload = {
         "version": VERSION,
         "status": "hockey_softball_asset_review_triage_ready",
@@ -2340,6 +2592,9 @@ def main() -> int:
     write_csv(SOURCE_PRIORITY_CSV, source_priority, SOURCE_PRIORITY_FIELDS)
     write_json(SOURCE_PRIORITY_JSON, source_priority_payload)
     write_text(SOURCE_PRIORITY_MD, render_source_priority(source_priority, generated_at))
+    write_csv(SOURCE_VERIFICATION_CHECKLIST_CSV, source_verification_checklist, SOURCE_VERIFICATION_CHECKLIST_FIELDS)
+    write_json(SOURCE_VERIFICATION_CHECKLIST_JSON, source_verification_checklist_payload)
+    write_text(SOURCE_VERIFICATION_CHECKLIST_MD, render_source_verification_checklist(source_verification_checklist, generated_at))
     write_csv(REVIEW_TRIAGE_CSV, review_triage, REVIEW_TRIAGE_FIELDS)
     write_json(REVIEW_TRIAGE_JSON, review_triage_payload)
     write_text(REVIEW_TRIAGE_MD, render_review_triage(review_triage, generated_at))

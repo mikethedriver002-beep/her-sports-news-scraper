@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_quarantine_download_intake_ready",
-  "generated_at_utc": "2026-06-28T06:27:39.296763+00:00",
+  "generated_at_utc": "2026-06-28T00:00:00+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,

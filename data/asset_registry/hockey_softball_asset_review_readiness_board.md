@@ -1,6 +1,6 @@
 # Hockey/Softball Asset Review Readiness Board
 
-Generated: `2026-06-28T17:59:16.169700+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Review-only board for deciding what must happen before hockey/softball source-candidate rows can become manual logo/photo review work. It does not download images, approve assets, write headshots or logos, create `.approved` markers, move files, or publish.
 `advisory_source_candidate_urls` remain evidence links to open manually. Generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.

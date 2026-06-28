@@ -1,6 +1,6 @@
 # Hockey/Softball Quarantine Download Intake
 
-Generated: `2026-06-28T06:27:39.296763+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Review-only, human-edited intake for a future quarantine-only local asset candidate step. This generator does not download logos or athlete photos, write headshots, create `.approved` markers, approve identities, move files, publish, or create a publish-ready lane.
 

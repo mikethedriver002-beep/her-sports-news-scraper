@@ -92,6 +92,12 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["source_priority_operator_verify_required_rows"] == 54
     assert report["totals"]["source_priority_download_approved_yes_rows"] == 0
     assert report["totals"]["source_priority_blank_source_url_rows"] == 74
+    assert report["totals"]["source_verification_checklist_rows"] == 18
+    assert report["totals"]["source_verification_checklist_womens_hockey_rows"] == 12
+    assert report["totals"]["source_verification_checklist_softball_rows"] == 6
+    assert report["totals"]["source_verification_checklist_download_approved_yes_rows"] == 0
+    assert report["totals"]["source_verification_checklist_blank_source_url_rows"] == 18
+    assert report["totals"]["source_verification_checklist_blank_human_review_rows"] == 18
     assert report["totals"]["review_triage_rows"] == 38
     assert report["totals"]["review_triage_logo_rows"] == 20
     assert report["totals"]["review_triage_athlete_rows"] == 18
@@ -146,6 +152,17 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "operator_verify_required_rows": 54,
         "download_approved_yes_rows": 0,
         "blank_source_url_rows": 74,
+    }
+    assert report["source_verification_checklist"] == {
+        "md": "data/asset_registry/hockey_softball_source_verification_checklist.md",
+        "csv": "data/asset_registry/hockey_softball_source_verification_checklist.csv",
+        "json": "data/asset_registry/hockey_softball_source_verification_checklist.json",
+        "rows": 18,
+        "womens_hockey_rows": 12,
+        "softball_rows": 6,
+        "download_approved_yes_rows": 0,
+        "blank_source_url_rows": 18,
+        "blank_human_review_rows": 18,
     }
     assert report["review_triage"] == {
         "md": "data/asset_registry/hockey_softball_asset_review_triage.md",
@@ -342,6 +359,49 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         source_priority_csv_rows = list(csv.DictReader(handle))
     assert len(source_priority_csv_rows) == 74
     assert list(source_priority_csv_rows[0].keys()) == workflow.SOURCE_PRIORITY_FIELDS
+    source_verification_path = tmp_path / "data/asset_registry/hockey_softball_source_verification_checklist.json"
+    source_verification = json.loads(source_verification_path.read_text(encoding="utf-8"))
+    assert source_verification["status"] == "hockey_softball_source_verification_checklist_ready"
+    assert source_verification["rows"] == 18
+    assert source_verification["womens_hockey_rows"] == 12
+    assert source_verification["softball_rows"] == 6
+    assert source_verification["download_approved_yes_rows"] == 0
+    assert source_verification["blank_source_url_rows"] == 18
+    assert source_verification["blank_human_review_rows"] == 18
+    verification_rows = source_verification["verification_rows_detail"]
+    assert verification_rows[0]["verification_order"] == "SV01"
+    assert verification_rows[0]["verification_bucket"] == "official_roster_team_source_check"
+    assert verification_rows[0]["league_player_index_url"] == "https://www.thepwhl.com/en/stats/player-stats"
+    assert verification_rows[0]["team_roster_url"].endswith("/roster")
+    assert verification_rows[0]["team_profile_url"]
+    assert verification_rows[0]["source_candidate_scope"] == "advisory_official_source_candidates_not_roster_truth_until_manual_confirmation"
+    assert verification_rows[0]["roster_truth_status"] == "not_confirmed_by_generated_artifact"
+    assert verification_rows[0]["review_board_to_open"] == "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"
+    assert verification_rows[0]["manual_intake_file_to_open"] == "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_review_intake.csv"
+    assert all(row["download_approved"] == "no" for row in verification_rows)
+    assert all(
+        row[field] == ""
+        for row in verification_rows
+        for field in [
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "operator_source_reviewed",
+            "operator_source_allowed_for_review_only",
+            "operator_identity_match",
+            "operator_rights_reviewed",
+        ]
+    )
+    assert all(row["review_only"] == "true" for row in verification_rows)
+    assert all(row["asset_downloads"] == "false" for row in verification_rows)
+    assert all(row["approval_state_change"] == "false" for row in verification_rows)
+    source_verification_csv_path = tmp_path / "data/asset_registry/hockey_softball_source_verification_checklist.csv"
+    with source_verification_csv_path.open(newline="", encoding="utf-8") as handle:
+        source_verification_csv_rows = list(csv.DictReader(handle))
+    assert len(source_verification_csv_rows) == 18
+    assert list(source_verification_csv_rows[0].keys()) == workflow.SOURCE_VERIFICATION_CHECKLIST_FIELDS
     triage_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.json"
     triage = json.loads(triage_path.read_text(encoding="utf-8"))
     assert triage["status"] == "hockey_softball_asset_review_triage_ready"
@@ -486,6 +546,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     batch_helper_board = (tmp_path / "data/asset_registry/hockey_softball_batch_source_review_helper.md").read_text(encoding="utf-8")
     next_decision_board = (tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.md").read_text(encoding="utf-8")
     source_priority_board = (tmp_path / "data/asset_registry/hockey_softball_source_priority_worksheet.md").read_text(encoding="utf-8")
+    source_verification_board = (tmp_path / "data/asset_registry/hockey_softball_source_verification_checklist.md").read_text(encoding="utf-8")
     triage_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.md").read_text(encoding="utf-8")
     readiness_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_readiness_board.md").read_text(encoding="utf-8")
     download_board = (tmp_path / "data/asset_registry/hockey_softball_quarantine_download_intake.md").read_text(encoding="utf-8")
@@ -505,6 +566,10 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "source_candidate_url` is advisory evidence" in source_priority_board
     assert "download-law `source_url` and `entity_id` fields remain blank" in source_priority_board
     assert "Do not copy `source_candidate_url` into download-law `source_url`" in source_priority_board
+    assert "Hockey/Softball Source Verification Checklist" in source_verification_board
+    assert "league_player_index_url" in source_verification_board
+    assert "not roster truth" in source_verification_board
+    assert "generated local-download-law fields stay `download_approved=no`" in source_verification_board
     assert "Review-only operator triage worksheet" in triage_board
     assert "## Candidate Next-Action Buckets" in triage_board
     assert "advisory_source_candidate_urls" in triage_board
@@ -626,6 +691,14 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_source_priority_operator_verify_rows"] == 54
     assert panel["hockey_softball_source_priority_download_approved_yes_rows"] == 0
     assert panel["hockey_softball_source_priority_blank_source_url_rows"] == 74
+    assert panel["hockey_softball_source_verification_status"] == "hockey_softball_source_verification_checklist_ready"
+    assert panel["hockey_softball_source_verification_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_source_verification_rows"] == 18
+    assert panel["hockey_softball_source_verification_womens_hockey_rows"] == 12
+    assert panel["hockey_softball_source_verification_softball_rows"] == 6
+    assert panel["hockey_softball_source_verification_download_approved_yes_rows"] == 0
+    assert panel["hockey_softball_source_verification_blank_source_url_rows"] == 18
+    assert panel["hockey_softball_source_verification_blank_human_review_rows"] == 18
     assert panel["hockey_softball_asset_review_triage_status"] == "hockey_softball_asset_review_triage_ready"
     assert panel["hockey_softball_asset_review_triage_freshness_status"] == "packet_ready"
     assert panel["hockey_softball_asset_review_triage_rows"] == 38
@@ -664,6 +737,9 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert "Hockey/softball next decision worksheet data" in shortcut_labels
     assert "Hockey/softball source priority worksheet" in shortcut_labels
     assert "Hockey/softball source priority worksheet data" in shortcut_labels
+    assert "Hockey/softball source verification checklist" in shortcut_labels
+    assert "Hockey/softball source verification checklist data" in shortcut_labels
+    assert "Hockey/softball source verification checklist manifest" in shortcut_labels
     assert "Hockey/softball asset review triage" in shortcut_labels
     assert "Hockey/softball asset review triage data" in shortcut_labels
     assert "Hockey/softball asset review triage manifest" in shortcut_labels
@@ -697,6 +773,9 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert missing_panel["hockey_softball_source_priority_status"] == ""
     assert missing_panel["hockey_softball_source_priority_generated_at"] == ""
     assert missing_panel["hockey_softball_source_priority_freshness_status"] == "packet_missing"
+    assert missing_panel["hockey_softball_source_verification_status"] == ""
+    assert missing_panel["hockey_softball_source_verification_generated_at"] == ""
+    assert missing_panel["hockey_softball_source_verification_freshness_status"] == "packet_missing"
     assert missing_panel["hockey_softball_asset_review_triage_status"] == ""
     assert missing_panel["hockey_softball_asset_review_triage_generated_at"] == ""
     assert missing_panel["hockey_softball_asset_review_triage_freshness_status"] == "packet_missing"
@@ -732,6 +811,11 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     (report_dir / "hockey_softball_source_priority_worksheet.md").write_text("# Empty source priority\n", encoding="utf-8")
     (report_dir / "hockey_softball_source_priority_worksheet.json").write_text(
         json.dumps({"status": "source_priority_empty", "generated_at_utc": "2026-06-27T15:18:00+00:00", "source_priority_rows_detail": None}),
+        encoding="utf-8",
+    )
+    (report_dir / "hockey_softball_source_verification_checklist.md").write_text("# Empty source verification\n", encoding="utf-8")
+    (report_dir / "hockey_softball_source_verification_checklist.json").write_text(
+        json.dumps({"status": "source_verification_empty", "generated_at_utc": "2026-06-27T15:18:30+00:00", "verification_rows_detail": None}),
         encoding="utf-8",
     )
     (report_dir / "hockey_softball_asset_review_triage.md").write_text("# Empty triage\n", encoding="utf-8")
@@ -770,6 +854,10 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert empty_panel["hockey_softball_source_priority_generated_at"] == "2026-06-27T15:18:00+00:00"
     assert empty_panel["hockey_softball_source_priority_freshness_status"] == "packet_empty"
     assert empty_panel["hockey_softball_source_priority_rows"] == 0
+    assert empty_panel["hockey_softball_source_verification_status"] == "source_verification_empty"
+    assert empty_panel["hockey_softball_source_verification_generated_at"] == "2026-06-27T15:18:30+00:00"
+    assert empty_panel["hockey_softball_source_verification_freshness_status"] == "packet_empty"
+    assert empty_panel["hockey_softball_source_verification_rows"] == 0
     assert empty_panel["hockey_softball_asset_review_triage_status"] == "triage_empty"
     assert empty_panel["hockey_softball_asset_review_triage_generated_at"] == "2026-06-27T15:19:00+00:00"
     assert empty_panel["hockey_softball_asset_review_triage_freshness_status"] == "packet_empty"

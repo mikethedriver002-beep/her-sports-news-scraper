@@ -1,6 +1,6 @@
 # Hockey/Softball Source Priority Worksheet
 
-Generated: `2026-06-28T10:05:44.117773+00:00`
+Generated: `2026-06-28T00:00:00+00:00`
 
 Review-only source-candidate worksheet built from existing hockey/softball action rows. `source_candidate_url` is advisory evidence for manual review; the local-download-law `source_url` and `entity_id` fields remain blank and `download_approved=no` unless a later human-edited intake supplies the required metadata.
 

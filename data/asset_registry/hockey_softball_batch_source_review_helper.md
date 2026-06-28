@@ -1,6 +1,6 @@
 # Hockey/Softball Batch Source Review Helper
 
-- Generated: `2026-06-27T22:34:58.410929+00:00`
+- Generated: `2026-06-28T00:00:00+00:00`
 - Rows: `74`
 - Source-reviewable now: `54`
 - Already source-reviewed or waiting on local assets: `20`

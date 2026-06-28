@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-28T17:59:16.169700+00:00`
+- Generated: `2026-06-28T00:00:00+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First
@@ -12,6 +12,7 @@
 - Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`
 - Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`
 - Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`
+- Source verification checklist: `data/asset_registry/hockey_softball_source_verification_checklist.md`
 - Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`
 - Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`
 - Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`
@@ -45,6 +46,8 @@
 - Source priority operator-verify rows: `54`
 - Source priority download-approved yes rows: `0`
 - Source priority blank source_url rows: `74`
+- Source verification checklist rows: `18`
+- Source verification checklist blank source_url rows: `18`
 - Review triage rows: `38`
 - Review triage operator-verify source rows: `54`
 - Review triage download-approved yes rows: `0`
