@@ -222,6 +222,9 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "final_score_stat_proof_confirmation_intake_v1.csv",
         "final_score_stat_proof_review_walkthrough_v1.md",
         "final_score_stat_proof_review_order_v1.csv",
+        "athlete_render_candidate_board_v1.csv",
+        "athlete_render_candidate_board_v1.md",
+        "athlete_render_candidate_board_v1.json",
     ]:
         assert artifact in results
         assert artifact in command_center
@@ -412,6 +415,56 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     assert "Review Order" in walkthrough
     assert "final_score_stat_proof_confirmation_intake_v1.csv" in walkthrough
     assert "does not approve anything" in walkthrough
+
+    catalog_rows = [
+        {
+            "athlete_id": "indiana_fever_player_one",
+            "athlete_name": "Player One",
+            "team_id": "indiana_fever",
+            "asset_kind": "headshot",
+            "local_asset_path": "assets/leagues/wnba/athletes/indiana_fever_player_one/headshot.png",
+            "file_exists": "true",
+            "approved_marker_path": "assets/leagues/wnba/athletes/indiana_fever_player_one/headshot.png.approved",
+            "approved_marker_exists": "true",
+            "source_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/1.png",
+        },
+        {
+            "athlete_id": "new_york_liberty_player_two",
+            "athlete_name": "Player Two",
+            "team_id": "new_york_liberty",
+            "asset_kind": "headshot",
+            "local_asset_path": "assets/leagues/wnba/athletes/new_york_liberty_player_two/headshot.png",
+            "file_exists": "false",
+            "approved_marker_path": "assets/leagues/wnba/athletes/new_york_liberty_player_two/headshot.png.approved",
+            "approved_marker_exists": "false",
+            "source_url": "https://cdn.wnba.com/headshots/wnba/latest/260x190/2.png",
+        },
+    ]
+    candidate_rows = module.athlete_render_candidate_rows(rows, review_rows, catalog_rows, check_paths=False)
+    assert len(candidate_rows) == 2
+    ready = candidate_rows[0]
+    blocked = candidate_rows[1]
+    assert ready["candidate_status"] == "athlete_render_candidate_ready_for_manual_review"
+    assert ready["athlete_name"] == "Player One"
+    assert ready["local_athlete_image_path"].endswith("headshot.png")
+    assert ready["proof_row_to_open"].startswith("final_score_stat_proof_v1.csv proof_id=")
+    assert ready["intake_row_to_record"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=")
+    assert "athlete_image=" in ready["exact_renderer_handoff_fields"]
+    assert ready["operator_checked_source_url"] == ""
+    assert ready["operator_asset_review_notes"] == ""
+    assert ready["review_only"] == "Yes"
+    assert ready["approval_state_change"] == "none"
+    assert ready["publish_action"] == "none_artifact_only"
+    assert ready["auto_approval"] == "No"
+    assert ready["asset_downloads"] == "No"
+    assert ready["publish_ready"] == "No"
+    assert blocked["candidate_status"] == "athlete_render_candidate_blocked_manual_review_required"
+    assert "local_athlete_image_file_missing" in blocked["missing_blockers"]
+    candidate_summary = module.athlete_render_candidate_summary(candidate_rows)
+    assert candidate_summary["ready_for_manual_review"] == 1
+    candidate_report = module.athlete_render_candidate_report_md(candidate_summary, candidate_rows)
+    assert "Athlete Render Candidate Board" in candidate_report
+    assert "No paid APIs" in candidate_report
 
     summary = module.final_score_stat_proof_summary(rows)
     assert summary["final_score_rows"] == 2
