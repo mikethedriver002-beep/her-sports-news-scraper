@@ -36,10 +36,12 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     entity_source_rows = read_csv(root / "review_only_action_photo_sport_entity_source_map.csv")
     womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
     external_research_rows = read_csv(root / "review_only_action_photo_external_research_source_map.csv")
+    queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
     external_research_manifest = json.loads((root / "review_only_action_photo_external_research_source_map.json").read_text(encoding="utf-8"))
+    queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
@@ -48,6 +50,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     entity_source_md = (root / "review_only_action_photo_sport_entity_source_map.md").read_text(encoding="utf-8")
     womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
     external_research_md = (root / "review_only_action_photo_external_research_source_map.md").read_text(encoding="utf-8")
+    queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -63,6 +66,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["womens_soccer_action_photo_starter_validation_issue_count"] == 0
     assert manifest["external_research_source_map_rows"] == 14
     assert manifest["external_research_source_map_validation_issue_count"] == 0
+    assert manifest["action_photo_candidate_queue_rows"] == 10
+    assert manifest["action_photo_candidate_queue_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -272,6 +277,70 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "fair-use operating assumption" in external_research_md
     assert "Rows are advisory URL/search leads only" in external_research_md
     assert "Official/player pages are identity anchors" in external_research_md
+    assert queue_manifest["status"] == "action_photo_candidate_queue_ready"
+    assert queue_manifest["queue_rows"] == 10
+    assert queue_manifest["validation_issue_count"] == 0
+    assert queue_manifest["download_approved_yes_rows"] == 0
+    assert queue_manifest["blank_candidate_photo_url_rows"] == 10
+    assert queue_manifest["blank_evidence_url_rows"] == 10
+    assert queue_manifest["blank_evidence_summary_rows"] == 10
+    assert queue_manifest["blank_identity_anchor_url_rows"] == 10
+    assert queue_manifest["blank_source_url_rows"] == 10
+    assert queue_manifest["blank_entity_id_rows"] == 10
+    assert queue_manifest["blank_rights_class_rows"] == 10
+    assert queue_manifest["blank_identity_confidence_rows"] == 10
+    assert queue_manifest["blank_intended_review_only_use_rows"] == 10
+    assert queue_manifest["review_only_rows"] == 10
+    assert queue_manifest["publish_ready_rows"] == 0
+    assert {
+        "WNBA",
+        "NWSL",
+        "USWNT / U.S. Soccer",
+        "NCAA Women Basketball",
+        "NCAA Women Softball",
+        "PWHL",
+        "AUSL / Pro Softball",
+        "WTA Tennis",
+        "LPGA Golf",
+    } <= set(queue_manifest["league_entities"])
+    assert {
+        "Getty Images Editorial Sports",
+        "ISI Photos Archive",
+        "NCAA Photos / Clarkson Creative",
+        "Athletes Unlimited / AUSL Media Hub",
+        "WTA / Getty",
+        "LPGA / Getty",
+    } <= set(queue_manifest["source_families"])
+    assert len({row["candidate_queue_id"] for row in queue_rows}) == len(queue_rows)
+    queue_keys = {
+        (row["sport"], row["league_entity"], row["source_family"], row["source_category"], row["source_url_or_search_macro"])
+        for row in queue_rows
+    }
+    assert len(queue_keys) == len(queue_rows)
+    for row in queue_rows:
+        assert row["candidate_queue_id"].startswith("APQ")
+        assert row["target_entity_or_player"] == "operator_fill_player_or_team"
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["rights_posture_metadata"] in taxonomy["rights_classes"]
+        assert row["source_url_or_search_macro"]
+        assert row["candidate_photo_url"] == ""
+        assert row["evidence_url"] == ""
+        assert row["evidence_summary"] == ""
+        assert row["identity_anchor_url"] == ""
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["manual_reviewer"] == ""
+        assert row["manual_review_status"] == "not_reviewed"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+    assert "Concrete candidate-research queue" in queue_md
+    assert "Fill `candidate_photo_url`, `evidence_url`, `evidence_summary`, and `identity_anchor_url`" in queue_md
+    assert "`download_approved=yes` remains human-edited only" in queue_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -487,3 +556,58 @@ def test_external_research_source_map_validator_blocks_unsafe_rows() -> None:
     assert ("publish_ready", "external_research_rows_must_not_be_publish_ready") in issue_pairs
     assert ("approval_state_change", "external_research_rows_must_not_change_approval_state") in issue_pairs
     assert ("publish_action", "external_research_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_candidate_queue_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = [
+        {
+            "candidate_queue_id": "APQBAD",
+            "sport": "basketball",
+            "league_entity": "WNBA",
+            "target_entity_or_player": "player",
+            "source_family": "unknown",
+            "source_category": "free_web_image",
+            "source_url_or_search_macro": "player photo",
+            "candidate_photo_url": "https://example.com/photo.jpg",
+            "evidence_url": "https://example.com/evidence",
+            "evidence_summary": "already found",
+            "identity_anchor_url": "https://example.com/roster",
+            "action_moment_type": "drive",
+            "render_fit_potential": "high",
+            "rights_posture_metadata": "reuse_ok",
+            "fair_use_context_note": "fair use",
+            "download_approved": "yes",
+            "source_url": "https://example.com/photo.jpg",
+            "entity_id": "wnba:player",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "manual_reviewer": "bot",
+            "manual_review_status": "approved_for_download",
+            "manual_next_action": "download it",
+            "review_only": "false",
+            "publish_ready": "true",
+        }
+    ]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_candidate_queue_rows(invalid_rows)}
+
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("rights_posture_metadata", "invalid_rights_posture_metadata") in issue_pairs
+    assert ("candidate_photo_url", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("evidence_url", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("evidence_summary", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("identity_anchor_url", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("manual_reviewer", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("manual_review_status", "generated_queue_rows_must_start_not_reviewed") in issue_pairs
+    assert ("review_only", "candidate_queue_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "candidate_queue_rows_must_not_be_publish_ready") in issue_pairs

@@ -32,6 +32,9 @@ OUT_WOMENS_SOCCER_STARTER_JSON = output_path(ROOT / "review_only_womens_soccer_a
 OUT_EXTERNAL_RESEARCH_SOURCE_MAP_CSV = output_path(ROOT / "review_only_action_photo_external_research_source_map.csv")
 OUT_EXTERNAL_RESEARCH_SOURCE_MAP_MD = output_path(ROOT / "review_only_action_photo_external_research_source_map.md")
 OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_photo_external_research_source_map.json")
+OUT_CANDIDATE_QUEUE_CSV = output_path(ROOT / "review_only_action_photo_candidate_queue_v1.csv")
+OUT_CANDIDATE_QUEUE_MD = output_path(ROOT / "review_only_action_photo_candidate_queue_v1.md")
+OUT_CANDIDATE_QUEUE_JSON = output_path(ROOT / "review_only_action_photo_candidate_queue_v1.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -161,6 +164,35 @@ EXTERNAL_RESEARCH_SOURCE_MAP_FIELDS = [
     "publish_ready",
     "approval_state_change",
     "publish_action",
+]
+ACTION_PHOTO_QUEUE_FIELDS = [
+    "candidate_queue_id",
+    "sport",
+    "league_entity",
+    "target_entity_or_player",
+    "source_family",
+    "source_category",
+    "source_url_or_search_macro",
+    "candidate_photo_url",
+    "evidence_url",
+    "evidence_summary",
+    "identity_anchor_url",
+    "action_moment_type",
+    "render_fit_potential",
+    "rights_posture_metadata",
+    "fair_use_context_note",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_target_hint",
+    "manual_reviewer",
+    "manual_review_status",
+    "manual_next_action",
+    "review_only",
+    "publish_ready",
 ]
 
 FIELDS = [
@@ -1738,6 +1770,176 @@ def render_external_research_source_map(rows: List[Mapping[str, str]], issues: L
     return "\n".join(lines) + "\n"
 
 
+def action_photo_candidate_queue_rows() -> List[Dict[str, str]]:
+    default_action = (
+        "Fill candidate_photo_url, evidence_url, evidence_summary, and identity_anchor_url after manual or "
+        "ChatGPT/Gemini research; keep download_approved=no unless a later human-edited intake satisfies the quarantine law."
+    )
+    base = {
+        "target_entity_or_player": "operator_fill_player_or_team",
+        "candidate_photo_url": "",
+        "evidence_url": "",
+        "evidence_summary": "",
+        "identity_anchor_url": "",
+        "download_approved": "no",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "manual_reviewer": "",
+        "manual_review_status": "not_reviewed",
+        "manual_next_action": default_action,
+        "review_only": "true",
+        "publish_ready": "false",
+        "fair_use_context_note": "fair_use_assumption_for_research_queue_only_not_auto_approval_or_publish_ready",
+    }
+    row_specs = [
+        ("APQ001", "basketball", "WNBA", "Getty Images Editorial Sports", "editorial_wire", "{player_name} WNBA match action site:gettyimages.com", "transition_drive|block|rebound|celebration", "high_action_fit_if_full_body_or_clean_face", "editorial_wire_rights_sensitive"),
+        ("APQ002", "basketball", "WNBA", "WNBA official league/team galleries", "official_league_gallery", "{player_name} {team} site:wnba.com OR site:{team}.wnba.com photos OR gallery OR recap", "game_action|bench_reaction|celebration", "high_context_fit_if_captioned_current_event", "official_review_needed"),
+        ("APQ003", "soccer", "NWSL", "ISI Photos Archive", "reputable_newsroom_gallery", "{player_name} {club} NWSL isiphotos photoshelter action", "dribble|shot|save|celebration", "high_action_fit_if_match_context_and_identity_anchor_are_clear", "newsroom_photo_rights_sensitive"),
+        ("APQ004", "soccer", "USWNT / U.S. Soccer", "ISI Photos / U.S. Soccer", "official_federation_or_tournament", "{player_name} USWNT match action ISI Photos OR ussoccer photos", "national_team_action|goal_celebration|defensive_play", "high_fit_for_international_context_if roster_anchor_present", "official_review_needed"),
+        ("APQ005", "basketball", "NCAA Women Basketball", "NCAA Photos / Clarkson Creative", "official_federation_or_tournament", "{player_name} NCAA March Madness basketball ncaaphotos photoshelter", "drive|jump_shot|celebration|defense", "medium_high_fit_if_school_and_event_are_current", "official_partner_licensed_manual_review"),
+        ("APQ006", "softball", "NCAA Women Softball", "NCAA Photos / Clarkson Creative", "official_federation_or_tournament", "{player_name} Women College World Series softball ncaaphotos photoshelter", "swing|pitch|slide|fielding", "high_fit_if_action_shape_is_readable", "official_partner_licensed_manual_review"),
+        ("APQ007", "hockey", "PWHL", "Getty / Ice Garden / Inside the Rink", "editorial_wire", "{player_name} PWHL game action Getty OR Ice Garden OR Inside the Rink gallery", "skate|shot|save|celebration", "medium_high_fit_if_face_or_number_is_clear", "editorial_wire_rights_sensitive"),
+        ("APQ008", "softball", "AUSL / Pro Softball", "Athletes Unlimited / AUSL Media Hub", "official_league_gallery", "{player_name} AUSL softball action site:theausl.com OR Jade Hewitt", "swing|pitch|fielding|dugout_celebration", "high_fit_if official event context is clear", "official_review_needed"),
+        ("APQ009", "tennis", "WTA Tennis", "WTA / Getty", "official_league_gallery", "{player_name} WTA match action site:wtatennis.com OR site:gettyimages.com", "serve|forehand|backhand|celebration", "high_fit_if ball/racket/body_line_clear", "official_review_needed"),
+        ("APQ010", "golf", "LPGA Golf", "LPGA / Getty", "official_league_gallery", "{player_name} LPGA swing site:lpga.com OR site:gettyimages.com", "drive|approach|putt|celebration", "medium_fit_if pose is dynamic and athlete identity is anchored", "official_review_needed"),
+    ]
+    rows: List[Dict[str, str]] = []
+    for queue_id, sport, league, family, category, macro, moment, fit, rights in row_specs:
+        rows.append(
+            {
+                **base,
+                "candidate_queue_id": queue_id,
+                "sport": sport,
+                "league_entity": league,
+                "source_family": family,
+                "source_category": category,
+                "source_url_or_search_macro": macro,
+                "action_moment_type": moment,
+                "render_fit_potential": fit,
+                "rights_posture_metadata": rights,
+                "quarantine_target_hint": f"{QUARANTINE_ROOT}/action_photo_candidates/{slug(league)}/{queue_id.lower()}/operator_fill_required.jpg",
+            }
+        )
+    return rows
+
+
+def validate_action_photo_candidate_queue_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen_ids = set()
+    seen_keys = set()
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_QUEUE_FIELDS}
+        queue_id = normalized["candidate_queue_id"]
+        if not queue_id:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "required_candidate_queue_id_blank"})
+        elif queue_id in seen_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "duplicate_candidate_queue_id"})
+        seen_ids.add(queue_id)
+        key = (
+            normalized["sport"],
+            normalized["league_entity"],
+            normalized["source_family"],
+            normalized["source_category"],
+            normalized["source_url_or_search_macro"],
+        )
+        if key in seen_keys:
+            issues.append({"row": str(index), "field": "source_url_or_search_macro", "issue": "duplicate_candidate_queue_key"})
+        seen_keys.add(key)
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        if normalized["rights_posture_metadata"] and normalized["rights_posture_metadata"] not in RIGHTS_CLASSES:
+            issues.append({"row": str(index), "field": "rights_posture_metadata", "issue": "invalid_rights_posture_metadata"})
+        for field in [
+            "sport",
+            "league_entity",
+            "target_entity_or_player",
+            "source_family",
+            "source_url_or_search_macro",
+            "action_moment_type",
+            "render_fit_potential",
+            "fair_use_context_note",
+            "quarantine_target_hint",
+            "manual_next_action",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_candidate_queue_field_blank"})
+        for field in ["candidate_photo_url", "evidence_url", "evidence_summary", "identity_anchor_url", "manual_reviewer"]:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_manual_candidate_field_must_stay_blank"})
+        for field in REQUIRED_DOWNLOAD_FIELDS:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_rows_must_not_approve_downloads"})
+        if not normalized["quarantine_target_hint"].startswith(QUARANTINE_ROOT + "/"):
+            issues.append({"row": str(index), "field": "quarantine_target_hint", "issue": "quarantine_hint_must_stay_in_review_only_root"})
+        if normalized["manual_review_status"] != "not_reviewed":
+            issues.append({"row": str(index), "field": "manual_review_status", "issue": "generated_queue_rows_must_start_not_reviewed"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "candidate_queue_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "candidate_queue_rows_must_not_be_publish_ready"})
+    return issues
+
+
+def render_action_photo_candidate_queue(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    sport_counts: Dict[str, int] = {}
+    source_counts: Dict[str, int] = {}
+    for row in rows:
+        sport = clean(row.get("sport"))
+        family = clean(row.get("source_family"))
+        sport_counts[sport] = sport_counts.get(sport, 0) + 1
+        source_counts[family] = source_counts.get(family, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Candidate Queue v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Concrete candidate-research queue seeded from the action-photo source maps. These rows are prompts for finding real action-photo candidate URLs and evidence; they do not download images, approve assets, assert roster truth, or make anything render-ready.",
+        "",
+        "## Operator Note",
+        "",
+        "Fill `candidate_photo_url`, `evidence_url`, `evidence_summary`, and `identity_anchor_url` after manual or ChatGPT/Gemini research. `download_approved=yes` remains human-edited only, requires `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`, and any later file must land in quarantine. Asset approval and render-ready state remain separate.",
+        "",
+        "## Summary",
+        "",
+        f"- Queue rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Sport Coverage",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(sport_counts.items()))
+    lines += ["", "## Source Families", ""]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(source_counts.items()))
+    lines += [
+        "",
+        "## Queue Preview",
+        "",
+        "| Queue ID | Sport | League/Entity | Source Family | Moment Type | Search Macro | Manual Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {queue_id} | {sport} | {league} | {family} | {moment} | `{macro}` | {action} |".format(
+                queue_id=clean(row.get("candidate_queue_id")),
+                sport=clean(row.get("sport")),
+                league=clean(row.get("league_entity")).replace("|", "/"),
+                family=clean(row.get("source_family")).replace("|", "/"),
+                moment=clean(row.get("action_moment_type")).replace("|", "/"),
+                macro=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -1749,6 +1951,8 @@ def main() -> int:
     womens_soccer_issues = validate_womens_soccer_starter_rows(womens_soccer_rows)
     external_research_rows = external_research_source_map_rows()
     external_research_issues = validate_external_research_source_map_rows(external_research_rows)
+    candidate_queue_rows = action_photo_candidate_queue_rows()
+    candidate_queue_issues = validate_action_photo_candidate_queue_rows(candidate_queue_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -1856,11 +2060,49 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_CANDIDATE_QUEUE_CSV, candidate_queue_rows, ACTION_PHOTO_QUEUE_FIELDS)
+    write_text(OUT_CANDIDATE_QUEUE_MD, render_action_photo_candidate_queue(candidate_queue_rows, candidate_queue_issues, generated_at))
+    write_json(
+        OUT_CANDIDATE_QUEUE_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_candidate_queue_ready" if not candidate_queue_issues else "action_photo_candidate_queue_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "queue_rows": len(candidate_queue_rows),
+            "validation_issue_count": len(candidate_queue_issues),
+            "validation_issues": candidate_queue_issues,
+            "sports": sorted({row["sport"] for row in candidate_queue_rows}),
+            "league_entities": sorted({row["league_entity"] for row in candidate_queue_rows}),
+            "source_families": sorted({row["source_family"] for row in candidate_queue_rows}),
+            "download_approved_yes_rows": sum(1 for row in candidate_queue_rows if row["download_approved"] == "yes"),
+            "blank_candidate_photo_url_rows": sum(1 for row in candidate_queue_rows if not row["candidate_photo_url"]),
+            "blank_evidence_url_rows": sum(1 for row in candidate_queue_rows if not row["evidence_url"]),
+            "blank_evidence_summary_rows": sum(1 for row in candidate_queue_rows if not row["evidence_summary"]),
+            "blank_identity_anchor_url_rows": sum(1 for row in candidate_queue_rows if not row["identity_anchor_url"]),
+            "blank_source_url_rows": sum(1 for row in candidate_queue_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in candidate_queue_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in candidate_queue_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in candidate_queue_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in candidate_queue_rows if not row["intended_review_only_use"]),
+            "review_only_rows": sum(1 for row in candidate_queue_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in candidate_queue_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_CANDIDATE_QUEUE_CSV.as_posix(),
+            "worksheet_md": OUT_CANDIDATE_QUEUE_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -1877,7 +2119,9 @@ def main() -> int:
             "womens_soccer_action_photo_starter_validation_issue_count": len(womens_soccer_issues),
             "external_research_source_map_rows": len(external_research_rows),
             "external_research_source_map_validation_issue_count": len(external_research_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues),
+            "action_photo_candidate_queue_rows": len(candidate_queue_rows),
+            "action_photo_candidate_queue_validation_issue_count": len(candidate_queue_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -1895,6 +2139,9 @@ def main() -> int:
             "external_research_source_map_csv": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_CSV.as_posix(),
             "external_research_source_map_md": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_MD.as_posix(),
             "external_research_source_map_json": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON.as_posix(),
+            "action_photo_candidate_queue_csv": OUT_CANDIDATE_QUEUE_CSV.as_posix(),
+            "action_photo_candidate_queue_md": OUT_CANDIDATE_QUEUE_MD.as_posix(),
+            "action_photo_candidate_queue_json": OUT_CANDIDATE_QUEUE_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -1908,8 +2155,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues else 0
 
 
 if __name__ == "__main__":
