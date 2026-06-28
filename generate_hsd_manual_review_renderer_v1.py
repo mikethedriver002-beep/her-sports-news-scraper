@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.34.0-photo-first-portrait-spotlight"
+VERSION = "hsd-manual-review-renderer-v1.35.0-photo-first-score-hierarchy"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v8_photo_first_portrait_spotlight"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v9_photo_first_score_hierarchy"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -54,7 +54,8 @@ RENDER_BACKGROUND_CUES = (
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
-    "photo_first_editorial_nameplate,photo_first_portrait_spotlight,compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
+    "photo_first_editorial_nameplate,photo_first_portrait_spotlight,photo_first_score_type_lockup,"
+    "photo_first_context_score_rail,compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2513,9 +2514,9 @@ def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: b
     x, y, w, h = box
     logo_size = min(h - 30, 104 if winner else 92)
     score_box = photo_first_score_slab_box(box, winner=winner)
-    text_x = x + logo_size + 52
-    text_w = max(128, min(max(128, w - logo_size - 252), score_box[0] - text_x - 26))
-    return (text_x, y + 48, text_w, h - 68)
+    text_x = x + logo_size + (56 if h > 130 else 50)
+    text_w = max(128, min(max(128, w - logo_size - 250), score_box[0] - text_x - 30))
+    return (text_x, y + (44 if h > 130 else 39), text_w, h - (62 if h > 130 else 54))
 
 
 def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
@@ -2617,13 +2618,17 @@ def draw_photo_first_score_row(
     compact = h <= 130
     draw_reference_panel(image, box, accent, fill=(2, 4, 9, 226 if winner else 210), radius=18, width=2)
     draw = ImageDraw.Draw(image, "RGBA")
-    draw.rectangle((x + 1, y + 1, x + 10, y + h - 1), fill=(*accent, 118 if winner else 86))
-    draw.line((x + 24, y + h - 20, x + w - 28, y + h - 20), fill=(*accent, 72 if winner else 54), width=1)
+    draw.rounded_rectangle((x + 8, y + 8, x + w - 8, y + h - 8), radius=16, outline=(248, 250, 255, 18), width=1)
+    draw.rectangle((x + 1, y + 1, x + 12, y + h - 1), fill=(*accent, 132 if winner else 96))
+    draw.line((x + 24, y + h - 21, x + w - 28, y + h - 21), fill=(*accent, 86 if winner else 66), width=2)
+    draw.line((x + 24, y + h - 17, x + w - 28, y + h - 17), fill=(248, 250, 255, 20), width=1)
     label = "WINNER" if winner else "FINAL"
-    label_w = 94 if winner else 70
-    label_y = y + (15 if not compact else 13)
-    draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + 24), radius=6, fill=(*accent, 214), outline=(248, 250, 255, 116), width=1)
-    draw_reference_text(image, (x + 33, label_y + 3, label_w - 18, 18), label, "context", 10, 8, (2, 4, 9), max_lines=1, align="center")
+    label_w = 108 if winner else 84
+    label_h = 28 if not compact else 24
+    label_y = y + (14 if not compact else 12)
+    draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + label_h), radius=7, fill=(*accent, 226), outline=(248, 250, 255, 132), width=1)
+    label_color = PALETTE["ink"] if winner else (2, 4, 9)
+    draw_reference_text(image, (x + 32, label_y + 4, label_w - 16, label_h - 7), label, "context", 13 if not compact else 11, 9, label_color, max_lines=1, align="center", stroke=1, stroke_fill=(0, 0, 0) if winner else (248, 250, 255))
     logo_size = min(h - 34, 96 if winner else 84)
     logo_box = (x + 26, y + (h - logo_size) // 2 + (12 if not compact else 10), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
@@ -2661,6 +2666,28 @@ def draw_photo_first_score_row(
         stroke=1,
         stroke_fill=(248, 250, 255),
     )
+
+
+def draw_photo_first_score_context_rail(
+    image: Any,
+    box: Tuple[int, int, int, int],
+    text: str,
+    primary: tuple[int, int, int],
+    secondary: tuple[int, int, int],
+) -> None:
+    x, y, w, h = box
+    draw = ImageDraw.Draw(image, "RGBA")
+    shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(shadow, "RGBA")
+    shadow_draw.rounded_rectangle((x + 5, y + 8, x + w + 5, y + h + 8), radius=13, fill=(0, 0, 0, 98))
+    if ImageFilter is not None:
+        shadow = shadow.filter(ImageFilter.GaussianBlur(5))
+    image.alpha_composite(shadow)
+    draw.rounded_rectangle((x, y + 2, x + w, y + h - 2), radius=13, fill=(2, 4, 9, 188), outline=(*primary, 132), width=1)
+    draw.rectangle((x + 1, y + 9, x + 9, y + h - 9), fill=(*primary, 178))
+    draw.rectangle((x + w - 10, y + 9, x + w - 2, y + h - 9), fill=(*secondary, 118))
+    draw.line((x + 18, y + 9, x + w - 18, y + 9), fill=(*PALETTE["gold"], 122), width=2)
+    draw_reference_text(image, (x + 22, y + 9, w - 44, h - 16), text, "context", 22 if h <= 54 else 24, 12, PALETTE["ink"], max_lines=1, stroke=1, stroke_fill=(0, 0, 0))
 
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
@@ -2726,7 +2753,7 @@ def draw_photo_first_final_score_template(
     context_parts = [clean(stat_module.get("matchup_note"))]
     if total is not None:
         context_parts.append(f"{total} pts")
-    draw_reference_text(image, context_box, " / ".join([part for part in context_parts if part]), "context", 25 if is_story else 27, 13, winner_accent, max_lines=1)
+    draw_photo_first_score_context_rail(image, context_box, " / ".join([part for part in context_parts if part]), winner_accent, loser_accent)
 
     draw_photo_first_stat_strip(image, stat_box, stat_module, winner_accent)
     microcopy = selected_editorial_microcopy(packet, score, stat_module)
