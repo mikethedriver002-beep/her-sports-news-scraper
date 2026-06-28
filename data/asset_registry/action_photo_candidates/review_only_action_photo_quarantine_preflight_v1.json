@@ -1,0 +1,51 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "status": "action_photo_quarantine_preflight_ready",
+  "generated_at_utc": "2026-06-28T00:00:00+00:00",
+  "preflight_rows": 10,
+  "ready_for_human_download_decision_rows": 0,
+  "lead_only_rows": 10,
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "candidate_queue_ids": [
+    "APQ001",
+    "APQ002",
+    "APQ003",
+    "APQ004",
+    "APQ005",
+    "APQ006",
+    "APQ007",
+    "APQ008",
+    "APQ009",
+    "APQ010"
+  ],
+  "missing_required_field_counts": {
+    "source_url": 10,
+    "entity_id": 10,
+    "rights_class": 10,
+    "identity_confidence": 10,
+    "intended_review_only_use": 10,
+    "candidate_photo_url": 10,
+    "evidence_url": 10,
+    "identity_anchor_url": 10
+  },
+  "action_photo_status_counts": {
+    "missing_candidate_photo_url": 10
+  },
+  "identity_confidence_status_counts": {
+    "identity_missing": 10
+  },
+  "download_approved_yes_rows": 0,
+  "review_only_rows": 10,
+  "publish_ready_rows": 0,
+  "worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
+  "worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
+  "review_only": true,
+  "asset_downloads": false,
+  "approval_state_change": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
