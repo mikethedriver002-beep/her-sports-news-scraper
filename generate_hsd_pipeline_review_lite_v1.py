@@ -32,6 +32,7 @@ KEY_FILES = [
     "stats_evidence_gap_board_v1.csv", "stats_evidence_gap_board_v1.md", "stats_evidence_gap_board_v1.json", "stats_confirmation_intake_v1.csv",
     "game_fact_confirmation_status_v1.csv", "game_fact_confirmation_status_v1.md", "game_fact_confirmation_status_v1.json",
     "game_source_confirmation_next_action_v1.csv", "game_source_confirmation_next_action_v1.md", "game_source_confirmation_next_action_v1.json",
+    "game_source_research_worksheet_v1.csv", "game_source_research_worksheet_v1.md", "game_source_research_worksheet_v1.json",
     "final_score_stat_proof_v1.csv", "final_score_stat_proof_v1.md", "final_score_stat_proof_v1.json", "final_score_stat_proof_confirmation_intake_v1.csv",
     "final_score_stat_proof_review_walkthrough_v1.md", "final_score_stat_proof_review_order_v1.csv",
     "athlete_render_candidate_board_v1.csv", "athlete_render_candidate_board_v1.md", "athlete_render_candidate_board_v1.json",
