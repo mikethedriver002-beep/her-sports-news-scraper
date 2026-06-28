@@ -196,6 +196,12 @@ GAME_FACT_CONFIRMATION_STATUS_FIELDS = [
     "stats_source_url",
     "missing_confirmation",
     "exact_next_file_or_intake",
+    "story_proof_card_row_to_open",
+    "final_score_review_order_row",
+    "named_stat_review_order_row",
+    "proof_manual_intake_path",
+    "source_confirmation_cue",
+    "recap_render_readiness",
     "manual_review_required",
     "retrieved_at_utc",
     "review_only",
@@ -1457,6 +1463,9 @@ def game_fact_confirmation_status_report_md(summary: Dict[str, Any], rows: List[
     for row in needs[:80]:
         lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | {row.get('game_status')} | missing={row.get('missing_confirmation')}")
         lines.append(f"  - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
+        lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
+        lines.append(f"  - proof_card={row.get('story_proof_card_row_to_open') or 'missing'}")
+        lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'} | review_order_named={row.get('named_stat_review_order_row') or 'missing'}")
         lines.append(f"  - next={row.get('exact_next_file_or_intake')}")
     if len(needs) > 80:
         lines.append(f"Showing first 80 of {len(needs)} rows. Open `game_fact_confirmation_status_v1.csv` for the full board.")
@@ -1464,6 +1473,9 @@ def game_fact_confirmation_status_report_md(summary: Dict[str, Any], rows: List[
     for row in [item for item in rows if item.get("overall_confirmation_status") != "manual_verification_required"][:40]:
         lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | {row.get('overall_confirmation_status')}")
         lines.append(f"  - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
+        lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
+        lines.append(f"  - proof_card={row.get('story_proof_card_row_to_open') or 'missing'}")
+        lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'} | review_order_named={row.get('named_stat_review_order_row') or 'missing'}")
         lines.append(f"  - next={row.get('exact_next_file_or_intake')}")
     return "\n".join(lines) + "\n"
 
@@ -1914,6 +1926,83 @@ def proof_id_from_reference(value: Any) -> str:
     return match.group(1) if match else ""
 
 
+def review_order_ref(row: Dict[str, Any]) -> str:
+    order = clean(row.get("review_order"))
+    proof_id = proof_id_from_reference(row.get("proof_row_to_open"))
+    if not order or not proof_id:
+        return ""
+    return f"final_score_stat_proof_review_order_v1.csv review_order={order}; proof_id={proof_id}"
+
+
+def enrich_game_fact_confirmation_status_rows(
+    rows: List[Dict[str, Any]],
+    review_order_rows: List[Dict[str, Any]],
+    story_proof_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    score_review_by_event: Dict[str, Dict[str, Any]] = {}
+    named_review_by_event: Dict[str, Dict[str, Any]] = {}
+    for row in review_order_rows:
+        event_uid = clean(row.get("event_uid"))
+        if not event_uid:
+            continue
+        if clean(row.get("fact_type")) == "final_score" and event_uid not in score_review_by_event:
+            score_review_by_event[event_uid] = row
+        if clean(row.get("fact_type")) == "named_player_stat_line" and event_uid not in named_review_by_event:
+            named_review_by_event[event_uid] = row
+
+    story_by_event: Dict[str, Dict[str, Any]] = {}
+    for row in story_proof_rows:
+        event_uid = clean(row.get("event_id"))
+        if event_uid and event_uid not in story_by_event:
+            story_by_event[event_uid] = row
+
+    enriched: List[Dict[str, Any]] = []
+    for row in rows:
+        event_uid = clean(row.get("event_uid"))
+        story = story_by_event.get(event_uid, {})
+        score_review = score_review_by_event.get(event_uid, {})
+        named_review = named_review_by_event.get(event_uid, {})
+        story_ref = ""
+        if story:
+            story_ref = f"story_proof_card_v1.csv event_id={event_uid}; candidate_id={clean(story.get('candidate_id'))}"
+        score_review_ref = clean(story.get("final_score_review_order_row")) or review_order_ref(score_review)
+        named_review_ref = clean(story.get("named_stat_review_order_row")) or review_order_ref(named_review)
+        source_cue = clean(story.get("source_confirmation_cue")) or clean(named_review.get("source_confirmation_cue")) or clean(score_review.get("source_confirmation_cue"))
+        if not source_cue:
+            if clean(row.get("game_status")) == "scheduled":
+                source_cue = "free_public_schedule_source_present_result_pending"
+            elif clean(row.get("missing_confirmation")) != "none":
+                source_cue = "manual_source_confirmation_required"
+            else:
+                source_cue = "free_public_source_present_operator_verify"
+        readiness = clean(story.get("renderability_state"))
+        if not readiness:
+            if clean(row.get("recap_candidate")) == "Yes":
+                readiness = "recap_candidate_needs_story_proof_card"
+            elif clean(row.get("game_status")) == "scheduled":
+                readiness = "result_pending_not_render_ready"
+            else:
+                readiness = "not_recap_or_render_candidate"
+        intake = clean(story.get("manual_intake_path")) or clean(named_review.get("intake_row_to_record")) or clean(score_review.get("intake_row_to_record"))
+        next_step = clean(row.get("exact_next_file_or_intake"))
+        proof_steps = [value for value in [story_ref, score_review_ref, named_review_ref, intake] if value]
+        if proof_steps:
+            next_step = next_step.rstrip(".") + "; then open " + "; then open ".join(proof_steps) + "."
+        enriched.append(
+            {
+                **row,
+                "story_proof_card_row_to_open": story_ref,
+                "final_score_review_order_row": score_review_ref,
+                "named_stat_review_order_row": named_review_ref,
+                "proof_manual_intake_path": intake,
+                "source_confirmation_cue": source_cue,
+                "recap_render_readiness": readiness,
+                "exact_next_file_or_intake": next_step,
+            }
+        )
+    return enriched
+
+
 def story_proof_card_rows(
     fact_rows: List[Dict[str, Any]],
     stat_proof_rows: List[Dict[str, Any]],
@@ -2173,7 +2262,7 @@ def main() -> None:
     observations, health = free_source_observations(run_id, compact_dates); stale_rows = stale_audit(observations, iso_dates); duplicate_rows = duplicate_audit(observations)
     events = apply_strict_date_window_gate(reconcile(run_id, observations), iso_dates); box_audit_rows = audit_wnba_box_scores(events)
     all_events = events; womens = [e for e in events if e.get("gender_scope") == "women" and e.get("include_in_dashboard")]; finals = [e for e in events if e.get("gender_scope") == "women" and e.get("status_norm") == "final" and float(e.get("confidence") or 0) >= 0.70]; top = womens[:50]; review = [e for e in events if e.get("gender_scope") == "women" and e.get("manual_review")]
-    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows); stats_gap_rows, stats_confirmation_rows = stats_evidence_gap_rows(events, observations); stats_gap_summary = stats_evidence_gap_summary(stats_gap_rows, stats_confirmation_rows); fact_status_rows = game_fact_confirmation_status_rows(intelligence_rows, stats_gap_rows); fact_status_summary = game_fact_confirmation_status_summary(fact_status_rows); stat_proof_rows = final_score_stat_proof_rows(stats_gap_rows); stat_proof_summary = final_score_stat_proof_summary(stat_proof_rows); stat_proof_confirmation_rows = final_score_stat_proof_confirmation_rows(stat_proof_rows); stat_proof_review_order_rows = final_score_stat_proof_review_order_rows(stat_proof_rows); athlete_render_candidate_rows_data = athlete_render_candidate_rows(stat_proof_rows, stat_proof_review_order_rows, read_csv(Path("data/asset_registry/wnba/athlete_photo_catalog.csv"))); athlete_render_candidate_summary_data = athlete_render_candidate_summary(athlete_render_candidate_rows_data); story_proof_card_rows_data = story_proof_card_rows(fact_status_rows, stat_proof_rows, stat_proof_review_order_rows, athlete_render_candidate_rows_data); story_proof_card_summary_data = story_proof_card_summary(story_proof_card_rows_data)
+    expected_rows, expected_summary = missing_games_alert(expected_game_rows(), events); accuracy = source_accuracy(events, observations, health, duplicate_rows, stale_rows, expected_summary); intelligence_rows = game_intelligence_rows(events, observations, expected_rows); intelligence_summary = game_intelligence_summary(intelligence_rows); stats_gap_rows, stats_confirmation_rows = stats_evidence_gap_rows(events, observations); stats_gap_summary = stats_evidence_gap_summary(stats_gap_rows, stats_confirmation_rows); fact_status_rows = game_fact_confirmation_status_rows(intelligence_rows, stats_gap_rows); stat_proof_rows = final_score_stat_proof_rows(stats_gap_rows); stat_proof_summary = final_score_stat_proof_summary(stat_proof_rows); stat_proof_confirmation_rows = final_score_stat_proof_confirmation_rows(stat_proof_rows); stat_proof_review_order_rows = final_score_stat_proof_review_order_rows(stat_proof_rows); athlete_render_candidate_rows_data = athlete_render_candidate_rows(stat_proof_rows, stat_proof_review_order_rows, read_csv(Path("data/asset_registry/wnba/athlete_photo_catalog.csv"))); athlete_render_candidate_summary_data = athlete_render_candidate_summary(athlete_render_candidate_rows_data); story_proof_card_rows_data = story_proof_card_rows(fact_status_rows, stat_proof_rows, stat_proof_review_order_rows, athlete_render_candidate_rows_data); story_proof_card_summary_data = story_proof_card_summary(story_proof_card_rows_data); fact_status_rows = enrich_game_fact_confirmation_status_rows(fact_status_rows, stat_proof_review_order_rows, story_proof_card_rows_data); fact_status_summary = game_fact_confirmation_status_summary(fact_status_rows)
     write_csv(OBSERVATIONS_FILE, observations, OBS_FIELDS); write_csv(RECONCILED_FILE, events, EVENT_FIELDS); write_csv(RESULTS_BOARD_FILE, all_events, EVENT_FIELDS); write_csv(WOMENS_RESULTS_FILE, womens, EVENT_FIELDS); write_csv(FINAL_RESULTS_FILE, finals, EVENT_FIELDS); write_csv(TOP_RESULTS_FILE, top, EVENT_FIELDS); write_csv(MANUAL_REVIEW_FILE, review, EVENT_FIELDS)
     write_csv(SOURCE_HEALTH_FILE, health, ["source_name", "sport_or_league", "date", "http_status", "ok", "events_found", "observations_emitted", "stale_rejected", "notes"]); write_csv(BOX_SCORE_AUDIT_FILE, box_audit_rows, ["event_uid", "espn_event_id", "graphics_headline", "league_norm", "http_status", "audit_status", "top_performers", "source_url", "notes"]); write_csv(DUPLICATE_AUDIT, duplicate_rows, DUP_FIELDS); write_csv(STALE_AUDIT, stale_rows, STALE_FIELDS); write_csv("missing_games_alert_v5.csv", expected_rows, EXPECTED_FIELDS); write_csv(GAME_INTELLIGENCE_BOARD_FILE, intelligence_rows, GAME_INTELLIGENCE_FIELDS); write_csv(STATS_EVIDENCE_GAP_BOARD_FILE, stats_gap_rows, STATS_EVIDENCE_FIELDS); write_csv(STATS_CONFIRMATION_INTAKE_FILE, stats_confirmation_rows, STATS_CONFIRMATION_FIELDS); write_csv(GAME_FACT_CONFIRMATION_STATUS_FILE, fact_status_rows, GAME_FACT_CONFIRMATION_STATUS_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_FILE, stat_proof_rows, FINAL_SCORE_STAT_PROOF_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_CONFIRMATION_INTAKE_FILE, stat_proof_confirmation_rows, FINAL_SCORE_STAT_PROOF_CONFIRMATION_FIELDS); write_csv(FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FILE, stat_proof_review_order_rows, FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FIELDS); write_csv(ATHLETE_RENDER_CANDIDATE_BOARD_FILE, athlete_render_candidate_rows_data, ATHLETE_RENDER_CANDIDATE_FIELDS); write_csv(STORY_PROOF_CARD_FILE, story_proof_card_rows_data, STORY_PROOF_CARD_FIELDS)
     write_text(BOX_SCORE_SUMMARY_FILE, box_score_summary_md(box_audit_rows)); write_text(GRAPHICS_QUEUE_FILE, graphics_queue(events)); write_text(RECOMMENDATIONS_FILE, recommendations_md(events)); write_text(HUB_FILE, v5_hub_md(run_id, events, observations, health, iso_dates)); write_text(GAME_INTELLIGENCE_REPORT_FILE, game_intelligence_report_md(intelligence_summary, intelligence_rows)); write_text(STATS_EVIDENCE_GAP_REPORT_FILE, stats_evidence_gap_report_md(stats_gap_summary, stats_gap_rows, stats_confirmation_rows)); write_text(GAME_FACT_CONFIRMATION_STATUS_REPORT_FILE, game_fact_confirmation_status_report_md(fact_status_summary, fact_status_rows)); write_text(FINAL_SCORE_STAT_PROOF_REPORT_FILE, final_score_stat_proof_report_md(stat_proof_summary, stat_proof_rows)); write_text(FINAL_SCORE_STAT_PROOF_WALKTHROUGH_FILE, final_score_stat_proof_review_walkthrough_md(stat_proof_review_order_rows)); write_text(ATHLETE_RENDER_CANDIDATE_REPORT_FILE, athlete_render_candidate_report_md(athlete_render_candidate_summary_data, athlete_render_candidate_rows_data)); write_text(STORY_PROOF_CARD_REPORT_FILE, story_proof_card_report_md(story_proof_card_summary_data, story_proof_card_rows_data))

@@ -301,6 +301,38 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     ]
 
     rows = module.game_fact_confirmation_status_rows(intelligence_rows, stats_rows)
+    rows = module.enrich_game_fact_confirmation_status_rows(
+        rows,
+        [
+            {
+                "review_order": "1",
+                "event_uid": "event_confirmed",
+                "fact_type": "final_score",
+                "proof_row_to_open": "final_score_stat_proof_v1.csv proof_id=score123",
+                "intake_row_to_record": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=score123",
+                "source_confirmation_cue": "free_public_final_score_source_present_operator_verify",
+            },
+            {
+                "review_order": "2",
+                "event_uid": "event_confirmed",
+                "fact_type": "named_player_stat_line",
+                "proof_row_to_open": "final_score_stat_proof_v1.csv proof_id=stat456",
+                "intake_row_to_record": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456",
+                "source_confirmation_cue": "free_public_box_score_stat_source_present_operator_verify",
+            },
+        ],
+        [
+            {
+                "event_id": "event_confirmed",
+                "candidate_id": "card789",
+                "source_confirmation_cue": "free_public_box_score_stat_source_present_operator_verify",
+                "manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456",
+                "renderability_state": "athlete_led_manual_render_candidate",
+                "final_score_review_order_row": "final_score_stat_proof_review_order_v1.csv review_order=1; proof_id=score123",
+                "named_stat_review_order_row": "final_score_stat_proof_review_order_v1.csv review_order=2; proof_id=stat456",
+            }
+        ],
+    )
     by_id = {row["event_uid"]: row for row in rows}
 
     confirmed = by_id["event_confirmed"]
@@ -311,6 +343,13 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert confirmed["missing_confirmation"] == "none"
     assert "game_intelligence_board_v1.csv row_id=event_confirmed" in confirmed["exact_next_file_or_intake"]
     assert "stats_evidence_gap_board_v1.csv event_uid=event_confirmed" in confirmed["exact_next_file_or_intake"]
+    assert confirmed["story_proof_card_row_to_open"] == "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789"
+    assert confirmed["final_score_review_order_row"] == "final_score_stat_proof_review_order_v1.csv review_order=1; proof_id=score123"
+    assert confirmed["named_stat_review_order_row"] == "final_score_stat_proof_review_order_v1.csv review_order=2; proof_id=stat456"
+    assert confirmed["proof_manual_intake_path"] == "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456"
+    assert confirmed["source_confirmation_cue"] == "free_public_box_score_stat_source_present_operator_verify"
+    assert confirmed["recap_render_readiness"] == "athlete_led_manual_render_candidate"
+    assert "story_proof_card_v1.csv event_id=event_confirmed" in confirmed["exact_next_file_or_intake"]
     assert confirmed["review_only"] == "Yes"
     assert confirmed["approval_state_change"] == "none"
     assert confirmed["publish_action"] == "none_artifact_only"
@@ -319,12 +358,16 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert scheduled["result_fact_status"] == "not_final_result_pending"
     assert scheduled["stats_fact_status"] == "not_final_stats_optional"
     assert scheduled["overall_confirmation_status"] == "schedule_confirmed_result_pending"
+    assert scheduled["source_confirmation_cue"] == "free_public_schedule_source_present_result_pending"
+    assert scheduled["recap_render_readiness"] == "result_pending_not_render_ready"
+    assert scheduled["story_proof_card_row_to_open"] == ""
 
     missing = by_id["expected_missing"]
     assert missing["overall_confirmation_status"] == "manual_verification_required"
     assert "schedule_source" in missing["missing_confirmation"]
     assert "missing_games_alert_v5.csv" in missing["exact_next_file_or_intake"]
     assert missing["manual_review_required"] == "Yes"
+    assert missing["source_confirmation_cue"] == "manual_source_confirmation_required"
 
     summary = module.game_fact_confirmation_status_summary(rows)
     assert summary["rows"] == 3
