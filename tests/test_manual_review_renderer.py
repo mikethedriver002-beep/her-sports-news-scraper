@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.28.0-visual-mode-contract"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.29.0-photo-first-score-polish"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -822,9 +822,40 @@ def test_manual_review_renderer_photo_first_geometry_keeps_feed_and_story_cleara
         assert photo[1] < focus[1] < bottom(focus) < bottom(photo)
         for row, winner in [(winner, True), (loser, False)]:
             team_text_box = module.photo_first_score_team_text_box(tuple(row), winner=winner)
-            score_plate_left = row[0] + row[2] - 178 - 14
-            assert team_text_box[0] + team_text_box[2] <= score_plate_left - 20
+            score_slab = module.photo_first_score_slab_box(tuple(row), winner=winner)
+            assert score_slab[0] + score_slab[2] <= row[0] + row[2] - 26
+            assert score_slab[1] >= row[1]
+            assert score_slab[1] + score_slab[3] <= row[1] + row[3]
+            assert team_text_box[0] + team_text_box[2] <= score_slab[0] - 26
             assert team_text_box[2] >= 128
+
+
+def test_manual_review_renderer_photo_first_score_slab_stays_inside_score_row() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    for format_spec in [
+        {"format_id": "ig_feed_4x5", "width": 1080, "height": 1350},
+        {"format_id": "ig_story_9x16", "width": 1080, "height": 1920},
+        {"format_id": "square_feed_1x1", "width": 1080, "height": 1080},
+    ]:
+        geometry = module.photo_first_layout_geometry(format_spec)
+        for key, winner in [("winner_score_row_box", True), ("loser_score_row_box", False)]:
+            row = geometry[key]
+            slab = module.photo_first_score_slab_box(tuple(row), winner=winner)
+            text_box = module.photo_first_score_team_text_box(tuple(row), winner=winner)
+            assert slab[0] >= row[0]
+            assert slab[1] >= row[1]
+            assert slab[0] + slab[2] <= row[0] + row[2] - 24
+            assert slab[1] + slab[3] <= row[1] + row[3]
+            assert slab[2] >= 132
+            assert slab[3] >= 80
+            assert text_box[0] + text_box[2] <= slab[0] - 26
+            assert text_box[2] >= 128
 
 
 def test_manual_review_renderer_photo_first_stage_preserves_face_edge_signal() -> None:
