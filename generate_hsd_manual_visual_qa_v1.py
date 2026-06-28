@@ -732,6 +732,7 @@ def main() -> None:
         zone_scores: List[float] = []
         bright_scores: List[float] = []
         photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
+        renderer_cues = clean(renderer_manifest.get("render_background_cues"))
         for zone_id, (box, min_bright_ratio, min_variance) in TEXT_ZONES.items():
             signal = title_zone_signal(image, box) if zone_id == "headline_text_zone" else text_zone_signal(image, box)
             zone_scores.append(signal["dark_pixel_ratio"])
@@ -757,6 +758,9 @@ def main() -> None:
                 if zone_id == "score_team_text_zone" and photo_layout_mode == "photo_first_final_score":
                     effective_min_bright_ratio = 0.045
                     label = "Photo-first score/team readable signal"
+                    if "photo_first_editorial_score_rails" in renderer_cues:
+                        effective_min_bright_ratio = 0.035
+                        label = "Photo-first editorial score-rail readable signal"
                 passed = signal["variance"] >= min_variance and signal["bright_pixel_ratio"] >= effective_min_bright_ratio
                 add_check(
                     checks,

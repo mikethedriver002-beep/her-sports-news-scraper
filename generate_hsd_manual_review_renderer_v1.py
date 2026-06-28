@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.42.0-photo-first-type-cap"
+VERSION = "hsd-manual-review-renderer-v1.43.0-photo-first-score-rail-soften"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v16_photo_first_type_cap"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v17_photo_first_score_rail_soften"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -58,7 +58,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_context_score_rail,photo_first_subject_glow_bridge,photo_first_soft_focal_frame,"
     "photo_first_athlete_primary_focal_contract,photo_first_premium_score_stage,"
     "photo_first_editorial_stage_depth,photo_first_score_type_grid_polish,photo_first_type_scale,"
-    "photo_first_athlete_visual_cap,compact_square_photo_footer,"
+    "photo_first_athlete_visual_cap,photo_first_editorial_score_rails,"
+    "photo_first_subtle_logo_identifiers,compact_square_photo_footer,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -76,6 +77,8 @@ PUBLIC_RENDER_BANNED_CANVAS_PHRASES = [
     "PHOTO-FIRST DRAFT",
     "ASSET READY",
     "HUMAN CHECK REQUIRED",
+    "LOGO CHECK",
+    "LOGO REVIEW",
 ]
 PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE = 0.40
 PHOTO_FIRST_FINAL_SCORE_ACTIVE_TYPE_LEVELS = ("label", "headline", "score", "support")
@@ -1377,6 +1380,15 @@ def short_team(team: str) -> str:
     return text
 
 
+def team_monogram(team: str) -> str:
+    words = [part for part in clean(team).upper().replace("-", " ").split() if part]
+    if not words:
+        return "HSD"
+    if len(words) == 1:
+        return words[0][:3]
+    return "".join(word[0] for word in words[:3])
+
+
 def team_city_name(team: str) -> str:
     team_text = clean(team)
     if not team_text:
@@ -2039,49 +2051,38 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
     result = enrich_logo_result(load_team_logo(team, aliases, logos), registry_accent, registry_accent_source)
     team_accent = result.get("team_accent_rgb") if isinstance(result.get("team_accent_rgb"), tuple) else accent
     approval_cue = clean(result.get("logo_approval_cue")) or "LOGO REVIEW"
-    draw_reference_panel(image, box, team_accent, fill=(1, 2, 7, 226), radius=16, width=2)
     x, y, w, h = box
     draw = ImageDraw.Draw(image, "RGBA")
     sheen = Image.new("RGBA", image.size, (0, 0, 0, 0))
     sheen_draw = ImageDraw.Draw(sheen, "RGBA")
-    glow_alpha = 56 if winner else 32
+    glow_alpha = 42 if winner else 24
     sheen_draw.ellipse(
-        (x - int(w * 0.25), y - int(h * 0.30), x + int(w * 1.25), y + int(h * 1.20)),
+        (x - int(w * 0.38), y - int(h * 0.42), x + int(w * 1.36), y + int(h * 1.30)),
         fill=(*team_accent, glow_alpha),
     )
     if ImageFilter is not None:
-        sheen = sheen.filter(ImageFilter.GaussianBlur(max(18, min(w, h) // 6)))
+        sheen = sheen.filter(ImageFilter.GaussianBlur(max(18, min(w, h) // 5)))
     image.alpha_composite(sheen)
-    draw.rounded_rectangle((x + 12, y + 12, x + w - 12, y + h - 12), radius=12, outline=(*team_accent, 88), width=1)
-    draw.line((x + 22, y + h - 18, x + w - 22, y + h - 18), fill=(*team_accent, 172), width=2)
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(2, 4, 9, 58), outline=(*team_accent, 72), width=1)
+    draw.line((x + 16, y + h - 9, x + w - 16, y + h - 9), fill=(*team_accent, 118), width=2)
     logo = result.get("image")
     if logo is not None:
         logo = logo.copy()
-        pad = max(26, min(w, h) // (5 if winner else 4))
+        pad = max(18, min(w, h) // (6 if winner else 5))
         logo.thumbnail((w - pad, h - pad), resample_filter())
         logo_x = x + (w - logo.width) // 2
         logo_y = y + (h - logo.height) // 2
         shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
-        shadow.alpha_composite(logo, (logo_x + 4, logo_y + 6))
-        shadow_alpha = shadow.split()[-1].point(lambda value: min(96, int(value * 0.48)))
+        shadow.alpha_composite(logo, (logo_x + 3, logo_y + 4))
+        shadow_alpha = shadow.split()[-1].point(lambda value: min(72, int(value * 0.34)))
         shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
         shadow.putalpha(shadow_alpha)
         if ImageFilter is not None:
-            shadow = shadow.filter(ImageFilter.GaussianBlur(5))
+            shadow = shadow.filter(ImageFilter.GaussianBlur(4))
         image.alpha_composite(shadow)
         image.alpha_composite(logo, (logo_x, logo_y))
     else:
-        draw_reference_text(image, (x + 18, y + 26, w - 36, h - 70), short_team(team), "context", 34, 18, team_accent, max_lines=2, align="center")
-        draw_reference_text(image, (x + 18, y + h - 58, w - 36, 38), "LOGO REVIEW", "context", 18, 12, PALETTE["ink"], max_lines=1, align="center")
-    cue_fill = (18, 26, 40, 224) if result.get("approved") else (190, 39, 54, 232)
-    cue_outline = (*team_accent, 186) if result.get("approved") else (255, 255, 255, 135)
-    cue_w = min(w - 28, max(108, int(w * 0.62)))
-    cue_h = 22
-    cue_x = x + (w - cue_w) // 2
-    cue_y = y + h - cue_h - 18
-    draw.rounded_rectangle((cue_x, cue_y, cue_x + cue_w, cue_y + cue_h), radius=6, fill=cue_fill, outline=cue_outline, width=1)
-    visual_cue = "LOGO CHECK" if result.get("approved") else approval_cue
-    draw_reference_text(image, (cue_x + 8, cue_y + 3, cue_w - 16, cue_h - 4), visual_cue, "context", 10, 8, PALETTE["ink"], max_lines=1, align="center")
+        draw_reference_text(image, (x + 10, y + 16, w - 20, h - 28), team_monogram(team), "context", 29, 16, team_accent, max_lines=1, align="center")
     return {
         "team": clean(team),
         "team_id": clean(result.get("team_id")),
@@ -2800,11 +2801,11 @@ def draw_photo_first_focal_depth_stage(
 
 def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
-    logo_size = min(h - 30, 104 if winner else 92)
+    logo_size = min(h - 54, 76 if winner else 66)
     score_box = photo_first_score_slab_box(box, winner=winner)
-    text_x = x + logo_size + (56 if h > 130 else 50)
+    text_x = x + logo_size + (76 if h > 130 else 68)
     score_gap = 44 if h > 130 else 34
-    text_w = max(128, min(max(128, w - logo_size - 260), score_box[0] - text_x - score_gap))
+    text_w = max(138, min(max(138, w - logo_size - 248), score_box[0] - text_x - score_gap))
     return (text_x, y + (44 if h > 130 else 39), text_w, h - (62 if h > 130 else 54))
 
 
@@ -2910,21 +2911,27 @@ def draw_photo_first_score_row(
 ) -> None:
     x, y, w, h = box
     compact = h <= 130
-    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 164 if winner else 150), radius=18, width=1)
     draw = ImageDraw.Draw(image, "RGBA")
-    draw.rectangle((x + 1, y + 3, x + 6, y + h - 3), fill=(*accent, 104 if winner else 82))
-    draw.line((x + 24, y + h - 21, x + w - 32, y + h - 21), fill=(*accent, 50 if winner else 38), width=1)
-    draw.line((x + 24, y + h - 16, x + w - 32, y + h - 16), fill=(248, 250, 255, 18), width=1)
+    rail_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(rail_shadow, "RGBA")
+    shadow_draw.rounded_rectangle((x + 8, y + 10, x + w + 8, y + h + 10), radius=22, fill=(0, 0, 0, 54))
+    if ImageFilter is not None:
+        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(9))
+    image.alpha_composite(rail_shadow)
+    draw.rounded_rectangle((x, y + 2, x + w, y + h - 2), radius=20, fill=(2, 4, 9, 104 if winner else 92), outline=(*accent, 68 if winner else 52), width=1)
+    draw.rectangle((x + 1, y + 6, x + 8, y + h - 6), fill=(*accent, 132 if winner else 104))
+    draw.line((x + 24, y + h - 24, x + w - 32, y + h - 24), fill=(*accent, 70 if winner else 52), width=2)
+    draw.line((x + 24, y + h - 17, x + w - 32, y + h - 17), fill=(248, 250, 255, 16), width=1)
     label = "WINNER" if winner else "FINAL"
-    label_w = 108 if winner else 84
-    label_h = 28 if not compact else 24
-    label_y = y + (14 if not compact else 12)
-    draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + label_h), radius=7, fill=(*accent, 174), outline=(248, 250, 255, 70), width=1)
-    label_color = PALETTE["ink"] if winner else (2, 4, 9)
+    label_w = 92 if winner else 70
+    label_h = 22 if not compact else 18
+    label_y = y + (17 if not compact else 15)
+    draw.line((x + 28, label_y - 3, x + 28 + label_w, label_y - 3), fill=(*accent, 128), width=2)
+    label_color = PALETTE["ink"] if winner else (222, 228, 238)
     label_type = photo_first_type_spec("chip_label", compact=compact)
     draw_reference_text(
         image,
-        (x + 32, label_y + 4, label_w - 16, label_h - 7),
+        (x + 28, label_y, label_w, label_h),
         label,
         label_type["font"],
         label_type["resolved_size"],
@@ -2934,8 +2941,8 @@ def draw_photo_first_score_row(
         align="center",
         stroke=label_type["stroke"],
     )
-    logo_size = min(h - 42, 90 if winner else 78)
-    logo_box = (x + 26, y + (h - logo_size) // 2 + (12 if not compact else 10), logo_size, logo_size)
+    logo_size = min(h - 54, 76 if winner else 66)
+    logo_box = (x + 32, y + (h - logo_size) // 2 + (18 if not compact else 14), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
     score_box = photo_first_score_slab_box(box, winner=winner)
     team_text_box = photo_first_score_team_text_box(box, winner=winner)
@@ -2953,21 +2960,11 @@ def draw_photo_first_score_row(
     )
 
     sx, sy, sw, sh = score_box
-    slab_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(slab_shadow, "RGBA")
-    shadow_draw.rounded_rectangle((sx + 4, sy + 8, sx + sw + 4, sy + sh + 8), radius=16, fill=(0, 0, 0, 72))
-    if ImageFilter is not None:
-        slab_shadow = slab_shadow.filter(ImageFilter.GaussianBlur(8))
-    image.alpha_composite(slab_shadow)
-    slab_fill = mix_rgb((4, 7, 14), accent, 0.10 if winner else 0.07)
-    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=13, fill=(*slab_fill, 216), outline=(*accent, 162), width=1)
-    draw.rectangle((sx + 6, sy + 10, sx + 10, sy + sh - 10), fill=(*accent, 174))
-    draw.line((sx + 18, sy + 10, sx + sw - 14, sy + 10), fill=(255, 255, 255, 38), width=1)
-    draw.line((sx + 18, sy + sh - 11, sx + sw - 14, sy + sh - 11), fill=(*accent, 80), width=1)
+    slab_fill = mix_rgb((4, 7, 14), accent, 0.08 if winner else 0.05)
+    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=12, fill=(*slab_fill, 104 if winner else 92), outline=(*accent, 74 if winner else 56), width=1)
+    draw.rectangle((sx + 5, sy + 12, sx + 8, sy + sh - 12), fill=(*accent, 142))
+    draw.line((sx + 18, sy + sh - 13, sx + sw - 10, sy + sh - 13), fill=(*accent, 90), width=2)
     cell = photo_first_score_digit_cell_box(score_box)
-    draw.rounded_rectangle(cell, radius=8, fill=(247, 249, 253, 218), outline=(248, 250, 255, 58), width=1)
-    draw.line((cell[0] + 5, cell[1] + 2, cell[2] - 5, cell[1] + 2), fill=(255, 255, 255, 92), width=1)
-    draw.line((cell[0] + 6, cell[3] - 3, cell[2] - 6, cell[3] - 3), fill=(*accent, 74), width=1)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"], max(58, int((cell[2] - cell[0]) * 0.82)), max(58, int((cell[3] - cell[1]) * 0.90)))
     min_score_size = score_type["resolved_min"]
@@ -2978,10 +2975,11 @@ def draw_photo_first_score_row(
         score_type["font"],
         score_size,
         min_score_size,
-        (2, 4, 9),
+        PALETTE["ink"],
         max_lines=1,
         align="center",
-        stroke=score_type["stroke"],
+        stroke=1,
+        stroke_fill=(0, 0, 0),
     )
 
 
