@@ -131,6 +131,9 @@ GAME_INTELLIGENCE_FIELDS = [
     "source_url",
     "source_domain",
     "retrieved_at_utc",
+    "source_freshness_status",
+    "source_freshness_age_minutes",
+    "source_freshness_note",
     "manual_review_status",
     "game_fact_status_row_to_open",
     "story_proof_card_row_to_open",
@@ -215,6 +218,9 @@ GAME_FACT_CONFIRMATION_STATUS_FIELDS = [
     "recap_render_readiness",
     "manual_review_required",
     "retrieved_at_utc",
+    "source_freshness_status",
+    "source_freshness_age_minutes",
+    "source_freshness_note",
     "review_only",
     "approval_state_change",
     "publish_action",
@@ -1023,6 +1029,60 @@ def source_confirmation_tier(source_url: Any, source_count: Any, selected_source
     )
 
 
+def parse_utc_timestamp(value: Any) -> datetime | None:
+    raw = clean(value)
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def source_freshness_fields(retrieved_at_utc: Any, *, now: datetime | None = None, no_matched_source: bool = False) -> Dict[str, str]:
+    if no_matched_source:
+        return {
+            "source_freshness_status": "no_matched_source_timestamp_manual_check",
+            "source_freshness_age_minutes": "",
+            "source_freshness_note": "No matched free/public source timestamp is available for this row.",
+        }
+    parsed = parse_utc_timestamp(retrieved_at_utc)
+    if parsed is None:
+        return {
+            "source_freshness_status": "evidence_timestamp_missing_manual_check",
+            "source_freshness_age_minutes": "",
+            "source_freshness_note": "Retrieved timestamp is missing or invalid; operator should confirm source freshness before use.",
+        }
+    now_utc = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    age_minutes = int((now_utc - parsed).total_seconds() // 60)
+    if age_minutes < 0:
+        return {
+            "source_freshness_status": "evidence_timestamp_future_manual_check",
+            "source_freshness_age_minutes": str(age_minutes),
+            "source_freshness_note": "Retrieved timestamp is in the future relative to this run; operator should confirm source freshness.",
+        }
+    if age_minutes <= 180:
+        return {
+            "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+            "source_freshness_age_minutes": str(age_minutes),
+            "source_freshness_note": "Evidence was retrieved within 3 hours; operator still verifies source facts before use.",
+        }
+    if age_minutes <= 1440:
+        return {
+            "source_freshness_status": "evidence_same_day_under_24h_operator_verify",
+            "source_freshness_age_minutes": str(age_minutes),
+            "source_freshness_note": "Evidence is under 24 hours old; operator should check for final-score/stat changes before use.",
+        }
+    return {
+        "source_freshness_status": "evidence_stale_over_24h_manual_check",
+        "source_freshness_age_minutes": str(age_minutes),
+        "source_freshness_note": "Evidence is over 24 hours old; operator should reopen the source or rerun Results before use.",
+    }
+
+
 def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict[str, str]], expected_rows: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     obs_by_key = selected_observation_by_key(observations)
     rows: List[Dict[str, Any]] = []
@@ -1032,6 +1092,8 @@ def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict
         source_url = clean(event.get("source_url"))
         bucket = game_attention_bucket(event)
         tier, limitations = source_confirmation_tier(source_url, event.get("source_count"), event.get("selected_source"), event.get("status_norm"), missing_evidence_for(event, stats_status))
+        retrieved_at = clean(obs.get("fetched_at_utc")) or now_iso()
+        freshness = source_freshness_fields(retrieved_at)
         row_type = "game_event"
         if bucket == "upcoming_game":
             row_type = "upcoming_game"
@@ -1065,7 +1127,8 @@ def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict
                 "source_confirmation_limitations": limitations,
                 "source_url": source_url,
                 "source_domain": source_domain(source_url),
-                "retrieved_at_utc": clean(obs.get("fetched_at_utc")) or now_iso(),
+                "retrieved_at_utc": retrieved_at,
+                **freshness,
                 "manual_review_status": "review_only_recap_candidate" if event.get("include_in_graphics") else "manual_review_required" if event.get("manual_review") else "review_only_monitor",
                 "review_only": "Yes",
                 "approval_state_change": "none",
@@ -1106,6 +1169,7 @@ def game_intelligence_rows(events: List[Dict[str, Any]], observations: List[Dict
                 "source_url": source_url,
                 "source_domain": source_domain(source_url),
                 "retrieved_at_utc": now_iso(),
+                **source_freshness_fields("", no_matched_source=True),
                 "manual_review_status": "manual_review_required_missing_source_evidence",
                 "review_only": "Yes",
                 "approval_state_change": "none",
@@ -1164,6 +1228,7 @@ def game_intelligence_report_md(summary: Dict[str, Any], rows: List[Dict[str, An
         lines.append(f"- **{row.get('attention_bucket')}** | {row.get('game_date')} | {row.get('league')} | {matchup}")
         lines.append(f"  - status={row.get('status')} | confidence={row.get('source_confidence')} | review={row.get('manual_review_status')}")
         lines.append(f"  - source_tier={row.get('source_confirmation_tier')} | limits={row.get('source_confirmation_limitations')}")
+        lines.append(f"  - freshness={row.get('source_freshness_status')} | age_min={row.get('source_freshness_age_minutes') or 'n/a'} | note={row.get('source_freshness_note')}")
         lines.append(f"  - stats={row.get('stats_context_status')} | missing={row.get('missing_evidence')}")
         lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
         lines.append(f"  - fact_status={row.get('game_fact_status_row_to_open') or 'missing'} | proof={row.get('proof_review_order_row_to_open') or 'missing'}")
@@ -1452,6 +1517,14 @@ def game_fact_confirmation_status_rows(intelligence_rows: List[Dict[str, Any]], 
             item.get("status"),
             item.get("missing_evidence"),
         )
+        retrieved_at = clean(item.get("retrieved_at_utc")) or now_iso()
+        freshness = {
+            "source_freshness_status": clean(item.get("source_freshness_status")),
+            "source_freshness_age_minutes": clean(item.get("source_freshness_age_minutes")),
+            "source_freshness_note": clean(item.get("source_freshness_note")),
+        }
+        if not freshness["source_freshness_status"]:
+            freshness = source_freshness_fields(retrieved_at, no_matched_source="free_source_observation_match" in clean(item.get("missing_evidence")))
         rows.append(
             {
                 "event_uid": event_uid,
@@ -1475,7 +1548,8 @@ def game_fact_confirmation_status_rows(intelligence_rows: List[Dict[str, Any]], 
                 "missing_confirmation": missing,
                 "exact_next_file_or_intake": game_fact_next_step(item, stats_row, missing),
                 "manual_review_required": "Yes" if missing != "none" or clean(item.get("recap_candidate")) == "Yes" else "No",
-                "retrieved_at_utc": clean(item.get("retrieved_at_utc")) or now_iso(),
+                "retrieved_at_utc": retrieved_at,
+                **freshness,
                 "review_only": "Yes",
                 "approval_state_change": "none",
                 "publish_action": "none_artifact_only",
@@ -1529,6 +1603,7 @@ def game_fact_confirmation_status_report_md(summary: Dict[str, Any], rows: List[
         lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | {row.get('game_status')} | missing={row.get('missing_confirmation')}")
         lines.append(f"  - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
         lines.append(f"  - source_tier={row.get('source_confirmation_tier')} | limits={row.get('source_confirmation_limitations')}")
+        lines.append(f"  - freshness={row.get('source_freshness_status')} | age_min={row.get('source_freshness_age_minutes') or 'n/a'} | note={row.get('source_freshness_note')}")
         lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
         lines.append(f"  - proof_card={row.get('story_proof_card_row_to_open') or 'missing'}")
         lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'} | review_order_named={row.get('named_stat_review_order_row') or 'missing'}")
@@ -1540,6 +1615,7 @@ def game_fact_confirmation_status_report_md(summary: Dict[str, Any], rows: List[
         lines.append(f"- **{row.get('matchup')}** | {row.get('game_date')} | {row.get('overall_confirmation_status')}")
         lines.append(f"  - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
         lines.append(f"  - source_tier={row.get('source_confirmation_tier')} | limits={row.get('source_confirmation_limitations')}")
+        lines.append(f"  - freshness={row.get('source_freshness_status')} | age_min={row.get('source_freshness_age_minutes') or 'n/a'} | note={row.get('source_freshness_note')}")
         lines.append(f"  - source_cue={row.get('source_confirmation_cue')} | render={row.get('recap_render_readiness')}")
         lines.append(f"  - proof_card={row.get('story_proof_card_row_to_open') or 'missing'}")
         lines.append(f"  - review_order_score={row.get('final_score_review_order_row') or 'missing'} | review_order_named={row.get('named_stat_review_order_row') or 'missing'}")

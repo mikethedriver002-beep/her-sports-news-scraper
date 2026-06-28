@@ -192,6 +192,8 @@ def test_game_intelligence_board_is_review_only_and_source_backed() -> None:
     assert recap["retrieved_at_utc"] == "2026-06-24T12:00:00+00:00"
     assert recap["source_confirmation_tier"] == "single_free_public_scoreboard_operator_verify"
     assert "not a human approval" in recap["source_confirmation_limitations"]
+    assert recap["source_freshness_status"] == "evidence_stale_over_24h_manual_check"
+    assert recap["source_freshness_age_minutes"]
     assert recap["stats_context_status"] == "missing_free_box_score_context"
     assert "box_score_or_top_performer_context" in recap["missing_evidence"]
     assert recap["manual_review_status"] == "review_only_recap_candidate"
@@ -209,6 +211,7 @@ def test_game_intelligence_board_is_review_only_and_source_backed() -> None:
     assert missing["source_confidence"] == "0.00"
     assert missing["source_confirmation_tier"] == "source_missing_manual_confirmation_required"
     assert "no matched free/public observation" in missing["source_confirmation_limitations"]
+    assert missing["source_freshness_status"] == "no_matched_source_timestamp_manual_check"
     assert missing["source_confirmation_cue"] == "manual_source_confirmation_required"
 
     upcoming = by_type["upcoming_game"]
@@ -216,6 +219,7 @@ def test_game_intelligence_board_is_review_only_and_source_backed() -> None:
     assert upcoming["stats_context_status"] == "not_expected_pre_game"
     assert upcoming["source_confirmation_tier"] == "single_free_public_schedule_source_result_pending"
     assert "result, box score, and recap use remain pending" in upcoming["source_confirmation_limitations"]
+    assert upcoming["source_freshness_status"] == "evidence_stale_over_24h_manual_check"
     assert upcoming["source_confirmation_cue"] == "free_public_schedule_source_present_result_pending"
     assert upcoming["recap_render_readiness"] == "result_pending_not_render_ready"
 
@@ -385,6 +389,7 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert confirmed["missing_confirmation"] == "none"
     assert confirmed["source_confirmation_tier"] == "single_free_public_scoreboard_operator_verify"
     assert "not a human approval" in confirmed["source_confirmation_limitations"]
+    assert confirmed["source_freshness_status"] == "evidence_stale_over_24h_manual_check"
     assert "game_intelligence_board_v1.csv row_id=event_confirmed" in confirmed["exact_next_file_or_intake"]
     assert "stats_evidence_gap_board_v1.csv event_uid=event_confirmed" in confirmed["exact_next_file_or_intake"]
     assert confirmed["story_proof_card_row_to_open"] == "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789"
@@ -403,6 +408,7 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert scheduled["stats_fact_status"] == "not_final_stats_optional"
     assert scheduled["overall_confirmation_status"] == "schedule_confirmed_result_pending"
     assert scheduled["source_confirmation_tier"] == "single_free_public_schedule_source_result_pending"
+    assert scheduled["source_freshness_status"] == "evidence_fresh_under_3h_operator_verify"
     assert scheduled["source_confirmation_cue"] == "free_public_schedule_source_present_result_pending"
     assert scheduled["recap_render_readiness"] == "result_pending_not_render_ready"
     assert scheduled["story_proof_card_row_to_open"] == ""
@@ -411,6 +417,7 @@ def test_game_fact_confirmation_status_board_points_to_exact_review_paths() -> N
     assert missing["overall_confirmation_status"] == "manual_verification_required"
     assert "schedule_source" in missing["missing_confirmation"]
     assert missing["source_confirmation_tier"] == "source_missing_manual_confirmation_required"
+    assert missing["source_freshness_status"] == "no_matched_source_timestamp_manual_check"
     assert "missing_games_alert_v5.csv" in missing["exact_next_file_or_intake"]
     assert missing["manual_review_required"] == "Yes"
     assert missing["source_confirmation_cue"] == "manual_source_confirmation_required"
