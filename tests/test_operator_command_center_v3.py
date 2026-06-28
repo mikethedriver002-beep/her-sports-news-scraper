@@ -187,6 +187,13 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "first_score_stat_review_order_target": "final_score_stat_proof_review_order_v1.csv review_order=5; phase=2_final_score_source_check; proof=final_score_stat_proof_v1.csv proof_id=proof-sky-score; record=final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score",
                 "score_stat_review_walkthrough_target": "final_score_stat_proof_review_walkthrough_v1.md",
                 "exact_review_walkthrough_next_action": "Open final_score_stat_proof_review_walkthrough_v1.md; start at final_score_stat_proof_review_order_v1.csv review_order=5; record checks in final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-sky-score.",
+                "corroboration_ladder_status": "official_and_reputable_artifact_cues_present_operator_verify",
+                "corroboration_ladder_summary": "official=present_operator_verify domains=sky.wnba.com; reputable_free=present_operator_verify domains=www.espn.com; public_signal=none_captured_public_signal_not_used_for_confirmation; missing_confirmation=human_confirmation_still_required_in_breaking_public_signal_confirmation_intake",
+                "official_source_corroboration": "present_operator_verify domains=sky.wnba.com",
+                "reputable_source_corroboration": "present_operator_verify domains=www.espn.com",
+                "public_signal_corroboration": "none_captured_public_signal_not_used_for_confirmation",
+                "missing_confirmation_cue": "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake",
+                "corroboration_evidence_urls": "[\"https://sky.wnba.com/news/recap\", \"https://www.espn.com/wnba/game/_/gameId/401857025\"]",
             }
         ],
         [
@@ -210,21 +217,34 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "first_score_stat_review_order_target",
             "score_stat_review_walkthrough_target",
             "exact_review_walkthrough_next_action",
+            "corroboration_ladder_status",
+            "corroboration_ladder_summary",
+            "official_source_corroboration",
+            "reputable_source_corroboration",
+            "public_signal_corroboration",
+            "missing_confirmation_cue",
+            "corroboration_evidence_urls",
         ],
     )
 
     rows = command_center.source_discovery_board()
     row = rows[0]
 
-    assert row["story_opportunity_source_coverage"] == "score_and_named_player_stat_proof_present_operator_verify"
+    assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
+    assert "reputable_free=present_operator_verify" in row["story_opportunity_source_coverage"]
     assert "final_score_stat_proof_v1.csv proof_id=proof-sky-player" in row["evidence_source"]
     assert "final_score_stat_proof_review_walkthrough_v1.md" in row["next_action"]
     assert "review_order=5" in row["next_action"]
+    assert row["story_opportunity_confidence_tier"] == "official_and_reputable_artifact_cues_present_operator_verify"
+    assert "official=present_operator_verify" in row["story_opportunity_source_coverage"]
+    assert row["story_opportunity_confirmation_cue"] == "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake"
+    assert "none_captured_public_signal_not_used_for_confirmation" in row["evidence_description"]
+    assert "https://sky.wnba.com/news/recap" in row["story_opportunity_urls"]
+    assert "https://www.espn.com/wnba/game/_/gameId/401857025" in row["story_opportunity_second_source_url"]
+    assert row["story_opportunity_second_source_reason"] == "present_operator_verify domains=sky.wnba.com"
     assert row["story_opportunity_second_source_action"].startswith("Open final_score_stat_proof_review_walkthrough_v1.md")
-    assert "final_score_stat_proof_review_walkthrough_v1.md" in row["story_opportunity_readiness_note"]
-    assert "proof_id=proof-sky-score in final_score_stat_proof_confirmation_intake_v1.csv" in row["story_opportunity_readiness_note"]
-    assert "final_score_stat_proof_review_order_v1.csv review_order=5" in row["story_opportunity_second_source_url"]
-    assert row["story_opportunity_second_source_reason"] == "review_order_rows_present_operator_follow_walkthrough"
+    assert "official_and_reputable_artifact_cues_present_operator_verify" in row["story_opportunity_readiness_note"]
+    assert "human_confirmation_still_required" in row["story_opportunity_readiness_note"]
     assert row["review_only"] == "true"
     assert row["publish_ready"] == "false"
 
