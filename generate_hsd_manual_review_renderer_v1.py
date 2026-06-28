@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.24.0-square-review-footer"
+VERSION = "hsd-manual-review-renderer-v1.25.0-square-context-hierarchy"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -49,7 +49,7 @@ RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
-    "square_compact_review_footer,stat_proof_rail,generated_preview_qa"
+    "square_compact_review_footer,square_context_score_hierarchy,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -1936,8 +1936,8 @@ def square_reference_spec() -> Dict[str, Any]:
             "secondary_logo_slot": {"x": 70, "y": 612, "w": 190, "h": 190},
             "secondary_team": {"x": 292, "y": 636, "w": 330, "h": 86},
             "secondary_score": {"x": 692, "y": 602, "w": 260, "h": 190},
-            "key_performer": {"x": 60, "y": 820, "w": 960, "h": 82},
-            "hook_takeaway": {"x": 60, "y": 918, "w": 960, "h": 82},
+            "key_performer": {"x": 60, "y": 808, "w": 960, "h": 100},
+            "hook_takeaway": {"x": 60, "y": 922, "w": 960, "h": 92},
         },
     }
 
@@ -2522,16 +2522,17 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
             PALETTE["ink"],
             max_lines=1,
         )
-        body_top += 30 if compact else 48
-    if compact and y + h - body_top < 24:
+        body_top += 24 if compact else 48
+    body_h = y + h - body_top - (10 if compact else 14)
+    if compact and body_h < 18:
         return
     draw_reference_text(
         image,
-        (x + 24, body_top, text_w, max(28, y + h - body_top - 14)),
+        (x + 24, body_top, text_w, max(18, body_h) if compact else max(28, body_h)),
         body,
         "body",
-        18 if compact else 27,
-        12 if compact else 14,
+        16 if compact else 27,
+        10 if compact else 14,
         PALETTE["ink"],
         max_lines=1 if compact else 2,
         uppercase=False,

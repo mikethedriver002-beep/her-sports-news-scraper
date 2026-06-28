@@ -118,7 +118,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.24.0-square-review-footer"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.25.0-square-context-hierarchy"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -154,6 +154,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "logo_first_score_atmosphere" in manifest["render_background_cues"]
     assert "sports_editorial_depth_markers" in manifest["render_background_cues"]
     assert "square_compact_review_footer" in manifest["render_background_cues"]
+    assert "square_context_score_hierarchy" in manifest["render_background_cues"]
     assert "stat_proof_rail" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -835,6 +836,13 @@ def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -
     square_spec = module.square_reference_spec()
     assert square_spec["canvas"] == {"width": 1080, "height": 1080}
     assert square_spec["zones"]["title"] == {"x": 60, "y": 116, "w": 960, "h": 132}
+    key_box = square_spec["zones"]["key_performer"]
+    hook_box = square_spec["zones"]["hook_takeaway"]
+    assert key_box["h"] >= 96
+    assert hook_box["h"] >= 90
+    assert key_box["y"] + key_box["h"] + 12 <= hook_box["y"]
+    assert hook_box["y"] + hook_box["h"] <= 1020
+    assert "square_context_score_hierarchy" in module.RENDER_BACKGROUND_CUES
     assert module.format_reference_spec({"format_id": "square_feed_1x1"}, {})["zones"]["title"] == square_spec["zones"]["title"]
 
 
@@ -854,6 +862,37 @@ def test_manual_review_renderer_square_title_lockup_is_visible() -> None:
     title_histogram = title_crop.histogram()
     bright_title_ratio = sum(title_histogram[190:]) / sum(title_histogram)
     assert bright_title_ratio > 0.025
+
+
+def test_manual_review_renderer_square_lower_module_shows_body_line_inside_card() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1080), (2, 4, 9, 255))
+    hook_box = tuple(module.square_reference_spec()["zones"]["hook_takeaway"].values())
+    module.draw_lower_reference_module(
+        image,
+        hook_box,
+        "MATCHUP ANGLE",
+        "CHICAGO SKY 124, PORTLAND FIRE 94; hold for source proof.",
+        (37, 99, 163),
+        headline="CHICAGO SKY +30 FINAL",
+    )
+
+    x, y, w, h = hook_box
+    body_crop = image.crop((x + 24, y + 60, x + w - 24, y + h - 8)).convert("RGB")
+    data = body_crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    bright_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r >= 185 and g >= 185 and b >= 185:
+            bright_pixels += 1
+    assert bright_pixels / pixels > 0.006
 
 
 def test_manual_review_renderer_square_compact_footer_keeps_review_marker_without_full_red_band() -> None:
