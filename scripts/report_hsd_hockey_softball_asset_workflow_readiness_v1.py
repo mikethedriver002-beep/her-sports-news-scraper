@@ -32,6 +32,9 @@ SOURCE_PRIORITY_JSON = Path("data/asset_registry/hockey_softball_source_priority
 SOURCE_VERIFICATION_CHECKLIST_MD = Path("data/asset_registry/hockey_softball_source_verification_checklist.md")
 SOURCE_VERIFICATION_CHECKLIST_CSV = Path("data/asset_registry/hockey_softball_source_verification_checklist.csv")
 SOURCE_VERIFICATION_CHECKLIST_JSON = Path("data/asset_registry/hockey_softball_source_verification_checklist.json")
+INTAKE_READINESS_SUMMARY_MD = Path("data/asset_registry/hockey_softball_intake_readiness_summary.md")
+INTAKE_READINESS_SUMMARY_CSV = Path("data/asset_registry/hockey_softball_intake_readiness_summary.csv")
+INTAKE_READINESS_SUMMARY_JSON = Path("data/asset_registry/hockey_softball_intake_readiness_summary.json")
 REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
 REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
 REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_triage.json")
@@ -215,6 +218,52 @@ SOURCE_VERIFICATION_CHECKLIST_FIELDS = [
     "operator_rights_reviewed",
     "operator_decision",
     "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+INTAKE_READINESS_SUMMARY_FIELDS = [
+    "summary_order",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "asset_domain",
+    "intake_file",
+    "review_board_to_open",
+    "intake_rows",
+    "source_reviewed_yes_rows",
+    "source_reviewed_no_rows",
+    "identity_confirmed_yes_rows",
+    "identity_confirmed_no_rows",
+    "rights_reviewed_yes_rows",
+    "rights_reviewed_no_rows",
+    "human_review_metadata_rows",
+    "blank_human_review_metadata_rows",
+    "source_url_to_record_blank_rows",
+    "local_file_reviewed_yes_rows",
+    "local_file_reviewed_no_rows",
+    "registry_hold_rows",
+    "unsafe_guardrail_rows",
+    "render_feed_readiness",
+    "primary_blocker",
+    "next_operator_action",
+    "fields_mike_can_fill_now",
+    "fields_that_must_stay_blank",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
     "review_only",
     "approval_state_change",
     "candidate_state_change",
@@ -691,6 +740,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`",
         "- Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`",
         "- Source verification checklist: `data/asset_registry/hockey_softball_source_verification_checklist.md`",
+        "- Intake readiness summary: `data/asset_registry/hockey_softball_intake_readiness_summary.md`",
         "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
@@ -726,6 +776,9 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Source priority blank source_url rows: `{report['totals']['source_priority_blank_source_url_rows']}`",
         f"- Source verification checklist rows: `{report['totals']['source_verification_checklist_rows']}`",
         f"- Source verification checklist blank source_url rows: `{report['totals']['source_verification_checklist_blank_source_url_rows']}`",
+        f"- Intake readiness groups: `{report['totals']['intake_readiness_summary_groups']}`",
+        f"- Intake readiness rows covered: `{report['totals']['intake_readiness_rows_covered']}`",
+        f"- Intake readiness unsafe rows: `{report['totals']['intake_readiness_unsafe_guardrail_rows']}`",
         f"- Review triage rows: `{report['totals']['review_triage_rows']}`",
         f"- Review triage operator-verify source rows: `{report['totals']['review_triage_operator_verify_required_source_rows']}`",
         f"- Review triage download-approved yes rows: `{report['totals']['review_triage_download_approved_yes_rows']}`",
@@ -1500,6 +1553,171 @@ def render_source_verification_checklist(rows: list[Dict[str, str]], generated_a
     return "\n".join(lines) + "\n"
 
 
+def intake_review_board(sport_family: str, asset_domain: str) -> str:
+    if sport_family == "womens_hockey" and asset_domain == "logo":
+        return "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md"
+    if sport_family == "womens_hockey" and asset_domain == "athlete_photo":
+        return "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"
+    if sport_family == "softball" and asset_domain == "logo":
+        return "data/asset_registry/softball/softball_logo_contact_sheet.md"
+    if sport_family == "softball" and asset_domain == "athlete_photo":
+        return "data/asset_registry/softball/softball_athlete_photo_contact_sheet_index.md"
+    return ""
+
+
+def intake_identity_yes(row: Mapping[str, str], asset_domain: str) -> bool:
+    if asset_domain == "logo":
+        return clean(row.get("identity_match")).lower() == "yes"
+    return clean(row.get("identity_verified")).lower() == "yes"
+
+
+def intake_identity_no(row: Mapping[str, str], asset_domain: str) -> bool:
+    if asset_domain == "logo":
+        return clean(row.get("identity_match")).lower() != "yes"
+    return clean(row.get("identity_verified")).lower() != "yes"
+
+
+def intake_readiness_row(
+    order: int,
+    sport_key: str,
+    sport: Mapping[str, Any],
+    asset_domain: str,
+    rows: list[Dict[str, str]],
+    intake_file: Path,
+) -> Dict[str, str]:
+    source_yes = sum(1 for row in rows if clean(row.get("source_reviewed")).lower() == "yes")
+    source_no = len(rows) - source_yes
+    identity_yes = sum(1 for row in rows if intake_identity_yes(row, asset_domain))
+    identity_no = sum(1 for row in rows if intake_identity_no(row, asset_domain))
+    rights_yes = sum(1 for row in rows if clean(row.get("rights_reviewed")).lower() == "yes")
+    rights_no = sum(1 for row in rows if "rights_reviewed" in row and clean(row.get("rights_reviewed")).lower() != "yes")
+    human_metadata_rows = sum(1 for row in rows if clean(row.get("reviewed_by")) and clean(row.get("reviewed_at_local")))
+    blank_metadata_rows = len(rows) - human_metadata_rows
+    source_url_blank_rows = sum(1 for row in rows if not clean(row.get("source_url_to_record")))
+    local_file_reviewed_yes = sum(1 for row in rows if clean(row.get("local_file_reviewed")).lower() == "yes")
+    local_file_reviewed_no = sum(1 for row in rows if "local_file_reviewed" in row and clean(row.get("local_file_reviewed")).lower() != "yes")
+    registry_hold_rows = sum(1 for row in rows if clean(row.get("registry_action")).startswith("hold_"))
+    unsafe_rows = unsafe_intake_rows(rows)
+
+    if asset_domain == "logo":
+        readiness = "source_review_recorded_waiting_for_local_logo_asset"
+        blocker = "local_logo_asset_missing_before_renderer_trust"
+        action = "Open the logo contact sheet and intake; keep registry_action hold-only until a local logo candidate exists and a later explicit human approval is applied."
+        fill_now = "none_if_source_and_identity_already_reviewed; otherwise revise operator_notes/source_url_to_record by human edit only"
+        keep_blank = "download_approved;source_url;entity_id;rights_class;identity_confidence;intended_review_only_use"
+    else:
+        readiness = "source_and_identity_review_pending_waiting_for_named_local_athlete_asset"
+        blocker = "named_athlete_identity_and_local_headshot_candidate_missing"
+        action = "Open the source verification checklist and athlete contact sheet; after manual source-page review, fill source_reviewed/source_allowed_for_review_only/rights_reviewed only, leaving identity/local-file/approval fields held."
+        fill_now = "after_manual_source_open_only:source_reviewed;source_allowed_for_review_only;rights_reviewed;operator_notes"
+        keep_blank = "identity_verified;local_file_reviewed;source_url_to_record;reviewed_by;reviewed_at_local;download_approved;source_url;entity_id;rights_class;identity_confidence;intended_review_only_use"
+
+    return {
+        "summary_order": f"IR{order:02d}",
+        "sport_family": sport_key,
+        "sport_label": clean(sport.get("sport_label")),
+        "league_name": clean(sport.get("league_label")),
+        "asset_domain": asset_domain,
+        "intake_file": intake_file.as_posix(),
+        "review_board_to_open": intake_review_board(sport_key, asset_domain),
+        "intake_rows": str(len(rows)),
+        "source_reviewed_yes_rows": str(source_yes),
+        "source_reviewed_no_rows": str(source_no),
+        "identity_confirmed_yes_rows": str(identity_yes),
+        "identity_confirmed_no_rows": str(identity_no),
+        "rights_reviewed_yes_rows": str(rights_yes),
+        "rights_reviewed_no_rows": str(rights_no),
+        "human_review_metadata_rows": str(human_metadata_rows),
+        "blank_human_review_metadata_rows": str(blank_metadata_rows),
+        "source_url_to_record_blank_rows": str(source_url_blank_rows),
+        "local_file_reviewed_yes_rows": str(local_file_reviewed_yes),
+        "local_file_reviewed_no_rows": str(local_file_reviewed_no),
+        "registry_hold_rows": str(registry_hold_rows),
+        "unsafe_guardrail_rows": str(unsafe_rows),
+        "render_feed_readiness": readiness,
+        "primary_blocker": blocker,
+        "next_operator_action": action,
+        "fields_mike_can_fill_now": fill_now,
+        "fields_that_must_stay_blank": keep_blank,
+        "download_approved": "no",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "review_only": "true",
+        "approval_state_change": "false",
+        "candidate_state_change": "false",
+        "asset_downloads": "false",
+        "headshot_writes": "false",
+        "approved_marker_writes": "false",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+
+
+def intake_readiness_summary_rows() -> list[Dict[str, str]]:
+    rows: list[Dict[str, str]] = []
+    order = 1
+    for sport_key, sport in SPORTS.items():
+        rows.append(intake_readiness_row(order, sport_key, sport, "logo", read_csv(sport["logo_intake"]), sport["logo_intake"]))
+        order += 1
+        rows.append(intake_readiness_row(order, sport_key, sport, "athlete_photo", read_csv(sport["athlete_intake"]), sport["athlete_intake"]))
+        order += 1
+    return rows
+
+
+def render_intake_readiness_summary(rows: list[Dict[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Hockey/Softball Intake Readiness Summary",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only summary of the existing hockey/softball logo and athlete manual intake CSVs. It validates the intake posture for operator visibility only; it does not download images, approve assets, write headshots or logos, create `.approved` markers, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Intake groups: `{len(rows)}`",
+        f"- Intake rows covered: `{sum(int(row['intake_rows']) for row in rows)}`",
+        f"- Logo source-reviewed rows: `{sum(int(row['source_reviewed_yes_rows']) for row in rows if row['asset_domain'] == 'logo')}`",
+        f"- Athlete source-pending rows: `{sum(int(row['source_reviewed_no_rows']) for row in rows if row['asset_domain'] == 'athlete_photo')}`",
+        f"- Blank human-review metadata rows: `{sum(int(row['blank_human_review_metadata_rows']) for row in rows)}`",
+        f"- Unsafe guardrail rows: `{sum(int(row['unsafe_guardrail_rows']) for row in rows)}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        "",
+        "## Operator Path",
+        "",
+        "- Logo groups are source-reviewed, identity-confirmed, and still held because local logo candidate assets are missing.",
+        "- Athlete groups are intentionally source/identity/local-file pending; use the source verification checklist before editing athlete intake rows.",
+        "- Generated future download-law fields remain `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.",
+        "- Keep approval, publish, movement, headshot/logo writes, and `.approved` marker fields false/held unless a later explicit human-edited intake workflow authorizes a separate step.",
+        "",
+        "## Intake Groups",
+        "",
+        "| Order | Sport | Asset | Rows | Source yes | Source no | Metadata blank | Unsafe | Readiness | Blocker |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {order} | {sport} | {asset} | {count} | {source_yes} | {source_no} | {metadata_blank} | {unsafe} | {readiness} | {blocker} |".format(
+                order=clean(row.get("summary_order")),
+                sport=clean(row.get("sport_family")),
+                asset=clean(row.get("asset_domain")),
+                count=clean(row.get("intake_rows")),
+                source_yes=clean(row.get("source_reviewed_yes_rows")),
+                source_no=clean(row.get("source_reviewed_no_rows")),
+                metadata_blank=clean(row.get("blank_human_review_metadata_rows")),
+                unsafe=clean(row.get("unsafe_guardrail_rows")),
+                readiness=clean(row.get("render_feed_readiness")),
+                blocker=clean(row.get("primary_blocker")),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def review_triage_group_key(row: Mapping[str, str]) -> tuple[str, str, str]:
     return (
         clean(row.get("sport_family")),
@@ -2228,6 +2446,20 @@ def main() -> int:
         and not clean(row.get("operator_identity_match"))
         and not clean(row.get("operator_rights_reviewed"))
     )
+    intake_readiness_summary = intake_readiness_summary_rows()
+    intake_readiness_rows_covered = sum(int(row["intake_rows"]) for row in intake_readiness_summary)
+    intake_readiness_logo_source_reviewed_rows = sum(
+        int(row["source_reviewed_yes_rows"]) for row in intake_readiness_summary if clean(row.get("asset_domain")) == "logo"
+    )
+    intake_readiness_athlete_source_pending_rows = sum(
+        int(row["source_reviewed_no_rows"]) for row in intake_readiness_summary if clean(row.get("asset_domain")) == "athlete_photo"
+    )
+    intake_readiness_blank_human_metadata_rows = sum(int(row["blank_human_review_metadata_rows"]) for row in intake_readiness_summary)
+    intake_readiness_unsafe_guardrail_rows = sum(int(row["unsafe_guardrail_rows"]) for row in intake_readiness_summary)
+    intake_readiness_download_approved_yes_rows = sum(
+        1 for row in intake_readiness_summary if clean(row.get("download_approved")).lower() == "yes"
+    )
+    intake_readiness_blank_source_url_rows = sum(1 for row in intake_readiness_summary if not clean(row.get("source_url")))
     review_triage = review_triage_rows(source_priority)
     review_triage_logo_rows = sum(1 for row in review_triage if clean(row.get("asset_domain")) == "logo")
     review_triage_athlete_rows = sum(1 for row in review_triage if clean(row.get("asset_domain")) == "athlete_photo")
@@ -2279,6 +2511,14 @@ def main() -> int:
             "source_verification_checklist_download_approved_yes_rows": source_verification_checklist_download_approved_yes_rows,
             "source_verification_checklist_blank_source_url_rows": source_verification_checklist_blank_source_url_rows,
             "source_verification_checklist_blank_human_review_rows": source_verification_checklist_blank_human_review_rows,
+            "intake_readiness_summary_groups": len(intake_readiness_summary),
+            "intake_readiness_rows_covered": intake_readiness_rows_covered,
+            "intake_readiness_logo_source_reviewed_rows": intake_readiness_logo_source_reviewed_rows,
+            "intake_readiness_athlete_source_pending_rows": intake_readiness_athlete_source_pending_rows,
+            "intake_readiness_blank_human_metadata_rows": intake_readiness_blank_human_metadata_rows,
+            "intake_readiness_unsafe_guardrail_rows": intake_readiness_unsafe_guardrail_rows,
+            "intake_readiness_download_approved_yes_rows": intake_readiness_download_approved_yes_rows,
+            "intake_readiness_blank_source_url_rows": intake_readiness_blank_source_url_rows,
             "review_triage_rows": len(review_triage),
             "review_triage_logo_rows": review_triage_logo_rows,
             "review_triage_athlete_rows": review_triage_athlete_rows,
@@ -2353,6 +2593,19 @@ def main() -> int:
             "download_approved_yes_rows": source_verification_checklist_download_approved_yes_rows,
             "blank_source_url_rows": source_verification_checklist_blank_source_url_rows,
             "blank_human_review_rows": source_verification_checklist_blank_human_review_rows,
+        },
+        "intake_readiness_summary": {
+            "md": INTAKE_READINESS_SUMMARY_MD.as_posix(),
+            "csv": INTAKE_READINESS_SUMMARY_CSV.as_posix(),
+            "json": INTAKE_READINESS_SUMMARY_JSON.as_posix(),
+            "groups": len(intake_readiness_summary),
+            "rows_covered": intake_readiness_rows_covered,
+            "logo_source_reviewed_rows": intake_readiness_logo_source_reviewed_rows,
+            "athlete_source_pending_rows": intake_readiness_athlete_source_pending_rows,
+            "blank_human_review_metadata_rows": intake_readiness_blank_human_metadata_rows,
+            "unsafe_guardrail_rows": intake_readiness_unsafe_guardrail_rows,
+            "download_approved_yes_rows": intake_readiness_download_approved_yes_rows,
+            "blank_source_url_rows": intake_readiness_blank_source_url_rows,
         },
         "review_triage": {
             "md": REVIEW_TRIAGE_MD.as_posix(),
@@ -2496,6 +2749,34 @@ def main() -> int:
         "paid_apis": False,
         "verification_rows_detail": source_verification_checklist,
     }
+    intake_readiness_summary_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_intake_readiness_summary_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "groups": len(intake_readiness_summary),
+        "rows_covered": intake_readiness_rows_covered,
+        "logo_source_reviewed_rows": intake_readiness_logo_source_reviewed_rows,
+        "athlete_source_pending_rows": intake_readiness_athlete_source_pending_rows,
+        "blank_human_review_metadata_rows": intake_readiness_blank_human_metadata_rows,
+        "unsafe_guardrail_rows": intake_readiness_unsafe_guardrail_rows,
+        "download_approved_yes_rows": intake_readiness_download_approved_yes_rows,
+        "blank_source_url_rows": intake_readiness_blank_source_url_rows,
+        "worksheet_md": INTAKE_READINESS_SUMMARY_MD.as_posix(),
+        "worksheet_csv": INTAKE_READINESS_SUMMARY_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "summary_rows": intake_readiness_summary,
+    }
     review_triage_payload = {
         "version": VERSION,
         "status": "hockey_softball_asset_review_triage_ready",
@@ -2595,6 +2876,9 @@ def main() -> int:
     write_csv(SOURCE_VERIFICATION_CHECKLIST_CSV, source_verification_checklist, SOURCE_VERIFICATION_CHECKLIST_FIELDS)
     write_json(SOURCE_VERIFICATION_CHECKLIST_JSON, source_verification_checklist_payload)
     write_text(SOURCE_VERIFICATION_CHECKLIST_MD, render_source_verification_checklist(source_verification_checklist, generated_at))
+    write_csv(INTAKE_READINESS_SUMMARY_CSV, intake_readiness_summary, INTAKE_READINESS_SUMMARY_FIELDS)
+    write_json(INTAKE_READINESS_SUMMARY_JSON, intake_readiness_summary_payload)
+    write_text(INTAKE_READINESS_SUMMARY_MD, render_intake_readiness_summary(intake_readiness_summary, generated_at))
     write_csv(REVIEW_TRIAGE_CSV, review_triage, REVIEW_TRIAGE_FIELDS)
     write_json(REVIEW_TRIAGE_JSON, review_triage_payload)
     write_text(REVIEW_TRIAGE_MD, render_review_triage(review_triage, generated_at))
