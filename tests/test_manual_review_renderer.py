@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.35.0-photo-first-score-hierarchy"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.36.0-photo-first-subject-glow"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -161,7 +161,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v9_photo_first_score_hierarchy"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v10_photo_first_subject_glow"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -176,13 +176,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_score_lock_slab" in manifest["render_background_cues"]
     assert "photo_first_score_type_lockup" in manifest["render_background_cues"]
     assert "photo_first_context_score_rail" in manifest["render_background_cues"]
+    assert "photo_first_subject_glow_bridge" in manifest["render_background_cues"]
     assert "photo_first_editorial_nameplate" in manifest["render_background_cues"]
     assert "compact_square_photo_footer" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v9_photo_first_score_hierarchy" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v10_photo_first_subject_glow" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -243,7 +244,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v9_photo_first_score_hierarchy"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v10_photo_first_subject_glow"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert "manual visual QA intake" in visual_board["next_manual_review_step"] or "hold" in visual_board["next_manual_review_step"]
     assert {item["format_id"] for item in visual_board["rows"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -303,7 +304,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v9_photo_first_score_hierarchy`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v10_photo_first_subject_glow`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "draft_preview_ig_feed.png" in board
     assert "draft_preview_story.png" in board
@@ -1233,19 +1234,25 @@ def test_manual_review_renderer_photo_first_depth_stage_adds_focal_atmosphere() 
     module.draw_photo_first_focal_depth_stage(image, geometry, (72, 144, 216), (192, 35, 48))
 
     assert "photo_first_focal_depth_stage" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_subject_glow_bridge" in module.RENDER_BACKGROUND_CUES
     athlete_crop = image.crop((40, 330, 500, 975)).convert("RGB")
     score_crop = image.crop((480, 360, 1040, 792)).convert("RGB")
     shelf_crop = image.crop((56, 966, 1024, 995)).convert("RGB")
+    bridge_crop = image.crop((420, 420, 800, 820)).convert("RGB")
     athlete_data = athlete_crop.tobytes()
     score_data = score_crop.tobytes()
     shelf_data = shelf_crop.tobytes()
+    bridge_data = bridge_crop.tobytes()
     athlete_pixels = max(1, len(athlete_data) // 3)
     score_pixels = max(1, len(score_data) // 3)
     shelf_pixels = max(1, len(shelf_data) // 3)
+    bridge_pixels = max(1, len(bridge_data) // 3)
 
     blue_depth = 0
     red_depth = 0
     gold_shelf = 0
+    bridge_red = 0
+    bridge_gold = 0
     for index in range(0, len(athlete_data), 3):
         r, g, b = athlete_data[index], athlete_data[index + 1], athlete_data[index + 2]
         if b > r and b >= 24 and g >= 18:
@@ -1258,10 +1265,18 @@ def test_manual_review_renderer_photo_first_depth_stage_adds_focal_atmosphere() 
         r, g, b = shelf_data[index], shelf_data[index + 1], shelf_data[index + 2]
         if r >= 48 and g >= 38 and b <= 105:
             gold_shelf += 1
+    for index in range(0, len(bridge_data), 3):
+        r, g, b = bridge_data[index], bridge_data[index + 1], bridge_data[index + 2]
+        if r > b and r >= 24 and g <= 48:
+            bridge_red += 1
+        if r >= 44 and g >= 36 and b <= 72:
+            bridge_gold += 1
 
     assert blue_depth / athlete_pixels > 0.25
     assert red_depth / score_pixels > 0.08
     assert gold_shelf / shelf_pixels > 0.015
+    assert bridge_red / bridge_pixels > 0.08
+    assert bridge_gold / bridge_pixels > 0.025
 
 
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
