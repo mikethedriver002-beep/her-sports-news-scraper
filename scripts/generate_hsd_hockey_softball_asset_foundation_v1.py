@@ -22,6 +22,9 @@ except Exception:  # pragma: no cover - reported in manifests
 
 VERSION = "hsd-hockey-softball-asset-foundation-v1-review-only"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+COVERAGE_INDEX_MD = Path("data/asset_registry/hockey_softball_foundation_coverage_index.md")
+COVERAGE_INDEX_CSV = Path("data/asset_registry/hockey_softball_foundation_coverage_index.csv")
+COVERAGE_INDEX_JSON = Path("data/asset_registry/hockey_softball_foundation_coverage_index.json")
 
 TEAM_FIELDS = [
     "league_id",
@@ -91,6 +94,34 @@ PLAYER_FIELDS = [
     "manual_review_status",
     "approval_status",
     "notes",
+]
+
+COVERAGE_INDEX_FIELDS = [
+    "sport_family",
+    "league_id",
+    "league_name",
+    "team_rows",
+    "source_rows",
+    "logo_contact_rows",
+    "logo_intake_rows",
+    "athlete_candidate_rows",
+    "athlete_intake_rows",
+    "athlete_team_boards",
+    "foundation_source_urls",
+    "team_registry",
+    "asset_slot_registry",
+    "approval_registry",
+    "logo_contact_sheet",
+    "logo_review_intake",
+    "athlete_contact_sheet",
+    "athlete_review_intake",
+    "athlete_contact_sheet_index",
+    "source_review_helper",
+    "workflow_readiness",
+    "asset_review_action_queue",
+    "batch_source_review_helper",
+    "next_operator_action",
+    "guardrail_note",
 ]
 
 LOGO_CONTACT_FIELDS = [
@@ -949,16 +980,116 @@ def write_foundation(foundation: Mapping[str, Any], generated_at: str) -> Dict[s
     return {
         "sport_family": sport,
         "league_id": foundation["league_id"],
+        "league_name": foundation["league_name"],
         "team_rows": len(registry["teams"]),
         "source_rows": len(registry["source_urls"]),
         "logo_rows": len(logo_rows),
+        "logo_intake_rows": len(logo_intake_rows),
         "athlete_candidate_rows": len(athlete_rows),
+        "athlete_intake_rows": len(athlete_intake_rows),
+        "athlete_team_boards": len({row["team_id"] for row in athlete_rows}),
+        "foundation_source_urls": output_path(root / "source_urls.csv").as_posix(),
+        "team_registry": output_path(root / "teams.csv").as_posix(),
+        "asset_slot_registry": output_path(root / "asset_slots.csv").as_posix(),
+        "approval_registry": output_path(root / "approval_status.csv").as_posix(),
+        "logo_contact_sheet": output_path(logo_csv).as_posix(),
+        "logo_review_intake": output_path(logo_intake).as_posix(),
+        "athlete_contact_sheet": output_path(athlete_csv).as_posix(),
+        "athlete_review_intake": output_path(athlete_intake).as_posix(),
+        "athlete_contact_sheet_index": output_path(athlete_index).as_posix(),
+        "source_review_helper": "data/asset_registry/hockey_softball_source_review_helper_report.md",
+        "workflow_readiness": "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md",
+        "asset_review_action_queue": "data/asset_registry/hockey_softball_asset_review_action_queue.md",
+        "batch_source_review_helper": "data/asset_registry/hockey_softball_batch_source_review_helper.md",
+        "next_operator_action": "Open the source URLs registry, then the logo and athlete contact sheets; record only manual source-review notes in intake CSVs and keep approval state held.",
+        "guardrail_note": "review-only; no downloads; no auto-approval; no approval-state change; no headshot or .approved marker writes; no publish-ready movement",
     }
+
+
+def render_coverage_index(rows: List[Dict[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Hockey/Softball Foundation Coverage Index",
+        "",
+        f"- Generated: `{generated_at}`",
+        f"- Foundations: `{len(rows)}`",
+        f"- Teams: `{sum(int(row['team_rows']) for row in rows)}`",
+        f"- Source candidates: `{sum(int(row['source_rows']) for row in rows)}`",
+        f"- Logo rows: `{sum(int(row['logo_contact_rows']) for row in rows)}`",
+        f"- Athlete candidate rows: `{sum(int(row['athlete_candidate_rows']) for row in rows)}`",
+        "- Guardrails: review-only, no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.",
+        "",
+        "## How To Use",
+        "",
+        "1. Open the `foundation_source_urls` CSV for the sport and confirm the source candidate list.",
+        "2. Open the logo and athlete contact sheets listed for that sport.",
+        "3. Fill only the linked human intake CSVs after manual review.",
+        "4. Keep approval, render, publish, local-file, `headshot.png`, and `.approved` state held until a separate human-edited intake explicitly supplies evidence.",
+        "5. Use the action queue and batch source-review helper for row order after the foundation source list looks sane.",
+        "",
+        "## Foundations",
+        "",
+    ]
+    for row in rows:
+        lines.extend(
+            [
+                f"### {row['league_name']} ({row['sport_family']})",
+                "",
+                f"- Source URL registry: `{row['foundation_source_urls']}`",
+                f"- Team registry: `{row['team_registry']}`",
+                f"- Asset slots: `{row['asset_slot_registry']}`",
+                f"- Approval registry: `{row['approval_registry']}`",
+                f"- Logo contact sheet: `{row['logo_contact_sheet']}`",
+                f"- Logo intake: `{row['logo_review_intake']}`",
+                f"- Athlete contact sheet: `{row['athlete_contact_sheet']}`",
+                f"- Athlete intake: `{row['athlete_review_intake']}`",
+                f"- Athlete index: `{row['athlete_contact_sheet_index']}`",
+                f"- Counts: teams `{row['team_rows']}`, source rows `{row['source_rows']}`, logo rows `{row['logo_contact_rows']}`, athlete rows `{row['athlete_candidate_rows']}`, team boards `{row['athlete_team_boards']}`.",
+                f"- Next operator action: {row['next_operator_action']}",
+                f"- Guardrail note: {row['guardrail_note']}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def coverage_rows_from_summaries(summaries: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for summary in summaries:
+        row = {
+            "sport_family": clean(summary.get("sport_family")),
+            "league_id": clean(summary.get("league_id")),
+            "league_name": clean(summary.get("league_name")),
+            "team_rows": str(summary.get("team_rows", 0)),
+            "source_rows": str(summary.get("source_rows", 0)),
+            "logo_contact_rows": str(summary.get("logo_rows", 0)),
+            "logo_intake_rows": str(summary.get("logo_intake_rows", 0)),
+            "athlete_candidate_rows": str(summary.get("athlete_candidate_rows", 0)),
+            "athlete_intake_rows": str(summary.get("athlete_intake_rows", 0)),
+            "athlete_team_boards": str(summary.get("athlete_team_boards", 0)),
+            "foundation_source_urls": clean(summary.get("foundation_source_urls")),
+            "team_registry": clean(summary.get("team_registry")),
+            "asset_slot_registry": clean(summary.get("asset_slot_registry")),
+            "approval_registry": clean(summary.get("approval_registry")),
+            "logo_contact_sheet": clean(summary.get("logo_contact_sheet")),
+            "logo_review_intake": clean(summary.get("logo_review_intake")),
+            "athlete_contact_sheet": clean(summary.get("athlete_contact_sheet")),
+            "athlete_review_intake": clean(summary.get("athlete_review_intake")),
+            "athlete_contact_sheet_index": clean(summary.get("athlete_contact_sheet_index")),
+            "source_review_helper": clean(summary.get("source_review_helper")),
+            "workflow_readiness": clean(summary.get("workflow_readiness")),
+            "asset_review_action_queue": clean(summary.get("asset_review_action_queue")),
+            "batch_source_review_helper": clean(summary.get("batch_source_review_helper")),
+            "next_operator_action": clean(summary.get("next_operator_action")),
+            "guardrail_note": clean(summary.get("guardrail_note")),
+        }
+        rows.append(row)
+    return rows
 
 
 def main() -> int:
     generated_at = now_iso()
     summaries = [write_foundation(foundation, generated_at) for foundation in FOUNDATIONS]
+    coverage_rows = coverage_rows_from_summaries(summaries)
     report = {
         "version": VERSION,
         "status": "hockey_softball_asset_foundation_ready",
@@ -973,7 +1104,31 @@ def main() -> int:
             "publishing": False,
         },
         "foundations": summaries,
+        "coverage_index": {
+            "status": "hockey_softball_foundation_coverage_index_ready",
+            "md": COVERAGE_INDEX_MD.as_posix(),
+            "csv": COVERAGE_INDEX_CSV.as_posix(),
+            "json": COVERAGE_INDEX_JSON.as_posix(),
+            "rows": len(coverage_rows),
+            "source_rows": sum(int(row["source_rows"]) for row in coverage_rows),
+            "logo_contact_rows": sum(int(row["logo_contact_rows"]) for row in coverage_rows),
+            "athlete_candidate_rows": sum(int(row["athlete_candidate_rows"]) for row in coverage_rows),
+        },
     }
+    coverage_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_foundation_coverage_index_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": report["guardrails"],
+        "rows": len(coverage_rows),
+        "source_rows": sum(int(row["source_rows"]) for row in coverage_rows),
+        "logo_contact_rows": sum(int(row["logo_contact_rows"]) for row in coverage_rows),
+        "athlete_candidate_rows": sum(int(row["athlete_candidate_rows"]) for row in coverage_rows),
+        "foundations": coverage_rows,
+    }
+    write_csv(COVERAGE_INDEX_CSV, coverage_rows, COVERAGE_INDEX_FIELDS)
+    write_json(COVERAGE_INDEX_JSON, coverage_payload)
+    write_text(COVERAGE_INDEX_MD, render_coverage_index(coverage_rows, generated_at))
     write_json("data/asset_registry/hockey_softball_asset_foundation_report.json", report)
     write_text(
         "data/asset_registry/hockey_softball_asset_foundation_report.md",
@@ -988,9 +1143,16 @@ def main() -> int:
                 "## Foundations",
                 "",
                 *[
-                    f"- {row['sport_family']} / {row['league_id']}: teams={row['team_rows']}, logo_rows={row['logo_rows']}, athlete_candidates={row['athlete_candidate_rows']}"
+                    f"- {row['sport_family']} / {row['league_id']}: teams={row['team_rows']}, source_rows={row['source_rows']}, logo_rows={row['logo_rows']}, athlete_candidates={row['athlete_candidate_rows']}, coverage=`{COVERAGE_INDEX_MD.as_posix()}`"
                     for row in summaries
                 ],
+                "",
+                "## Operator Coverage Index",
+                "",
+                f"- Open first: `{COVERAGE_INDEX_MD.as_posix()}`",
+                f"- Source rows: `{report['coverage_index']['source_rows']}`",
+                f"- Logo contact rows: `{report['coverage_index']['logo_contact_rows']}`",
+                f"- Athlete candidate rows: `{report['coverage_index']['athlete_candidate_rows']}`",
                 "",
             ]
         ),

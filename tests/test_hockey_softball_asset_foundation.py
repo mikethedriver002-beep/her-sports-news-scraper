@@ -55,6 +55,16 @@ def test_hockey_softball_foundation_generates_review_only_scaffolds(tmp_path: Pa
         "womens_hockey": 12,
         "softball": 6,
     }
+    assert report["coverage_index"] == {
+        "status": "hockey_softball_foundation_coverage_index_ready",
+        "md": "data/asset_registry/hockey_softball_foundation_coverage_index.md",
+        "csv": "data/asset_registry/hockey_softball_foundation_coverage_index.csv",
+        "json": "data/asset_registry/hockey_softball_foundation_coverage_index.json",
+        "rows": 2,
+        "source_rows": 60,
+        "logo_contact_rows": 20,
+        "athlete_candidate_rows": 54,
+    }
 
     pwhl_teams = read_csv(tmp_path / "data/asset_registry/womens_hockey/pwhl/teams.csv")
     ausl_teams = read_csv(tmp_path / "data/asset_registry/softball/ausl/teams.csv")
@@ -80,6 +90,23 @@ def test_hockey_softball_foundation_generates_review_only_scaffolds(tmp_path: Pa
         assert forbidden not in registry_text
     assert "https://www.thepwhl.com/en/teams/seattle-torrent" in registry_text
     assert "https://theausl.com/volts/" in registry_text
+    coverage_rows = read_csv(tmp_path / "data/asset_registry/hockey_softball_foundation_coverage_index.csv")
+    assert len(coverage_rows) == 2
+    assert {row["sport_family"]: row["source_rows"] for row in coverage_rows} == {
+        "womens_hockey": "39",
+        "softball": "21",
+    }
+    assert coverage_rows[0]["foundation_source_urls"].endswith("source_urls.csv")
+    assert coverage_rows[0]["logo_contact_sheet"].endswith("womens_hockey_logo_contact_sheet.csv")
+    assert coverage_rows[0]["athlete_review_intake"].endswith("womens_hockey_athlete_photo_review_intake.csv")
+    assert coverage_rows[0]["asset_review_action_queue"] == "data/asset_registry/hockey_softball_asset_review_action_queue.md"
+    assert "no downloads" in coverage_rows[0]["guardrail_note"]
+    coverage_manifest = json.loads((tmp_path / "data/asset_registry/hockey_softball_foundation_coverage_index.json").read_text(encoding="utf-8"))
+    assert coverage_manifest["status"] == "hockey_softball_foundation_coverage_index_ready"
+    assert coverage_manifest["source_rows"] == 60
+    coverage_md = (tmp_path / "data/asset_registry/hockey_softball_foundation_coverage_index.md").read_text(encoding="utf-8")
+    assert "## How To Use" in coverage_md
+    assert "Keep approval, render, publish, local-file" in coverage_md
     hockey_candidates = read_csv(tmp_path / "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet.csv")
     softball_candidates = read_csv(tmp_path / "data/asset_registry/softball/softball_athlete_photo_contact_sheet.csv")
     assert len(hockey_candidates) == 36
@@ -149,6 +176,12 @@ def test_command_center_surfaces_hockey_softball_asset_foundation(tmp_path: Path
 
     assert panel["hockey_softball_asset_foundation_status"] == "hockey_softball_asset_foundation_ready"
     assert panel["hockey_softball_asset_foundation_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_foundation_coverage_status"] == "hockey_softball_foundation_coverage_index_ready"
+    assert panel["hockey_softball_foundation_coverage_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_foundation_coverage_rows"] == 2
+    assert panel["hockey_softball_foundation_coverage_source_rows"] == 60
+    assert panel["hockey_softball_foundation_coverage_logo_contact_rows"] == 20
+    assert panel["hockey_softball_foundation_coverage_athlete_candidate_rows"] == 54
     assert panel["womens_hockey_logo_contact_sheet_rows"] == 13
     assert panel["womens_hockey_athlete_photo_contact_sheet_rows"] == 36
     assert panel["womens_hockey_athlete_photo_source_review_slot_rows"] == 36
@@ -157,5 +190,34 @@ def test_command_center_surfaces_hockey_softball_asset_foundation(tmp_path: Path
     assert panel["softball_athlete_photo_source_review_slot_rows"] == 18
     shortcut_labels = {shortcut["label"] for shortcut in panel["file_shortcuts"]}
     assert "Hockey/softball foundation report" in shortcut_labels
+    assert "Hockey/softball foundation coverage index" in shortcut_labels
+    assert "Hockey/softball foundation coverage manifest" in shortcut_labels
     assert "Women's hockey logo contact sheet" in shortcut_labels
     assert "Softball athlete contact sheets" in shortcut_labels
+
+
+def test_command_center_marks_hockey_softball_coverage_missing_when_markdown_absent(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path))
+    command_center = load_command_center_module()
+    registry_dir = tmp_path / "data" / "asset_registry"
+    registry_dir.mkdir(parents=True)
+    (registry_dir / "hockey_softball_foundation_coverage_index.json").write_text(
+        json.dumps(
+            {
+                "status": "hockey_softball_foundation_coverage_index_ready",
+                "generated_at_utc": "2026-06-28T04:00:00+00:00",
+                "rows": 2,
+                "source_rows": 60,
+                "logo_contact_rows": 20,
+                "athlete_candidate_rows": 54,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+
+    assert panel["hockey_softball_foundation_coverage_status"] == "hockey_softball_foundation_coverage_index_ready"
+    assert panel["hockey_softball_foundation_coverage_rows"] == 2
+    assert panel["hockey_softball_foundation_coverage_freshness_status"] == "packet_missing"

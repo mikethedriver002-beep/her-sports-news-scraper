@@ -1,6 +1,6 @@
 {
   "version": "hsd-hockey-softball-asset-foundation-v1-review-only",
-  "status": "hockey_softball_asset_foundation_ready",
+  "status": "hockey_softball_foundation_coverage_index_ready",
   "generated_at_utc": "2026-06-28T03:27:30.630690+00:00",
   "guardrails": {
     "paid_apis": false,
@@ -11,18 +11,22 @@
     "publish_ready_movement": false,
     "publishing": false
   },
+  "rows": 2,
+  "source_rows": 60,
+  "logo_contact_rows": 20,
+  "athlete_candidate_rows": 54,
   "foundations": [
     {
       "sport_family": "womens_hockey",
       "league_id": "pwhl",
       "league_name": "Professional Women's Hockey League",
-      "team_rows": 12,
-      "source_rows": 39,
-      "logo_rows": 13,
-      "logo_intake_rows": 13,
-      "athlete_candidate_rows": 36,
-      "athlete_intake_rows": 36,
-      "athlete_team_boards": 12,
+      "team_rows": "12",
+      "source_rows": "39",
+      "logo_contact_rows": "13",
+      "logo_intake_rows": "13",
+      "athlete_candidate_rows": "36",
+      "athlete_intake_rows": "36",
+      "athlete_team_boards": "12",
       "foundation_source_urls": "data/asset_registry/womens_hockey/pwhl/source_urls.csv",
       "team_registry": "data/asset_registry/womens_hockey/pwhl/teams.csv",
       "asset_slot_registry": "data/asset_registry/womens_hockey/pwhl/asset_slots.csv",
@@ -43,13 +47,13 @@
       "sport_family": "softball",
       "league_id": "ausl",
       "league_name": "Athletes Unlimited Softball League",
-      "team_rows": 6,
-      "source_rows": 21,
-      "logo_rows": 7,
-      "logo_intake_rows": 7,
-      "athlete_candidate_rows": 18,
-      "athlete_intake_rows": 18,
-      "athlete_team_boards": 6,
+      "team_rows": "6",
+      "source_rows": "21",
+      "logo_contact_rows": "7",
+      "logo_intake_rows": "7",
+      "athlete_candidate_rows": "18",
+      "athlete_intake_rows": "18",
+      "athlete_team_boards": "6",
       "foundation_source_urls": "data/asset_registry/softball/ausl/source_urls.csv",
       "team_registry": "data/asset_registry/softball/ausl/teams.csv",
       "asset_slot_registry": "data/asset_registry/softball/ausl/asset_slots.csv",
@@ -66,15 +70,5 @@
       "next_operator_action": "Open the source URLs registry, then the logo and athlete contact sheets; record only manual source-review notes in intake CSVs and keep approval state held.",
       "guardrail_note": "review-only; no downloads; no auto-approval; no approval-state change; no headshot or .approved marker writes; no publish-ready movement"
     }
-  ],
-  "coverage_index": {
-    "status": "hockey_softball_foundation_coverage_index_ready",
-    "md": "data/asset_registry/hockey_softball_foundation_coverage_index.md",
-    "csv": "data/asset_registry/hockey_softball_foundation_coverage_index.csv",
-    "json": "data/asset_registry/hockey_softball_foundation_coverage_index.json",
-    "rows": 2,
-    "source_rows": 60,
-    "logo_contact_rows": 20,
-    "athlete_candidate_rows": 54
-  }
+  ]
 }
