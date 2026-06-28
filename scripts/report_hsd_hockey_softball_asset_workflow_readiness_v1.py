@@ -24,6 +24,11 @@ BATCH_SOURCE_REVIEW_JSON = Path("data/asset_registry/hockey_softball_batch_sourc
 NEXT_DECISION_WORKSHEET_MD = Path("data/asset_registry/hockey_softball_next_decision_worksheet.md")
 NEXT_DECISION_WORKSHEET_CSV = Path("data/asset_registry/hockey_softball_next_decision_worksheet.csv")
 NEXT_DECISION_WORKSHEET_JSON = Path("data/asset_registry/hockey_softball_next_decision_worksheet.json")
+QUARANTINE_DOWNLOAD_INTAKE_MD = Path("data/asset_registry/hockey_softball_quarantine_download_intake.md")
+QUARANTINE_DOWNLOAD_INTAKE_CSV = Path("data/asset_registry/hockey_softball_quarantine_download_intake.csv")
+QUARANTINE_DOWNLOAD_INTAKE_JSON = Path("data/asset_registry/hockey_softball_quarantine_download_intake.json")
+SANCTIONED_QUARANTINE_ROOT = Path("data/assets/quarantine/review_only_candidates")
+CANONICAL_DOWNLOAD_INTAKE_PATH = Path("operator/inbox/review_only_asset_download_intake.csv")
 
 ACTION_QUEUE_FIELDS = [
     "priority",
@@ -102,6 +107,48 @@ NEXT_DECISION_WORKSHEET_FIELDS = [
     "local_asset_present",
     "local_asset_needed_later",
     "do_not_touch",
+    "guardrail_note",
+]
+
+QUARANTINE_DOWNLOAD_INTAKE_FIELDS = [
+    "download_order",
+    "download_bucket",
+    "sport_family",
+    "sport_label",
+    "asset_domain",
+    "entity_id",
+    "display_name",
+    "candidate_id",
+    "source_url",
+    "source_review_status",
+    "identity_status",
+    "local_asset_present",
+    "download_approved",
+    "download_status",
+    "source_url_required_if_approved",
+    "entity_id_required_if_approved",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_source_url",
+    "operator_entity_id",
+    "operator_rights_class",
+    "operator_identity_confidence",
+    "operator_intended_review_only_use",
+    "operator_notes",
+    "reviewed_by",
+    "reviewed_at_local",
+    "quarantine_folder",
+    "proposed_quarantine_path",
+    "separate_approval_required",
+    "approval_status",
+    "review_only",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
     "guardrail_note",
 ]
 
@@ -196,6 +243,28 @@ def athlete_intake_key(row: Mapping[str, str]) -> tuple[str, str, str, str]:
 
 def bool_text(value: Any) -> str:
     return "yes" if is_truthy(value) else "no"
+
+
+def slug(value: Any) -> str:
+    text = re.sub(r"[^a-z0-9]+", "_", clean(value).lower()).strip("_")
+    return text or "operator_fill_required"
+
+
+def existing_quarantine_download_rows() -> list[Dict[str, str]]:
+    return read_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV)
+
+
+def quarantine_download_key(row: Mapping[str, str]) -> tuple[str, str, str, str]:
+    return (
+        clean(row.get("sport_family")),
+        clean(row.get("asset_domain")),
+        clean(row.get("entity_id")),
+        clean(row.get("candidate_id")),
+    )
+
+
+def existing_quarantine_download_by_key(rows: Iterable[Mapping[str, str]] | None = None) -> Dict[tuple[str, str, str, str], Mapping[str, str]]:
+    return {quarantine_download_key(row): row for row in (rows or existing_quarantine_download_rows())}
 
 
 def logo_action_rows(sport_key: str, sport: Mapping[str, Any], logo_rows: list[Dict[str, str]], logo_intake_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
@@ -403,6 +472,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Review action queue: `data/asset_registry/hockey_softball_asset_review_action_queue.md`",
         "- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`",
         "- Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`",
+        "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
         "",
@@ -426,6 +496,8 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Next decision worksheet rows: `{report['totals']['next_decision_worksheet_rows']}`",
         f"- Next decision logo rows: `{report['totals']['next_decision_logo_rows']}`",
         f"- Next decision athlete rows: `{report['totals']['next_decision_athlete_rows']}`",
+        f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
+        f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
         "## Sport Boards",
         "",
@@ -784,6 +856,130 @@ def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str
     return "\n".join(lines)
 
 
+def proposed_quarantine_path(row: Mapping[str, str]) -> str:
+    return (
+        SANCTIONED_QUARANTINE_ROOT
+        / clean(row.get("sport_family"))
+        / clean(row.get("asset_domain"))
+        / slug(row.get("entity_id"))
+        / f"{slug(row.get('candidate_id') or row.get('display_name'))}.png"
+    ).as_posix()
+
+
+def quarantine_download_bucket(row: Mapping[str, str]) -> str:
+    if clean(row.get("local_asset_present")).lower() == "yes":
+        return "local_asset_present_no_download_needed"
+    if clean(row.get("current_source_reviewed")).lower() == "yes":
+        return "source_reviewed_waiting_for_human_download_intake"
+    if clean(row.get("asset_domain")) == "athlete_photo":
+        return "source_only_athlete_needs_manual_source_review_first"
+    return "source_candidate_needs_manual_review_first"
+
+
+def quarantine_download_intake_rows(
+    action_rows: list[Dict[str, str]],
+    existing: Mapping[tuple[str, str, str, str], Mapping[str, str]] | None = None,
+) -> list[Dict[str, str]]:
+    existing = existing or existing_quarantine_download_by_key()
+    eligible_rows = [
+        row
+        for row in action_rows
+        if clean(row.get("source_url")) and clean(row.get("local_asset_present")).lower() != "yes"
+    ]
+    rows: list[Dict[str, str]] = []
+    for index, row in enumerate(eligible_rows, start=1):
+        prior = existing.get(quarantine_download_key(row), {})
+        download_approved = clean(prior.get("download_approved")) or "no"
+        download_status = "human_approved_future_quarantine_candidate_pending_separate_tool" if download_approved.lower() == "yes" else "not_requested"
+        rows.append(
+            {
+                "download_order": f"QD{index:02d}",
+                "download_bucket": quarantine_download_bucket(row),
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "asset_domain": clean(row.get("asset_domain")),
+                "entity_id": clean(row.get("entity_id")),
+                "display_name": clean(row.get("display_name")),
+                "candidate_id": clean(row.get("candidate_id")),
+                "source_url": clean(prior.get("source_url")) or clean(row.get("source_url")),
+                "source_review_status": clean(row.get("current_source_reviewed")) or "no",
+                "identity_status": clean(row.get("current_identity_status")) or "no",
+                "local_asset_present": clean(row.get("local_asset_present")) or "no",
+                "download_approved": download_approved,
+                "download_status": clean(prior.get("download_status")) or download_status,
+                "source_url_required_if_approved": clean(prior.get("source_url")) or clean(row.get("source_url")),
+                "entity_id_required_if_approved": clean(prior.get("entity_id_required_if_approved")) or clean(row.get("entity_id")),
+                "rights_class": clean(prior.get("rights_class")) or "operator_rights_review_required",
+                "identity_confidence": clean(prior.get("identity_confidence")) or "operator_fill_required",
+                "intended_review_only_use": clean(prior.get("intended_review_only_use")) or "review_only_quarantine_candidate_check_not_renderer_approval",
+                "operator_source_url": clean(prior.get("operator_source_url")),
+                "operator_entity_id": clean(prior.get("operator_entity_id")),
+                "operator_rights_class": clean(prior.get("operator_rights_class")),
+                "operator_identity_confidence": clean(prior.get("operator_identity_confidence")),
+                "operator_intended_review_only_use": clean(prior.get("operator_intended_review_only_use")),
+                "operator_notes": clean(prior.get("operator_notes")),
+                "reviewed_by": clean(prior.get("reviewed_by")),
+                "reviewed_at_local": clean(prior.get("reviewed_at_local")),
+                "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+                "proposed_quarantine_path": clean(prior.get("proposed_quarantine_path")) or proposed_quarantine_path(row),
+                "separate_approval_required": "true",
+                "approval_status": "not_approved",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+                "guardrail_note": "review-only future quarantine intake; generator does not download files or approve assets",
+            }
+        )
+    return rows
+
+
+def render_quarantine_download_intake(rows: list[Dict[str, str]], generated_at: str) -> str:
+    approved_yes = sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes")
+    bucket_counts = {bucket: sum(1 for row in rows if row["download_bucket"] == bucket) for bucket in sorted({row["download_bucket"] for row in rows})}
+    lines = [
+        "# Hockey/Softball Quarantine Download Intake",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only, human-edited intake for a future quarantine-only local asset candidate step. This generator does not download logos or athlete photos, write headshots, create `.approved` markers, approve identities, move files, publish, or create a publish-ready lane.",
+        "",
+        "A row is not eligible for any future quarantine download unless a human edits the CSV with `download_approved=yes`, source URL, entity ID, rights class, identity confidence, intended review-only use, and a separate approval step remains required after local review.",
+        "",
+        "## Summary",
+        "",
+        f"- Intake rows: `{len(rows)}`",
+        f"- Rows with download_approved=yes: `{approved_yes}`",
+        "- Default download_approved value: `no`",
+        f"- Quarantine folder only: `{SANCTIONED_QUARANTINE_ROOT.as_posix()}`",
+        f"- Download intake CSV: `{QUARANTINE_DOWNLOAD_INTAKE_CSV.as_posix()}`",
+        f"- Policy canonical intake template: `{CANONICAL_DOWNLOAD_INTAKE_PATH.as_posix()}`",
+        "",
+        "## Buckets",
+        "",
+    ]
+    if not bucket_counts:
+        lines.append("- No future quarantine candidates are currently listed.")
+    for bucket, count in bucket_counts.items():
+        lines.append(f"- {bucket}: `{count}`")
+    lines.extend(
+        [
+            "",
+            "## Operator Rules",
+            "",
+            "1. Do not download from this packet.",
+            "2. A future download tool may only consider human-edited rows where `download_approved=yes` and the required source, entity, rights, identity, and intended-use fields are complete.",
+            "3. Any future file must land under `data/assets/quarantine/review_only_candidates/` and still requires separate visual identity and asset approval review.",
+            "4. Keep `publish_ready`, `auto_approval`, `auto_publish`, `move_files`, `paid_apis`, and `asset_downloads` false in this generated intake.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def main() -> int:
     generated_at = generated_at_utc()
     summaries = [summarize_sport(sport_key, sport, generated_at) for sport_key, sport in SPORTS.items()]
@@ -827,11 +1023,21 @@ def main() -> int:
     next_decision_rows = next_decision_worksheet_rows(action_rows)
     next_decision_logo_rows = sum(1 for row in next_decision_rows if row["asset_domain"] == "logo")
     next_decision_athlete_rows = sum(1 for row in next_decision_rows if row["asset_domain"] == "athlete_photo")
+    quarantine_download_rows = quarantine_download_intake_rows(action_rows)
+    quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
+    quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
+    quarantine_download_athlete_rows = sum(1 for row in quarantine_download_rows if clean(row.get("asset_domain")) == "athlete_photo")
+    quarantine_download_logo_rows = sum(1 for row in quarantine_download_rows if clean(row.get("asset_domain")) == "logo")
     totals.update(
         {
             "next_decision_worksheet_rows": len(next_decision_rows),
             "next_decision_logo_rows": next_decision_logo_rows,
             "next_decision_athlete_rows": next_decision_athlete_rows,
+            "quarantine_download_intake_rows": len(quarantine_download_rows),
+            "quarantine_download_logo_rows": quarantine_download_logo_rows,
+            "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
+            "quarantine_download_source_reviewed_rows": quarantine_download_source_reviewed_rows,
+            "quarantine_download_approved_yes_rows": quarantine_download_approved_yes_rows,
         }
     )
     report = {
@@ -862,6 +1068,17 @@ def main() -> int:
             "rows": len(next_decision_rows),
             "logo_rows": next_decision_logo_rows,
             "athlete_rows": next_decision_athlete_rows,
+        },
+        "quarantine_download_intake": {
+            "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
+            "csv": QUARANTINE_DOWNLOAD_INTAKE_CSV.as_posix(),
+            "json": QUARANTINE_DOWNLOAD_INTAKE_JSON.as_posix(),
+            "rows": len(quarantine_download_rows),
+            "logo_rows": quarantine_download_logo_rows,
+            "athlete_rows": quarantine_download_athlete_rows,
+            "source_reviewed_rows": quarantine_download_source_reviewed_rows,
+            "download_approved_yes_rows": quarantine_download_approved_yes_rows,
+            "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
         },
     }
     action_payload = {
@@ -907,6 +1124,29 @@ def main() -> int:
         ],
         "worksheet_rows": next_decision_rows,
     }
+    quarantine_download_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_quarantine_download_intake_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(quarantine_download_rows),
+        "logo_rows": quarantine_download_logo_rows,
+        "athlete_rows": quarantine_download_athlete_rows,
+        "source_reviewed_rows": quarantine_download_source_reviewed_rows,
+        "download_approved_yes_rows": quarantine_download_approved_yes_rows,
+        "default_download_approved": "no",
+        "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+        "canonical_download_intake": CANONICAL_DOWNLOAD_INTAKE_PATH.as_posix(),
+        "required_human_fields_for_future_download": [
+            "download_approved=yes",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+        ],
+        "download_rows": quarantine_download_rows,
+    }
     write_csv(ACTION_QUEUE_CSV, action_rows, ACTION_QUEUE_FIELDS)
     write_json(ACTION_QUEUE_JSON, action_payload)
     write_text(ACTION_QUEUE_MD, render_action_queue(action_rows, generated_at))
@@ -916,6 +1156,9 @@ def main() -> int:
     write_csv(NEXT_DECISION_WORKSHEET_CSV, next_decision_rows, NEXT_DECISION_WORKSHEET_FIELDS)
     write_json(NEXT_DECISION_WORKSHEET_JSON, next_decision_payload)
     write_text(NEXT_DECISION_WORKSHEET_MD, render_next_decision_worksheet(next_decision_rows, generated_at))
+    write_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV, quarantine_download_rows, QUARANTINE_DOWNLOAD_INTAKE_FIELDS)
+    write_json(QUARANTINE_DOWNLOAD_INTAKE_JSON, quarantine_download_payload)
+    write_text(QUARANTINE_DOWNLOAD_INTAKE_MD, render_quarantine_download_intake(quarantine_download_rows, generated_at))
     write_json(REPORT_JSON, report)
     write_text(REPORT_MD, render_report(report))
     print(json.dumps({"status": report["status"], "workflow_rows": totals["workflow_rows"]}, indent=2))
