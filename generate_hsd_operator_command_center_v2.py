@@ -300,6 +300,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json",
     "data/asset_registry/hockey_softball_asset_foundation_report.md",
     "data/asset_registry/hockey_softball_asset_foundation_report.json",
+    "data/asset_registry/hockey_softball_foundation_coverage_index.md",
+    "data/asset_registry/hockey_softball_foundation_coverage_index.csv",
+    "data/asset_registry/hockey_softball_foundation_coverage_index.json",
     "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md",
     "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.png",
     "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.csv",
@@ -574,6 +577,9 @@ ARTIFACTS = [
     ("Graphics", "Women's soccer NWSL roster candidate fetch report", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md"),
     ("Graphics", "Women's soccer NWSL roster candidate fetch manifest", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json"),
     ("Graphics", "Hockey/softball asset foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md"),
+    ("Graphics", "Hockey/softball foundation coverage index", "data/asset_registry/hockey_softball_foundation_coverage_index.md"),
+    ("Graphics", "Hockey/softball foundation coverage index data", "data/asset_registry/hockey_softball_foundation_coverage_index.csv"),
+    ("Graphics", "Hockey/softball foundation coverage index manifest", "data/asset_registry/hockey_softball_foundation_coverage_index.json"),
     ("Graphics", "Women's hockey logo contact sheet", "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md"),
     ("Graphics", "Women's hockey logo review intake", "data/asset_registry/womens_hockey/womens_hockey_logo_review_intake.csv"),
     ("Graphics", "Women's hockey athlete photo contact sheets", "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"),
@@ -688,6 +694,9 @@ RUN_COMMANDS = {
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
     "data/asset_registry/hockey_softball_asset_foundation_report.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
+    "data/asset_registry/hockey_softball_foundation_coverage_index.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
+    "data/asset_registry/hockey_softball_foundation_coverage_index.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
+    "data/asset_registry/hockey_softball_foundation_coverage_index.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/womens_hockey/womens_hockey_logo_review_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
@@ -1426,11 +1435,18 @@ def logo_review_packet_rows(rows: Iterable[Dict[str, str]], *, limit: int = 8) -
 
 def packet_freshness_cue(path: str, rows: int, run_command: str, *, context: str) -> Dict[str, str]:
     exists = find_existing_input(path).exists()
-    if rows > 0:
+    if exists and rows > 0:
         return {
             "path": path,
             "status": "packet_ready",
             "detail": f"{context} packet is present with {rows} row(s).",
+            "run_command": run_command,
+        }
+    if rows > 0:
+        return {
+            "path": path,
+            "status": "packet_missing",
+            "detail": f"{context} packet has {rows} manifest row(s), but the clickable packet file is missing; rerun the packet generator.",
             "run_command": run_command,
         }
     if exists:
@@ -1530,6 +1546,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     softball_athlete_manifest = read_json("data/asset_registry/softball/softball_athlete_photo_contact_sheet_manifest.json")
     softball_athlete_rows = read_csv("data/asset_registry/softball/softball_athlete_photo_contact_sheet.csv")
     hockey_softball_helper_manifest = read_json("data/asset_registry/hockey_softball_source_review_helper_report.json")
+    hockey_softball_coverage_manifest = read_json("data/asset_registry/hockey_softball_foundation_coverage_index.json")
     hockey_softball_workflow_manifest = read_json("data/asset_registry/hockey_softball_asset_workflow_readiness_report.json")
     hockey_softball_action_queue_manifest = read_json("data/asset_registry/hockey_softball_asset_review_action_queue.json")
     hockey_softball_batch_source_review_manifest = read_json("data/asset_registry/hockey_softball_batch_source_review_helper.json")
@@ -1574,6 +1591,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         hockey_softball_helper_summary_rows(hockey_softball_helper_manifest),
         RUN_COMMANDS["data/asset_registry/hockey_softball_source_review_helper_report.md"],
         context="hockey/softball source review helper",
+    )
+    hockey_softball_coverage_rows = as_int(hockey_softball_coverage_manifest.get("rows")) if isinstance(hockey_softball_coverage_manifest, dict) else 0
+    hockey_softball_coverage_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_foundation_coverage_index.md",
+        hockey_softball_coverage_rows,
+        RUN_COMMANDS["data/asset_registry/hockey_softball_foundation_coverage_index.md"],
+        context="hockey/softball foundation coverage index",
     )
     hockey_softball_workflow_cue = packet_freshness_cue(
         "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md",
@@ -1683,6 +1707,12 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_athlete_operator_board_refresh_command": womens_soccer_athlete_operator_cue["run_command"],
         "hockey_softball_asset_foundation_status": clean(hockey_softball_manifest.get("status")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_asset_foundation_generated_at": clean(hockey_softball_manifest.get("generated_at_utc")) if isinstance(hockey_softball_manifest, dict) else "",
+        "hockey_softball_foundation_coverage_status": clean(hockey_softball_coverage_manifest.get("status")) if isinstance(hockey_softball_coverage_manifest, dict) else "",
+        "hockey_softball_foundation_coverage_generated_at": clean(hockey_softball_coverage_manifest.get("generated_at_utc")) if isinstance(hockey_softball_coverage_manifest, dict) else "",
+        "hockey_softball_foundation_coverage_rows": hockey_softball_coverage_rows,
+        "hockey_softball_foundation_coverage_source_rows": as_int(hockey_softball_coverage_manifest.get("source_rows")) if isinstance(hockey_softball_coverage_manifest, dict) else 0,
+        "hockey_softball_foundation_coverage_logo_contact_rows": as_int(hockey_softball_coverage_manifest.get("logo_contact_rows")) if isinstance(hockey_softball_coverage_manifest, dict) else 0,
+        "hockey_softball_foundation_coverage_athlete_candidate_rows": as_int(hockey_softball_coverage_manifest.get("athlete_candidate_rows")) if isinstance(hockey_softball_coverage_manifest, dict) else 0,
         "hockey_softball_source_review_helper_status": clean(hockey_softball_helper_manifest.get("status")) if isinstance(hockey_softball_helper_manifest, dict) else "",
         "hockey_softball_source_review_helper_generated_at": clean(hockey_softball_helper_manifest.get("generated_at_local")) if isinstance(hockey_softball_helper_manifest, dict) else "",
         "hockey_softball_asset_workflow_status": clean(hockey_softball_workflow_manifest.get("status")) if isinstance(hockey_softball_workflow_manifest, dict) else "",
@@ -1718,6 +1748,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_asset_foundation_freshness_status": hockey_softball_cue["status"],
         "hockey_softball_asset_foundation_freshness_detail": hockey_softball_cue["detail"],
         "hockey_softball_asset_foundation_refresh_command": hockey_softball_cue["run_command"],
+        "hockey_softball_foundation_coverage_freshness_status": hockey_softball_coverage_cue["status"],
+        "hockey_softball_foundation_coverage_freshness_detail": hockey_softball_coverage_cue["detail"],
+        "hockey_softball_foundation_coverage_refresh_command": hockey_softball_coverage_cue["run_command"],
         "hockey_softball_source_review_helper_freshness_status": hockey_softball_helper_cue["status"],
         "hockey_softball_source_review_helper_freshness_detail": hockey_softball_helper_cue["detail"],
         "hockey_softball_source_review_helper_refresh_command": hockey_softball_helper_cue["run_command"],
@@ -1760,6 +1793,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer athlete operator board manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json", "Freshness and guardrail metadata for the NWSL-first athlete operator board."),
             file_shortcut("Women's soccer athlete photo manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json", "Freshness, warning, and guardrail metadata for the athlete photo contact-sheet packet."),
             file_shortcut("Hockey/softball foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md", "Review PWHL and AUSL source-candidate scaffold counts and guardrails."),
+            file_shortcut("Hockey/softball foundation coverage index", "data/asset_registry/hockey_softball_foundation_coverage_index.md", "Open one compact index of source URL registries, contact sheets, intakes, athlete layers, and hold-only guardrails."),
+            file_shortcut("Hockey/softball foundation coverage manifest", "data/asset_registry/hockey_softball_foundation_coverage_index.json", "Structured counts and freshness data for the hockey/softball foundation coverage index."),
             file_shortcut("Hockey/softball source review helper report", "data/asset_registry/hockey_softball_source_review_helper_report.md", "Review batch source-review prep counts and safety notes for the hockey and softball packets."),
             file_shortcut("Hockey/softball asset workflow readiness", "data/asset_registry/hockey_softball_asset_workflow_readiness_report.md", "Open the logo/contact-sheet/intake review order and athlete candidate path clarity board."),
             file_shortcut("Hockey/softball asset review action queue", "data/asset_registry/hockey_softball_asset_review_action_queue.md", "Start here for exact board, contact sheet, intake CSV, fields to fill, fields to leave blank, and hold-only fields."),
@@ -8313,6 +8348,8 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer local files</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_local_candidate_files_present', 0)))}</strong></div>
             <div><span>Soccer athlete warnings</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_photo_contact_sheet_warning_count', 0)))}</strong></div>
             <div><span>Soccer operator board</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_operator_board_rows', 0)))}</strong></div>
+            <div><span>H/S coverage rows</span><strong>{html.escape(str(panel.get('hockey_softball_foundation_coverage_rows', 0)))}</strong></div>
+            <div><span>H/S source rows</span><strong>{html.escape(str(panel.get('hockey_softball_foundation_coverage_source_rows', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey athlete candidates</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)))}</strong></div>
             <div><span>Hockey source slots</span><strong>{html.escape(str(panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)))}</strong></div>
@@ -8337,6 +8374,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_athlete_photo_contact_sheet', "Women's soccer athlete photo contact sheets")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_operator_board', "Women's soccer athlete operator board")}
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
+          {packet_freshness_html(panel, 'hockey_softball_foundation_coverage', "Hockey/softball foundation coverage index")}
           {packet_freshness_html(panel, 'hockey_softball_source_review_helper', "Hockey/softball source review helper")}
           {packet_freshness_html(panel, 'hockey_softball_asset_workflow', "Hockey/softball asset workflow readiness")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_action_queue', "Hockey/softball asset review action queue")}
@@ -9903,6 +9941,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Softball workflow rows: {asset_panel.get('softball_asset_workflow_rows', 0)}",
         f"- Softball proposed headshot path refs: {asset_panel.get('softball_proposed_headshot_path_refs', 0)}",
         f"- Hockey/softball asset foundation generated: {asset_panel.get('hockey_softball_asset_foundation_generated_at') or 'missing'}",
+        f"- Hockey/softball foundation coverage rows: {asset_panel.get('hockey_softball_foundation_coverage_rows', 0)}",
+        f"- Hockey/softball foundation source rows: {asset_panel.get('hockey_softball_foundation_coverage_source_rows', 0)}",
+        f"- Hockey/softball foundation logo contact rows: {asset_panel.get('hockey_softball_foundation_coverage_logo_contact_rows', 0)}",
+        f"- Hockey/softball foundation athlete candidate rows: {asset_panel.get('hockey_softball_foundation_coverage_athlete_candidate_rows', 0)}",
+        f"- Hockey/softball foundation coverage generated: {asset_panel.get('hockey_softball_foundation_coverage_generated_at') or 'missing'}",
         f"- Hockey/softball source review helper generated: {asset_panel.get('hockey_softball_source_review_helper_generated_at') or 'missing'}",
         f"- Hockey/softball asset workflow generated: {asset_panel.get('hockey_softball_asset_workflow_generated_at') or 'missing'}",
         f"- Hockey/softball asset review action queue rows: {asset_panel.get('hockey_softball_asset_review_action_queue_rows', 0)}",
@@ -9969,6 +10012,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_asset_foundation_refresh_command"),
             },
             "Hockey/softball asset foundation",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_foundation_coverage_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_foundation_coverage_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_foundation_coverage_refresh_command"),
+            },
+            "Hockey/softball foundation coverage index",
         ),
         packet_freshness_markdown(
             {
