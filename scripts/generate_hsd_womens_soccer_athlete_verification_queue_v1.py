@@ -35,6 +35,9 @@ OUT_REVIEW_TRIAGE_JSON = output_path(ROOT / "womens_soccer_athlete_review_triage
 OUT_CANDIDATE_ACTIONS_MD = output_path(ROOT / "womens_soccer_athlete_candidate_next_action_board.md")
 OUT_CANDIDATE_ACTIONS_CSV = output_path(ROOT / "womens_soccer_athlete_candidate_next_action_board.csv")
 OUT_CANDIDATE_ACTIONS_JSON = output_path(ROOT / "womens_soccer_athlete_candidate_next_action_board.json")
+OUT_PHOTO_READINESS_MD = output_path(ROOT / "womens_soccer_athlete_photo_review_readiness_board.md")
+OUT_PHOTO_READINESS_CSV = output_path(ROOT / "womens_soccer_athlete_photo_review_readiness_board.csv")
+OUT_PHOTO_READINESS_JSON = output_path(ROOT / "womens_soccer_athlete_photo_review_readiness_board.json")
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -250,6 +253,52 @@ CANDIDATE_ACTION_FIELDS = [
     "candidate_entity_id",
     "linked_queue_bucket",
     "render_readiness",
+    "next_manual_action",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+PHOTO_READINESS_FIELDS = [
+    "photo_readiness_rank",
+    "photo_review_readiness_bucket",
+    "manual_action_group",
+    "source_tier",
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_name",
+    "operator_verify_required",
+    "source_domain",
+    "source_candidate_url",
+    "candidate_action_row_ref",
+    "candidate_action_file",
+    "source_priority_row_ref",
+    "source_priority_file",
+    "triage_row_ref",
+    "triage_file",
+    "candidate_entity_id",
+    "linked_queue_bucket",
+    "render_readiness",
+    "photo_asset_blocker",
+    "future_download_intake_status",
     "next_manual_action",
     "download_approved",
     "source_url",
@@ -1323,6 +1372,161 @@ def render_candidate_actions(rows: List[Mapping[str, str]], generated_at: str) -
     return "\n".join(lines) + "\n"
 
 
+def photo_readiness_bucket(row: Mapping[str, str]) -> str:
+    group = clean(row.get("manual_action_group"))
+    if group == "gray_area_reputable_media_lead":
+        return "park_gray_area_lead_no_photo_use"
+    if group == "duplicate_transfer_check":
+        return "resolve_duplicate_transfer_before_photo_review"
+    if group == "official_page_missing_or_season_rollover_verify":
+        return "verify_official_page_before_photo_review"
+    if group == "future_quarantine_download_intake_prep":
+        return "future_quarantine_download_intake_prep"
+    if group == "roster_source_verify" and clean(row.get("scope_id")) == "nwsl":
+        return "nwsl_roster_verify_before_photo_review"
+    if clean(row.get("scope_id")) == "europe_top_flight":
+        return "europe_source_candidate_not_render_ready"
+    return "source_candidate_review_before_photo_review"
+
+
+def photo_asset_blocker(row: Mapping[str, str]) -> str:
+    if clean(row.get("render_readiness")) == "not_render_ready_source_candidate_only":
+        return "missing_local_candidate_or_human_intake_required"
+    return clean(row.get("render_readiness")) or "manual_review_required"
+
+
+def photo_readiness_next_action(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "park_gray_area_lead_no_photo_use":
+        return "Keep as research-only lead; require official roster or identity confirmation before any photo-review intake."
+    if bucket == "resolve_duplicate_transfer_before_photo_review":
+        return "Resolve duplicate, transfer, loan, stale, or short-term status against official sources before photo review."
+    if bucket == "verify_official_page_before_photo_review":
+        return "Verify the official roster/profile page or season-rollover URL before preparing manual photo-review intake."
+    if bucket == "future_quarantine_download_intake_prep":
+        return "Prepare future human-edited quarantine-download intake only; generated row does not authorize any download."
+    if bucket == "nwsl_roster_verify_before_photo_review":
+        return "Open official NWSL/team source, verify player/team identity, then create human photo-review intake if needed."
+    if bucket == "europe_source_candidate_not_render_ready":
+        return "Keep Europe row source-candidate-only until roster/source verification and local candidate intake are complete."
+    return "Review source metadata and identity only; do not download, approve, or treat as render-ready."
+
+
+def photo_readiness_rows(candidate_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    output: List[Dict[str, str]] = []
+    for row in candidate_rows:
+        bucket = photo_readiness_bucket(row)
+        output.append(
+            {
+                "photo_readiness_rank": "0",
+                "photo_review_readiness_bucket": bucket,
+                "manual_action_group": clean(row.get("manual_action_group")),
+                "source_tier": clean(row.get("source_tier")),
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "player_name": clean(row.get("player_name")),
+                "operator_verify_required": clean(row.get("operator_verify_required")),
+                "source_domain": clean(row.get("source_domain")),
+                "source_candidate_url": clean(row.get("source_candidate_url")),
+                "candidate_action_row_ref": f"{OUT_CANDIDATE_ACTIONS_CSV.as_posix()}#row={clean(row.get('candidate_action_rank'))}",
+                "candidate_action_file": OUT_CANDIDATE_ACTIONS_CSV.as_posix(),
+                "source_priority_row_ref": clean(row.get("source_priority_row_ref")),
+                "source_priority_file": clean(row.get("source_priority_file")),
+                "triage_row_ref": clean(row.get("triage_row_ref")),
+                "triage_file": clean(row.get("triage_file")),
+                "candidate_entity_id": clean(row.get("candidate_entity_id")),
+                "linked_queue_bucket": clean(row.get("linked_queue_bucket")),
+                "render_readiness": clean(row.get("render_readiness")),
+                "photo_asset_blocker": photo_asset_blocker(row),
+                "future_download_intake_status": "human_edited_intake_required_no_generated_authorization",
+                "next_manual_action": photo_readiness_next_action(row, bucket),
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                **guardrails(),
+            }
+        )
+    priority = {
+        "nwsl_roster_verify_before_photo_review": 10,
+        "resolve_duplicate_transfer_before_photo_review": 20,
+        "verify_official_page_before_photo_review": 30,
+        "park_gray_area_lead_no_photo_use": 40,
+        "future_quarantine_download_intake_prep": 50,
+        "europe_source_candidate_not_render_ready": 60,
+        "source_candidate_review_before_photo_review": 70,
+    }
+    output.sort(
+        key=lambda item: (
+            priority.get(item["photo_review_readiness_bucket"], 999),
+            LEAGUE_ORDER.get(item["league_id"], 999),
+            clean(item.get("team_name")),
+            clean(item.get("player_name")),
+            clean(item.get("source_candidate_url")),
+        )
+    )
+    for index, row in enumerate(output, start=1):
+        row["photo_readiness_rank"] = str(index)
+    return output
+
+
+def render_photo_readiness(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    bucket_counts = count_by(rows, "photo_review_readiness_bucket")
+    lines = [
+        "# Women's Soccer Athlete Photo Review Readiness Board",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only board for deciding what must happen before a source-candidate row can become manual photo-review work. It does not download images, approve assets, write headshots, create `.approved` markers, move files, or publish.",
+        "`source_candidate_url` remains advisory metadata. Generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.",
+        "",
+        "## Summary",
+        "",
+        f"- Photo readiness rows: `{len(rows)}`",
+        f"- NWSL rows: `{sum(1 for row in rows if clean(row.get('scope_id')) == 'nwsl')}`",
+        f"- Europe rows: `{sum(1 for row in rows if clean(row.get('scope_id')) == 'europe_top_flight')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Readiness Buckets",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in bucket_counts.items())
+    lines += [
+        "",
+        "## Safe Operator Path",
+        "",
+        "- Verify official roster/team/player identity before any photo-review intake.",
+        "- Park gray-area, reputable-media, Getty/AP/Reuters/licensed/news/photo leads as research-only leads unless official confirmation exists.",
+        "- Future quarantine-download intake requires a later human-edited row; generated rows do not authorize download or approval.",
+        "",
+        "## Board Preview",
+        "",
+        "| Rank | Readiness Bucket | League | Team | Player | Source | Candidate Row | Source Row | Next Manual Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows[:40]:
+        lines.append(
+            "| {rank} | {bucket} | {league} | {team} | {player} | {domain} | {candidate_ref} | {source_ref} | {action} |".format(
+                rank=clean(row.get("photo_readiness_rank")),
+                bucket=clean(row.get("photo_review_readiness_bucket")),
+                league=clean(row.get("league_id")),
+                team=clean(row.get("team_name")).replace("|", "/"),
+                player=clean(row.get("player_name")).replace("|", "/"),
+                domain=clean(row.get("source_domain")).replace("|", "/"),
+                candidate_ref=clean(row.get("candidate_action_row_ref")).replace("|", "%7C"),
+                source_ref=clean(row.get("source_priority_row_ref")).replace("|", "%7C"),
+                action=clean(row.get("next_manual_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = now_iso()
     rows = build_queue()
@@ -1332,6 +1536,7 @@ def main() -> int:
     source_rows = source_priority_rows(rows, external_rows)
     triage_rows = review_triage_rows(rows, source_rows)
     candidate_rows = candidate_action_rows(source_rows, triage_rows)
+    photo_readiness = photo_readiness_rows(candidate_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, generated_at))
     write_csv(OUT_NEXT_ACTIONS_CSV, action_rows, NEXT_ACTION_FIELDS)
@@ -1342,6 +1547,8 @@ def main() -> int:
     write_text(OUT_REVIEW_TRIAGE_MD, render_review_triage(triage_rows, generated_at))
     write_csv(OUT_CANDIDATE_ACTIONS_CSV, candidate_rows, CANDIDATE_ACTION_FIELDS)
     write_text(OUT_CANDIDATE_ACTIONS_MD, render_candidate_actions(candidate_rows, generated_at))
+    write_csv(OUT_PHOTO_READINESS_CSV, photo_readiness, PHOTO_READINESS_FIELDS)
+    write_text(OUT_PHOTO_READINESS_MD, render_photo_readiness(photo_readiness, generated_at))
     manifest = {
         "version": VERSION,
         "status": "athlete_verification_queue_ready",
@@ -1382,6 +1589,12 @@ def main() -> int:
         "candidate_next_action_download_approved_yes_rows": sum(1 for row in candidate_rows if clean(row.get("download_approved")).lower() == "yes"),
         "candidate_next_action_blank_source_url_rows": sum(1 for row in candidate_rows if not clean(row.get("source_url"))),
         "candidate_next_action_manual_action_counts": count_by(candidate_rows, "manual_action_group"),
+        "photo_review_readiness_md": OUT_PHOTO_READINESS_MD.as_posix(),
+        "photo_review_readiness_csv": OUT_PHOTO_READINESS_CSV.as_posix(),
+        "photo_review_readiness_rows": len(photo_readiness),
+        "photo_review_readiness_download_approved_yes_rows": sum(1 for row in photo_readiness if clean(row.get("download_approved")).lower() == "yes"),
+        "photo_review_readiness_blank_source_url_rows": sum(1 for row in photo_readiness if not clean(row.get("source_url"))),
+        "photo_review_readiness_bucket_counts": count_by(photo_readiness, "photo_review_readiness_bucket"),
         "inputs": [CONTACT_CSV.as_posix(), OPERATOR_BOARD_CSV.as_posix(), DOWNLOAD_INTAKE_CSV.as_posix(), EXTERNAL_RESEARCH_CSV.as_posix()],
         "review_only": True,
         "approval_state_change": False,
@@ -1510,7 +1723,35 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "queue": OUT_MD.as_posix()}, indent=2))
+    write_json(
+        OUT_PHOTO_READINESS_JSON,
+        {
+            "version": VERSION,
+            "status": "athlete_photo_review_readiness_ready",
+            "generated_at_utc": generated_at,
+            "photo_readiness_rows": len(photo_readiness),
+            "nwsl_rows": sum(1 for row in photo_readiness if clean(row.get("scope_id")) == "nwsl"),
+            "europe_rows": sum(1 for row in photo_readiness if clean(row.get("scope_id")) == "europe_top_flight"),
+            "download_approved_yes_rows": sum(1 for row in photo_readiness if clean(row.get("download_approved")).lower() == "yes"),
+            "blank_source_url_rows": sum(1 for row in photo_readiness if not clean(row.get("source_url"))),
+            "blank_entity_id_rows": sum(1 for row in photo_readiness if not clean(row.get("entity_id"))),
+            "readiness_bucket_counts": count_by(photo_readiness, "photo_review_readiness_bucket"),
+            "worksheet_md": OUT_PHOTO_READINESS_MD.as_posix(),
+            "worksheet_csv": OUT_PHOTO_READINESS_CSV.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "photo_readiness_rows": len(photo_readiness), "queue": OUT_MD.as_posix()}, indent=2))
     return 0
 
 

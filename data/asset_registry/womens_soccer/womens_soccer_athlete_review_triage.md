@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Review Triage
 
-Generated: `2026-06-28T14:35:58.306489+00:00`
+Generated: `2026-06-28T16:09:52.677745+00:00`
 
 Review-only operator triage worksheet built from the verification queue and source-priority rows. Advisory source candidates remain in `advisory_source_candidate_urls`; generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.
 
