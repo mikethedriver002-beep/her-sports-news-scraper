@@ -3495,6 +3495,66 @@ def stat_source_fields(top_performers: str) -> Dict[str, str]:
     }
 
 
+def breaking_cluster_player_angle_signal(
+    *,
+    title: str,
+    candidate_id: str,
+    payload: Dict[str, Any],
+) -> Dict[str, str]:
+    title = clean(title)
+    candidate_id = clean(candidate_id)
+    for cluster in payload.get("breaking_public_signal_clusters", []):
+        examples = clean(cluster.get("named_player_stat_proof_examples"))
+        if not examples:
+            continue
+        proof_sources = first_present(
+            cluster.get("score_stat_proof_source_urls"),
+            cluster.get("matching_official_evidence_urls"),
+        )
+        if not proof_sources:
+            continue
+        proof_status = clean(cluster.get("score_stat_proof_status"))
+        review_status = clean(cluster.get("score_stat_review_order_status"))
+        first_review_target = clean(cluster.get("first_score_stat_review_order_target"))
+        proof_artifact_ready = (
+            find_existing_input("final_score_stat_proof_v1.csv").exists()
+            or "final_score_stat_proof_v1.csv proof_id=" in clean(cluster.get("score_stat_proof_artifacts"))
+        )
+        review_order_ready = (
+            find_existing_input("final_score_stat_proof_review_order_v1.csv").exists()
+            or (
+                review_status == "review_order_rows_present_operator_follow_walkthrough"
+                and bool(first_review_target)
+            )
+        )
+        if not proof_artifact_ready or not review_order_ready:
+            continue
+        cluster_candidate_ids = {clean(value) for value in clean(cluster.get("candidate_ids")).split(";") if clean(value)}
+        title_matches = clean(cluster.get("cluster_headline")) == title
+        candidate_matches = candidate_id and candidate_id in cluster_candidate_ids
+        if not title_matches and not candidate_matches:
+            continue
+        walkthrough = clean(cluster.get("score_stat_review_walkthrough_target"))
+        proof_text = examples.replace(" | ", "; ")
+        return {
+            "top_performers": proof_text,
+            "stat_module_status": "named_player_stat_proof_text_available",
+            "stat_source_confidence": "cluster_named_player_proof_ready_manual_crosscheck_required",
+            "stat_source_label": "Named-player proof from breaking/public-signal cluster",
+            "stat_review_cue": (
+                "Player-led render angle is available from breaking_public_signal_clusters.csv; "
+                f"status={proof_status or 'review'}; review_order={review_status or 'missing'}; "
+                f"open {walkthrough or 'final_score_stat_proof_review_walkthrough_v1.md'}"
+                f"{' and start at ' + first_review_target if first_review_target else ''} before approval."
+            ),
+            "source_detail": (
+                "Named-player stat proof surfaced from breaking_public_signal_clusters.csv; "
+                "manual source and intake confirmation still required before editorial or render approval."
+            ),
+        }
+    return {}
+
+
 def final_score_template_fit() -> Dict[str, str]:
     return {
         "template_fit": "hsd_game_recap_final_score_review",
@@ -3547,8 +3607,13 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
     title = clean(row.get("title"))
     for packet in payload.get("news_fact_packets", []):
         if clean(packet.get("headline")) == title:
-            top_performers = clean(packet.get("top_performers"))
-            stat_fields = stat_source_fields(top_performers)
+            cluster_angle = breaking_cluster_player_angle_signal(
+                title=title,
+                candidate_id=packet.get("candidate_id", ""),
+                payload=payload,
+            )
+            top_performers = clean(packet.get("top_performers")) or clean(cluster_angle.get("top_performers"))
+            stat_fields = cluster_angle if clean(cluster_angle.get("top_performers")) and not clean(packet.get("top_performers")) else stat_source_fields(top_performers)
             return {
                 "copy_headline": title,
                 "copy_dek": clean(packet.get("caption_hard_fact")) or clean(packet.get("dek")),
@@ -3557,14 +3622,23 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                     f"{clean(packet.get('source_publish_grade')) or clean(packet.get('source_confidence_tier')) or 'not_scored'}"
                     f"{' score ' + clean(packet.get('source_confidence_score')) if clean(packet.get('source_confidence_score')) else ''}."
                 ),
-                "source_detail": clean(packet.get("source_confidence_reason")) or clean(packet.get("rights_safe_note")),
+                "source_detail": first_present(
+                    cluster_angle.get("source_detail"),
+                    packet.get("source_confidence_reason"),
+                    packet.get("rights_safe_note"),
+                ),
                 "top_performers": top_performers,
                 **stat_fields,
             }
     for candidate in payload.get("content_candidates", []):
         if clean(candidate.get("headline")) == title:
-            top_performers = clean(candidate.get("top_performers"))
-            stat_fields = stat_source_fields(top_performers)
+            cluster_angle = breaking_cluster_player_angle_signal(
+                title=title,
+                candidate_id=candidate.get("candidate_id", ""),
+                payload=payload,
+            )
+            top_performers = clean(candidate.get("top_performers")) or clean(cluster_angle.get("top_performers"))
+            stat_fields = cluster_angle if clean(cluster_angle.get("top_performers")) and not clean(candidate.get("top_performers")) else stat_source_fields(top_performers)
             return {
                 "copy_headline": title,
                 "copy_dek": clean(candidate.get("detail")),
@@ -3573,7 +3647,7 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                     f"{clean(candidate.get('source_grade')) or 'not_scored'}"
                     f"{' score ' + clean(candidate.get('source_score')) if clean(candidate.get('source_score')) else ''}."
                 ),
-                "source_detail": clean(candidate.get("source_reason")),
+                "source_detail": first_present(cluster_angle.get("source_detail"), candidate.get("source_reason")),
                 "top_performers": top_performers,
                 **stat_fields,
             }
@@ -3592,6 +3666,13 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
             }
     for lead in payload.get("source_discovery_board", []):
         if clean(lead.get("title")) == title:
+            cluster_angle = breaking_cluster_player_angle_signal(
+                title=title,
+                candidate_id=lead.get("story_opportunity_id", ""),
+                payload=payload,
+            )
+            top_performers = clean(cluster_angle.get("top_performers"))
+            stat_fields = cluster_angle if top_performers else stat_source_fields("")
             return {
                 "copy_headline": title,
                 "copy_dek": clean(lead.get("detail")),
@@ -3599,9 +3680,9 @@ def enrich_render_row(row: Dict[str, str], payload: Dict[str, Any]) -> Dict[str,
                     f"Discovery lane: {clean(lead.get('lane')) or 'review'}; "
                     f"posture: {clean(lead.get('posture')) or 'review'}."
                 ),
-                "source_detail": clean(lead.get("story_opportunity_reason")),
-                "top_performers": "",
-                **stat_source_fields(""),
+                "source_detail": first_present(cluster_angle.get("source_detail"), lead.get("story_opportunity_reason")),
+                "top_performers": top_performers,
+                **stat_fields,
             }
     return {"copy_headline": title, "copy_dek": "", "copy_context": "", "source_detail": "", "top_performers": "", **stat_source_fields("")}
 
@@ -6286,6 +6367,7 @@ def build_payload() -> Dict[str, Any]:
     artifacts = artifact_entries()
     candidates = content_candidates()
     news_packets = read_csv("news_fact_packets.csv")
+    breaking_clusters = read_csv("breaking_public_signal_clusters.csv")
     source_board = source_discovery_board()
     promotions = lead_promotion_recommendations()
     studio = studio_queue()
@@ -6298,6 +6380,7 @@ def build_payload() -> Dict[str, Any]:
             "source_discovery_board": source_board,
             "render_readiness_queue": render_queue,
             "news_fact_packets": news_packets,
+            "breaking_public_signal_clusters": breaking_clusters,
         }
     )
     attach_render_prep_active_cues(render_queue, render_prep_packets)
@@ -6562,6 +6645,7 @@ def build_payload() -> Dict[str, Any]:
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
         "athlete_photo_onboarding_panel": athlete_photo_panel,
+        "breaking_public_signal_clusters": breaking_clusters,
         "source_discovery_board": source_board,
         "lead_promotion_recommendations": promotions,
         "source_coverage_map": coverage_map,
