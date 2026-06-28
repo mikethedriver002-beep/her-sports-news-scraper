@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.44.0-photo-first-lower-stage-integrated"
+VERSION = "hsd-manual-review-renderer-v1.45.0-photo-first-editorial-stage-v2"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v18_photo_first_lower_stage_integrated"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v19_photo_first_editorial_stage_v2"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -61,6 +61,7 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_athlete_visual_cap,photo_first_editorial_score_rails,"
     "photo_first_subtle_logo_identifiers,compact_square_photo_footer,"
     "photo_first_integrated_stat_band,photo_first_context_stage_bridge,"
+    "photo_first_open_score_lockup,photo_first_soft_athlete_stage,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -1171,16 +1172,16 @@ def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
 def draw_reference_guardrail(image: Any, *, compact_footer: bool = False) -> None:
     width, height = image.size
     draw = ImageDraw.Draw(image, "RGBA")
-    pill_w = min(250, width - 790)
+    pill_w = min(210, width - 820)
     if pill_w > 180:
         marker_type = photo_first_type_spec("review_marker")
-        draw.rounded_rectangle((width - pill_w - 50, 76, width - 50, 116), radius=8, fill=(190, 39, 54, 218), outline=(241, 238, 229, 150), width=1)
+        draw.rounded_rectangle((width - pill_w - 50, 82, width - 50, 114), radius=7, fill=(190, 39, 54, 196), outline=(241, 238, 229, 108), width=1)
         draw_reference_text(
             image,
-            (width - pill_w - 38, 81, pill_w - 24, 29),
+            (width - pill_w - 38, 86, pill_w - 24, 23),
             "Review Draft Only",
             marker_type["font"],
-            marker_type["resolved_size"],
+            min(marker_type["resolved_size"], 17),
             marker_type["resolved_min"],
             PALETTE["ink"],
             max_lines=1,
@@ -2859,14 +2860,14 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    draw.rounded_rectangle((x + 18, y + 26, x + w + 10, y + h + 18), radius=34, fill=(0, 0, 0, 58))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 82), outline=(*accent, 94), width=1)
-    draw.rectangle((x, y + 42, x + 5, y + h - 34), fill=(*accent, 108))
+    draw.rounded_rectangle((x + 16, y + 30, x + w + 10, y + h + 16), radius=34, fill=(0, 0, 0, 34))
+    draw.rounded_rectangle((x - 2, y + 8, x + w + 6, y + h - 4), radius=30, fill=(2, 4, 9, 42), outline=(*accent, 38), width=1)
+    draw.rectangle((x - 1, y + 62, x + 3, y + h - 48), fill=(*accent, 84))
     draw.polygon([(x + 18, y + h - 172), (x + w - 4, y + h - 322), (x + w - 4, y + h - 10), (x + 18, y + h - 10)], fill=(*accent, 38))
     draw.polygon([(x + 30, y + 86), (x + w - 4, y + 10), (x + w - 6, y + 128), (x + 30, y + 190)], fill=(255, 255, 255, 10))
     draw.polygon([(x + 24, y + 24), (x + w - 18, y + 24), (x + w - 92, y + 54), (x + 44, y + 62)], fill=(*PALETTE["gold"], 20))
-    draw.line((x + 26, y + 28, x + w - 24, y + 28), fill=(*accent, 78), width=1)
-    draw.line((x + 28, y + h - 70, x + w - 26, y + h - 70), fill=(*accent, 48), width=1)
+    draw.line((x + 36, y + 32, x + w - 38, y + 24), fill=(*accent, 42), width=1)
+    draw.line((x + 40, y + h - 70, x + w - 48, y + h - 74), fill=(*accent, 34), width=1)
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
     glow_draw.ellipse((x - 126, y - 38, x + w + 138, y + h + 132), fill=(*accent, 78))
@@ -2882,20 +2883,18 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     stage_photo.alpha_composite(photo, (photo_x, photo_y))
     stage_mask = Image.new("L", image.size, 0)
     mask_draw = ImageDraw.Draw(stage_mask)
-    mask_draw.rounded_rectangle((x + 3, y + 22, x + w - 3, y + h - 8), radius=20, fill=255)
+    mask_draw.rounded_rectangle((x + 7, y + 24, x + w - 7, y + h - 10), radius=22, fill=255)
     layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
-    draw.rounded_rectangle((x + 3, y + 22, x + w - 3, y + h - 8), radius=20, outline=(248, 250, 255, 16), width=1)
-    draw.line((x + 8, y + 40, x + 8, y + h - 28), fill=(*accent, 86), width=1)
-    draw.line((x + 14, y + 58, x + 14, y + h - 48), fill=(*accent, 218), width=2)
+    draw.line((x + 10, y + 52, x + 10, y + h - 42), fill=(*accent, 62), width=1)
+    draw.line((x + 16, y + 74, x + 16, y + h - 62), fill=(*accent, 170), width=2)
     draw.arc((x - 42, y + 20, x + w + 50, y + h + 82), start=196, end=304, fill=(*PALETTE["gold"], 96), width=2)
     draw.arc((x - 22, y + 44, x + w + 28, y + h + 48), start=206, end=292, fill=(248, 250, 255, 26), width=1)
-    draw.line((x + w - 22, y + 58, x + w - 22, y + h - 106), fill=(*PALETTE["gold"], 82), width=1)
+    draw.line((x + w - 22, y + 72, x + w - 22, y + h - 124), fill=(*PALETTE["gold"], 58), width=1)
     draw.line((x + 20, y + 54, x + min(x + 152, x + w - 34), y + 42), fill=(248, 250, 255, 32), width=1)
-    draw.line((x + max(170, int(w * 0.46)), y + h - 88, x + w - 28, y + h - 88), fill=(*PALETTE["gold"], 54), width=1)
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 122), width=1)
+    draw.line((x + max(170, int(w * 0.46)), y + h - 88, x + w - 28, y + h - 88), fill=(*PALETTE["gold"], 42), width=1)
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
-    draw_reference_text(image, (x + 34, y + 36, w - 68, 42), player, "context", 27, 15, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
+    draw_reference_text(image, (x + 34, y + 42, w - 72, 32), player, "context", 21, 13, (230, 236, 246), max_lines=1, align="left", uppercase=False)
     return True
 
 
@@ -2915,19 +2914,18 @@ def draw_photo_first_score_row(
     draw = ImageDraw.Draw(image, "RGBA")
     rail_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(rail_shadow, "RGBA")
-    shadow_draw.rounded_rectangle((x + 8, y + 10, x + w + 8, y + h + 10), radius=22, fill=(0, 0, 0, 54))
+    shadow_draw.rounded_rectangle((x + 8, y + 10, x + w + 8, y + h + 10), radius=24, fill=(0, 0, 0, 34))
     if ImageFilter is not None:
-        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(9))
+        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(11))
     image.alpha_composite(rail_shadow)
-    draw.rounded_rectangle((x, y + 2, x + w, y + h - 2), radius=20, fill=(2, 4, 9, 104 if winner else 92), outline=(*accent, 68 if winner else 52), width=1)
-    draw.rectangle((x + 1, y + 6, x + 8, y + h - 6), fill=(*accent, 132 if winner else 104))
-    draw.line((x + 24, y + h - 24, x + w - 32, y + h - 24), fill=(*accent, 70 if winner else 52), width=2)
-    draw.line((x + 24, y + h - 17, x + w - 32, y + h - 17), fill=(248, 250, 255, 16), width=1)
+    draw.rounded_rectangle((x, y + 8, x + w, y + h - 8), radius=22, fill=(2, 4, 9, 72 if winner else 60))
+    draw.rectangle((x + 1, y + 14, x + 6, y + h - 14), fill=(*accent, 118 if winner else 92))
+    draw.line((x + 30, y + h - 30, x + w - 36, y + h - 30), fill=(*accent, 54 if winner else 42), width=2)
     label = "WINNER" if winner else "FINAL"
     label_w = 92 if winner else 70
     label_h = 22 if not compact else 18
     label_y = y + (17 if not compact else 15)
-    draw.line((x + 28, label_y - 3, x + 28 + label_w, label_y - 3), fill=(*accent, 128), width=2)
+    draw.line((x + 28, label_y - 3, x + 28 + label_w, label_y - 3), fill=(*accent, 104), width=2)
     label_color = PALETTE["ink"] if winner else (222, 228, 238)
     label_type = photo_first_type_spec("chip_label", compact=compact)
     draw_reference_text(
@@ -2961,13 +2959,18 @@ def draw_photo_first_score_row(
     )
 
     sx, sy, sw, sh = score_box
-    slab_fill = mix_rgb((4, 7, 14), accent, 0.08 if winner else 0.05)
-    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=12, fill=(*slab_fill, 104 if winner else 92), outline=(*accent, 74 if winner else 56), width=1)
-    draw.rectangle((sx + 5, sy + 12, sx + 8, sy + sh - 12), fill=(*accent, 142))
-    draw.line((sx + 18, sy + sh - 13, sx + sw - 10, sy + sh - 13), fill=(*accent, 90), width=2)
+    score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(score_glow, "RGBA")
+    glow_draw.rounded_rectangle((sx - 12, sy - 10, sx + sw + 12, sy + sh + 10), radius=18, fill=(*accent, 34 if winner else 28))
+    if ImageFilter is not None:
+        score_glow = score_glow.filter(ImageFilter.GaussianBlur(10))
+    image.alpha_composite(score_glow)
+    draw.line((sx + 7, sy + 10, sx + 7, sy + sh - 10), fill=(*accent, 132), width=4)
+    draw.line((sx + 20, sy + sh - 10, sx + sw - 12, sy + sh - 10), fill=(*accent, 66), width=2)
+    draw.line((sx + 24, sy + 8, sx + sw - 18, sy + 8), fill=(248, 250, 255, 220), width=3)
     cell = photo_first_score_digit_cell_box(score_box)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
-    score_size = min(score_type["resolved_size"], max(58, int((cell[2] - cell[0]) * 0.82)), max(58, int((cell[3] - cell[1]) * 0.90)))
+    score_size = min(score_type["resolved_size"] + 4, max(58, int((cell[2] - cell[0]) * 0.90)), max(58, int((cell[3] - cell[1]) * 0.98)))
     min_score_size = score_type["resolved_min"]
     draw_reference_text(
         image,
@@ -2999,9 +3002,9 @@ def draw_photo_first_score_context_rail(
     if ImageFilter is not None:
         shadow = shadow.filter(ImageFilter.GaussianBlur(5))
     image.alpha_composite(shadow)
-    draw.rounded_rectangle((x, y + 2, x + w, y + h - 2), radius=13, fill=(2, 4, 9, 132), outline=(*primary, 72), width=1)
-    draw.line((x + 2, y + 12, x + 2, y + h - 12), fill=(*primary, 136), width=4)
-    draw.line((x + 18, y + 9, x + w - 18, y + 9), fill=(*PALETTE["gold"], 94), width=1)
+    draw.rounded_rectangle((x, y + 6, x + w, y + h - 6), radius=13, fill=(2, 4, 9, 76))
+    draw.line((x + 4, y + 16, x + 4, y + h - 16), fill=(*primary, 160), width=3)
+    draw.line((x + 20, y + 11, x + w - 20, y + 11), fill=(*PALETTE["gold"], 66), width=1)
     context_type = photo_first_type_spec("context_rail", compact=h <= 54)
     draw_reference_text(
         image,
@@ -3022,15 +3025,15 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     draw = ImageDraw.Draw(image, "RGBA")
     wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
     wash_draw = ImageDraw.Draw(wash, "RGBA")
-    wash_draw.rounded_rectangle((x + 8, y + 8, x + w - 8, y + h + 8), radius=22, fill=(0, 0, 0, 58))
+    wash_draw.rounded_rectangle((x + 12, y + 10, x + w - 12, y + h + 8), radius=22, fill=(0, 0, 0, 34))
     if ImageFilter is not None:
         wash = wash.filter(ImageFilter.GaussianBlur(7))
     image.alpha_composite(wash)
     band = Image.new("RGBA", image.size, (0, 0, 0, 0))
     band_draw = ImageDraw.Draw(band, "RGBA")
-    band_draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(18, 30, 48, 120), outline=(*accent, 72), width=1)
-    band_draw.line((x + 26, y + 12, x + w - 26, y + 12), fill=(*PALETTE["gold"], 88), width=1)
-    band_draw.line((x + 15, y + 20, x + 15, y + h - 18), fill=(*accent, 192), width=4)
+    band_draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(18, 30, 48, 82))
+    band_draw.line((x + 34, y + 13, x + w - 34, y + 13), fill=(*PALETTE["gold"], 58), width=1)
+    band_draw.line((x + 15, y + 22, x + 15, y + h - 20), fill=(*accent, 180), width=3)
     image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
@@ -3107,7 +3110,10 @@ def draw_photo_first_final_score_template(
     context_parts = [clean(stat_module.get("matchup_note"))]
     if total is not None:
         context_parts.append(f"{total} pts")
-    draw_photo_first_score_context_rail(image, context_box, clean(canvas_copy.get("result_line")) or " / ".join([part for part in context_parts if part]), winner_accent, loser_accent)
+    score_bridge_text = f"FINAL: {score['winner_score']}-{score['loser_score']}"
+    if total is not None:
+        score_bridge_text = f"{score_bridge_text} | {total} PTS"
+    draw_photo_first_score_context_rail(image, context_box, score_bridge_text or " / ".join([part for part in context_parts if part]), winner_accent, loser_accent)
 
     draw_photo_first_stat_strip(image, stat_box, stat_module, winner_accent, canvas_copy)
     draw_reference_guardrail(image, compact_footer=format_id == "square_feed_1x1")
@@ -3994,7 +4000,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
             row["photo_first_athlete_visual_status"] = row["photo_first_template_geometry"].get("athlete_visual_status")
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
-                "balanced_score_rails,integrated_lower_stat_band,and_review_only_guardrails"
+                "open_score_lockups,soft_athlete_stage,integrated_lower_stat_band,and_review_only_guardrails"
             )
             row["public_render_canvas_text"] = public_canvas_text
             row["public_render_review_marker_count"] = 1
