@@ -277,6 +277,9 @@ jobs:
             athlete_render_candidate_board_v1.csv
             athlete_render_candidate_board_v1.md
             athlete_render_candidate_board_v1.json
+            story_proof_card_v1.csv
+            story_proof_card_v1.md
+            story_proof_card_v1.json
             game_source_confirmation_bridge_v1.csv
             game_source_confirmation_bridge_v1.md
             game_source_confirmation_bridge_v1.json
