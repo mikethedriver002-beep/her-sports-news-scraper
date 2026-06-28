@@ -69,21 +69,21 @@ FALLBACK_ZONES = {
         "context_row": (0.055, 0.245, 0.945, 0.300),
         "score_lane": (0.050, 0.315, 0.950, 0.700),
         "lower_modules": (0.055, 0.710, 0.945, 0.955),
-        "footer_guardrail": (0.050, 0.955, 0.950, 0.985),
+        "review_marker": (0.650, 0.050, 0.955, 0.105),
     },
     "ig_story_9x16": {
         "title": (0.070, 0.080, 0.930, 0.180),
         "context_row": (0.070, 0.195, 0.930, 0.245),
         "score_lane": (0.070, 0.255, 0.930, 0.595),
         "lower_modules": (0.070, 0.635, 0.930, 0.870),
-        "footer_guardrail": (0.050, 0.940, 0.950, 0.980),
+        "review_marker": (0.650, 0.040, 0.955, 0.075),
     },
     "square_feed_1x1": {
         "title": (0.055, 0.110, 0.945, 0.285),
         "context_row": (0.055, 0.300, 0.945, 0.365),
         "score_lane": (0.050, 0.385, 0.950, 0.780),
         "lower_modules": (0.055, 0.790, 0.945, 0.935),
-        "footer_guardrail": (0.050, 0.935, 0.950, 0.985),
+        "review_marker": (0.650, 0.070, 0.955, 0.115),
     },
 }
 
@@ -178,7 +178,7 @@ def spec_zone_boxes(spec: Dict[str, Any], image_size: Tuple[int, int], format_id
         key: value if value else ratio_box(image_size, fallback[key])
         for key, value in mapped.items()
         if key in fallback
-    } | {"footer_guardrail": ratio_box(image_size, fallback["footer_guardrail"])}
+    } | {"review_marker": ratio_box(image_size, fallback["review_marker"])}
 
 
 def mean_abs_delta(left: Any, right: Any) -> float:
@@ -367,14 +367,14 @@ def zone_revision_focus(zone: str, format_id: str) -> Dict[str, str]:
         return {
             "revision_focus": "Lower module rhythm",
             "specific_manual_revisions": (
-                "Compress GAME EDGE/YOUR TAKE copy, align module headers to the reference grid, and keep the lower cards from pushing into the footer guardrail."
+                "Compress support copy, align the public stat/takeaway zone to the reference grid, and keep lower modules from crowding the main result."
             ),
         }
-    if zone == "footer_guardrail":
+    if zone == "review_marker":
         return {
-            "revision_focus": "Draft footer and guardrail strip",
+            "revision_focus": "Single review marker",
             "specific_manual_revisions": (
-                "Verify the red draft footer remains visible, uncropped, and separated from content; do not remove draft-only guardrails."
+                "Verify one small Review Draft Only marker remains visible without repeating footer/status language on the public-style art."
             ),
         }
     if format_id == "square_feed_1x1":

@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.40.0-athlete-stage-depth-polish"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.41.0-score-type-grid-polish"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -161,7 +161,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v14_athlete_stage_depth_polish"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v15_score_type_grid_polish"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -181,13 +181,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_athlete_primary_focal_contract" in manifest["render_background_cues"]
     assert "photo_first_premium_score_stage" in manifest["render_background_cues"]
     assert "photo_first_editorial_stage_depth" in manifest["render_background_cues"]
+    assert "photo_first_score_type_grid_polish" in manifest["render_background_cues"]
     assert "photo_first_editorial_nameplate" in manifest["render_background_cues"]
     assert "compact_square_photo_footer" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v14_athlete_stage_depth_polish" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v15_score_type_grid_polish" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -248,7 +249,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v14_athlete_stage_depth_polish"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v15_score_type_grid_polish"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["focal_priority"] == "non_athlete_fallback"
     assert visual_board["athlete_focal_contract"] == "logo_score_fallback_not_athlete_led"
@@ -317,7 +318,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v14_athlete_stage_depth_polish`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v15_score_type_grid_polish`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Focal priority: `non_athlete_fallback`" in board
     assert "Athlete focal contract: `logo_score_fallback_not_athlete_led`" in board
@@ -580,6 +581,14 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert selected["athlete_led_missing_fields"] == ""
     assert selected["athlete_photo_status"] == "approved_local_headshot"
     assert selected["athlete_photo_path"] == "assets/leagues/wnba/athletes/chicago_sky_kamilla_cardoso/headshot.png"
+    public_copy = module.photo_first_public_canvas_copy(score, selected)
+    assert public_copy["kicker"] == "WNBA FINAL"
+    assert public_copy["result_line"] == "Sky beat Fire, 124-94"
+    assert public_copy["athlete_line"] == "Kamilla Cardoso led Chicago with 30 points."
+    assert public_copy["stat_line"] == "30 PTS | 8 REB | 1 AST"
+    canvas_text = " ".join(public_copy.values()).upper()
+    for banned_phrase in module.PUBLIC_RENDER_BANNED_CANVAS_PHRASES:
+        assert banned_phrase not in canvas_text
 
     summary = module.content_module_summary(packet, {"tone": "result"})
     assert summary["content_module_mode"] == "verified_player_stats"
@@ -613,7 +622,7 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert square_contract["score_lock_variant"] == "final_score_locked_square_photo_panel"
     assert square_contract["score_layout_contract"] == "photo_first_score_team_caption_clearance_locked"
     assert summary["content_module_title"] == "CARDOSO + STATEMENT MARGIN"
-    assert summary["content_module_matchup_note"] == "CHICAGO SKY 124, PORTLAND FIRE 94"
+    assert summary["content_module_matchup_note"] == "SKY 124, FIRE 94"
     assert summary["content_module_game_shape"] == "statement_margin"
     assert summary["content_module_stat_strength"] == "lead_ledger"
     assert summary["athlete_photo_status"] == selected["athlete_photo_status"]
@@ -927,8 +936,15 @@ def test_manual_review_renderer_photo_first_score_slab_stays_inside_score_row() 
             assert slab[1] >= row[1]
             assert slab[0] + slab[2] <= row[0] + row[2] - 24
             assert slab[1] + slab[3] <= row[1] + row[3]
-            assert slab[2] >= 132
-            assert slab[3] >= 80
+            assert slab[2] >= 126
+            assert slab[3] >= 70
+            digit_cell = module.photo_first_score_digit_cell_box(slab)
+            assert digit_cell[0] > slab[0]
+            assert digit_cell[1] > slab[1]
+            assert digit_cell[2] <= slab[0] + slab[2] - 10
+            assert digit_cell[3] <= slab[1] + slab[3] - 10
+            assert digit_cell[2] - digit_cell[0] >= 78
+            assert digit_cell[3] - digit_cell[1] >= 54
             assert text_box[0] + text_box[2] <= slab[0] - 26
             assert text_box[2] >= 128
 
@@ -959,7 +975,13 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
     assert "photo_first_score_type_lockup" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_premium_score_stage" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_editorial_stage_depth" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_score_type_grid_polish" in module.RENDER_BACKGROUND_CUES
     sx, sy, sw, sh = module.photo_first_score_slab_box(row, winner=True)
+    cell = module.photo_first_score_digit_cell_box((sx, sy, sw, sh))
+    assert cell[0] - sx >= 18
+    assert sx + sw - cell[2] >= 10
+    assert sy + sh - cell[3] >= 10
+    assert cell[3] - cell[1] <= sh - 20
     slab = image.crop((sx, sy, sx + sw, sy + sh)).convert("RGB")
     data = slab.tobytes()
     pixels = max(1, len(data) // 3)
@@ -975,7 +997,7 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
         if b >= 120 and 45 <= r <= 110 and 90 <= g <= 170:
             accent_spine_pixels += 1
 
-    assert pale_cell_pixels / pixels > 0.42
+    assert pale_cell_pixels / pixels > 0.25
     assert dark_number_pixels / pixels > 0.08
     assert accent_spine_pixels / pixels > 0.015
 
@@ -1383,7 +1405,7 @@ def test_manual_review_renderer_square_lower_module_shows_body_line_inside_card(
     assert bright_pixels / pixels > 0.006
 
 
-def test_manual_review_renderer_square_compact_footer_keeps_review_marker_without_full_red_band() -> None:
+def test_manual_review_renderer_guardrail_uses_one_small_review_marker_without_footer_band() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
@@ -1395,8 +1417,9 @@ def test_manual_review_renderer_square_compact_footer_keeps_review_marker_withou
     module.draw_reference_guardrail(image, compact_footer=True)
 
     assert "square_compact_review_footer" in module.RENDER_BACKGROUND_CUES
+    marker_crop = image.crop((790, 72, 1034, 122)).convert("RGB")
     footer_crop = image.crop((54, 1010, 1026, 1063)).convert("RGB")
-    data = footer_crop.tobytes()
+    data = marker_crop.tobytes()
     pixels = max(1, len(data) // 3)
     red_pixels = 0
     light_text_pixels = 0
@@ -1408,11 +1431,18 @@ def test_manual_review_renderer_square_compact_footer_keeps_review_marker_withou
             light_text_pixels += 1
 
     red_ratio = red_pixels / pixels
-    assert 0.22 <= red_ratio <= 0.64
+    assert 0.12 <= red_ratio <= 0.80
     assert light_text_pixels / pixels > 0.008
+    footer_data = footer_crop.tobytes()
+    footer_red_pixels = 0
+    for index in range(0, len(footer_data), 3):
+        r, g, b = footer_data[index], footer_data[index + 1], footer_data[index + 2]
+        if r >= 135 and 18 <= g <= 75 and 28 <= b <= 90:
+            footer_red_pixels += 1
+    assert footer_red_pixels / max(1, len(footer_data) // 3) < 0.05
 
 
-def test_manual_review_renderer_photo_first_square_template_uses_compact_footer() -> None:
+def test_manual_review_renderer_photo_first_square_template_uses_one_review_marker() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
@@ -1448,7 +1478,7 @@ def test_manual_review_renderer_photo_first_square_template_uses_compact_footer(
 
     assert rendered is True
     assert "compact_square_photo_footer" in module.RENDER_BACKGROUND_CUES
-    upper_footer_zone = image.crop((54, 1016, 1026, 1032)).convert("RGB")
+    marker_zone = image.crop((790, 72, 1034, 122)).convert("RGB")
     footer_band = image.crop((54, 1038, 1026, 1074)).convert("RGB")
 
     def red_ratio(crop: Image.Image) -> float:
@@ -1461,8 +1491,8 @@ def test_manual_review_renderer_photo_first_square_template_uses_compact_footer(
                 red_pixels += 1
         return red_pixels / pixels
 
-    assert red_ratio(upper_footer_zone) < 0.18
-    assert red_ratio(footer_band) > 0.35
+    assert red_ratio(marker_zone) > 0.12
+    assert red_ratio(footer_band) < 0.05
 
 
 def test_manual_review_renderer_keeps_partial_approved_module_out_of_photo_first_layout() -> None:

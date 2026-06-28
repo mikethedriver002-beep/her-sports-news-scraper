@@ -180,7 +180,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     check_ids = {row["check_id"] for row in rows}
     assert "dimensions_1080x1350" in check_ids
     assert "top_draft_label_zone" in check_ids
-    assert "footer_guardrail_zone" in check_ids
+    assert "footer_guardrail_zone" not in check_ids
     assert "headline_text_zone" in check_ids
     assert "score_team_text_zone" in check_ids
     assert "context_text_zone" in check_ids

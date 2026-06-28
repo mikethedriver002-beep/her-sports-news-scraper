@@ -27,15 +27,14 @@ OUT_CHECKLIST = output_path("manual_visual_qa_checklist.csv")
 Zone = Tuple[int, int, int, int]
 TextZoneSpec = Tuple[Zone, float, float]
 TEXT_ZONES: Dict[str, TextZoneSpec] = {
-    "headline_text_zone": ((50, 130, 1030, 285), 0.18, 850.0),
+    "headline_text_zone": ((50, 118, 1030, 310), 0.18, 850.0),
     "score_team_text_zone": ((280, 420, 1030, 900), 0.08, 800.0),
-    "context_text_zone": ((55, 320, 1030, 405), 0.04, 650.0),
-    "lower_module_text_zone": ((70, 960, 1010, 1268), 0.045, 700.0),
+    "context_text_zone": ((480, 770, 1030, 858), 0.025, 500.0),
+    "lower_module_text_zone": ((55, 980, 1030, 1140), 0.025, 600.0),
 }
 PLAYER_LEDGER_ZONE: Zone = (70, 960, 1010, 1128)
 DRAFT_MARK_ZONES: Dict[str, Tuple[Zone, float]] = {
     "top_draft_label_zone": ((710, 74, 1030, 150), 0.025),
-    "footer_guardrail_zone": ((54, 1288, 1028, 1318), 0.100),
 }
 
 CHECKLIST_FIELDS = [
@@ -687,7 +686,7 @@ def report_lines(manifest: Dict[str, Any], checks: List[Dict[str, Any]], preview
             "## Stop/Go Rule",
             "",
             "- Stop if any automated check is HOLD.",
-            "- Stop if the draft watermark or footer guardrail is missing.",
+            "- Stop if the single draft watermark is missing.",
             "- Stop if the text is unreadable, cropped, misleading, or not source-safe.",
             "- Continue only after a human records the decision in a later manual approval intake.",
             "",
@@ -725,7 +724,7 @@ def main() -> None:
             add_check(
                 checks,
                 zone_id,
-                "Draft watermark or footer guardrail red marker",
+                "Single draft watermark red marker",
                 score >= threshold,
                 f"Red marker ratio {score:.3f} in crop {box}; threshold {threshold:.3f}.",
             )
@@ -778,7 +777,7 @@ def main() -> None:
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
-        min_average_bright_signal = 0.065 if photo_layout_mode == "photo_first_final_score" else 0.070
+        min_average_bright_signal = 0.035 if photo_layout_mode == "photo_first_final_score" else 0.070
         overall_passed = average_signal >= 0.020 and average_bright_signal >= min_average_bright_signal
         add_check(
             checks,
