@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.84.0-athlete-photo-contact-sheets"
+VERSION = "hsd-operator-command-center-v3.85.0-render-visual-mode-contract"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -63,6 +63,14 @@ RENDER_PREP_FIELDS = [
     "reference_pack_id",
     "template_shape",
     "renderer_family",
+    "visual_mode",
+    "hero_asset_required",
+    "focal_entity_type",
+    "score_lock_variant",
+    "proof_strip_variant",
+    "copy_unlock_state",
+    "background_family",
+    "template_fit_reason",
     "copy_headline",
     "copy_dek",
     "copy_context",
@@ -2225,6 +2233,14 @@ def build_render_gallery(
                 "photo_layout_mode": clean(option.get("athlete_photo_layout_mode")),
                 "photo_layout_status": clean(option.get("athlete_photo_layout_status")),
                 "photo_layout_detail": clean(option.get("athlete_photo_layout_detail")),
+                "visual_mode": clean(option.get("visual_mode")),
+                "hero_asset_required": clean(option.get("hero_asset_required")),
+                "focal_entity_type": clean(option.get("focal_entity_type")),
+                "score_lock_variant": clean(option.get("score_lock_variant")),
+                "proof_strip_variant": clean(option.get("proof_strip_variant")),
+                "copy_unlock_state": clean(option.get("copy_unlock_state")),
+                "background_family": clean(option.get("background_family")),
+                "template_fit_reason": clean(option.get("template_fit_reason")),
                 "source_status": source_summary["status"],
                 "source_summary": source_summary["summary"],
                 "source_detail": source_summary["detail"],
@@ -3579,6 +3595,45 @@ def final_score_template_fit() -> Dict[str, str]:
     }
 
 
+def render_visual_mode_contract(enriched: Dict[str, str], fit: Dict[str, str]) -> Dict[str, str]:
+    stat_status = clean(enriched.get("stat_module_status"))
+    top_performers = clean(enriched.get("top_performers"))
+    template_family = clean(fit.get("template_family"))
+    if template_family == "game_recap_final_score" and top_performers and stat_status != "no_verified_stat_text":
+        return {
+            "visual_mode": "photo_first_performer",
+            "hero_asset_required": "approved_local_athlete_photo",
+            "focal_entity_type": "athlete",
+            "score_lock_variant": "final_score_locked_photo_first",
+            "proof_strip_variant": "player_stat_proof_strip",
+            "copy_unlock_state": "verified_stat_copy_locked_manual_review",
+            "background_family": "hsd_premium_sports_editorial",
+            "template_fit_reason": "Verified player/stat context is present; renderer should attempt review-only photo-first performer routing with approved local athlete asset gates.",
+            "asset_requirement": "Use exact local WNBA team logos plus approved local athlete headshot/cutout for the verified performer; no downloads, no invented identity, no asset approval changes.",
+        }
+    if template_family == "game_recap_final_score":
+        return {
+            "visual_mode": "no_photo_premium_result",
+            "hero_asset_required": "approved_local_athlete_photo_missing",
+            "focal_entity_type": "team_matchup",
+            "score_lock_variant": "final_score_locked_logo_first",
+            "proof_strip_variant": "score_edge_only",
+            "copy_unlock_state": "score_only_copy_locked_manual_review",
+            "background_family": "hsd_premium_sports_editorial",
+            "template_fit_reason": "No verified player/stat context in handoff; renderer must use no-photo premium result fallback or visibly block athlete-led rendering with missing fields.",
+        }
+    return {
+        "visual_mode": "manual_review_template",
+        "hero_asset_required": "operator_review",
+        "focal_entity_type": "story",
+        "score_lock_variant": "not_final_score",
+        "proof_strip_variant": "source_check_only",
+        "copy_unlock_state": "manual_copy_locked_review",
+        "background_family": "hsd_premium_sports_editorial",
+        "template_fit_reason": clean(fit.get("template_fit")) or "Manual renderer route selected from source/format fit.",
+    }
+
+
 def no_mid_word_trim(value: Any, limit: int) -> str:
     text = clean(value)
     if len(text) <= limit:
@@ -3960,6 +4015,8 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
         if looks_like_final_score(enriched, row):
             fit = final_score_template_fit()
         copy_polish = final_score_copy_polish(enriched, row, fit)
+        visual_contract = render_visual_mode_contract(enriched, fit)
+        asset_requirement = clean(visual_contract.get("asset_requirement")) or clean(fit.get("asset_requirement"))
         packet = {
             "packet_id": f"render_prep_{clean(row.get('rank')) or len(packets) + 1}_{packet_slug(row.get('title'))}",
             "packet_status": "ready_for_manual_render_review" if band == "render_ready_review" else "review_before_manual_render",
@@ -3988,6 +4045,8 @@ def build_render_prep_packets(payload: Dict[str, Any]) -> List[Dict[str, str]]:
             "template_family": "",
             "reference_pack_id": "",
             **fit,
+            **{key: value for key, value in visual_contract.items() if key != "asset_requirement"},
+            "asset_requirement": asset_requirement,
             "active_logo_readiness_status": "",
             "active_logo_review_cues": "",
             "logo_review_artifact": "",
@@ -4057,6 +4116,14 @@ def build_render_handoff_summary(render_prep_packets: List[Dict[str, str]]) -> D
         "packet_id": packet.get("packet_id", ""),
         "title": packet.get("title", ""),
         "active_asset_stop_go": packet.get("active_asset_stop_go", ""),
+        "visual_mode": packet.get("visual_mode", ""),
+        "hero_asset_required": packet.get("hero_asset_required", ""),
+        "focal_entity_type": packet.get("focal_entity_type", ""),
+        "score_lock_variant": packet.get("score_lock_variant", ""),
+        "proof_strip_variant": packet.get("proof_strip_variant", ""),
+        "copy_unlock_state": packet.get("copy_unlock_state", ""),
+        "background_family": packet.get("background_family", ""),
+        "template_fit_reason": packet.get("template_fit_reason", ""),
         "folder": "render_handoff_top_packet",
         "readme": "render_handoff_top_packet/README.md",
         "files": [
@@ -4132,10 +4199,14 @@ def render_handoff_readme(payload: Dict[str, Any], packet: Dict[str, str] | None
             f"- Athlete identity cues: {clean(packet.get('active_athlete_identity_cues')) or 'none recorded'}",
             f"- Athlete identity artifact: `{clean(packet.get('athlete_identity_artifact')) or 'data/asset_registry/wnba/athlete_identity_audit.csv'}`",
             f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
+            f"- Visual mode: `{clean(packet.get('visual_mode')) or 'manual_review_template'}`",
+            f"- Hero asset required: `{clean(packet.get('hero_asset_required')) or 'operator_review'}`",
+            f"- Focal entity: `{clean(packet.get('focal_entity_type')) or 'story'}`",
+            f"- Template fit reason: {clean(packet.get('template_fit_reason')) or 'n/a'}",
             f"- Active queue scope: `{len(active_asset_rows)}` rows; selected-template blockers `{len(blocking_rows)}` ({active_queue_entity_list(blocking_rows)}); future photo-first holds `{len(future_photo_rows)}` ({active_queue_entity_list(future_photo_rows)}); league-mark context holds `{len(league_context_rows)}` ({active_queue_entity_list(league_context_rows)}).",
             (
                 "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
-                if "no player asset required" in clean(packet.get("asset_requirement")).lower()
+                if clean(packet.get("visual_mode")) == "no_photo_premium_result"
                 else "- Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use."
             ),
             f"- Athlete identity closure cues: {clean(packet.get('active_athlete_identity_closure_cues')) or 'none recorded'}",
@@ -4190,6 +4261,14 @@ def render_handoff_copy_sheet(packet: Dict[str, str]) -> str:
             f"- Template family: `{clean(packet.get('template_family')) or 'manual_review'}`",
             f"- Reference pack: `{clean(packet.get('reference_pack_id')) or 'none'}`",
             f"- Template shape: `{clean(packet.get('template_shape'))}`",
+            f"- Visual mode: `{clean(packet.get('visual_mode')) or 'manual_review_template'}`",
+            f"- Hero asset required: `{clean(packet.get('hero_asset_required')) or 'operator_review'}`",
+            f"- Focal entity: `{clean(packet.get('focal_entity_type')) or 'story'}`",
+            f"- Score lock: `{clean(packet.get('score_lock_variant')) or 'not_final_score'}`",
+            f"- Proof strip: `{clean(packet.get('proof_strip_variant')) or 'source_check_only'}`",
+            f"- Copy unlock: `{clean(packet.get('copy_unlock_state')) or 'manual_copy_locked_review'}`",
+            f"- Background family: `{clean(packet.get('background_family')) or 'hsd_premium_sports_editorial'}`",
+            f"- Template fit reason: {clean(packet.get('template_fit_reason')) or 'n/a'}",
             f"- Approval gate: `{clean(packet.get('approval_gate'))}`",
             "",
             "Copy is not approved for publishing until source proof and human visual review are complete.",
@@ -4206,9 +4285,13 @@ def render_handoff_asset_checklist(packet: Dict[str, str]) -> str:
             f"- Asset cue: `{clean(packet.get('asset_cue'))}`",
             f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
+            f"- Visual mode: `{clean(packet.get('visual_mode')) or 'manual_review_template'}`",
+            f"- Hero asset required: `{clean(packet.get('hero_asset_required')) or 'operator_review'}`",
+            f"- Focal entity: `{clean(packet.get('focal_entity_type')) or 'story'}`",
+            f"- Template fit reason: {clean(packet.get('template_fit_reason')) or 'n/a'}",
             (
                 "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
-                if "no player asset required" in clean(packet.get("asset_requirement")).lower()
+                if clean(packet.get("visual_mode")) == "no_photo_premium_result"
                 else "- Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use."
             ),
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",
@@ -5274,6 +5357,14 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         f"- Reference pack: {clean(packet.get('reference_pack_id')) or 'none'}",
         f"- Shape: {clean(packet.get('template_shape'))}",
         f"- Renderer family: {clean(packet.get('renderer_family'))}",
+        f"- Visual mode: {clean(packet.get('visual_mode')) or 'manual_review_template'}",
+        f"- Focal entity: {clean(packet.get('focal_entity_type')) or 'story'}",
+        f"- Hero asset required: {clean(packet.get('hero_asset_required')) or 'operator_review'}",
+        f"- Score lock: {clean(packet.get('score_lock_variant')) or 'not_final_score'}",
+        f"- Proof strip: {clean(packet.get('proof_strip_variant')) or 'source_check_only'}",
+        f"- Copy unlock: {clean(packet.get('copy_unlock_state')) or 'manual_copy_locked_review'}",
+        f"- Background family: {clean(packet.get('background_family')) or 'hsd_premium_sports_editorial'}",
+        f"- Template fit reason: {clean(packet.get('template_fit_reason')) or 'n/a'}",
         "",
         "## Assets",
         "",
@@ -5281,7 +5372,7 @@ def render_manual_renderer_prompt(packet: Dict[str, str]) -> str:
         f"- Active asset stop/go: {clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}",
         (
             "- Selected-template scope: Player imagery is not required; athlete identity holds remain future photo-first review cues."
-            if "no player asset required" in clean(packet.get("asset_requirement")).lower()
+            if clean(packet.get("visual_mode")) == "no_photo_premium_result"
             else "- Selected-template scope: Resolve active athlete identity holds before any photo-first renderer use."
         ),
         "- Review order: clear selected-template blockers first; future photo-first and league-mark context holds stay review-only.",
@@ -5439,10 +5530,46 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "template_family": packet.get("template_family"),
                     "reference_pack_id": packet.get("reference_pack_id"),
                     "template_shape": packet.get("template_shape"),
+                    "visual_mode": packet.get("visual_mode"),
+                    "hero_asset_required": packet.get("hero_asset_required"),
+                    "focal_entity_type": packet.get("focal_entity_type"),
+                    "score_lock_variant": packet.get("score_lock_variant"),
+                    "proof_strip_variant": packet.get("proof_strip_variant"),
+                    "copy_unlock_state": packet.get("copy_unlock_state"),
+                    "background_family": packet.get("background_family"),
+                    "template_fit_reason": packet.get("template_fit_reason"),
                     "approval_gate": packet.get("approval_gate"),
                 }
             ],
-            ["packet_id", "headline", "dek", "context", "suggested_title", "suggested_dek", "fit_cue", "polish_note", "top_performers", "stat_module_status", "stat_source_confidence", "stat_source_label", "stat_review_cue", "template_fit", "selected_template_id", "template_family", "reference_pack_id", "template_shape", "approval_gate"],
+            [
+                "packet_id",
+                "headline",
+                "dek",
+                "context",
+                "suggested_title",
+                "suggested_dek",
+                "fit_cue",
+                "polish_note",
+                "top_performers",
+                "stat_module_status",
+                "stat_source_confidence",
+                "stat_source_label",
+                "stat_review_cue",
+                "template_fit",
+                "selected_template_id",
+                "template_family",
+                "reference_pack_id",
+                "template_shape",
+                "visual_mode",
+                "hero_asset_required",
+                "focal_entity_type",
+                "score_lock_variant",
+                "proof_strip_variant",
+                "copy_unlock_state",
+                "background_family",
+                "template_fit_reason",
+                "approval_gate",
+            ],
         )
         write_text(OUT_RENDER_HANDOFF_ASSETS, render_handoff_asset_checklist(packet))
         write_csv(
@@ -5465,10 +5592,44 @@ def write_render_handoff_outputs(payload: Dict[str, Any]) -> None:
                     "renderer_fallback_cue": packet.get("renderer_fallback_cue"),
                     "manual_path": packet.get("manual_path"),
                     "renderer_family": packet.get("renderer_family"),
+                    "visual_mode": packet.get("visual_mode"),
+                    "hero_asset_required": packet.get("hero_asset_required"),
+                    "focal_entity_type": packet.get("focal_entity_type"),
+                    "score_lock_variant": packet.get("score_lock_variant"),
+                    "proof_strip_variant": packet.get("proof_strip_variant"),
+                    "copy_unlock_state": packet.get("copy_unlock_state"),
+                    "background_family": packet.get("background_family"),
+                    "template_fit_reason": packet.get("template_fit_reason"),
                     "decision": "operator_review_required",
                 }
             ],
-            ["packet_id", "asset_cue", "active_asset_stop_go", "asset_requirement", "active_logo_readiness_status", "active_logo_review_cues", "logo_review_artifact", "active_athlete_identity_status", "active_athlete_identity_cues", "athlete_identity_artifact", "active_athlete_identity_closure_cues", "athlete_identity_closure_artifact", "athlete_identity_backfill_artifact", "renderer_fallback_cue", "manual_path", "renderer_family", "decision"],
+            [
+                "packet_id",
+                "asset_cue",
+                "active_asset_stop_go",
+                "asset_requirement",
+                "active_logo_readiness_status",
+                "active_logo_review_cues",
+                "logo_review_artifact",
+                "active_athlete_identity_status",
+                "active_athlete_identity_cues",
+                "athlete_identity_artifact",
+                "active_athlete_identity_closure_cues",
+                "athlete_identity_closure_artifact",
+                "athlete_identity_backfill_artifact",
+                "renderer_fallback_cue",
+                "manual_path",
+                "renderer_family",
+                "visual_mode",
+                "hero_asset_required",
+                "focal_entity_type",
+                "score_lock_variant",
+                "proof_strip_variant",
+                "copy_unlock_state",
+                "background_family",
+                "template_fit_reason",
+                "decision",
+            ],
         )
         active_asset_rows = manifest_active_asset_rows
         manual_asset_source_rows = manifest_manual_source_rows
@@ -7784,7 +7945,9 @@ def render_decision_render_gallery(rows: Iterable[Dict[str, Any]]) -> str:
                 {pill(clean(row.get('review_status')) or 'review')}
                 {pill(clean(row.get('shape')))}
                 {pill('reference exact: ' + (clean(row.get('reference_exact_format_match')) or 'false'))}
-                {pill('photo layout: ' + (clean(row.get('photo_layout_mode')) or 'n/a'), 'good' if clean(row.get('photo_layout_status')) in {'approved_photo_premium_layout', 'approved_photo_first_template', 'approved_photo_compact_layout'} else 'neutral')}
+                {pill('mode: ' + (clean(row.get('visual_mode')) or 'n/a'), 'good' if clean(row.get('visual_mode')).startswith('photo_first') else 'neutral')}
+                {pill('photo layout: ' + (clean(row.get('photo_layout_mode')) or 'n/a'), 'good' if clean(row.get('photo_layout_status')) in {'approved_photo_premium_layout', 'approved_photo_first_template', 'approved_photo_first_square_template', 'approved_photo_compact_layout'} else 'neutral')}
+                {pill('focal: ' + (clean(row.get('focal_entity_type')) or 'n/a'), 'good' if clean(row.get('focal_entity_type')) == 'athlete' else 'neutral')}
                 {pill(clean(row.get('visual_delta_summary')) or 'Delta: not scored', clean(row.get('visual_delta_tone')) or 'warn')}
                 {pill(clean(row.get('revision_summary')) or 'Revision: not planned', clean(row.get('revision_tone')) or 'warn')}
                 {pill('publish ready: false')}
@@ -10156,6 +10319,14 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
             f"- Reference pack: `{clean(packet.get('reference_pack_id')) or 'none'}`",
             f"- Template shape: `{clean(packet.get('template_shape'))}`",
             f"- Renderer family: `{clean(packet.get('renderer_family'))}`",
+            f"- Visual mode: `{clean(packet.get('visual_mode')) or 'manual_review_template'}`",
+            f"- Focal entity: `{clean(packet.get('focal_entity_type')) or 'story'}`",
+            f"- Hero asset required: `{clean(packet.get('hero_asset_required')) or 'operator_review'}`",
+            f"- Score lock: `{clean(packet.get('score_lock_variant')) or 'not_final_score'}`",
+            f"- Proof strip: `{clean(packet.get('proof_strip_variant')) or 'source_check_only'}`",
+            f"- Copy unlock: `{clean(packet.get('copy_unlock_state')) or 'manual_copy_locked_review'}`",
+            f"- Background family: `{clean(packet.get('background_family')) or 'hsd_premium_sports_editorial'}`",
+            f"- Template fit reason: {clean(packet.get('template_fit_reason')) or 'n/a'}",
             f"- Asset requirement: {clean(packet.get('asset_requirement'))}",
             f"- Active asset stop/go: `{clean(packet.get('active_asset_stop_go')) or 'clear_no_active_asset_holds'}`",
             f"- Active logo readiness: `{clean(packet.get('active_logo_readiness_status')) or 'logo_review_not_flagged'}`",

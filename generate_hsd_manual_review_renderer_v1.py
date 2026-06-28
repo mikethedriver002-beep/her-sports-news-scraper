@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.27.0-square-athlete-proof-panel"
+VERSION = "hsd-manual-review-renderer-v1.28.0-visual-mode-contract"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,6 +46,7 @@ ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
 RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v4_dimensional"
+RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
@@ -2862,7 +2863,7 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
     stat_module = select_verified_stat_module(packet, score)
     microcopy = selected_editorial_microcopy(packet, score, stat_module)
     if clean(stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}:
-        return {
+        summary = {
             "content_module_mode": "verified_player_stats",
             "content_module_status": clean(stat_module.get("status")),
             "content_module_title": clean(stat_module.get("headline")),
@@ -2930,8 +2931,10 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
             "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
             "editorial_microcopy_variants": microcopy.get("variants") or [],
         }
+        summary.update(visual_mode_contract(summary))
+        return summary
     edge = game_edge_module(score)
-    return {
+    summary = {
         "content_module_mode": "game_edge_fallback",
         "content_module_status": clean(stat_module.get("status")) or "fallback_game_edge_no_verified_stat_text",
         "content_module_title": clean(edge.get("headline")),
@@ -2966,6 +2969,8 @@ def content_module_summary(packet: Dict[str, Any], template: Dict[str, str]) -> 
         "editorial_microcopy_review_cue": clean(microcopy.get("review_cue")),
         "editorial_microcopy_variants": microcopy.get("variants") or [],
     }
+    summary.update(visual_mode_contract(summary))
+    return summary
 
 
 def athlete_photo_layout_for_format(content_module: Dict[str, Any], spec: Dict[str, Any]) -> Dict[str, str]:
@@ -2988,6 +2993,49 @@ def athlete_photo_layout_for_format(content_module: Dict[str, Any], spec: Dict[s
         "athlete_photo_layout_status": "approved_photo_first_template",
         "athlete_photo_layout_detail": "Approved local headshot becomes the main editorial visual with score lanes and verified stat modules kept review-only.",
         "athlete_photo_template_family": "approved_athlete_photo_final_score",
+    }
+
+
+def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] | None = None) -> Dict[str, str]:
+    layout = layout or {}
+    layout_mode = clean(layout.get("athlete_photo_layout_mode"))
+    status = clean(content_module.get("content_module_status"))
+    player = clean(content_module.get("content_module_player"))
+    missing = clean(content_module.get("athlete_led_missing_fields"))
+    photo_ready = photo_first_eligible(content_module)
+    is_player_stat = status == "verified_player_stat_module"
+    is_supporting_stat = status == "verified_supporting_stat_module"
+    visual_mode = "no_photo_premium_result"
+    focal_entity_type = "team_matchup"
+    hero_asset_required = "approved_local_athlete_photo_missing"
+    score_lock_variant = "final_score_locked_logo_first"
+    proof_strip_variant = "score_edge_only"
+    copy_unlock_state = "score_only_copy_locked_manual_review"
+    template_fit_reason = clean(content_module.get("athlete_led_blocker")) or "No approved player photo and verified player stat context; renderer holds photo-first route."
+    if photo_ready and player and (is_player_stat or is_supporting_stat):
+        visual_mode = "photo_first_performer" if is_player_stat else "photo_first_result"
+        focal_entity_type = "athlete"
+        hero_asset_required = "approved_local_athlete_photo"
+        score_lock_variant = "final_score_locked_photo_first"
+        proof_strip_variant = "player_stat_proof_strip" if is_player_stat else "supporting_stat_proof_strip"
+        copy_unlock_state = "verified_stat_copy_locked_manual_review" if is_player_stat else "supporting_stat_copy_locked_manual_review"
+        template_fit_reason = "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing."
+        if layout_mode == "square_photo_first_score_panel":
+            visual_mode = "photo_first_performer_square" if is_player_stat else "photo_first_result_square"
+            score_lock_variant = "final_score_locked_square_photo_panel"
+        elif layout_mode == "photo_first_final_score":
+            score_lock_variant = "final_score_locked_photo_first"
+    elif missing:
+        template_fit_reason = f"Photo-first route blocked; missing {missing}."
+    return {
+        "visual_mode": visual_mode,
+        "hero_asset_required": hero_asset_required,
+        "focal_entity_type": focal_entity_type,
+        "score_lock_variant": score_lock_variant,
+        "proof_strip_variant": proof_strip_variant,
+        "copy_unlock_state": copy_unlock_state,
+        "background_family": RENDER_BACKGROUND_FAMILY,
+        "template_fit_reason": template_fit_reason,
     }
 
 
@@ -3165,13 +3213,16 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         }
         if reference:
             row.update(reference)
-        row.update(athlete_photo_layout_for_format(content_module, spec))
+        layout_contract = athlete_photo_layout_for_format(content_module, spec)
+        row.update(layout_contract)
+        row.update(visual_mode_contract(content_module, layout_contract))
         row["render_background_style"] = RENDER_BACKGROUND_STYLE
+        row["background_family"] = clean(row.get("background_family")) or RENDER_BACKGROUND_FAMILY
         row["render_background_cues"] = RENDER_BACKGROUND_CUES
         row["preview_qa_status"] = clean(qa_row.get("status"))
         row["preview_qa_title_bright_ratio"] = qa_row.get("title_bright_ratio", "")
         row["preview_qa_luma_stddev"] = qa_row.get("luma_stddev", "")
-        if clean(row.get("athlete_photo_layout_mode")) == "photo_first_final_score":
+        if clean(row.get("athlete_photo_layout_mode")) in {"photo_first_final_score", "square_photo_first_score_panel"}:
             row["photo_first_template_geometry"] = photo_first_layout_geometry(spec)
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
@@ -3253,6 +3304,9 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
+        f"- Visual mode: `{clean(content_module.get('visual_mode')) or 'not_selected'}` focal_entity=`{clean(content_module.get('focal_entity_type')) or 'n/a'}` hero_asset_required=`{clean(content_module.get('hero_asset_required')) or 'n/a'}`",
+        f"- Visual contract: score_lock=`{clean(content_module.get('score_lock_variant')) or 'n/a'}` proof_strip=`{clean(content_module.get('proof_strip_variant')) or 'n/a'}` copy_unlock=`{clean(content_module.get('copy_unlock_state')) or 'n/a'}` background=`{clean(content_module.get('background_family')) or clean(render_result.get('render_background_style')) or 'n/a'}`",
+        f"- Template fit reason: {clean(content_module.get('template_fit_reason')) or 'n/a'}",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
         f"- Athlete-led render: `{clean(content_module.get('athlete_led_render_status')) or 'not_evaluated'}` missing=`{clean(content_module.get('athlete_led_missing_fields')) or 'none'}`",
         f"- Athlete proof bridge: used=`{clean(content_module.get('proof_artifact_bridge_used')) or 'false'}` source=`{clean(content_module.get('proof_source')) or 'handoff'}` proof_id=`{clean(content_module.get('proof_id')) or 'n/a'}`",
@@ -3273,8 +3327,9 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
             ref = clean(item.get("reference_template_id")) or "none"
             derivation = clean(item.get("reference_derivation")) or "not_reference_packed"
             photo_layout = clean(item.get("athlete_photo_layout_mode")) or "n/a"
+            visual_mode = clean(item.get("visual_mode")) or "n/a"
             lines.append(
-                f"- `{item.get('format_id')}` | `{item.get('width')}x{item.get('height')}` | `{item.get('path')}` | reference=`{ref}` | derivation=`{derivation}` | photo_layout=`{photo_layout}` | publish_ready=`false`"
+                f"- `{item.get('format_id')}` | `{item.get('width')}x{item.get('height')}` | `{item.get('path')}` | reference=`{ref}` | derivation=`{derivation}` | visual_mode=`{visual_mode}` | photo_layout=`{photo_layout}` | publish_ready=`false`"
             )
     else:
         lines.append("- none")
