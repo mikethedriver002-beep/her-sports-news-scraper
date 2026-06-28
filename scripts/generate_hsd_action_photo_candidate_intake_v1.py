@@ -29,6 +29,9 @@ OUT_ENTITY_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_photo_sport_
 OUT_WOMENS_SOCCER_STARTER_CSV = output_path(ROOT / "review_only_womens_soccer_action_photo_starter_intake.csv")
 OUT_WOMENS_SOCCER_STARTER_MD = output_path(ROOT / "review_only_womens_soccer_action_photo_starter_intake.md")
 OUT_WOMENS_SOCCER_STARTER_JSON = output_path(ROOT / "review_only_womens_soccer_action_photo_starter_intake.json")
+OUT_EXTERNAL_RESEARCH_SOURCE_MAP_CSV = output_path(ROOT / "review_only_action_photo_external_research_source_map.csv")
+OUT_EXTERNAL_RESEARCH_SOURCE_MAP_MD = output_path(ROOT / "review_only_action_photo_external_research_source_map.md")
+OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_photo_external_research_source_map.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -123,6 +126,37 @@ WOMENS_SOCCER_STARTER_FIELDS = [
     "reviewed_at_utc",
     "allowed_for_download_approved_yes",
     "manual_next_action",
+    "review_only",
+    "publish_ready",
+    "approval_state_change",
+    "publish_action",
+]
+EXTERNAL_RESEARCH_SOURCE_MAP_FIELDS = [
+    "sport",
+    "league_entity",
+    "official_gallery_url_or_macro",
+    "roster_player_directory_url_or_macro",
+    "media_guide_stats_profile_url_or_macro",
+    "editorial_wire_newsroom_sources",
+    "official_social",
+    "gray_area_public_creator_fan_surfaces",
+    "source_category",
+    "source_domain",
+    "likely_search_query_macro",
+    "identity_verification_anchor",
+    "rights_posture_recommendation",
+    "limitations_red_flags",
+    "manual_next_action",
+    "source_family_rank",
+    "source_family_name",
+    "source_family_yield",
+    "source_family_function",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
     "review_only",
     "publish_ready",
     "approval_state_change",
@@ -1281,6 +1315,429 @@ def render_womens_soccer_starter(rows: List[Mapping[str, str]], issues: List[Map
     return "\n".join(lines) + "\n"
 
 
+def external_research_source_map_rows() -> List[Dict[str, str]]:
+    default_action = (
+        "Paste ChatGPT Pro, Gemini, or manual research results as URL/evidence leads only; "
+        "do not download images, claim approval, assert current roster truth, or mark render-ready."
+    )
+    base = {
+        "download_approved": "no",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "review_only": "true",
+        "publish_ready": "false",
+        "approval_state_change": "none",
+        "publish_action": "none_artifact_only",
+        "manual_next_action": default_action,
+    }
+    rows = [
+        {
+            "sport": "Basketball",
+            "league_entity": "WNBA",
+            "official_gallery_url_or_macro": "https://www.wnba.com/photos",
+            "roster_player_directory_url_or_macro": "https://www.wnba.com/players/roster-tracker",
+            "media_guide_stats_profile_url_or_macro": "https://sky.wnba.com/chicago-sky-2026-media-central",
+            "editorial_wire_newsroom_sources": "https://www.gettyimages.com/photos/wnba",
+            "official_social": "https://x.com/WNBA",
+            "gray_area_public_creator_fan_surfaces": "https://commons.wikimedia.org/wiki/File:Kelly_Miller_WNBA.jpg",
+            "source_category": "editorial_wire",
+            "source_domain": "gettyimages.com",
+            "likely_search_query_macro": "{player_name} WNBA match action",
+            "identity_verification_anchor": "https://www.wnba.com/players",
+            "rights_posture_recommendation": "editorial_wire_rights_sensitive",
+            "limitations_red_flags": "URL-only pointer; do not cache or persist images; verify active roster/team manually.",
+            "source_family_rank": "1",
+            "source_family_name": "Getty Images Editorial Sports",
+            "source_family_yield": "Ultra-High",
+            "source_family_function": "Verify active match-action photo existence in real time.",
+        },
+        {
+            "sport": "Soccer",
+            "league_entity": "NWSL",
+            "official_gallery_url_or_macro": "https://www.nwslsoccer.com/photos",
+            "roster_player_directory_url_or_macro": "https://www.nwslsoccer.com/stats/players/all",
+            "media_guide_stats_profile_url_or_macro": "https://www.nwslsoccer.com/press/media-guides",
+            "editorial_wire_newsroom_sources": "https://isiphotos.photoshelter.com/gallery-collection/C00002Y8lb20itTM",
+            "official_social": "https://x.com/NWSL",
+            "gray_area_public_creator_fan_surfaces": "https://www.alamy.com/stock-photo/nwsl.html",
+            "source_category": "reputable_newsroom_gallery",
+            "source_domain": "isiphotos.com",
+            "likely_search_query_macro": "{player_name} NWSL soccer",
+            "identity_verification_anchor": "https://fbref.com/en/comps/182/NWSL-Stats",
+            "rights_posture_recommendation": "official_partner_licensed_manual_review",
+            "limitations_red_flags": "ISI/specialist soccer coverage is a discovery lead; verify club, roster, and match date manually.",
+            "source_family_rank": "2",
+            "source_family_name": "ISI Photos Archive",
+            "source_family_yield": "High",
+            "source_family_function": "Check historical progression and current club matches for soccer players.",
+        },
+        {
+            "sport": "Soccer",
+            "league_entity": "USWNT / U.S. Soccer",
+            "official_gallery_url_or_macro": "https://www.ussoccer.com/media-services/media-contacts",
+            "roster_player_directory_url_or_macro": "https://www.ussoccer.com/teams/uswnt",
+            "media_guide_stats_profile_url_or_macro": "https://www.ussoccer.com/media-services/media-contacts",
+            "editorial_wire_newsroom_sources": "https://www.gettyimages.com/photos/nwsl-soccer",
+            "official_social": "https://x.com/USWNT",
+            "gray_area_public_creator_fan_surfaces": "https://isiphotos.photoshelter.com/gallery-collection/C00002Y8lb20itTM",
+            "source_category": "official_federation_or_tournament",
+            "source_domain": "ussoccer.com",
+            "likely_search_query_macro": "{player_name} USWNT starting XI",
+            "identity_verification_anchor": "https://www.ussoccer.com/teams/uswnt",
+            "rights_posture_recommendation": "official_review_needed",
+            "limitations_red_flags": "Federation/media-service surfaces are identity anchors and lead maps, not approval.",
+            "source_family_rank": "2",
+            "source_family_name": "ISI Photos Archive",
+            "source_family_yield": "High",
+            "source_family_function": "Cross-check national-team action leads with federation roster context.",
+        },
+        {
+            "sport": "Basketball",
+            "league_entity": "NCAA Women Basketball",
+            "official_gallery_url_or_macro": "https://ncaaphotos.photoshelter.com/",
+            "roster_player_directory_url_or_macro": "{school} women's basketball roster official",
+            "media_guide_stats_profile_url_or_macro": "https://www.clarkson-creative.com/schwaberow",
+            "editorial_wire_newsroom_sources": "http://fs.ncaa.org/Docs/PressArchive/2009/Announcements/20090210_ap_image_rls.html",
+            "official_social": "https://x.com/NCAAWBB",
+            "gray_area_public_creator_fan_surfaces": "https://www.flickr.com/photos/keithallison/",
+            "source_category": "official_federation_or_tournament",
+            "source_domain": "ncaaphotos.photoshelter.com",
+            "likely_search_query_macro": "{player_name} NCAA March Madness basketball",
+            "identity_verification_anchor": "{school} women's basketball roster official",
+            "rights_posture_recommendation": "official_partner_licensed_manual_review",
+            "limitations_red_flags": "Separate championship leads from school regular-season leads; verify athlete identity manually.",
+            "source_family_rank": "3",
+            "source_family_name": "NCAA Photos / Clarkson Creative",
+            "source_family_yield": "High",
+            "source_family_function": "Track championship tournament action sequences via keyword tags.",
+        },
+        {
+            "sport": "Softball",
+            "league_entity": "NCAA Women Softball",
+            "official_gallery_url_or_macro": "https://ncaaphotos.photoshelter.com/",
+            "roster_player_directory_url_or_macro": "{school} softball roster official",
+            "media_guide_stats_profile_url_or_macro": "https://www.clarkson-creative.com/schwaberow",
+            "editorial_wire_newsroom_sources": "http://fs.ncaa.org/Docs/PressArchive/2009/Announcements/20090210_ap_image_rls.html",
+            "official_social": "https://x.com/NCAASoftball",
+            "gray_area_public_creator_fan_surfaces": "https://www.flickr.com/photos/keithallison/",
+            "source_category": "official_federation_or_tournament",
+            "source_domain": "ncaaphotos.photoshelter.com",
+            "likely_search_query_macro": "{player_name} Women College World Series softball",
+            "identity_verification_anchor": "{school} softball roster official",
+            "rights_posture_recommendation": "official_partner_licensed_manual_review",
+            "limitations_red_flags": "Championship archives and school images are candidate leads until human verified.",
+            "source_family_rank": "3",
+            "source_family_name": "NCAA Photos / Clarkson Creative",
+            "source_family_yield": "High",
+            "source_family_function": "Track championship softball action sequences.",
+        },
+        {
+            "sport": "Volleyball",
+            "league_entity": "NCAA Women Volleyball",
+            "official_gallery_url_or_macro": "https://ncaaphotos.photoshelter.com/",
+            "roster_player_directory_url_or_macro": "{school} volleyball roster official",
+            "media_guide_stats_profile_url_or_macro": "https://www.clarkson-creative.com/about-us",
+            "editorial_wire_newsroom_sources": "http://fs.ncaa.org/Docs/PressArchive/2009/Announcements/20090210_ap_image_rls.html",
+            "official_social": "https://x.com/NCAAVolleyball",
+            "gray_area_public_creator_fan_surfaces": "https://www.flickr.com/photos/keithallison/",
+            "source_category": "official_federation_or_tournament",
+            "source_domain": "ncaaphotos.photoshelter.com",
+            "likely_search_query_macro": "{player_name} NCAA volleyball championship",
+            "identity_verification_anchor": "{school} volleyball roster official",
+            "rights_posture_recommendation": "official_partner_licensed_manual_review",
+            "limitations_red_flags": "Use player/school pages as identity anchors; photo leads remain advisory.",
+            "source_family_rank": "3",
+            "source_family_name": "NCAA Photos / Clarkson Creative",
+            "source_family_yield": "High",
+            "source_family_function": "Track championship volleyball action sequences.",
+        },
+        {
+            "sport": "Soccer",
+            "league_entity": "NCAA Women Soccer",
+            "official_gallery_url_or_macro": "https://ncaaphotos.photoshelter.com/",
+            "roster_player_directory_url_or_macro": "{school} women's soccer roster official",
+            "media_guide_stats_profile_url_or_macro": "https://www.isiphotos.com/about",
+            "editorial_wire_newsroom_sources": "http://fs.ncaa.org/Docs/PressArchive/2009/Announcements/20090210_ap_image_rls.html",
+            "official_social": "https://x.com/NCAASoccer",
+            "gray_area_public_creator_fan_surfaces": "https://www.isiphotos.com/all-collections",
+            "source_category": "official_federation_or_tournament",
+            "source_domain": "ncaaphotos.photoshelter.com",
+            "likely_search_query_macro": "{player_name} NCAA women soccer college cup",
+            "identity_verification_anchor": "{school} women's soccer roster official",
+            "rights_posture_recommendation": "official_partner_licensed_manual_review",
+            "limitations_red_flags": "NCAA/ISI overlap is a source-family clue only; verify player, school, and event manually.",
+            "source_family_rank": "3",
+            "source_family_name": "NCAA Photos / Clarkson Creative",
+            "source_family_yield": "High",
+            "source_family_function": "Track championship soccer action sequences.",
+        },
+        {
+            "sport": "Tennis",
+            "league_entity": "WTA Tennis",
+            "official_gallery_url_or_macro": "https://www.wtatennis.com/media",
+            "roster_player_directory_url_or_macro": "https://www.wtatennis.com/players-hub",
+            "media_guide_stats_profile_url_or_macro": "https://www.wtatennis.com/news/1350286/wta-media-guide",
+            "editorial_wire_newsroom_sources": "https://www.wtatennis.com/match-notes",
+            "official_social": "https://x.com/WTA",
+            "gray_area_public_creator_fan_surfaces": "https://www.flickr.com/photos/keithallison/",
+            "source_category": "official_league_gallery",
+            "source_domain": "wtatennis.com",
+            "likely_search_query_macro": "{player_name} WTA match action",
+            "identity_verification_anchor": "https://www.wtatennis.com/players-hub",
+            "rights_posture_recommendation": "official_review_needed",
+            "limitations_red_flags": "Use WTA as identity/match context; find action-photo leads separately.",
+            "source_family_rank": "7",
+            "source_family_name": "WTA Corporate Match Notes",
+            "source_family_yield": "Medium",
+            "source_family_function": "Sync tournament scheduling with candidate photo availability.",
+        },
+        {
+            "sport": "Golf",
+            "league_entity": "LPGA Golf",
+            "official_gallery_url_or_macro": "https://media.lpga.com/",
+            "roster_player_directory_url_or_macro": "https://www.lpga.com/athletes/directory",
+            "media_guide_stats_profile_url_or_macro": "https://www.lpga.com/news-and-video",
+            "editorial_wire_newsroom_sources": "https://www.gettyimages.com/photos/lpga",
+            "official_social": "https://x.com/LPGA",
+            "gray_area_public_creator_fan_surfaces": "https://commons.wikimedia.org/wiki/File:Michelle_Wie_-_Flickr_-_Keith_Allison_(3).jpg",
+            "source_category": "official_league_gallery",
+            "source_domain": "lpga.com",
+            "likely_search_query_macro": "{player_name} LPGA swing",
+            "identity_verification_anchor": "https://www.lpga.com/stats-and-rankings",
+            "rights_posture_recommendation": "official_review_needed",
+            "limitations_red_flags": "Use LPGA pages for identity, round, and tournament context; action leads remain advisory.",
+            "source_family_rank": "6",
+            "source_family_name": "LPGA On-Site Media Hub",
+            "source_family_yield": "Medium",
+            "source_family_function": "Review golf action/swing lead availability at major events.",
+        },
+        {
+            "sport": "Hockey",
+            "league_entity": "PWHL / Women Hockey",
+            "official_gallery_url_or_macro": "https://www.thepwhl.com/en/sample-content/image-gallery",
+            "roster_player_directory_url_or_macro": "https://www.thepwhl.com/en/teams/san-jose/roster-tracker",
+            "media_guide_stats_profile_url_or_macro": "https://www.eliteprospects.com/league/pwhl-w",
+            "editorial_wire_newsroom_sources": "https://www.gettyimages.com/photos/pwhl",
+            "official_social": "https://x.com/thepwhlofficial",
+            "gray_area_public_creator_fan_surfaces": "https://www.theixsports.com/the-ice-garden/multimedia/photography/film-photo-gallery-pwhl-boston-wins-semifinal-game-3/",
+            "source_category": "editorial_wire",
+            "source_domain": "gettyimages.com",
+            "likely_search_query_macro": "{player_name} PWHL hockey game action",
+            "identity_verification_anchor": "https://www.eliteprospects.com/league/pwhl-w",
+            "rights_posture_recommendation": "editorial_wire_rights_sensitive",
+            "limitations_red_flags": "Independent hockey galleries are creator leads; verify credit, event, and player manually.",
+            "source_family_rank": "9",
+            "source_family_name": "The Ice Garden Portfolio Network",
+            "source_family_yield": "Medium-Low",
+            "source_family_function": "Discover localized hockey images through credentialed independent creators.",
+        },
+        {
+            "sport": "Softball",
+            "league_entity": "AUSL / Pro Softball",
+            "official_gallery_url_or_macro": "https://theausl.com/",
+            "roster_player_directory_url_or_macro": "https://theausl.com/volts/roster/",
+            "media_guide_stats_profile_url_or_macro": "https://theausl.com/",
+            "editorial_wire_newsroom_sources": "https://www.gettyimages.com/photos/ausl-softball",
+            "official_social": "https://x.com/theausl",
+            "gray_area_public_creator_fan_surfaces": "https://www.jadehewittmedia.com/about",
+            "source_category": "official_league_gallery",
+            "source_domain": "theausl.com",
+            "likely_search_query_macro": "{player_name} AUSL softball action",
+            "identity_verification_anchor": "https://theausl.com/talons/news/utah-talons-2026-opening-day-roster/",
+            "rights_posture_recommendation": "official_review_needed",
+            "limitations_red_flags": "AUSL/Athletes Unlimited public imagery is a source lead and identity clue only.",
+            "source_family_rank": "5",
+            "source_family_name": "Athletes Unlimited / AUSL Media Hub",
+            "source_family_yield": "Medium-High",
+            "source_family_function": "Monitor narrative-focused professional softball imagery.",
+        },
+        {
+            "sport": "Multi-sport",
+            "league_entity": "AP Images Sports Portal",
+            "official_gallery_url_or_macro": "operator_fill_required",
+            "roster_player_directory_url_or_macro": "{league_or_school} roster/player profile official",
+            "media_guide_stats_profile_url_or_macro": "{event} media guide stats official",
+            "editorial_wire_newsroom_sources": "https://newsroom.ap.org/",
+            "official_social": "operator_fill_required",
+            "gray_area_public_creator_fan_surfaces": "operator_fill_required",
+            "source_category": "editorial_wire",
+            "source_domain": "newsroom.ap.org",
+            "likely_search_query_macro": "{player_name} {team} photo AP Images",
+            "identity_verification_anchor": "official roster/player profile plus event context",
+            "rights_posture_recommendation": "editorial_wire_rights_sensitive",
+            "limitations_red_flags": "National wire source-family clue only; do not fetch previews or assume rights.",
+            "source_family_rank": "4",
+            "source_family_name": "AP Images Sports Portal",
+            "source_family_yield": "High",
+            "source_family_function": "Cross-check national collegiate histories with commercial availability.",
+        },
+        {
+            "sport": "Multi-sport",
+            "league_entity": "Keith Allison Flickr legacy references",
+            "official_gallery_url_or_macro": "operator_fill_required",
+            "roster_player_directory_url_or_macro": "official player profile or historical roster",
+            "media_guide_stats_profile_url_or_macro": "official stats/media guide where available",
+            "editorial_wire_newsroom_sources": "operator_fill_required",
+            "official_social": "operator_fill_required",
+            "gray_area_public_creator_fan_surfaces": "https://www.flickr.com/photos/keithallison/",
+            "source_category": "gray_area_public_lead",
+            "source_domain": "flickr.com",
+            "likely_search_query_macro": "{player_name} Keith Allison Flickr",
+            "identity_verification_anchor": "official roster/player profile and event date context",
+            "rights_posture_recommendation": "gray_area_lead_only",
+            "limitations_red_flags": "Legacy/public creator references are discovery/identity clues only.",
+            "source_family_rank": "8",
+            "source_family_name": "Keith Allison Flickr Archive",
+            "source_family_yield": "Medium",
+            "source_family_function": "Find historical player profile references.",
+        },
+        {
+            "sport": "Hockey",
+            "league_entity": "Inside the Rink galleries",
+            "official_gallery_url_or_macro": "operator_fill_required",
+            "roster_player_directory_url_or_macro": "official PWHL/team roster or Elite Prospects",
+            "media_guide_stats_profile_url_or_macro": "official game sheet or stats profile",
+            "editorial_wire_newsroom_sources": "operator_fill_required",
+            "official_social": "operator_fill_required",
+            "gray_area_public_creator_fan_surfaces": "Inside the Rink galleries",
+            "source_category": "third_party_creator_public",
+            "source_domain": "insidetherink.com",
+            "likely_search_query_macro": "{player_name} PWHL Inside the Rink gallery",
+            "identity_verification_anchor": "official roster/player profile and game sheet",
+            "rights_posture_recommendation": "third_party_creator_uncleared",
+            "limitations_red_flags": "Regional creator galleries are useful lead surfaces, not rights or roster truth.",
+            "source_family_rank": "10",
+            "source_family_name": "Inside the Rink Galleries",
+            "source_family_yield": "Low-Medium",
+            "source_family_function": "Track regional game-by-game hockey player lineups.",
+        },
+    ]
+    return [{**base, **row} for row in rows]
+
+
+def validate_external_research_source_map_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen = set()
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in EXTERNAL_RESEARCH_SOURCE_MAP_FIELDS}
+        key = (
+            normalized["sport"],
+            normalized["league_entity"],
+            normalized["source_category"],
+            normalized["source_domain"],
+            normalized["likely_search_query_macro"],
+        )
+        if key in seen:
+            issues.append({"row": str(index), "field": "likely_search_query_macro", "issue": "duplicate_external_research_source_map_key"})
+        seen.add(key)
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        if normalized["rights_posture_recommendation"] not in RIGHTS_CLASSES:
+            issues.append({"row": str(index), "field": "rights_posture_recommendation", "issue": "invalid_rights_posture_recommendation"})
+        for field in [
+            "sport",
+            "league_entity",
+            "official_gallery_url_or_macro",
+            "roster_player_directory_url_or_macro",
+            "editorial_wire_newsroom_sources",
+            "source_domain",
+            "likely_search_query_macro",
+            "identity_verification_anchor",
+            "limitations_red_flags",
+            "manual_next_action",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_external_research_field_blank"})
+        for field in REQUIRED_DOWNLOAD_FIELDS:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_rows_must_not_approve_downloads"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "external_research_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "external_research_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] not in {"", "none"}:
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "external_research_rows_must_not_change_approval_state"})
+        if normalized["publish_action"] not in {"", "none_artifact_only"}:
+            issues.append({"row": str(index), "field": "publish_action", "issue": "external_research_rows_must_not_publish"})
+    return issues
+
+
+def render_external_research_source_map(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    sport_counts: Dict[str, int] = {}
+    category_counts: Dict[str, int] = {}
+    for row in rows:
+        sport = clean(row.get("sport"))
+        category = clean(row.get("source_category"))
+        sport_counts[sport] = sport_counts.get(sport, 0) + 1
+        category_counts[category] = category_counts.get(category, 0) + 1
+    ranked = sorted(
+        [row for row in rows if clean(row.get("source_family_rank")).isdigit()],
+        key=lambda row: int(clean(row.get("source_family_rank"))),
+    )
+    lines = [
+        "# Review-Only Action Photo External Research Source Map",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Report-digested source-discovery map for action-photo candidate research. Legal-risk framing from the report is treated as non-blocking metadata under HSD's fair-use operating assumption; operational guardrails still apply. Rows are advisory URL/search leads only and are not approval, current roster truth, downloads, or render-ready state.",
+        "",
+        "## Operator Paste Note",
+        "",
+        "Paste ChatGPT Pro, Gemini, or manual research outputs as URL/evidence rows only. Official/player pages are identity anchors; wires, newsrooms, social, creator galleries, and gray-area public surfaces are candidate-photo discovery leads. Keep generated local-download-law fields blank/no unless a later human-edited intake row explicitly satisfies the quarantine-only download law.",
+        "",
+        "## Summary",
+        "",
+        f"- Source-map rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Sport Coverage",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(sport_counts.items()))
+    lines += ["", "## Source Category Coverage", ""]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(category_counts.items()))
+    lines += ["", "## High-Yield Source Families", ""]
+    for row in ranked:
+        lines.append(
+            "- {rank}. {name}: {target} / {yield_rating} / {function}".format(
+                rank=clean(row.get("source_family_rank")),
+                name=clean(row.get("source_family_name")),
+                target=clean(row.get("league_entity")),
+                yield_rating=clean(row.get("source_family_yield")),
+                function=clean(row.get("source_family_function")),
+            )
+        )
+    lines += [
+        "",
+        "## Board Preview",
+        "",
+        "| Sport | League/Entity | Category | Domain | Search Macro | Identity Anchor | Rights Metadata | Manual Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {sport} | {league} | {category} | {domain} | `{macro}` | {anchor} | {rights} | {action} |".format(
+                sport=clean(row.get("sport")),
+                league=clean(row.get("league_entity")).replace("|", "/"),
+                category=clean(row.get("source_category")),
+                domain=clean(row.get("source_domain")).replace("|", "/"),
+                macro=clean(row.get("likely_search_query_macro")).replace("|", "/"),
+                anchor=clean(row.get("identity_verification_anchor")).replace("|", "/"),
+                rights=clean(row.get("rights_posture_recommendation")),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -1290,6 +1747,8 @@ def main() -> int:
     entity_source_issues = validate_entity_source_map_rows(entity_source_rows)
     womens_soccer_rows = womens_soccer_starter_rows()
     womens_soccer_issues = validate_womens_soccer_starter_rows(womens_soccer_rows)
+    external_research_rows = external_research_source_map_rows()
+    external_research_issues = validate_external_research_source_map_rows(external_research_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -1362,11 +1821,46 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_EXTERNAL_RESEARCH_SOURCE_MAP_CSV, external_research_rows, EXTERNAL_RESEARCH_SOURCE_MAP_FIELDS)
+    write_text(OUT_EXTERNAL_RESEARCH_SOURCE_MAP_MD, render_external_research_source_map(external_research_rows, external_research_issues, generated_at))
+    write_json(
+        OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_external_research_source_map_ready" if not external_research_issues else "action_photo_external_research_source_map_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "source_map_rows": len(external_research_rows),
+            "validation_issue_count": len(external_research_issues),
+            "validation_issues": external_research_issues,
+            "sports": sorted({row["sport"] for row in external_research_rows}),
+            "league_entities": sorted({row["league_entity"] for row in external_research_rows}),
+            "source_categories": sorted({row["source_category"] for row in external_research_rows}),
+            "source_family_ranked_rows": sum(1 for row in external_research_rows if row["source_family_rank"]),
+            "download_approved_yes_rows": sum(1 for row in external_research_rows if row["download_approved"] == "yes"),
+            "blank_source_url_rows": sum(1 for row in external_research_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in external_research_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in external_research_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in external_research_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in external_research_rows if not row["intended_review_only_use"]),
+            "review_only_rows": sum(1 for row in external_research_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in external_research_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_CSV.as_posix(),
+            "worksheet_md": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -1381,7 +1875,9 @@ def main() -> int:
             "sport_entity_source_map_validation_issue_count": len(entity_source_issues),
             "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows),
             "womens_soccer_action_photo_starter_validation_issue_count": len(womens_soccer_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues),
+            "external_research_source_map_rows": len(external_research_rows),
+            "external_research_source_map_validation_issue_count": len(external_research_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -1396,6 +1892,9 @@ def main() -> int:
             "womens_soccer_action_photo_starter_csv": OUT_WOMENS_SOCCER_STARTER_CSV.as_posix(),
             "womens_soccer_action_photo_starter_md": OUT_WOMENS_SOCCER_STARTER_MD.as_posix(),
             "womens_soccer_action_photo_starter_json": OUT_WOMENS_SOCCER_STARTER_JSON.as_posix(),
+            "external_research_source_map_csv": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_CSV.as_posix(),
+            "external_research_source_map_md": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_MD.as_posix(),
+            "external_research_source_map_json": OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -1409,8 +1908,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues else 0
 
 
 if __name__ == "__main__":
