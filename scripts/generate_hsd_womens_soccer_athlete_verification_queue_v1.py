@@ -107,6 +107,7 @@ NEXT_ACTION_FIELDS = [
     "download_approved_yes_rows",
     "download_approved",
     "source_url",
+    "candidate_entity_id",
     "entity_id",
     "rights_class",
     "identity_confidence",
@@ -146,6 +147,7 @@ SOURCE_PRIORITY_FIELDS = [
     "confidence",
     "operator_verify_required",
     "source_domain",
+    "candidate_entity_id",
     "source_candidate_url",
     "linked_queue_bucket",
     "linked_first_action_bucket",
@@ -338,6 +340,64 @@ def source_safe_next_action(row: Mapping[str, str], review_bucket: str) -> str:
     if review_bucket == "4_official_metadata_candidate":
         return "Use as source metadata candidate only; Europe rows remain not render-ready."
     return "Keep as source metadata watch; no downloads, approvals, or render readiness."
+
+
+def source_team_scope(row: Mapping[str, str]) -> str:
+    team_name = clean(row.get("team_name"))
+    if clean(row.get("research_lane")) == "nwsl_correction_enrichment" and slug(team_name) in {"nwsl_all_teams", "nwsl_all_players"}:
+        return "nwsl_league_index"
+    return slug(team_name) or slug(row.get("league_id")) or "source_scope"
+
+
+def join_unique(values: Iterable[str]) -> str:
+    seen = []
+    for value in values:
+        cleaned = clean(value)
+        if cleaned and cleaned not in seen:
+            seen.append(cleaned)
+    return "; ".join(seen)
+
+
+def merge_source_priority_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    grouped: Dict[tuple[str, str, str], List[Dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        key = (
+            clean(row.get("league_id")).lower(),
+            clean(row.get("candidate_entity_id")).lower(),
+            clean(row.get("source_candidate_url")).lower(),
+        )
+        grouped[key].append(row)
+    merged: List[Dict[str, str]] = []
+    bucket_priority = {
+        "1_nwsl_p0_roster_source_check": 10,
+        "2_gray_area_or_reputable_manual_verify": 20,
+        "3_operator_verify_required_official": 30,
+        "4_official_metadata_candidate": 40,
+        "5_metadata_candidate_watch": 50,
+    }
+    level_priority = {
+        "gray_area_manual_verify": 10,
+        "reputable_or_public_backup_candidate": 20,
+        "official_source_candidate": 30,
+        "source_candidate_manual_review": 40,
+    }
+    for grouped_rows in grouped.values():
+        base = min(grouped_rows, key=lambda row: bucket_priority.get(clean(row.get("source_review_bucket")), 999)).copy()
+        base["source_candidate_level"] = clean(
+            min(grouped_rows, key=lambda row: level_priority.get(clean(row.get("source_candidate_level")), 999)).get("source_candidate_level")
+        )
+        verify_values = [clean(row.get("operator_verify_required")).lower() for row in grouped_rows]
+        base["operator_verify_required"] = "yes" if "yes" in verify_values else join_unique(verify_values)
+        base["team_name"] = join_unique(row.get("team_name", "") for row in grouped_rows)
+        base["player_name"] = join_unique(row.get("player_name", "") for row in grouped_rows)
+        base["issue_type"] = join_unique(row.get("issue_type", "") for row in grouped_rows)
+        base["operator_action"] = join_unique(row.get("operator_action", "") for row in grouped_rows)
+        base["source_priority"] = join_unique(row.get("source_priority", "") for row in grouped_rows)
+        base["official_status"] = join_unique(row.get("official_status", "") for row in grouped_rows)
+        base["confidence"] = join_unique(row.get("confidence", "") for row in grouped_rows)
+        base["safe_next_action"] = source_safe_next_action(base, clean(base.get("source_review_bucket")))
+        merged.append(base)
+    return merged
 
 
 def build_queue() -> List[Dict[str, str]]:
@@ -586,7 +646,8 @@ def next_action_rows(queue_rows: List[Mapping[str, str]], download_rows: List[Ma
                 "download_approved_yes_rows": clean(row.get("download_approved_yes_rows")),
                 "download_approved": "no",
                 "source_url": "",
-                "entity_id": clean(row.get("team_id")),
+                "candidate_entity_id": clean(row.get("team_id")),
+                "entity_id": "",
                 "rights_class": "",
                 "identity_confidence": "",
                 "intended_review_only_use": "",
@@ -677,7 +738,6 @@ def source_priority_rows(queue_rows: List[Mapping[str, str]], external_rows: Lis
             matched_queue = queue_by_league.get(league_id, {})
             team_id = slug(team_name) or "league_source_scope"
         review_bucket = source_review_bucket(row)
-        entity_id = team_id if team_id else league_id
         output.append(
             {
                 "source_priority_rank": "0",
@@ -697,6 +757,7 @@ def source_priority_rows(queue_rows: List[Mapping[str, str]], external_rows: Lis
                 "confidence": clean(row.get("confidence")),
                 "operator_verify_required": clean(row.get("operator_verify_required")),
                 "source_domain": clean(row.get("source_domain")),
+                "candidate_entity_id": source_team_scope(row),
                 "source_candidate_url": clean(row.get("source_url")),
                 "linked_queue_bucket": clean(matched_queue.get("queue_bucket")),
                 "linked_first_action_bucket": clean(matched_queue.get("first_action_bucket")),
@@ -705,7 +766,7 @@ def source_priority_rows(queue_rows: List[Mapping[str, str]], external_rows: Lis
                 "safe_next_action": source_safe_next_action(row, review_bucket),
                 "download_approved": "no",
                 "source_url": "",
-                "entity_id": entity_id,
+                "entity_id": "",
                 "rights_class": "",
                 "identity_confidence": "",
                 "intended_review_only_use": "",
@@ -714,6 +775,7 @@ def source_priority_rows(queue_rows: List[Mapping[str, str]], external_rows: Lis
                 **guardrails(),
             }
         )
+    output = merge_source_priority_rows(output)
     priority = {
         "1_nwsl_p0_roster_source_check": 10,
         "2_gray_area_or_reputable_manual_verify": 20,
