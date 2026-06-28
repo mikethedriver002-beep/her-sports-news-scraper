@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Photo Contact Sheets
 
-Generated: `2026-06-27T19:32:52.684589+00:00`
+Generated: `2026-06-28T03:49:32.909912+00:00`
 
 Review-only candidate layer for women's soccer athlete photos. It keeps the NWSL roster candidate layer and extends the same CSV/intake/team-board workflow to WSL, Liga F, Frauen-Bundesliga, Serie A Women, and Arkema Premiere Ligue starter rows.
 No downloads or approvals are performed by this generator.
@@ -13,7 +13,9 @@ No downloads or approvals are performed by this generator.
 - Local candidate files present: `0`
 - Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`
 - Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`
+- Download intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv`
 - Allowed decisions: `approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate`
+- Future download gate: human-edited `download_approved=yes` plus source URL, entity ID, rights class, identity confidence, intended review-only use, quarantine folder only, and a separate approval step.
 - Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false
 
 ## Scope Counts

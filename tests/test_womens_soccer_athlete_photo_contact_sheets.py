@@ -40,6 +40,9 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     module.OUT_OPERATOR_BOARD_MD = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.md"
     module.OUT_OPERATOR_BOARD_CSV = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.csv"
     module.OUT_OPERATOR_BOARD_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_operator_board.json"
+    module.OUT_DOWNLOAD_INTAKE_CSV = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_download_intake.csv"
+    module.OUT_DOWNLOAD_INTAKE_MD = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_download_intake.md"
+    module.OUT_DOWNLOAD_INTAKE_JSON = tmp_path / "data" / "asset_registry" / "womens_soccer" / "womens_soccer_athlete_photo_download_intake.json"
 
     root = tmp_path / "data" / "asset_registry" / "womens_soccer" / "nwsl"
     write_csv(
@@ -95,10 +98,12 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert module.main() == 0
     rows = list(csv.DictReader(module.OUT_CSV.open(newline="", encoding="utf-8")))
     intake = list(csv.DictReader(module.OUT_INTAKE.open(newline="", encoding="utf-8")))
+    download_intake = list(csv.DictReader(module.OUT_DOWNLOAD_INTAKE_CSV.open(newline="", encoding="utf-8")))
     candidates = list(csv.DictReader(module.CANDIDATES.open(newline="", encoding="utf-8")))
 
     assert len(rows) == 1
     assert len(intake) == 1
+    assert len(download_intake) == 1
     assert len(candidates) == 1
     assert rows[0]["team_name"] == "Angel City FC"
     assert rows[0]["display_name"] == "operator_add_player_candidate"
@@ -108,8 +113,20 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert rows[0]["publish_ready"] == "false"
     assert rows[0]["auto_approval"] == "false"
     assert rows[0]["asset_downloads"] == "false"
+    assert rows[0]["source_candidate_class"] == "manual_starter_placeholder"
+    assert rows[0]["rights_class"] == "operator_rights_review_required"
+    assert rows[0]["download_approved"] == "no"
+    assert rows[0]["separate_approval_required"] == "true"
     assert intake[0]["operator_decision"] == "operator_fill_required"
     assert intake[0]["source_allowed_for_review_only"] == "operator_fill_required"
+    assert download_intake[0]["download_approved"] == "no"
+    assert download_intake[0]["download_status"] == "not_requested"
+    assert download_intake[0]["operator_source_url"] == "operator_fill_required"
+    assert download_intake[0]["operator_rights_class"] == "operator_fill_required"
+    assert download_intake[0]["approval_status"] == "not_approved"
+    assert download_intake[0]["asset_downloads"] == "false"
+    assert download_intake[0]["quarantine_folder"] == "data/assets/quarantine/review_only_candidates"
+    assert "data/assets/quarantine/review_only_candidates/womens_soccer/athlete_photo_candidates" in download_intake[0]["proposed_quarantine_path"]
     assert not list(tmp_path.rglob("headshot.png"))
     assert not list(tmp_path.rglob("*.approved"))
     assert module.OUT_INDEX.exists()
@@ -117,7 +134,10 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert module.OUT_OPERATOR_BOARD_MD.exists()
     assert module.OUT_OPERATOR_BOARD_CSV.exists()
     assert module.OUT_OPERATOR_BOARD_JSON.exists()
+    assert module.OUT_DOWNLOAD_INTAKE_MD.exists()
+    assert module.OUT_DOWNLOAD_INTAKE_JSON.exists()
     assert "No downloads or approvals" in module.OUT_INDEX.read_text(encoding="utf-8")
+    assert "Default download_approved value: `no`" in module.OUT_DOWNLOAD_INTAKE_MD.read_text(encoding="utf-8")
     operator_board_text = module.OUT_OPERATOR_BOARD_MD.read_text(encoding="utf-8")
     operator_rows = list(csv.DictReader(module.OUT_OPERATOR_BOARD_CSV.open(newline="", encoding="utf-8")))
     operator_manifest = json.loads(module.OUT_OPERATOR_BOARD_JSON.read_text(encoding="utf-8"))
@@ -127,12 +147,20 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert operator_rows[0]["review_only"] == "true"
     assert operator_rows[0]["publish_ready"] == "false"
     assert operator_rows[0]["asset_downloads"] == "false"
+    assert operator_rows[0]["download_intake_file"] == "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv"
+    assert operator_rows[0]["download_intake_rows"] == "1"
     assert operator_manifest["status"] == "operator_board_ready"
     assert operator_manifest["operator_board_rows"] == 1
     assert operator_manifest["downloads_performed"] is False
     assert operator_manifest["approvals_applied"] is False
     assert operator_manifest["headshot_files_written"] is False
     assert operator_manifest["approved_markers_created"] is False
+    download_manifest = json.loads(module.OUT_DOWNLOAD_INTAKE_JSON.read_text(encoding="utf-8"))
+    assert download_manifest["status"] == "download_intake_ready"
+    assert download_manifest["download_intake_rows"] == 1
+    assert download_manifest["download_approved_yes_rows"] == 0
+    assert download_manifest["downloads_performed"] is False
+    assert download_manifest["separate_approval_required"] is True
     manifest = json.loads(module.OUT_JSON.read_text(encoding="utf-8"))
     assert manifest["version"] == module.VERSION
     assert manifest["status"] == "contact_sheets_ready"
@@ -146,6 +174,8 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     assert manifest["candidate_csv"] == module.CANDIDATES.as_posix()
     assert manifest["contact_sheet_csv"] == module.OUT_CSV.as_posix()
     assert manifest["intake_csv"] == module.OUT_INTAKE.as_posix()
+    assert manifest["download_intake_csv"] == module.OUT_DOWNLOAD_INTAKE_CSV.as_posix()
+    assert manifest["download_approved_yes_rows"] == 0
     assert manifest["operator_board_md"] == module.OUT_OPERATOR_BOARD_MD.as_posix()
     assert manifest["operator_board_rows"] == 1
     assert Path(rows[0]["team_review_board_path"]).exists()
@@ -160,15 +190,46 @@ def test_womens_soccer_athlete_photo_contact_sheets_seed_nwsl_without_downloads(
     preserved_intake["operator_priority"] = "P1"
     preserved_intake["source_language_note"] = "Espana"
     write_csv(module.OUT_INTAKE, [preserved_intake], module.INTAKE_FIELDS + ["operator_priority", "source_language_note"])
+    preserved_download_intake = dict(download_intake[0])
+    preserved_download_intake["download_approved"] = "yes"
+    preserved_download_intake["source_url"] = "https://example.test/human-reviewed-source"
+    preserved_download_intake["rights_class"] = "human_reviewed_public_source_candidate"
+    preserved_download_intake["identity_confidence"] = "human_confirmed_team_and_name"
+    preserved_download_intake["intended_review_only_use"] = "review_only_quarantine_candidate_check"
+    preserved_download_intake["operator_source_url"] = "https://example.test/player-photo"
+    preserved_download_intake["operator_rights_class"] = "operator_reviewed_public_source"
+    preserved_download_intake["operator_identity_confidence"] = "operator_confirmed_identity"
+    preserved_download_intake["operator_intended_review_only_use"] = "review_only_local_candidate_check"
+    preserved_download_intake["operator_notes"] = "Human-edited future quarantine gate."
+    preserved_download_intake["publish_ready"] = "true"
+    preserved_download_intake["auto_approval"] = "true"
+    preserved_download_intake["download_priority"] = "P0"
+    reordered_download_fields = ["download_priority"] + list(reversed(module.DOWNLOAD_INTAKE_FIELDS))
+    with module.OUT_DOWNLOAD_INTAKE_CSV.open("w", newline="", encoding="utf-8-sig") as handle:
+        writer = csv.DictWriter(handle, fieldnames=reordered_download_fields)
+        writer.writeheader()
+        writer.writerow(preserved_download_intake)
 
     assert module.main() == 0
     rerun_intake = list(csv.DictReader(module.OUT_INTAKE.open(newline="", encoding="utf-8-sig")))
+    rerun_download_intake = list(csv.DictReader(module.OUT_DOWNLOAD_INTAKE_CSV.open(newline="", encoding="utf-8-sig")))
     assert rerun_intake[0]["operator_decision"] == "hold_identity"
     assert rerun_intake[0]["operator_notes"] == "Reviewed Pena source; keep held for now."
     assert rerun_intake[0]["operator_priority"] == "P1"
     assert rerun_intake[0]["source_language_note"] == "Espana"
     assert rerun_intake[0]["publish_ready"] == "false"
     assert rerun_intake[0]["auto_approval"] == "false"
+    assert rerun_download_intake[0]["download_approved"] == "yes"
+    assert rerun_download_intake[0]["source_url"] == "https://example.test/human-reviewed-source"
+    assert rerun_download_intake[0]["rights_class"] == "human_reviewed_public_source_candidate"
+    assert rerun_download_intake[0]["identity_confidence"] == "human_confirmed_team_and_name"
+    assert rerun_download_intake[0]["intended_review_only_use"] == "review_only_quarantine_candidate_check"
+    assert rerun_download_intake[0]["operator_source_url"] == "https://example.test/player-photo"
+    assert rerun_download_intake[0]["operator_notes"] == "Human-edited future quarantine gate."
+    assert rerun_download_intake[0]["download_priority"] == "P0"
+    assert rerun_download_intake[0]["publish_ready"] == "false"
+    assert rerun_download_intake[0]["auto_approval"] == "false"
+    assert rerun_download_intake[0]["asset_downloads"] == "false"
 
 
 def test_womens_soccer_athlete_photo_contact_sheets_expand_roster_rows_without_slow_full_png(tmp_path: Path, monkeypatch) -> None:

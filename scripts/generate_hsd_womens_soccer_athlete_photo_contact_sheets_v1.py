@@ -34,6 +34,9 @@ LEAGUE_OPERATOR_ORDER = {
     "premiere_ligue_france": 60,
 }
 TEAM_SHEET_ROOT = Path("data/asset_registry/womens_soccer/athlete_photo_contact_sheets")
+SANCTIONED_QUARANTINE_ROOT = Path("data/assets/quarantine/review_only_candidates")
+WOMENS_SOCCER_ATHLETE_QUARANTINE_SUBDIR = Path("womens_soccer/athlete_photo_candidates")
+CANONICAL_DOWNLOAD_INTAKE_PATH = Path("operator/inbox/review_only_asset_download_intake.csv")
 MAX_VISUAL_ROWS_PER_TEAM = 12
 FONT_CACHE: Dict[Tuple[int, bool], Any] = {}
 
@@ -46,6 +49,9 @@ CANDIDATES = output_path("data/asset_registry/womens_soccer/womens_soccer_athlet
 OUT_OPERATOR_BOARD_MD = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.md")
 OUT_OPERATOR_BOARD_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.csv")
 OUT_OPERATOR_BOARD_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_operator_board.json")
+OUT_DOWNLOAD_INTAKE_CSV = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv")
+OUT_DOWNLOAD_INTAKE_MD = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.md")
+OUT_DOWNLOAD_INTAKE_JSON = output_path("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.json")
 
 CANDIDATE_FIELDS = [
     "scope_id",
@@ -62,6 +68,8 @@ CANDIDATE_FIELDS = [
     "source_tier",
     "source_platform",
     "source_kind",
+    "source_candidate_class",
+    "source_candidate_priority",
     "candidate_method",
     "page_title",
     "canonical_url",
@@ -73,6 +81,7 @@ CANDIDATE_FIELDS = [
     "image_height",
     "file_sha256",
     "license_hint",
+    "rights_class",
     "rights_note",
     "attribution_text",
     "identity_evidence_notes",
@@ -80,6 +89,13 @@ CANDIDATE_FIELDS = [
     "jersey_context_notes",
     "identity_risk_flags",
     "manual_review_status",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_folder",
+    "proposed_quarantine_path",
+    "download_intake_file",
+    "download_approved",
+    "separate_approval_required",
     "approval_status",
     "review_only",
     "publish_ready",
@@ -111,11 +127,21 @@ CONTACT_FIELDS = [
     "source_domain",
     "source_tier",
     "source_kind",
+    "source_candidate_class",
+    "source_candidate_priority",
     "source_platform",
     "photo_candidate_url",
     "license_hint",
+    "rights_class",
     "rights_note",
     "identity_evidence_notes",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_folder",
+    "proposed_quarantine_path",
+    "download_intake_file",
+    "download_approved",
+    "separate_approval_required",
     "identity_risk_flags",
     "allowed_decisions",
     "human_intake_file",
@@ -164,6 +190,44 @@ INTAKE_FIELDS = [
     "asset_downloads",
 ]
 
+DOWNLOAD_INTAKE_FIELDS = [
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_id",
+    "display_name",
+    "candidate_id",
+    "entity_id",
+    "source_url",
+    "photo_candidate_url",
+    "source_candidate_class",
+    "source_candidate_priority",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_folder",
+    "proposed_quarantine_path",
+    "download_approved",
+    "download_status",
+    "operator_source_url",
+    "operator_rights_class",
+    "operator_identity_confidence",
+    "operator_intended_review_only_use",
+    "operator_notes",
+    "reviewed_by",
+    "reviewed_at_local",
+    "separate_approval_required",
+    "approval_status",
+    "review_only",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "asset_downloads",
+]
+
 OPERATOR_BOARD_FIELDS = [
     "operator_rank",
     "scope_id",
@@ -177,6 +241,9 @@ OPERATOR_BOARD_FIELDS = [
     "source_domains",
     "highest_priority_source_tier",
     "manual_intake_file",
+    "download_intake_file",
+    "download_intake_rows",
+    "download_approved_yes_rows",
     "team_review_board_path",
     "team_contact_sheet_path",
     "operator_next_step",
@@ -266,6 +333,34 @@ def proposed_candidate_path(scope_id: str, league_id: str, team_id: str, player_
     if slug(league_id) and slug(league_id) != slug(scope_id):
         root /= slug(league_id)
     return (root / "teams" / slug(team_id) / "athletes" / player_slug / "review_candidates" / f"{candidate_slug}.png").as_posix()
+
+
+def proposed_quarantine_path(scope_id: str, league_id: str, team_id: str, player_id: str, candidate_id: str) -> str:
+    player_slug = slug(player_id or "operator_fill_required")
+    candidate_slug = slug(candidate_id or "candidate_001")
+    root = SANCTIONED_QUARANTINE_ROOT / WOMENS_SOCCER_ATHLETE_QUARANTINE_SUBDIR / slug(scope_id)
+    if slug(league_id) and slug(league_id) != slug(scope_id):
+        root /= slug(league_id)
+    return (root / slug(team_id) / player_slug / f"{candidate_slug}.png").as_posix()
+
+
+def source_candidate_class(row: Mapping[str, str]) -> str:
+    status = clean(row.get("candidate_status"))
+    if status == "official_roster_source_candidate":
+        return "official_roster_metadata_candidate"
+    if status == "operator_add_candidate":
+        return "manual_starter_placeholder"
+    return clean(row.get("source_candidate_class")) or "operator_source_candidate"
+
+
+def source_candidate_priority(row: Mapping[str, str]) -> str:
+    status = clean(row.get("candidate_status"))
+    league_id = clean(row.get("league_id"))
+    if status == "official_roster_source_candidate" and league_id == "nwsl":
+        return "P0_nwsl_roster_metadata"
+    if status == "operator_add_candidate":
+        return "P2_europe_top_flight_manual_starter"
+    return clean(row.get("source_candidate_priority")) or "P1_operator_source_candidate"
 
 
 def preferred_sources(scope: str) -> Dict[Tuple[str, str], str]:
@@ -365,6 +460,8 @@ def player_candidate_rows() -> List[Dict[str, str]]:
                     "source_tier": "official_public_roster_metadata",
                     "source_platform": "nwsl_public_roster_api",
                     "source_kind": "roster_or_public_profile_candidate",
+                    "source_candidate_class": "official_roster_metadata_candidate",
+                    "source_candidate_priority": "P0_nwsl_roster_metadata",
                     "candidate_method": "official_roster_metadata_no_image_download",
                     "page_title": f"{player['team_name']} roster",
                     "canonical_url": source_url,
@@ -376,6 +473,7 @@ def player_candidate_rows() -> List[Dict[str, str]]:
                     "image_height": "",
                     "file_sha256": "",
                     "license_hint": "operator_rights_review_required",
+                    "rights_class": "operator_rights_review_required",
                     "rights_note": "review_only_fair_use_tolerant_candidate; roster metadata only; no image downloaded",
                     "attribution_text": "NWSL public roster metadata",
                     "identity_evidence_notes": f"Official roster metadata links {player['display_name']} to {player['team_name']}; provider={provider or 'missing'}; local image still required before approval.",
@@ -383,6 +481,13 @@ def player_candidate_rows() -> List[Dict[str, str]]:
                     "jersey_context_notes": "",
                     "identity_risk_flags": "local_photo_missing_identity_review_required",
                     "manual_review_status": "source_candidate_ready_local_file_missing",
+                    "identity_confidence": "roster_metadata_team_match_unverified_photo",
+                    "intended_review_only_use": "review_only_candidate_research_not_renderer_approval",
+                    "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+                    "proposed_quarantine_path": proposed_quarantine_path(player["scope_id"], player["league_id"], player["team_id"], player_id, candidate_id),
+                    "download_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv",
+                    "download_approved": "no",
+                    "separate_approval_required": "true",
                     "approval_status": "not_approved",
                     "review_only": "true",
                     "publish_ready": "false",
@@ -415,6 +520,8 @@ def starter_candidate_row(team: Mapping[str, str]) -> Dict[str, str]:
         "source_tier": "public_or_official_candidate",
         "source_platform": "manual_research",
         "source_kind": "roster_or_public_profile_candidate",
+        "source_candidate_class": "manual_starter_placeholder",
+        "source_candidate_priority": "P2_europe_top_flight_manual_starter",
         "candidate_method": "manual_candidate_layer_placeholder",
         "page_title": f"{team['team_name']} roster source review",
         "canonical_url": source_url,
@@ -426,6 +533,7 @@ def starter_candidate_row(team: Mapping[str, str]) -> Dict[str, str]:
         "image_height": "",
         "file_sha256": "",
         "license_hint": "operator_review_required",
+        "rights_class": "operator_rights_review_required",
         "rights_note": "review_only_fair_use_tolerant_candidate; no renderer approval",
         "attribution_text": "",
         "identity_evidence_notes": "Add exact player name, current team evidence, and source URL before approval.",
@@ -433,6 +541,13 @@ def starter_candidate_row(team: Mapping[str, str]) -> Dict[str, str]:
         "jersey_context_notes": "",
         "identity_risk_flags": "missing_player_identity_candidate",
         "manual_review_status": "operator_fill_required",
+        "identity_confidence": "operator_fill_required",
+        "intended_review_only_use": "review_only_candidate_research_not_renderer_approval",
+        "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+        "proposed_quarantine_path": proposed_quarantine_path(team["scope_id"], team["league_id"], team["team_id"], "", candidate_id),
+        "download_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv",
+        "download_approved": "no",
+        "separate_approval_required": "true",
         "approval_status": "not_approved",
         "review_only": "true",
         "publish_ready": "false",
@@ -560,6 +675,9 @@ def build_operator_board_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[st
             "source_domains": ";".join(source_domains),
             "highest_priority_source_tier": source_tiers[0] if source_tiers else "",
             "manual_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
+            "download_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv",
+            "download_intake_rows": str(len(team_rows_for_board)),
+            "download_approved_yes_rows": str(sum(1 for row in team_rows_for_board if clean(row.get("download_approved")).lower() == "yes")),
             "team_review_board_path": clean(first.get("team_review_board_path")),
             "team_contact_sheet_path": clean(first.get("team_contact_sheet_path")),
             "operator_next_step": "",
@@ -609,6 +727,8 @@ def render_operator_board(rows: List[Mapping[str, str]], generated_at: str) -> s
         f"- Local candidate files present: `{local_files}`",
         "- Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`",
         "- Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`",
+        "- Download intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv`",
+        "- Download intake rule: rows default to `download_approved=no`; a future quarantine-only download step would require human-edited `download_approved=yes`, source URL, entity ID, rights class, identity confidence, intended review-only use, and a separate approval step.",
         "",
         "## League Candidate Counts",
         "",
@@ -668,11 +788,21 @@ def build_rows() -> List[Dict[str, str]]:
                 "source_domain": clean(row.get("source_domain")) or source_domain(clean(row.get("source_url"))),
                 "source_tier": clean(row.get("source_tier")),
                 "source_kind": clean(row.get("source_kind")),
+                "source_candidate_class": clean(row.get("source_candidate_class")) or source_candidate_class(row),
+                "source_candidate_priority": clean(row.get("source_candidate_priority")) or source_candidate_priority(row),
                 "source_platform": clean(row.get("source_platform")),
                 "photo_candidate_url": clean(row.get("photo_candidate_url")),
                 "license_hint": clean(row.get("license_hint")),
+                "rights_class": clean(row.get("rights_class")) or clean(row.get("license_hint")) or "operator_rights_review_required",
                 "rights_note": clean(row.get("rights_note")),
                 "identity_evidence_notes": clean(row.get("identity_evidence_notes")),
+                "identity_confidence": clean(row.get("identity_confidence")) or ("roster_metadata_team_match_unverified_photo" if clean(row.get("candidate_status")) == "official_roster_source_candidate" else "operator_fill_required"),
+                "intended_review_only_use": clean(row.get("intended_review_only_use")) or "review_only_candidate_research_not_renderer_approval",
+                "quarantine_folder": clean(row.get("quarantine_folder")) or SANCTIONED_QUARANTINE_ROOT.as_posix(),
+                "proposed_quarantine_path": clean(row.get("proposed_quarantine_path")) or proposed_quarantine_path(scope_id, clean(row.get("league_id")), team_id, clean(row.get("player_id")), clean(row.get("candidate_id"))),
+                "download_intake_file": clean(row.get("download_intake_file")) or "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv",
+                "download_approved": clean(row.get("download_approved")) or "no",
+                "separate_approval_required": clean(row.get("separate_approval_required")) or "true",
                 "identity_risk_flags": clean(row.get("identity_risk_flags")) or "identity_review_required",
                 "allowed_decisions": "approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate",
                 "human_intake_file": "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv",
@@ -696,6 +826,14 @@ def existing_intake_rows() -> List[Dict[str, str]]:
 
 def existing_intake_by_candidate(rows: Iterable[Mapping[str, str]] | None = None) -> Dict[str, Mapping[str, str]]:
     return by_key(rows or existing_intake_rows(), "candidate_id")
+
+
+def existing_download_intake_rows() -> List[Dict[str, str]]:
+    return read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv")
+
+
+def existing_download_intake_by_candidate(rows: Iterable[Mapping[str, str]] | None = None) -> Dict[str, Mapping[str, str]]:
+    return by_key(rows or existing_download_intake_rows(), "candidate_id")
 
 
 def extended_fields(base_fields: List[str], rows: Iterable[Mapping[str, str]]) -> List[str]:
@@ -752,6 +890,83 @@ def intake_rows(rows: Iterable[Mapping[str, str]], existing: Mapping[str, Mappin
         )
         output.append(merged)
     return output
+
+
+def download_intake_rows(rows: Iterable[Mapping[str, str]], existing: Mapping[str, Mapping[str, str]] | None = None) -> List[Dict[str, str]]:
+    existing = existing or existing_download_intake_by_candidate()
+    output: List[Dict[str, str]] = []
+    for row in rows:
+        prior = existing.get(clean(row.get("candidate_id")), {})
+        merged = {field: clean(value) for field, value in prior.items() if field not in DOWNLOAD_INTAKE_FIELDS}
+        merged.update(
+            {
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "player_id": clean(row.get("player_id")),
+                "display_name": clean(row.get("display_name")),
+                "candidate_id": clean(row.get("candidate_id")),
+                "entity_id": clean(prior.get("entity_id")) or clean(row.get("candidate_id")),
+                "source_url": clean(prior.get("source_url")) or clean(row.get("source_url")),
+                "photo_candidate_url": clean(row.get("photo_candidate_url")),
+                "source_candidate_class": clean(row.get("source_candidate_class")) or source_candidate_class(row),
+                "source_candidate_priority": clean(row.get("source_candidate_priority")) or source_candidate_priority(row),
+                "rights_class": clean(prior.get("rights_class")) or clean(row.get("rights_class")) or "operator_rights_review_required",
+                "identity_confidence": clean(prior.get("identity_confidence")) or clean(row.get("identity_confidence")) or "operator_fill_required",
+                "intended_review_only_use": clean(prior.get("intended_review_only_use")) or clean(row.get("intended_review_only_use")) or "review_only_candidate_research_not_renderer_approval",
+                "quarantine_folder": clean(row.get("quarantine_folder")) or SANCTIONED_QUARANTINE_ROOT.as_posix(),
+                "proposed_quarantine_path": clean(row.get("proposed_quarantine_path")),
+                "download_approved": clean(prior.get("download_approved")) or "no",
+                "download_status": clean(prior.get("download_status")) or "not_requested",
+                "operator_source_url": clean(prior.get("operator_source_url")) or "operator_fill_required",
+                "operator_rights_class": clean(prior.get("operator_rights_class")) or "operator_fill_required",
+                "operator_identity_confidence": clean(prior.get("operator_identity_confidence")) or "operator_fill_required",
+                "operator_intended_review_only_use": clean(prior.get("operator_intended_review_only_use")) or "operator_fill_required",
+                "operator_notes": clean(prior.get("operator_notes")),
+                "reviewed_by": clean(prior.get("reviewed_by")),
+                "reviewed_at_local": clean(prior.get("reviewed_at_local")),
+                "separate_approval_required": "true",
+                "approval_status": "not_approved",
+                "review_only": "true",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "asset_downloads": "false",
+            }
+        )
+        output.append(merged)
+    return output
+
+
+def render_download_intake(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    approved_yes = sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes")
+    source_classes = count_by_field(rows, "source_candidate_class")
+    lines = [
+        "# Women's Soccer Athlete Photo Download Intake",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only, human-edited intake for a future quarantine-only local download step. This generator does not download athlete photos, write headshots, create `.approved` markers, approve identities, move files, publish, or create a publish-ready lane.",
+        "",
+        "A row is not eligible for any future quarantine download unless a human edits the CSV with `download_approved=yes`, source URL, entity ID, rights class, identity confidence, intended review-only use, and a separate approval step remains required after local review.",
+        "",
+        "## Summary",
+        "",
+        f"- Intake rows: `{len(rows)}`",
+        f"- Rows with download_approved=yes: `{approved_yes}`",
+        "- Default download_approved value: `no`",
+        f"- Quarantine folder only: `{SANCTIONED_QUARANTINE_ROOT.as_posix()}`",
+        "- Download intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv`",
+        f"- Policy canonical intake template: `{CANONICAL_DOWNLOAD_INTAKE_PATH.as_posix()}`",
+        "",
+        "## Source Candidate Classes",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in source_classes.items())
+    return "\n".join(lines) + "\n"
 
 
 def text_width(draw: Any, text: str, font: Any) -> int:
@@ -900,7 +1115,9 @@ def render_index(rows: List[Mapping[str, str]], team_outputs: Mapping[str, Mappi
         f"- Local candidate files present: `{local_count}`",
         "- Candidate CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_candidates.csv`",
         "- Human intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_intake.csv`",
+        "- Download intake CSV: `data/asset_registry/womens_soccer/womens_soccer_athlete_photo_download_intake.csv`",
         "- Allowed decisions: `approve_for_review_only_renderer_use|hold_identity|deny_candidate|revise_source_metadata|request_better_candidate`",
+        "- Future download gate: human-edited `download_approved=yes` plus source URL, entity ID, rights class, identity confidence, intended review-only use, quarantine folder only, and a separate approval step.",
         "- Guardrails: review_only=true; publish_ready=false; auto_approval=false; auto_publish=false; move_files=false; paid_apis=false; asset_downloads=false",
         "",
         "## Scope Counts",
@@ -934,6 +1151,9 @@ def main() -> int:
     prior_intake_rows = existing_intake_rows()
     existing = existing_intake_by_candidate(prior_intake_rows)
     decisions = intake_rows(rows, existing)
+    prior_download_intake_rows = existing_download_intake_rows()
+    existing_downloads = existing_download_intake_by_candidate(prior_download_intake_rows)
+    download_decisions = download_intake_rows(rows, existing_downloads)
     team_outputs: Dict[str, Dict[str, str]] = {}
     warnings: List[str] = []
     grouped: Dict[Tuple[str, str], List[Mapping[str, str]]] = {}
@@ -955,6 +1175,8 @@ def main() -> int:
     operator_board_rows = build_operator_board_rows(rows)
     write_csv(OUT_CSV, rows, CONTACT_FIELDS)
     write_csv(OUT_INTAKE, decisions, extended_fields(INTAKE_FIELDS, prior_intake_rows))
+    write_csv(OUT_DOWNLOAD_INTAKE_CSV, download_decisions, extended_fields(DOWNLOAD_INTAKE_FIELDS, prior_download_intake_rows))
+    write_text(OUT_DOWNLOAD_INTAKE_MD, render_download_intake(download_decisions, generated_at))
     write_csv(OUT_OPERATOR_BOARD_CSV, operator_board_rows, OPERATOR_BOARD_FIELDS)
     write_text(OUT_OPERATOR_BOARD_MD, render_operator_board(operator_board_rows, generated_at))
     write_text(OUT_INDEX, render_index(rows, team_outputs, generated_at))
@@ -971,6 +1193,10 @@ def main() -> int:
         "operator_board_csv": OUT_OPERATOR_BOARD_CSV.as_posix(),
         "candidate_csv": CANDIDATES.as_posix(),
         "intake_csv": OUT_INTAKE.as_posix(),
+        "download_intake_csv": OUT_DOWNLOAD_INTAKE_CSV.as_posix(),
+        "download_intake_md": OUT_DOWNLOAD_INTAKE_MD.as_posix(),
+        "download_intake_rows": len(download_decisions),
+        "download_approved_yes_rows": sum(1 for row in download_decisions if clean(row.get("download_approved")).lower() == "yes"),
         "review_only": True,
         "downloads_performed": False,
         "approvals_applied": False,
@@ -983,6 +1209,30 @@ def main() -> int:
         "paid_apis": False,
     }
     write_json(OUT_OPERATOR_BOARD_JSON, operator_board_manifest)
+    download_intake_manifest = {
+        "version": VERSION,
+        "status": "download_intake_ready",
+        "generated_at_utc": generated_at,
+        "download_intake_rows": len(download_decisions),
+        "download_approved_yes_rows": sum(1 for row in download_decisions if clean(row.get("download_approved")).lower() == "yes"),
+        "download_intake_csv": OUT_DOWNLOAD_INTAKE_CSV.as_posix(),
+        "download_intake_md": OUT_DOWNLOAD_INTAKE_MD.as_posix(),
+        "candidate_csv": CANDIDATES.as_posix(),
+        "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+        "policy_canonical_intake_path": CANONICAL_DOWNLOAD_INTAKE_PATH.as_posix(),
+        "review_only": True,
+        "downloads_performed": False,
+        "approvals_applied": False,
+        "headshot_files_written": False,
+        "approved_markers_created": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "separate_approval_required": True,
+    }
+    write_json(OUT_DOWNLOAD_INTAKE_JSON, download_intake_manifest)
     manifest = {
         "version": VERSION,
         "status": "contact_sheets_ready",
@@ -995,6 +1245,9 @@ def main() -> int:
         "operator_board_md": OUT_OPERATOR_BOARD_MD.as_posix(),
         "operator_board_csv": OUT_OPERATOR_BOARD_CSV.as_posix(),
         "operator_board_json": OUT_OPERATOR_BOARD_JSON.as_posix(),
+        "download_intake_csv": OUT_DOWNLOAD_INTAKE_CSV.as_posix(),
+        "download_intake_md": OUT_DOWNLOAD_INTAKE_MD.as_posix(),
+        "download_intake_json": OUT_DOWNLOAD_INTAKE_JSON.as_posix(),
         "index": OUT_INDEX.as_posix(),
         "scope_counts": count_by_field(rows, "scope_id"),
         "league_counts": count_by_field(rows, "league_id"),
@@ -1002,6 +1255,8 @@ def main() -> int:
         "official_roster_candidate_rows": sum(1 for row in rows if clean(row.get("candidate_status")) == "official_roster_source_candidate"),
         "local_candidate_files_present": sum(1 for row in rows if clean(row.get("local_candidate_exists")) == "true"),
         "operator_board_rows": len(operator_board_rows),
+        "download_intake_rows": len(download_decisions),
+        "download_approved_yes_rows": sum(1 for row in download_decisions if clean(row.get("download_approved")).lower() == "yes"),
         "warnings": warnings,
         "review_only": True,
         "downloads_performed": False,
@@ -1009,9 +1264,10 @@ def main() -> int:
         "headshot_files_written": False,
         "approved_markers_created": False,
         "publish_ready": False,
+        "separate_approval_required": True,
     }
     write_json(OUT_JSON, manifest)
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "candidate_rows": len(rows), "team_boards": len(team_outputs), "operator_board": OUT_OPERATOR_BOARD_MD.as_posix(), "index": OUT_INDEX.as_posix(), "intake": OUT_INTAKE.as_posix()}, indent=2))
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "candidate_rows": len(rows), "team_boards": len(team_outputs), "operator_board": OUT_OPERATOR_BOARD_MD.as_posix(), "index": OUT_INDEX.as_posix(), "intake": OUT_INTAKE.as_posix(), "download_intake": OUT_DOWNLOAD_INTAKE_CSV.as_posix()}, indent=2))
     return 0
 
 
