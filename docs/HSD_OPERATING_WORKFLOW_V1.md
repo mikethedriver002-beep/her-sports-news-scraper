@@ -75,6 +75,7 @@ External reports return to the conductor, which decides what is safe, what needs
 Research alerts should be non-blocking. They tell Mike when an external tool would raise quality, without stopping active Codex lanes.
 
 Primary delivery: email to Mike using `docs/HSD_RESEARCH_ALERT_EMAIL_TEMPLATE.md`.
+Operational helper: build the upload bundle and Gmail-ready draft with `scripts/build_hsd_external_research_packet_v1.py`; usage notes live in `docs/HSD_RESEARCH_PACKET_BUILDER.md`.
 
 Default recipient: `michael@brieffactory.com`.
 
