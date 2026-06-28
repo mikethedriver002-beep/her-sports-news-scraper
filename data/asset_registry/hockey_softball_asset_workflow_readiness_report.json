@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_asset_workflow_readiness_ready",
-  "generated_at_utc": "2026-06-28T16:29:38.362354+00:00",
+  "generated_at_utc": "2026-06-28T17:59:16.169700+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -54,6 +54,9 @@
     "asset_review_readiness_athlete_rows": 18,
     "asset_review_readiness_download_approved_yes_rows": 0,
     "asset_review_readiness_blank_source_url_rows": 38,
+    "asset_review_readiness_source_identity_gap_rows": 38,
+    "asset_review_readiness_team_entity_check_rows": 38,
+    "asset_review_readiness_local_candidate_gap_rows": 38,
     "quarantine_download_intake_rows": 74,
     "quarantine_download_logo_rows": 20,
     "quarantine_download_athlete_rows": 54,
@@ -197,7 +200,10 @@
     "logo_rows": 20,
     "athlete_rows": 18,
     "download_approved_yes_rows": 0,
-    "blank_source_url_rows": 38
+    "blank_source_url_rows": 38,
+    "source_identity_gap_rows": 38,
+    "team_entity_check_rows": 38,
+    "local_candidate_gap_rows": 38
   },
   "quarantine_download_intake": {
     "md": "data/asset_registry/hockey_softball_quarantine_download_intake.md",

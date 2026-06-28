@@ -2075,6 +2075,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_asset_review_readiness_athlete_rows": as_int(hockey_softball_asset_readiness_manifest.get("athlete_rows")) if isinstance(hockey_softball_asset_readiness_manifest, dict) else 0,
         "hockey_softball_asset_review_readiness_download_approved_yes_rows": as_int(hockey_softball_asset_readiness_manifest.get("download_approved_yes_rows")) if isinstance(hockey_softball_asset_readiness_manifest, dict) else 0,
         "hockey_softball_asset_review_readiness_blank_source_url_rows": as_int(hockey_softball_asset_readiness_manifest.get("blank_source_url_rows")) if isinstance(hockey_softball_asset_readiness_manifest, dict) else 0,
+        "hockey_softball_asset_review_readiness_source_identity_gap_rows": as_int(hockey_softball_asset_readiness_manifest.get("source_identity_gap_rows")) if isinstance(hockey_softball_asset_readiness_manifest, dict) else 0,
+        "hockey_softball_asset_review_readiness_team_entity_check_rows": as_int(hockey_softball_asset_readiness_manifest.get("team_entity_check_rows")) if isinstance(hockey_softball_asset_readiness_manifest, dict) else 0,
+        "hockey_softball_asset_review_readiness_local_candidate_gap_rows": as_int(hockey_softball_asset_readiness_manifest.get("local_candidate_gap_rows")) if isinstance(hockey_softball_asset_readiness_manifest, dict) else 0,
         "hockey_softball_quarantine_download_intake_status": clean(hockey_softball_quarantine_download_manifest.get("status")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else "",
         "hockey_softball_quarantine_download_intake_generated_at": clean(hockey_softball_quarantine_download_manifest.get("generated_at_utc")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else "",
         "hockey_softball_quarantine_download_intake_rows": hockey_softball_quarantine_download_rows,
@@ -8889,6 +8892,8 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S triage dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_triage_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>H/S readiness rows</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_readiness_rows', 0)))}</strong></div>
             <div><span>H/S readiness blanks</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_readiness_blank_source_url_rows', 0)))}</strong></div>
+            <div><span>H/S readiness gaps</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_readiness_source_identity_gap_rows', 0)))}</strong></div>
+            <div><span>H/S local gaps</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_readiness_local_candidate_gap_rows', 0)))}</strong></div>
             <div><span>H/S download gate</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_intake_rows', 0)))}</strong></div>
             <div><span>H/S download yes</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_approved_yes_rows', 0)))}</strong></div>
           </div>
@@ -10563,6 +10568,9 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball asset review readiness athlete rows: {asset_panel.get('hockey_softball_asset_review_readiness_athlete_rows', 0)}",
         f"- Hockey/softball asset review readiness download-approved yes rows: {asset_panel.get('hockey_softball_asset_review_readiness_download_approved_yes_rows', 0)}",
         f"- Hockey/softball asset review readiness blank source_url rows: {asset_panel.get('hockey_softball_asset_review_readiness_blank_source_url_rows', 0)}",
+        f"- Hockey/softball asset review readiness source/identity gap rows: {asset_panel.get('hockey_softball_asset_review_readiness_source_identity_gap_rows', 0)}",
+        f"- Hockey/softball asset review readiness team/entity check rows: {asset_panel.get('hockey_softball_asset_review_readiness_team_entity_check_rows', 0)}",
+        f"- Hockey/softball asset review readiness local candidate gap rows: {asset_panel.get('hockey_softball_asset_review_readiness_local_candidate_gap_rows', 0)}",
         f"- Hockey/softball asset review readiness generated: {asset_panel.get('hockey_softball_asset_review_readiness_generated_at') or 'missing'}",
         f"- Hockey/softball quarantine download intake rows: {asset_panel.get('hockey_softball_quarantine_download_intake_rows', 0)}",
         f"- Hockey/softball quarantine download logo rows: {asset_panel.get('hockey_softball_quarantine_download_intake_logo_rows', 0)}",
