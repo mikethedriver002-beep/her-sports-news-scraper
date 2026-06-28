@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.37.0-photo-first-focal-frame"
+VERSION = "hsd-manual-review-renderer-v1.38.0-athlete-focal-contract"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v11_photo_first_focal_frame"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v12_athlete_focal_contract"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -56,7 +56,7 @@ RENDER_BACKGROUND_CUES = (
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
     "photo_first_editorial_nameplate,photo_first_portrait_spotlight,photo_first_score_type_lockup,"
     "photo_first_context_score_rail,photo_first_subject_glow_bridge,photo_first_soft_focal_frame,"
-    "compact_square_photo_footer,"
+    "photo_first_athlete_primary_focal_contract,compact_square_photo_footer,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -2625,7 +2625,7 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
     variant_label = photo_first_stage_caption(module)
-    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "GAME FOCUS", "context", 18, 10, PALETTE["gold"], max_lines=1, align="left")
+    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "ATHLETE FOCUS", "context", 18, 10, PALETTE["gold"], max_lines=1, align="left")
     draw_reference_text(image, (x + 36, y + 58, w - 72, 42), player, "context", 26, 14, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
     draw_reference_text(image, (plate_x + 12, plate_y + 8, plate_w - 24, 24), variant_label, "context", 15, 9, PALETTE["gold"], max_lines=1, align="center")
     return True
@@ -3203,6 +3203,11 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     score_lock_variant = "final_score_locked_logo_first"
     proof_strip_variant = "score_edge_only"
     copy_unlock_state = "score_only_copy_locked_manual_review"
+    focal_priority = "non_athlete_fallback"
+    athlete_focal_contract = "logo_score_fallback_not_athlete_led"
+    fallback_comparison_status = "fallback_active_label_no_athlete_photo"
+    fallback_comparison_note = "No athlete/person focal frame rendered; hold if the handoff expected an athlete-led result."
+    score_layout_contract = "logo_score_fallback_score_team_caption_clearance"
     template_fit_reason = clean(content_module.get("athlete_led_blocker")) or "No approved player photo and verified player stat context; renderer holds photo-first route."
     if photo_ready and player and (is_player_stat or is_supporting_stat):
         visual_mode = "photo_first_performer" if is_player_stat else "photo_first_result"
@@ -3211,6 +3216,11 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         score_lock_variant = "final_score_locked_photo_first"
         proof_strip_variant = "player_stat_proof_strip" if is_player_stat else "supporting_stat_proof_strip"
         copy_unlock_state = "verified_stat_copy_locked_manual_review" if is_player_stat else "supporting_stat_copy_locked_manual_review"
+        focal_priority = "athlete_primary"
+        athlete_focal_contract = "approved_or_review_local_person_image_primary"
+        fallback_comparison_status = "fallback_not_used_athlete_preview_ready"
+        fallback_comparison_note = "Photo-first athlete/person frame is the primary editorial focal point; logo-only fallback should appear only when the handoff loses photo/stat eligibility."
+        score_layout_contract = "photo_first_score_team_caption_clearance_locked"
         template_fit_reason = "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing."
         if layout_mode == "square_photo_first_score_panel":
             visual_mode = "photo_first_performer_square" if is_player_stat else "photo_first_result_square"
@@ -3226,6 +3236,11 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "score_lock_variant": score_lock_variant,
         "proof_strip_variant": proof_strip_variant,
         "copy_unlock_state": copy_unlock_state,
+        "focal_priority": focal_priority,
+        "athlete_focal_contract": athlete_focal_contract,
+        "fallback_comparison_status": fallback_comparison_status,
+        "fallback_comparison_note": fallback_comparison_note,
+        "score_layout_contract": score_layout_contract,
         "background_family": RENDER_BACKGROUND_FAMILY,
         "template_fit_reason": template_fit_reason,
     }
@@ -3394,6 +3409,10 @@ def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
         "background_style": clean(format_row.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "hero_asset_required": clean(format_row.get("hero_asset_required")) or "not_recorded",
         "focal_entity_type": clean(format_row.get("focal_entity_type")) or "not_recorded",
+        "focal_priority": clean(format_row.get("focal_priority")) or "not_recorded",
+        "athlete_focal_contract": clean(format_row.get("athlete_focal_contract")) or "not_recorded",
+        "fallback_comparison_status": clean(format_row.get("fallback_comparison_status")) or "not_recorded",
+        "score_layout_contract": clean(format_row.get("score_layout_contract")) or "not_recorded",
         "automated_qa_status": clean(format_row.get("preview_qa_status")) or "preview_qa_not_run",
         "reference_public_mockup_path": clean(format_row.get("reference_public_mockup_path")) or "not_reference_packed",
         "reference_layout_path": clean(format_row.get("reference_layout_path")) or "not_reference_packed",
@@ -3441,6 +3460,12 @@ def write_visual_comparison_contact_sheet(rows: List[Dict[str, Any]], content_mo
         f"Background: {RENDER_BACKGROUND_STYLE}"
     )
     draw_text_block(draw, (70, 112), subtitle, font(24, False), (204, 216, 232), width - 140, 2, 4)
+    contract_line = (
+        f"Focal contract: {clean(content_module.get('focal_priority')) or 'not_recorded'} | "
+        f"{clean(content_module.get('athlete_focal_contract')) or 'not_recorded'} | "
+        f"Fallback: {clean(content_module.get('fallback_comparison_status')) or 'not_recorded'}"
+    )
+    draw_text_block(draw, (70, 142), contract_line, font(19, False), (236, 242, 250), width - 140, 1, 4)
 
     panel_w = 720
     panel_gap = 50
@@ -3476,6 +3501,8 @@ def write_visual_comparison_contact_sheet(rows: List[Dict[str, Any]], content_mo
             f"Visual: {clean(row.get('visual_mode'))}",
             f"Photo/layout: {clean(row.get('photo_layout'))}",
             f"Hero: {clean(row.get('hero_asset_required'))}",
+            f"Focal: {clean(row.get('focal_priority'))}",
+            f"Fallback: {clean(row.get('fallback_comparison_status'))}",
             f"Reference: {clean(row.get('reference_derivation'))}",
             f"Image: {thumb_status}",
         ]
@@ -3517,6 +3544,11 @@ def write_visual_comparison_board(
         "background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "hero_asset_required": clean(content_module.get("hero_asset_required")) or "not_recorded",
         "focal_entity_type": clean(content_module.get("focal_entity_type")) or "not_recorded",
+        "focal_priority": clean(content_module.get("focal_priority")) or "not_recorded",
+        "athlete_focal_contract": clean(content_module.get("athlete_focal_contract")) or "not_recorded",
+        "fallback_comparison_status": clean(content_module.get("fallback_comparison_status")) or "not_recorded",
+        "fallback_comparison_note": clean(content_module.get("fallback_comparison_note")) or "not_recorded",
+        "score_layout_contract": clean(content_module.get("score_layout_contract")) or "not_recorded",
         "next_manual_review_step": next_step,
         "rows": rows,
     }
@@ -3546,6 +3578,11 @@ def write_visual_comparison_board(
         f"- Background style: `{board['background_style']}`",
         f"- Hero asset status: `{board['hero_asset_required']}`",
         f"- Focal entity: `{board['focal_entity_type']}`",
+        f"- Focal priority: `{board['focal_priority']}`",
+        f"- Athlete focal contract: `{board['athlete_focal_contract']}`",
+        f"- Fallback comparison: `{board['fallback_comparison_status']}`",
+        f"- Fallback note: {board['fallback_comparison_note']}",
+        f"- Score layout contract: `{board['score_layout_contract']}`",
         "",
         "## Format Review",
         "",
@@ -3563,6 +3600,10 @@ def write_visual_comparison_board(
                     f"- Photo layout: `{clean(row.get('photo_layout'))}`",
                     f"- Background style: `{clean(row.get('background_style'))}`",
                     f"- Hero asset status: `{clean(row.get('hero_asset_required'))}`",
+                    f"- Focal priority: `{clean(row.get('focal_priority'))}`",
+                    f"- Athlete focal contract: `{clean(row.get('athlete_focal_contract'))}`",
+                    f"- Fallback comparison: `{clean(row.get('fallback_comparison_status'))}`",
+                    f"- Score layout contract: `{clean(row.get('score_layout_contract'))}`",
                     f"- Reference mockup: `{clean(row.get('reference_public_mockup_path'))}`",
                     f"- Reference layout: `{clean(row.get('reference_layout_path'))}`",
                     f"- Reference derivation: `{clean(row.get('reference_derivation'))}`",
@@ -3701,6 +3742,9 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Visual mode: `{clean(content_module.get('visual_mode')) or 'not_selected'}` focal_entity=`{clean(content_module.get('focal_entity_type')) or 'n/a'}` hero_asset_required=`{clean(content_module.get('hero_asset_required')) or 'n/a'}`",
         f"- Visual contract: score_lock=`{clean(content_module.get('score_lock_variant')) or 'n/a'}` proof_strip=`{clean(content_module.get('proof_strip_variant')) or 'n/a'}` copy_unlock=`{clean(content_module.get('copy_unlock_state')) or 'n/a'}` background=`{clean(content_module.get('background_family')) or clean(render_result.get('render_background_style')) or 'n/a'}`",
+        f"- Athlete focal contract: priority=`{clean(content_module.get('focal_priority')) or 'n/a'}` contract=`{clean(content_module.get('athlete_focal_contract')) or 'n/a'}` fallback=`{clean(content_module.get('fallback_comparison_status')) or 'n/a'}`",
+        f"- Fallback comparison note: {clean(content_module.get('fallback_comparison_note')) or 'n/a'}",
+        f"- Score layout contract: `{clean(content_module.get('score_layout_contract')) or 'n/a'}`",
         f"- Template fit reason: {clean(content_module.get('template_fit_reason')) or 'n/a'}",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
         f"- Athlete-led render: `{clean(content_module.get('athlete_led_render_status')) or 'not_evaluated'}` missing=`{clean(content_module.get('athlete_led_missing_fields')) or 'none'}`",
