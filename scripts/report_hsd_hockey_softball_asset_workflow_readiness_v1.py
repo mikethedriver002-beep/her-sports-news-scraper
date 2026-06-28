@@ -7,6 +7,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping
+from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -25,6 +26,9 @@ BATCH_SOURCE_REVIEW_JSON = Path("data/asset_registry/hockey_softball_batch_sourc
 NEXT_DECISION_WORKSHEET_MD = Path("data/asset_registry/hockey_softball_next_decision_worksheet.md")
 NEXT_DECISION_WORKSHEET_CSV = Path("data/asset_registry/hockey_softball_next_decision_worksheet.csv")
 NEXT_DECISION_WORKSHEET_JSON = Path("data/asset_registry/hockey_softball_next_decision_worksheet.json")
+SOURCE_PRIORITY_MD = Path("data/asset_registry/hockey_softball_source_priority_worksheet.md")
+SOURCE_PRIORITY_CSV = Path("data/asset_registry/hockey_softball_source_priority_worksheet.csv")
+SOURCE_PRIORITY_JSON = Path("data/asset_registry/hockey_softball_source_priority_worksheet.json")
 QUARANTINE_DOWNLOAD_INTAKE_MD = Path("data/asset_registry/hockey_softball_quarantine_download_intake.md")
 QUARANTINE_DOWNLOAD_INTAKE_CSV = Path("data/asset_registry/hockey_softball_quarantine_download_intake.csv")
 QUARANTINE_DOWNLOAD_INTAKE_JSON = Path("data/asset_registry/hockey_softball_quarantine_download_intake.json")
@@ -121,6 +125,50 @@ NEXT_DECISION_WORKSHEET_FIELDS = [
     "local_asset_needed_later",
     "do_not_touch",
     "guardrail_note",
+]
+
+SOURCE_PRIORITY_FIELDS = [
+    "source_priority_rank",
+    "source_review_bucket",
+    "source_candidate_level",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "asset_domain",
+    "candidate_entity_id",
+    "display_name",
+    "candidate_id",
+    "operator_action",
+    "source_priority",
+    "official_status",
+    "confidence",
+    "operator_verify_required",
+    "source_domain",
+    "source_candidate_url",
+    "linked_first_action_bucket",
+    "linked_missing_local_candidate_asset",
+    "linked_review_state",
+    "render_readiness",
+    "safe_next_action",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
 ]
 
 QUARANTINE_DOWNLOAD_INTAKE_FIELDS = [
@@ -485,6 +533,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Review action queue: `data/asset_registry/hockey_softball_asset_review_action_queue.md`",
         "- Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`",
         "- Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`",
+        "- Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
@@ -512,6 +561,10 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Next decision missing-local rows: `{report['totals']['next_decision_missing_local_candidate_asset_rows']}`",
         f"- Next decision download-approved yes rows: `{report['totals']['next_decision_download_approved_yes_rows']}`",
         f"- Next decision blank download-metadata rows: `{report['totals']['next_decision_blank_download_metadata_rows']}`",
+        f"- Source priority rows: `{report['totals']['source_priority_rows']}`",
+        f"- Source priority operator-verify rows: `{report['totals']['source_priority_operator_verify_required_rows']}`",
+        f"- Source priority download-approved yes rows: `{report['totals']['source_priority_download_approved_yes_rows']}`",
+        f"- Source priority blank source_url rows: `{report['totals']['source_priority_blank_source_url_rows']}`",
         f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
         f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
@@ -957,6 +1010,188 @@ def render_next_decision_worksheet(rows: list[Dict[str, str]], generated_at: str
     return "\n".join(lines)
 
 
+def source_domain(value: Any) -> str:
+    parsed = urlparse(clean(value))
+    return parsed.netloc.lower()
+
+
+def source_priority_bucket(row: Mapping[str, str]) -> str:
+    if not clean(row.get("source_url")):
+        return "0_source_missing_hold"
+    if clean(row.get("current_source_reviewed")).lower() == "yes":
+        return "2_source_reviewed_waiting_for_local_asset"
+    if source_domain(row.get("source_url")) in {"www.thepwhl.com", "thepwhl.com", "theausl.com", "www.theausl.com"}:
+        return "1_official_league_or_team_manual_verify"
+    return "3_public_source_manual_verify"
+
+
+def source_candidate_level(row: Mapping[str, str]) -> str:
+    asset_domain = clean(row.get("asset_domain"))
+    candidate_id = clean(row.get("candidate_id")).lower()
+    entity_id = clean(row.get("entity_id")).lower()
+    if asset_domain == "logo" and candidate_id == "league_mark":
+        return "league_logo_source_candidate"
+    if asset_domain == "logo":
+        return "team_logo_source_candidate"
+    if "roster" in candidate_id:
+        return "athlete_roster_source_candidate"
+    if "profile" in candidate_id:
+        return "athlete_team_profile_source_candidate"
+    if "player_index" in candidate_id:
+        return "athlete_league_player_index_source_candidate"
+    return f"{asset_domain or 'asset'}_{entity_id or 'entity'}_source_candidate"
+
+
+def source_priority_value(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "1_official_league_or_team_manual_verify":
+        return "P0_OFFICIAL_LEAGUE_OR_TEAM_SOURCE"
+    if bucket == "2_source_reviewed_waiting_for_local_asset":
+        return "P1_SOURCE_REVIEWED_LOCAL_ASSET_MISSING"
+    if bucket == "0_source_missing_hold":
+        return "HOLD_SOURCE_MISSING"
+    return "P2_PUBLIC_SOURCE_MANUAL_VERIFY"
+
+
+def source_priority_safe_next_action(row: Mapping[str, str], bucket: str) -> str:
+    if bucket == "1_official_league_or_team_manual_verify":
+        return "Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank."
+    if bucket == "2_source_reviewed_waiting_for_local_asset":
+        return "Do not restamp source review unless correcting a human-entered row; wait for a human-supplied local candidate asset or future human-edited quarantine download intake."
+    if bucket == "0_source_missing_hold":
+        return "Hold until a public source candidate URL is added through a later review-only intake."
+    return "Open source_candidate_url manually and treat it as advisory source evidence only; do not approve or download."
+
+
+def source_priority_sort_key(row: Mapping[str, str]) -> tuple[int, str, str, str, str]:
+    bucket_order = {
+        "1_official_league_or_team_manual_verify": 0,
+        "2_source_reviewed_waiting_for_local_asset": 1,
+        "3_public_source_manual_verify": 2,
+        "0_source_missing_hold": 3,
+    }
+    sport_order = {"womens_hockey": "0", "softball": "1"}
+    return (
+        bucket_order.get(clean(row.get("source_review_bucket")), 9),
+        sport_order.get(clean(row.get("sport_family")), "9"),
+        clean(row.get("asset_domain")),
+        clean(row.get("candidate_entity_id")),
+        clean(row.get("candidate_id")),
+    )
+
+
+def source_priority_rows(action_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    rows: list[Dict[str, str]] = []
+    for action_row in action_rows:
+        bucket = source_priority_bucket(action_row)
+        candidate_url = clean(action_row.get("source_url"))
+        rows.append(
+            {
+                "source_priority_rank": "0",
+                "source_review_bucket": bucket,
+                "source_candidate_level": source_candidate_level(action_row),
+                "sport_family": clean(action_row.get("sport_family")),
+                "sport_label": clean(action_row.get("sport_label")),
+                "league_name": SPORTS.get(clean(action_row.get("sport_family")), {}).get("league_label", ""),
+                "asset_domain": clean(action_row.get("asset_domain")),
+                "candidate_entity_id": clean(action_row.get("entity_id")),
+                "display_name": clean(action_row.get("display_name")),
+                "candidate_id": clean(action_row.get("candidate_id")),
+                "operator_action": "manual_source_review_only",
+                "source_priority": source_priority_value(action_row, bucket),
+                "official_status": "official_league_or_team_candidate"
+                if bucket in {"1_official_league_or_team_manual_verify", "2_source_reviewed_waiting_for_local_asset"}
+                else "public_source_candidate",
+                "confidence": "operator_verify_required" if bucket == "1_official_league_or_team_manual_verify" else "source_reviewed_waiting_for_local_asset",
+                "operator_verify_required": "yes" if bucket == "1_official_league_or_team_manual_verify" else "no_unless_correcting",
+                "source_domain": source_domain(candidate_url),
+                "source_candidate_url": candidate_url,
+                "linked_first_action_bucket": next_decision_first_action_bucket(action_row),
+                "linked_missing_local_candidate_asset": "no" if clean(action_row.get("local_asset_present")).lower() == "yes" else "yes",
+                "linked_review_state": clean(action_row.get("review_state")),
+                "render_readiness": "not_render_ready_source_candidate_only",
+                "safe_next_action": source_priority_safe_next_action(action_row, bucket),
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    rows.sort(key=source_priority_sort_key)
+    for index, row in enumerate(rows, start=1):
+        row["source_priority_rank"] = str(index)
+    return rows
+
+
+def render_source_priority(rows: list[Dict[str, str]], generated_at: str) -> str:
+    bucket_counts = Counter(row["source_review_bucket"] for row in rows)
+    lines = [
+        "# Hockey/Softball Source Priority Worksheet",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only source-candidate worksheet built from existing hockey/softball action rows. `source_candidate_url` is advisory evidence for manual review; the local-download-law `source_url` and `entity_id` fields remain blank and `download_approved=no` unless a later human-edited intake supplies the required metadata.",
+        "",
+        "## Summary",
+        "",
+        f"- Source priority rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Operator-verify rows: `{sum(1 for row in rows if clean(row.get('operator_verify_required')).lower() == 'yes')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Source Review Buckets",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in sorted(bucket_counts.items()))
+    lines.extend(
+        [
+            "",
+            "## Safe Operator Path",
+            "",
+            "- Work `1_official_league_or_team_manual_verify` rows first; these are source-candidate URLs that still need a human source review.",
+            "- Treat `source_candidate_url` as advisory source evidence only.",
+            "- Do not copy `source_candidate_url` into download-law `source_url` without a later human-edited intake row.",
+            "- Keep `download_approved=no` and leave `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` blank in generated rows.",
+            "- This worksheet does not download files, approve assets, write headshots, create `.approved` markers, move files, or publish.",
+            "",
+            "## Worksheet Preview",
+            "",
+            "| Rank | Bucket | Sport | Asset | Entity | Candidate | Source | Safe Next Action |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for row in rows[:35]:
+        lines.append(
+            "| {rank} | {bucket} | {sport} | {asset} | {entity} | {candidate} | {url} | {action} |".format(
+                rank=clean(row.get("source_priority_rank")),
+                bucket=clean(row.get("source_review_bucket")),
+                sport=clean(row.get("sport_family")),
+                asset=clean(row.get("asset_domain")),
+                entity=clean(row.get("candidate_entity_id")).replace("|", "/"),
+                candidate=clean(row.get("candidate_id")).replace("|", "/"),
+                url=clean(row.get("source_candidate_url")).replace("|", "%7C"),
+                action=clean(row.get("safe_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def proposed_quarantine_path(row: Mapping[str, str]) -> str:
     return (
         SANCTIONED_QUARANTINE_ROOT
@@ -1137,6 +1372,12 @@ def main() -> int:
         and not clean(row.get("identity_confidence"))
         and not clean(row.get("intended_review_only_use"))
     )
+    source_priority = source_priority_rows(action_rows)
+    source_priority_operator_verify_rows = sum(1 for row in source_priority if clean(row.get("operator_verify_required")).lower() == "yes")
+    source_priority_download_approved_yes_rows = sum(1 for row in source_priority if clean(row.get("download_approved")).lower() == "yes")
+    source_priority_blank_source_url_rows = sum(1 for row in source_priority if not clean(row.get("source_url")))
+    source_priority_athlete_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "athlete_photo")
+    source_priority_logo_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "logo")
     quarantine_download_rows = quarantine_download_intake_rows(action_rows)
     quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
     quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
@@ -1150,6 +1391,12 @@ def main() -> int:
             "next_decision_missing_local_candidate_asset_rows": next_decision_missing_local_rows,
             "next_decision_download_approved_yes_rows": next_decision_download_approved_yes_rows,
             "next_decision_blank_download_metadata_rows": next_decision_blank_download_metadata_rows,
+            "source_priority_rows": len(source_priority),
+            "source_priority_logo_rows": source_priority_logo_rows,
+            "source_priority_athlete_rows": source_priority_athlete_rows,
+            "source_priority_operator_verify_required_rows": source_priority_operator_verify_rows,
+            "source_priority_download_approved_yes_rows": source_priority_download_approved_yes_rows,
+            "source_priority_blank_source_url_rows": source_priority_blank_source_url_rows,
             "quarantine_download_intake_rows": len(quarantine_download_rows),
             "quarantine_download_logo_rows": quarantine_download_logo_rows,
             "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
@@ -1188,6 +1435,17 @@ def main() -> int:
             "missing_local_candidate_asset_rows": next_decision_missing_local_rows,
             "download_approved_yes_rows": next_decision_download_approved_yes_rows,
             "blank_download_metadata_rows": next_decision_blank_download_metadata_rows,
+        },
+        "source_priority_worksheet": {
+            "md": SOURCE_PRIORITY_MD.as_posix(),
+            "csv": SOURCE_PRIORITY_CSV.as_posix(),
+            "json": SOURCE_PRIORITY_JSON.as_posix(),
+            "rows": len(source_priority),
+            "logo_rows": source_priority_logo_rows,
+            "athlete_rows": source_priority_athlete_rows,
+            "operator_verify_required_rows": source_priority_operator_verify_rows,
+            "download_approved_yes_rows": source_priority_download_approved_yes_rows,
+            "blank_source_url_rows": source_priority_blank_source_url_rows,
         },
         "quarantine_download_intake": {
             "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
@@ -1251,6 +1509,36 @@ def main() -> int:
         ],
         "worksheet_rows": next_decision_rows,
     }
+    source_priority_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_source_priority_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "source_priority_rows": len(source_priority),
+        "logo_rows": source_priority_logo_rows,
+        "athlete_rows": source_priority_athlete_rows,
+        "womens_hockey_rows": sum(1 for row in source_priority if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in source_priority if clean(row.get("sport_family")) == "softball"),
+        "operator_verify_required_rows": source_priority_operator_verify_rows,
+        "download_approved_yes_rows": source_priority_download_approved_yes_rows,
+        "blank_source_url_rows": source_priority_blank_source_url_rows,
+        "source_review_bucket_counts": dict(sorted(Counter(row["source_review_bucket"] for row in source_priority).items())),
+        "source_candidate_level_counts": dict(sorted(Counter(row["source_candidate_level"] for row in source_priority).items())),
+        "worksheet_md": SOURCE_PRIORITY_MD.as_posix(),
+        "worksheet_csv": SOURCE_PRIORITY_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "source_priority_rows_detail": source_priority,
+    }
     quarantine_download_payload = {
         "version": VERSION,
         "status": "hockey_softball_quarantine_download_intake_ready",
@@ -1283,6 +1571,9 @@ def main() -> int:
     write_csv(NEXT_DECISION_WORKSHEET_CSV, next_decision_rows, NEXT_DECISION_WORKSHEET_FIELDS)
     write_json(NEXT_DECISION_WORKSHEET_JSON, next_decision_payload)
     write_text(NEXT_DECISION_WORKSHEET_MD, render_next_decision_worksheet(next_decision_rows, generated_at))
+    write_csv(SOURCE_PRIORITY_CSV, source_priority, SOURCE_PRIORITY_FIELDS)
+    write_json(SOURCE_PRIORITY_JSON, source_priority_payload)
+    write_text(SOURCE_PRIORITY_MD, render_source_priority(source_priority, generated_at))
     write_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV, quarantine_download_rows, QUARANTINE_DOWNLOAD_INTAKE_FIELDS)
     write_json(QUARANTINE_DOWNLOAD_INTAKE_JSON, quarantine_download_payload)
     write_text(QUARANTINE_DOWNLOAD_INTAKE_MD, render_quarantine_download_intake(quarantine_download_rows, generated_at))

@@ -1,0 +1,67 @@
+# Hockey/Softball Source Priority Worksheet
+
+Generated: `2026-06-28T10:05:44.117773+00:00`
+
+Review-only source-candidate worksheet built from existing hockey/softball action rows. `source_candidate_url` is advisory evidence for manual review; the local-download-law `source_url` and `entity_id` fields remain blank and `download_approved=no` unless a later human-edited intake supplies the required metadata.
+
+## Summary
+
+- Source priority rows: `74`
+- Women's hockey rows: `49`
+- Softball rows: `25`
+- Operator-verify rows: `54`
+- Download-approved yes rows: `0`
+- Blank download-law source_url rows: `74`
+
+## Source Review Buckets
+
+- 1_official_league_or_team_manual_verify: `54`
+- 2_source_reviewed_waiting_for_local_asset: `20`
+
+## Safe Operator Path
+
+- Work `1_official_league_or_team_manual_verify` rows first; these are source-candidate URLs that still need a human source review.
+- Treat `source_candidate_url` as advisory source evidence only.
+- Do not copy `source_candidate_url` into download-law `source_url` without a later human-edited intake row.
+- Keep `download_approved=no` and leave `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` blank in generated rows.
+- This worksheet does not download files, approve assets, write headshots, create `.approved` markers, move files, or publish.
+
+## Worksheet Preview
+
+| Rank | Bucket | Sport | Asset | Entity | Candidate | Source | Safe Next Action |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | boston_fleet | boston_fleet_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 2 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | boston_fleet | boston_fleet_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/boston-fleet/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 3 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | boston_fleet | boston_fleet_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/boston-fleet | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 4 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | detroit | detroit_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 5 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | detroit | detroit_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/detroit/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 6 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | detroit | detroit_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/detroit | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 7 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | hamilton | hamilton_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 8 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | hamilton | hamilton_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/hamilton/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 9 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | hamilton | hamilton_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/hamilton | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 10 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | las_vegas | las_vegas_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 11 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | las_vegas | las_vegas_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/las-vegas/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 12 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | las_vegas | las_vegas_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/las-vegas | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 13 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | minnesota_frost | minnesota_frost_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 14 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | minnesota_frost | minnesota_frost_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/minnesota-frost/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 15 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | minnesota_frost | minnesota_frost_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/minnesota-frost | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 16 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | montreal_victoire | montreal_victoire_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 17 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | montreal_victoire | montreal_victoire_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/montreal-victoire/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 18 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | montreal_victoire | montreal_victoire_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/montreal-victoire | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 19 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | new_york_sirens | new_york_sirens_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 20 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | new_york_sirens | new_york_sirens_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/new-york-sirens/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 21 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | new_york_sirens | new_york_sirens_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/new-york-sirens | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 22 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | ottawa_charge | ottawa_charge_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 23 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | ottawa_charge | ottawa_charge_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/ottawa-charge/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 24 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | ottawa_charge | ottawa_charge_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/ottawa-charge | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 25 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | san_jose | san_jose_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 26 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | san_jose | san_jose_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/san-jose/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 27 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | san_jose | san_jose_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/san-jose | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 28 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | seattle_torrent | seattle_torrent_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 29 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | seattle_torrent | seattle_torrent_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/seattle-torrent/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 30 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | seattle_torrent | seattle_torrent_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/seattle-torrent | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 31 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | toronto_sceptres | toronto_sceptres_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 32 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | toronto_sceptres | toronto_sceptres_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/toronto-sceptres/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 33 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | toronto_sceptres | toronto_sceptres_team_profile_source_candidate_02 | https://www.thepwhl.com/en/teams/toronto-sceptres | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 34 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | vancouver_goldeneyes | vancouver_goldeneyes_league_player_index_candidate_03 | https://www.thepwhl.com/en/stats/player-stats | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |
+| 35 | 1_official_league_or_team_manual_verify | womens_hockey | athlete_photo | vancouver_goldeneyes | vancouver_goldeneyes_roster_source_candidate_01 | https://www.thepwhl.com/en/teams/vancouver-goldeneyes/roster | Open source_candidate_url manually; if it is the expected official league/team page, record source review only and keep download-law fields blank. |

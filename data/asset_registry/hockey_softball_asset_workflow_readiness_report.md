@@ -1,7 +1,7 @@
 # Hockey/Softball Asset Workflow Readiness Report
 
 - Status: `hockey_softball_asset_workflow_readiness_ready`
-- Generated: `2026-06-28T08:19:23.450540+00:00`
+- Generated: `2026-06-28T10:05:44.117773+00:00`
 - Guardrails: no paid APIs, no automatic downloads, no auto-approval, no approval-state changes, no headshot writes, no `.approved` markers, no publish-ready movement, no publishing.
 
 ## Open First
@@ -11,6 +11,7 @@
 - Review action queue: `data/asset_registry/hockey_softball_asset_review_action_queue.md`
 - Batch source review helper: `data/asset_registry/hockey_softball_batch_source_review_helper.md`
 - Next decision worksheet: `data/asset_registry/hockey_softball_next_decision_worksheet.md`
+- Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`
 - Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`
 - Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`
 - Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`
@@ -38,6 +39,10 @@
 - Next decision missing-local rows: `74`
 - Next decision download-approved yes rows: `0`
 - Next decision blank download-metadata rows: `74`
+- Source priority rows: `74`
+- Source priority operator-verify rows: `54`
+- Source priority download-approved yes rows: `0`
+- Source priority blank source_url rows: `74`
 - Quarantine download intake rows: `74`
 - Quarantine download-approved yes rows: `0`
 
