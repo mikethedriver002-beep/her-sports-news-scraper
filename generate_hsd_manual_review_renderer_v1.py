@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.33.0-photo-first-focal-stage"
+VERSION = "hsd-manual-review-renderer-v1.34.0-photo-first-portrait-spotlight"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v7_photo_first_focal_stage"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v8_photo_first_portrait_spotlight"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -54,7 +54,7 @@ RENDER_BACKGROUND_CUES = (
     "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
-    "photo_first_editorial_nameplate,compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
+    "photo_first_editorial_nameplate,photo_first_portrait_spotlight,compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2553,35 +2553,40 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
         if focus_box:
             _fx, fy, _fw, fh = focus_box
             focus_y = ((fy + fh / 2) - y) / max(1, h)
-        photo = prepared_athlete_photo_focus_fill(path, w - 28, h - 72, focus_y=focus_y)
+        photo = prepared_athlete_photo_focus_fill(path, w - 12, h - 58, focus_y=focus_y)
         if ImageFilter is not None:
             photo = photo.filter(ImageFilter.UnsharpMask(radius=1.1, percent=170, threshold=2))
     except Exception:
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    draw.rounded_rectangle((x + 12, y + 14, x + w + 12, y + h + 14), radius=30, fill=(0, 0, 0, 130))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 218), outline=(*accent, 236), width=3)
-    draw.rectangle((x, y + 34, x + 10, y + h - 32), fill=(*accent, 206))
-    draw.polygon([(x + 28, y + h - 152), (x + w - 20, y + h - 244), (x + w - 20, y + h - 20), (x + 28, y + h - 20)], fill=(*accent, 54))
-    draw.polygon([(x + 44, y + 92), (x + w - 26, y + 36), (x + w - 26, y + 112), (x + 44, y + 166)], fill=(255, 255, 255, 12))
-    draw.line((x + 30, y + 30, x + w - 28, y + 30), fill=(*accent, 176), width=3)
-    draw.line((x + 30, y + h - 78, x + w - 28, y + h - 78), fill=(*accent, 104), width=2)
+    draw.rounded_rectangle((x + 14, y + 18, x + w + 14, y + h + 16), radius=30, fill=(0, 0, 0, 108))
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=30, fill=(2, 4, 9, 178), outline=(*accent, 218), width=2)
+    draw.rectangle((x, y + 32, x + 8, y + h - 26), fill=(*accent, 188))
+    draw.polygon([(x + 18, y + h - 172), (x + w - 10, y + h - 292), (x + w - 8, y + h - 18), (x + 18, y + h - 18)], fill=(*accent, 66))
+    draw.polygon([(x + 36, y + 84), (x + w - 16, y + 20), (x + w - 16, y + 128), (x + 36, y + 184)], fill=(255, 255, 255, 16))
+    draw.polygon([(x + 24, y + 24), (x + w - 18, y + 24), (x + w - 88, y + 56), (x + 44, y + 62)], fill=(*PALETTE["gold"], 28))
+    draw.line((x + 28, y + 28, x + w - 26, y + 28), fill=(*accent, 154), width=2)
+    draw.line((x + 28, y + h - 74, x + w - 26, y + h - 74), fill=(*accent, 86), width=2)
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((x - 80, y + 26, x + w + 80, y + h + 92), fill=(*accent, 50))
+    glow_draw.ellipse((x - 94, y - 16, x + w + 104, y + h + 122), fill=(*accent, 62))
+    glow_draw.ellipse((x + 14, y + 68, x + w - 8, y + int(h * 0.72)), fill=(248, 250, 255, 32))
+    glow_draw.ellipse((x + 18, y + h - 248, x + w + 74, y + h + 54), fill=(*PALETTE["gold"], 34))
     if ImageFilter is not None:
-        glow = glow.filter(ImageFilter.GaussianBlur(30))
+        glow = glow.filter(ImageFilter.GaussianBlur(32))
     layer.alpha_composite(glow)
-    photo_x = x + 14 + max(0, (w - 28 - photo.width) // 2)
-    photo_y = y + h - photo.height - 42
+    photo_x = x + 6 + max(0, (w - 12 - photo.width) // 2)
+    photo_y = y + h - photo.height - 30
     stage_photo = Image.new("RGBA", image.size, (0, 0, 0, 0))
     stage_photo.alpha_composite(photo, (photo_x, photo_y))
     stage_mask = Image.new("L", image.size, 0)
     mask_draw = ImageDraw.Draw(stage_mask)
-    mask_draw.rounded_rectangle((x + 14, y + 38, x + w - 14, y + h - 18), radius=22, fill=255)
+    mask_draw.rounded_rectangle((x + 8, y + 34, x + w - 8, y + h - 14), radius=24, fill=255)
     layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 238), width=3)
+    draw.rounded_rectangle((x + 8, y + 34, x + w - 8, y + h - 14), radius=24, outline=(248, 250, 255, 34), width=1)
+    draw.line((x + 10, y + 36, x + 10, y + h - 18), fill=(*accent, 138), width=2)
+    draw.rounded_rectangle((x, y, x + w, y + h), radius=26, outline=(*accent, 224), width=2)
     plate_x = x + 22
     plate_y = y + h - 66
     plate_w = min(w - 44, 270)
@@ -2591,7 +2596,7 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     image.alpha_composite(layer)
     player = clean(module.get("player_name")) or "APPROVED ATHLETE"
     variant_label = photo_first_stage_caption(module)
-    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "PHOTO-FIRST FOCUS", "context", 18, 10, accent, max_lines=1, align="left")
+    draw_reference_text(image, (x + 36, y + 28, w - 72, 42), "GAME FOCUS", "context", 18, 10, accent, max_lines=1, align="left")
     draw_reference_text(image, (x + 36, y + 58, w - 72, 42), player, "context", 26, 14, PALETTE["ink"], max_lines=1, align="left", uppercase=False)
     draw_reference_text(image, (plate_x + 12, plate_y + 8, plate_w - 24, 24), variant_label, "context", 15, 9, PALETTE["gold"], max_lines=1, align="center")
     return True

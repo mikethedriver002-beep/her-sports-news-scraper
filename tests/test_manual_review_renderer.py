@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.33.0-photo-first-focal-stage"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.34.0-photo-first-portrait-spotlight"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -161,7 +161,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v7_photo_first_focal_stage"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v8_photo_first_portrait_spotlight"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -180,7 +180,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v7_photo_first_focal_stage" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v8_photo_first_portrait_spotlight" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -241,7 +241,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v7_photo_first_focal_stage"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v8_photo_first_portrait_spotlight"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert "manual visual QA intake" in visual_board["next_manual_review_step"] or "hold" in visual_board["next_manual_review_step"]
     assert {item["format_id"] for item in visual_board["rows"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -301,7 +301,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v7_photo_first_focal_stage`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v8_photo_first_portrait_spotlight`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "draft_preview_ig_feed.png" in board
     assert "draft_preview_story.png" in board
@@ -1039,6 +1039,52 @@ def test_manual_review_renderer_photo_first_stage_draws_editorial_nameplate() ->
             light_text_pixels += 1
     assert gold_pixels / pixels > 0.004
     assert light_text_pixels / pixels > 0.006
+
+
+def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    drawn = module.draw_photo_first_athlete_stage(
+        image,
+        tuple(geometry["photo_stage_box"]),
+        {
+            "player_name": "Breanna Stewart",
+            "athlete_photo_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+            "athlete_photo_status": "approved_local_headshot",
+            "callouts": [{"value": "22", "label": "PTS"}, {"value": "7", "label": "REB"}],
+        },
+        (72, 144, 216),
+        tuple(geometry["photo_face_focus_box"]),
+    )
+
+    assert drawn is True
+    assert "photo_first_portrait_spotlight" in module.RENDER_BACKGROUND_CUES
+    x, y, w, h = geometry["photo_stage_box"]
+    stage_crop = image.crop((x + 8, y + 34, x + w - 8, y + h - 14)).convert("RGB")
+    data = stage_crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    bright_portrait_pixels = 0
+    blue_spotlight_pixels = 0
+    gold_rim_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r >= 170 and g >= 135 and b >= 110:
+            bright_portrait_pixels += 1
+        if b >= 118 and 45 <= r <= 130 and 80 <= g <= 175:
+            blue_spotlight_pixels += 1
+        if r >= 170 and 115 <= g <= 215 and b <= 115:
+            gold_rim_pixels += 1
+
+    assert bright_portrait_pixels / pixels > 0.145
+    assert blue_spotlight_pixels / pixels > 0.010
+    assert gold_rim_pixels / pixels > 0.003
 
 
 def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
