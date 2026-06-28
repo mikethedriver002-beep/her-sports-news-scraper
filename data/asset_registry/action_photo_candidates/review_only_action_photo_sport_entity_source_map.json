@@ -1,0 +1,43 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "status": "action_photo_sport_entity_source_map_ready",
+  "generated_at_utc": "2026-06-28T00:00:00+00:00",
+  "source_map_rows": 19,
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "source_categories": [
+    "editorial_wire",
+    "gray_area_public_lead",
+    "official_federation_or_tournament",
+    "official_league_gallery",
+    "official_social",
+    "official_team_gallery",
+    "reputable_newsroom_gallery",
+    "third_party_creator_public",
+    "verification_only_player_page"
+  ],
+  "sports": [
+    "basketball",
+    "college basketball",
+    "college soccer",
+    "golf",
+    "hockey",
+    "multi-sport",
+    "soccer",
+    "softball",
+    "tennis"
+  ],
+  "download_approved_yes_allowed_rows": 0,
+  "review_only_rows": 19,
+  "publish_ready_rows": 0,
+  "worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map.csv",
+  "worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map.md",
+  "review_only": true,
+  "asset_downloads": false,
+  "approval_state_change": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}

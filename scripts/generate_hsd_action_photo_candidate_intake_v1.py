@@ -23,6 +23,9 @@ OUT_TAXONOMY_JSON = output_path(ROOT / "review_only_action_photo_candidate_taxon
 OUT_CHECKLIST_MD = output_path(ROOT / "review_only_action_photo_human_review_checklist.md")
 OUT_SOURCE_MAP_CSV = output_path(ROOT / "review_only_action_photo_source_map_template.csv")
 OUT_SOURCE_MAP_MD = output_path(ROOT / "review_only_action_photo_source_map_template.md")
+OUT_ENTITY_SOURCE_MAP_CSV = output_path(ROOT / "review_only_action_photo_sport_entity_source_map.csv")
+OUT_ENTITY_SOURCE_MAP_MD = output_path(ROOT / "review_only_action_photo_sport_entity_source_map.md")
+OUT_ENTITY_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_photo_sport_entity_source_map.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -74,6 +77,22 @@ BLOCKED_DOWNLOAD_RIGHTS = {
 }
 DOWNLOAD_READY_IDENTITY = {"strong_context", "confirmed_official"}
 CREDIT_NOT_VISIBLE = "credit_not_visible_manual_review"
+ENTITY_SOURCE_MAP_FIELDS = [
+    "sport",
+    "league_or_entity",
+    "source_priority",
+    "source_category",
+    "source_name",
+    "source_url_or_search_macro",
+    "source_domain",
+    "evidence_use",
+    "rights_review_note",
+    "identity_anchor_use",
+    "allowed_for_download_approved_yes",
+    "manual_next_action",
+    "review_only",
+    "publish_ready",
+]
 
 FIELDS = [
     "intake_rank",
@@ -568,11 +587,411 @@ def render_source_map(rows: List[Mapping[str, str]], generated_at: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def sport_entity_source_map_rows() -> List[Dict[str, str]]:
+    default_action = (
+        "Paste URL-only research leads into this board, then promote only verified page metadata into the action-photo intake; "
+        "do not download images or mark anything approved."
+    )
+    rows = [
+        {
+            "sport": "basketball",
+            "league_or_entity": "WNBA",
+            "source_priority": "P0_official_league",
+            "source_category": "official_league_gallery",
+            "source_name": "WNBA official site",
+            "source_url_or_search_macro": '"[athlete] [team] site:wnba.com gallery OR recap OR photos"',
+            "source_domain": "wnba.com",
+            "evidence_use": "event recap/gallery lead; current team/date context; caption clues",
+            "rights_review_note": "official_review_needed; official surface is not publish-ready rights",
+            "identity_anchor_use": "cross-check WNBA player profile, team roster, jersey, and box score context",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "basketball",
+            "league_or_entity": "WNBA teams",
+            "source_priority": "P0_official_team",
+            "source_category": "official_team_gallery",
+            "source_name": "WNBA team sites",
+            "source_url_or_search_macro": '"[athlete] [team] site:[team].wnba.com gallery OR recap"',
+            "source_domain": "team.wnba.com",
+            "evidence_use": "team-owned game gallery/recap lead; player/team/event context",
+            "rights_review_note": "official_review_needed; verify any partner photo credit",
+            "identity_anchor_use": "team roster plus event recap and visible number/uniform",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "multi-sport",
+            "league_or_entity": "official player pages / rosters",
+            "source_priority": "P0_identity_anchor",
+            "source_category": "verification_only_player_page",
+            "source_name": "official player profile, roster, stats page, or media guide",
+            "source_url_or_search_macro": '"[athlete] [team] official roster player profile media guide"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "identity anchor only; roster status, jersey, position, team, and season context",
+            "rights_review_note": "verification_only; do not treat roster portraits as action-photo candidates",
+            "identity_anchor_use": "use as the official corroboration URL before promoting an action-photo lead",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "soccer",
+            "league_or_entity": "NWSL",
+            "source_priority": "P0_official_league",
+            "source_category": "official_league_gallery",
+            "source_name": "NWSL official site",
+            "source_url_or_search_macro": '"[athlete] [club] site:nwslsoccer.com photos OR gallery OR recap"',
+            "source_domain": "nwslsoccer.com",
+            "evidence_use": "match recap/gallery lead; league/team/date context",
+            "rights_review_note": "official_review_needed; check partner photography credits",
+            "identity_anchor_use": "NWSL roster/player page, club roster, match report, jersey context",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "soccer",
+            "league_or_entity": "NWSL clubs",
+            "source_priority": "P0_official_team",
+            "source_category": "official_team_gallery",
+            "source_name": "NWSL club sites",
+            "source_url_or_search_macro": '"[athlete] [club] site:[club-domain] gallery OR recap OR photos"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "club gallery/recap source lead; current club and match context",
+            "rights_review_note": "official_review_needed; respect club/media credential limits",
+            "identity_anchor_use": "club roster, NWSL player page, match lineup, visible number",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "soccer",
+            "league_or_entity": "USWNT",
+            "source_priority": "P0_official_federation",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "U.S. Soccer official site",
+            "source_url_or_search_macro": '"[athlete] USWNT site:ussoccer.com gallery OR photos OR recap"',
+            "source_domain": "ussoccer.com",
+            "evidence_use": "national-team event lead; competition/date/caption context",
+            "rights_review_note": "official_review_needed; federation content still needs rights review",
+            "identity_anchor_use": "USWNT roster/player page, match report, uniform/number context",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "college basketball",
+            "league_or_entity": "NCAA women's basketball",
+            "source_priority": "P0_official_tournament_or_school",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "NCAA and school athletics sites",
+            "source_url_or_search_macro": '"[athlete] [school] women basketball gallery OR recap site:ncaa.com OR site:[school-athletics-domain]"',
+            "source_domain": "ncaa.com|school-athletics-domain",
+            "evidence_use": "school/NCAA gallery lead; game/tournament context and roster proof",
+            "rights_review_note": "official_review_needed; NCAA/school event photography rights remain restricted",
+            "identity_anchor_use": "school roster, NCAA stats, jersey number, event box score",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "college soccer",
+            "league_or_entity": "NCAA women's soccer",
+            "source_priority": "P0_official_school_or_tournament",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "NCAA and school athletics sites",
+            "source_url_or_search_macro": '"[athlete] [school] women soccer gallery OR recap site:ncaa.com OR site:[school-athletics-domain]"',
+            "source_domain": "ncaa.com|school-athletics-domain",
+            "evidence_use": "school/NCAA action lead; match/date/roster context",
+            "rights_review_note": "official_review_needed; confirm school or NCAA rights notes",
+            "identity_anchor_use": "school roster, match recap, jersey number, opponent context",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "softball",
+            "league_or_entity": "NCAA softball",
+            "source_priority": "P0_official_school_or_tournament",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "NCAA and school athletics sites",
+            "source_url_or_search_macro": '"[athlete] [school] softball gallery OR recap site:ncaa.com OR site:[school-athletics-domain]"',
+            "source_domain": "ncaa.com|school-athletics-domain",
+            "evidence_use": "game/championship gallery lead; batting/fielding action context",
+            "rights_review_note": "official_review_needed; championship/school imagery is not auto-cleared",
+            "identity_anchor_use": "school roster, number, position, game recap, opponent",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "softball",
+            "league_or_entity": "pro softball / Athletes Unlimited",
+            "source_priority": "P1_official_or_reputable",
+            "source_category": "official_league_gallery",
+            "source_name": "Pro softball league/operator sites",
+            "source_url_or_search_macro": '"[athlete] softball gallery OR recap site:auprosports.com OR site:[league-domain]"',
+            "source_domain": "auprosports.com|league-domain",
+            "evidence_use": "pro softball action lead; current event and team/session context",
+            "rights_review_note": "official_review_needed; verify league/operator photo terms",
+            "identity_anchor_use": "league roster/profile, event page, jersey/context clues",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "tennis",
+            "league_or_entity": "WTA / Grand Slam / tournament",
+            "source_priority": "P0_official_tournament",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "WTA and tournament sites",
+            "source_url_or_search_macro": '"[athlete] site:wtatennis.com OR site:[tournament-domain] photos OR gallery"',
+            "source_domain": "wtatennis.com|tournament-domain",
+            "evidence_use": "tournament gallery/recap lead; match/date/action context",
+            "rights_review_note": "official_review_needed or official_partner_licensed_manual_review if credited partner imagery",
+            "identity_anchor_use": "WTA profile, draw/match page, tournament caption",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "golf",
+            "league_or_entity": "LPGA / tournament",
+            "source_priority": "P0_official_tournament",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "LPGA and tournament sites",
+            "source_url_or_search_macro": '"[athlete] site:lpga.com OR site:[tournament-domain] photos OR gallery"',
+            "source_domain": "lpga.com|tournament-domain",
+            "evidence_use": "tournament/article photo lead; round/date/context clues",
+            "rights_review_note": "official_review_needed; partner photo credits may be rights-sensitive",
+            "identity_anchor_use": "LPGA player profile, tournament leaderboard, caption/context",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "hockey",
+            "league_or_entity": "PWHL",
+            "source_priority": "P0_official_league_or_team",
+            "source_category": "official_league_gallery",
+            "source_name": "PWHL official and team sites",
+            "source_url_or_search_macro": '"[athlete] PWHL [team] gallery OR recap site:thepwhl.com"',
+            "source_domain": "thepwhl.com",
+            "evidence_use": "league/team game gallery lead; player/team/date context",
+            "rights_review_note": "official_review_needed; check league/team image terms and credit",
+            "identity_anchor_use": "PWHL roster/profile, game recap, jersey number",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "hockey",
+            "league_or_entity": "NCAA women's hockey",
+            "source_priority": "P0_official_school_or_tournament",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "NCAA and school athletics sites",
+            "source_url_or_search_macro": '"[athlete] [school] women hockey gallery OR recap site:ncaa.com OR site:[school-athletics-domain]"',
+            "source_domain": "ncaa.com|school-athletics-domain",
+            "evidence_use": "school/NCAA hockey action lead; game/date/context",
+            "rights_review_note": "official_review_needed; school/NCAA photo rights remain separate",
+            "identity_anchor_use": "school roster, game recap, jersey number, position",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "multi-sport",
+            "league_or_entity": "editorial wires",
+            "source_priority": "P1_rights_sensitive",
+            "source_category": "editorial_wire",
+            "source_name": "Getty / AP / Reuters / Imagn",
+            "source_url_or_search_macro": '"[athlete]" site:gettyimages.com OR site:newsroom.ap.org OR site:reutersconnect.com OR site:imagn.com',
+            "source_domain": "gettyimages.com|newsroom.ap.org|reutersconnect.com|imagn.com",
+            "evidence_use": "detail-page lead with caption, event, photographer/agency, and license clues",
+            "rights_review_note": "editorial_wire_rights_sensitive; licensing review required before any human download approval",
+            "identity_anchor_use": "caption plus official roster/profile/event anchor",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "multi-sport",
+            "league_or_entity": "reputable newsrooms / local beat galleries",
+            "source_priority": "P2_reputable_public",
+            "source_category": "reputable_newsroom_gallery",
+            "source_name": "newsrooms and local beat outlets",
+            "source_url_or_search_macro": '"[athlete] [team] photo gallery local news OR sports desk"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "supplemental public action lead with caption/credit/context",
+            "rights_review_note": "newsroom_photo_rights_sensitive; no reuse assumed",
+            "identity_anchor_use": "news caption plus official roster/event page",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "multi-sport",
+            "league_or_entity": "official social",
+            "source_priority": "P3_social_discovery",
+            "source_category": "official_social",
+            "source_name": "official athlete/team/league social",
+            "source_url_or_search_macro": '"[athlete] [team]" site:instagram.com/p/ OR site:x.com OR site:tiktok.com',
+            "source_domain": "instagram.com|x.com|tiktok.com",
+            "evidence_use": "current moment discovery lead; caption and account relationship only",
+            "rights_review_note": "social_uncleared; discovery only, not a rights answer",
+            "identity_anchor_use": "verified account context plus official roster/event anchor",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "multi-sport",
+            "league_or_entity": "creator/public galleries",
+            "source_priority": "P4_creator_public",
+            "source_category": "third_party_creator_public",
+            "source_name": "independent photographer / portfolio / Flickr / SmugMug",
+            "source_url_or_search_macro": '"[athlete] [team] photographer gallery OR Flickr OR SmugMug"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "long-tail discovery lead; original creator/credit and event clues",
+            "rights_review_note": "third_party_creator_uncleared; requires provenance and permission review",
+            "identity_anchor_use": "creator caption plus official roster/event anchor",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": default_action,
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "sport": "multi-sport",
+            "league_or_entity": "gray-area public leads",
+            "source_priority": "P5_park_only",
+            "source_category": "gray_area_public_lead",
+            "source_name": "fan archives / reposts / forums / weak-provenance public pages",
+            "source_url_or_search_macro": '"[athlete] [team] action photo"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "parking lot for possibly useful leads when official/editorial coverage is thin",
+            "rights_review_note": "gray_area_lead_only; do not treat as official roster truth or download candidate",
+            "identity_anchor_use": "must be corroborated against official roster/event source before intake promotion",
+            "allowed_for_download_approved_yes": "false",
+            "manual_next_action": "Park as advisory metadata only unless a human finds a stronger official/reputable source.",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+    ]
+    return rows
+
+
+def validate_entity_source_map_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen = set()
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ENTITY_SOURCE_MAP_FIELDS}
+        key = (
+            normalized["sport"],
+            normalized["league_or_entity"],
+            normalized["source_category"],
+            normalized["source_url_or_search_macro"],
+        )
+        if key in seen:
+            issues.append({"row": str(index), "field": "source_url_or_search_macro", "issue": "duplicate_source_map_key"})
+        seen.add(key)
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        for field in ["sport", "league_or_entity", "source_priority", "source_name", "source_url_or_search_macro", "evidence_use", "rights_review_note", "identity_anchor_use", "manual_next_action"]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_source_map_field_blank"})
+        if normalized["allowed_for_download_approved_yes"] != "false":
+            issues.append({"row": str(index), "field": "allowed_for_download_approved_yes", "issue": "source_map_never_download_approved"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "source_map_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "source_map_must_not_be_publish_ready"})
+    return issues
+
+
+def render_entity_source_map(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    category_counts: Dict[str, int] = {}
+    sport_counts: Dict[str, int] = {}
+    for row in rows:
+        category = clean(row.get("source_category"))
+        sport = clean(row.get("sport"))
+        category_counts[category] = category_counts.get(category, 0) + 1
+        sport_counts[sport] = sport_counts.get(sport, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Sport/Entity Source Map",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "URL-first, evidence-first board for ChatGPT Pro, Gemini, and manual researchers. It tells researchers where to look for source leads; it does not fetch, download, approve, or publish image assets.",
+        "",
+        "## Operator Paste Note",
+        "",
+        "Paste research outputs back into this board as source URLs or search macros plus evidence notes. Only after a human verifies identity, source provenance, and rights posture should page metadata be copied into the action-photo intake. Keep `allowed_for_download_approved_yes=false` here; any future quarantine download still requires a separate human-edited intake row with the local-download-law fields filled.",
+        "",
+        "## Summary",
+        "",
+        f"- Source-map rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows allowed for `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('allowed_for_download_approved_yes')).lower() == 'true')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Sport Coverage",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(sport_counts.items()))
+    lines += ["", "## Source Category Coverage", ""]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(category_counts.items()))
+    lines += [
+        "",
+        "## Board Preview",
+        "",
+        "| Sport | League/Entity | Priority | Category | Source Name | URL/Search Macro | Evidence Use | Manual Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {sport} | {league_or_entity} | {source_priority} | {source_category} | {source_name} | `{macro}` | {evidence_use} | {manual_next_action} |".format(
+                sport=clean(row.get("sport")),
+                league_or_entity=clean(row.get("league_or_entity")).replace("|", "/"),
+                source_priority=clean(row.get("source_priority")),
+                source_category=clean(row.get("source_category")),
+                source_name=clean(row.get("source_name")).replace("|", "/"),
+                macro=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
+                evidence_use=clean(row.get("evidence_use")).replace("|", "/"),
+                manual_next_action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
     issues = validate_rows(rows)
     source_rows = source_map_rows()
+    entity_source_rows = sport_entity_source_map_rows()
+    entity_source_issues = validate_entity_source_map_rows(entity_source_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -584,11 +1003,39 @@ def main() -> int:
         ["source_category", "source_priority", "source_examples", "search_macro", "collect_only", "do_not_collect", "rights_posture"],
     )
     write_text(OUT_SOURCE_MAP_MD, render_source_map(source_rows, generated_at))
+    write_csv(OUT_ENTITY_SOURCE_MAP_CSV, entity_source_rows, ENTITY_SOURCE_MAP_FIELDS)
+    write_text(OUT_ENTITY_SOURCE_MAP_MD, render_entity_source_map(entity_source_rows, entity_source_issues, generated_at))
+    write_json(
+        OUT_ENTITY_SOURCE_MAP_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_sport_entity_source_map_ready" if not entity_source_issues else "action_photo_sport_entity_source_map_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "source_map_rows": len(entity_source_rows),
+            "validation_issue_count": len(entity_source_issues),
+            "validation_issues": entity_source_issues,
+            "source_categories": sorted({row["source_category"] for row in entity_source_rows}),
+            "sports": sorted({row["sport"] for row in entity_source_rows}),
+            "download_approved_yes_allowed_rows": sum(1 for row in entity_source_rows if row["allowed_for_download_approved_yes"] == "true"),
+            "review_only_rows": sum(1 for row in entity_source_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in entity_source_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_ENTITY_SOURCE_MAP_CSV.as_posix(),
+            "worksheet_md": OUT_ENTITY_SOURCE_MAP_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -599,7 +1046,9 @@ def main() -> int:
             "rights_class_count": len(RIGHTS_CLASSES),
             "identity_confidence_count": len(IDENTITY_CONFIDENCE),
             "source_map_rows": len(source_rows),
-            "validation_issue_count": len(issues),
+            "sport_entity_source_map_rows": len(entity_source_rows),
+            "sport_entity_source_map_validation_issue_count": len(entity_source_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -608,6 +1057,9 @@ def main() -> int:
             "human_review_checklist_md": OUT_CHECKLIST_MD.as_posix(),
             "source_map_template_csv": OUT_SOURCE_MAP_CSV.as_posix(),
             "source_map_template_md": OUT_SOURCE_MAP_MD.as_posix(),
+            "sport_entity_source_map_csv": OUT_ENTITY_SOURCE_MAP_CSV.as_posix(),
+            "sport_entity_source_map_md": OUT_ENTITY_SOURCE_MAP_MD.as_posix(),
+            "sport_entity_source_map_json": OUT_ENTITY_SOURCE_MAP_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -621,8 +1073,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "validation_issue_count": len(issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "validation_issue_count": len(issues) + len(entity_source_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues else 0
 
 
 if __name__ == "__main__":
