@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.38.0-athlete-focal-contract"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.39.0-athlete-score-stage-polish"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -161,7 +161,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v12_athlete_focal_contract"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v13_athlete_score_stage_polish"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -179,13 +179,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_subject_glow_bridge" in manifest["render_background_cues"]
     assert "photo_first_soft_focal_frame" in manifest["render_background_cues"]
     assert "photo_first_athlete_primary_focal_contract" in manifest["render_background_cues"]
+    assert "photo_first_premium_score_stage" in manifest["render_background_cues"]
     assert "photo_first_editorial_nameplate" in manifest["render_background_cues"]
     assert "compact_square_photo_footer" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v12_athlete_focal_contract" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v13_athlete_score_stage_polish" for item in manifest["format_options"])
     assert len(manifest["generated_preview_qa"]) == 3
     assert {item["format_id"] for item in manifest["generated_preview_qa"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["status"] == "preview_qa_pass" for item in manifest["generated_preview_qa"])
@@ -246,7 +247,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v12_athlete_focal_contract"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v13_athlete_score_stage_polish"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["focal_priority"] == "non_athlete_fallback"
     assert visual_board["athlete_focal_contract"] == "logo_score_fallback_not_athlete_led"
@@ -315,7 +316,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v12_athlete_focal_contract`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v13_athlete_score_stage_polish`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Focal priority: `non_athlete_fallback`" in board
     assert "Athlete focal contract: `logo_score_fallback_not_athlete_led`" in board
@@ -955,6 +956,7 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
 
     assert "photo_first_score_lock_slab" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_score_type_lockup" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_premium_score_stage" in module.RENDER_BACKGROUND_CUES
     sx, sy, sw, sh = module.photo_first_score_slab_box(row, winner=True)
     slab = image.crop((sx, sy, sx + sw, sy + sh)).convert("RGB")
     data = slab.tobytes()
@@ -1133,6 +1135,7 @@ def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> N
     assert "photo_first_portrait_spotlight" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_soft_focal_frame" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_athlete_primary_focal_contract" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_premium_score_stage" in module.RENDER_BACKGROUND_CUES
     x, y, w, h = geometry["photo_stage_box"]
     stage_crop = image.crop((x + 8, y + 34, x + w - 8, y + h - 14)).convert("RGB")
     data = stage_crop.tobytes()

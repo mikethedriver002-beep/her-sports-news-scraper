@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.38.0-athlete-focal-contract"
+VERSION = "hsd-manual-review-renderer-v1.39.0-athlete-score-stage-polish"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v12_athlete_focal_contract"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v13_athlete_score_stage_polish"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -56,7 +56,7 @@ RENDER_BACKGROUND_CUES = (
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
     "photo_first_editorial_nameplate,photo_first_portrait_spotlight,photo_first_score_type_lockup,"
     "photo_first_context_score_rail,photo_first_subject_glow_bridge,photo_first_soft_focal_frame,"
-    "photo_first_athlete_primary_focal_contract,compact_square_photo_footer,"
+    "photo_first_athlete_primary_focal_contract,photo_first_premium_score_stage,compact_square_photo_footer,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -2545,9 +2545,9 @@ def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: b
 def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
     compact = h <= 130
-    slab_w = min(168 if not compact else 146, max(132, int(w * (0.28 if compact else 0.27))))
-    inset_y = 20 if not compact else 14
-    right_inset = 30 if not compact else 28
+    slab_w = min(158 if not compact else 138, max(132, int(w * (0.255 if compact else 0.248))))
+    inset_y = 24 if not compact else 14
+    right_inset = 34 if not compact else 32
     return (x + w - slab_w - right_inset, y + inset_y, slab_w, h - inset_y * 2)
 
 
@@ -2644,20 +2644,18 @@ def draw_photo_first_score_row(
 ) -> None:
     x, y, w, h = box
     compact = h <= 130
-    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 226 if winner else 210), radius=18, width=2)
+    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 188 if winner else 174), radius=18, width=1)
     draw = ImageDraw.Draw(image, "RGBA")
-    draw.rounded_rectangle((x + 8, y + 8, x + w - 8, y + h - 8), radius=16, outline=(248, 250, 255, 18), width=1)
-    draw.rectangle((x + 1, y + 1, x + 12, y + h - 1), fill=(*accent, 132 if winner else 96))
-    draw.line((x + 24, y + h - 21, x + w - 28, y + h - 21), fill=(*accent, 86 if winner else 66), width=2)
-    draw.line((x + 24, y + h - 17, x + w - 28, y + h - 17), fill=(248, 250, 255, 20), width=1)
+    draw.rectangle((x + 1, y + 3, x + 7, y + h - 3), fill=(*accent, 118 if winner else 92))
+    draw.line((x + 24, y + h - 20, x + w - 30, y + h - 20), fill=(*accent, 54 if winner else 42), width=1)
     label = "WINNER" if winner else "FINAL"
     label_w = 108 if winner else 84
     label_h = 28 if not compact else 24
     label_y = y + (14 if not compact else 12)
-    draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + label_h), radius=7, fill=(*accent, 226), outline=(248, 250, 255, 132), width=1)
+    draw.rounded_rectangle((x + 24, label_y, x + 24 + label_w, label_y + label_h), radius=7, fill=(*accent, 174), outline=(248, 250, 255, 70), width=1)
     label_color = PALETTE["ink"] if winner else (2, 4, 9)
     draw_reference_text(image, (x + 32, label_y + 4, label_w - 16, label_h - 7), label, "context", 13 if not compact else 11, 9, label_color, max_lines=1, align="center", stroke=1, stroke_fill=(0, 0, 0) if winner else (248, 250, 255))
-    logo_size = min(h - 34, 96 if winner else 84)
+    logo_size = min(h - 42, 90 if winner else 78)
     logo_box = (x + 26, y + (h - logo_size) // 2 + (12 if not compact else 10), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
     score_box = photo_first_score_slab_box(box, winner=winner)
@@ -2667,18 +2665,17 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     slab_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(slab_shadow, "RGBA")
-    shadow_draw.rounded_rectangle((sx + 4, sy + 6, sx + sw + 4, sy + sh + 6), radius=18, fill=(0, 0, 0, 122))
+    shadow_draw.rounded_rectangle((sx + 4, sy + 7, sx + sw + 4, sy + sh + 7), radius=16, fill=(0, 0, 0, 62))
     if ImageFilter is not None:
-        slab_shadow = slab_shadow.filter(ImageFilter.GaussianBlur(5))
+        slab_shadow = slab_shadow.filter(ImageFilter.GaussianBlur(8))
     image.alpha_composite(slab_shadow)
     slab_fill = mix_rgb((236, 241, 249), accent, 0.08 if winner else 0.05)
-    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=17, fill=(*slab_fill, 246), outline=(*accent, 224), width=2)
-    draw.rectangle((sx + 8, sy + 10, sx + 15, sy + sh - 10), fill=(*accent, 210))
-    draw.line((sx + 20, sy + 10, sx + sw - 14, sy + 10), fill=(255, 255, 255, 115), width=1)
-    draw.line((sx + 20, sy + sh - 11, sx + sw - 14, sy + sh - 11), fill=(2, 4, 9, 42), width=1)
-    cell = (sx + 25, sy + 12, sx + sw - 11, sy + sh - 12)
-    draw.rounded_rectangle(cell, radius=12, fill=(247, 249, 253, 238), outline=(2, 4, 9, 84), width=1)
-    draw.line((cell[0] + 3, cell[1] + 2, cell[2] - 3, cell[1] + 2), fill=(255, 255, 255, 138), width=1)
+    draw.rounded_rectangle((sx, sy, sx + sw, sy + sh), radius=14, fill=(*slab_fill, 230), outline=(*accent, 132), width=1)
+    draw.rectangle((sx + 7, sy + 12, sx + 11, sy + sh - 12), fill=(*accent, 154))
+    draw.line((sx + 18, sy + 11, sx + sw - 14, sy + 11), fill=(255, 255, 255, 58), width=1)
+    cell = (sx + 21, sy + 12, sx + sw - 11, sy + sh - 12)
+    draw.rounded_rectangle(cell, radius=9, fill=(247, 249, 253, 220), outline=(2, 4, 9, 38), width=1)
+    draw.line((cell[0] + 4, cell[1] + 2, cell[2] - 4, cell[1] + 2), fill=(255, 255, 255, 104), width=1)
     score_size = min(80 if compact else (94 if winner else 86), max(58, int((cell[2] - cell[0]) * 0.82)), max(58, int((cell[3] - cell[1]) * 0.90)))
     min_score_size = 46 if compact else 52
     draw_reference_text(
@@ -2721,16 +2718,17 @@ def draw_photo_first_score_context_rail(
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
     x, y, w, h = box
     compact = h < 112
-    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16, width=2)
+    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 214), radius=16, width=1)
     draw = ImageDraw.Draw(image, "RGBA")
     draw_stat_proof_rail(image, box, accent, compact=h < 132)
+    draw.line((x + 24, y + 14, x + w - 24, y + 14), fill=(*PALETTE["gold"], 88), width=2)
     chip_w = min(338, max(260, w // 3))
     draw_premium_stat_chips(image, (x + w - chip_w - 22, y + (18 if not compact else 20), chip_w, h - (36 if not compact else 32)), module.get("callouts") or [], accent, compact=h < 132)
     player = clean(module.get("player_name"))
     source_label = "STAT PROOF CHECK"
     heading = clean(module.get("headline")) or (f"{last_name(player)} LEDGER" if player else "PLAYER LEDGER")
     text_w = max(390, w - chip_w - 72)
-    draw_reference_text(image, (x + 28, y + (15 if not compact else 14), text_w, 24), f"PHOTO-FIRST / {source_label}", "context", 19, 11, accent, max_lines=1)
+    draw_reference_text(image, (x + 28, y + (15 if not compact else 14), text_w, 24), f"PHOTO-FIRST / {source_label}", "context", 18, 11, PALETTE["gold"], max_lines=1)
     draw_reference_text(image, (x + 28, y + (42 if not compact else 40), text_w, 46), heading, "display", 40 if not compact else 34, 22, PALETTE["ink"], max_lines=1)
     if compact:
         return
