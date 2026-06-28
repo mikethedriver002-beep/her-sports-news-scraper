@@ -349,6 +349,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/hockey_softball_next_decision_worksheet.md",
     "data/asset_registry/hockey_softball_next_decision_worksheet.csv",
     "data/asset_registry/hockey_softball_next_decision_worksheet.json",
+    "data/asset_registry/hockey_softball_quarantine_download_intake.md",
+    "data/asset_registry/hockey_softball_quarantine_download_intake.csv",
+    "data/asset_registry/hockey_softball_quarantine_download_intake.json",
     "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md",
     "data/asset_registry/softball/softball_asset_workflow_board.md",
 ]
@@ -624,6 +627,9 @@ ARTIFACTS = [
     ("Graphics", "Hockey/softball next decision worksheet", "data/asset_registry/hockey_softball_next_decision_worksheet.md"),
     ("Graphics", "Hockey/softball next decision worksheet data", "data/asset_registry/hockey_softball_next_decision_worksheet.csv"),
     ("Graphics", "Hockey/softball next decision worksheet manifest", "data/asset_registry/hockey_softball_next_decision_worksheet.json"),
+    ("Graphics", "Hockey/softball quarantine download intake", "data/asset_registry/hockey_softball_quarantine_download_intake.md"),
+    ("Graphics", "Hockey/softball quarantine download intake data", "data/asset_registry/hockey_softball_quarantine_download_intake.csv"),
+    ("Graphics", "Hockey/softball quarantine download intake manifest", "data/asset_registry/hockey_softball_quarantine_download_intake.json"),
     ("Graphics", "Women's hockey asset workflow board", "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md"),
     ("Graphics", "Softball asset workflow board", "data/asset_registry/softball/softball_asset_workflow_board.md"),
     ("Graphics", "Logo asset catalog", "data/asset_registry/logo_asset_catalog.md"),
@@ -763,6 +769,9 @@ RUN_COMMANDS = {
     "data/asset_registry/hockey_softball_next_decision_worksheet.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_next_decision_worksheet.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_next_decision_worksheet.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_quarantine_download_intake.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_quarantine_download_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_quarantine_download_intake.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/softball/softball_asset_workflow_board.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/logo_asset_catalog.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py",
@@ -1599,6 +1608,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     hockey_softball_action_queue_manifest = read_json("data/asset_registry/hockey_softball_asset_review_action_queue.json")
     hockey_softball_batch_source_review_manifest = read_json("data/asset_registry/hockey_softball_batch_source_review_helper.json")
     hockey_softball_next_decision_manifest = read_json("data/asset_registry/hockey_softball_next_decision_worksheet.json")
+    hockey_softball_quarantine_download_manifest = read_json("data/asset_registry/hockey_softball_quarantine_download_intake.json")
     logo_contact_cue = packet_freshness_cue(
         "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md",
         len(logo_contact_rows),
@@ -1692,6 +1702,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         hockey_softball_next_decision_rows,
         RUN_COMMANDS["data/asset_registry/hockey_softball_next_decision_worksheet.md"],
         context="hockey/softball next decision worksheet",
+    )
+    hockey_softball_quarantine_download_rows = as_int(hockey_softball_quarantine_download_manifest.get("rows")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else 0
+    hockey_softball_quarantine_download_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_quarantine_download_intake.md",
+        hockey_softball_quarantine_download_rows,
+        RUN_COMMANDS["data/asset_registry/hockey_softball_quarantine_download_intake.md"],
+        context="hockey/softball quarantine download intake",
     )
     womens_hockey_workflow_summary = hockey_softball_workflow_sport_summary(hockey_softball_workflow_manifest, "womens_hockey")
     softball_workflow_summary = hockey_softball_workflow_sport_summary(hockey_softball_workflow_manifest, "softball")
@@ -1837,6 +1854,12 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_next_decision_worksheet_rows": hockey_softball_next_decision_rows,
         "hockey_softball_next_decision_worksheet_logo_rows": as_int(hockey_softball_next_decision_manifest.get("logo_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
         "hockey_softball_next_decision_worksheet_athlete_rows": as_int(hockey_softball_next_decision_manifest.get("athlete_rows")) if isinstance(hockey_softball_next_decision_manifest, dict) else 0,
+        "hockey_softball_quarantine_download_intake_status": clean(hockey_softball_quarantine_download_manifest.get("status")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else "",
+        "hockey_softball_quarantine_download_intake_generated_at": clean(hockey_softball_quarantine_download_manifest.get("generated_at_utc")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else "",
+        "hockey_softball_quarantine_download_intake_rows": hockey_softball_quarantine_download_rows,
+        "hockey_softball_quarantine_download_intake_logo_rows": as_int(hockey_softball_quarantine_download_manifest.get("logo_rows")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else 0,
+        "hockey_softball_quarantine_download_intake_athlete_rows": as_int(hockey_softball_quarantine_download_manifest.get("athlete_rows")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else 0,
+        "hockey_softball_quarantine_download_approved_yes_rows": as_int(hockey_softball_quarantine_download_manifest.get("download_approved_yes_rows")) if isinstance(hockey_softball_quarantine_download_manifest, dict) else 0,
         "womens_hockey_logo_contact_sheet_rows": len(womens_hockey_logo_rows),
         "womens_hockey_athlete_photo_contact_sheet_rows": len(womens_hockey_athlete_rows),
         "womens_hockey_athlete_photo_contact_sheet_team_boards": as_int(womens_hockey_athlete_manifest.get("team_boards")) if isinstance(womens_hockey_athlete_manifest, dict) else 0,
@@ -1874,6 +1897,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_next_decision_worksheet_freshness_status": hockey_softball_next_decision_cue["status"],
         "hockey_softball_next_decision_worksheet_freshness_detail": hockey_softball_next_decision_cue["detail"],
         "hockey_softball_next_decision_worksheet_refresh_command": hockey_softball_next_decision_cue["run_command"],
+        "hockey_softball_quarantine_download_intake_freshness_status": hockey_softball_quarantine_download_cue["status"],
+        "hockey_softball_quarantine_download_intake_freshness_detail": hockey_softball_quarantine_download_cue["detail"],
+        "hockey_softball_quarantine_download_intake_refresh_command": hockey_softball_quarantine_download_cue["run_command"],
         "logo_review_packets": logo_packets,
         "top_findings": top_findings,
         "next_step": next_step,
@@ -1921,6 +1947,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Hockey/softball batch source review helper", "data/asset_registry/hockey_softball_batch_source_review_helper.md", "Open the next 10 source-reviewable rows, evidence URLs, intake fields to fill, and fields that must stay held."),
             file_shortcut("Hockey/softball next decision worksheet", "data/asset_registry/hockey_softball_next_decision_worksheet.md", "Compact blank-cell worksheet for the next logo identity/source rows and athlete source-only rows."),
             file_shortcut("Hockey/softball next decision worksheet data", "data/asset_registry/hockey_softball_next_decision_worksheet.csv", "Machine-readable next-decision worksheet; generated human-decision cells remain blank."),
+            file_shortcut("Hockey/softball quarantine download intake", "data/asset_registry/hockey_softball_quarantine_download_intake.md", "Human-edited future quarantine-download gate; generated rows default to download_approved=no."),
+            file_shortcut("Hockey/softball quarantine download intake data", "data/asset_registry/hockey_softball_quarantine_download_intake.csv", "Machine-readable future download gate; no downloads occur from this packet."),
             file_shortcut("Women's hockey logo contact sheet", "data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.md", "Review PWHL league/team logo source candidates before filling manual intake."),
             file_shortcut("Women's hockey athlete contact sheets", "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md", "Review PWHL athlete candidate placeholders by team; no photos are downloaded."),
             file_shortcut("Women's hockey review walkthrough", "data/asset_registry/womens_hockey/womens_hockey_review_walkthrough.md", "Open the hockey logo and athlete review order before touching the intake CSVs."),
@@ -8525,6 +8553,8 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S worksheet</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_rows', 0)))}</strong></div>
             <div><span>H/S worksheet logos</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_logo_rows', 0)))}</strong></div>
             <div><span>H/S worksheet athletes</span><strong>{html.escape(str(panel.get('hockey_softball_next_decision_worksheet_athlete_rows', 0)))}</strong></div>
+            <div><span>H/S download gate</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_intake_rows', 0)))}</strong></div>
+            <div><span>H/S download yes</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_approved_yes_rows', 0)))}</strong></div>
           </div>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
@@ -8542,6 +8572,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'hockey_softball_asset_review_action_queue', "Hockey/softball asset review action queue")}
           {packet_freshness_html(panel, 'hockey_softball_batch_source_review', "Hockey/softball batch source review helper")}
           {packet_freshness_html(panel, 'hockey_softball_next_decision_worksheet', "Hockey/softball next decision worksheet")}
+          {packet_freshness_html(panel, 'hockey_softball_quarantine_download_intake', "Hockey/softball quarantine download intake")}
           <div class="review-flow">
             <div><span>1</span><strong>Verify</strong><p>Open the linked audit/catalog row and compare source evidence manually.</p></div>
             <div><span>2</span><strong>Hold</strong><p>Keep assets out of render trust when source, identity, approval, or format evidence is incomplete.</p></div>
@@ -10140,6 +10171,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball next decision logo rows: {asset_panel.get('hockey_softball_next_decision_worksheet_logo_rows', 0)}",
         f"- Hockey/softball next decision athlete rows: {asset_panel.get('hockey_softball_next_decision_worksheet_athlete_rows', 0)}",
         f"- Hockey/softball next decision worksheet generated: {asset_panel.get('hockey_softball_next_decision_worksheet_generated_at') or 'missing'}",
+        f"- Hockey/softball quarantine download intake rows: {asset_panel.get('hockey_softball_quarantine_download_intake_rows', 0)}",
+        f"- Hockey/softball quarantine download logo rows: {asset_panel.get('hockey_softball_quarantine_download_intake_logo_rows', 0)}",
+        f"- Hockey/softball quarantine download athlete rows: {asset_panel.get('hockey_softball_quarantine_download_intake_athlete_rows', 0)}",
+        f"- Hockey/softball quarantine download-approved yes rows: {asset_panel.get('hockey_softball_quarantine_download_approved_yes_rows', 0)}",
+        f"- Hockey/softball quarantine download intake generated: {asset_panel.get('hockey_softball_quarantine_download_intake_generated_at') or 'missing'}",
         packet_freshness_markdown(
             {
                 "status": asset_panel.get("logo_review_packet_freshness_status"),
@@ -10267,6 +10303,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_next_decision_worksheet_refresh_command"),
             },
             "Hockey/softball next decision worksheet",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_quarantine_download_intake_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_quarantine_download_intake_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_quarantine_download_intake_refresh_command"),
+            },
+            "Hockey/softball quarantine download intake",
         ),
         f"- Next safe action: {asset_panel.get('next_step')}",
         "- Guardrails: review-only, no paid APIs, no asset downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",

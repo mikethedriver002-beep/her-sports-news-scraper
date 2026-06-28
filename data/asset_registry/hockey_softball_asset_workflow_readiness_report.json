@@ -1,7 +1,7 @@
 {
   "version": "hsd-hockey-softball-asset-workflow-readiness-v1-review-only",
   "status": "hockey_softball_asset_workflow_readiness_ready",
-  "generated_at_utc": "2026-06-28T04:55:40.558309+00:00",
+  "generated_at_utc": "2026-06-28T06:27:39.296763+00:00",
   "guardrails": {
     "paid_apis": false,
     "automatic_downloads": false,
@@ -33,7 +33,12 @@
     "batch_source_review_local_asset_needed_later_rows": 74,
     "next_decision_worksheet_rows": 12,
     "next_decision_logo_rows": 6,
-    "next_decision_athlete_rows": 6
+    "next_decision_athlete_rows": 6,
+    "quarantine_download_intake_rows": 74,
+    "quarantine_download_logo_rows": 20,
+    "quarantine_download_athlete_rows": 54,
+    "quarantine_download_source_reviewed_rows": 20,
+    "quarantine_download_approved_yes_rows": 0
   },
   "summaries": [
     {
@@ -138,5 +143,16 @@
     "rows": 12,
     "logo_rows": 6,
     "athlete_rows": 6
+  },
+  "quarantine_download_intake": {
+    "md": "data/asset_registry/hockey_softball_quarantine_download_intake.md",
+    "csv": "data/asset_registry/hockey_softball_quarantine_download_intake.csv",
+    "json": "data/asset_registry/hockey_softball_quarantine_download_intake.json",
+    "rows": 74,
+    "logo_rows": 20,
+    "athlete_rows": 54,
+    "source_reviewed_rows": 20,
+    "download_approved_yes_rows": 0,
+    "quarantine_folder": "data/assets/quarantine/review_only_candidates"
   }
 }
