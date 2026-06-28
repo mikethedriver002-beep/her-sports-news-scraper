@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.35.0-photo-first-score-hierarchy"
+VERSION = "hsd-manual-review-renderer-v1.36.0-photo-first-subject-glow"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v9_photo_first_score_hierarchy"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v10_photo_first_subject_glow"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -55,7 +55,8 @@ RENDER_BACKGROUND_CUES = (
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
     "photo_first_editorial_nameplate,photo_first_portrait_spotlight,photo_first_score_type_lockup,"
-    "photo_first_context_score_rail,compact_square_photo_footer,stat_proof_rail,generated_preview_qa"
+    "photo_first_context_score_rail,photo_first_subject_glow_bridge,compact_square_photo_footer,"
+    "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -2492,6 +2493,24 @@ def draw_photo_first_focal_depth_stage(
         ],
         fill=(*secondary, 24),
     )
+    draw.polygon(
+        [
+            (px + int(pw * 0.72), py + int(ph * 0.18)),
+            (wx + int(ww * 0.56), wy - 18),
+            (wx + int(ww * 0.88), ly + lh + 20),
+            (px + int(pw * 0.70), py + int(ph * 0.92)),
+        ],
+        fill=(*primary, 36),
+    )
+    draw.polygon(
+        [
+            (px + int(pw * 0.62), py + int(ph * 0.36)),
+            (wx + int(ww * 0.44), wy + int(wh * 0.22)),
+            (wx + int(ww * 0.82), ly + int(lh * 0.78)),
+            (px + int(pw * 0.58), py + int(ph * 0.76)),
+        ],
+        fill=(*PALETTE["gold"], 32),
+    )
     draw.rectangle((px - 8, py + 10, px + 16, py + ph - 8), fill=(*primary, 130))
     draw.rectangle((wx - 10, wy + 2, wx + 10, wy + wh - 2), fill=(*primary, 102))
     draw.rectangle((wx - 10, ly + 2, wx + 10, ly + lh - 2), fill=(*secondary, 112))
@@ -2500,7 +2519,10 @@ def draw_photo_first_focal_depth_stage(
 
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((px - 88, py - 74, px + pw + 96, py + ph + 116), fill=(*primary, 66))
+    glow_draw.ellipse((px - 110, py - 96, px + pw + 152, py + ph + 132), fill=(*primary, 76))
+    glow_draw.ellipse((px + 28, py + int(ph * 0.12), px + pw + 88, py + int(ph * 0.76)), fill=(248, 250, 255, 30))
+    glow_draw.ellipse((px + int(pw * 0.40), py + int(ph * 0.28), wx + int(ww * 0.84), ly + lh + 62), fill=(*primary, 44))
+    glow_draw.ellipse((px + int(pw * 0.56), py + int(ph * 0.40), wx + int(ww * 0.92), ly + lh + 90), fill=(*PALETTE["gold"], 38))
     glow_draw.ellipse((wx - 96, wy - 70, wx + ww + 70, ly + lh + 96), fill=(*secondary, 34))
     glow_draw.ellipse((sx + int(sw * 0.40), sy - 42, sx + sw + 80, sy + sh + 76), fill=(*PALETTE["gold"], 28))
     if ImageFilter is not None:
