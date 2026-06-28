@@ -44,6 +44,9 @@ OUT_RESEARCH_RETURN_INTAKE_JSON = output_path(ROOT / "review_only_action_photo_r
 OUT_RESEARCH_RUN_BUNDLE_CSV = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.csv")
 OUT_RESEARCH_RUN_BUNDLE_MD = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.md")
 OUT_RESEARCH_RUN_BUNDLE_JSON = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.json")
+OUT_QUARANTINE_PREFLIGHT_CSV = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.csv")
+OUT_QUARANTINE_PREFLIGHT_MD = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.md")
+OUT_QUARANTINE_PREFLIGHT_JSON = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -278,6 +281,30 @@ ACTION_PHOTO_RESEARCH_RUN_BUNDLE_FIELDS = [
     "paste_back_location",
     "next_conductor_action",
     "download_approved",
+    "review_only",
+    "publish_ready",
+]
+ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS = [
+    "preflight_id",
+    "candidate_queue_id",
+    "candidate_photo_url",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "evidence_url",
+    "identity_anchor_url",
+    "action_photo_check",
+    "missing_required_fields",
+    "duplicate_candidate_key",
+    "identity_confidence_status",
+    "action_photo_status",
+    "lead_status",
+    "ready_for_human_download_decision",
+    "download_approved",
+    "quarantine_target_hint",
+    "manual_next_action",
     "review_only",
     "publish_ready",
 ]
@@ -2556,6 +2583,227 @@ def render_action_photo_research_run_bundle(rows: List[Mapping[str, str]], issue
     return "\n".join(lines).rstrip() + "\n"
 
 
+def action_photo_text_blob(row: Mapping[str, str]) -> str:
+    return " ".join(
+        clean(row.get(field)).lower()
+        for field in ["candidate_photo_url", "evidence_url", "evidence_summary", "source_url", "intended_review_only_use", "notes"]
+    )
+
+
+def action_photo_status_for_return(row: Mapping[str, str]) -> str:
+    text = action_photo_text_blob(row)
+    if not clean(row.get("candidate_photo_url")):
+        return "missing_candidate_photo_url"
+    headshot_terms = ["headshot", "portrait", "roster photo", "profile photo", "media day", "mugshot"]
+    if any(term in text for term in headshot_terms):
+        return "blocked_headshot_or_portrait_cue"
+    action_terms = ["action", "game", "match", "drive", "shot", "save", "swing", "pitch", "slide", "skate", "serve", "celebration", "rebound", "block"]
+    if any(term in text for term in action_terms):
+        return "action_photo_candidate"
+    return "needs_action_photo_confirmation"
+
+
+def candidate_duplicate_key(row: Mapping[str, str]) -> str:
+    candidate_url = clean(row.get("candidate_photo_url"))
+    if candidate_url:
+        return candidate_url.lower()
+    source_url = clean(row.get("source_url"))
+    entity_id = clean(row.get("entity_id"))
+    if source_url and entity_id:
+        return f"{source_url.lower()}::{entity_id.lower()}"
+    return ""
+
+
+def action_photo_quarantine_preflight_rows(return_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    key_counts: Dict[str, int] = {}
+    for row in return_rows:
+        key = candidate_duplicate_key(row)
+        if key:
+            key_counts[key] = key_counts.get(key, 0) + 1
+    rows: List[Dict[str, str]] = []
+    for index, row in enumerate(return_rows, start=1):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_RESEARCH_RETURN_INTAKE_FIELDS}
+        pasted = has_research_return_data(normalized)
+        missing_required = [field for field in REQUIRED_DOWNLOAD_FIELDS if not normalized[field]]
+        for field in ["candidate_photo_url", "evidence_url", "identity_anchor_url"]:
+            if not normalized[field]:
+                missing_required.append(field)
+        identity = normalized["identity_confidence"]
+        identity_status = "identity_missing"
+        if identity in {"confirmed_official", "strong_context"}:
+            identity_status = "identity_ready_for_human_review"
+        elif identity in {"probable", "weak"}:
+            identity_status = "identity_weak_or_stale_manual_verify"
+        elif identity:
+            identity_status = "identity_unknown_or_invalid"
+        action_status = action_photo_status_for_return(normalized)
+        key = candidate_duplicate_key(normalized)
+        duplicate_status = "duplicate_candidate_key" if key and key_counts.get(key, 0) > 1 else "unique_or_unfilled"
+        lead_status = "lead_only_research_return_missing" if not pasted else "research_return_pasted_preflight_only"
+        ready = (
+            pasted
+            and not missing_required
+            and duplicate_status != "duplicate_candidate_key"
+            and identity_status == "identity_ready_for_human_review"
+            and action_status == "action_photo_candidate"
+            and normalized["download_approved"] == "no"
+            and normalized["review_only"] == "true"
+            and normalized["publish_ready"] == "false"
+        )
+        if ready:
+            manual_next_action = "Ready for a human download_approved=yes decision; do not download until a human edits approval fields and keeps quarantine target."
+        elif not pasted:
+            manual_next_action = "Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight."
+        else:
+            manual_next_action = "Hold for manual fix: fill missing fields, strengthen identity/action evidence, resolve duplicates, and keep review-only/no-publish."
+        rows.append(
+            {
+                "preflight_id": f"APQP{index:03d}",
+                "candidate_queue_id": normalized["candidate_queue_id"],
+                "candidate_photo_url": normalized["candidate_photo_url"],
+                "source_url": normalized["source_url"],
+                "entity_id": normalized["entity_id"],
+                "rights_class": normalized["rights_class"],
+                "identity_confidence": normalized["identity_confidence"],
+                "intended_review_only_use": normalized["intended_review_only_use"],
+                "evidence_url": normalized["evidence_url"],
+                "identity_anchor_url": normalized["identity_anchor_url"],
+                "action_photo_check": action_status,
+                "missing_required_fields": "|".join(dict.fromkeys(missing_required)),
+                "duplicate_candidate_key": duplicate_status,
+                "identity_confidence_status": identity_status,
+                "action_photo_status": action_status,
+                "lead_status": lead_status,
+                "ready_for_human_download_decision": "yes" if ready else "no",
+                "download_approved": normalized["download_approved"],
+                "quarantine_target_hint": normalized["quarantine_target_hint"],
+                "manual_next_action": manual_next_action,
+                "review_only": normalized["review_only"],
+                "publish_ready": normalized["publish_ready"],
+            }
+        )
+    return rows
+
+
+def validate_action_photo_quarantine_preflight_rows(rows: Iterable[Mapping[str, str]], return_rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    return_ids = {clean(row.get("candidate_queue_id")) for row in return_rows}
+    seen_preflight_ids = set()
+    seen_queue_ids = set()
+    valid_identity_statuses = {
+        "identity_missing",
+        "identity_ready_for_human_review",
+        "identity_weak_or_stale_manual_verify",
+        "identity_unknown_or_invalid",
+    }
+    valid_action_statuses = {
+        "missing_candidate_photo_url",
+        "blocked_headshot_or_portrait_cue",
+        "action_photo_candidate",
+        "needs_action_photo_confirmation",
+    }
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS}
+        preflight_id = normalized["preflight_id"]
+        queue_id = normalized["candidate_queue_id"]
+        if not preflight_id:
+            issues.append({"row": str(index), "field": "preflight_id", "issue": "required_preflight_id_blank"})
+        elif preflight_id in seen_preflight_ids:
+            issues.append({"row": str(index), "field": "preflight_id", "issue": "duplicate_preflight_id"})
+        seen_preflight_ids.add(preflight_id)
+        if queue_id not in return_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "candidate_queue_id_not_in_return_intake"})
+        if queue_id in seen_queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "duplicate_candidate_queue_id_in_preflight"})
+        seen_queue_ids.add(queue_id)
+        if normalized["identity_confidence_status"] not in valid_identity_statuses:
+            issues.append({"row": str(index), "field": "identity_confidence_status", "issue": "invalid_identity_confidence_status"})
+        if normalized["action_photo_status"] not in valid_action_statuses:
+            issues.append({"row": str(index), "field": "action_photo_status", "issue": "invalid_action_photo_status"})
+        if normalized["action_photo_check"] != normalized["action_photo_status"]:
+            issues.append({"row": str(index), "field": "action_photo_check", "issue": "action_photo_check_must_match_status"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "preflight_rows_must_not_approve_downloads"})
+        if not normalized["quarantine_target_hint"].startswith(QUARANTINE_ROOT + "/"):
+            issues.append({"row": str(index), "field": "quarantine_target_hint", "issue": "quarantine_hint_must_stay_in_review_only_root"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "preflight_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "preflight_rows_must_not_be_publish_ready"})
+        ready = normalized["ready_for_human_download_decision"] == "yes"
+        if ready and normalized["missing_required_fields"]:
+            issues.append({"row": str(index), "field": "ready_for_human_download_decision", "issue": "ready_row_has_missing_required_fields"})
+        if ready and normalized["duplicate_candidate_key"] == "duplicate_candidate_key":
+            issues.append({"row": str(index), "field": "ready_for_human_download_decision", "issue": "ready_row_has_duplicate_candidate_key"})
+        if ready and normalized["identity_confidence_status"] != "identity_ready_for_human_review":
+            issues.append({"row": str(index), "field": "ready_for_human_download_decision", "issue": "ready_row_identity_not_strong_enough"})
+        if ready and normalized["action_photo_status"] != "action_photo_candidate":
+            issues.append({"row": str(index), "field": "ready_for_human_download_decision", "issue": "ready_row_not_action_photo_candidate"})
+    missing_ids = sorted(return_ids - seen_queue_ids)
+    for missing_id in missing_ids:
+        issues.append({"row": "0", "field": "candidate_queue_id", "issue": f"return_intake_id_missing_from_preflight:{missing_id}"})
+    return issues
+
+
+def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    ready_rows = [row for row in rows if clean(row.get("ready_for_human_download_decision")) == "yes"]
+    lead_rows = [row for row in rows if clean(row.get("lead_status")) == "lead_only_research_return_missing"]
+    missing_counts: Dict[str, int] = {}
+    for row in rows:
+        for field in clean(row.get("missing_required_fields")).split("|"):
+            if field:
+                missing_counts[field] = missing_counts.get(field, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Quarantine Preflight v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Preflight board for manually researched action-photo URL/evidence rows. This tells Mike which rows are ready for a human `download_approved=yes` decision under the local-download law. It does not download files, approve assets, write headshots, create `.approved` markers, move files to publish-ready lanes, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Preflight rows: `{len(rows)}`",
+        f"- Ready for human download decision: `{len(ready_rows)}`",
+        f"- Lead-only / research return missing: `{len(lead_rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Required Fields For Any Future Human Download Decision",
+        "",
+        "- `download_approved`",
+        "- `source_url`",
+        "- `entity_id`",
+        "- `rights_class`",
+        "- `identity_confidence`",
+        "- `intended_review_only_use`",
+        "- plus candidate/evidence fields: `candidate_photo_url`, `evidence_url`, `identity_anchor_url`",
+        "",
+        "## Missing Field Counts",
+        "",
+    ]
+    if missing_counts:
+        lines.extend(f"- `{field}`: `{count}`" for field, count in sorted(missing_counts.items()))
+    else:
+        lines.append("- None")
+    lines += ["", "## Queue Preview", "", "| Preflight ID | Queue ID | Ready? | Lead Status | Action Status | Identity Status | Missing Fields | Next Action |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for row in rows:
+        lines.append(
+            "| {preflight_id} | {queue_id} | {ready} | {lead} | {action} | {identity} | `{missing}` | {next_action} |".format(
+                preflight_id=clean(row.get("preflight_id")),
+                queue_id=clean(row.get("candidate_queue_id")),
+                ready=clean(row.get("ready_for_human_download_decision")),
+                lead=clean(row.get("lead_status")),
+                action=clean(row.get("action_photo_status")),
+                identity=clean(row.get("identity_confidence_status")),
+                missing=clean(row.get("missing_required_fields")),
+                next_action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -2575,6 +2823,8 @@ def main() -> int:
     research_return_issues = validate_action_photo_research_return_intake_rows(research_return_rows, candidate_queue_rows)
     research_run_bundle_rows = action_photo_research_run_bundle_rows(research_packet_rows)
     research_run_bundle_issues = validate_action_photo_research_run_bundle_rows(research_run_bundle_rows, research_run_bundle_artifact_paths().values())
+    quarantine_preflight_rows = action_photo_quarantine_preflight_rows(research_return_rows)
+    quarantine_preflight_issues = validate_action_photo_quarantine_preflight_rows(quarantine_preflight_rows, research_return_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -2833,11 +3083,52 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_QUARANTINE_PREFLIGHT_CSV, quarantine_preflight_rows, ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS)
+    write_text(OUT_QUARANTINE_PREFLIGHT_MD, render_action_photo_quarantine_preflight(quarantine_preflight_rows, quarantine_preflight_issues, generated_at))
+    write_json(
+        OUT_QUARANTINE_PREFLIGHT_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_quarantine_preflight_ready" if not quarantine_preflight_issues else "action_photo_quarantine_preflight_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "preflight_rows": len(quarantine_preflight_rows),
+            "ready_for_human_download_decision_rows": sum(1 for row in quarantine_preflight_rows if row["ready_for_human_download_decision"] == "yes"),
+            "lead_only_rows": sum(1 for row in quarantine_preflight_rows if row["lead_status"] == "lead_only_research_return_missing"),
+            "validation_issue_count": len(quarantine_preflight_issues),
+            "validation_issues": quarantine_preflight_issues,
+            "candidate_queue_ids": sorted({row["candidate_queue_id"] for row in quarantine_preflight_rows}),
+            "missing_required_field_counts": {
+                field: sum(1 for row in quarantine_preflight_rows if field in row["missing_required_fields"].split("|"))
+                for field in REQUIRED_DOWNLOAD_FIELDS + ["candidate_photo_url", "evidence_url", "identity_anchor_url"]
+            },
+            "action_photo_status_counts": {
+                status: sum(1 for row in quarantine_preflight_rows if row["action_photo_status"] == status)
+                for status in sorted({row["action_photo_status"] for row in quarantine_preflight_rows})
+            },
+            "identity_confidence_status_counts": {
+                status: sum(1 for row in quarantine_preflight_rows if row["identity_confidence_status"] == status)
+                for status in sorted({row["identity_confidence_status"] for row in quarantine_preflight_rows})
+            },
+            "download_approved_yes_rows": sum(1 for row in quarantine_preflight_rows if row["download_approved"] == "yes"),
+            "review_only_rows": sum(1 for row in quarantine_preflight_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in quarantine_preflight_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_QUARANTINE_PREFLIGHT_CSV.as_posix(),
+            "worksheet_md": OUT_QUARANTINE_PREFLIGHT_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -2862,7 +3153,9 @@ def main() -> int:
             "action_photo_research_return_intake_validation_issue_count": len(research_return_issues),
             "action_photo_research_run_bundle_rows": len(research_run_bundle_rows),
             "action_photo_research_run_bundle_validation_issue_count": len(research_run_bundle_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues),
+            "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows),
+            "action_photo_quarantine_preflight_validation_issue_count": len(quarantine_preflight_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -2892,6 +3185,9 @@ def main() -> int:
             "action_photo_research_run_bundle_csv": OUT_RESEARCH_RUN_BUNDLE_CSV.as_posix(),
             "action_photo_research_run_bundle_md": OUT_RESEARCH_RUN_BUNDLE_MD.as_posix(),
             "action_photo_research_run_bundle_json": OUT_RESEARCH_RUN_BUNDLE_JSON.as_posix(),
+            "action_photo_quarantine_preflight_csv": OUT_QUARANTINE_PREFLIGHT_CSV.as_posix(),
+            "action_photo_quarantine_preflight_md": OUT_QUARANTINE_PREFLIGHT_MD.as_posix(),
+            "action_photo_quarantine_preflight_json": OUT_QUARANTINE_PREFLIGHT_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -2905,8 +3201,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues else 0
 
 
 if __name__ == "__main__":

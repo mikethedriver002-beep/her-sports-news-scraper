@@ -40,6 +40,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
     research_bundle_rows = read_csv(root / "review_only_action_photo_research_run_bundle_v1.csv")
+    preflight_rows = read_csv(root / "review_only_action_photo_quarantine_preflight_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
@@ -48,6 +49,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
     research_bundle_manifest = json.loads((root / "review_only_action_photo_research_run_bundle_v1.json").read_text(encoding="utf-8"))
+    preflight_manifest = json.loads((root / "review_only_action_photo_quarantine_preflight_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
@@ -60,6 +62,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
     research_bundle_md = (root / "review_only_action_photo_research_run_bundle_v1.md").read_text(encoding="utf-8")
+    preflight_md = (root / "review_only_action_photo_quarantine_preflight_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -83,6 +86,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_research_return_intake_validation_issue_count"] == 0
     assert manifest["action_photo_research_run_bundle_rows"] == 5
     assert manifest["action_photo_research_run_bundle_validation_issue_count"] == 0
+    assert manifest["action_photo_quarantine_preflight_rows"] == 10
+    assert manifest["action_photo_quarantine_preflight_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -520,6 +525,52 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "Do not send email automatically from this lane" in research_bundle_md
     assert "Do not download or fetch image files" in research_bundle_md
     assert "After Mike pastes returned rows into the intake, validate pasted rows" in research_bundle_md
+    assert preflight_manifest["status"] == "action_photo_quarantine_preflight_ready"
+    assert preflight_manifest["preflight_rows"] == 10
+    assert preflight_manifest["ready_for_human_download_decision_rows"] == 0
+    assert preflight_manifest["lead_only_rows"] == 10
+    assert preflight_manifest["validation_issue_count"] == 0
+    assert preflight_manifest["download_approved_yes_rows"] == 0
+    assert preflight_manifest["review_only_rows"] == 10
+    assert preflight_manifest["publish_ready_rows"] == 0
+    assert preflight_manifest["missing_required_field_counts"]["source_url"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["entity_id"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["rights_class"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["identity_confidence"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["intended_review_only_use"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["candidate_photo_url"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["evidence_url"] == 10
+    assert preflight_manifest["missing_required_field_counts"]["identity_anchor_url"] == 10
+    assert preflight_manifest["action_photo_status_counts"] == {"missing_candidate_photo_url": 10}
+    assert preflight_manifest["identity_confidence_status_counts"] == {"identity_missing": 10}
+    assert set(preflight_manifest["candidate_queue_ids"]) == {row["candidate_queue_id"] for row in queue_rows}
+    assert len({row["preflight_id"] for row in preflight_rows}) == len(preflight_rows)
+    assert {row["candidate_queue_id"] for row in preflight_rows} == {row["candidate_queue_id"] for row in research_return_rows}
+    for row in preflight_rows:
+        assert row["preflight_id"].startswith("APQP")
+        assert row["candidate_queue_id"].startswith("APQ")
+        assert row["candidate_photo_url"] == ""
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["evidence_url"] == ""
+        assert row["identity_anchor_url"] == ""
+        assert row["action_photo_check"] == "missing_candidate_photo_url"
+        assert row["action_photo_status"] == "missing_candidate_photo_url"
+        assert row["identity_confidence_status"] == "identity_missing"
+        assert row["duplicate_candidate_key"] == "unique_or_unfilled"
+        assert row["lead_status"] == "lead_only_research_return_missing"
+        assert row["ready_for_human_download_decision"] == "no"
+        assert row["download_approved"] == "no"
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert "Run the research bundle" in row["manual_next_action"]
+    assert "Review-Only Action Photo Quarantine Preflight" in preflight_md
+    assert "Ready for human download decision" in preflight_md
+    assert "does not download files, approve assets, write headshots" in preflight_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -961,3 +1012,89 @@ def test_action_photo_research_run_bundle_validator_blocks_unsafe_rows() -> None
     assert ("download_approved", "bundle_rows_must_not_approve_downloads") in issue_pairs
     assert ("review_only", "bundle_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "bundle_rows_must_not_be_publish_ready") in issue_pairs
+
+
+def test_action_photo_quarantine_preflight_marks_complete_human_return_ready_without_approval() -> None:
+    module = load_module()
+    return_rows = module.action_photo_research_return_intake_rows(module.action_photo_candidate_queue_rows())
+    return_rows[0].update(
+        {
+            "candidate_photo_url": "https://example.com/game-action-photo",
+            "evidence_url": "https://example.com/game-recap",
+            "evidence_summary": "game action shows a drive and confirms event context",
+            "identity_anchor_url": "https://example.com/player-profile",
+            "source_url": "https://example.com/game-action-photo",
+            "entity_id": "wnba:player:apq001",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review_only_action_photo_candidate_quarantine_decision_prep",
+            "notes": "action frame with visible game context",
+            "manual_review_status": "needs_operator_verify",
+        }
+    )
+
+    preflight_rows = module.action_photo_quarantine_preflight_rows(return_rows)
+
+    assert preflight_rows[0]["ready_for_human_download_decision"] == "yes"
+    assert preflight_rows[0]["missing_required_fields"] == ""
+    assert preflight_rows[0]["action_photo_status"] == "action_photo_candidate"
+    assert preflight_rows[0]["identity_confidence_status"] == "identity_ready_for_human_review"
+    assert preflight_rows[0]["download_approved"] == "no"
+    assert module.validate_action_photo_quarantine_preflight_rows(preflight_rows, return_rows) == []
+
+
+def test_action_photo_quarantine_preflight_blocks_duplicate_headshot_and_weak_identity() -> None:
+    module = load_module()
+    return_rows = module.action_photo_research_return_intake_rows(module.action_photo_candidate_queue_rows())
+    for row in return_rows[:2]:
+        row.update(
+            {
+                "candidate_photo_url": "https://example.com/same-roster-headshot",
+                "evidence_url": "https://example.com/evidence",
+                "evidence_summary": "roster portrait/headshot with no game action",
+                "identity_anchor_url": "https://example.com/player-profile",
+                "source_url": "https://example.com/same-roster-headshot",
+                "entity_id": "wnba:duplicate",
+                "rights_class": "official_review_needed",
+                "identity_confidence": "weak",
+                "intended_review_only_use": "review_only_candidate_research",
+                "notes": "headshot only",
+            }
+        )
+
+    preflight_rows = module.action_photo_quarantine_preflight_rows(return_rows)
+
+    assert preflight_rows[0]["ready_for_human_download_decision"] == "no"
+    assert preflight_rows[0]["duplicate_candidate_key"] == "duplicate_candidate_key"
+    assert preflight_rows[0]["action_photo_status"] == "blocked_headshot_or_portrait_cue"
+    assert preflight_rows[0]["identity_confidence_status"] == "identity_weak_or_stale_manual_verify"
+    assert preflight_rows[1]["duplicate_candidate_key"] == "duplicate_candidate_key"
+    assert module.validate_action_photo_quarantine_preflight_rows(preflight_rows, return_rows) == []
+
+
+def test_action_photo_quarantine_preflight_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    return_rows = module.action_photo_research_return_intake_rows(module.action_photo_candidate_queue_rows())
+    preflight_rows = module.action_photo_quarantine_preflight_rows(return_rows)
+    preflight_rows[0].update(
+        {
+            "ready_for_human_download_decision": "yes",
+            "missing_required_fields": "source_url",
+            "download_approved": "yes",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "review_only": "false",
+            "publish_ready": "true",
+        }
+    )
+    preflight_rows[1]["candidate_queue_id"] = preflight_rows[2]["candidate_queue_id"]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_quarantine_preflight_rows(preflight_rows, return_rows)}
+
+    assert ("ready_for_human_download_decision", "ready_row_has_missing_required_fields") in issue_pairs
+    assert ("ready_for_human_download_decision", "ready_row_identity_not_strong_enough") in issue_pairs
+    assert ("ready_for_human_download_decision", "ready_row_not_action_photo_candidate") in issue_pairs
+    assert ("download_approved", "preflight_rows_must_not_approve_downloads") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("review_only", "preflight_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "preflight_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("candidate_queue_id", "duplicate_candidate_queue_id_in_preflight") in issue_pairs
