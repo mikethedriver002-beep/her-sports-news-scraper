@@ -35,9 +35,11 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     source_map_rows = read_csv(root / "review_only_action_photo_source_map_template.csv")
     entity_source_rows = read_csv(root / "review_only_action_photo_sport_entity_source_map.csv")
     womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
+    external_research_rows = read_csv(root / "review_only_action_photo_external_research_source_map.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
+    external_research_manifest = json.loads((root / "review_only_action_photo_external_research_source_map.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
@@ -45,6 +47,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     source_map_md = (root / "review_only_action_photo_source_map_template.md").read_text(encoding="utf-8")
     entity_source_md = (root / "review_only_action_photo_sport_entity_source_map.md").read_text(encoding="utf-8")
     womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
+    external_research_md = (root / "review_only_action_photo_external_research_source_map.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -58,6 +61,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["sport_entity_source_map_validation_issue_count"] == 0
     assert manifest["womens_soccer_action_photo_starter_rows"] == 10
     assert manifest["womens_soccer_action_photo_starter_validation_issue_count"] == 0
+    assert manifest["external_research_source_map_rows"] == 14
+    assert manifest["external_research_source_map_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -197,6 +202,76 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "NWSL-first URL/evidence starter" in womens_soccer_md
     assert "does not fetch, download, approve, assert current roster truth" in womens_soccer_md
     assert "Keep generated local-download-law fields blank/no" in womens_soccer_md
+    assert external_research_manifest["status"] == "action_photo_external_research_source_map_ready"
+    assert external_research_manifest["source_map_rows"] == 14
+    assert external_research_manifest["validation_issue_count"] == 0
+    assert external_research_manifest["download_approved_yes_rows"] == 0
+    assert external_research_manifest["blank_source_url_rows"] == 14
+    assert external_research_manifest["blank_entity_id_rows"] == 14
+    assert external_research_manifest["blank_rights_class_rows"] == 14
+    assert external_research_manifest["blank_identity_confidence_rows"] == 14
+    assert external_research_manifest["blank_intended_review_only_use_rows"] == 14
+    assert external_research_manifest["review_only_rows"] == 14
+    assert external_research_manifest["publish_ready_rows"] == 0
+    assert external_research_manifest["source_family_ranked_rows"] == 14
+    assert {
+        "WNBA",
+        "NWSL",
+        "USWNT / U.S. Soccer",
+        "NCAA Women Basketball",
+        "NCAA Women Softball",
+        "NCAA Women Volleyball",
+        "NCAA Women Soccer",
+        "WTA Tennis",
+        "LPGA Golf",
+        "PWHL / Women Hockey",
+        "AUSL / Pro Softball",
+        "AP Images Sports Portal",
+        "Keith Allison Flickr legacy references",
+        "Inside the Rink galleries",
+    } == set(external_research_manifest["league_entities"])
+    assert {
+        "Getty Images Editorial Sports",
+        "ISI Photos Archive",
+        "NCAA Photos / Clarkson Creative",
+        "AP Images Sports Portal",
+        "Athletes Unlimited / AUSL Media Hub",
+        "LPGA On-Site Media Hub",
+        "WTA Corporate Match Notes",
+        "Keith Allison Flickr Archive",
+        "The Ice Garden Portfolio Network",
+        "Inside the Rink Galleries",
+    } <= {row["source_family_name"] for row in external_research_rows}
+    external_keys = {
+        (
+            row["sport"],
+            row["league_entity"],
+            row["source_category"],
+            row["source_domain"],
+            row["likely_search_query_macro"],
+        )
+        for row in external_research_rows
+    }
+    assert len(external_keys) == len(external_research_rows)
+    for row in external_research_rows:
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["rights_posture_recommendation"] in taxonomy["rights_classes"]
+        assert row["likely_search_query_macro"]
+        assert row["identity_verification_anchor"]
+        assert row["limitations_red_flags"]
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["publish_action"] == "none_artifact_only"
+    assert "fair-use operating assumption" in external_research_md
+    assert "Rows are advisory URL/search leads only" in external_research_md
+    assert "Official/player pages are identity anchors" in external_research_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -364,3 +439,51 @@ def test_womens_soccer_action_photo_starter_validator_blocks_unsafe_rows() -> No
     assert ("approval_state_change", "starter_rows_must_not_change_approval_state") in issue_pairs
     assert ("publish_action", "starter_rows_must_not_publish") in issue_pairs
     assert ("roster_truth_status", "roster_truth_must_not_be_asserted") in issue_pairs
+
+
+def test_external_research_source_map_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = [
+        {
+            "sport": "Basketball",
+            "league_entity": "WNBA",
+            "official_gallery_url_or_macro": "https://example.com/gallery",
+            "roster_player_directory_url_or_macro": "https://example.com/roster",
+            "media_guide_stats_profile_url_or_macro": "",
+            "editorial_wire_newsroom_sources": "https://example.com/wire",
+            "official_social": "",
+            "gray_area_public_creator_fan_surfaces": "",
+            "source_category": "free_web_image",
+            "source_domain": "example.com",
+            "likely_search_query_macro": "player photo",
+            "identity_verification_anchor": "https://example.com/roster",
+            "rights_posture_recommendation": "reuse_ok",
+            "limitations_red_flags": "none",
+            "manual_next_action": "download it",
+            "source_url": "https://example.com/photo",
+            "entity_id": "wnba:player",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "download_approved": "yes",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approve",
+            "publish_action": "publish",
+        }
+    ]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_external_research_source_map_rows(invalid_rows)}
+
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("rights_posture_recommendation", "invalid_rights_posture_recommendation") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "external_research_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "external_research_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "external_research_rows_must_not_change_approval_state") in issue_pairs
+    assert ("publish_action", "external_research_rows_must_not_publish") in issue_pairs
