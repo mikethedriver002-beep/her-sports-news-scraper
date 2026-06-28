@@ -39,6 +39,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
     research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
+    research_bundle_rows = read_csv(root / "review_only_action_photo_research_run_bundle_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
@@ -46,6 +47,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
+    research_bundle_manifest = json.loads((root / "review_only_action_photo_research_run_bundle_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
@@ -57,6 +59,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
+    research_bundle_md = (root / "review_only_action_photo_research_run_bundle_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -78,6 +81,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_candidate_research_packet_validation_issue_count"] == 0
     assert manifest["action_photo_research_return_intake_rows"] == 10
     assert manifest["action_photo_research_return_intake_validation_issue_count"] == 0
+    assert manifest["action_photo_research_run_bundle_rows"] == 5
+    assert manifest["action_photo_research_run_bundle_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
@@ -466,6 +471,55 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "What To Paste Back" in research_return_md
     assert "`download_approved=yes` remains human-edited only" in research_return_md
     assert "does not download images, approve assets, change approval state, or make anything render-ready" in research_return_md
+    assert research_bundle_manifest["status"] == "action_photo_research_run_bundle_ready"
+    assert research_bundle_manifest["bundle_steps"] == 5
+    assert research_bundle_manifest["validation_issue_count"] == 0
+    assert research_bundle_manifest["download_approved_yes_rows"] == 0
+    assert research_bundle_manifest["review_only_rows"] == 5
+    assert research_bundle_manifest["publish_ready_rows"] == 0
+    assert research_bundle_manifest["emails_sent"] is False
+    assert research_bundle_manifest["asset_downloads"] is False
+    assert research_bundle_manifest["approval_state_change"] is False
+    assert research_bundle_manifest["auto_publish"] is False
+    assert research_bundle_manifest["paid_apis"] is False
+    expected_bundle_paths = {
+        "research_packet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
+        "research_packet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv",
+        "research_packet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json",
+        "return_intake_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
+        "return_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+        "return_intake_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
+    }
+    assert set(research_bundle_manifest["artifact_paths"]) == set(expected_bundle_paths)
+    for key, expected_suffix in expected_bundle_paths.items():
+        assert research_bundle_manifest["artifact_paths"][key].endswith(expected_suffix)
+    assert research_bundle_manifest["email_ready_subject"] == "Run HSD review-only action-photo research packet"
+    assert "Do not download images" in research_bundle_manifest["email_ready_body"]
+    assert "approve assets" in research_bundle_manifest["email_ready_body"]
+    assert len({row["bundle_step_id"] for row in research_bundle_rows}) == len(research_bundle_rows)
+    assert {row["operator_lane"] for row in research_bundle_rows} == {
+        "chatgpt_pro",
+        "gemini_pro",
+        "manual_research",
+        "paste_back_intake",
+        "conductor_validation",
+    }
+    all_bundle_paths = set(research_bundle_manifest["artifact_paths"].values())
+    for row in research_bundle_rows:
+        assert row["bundle_step_id"].startswith("APRB")
+        assert set(row["artifact_paths"].split("|")) == all_bundle_paths
+        assert row["paste_back_location"] == research_bundle_manifest["artifact_paths"]["return_intake_csv"]
+        assert row["copy_ready_instruction"]
+        assert "download" in row["copy_ready_instruction"].lower() or "url/evidence" in row["copy_ready_instruction"].lower()
+        assert row["next_conductor_action"]
+        assert row["download_approved"] == "no"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+    assert "Review-Only Action Photo Research Run Bundle" in research_bundle_md
+    assert "Email-Ready Text" in research_bundle_md
+    assert "Do not send email automatically from this lane" in research_bundle_md
+    assert "Do not download or fetch image files" in research_bundle_md
+    assert "After Mike pastes returned rows into the intake, validate pasted rows" in research_bundle_md
 
 
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
@@ -864,3 +918,46 @@ def test_action_photo_research_return_intake_validator_blocks_unsafe_rows() -> N
     assert ("manual_review_status", "approval_or_render_ready_language_not_allowed") in issue_pairs
     assert ("review_only", "research_return_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "research_return_rows_must_not_be_publish_ready") in issue_pairs
+
+
+def test_action_photo_research_run_bundle_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    expected_paths = module.research_run_bundle_artifact_paths().values()
+    invalid_rows = [
+        {
+            "bundle_step_id": "APRBAD",
+            "operator_lane": "",
+            "task_scope": "bad",
+            "artifact_paths": "data/asset_registry/action_photo_candidates/missing.md",
+            "copy_ready_instruction": "send it",
+            "paste_back_location": "data/asset_registry/action_photo_candidates/missing.csv",
+            "next_conductor_action": "",
+            "download_approved": "yes",
+            "review_only": "false",
+            "publish_ready": "true",
+        },
+        {
+            "bundle_step_id": "APRBAD",
+            "operator_lane": "manual_research",
+            "task_scope": "duplicate",
+            "artifact_paths": "|".join(expected_paths),
+            "copy_ready_instruction": "Collect URL/evidence rows only and do not download.",
+            "paste_back_location": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+            "next_conductor_action": "validate",
+            "download_approved": "no",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+    ]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_research_run_bundle_rows(invalid_rows, expected_paths)}
+
+    assert ("bundle_step_id", "duplicate_bundle_step_id") in issue_pairs
+    assert ("operator_lane", "required_bundle_field_blank") in issue_pairs
+    assert ("artifact_paths", "bundle_artifact_paths_mismatch") in issue_pairs
+    assert ("paste_back_location", "paste_back_location_not_in_bundle_paths") in issue_pairs
+    assert ("copy_ready_instruction", "bundle_instruction_missing_research_guardrail") in issue_pairs
+    assert ("next_conductor_action", "required_bundle_field_blank") in issue_pairs
+    assert ("download_approved", "bundle_rows_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "bundle_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "bundle_rows_must_not_be_publish_ready") in issue_pairs

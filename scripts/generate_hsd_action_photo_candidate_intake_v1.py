@@ -41,6 +41,9 @@ OUT_RESEARCH_PACKET_JSON = output_path(ROOT / "review_only_action_photo_candidat
 OUT_RESEARCH_RETURN_INTAKE_CSV = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.csv")
 OUT_RESEARCH_RETURN_INTAKE_MD = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.md")
 OUT_RESEARCH_RETURN_INTAKE_JSON = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.json")
+OUT_RESEARCH_RUN_BUNDLE_CSV = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.csv")
+OUT_RESEARCH_RUN_BUNDLE_MD = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.md")
+OUT_RESEARCH_RUN_BUNDLE_JSON = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -263,6 +266,18 @@ ACTION_PHOTO_RESEARCH_RETURN_INTAKE_FIELDS = [
     "manual_next_action",
     "download_approved",
     "quarantine_target_hint",
+    "review_only",
+    "publish_ready",
+]
+ACTION_PHOTO_RESEARCH_RUN_BUNDLE_FIELDS = [
+    "bundle_step_id",
+    "operator_lane",
+    "task_scope",
+    "artifact_paths",
+    "copy_ready_instruction",
+    "paste_back_location",
+    "next_conductor_action",
+    "download_approved",
     "review_only",
     "publish_ready",
 ]
@@ -2360,6 +2375,187 @@ def render_action_photo_research_return_intake(rows: List[Mapping[str, str]], is
     return "\n".join(lines) + "\n"
 
 
+def research_run_bundle_artifact_paths() -> Dict[str, str]:
+    return {
+        "research_packet_md": OUT_RESEARCH_PACKET_MD.as_posix(),
+        "research_packet_csv": OUT_RESEARCH_PACKET_CSV.as_posix(),
+        "research_packet_json": OUT_RESEARCH_PACKET_JSON.as_posix(),
+        "return_intake_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
+        "return_intake_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+        "return_intake_json": OUT_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
+    }
+
+
+def action_photo_research_run_bundle_rows(research_packet_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    paths = research_run_bundle_artifact_paths()
+    all_paths = "|".join(paths.values())
+    lane_counts: Dict[str, int] = {}
+    for row in research_packet_rows:
+        lane = clean(row.get("researcher_lane"))
+        lane_counts[lane] = lane_counts.get(lane, 0) + 1
+    return [
+        {
+            "bundle_step_id": "APRB001",
+            "operator_lane": "chatgpt_pro",
+            "task_scope": f"{lane_counts.get('chatgpt_pro', 0)} research-packet task(s) marked chatgpt_pro",
+            "artifact_paths": all_paths,
+            "copy_ready_instruction": "Open the research packet Markdown, copy each chatgpt_pro task prompt, run it in ChatGPT Pro, and request CSV-in-code-block URL/evidence rows only.",
+            "paste_back_location": paths["return_intake_csv"],
+            "next_conductor_action": "After Mike pastes rows back, run the return-intake validator before any quarantine-download decision.",
+            "download_approved": "no",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "bundle_step_id": "APRB002",
+            "operator_lane": "gemini_pro",
+            "task_scope": f"{lane_counts.get('gemini_pro', 0)} research-packet task(s) marked gemini_pro",
+            "artifact_paths": all_paths,
+            "copy_ready_instruction": "Open the research packet Markdown, copy each gemini_pro task prompt, run it in Gemini Pro, and request CSV-in-code-block URL/evidence rows only.",
+            "paste_back_location": paths["return_intake_csv"],
+            "next_conductor_action": "After Mike pastes rows back, run the return-intake validator before any quarantine-download decision.",
+            "download_approved": "no",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "bundle_step_id": "APRB003",
+            "operator_lane": "manual_research",
+            "task_scope": f"{lane_counts.get('manual_research', 0)} research-packet task(s) marked manual_research",
+            "artifact_paths": all_paths,
+            "copy_ready_instruction": "Use the research packet Markdown as a manual URL/evidence checklist; collect candidate page URLs, evidence URLs, identity anchors, and conservative rights/identity metadata only.",
+            "paste_back_location": paths["return_intake_csv"],
+            "next_conductor_action": "After Mike pastes rows back, run the return-intake validator before any quarantine-download decision.",
+            "download_approved": "no",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "bundle_step_id": "APRB004",
+            "operator_lane": "paste_back_intake",
+            "task_scope": "Paste returned URL/evidence rows into the return intake CSV",
+            "artifact_paths": all_paths,
+            "copy_ready_instruction": "Paste only URL/evidence schema fields returned by the research packet: candidate_queue_id,candidate_photo_url,evidence_url,evidence_summary,identity_anchor_url,source_url,entity_id,rights_class,identity_confidence,intended_review_only_use,notes,operator_verify_required.",
+            "paste_back_location": paths["return_intake_csv"],
+            "next_conductor_action": "Validate pasted rows; rows with missing evidence, identity anchor, source URL, rights class, or identity confidence stay held for manual review.",
+            "download_approved": "no",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "bundle_step_id": "APRB005",
+            "operator_lane": "conductor_validation",
+            "task_scope": "Validate pasted rows, then stop for human download approval decisions",
+            "artifact_paths": all_paths,
+            "copy_ready_instruction": "Run focused action-photo validation after paste-back. Do not download, approve, render, publish, or move files. Human-edited download_approved=yes remains a separate quarantine-only step.",
+            "paste_back_location": paths["return_intake_csv"],
+            "next_conductor_action": "Only human-approved rows with source_url, entity_id, rights_class, identity_confidence, intended_review_only_use, and quarantine target can proceed toward a later quarantine candidate download.",
+            "download_approved": "no",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+    ]
+
+
+def validate_action_photo_research_run_bundle_rows(rows: Iterable[Mapping[str, str]], expected_paths: Iterable[str]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    expected_path_set = {clean(path) for path in expected_paths}
+    seen_ids = set()
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_RESEARCH_RUN_BUNDLE_FIELDS}
+        step_id = normalized["bundle_step_id"]
+        if not step_id:
+            issues.append({"row": str(index), "field": "bundle_step_id", "issue": "required_bundle_step_id_blank"})
+        elif step_id in seen_ids:
+            issues.append({"row": str(index), "field": "bundle_step_id", "issue": "duplicate_bundle_step_id"})
+        seen_ids.add(step_id)
+        for field in ["operator_lane", "task_scope", "artifact_paths", "copy_ready_instruction", "paste_back_location", "next_conductor_action"]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_bundle_field_blank"})
+        row_paths = {clean(path) for path in normalized["artifact_paths"].split("|") if clean(path)}
+        if row_paths != expected_path_set:
+            issues.append({"row": str(index), "field": "artifact_paths", "issue": "bundle_artifact_paths_mismatch"})
+        if normalized["paste_back_location"] not in expected_path_set:
+            issues.append({"row": str(index), "field": "paste_back_location", "issue": "paste_back_location_not_in_bundle_paths"})
+        if "download" not in normalized["copy_ready_instruction"].lower() and "url/evidence" not in normalized["copy_ready_instruction"].lower():
+            issues.append({"row": str(index), "field": "copy_ready_instruction", "issue": "bundle_instruction_missing_research_guardrail"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "bundle_rows_must_not_approve_downloads"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "bundle_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "bundle_rows_must_not_be_publish_ready"})
+    return issues
+
+
+def render_action_photo_research_run_bundle(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    paths = research_run_bundle_artifact_paths()
+    email_subject = "Run HSD review-only action-photo research packet"
+    email_body = (
+        "Mike, run the review-only action-photo research packet next. Open "
+        f"{paths['research_packet_md']}, send the ChatGPT Pro/Gemini/manual prompts as marked, and paste returned "
+        f"CSV rows into {paths['return_intake_csv']}. Do not download images, approve assets, mark anything "
+        "render-ready, or publish. After paste-back, ask the conductor to validate rows before any human quarantine-download decision."
+    )
+    lines = [
+        "# Review-Only Action Photo Research Run Bundle v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Operator alert bundle for running the existing action-photo research packet and pasting results into the return intake. This is artifact-only glue: it does not send email, download images, approve assets, mark render-ready state, or publish.",
+        "",
+        "## Artifact Paths",
+        "",
+    ]
+    lines.extend(f"- `{key}`: `{value}`" for key, value in paths.items())
+    lines += [
+        "",
+        "## Email-Ready Text",
+        "",
+        f"Subject: {email_subject}",
+        "",
+        "```text",
+        email_body,
+        "```",
+        "",
+        "## What Not To Do",
+        "",
+        "- Do not download or fetch image files.",
+        "- Do not send email automatically from this lane.",
+        "- Do not approve assets or change approval state.",
+        "- Do not mark rows render-ready or publish-ready.",
+        "- Do not move files into publish-ready lanes or publish.",
+        "",
+        "## Next Conductor Action",
+        "",
+        "After Mike pastes returned rows into the intake, validate pasted rows. Only human-edited rows that satisfy `download_approved=yes` plus `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` can proceed toward a later quarantine-only candidate download. Approval/render-ready remains separate.",
+        "",
+        "## Summary",
+        "",
+        f"- Bundle steps: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Bundle Steps",
+        "",
+    ]
+    for row in rows:
+        lines.extend(
+            [
+                f"### {clean(row.get('bundle_step_id'))}: {clean(row.get('operator_lane'))}",
+                "",
+                f"- Scope: {clean(row.get('task_scope'))}",
+                f"- Instruction: {clean(row.get('copy_ready_instruction'))}",
+                f"- Paste back: `{clean(row.get('paste_back_location'))}`",
+                f"- Next: {clean(row.get('next_conductor_action'))}",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -2377,6 +2573,8 @@ def main() -> int:
     research_packet_issues = validate_action_photo_research_packet_rows(research_packet_rows, candidate_queue_rows)
     research_return_rows = action_photo_research_return_intake_rows(candidate_queue_rows)
     research_return_issues = validate_action_photo_research_return_intake_rows(research_return_rows, candidate_queue_rows)
+    research_run_bundle_rows = action_photo_research_run_bundle_rows(research_packet_rows)
+    research_run_bundle_issues = validate_action_photo_research_run_bundle_rows(research_run_bundle_rows, research_run_bundle_artifact_paths().values())
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -2605,11 +2803,41 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_RESEARCH_RUN_BUNDLE_CSV, research_run_bundle_rows, ACTION_PHOTO_RESEARCH_RUN_BUNDLE_FIELDS)
+    write_text(OUT_RESEARCH_RUN_BUNDLE_MD, render_action_photo_research_run_bundle(research_run_bundle_rows, research_run_bundle_issues, generated_at))
+    write_json(
+        OUT_RESEARCH_RUN_BUNDLE_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_research_run_bundle_ready" if not research_run_bundle_issues else "action_photo_research_run_bundle_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "bundle_steps": len(research_run_bundle_rows),
+            "validation_issue_count": len(research_run_bundle_issues),
+            "validation_issues": research_run_bundle_issues,
+            "artifact_paths": research_run_bundle_artifact_paths(),
+            "email_ready_subject": "Run HSD review-only action-photo research packet",
+            "email_ready_body": "Mike, run the review-only action-photo research packet next. Open data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md, send the ChatGPT Pro/Gemini/manual prompts as marked, and paste returned CSV rows into data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv. Do not download images, approve assets, mark anything render-ready, or publish. After paste-back, ask the conductor to validate rows before any human quarantine-download decision.",
+            "download_approved_yes_rows": sum(1 for row in research_run_bundle_rows if row["download_approved"] == "yes"),
+            "review_only_rows": sum(1 for row in research_run_bundle_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in research_run_bundle_rows if row["publish_ready"] == "true"),
+            "bundle_csv": OUT_RESEARCH_RUN_BUNDLE_CSV.as_posix(),
+            "bundle_md": OUT_RESEARCH_RUN_BUNDLE_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "emails_sent": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -2632,7 +2860,9 @@ def main() -> int:
             "action_photo_candidate_research_packet_validation_issue_count": len(research_packet_issues),
             "action_photo_research_return_intake_rows": len(research_return_rows),
             "action_photo_research_return_intake_validation_issue_count": len(research_return_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues),
+            "action_photo_research_run_bundle_rows": len(research_run_bundle_rows),
+            "action_photo_research_run_bundle_validation_issue_count": len(research_run_bundle_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -2659,6 +2889,9 @@ def main() -> int:
             "action_photo_research_return_intake_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
             "action_photo_research_return_intake_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
             "action_photo_research_return_intake_json": OUT_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
+            "action_photo_research_run_bundle_csv": OUT_RESEARCH_RUN_BUNDLE_CSV.as_posix(),
+            "action_photo_research_run_bundle_md": OUT_RESEARCH_RUN_BUNDLE_MD.as_posix(),
+            "action_photo_research_run_bundle_json": OUT_RESEARCH_RUN_BUNDLE_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -2672,8 +2905,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues else 0
 
 
 if __name__ == "__main__":
