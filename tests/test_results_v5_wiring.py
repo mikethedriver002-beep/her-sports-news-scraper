@@ -265,6 +265,9 @@ def test_game_intelligence_board_artifacts_are_wired_for_operator_visibility() -
         "game_source_confirmation_next_action_v1.csv",
         "game_source_confirmation_next_action_v1.md",
         "game_source_confirmation_next_action_v1.json",
+        "game_source_research_worksheet_v1.csv",
+        "game_source_research_worksheet_v1.md",
+        "game_source_research_worksheet_v1.json",
         "final_score_stat_proof_v1.csv",
         "final_score_stat_proof_v1.md",
         "final_score_stat_proof_v1.json",
@@ -536,6 +539,84 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
     assert "No paid APIs" in report
     assert "confidence=0.92" in report
     assert "gate=blocked_source_freshness_check_required" in report
+
+
+def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
+    module = load_results_desk()
+    next_action_rows = [
+        {
+            "action_rank": "1",
+            "event_uid": "event_confirmed",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Indiana Fever at New York Liberty",
+            "game_status": "final",
+            "recap_candidate": "Yes",
+            "review_priority": "P2_final_recap_source_review",
+            "source_confirmation_tier": "single_free_public_scoreboard_operator_verify",
+            "official_or_public_source_cue": "public_scoreboard_source_operator_verify",
+            "source_confidence": "0.92",
+            "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+            "schedule_fact_status": "schedule_source_confirmed_free_public_operator_verify",
+            "result_fact_status": "final_score_source_confirmed_free_public_operator_verify",
+            "stats_fact_status": "stats_source_confirmed_free_public_operator_verify",
+            "missing_confirmation": "none",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+            "source_domain": "www.espn.com",
+            "proof_row_to_open": "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789",
+            "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_confirmed",
+            "manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456",
+        },
+        {
+            "action_rank": "2",
+            "event_uid": "event_missing",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Dallas Wings at Las Vegas Aces",
+            "game_status": "missing_from_free_sources_or_outside_window",
+            "recap_candidate": "No",
+            "review_priority": "P0_manual_confirmation_required",
+            "source_confirmation_tier": "source_missing_manual_confirmation_required",
+            "official_or_public_source_cue": "no_matched_free_public_source_manual_confirmation_required",
+            "source_confidence": "0.00",
+            "source_freshness_status": "no_matched_source_timestamp_manual_check",
+            "schedule_fact_status": "schedule_source_missing_or_low_confidence_manual_review_required",
+            "result_fact_status": "result_or_final_score_missing_manual_review_required",
+            "stats_fact_status": "stats_evidence_row_missing_manual_review_required",
+            "missing_confirmation": "schedule_source; result_or_final_score; stats_or_box_score",
+            "source_url": "",
+            "source_domain": "",
+            "proof_row_to_open": "",
+            "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_missing",
+            "manual_intake_path": "",
+        },
+    ]
+
+    rows = module.game_source_research_worksheet_rows(next_action_rows)
+    by_id = {row["event_uid"]: row for row in rows}
+
+    assert by_id["event_confirmed"]["research_need"] == "confirm_final_score_and_named_stat_source_before_recap"
+    assert by_id["event_confirmed"]["box_score_or_stat_source_url"] == "https://www.espn.com/wnba/game/_/gameId/401"
+    assert by_id["event_missing"]["research_need"] == "find_official_or_public_schedule_result_stat_source"
+    assert "Find a free official or reputable public source" in by_id["event_missing"]["operator_research_prompt"]
+    for row in rows:
+        assert row["operator_found_official_url"] == ""
+        assert row["operator_found_public_scoreboard_url"] == ""
+        assert row["operator_found_box_score_url"] == ""
+        assert row["operator_source_tier_decision"] == ""
+        assert row["operator_confirmation_status"] == ""
+        assert row["operator_notes"] == ""
+        assert row["review_only"] == "Yes"
+        assert row["approval_state_change"] == "none"
+        assert row["source_enablement"] == "none_existing_local_artifacts_only"
+        assert row["publish_action"] == "none_artifact_only"
+
+    summary = module.game_source_research_worksheet_summary(rows)
+    assert summary["operator_fields_prefilled"] is False
+    assert summary["research_need_counts"]["find_official_or_public_schedule_result_stat_source"] == 1
+    report = module.game_source_research_worksheet_report_md(summary, rows)
+    assert "Operator fields are intentionally blank" in report
+    assert "No fetching, paid APIs" in report
 
 
 def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
