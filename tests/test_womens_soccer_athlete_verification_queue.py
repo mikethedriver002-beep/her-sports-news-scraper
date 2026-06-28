@@ -229,6 +229,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     triage_rows = read_csv(root / "womens_soccer_athlete_review_triage.csv")
     triage_manifest = json.loads((root / "womens_soccer_athlete_review_triage.json").read_text(encoding="utf-8"))
     triage_markdown = (root / "womens_soccer_athlete_review_triage.md").read_text(encoding="utf-8")
+    candidate_rows = read_csv(root / "womens_soccer_athlete_candidate_next_action_board.csv")
+    candidate_manifest = json.loads((root / "womens_soccer_athlete_candidate_next_action_board.json").read_text(encoding="utf-8"))
+    candidate_markdown = (root / "womens_soccer_athlete_candidate_next_action_board.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -258,6 +261,14 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         "gray_area_reputable_lead_review": 1,
         "identity_verification": 1,
         "official_roster_check": 1,
+    }
+    assert manifest["candidate_next_action_rows"] == 4
+    assert manifest["candidate_next_action_download_approved_yes_rows"] == 0
+    assert manifest["candidate_next_action_blank_source_url_rows"] == 4
+    assert manifest["candidate_next_action_manual_action_counts"] == {
+        "duplicate_transfer_check": 1,
+        "gray_area_reputable_media_lead": 1,
+        "roster_source_verify": 2,
     }
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
@@ -389,3 +400,48 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert row["publish_ready"] == "false"
     assert "Review-only operator triage worksheet" in triage_markdown
     assert "generated local-download-law fields stay `download_approved=no`" in triage_markdown
+    assert candidate_manifest["status"] == "athlete_candidate_next_actions_ready"
+    assert candidate_manifest["candidate_action_rows"] == 4
+    assert candidate_manifest["nwsl_rows"] == 2
+    assert candidate_manifest["europe_rows"] == 2
+    assert candidate_manifest["download_approved_yes_rows"] == 0
+    assert candidate_manifest["blank_source_url_rows"] == 4
+    assert candidate_manifest["blank_entity_id_rows"] == 4
+    assert candidate_manifest["manual_action_group_counts"] == {
+        "duplicate_transfer_check": 1,
+        "gray_area_reputable_media_lead": 1,
+        "roster_source_verify": 2,
+    }
+    assert [row["manual_action_group"] for row in candidate_rows] == [
+        "roster_source_verify",
+        "roster_source_verify",
+        "gray_area_reputable_media_lead",
+        "duplicate_transfer_check",
+    ]
+    assert len(
+        {
+            (
+                row["manual_action_group"],
+                row["league_id"],
+                row["candidate_entity_id"],
+                row["source_candidate_url"],
+            )
+            for row in candidate_rows
+        }
+    ) == len(candidate_rows)
+    for row in candidate_rows:
+        assert row["source_candidate_url"]
+        assert "womens_soccer_athlete_source_priority.csv#row=" in row["source_priority_row_ref"]
+        assert "womens_soccer_athlete_review_triage.csv#row=" in row["triage_row_ref"]
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["asset_downloads"] == "false"
+        assert row["approval_state_change"] == "false"
+        assert row["publish_ready"] == "false"
+    assert "Review-only board" in candidate_markdown
+    assert "`source_candidate_url` remains advisory metadata" in candidate_markdown
