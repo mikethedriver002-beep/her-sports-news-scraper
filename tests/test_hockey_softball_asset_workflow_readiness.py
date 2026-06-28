@@ -332,6 +332,10 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert triage["operator_verify_required_source_rows"] == 54
     assert triage["download_approved_yes_rows"] == 0
     assert triage["blank_source_url_rows"] == 38
+    assert triage["candidate_next_action_bucket_counts"] == {
+        "local_logo_candidate_needed": 20,
+        "official_roster_team_source_verify": 18,
+    }
     assert triage["primary_manual_action_counts"] == {
         "official_roster_team_source_check": 18,
         "source_reviewed_waiting_for_local_asset": 20,
@@ -342,10 +346,21 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     triage_rows = triage["triage_rows_detail"]
     assert len(triage_rows) == 38
     assert triage_rows[0]["primary_manual_action"] == "official_roster_team_source_check"
+    assert triage_rows[0]["candidate_next_action_bucket"] == "official_roster_team_source_verify"
+    assert triage_rows[0]["source_tier"] == "P0_OFFICIAL_LEAGUE_OR_TEAM_SOURCE"
     assert triage_rows[0]["source_priority_rows"] == "3"
+    assert triage_rows[0]["source_priority_rank_range"] == "1-3"
+    assert triage_rows[0]["source_priority_csv_filter"] == "sport_family=womens_hockey;asset_domain=athlete_photo;candidate_entity_id=boston_fleet"
     assert triage_rows[0]["operator_verify_required_source_rows"] == "3"
     assert "identity_source_verification" in triage_rows[0]["action_flags"]
     assert triage_rows[0]["advisory_source_candidate_urls"]
+    assert triage_rows[0]["review_board_to_open"] == "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_index.md"
+    assert triage_rows[0]["manual_intake_file_to_open"] == "data/asset_registry/womens_hockey/womens_hockey_athlete_photo_review_intake.csv"
+    assert triage_rows[0]["future_download_intake_file"] == "data/asset_registry/hockey_softball_quarantine_download_intake.csv"
+    logo_triage_row = next(row for row in triage_rows if row["asset_domain"] == "logo")
+    assert logo_triage_row["candidate_next_action_bucket"] == "local_logo_candidate_needed"
+    assert logo_triage_row["review_board_to_open"].endswith("_logo_contact_sheet.md")
+    assert logo_triage_row["manual_intake_file_to_open"].endswith("_logo_review_intake.csv")
     assert all(row["download_approved"] == "no" for row in triage_rows)
     assert all(
         row[field] == ""
@@ -419,7 +434,10 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "download-law `source_url` and `entity_id` fields remain blank" in source_priority_board
     assert "Do not copy `source_candidate_url` into download-law `source_url`" in source_priority_board
     assert "Review-only operator triage worksheet" in triage_board
+    assert "## Candidate Next-Action Buckets" in triage_board
     assert "advisory_source_candidate_urls" in triage_board
+    assert "source_priority_csv_filter" in triage_board
+    assert "review_board_to_open" in triage_board
     assert "generated local-download-law fields stay `download_approved=no`" in triage_board
     assert "Default download_approved value: `no`" in download_board
     assert "quarantine-only local asset candidate step" in download_board
