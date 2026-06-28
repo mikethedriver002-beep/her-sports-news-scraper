@@ -26,6 +26,9 @@ OUT_SOURCE_MAP_MD = output_path(ROOT / "review_only_action_photo_source_map_temp
 OUT_ENTITY_SOURCE_MAP_CSV = output_path(ROOT / "review_only_action_photo_sport_entity_source_map.csv")
 OUT_ENTITY_SOURCE_MAP_MD = output_path(ROOT / "review_only_action_photo_sport_entity_source_map.md")
 OUT_ENTITY_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_photo_sport_entity_source_map.json")
+OUT_WOMENS_SOCCER_STARTER_CSV = output_path(ROOT / "review_only_womens_soccer_action_photo_starter_intake.csv")
+OUT_WOMENS_SOCCER_STARTER_MD = output_path(ROOT / "review_only_womens_soccer_action_photo_starter_intake.md")
+OUT_WOMENS_SOCCER_STARTER_JSON = output_path(ROOT / "review_only_womens_soccer_action_photo_starter_intake.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -92,6 +95,38 @@ ENTITY_SOURCE_MAP_FIELDS = [
     "manual_next_action",
     "review_only",
     "publish_ready",
+]
+WOMENS_SOCCER_STARTER_FIELDS = [
+    "starter_rank",
+    "sport",
+    "league_or_entity",
+    "expansion_lane",
+    "team_or_scope",
+    "source_priority",
+    "source_category",
+    "source_name",
+    "source_url_or_search_macro",
+    "source_domain",
+    "evidence_use",
+    "identity_anchor_use",
+    "rights_review_note",
+    "roster_truth_status",
+    "source_confidence",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "download_approved",
+    "manual_review_status",
+    "manual_reviewer",
+    "reviewed_at_utc",
+    "allowed_for_download_approved_yes",
+    "manual_next_action",
+    "review_only",
+    "publish_ready",
+    "approval_state_change",
+    "publish_action",
 ]
 
 FIELDS = [
@@ -985,6 +1020,267 @@ def render_entity_source_map(rows: List[Mapping[str, str]], issues: List[Mapping
     return "\n".join(lines) + "\n"
 
 
+def womens_soccer_starter_rows() -> List[Dict[str, str]]:
+    default_action = (
+        "Use this as a manual research prompt only; paste URLs/evidence after human review and keep download_approved=no. "
+        "Do not assert roster truth, download images, or mark anything approved."
+    )
+    base = {
+        "sport": "soccer",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "download_approved": "no",
+        "manual_review_status": "not_reviewed",
+        "manual_reviewer": "",
+        "reviewed_at_utc": "",
+        "allowed_for_download_approved_yes": "false",
+        "manual_next_action": default_action,
+        "review_only": "true",
+        "publish_ready": "false",
+        "approval_state_change": "none",
+        "publish_action": "none_artifact_only",
+        "source_confidence": "manual_review_required",
+        "roster_truth_status": "not_asserted_manual_verification_required",
+    }
+    row_specs = [
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "league",
+            "source_priority": "P0_official_league",
+            "source_category": "official_league_gallery",
+            "source_name": "NWSL official site",
+            "source_url_or_search_macro": '"[athlete] [club] site:nwslsoccer.com gallery OR photos OR recap"',
+            "source_domain": "nwslsoccer.com",
+            "evidence_use": "official league action lead; match/date/team context and caption clues",
+            "identity_anchor_use": "cross-check NWSL player page, club roster, match report, jersey/uniform context",
+            "rights_review_note": "official_review_needed; no publish-ready rights assumed",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "club_sites",
+            "source_priority": "P0_official_team",
+            "source_category": "official_team_gallery",
+            "source_name": "NWSL club sites",
+            "source_url_or_search_macro": '"[athlete] [club] site:[club-domain] gallery OR recap OR photos"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "club-owned gallery or recap lead; current club and match context",
+            "identity_anchor_use": "club roster plus NWSL player page, lineup, visible number, and match context",
+            "rights_review_note": "official_review_needed; respect club/media credential limits and partner photo credits",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "player_identity_anchor",
+            "source_priority": "P0_identity_anchor",
+            "source_category": "verification_only_player_page",
+            "source_name": "NWSL and club roster/player pages",
+            "source_url_or_search_macro": '"[athlete] [club] NWSL roster player profile official"',
+            "source_domain": "nwslsoccer.com|club-domain",
+            "evidence_use": "identity anchor only; roster status, number, position, current club, and season context",
+            "identity_anchor_use": "use as required corroboration before treating any image lead as the claimed athlete",
+            "rights_review_note": "verification_only; roster/headshot pages are not action-photo candidates",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "editorial_marketplaces",
+            "source_priority": "P1_rights_sensitive",
+            "source_category": "editorial_wire",
+            "source_name": "Getty / AP / Reuters / Imagn",
+            "source_url_or_search_macro": '"[athlete]" "[club]" NWSL site:gettyimages.com OR site:newsroom.ap.org OR site:reutersconnect.com OR site:imagn.com',
+            "source_domain": "gettyimages.com|newsroom.ap.org|reutersconnect.com|imagn.com",
+            "evidence_use": "rights-sensitive detail-page lead; caption, event, photographer/agency, and license clues",
+            "identity_anchor_use": "caption plus official NWSL/club roster and match context",
+            "rights_review_note": "editorial_wire_rights_sensitive; licensing review required before any later human download approval",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "reputable_newsrooms",
+            "source_priority": "P2_reputable_public",
+            "source_category": "reputable_newsroom_gallery",
+            "source_name": "newsrooms and local beat outlets",
+            "source_url_or_search_macro": '"[athlete] [club] NWSL photo gallery local news OR sports desk"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "supplemental public action lead with caption, credit, and match context",
+            "identity_anchor_use": "news caption plus official roster/player page and match report",
+            "rights_review_note": "newsroom_photo_rights_sensitive; no reuse assumed",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "official_social",
+            "source_priority": "P3_social_discovery",
+            "source_category": "official_social",
+            "source_name": "official NWSL, club, and athlete social accounts",
+            "source_url_or_search_macro": '"[athlete] [club] NWSL" site:instagram.com/p/ OR site:x.com OR site:tiktok.com',
+            "source_domain": "instagram.com|x.com|tiktok.com",
+            "evidence_use": "current moment discovery lead; account relationship, caption, and event clues",
+            "identity_anchor_use": "verified account context plus official roster/player/event anchor",
+            "rights_review_note": "social_uncleared; discovery only, not a rights answer",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "creator_public_galleries",
+            "source_priority": "P4_creator_public",
+            "source_category": "third_party_creator_public",
+            "source_name": "independent photographers / portfolios / Flickr / SmugMug",
+            "source_url_or_search_macro": '"[athlete] [club] NWSL photographer gallery OR Flickr OR SmugMug"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "long-tail discovery lead; original creator/credit and match clues",
+            "identity_anchor_use": "creator caption plus official roster/player/event anchor",
+            "rights_review_note": "third_party_creator_uncleared; provenance and permission review required",
+        },
+        {
+            "league_or_entity": "NWSL",
+            "expansion_lane": "nwsl_first",
+            "team_or_scope": "gray_area_public_leads",
+            "source_priority": "P5_park_only",
+            "source_category": "gray_area_public_lead",
+            "source_name": "fan archives / reposts / forums / weak-provenance public pages",
+            "source_url_or_search_macro": '"[athlete] [club] NWSL action photo"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "parking lot for possibly useful leads when official/editorial coverage is thin",
+            "identity_anchor_use": "must be corroborated against official roster/player and event sources",
+            "rights_review_note": "gray_area_lead_only; not official roster truth and not a download candidate",
+            "manual_next_action": "Park as advisory metadata only unless a human finds a stronger official/reputable source; do not download or approve.",
+        },
+        {
+            "league_or_entity": "USWNT",
+            "expansion_lane": "future_uswnt",
+            "team_or_scope": "federation_official",
+            "source_priority": "P0_official_federation",
+            "source_category": "official_federation_or_tournament",
+            "source_name": "U.S. Soccer official site",
+            "source_url_or_search_macro": '"[athlete] USWNT site:ussoccer.com gallery OR photos OR recap"',
+            "source_domain": "ussoccer.com",
+            "evidence_use": "future federation action lead; national-team event/date/caption context",
+            "identity_anchor_use": "USWNT roster/player page, match report, uniform/number context",
+            "rights_review_note": "official_review_needed; federation content still requires rights review",
+        },
+        {
+            "league_or_entity": "Europe top flight",
+            "expansion_lane": "future_wsl_liga_f_arkema",
+            "team_or_scope": "official_league_or_club",
+            "source_priority": "P0_official_league_or_team",
+            "source_category": "official_league_gallery",
+            "source_name": "WSL / Liga F / Arkema / club official sites",
+            "source_url_or_search_macro": '"[athlete] [club] WSL OR \"Liga F\" OR Arkema gallery OR recap official"',
+            "source_domain": "operator_fill_required",
+            "evidence_use": "future Europe action lead; league/club/match context only",
+            "identity_anchor_use": "official league/club roster/player page before any intake promotion",
+            "rights_review_note": "official_review_needed; source-candidate only and explicitly not render-ready",
+        },
+    ]
+    rows: List[Dict[str, str]] = []
+    for index, spec in enumerate(row_specs, start=1):
+        row = {**base, **spec}
+        row["starter_rank"] = f"WSAP{index:02d}"
+        rows.append(row)
+    return rows
+
+
+def validate_womens_soccer_starter_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen = set()
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in WOMENS_SOCCER_STARTER_FIELDS}
+        key = (
+            normalized["league_or_entity"],
+            normalized["team_or_scope"],
+            normalized["source_category"],
+            normalized["source_url_or_search_macro"],
+        )
+        if key in seen:
+            issues.append({"row": str(index), "field": "source_url_or_search_macro", "issue": "duplicate_womens_soccer_starter_key"})
+        seen.add(key)
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        for field in ["starter_rank", "sport", "league_or_entity", "source_priority", "source_name", "source_url_or_search_macro", "evidence_use", "identity_anchor_use", "rights_review_note", "manual_next_action"]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_womens_soccer_starter_field_blank"})
+        for field in REQUIRED_DOWNLOAD_FIELDS:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_rows_must_not_approve_downloads"})
+        if normalized["allowed_for_download_approved_yes"] != "false":
+            issues.append({"row": str(index), "field": "allowed_for_download_approved_yes", "issue": "starter_rows_never_download_approved"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "starter_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "starter_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] not in {"", "none"}:
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "starter_rows_must_not_change_approval_state"})
+        if normalized["publish_action"] not in {"", "none_artifact_only"}:
+            issues.append({"row": str(index), "field": "publish_action", "issue": "starter_rows_must_not_publish"})
+        if "asserted" in normalized["roster_truth_status"] and normalized["roster_truth_status"] != "not_asserted_manual_verification_required":
+            issues.append({"row": str(index), "field": "roster_truth_status", "issue": "roster_truth_must_not_be_asserted"})
+    return issues
+
+
+def render_womens_soccer_starter(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    lane_counts: Dict[str, int] = {}
+    category_counts: Dict[str, int] = {}
+    for row in rows:
+        lane = clean(row.get("expansion_lane"))
+        category = clean(row.get("source_category"))
+        lane_counts[lane] = lane_counts.get(lane, 0) + 1
+        category_counts[category] = category_counts.get(category, 0) + 1
+    lines = [
+        "# Review-Only Women's Soccer Action Photo Starter Intake",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "NWSL-first URL/evidence starter for manual action-photo research. This artifact stores prompts and source leads only; it does not fetch, download, approve, assert current roster truth, write headshots, create `.approved` markers, publish, or create a publish-ready lane.",
+        "",
+        "## Operator Paste Note",
+        "",
+        "Use ChatGPT Pro, Gemini, or manual research to fill source URLs and evidence notes in a later human-edited row. Keep generated local-download-law fields blank/no here. Copy only verified page metadata into the main action-photo intake after identity, source provenance, and rights posture are manually checked.",
+        "",
+        "## Summary",
+        "",
+        f"- Starter rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Expansion Lanes",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(lane_counts.items()))
+    lines += ["", "## Source Categories", ""]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(category_counts.items()))
+    lines += [
+        "",
+        "## Board Preview",
+        "",
+        "| Rank | League/Entity | Lane | Scope | Priority | Category | URL/Search Macro | Manual Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | {league} | {lane} | {scope} | {priority} | {category} | `{macro}` | {action} |".format(
+                rank=clean(row.get("starter_rank")),
+                league=clean(row.get("league_or_entity")).replace("|", "/"),
+                lane=clean(row.get("expansion_lane")),
+                scope=clean(row.get("team_or_scope")).replace("|", "/"),
+                priority=clean(row.get("source_priority")),
+                category=clean(row.get("source_category")),
+                macro=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -992,6 +1288,8 @@ def main() -> int:
     source_rows = source_map_rows()
     entity_source_rows = sport_entity_source_map_rows()
     entity_source_issues = validate_entity_source_map_rows(entity_source_rows)
+    womens_soccer_rows = womens_soccer_starter_rows()
+    womens_soccer_issues = validate_womens_soccer_starter_rows(womens_soccer_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -1031,11 +1329,44 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_WOMENS_SOCCER_STARTER_CSV, womens_soccer_rows, WOMENS_SOCCER_STARTER_FIELDS)
+    write_text(OUT_WOMENS_SOCCER_STARTER_MD, render_womens_soccer_starter(womens_soccer_rows, womens_soccer_issues, generated_at))
+    write_json(
+        OUT_WOMENS_SOCCER_STARTER_JSON,
+        {
+            "version": VERSION,
+            "status": "womens_soccer_action_photo_starter_ready" if not womens_soccer_issues else "womens_soccer_action_photo_starter_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "starter_rows": len(womens_soccer_rows),
+            "validation_issue_count": len(womens_soccer_issues),
+            "validation_issues": womens_soccer_issues,
+            "expansion_lanes": sorted({row["expansion_lane"] for row in womens_soccer_rows}),
+            "source_categories": sorted({row["source_category"] for row in womens_soccer_rows}),
+            "download_approved_yes_rows": sum(1 for row in womens_soccer_rows if row["download_approved"] == "yes"),
+            "blank_source_url_rows": sum(1 for row in womens_soccer_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in womens_soccer_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in womens_soccer_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in womens_soccer_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in womens_soccer_rows if not row["intended_review_only_use"]),
+            "review_only_rows": sum(1 for row in womens_soccer_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in womens_soccer_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_WOMENS_SOCCER_STARTER_CSV.as_posix(),
+            "worksheet_md": OUT_WOMENS_SOCCER_STARTER_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -1048,7 +1379,9 @@ def main() -> int:
             "source_map_rows": len(source_rows),
             "sport_entity_source_map_rows": len(entity_source_rows),
             "sport_entity_source_map_validation_issue_count": len(entity_source_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues),
+            "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows),
+            "womens_soccer_action_photo_starter_validation_issue_count": len(womens_soccer_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -1060,6 +1393,9 @@ def main() -> int:
             "sport_entity_source_map_csv": OUT_ENTITY_SOURCE_MAP_CSV.as_posix(),
             "sport_entity_source_map_md": OUT_ENTITY_SOURCE_MAP_MD.as_posix(),
             "sport_entity_source_map_json": OUT_ENTITY_SOURCE_MAP_JSON.as_posix(),
+            "womens_soccer_action_photo_starter_csv": OUT_WOMENS_SOCCER_STARTER_CSV.as_posix(),
+            "womens_soccer_action_photo_starter_md": OUT_WOMENS_SOCCER_STARTER_MD.as_posix(),
+            "womens_soccer_action_photo_starter_json": OUT_WOMENS_SOCCER_STARTER_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -1073,8 +1409,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "validation_issue_count": len(issues) + len(entity_source_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues else 0
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues), "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues else 0
 
 
 if __name__ == "__main__":
