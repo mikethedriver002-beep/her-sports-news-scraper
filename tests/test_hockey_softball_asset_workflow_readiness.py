@@ -98,6 +98,11 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["review_triage_operator_verify_required_source_rows"] == 54
     assert report["totals"]["review_triage_download_approved_yes_rows"] == 0
     assert report["totals"]["review_triage_blank_source_url_rows"] == 38
+    assert report["totals"]["asset_review_readiness_rows"] == 38
+    assert report["totals"]["asset_review_readiness_logo_rows"] == 20
+    assert report["totals"]["asset_review_readiness_athlete_rows"] == 18
+    assert report["totals"]["asset_review_readiness_download_approved_yes_rows"] == 0
+    assert report["totals"]["asset_review_readiness_blank_source_url_rows"] == 38
     assert report["totals"]["quarantine_download_intake_rows"] == 74
     assert report["totals"]["quarantine_download_logo_rows"] == 20
     assert report["totals"]["quarantine_download_athlete_rows"] == 54
@@ -147,6 +152,16 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "logo_rows": 20,
         "athlete_rows": 18,
         "operator_verify_required_source_rows": 54,
+        "download_approved_yes_rows": 0,
+        "blank_source_url_rows": 38,
+    }
+    assert report["asset_review_readiness"] == {
+        "md": "data/asset_registry/hockey_softball_asset_review_readiness_board.md",
+        "csv": "data/asset_registry/hockey_softball_asset_review_readiness_board.csv",
+        "json": "data/asset_registry/hockey_softball_asset_review_readiness_board.json",
+        "rows": 38,
+        "logo_rows": 20,
+        "athlete_rows": 18,
         "download_approved_yes_rows": 0,
         "blank_source_url_rows": 38,
     }
@@ -376,6 +391,44 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         triage_csv_rows = list(csv.DictReader(handle))
     assert len(triage_csv_rows) == 38
     assert list(triage_csv_rows[0].keys()) == workflow.REVIEW_TRIAGE_FIELDS
+    readiness_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_readiness_board.json"
+    readiness = json.loads(readiness_path.read_text(encoding="utf-8"))
+    assert readiness["status"] == "hockey_softball_asset_review_readiness_ready"
+    assert readiness["readiness_rows"] == 38
+    assert readiness["logo_rows"] == 20
+    assert readiness["athlete_rows"] == 18
+    assert readiness["womens_hockey_rows"] == 25
+    assert readiness["softball_rows"] == 13
+    assert readiness["download_approved_yes_rows"] == 0
+    assert readiness["blank_source_url_rows"] == 38
+    assert readiness["readiness_bucket_counts"] == {
+        "local_logo_candidate_needed_before_logo_review": 20,
+        "official_roster_source_verify_before_photo_review": 18,
+    }
+    readiness_rows = readiness["readiness_rows_detail"]
+    assert readiness_rows[0]["asset_review_readiness_bucket"] == "official_roster_source_verify_before_photo_review"
+    assert readiness_rows[0]["future_download_intake_status"] == "human_edited_intake_required_no_generated_authorization"
+    assert readiness_rows[0]["triage_row_ref"].startswith("data/asset_registry/hockey_softball_asset_review_triage.csv#row=")
+    assert any(
+        row["triage_row_ref"] == "data/asset_registry/hockey_softball_asset_review_triage.csv#row=1"
+        for row in readiness_rows
+    )
+    assert readiness_rows[0]["source_priority_file"] == "data/asset_registry/hockey_softball_source_priority_worksheet.csv"
+    assert all(row["download_approved"] == "no" for row in readiness_rows)
+    assert all(
+        row[field] == ""
+        for row in readiness_rows
+        for field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use"]
+    )
+    assert all(row["review_only"] == "true" for row in readiness_rows)
+    assert all(row["asset_downloads"] == "false" for row in readiness_rows)
+    assert all(row["approval_state_change"] == "false" for row in readiness_rows)
+    assert all(row["publish_ready"] == "false" for row in readiness_rows)
+    readiness_csv_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_readiness_board.csv"
+    with readiness_csv_path.open(newline="", encoding="utf-8") as handle:
+        readiness_csv_rows = list(csv.DictReader(handle))
+    assert len(readiness_csv_rows) == 38
+    assert list(readiness_csv_rows[0].keys()) == workflow.ASSET_REVIEW_READINESS_FIELDS
     download_path = tmp_path / "data/asset_registry/hockey_softball_quarantine_download_intake.json"
     download_manifest = json.loads(download_path.read_text(encoding="utf-8"))
     assert download_manifest["status"] == "hockey_softball_quarantine_download_intake_ready"
@@ -416,6 +469,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     next_decision_board = (tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.md").read_text(encoding="utf-8")
     source_priority_board = (tmp_path / "data/asset_registry/hockey_softball_source_priority_worksheet.md").read_text(encoding="utf-8")
     triage_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.md").read_text(encoding="utf-8")
+    readiness_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_readiness_board.md").read_text(encoding="utf-8")
     download_board = (tmp_path / "data/asset_registry/hockey_softball_quarantine_download_intake.md").read_text(encoding="utf-8")
     assert "## How To Work This Queue" in action_queue_board
     assert "fields_to_keep_blank_until_review" in action_queue_board
@@ -439,6 +493,10 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "source_priority_csv_filter" in triage_board
     assert "review_board_to_open" in triage_board
     assert "generated local-download-law fields stay `download_approved=no`" in triage_board
+    assert "Hockey/Softball Asset Review Readiness Board" in readiness_board
+    assert "official_roster_source_verify_before_photo_review" in readiness_board
+    assert "local_logo_candidate_needed_before_logo_review" in readiness_board
+    assert "Generated local-download-law fields stay `download_approved=no`" in readiness_board
     assert "Default download_approved value: `no`" in download_board
     assert "quarantine-only local asset candidate step" in download_board
     assert "Do not download from this packet" in download_board
@@ -556,6 +614,13 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_asset_review_triage_operator_verify_source_rows"] == 54
     assert panel["hockey_softball_asset_review_triage_download_approved_yes_rows"] == 0
     assert panel["hockey_softball_asset_review_triage_blank_source_url_rows"] == 38
+    assert panel["hockey_softball_asset_review_readiness_status"] == "hockey_softball_asset_review_readiness_ready"
+    assert panel["hockey_softball_asset_review_readiness_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_asset_review_readiness_rows"] == 38
+    assert panel["hockey_softball_asset_review_readiness_logo_rows"] == 20
+    assert panel["hockey_softball_asset_review_readiness_athlete_rows"] == 18
+    assert panel["hockey_softball_asset_review_readiness_download_approved_yes_rows"] == 0
+    assert panel["hockey_softball_asset_review_readiness_blank_source_url_rows"] == 38
     assert panel["hockey_softball_quarantine_download_intake_status"] == "hockey_softball_quarantine_download_intake_ready"
     assert panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_ready"
     assert panel["hockey_softball_quarantine_download_intake_rows"] == 74
@@ -579,6 +644,9 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert "Hockey/softball asset review triage" in shortcut_labels
     assert "Hockey/softball asset review triage data" in shortcut_labels
     assert "Hockey/softball asset review triage manifest" in shortcut_labels
+    assert "Hockey/softball asset review readiness board" in shortcut_labels
+    assert "Hockey/softball asset review readiness data" in shortcut_labels
+    assert "Hockey/softball asset review readiness manifest" in shortcut_labels
     assert "Hockey/softball quarantine download intake" in shortcut_labels
     assert "Hockey/softball quarantine download intake data" in shortcut_labels
     assert "Women's hockey asset workflow board" in shortcut_labels
@@ -609,6 +677,9 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert missing_panel["hockey_softball_asset_review_triage_status"] == ""
     assert missing_panel["hockey_softball_asset_review_triage_generated_at"] == ""
     assert missing_panel["hockey_softball_asset_review_triage_freshness_status"] == "packet_missing"
+    assert missing_panel["hockey_softball_asset_review_readiness_status"] == ""
+    assert missing_panel["hockey_softball_asset_review_readiness_generated_at"] == ""
+    assert missing_panel["hockey_softball_asset_review_readiness_freshness_status"] == "packet_missing"
     assert missing_panel["hockey_softball_quarantine_download_intake_status"] == ""
     assert missing_panel["hockey_softball_quarantine_download_intake_generated_at"] == ""
     assert missing_panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_missing"
@@ -645,6 +716,11 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
         json.dumps({"status": "triage_empty", "generated_at_utc": "2026-06-27T15:19:00+00:00", "triage_rows_detail": None}),
         encoding="utf-8",
     )
+    (report_dir / "hockey_softball_asset_review_readiness_board.md").write_text("# Empty readiness\n", encoding="utf-8")
+    (report_dir / "hockey_softball_asset_review_readiness_board.json").write_text(
+        json.dumps({"status": "readiness_empty", "generated_at_utc": "2026-06-27T15:19:30+00:00", "readiness_rows_detail": None}),
+        encoding="utf-8",
+    )
     (report_dir / "hockey_softball_quarantine_download_intake.md").write_text("# Empty download intake\n", encoding="utf-8")
     (report_dir / "hockey_softball_quarantine_download_intake.json").write_text(
         json.dumps({"status": "download_empty", "generated_at_utc": "2026-06-27T15:20:00+00:00", "download_rows": None}),
@@ -675,6 +751,10 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert empty_panel["hockey_softball_asset_review_triage_generated_at"] == "2026-06-27T15:19:00+00:00"
     assert empty_panel["hockey_softball_asset_review_triage_freshness_status"] == "packet_empty"
     assert empty_panel["hockey_softball_asset_review_triage_rows"] == 0
+    assert empty_panel["hockey_softball_asset_review_readiness_status"] == "readiness_empty"
+    assert empty_panel["hockey_softball_asset_review_readiness_generated_at"] == "2026-06-27T15:19:30+00:00"
+    assert empty_panel["hockey_softball_asset_review_readiness_freshness_status"] == "packet_empty"
+    assert empty_panel["hockey_softball_asset_review_readiness_rows"] == 0
     assert empty_panel["hockey_softball_quarantine_download_intake_status"] == "download_empty"
     assert empty_panel["hockey_softball_quarantine_download_intake_generated_at"] == "2026-06-27T15:20:00+00:00"
     assert empty_panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_empty"
