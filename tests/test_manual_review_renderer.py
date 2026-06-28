@@ -106,19 +106,23 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert proc.returncode == 0, proc.stderr
     preview = run_dir / "render_handoff_top_packet" / "draft_preview.png"
     review_drafts = run_dir / "render_handoff_top_packet" / "review_drafts"
+    contact_sheet = review_drafts / "draft_preview_visual_contact_sheet.png"
     manifest_path = run_dir / "manual_review_renderer_manifest.json"
     report_path = run_dir / "manual_review_renderer_report.md"
+    board_path = run_dir / "manual_review_renderer_visual_comparison_board.md"
     assert preview.exists()
     assert (review_drafts / "draft_preview_ig_feed.png").exists()
     assert (review_drafts / "draft_preview_story.png").exists()
     assert (review_drafts / "draft_preview_square.png").exists()
+    assert contact_sheet.exists()
     assert manifest_path.exists()
     assert report_path.exists()
+    assert board_path.exists()
     assert (run_dir / "render_handoff_top_packet" / "handoff_manifest.json").exists()
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.30.0-photo-first-depth-stage"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.31.0-visual-comparison-board"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -223,6 +227,26 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["guardrails"]["move_files"] is False
     assert manifest["guardrails"]["publish_ready"] is False
     assert manifest["approval_status"] == "not_approved_human_review_required"
+    visual_board = manifest["visual_comparison_board"]
+    assert visual_board["status"] == "review_only_visual_comparison_ready"
+    assert visual_board["review_only"] is True
+    assert visual_board["publish_ready"] is False
+    assert visual_board["approval_status"] == "not_approved_human_review_required"
+    assert visual_board["path"] == board_path.as_posix()
+    assert visual_board["contact_sheet_path"] == contact_sheet.as_posix()
+    assert visual_board["contact_sheet_status"] == "visual_comparison_contact_sheet_ready"
+    assert visual_board["format_count"] == 3
+    assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
+    assert visual_board["visual_mode"] == "no_photo_premium_result"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v5_photo_first_depth_stage"
+    assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
+    assert "manual visual QA intake" in visual_board["next_manual_review_step"] or "hold" in visual_board["next_manual_review_step"]
+    assert {item["format_id"] for item in visual_board["rows"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
+    assert all(item["review_only"] is True for item in visual_board["rows"])
+    assert all(item["publish_ready"] is False for item in visual_board["rows"])
+    assert all(item["automated_qa_status"] == "preview_qa_pass" for item in visual_board["rows"])
+    assert all(item["reference_public_mockup_path"] for item in visual_board["rows"])
+    assert all(item["reference_layout_path"] for item in visual_board["rows"])
 
     image = Image.open(preview)
     assert image.size == (1080, 1350)
@@ -236,8 +260,11 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert bright_context_ratio > 0.04
     story = Image.open(review_drafts / "draft_preview_story.png")
     square = Image.open(review_drafts / "draft_preview_square.png")
+    contact = Image.open(contact_sheet)
     assert story.size == (1080, 1920)
     assert square.size == (1080, 1080)
+    assert contact.size == (2400, 1600)
+    assert ImageChops.difference(contact.convert("RGB"), Image.new("RGB", contact.size, contact.getpixel((0, 0)))).getbbox()
     square_title_crop = square.convert("L").crop((48, 112, 1032, 244))
     square_title_histogram = square_title_crop.histogram()
     bright_square_title_ratio = sum(square_title_histogram[200:]) / sum(square_title_histogram)
@@ -247,6 +274,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Review draft is for human review only" in report
     assert "Preview source packet: `Test Liberty result`" in report
     assert "Preview freshness: generated from the current handoff packet." in report
+    assert "Visual comparison board:" in report
+    assert "Visual contact sheet:" in report
     assert "Source handoff generated: `2026-06-27T17:38:08+00:00`" in report
     assert "Preview decision cue" in report
     assert "## Review Draft Formats" in report
@@ -262,6 +291,22 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "APPROVED LOGO" in report or "LOGO REVIEW" in report
     assert "Editorial microcopy" in report
     assert "publish_ready=`false`" in report
+    board = board_path.read_text(encoding="utf-8")
+    assert "# HSD Renderer Visual Comparison Board" in board
+    assert "Review-only visual comparison artifact" in board
+    assert "Does not publish or mark anything publish-ready" in board
+    assert "Contact sheet:" in board
+    assert "Preview freshness: `generated_from_current_handoff_packet`" in board
+    assert "Visual mode: `no_photo_premium_result`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v5_photo_first_depth_stage`" in board
+    assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
+    assert "draft_preview_ig_feed.png" in board
+    assert "draft_preview_story.png" in board
+    assert "draft_preview_square.png" in board
+    assert "reference_public_mockup_path" not in board
+    assert "assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight" in board
+    assert "assets/graphics/v4/approved/layout_references/wnba_final_score_tonight" in board
+    assert "manual visual QA" in board or "hold if an athlete-led asset" in board
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
 
 

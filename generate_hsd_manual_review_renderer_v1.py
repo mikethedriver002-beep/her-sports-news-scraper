@@ -23,13 +23,14 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.30.0-photo-first-depth-stage"
+VERSION = "hsd-manual-review-renderer-v1.31.0-visual-comparison-board"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
 OUT_REVIEW_DRAFTS = OUT_DIR / "review_drafts"
 OUT_REPORT = output_path("manual_review_renderer_report.md")
 OUT_MANIFEST = output_path("manual_review_renderer_manifest.json")
+OUT_VISUAL_COMPARISON_BOARD = output_path("manual_review_renderer_visual_comparison_board.md")
 PROJECT_ROOT = Path(__file__).resolve().parent
 REFERENCE_PACK_ID = "templates_hsd_20260625"
 REFERENCE_PACK_MANIFEST = PROJECT_ROOT / "config" / "graphics" / "v4" / "template_reference_packs_v1.json"
@@ -3286,6 +3287,206 @@ def preview_qa_for_path(path: Path, spec: Dict[str, Any]) -> Dict[str, Any]:
     return row
 
 
+def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "format_id": clean(format_row.get("format_id")),
+        "path": clean(format_row.get("path")),
+        "dimensions": f"{clean(format_row.get('width'))}x{clean(format_row.get('height'))}",
+        "visual_mode": clean(format_row.get("visual_mode")) or "not_selected",
+        "photo_layout": clean(format_row.get("athlete_photo_layout_mode")) or "not_selected",
+        "background_style": clean(format_row.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
+        "hero_asset_required": clean(format_row.get("hero_asset_required")) or "not_recorded",
+        "focal_entity_type": clean(format_row.get("focal_entity_type")) or "not_recorded",
+        "automated_qa_status": clean(format_row.get("preview_qa_status")) or "preview_qa_not_run",
+        "reference_public_mockup_path": clean(format_row.get("reference_public_mockup_path")) or "not_reference_packed",
+        "reference_layout_path": clean(format_row.get("reference_layout_path")) or "not_reference_packed",
+        "reference_derivation": clean(format_row.get("reference_derivation")) or "not_reference_packed",
+        "review_only": True,
+        "publish_ready": False,
+    }
+
+
+def visual_comparison_next_step(content_module: Dict[str, Any]) -> str:
+    if clean(content_module.get("visual_mode")).startswith("photo_first"):
+        return (
+            "Open the contact sheet first, compare athlete focal point, score hierarchy, stat strip, and square crop against "
+            "the reference mockup/layout paths, then record approve/hold/revise in the manual visual QA intake."
+        )
+    return (
+        "Open the contact sheet first, confirm the no-photo fallback is intentional, compare score hierarchy and reference "
+        "paths, then hold if an athlete-led asset/stat context should be required."
+    )
+
+
+def write_visual_comparison_contact_sheet(rows: List[Dict[str, Any]], content_module: Dict[str, Any], contact_path: Path) -> Dict[str, Any]:
+    result = {
+        "status": "visual_comparison_contact_sheet_not_created",
+        "path": contact_path.as_posix(),
+        "review_only": True,
+        "publish_ready": False,
+    }
+    if Image is None or ImageDraw is None:
+        result["status"] = "visual_comparison_contact_sheet_unavailable_pillow_missing"
+        return result
+
+    contact_path.parent.mkdir(parents=True, exist_ok=True)
+    width, height = 2400, 1600
+    canvas = Image.new("RGBA", (width, height), (8, 13, 24, 255))
+    draw = ImageDraw.Draw(canvas)
+    draw.rectangle((0, 0, width, height), fill=(7, 12, 22, 255))
+    draw.rectangle((0, 0, width, 170), fill=(12, 26, 44, 255))
+    draw.rectangle((0, height - 86, width, height), fill=(145, 24, 38, 255))
+    draw.text((70, 48), "HSD RENDERER VISUAL COMPARISON", font=font(44, True), fill=PALETTE["ink"])
+    draw_right_text(draw, width - 70, 54, "REVIEW-ONLY QA BOARD", font(30, True), PALETTE["gold"])
+    subtitle = (
+        f"Mode: {clean(content_module.get('visual_mode')) or 'not_selected'} | "
+        f"Hero: {clean(content_module.get('hero_asset_required')) or 'not_recorded'} | "
+        f"Background: {RENDER_BACKGROUND_STYLE}"
+    )
+    draw_text_block(draw, (70, 112), subtitle, font(24, False), (204, 216, 232), width - 140, 2, 4)
+
+    panel_w = 720
+    panel_gap = 50
+    x0 = 70
+    panel_top = 210
+    thumb_top = 315
+    thumb_max_w = 610
+    thumb_max_h = 760
+    meta_top = 1120
+    for index, row in enumerate(rows[:3]):
+        x = x0 + index * (panel_w + panel_gap)
+        draw_rounded(draw, (x, panel_top, x + panel_w, height - 130), 18, (18, 31, 51), outline=(72, 103, 142), width=2)
+        draw.text((x + 28, panel_top + 24), clean(row.get("format_id")).upper(), font=font(31, True), fill=PALETTE["ink"])
+        draw_right_text(draw, x + panel_w - 28, panel_top + 27, clean(row.get("dimensions")), font(22, True), PALETTE["gold"])
+
+        preview_path = Path(clean(row.get("path")))
+        thumb_status = "preview missing"
+        try:
+            preview = Image.open(preview_path).convert("RGBA")
+            preview.thumbnail((thumb_max_w, thumb_max_h), resample_filter())
+            paste_x = x + (panel_w - preview.width) // 2
+            paste_y = thumb_top + (thumb_max_h - preview.height) // 2
+            draw.rectangle((paste_x - 4, paste_y - 4, paste_x + preview.width + 4, paste_y + preview.height + 4), fill=(236, 242, 250))
+            canvas.alpha_composite(preview, (paste_x, paste_y))
+            thumb_status = "preview loaded"
+        except Exception:
+            draw_rounded(draw, (x + 52, thumb_top, x + panel_w - 52, thumb_top + thumb_max_h), 12, (33, 42, 58), outline=(150, 72, 82), width=2)
+            draw_text_block(draw, (x + 80, thumb_top + 330), "Preview image missing or unreadable", font(30, True), PALETTE["ink"], panel_w - 160, 3, 8)
+
+        y = meta_top
+        meta_lines = [
+            f"QA: {clean(row.get('automated_qa_status'))}",
+            f"Visual: {clean(row.get('visual_mode'))}",
+            f"Photo/layout: {clean(row.get('photo_layout'))}",
+            f"Hero: {clean(row.get('hero_asset_required'))}",
+            f"Reference: {clean(row.get('reference_derivation'))}",
+            f"Image: {thumb_status}",
+        ]
+        for line in meta_lines:
+            y = draw_text_block(draw, (x + 30, y), line, font(21, False), (222, 229, 240), panel_w - 60, 2, 5)
+            y += 2
+    footer = "Review-only artifact. This board does not approve, publish, move files, or create a publish-ready lane."
+    draw_text_block(draw, (70, height - 60), footer, font(28, True), PALETTE["ink"], width - 140, 2, 4)
+    canvas.convert("RGB").save(contact_path)
+    result["status"] = "visual_comparison_contact_sheet_ready"
+    return result
+
+
+def write_visual_comparison_board(
+    render_result: Dict[str, Any],
+    source_manifest: Dict[str, Any],
+    generated_at_utc: str,
+    freshness: Dict[str, str],
+) -> Dict[str, Any]:
+    formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
+    content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
+    rows = [visual_comparison_row(row) for row in formats]
+    contact_path = OUT_REVIEW_DRAFTS / "draft_preview_visual_contact_sheet.png"
+    contact_sheet = write_visual_comparison_contact_sheet(rows, content_module, contact_path)
+    next_step = visual_comparison_next_step(content_module)
+    board = {
+        "status": "review_only_visual_comparison_ready" if rows else "review_only_visual_comparison_no_formats",
+        "path": OUT_VISUAL_COMPARISON_BOARD.as_posix(),
+        "contact_sheet_path": contact_path.as_posix(),
+        "contact_sheet_status": clean(contact_sheet.get("status")),
+        "review_only": True,
+        "publish_ready": False,
+        "approval_status": "not_approved_human_review_required",
+        "format_count": len(rows),
+        "preview_freshness_status": clean(freshness.get("preview_freshness_status")),
+        "renderer_generated_at_utc": generated_at_utc,
+        "source_handoff_generated_at_utc": clean(source_manifest.get("generated_at_utc")),
+        "visual_mode": clean(content_module.get("visual_mode")) or "not_selected",
+        "background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
+        "hero_asset_required": clean(content_module.get("hero_asset_required")) or "not_recorded",
+        "focal_entity_type": clean(content_module.get("focal_entity_type")) or "not_recorded",
+        "next_manual_review_step": next_step,
+        "rows": rows,
+    }
+    lines = [
+        "# HSD Renderer Visual Comparison Board",
+        "",
+        f"Version: `{VERSION}`",
+        f"Status: `{board['status']}`",
+        f"Generated: `{generated_at_utc}`",
+        "",
+        "## Guardrails",
+        "",
+        "- Review-only visual comparison artifact.",
+        "- Does not approve previews.",
+        "- Does not publish or mark anything publish-ready.",
+        "- Does not move files into a publish-ready lane.",
+        "- Does not download assets or call paid APIs.",
+        "",
+        "## Look First",
+        "",
+        f"- Contact sheet: `{board['contact_sheet_path']}`",
+        f"- Contact sheet status: `{board['contact_sheet_status']}`",
+        f"- Preview freshness: `{board['preview_freshness_status']}`",
+        f"- Source handoff generated: `{board['source_handoff_generated_at_utc'] or 'not_recorded'}`",
+        f"- Renderer generated: `{generated_at_utc}`",
+        f"- Visual mode: `{board['visual_mode']}`",
+        f"- Background style: `{board['background_style']}`",
+        f"- Hero asset status: `{board['hero_asset_required']}`",
+        f"- Focal entity: `{board['focal_entity_type']}`",
+        "",
+        "## Format Review",
+        "",
+    ]
+    if rows:
+        for row in rows:
+            lines.extend(
+                [
+                    f"### {clean(row.get('format_id'))}",
+                    "",
+                    f"- Preview path: `{clean(row.get('path'))}`",
+                    f"- Format label: `{clean(row.get('dimensions'))}`",
+                    f"- Automated QA: `{clean(row.get('automated_qa_status'))}`",
+                    f"- Visual mode: `{clean(row.get('visual_mode'))}`",
+                    f"- Photo layout: `{clean(row.get('photo_layout'))}`",
+                    f"- Background style: `{clean(row.get('background_style'))}`",
+                    f"- Hero asset status: `{clean(row.get('hero_asset_required'))}`",
+                    f"- Reference mockup: `{clean(row.get('reference_public_mockup_path'))}`",
+                    f"- Reference layout: `{clean(row.get('reference_layout_path'))}`",
+                    f"- Reference derivation: `{clean(row.get('reference_derivation'))}`",
+                    "",
+                ]
+            )
+    else:
+        lines.append("- No generated preview formats were available.")
+    lines.extend(
+        [
+            "## Next Manual Review Step",
+            "",
+            f"- {next_step}",
+            "- Keep the decision in manual QA/intake files; this artifact is not approval.",
+            "",
+        ]
+    )
+    write_text(OUT_VISUAL_COMPARISON_BOARD, "\n".join(lines))
+    return board
+
+
 def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
     OUT_PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     template = choose_template(packet)
@@ -3371,6 +3572,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
     slots = render_result.get("asset_slots") if isinstance(render_result.get("asset_slots"), list) else []
     content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
     team_profiles = render_result.get("team_visual_profiles") if isinstance(render_result.get("team_visual_profiles"), list) else []
+    visual_comparison = render_result.get("visual_comparison_board") if isinstance(render_result.get("visual_comparison_board"), dict) else {}
     lines = [
         "# HSD Manual Review Renderer",
         "",
@@ -3392,6 +3594,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Preview source packet: `{clean(packet.get('title')) or 'none'}`",
         "- Preview freshness: generated from the current handoff packet.",
         f"- Preview: `{preview_path or 'not_created'}`",
+        f"- Visual comparison board: `{clean(visual_comparison.get('path')) or 'not_created'}`",
+        f"- Visual contact sheet: `{clean(visual_comparison.get('contact_sheet_path')) or 'not_created'}`",
         f"- Source handoff generated: `{clean(manifest.get('generated_at_utc')) or 'not_recorded'}`",
         f"- Story: `{clean(packet.get('title')) or 'none'}`",
         f"- Template: `{clean(template.get('template_id')) or 'not_selected'}`",
@@ -3411,6 +3615,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Editorial microcopy: `{clean(content_module.get('editorial_microcopy_variant')) or 'not_selected'}` / {clean(content_module.get('editorial_microcopy_headline')) or 'n/a'}",
         f"- Editorial review cue: {clean(content_module.get('editorial_microcopy_review_cue')) or 'n/a'}",
         "- Preview decision cue: use only if the renderer manifest time is at or after the source handoff time; otherwise rerun the renderer.",
+        f"- Next visual review step: {clean(visual_comparison.get('next_manual_review_step')) or 'Open the generated previews and record the manual visual QA decision.'}",
         f"- Reason: {reason or 'n/a'}",
         "",
         "## Review Draft Formats",
@@ -3503,6 +3708,13 @@ def main() -> None:
 
     generated_at_utc = datetime.now(timezone.utc).isoformat()
     freshness = preview_freshness_detail(source_manifest, generated_at_utc, preview)
+    if status == "draft_preview_created":
+        render_result["visual_comparison_board"] = write_visual_comparison_board(
+            render_result,
+            source_manifest,
+            generated_at_utc,
+            freshness,
+        )
     manifest = {
         "version": VERSION,
         "generated_at_utc": generated_at_utc,
@@ -3524,6 +3736,7 @@ def main() -> None:
         "asset_slots": render_result.get("asset_slots", []),
         "content_module": render_result.get("content_module", {}),
         "team_visual_profiles": render_result.get("team_visual_profiles", []),
+        "visual_comparison_board": render_result.get("visual_comparison_board", {}),
         "render_background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "render_background_cues": clean(render_result.get("render_background_cues")) or RENDER_BACKGROUND_CUES,
         "preview_source_title": clean(packet.get("title")),
