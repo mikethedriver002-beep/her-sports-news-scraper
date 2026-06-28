@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.46.0-photo-first-editorial-corridor"
+VERSION = "hsd-manual-review-renderer-v1.47.0-photo-first-unboxed-editorial-stage"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v20_photo_first_editorial_corridor"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v21_photo_first_unboxed_stage"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -63,6 +63,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_integrated_stat_band,photo_first_context_stage_bridge,"
     "photo_first_open_score_lockup,photo_first_soft_athlete_stage,"
     "photo_first_editorial_focal_corridor,photo_first_calm_background_zones,"
+    "photo_first_unboxed_score_rails,photo_first_soft_photo_stage_mask,"
+    "photo_first_action_photo_hero_contract,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -2703,7 +2705,7 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     is_story = height > 1500
     is_square = format_id == "square_feed_1x1" or height <= 1100
     if is_square:
-        photo_box = [60, 366, 286, 360]
+        photo_box = [54, 364, 306, 354]
         score_top = 360
         score_h = 124
         score_gap = 20
@@ -2711,7 +2713,7 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         hook_box = [60, 854, 960, 94]
         context_extra_gap = 28
     elif is_story:
-        photo_box = [72, 535, 386, 670]
+        photo_box = [64, 536, 408, 658]
         score_top = 520
         score_h = 206
         score_gap = 24
@@ -2719,14 +2721,14 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         hook_box = [72, 1396, 936, 132]
         context_extra_gap = 36
     else:
-        photo_box = [58, 392, 382, 560]
+        photo_box = [52, 388, 404, 554]
         score_top = 398
         score_h = 176
         score_gap = 24
         stat_box = [58, 976, 964, 112]
         hook_box = [58, 1118, 964, 104]
         context_extra_gap = 36
-    score_x = photo_box[0] + photo_box[2] + 28
+    score_x = photo_box[0] + photo_box[2] + 24
     score_w = width - score_x - photo_box[0]
     winner_row = [score_x, score_top, score_w, score_h]
     loser_row = [score_x, score_top + score_h + score_gap, score_w, score_h - 16]
@@ -2782,9 +2784,7 @@ def draw_photo_first_focal_depth_stage(
     draw.rounded_rectangle(
         (stage_left, stage_top, stage_right, stage_bottom),
         radius=34,
-        fill=(0, 0, 0, 42),
-        outline=(*primary, 36),
-        width=1,
+        fill=(0, 0, 0, 28),
     )
     draw.polygon(
         [
@@ -2822,16 +2822,16 @@ def draw_photo_first_focal_depth_stage(
         ],
         fill=(*PALETTE["gold"], 20),
     )
-    draw.rectangle((px - 8, py + 10, px + 13, py + ph - 8), fill=(*primary, 92))
-    draw.rectangle((wx - 9, wy + 2, wx + 7, wy + wh - 2), fill=(*primary, 78))
-    draw.rectangle((wx - 9, ly + 2, wx + 7, ly + lh - 2), fill=(*secondary, 84))
-    draw.line((stage_left + 32, sy - 16, stage_right - 32, sy - 16), fill=(*PALETTE["gold"], 88), width=2)
-    draw.line((stage_left + 42, sy - 8, stage_right - 42, sy - 8), fill=(248, 250, 255, 16), width=1)
+    draw.rectangle((px - 5, py + 22, px + 7, py + ph - 28), fill=(*primary, 66))
+    draw.rectangle((wx - 5, wy + 20, wx + 5, wy + wh - 20), fill=(*primary, 50))
+    draw.rectangle((wx - 5, ly + 18, wx + 5, ly + lh - 18), fill=(*secondary, 56))
+    draw.line((stage_left + 48, sy - 16, stage_right - 48, sy - 16), fill=(*PALETTE["gold"], 58), width=1)
+    draw.line((stage_left + 72, sy - 7, stage_right - 72, sy - 7), fill=(248, 250, 255, 10), width=1)
 
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((px - 110, py - 96, px + pw + 152, py + ph + 132), fill=(*primary, 58))
-    glow_draw.ellipse((px + 28, py + int(ph * 0.12), px + pw + 88, py + int(ph * 0.76)), fill=(248, 250, 255, 24))
+    glow_draw.ellipse((px - 110, py - 96, px + pw + 152, py + ph + 132), fill=(*primary, 48))
+    glow_draw.ellipse((px + 28, py + int(ph * 0.12), px + pw + 88, py + int(ph * 0.76)), fill=(248, 250, 255, 18))
     glow_draw.ellipse((px + int(pw * 0.40), py + int(ph * 0.28), wx + int(ww * 0.84), ly + lh + 62), fill=(*primary, 30))
     glow_draw.ellipse((px + int(pw * 0.56), py + int(ph * 0.40), wx + int(ww * 0.92), ly + lh + 90), fill=(*PALETTE["gold"], 24))
     glow_draw.ellipse((wx - 96, wy - 70, wx + ww + 70, ly + lh + 96), fill=(*secondary, 22))
@@ -2902,20 +2902,20 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    draw.rounded_rectangle((x + 16, y + 30, x + w + 10, y + h + 16), radius=34, fill=(0, 0, 0, 34))
-    draw.rounded_rectangle((x - 2, y + 8, x + w + 6, y + h - 4), radius=30, fill=(2, 4, 9, 42), outline=(*accent, 38), width=1)
-    draw.rectangle((x - 1, y + 62, x + 3, y + h - 48), fill=(*accent, 84))
-    draw.polygon([(x + 18, y + h - 172), (x + w - 4, y + h - 322), (x + w - 4, y + h - 10), (x + 18, y + h - 10)], fill=(*accent, 38))
+    draw.rounded_rectangle((x + 18, y + 38, x + w + 12, y + h + 18), radius=34, fill=(0, 0, 0, 22))
+    draw.rounded_rectangle((x + 2, y + 14, x + w + 2, y + h - 8), radius=30, fill=(2, 4, 9, 24))
+    draw.rectangle((x + 1, y + 76, x + 4, y + h - 70), fill=(*accent, 48))
+    draw.polygon([(x + 16, y + h - 172), (x + w - 2, y + h - 318), (x + w - 2, y + h - 10), (x + 16, y + h - 10)], fill=(*accent, 24))
     draw.polygon([(x + 30, y + 86), (x + w - 4, y + 10), (x + w - 6, y + 128), (x + 30, y + 190)], fill=(255, 255, 255, 10))
     draw.polygon([(x + 24, y + 24), (x + w - 18, y + 24), (x + w - 92, y + 54), (x + 44, y + 62)], fill=(*PALETTE["gold"], 20))
-    draw.line((x + 36, y + 32, x + w - 38, y + 24), fill=(*accent, 42), width=1)
-    draw.line((x + 40, y + h - 70, x + w - 48, y + h - 74), fill=(*accent, 34), width=1)
+    draw.line((x + 48, y + 34, x + w - 54, y + 28), fill=(*accent, 26), width=1)
+    draw.line((x + 48, y + h - 70, x + w - 58, y + h - 74), fill=(*accent, 22), width=1)
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((x - 126, y - 38, x + w + 138, y + h + 132), fill=(*accent, 78))
-    glow_draw.ellipse((x - 8, y + 48, x + w + 34, y + int(h * 0.78)), fill=(248, 250, 255, 42))
-    glow_draw.ellipse((x + 18, y + h - 256, x + w + 82, y + h + 64), fill=(*PALETTE["gold"], 38))
-    glow_draw.ellipse((x - 44, y + int(h * 0.18), x + w + 28, y + int(h * 0.62)), fill=(*PALETTE["gold"], 24))
+    glow_draw.ellipse((x - 126, y - 38, x + w + 138, y + h + 132), fill=(*accent, 60))
+    glow_draw.ellipse((x - 8, y + 48, x + w + 34, y + int(h * 0.78)), fill=(248, 250, 255, 34))
+    glow_draw.ellipse((x + 18, y + h - 256, x + w + 82, y + h + 64), fill=(*PALETTE["gold"], 26))
+    glow_draw.ellipse((x - 44, y + int(h * 0.18), x + w + 28, y + int(h * 0.62)), fill=(*PALETTE["gold"], 16))
     if ImageFilter is not None:
         glow = glow.filter(ImageFilter.GaussianBlur(38))
     layer.alpha_composite(glow)
@@ -2925,13 +2925,12 @@ def draw_photo_first_athlete_stage(image: Any, box: Tuple[int, int, int, int], m
     stage_photo.alpha_composite(photo, (photo_x, photo_y))
     stage_mask = Image.new("L", image.size, 0)
     mask_draw = ImageDraw.Draw(stage_mask)
-    mask_draw.rounded_rectangle((x + 7, y + 24, x + w - 7, y + h - 10), radius=22, fill=255)
+    mask_draw.rounded_rectangle((x + 8, y + 28, x + w - 8, y + h - 12), radius=18, fill=255)
     layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
-    draw.line((x + 10, y + 52, x + 10, y + h - 42), fill=(*accent, 62), width=1)
-    draw.line((x + 16, y + 74, x + 16, y + h - 62), fill=(*accent, 170), width=2)
-    draw.arc((x - 42, y + 20, x + w + 50, y + h + 82), start=196, end=304, fill=(*PALETTE["gold"], 96), width=2)
-    draw.arc((x - 22, y + 44, x + w + 28, y + h + 48), start=206, end=292, fill=(248, 250, 255, 26), width=1)
-    draw.line((x + w - 22, y + 72, x + w - 22, y + h - 124), fill=(*PALETTE["gold"], 58), width=1)
+    draw.line((x + 13, y + 80, x + 13, y + h - 74), fill=(*accent, 112), width=1)
+    draw.arc((x - 42, y + 20, x + w + 50, y + h + 82), start=196, end=304, fill=(*PALETTE["gold"], 66), width=1)
+    draw.arc((x - 22, y + 44, x + w + 28, y + h + 48), start=206, end=292, fill=(248, 250, 255, 18), width=1)
+    draw.line((x + w - 22, y + 92, x + w - 22, y + h - 148), fill=(*PALETTE["gold"], 34), width=1)
     draw.line((x + 20, y + 54, x + min(x + 152, x + w - 34), y + 42), fill=(248, 250, 255, 32), width=1)
     draw.line((x + max(170, int(w * 0.46)), y + h - 88, x + w - 28, y + h - 88), fill=(*PALETTE["gold"], 42), width=1)
     image.alpha_composite(layer)
@@ -2956,18 +2955,19 @@ def draw_photo_first_score_row(
     draw = ImageDraw.Draw(image, "RGBA")
     rail_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(rail_shadow, "RGBA")
-    shadow_draw.rounded_rectangle((x + 8, y + 10, x + w + 8, y + h + 10), radius=24, fill=(0, 0, 0, 34))
+    shadow_draw.rounded_rectangle((x + 12, y + 18, x + w + 6, y + h + 6), radius=20, fill=(0, 0, 0, 24))
     if ImageFilter is not None:
-        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(11))
+        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(13))
     image.alpha_composite(rail_shadow)
-    draw.rounded_rectangle((x, y + 8, x + w, y + h - 8), radius=22, fill=(2, 4, 9, 72 if winner else 60))
-    draw.rectangle((x + 1, y + 14, x + 6, y + h - 14), fill=(*accent, 118 if winner else 92))
-    draw.line((x + 30, y + h - 30, x + w - 36, y + h - 30), fill=(*accent, 54 if winner else 42), width=2)
+    row_fill = 46 if winner else 38
+    draw.rounded_rectangle((x + 2, y + 14, x + w, y + h - 12), radius=18, fill=(2, 4, 9, row_fill))
+    draw.rectangle((x + 1, y + 26, x + 4, y + h - 26), fill=(*accent, 84 if winner else 62))
+    draw.line((x + 36, y + h - 34, x + w - 32, y + h - 34), fill=(*accent, 38 if winner else 30), width=1)
     label = "WINNER" if winner else "FINAL"
     label_w = 92 if winner else 70
     label_h = 22 if not compact else 18
     label_y = y + (17 if not compact else 15)
-    draw.line((x + 28, label_y - 3, x + 28 + label_w, label_y - 3), fill=(*accent, 104), width=2)
+    draw.line((x + 28, label_y - 3, x + 28 + label_w, label_y - 3), fill=(*accent, 80), width=1)
     label_color = PALETTE["ink"] if winner else (222, 228, 238)
     label_type = photo_first_type_spec("chip_label", compact=compact)
     draw_reference_text(
@@ -3003,13 +3003,13 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(score_glow, "RGBA")
-    glow_draw.rounded_rectangle((sx - 12, sy - 10, sx + sw + 12, sy + sh + 10), radius=18, fill=(*accent, 34 if winner else 28))
+    glow_draw.ellipse((sx - 38, sy - 26, sx + sw + 42, sy + sh + 28), fill=(*accent, 24 if winner else 18))
     if ImageFilter is not None:
-        score_glow = score_glow.filter(ImageFilter.GaussianBlur(10))
+        score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
     image.alpha_composite(score_glow)
-    draw.line((sx + 7, sy + 10, sx + 7, sy + sh - 10), fill=(*accent, 132), width=4)
-    draw.line((sx + 20, sy + sh - 10, sx + sw - 12, sy + sh - 10), fill=(*accent, 66), width=2)
-    draw.line((sx + 24, sy + 8, sx + sw - 18, sy + 8), fill=(248, 250, 255, 220), width=3)
+    draw.line((sx + 10, sy + 12, sx + 10, sy + sh - 12), fill=(*accent, 102), width=3)
+    draw.line((sx + 22, sy + sh - 8, sx + sw - 10, sy + sh - 8), fill=(*accent, 46), width=1)
+    draw.line((sx + 28, sy + 8, sx + sw - 18, sy + 8), fill=(248, 250, 255, 170), width=2)
     cell = photo_first_score_digit_cell_box(score_box)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"] + 4, max(58, int((cell[2] - cell[0]) * 0.90)), max(58, int((cell[3] - cell[1]) * 0.98)))
@@ -3023,7 +3023,7 @@ def draw_photo_first_score_row(
         min_score_size,
         PALETTE["ink"],
         max_lines=1,
-        align="center",
+        align="right",
         stroke=1,
         stroke_fill=(0, 0, 0),
     )
@@ -3040,13 +3040,13 @@ def draw_photo_first_score_context_rail(
     draw = ImageDraw.Draw(image, "RGBA")
     shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow, "RGBA")
-    shadow_draw.rounded_rectangle((x + 4, y + 7, x + w + 4, y + h + 7), radius=13, fill=(0, 0, 0, 56))
+    shadow_draw.rounded_rectangle((x + 4, y + 8, x + w + 4, y + h + 8), radius=13, fill=(0, 0, 0, 34))
     if ImageFilter is not None:
         shadow = shadow.filter(ImageFilter.GaussianBlur(5))
     image.alpha_composite(shadow)
-    draw.rounded_rectangle((x, y + 6, x + w, y + h - 6), radius=13, fill=(2, 4, 9, 76))
-    draw.line((x + 4, y + 16, x + 4, y + h - 16), fill=(*primary, 160), width=3)
-    draw.line((x + 20, y + 11, x + w - 20, y + 11), fill=(*PALETTE["gold"], 66), width=1)
+    draw.rounded_rectangle((x + 2, y + 8, x + w - 2, y + h - 8), radius=11, fill=(2, 4, 9, 54))
+    draw.line((x + 5, y + 17, x + 5, y + h - 17), fill=(*primary, 118), width=2)
+    draw.line((x + 26, y + 12, x + w - 26, y + 12), fill=(*PALETTE["gold"], 42), width=1)
     context_type = photo_first_type_spec("context_rail", compact=h <= 54)
     draw_reference_text(
         image,
@@ -3067,15 +3067,15 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     draw = ImageDraw.Draw(image, "RGBA")
     wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
     wash_draw = ImageDraw.Draw(wash, "RGBA")
-    wash_draw.rounded_rectangle((x + 12, y + 10, x + w - 12, y + h + 8), radius=22, fill=(0, 0, 0, 34))
+    wash_draw.rounded_rectangle((x + 12, y + 10, x + w - 12, y + h + 8), radius=22, fill=(0, 0, 0, 22))
     if ImageFilter is not None:
         wash = wash.filter(ImageFilter.GaussianBlur(7))
     image.alpha_composite(wash)
     band = Image.new("RGBA", image.size, (0, 0, 0, 0))
     band_draw = ImageDraw.Draw(band, "RGBA")
-    band_draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(18, 30, 48, 82))
-    band_draw.line((x + 34, y + 13, x + w - 34, y + 13), fill=(*PALETTE["gold"], 58), width=1)
-    band_draw.line((x + 15, y + 22, x + 15, y + h - 20), fill=(*accent, 180), width=3)
+    band_draw.rounded_rectangle((x + 4, y + 4, x + w - 4, y + h - 2), radius=18, fill=(18, 30, 48, 58))
+    band_draw.line((x + 44, y + 15, x + w - 44, y + 15), fill=(*PALETTE["gold"], 36), width=1)
+    band_draw.line((x + 16, y + 24, x + 16, y + h - 22), fill=(*accent, 130), width=2)
     image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
@@ -3572,6 +3572,10 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     fallback_comparison_status = "fallback_active_label_no_athlete_photo"
     fallback_comparison_note = "No athlete/person focal frame rendered; hold if the handoff expected an athlete-led result."
     score_layout_contract = "logo_score_fallback_score_team_caption_clearance"
+    hero_image_mode = "logo_score_fallback_no_person_image"
+    hero_image_source_class = "no_local_hero_image"
+    action_photo_hero_contract = "manual_review_action_photo_not_available_no_download"
+    action_photo_candidate_status = "not_available_to_renderer"
     template_fit_reason = clean(content_module.get("athlete_led_blocker")) or "No approved player photo and verified player stat context; renderer holds photo-first route."
     if photo_ready and player and (is_player_stat or is_supporting_stat):
         visual_mode = "photo_first_performer" if is_player_stat else "photo_first_result"
@@ -3585,6 +3589,10 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         fallback_comparison_status = "fallback_not_used_athlete_preview_ready"
         fallback_comparison_note = "Photo-first athlete/person frame is the primary editorial focal point; logo-only fallback should appear only when the handoff loses photo/stat eligibility."
         score_layout_contract = "photo_first_score_team_caption_clearance_locked"
+        hero_image_mode = "approved_headshot_bridge_action_photo_ready"
+        hero_image_source_class = "approved_local_headshot_bridge"
+        action_photo_hero_contract = "manual_review_action_photo_can_replace_headshot_when_local_approved"
+        action_photo_candidate_status = "pending_manual_action_photo_candidate"
         template_fit_reason = "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing."
         if layout_mode == "square_photo_first_score_panel":
             visual_mode = "photo_first_performer_square" if is_player_stat else "photo_first_result_square"
@@ -3606,6 +3614,10 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "fallback_comparison_note": fallback_comparison_note,
         "score_layout_contract": score_layout_contract,
         "background_family": RENDER_BACKGROUND_FAMILY,
+        "hero_image_mode": hero_image_mode,
+        "hero_image_source_class": hero_image_source_class,
+        "action_photo_hero_contract": action_photo_hero_contract,
+        "action_photo_candidate_status": action_photo_candidate_status,
         "template_fit_reason": template_fit_reason,
     }
 
@@ -3772,6 +3784,10 @@ def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
         "photo_layout": clean(format_row.get("athlete_photo_layout_mode")) or "not_selected",
         "background_style": clean(format_row.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "hero_asset_required": clean(format_row.get("hero_asset_required")) or "not_recorded",
+        "hero_image_mode": clean(format_row.get("hero_image_mode")) or "not_recorded",
+        "hero_image_source_class": clean(format_row.get("hero_image_source_class")) or "not_recorded",
+        "action_photo_hero_contract": clean(format_row.get("action_photo_hero_contract")) or "not_recorded",
+        "action_photo_candidate_status": clean(format_row.get("action_photo_candidate_status")) or "not_recorded",
         "focal_entity_type": clean(format_row.get("focal_entity_type")) or "not_recorded",
         "focal_priority": clean(format_row.get("focal_priority")) or "not_recorded",
         "athlete_focal_contract": clean(format_row.get("athlete_focal_contract")) or "not_recorded",
@@ -3865,6 +3881,7 @@ def write_visual_comparison_contact_sheet(rows: List[Dict[str, Any]], content_mo
             f"Visual: {clean(row.get('visual_mode'))}",
             f"Photo/layout: {clean(row.get('photo_layout'))}",
             f"Hero: {clean(row.get('hero_asset_required'))}",
+            f"Hero mode: {clean(row.get('hero_image_mode'))}",
             f"Focal: {clean(row.get('focal_priority'))}",
             f"Fallback: {clean(row.get('fallback_comparison_status'))}",
             f"Reference: {clean(row.get('reference_derivation'))}",
@@ -3907,6 +3924,10 @@ def write_visual_comparison_board(
         "visual_mode": clean(content_module.get("visual_mode")) or "not_selected",
         "background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
         "hero_asset_required": clean(content_module.get("hero_asset_required")) or "not_recorded",
+        "hero_image_mode": clean(content_module.get("hero_image_mode")) or "not_recorded",
+        "hero_image_source_class": clean(content_module.get("hero_image_source_class")) or "not_recorded",
+        "action_photo_hero_contract": clean(content_module.get("action_photo_hero_contract")) or "not_recorded",
+        "action_photo_candidate_status": clean(content_module.get("action_photo_candidate_status")) or "not_recorded",
         "focal_entity_type": clean(content_module.get("focal_entity_type")) or "not_recorded",
         "focal_priority": clean(content_module.get("focal_priority")) or "not_recorded",
         "athlete_focal_contract": clean(content_module.get("athlete_focal_contract")) or "not_recorded",
@@ -3941,6 +3962,9 @@ def write_visual_comparison_board(
         f"- Visual mode: `{board['visual_mode']}`",
         f"- Background style: `{board['background_style']}`",
         f"- Hero asset status: `{board['hero_asset_required']}`",
+        f"- Hero image mode: `{board['hero_image_mode']}`",
+        f"- Action-photo hero contract: `{board['action_photo_hero_contract']}`",
+        f"- Action-photo candidate status: `{board['action_photo_candidate_status']}`",
         f"- Focal entity: `{board['focal_entity_type']}`",
         f"- Focal priority: `{board['focal_priority']}`",
         f"- Athlete focal contract: `{board['athlete_focal_contract']}`",
@@ -3964,6 +3988,8 @@ def write_visual_comparison_board(
                     f"- Photo layout: `{clean(row.get('photo_layout'))}`",
                     f"- Background style: `{clean(row.get('background_style'))}`",
                     f"- Hero asset status: `{clean(row.get('hero_asset_required'))}`",
+                    f"- Hero image mode: `{clean(row.get('hero_image_mode'))}`",
+                    f"- Action-photo hero contract: `{clean(row.get('action_photo_hero_contract'))}`",
                     f"- Focal priority: `{clean(row.get('focal_priority'))}`",
                     f"- Athlete focal contract: `{clean(row.get('athlete_focal_contract'))}`",
                     f"- Fallback comparison: `{clean(row.get('fallback_comparison_status'))}`",
@@ -4132,6 +4158,7 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
         f"- Visual mode: `{clean(content_module.get('visual_mode')) or 'not_selected'}` focal_entity=`{clean(content_module.get('focal_entity_type')) or 'n/a'}` hero_asset_required=`{clean(content_module.get('hero_asset_required')) or 'n/a'}`",
         f"- Visual contract: score_lock=`{clean(content_module.get('score_lock_variant')) or 'n/a'}` proof_strip=`{clean(content_module.get('proof_strip_variant')) or 'n/a'}` copy_unlock=`{clean(content_module.get('copy_unlock_state')) or 'n/a'}` background=`{clean(content_module.get('background_family')) or clean(render_result.get('render_background_style')) or 'n/a'}`",
+        f"- Hero image contract: mode=`{clean(content_module.get('hero_image_mode')) or 'n/a'}` source=`{clean(content_module.get('hero_image_source_class')) or 'n/a'}` action_photo=`{clean(content_module.get('action_photo_hero_contract')) or 'n/a'}` status=`{clean(content_module.get('action_photo_candidate_status')) or 'n/a'}`",
         f"- Athlete focal contract: priority=`{clean(content_module.get('focal_priority')) or 'n/a'}` contract=`{clean(content_module.get('athlete_focal_contract')) or 'n/a'}` fallback=`{clean(content_module.get('fallback_comparison_status')) or 'n/a'}`",
         f"- Fallback comparison note: {clean(content_module.get('fallback_comparison_note')) or 'n/a'}",
         f"- Score layout contract: `{clean(content_module.get('score_layout_contract')) or 'n/a'}`",
