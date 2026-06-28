@@ -163,6 +163,10 @@ BREAKING_SIGNAL_CLUSTER_FIELDS = [
     "score_stat_review_order_status", "score_stat_review_order_targets",
     "first_score_stat_review_order_target", "score_stat_review_walkthrough_target",
     "exact_review_walkthrough_next_action",
+    "corroboration_ladder_status", "corroboration_ladder_summary",
+    "official_source_corroboration", "reputable_source_corroboration",
+    "public_signal_corroboration", "missing_confirmation_cue",
+    "corroboration_evidence_urls",
     "source_diversity", "source_domain_count", "source_domains", "source_urls",
     "public_signal_count", "public_signal_confidence", "freshness_status",
     "oldest_signal_timestamp_utc", "newest_signal_timestamp_utc",
@@ -2687,6 +2691,106 @@ def is_free_result_domain(domain: Any) -> bool:
     return is_official_or_wire_domain(text) or text.endswith("espn.com") or text.endswith("cbssports.com")
 
 
+def is_official_source_domain(domain: Any) -> bool:
+    text = clean(domain).lower()
+    return any(text == d or text.endswith("." + d) for d in OFFICIAL_RESULT_DOMAINS)
+
+
+def is_reputable_public_source_domain(domain: Any) -> bool:
+    text = clean(domain).lower()
+    return (
+        any(text == d or text.endswith("." + d) for d in WIRE_RESULT_DOMAINS)
+        or text.endswith("espn.com")
+        or text.endswith("cbssports.com")
+    )
+
+
+def urls_for_domains(urls: List[str], domains: List[str], predicate: Any) -> List[str]:
+    domain_set = {clean(domain).lower() for domain in domains if predicate(domain)}
+    matched: List[str] = []
+    for url in urls:
+        domain = source_domain_from_url(url)
+        if domain in domain_set and url not in matched:
+            matched.append(url)
+    return matched
+
+
+def public_signal_ladder_label(public_count: int, public_confidence: str) -> str:
+    confidence = clean(public_confidence)
+    if public_count <= 0 or confidence in {"", "none"}:
+        return "none_captured_public_signal_not_used_for_confirmation"
+    if confidence == "medium":
+        return f"public_or_community_signal_present_review_only_count={public_count}_confidence=medium"
+    return f"public_or_community_signal_present_review_only_count={public_count}_confidence={confidence or 'low'}"
+
+
+def corroboration_ladder(
+    *,
+    domains: List[str],
+    urls: List[str],
+    evidence: List[Dict[str, str]],
+    public_count: int,
+    public_confidence: str,
+    evidence_status: str,
+) -> Dict[str, str]:
+    official_domains = [domain for domain in domains if is_official_source_domain(domain)]
+    reputable_domains = [domain for domain in domains if is_reputable_public_source_domain(domain)]
+    official_urls = urls_for_domains(urls, official_domains, is_official_source_domain)
+    reputable_urls = urls_for_domains(urls, reputable_domains, is_reputable_public_source_domain)
+    evidence_urls = parse_json_list(evidence_urls_json(evidence))
+    for url in evidence_urls:
+        domain = source_domain_from_url(url)
+        if is_official_source_domain(domain) and url not in official_urls:
+            official_urls.append(url)
+        if is_reputable_public_source_domain(domain) and url not in reputable_urls:
+            reputable_urls.append(url)
+
+    official_label = "missing_official_source_operator_add_to_intake"
+    if official_domains or official_urls:
+        official_label = (
+            f"present_operator_verify domains={'; '.join(sorted(set(official_domains))[:6])}"
+            if official_domains
+            else f"present_operator_verify source_url_count={len(official_urls)}"
+        )
+    reputable_label = "missing_reputable_free_source_operator_seek_wire_team_league_or_scoreboard"
+    if reputable_domains or reputable_urls:
+        reputable_label = (
+            f"present_operator_verify domains={'; '.join(sorted(set(reputable_domains))[:6])}"
+            if reputable_domains
+            else f"present_operator_verify source_url_count={len(reputable_urls)}"
+        )
+    public_label = public_signal_ladder_label(public_count, public_confidence)
+    missing_cue = (
+        "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake"
+        if clean(evidence_status) != "no_matching_current_artifact_evidence_operator_confirmation_required"
+        else "missing_confirmation_add_official_wire_primary_or_operator_verified_url_before_story_path"
+    )
+    if official_domains and reputable_domains and evidence:
+        ladder_status = "official_and_reputable_artifact_cues_present_operator_verify"
+    elif official_domains or evidence:
+        ladder_status = "partial_corroboration_operator_verify"
+    else:
+        ladder_status = "missing_corroboration_operator_confirmation_required"
+
+    ladder_urls: List[str] = []
+    for url in official_urls + reputable_urls + evidence_urls:
+        if url not in ladder_urls:
+            ladder_urls.append(url)
+    summary = (
+        f"official={official_label}; reputable_free={reputable_label}; "
+        f"public_signal={public_label}; missing_confirmation={missing_cue}"
+    )
+    return {
+        "corroboration_ladder_status": ladder_status,
+        "corroboration_ladder_summary": summary,
+        "official_source_corroboration": official_label,
+        "reputable_source_corroboration": reputable_label,
+        "public_signal_corroboration": public_label,
+        "missing_confirmation_cue": missing_cue,
+        "corroboration_evidence_urls": json.dumps(ladder_urls[:12], ensure_ascii=False),
+    }
+
+
 def official_confirmation_status(rows: List[Dict[str, Any]], domains: List[str]) -> str:
     grades = {clean(row.get("source_publish_grade")) for row in rows}
     tiers = {clean(row.get("source_confidence_tier")) for row in rows}
@@ -3169,6 +3273,15 @@ def breaking_signal_cluster_rows(
         candidate_ids = sorted({clean(row.get("candidate_id")) for row in group if clean(row.get("candidate_id"))})
         evidence = confirmation_evidence_rows(packets, game_rows, clean(group[0].get("headline")), candidate_ids)
         evidence_status = evidence_rollup_status(evidence)
+        public_confidence = public_signal_confidence_rollup(group)
+        ladder = corroboration_ladder(
+            domains=domains,
+            urls=urls,
+            evidence=evidence,
+            public_count=public_count,
+            public_confidence=public_confidence,
+            evidence_status=evidence_status,
+        )
         matched_proof_rows = proof_rows_for_cluster(proof_rows, clean(group[0].get("headline")), evidence)
         proof_status = proof_status_for_rows(matched_proof_rows)
         named_proof_rows = [row for row in matched_proof_rows if clean(row.get("fact_type")) == "named_player_stat_line"]
@@ -3236,12 +3349,13 @@ def breaking_signal_cluster_rows(
                     first_review_target,
                     review_targets,
                 ),
+                **ladder,
                 "source_diversity": "multi_domain" if len(domains) >= 2 else "single_domain" if domains else "no_source_domain_captured",
                 "source_domain_count": str(len(domains)),
                 "source_domains": "; ".join(domains[:12]),
                 "source_urls": json.dumps(urls[:12], ensure_ascii=False),
                 "public_signal_count": str(public_count),
-                "public_signal_confidence": public_signal_confidence_rollup(group),
+                "public_signal_confidence": public_confidence,
                 "freshness_status": freshness_status_for_timestamps(timestamps),
                 "oldest_signal_timestamp_utc": min(timestamps).isoformat() if timestamps else "",
                 "newest_signal_timestamp_utc": max(timestamps).isoformat() if timestamps else "",
@@ -3294,6 +3408,11 @@ def markdown_breaking_signal_clusters(rows: List[Dict[str, Any]]) -> str:
             f"- Review walkthrough: `{row.get('score_stat_review_walkthrough_target') or 'missing'}` / status: `{row.get('score_stat_review_order_status')}`",
             f"- First review-order row: {row.get('first_score_stat_review_order_target') or 'missing'}",
             f"- Exact walkthrough next action: {row.get('exact_review_walkthrough_next_action')}",
+            f"- Corroboration ladder: `{row.get('corroboration_ladder_status')}`",
+            f"  - Official: {row.get('official_source_corroboration') or 'missing'}",
+            f"  - Reputable/free: {row.get('reputable_source_corroboration') or 'missing'}",
+            f"  - Public/community: {row.get('public_signal_corroboration') or 'none captured'}",
+            f"  - Missing confirmation cue: {row.get('missing_confirmation_cue') or 'operator confirmation required'}",
             f"- Source diversity: `{row.get('source_diversity')}` / domains: {row.get('source_domains') or 'none captured'}",
             f"- Public signal: `{row.get('public_signal_confidence')}` / count: `{row.get('public_signal_count')}`",
             f"- Freshness: `{row.get('freshness_status')}` / newest: `{row.get('newest_signal_timestamp_utc') or 'missing'}`",
@@ -3906,6 +4025,10 @@ def main() -> None:
                     row for row in cluster_rows
                     if clean(row.get("first_score_stat_review_order_target"))
                 ]),
+                "clusters_with_corroboration_ladder": len([
+                    row for row in cluster_rows
+                    if clean(row.get("corroboration_ladder_status"))
+                ]),
             },
             "outputs": [
                 BREAKING_PUBLIC_SIGNAL_CSV,
@@ -3989,6 +4112,10 @@ def main() -> None:
             "breaking_signal_clusters_with_score_stat_review_order_targets": len([
                 row for row in cluster_rows
                 if clean(row.get("first_score_stat_review_order_target"))
+            ]),
+            "breaking_signal_clusters_with_corroboration_ladder": len([
+                row for row in cluster_rows
+                if clean(row.get("corroboration_ladder_status"))
             ]),
             "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
         },

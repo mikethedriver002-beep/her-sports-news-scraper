@@ -290,6 +290,14 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert cluster["matching_official_evidence_count"] == "2"
     assert "news_fact_packets.csv candidate_id=" in cluster["matching_official_evidence_artifacts"]
     assert "game_intelligence_board_v1.csv row_id=event-liberty-aces" in cluster["matching_official_evidence_artifacts"]
+    assert cluster["corroboration_ladder_status"] == "official_and_reputable_artifact_cues_present_operator_verify"
+    assert "official=present_operator_verify" in cluster["corroboration_ladder_summary"]
+    assert "reputable_free=present_operator_verify" in cluster["corroboration_ladder_summary"]
+    assert cluster["public_signal_corroboration"] == "public_or_community_signal_present_review_only_count=2_confidence=medium"
+    assert cluster["missing_confirmation_cue"] == "human_confirmation_still_required_in_breaking_public_signal_confirmation_intake"
+    assert "liberty.wnba.com" in cluster["official_source_corroboration"]
+    assert "espn.com" in cluster["reputable_source_corroboration"]
+    assert "https://www.espn.com/wnba/game/_/gameId/401000001" in cluster["corroboration_evidence_urls"]
     assert "breaking_public_signal_confirmation_intake.csv confirmation_id=" in cluster["exact_source_or_intake_row_to_open"]
     assert "operator must still verify" in cluster["manual_confirmation_gap"].lower()
     assert cluster["score_stat_proof_status"] == "score_and_named_player_stat_proof_present_operator_verify"
