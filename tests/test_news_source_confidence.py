@@ -271,6 +271,31 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
             "intake_row_to_record": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-player-liberty",
         },
     ]
+    game_fact_confirmation_rows = [
+        {
+            "event_uid": "event-liberty-aces",
+            "overall_confirmation_status": "source_confirmed_operator_verify_before_use",
+            "source_domain": "www.espn.com",
+            "recap_render_readiness": "athlete_led_manual_render_candidate",
+            "story_proof_card_row_to_open": "story_proof_card_v1.csv event_id=event-liberty-aces; candidate_id=story-card-liberty",
+            "exact_next_file_or_intake": "Open game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces; then open story_proof_card_v1.csv event_id=event-liberty-aces; candidate_id=story-card-liberty.",
+        },
+    ]
+    story_proof_card_rows = [
+        {
+            "candidate_id": "story-card-liberty",
+            "candidate_rank": "1",
+            "event_id": "event-liberty-aces",
+            "proof_status": "proof_card_ready_for_manual_review",
+            "copy_unlock_level": "score_and_named_stat_copy_review_ready",
+            "renderability_state": "athlete_led_manual_render_candidate",
+            "athlete_name": "Sabrina Ionescu",
+            "manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=proof-player-liberty",
+            "source_confirmation_cue": "free_public_box_score_stat_source_present_operator_verify",
+            "game_fact_row": "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces",
+            "smallest_next_action": "Open story_proof_card_v1.md, verify the official source URL, record the check in the manual intake row.",
+        },
+    ]
     clusters = module.breaking_signal_cluster_rows(
         [row, duplicate],
         packets=[packet],
@@ -278,6 +303,8 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
         proof_rows=proof_rows,
         proof_confirmation_rows=proof_confirmation_rows,
         proof_review_order_rows=proof_review_order_rows,
+        game_fact_confirmation_rows=game_fact_confirmation_rows,
+        story_proof_card_rows=story_proof_card_rows,
         intake_rows=intake,
     )
     cluster = clusters[0]
@@ -298,6 +325,14 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "liberty.wnba.com" in cluster["official_source_corroboration"]
     assert "espn.com" in cluster["reputable_source_corroboration"]
     assert "https://www.espn.com/wnba/game/_/gameId/401000001" in cluster["corroboration_evidence_urls"]
+    assert "Why now: P" in cluster["urgency_review_reason"]
+    assert "story_proof_card_ready_operator_verify" in cluster["urgency_review_reason"]
+    assert cluster["source_proof_readiness_status"] == "story_proof_card_ready_operator_verify"
+    assert "proof_card_ready_for_manual_review" in cluster["source_proof_readiness_summary"]
+    assert "Sabrina Ionescu" in cluster["source_proof_readiness_summary"]
+    assert "story_proof_card_v1.csv event_id=event-liberty-aces" in cluster["story_proof_card_target"]
+    assert cluster["game_fact_confirmation_target"] == "game_fact_confirmation_status_v1.csv event_uid=event-liberty-aces"
+    assert cluster["source_proof_readiness_next_action"].startswith("Open story_proof_card_v1.md")
     assert "breaking_public_signal_confirmation_intake.csv confirmation_id=" in cluster["exact_source_or_intake_row_to_open"]
     assert "operator must still verify" in cluster["manual_confirmation_gap"].lower()
     assert cluster["score_stat_proof_status"] == "score_and_named_player_stat_proof_present_operator_verify"
