@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.50.0-photo-first-editorial-identifiers"
+VERSION = "hsd-manual-review-renderer-v1.51.0-photo-first-score-stage-wash"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v24_photo_first_editorial_identifiers"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v25_photo_first_score_stage_wash"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -70,7 +70,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_asymmetric_score_treatment,photo_first_hero_cutout_contract,"
     "photo_first_safe_zone_enforced,photo_first_oversized_emblem_atmosphere,"
     "photo_first_editorial_team_identifiers,photo_first_lower_third_caption_strip,"
-    "photo_first_quiet_review_marker,"
+    "photo_first_quiet_review_marker,photo_first_score_stage_wash,"
+    "photo_first_action_photo_stage_bridge,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -2847,9 +2848,9 @@ def hero_cutout_mode_contract(module: Dict[str, Any]) -> Dict[str, str]:
 
 def photo_first_blueprint_depth_contract(geometry: Dict[str, Any]) -> Dict[str, Any]:
     return {
-        "depth_layer_contract": "ghost_score_and_emblem_layers_behind_hero_keep_critical_text_clear",
+        "depth_layer_contract": "ghost_score_emblem_and_stage_wash_layers_behind_hero_keep_critical_text_clear",
         "depth_layer_order": "background_texture,ghost_score,decorative_emblem,hero,score,stat",
-        "procedural_texture_contract": "local_code_generated_court_grain_stadium_light_and_grit_no_external_assets",
+        "procedural_texture_contract": "local_code_generated_court_grain_stadium_light_score_stage_wash_and_grit_no_external_assets",
         "team_color_weighting": "winner_palette_dominant_loser_palette_localized_subdued",
         "score_asymmetry_contract": PHOTO_FIRST_SCORE_ASYMMETRY_CONTRACT,
         "ghost_score_anchor_box": geometry.get("photo_stage_box", []),
@@ -2981,6 +2982,39 @@ def draw_photo_first_focal_depth_stage(
         ],
         fill=(*PALETTE["gold"], 20),
     )
+    draw.polygon(
+        [
+            (px + int(pw * 0.36), py + int(ph * 0.10)),
+            (stage_right - 18, wy - 8),
+            (stage_right - 42, ly + lh + 40),
+            (px + int(pw * 0.30), py + int(ph * 0.90)),
+        ],
+        fill=(*primary, 14),
+    )
+    draw.polygon(
+        [
+            (px + int(pw * 0.48), py + int(ph * 0.22)),
+            (stage_right - 86, wy + int(wh * 0.20)),
+            (stage_right - 110, sy + 24),
+            (px + int(pw * 0.54), sy + 8),
+        ],
+        fill=(*secondary, 12),
+    )
+    draw.ellipse(
+        (px + int(pw * 0.46), wy - 42, stage_right + 54, ly + lh + 54),
+        fill=(248, 250, 255, 12),
+    )
+    for offset in range(-80, stage_right - stage_left + 160, 46):
+        draw.line(
+            (
+                stage_left + offset,
+                sy - 142,
+                stage_left + offset + int((stage_bottom - stage_top) * 0.42),
+                sy + 18,
+            ),
+            fill=(*PALETTE["gold"], 10 if offset % 92 else 18),
+            width=1,
+        )
     draw.rectangle((px - 5, py + 22, px + 7, py + ph - 28), fill=(*primary, 66))
     draw.rectangle((wx - 5, wy + 20, wx + 5, wy + wh - 20), fill=(*primary, 50))
     draw.rectangle((wx - 5, ly + 18, wx + 5, ly + lh - 18), fill=(*secondary, 56))
@@ -2995,6 +3029,8 @@ def draw_photo_first_focal_depth_stage(
     glow_draw.ellipse((px + int(pw * 0.56), py + int(ph * 0.40), wx + int(ww * 0.92), ly + lh + 90), fill=(*PALETTE["gold"], 24))
     glow_draw.ellipse((wx - 96, wy - 70, wx + ww + 70, ly + lh + 96), fill=(*secondary, 22))
     glow_draw.ellipse((sx + int(sw * 0.40), sy - 42, sx + sw + 80, sy + sh + 76), fill=(*PALETTE["gold"], 18))
+    glow_draw.ellipse((px + int(pw * 0.28), wy - 80, stage_right + 90, sy + 74), fill=(*primary, 20))
+    glow_draw.ellipse((px + int(pw * 0.52), wy + 20, stage_right + 120, sy + 110), fill=(*secondary, 14))
     if ImageFilter is not None:
         glow = glow.filter(ImageFilter.GaussianBlur(34))
         layer = layer.filter(ImageFilter.GaussianBlur(0.6))
