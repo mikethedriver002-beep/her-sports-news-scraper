@@ -64,6 +64,21 @@ def test_changed_path_scan_blocks_publish_ready_and_approved_marker() -> None:
     assert "protected_asset_write" in codes
 
 
+def test_changed_path_scan_allows_safe_docs_and_tests_examples() -> None:
+    config = guardrail.load_guardrails()
+    violations = guardrail.scan_changed_paths(
+        [
+            "docs/no-publish-ready-lane-example.md",
+            "docs/examples/assets/headshots/path-example.md",
+            "tests/fixtures/example.approved",
+            "tests/fixtures/assets/headshots/example.png",
+        ],
+        config,
+    )
+
+    assert violations == []
+
+
 def test_scan_directory_blocks_truthy_generated_csv(tmp_path: Path) -> None:
     artifact = tmp_path / "artifact.csv"
     artifact.write_text("row_id,review_only,auto_publish\n1,true,true\n", encoding="utf-8")

@@ -48,6 +48,10 @@
     "docs/",
     "tests/"
   ],
+  "changed_path_exceptions": [
+    "docs/",
+    "tests/"
+  ],
   "protected_asset_write_fragments": [
     "assets/headshots/",
     "/assets/headshots/",
