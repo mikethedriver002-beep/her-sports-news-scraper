@@ -1,0 +1,73 @@
+{
+  "version": "hsd-guardrails-v1",
+  "blocked_path_fragments": [
+    "publish-ready",
+    "publish_ready",
+    "/publish/",
+    "\\publish\\",
+    "/dist/ready/",
+    "\\dist\\ready\\"
+  ],
+  "blocked_marker_suffixes": [
+    ".approved"
+  ],
+  "truthy_guardrail_fields": [
+    "approval_state_change",
+    "asset_downloads",
+    "auto_approval",
+    "auto_publish",
+    "candidate_state_change",
+    "cutout_file_writes",
+    "download_approved",
+    "headshot_writes",
+    "logo_writes",
+    "move_files",
+    "paid_apis",
+    "publish_ready",
+    "publishing",
+    "segmentation_writes",
+    "source_fetching"
+  ],
+  "truthy_values": [
+    "1",
+    "true",
+    "yes",
+    "y"
+  ],
+  "diff_truthy_exceptions": {
+    "download_approved": [
+      "tests/",
+      "docs/",
+      "human-edited",
+      "human edited",
+      "download_approved=yes remains human-edited only",
+      "required_when_download_approved_yes"
+    ]
+  },
+  "diff_truthy_path_exceptions": [
+    "docs/",
+    "tests/"
+  ],
+  "protected_asset_write_fragments": [
+    "assets/headshots/",
+    "/assets/headshots/",
+    "\\assets\\headshots\\",
+    "assets/cutouts/",
+    "/assets/cutouts/",
+    "\\assets\\cutouts\\",
+    "assets/leagues/",
+    "/assets/leagues/",
+    "\\assets\\leagues\\"
+  ],
+  "protected_asset_write_exceptions": [
+    "/data/assets/quarantine/review_only_candidates/",
+    "\\data\\assets\\quarantine\\review_only_candidates\\",
+    "/tests/",
+    "\\tests\\"
+  ],
+  "scan_file_extensions": [
+    ".csv",
+    ".json",
+    ".jsonl"
+  ]
+}
