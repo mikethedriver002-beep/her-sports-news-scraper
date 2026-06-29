@@ -35,6 +35,9 @@ OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_p
 OUT_SOURCE_DISCOVERY_BOARD_CSV = output_path(ROOT / "review_only_action_photo_source_discovery_board_v1.csv")
 OUT_SOURCE_DISCOVERY_BOARD_MD = output_path(ROOT / "review_only_action_photo_source_discovery_board_v1.md")
 OUT_SOURCE_DISCOVERY_BOARD_JSON = output_path(ROOT / "review_only_action_photo_source_discovery_board_v1.json")
+OUT_MANUAL_SOURCE_HUNT_BOARD_CSV = output_path(ROOT / "review_only_action_photo_manual_source_hunt_board_v1.csv")
+OUT_MANUAL_SOURCE_HUNT_BOARD_MD = output_path(ROOT / "review_only_action_photo_manual_source_hunt_board_v1.md")
+OUT_MANUAL_SOURCE_HUNT_BOARD_JSON = output_path(ROOT / "review_only_action_photo_manual_source_hunt_board_v1.json")
 OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_CSV = output_path(ROOT / "review_only_action_photo_sport_entity_source_map_board_v1.csv")
 OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_MD = output_path(ROOT / "review_only_action_photo_sport_entity_source_map_board_v1.md")
 OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_JSON = output_path(ROOT / "review_only_action_photo_sport_entity_source_map_board_v1.json")
@@ -242,6 +245,46 @@ ACTION_PHOTO_SOURCE_DISCOVERY_BOARD_FIELDS = [
     "review_only",
     "publish_ready",
     "approval_state_change",
+    "publish_action",
+]
+ACTION_PHOTO_MANUAL_SOURCE_HUNT_BOARD_FIELDS = [
+    "source_hunt_id",
+    "candidate_queue_id",
+    "sport",
+    "league_entity",
+    "target_entity_or_player",
+    "source_family",
+    "source_category",
+    "source_tier",
+    "source_tier_guidance",
+    "rights_review_category",
+    "primary_manual_search_query",
+    "secondary_manual_search_query",
+    "candidate_page_url_guidance",
+    "official_page_or_identity_anchor_needed",
+    "candidate_photo_page_needed",
+    "evidence_url_needed",
+    "rights_class_hint",
+    "paste_target",
+    "paste_fields_to_fill",
+    "blocked_or_deprioritized_sources",
+    "red_flags_or_hold_reasons",
+    "manual_next_action",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "review_only",
+    "publish_ready",
+    "approval_state_change",
+    "asset_downloads",
+    "source_fetching",
+    "auto_source_enablement",
+    "auto_approval",
+    "headshot_writes",
+    "approved_marker_writes",
     "publish_action",
 ]
 ACTION_PHOTO_SPORT_ENTITY_SOURCE_MAP_BOARD_FIELDS = [
@@ -2719,6 +2762,317 @@ def render_action_photo_source_discovery_board(rows: List[Mapping[str, str]], is
     return "\n".join(lines) + "\n"
 
 
+def source_hunt_secondary_query(row: Mapping[str, str]) -> str:
+    sport = clean(row.get("sport")).lower()
+    league = clean(row.get("league_entity"))
+    if "wnba" in league.lower():
+        return "{player_name} {team} WNBA recap photos gallery action"
+    if "nwsl" in league.lower():
+        return "{player_name} {club} NWSL match recap gallery action"
+    if "uswnt" in league.lower() or "u.s. soccer" in league.lower():
+        return "{player_name} USWNT match recap gallery action identity anchor"
+    if "pwhl" in league.lower():
+        return "{player_name} PWHL game recap gallery jersey number action"
+    if "ausl" in league.lower() or "softball" in sport:
+        return "{player_name} softball recap gallery swing pitch slide action"
+    if "tennis" in sport:
+        return "{player_name} tournament match gallery serve action official profile"
+    if "golf" in sport:
+        return "{player_name} tournament gallery swing celebration official profile"
+    return "{player_name} action photo official recap gallery identity anchor"
+
+
+SOURCE_HUNT_TIERS = {
+    "tier_1_official_league_team_portal",
+    "tier_2_authorized_syndicator_public_reference",
+    "tier_3_credited_specialist_media_reference",
+    "tier_4_verified_team_social_manual_reference",
+    "unknown_hold_manual_review",
+    "disallowed_or_do_not_use",
+}
+SOURCE_HUNT_RIGHTS_REVIEW_CATEGORIES = {
+    "official_editorial_page",
+    "authorized_agency_preview_reference",
+    "credited_media_reference",
+    "verified_team_social_reference",
+    "unknown_hold",
+    "disallowed_or_do_not_use",
+}
+
+
+def source_hunt_tier_metadata(row: Mapping[str, str]) -> Dict[str, str]:
+    category = clean(row.get("source_category"))
+    family = clean(row.get("source_family")).lower()
+    if category in {"official_league_gallery", "official_federation_or_tournament"}:
+        return {
+            "source_tier": "tier_1_official_league_team_portal",
+            "source_tier_guidance": "Official league/team/federation/tournament pages: media galleries, recap pages, and press releases on official domains; collect page URLs and evidence only.",
+            "rights_review_category": "official_editorial_page",
+            "red_flags_or_hold_reasons": "partner-licensed imagery may still need rights review|missing caption or event context|direct image binary or hotlink|page implies sales/license workflow",
+        }
+    if category == "editorial_wire" or any(token in family for token in ["getty", "isi", "photoshelter", "ap images", "reuters", "imagn"]):
+        return {
+            "source_tier": "tier_2_authorized_syndicator_public_reference",
+            "source_tier_guidance": "Authorized agency or public preview/search pages such as ISI Photos, Photoshelter, Getty-style, AP, Reuters, or Imagn references; manual reference only with no scraping, automatic download, or rights assumption.",
+            "rights_review_category": "authorized_agency_preview_reference",
+            "red_flags_or_hold_reasons": "public preview is not clearance|watermark or license wall|terms restrict reuse|caption missing identity|direct image binary or thumbnail",
+        }
+    if category == "reputable_newsroom_gallery" or any(token in family for token in ["ice garden", "inside the rink", "women's sports", "womens sports", "equalizer"]):
+        return {
+            "source_tier": "tier_3_credited_specialist_media_reference",
+            "source_tier_guidance": "Specialized women's sports media and reputable newsroom coverage with credited photography; collect source/evidence URLs and photographer/provenance notes for later review.",
+            "rights_review_category": "credited_media_reference",
+            "red_flags_or_hold_reasons": "credit missing|syndicated image inside article|outlet terms restrict reuse|caption does not verify identity|crop/use fit uncertain",
+        }
+    if category == "official_social":
+        return {
+            "source_tier": "tier_4_verified_team_social_manual_reference",
+            "source_tier_guidance": "Verified team/player/league social posts are cautious manual references only because overlays, crops, platform terms, reposts, and creator rights often block reuse.",
+            "rights_review_category": "verified_team_social_reference",
+            "red_flags_or_hold_reasons": "text overlays|reposted or uncredited media|platform-only rights|crop already compromised|identity or event context missing",
+        }
+    if category in {"gray_area_public_lead", "third_party_creator_public"}:
+        return {
+            "source_tier": "unknown_hold_manual_review",
+            "source_tier_guidance": "Weak or creator-public provenance stays hold-only until a human can verify source chain, permission posture, identity, event context, and review-only use.",
+            "rights_review_category": "unknown_hold",
+            "red_flags_or_hold_reasons": "weak provenance|uncredited repost|fan archive|permission unclear|identity or event context incomplete",
+        }
+    return {
+        "source_tier": "disallowed_or_do_not_use",
+        "source_tier_guidance": "Do not pursue sources with deceptive provenance, restricted access, AI edits, wallpaper/repost patterns, or direct binary-only leads.",
+        "rights_review_category": "disallowed_or_do_not_use",
+        "red_flags_or_hold_reasons": "restricted source|deceptive provenance|AI edit|wallpaper/repost site|direct binary-only lead",
+    }
+
+
+def action_photo_manual_source_hunt_board_rows(queue_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    paste_fields = "|".join(
+        [
+            "candidate_photo_url",
+            "evidence_url",
+            "evidence_summary",
+            "identity_anchor_url",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "operator_verify_required",
+        ]
+    )
+    for index, row in enumerate(queue_rows, start=1):
+        source_macro = clean(row.get("source_url_or_search_macro"))
+        tier_metadata = source_hunt_tier_metadata(row)
+        rows.append(
+            {
+                "source_hunt_id": f"APSH{index:03d}",
+                "candidate_queue_id": clean(row.get("candidate_queue_id")),
+                "sport": clean(row.get("sport")),
+                "league_entity": clean(row.get("league_entity")),
+                "target_entity_or_player": clean(row.get("target_entity_or_player")),
+                "source_family": clean(row.get("source_family")),
+                "source_category": clean(row.get("source_category")),
+                "source_tier": tier_metadata["source_tier"],
+                "source_tier_guidance": tier_metadata["source_tier_guidance"],
+                "rights_review_category": tier_metadata["rights_review_category"],
+                "primary_manual_search_query": source_macro,
+                "secondary_manual_search_query": source_hunt_secondary_query(row),
+                "candidate_page_url_guidance": "Prefer candidate_page_url/evidence page/source page wording. If the existing return schema requires candidate_photo_url, keep it blank until a human supplies a page URL; do not paste hotlinked image files or cached binaries.",
+                "official_page_or_identity_anchor_needed": "official roster/player/team page or event/game recap URL that confirms identity, team, and event context",
+                "candidate_photo_page_needed": "candidate action-photo source page or gallery page URL; not a hotlinked image file, thumbnail, screenshot, or cached binary",
+                "evidence_url_needed": "caption, recap, gallery, event page, game sheet, roster profile, or source page that supports identity and action context",
+                "rights_class_hint": clean(row.get("rights_posture_metadata")),
+                "paste_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+                "paste_fields_to_fill": paste_fields,
+                "blocked_or_deprioritized_sources": "broadcast/video stills|screenshots|hotlinked image files|image-search thumbnails|AI edits|wallpaper sites|uncredited reposts",
+                "red_flags_or_hold_reasons": tier_metadata["red_flags_or_hold_reasons"],
+                "manual_next_action": "Open source pages manually, collect URL/evidence fields only, then paste complete rows into the research return intake; do not fetch, download, approve, or publish.",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "publish_ready": "false",
+                "approval_state_change": "none",
+                "asset_downloads": "false",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "auto_approval": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    return rows
+
+
+def validate_action_photo_manual_source_hunt_board_rows(
+    rows: Iterable[Mapping[str, str]],
+    queue_rows: Iterable[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    queue_ids = {clean(row.get("candidate_queue_id")) for row in queue_rows}
+    seen_ids = set()
+    seen_queue_ids = set()
+    required_paste_fields = {
+        "candidate_photo_url",
+        "evidence_url",
+        "evidence_summary",
+        "identity_anchor_url",
+        "source_url",
+        "entity_id",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+        "operator_verify_required",
+    }
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_MANUAL_SOURCE_HUNT_BOARD_FIELDS}
+        source_hunt_id = normalized["source_hunt_id"]
+        queue_id = normalized["candidate_queue_id"]
+        if not source_hunt_id:
+            issues.append({"row": str(index), "field": "source_hunt_id", "issue": "required_source_hunt_id_blank"})
+        elif source_hunt_id in seen_ids:
+            issues.append({"row": str(index), "field": "source_hunt_id", "issue": "duplicate_source_hunt_id"})
+        seen_ids.add(source_hunt_id)
+        if queue_id not in queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "candidate_queue_id_not_in_queue"})
+        if queue_id in seen_queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "duplicate_candidate_queue_id_in_source_hunt"})
+        seen_queue_ids.add(queue_id)
+        for field in [
+            "sport",
+            "league_entity",
+            "target_entity_or_player",
+            "source_family",
+            "source_category",
+            "source_tier",
+            "source_tier_guidance",
+            "rights_review_category",
+            "primary_manual_search_query",
+            "secondary_manual_search_query",
+            "candidate_page_url_guidance",
+            "official_page_or_identity_anchor_needed",
+            "candidate_photo_page_needed",
+            "evidence_url_needed",
+            "rights_class_hint",
+            "paste_target",
+            "paste_fields_to_fill",
+            "blocked_or_deprioritized_sources",
+            "red_flags_or_hold_reasons",
+            "manual_next_action",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_source_hunt_field_blank"})
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        if normalized["source_tier"] not in SOURCE_HUNT_TIERS:
+            issues.append({"row": str(index), "field": "source_tier", "issue": "invalid_source_hunt_tier"})
+        if normalized["rights_review_category"] not in SOURCE_HUNT_RIGHTS_REVIEW_CATEGORIES:
+            issues.append({"row": str(index), "field": "rights_review_category", "issue": "invalid_source_hunt_rights_review_category"})
+        if normalized["rights_class_hint"] and normalized["rights_class_hint"] not in RIGHTS_CLASSES:
+            issues.append({"row": str(index), "field": "rights_class_hint", "issue": "invalid_rights_class_hint"})
+        if normalized["paste_target"] != OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix():
+            issues.append({"row": str(index), "field": "paste_target", "issue": "paste_target_must_be_research_return_intake"})
+        pasted_fields = {field for field in normalized["paste_fields_to_fill"].split("|") if field}
+        if not required_paste_fields.issubset(pasted_fields):
+            issues.append({"row": str(index), "field": "paste_fields_to_fill", "issue": "source_hunt_missing_required_paste_fields"})
+        for field in REQUIRED_DOWNLOAD_FIELDS:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "source_hunt_rows_must_not_approve_downloads"})
+        if "download" not in normalized["manual_next_action"].lower() or "paste" not in normalized["manual_next_action"].lower():
+            issues.append({"row": str(index), "field": "manual_next_action", "issue": "source_hunt_next_action_missing_guardrail"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "source_hunt_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "source_hunt_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] != "none":
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "source_hunt_rows_must_not_change_approval_state"})
+        for field in ["asset_downloads", "source_fetching", "auto_source_enablement", "auto_approval", "headshot_writes", "approved_marker_writes"]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "source_hunt_guardrail_flag_must_stay_false"})
+        if normalized["publish_action"] != "none_artifact_only":
+            issues.append({"row": str(index), "field": "publish_action", "issue": "source_hunt_rows_must_not_publish"})
+    for missing_id in sorted(queue_ids - seen_queue_ids):
+        issues.append({"row": "0", "field": "candidate_queue_id", "issue": f"queue_id_missing_from_source_hunt:{missing_id}"})
+    return issues
+
+
+def render_action_photo_manual_source_hunt_board(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    sport_counts = count_by(rows, "sport")
+    category_counts = count_by(rows, "source_category")
+    download_truthy_value = "y" + "es"
+    lines = [
+        "# Review-Only Action Photo Manual Source-Hunt Board v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Manual source-hunt board for finding real action-photo candidate pages without fetching, scraping, downloading, approving, or publishing. Each row starts from the action-photo candidate queue and tells Mike what source/evidence/identity anchors to collect before pasting into the research return intake.",
+        "",
+        "## Operator Contract",
+        "",
+        f"- Paste target: `{OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix()}`",
+        "- Collect source-page URLs and evidence only; do not save image files.",
+        "- Required paste fields: `candidate_photo_url`, `evidence_url`, `evidence_summary`, `identity_anchor_url`, `source_url`, `entity_id`, `rights_class`, `identity_confidence`, `intended_review_only_use`, and `operator_verify_required`.",
+        "- Existing schema field `candidate_photo_url` is human-provided only and should mean a candidate/source page URL, not a direct image file, cached binary, screenshot, or thumbnail.",
+        "- Generated local-download-law fields stay blank/no. Later human download-decision review is separate, quarantine-only, and not asset approval.",
+        "",
+        "## Summary",
+        "",
+        f"- Source-hunt rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with source URL already filled: `{sum(1 for row in rows if clean(row.get('source_url')))}`",
+        f"- Rows with download approval recorded: `{sum(1 for row in rows if clean(row.get('download_approved')) == download_truthy_value)}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Sport Counts",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(sport_counts.items()))
+    lines += ["", "## Source Category Counts", ""]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(category_counts.items()))
+    lines += [
+        "",
+        "## Source-Hunt Ranking",
+        "",
+        "- Tier 1: official league/team/federation/tournament portals such as official galleries, recap pages, and press releases.",
+        "- Tier 2: authorized agency or public preview/search references such as ISI Photos, Photoshelter, Getty-style, AP, Reuters, or Imagn pages; manual reference only and not a clearance signal.",
+        "- Tier 3: credited women's sports or specialist media coverage; verify photographer credit, provenance, rights posture, identity, and crop/use fit.",
+        "- Tier 4: verified team/player/league social posts; cautious manual reference only because overlays, reposts, platform terms, and crop issues are common.",
+        "- Candidate-ready means later human download-decision review only; it is never download approval, asset approval, render approval, or publish readiness.",
+        "",
+        "## Source-Hunt Rows",
+        "",
+        "| Hunt | Queue | Sport | Entity | Tier | Rights Review | Source Family | Primary Query | Secondary Query | Candidate Page Guidance | Red Flags / Hold Reasons | Paste Target |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {hunt} | {queue} | {sport} | {entity} | {tier} | {rights} | {family} | `{primary}` | `{secondary}` | {candidate_page} | {red_flags} | `{target}` |".format(
+                hunt=clean(row.get("source_hunt_id")),
+                queue=clean(row.get("candidate_queue_id")),
+                sport=clean(row.get("sport")),
+                entity=clean(row.get("league_entity")).replace("|", "/"),
+                tier=clean(row.get("source_tier")).replace("|", "/"),
+                rights=clean(row.get("rights_review_category")).replace("|", "/"),
+                family=clean(row.get("source_family")).replace("|", "/"),
+                primary=clean(row.get("primary_manual_search_query")).replace("|", "/"),
+                secondary=clean(row.get("secondary_manual_search_query")).replace("|", "/"),
+                candidate_page=clean(row.get("candidate_page_url_guidance")).replace("|", "/"),
+                red_flags=clean(row.get("red_flags_or_hold_reasons")).replace("|", "/"),
+                target=clean(row.get("paste_target")),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def action_photo_sport_entity_source_map_board_rows() -> List[Dict[str, str]]:
     base = {
         "paste_back_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
@@ -4158,6 +4512,9 @@ def research_run_bundle_artifact_paths() -> Dict[str, str]:
         "source_discovery_board_md": OUT_SOURCE_DISCOVERY_BOARD_MD.as_posix(),
         "source_discovery_board_csv": OUT_SOURCE_DISCOVERY_BOARD_CSV.as_posix(),
         "source_discovery_board_json": OUT_SOURCE_DISCOVERY_BOARD_JSON.as_posix(),
+        "manual_source_hunt_board_md": OUT_MANUAL_SOURCE_HUNT_BOARD_MD.as_posix(),
+        "manual_source_hunt_board_csv": OUT_MANUAL_SOURCE_HUNT_BOARD_CSV.as_posix(),
+        "manual_source_hunt_board_json": OUT_MANUAL_SOURCE_HUNT_BOARD_JSON.as_posix(),
         "operator_worksheet_md": OUT_OPERATOR_WORKSHEET_MD.as_posix(),
         "operator_worksheet_csv": OUT_OPERATOR_WORKSHEET_CSV.as_posix(),
         "operator_worksheet_json": OUT_OPERATOR_WORKSHEET_JSON.as_posix(),
@@ -5937,6 +6294,8 @@ def main() -> int:
     cutout_scoring_issues = validate_action_photo_cutout_scoring_criteria_rows(cutout_scoring_rows)
     candidate_queue_rows = action_photo_candidate_queue_rows()
     candidate_queue_issues = validate_action_photo_candidate_queue_rows(candidate_queue_rows)
+    manual_source_hunt_rows = action_photo_manual_source_hunt_board_rows(candidate_queue_rows)
+    manual_source_hunt_issues = validate_action_photo_manual_source_hunt_board_rows(manual_source_hunt_rows, candidate_queue_rows)
     operator_worksheet_rows = action_photo_candidate_operator_worksheet_rows(candidate_queue_rows)
     operator_worksheet_issues = validate_action_photo_candidate_operator_worksheet_rows(operator_worksheet_rows, candidate_queue_rows)
     research_packet_rows = action_photo_research_packet_rows(candidate_queue_rows)
@@ -6113,6 +6472,60 @@ def main() -> int:
             "approval_state_change": False,
             "publish_ready": False,
             "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    write_csv(OUT_MANUAL_SOURCE_HUNT_BOARD_CSV, manual_source_hunt_rows, ACTION_PHOTO_MANUAL_SOURCE_HUNT_BOARD_FIELDS)
+    write_text(OUT_MANUAL_SOURCE_HUNT_BOARD_MD, render_action_photo_manual_source_hunt_board(manual_source_hunt_rows, manual_source_hunt_issues, generated_at))
+    write_json(
+        OUT_MANUAL_SOURCE_HUNT_BOARD_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_manual_source_hunt_board_ready" if not manual_source_hunt_issues else "action_photo_manual_source_hunt_board_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "source_hunt_rows": len(manual_source_hunt_rows),
+            "validation_issue_count": len(manual_source_hunt_issues),
+            "validation_issues": manual_source_hunt_issues,
+            "candidate_queue_ids": sorted({row["candidate_queue_id"] for row in manual_source_hunt_rows}),
+            "sports": sorted({row["sport"] for row in manual_source_hunt_rows}),
+            "league_entities": sorted({row["league_entity"] for row in manual_source_hunt_rows}),
+            "source_categories": sorted({row["source_category"] for row in manual_source_hunt_rows}),
+            "source_tiers": sorted({row["source_tier"] for row in manual_source_hunt_rows}),
+            "rights_review_categories": sorted({row["rights_review_category"] for row in manual_source_hunt_rows}),
+            "blank_source_url_rows": sum(1 for row in manual_source_hunt_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in manual_source_hunt_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in manual_source_hunt_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in manual_source_hunt_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in manual_source_hunt_rows if not row["intended_review_only_use"]),
+            "download_approved_yes_rows": sum(1 for row in manual_source_hunt_rows if row["download_approved"] == "yes"),
+            "paste_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+            "paste_fields": [
+                "candidate_photo_url",
+                "evidence_url",
+                "evidence_summary",
+                "identity_anchor_url",
+                "source_url",
+                "entity_id",
+                "rights_class",
+                "identity_confidence",
+                "intended_review_only_use",
+                "operator_verify_required",
+            ],
+            "review_only_rows": sum(1 for row in manual_source_hunt_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in manual_source_hunt_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_MANUAL_SOURCE_HUNT_BOARD_CSV.as_posix(),
+            "worksheet_md": OUT_MANUAL_SOURCE_HUNT_BOARD_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "auto_approval": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
             "auto_publish": False,
             "move_files": False,
             "paid_apis": False,
@@ -6793,7 +7206,7 @@ def main() -> int:
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not source_map_board_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not operator_worksheet_issues and not research_packet_issues and not research_return_issues and not research_return_paste_worksheet_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not research_return_summary_issues and not quality_fit_issues and not quality_fit_operator_cue_issues and not download_decision_queue_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not source_map_board_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not manual_source_hunt_issues and not operator_worksheet_issues and not research_packet_issues and not research_return_issues and not research_return_paste_worksheet_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not research_return_summary_issues and not quality_fit_issues and not quality_fit_operator_cue_issues and not download_decision_queue_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -6820,6 +7233,8 @@ def main() -> int:
             "action_photo_cutout_scoring_criteria_validation_issue_count": len(cutout_scoring_issues),
             "action_photo_candidate_queue_rows": len(candidate_queue_rows),
             "action_photo_candidate_queue_validation_issue_count": len(candidate_queue_issues),
+            "action_photo_manual_source_hunt_board_rows": len(manual_source_hunt_rows),
+            "action_photo_manual_source_hunt_board_validation_issue_count": len(manual_source_hunt_issues),
             "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows),
             "action_photo_candidate_operator_worksheet_validation_issue_count": len(operator_worksheet_issues),
             "action_photo_candidate_research_packet_rows": len(research_packet_rows),
@@ -6847,7 +7262,7 @@ def main() -> int:
             "wnba_final_score_hero_action_photo_target_validation_issue_count": len(wnba_hero_target_issues),
             "action_photo_cutout_readiness_rows": len(cutout_readiness_rows),
             "action_photo_cutout_readiness_validation_issue_count": len(cutout_readiness_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_return_paste_worksheet_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(manual_source_hunt_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_return_paste_worksheet_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -6868,6 +7283,9 @@ def main() -> int:
             "action_photo_source_discovery_board_csv": OUT_SOURCE_DISCOVERY_BOARD_CSV.as_posix(),
             "action_photo_source_discovery_board_md": OUT_SOURCE_DISCOVERY_BOARD_MD.as_posix(),
             "action_photo_source_discovery_board_json": OUT_SOURCE_DISCOVERY_BOARD_JSON.as_posix(),
+            "action_photo_manual_source_hunt_board_csv": OUT_MANUAL_SOURCE_HUNT_BOARD_CSV.as_posix(),
+            "action_photo_manual_source_hunt_board_md": OUT_MANUAL_SOURCE_HUNT_BOARD_MD.as_posix(),
+            "action_photo_manual_source_hunt_board_json": OUT_MANUAL_SOURCE_HUNT_BOARD_JSON.as_posix(),
             "action_photo_sport_entity_source_map_board_csv": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_CSV.as_posix(),
             "action_photo_sport_entity_source_map_board_md": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_MD.as_posix(),
             "action_photo_sport_entity_source_map_board_json": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_JSON.as_posix(),
@@ -6931,9 +7349,9 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_return_paste_worksheet_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_return_paste_worksheet_rows": len(research_return_paste_worksheet_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows), "action_photo_quality_fit_operator_cue_rows": len(quality_fit_operator_cue_rows), "action_photo_download_decision_queue_rows": len(download_decision_queue_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_return_paste_worksheet_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or quality_fit_issues or quality_fit_operator_cue_issues or download_decision_queue_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
+    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(manual_source_hunt_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_return_paste_worksheet_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_manual_source_hunt_board_rows": len(manual_source_hunt_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_return_paste_worksheet_rows": len(research_return_paste_worksheet_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows), "action_photo_quality_fit_operator_cue_rows": len(quality_fit_operator_cue_rows), "action_photo_download_decision_queue_rows": len(download_decision_queue_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or manual_source_hunt_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_return_paste_worksheet_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or quality_fit_issues or quality_fit_operator_cue_issues or download_decision_queue_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
 
 
 if __name__ == "__main__":

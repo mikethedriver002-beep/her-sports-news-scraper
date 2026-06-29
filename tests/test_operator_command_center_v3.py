@@ -179,6 +179,9 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         "data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.json",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json",
@@ -3111,6 +3114,42 @@ def seed_asset_availability_audit_files() -> None:
             "approval_state_change": False,
         },
     )
+    (action_photo_dir / "review_only_action_photo_manual_source_hunt_board_v1.md").write_text("# Action Photo Manual Source-Hunt Board\n", encoding="utf-8")
+    write_csv_with_fields(
+        (action_photo_dir / "review_only_action_photo_manual_source_hunt_board_v1.csv").as_posix(),
+        [
+            {
+                "source_hunt_id": "APSH001",
+                "candidate_queue_id": "APQ001",
+                "sport": "basketball",
+                "league_entity": "WNBA",
+                "source_url": "",
+                "download_approved": "no",
+                "review_only": "true",
+                "publish_ready": "false",
+            }
+        ],
+        ["source_hunt_id", "candidate_queue_id", "sport", "league_entity", "source_url", "download_approved", "review_only", "publish_ready"],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_manual_source_hunt_board_v1.json").as_posix(),
+        {
+            "status": "action_photo_manual_source_hunt_board_ready",
+            "generated_at_utc": "2026-06-29T00:00:45+00:00",
+            "source_hunt_rows": 10,
+            "blank_source_url_rows": 10,
+            "download_approved_yes_rows": 0,
+            "review_only": True,
+            "asset_downloads": False,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "auto_approval": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
     write_json(
         (action_photo_dir / "review_only_action_photo_candidate_intake.json").as_posix(),
         {
@@ -5025,6 +5064,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_blank_source_url_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_download_approved_yes_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_source_fetching"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_auto_source_enablement"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_auto_approval"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_source_hunt_approved_marker_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_research_return_rows_with_pasted_data"] == 0
     assert payload["asset_readiness_panel"]["action_photo_research_return_validation_issues"] == 0
     assert payload["asset_readiness_panel"]["action_photo_research_return_blank_candidate_photo_url_rows"] == 10
@@ -5091,6 +5139,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Paste worksheet rows" in html
     assert "Paste ready review" in html
     assert "Paste missing src" in html
+    assert "Source-hunt rows" in html
+    assert "Source-hunt blanks" in html
+    assert "Source-hunt dl yes" in html
+    assert "Source-hunt fetch" in html
     assert "Quality/fit rows" in html
     assert "Quality source yes" in html
     assert "Quality ready dl" in html
@@ -5127,6 +5179,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Action-photo research return paste worksheet blank source_url rows: 10" in markdown
     assert "Action-photo research return paste worksheet download-approved yes rows: 0" in markdown
     assert "Action-photo research return paste worksheet asset/headshot/marker writes: False/False/False" in markdown
+    assert "Action-photo manual source-hunt rows: 10" in markdown
+    assert "Action-photo manual source-hunt blank source_url rows: 10" in markdown
+    assert "Action-photo manual source-hunt download-approved yes rows: 0" in markdown
+    assert "Action-photo manual source-hunt fetch/auto-enable/auto-approve: False/False/False" in markdown
+    assert "Action-photo manual source-hunt asset/headshot/marker writes: False/False/False" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
@@ -5657,6 +5714,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_lead_return_schema_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_lead_return_schema_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_lead_return_schema_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"

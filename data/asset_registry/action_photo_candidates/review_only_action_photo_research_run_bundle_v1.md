@@ -12,6 +12,9 @@ Operator alert bundle for running the existing action-photo research packet and 
 - `source_discovery_board_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.md`
 - `source_discovery_board_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.csv`
 - `source_discovery_board_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.json`
+- `manual_source_hunt_board_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.md`
+- `manual_source_hunt_board_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.csv`
+- `manual_source_hunt_board_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_manual_source_hunt_board_v1.json`
 - `operator_worksheet_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md`
 - `operator_worksheet_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv`
 - `operator_worksheet_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json`
