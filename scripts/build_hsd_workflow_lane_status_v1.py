@@ -119,6 +119,23 @@ GUARDRAIL_DEFAULTS = {
 
 GUARDRAIL_FIELDS = list(GUARDRAIL_DEFAULTS)
 
+WORKFLOW_HEARTBEAT_STATUS = "heartbeat_visible_needs_conductor_check"
+WORKFLOW_HEARTBEAT_NEXT_ACTION = (
+    "Refresh workflow/conductor artifacts, confirm no open PRs or active worktree hints, "
+    "then nudge one review-only workflow-overhaul packet if the lane is still idle."
+)
+WORKFLOW_HEARTBEAT_CUE = (
+    "Continuous visibility heartbeat: workflow-overhaul stays visible even when no manual intake, "
+    "open PR, current branch, or worktree hint is present."
+)
+WORKFLOW_HEARTBEAT_CHECKLIST = [
+    "Confirm current branch is based on origin/main.",
+    "Confirm open PR count and worktree hint count before nudging new workflow work.",
+    "Open operator_next_action_synthesis.md and conductor_workspace_audit.md if present.",
+    "Keep the next packet workflow/conductor visibility-only and review-only.",
+    "Do not fetch sources, download assets, approve assets, move publish-ready files, or publish.",
+]
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -320,6 +337,8 @@ def status_tone(status: str) -> str:
         return "active"
     if any(token in normalized for token in ("completed", "merged", "done")):
         return "completed"
+    if "heartbeat" in normalized:
+        return "idle"
     if any(token in normalized for token in ("idle", "queued", "ready")):
         return "idle"
     return "unknown"
@@ -357,6 +376,8 @@ def lane_rows(
         elif not status and first_hint:
             status = "worktree_branch_detected_needs_conductor_check"
             branch = first_hint.get("branch", "")
+        elif not status and lane_id == "workflow_overhaul":
+            status = WORKFLOW_HEARTBEAT_STATUS
         elif not status:
             status = "unreported"
         guardrails, guardrail_warnings = normalized_guardrails(intake)
@@ -382,13 +403,20 @@ def lane_rows(
             if intake
             else "current_branch"
             if status == "active_current_lane"
+            else "workflow_heartbeat"
+            if status == WORKFLOW_HEARTBEAT_STATUS
             else "worktree_hint"
             if first_hint
             else "default",
             "detected_worktree": first_hint.get("path", ""),
             "detected_worktree_dirty": first_hint.get("dirty", ""),
+            "heartbeat": "true" if status == WORKFLOW_HEARTBEAT_STATUS else "false",
+            "heartbeat_cue": WORKFLOW_HEARTBEAT_CUE if status == WORKFLOW_HEARTBEAT_STATUS else "",
+            "heartbeat_next_action": WORKFLOW_HEARTBEAT_NEXT_ACTION if status == WORKFLOW_HEARTBEAT_STATUS else "",
             "guardrail_warnings": ";".join(guardrail_warnings),
         }
+        if status == WORKFLOW_HEARTBEAT_STATUS:
+            row["next_action"] = intake.get("next_action", "") or WORKFLOW_HEARTBEAT_NEXT_ACTION
         row.update(guardrails)
         rows.append(row)
     return rows
@@ -427,6 +455,23 @@ def render_markdown(payload: dict[str, Any]) -> str:
         lines.append(
             f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{branch}` | {pr} | {completed} | {blocker} | {row['next_action']} |"
         )
+    heartbeat = payload.get("workflow_overhaul_heartbeat", {})
+    if heartbeat:
+        lines.extend(
+            [
+                "",
+                "## Workflow Overhaul Heartbeat",
+                "",
+                f"- Status: `{heartbeat['status']}`",
+                f"- Source: `{heartbeat['status_source']}`",
+                f"- Next action: {heartbeat['next_action']}",
+                f"- Cue: {heartbeat['cue']}",
+                "",
+                "Checklist:",
+                "",
+            ]
+        )
+        lines.extend(f"- {item}" for item in heartbeat["checklist"])
     lines.extend(
         [
             "",
@@ -462,6 +507,29 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     open_prs = collect_open_prs() if not args.skip_pr_lookup else []
     worktrees = collect_worktree_branches() if not args.skip_worktree_lookup else []
     rows = lane_rows(intake_rows, open_prs, git_state, worktrees)
+    workflow_row = next((row for row in rows if row["lane_id"] == "workflow_overhaul"), {})
+    workflow_heartbeat = {
+        "status": workflow_row.get("status", ""),
+        "status_source": workflow_row.get("status_source", ""),
+        "active": workflow_row.get("heartbeat") == "true",
+        "next_action": workflow_row.get("heartbeat_next_action") or workflow_row.get("next_action", ""),
+        "cue": workflow_row.get("heartbeat_cue", ""),
+        "checklist": WORKFLOW_HEARTBEAT_CHECKLIST,
+        "guardrails": {
+            "review_only": True,
+            "artifact_only": True,
+            "paid_apis": False,
+            "source_fetching": False,
+            "automatic_downloads": False,
+            "source_auto_enablement": False,
+            "auto_approval": False,
+            "approval_state_change": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready_movement": False,
+            "publishing": False,
+        },
+    }
     payload = {
         "version": VERSION,
         "generated_at_utc": now_iso(),
@@ -483,6 +551,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "unreported_lane_count": sum(1 for row in rows if row["status"] == "unreported"),
         "completed_lane_count": sum(1 for row in rows if row["status_tone"] == "completed"),
         "worktree_hint_lane_count": sum(1 for row in rows if row["status_source"] == "worktree_hint"),
+        "heartbeat_lane_count": sum(1 for row in rows if row["heartbeat"] == "true"),
+        "workflow_overhaul_heartbeat": workflow_heartbeat,
         "blocked_lane_count": sum(1 for row in rows if row["status_tone"] == "blocked"),
         "guardrail_warning_count": sum(1 for row in rows if row["guardrail_warnings"]),
     }
@@ -513,6 +583,9 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "status_source",
             "detected_worktree",
             "detected_worktree_dirty",
+            "heartbeat",
+            "heartbeat_cue",
+            "heartbeat_next_action",
             *GUARDRAIL_FIELDS,
             "guardrail_warnings",
         ],
@@ -542,6 +615,7 @@ def main(argv: list[str] | None = None) -> int:
                 "unreported_lane_count": payload["unreported_lane_count"],
                 "completed_lane_count": payload["completed_lane_count"],
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
+                "heartbeat_lane_count": payload["heartbeat_lane_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
                 "guardrail_warning_count": payload["guardrail_warning_count"],
                 "outputs": outputs,
