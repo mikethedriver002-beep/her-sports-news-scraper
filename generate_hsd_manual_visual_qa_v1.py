@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.5.0-photo-first-crop-clearance"
+VERSION = "hsd-manual-visual-qa-v1.6.0-photo-first-no-redundant-context"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -735,6 +735,27 @@ def main() -> None:
         renderer_cues = clean(renderer_manifest.get("render_background_cues"))
         for zone_id, (box, min_bright_ratio, min_variance) in TEXT_ZONES.items():
             signal = title_zone_signal(image, box) if zone_id == "headline_text_zone" else text_zone_signal(image, box)
+            if (
+                zone_id == "context_text_zone"
+                and photo_layout_mode == "photo_first_final_score"
+                and "photo_first_no_redundant_score_context" in renderer_cues
+            ):
+                passed = signal["bright_pixel_ratio"] <= 0.015 and signal["variance"] <= 1200.0
+                add_check(
+                    checks,
+                    zone_id,
+                    "Photo-first redundant score context removed",
+                    passed,
+                    "No public score-context copy expected for naked-score stage; luma avg {average_luma:.1f}, "
+                    "variance {variance:.1f} (max 1200.0), bright pixel ratio {bright_pixel_ratio:.3f} "
+                    "(max 0.015), dark pixel ratio {dark_pixel_ratio:.3f} in crop {box}; "
+                    "layout={photo_layout_mode}.".format(
+                        **signal,
+                        box=box,
+                        photo_layout_mode=photo_layout_mode or "standard",
+                    ),
+                )
+                continue
             zone_scores.append(signal["dark_pixel_ratio"])
             bright_scores.append(signal["bright_pixel_ratio"])
             if zone_id == "headline_text_zone":
