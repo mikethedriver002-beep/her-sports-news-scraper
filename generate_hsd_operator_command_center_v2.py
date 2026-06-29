@@ -4227,6 +4227,21 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
         breaking_next_action_manual_artifact = clean(next_action_row.get("manual_confirmation_artifact"))
         breaking_next_action_manual_row = clean(next_action_row.get("manual_confirmation_row_ref"))
         breaking_next_action_manual_target = clean(next_action_row.get("manual_confirmation_target"))
+        breaking_next_action_return_fields = clean(next_action_row.get("manual_return_fields_to_complete"))
+        breaking_next_action_return_guardrail = clean(next_action_row.get("manual_return_guardrail_cue"))
+        breaking_next_action_return_blank_status = ""
+        if breaking_next_action_return_fields:
+            blank_return_fields = [
+                field
+                for field in [
+                    "manual_return_operator_checked_url",
+                    "manual_return_operator_confirmation_result",
+                    "manual_return_operator_confirmed_at_utc",
+                    "manual_return_operator_notes",
+                ]
+                if not clean(next_action_row.get(field))
+            ]
+            breaking_next_action_return_blank_status = f"manual_return_blank_fields={len(blank_return_fields)}/4"
         evidence_status = clean(cluster.get("matching_official_evidence_status"))
         evidence_artifacts = clean(cluster.get("matching_official_evidence_artifacts"))
         exact_next = clean(cluster.get("exact_source_or_intake_row_to_open"))
@@ -4303,6 +4318,9 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
                 f"retrieval={breaking_next_action_retrieval}" if breaking_next_action_retrieval else "",
                 f"signal_time={breaking_next_action_signal_time}" if breaking_next_action_signal_time else "",
                 f"manual_row={breaking_next_action_manual_artifact} {breaking_next_action_manual_row}".strip() if breaking_next_action_manual_artifact or breaking_next_action_manual_row else "",
+                f"manual_return_fields={breaking_next_action_return_fields}" if breaking_next_action_return_fields else "",
+                breaking_next_action_return_blank_status,
+                breaking_next_action_return_guardrail,
             ]
             next_action_summary = "; ".join(bit for bit in next_action_bits if bit)
             coverage_summary = f"{coverage_summary} | {next_action_summary}" if coverage_summary else next_action_summary

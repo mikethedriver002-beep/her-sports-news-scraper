@@ -211,6 +211,10 @@ BREAKING_SIGNAL_NEXT_ACTION_FIELDS = [
     "evidence_urls", "source_or_intake_row_to_open",
     "freshness_or_proof_row_to_open", "manual_confirmation_artifact",
     "manual_confirmation_row_ref", "manual_confirmation_target",
+    "manual_return_fields_to_complete", "manual_return_operator_checked_url",
+    "manual_return_operator_confirmation_result",
+    "manual_return_operator_confirmed_at_utc", "manual_return_operator_notes",
+    "manual_return_guardrail_cue",
     "operator_next_action", "review_limitations",
     "review_only", "approval_state_change", "source_enablement",
     "publish_action",
@@ -4051,6 +4055,12 @@ def breaking_signal_next_action_rows(
                 "manual_confirmation_artifact": manual_artifact,
                 "manual_confirmation_row_ref": manual_row_ref,
                 "manual_confirmation_target": manual_target,
+                "manual_return_fields_to_complete": "operator_checked_url; operator_confirmation_result; operator_confirmed_at_utc; operator_notes",
+                "manual_return_operator_checked_url": "",
+                "manual_return_operator_confirmation_result": "",
+                "manual_return_operator_confirmed_at_utc": "",
+                "manual_return_operator_notes": "",
+                "manual_return_guardrail_cue": "Blank advisory return fields only; human edits belong in breaking_public_signal_confirmation_intake.csv and do not approve, enable, download, render, or publish.",
                 "operator_next_action": breaking_next_action_text(cluster, priority),
                 "review_limitations": "Review-only triage; public/community signal and free public source evidence do not confirm a breaking claim without human operator verification.",
                 "review_only": "true",
@@ -4082,6 +4092,14 @@ def breaking_signal_next_action_summary(rows: List[Dict[str, Any]]) -> Dict[str,
     counts: Dict[str, int] = defaultdict(int)
     for row in rows:
         counts[clean(row.get("review_priority"))] += 1
+    manual_return_blank_rows = sum(
+        1
+        for row in rows
+        if not clean(row.get("manual_return_operator_checked_url"))
+        and not clean(row.get("manual_return_operator_confirmation_result"))
+        and not clean(row.get("manual_return_operator_confirmed_at_utc"))
+        and not clean(row.get("manual_return_operator_notes"))
+    )
     return {
         "version": "v1-review-only-breaking-public-signal-next-action",
         "generated_at_utc": utc_now(),
@@ -4096,6 +4114,13 @@ def breaking_signal_next_action_summary(rows: List[Dict[str, Any]]) -> Dict[str,
         "reputable_gray_area_source_verify": counts.get("P2_reputable_or_gray_area_source_verify", 0),
         "public_signal_review_only": counts.get("P3_public_signal_review_only", 0),
         "cluster_audit_no_fix": counts.get("P4_cluster_audit_no_fix", 0),
+        "manual_return_blank_rows": manual_return_blank_rows,
+        "manual_return_fields_to_complete": [
+            "operator_checked_url",
+            "operator_confirmation_result",
+            "operator_confirmed_at_utc",
+            "operator_notes",
+        ],
         "priority_counts": dict(sorted(counts.items())),
     }
 
@@ -4122,6 +4147,7 @@ def markdown_breaking_signal_next_action(summary: Dict[str, Any], rows: List[Dic
         "reputable_gray_area_source_verify",
         "public_signal_review_only",
         "cluster_audit_no_fix",
+        "manual_return_blank_rows",
     ]:
         lines.append(f"- {key}: `{summary.get(key)}`")
     lines.extend(["", "## Review Order", ""])
@@ -4136,6 +4162,7 @@ def markdown_breaking_signal_next_action(summary: Dict[str, Any], rows: List[Dic
         lines.append(f"   - public_signal_type={row.get('public_signal_type') or 'missing'} confidence={row.get('public_signal_confidence') or 'none'} count={row.get('public_signal_count') or '0'} | limit={row.get('public_signal_limitations_cue') or row.get('review_limitations')}")
         lines.append(f"   - confirmation_gap={row.get('confirmation_gap') or 'missing'}")
         lines.append(f"   - open={row.get('source_or_intake_row_to_open') or 'missing'} | proof_or_freshness={row.get('freshness_or_proof_row_to_open') or 'missing'} | manual_artifact={row.get('manual_confirmation_artifact') or 'missing'} | manual_row={row.get('manual_confirmation_row_ref') or 'missing'}")
+        lines.append(f"   - return_fields={row.get('manual_return_fields_to_complete') or 'missing'} | blank_return_fields=operator_checked_url/operator_confirmation_result/operator_confirmed_at_utc/operator_notes | guardrail={row.get('manual_return_guardrail_cue') or 'review-only'}")
         lines.append(f"   - next={row.get('operator_next_action')}")
     if len(rows) > 80:
         lines.append(f"Showing first 80 of {len(rows)} rows. Open `{BREAKING_SIGNAL_NEXT_ACTION_CSV}` for the full board.")

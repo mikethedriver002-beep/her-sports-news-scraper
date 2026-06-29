@@ -724,6 +724,13 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all("signal_timestamp_utc" in row for row in next_action_rows)
     assert all("retrieval_method" in row for row in next_action_rows)
     assert all("public_signal_limitations_cue" in row for row in next_action_rows)
+    assert all("manual_return_fields_to_complete" in row for row in next_action_rows)
+    assert all("operator_checked_url" in row["manual_return_fields_to_complete"] for row in next_action_rows)
+    assert all(row["manual_return_operator_checked_url"] == "" for row in next_action_rows)
+    assert all(row["manual_return_operator_confirmation_result"] == "" for row in next_action_rows)
+    assert all(row["manual_return_operator_confirmed_at_utc"] == "" for row in next_action_rows)
+    assert all(row["manual_return_operator_notes"] == "" for row in next_action_rows)
+    assert all("do not approve" in row["manual_return_guardrail_cue"] for row in next_action_rows)
     assert any(row["why_story_looks_urgent"] for row in next_action_rows)
     assert any(row["source_confidence_tier"] for row in next_action_rows)
     assert all(row["review_only"] == "true" for row in bridge_rows)
@@ -734,6 +741,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     signal_payload = json.loads(signal_manifest.read_text(encoding="utf-8"))
     news_payload = json.loads(news_manifest.read_text(encoding="utf-8"))
     assert signal_payload["review_only"] is True
+    next_action_payload = json.loads(next_actions_json.read_text(encoding="utf-8"))
+    assert next_action_payload["summary"]["manual_return_blank_rows"] == len(next_action_rows)
+    assert "operator_confirmation_result" in next_action_payload["summary"]["manual_return_fields_to_complete"]
     assert signal_payload["publish_ready"] is False
     assert signal_payload["counts"]["rows"] == len(rows)
     assert signal_payload["counts"]["confirmation_intake_rows"] == len(confirmation_rows)

@@ -359,6 +359,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
                 "manual_confirmation_artifact": "breaking_public_signal_confirmation_intake.csv",
                 "manual_confirmation_row_ref": "confirmation_id=confirm-sky",
                 "manual_confirmation_target": "breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky",
+                "manual_return_fields_to_complete": "operator_checked_url; operator_confirmation_result; operator_confirmed_at_utc; operator_notes",
+                "manual_return_operator_checked_url": "",
+                "manual_return_operator_confirmation_result": "",
+                "manual_return_operator_confirmed_at_utc": "",
+                "manual_return_operator_notes": "",
+                "manual_return_guardrail_cue": "Blank advisory return fields only; human edits belong in breaking_public_signal_confirmation_intake.csv and do not approve, enable, download, render, or publish.",
                 "operator_next_action": "Open breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky; record operator_checked_url and operator_confirmation_result before any story path.",
                 "review_limitations": "Review-only triage; public/community signal and free public source evidence do not confirm a breaking claim without human operator verification.",
                 "review_only": "true",
@@ -396,6 +402,12 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
             "manual_confirmation_artifact",
             "manual_confirmation_row_ref",
             "manual_confirmation_target",
+            "manual_return_fields_to_complete",
+            "manual_return_operator_checked_url",
+            "manual_return_operator_confirmation_result",
+            "manual_return_operator_confirmed_at_utc",
+            "manual_return_operator_notes",
+            "manual_return_guardrail_cue",
             "operator_next_action",
             "review_limitations",
             "review_only",
@@ -422,6 +434,9 @@ def test_command_center_surfaces_cluster_confirmation_evidence_cues(tmp_path, mo
     assert "retrieval=source_metadata_observation" in row["story_opportunity_source_coverage"]
     assert "signal_time=2026-06-28T12:01:53+00:00" in row["story_opportunity_source_coverage"]
     assert "manual_row=breaking_public_signal_confirmation_intake.csv confirmation_id=confirm-sky" in row["story_opportunity_source_coverage"]
+    assert "manual_return_fields=operator_checked_url; operator_confirmation_result; operator_confirmed_at_utc; operator_notes" in row["story_opportunity_source_coverage"]
+    assert "manual_return_blank_fields=4/4" in row["story_opportunity_source_coverage"]
+    assert "do not approve, enable, download, render, or publish" in row["story_opportunity_source_coverage"]
     assert row["freshness_label"] == "signal_and_game_source_timestamp"
     assert row["freshness_source"] == "2026-06-28T12:01:53+00:00"
     assert row["freshness_score"] == "evidence_fresh_under_3h_operator_verify"
