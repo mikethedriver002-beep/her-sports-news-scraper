@@ -6330,11 +6330,62 @@ def test_operator_command_center_infers_legacy_packet_source_grade(tmp_path, mon
     assert news_candidate["source_reason"] == "Legacy packet inferred from production-ready status and primary source count"
 
 
+def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    write_json(
+        "release_readiness_guardrail_rollup.json",
+        {
+            "status": "passed",
+            "blocker_count": 0,
+            "missing_inputs": [],
+            "latest_artifact_scan": {
+                "status": "passed",
+                "scan_files_checked": 3,
+                "violation_count": 0,
+            },
+            "conductor_workspace_audit": {
+                "status": "passed",
+                "collision_blocker_count": 0,
+            },
+            "checks": [
+                {
+                    "check_id": "latest_artifact_guardrail_scan",
+                    "status": "passed",
+                    "detail": "scan_files_checked=3; violations=0",
+                    "evidence": "outputs/local/latest/files",
+                    "operator_next_step": "No generated latest-artifact guardrail violations found.",
+                }
+            ],
+        },
+    )
+    Path("release_readiness_guardrail_rollup.md").write_text("# Rollup\n", encoding="utf-8")
+
+    payload = command_center.build_payload()
+    html = command_center.render_html(payload)
+    markdown = command_center.render_markdown(payload)
+    panel = payload["release_readiness_panel"]
+
+    assert panel["status"] == "passed"
+    assert panel["blocker_count"] == 0
+    assert panel["latest_scan_files_checked"] == 3
+    assert panel["latest_scan_violations"] == 0
+    assert panel["conductor_status"] == "passed"
+    assert "Release-readiness evidence" in html
+    assert "Guardrail rollup" in html
+    assert "latest_artifact_guardrail_scan" in html
+    assert "release_readiness_guardrail_rollup.md" in markdown
+
+
 def test_local_runner_collects_daily_command_center_artifacts() -> None:
     runner = (REPO / "scripts" / "hsd_local.ps1").read_text(encoding="utf-8")
     assert "operator_command_center.html" in runner
     assert "operator_command_center.md" in runner
     assert "operator_command_center.json" in runner
+    assert "scripts\\build_hsd_release_readiness_rollup_v1.py" in runner
+    assert "release_readiness_guardrail_rollup.md" in runner
+    assert "release_readiness_guardrail_rollup.csv" in runner
+    assert "release_readiness_guardrail_rollup.json" in runner
     assert "bebe_priority_board.md" in runner
     assert "render_prep_packets.md" in runner
     assert "render_prep_packets.csv" in runner
@@ -6439,3 +6490,4 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     command_center = (REPO / "generate_hsd_operator_command_center_v2.py").read_text(encoding="utf-8")
     assert "Results drill-down dashboard" in command_center
     assert "Studio drill-down dashboard" in command_center
+    assert "Release-readiness guardrail rollup" in command_center

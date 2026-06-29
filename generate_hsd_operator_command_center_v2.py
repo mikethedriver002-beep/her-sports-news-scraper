@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.85.0-render-visual-mode-contract"
+VERSION = "hsd-operator-command-center-v3.86.0-release-readiness-evidence"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -494,6 +494,9 @@ ARTIFACTS = [
     ("Decision", "Conductor workspace audit", "conductor_workspace_audit.md"),
     ("Decision", "Conductor workspace audit data", "conductor_workspace_audit.csv"),
     ("Decision", "Conductor workspace audit manifest", "conductor_workspace_audit.json"),
+    ("Decision", "Release-readiness guardrail rollup", "release_readiness_guardrail_rollup.md"),
+    ("Decision", "Release-readiness guardrail rollup data", "release_readiness_guardrail_rollup.csv"),
+    ("Decision", "Release-readiness guardrail rollup manifest", "release_readiness_guardrail_rollup.json"),
     ("Decision", "Publish guard", "publish_guard_report.md"),
     ("Decision", "BeBe daily ops plan", "bebe_daily_ops_plan.md"),
     ("Decision", "BeBe posting schedule", "bebe_posting_schedule_today.md"),
@@ -7398,6 +7401,46 @@ def source_registry_status(counts: Dict[str, Any]) -> str:
     return "PASS"
 
 
+def release_readiness_evidence_panel() -> Dict[str, Any]:
+    manifest = read_json("release_readiness_guardrail_rollup.json")
+    if not manifest:
+        return {
+            "status": "not_created",
+            "blocker_count": 0,
+            "latest_scan_status": "not_run",
+            "latest_scan_files_checked": 0,
+            "latest_scan_violations": 0,
+            "conductor_status": "not_run",
+            "conductor_collision_blockers": 0,
+            "missing_inputs": ["release_readiness_guardrail_rollup"],
+            "checks": [],
+            "next_step": "Run the local review stage to create release_readiness_guardrail_rollup.md before release review.",
+        }
+    latest = manifest.get("latest_artifact_scan", {}) if isinstance(manifest.get("latest_artifact_scan"), dict) else {}
+    conductor = manifest.get("conductor_workspace_audit", {}) if isinstance(manifest.get("conductor_workspace_audit"), dict) else {}
+    checks = manifest.get("checks", []) if isinstance(manifest.get("checks"), list) else []
+    blocker_count = as_int(manifest.get("blocker_count"))
+    missing_inputs = manifest.get("missing_inputs", []) if isinstance(manifest.get("missing_inputs"), list) else []
+    if blocker_count:
+        next_step = "Stop release review and fix the blocked evidence row before continuing."
+    elif missing_inputs:
+        next_step = "Generate the missing evidence inputs, then rerun the release-readiness rollup."
+    else:
+        next_step = "Use the rollup as review evidence with the conductor audit and deterministic guardrail check."
+    return {
+        "status": clean(manifest.get("status")) or "unknown",
+        "blocker_count": blocker_count,
+        "latest_scan_status": clean(latest.get("status")) or "not_run",
+        "latest_scan_files_checked": as_int(latest.get("scan_files_checked")),
+        "latest_scan_violations": as_int(latest.get("violation_count")),
+        "conductor_status": clean(conductor.get("status")) or "not_run",
+        "conductor_collision_blockers": as_int(conductor.get("collision_blocker_count")),
+        "missing_inputs": missing_inputs,
+        "checks": checks,
+        "next_step": next_step,
+    }
+
+
 def source_registry_detail(counts: Dict[str, Any]) -> str:
     total = as_int(counts.get("sources"))
     if not total:
@@ -7817,6 +7860,7 @@ def build_payload() -> Dict[str, Any]:
     review_order_checklist = decision_review_order_checklist(stop_go_summary)
     operator_decision_panel = operator_decision_ui_panel()
     asset_readiness_panel = asset_availability_readiness_panel()
+    release_readiness_panel = release_readiness_evidence_panel()
     athlete_photo_panel = athlete_photo_onboarding_panel(read_json("manual_review_renderer_manifest.json"))
     coverage_map = source_coverage_map(source_registry)
     source_intake_rows = read_csv("source_registry_intake_template.csv")
@@ -7988,6 +8032,9 @@ def build_payload() -> Dict[str, Any]:
         metric("Manual league-mark intake bridge", len(manual_league_mark_context_intake)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
+        metric("Release readiness", release_readiness_panel["status"], release_readiness_panel["next_step"]),
+        metric("Release blockers", release_readiness_panel["blocker_count"]),
+        metric("Latest guardrail scan", release_readiness_panel["latest_scan_status"], f"files={release_readiness_panel['latest_scan_files_checked']}; violations={release_readiness_panel['latest_scan_violations']}"),
         metric("Asset audit", asset_readiness_panel["panel_status"], asset_readiness_panel["next_step"]),
         metric("Asset blockers", asset_readiness_panel["finding_count"]),
         metric("Asset errors/warnings", f"{asset_readiness_panel['error_count']}/{asset_readiness_panel['warning_count']}"),
@@ -8069,6 +8116,7 @@ def build_payload() -> Dict[str, Any]:
         "manual_league_mark_context_intake": manual_league_mark_context_intake,
         "operator_decision_panel": operator_decision_panel,
         "asset_readiness_panel": asset_readiness_panel,
+        "release_readiness_panel": release_readiness_panel,
         "athlete_photo_onboarding_panel": athlete_photo_panel,
         "breaking_public_signal_clusters": breaking_clusters,
         "source_discovery_board": source_board,
@@ -8116,6 +8164,53 @@ def command_hint(command: str) -> str:
     if not command:
         return ""
     return f'<div class="command-line"><span>Run next</span><code>{html.escape(command)}</code></div>'
+
+
+def render_release_readiness_checks(rows: Iterable[Dict[str, Any]]) -> str:
+    rendered: List[str] = []
+    for row in rows:
+        rendered.append(
+            "<tr>"
+            f"<td>{html.escape(clean(row.get('check_id')))}</td>"
+            f"<td>{pill(row.get('status'))}</td>"
+            f"<td>{html.escape(clean(row.get('detail')))}</td>"
+            f"<td><code>{html.escape(clean(row.get('evidence')))}</code></td>"
+            f"<td>{html.escape(clean(row.get('operator_next_step')))}</td>"
+            "</tr>"
+        )
+    if not rendered:
+        return '<tr><td colspan="5" class="empty">Release-readiness rollup has not been generated yet.</td></tr>'
+    return "".join(rendered)
+
+
+def render_release_readiness_panel(panel: Dict[str, Any]) -> str:
+    missing = ", ".join(clean(item) for item in panel.get("missing_inputs", []) if clean(item)) or "none"
+    return f"""
+      <div class="panel" style="margin-bottom:16px">
+        <div class="section-heading">
+          <div>
+            <span class="row-kicker">Release-readiness evidence</span>
+            <h2>Guardrail rollup</h2>
+            <p class="muted">Review-only visibility across deterministic guardrails, latest generated artifacts, and conductor collision brakes.</p>
+          </div>
+          {open_link('release_readiness_guardrail_rollup.md', 'Open rollup')}
+        </div>
+        <div class="safety-strip">
+          {pill(panel.get('status'))}
+          {pill('blockers: ' + clean(panel.get('blocker_count')), 'bad' if as_int(panel.get('blocker_count')) else 'good')}
+          {pill('latest scan: ' + clean(panel.get('latest_scan_status')))}
+          {pill('conductor: ' + clean(panel.get('conductor_status')))}
+        </div>
+        <p class="muted" style="margin-top:10px">{html.escape(clean(panel.get('next_step')))}</p>
+        <p class="muted" style="margin-top:6px">Latest files checked: <code>{as_int(panel.get('latest_scan_files_checked'))}</code>; violations: <code>{as_int(panel.get('latest_scan_violations'))}</code>; missing inputs: <code>{html.escape(missing)}</code>.</p>
+        <div class="table-wrap" style="margin-top:12px">
+          <table>
+            <thead><tr><th>Check</th><th>Status</th><th>Detail</th><th>Evidence</th><th>Next step</th></tr></thead>
+            <tbody>{render_release_readiness_checks(panel.get('checks', []))}</tbody>
+          </table>
+        </div>
+      </div>
+    """
 
 
 def artifact_tool(row: Dict[str, Any]) -> str:
@@ -10665,6 +10760,7 @@ def render_html(payload: Dict[str, Any]) -> str:
     </section>
 
     <section id="safety" class="tab-panel">
+      {render_release_readiness_panel(payload.get('release_readiness_panel', {}))}
       <div class="two-col">
         <div class="panel">
           <h2>Blocks and review notes</h2>
@@ -11245,6 +11341,18 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         )
         for row in payload.get("operator_next_action_synthesis", [])
     )
+    release_panel = payload.get("release_readiness_panel", {})
+    lines += [
+        "",
+        "## Release-readiness evidence",
+        "",
+        f"- Status: {release_panel.get('status') or 'not_created'}",
+        f"- Blockers: {release_panel.get('blocker_count', 0)}",
+        f"- Latest guardrail scan: {release_panel.get('latest_scan_status') or 'not_run'}; files checked: {release_panel.get('latest_scan_files_checked', 0)}; violations: {release_panel.get('latest_scan_violations', 0)}",
+        f"- Conductor audit: {release_panel.get('conductor_status') or 'not_run'}; collision blockers: {release_panel.get('conductor_collision_blockers', 0)}",
+        f"- Next step: {release_panel.get('next_step') or 'Run the release-readiness rollup before release review.'}",
+        "- Artifact: `release_readiness_guardrail_rollup.md`",
+    ]
     lines += ["", "## Render readiness", ""]
     lines.extend(
         f"- {item.get('rank') or '-'} | {item.get('band') or 'not_scored'} | score: {item.get('score') or '0'} | {item.get('title') or 'Untitled candidate'} | path: {item.get('recommended_path') or 'review'} | source: {item.get('source_cue') or 'n/a'} | assets: {item.get('asset_cue') or 'n/a'} | format: {item.get('format_cue') or 'n/a'} | manual: {item.get('manual_path') or 'n/a'} | blockers: {display_render_blockers(item)} | next: {item.get('next_step') or 'review manually'}"
