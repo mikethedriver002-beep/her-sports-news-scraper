@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.53.0-anti-dashboard-score-spine"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.54.0-lower-third-editorial-rail"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -150,6 +150,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["content_module"]["score_layout_contract"] == "logo_first_editorial_score_spine_no_dashboard_panels"
     assert manifest["content_module"]["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles"
     assert "dashboard card" in manifest["content_module"]["anti_dashboard_review_cue"]
+    assert manifest["content_module"]["lower_third_contract"] == "editorial_stat_rail_no_heavy_card_container"
+    assert "heavy boxed lower-third" in manifest["content_module"]["lower_third_review_cue"]
     assert "Photo-first route blocked" in manifest["content_module"]["template_fit_reason"]
     assert manifest["content_module"]["stat_source_confidence"] == "score_only_fallback_manual_context_required"
     assert manifest["content_module"]["editorial_microcopy_status"] == "source_safe_editorial_microcopy_ready"
@@ -224,6 +226,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_quiet_badge_pin" in manifest["render_background_cues"]
     assert "logo_first_editorial_score_spine" in manifest["render_background_cues"]
     assert "logo_first_no_dashboard_card_panels" in manifest["render_background_cues"]
+    assert "lower_third_editorial_rail" in manifest["render_background_cues"]
+    assert "lower_third_no_heavy_stat_cards" in manifest["render_background_cues"]
     assert "anti_dashboard_visual_qa" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
@@ -304,6 +308,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["score_layout_contract"] == "logo_first_editorial_score_spine_no_dashboard_panels"
     assert visual_board["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles"
     assert "dashboard card" in visual_board["anti_dashboard_review_cue"]
+    assert visual_board["lower_third_contract"] == "editorial_stat_rail_no_heavy_card_container"
+    assert "heavy boxed lower-third" in visual_board["lower_third_review_cue"]
     assert "manual visual QA intake" in visual_board["next_manual_review_step"] or "hold" in visual_board["next_manual_review_step"]
     assert {item["format_id"] for item in visual_board["rows"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in visual_board["rows"])
@@ -313,6 +319,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert all(item["fallback_comparison_status"] == "fallback_active_label_no_athlete_photo" for item in visual_board["rows"])
     assert all(item["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles" for item in visual_board["rows"])
     assert all("dashboard" in item["anti_dashboard_review_cue"] for item in visual_board["rows"])
+    assert all(item["lower_third_contract"] == "editorial_stat_rail_no_heavy_card_container" for item in visual_board["rows"])
     assert all(item["reference_public_mockup_path"] for item in visual_board["rows"])
     assert all(item["reference_layout_path"] for item in visual_board["rows"])
 
@@ -359,6 +366,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Score layout contract: `logo_first_editorial_score_spine_no_dashboard_panels`" in report
     assert "Anti-dashboard contract: `open_score_spine_no_nested_cards_no_metric_tiles`" in report
     assert "Anti-dashboard review cue:" in report
+    assert "Lower-third contract: `editorial_stat_rail_no_heavy_card_container`" in report
     assert "Template fit reason: Photo-first route blocked" in report
     assert "visual_mode=`no_photo_premium_result`" in report
     assert "APPROVED LOGO" in report or "LOGO REVIEW" in report
@@ -385,6 +393,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "assets/graphics/v4/approved/public_mockups/wnba_final_score_tonight" in board
     assert "assets/graphics/v4/approved/layout_references/wnba_final_score_tonight" in board
     assert "Anti-dashboard contract: `open_score_spine_no_nested_cards_no_metric_tiles`" in board
+    assert "Lower-third contract: `editorial_stat_rail_no_heavy_card_container`" in board
     assert "boxed scoreboard" in board or "dashboard card" in board
     assert "manual visual QA" in board or "hold if an athlete-led asset" in board
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
@@ -687,6 +696,8 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert summary["score_layout_contract"] == "photo_first_score_team_caption_clearance_locked"
     assert summary["anti_dashboard_contract"] == "photo_first_borderless_score_stage_no_dashboard_panels"
     assert "boxed widgets" in summary["anti_dashboard_review_cue"]
+    assert summary["lower_third_contract"] == "photo_first_integrated_stat_caption_rail_no_heavy_panel"
+    assert "heavy panel" in summary["lower_third_review_cue"]
     assert summary["background_family"] == "hsd_premium_sports_editorial"
     assert summary["hero_image_mode"] == "approved_headshot_bridge_action_photo_ready"
     assert summary["hero_image_source_class"] == "approved_local_headshot_bridge"
@@ -709,11 +720,13 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert feed_contract["hero_silhouette_mode"] in {"headshot_bridge_rectangular_source", "local_transparent_cutout_grid_breaking"}
     assert feed_contract["action_photo_hero_contract"] == "manual_review_action_photo_can_replace_headshot_when_local_approved"
     assert feed_contract["anti_dashboard_contract"] == "photo_first_borderless_score_stage_no_dashboard_panels"
+    assert feed_contract["lower_third_contract"] == "photo_first_integrated_stat_caption_rail_no_heavy_panel"
     square_contract = module.visual_mode_contract(summary, square_layout)
     assert square_contract["visual_mode"] == "photo_first_performer_square"
     assert square_contract["score_lock_variant"] == "final_score_locked_square_photo_panel"
     assert square_contract["score_layout_contract"] == "photo_first_score_team_caption_clearance_locked"
     assert square_contract["anti_dashboard_contract"] == "photo_first_borderless_score_stage_no_dashboard_panels"
+    assert square_contract["lower_third_contract"] == "photo_first_integrated_stat_caption_rail_no_heavy_panel"
     assert summary["content_module_title"] == "CARDOSO + STATEMENT MARGIN"
     assert summary["content_module_matchup_note"] == "SKY 124, FIRE 94"
     assert summary["content_module_game_shape"] == "statement_margin"
@@ -1562,6 +1575,7 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
     assert "stat_proof_rail" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_integrated_stat_band" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_lower_third_caption_strip" in module.RENDER_BACKGROUND_CUES
+    assert "lower_third_no_heavy_stat_cards" in module.RENDER_BACKGROUND_CUES
     crop = image.crop((60, 976, 1020, 1088)).convert("RGB")
     data = crop.tobytes()
     pixels = max(1, len(data) // 3)
@@ -1786,7 +1800,7 @@ def test_manual_review_renderer_square_title_lockup_is_visible() -> None:
     assert bright_title_ratio > 0.025
 
 
-def test_manual_review_renderer_square_lower_module_shows_body_line_inside_card() -> None:
+def test_manual_review_renderer_square_lower_module_shows_body_line_without_heavy_card() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
@@ -1810,11 +1824,15 @@ def test_manual_review_renderer_square_lower_module_shows_body_line_inside_card(
     data = body_crop.tobytes()
     pixels = max(1, len(data) // 3)
     bright_pixels = 0
+    dense_panel_pixels = 0
     for index in range(0, len(data), 3):
         r, g, b = data[index], data[index + 1], data[index + 2]
         if r >= 185 and g >= 185 and b >= 185:
             bright_pixels += 1
+        if r <= 12 and g <= 15 and b <= 24:
+            dense_panel_pixels += 1
     assert bright_pixels / pixels > 0.006
+    assert dense_panel_pixels / pixels < 0.74
 
 
 def test_manual_review_renderer_guardrail_uses_one_small_review_marker_without_footer_band() -> None:
