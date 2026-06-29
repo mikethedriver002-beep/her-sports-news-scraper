@@ -295,6 +295,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert manifest["operator_focus_p1_rows"] == 2
     assert manifest["operator_focus_duplicate_transfer_loan_stale_rows"] == 1
     assert manifest["operator_focus_profile_gap_rows"] == 0
+    assert manifest["operator_focus_identity_manual_verification_rows"] == 3
+    assert manifest["operator_focus_blank_official_profile_url_rows"] == 4
+    assert manifest["operator_focus_action_photo_no_selected_candidate_rows"] == 4
     assert manifest["operator_focus_download_approved_yes_rows"] == 0
     assert manifest["operator_focus_blank_source_url_rows"] == 4
     assert manifest["operator_focus_bucket_counts"] == {
@@ -531,6 +534,18 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert focus_manifest["p1_rows"] == 2
     assert focus_manifest["duplicate_transfer_loan_stale_rows"] == 1
     assert focus_manifest["profile_gap_rows"] == 0
+    assert focus_manifest["identity_manual_verification_rows"] == 3
+    assert focus_manifest["blank_official_profile_url_rows"] == 4
+    assert focus_manifest["action_photo_no_selected_candidate_rows"] == 4
+    assert focus_manifest["identity_verification_status_counts"] == {
+        "current_team_identity_conflict_requires_manual_resolution": 1,
+        "player_identity_manual_verification_required": 2,
+        "team_or_roster_scope_not_player_specific": 1,
+    }
+    assert focus_manifest["source_proof_status_counts"] == {
+        "official_source_candidate_manual_verification_required": 3,
+        "official_source_proof_required_before_any_future_intake": 1,
+    }
     assert focus_manifest["download_approved_yes_rows"] == 0
     assert focus_manifest["blank_source_url_rows"] == 4
     assert focus_manifest["focus_bucket_counts"] == {
@@ -549,6 +564,13 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert "womens_soccer_athlete_source_priority.csv#row=" in row["open_next_row_ref"]
         assert "womens_soccer_athlete_source_priority.csv#row=" in row["source_priority_row_ref"]
         assert "womens_soccer_athlete_candidate_next_action_board.csv#row=" in row["candidate_action_row_ref"]
+        assert row["candidate_entity_id"]
+        assert row["source_proof_status"]
+        assert row["identity_verification_status"]
+        assert row["official_profile_url"] == ""
+        assert row["photo_candidate_status"]
+        assert "no_candidate_selected" in row["action_photo_candidate_status"] or "no_action_photo_selection" in row["action_photo_candidate_status"]
+        assert row["action_photo_starter_intake_file"] == "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv"
         assert row["why_row_matters"]
         assert "Do not download assets" in row["do_not_do"]
         assert row["download_approved"] == "no"
@@ -564,5 +586,8 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     duplicate_focus = focus_rows[0]
     assert duplicate_focus["player_name"] == "Chelsea Player"
     assert "duplicate_transfer_loan_stale_or_short_term_issue" in duplicate_focus["focus_reason_flags"]
+    assert duplicate_focus["identity_verification_status"] == "current_team_identity_conflict_requires_manual_resolution"
     assert "triage_row_ref" in focus_markdown
+    assert "Blank official_profile_url placeholders" in focus_markdown
+    assert "action_photo_starter_intake_file" in focus_markdown
     assert "Do not download assets" in focus_markdown

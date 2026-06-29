@@ -344,6 +344,13 @@ OPERATOR_FOCUS_FIELDS = [
     "operator_verify_required",
     "source_domain",
     "source_candidate_url",
+    "candidate_entity_id",
+    "source_proof_status",
+    "identity_verification_status",
+    "official_profile_url",
+    "photo_candidate_status",
+    "action_photo_candidate_status",
+    "action_photo_starter_intake_file",
     "source_priority_row_ref",
     "triage_row_ref",
     "candidate_action_row_ref",
@@ -1630,6 +1637,38 @@ def operator_focus_bucket(row: Mapping[str, str], flags: List[str]) -> str:
     return "7_metadata_watch"
 
 
+def operator_focus_source_proof_status(row: Mapping[str, str]) -> str:
+    status = clean(row.get("official_status")).lower()
+    group = clean(row.get("manual_action_group"))
+    if group == "gray_area_reputable_media_lead" or "gray_area" in status or "non_official" in status:
+        return "official_source_proof_required_before_any_future_intake"
+    if status.startswith("official"):
+        return "official_source_candidate_manual_verification_required"
+    if clean(row.get("source_candidate_url")):
+        return "advisory_source_candidate_manual_verification_required"
+    return "source_proof_missing_manual_research_required"
+
+
+def operator_focus_identity_verification_status(row: Mapping[str, str], bucket: str) -> str:
+    player = clean(row.get("player_name"))
+    if bucket == "1_duplicate_transfer_loan_stale_profile_check":
+        return "current_team_identity_conflict_requires_manual_resolution"
+    if not player:
+        return "team_or_roster_scope_not_player_specific"
+    if clean(row.get("operator_verify_required")).lower() == "yes":
+        return "player_identity_manual_verification_required"
+    return "player_identity_metadata_watch_not_approved"
+
+
+def operator_focus_action_photo_status(row: Mapping[str, str]) -> str:
+    group = clean(row.get("manual_action_group"))
+    if group == "gray_area_reputable_media_lead":
+        return "action_photo_parked_no_candidate_selected_until_official_identity_confirmed"
+    if group == "duplicate_transfer_check":
+        return "no_action_photo_selection_until_team_status_resolved"
+    return "action_photo_starter_intake_available_no_candidate_selected"
+
+
 def operator_focus_why(row: Mapping[str, str], bucket: str) -> str:
     player = clean(row.get("player_name")) or "team/source row"
     team = clean(row.get("team_name")) or clean(row.get("team_id"))
@@ -1659,6 +1698,7 @@ def operator_focus_rows(candidate_rows: List[Mapping[str, str]]) -> List[Dict[st
         source_ref = clean(row.get("source_priority_row_ref"))
         triage_ref = clean(row.get("triage_row_ref"))
         open_ref = source_ref or triage_ref
+        photo_status = photo_readiness_bucket(row)
         output.append(
             {
                 "focus_rank": "0",
@@ -1680,6 +1720,13 @@ def operator_focus_rows(candidate_rows: List[Mapping[str, str]]) -> List[Dict[st
                 "operator_verify_required": clean(row.get("operator_verify_required")),
                 "source_domain": clean(row.get("source_domain")),
                 "source_candidate_url": clean(row.get("source_candidate_url")),
+                "candidate_entity_id": clean(row.get("candidate_entity_id")),
+                "source_proof_status": operator_focus_source_proof_status(row),
+                "identity_verification_status": operator_focus_identity_verification_status(row, bucket),
+                "official_profile_url": "",
+                "photo_candidate_status": photo_status,
+                "action_photo_candidate_status": operator_focus_action_photo_status(row),
+                "action_photo_starter_intake_file": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
                 "source_priority_row_ref": source_ref,
                 "triage_row_ref": triage_ref,
                 "candidate_action_row_ref": f"{OUT_CANDIDATE_ACTIONS_CSV.as_posix()}#row={clean(row.get('candidate_action_rank'))}",
@@ -1739,6 +1786,9 @@ def render_operator_focus(rows: List[Mapping[str, str]], generated_at: str) -> s
         f"- P1 rows: `{sum(1 for row in rows if 'p1_source_or_roster_row' in clean(row.get('focus_reason_flags')).split('|'))}`",
         f"- Duplicate/transfer/loan/stale-profile rows: `{sum(1 for row in rows if 'duplicate_transfer_loan_stale_or_short_term_issue' in clean(row.get('focus_reason_flags')).split('|'))}`",
         f"- Profile/official-page-gap rows: `{sum(1 for row in rows if 'profile_or_official_page_gap' in clean(row.get('focus_reason_flags')).split('|'))}`",
+        f"- Rows needing manual identity verification/status resolution: `{sum(1 for row in rows if 'manual_verification_required' in clean(row.get('identity_verification_status')) or 'conflict_requires_manual_resolution' in clean(row.get('identity_verification_status')))}`",
+        f"- Blank official_profile_url placeholders: `{sum(1 for row in rows if not clean(row.get('official_profile_url')))}`",
+        f"- Action-photo rows with no selected candidate: `{sum(1 for row in rows if 'no_candidate_selected' in clean(row.get('action_photo_candidate_status')) or 'no_action_photo_selection' in clean(row.get('action_photo_candidate_status')))}`",
         f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
         f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
         "",
@@ -1752,24 +1802,27 @@ def render_operator_focus(rows: List[Mapping[str, str]], generated_at: str) -> s
         "",
         "- Open `open_next_row_ref`, then the paired `triage_row_ref`, before touching any manual intake.",
         "- Use official roster/team/player pages to resolve duplicate, transfer, loan, stale-profile, and profile-gap rows.",
+        "- Fill `official_profile_url` only after manual verification; generated rows keep it blank as a placeholder.",
+        "- Use `action_photo_starter_intake_file` as a review-only prompt sheet only; this focus board does not select or approve action-photo candidates.",
         "- Keep gray-area and reputable-source leads parked until official confirmation exists.",
         "- Do not download assets, write headshots, approve candidates, create `.approved` markers, move files, or publish from this packet.",
         "",
         "## Focus Preview",
         "",
-        "| Rank | Bucket | Priority | Team | Player | Source Row | Triage Row | Why It Matters |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Rank | Bucket | Priority | Team | Player | Identity Status | Photo Status | Source Row | Why It Matters |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in rows[:50]:
         lines.append(
-            "| {rank} | {bucket} | {priority} | {team} | {player} | {source_ref} | {triage_ref} | {why} |".format(
+            "| {rank} | {bucket} | {priority} | {team} | {player} | {identity_status} | {photo_status} | {source_ref} | {why} |".format(
                 rank=clean(row.get("focus_rank")),
                 bucket=clean(row.get("focus_bucket")),
                 priority=clean(row.get("priority_label")).replace("|", "/"),
                 team=clean(row.get("team_name")).replace("|", "/"),
                 player=clean(row.get("player_name")).replace("|", "/"),
+                identity_status=clean(row.get("identity_verification_status")).replace("|", "/"),
+                photo_status=clean(row.get("photo_candidate_status")).replace("|", "/"),
                 source_ref=clean(row.get("source_priority_row_ref")).replace("|", "%7C"),
-                triage_ref=clean(row.get("triage_row_ref")).replace("|", "%7C"),
                 why=clean(row.get("why_row_matters")).replace("|", "/"),
             )
         )
@@ -1856,6 +1909,19 @@ def main() -> int:
             1 for row in focus_rows if "duplicate_transfer_loan_stale_or_short_term_issue" in clean(row.get("focus_reason_flags")).split("|")
         ),
         "operator_focus_profile_gap_rows": sum(1 for row in focus_rows if "profile_or_official_page_gap" in clean(row.get("focus_reason_flags")).split("|")),
+        "operator_focus_identity_manual_verification_rows": sum(
+            1
+            for row in focus_rows
+            if "manual_verification_required" in clean(row.get("identity_verification_status"))
+            or "conflict_requires_manual_resolution" in clean(row.get("identity_verification_status"))
+        ),
+        "operator_focus_blank_official_profile_url_rows": sum(1 for row in focus_rows if not clean(row.get("official_profile_url"))),
+        "operator_focus_action_photo_no_selected_candidate_rows": sum(
+            1
+            for row in focus_rows
+            if "no_candidate_selected" in clean(row.get("action_photo_candidate_status"))
+            or "no_action_photo_selection" in clean(row.get("action_photo_candidate_status"))
+        ),
         "operator_focus_download_approved_yes_rows": sum(1 for row in focus_rows if clean(row.get("download_approved")).lower() == "yes"),
         "operator_focus_blank_source_url_rows": sum(1 for row in focus_rows if not clean(row.get("source_url"))),
         "operator_focus_bucket_counts": count_by(focus_rows, "focus_bucket"),
@@ -2028,6 +2094,23 @@ def main() -> int:
                 1 for row in focus_rows if "duplicate_transfer_loan_stale_or_short_term_issue" in clean(row.get("focus_reason_flags")).split("|")
             ),
             "profile_gap_rows": sum(1 for row in focus_rows if "profile_or_official_page_gap" in clean(row.get("focus_reason_flags")).split("|")),
+            "identity_manual_verification_rows": sum(
+                1
+                for row in focus_rows
+                if "manual_verification_required" in clean(row.get("identity_verification_status"))
+                or "conflict_requires_manual_resolution" in clean(row.get("identity_verification_status"))
+            ),
+            "blank_official_profile_url_rows": sum(1 for row in focus_rows if not clean(row.get("official_profile_url"))),
+            "action_photo_no_selected_candidate_rows": sum(
+                1
+                for row in focus_rows
+                if "no_candidate_selected" in clean(row.get("action_photo_candidate_status"))
+                or "no_action_photo_selection" in clean(row.get("action_photo_candidate_status"))
+            ),
+            "identity_verification_status_counts": count_by(focus_rows, "identity_verification_status"),
+            "source_proof_status_counts": count_by(focus_rows, "source_proof_status"),
+            "photo_candidate_status_counts": count_by(focus_rows, "photo_candidate_status"),
+            "action_photo_candidate_status_counts": count_by(focus_rows, "action_photo_candidate_status"),
             "download_approved_yes_rows": sum(1 for row in focus_rows if clean(row.get("download_approved")).lower() == "yes"),
             "blank_source_url_rows": sum(1 for row in focus_rows if not clean(row.get("source_url"))),
             "focus_bucket_counts": count_by(focus_rows, "focus_bucket"),

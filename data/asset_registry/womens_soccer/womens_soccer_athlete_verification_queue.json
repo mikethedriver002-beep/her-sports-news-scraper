@@ -82,6 +82,9 @@
   "operator_focus_p1_rows": 14,
   "operator_focus_duplicate_transfer_loan_stale_rows": 12,
   "operator_focus_profile_gap_rows": 8,
+  "operator_focus_identity_manual_verification_rows": 20,
+  "operator_focus_blank_official_profile_url_rows": 95,
+  "operator_focus_action_photo_no_selected_candidate_rows": 95,
   "operator_focus_download_approved_yes_rows": 0,
   "operator_focus_blank_source_url_rows": 95,
   "operator_focus_bucket_counts": {
