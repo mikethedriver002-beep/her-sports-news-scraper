@@ -127,6 +127,13 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["asset_review_readiness_source_identity_gap_rows"] == 38
     assert report["totals"]["asset_review_readiness_team_entity_check_rows"] == 38
     assert report["totals"]["asset_review_readiness_local_candidate_gap_rows"] == 38
+    assert report["totals"]["manual_verification_focus_rows"] == 46
+    assert report["totals"]["manual_verification_focus_p0_rows"] == 24
+    assert report["totals"]["manual_verification_focus_p1_rows"] == 22
+    assert report["totals"]["manual_verification_focus_asset_readiness_rows"] == 38
+    assert report["totals"]["manual_verification_focus_source_map_rows"] == 8
+    assert report["totals"]["manual_verification_focus_download_approved_yes_rows"] == 0
+    assert report["totals"]["manual_verification_focus_blank_source_url_rows"] == 46
     assert report["totals"]["quarantine_download_intake_rows"] == 74
     assert report["totals"]["quarantine_download_logo_rows"] == 20
     assert report["totals"]["quarantine_download_athlete_rows"] == 54
@@ -227,6 +234,18 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "source_identity_gap_rows": 38,
         "team_entity_check_rows": 38,
         "local_candidate_gap_rows": 38,
+    }
+    assert report["manual_verification_focus"] == {
+        "md": "data/asset_registry/hockey_softball_manual_verification_focus.md",
+        "csv": "data/asset_registry/hockey_softball_manual_verification_focus.csv",
+        "json": "data/asset_registry/hockey_softball_manual_verification_focus.json",
+        "rows": 46,
+        "p0_rows": 24,
+        "p1_rows": 22,
+        "asset_readiness_rows": 38,
+        "source_map_rows": 8,
+        "download_approved_yes_rows": 0,
+        "blank_source_url_rows": 46,
     }
     assert report["quarantine_download_intake"] == {
         "md": "data/asset_registry/hockey_softball_quarantine_download_intake.md",
@@ -620,6 +639,46 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         readiness_csv_rows = list(csv.DictReader(handle))
     assert len(readiness_csv_rows) == 38
     assert list(readiness_csv_rows[0].keys()) == workflow.ASSET_REVIEW_READINESS_FIELDS
+    focus_path = tmp_path / "data/asset_registry/hockey_softball_manual_verification_focus.json"
+    focus = json.loads(focus_path.read_text(encoding="utf-8"))
+    assert focus["status"] == "hockey_softball_manual_verification_focus_ready"
+    assert focus["rows"] == 46
+    assert focus["p0_rows"] == 24
+    assert focus["p1_rows"] == 22
+    assert focus["asset_readiness_rows"] == 38
+    assert focus["source_map_rows"] == 8
+    assert focus["download_approved_yes_rows"] == 0
+    assert focus["blank_source_url_rows"] == 46
+    assert focus["review_only"] is True
+    assert focus["asset_downloads"] is False
+    assert focus["publish_ready"] is False
+    focus_rows = focus["focus_rows_detail"]
+    assert focus_rows[0]["focus_rank"] == "VF01"
+    assert focus_rows[0]["priority"] == "P0"
+    assert focus_rows[0]["source_surface"] == "asset_review_readiness"
+    assert focus_rows[0]["exact_row_ref"].startswith("data/asset_registry/hockey_softball_asset_review_readiness_board.csv#row=")
+    assert "data/asset_registry/hockey_softball_source_priority_worksheet.csv#rank=" in focus_rows[0]["source_priority_row_ref_or_filter"]
+    assert focus_rows[0]["open_first_file"].endswith("_athlete_photo_contact_sheet_index.md")
+    assert focus_rows[0]["manual_intake_file_to_open"].endswith("_athlete_photo_review_intake.csv")
+    assert "not render-ready" in focus_rows[0]["why_row_matters"]
+    assert "source_and_identity_verification_required" in focus_rows[0]["evidence_or_candidate_blocker"]
+    assert "do not download" in focus_rows[0]["do_not_do"]
+    assert any(row["source_surface"] == "source_map_board" and row["priority"] == "P1" for row in focus_rows)
+    assert all(row["download_approved"] == "no" for row in focus_rows)
+    assert all(
+        row[field] == ""
+        for row in focus_rows
+        for field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use"]
+    )
+    assert all(row["review_only"] == "true" for row in focus_rows)
+    assert all(row["asset_downloads"] == "false" for row in focus_rows)
+    assert all(row["approval_state_change"] == "false" for row in focus_rows)
+    assert all(row["publish_ready"] == "false" for row in focus_rows)
+    focus_csv_path = tmp_path / "data/asset_registry/hockey_softball_manual_verification_focus.csv"
+    with focus_csv_path.open(newline="", encoding="utf-8") as handle:
+        focus_csv_rows = list(csv.DictReader(handle))
+    assert len(focus_csv_rows) == 46
+    assert list(focus_csv_rows[0].keys()) == workflow.MANUAL_VERIFICATION_FOCUS_FIELDS
     download_path = tmp_path / "data/asset_registry/hockey_softball_quarantine_download_intake.json"
     download_manifest = json.loads(download_path.read_text(encoding="utf-8"))
     assert download_manifest["status"] == "hockey_softball_quarantine_download_intake_ready"
@@ -664,6 +723,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     intake_readiness_board = (tmp_path / "data/asset_registry/hockey_softball_intake_readiness_summary.md").read_text(encoding="utf-8")
     triage_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.md").read_text(encoding="utf-8")
     readiness_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_readiness_board.md").read_text(encoding="utf-8")
+    focus_board = (tmp_path / "data/asset_registry/hockey_softball_manual_verification_focus.md").read_text(encoding="utf-8")
     download_board = (tmp_path / "data/asset_registry/hockey_softball_quarantine_download_intake.md").read_text(encoding="utf-8")
     assert "## How To Work This Queue" in action_queue_board
     assert "fields_to_keep_blank_until_review" in action_queue_board
@@ -706,6 +766,12 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "Generated local-download-law fields stay `download_approved=no`" in readiness_board
     assert "source_identity_gap" in readiness_board
     assert "human_fields_to_fill_now" in readiness_board
+    assert "Hockey/Softball Manual Verification Focus" in focus_board
+    assert "P0 rows: `24`" in focus_board
+    assert "P1 rows: `22`" in focus_board
+    assert "exact_row_ref" in focus_board
+    assert "fields_to_keep_blank_or_no" in focus_board
+    assert "does not fetch sources" in focus_board
     assert "Default download_approved value: `no`" in download_board
     assert "quarantine-only local asset candidate step" in download_board
     assert "Do not download from this packet" in download_board
@@ -859,6 +925,15 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_asset_review_readiness_source_identity_gap_rows"] == 38
     assert panel["hockey_softball_asset_review_readiness_team_entity_check_rows"] == 38
     assert panel["hockey_softball_asset_review_readiness_local_candidate_gap_rows"] == 38
+    assert panel["hockey_softball_manual_verification_focus_status"] == "hockey_softball_manual_verification_focus_ready"
+    assert panel["hockey_softball_manual_verification_focus_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_manual_verification_focus_rows"] == 46
+    assert panel["hockey_softball_manual_verification_focus_p0_rows"] == 24
+    assert panel["hockey_softball_manual_verification_focus_p1_rows"] == 22
+    assert panel["hockey_softball_manual_verification_focus_asset_readiness_rows"] == 38
+    assert panel["hockey_softball_manual_verification_focus_source_map_rows"] == 8
+    assert panel["hockey_softball_manual_verification_focus_download_approved_yes_rows"] == 0
+    assert panel["hockey_softball_manual_verification_focus_blank_source_url_rows"] == 46
     assert panel["hockey_softball_quarantine_download_intake_status"] == "hockey_softball_quarantine_download_intake_ready"
     assert panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_ready"
     assert panel["hockey_softball_quarantine_download_intake_rows"] == 74
@@ -894,6 +969,9 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert "Hockey/softball asset review readiness board" in shortcut_labels
     assert "Hockey/softball asset review readiness data" in shortcut_labels
     assert "Hockey/softball asset review readiness manifest" in shortcut_labels
+    assert "Hockey/softball manual verification focus" in shortcut_labels
+    assert "Hockey/softball manual verification focus data" in shortcut_labels
+    assert "Hockey/softball manual verification focus manifest" in shortcut_labels
     assert "Hockey/softball quarantine download intake" in shortcut_labels
     assert "Hockey/softball quarantine download intake data" in shortcut_labels
     assert "Women's hockey asset workflow board" in shortcut_labels
@@ -936,6 +1014,9 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert missing_panel["hockey_softball_asset_review_readiness_status"] == ""
     assert missing_panel["hockey_softball_asset_review_readiness_generated_at"] == ""
     assert missing_panel["hockey_softball_asset_review_readiness_freshness_status"] == "packet_missing"
+    assert missing_panel["hockey_softball_manual_verification_focus_status"] == ""
+    assert missing_panel["hockey_softball_manual_verification_focus_generated_at"] == ""
+    assert missing_panel["hockey_softball_manual_verification_focus_freshness_status"] == "packet_missing"
     assert missing_panel["hockey_softball_quarantine_download_intake_status"] == ""
     assert missing_panel["hockey_softball_quarantine_download_intake_generated_at"] == ""
     assert missing_panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_missing"
@@ -992,6 +1073,11 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
         json.dumps({"status": "readiness_empty", "generated_at_utc": "2026-06-27T15:19:30+00:00", "readiness_rows_detail": None}),
         encoding="utf-8",
     )
+    (report_dir / "hockey_softball_manual_verification_focus.md").write_text("# Empty focus\n", encoding="utf-8")
+    (report_dir / "hockey_softball_manual_verification_focus.json").write_text(
+        json.dumps({"status": "focus_empty", "generated_at_utc": "2026-06-27T15:19:45+00:00", "focus_rows_detail": None}),
+        encoding="utf-8",
+    )
     (report_dir / "hockey_softball_quarantine_download_intake.md").write_text("# Empty download intake\n", encoding="utf-8")
     (report_dir / "hockey_softball_quarantine_download_intake.json").write_text(
         json.dumps({"status": "download_empty", "generated_at_utc": "2026-06-27T15:20:00+00:00", "download_rows": None}),
@@ -1041,6 +1127,12 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert empty_panel["hockey_softball_asset_review_readiness_source_identity_gap_rows"] == 0
     assert empty_panel["hockey_softball_asset_review_readiness_team_entity_check_rows"] == 0
     assert empty_panel["hockey_softball_asset_review_readiness_local_candidate_gap_rows"] == 0
+    assert empty_panel["hockey_softball_manual_verification_focus_status"] == "focus_empty"
+    assert empty_panel["hockey_softball_manual_verification_focus_generated_at"] == "2026-06-27T15:19:45+00:00"
+    assert empty_panel["hockey_softball_manual_verification_focus_freshness_status"] == "packet_empty"
+    assert empty_panel["hockey_softball_manual_verification_focus_rows"] == 0
+    assert empty_panel["hockey_softball_manual_verification_focus_p0_rows"] == 0
+    assert empty_panel["hockey_softball_manual_verification_focus_p1_rows"] == 0
     assert empty_panel["hockey_softball_quarantine_download_intake_status"] == "download_empty"
     assert empty_panel["hockey_softball_quarantine_download_intake_generated_at"] == "2026-06-27T15:20:00+00:00"
     assert empty_panel["hockey_softball_quarantine_download_intake_freshness_status"] == "packet_empty"

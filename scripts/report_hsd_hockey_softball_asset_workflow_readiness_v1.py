@@ -44,6 +44,9 @@ REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_tria
 ASSET_REVIEW_READINESS_MD = Path("data/asset_registry/hockey_softball_asset_review_readiness_board.md")
 ASSET_REVIEW_READINESS_CSV = Path("data/asset_registry/hockey_softball_asset_review_readiness_board.csv")
 ASSET_REVIEW_READINESS_JSON = Path("data/asset_registry/hockey_softball_asset_review_readiness_board.json")
+MANUAL_VERIFICATION_FOCUS_MD = Path("data/asset_registry/hockey_softball_manual_verification_focus.md")
+MANUAL_VERIFICATION_FOCUS_CSV = Path("data/asset_registry/hockey_softball_manual_verification_focus.csv")
+MANUAL_VERIFICATION_FOCUS_JSON = Path("data/asset_registry/hockey_softball_manual_verification_focus.json")
 QUARANTINE_DOWNLOAD_INTAKE_MD = Path("data/asset_registry/hockey_softball_quarantine_download_intake.md")
 QUARANTINE_DOWNLOAD_INTAKE_CSV = Path("data/asset_registry/hockey_softball_quarantine_download_intake.csv")
 QUARANTINE_DOWNLOAD_INTAKE_JSON = Path("data/asset_registry/hockey_softball_quarantine_download_intake.json")
@@ -423,6 +426,51 @@ ASSET_REVIEW_READINESS_FIELDS = [
     "paid_apis",
 ]
 
+MANUAL_VERIFICATION_FOCUS_FIELDS = [
+    "focus_rank",
+    "priority",
+    "focus_bucket",
+    "source_surface",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "asset_domain",
+    "candidate_entity_id",
+    "display_name_or_lane",
+    "why_row_matters",
+    "exact_row_ref",
+    "source_priority_row_ref_or_filter",
+    "open_first_file",
+    "manual_intake_file_to_open",
+    "source_or_evidence_to_open",
+    "evidence_or_candidate_blocker",
+    "next_safe_operator_action",
+    "fields_mike_can_fill_now",
+    "fields_to_keep_blank_or_no",
+    "do_not_do",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "logo_writes",
+    "segmentation_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
 QUARANTINE_DOWNLOAD_INTAKE_FIELDS = [
     "download_order",
     "download_bucket",
@@ -791,6 +839,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Source map board: `data/asset_registry/hockey_softball_source_map_board.md`",
         "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`",
+        "- Manual verification focus: `data/asset_registry/hockey_softball_manual_verification_focus.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
@@ -839,6 +888,10 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Asset review readiness blank source_url rows: `{report['totals']['asset_review_readiness_blank_source_url_rows']}`",
         f"- Asset review readiness source/identity gap rows: `{report['totals']['asset_review_readiness_source_identity_gap_rows']}`",
         f"- Asset review readiness local candidate gap rows: `{report['totals']['asset_review_readiness_local_candidate_gap_rows']}`",
+        f"- Manual verification focus rows: `{report['totals']['manual_verification_focus_rows']}`",
+        f"- Manual verification focus P0 rows: `{report['totals']['manual_verification_focus_p0_rows']}`",
+        f"- Manual verification focus P1 rows: `{report['totals']['manual_verification_focus_p1_rows']}`",
+        f"- Manual verification focus download-approved yes rows: `{report['totals']['manual_verification_focus_download_approved_yes_rows']}`",
         f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
         f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
@@ -2566,6 +2619,198 @@ def render_asset_review_readiness(rows: list[Dict[str, str]], generated_at: str)
     return "\n".join(lines) + "\n"
 
 
+def verification_focus_priority(source_tier: str) -> str:
+    tier = clean(source_tier).upper()
+    if tier.startswith("P0"):
+        return "P0"
+    if tier.startswith("P1"):
+        return "P1"
+    return "P2"
+
+
+def verification_focus_source_priority_ref(row: Mapping[str, str]) -> str:
+    rank_range = clean(row.get("source_priority_rank_range"))
+    source_file = clean(row.get("source_priority_file")) or SOURCE_PRIORITY_CSV.as_posix()
+    source_filter = clean(row.get("source_priority_csv_filter"))
+    if rank_range:
+        return f"{source_file}#rank={rank_range};filter={source_filter}"
+    return source_filter
+
+
+def manual_verification_focus_rows(
+    asset_readiness: list[Dict[str, str]],
+    source_map: list[Dict[str, str]],
+) -> list[Dict[str, str]]:
+    rows: list[Dict[str, str]] = []
+    base_guardrails = {
+        "download_approved": "no",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "operator_decision": "",
+        "operator_notes": "",
+        "review_only": "true",
+        "approval_state_change": "false",
+        "candidate_state_change": "false",
+        "asset_downloads": "false",
+        "headshot_writes": "false",
+        "logo_writes": "false",
+        "segmentation_writes": "false",
+        "approved_marker_writes": "false",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+    for row in asset_readiness:
+        priority = verification_focus_priority(clean(row.get("source_tier")))
+        if priority not in {"P0", "P1"}:
+            continue
+        source_identity_gap = clean(row.get("source_identity_gap"))
+        local_candidate_gap = clean(row.get("local_candidate_asset_gap"))
+        rows.append(
+            {
+                "focus_rank": "0",
+                "priority": priority,
+                "focus_bucket": clean(row.get("asset_review_readiness_bucket")),
+                "source_surface": "asset_review_readiness",
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "league_name": clean(row.get("league_name")),
+                "asset_domain": clean(row.get("asset_domain")),
+                "candidate_entity_id": clean(row.get("candidate_entity_id")),
+                "display_name_or_lane": clean(row.get("candidate_entity_id")),
+                "why_row_matters": (
+                    f"{priority} manual blocker: {source_identity_gap}; {local_candidate_gap}; "
+                    "row is not render-ready and must stay review-only."
+                ),
+                "exact_row_ref": f"{ASSET_REVIEW_READINESS_CSV.as_posix()}#row={clean(row.get('readiness_rank'))}",
+                "source_priority_row_ref_or_filter": verification_focus_source_priority_ref(row),
+                "open_first_file": clean(row.get("review_board_to_open")),
+                "manual_intake_file_to_open": clean(row.get("manual_intake_file_to_open")),
+                "source_or_evidence_to_open": clean(row.get("advisory_source_candidate_urls")),
+                "evidence_or_candidate_blocker": clean(row.get("asset_review_blocker")),
+                "next_safe_operator_action": clean(row.get("next_manual_action")),
+                "fields_mike_can_fill_now": clean(row.get("human_fields_to_fill_now")),
+                "fields_to_keep_blank_or_no": clean(row.get("human_fields_to_keep_blank")),
+                "do_not_do": (
+                    "do not download; do not approve; do not write headshot/logo files; "
+                    "do not create .approved markers; do not move files; do not publish"
+                ),
+                **base_guardrails,
+            }
+        )
+    for index, row in enumerate(source_map, start=1):
+        priority = verification_focus_priority(clean(row.get("source_tier")))
+        if priority not in {"P0", "P1"}:
+            continue
+        source_lane = clean(row.get("source_lane"))
+        rows.append(
+            {
+                "focus_rank": "0",
+                "priority": priority,
+                "focus_bucket": f"source_map_{source_lane}",
+                "source_surface": "source_map_board",
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "league_name": clean(row.get("league_name")),
+                "asset_domain": clean(row.get("asset_domain")),
+                "candidate_entity_id": source_lane,
+                "display_name_or_lane": source_lane,
+                "why_row_matters": (
+                    f"{priority} source lane: {clean(row.get('evidence_use'))}; "
+                    f"limitation: {clean(row.get('known_limitations'))}"
+                ),
+                "exact_row_ref": f"{SOURCE_MAP_BOARD_CSV.as_posix()}#row={index}",
+                "source_priority_row_ref_or_filter": clean(row.get("source_priority_filter")),
+                "open_first_file": SOURCE_MAP_BOARD_CSV.as_posix(),
+                "manual_intake_file_to_open": clean(row.get("manual_return_intake_hint")),
+                "source_or_evidence_to_open": clean(row.get("source_url_or_search_macro")),
+                "evidence_or_candidate_blocker": clean(row.get("known_limitations")),
+                "next_safe_operator_action": clean(row.get("next_operator_action")),
+                "fields_mike_can_fill_now": "manual_source_notes_only_after_human_open",
+                "fields_to_keep_blank_or_no": (
+                    "download_approved=no; source_url; entity_id; rights_class; "
+                    "identity_confidence; intended_review_only_use; operator_decision"
+                ),
+                "do_not_do": (
+                    "do not fetch source pages from this artifact; do not copy search macros into "
+                    "download-law source_url; do not download, approve, move, or publish"
+                ),
+                **base_guardrails,
+            }
+        )
+    order = {"P0": 0, "P1": 1, "P2": 2}
+    rows.sort(
+        key=lambda row: (
+            order.get(row["priority"], 9),
+            clean(row.get("source_surface")),
+            clean(row.get("sport_family")),
+            clean(row.get("asset_domain")),
+            clean(row.get("candidate_entity_id")),
+        )
+    )
+    for index, row in enumerate(rows, start=1):
+        row["focus_rank"] = f"VF{index:02d}"
+    return rows
+
+
+def render_manual_verification_focus(rows: list[Dict[str, str]], generated_at: str) -> str:
+    priority_counts = Counter(row["priority"] for row in rows)
+    surface_counts = Counter(row["source_surface"] for row in rows)
+    lines = [
+        "# Hockey/Softball Manual Verification Focus",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only focus board for moving from the current hockey/softball source, triage, and readiness boards to the next manual verification actions. It does not fetch sources, download images, approve assets, write headshots or logos, create `.approved` markers, move files, create a publish-ready lane, or publish.",
+        "Generated download-law and approval fields stay blank/no/false. Source URLs and search macros in this board are evidence to open manually, not authorization to download or approve.",
+        "",
+        "## Summary",
+        "",
+        f"- Focus rows: `{len(rows)}`",
+        f"- P0 rows: `{priority_counts.get('P0', 0)}`",
+        f"- P1 rows: `{priority_counts.get('P1', 0)}`",
+        f"- Asset readiness rows: `{surface_counts.get('asset_review_readiness', 0)}`",
+        f"- Source-map rows: `{surface_counts.get('source_map_board', 0)}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Operator Path",
+        "",
+        "1. Open `exact_row_ref`, then open `open_first_file` for row context.",
+        "2. Open `source_or_evidence_to_open` manually and record notes only in the linked human intake if the row says fields can be filled now.",
+        "3. Treat `evidence_or_candidate_blocker` as the reason the row cannot move into asset approval or render trust.",
+        "4. Keep every field listed in `fields_to_keep_blank_or_no` blank or `no` until a later human-edited intake explicitly supplies required evidence.",
+        "5. Follow `do_not_do` even when a source looks useful.",
+        "",
+        "## Focus Rows",
+        "",
+        "| Rank | Priority | Surface | Sport | Asset | Entity/Lane | Exact Row | Open First | Evidence | Blocker | Next Safe Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | {priority} | {surface} | {sport} | {asset} | {entity} | {row_ref} | {open_first} | {evidence} | {blocker} | {action} |".format(
+                rank=clean(row.get("focus_rank")),
+                priority=clean(row.get("priority")),
+                surface=clean(row.get("source_surface")),
+                sport=clean(row.get("sport_family")),
+                asset=clean(row.get("asset_domain")),
+                entity=clean(row.get("display_name_or_lane")).replace("|", "/"),
+                row_ref=clean(row.get("exact_row_ref")).replace("|", "/"),
+                open_first=clean(row.get("open_first_file")).replace("|", "/"),
+                evidence=clean(row.get("source_or_evidence_to_open")).replace("|", "/"),
+                blocker=clean(row.get("evidence_or_candidate_blocker")).replace("|", "/"),
+                action=clean(row.get("next_safe_operator_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def proposed_quarantine_path(row: Mapping[str, str]) -> str:
     return (
         SANCTIONED_QUARANTINE_ROOT
@@ -2806,6 +3051,19 @@ def main() -> int:
         for row in asset_review_readiness
         if clean(row.get("local_candidate_asset_gap")) not in {"", "no_local_candidate_gap_from_generated_board"}
     )
+    manual_verification_focus = manual_verification_focus_rows(asset_review_readiness, source_map)
+    manual_verification_focus_p0_rows = sum(1 for row in manual_verification_focus if clean(row.get("priority")) == "P0")
+    manual_verification_focus_p1_rows = sum(1 for row in manual_verification_focus if clean(row.get("priority")) == "P1")
+    manual_verification_focus_asset_readiness_rows = sum(
+        1 for row in manual_verification_focus if clean(row.get("source_surface")) == "asset_review_readiness"
+    )
+    manual_verification_focus_source_map_rows = sum(
+        1 for row in manual_verification_focus if clean(row.get("source_surface")) == "source_map_board"
+    )
+    manual_verification_focus_download_approved_yes_rows = sum(
+        1 for row in manual_verification_focus if clean(row.get("download_approved")).lower() == "yes"
+    )
+    manual_verification_focus_blank_source_url_rows = sum(1 for row in manual_verification_focus if not clean(row.get("source_url")))
     quarantine_download_rows = quarantine_download_intake_rows(action_rows)
     quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
     quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
@@ -2864,6 +3122,13 @@ def main() -> int:
             "asset_review_readiness_source_identity_gap_rows": asset_review_readiness_source_identity_gap_rows,
             "asset_review_readiness_team_entity_check_rows": asset_review_readiness_team_entity_check_rows,
             "asset_review_readiness_local_candidate_gap_rows": asset_review_readiness_local_candidate_gap_rows,
+            "manual_verification_focus_rows": len(manual_verification_focus),
+            "manual_verification_focus_p0_rows": manual_verification_focus_p0_rows,
+            "manual_verification_focus_p1_rows": manual_verification_focus_p1_rows,
+            "manual_verification_focus_asset_readiness_rows": manual_verification_focus_asset_readiness_rows,
+            "manual_verification_focus_source_map_rows": manual_verification_focus_source_map_rows,
+            "manual_verification_focus_download_approved_yes_rows": manual_verification_focus_download_approved_yes_rows,
+            "manual_verification_focus_blank_source_url_rows": manual_verification_focus_blank_source_url_rows,
             "quarantine_download_intake_rows": len(quarantine_download_rows),
             "quarantine_download_logo_rows": quarantine_download_logo_rows,
             "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
@@ -2973,6 +3238,18 @@ def main() -> int:
             "source_identity_gap_rows": asset_review_readiness_source_identity_gap_rows,
             "team_entity_check_rows": asset_review_readiness_team_entity_check_rows,
             "local_candidate_gap_rows": asset_review_readiness_local_candidate_gap_rows,
+        },
+        "manual_verification_focus": {
+            "md": MANUAL_VERIFICATION_FOCUS_MD.as_posix(),
+            "csv": MANUAL_VERIFICATION_FOCUS_CSV.as_posix(),
+            "json": MANUAL_VERIFICATION_FOCUS_JSON.as_posix(),
+            "rows": len(manual_verification_focus),
+            "p0_rows": manual_verification_focus_p0_rows,
+            "p1_rows": manual_verification_focus_p1_rows,
+            "asset_readiness_rows": manual_verification_focus_asset_readiness_rows,
+            "source_map_rows": manual_verification_focus_source_map_rows,
+            "download_approved_yes_rows": manual_verification_focus_download_approved_yes_rows,
+            "blank_source_url_rows": manual_verification_focus_blank_source_url_rows,
         },
         "quarantine_download_intake": {
             "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
@@ -3210,6 +3487,35 @@ def main() -> int:
         "paid_apis": False,
         "readiness_rows_detail": asset_review_readiness,
     }
+    manual_verification_focus_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_manual_verification_focus_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(manual_verification_focus),
+        "p0_rows": manual_verification_focus_p0_rows,
+        "p1_rows": manual_verification_focus_p1_rows,
+        "asset_readiness_rows": manual_verification_focus_asset_readiness_rows,
+        "source_map_rows": manual_verification_focus_source_map_rows,
+        "download_approved_yes_rows": manual_verification_focus_download_approved_yes_rows,
+        "blank_source_url_rows": manual_verification_focus_blank_source_url_rows,
+        "worksheet_md": MANUAL_VERIFICATION_FOCUS_MD.as_posix(),
+        "worksheet_csv": MANUAL_VERIFICATION_FOCUS_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "logo_writes": False,
+        "segmentation_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "focus_rows_detail": manual_verification_focus,
+    }
     quarantine_download_payload = {
         "version": VERSION,
         "status": "hockey_softball_quarantine_download_intake_ready",
@@ -3260,6 +3566,9 @@ def main() -> int:
     write_csv(ASSET_REVIEW_READINESS_CSV, asset_review_readiness, ASSET_REVIEW_READINESS_FIELDS)
     write_json(ASSET_REVIEW_READINESS_JSON, asset_review_readiness_payload)
     write_text(ASSET_REVIEW_READINESS_MD, render_asset_review_readiness(asset_review_readiness, generated_at))
+    write_csv(MANUAL_VERIFICATION_FOCUS_CSV, manual_verification_focus, MANUAL_VERIFICATION_FOCUS_FIELDS)
+    write_json(MANUAL_VERIFICATION_FOCUS_JSON, manual_verification_focus_payload)
+    write_text(MANUAL_VERIFICATION_FOCUS_MD, render_manual_verification_focus(manual_verification_focus, generated_at))
     write_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV, quarantine_download_rows, QUARANTINE_DOWNLOAD_INTAKE_FIELDS)
     write_json(QUARANTINE_DOWNLOAD_INTAKE_JSON, quarantine_download_payload)
     write_text(QUARANTINE_DOWNLOAD_INTAKE_MD, render_quarantine_download_intake(quarantine_download_rows, generated_at))
