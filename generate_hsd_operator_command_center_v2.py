@@ -324,6 +324,38 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/womens_soccer/nwsl/players.csv",
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md",
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_source_map_template.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_source_map_template.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_source_map.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_source_map.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_source_map.json",
+    "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
+    "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+    "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.json",
     "data/asset_registry/hockey_softball_asset_foundation_report.md",
     "data/asset_registry/hockey_softball_asset_foundation_report.json",
     "data/asset_registry/hockey_softball_foundation_coverage_index.md",
@@ -658,6 +690,26 @@ ARTIFACTS = [
     ("Graphics", "Women's soccer NWSL player registry", "data/asset_registry/womens_soccer/nwsl/players.csv"),
     ("Graphics", "Women's soccer NWSL roster candidate fetch report", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md"),
     ("Graphics", "Women's soccer NWSL roster candidate fetch manifest", "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json"),
+    ("Graphics", "Action-photo candidate intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.md"),
+    ("Graphics", "Action-photo candidate intake data", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.csv"),
+    ("Graphics", "Action-photo candidate intake manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json"),
+    ("Graphics", "Action-photo candidate queue", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.md"),
+    ("Graphics", "Action-photo candidate queue data", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.csv"),
+    ("Graphics", "Action-photo candidate queue manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.json"),
+    ("Graphics", "Action-photo research packet", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md"),
+    ("Graphics", "Action-photo research packet data", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv"),
+    ("Graphics", "Action-photo research packet manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json"),
+    ("Graphics", "Action-photo research return intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md"),
+    ("Graphics", "Action-photo research return intake data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"),
+    ("Graphics", "Action-photo research return intake manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json"),
+    ("Graphics", "Action-photo research run bundle", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md"),
+    ("Graphics", "Action-photo research run bundle data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv"),
+    ("Graphics", "Action-photo research run bundle manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json"),
+    ("Graphics", "Action-photo quarantine preflight", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md"),
+    ("Graphics", "Action-photo quarantine preflight data", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv"),
+    ("Graphics", "Action-photo quarantine preflight manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json"),
+    ("Graphics", "Action-photo candidate taxonomy", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md"),
+    ("Graphics", "Action-photo human review checklist", "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md"),
     ("Graphics", "Hockey/softball asset foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md"),
     ("Graphics", "Hockey/softball foundation coverage index", "data/asset_registry/hockey_softball_foundation_coverage_index.md"),
     ("Graphics", "Hockey/softball foundation coverage index data", "data/asset_registry/hockey_softball_foundation_coverage_index.csv"),
@@ -828,6 +880,26 @@ RUN_COMMANDS = {
     "data/asset_registry/womens_soccer/nwsl/players.csv": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.md": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
     "data/asset_registry/womens_soccer/nwsl/roster_candidate_fetch_report.json": ".\\.venv\\Scripts\\python.exe scripts\\fetch_hsd_womens_soccer_nwsl_roster_candidates_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_queue_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/hockey_softball_asset_foundation_report.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/hockey_softball_foundation_coverage_index.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/hockey_softball_foundation_coverage_index.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
@@ -1710,6 +1782,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     womens_soccer_athlete_photo_readiness_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_readiness_board.csv")
     womens_soccer_external_research_manifest = read_json("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json")
     womens_soccer_external_research_rows = read_csv("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv")
+    action_photo_intake_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json")
+    action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
+    action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
     hockey_softball_manifest = read_json("data/asset_registry/hockey_softball_asset_foundation_report.json")
     womens_hockey_logo_rows = read_csv("data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.csv")
     womens_hockey_athlete_manifest = read_json("data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_manifest.json")
@@ -1806,6 +1881,20 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         len(womens_soccer_external_research_rows),
         RUN_COMMANDS["data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.md"],
         context="women's soccer external research intake",
+    )
+    action_photo_research_bundle_steps = as_int(action_photo_research_bundle_manifest.get("bundle_steps")) if isinstance(action_photo_research_bundle_manifest, dict) else 0
+    action_photo_research_bundle_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md",
+        action_photo_research_bundle_steps,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md"],
+        context="action-photo research run bundle",
+    )
+    action_photo_preflight_rows = as_int(action_photo_preflight_manifest.get("preflight_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0
+    action_photo_preflight_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
+        action_photo_preflight_rows,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md"],
+        context="action-photo quarantine preflight",
     )
     hockey_softball_cue = packet_freshness_cue(
         "data/asset_registry/hockey_softball_asset_foundation_report.md",
@@ -2060,6 +2149,29 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_external_research_freshness_status": womens_soccer_external_research_cue["status"],
         "womens_soccer_external_research_freshness_detail": womens_soccer_external_research_cue["detail"],
         "womens_soccer_external_research_refresh_command": womens_soccer_external_research_cue["run_command"],
+        "action_photo_candidate_intake_status": clean(action_photo_intake_manifest.get("status")) if isinstance(action_photo_intake_manifest, dict) else "",
+        "action_photo_candidate_intake_generated_at": clean(action_photo_intake_manifest.get("generated_at_utc")) if isinstance(action_photo_intake_manifest, dict) else "",
+        "action_photo_candidate_intake_rows": as_int(action_photo_intake_manifest.get("intake_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_candidate_queue_rows": as_int(action_photo_intake_manifest.get("action_photo_candidate_queue_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_research_packet_rows": as_int(action_photo_intake_manifest.get("action_photo_candidate_research_packet_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_research_return_intake_rows": as_int(action_photo_intake_manifest.get("action_photo_research_return_intake_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_research_run_bundle_status": clean(action_photo_research_bundle_manifest.get("status")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
+        "action_photo_research_run_bundle_generated_at": clean(action_photo_research_bundle_manifest.get("generated_at_utc")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
+        "action_photo_research_run_bundle_rows": action_photo_research_bundle_steps,
+        "action_photo_research_run_bundle_download_approved_yes_rows": as_int(action_photo_research_bundle_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_research_bundle_manifest, dict) else 0,
+        "action_photo_quarantine_preflight_status": clean(action_photo_preflight_manifest.get("status")) if isinstance(action_photo_preflight_manifest, dict) else "",
+        "action_photo_quarantine_preflight_generated_at": clean(action_photo_preflight_manifest.get("generated_at_utc")) if isinstance(action_photo_preflight_manifest, dict) else "",
+        "action_photo_quarantine_preflight_rows": action_photo_preflight_rows,
+        "action_photo_quarantine_preflight_ready_for_human_download_decision_rows": as_int(action_photo_preflight_manifest.get("ready_for_human_download_decision_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
+        "action_photo_quarantine_preflight_lead_only_rows": as_int(action_photo_preflight_manifest.get("lead_only_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
+        "action_photo_quarantine_preflight_download_approved_yes_rows": as_int(action_photo_preflight_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
+        "action_photo_quarantine_preflight_missing_source_url_rows": as_int(action_photo_preflight_manifest.get("missing_required_field_counts", {}).get("source_url")) if isinstance(action_photo_preflight_manifest, dict) and isinstance(action_photo_preflight_manifest.get("missing_required_field_counts"), dict) else 0,
+        "action_photo_research_run_bundle_freshness_status": action_photo_research_bundle_cue["status"],
+        "action_photo_research_run_bundle_freshness_detail": action_photo_research_bundle_cue["detail"],
+        "action_photo_research_run_bundle_refresh_command": action_photo_research_bundle_cue["run_command"],
+        "action_photo_quarantine_preflight_freshness_status": action_photo_preflight_cue["status"],
+        "action_photo_quarantine_preflight_freshness_detail": action_photo_preflight_cue["detail"],
+        "action_photo_quarantine_preflight_refresh_command": action_photo_preflight_cue["run_command"],
         "hockey_softball_asset_foundation_status": clean(hockey_softball_manifest.get("status")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_asset_foundation_generated_at": clean(hockey_softball_manifest.get("generated_at_utc")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_foundation_coverage_status": clean(hockey_softball_coverage_manifest.get("status")) if isinstance(hockey_softball_coverage_manifest, dict) else "",
@@ -2249,6 +2361,12 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer NWSL external research source", "data/asset_registry/womens_soccer/external_research/nwsl_correction_enrichment_report.csv", "Raw advisory NWSL correction/enrichment research from ChatGPT Pro."),
             file_shortcut("Women's soccer Europe external research source", "data/asset_registry/womens_soccer/external_research/europe_official_source_map.csv", "Raw advisory European official-source map from ChatGPT Pro."),
             file_shortcut("Women's soccer athlete photo manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json", "Freshness, warning, and guardrail metadata for the athlete photo contact-sheet packet."),
+            file_shortcut("Action-photo candidate intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.md", "Review-only local-download-law starter; generated rows remain blank/no until human return fields exist."),
+            file_shortcut("Action-photo research packet", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md", "Manual research prompts and source leads only; no image downloads, approvals, or render-ready state."),
+            file_shortcut("Action-photo research run bundle", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md", "Operator glue for running/pasting the research packet; artifact-only and does not send email or download images."),
+            file_shortcut("Action-photo research return intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv", "Human-edited paste-back target for source_url/entity_id/rights/identity fields before any quarantine decision."),
+            file_shortcut("Action-photo quarantine preflight", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md", "Preflight gate showing whether human-return rows are ready for download decision; generated rows remain lead-only."),
+            file_shortcut("Action-photo quarantine preflight data", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv", "Machine-readable preflight; 0 ready rows means no human download decision should happen yet."),
             file_shortcut("Hockey/softball foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md", "Review PWHL and AUSL source-candidate scaffold counts and guardrails."),
             file_shortcut("Hockey/softball foundation coverage index", "data/asset_registry/hockey_softball_foundation_coverage_index.md", "Open one compact index of source URL registries, contact sheets, intakes, athlete layers, and hold-only guardrails."),
             file_shortcut("Hockey/softball foundation coverage manifest", "data/asset_registry/hockey_softball_foundation_coverage_index.json", "Structured counts and freshness data for the hockey/softball foundation coverage index."),
@@ -8929,6 +9047,12 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer research Europe</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_europe_rows', 0)))}</strong></div>
             <div><span>Soccer research P0</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_p0_nwsl_rows', 0)))}</strong></div>
             <div><span>Soccer gray-area leads</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_gray_area_rows', 0)))}</strong></div>
+            <div><span>Action-photo intake</span><strong>{html.escape(str(panel.get('action_photo_candidate_intake_rows', 0)))}</strong></div>
+            <div><span>Action-photo research</span><strong>{html.escape(str(panel.get('action_photo_research_packet_rows', 0)))}</strong></div>
+            <div><span>Action-photo bundle</span><strong>{html.escape(str(panel.get('action_photo_research_run_bundle_rows', 0)))}</strong></div>
+            <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
+            <div><span>Action-photo ready dl</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)))}</strong></div>
+            <div><span>Action-photo dl yes</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>H/S coverage rows</span><strong>{html.escape(str(panel.get('hockey_softball_foundation_coverage_rows', 0)))}</strong></div>
             <div><span>H/S source rows</span><strong>{html.escape(str(panel.get('hockey_softball_foundation_coverage_source_rows', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
@@ -8985,6 +9109,8 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_athlete_candidate_actions', "Women's soccer athlete candidate next-action board")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_photo_readiness', "Women's soccer athlete photo review readiness board")}
           {packet_freshness_html(panel, 'womens_soccer_external_research', "Women's soccer external research intake")}
+          {packet_freshness_html(panel, 'action_photo_research_run_bundle', "Action-photo research run bundle")}
+          {packet_freshness_html(panel, 'action_photo_quarantine_preflight', "Action-photo quarantine preflight")}
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
           {packet_freshness_html(panel, 'hockey_softball_foundation_coverage', "Hockey/softball foundation coverage index")}
           {packet_freshness_html(panel, 'hockey_softball_source_review_helper', "Hockey/softball source review helper")}
@@ -10591,6 +10717,19 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer external research gray-area rows: {asset_panel.get('womens_soccer_external_research_gray_area_rows', 0)}",
         f"- Women's soccer external research Sam Kerr gray-area only: {asset_panel.get('womens_soccer_external_research_sam_kerr_gray_area_only', False)}",
         f"- Women's soccer external research generated: {asset_panel.get('womens_soccer_external_research_generated_at') or 'missing'}",
+        f"- Action-photo candidate intake rows: {asset_panel.get('action_photo_candidate_intake_rows', 0)}",
+        f"- Action-photo candidate queue rows: {asset_panel.get('action_photo_candidate_queue_rows', 0)}",
+        f"- Action-photo research packet rows: {asset_panel.get('action_photo_research_packet_rows', 0)}",
+        f"- Action-photo research return intake rows: {asset_panel.get('action_photo_research_return_intake_rows', 0)}",
+        f"- Action-photo research run bundle rows: {asset_panel.get('action_photo_research_run_bundle_rows', 0)}",
+        f"- Action-photo research run bundle download-approved yes rows: {asset_panel.get('action_photo_research_run_bundle_download_approved_yes_rows', 0)}",
+        f"- Action-photo research run bundle generated: {asset_panel.get('action_photo_research_run_bundle_generated_at') or 'missing'}",
+        f"- Action-photo quarantine preflight rows: {asset_panel.get('action_photo_quarantine_preflight_rows', 0)}",
+        f"- Action-photo quarantine ready-for-human-download-decision rows: {asset_panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)}",
+        f"- Action-photo quarantine lead-only rows: {asset_panel.get('action_photo_quarantine_preflight_lead_only_rows', 0)}",
+        f"- Action-photo quarantine download-approved yes rows: {asset_panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)}",
+        f"- Action-photo quarantine missing source_url rows: {asset_panel.get('action_photo_quarantine_preflight_missing_source_url_rows', 0)}",
+        f"- Action-photo quarantine preflight generated: {asset_panel.get('action_photo_quarantine_preflight_generated_at') or 'missing'}",
         f"- Women's hockey logo contact sheet rows: {asset_panel.get('womens_hockey_logo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete photo candidate rows: {asset_panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete source-review slot rows: {asset_panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)}",
@@ -10779,6 +10918,22 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("womens_soccer_external_research_refresh_command"),
             },
             "Women's soccer external research intake",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("action_photo_research_run_bundle_freshness_status"),
+                "detail": asset_panel.get("action_photo_research_run_bundle_freshness_detail"),
+                "run_command": asset_panel.get("action_photo_research_run_bundle_refresh_command"),
+            },
+            "Action-photo research run bundle",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("action_photo_quarantine_preflight_freshness_status"),
+                "detail": asset_panel.get("action_photo_quarantine_preflight_freshness_detail"),
+                "run_command": asset_panel.get("action_photo_quarantine_preflight_refresh_command"),
+            },
+            "Action-photo quarantine preflight",
         ),
         packet_freshness_markdown(
             {
