@@ -135,10 +135,89 @@ WORKFLOW_HEARTBEAT_CHECKLIST = [
     "Keep the next packet workflow/conductor visibility-only and review-only.",
     "Do not fetch sources, download assets, approve assets, move publish-ready files, or publish.",
 ]
+STALE_LANE_AFTER_HOURS = 48
+STALE_EXEMPT_STATUS_TOKENS = ("completed", "merged", "done")
+STALE_REVIEW_STATUS_TOKENS = ("active", "progress", "pr_open", "review", "blocked", "needs", "detected")
 
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def parse_utc(value: str) -> datetime | None:
+    clean = (value or "").strip()
+    if not clean:
+        return None
+    if clean.endswith("Z"):
+        clean = f"{clean[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(clean)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def is_stale_exempt_status(status: str) -> bool:
+    normalized = status.lower()
+    return any(token in normalized for token in STALE_EXEMPT_STATUS_TOKENS)
+
+
+def needs_stale_lane_check(status: str, branch: str, pr: str, blocker: str) -> bool:
+    normalized = status.lower()
+    if is_stale_exempt_status(normalized):
+        return False
+    if any(token in normalized for token in STALE_REVIEW_STATUS_TOKENS):
+        return True
+    return bool(branch or pr or blocker)
+
+
+def lane_staleness(
+    intake: dict[str, str],
+    status: str,
+    branch: str,
+    pr: str,
+    blocker: str,
+    as_of_utc: datetime,
+    stale_after_hours: int,
+) -> dict[str, str]:
+    if not intake or not needs_stale_lane_check(status, branch, pr, blocker):
+        return {
+            "staleness_status": "not_applicable",
+            "stale_lane_brake": "false",
+            "stale_age_hours": "",
+            "stale_threshold_hours": str(stale_after_hours),
+            "stale_warning": "",
+        }
+
+    last_update = parse_utc(intake.get("last_update_utc", ""))
+    if not last_update:
+        return {
+            "staleness_status": "missing_last_update_needs_conductor_check",
+            "stale_lane_brake": "true",
+            "stale_age_hours": "",
+            "stale_threshold_hours": str(stale_after_hours),
+            "stale_warning": "manual_intake_active_without_last_update_utc",
+        }
+
+    age_hours = max(0.0, (as_of_utc - last_update).total_seconds() / 3600)
+    if age_hours > stale_after_hours:
+        return {
+            "staleness_status": "stale_lane_needs_conductor_check",
+            "stale_lane_brake": "true",
+            "stale_age_hours": f"{age_hours:.1f}",
+            "stale_threshold_hours": str(stale_after_hours),
+            "stale_warning": f"last_update_utc_older_than_{stale_after_hours}h",
+        }
+
+    return {
+        "staleness_status": "fresh_enough",
+        "stale_lane_brake": "false",
+        "stale_age_hours": f"{age_hours:.1f}",
+        "stale_threshold_hours": str(stale_after_hours),
+        "stale_warning": "",
+    }
 
 
 def run_command(args: list[str], cwd: Path | None = None) -> tuple[int, str]:
@@ -349,12 +428,15 @@ def lane_rows(
     open_prs: list[dict[str, str]],
     git_state: dict[str, Any],
     worktrees: list[dict[str, str]] | None = None,
+    as_of_utc: datetime | None = None,
+    stale_after_hours: int = STALE_LANE_AFTER_HOURS,
 ) -> list[dict[str, str]]:
     intake_by_lane = normalize_intake(intake_rows)
     pr_by_branch = {pr["branch"]: pr for pr in open_prs if pr.get("branch")}
     hints_by_lane = worktree_hints_by_lane(worktrees or [])
     rows: list[dict[str, str]] = []
     current_branch = str(git_state.get("branch") or "")
+    stale_as_of = as_of_utc or datetime.now(timezone.utc)
     for lane in LANE_ROSTER:
         lane_id = lane["lane_id"]
         intake = intake_by_lane.get(lane_id, {})
@@ -384,6 +466,16 @@ def lane_rows(
         notes = intake.get("notes", "")
         if first_hint and not notes:
             notes = f"worktree={first_hint.get('path', '')}; dirty={first_hint.get('dirty', 'unknown')}; dirty_count={first_hint.get('dirty_count', 'unknown')}"
+        pr_value = intake.get("pr", "") or matching_pr.get("url", "")
+        staleness = lane_staleness(
+            intake,
+            status,
+            branch,
+            pr_value,
+            intake.get("blocker", ""),
+            stale_as_of,
+            stale_after_hours,
+        )
         row = {
             "lane_id": lane_id,
             "lane": lane["lane"],
@@ -391,7 +483,7 @@ def lane_rows(
             "status": status,
             "status_tone": status_tone(status),
             "branch": branch,
-            "pr": intake.get("pr", "") or matching_pr.get("url", ""),
+            "pr": pr_value,
             "owner": intake.get("owner", ""),
             "last_update_utc": intake.get("last_update_utc", ""),
             "completed_merge_pr": intake.get("completed_merge_pr", ""),
@@ -415,6 +507,7 @@ def lane_rows(
             "heartbeat_next_action": WORKFLOW_HEARTBEAT_NEXT_ACTION if status == WORKFLOW_HEARTBEAT_STATUS else "",
             "guardrail_warnings": ";".join(guardrail_warnings),
         }
+        row.update(staleness)
         if status == WORKFLOW_HEARTBEAT_STATUS:
             row["next_action"] = intake.get("next_action", "") or WORKFLOW_HEARTBEAT_NEXT_ACTION
         row.update(guardrails)
@@ -438,12 +531,13 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- HEAD: `{git_state['head_commit']}` - {git_state['head_subject']}",
         f"- Dirty state: `{git_state['dirty_count']}` changed/untracked paths",
         f"- Open PRs detected: `{len(payload['open_prs'])}`",
+        f"- Stale lane brakes: `{payload['stale_lane_count']}`",
         f"- Intake file: `{payload['intake_path']}`",
         "",
         "## Lane Dashboard",
         "",
-        "| Lane | Status | Source | Branch | PR | Completed merge | Blocker | Next action |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Lane | Status | Source | Stale brake | Branch | PR | Completed merge | Blocker | Next action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["lanes"]:
         pr = row["pr"] or "-"
@@ -453,8 +547,22 @@ def render_markdown(payload: dict[str, Any]) -> str:
             completed = f"{row['completed_merge_pr']} / `{row['completed_merge_commit']}`"
         blocker = row["blocker"] or "-"
         lines.append(
-            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{branch}` | {pr} | {completed} | {blocker} | {row['next_action']} |"
+            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{row['staleness_status']}` | `{branch}` | {pr} | {completed} | {blocker} | {row['next_action']} |"
         )
+    stale_rows = [row for row in payload["lanes"] if row.get("stale_lane_brake") == "true"]
+    lines.extend(
+        [
+            "",
+            "## Stale Lane Brake",
+            "",
+            f"- Active stale or missing-update lanes: `{len(stale_rows)}`",
+            f"- Threshold: `{payload['stale_lane_threshold_hours']}` hours since `last_update_utc`.",
+            "- Brake only informs conductor review; it does not edit branches, PRs, sources, assets, approvals, or publish state.",
+        ]
+    )
+    for row in stale_rows:
+        age = f"{row['stale_age_hours']}h" if row["stale_age_hours"] else "unknown age"
+        lines.append(f"- `{row['lane_id']}`: `{row['staleness_status']}` ({age}); warning: `{row['stale_warning']}`")
     heartbeat = payload.get("workflow_overhaul_heartbeat", {})
     if heartbeat:
         lines.extend(
@@ -503,10 +611,12 @@ def render_markdown(payload: dict[str, Any]) -> str:
 
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     intake_rows = read_csv(args.intake)
+    generated_at_utc = args.as_of_utc or now_iso()
+    as_of = parse_utc(generated_at_utc) or datetime.now(timezone.utc)
     git_state = collect_git_state()
     open_prs = collect_open_prs() if not args.skip_pr_lookup else []
     worktrees = collect_worktree_branches() if not args.skip_worktree_lookup else []
-    rows = lane_rows(intake_rows, open_prs, git_state, worktrees)
+    rows = lane_rows(intake_rows, open_prs, git_state, worktrees, as_of, args.stale_after_hours)
     workflow_row = next((row for row in rows if row["lane_id"] == "workflow_overhaul"), {})
     workflow_heartbeat = {
         "status": workflow_row.get("status", ""),
@@ -532,7 +642,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     }
     payload = {
         "version": VERSION,
-        "generated_at_utc": now_iso(),
+        "generated_at_utc": generated_at_utc,
         "status": "workflow_lane_status_ready",
         "review_only": True,
         "paid_apis": False,
@@ -553,6 +663,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "worktree_hint_lane_count": sum(1 for row in rows if row["status_source"] == "worktree_hint"),
         "heartbeat_lane_count": sum(1 for row in rows if row["heartbeat"] == "true"),
         "workflow_overhaul_heartbeat": workflow_heartbeat,
+        "stale_lane_count": sum(1 for row in rows if row["stale_lane_brake"] == "true"),
+        "stale_lane_threshold_hours": args.stale_after_hours,
         "blocked_lane_count": sum(1 for row in rows if row["status_tone"] == "blocked"),
         "guardrail_warning_count": sum(1 for row in rows if row["guardrail_warnings"]),
     }
@@ -586,6 +698,11 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "heartbeat",
             "heartbeat_cue",
             "heartbeat_next_action",
+            "staleness_status",
+            "stale_lane_brake",
+            "stale_age_hours",
+            "stale_threshold_hours",
+            "stale_warning",
             *GUARDRAIL_FIELDS,
             "guardrail_warnings",
         ],
@@ -599,6 +716,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-stem", default=DEFAULT_OUTPUT_STEM)
     parser.add_argument("--skip-pr-lookup", action="store_true")
     parser.add_argument("--skip-worktree-lookup", action="store_true")
+    parser.add_argument("--stale-after-hours", type=int, default=STALE_LANE_AFTER_HOURS)
+    parser.add_argument("--as-of-utc", default="", help="Testing hook for deterministic stale-lane checks")
     return parser.parse_args(argv)
 
 
@@ -616,6 +735,7 @@ def main(argv: list[str] | None = None) -> int:
                 "completed_lane_count": payload["completed_lane_count"],
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
                 "heartbeat_lane_count": payload["heartbeat_lane_count"],
+                "stale_lane_count": payload["stale_lane_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
                 "guardrail_warning_count": payload["guardrail_warning_count"],
                 "outputs": outputs,

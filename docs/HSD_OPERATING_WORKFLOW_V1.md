@@ -130,6 +130,8 @@ When no intake row exists, the dashboard also scans local Git worktrees for `cod
 
 If the workflow-overhaul row has no manual intake, open PR, current branch, or worktree hint, the dashboard keeps it visible as `heartbeat_visible_needs_conductor_check` instead of letting the conductor lose the lane in a fully unreported table. That heartbeat is a checklist/status cue only: confirm `origin/main`, open PR count, worktree hints, next-action synthesis, and conductor audit before nudging one small review-only workflow packet.
 
+Manual intake rows with an active/review/blocked status, branch, PR, or blocker now carry a deterministic stale-lane brake. By default, `last_update_utc` older than 48 hours becomes `stale_lane_needs_conductor_check`; a missing timestamp becomes `missing_last_update_needs_conductor_check`. The brake tells the conductor to refresh current proof, PR state, and branch freshness before nudging or merging. It does not edit the intake, branches, PRs, sources, assets, approvals, publish-ready folders, or publishing state.
+
 This dashboard is a conductor visibility aid only. It does not create branches, change approval state, download assets, move files, or publish.
 
 ## Standard Research Packet

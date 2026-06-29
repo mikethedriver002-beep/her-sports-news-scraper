@@ -54,6 +54,8 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["worktree_hint_lane_count"] == 0
     assert manifest["unreported_lane_count"] == 6
     assert manifest["heartbeat_lane_count"] == 1
+    assert manifest["stale_lane_count"] == 0
+    assert manifest["stale_lane_threshold_hours"] == 48
     assert manifest["workflow_overhaul_heartbeat"]["active"] is True
     assert manifest["workflow_overhaul_heartbeat"]["status"] == "heartbeat_visible_needs_conductor_check"
     assert manifest["workflow_overhaul_heartbeat"]["guardrails"]["review_only"] is True
@@ -63,10 +65,13 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "status_source" in rows[0]
     assert "completed_merge_pr" in rows[0]
     assert "heartbeat" in rows[0]
+    assert "staleness_status" in rows[0]
     assert workflow["status"] == "heartbeat_visible_needs_conductor_check"
     assert workflow["status_source"] == "workflow_heartbeat"
     assert workflow["status_tone"] == "idle"
     assert workflow["heartbeat"] == "true"
+    assert workflow["stale_lane_brake"] == "false"
+    assert workflow["staleness_status"] == "not_applicable"
     assert "open PRs" in workflow["heartbeat_next_action"]
     assert "review_only" in rows[0]
     assert all(row["review_only"] == "true" for row in rows)
@@ -77,6 +82,8 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "workflow_lane_status_intake.example.csv" in markdown
     assert "best-effort worktree hints" in markdown
     assert "## Workflow Overhaul Heartbeat" in markdown
+    assert "## Stale Lane Brake" in markdown
+    assert "Active stale or missing-update lanes: `0`" in markdown
     assert "Continuous visibility heartbeat" in markdown
     assert "Do not fetch sources, download assets, approve assets" in markdown
 
@@ -166,8 +173,95 @@ def test_workflow_lane_status_surfaces_completed_merge_rows_as_review_only(tmp_p
     assert workflow["publish_ready"] == "false"
     assert workflow["approval_state_change"] == "false"
     assert workflow["guardrail_warnings"] == ""
+    assert workflow["stale_lane_brake"] == "false"
+    assert workflow["staleness_status"] == "not_applicable"
     assert payload["completed_lane_count"] == 1
+    assert payload["stale_lane_count"] == 0
     assert payload["guardrail_warning_count"] == 0
+
+
+def test_workflow_lane_status_flags_stale_active_manual_lane_without_state_change(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    intake = tmp_path / "operator" / "inbox" / "workflow_lane_status_intake.csv"
+    module = load_module()
+    row = {field: "" for field in module.INTAKE_FIELDS}
+    row.update(
+        {
+            "lane_id": "workflow_overhaul",
+            "status": "pr_open",
+            "branch": "codex/workflow-old-lane",
+            "pr": "https://github.com/example/hsd/pull/300",
+            "owner": "workflow lane",
+            "last_update_utc": "2026-06-26T00:00:00Z",
+            "next_action": "Refresh current proof before continuing.",
+            "review_only": "true",
+            "paid_apis": "false",
+            "source_fetching": "false",
+            "automatic_downloads": "false",
+            "auto_approval": "false",
+            "approval_state_change": "false",
+            "headshot_writes": "false",
+            "approved_marker_writes": "false",
+            "publish_ready": "false",
+            "publishing": "false",
+        }
+    )
+    write_csv(intake, [row], module.INTAKE_FIELDS)
+
+    payload = module.build_payload(
+        module.parse_args(
+            [
+                "--skip-pr-lookup",
+                "--skip-worktree-lookup",
+                "--as-of-utc",
+                "2026-06-29T12:00:00Z",
+            ]
+        )
+    )
+    workflow = next(row for row in payload["lanes"] if row["lane_id"] == "workflow_overhaul")
+
+    assert workflow["status"] == "pr_open"
+    assert workflow["status_source"] == "manual_intake"
+    assert workflow["staleness_status"] == "stale_lane_needs_conductor_check"
+    assert workflow["stale_lane_brake"] == "true"
+    assert workflow["stale_age_hours"] == "84.0"
+    assert workflow["stale_warning"] == "last_update_utc_older_than_48h"
+    assert workflow["review_only"] == "true"
+    assert workflow["automatic_downloads"] == "false"
+    assert workflow["auto_approval"] == "false"
+    assert workflow["approval_state_change"] == "false"
+    assert workflow["publish_ready"] == "false"
+    assert payload["stale_lane_count"] == 1
+    assert payload["paid_apis"] is False
+    assert payload["automatic_downloads"] is False
+    assert payload["publish_ready"] is False
+
+
+def test_workflow_lane_status_flags_active_manual_lane_missing_update(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    intake = tmp_path / "operator" / "inbox" / "workflow_lane_status_intake.csv"
+    module = load_module()
+    row = {field: "" for field in module.INTAKE_FIELDS}
+    row.update(
+        {
+            "lane_id": "qa_release_readiness",
+            "status": "active_or_needs_conductor_check",
+            "branch": "codex/qa-proof-refresh",
+        }
+    )
+    write_csv(intake, [row], module.INTAKE_FIELDS)
+
+    payload = module.build_payload(
+        module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup", "--as-of-utc", "2026-06-29T12:00:00Z"])
+    )
+    qa = next(row for row in payload["lanes"] if row["lane_id"] == "qa_release_readiness")
+
+    assert qa["staleness_status"] == "missing_last_update_needs_conductor_check"
+    assert qa["stale_lane_brake"] == "true"
+    assert qa["stale_warning"] == "manual_intake_active_without_last_update_utc"
+    assert payload["stale_lane_count"] == 1
 
 
 def test_workflow_lane_status_flags_truthy_guardrail_intake_without_enabling_behavior(tmp_path: Path, monkeypatch) -> None:
