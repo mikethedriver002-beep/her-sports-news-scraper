@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Verification Queue
 
-Generated: `2026-06-29T05:42:22.538606+00:00`
+Generated: `2026-06-29T22:39:18.754226+00:00`
 
 Review-only operator queue built from existing women's soccer athlete candidate rows, download-intake rows, and external research intake rows. It does not download images, approve assets, write `headshot.png`, create `.approved` markers, change current candidate state, move files into publish-ready lanes, publish, or use paid APIs.
 

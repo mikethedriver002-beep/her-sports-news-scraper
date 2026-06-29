@@ -41,9 +41,14 @@ OUT_PHOTO_READINESS_JSON = output_path(ROOT / "womens_soccer_athlete_photo_revie
 OUT_OPERATOR_FOCUS_MD = output_path(ROOT / "womens_soccer_athlete_operator_focus.md")
 OUT_OPERATOR_FOCUS_CSV = output_path(ROOT / "womens_soccer_athlete_operator_focus.csv")
 OUT_OPERATOR_FOCUS_JSON = output_path(ROOT / "womens_soccer_athlete_operator_focus.json")
+OUT_ACTION_PHOTO_RESEARCH_NEXT_MD = output_path(ROOT / "womens_soccer_action_photo_research_next.md")
+OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV = output_path(ROOT / "womens_soccer_action_photo_research_next.csv")
+OUT_ACTION_PHOTO_RESEARCH_NEXT_JSON = output_path(ROOT / "womens_soccer_action_photo_research_next.json")
 OUT_CLOSURE_SUMMARY_MD = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.md")
 OUT_CLOSURE_SUMMARY_CSV = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.csv")
 OUT_CLOSURE_SUMMARY_JSON = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.json")
+ACTION_PHOTO_RESEARCH_RETURN_INTAKE = Path("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv")
+ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE = Path("data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv")
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -361,6 +366,54 @@ OPERATOR_FOCUS_FIELDS = [
     "open_next_row_ref",
     "why_row_matters",
     "next_manual_action",
+    "do_not_do",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+ACTION_PHOTO_RESEARCH_NEXT_FIELDS = [
+    "research_next_rank",
+    "focus_rank",
+    "candidate_action_rank",
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_name",
+    "priority_label",
+    "focus_bucket",
+    "source_tier",
+    "source_domain",
+    "source_candidate_url",
+    "candidate_page_url_needed",
+    "evidence_url_needed",
+    "identity_anchor_url_needed",
+    "official_profile_url_needed",
+    "source_priority_row_ref",
+    "candidate_action_row_ref",
+    "operator_focus_row_ref",
+    "action_photo_starter_intake_file",
+    "research_return_intake_file",
+    "paste_fields_to_fill",
+    "candidate_ready_for_later_human_download_decision_review",
+    "manual_next_action",
     "do_not_do",
     "download_approved",
     "source_url",
@@ -1861,6 +1914,215 @@ def render_operator_focus(rows: List[Mapping[str, str]], generated_at: str) -> s
     return "\n".join(lines) + "\n"
 
 
+def action_photo_research_next_rows(focus_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    paste_fields = "|".join(
+        [
+            "candidate_photo_url",
+            "evidence_url",
+            "evidence_summary",
+            "identity_anchor_url",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "operator_verify_required",
+        ]
+    )
+    output: List[Dict[str, str]] = []
+    for row in focus_rows:
+        focus_rank = clean(row.get("focus_rank"))
+        candidate_action_ref = clean(row.get("candidate_action_row_ref"))
+        output.append(
+            {
+                "research_next_rank": "0",
+                "focus_rank": focus_rank,
+                "candidate_action_rank": candidate_action_ref.split("#row=")[-1] if "#row=" in candidate_action_ref else "",
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "player_name": clean(row.get("player_name")),
+                "priority_label": clean(row.get("priority_label")),
+                "focus_bucket": clean(row.get("focus_bucket")),
+                "source_tier": clean(row.get("source_tier")),
+                "source_domain": clean(row.get("source_domain")),
+                "source_candidate_url": clean(row.get("source_candidate_url")),
+                "candidate_page_url_needed": "human-provided candidate/source page URL only; not a hotlinked image file, screenshot, cached binary, or thumbnail",
+                "evidence_url_needed": "caption, recap, roster/profile, source page, match report, or team/player page that supports identity and action context",
+                "identity_anchor_url_needed": "official roster, player profile, team page, league page, or match/event page that confirms player/team/current context",
+                "official_profile_url_needed": "yes" if not clean(row.get("official_profile_url")) else "no",
+                "source_priority_row_ref": clean(row.get("source_priority_row_ref")),
+                "candidate_action_row_ref": candidate_action_ref,
+                "operator_focus_row_ref": f"{OUT_OPERATOR_FOCUS_CSV.as_posix()}#row={focus_rank}",
+                "action_photo_starter_intake_file": ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE.as_posix(),
+                "research_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+                "paste_fields_to_fill": paste_fields,
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "manual_next_action": "Open the source/focus refs manually, collect candidate page URL, evidence URL, identity anchor, and conservative rights/identity metadata, then paste complete human-reviewed rows into the action-photo research return intake; do not fetch, download, approve, render, move, or publish.",
+                "do_not_do": "Do not fetch sources, download images, write assets/headshots, approve candidates, create .approved markers, mark render-ready, move files, or publish.",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                **guardrails(),
+            }
+        )
+    priority = {
+        "1_duplicate_transfer_loan_stale_profile_check": 10,
+        "2_p0_roster_or_source_verify": 20,
+        "3_profile_or_official_page_gap": 30,
+        "4_gray_area_or_reputable_lead": 40,
+        "5_p1_source_followup": 50,
+        "6_future_intake_prep_only": 60,
+        "7_metadata_watch": 70,
+    }
+    output.sort(
+        key=lambda item: (
+            priority.get(item["focus_bucket"], 999),
+            LEAGUE_ORDER.get(item["league_id"], 999),
+            clean(item.get("team_name")),
+            clean(item.get("player_name")),
+            clean(item.get("source_candidate_url")),
+        )
+    )
+    for index, row in enumerate(output, start=1):
+        row["research_next_rank"] = str(index)
+    return output
+
+
+def validate_action_photo_research_next_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen_refs = set()
+    required = [
+        "research_next_rank",
+        "focus_rank",
+        "scope_id",
+        "league_id",
+        "team_id",
+        "team_name",
+        "source_candidate_url",
+        "candidate_page_url_needed",
+        "evidence_url_needed",
+        "identity_anchor_url_needed",
+        "operator_focus_row_ref",
+        "action_photo_starter_intake_file",
+        "research_return_intake_file",
+        "paste_fields_to_fill",
+        "manual_next_action",
+        "do_not_do",
+    ]
+    required_paste_fields = {
+        "candidate_photo_url",
+        "evidence_url",
+        "evidence_summary",
+        "identity_anchor_url",
+        "source_url",
+        "entity_id",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+        "operator_verify_required",
+    }
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_RESEARCH_NEXT_FIELDS}
+        ref_key = normalized["operator_focus_row_ref"] or f"row:{index}"
+        if ref_key in seen_refs:
+            issues.append({"row": str(index), "field": "operator_focus_row_ref", "issue": "duplicate_operator_focus_row_ref"})
+        seen_refs.add(ref_key)
+        for field in required:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_action_photo_research_next_field_blank"})
+        if normalized["research_return_intake_file"] != ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix():
+            issues.append({"row": str(index), "field": "research_return_intake_file", "issue": "research_return_intake_file_must_target_action_photo_return_intake"})
+        if normalized["action_photo_starter_intake_file"] != ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE.as_posix():
+            issues.append({"row": str(index), "field": "action_photo_starter_intake_file", "issue": "starter_intake_file_must_target_womens_soccer_action_photo_starter"})
+        pasted_fields = {field for field in normalized["paste_fields_to_fill"].split("|") if field}
+        if not required_paste_fields.issubset(pasted_fields):
+            issues.append({"row": str(index), "field": "paste_fields_to_fill", "issue": "action_photo_research_next_missing_required_paste_fields"})
+        for field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use", "operator_decision", "operator_notes"]:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_human_decision_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "action_photo_research_next_must_not_approve_downloads"})
+        if normalized["candidate_ready_for_later_human_download_decision_review"] != "no":
+            issues.append({"row": str(index), "field": "candidate_ready_for_later_human_download_decision_review", "issue": "generated_rows_must_not_be_candidate_ready"})
+        for field in [
+            "approval_state_change",
+            "candidate_state_change",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "action_photo_research_next_guardrail_field_must_stay_false"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "action_photo_research_next_must_remain_review_only"})
+    return issues
+
+
+def render_action_photo_research_next(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    bucket_counts = count_by(rows, "focus_bucket")
+    lines = [
+        "# Women's Soccer Action-Photo Research Next Board",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only bridge from women's soccer athlete verification/operator-focus rows to the action-photo research return intake. It tells Mike which team/player/source rows need manual candidate-page, evidence, and identity anchors next. It does not fetch sources, download images, approve assets, write headshots, create `.approved` markers, mark render-ready, move files, or publish.",
+        "",
+        "## Operator Contract",
+        "",
+        f"- Paste target: `{ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix()}`",
+        f"- Starter context: `{ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE.as_posix()}`",
+        "- Collect URLs/evidence only: candidate/source page URL, evidence URL, identity anchor URL, conservative rights class, identity confidence, intended review-only use, and operator verification flag.",
+        "- Existing `candidate_photo_url` paste field is human-provided only and should point to a candidate/source page, not a direct image binary, screenshot, cached file, or thumbnail.",
+        "- Candidate-ready means later human download-decision review only; this generated board never approves downloads, assets, renders, or publishing.",
+        "",
+        "## Summary",
+        "",
+        f"- Research-next rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Candidate-ready generated rows: `{sum(1 for row in rows if clean(row.get('candidate_ready_for_later_human_download_decision_review')).lower() == 'yes')}`",
+        f"- Blank source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Focus Buckets",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in bucket_counts.items())
+    lines += [
+        "",
+        "## Rows",
+        "",
+        "| Rank | Focus | League | Team | Player | Source | Needed | Paste Target |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    needed = "candidate_page_url|evidence_url|identity_anchor_url|source_url|rights_class|identity_confidence|intended_review_only_use"
+    for row in rows[:60]:
+        lines.append(
+            "| {rank} | {focus} | {league} | {team} | {player} | {source} | {needed} | `{target}` |".format(
+                rank=clean(row.get("research_next_rank")),
+                focus=clean(row.get("focus_bucket")),
+                league=clean(row.get("league_id")),
+                team=clean(row.get("team_name")).replace("|", "/"),
+                player=clean(row.get("player_name")).replace("|", "/"),
+                source=clean(row.get("source_candidate_url")).replace("|", "%7C"),
+                needed=needed,
+                target=clean(row.get("research_return_intake_file")),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def closure_summary_rows(
     queue_rows: List[Mapping[str, str]],
     action_rows: List[Mapping[str, str]],
@@ -1869,6 +2131,7 @@ def closure_summary_rows(
     candidate_rows: List[Mapping[str, str]],
     photo_readiness: List[Mapping[str, str]],
     focus_rows: List[Mapping[str, str]],
+    action_photo_research_next: List[Mapping[str, str]],
     external_rows: List[Mapping[str, str]],
 ) -> List[Dict[str, str]]:
     def common(row_source: List[Mapping[str, str]], artifact_group: str, artifact_label: str, artifact_path: str, manual_next_action: str, operator_open_after: str) -> Dict[str, str]:
@@ -1926,6 +2189,14 @@ def closure_summary_rows(
         }
 
     rows = [
+        common(
+            action_photo_research_next,
+            "action_photo_research_next",
+            "Women's soccer action-photo research next",
+            OUT_ACTION_PHOTO_RESEARCH_NEXT_MD.as_posix(),
+            "Collect candidate/source page URL, evidence URL, identity anchor, and conservative rights/identity metadata; paste only into the action-photo research return intake.",
+            OUT_OPERATOR_FOCUS_MD.as_posix(),
+        ),
         common(
             focus_rows,
             "operator_focus",
@@ -2065,7 +2336,19 @@ def main() -> int:
     candidate_rows = candidate_action_rows(source_rows, triage_rows)
     photo_readiness = photo_readiness_rows(candidate_rows)
     focus_rows = operator_focus_rows(candidate_rows)
-    closure_rows = closure_summary_rows(rows, action_rows, source_rows, triage_rows, candidate_rows, photo_readiness, focus_rows, external_rows)
+    action_photo_research_next = action_photo_research_next_rows(focus_rows)
+    action_photo_research_next_issues = validate_action_photo_research_next_rows(action_photo_research_next)
+    closure_rows = closure_summary_rows(
+        rows,
+        action_rows,
+        source_rows,
+        triage_rows,
+        candidate_rows,
+        photo_readiness,
+        focus_rows,
+        action_photo_research_next,
+        external_rows,
+    )
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, generated_at))
     write_csv(OUT_NEXT_ACTIONS_CSV, action_rows, NEXT_ACTION_FIELDS)
@@ -2080,6 +2363,8 @@ def main() -> int:
     write_text(OUT_PHOTO_READINESS_MD, render_photo_readiness(photo_readiness, generated_at))
     write_csv(OUT_OPERATOR_FOCUS_CSV, focus_rows, OPERATOR_FOCUS_FIELDS)
     write_text(OUT_OPERATOR_FOCUS_MD, render_operator_focus(focus_rows, generated_at))
+    write_csv(OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV, action_photo_research_next, ACTION_PHOTO_RESEARCH_NEXT_FIELDS)
+    write_text(OUT_ACTION_PHOTO_RESEARCH_NEXT_MD, render_action_photo_research_next(action_photo_research_next, action_photo_research_next_issues, generated_at))
     write_csv(OUT_CLOSURE_SUMMARY_CSV, closure_rows, CLOSURE_SUMMARY_FIELDS)
     write_text(OUT_CLOSURE_SUMMARY_MD, render_closure_summary(closure_rows, generated_at))
     manifest = {
@@ -2153,6 +2438,20 @@ def main() -> int:
         "operator_focus_download_approved_yes_rows": sum(1 for row in focus_rows if clean(row.get("download_approved")).lower() == "yes"),
         "operator_focus_blank_source_url_rows": sum(1 for row in focus_rows if not clean(row.get("source_url"))),
         "operator_focus_bucket_counts": count_by(focus_rows, "focus_bucket"),
+        "action_photo_research_next_md": OUT_ACTION_PHOTO_RESEARCH_NEXT_MD.as_posix(),
+        "action_photo_research_next_csv": OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV.as_posix(),
+        "action_photo_research_next_json": OUT_ACTION_PHOTO_RESEARCH_NEXT_JSON.as_posix(),
+        "action_photo_research_next_rows": len(action_photo_research_next),
+        "action_photo_research_next_validation_issue_count": len(action_photo_research_next_issues),
+        "action_photo_research_next_download_approved_yes_rows": sum(
+            1 for row in action_photo_research_next if clean(row.get("download_approved")).lower() == "yes"
+        ),
+        "action_photo_research_next_candidate_ready_rows": sum(
+            1
+            for row in action_photo_research_next
+            if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == "yes"
+        ),
+        "action_photo_research_next_blank_source_url_rows": sum(1 for row in action_photo_research_next if not clean(row.get("source_url"))),
         "closure_summary_md": OUT_CLOSURE_SUMMARY_MD.as_posix(),
         "closure_summary_csv": OUT_CLOSURE_SUMMARY_CSV.as_posix(),
         "closure_summary_rows": len(closure_rows),
@@ -2369,6 +2668,47 @@ def main() -> int:
         },
     )
     write_json(
+        OUT_ACTION_PHOTO_RESEARCH_NEXT_JSON,
+        {
+            "version": VERSION,
+            "status": "womens_soccer_action_photo_research_next_ready"
+            if not action_photo_research_next_issues
+            else "womens_soccer_action_photo_research_next_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "research_next_rows": len(action_photo_research_next),
+            "validation_issue_count": len(action_photo_research_next_issues),
+            "validation_issues": action_photo_research_next_issues,
+            "download_approved_yes_rows": sum(
+                1 for row in action_photo_research_next if clean(row.get("download_approved")).lower() == "yes"
+            ),
+            "candidate_ready_for_later_human_download_decision_review_rows": sum(
+                1
+                for row in action_photo_research_next
+                if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == "yes"
+            ),
+            "blank_source_url_rows": sum(1 for row in action_photo_research_next if not clean(row.get("source_url"))),
+            "blank_rights_class_rows": sum(1 for row in action_photo_research_next if not clean(row.get("rights_class"))),
+            "blank_identity_confidence_rows": sum(1 for row in action_photo_research_next if not clean(row.get("identity_confidence"))),
+            "scope_counts": count_by(action_photo_research_next, "scope_id"),
+            "focus_bucket_counts": count_by(action_photo_research_next, "focus_bucket"),
+            "research_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+            "action_photo_starter_intake_file": ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE.as_posix(),
+            "worksheet_md": OUT_ACTION_PHOTO_RESEARCH_NEXT_MD.as_posix(),
+            "worksheet_csv": OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    write_json(
         OUT_CLOSURE_SUMMARY_JSON,
         {
             "version": VERSION,
@@ -2397,7 +2737,25 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "photo_readiness_rows": len(photo_readiness), "operator_focus_rows": len(focus_rows), "closure_summary_rows": len(closure_rows), "queue": OUT_MD.as_posix()}, indent=2))
+    print(
+        json.dumps(
+            {
+                "version": VERSION,
+                "status": manifest["status"],
+                "queue_rows": len(rows),
+                "next_action_rows": len(action_rows),
+                "source_priority_rows": len(source_rows),
+                "review_triage_rows": len(triage_rows),
+                "candidate_action_rows": len(candidate_rows),
+                "photo_readiness_rows": len(photo_readiness),
+                "operator_focus_rows": len(focus_rows),
+                "action_photo_research_next_rows": len(action_photo_research_next),
+                "closure_summary_rows": len(closure_rows),
+                "queue": OUT_MD.as_posix(),
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

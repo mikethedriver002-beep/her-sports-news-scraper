@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Photo Review Readiness Board
 
-Generated: `2026-06-29T05:42:22.538606+00:00`
+Generated: `2026-06-29T22:39:18.754226+00:00`
 
 Review-only board for deciding what must happen before a source-candidate row can become manual photo-review work. It does not download images, approve assets, write headshots, create `.approved` markers, move files, or publish.
 `source_candidate_url` remains advisory metadata. Generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.

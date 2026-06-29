@@ -1,0 +1,38 @@
+{
+  "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
+  "status": "womens_soccer_action_photo_research_next_ready",
+  "generated_at_utc": "2026-06-29T22:39:18.754226+00:00",
+  "research_next_rows": 95,
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "download_approved_yes_rows": 0,
+  "candidate_ready_for_later_human_download_decision_review_rows": 0,
+  "blank_source_url_rows": 95,
+  "blank_rights_class_rows": 95,
+  "blank_identity_confidence_rows": 95,
+  "scope_counts": {
+    "europe_top_flight": 71,
+    "nwsl": 24
+  },
+  "focus_bucket_counts": {
+    "1_duplicate_transfer_loan_stale_profile_check": 12,
+    "2_p0_roster_or_source_verify": 71,
+    "3_profile_or_official_page_gap": 5,
+    "4_gray_area_or_reputable_lead": 7
+  },
+  "research_return_intake_file": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+  "action_photo_starter_intake_file": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+  "worksheet_md": "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md",
+  "worksheet_csv": "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv",
+  "review_only": true,
+  "approval_state_change": false,
+  "candidate_state_change": false,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
