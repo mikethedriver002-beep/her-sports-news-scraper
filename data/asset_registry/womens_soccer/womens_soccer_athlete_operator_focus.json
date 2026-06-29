@@ -1,12 +1,37 @@
 {
   "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
   "status": "athlete_operator_focus_ready",
-  "generated_at_utc": "2026-06-29T05:42:22.538606+00:00",
+  "generated_at_utc": "2026-06-29T08:23:01.933059+00:00",
   "focus_rows": 95,
   "p0_rows": 75,
   "p1_rows": 14,
   "duplicate_transfer_loan_stale_rows": 12,
   "profile_gap_rows": 8,
+  "identity_manual_verification_rows": 20,
+  "blank_official_profile_url_rows": 95,
+  "action_photo_no_selected_candidate_rows": 95,
+  "identity_verification_status_counts": {
+    "current_team_identity_conflict_requires_manual_resolution": 12,
+    "player_identity_manual_verification_required": 8,
+    "team_or_roster_scope_not_player_specific": 75
+  },
+  "source_proof_status_counts": {
+    "official_source_candidate_manual_verification_required": 87,
+    "official_source_proof_required_before_any_future_intake": 8
+  },
+  "photo_candidate_status_counts": {
+    "europe_source_candidate_not_render_ready": 24,
+    "future_quarantine_download_intake_prep": 40,
+    "nwsl_roster_verify_before_photo_review": 2,
+    "park_gray_area_lead_no_photo_use": 8,
+    "resolve_duplicate_transfer_before_photo_review": 12,
+    "verify_official_page_before_photo_review": 9
+  },
+  "action_photo_candidate_status_counts": {
+    "action_photo_parked_no_candidate_selected_until_official_identity_confirmed": 8,
+    "action_photo_starter_intake_available_no_candidate_selected": 75,
+    "no_action_photo_selection_until_team_status_resolved": 12
+  },
   "download_approved_yes_rows": 0,
   "blank_source_url_rows": 95,
   "focus_bucket_counts": {

@@ -1642,6 +1642,133 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md").write_text(
+        "# Operator focus\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv",
+        [
+            {
+                "focus_rank": "1",
+                "focus_bucket": "2_p0_roster_or_source_verify",
+                "focus_reason_flags": "p0_source_or_roster_row|operator_verify_required",
+                "priority_label": "P0",
+                "manual_action_group": "roster_source_verify",
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "player_name": "Angel Player",
+                "operator_verify_required": "yes",
+                "source_domain": "www.angelcity.com",
+                "source_candidate_url": "https://www.angelcity.com/club/roster",
+                "candidate_entity_id": "nwsl:angel_city_fc:angel_player",
+                "source_proof_status": "official_source_candidate_manual_verification_required",
+                "identity_verification_status": "player_identity_manual_verification_required",
+                "official_profile_url": "",
+                "photo_candidate_status": "nwsl_roster_verify_before_photo_review",
+                "action_photo_candidate_status": "action_photo_starter_intake_available_no_candidate_selected",
+                "action_photo_starter_intake_file": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+            {
+                "focus_rank": "2",
+                "focus_bucket": "4_gray_area_or_reputable_lead",
+                "focus_reason_flags": "gray_area_or_reputable_lead|operator_verify_required",
+                "priority_label": "P2",
+                "manual_action_group": "gray_area_reputable_media_lead",
+                "scope_id": "europe_top_flight",
+                "league_id": "wsl_england",
+                "team_id": "all_teams",
+                "team_name": "WSL England",
+                "player_name": "",
+                "operator_verify_required": "yes",
+                "source_domain": "example.org",
+                "source_candidate_url": "https://example.org/wsl",
+                "candidate_entity_id": "wsl_england:gray_lead",
+                "source_proof_status": "official_source_proof_required_before_any_future_intake",
+                "identity_verification_status": "team_or_roster_scope_not_player_specific",
+                "official_profile_url": "",
+                "photo_candidate_status": "park_gray_area_lead_no_photo_use",
+                "action_photo_candidate_status": "action_photo_parked_no_candidate_selected_until_official_identity_confirmed",
+                "action_photo_starter_intake_file": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "asset_downloads": "false",
+            },
+        ],
+        [
+            "focus_rank",
+            "focus_bucket",
+            "focus_reason_flags",
+            "priority_label",
+            "manual_action_group",
+            "scope_id",
+            "league_id",
+            "team_id",
+            "team_name",
+            "player_name",
+            "operator_verify_required",
+            "source_domain",
+            "source_candidate_url",
+            "candidate_entity_id",
+            "source_proof_status",
+            "identity_verification_status",
+            "official_profile_url",
+            "photo_candidate_status",
+            "action_photo_candidate_status",
+            "action_photo_starter_intake_file",
+            "download_approved",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "review_only",
+            "approval_state_change",
+            "asset_downloads",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.json",
+        {
+            "status": "athlete_operator_focus_ready",
+            "generated_at_utc": "2026-06-27T22:00:00+00:00",
+            "focus_rows": 2,
+            "p0_rows": 1,
+            "identity_manual_verification_rows": 1,
+            "blank_official_profile_url_rows": 2,
+            "action_photo_no_selected_candidate_rows": 2,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 2,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -1719,6 +1846,16 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_athlete_photo_readiness_blank_source_url_rows"] == 2
     assert panel["womens_soccer_athlete_photo_readiness_generated_at"] == "2026-06-27T21:50:00+00:00"
     assert panel["womens_soccer_athlete_photo_readiness_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_operator_focus_status"] == "athlete_operator_focus_ready"
+    assert panel["womens_soccer_athlete_operator_focus_rows"] == 2
+    assert panel["womens_soccer_athlete_operator_focus_p0_rows"] == 1
+    assert panel["womens_soccer_athlete_operator_focus_identity_manual_verification_rows"] == 1
+    assert panel["womens_soccer_athlete_operator_focus_blank_official_profile_url_rows"] == 2
+    assert panel["womens_soccer_athlete_operator_focus_action_photo_no_selected_candidate_rows"] == 2
+    assert panel["womens_soccer_athlete_operator_focus_download_approved_yes_rows"] == 0
+    assert panel["womens_soccer_athlete_operator_focus_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_athlete_operator_focus_generated_at"] == "2026-06-27T22:00:00+00:00"
+    assert panel["womens_soccer_athlete_operator_focus_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_external_research_status"] == "external_research_intake_ready"
     assert panel["womens_soccer_external_research_rows"] == 3
     assert panel["womens_soccer_external_research_nwsl_rows"] == 2
@@ -1757,6 +1894,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer athlete photo review readiness board" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete photo review readiness board data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete photo review readiness board manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete operator focus" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete operator focus data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete operator focus manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer NWSL external research source" for item in panel["file_shortcuts"])
