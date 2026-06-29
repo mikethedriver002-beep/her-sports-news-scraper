@@ -77,6 +77,32 @@ def collect_git_state() -> dict[str, Any]:
     }
 
 
+def collect_origin_main_alignment() -> dict[str, Any]:
+    head = git_value(["rev-parse", "--short", "HEAD"], "")
+    origin_main = git_value(["rev-parse", "--short", "origin/main"], "")
+    merge_base = git_value(["merge-base", "HEAD", "origin/main"], "")[:8]
+    if not head or not origin_main or not merge_base:
+        status = "needs_operator_review"
+        blocker_count = 0
+        detail = "origin/main alignment could not be checked locally"
+    elif merge_base == origin_main:
+        status = "passed"
+        blocker_count = 0
+        detail = "branch contains current origin/main"
+    else:
+        status = "blocked"
+        blocker_count = 1
+        detail = "branch does not contain current origin/main; rebase or recreate from origin/main before continuing"
+    return {
+        "status": status,
+        "blocker_count": blocker_count,
+        "head_commit": head,
+        "origin_main_commit": origin_main,
+        "merge_base_commit": merge_base,
+        "detail": detail,
+    }
+
+
 def collect_runtime_tracking_audit() -> dict[str, Any]:
     tracked_runtime = [
         path
@@ -109,6 +135,7 @@ def workspace_hash(payload: dict[str, Any]) -> str:
     hash_payload = {
         "version": payload["version"],
         "git_state": payload["git_state"],
+        "origin_main_alignment": payload["origin_main_alignment"],
         "directive_validation": payload["directive_validation"],
         "shared_directive_audit": payload["shared_directive_audit"],
         "runtime_tracking_audit": payload["runtime_tracking_audit"],
@@ -122,6 +149,7 @@ def build_rows(payload: dict[str, Any]) -> list[dict[str, str]]:
     directive_blockers = payload["directive_validation"].get("blockers", [])
     shared_paths = payload["shared_directive_audit"]["present_shared_directive_paths"]
     runtime_paths = payload["runtime_tracking_audit"]["tracked_runtime_state_paths"]
+    origin_alignment = payload["origin_main_alignment"]
     dirty_count = payload["git_state"]["dirty_count"]
     status = payload["status"]
     return [
@@ -130,6 +158,19 @@ def build_rows(payload: dict[str, Any]) -> list[dict[str, str]]:
             "status": "needs_operator_review" if dirty_count else "passed",
             "detail": f"branch={payload['git_state']['branch']}; head={payload['git_state']['head_commit']}; dirty_count={dirty_count}",
             "blocker_count": "0",
+            "review_only": "true",
+            "publish_ready": "false",
+        },
+        {
+            "check_id": "current_origin_main_alignment",
+            "status": origin_alignment["status"],
+            "detail": (
+                f"head={origin_alignment['head_commit'] or 'unknown'}; "
+                f"origin_main={origin_alignment['origin_main_commit'] or 'unknown'}; "
+                f"merge_base={origin_alignment['merge_base_commit'] or 'unknown'}; "
+                f"{origin_alignment['detail']}"
+            ),
+            "blocker_count": str(origin_alignment["blocker_count"]),
             "review_only": "true",
             "publish_ready": "false",
         },
@@ -170,6 +211,7 @@ def build_rows(payload: dict[str, Any]) -> list[dict[str, str]]:
 
 def render_markdown(payload: dict[str, Any]) -> str:
     git_state = payload["git_state"]
+    origin_alignment = payload["origin_main_alignment"]
     lines = [
         "# HSD Conductor Workspace Audit",
         "",
@@ -184,6 +226,9 @@ def render_markdown(payload: dict[str, Any]) -> str:
         "",
         f"- Branch: `{git_state['branch']}`",
         f"- HEAD: `{git_state['head_commit']}` - {git_state['head_subject']}",
+        f"- origin/main: `{origin_alignment['origin_main_commit'] or 'unknown'}`",
+        f"- HEAD/origin main merge-base: `{origin_alignment['merge_base_commit'] or 'unknown'}`",
+        f"- Current origin/main alignment: `{origin_alignment['status']}` - {origin_alignment['detail']}",
         f"- Dirty paths: `{git_state['dirty_count']}`",
         f"- Untracked paths: `{git_state['untracked_count']}`",
         "",
@@ -224,10 +269,12 @@ def build_payload() -> dict[str, Any]:
     directive_validation = collect_directive_validation()
     shared_directive_audit = collect_shared_directive_audit()
     runtime_tracking_audit = collect_runtime_tracking_audit()
+    origin_main_alignment = collect_origin_main_alignment()
     collision_blocker_count = (
         len(directive_validation.get("blockers", []))
         + shared_directive_audit["present_shared_directive_count"]
         + runtime_tracking_audit["tracked_runtime_state_count"]
+        + origin_main_alignment["blocker_count"]
     )
     payload: dict[str, Any] = {
         "version": VERSION,
@@ -235,6 +282,7 @@ def build_payload() -> dict[str, Any]:
         "status": "blocked" if collision_blocker_count else "passed",
         "review_only": True,
         "git_state": collect_git_state(),
+        "origin_main_alignment": origin_main_alignment,
         "directive_validation": directive_validation,
         "shared_directive_audit": shared_directive_audit,
         "runtime_tracking_audit": runtime_tracking_audit,
