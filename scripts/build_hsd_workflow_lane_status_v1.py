@@ -86,6 +86,10 @@ INTAKE_FIELDS = [
     "branch",
     "pr",
     "pending_thread",
+    "lane_owner_thread",
+    "last_pr_merged",
+    "restart_needed",
+    "next_packet",
     "owner",
     "last_update_utc",
     "completed_merge_pr",
@@ -424,6 +428,20 @@ def status_tone(status: str) -> str:
     return "unknown"
 
 
+def boolish(value: str) -> bool:
+    return (value or "").strip().lower() in {"1", "true", "yes", "y"}
+
+
+def restart_status(status: str, restart_needed: str, next_packet: str, lane_owner_thread: str) -> str:
+    if boolish(restart_needed):
+        return "restart_ready_from_current_main" if next_packet else "restart_needed_missing_next_packet"
+    if is_stale_exempt_status(status):
+        if next_packet or lane_owner_thread:
+            return "completed_restart_context_available"
+        return "completed_no_restart_requested"
+    return "not_applicable"
+
+
 def lane_rows(
     intake_rows: list[dict[str, str]],
     open_prs: list[dict[str, str]],
@@ -468,6 +486,10 @@ def lane_rows(
         if first_hint and not notes:
             notes = f"worktree={first_hint.get('path', '')}; dirty={first_hint.get('dirty', 'unknown')}; dirty_count={first_hint.get('dirty_count', 'unknown')}"
         pr_value = intake.get("pr", "") or matching_pr.get("url", "")
+        last_pr_merged = intake.get("last_pr_merged", "") or intake.get("completed_merge_pr", "")
+        lane_owner_thread = intake.get("lane_owner_thread", "")
+        restart_needed = intake.get("restart_needed", "")
+        next_packet = intake.get("next_packet", "")
         staleness = lane_staleness(
             intake,
             status,
@@ -486,6 +508,11 @@ def lane_rows(
             "branch": branch,
             "pr": pr_value,
             "pending_thread": intake.get("pending_thread", ""),
+            "lane_owner_thread": lane_owner_thread,
+            "last_pr_merged": last_pr_merged,
+            "restart_needed": restart_needed,
+            "next_packet": next_packet,
+            "restart_status": restart_status(status, restart_needed, next_packet, lane_owner_thread),
             "owner": intake.get("owner", ""),
             "last_update_utc": intake.get("last_update_utc", ""),
             "completed_merge_pr": intake.get("completed_merge_pr", ""),
@@ -534,24 +561,39 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- Dirty state: `{git_state['dirty_count']}` changed/untracked paths",
         f"- Open PRs detected: `{len(payload['open_prs'])}`",
         f"- Stale lane brakes: `{payload['stale_lane_count']}`",
+        f"- Restart-needed lanes: `{payload['restart_needed_lane_count']}`",
         f"- Intake file: `{payload['intake_path']}`",
         "",
         "## Lane Dashboard",
         "",
-        "| Lane | Status | Source | Stale brake | Branch | PR | Pending thread | Completed merge | Blocker | Next action |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Lane | Status | Source | Stale brake | Restart | Branch | PR | Pending thread | Owner thread | Last merged PR | Next packet | Blocker | Next action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["lanes"]:
         pr = row["pr"] or "-"
         pending_thread = row["pending_thread"] or "-"
+        lane_owner_thread = row["lane_owner_thread"] or "-"
         branch = row["branch"] or "-"
-        completed = row["completed_merge_pr"] or row["completed_merge_commit"] or "-"
-        if row["completed_merge_pr"] and row["completed_merge_commit"]:
-            completed = f"{row['completed_merge_pr']} / `{row['completed_merge_commit']}`"
+        last_pr_merged = row["last_pr_merged"] or "-"
+        next_packet = row["next_packet"] or "-"
         blocker = row["blocker"] or "-"
         lines.append(
-            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{row['staleness_status']}` | `{branch}` | {pr} | {pending_thread} | {completed} | {blocker} | {row['next_action']} |"
+            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{row['staleness_status']}` | `{row['restart_status']}` | `{branch}` | {pr} | {pending_thread} | {lane_owner_thread} | {last_pr_merged} | {next_packet} | {blocker} | {row['next_action']} |"
         )
+    restart_rows = [row for row in payload["lanes"] if row.get("restart_needed", "").lower() == "true"]
+    lines.extend(
+        [
+            "",
+            "## Restart Cues",
+            "",
+            f"- Restart-needed lanes: `{len(restart_rows)}`",
+            "- Restart cues are manual conductor prompts only; start any resumed packet from current `origin/main`.",
+        ]
+    )
+    for row in restart_rows:
+        packet = row["next_packet"] or "missing next_packet"
+        owner = row["lane_owner_thread"] or row["pending_thread"] or "missing lane_owner_thread"
+        lines.append(f"- `{row['lane_id']}`: {packet}; owner thread: `{owner}`; last merged PR: `{row['last_pr_merged'] or '-'}`")
     stale_rows = [row for row in payload["lanes"] if row.get("stale_lane_brake") == "true"]
     lines.extend(
         [
@@ -602,11 +644,13 @@ def render_markdown(payload: dict[str, Any]) -> str:
             "",
             "Optional intake rows can live in `operator/inbox/workflow_lane_status_intake.csv` with these columns:",
             "",
-            "`lane_id,status,branch,pr,pending_thread,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
+            "`lane_id,status,branch,pr,pending_thread,lane_owner_thread,last_pr_merged,restart_needed,next_packet,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
             "",
             "A starter example lives at `operator/inbox/workflow_lane_status_intake.example.csv`; copy rows into the real intake only after conductor review.",
             "",
             "Use `pending_thread` for a delegated Codex thread id or URL that has work in progress but no PR yet.",
+            "",
+            "Use `lane_owner_thread`, `last_pr_merged`, `restart_needed`, and `next_packet` to make merged durable lanes restartable from current main after a merge wave.",
             "",
             "If no intake row exists, the dashboard adds best-effort worktree hints from local `codex/` branches and marks them for conductor check.",
         ]
@@ -668,6 +712,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "worktree_hint_lane_count": sum(1 for row in rows if row["status_source"] == "worktree_hint"),
         "heartbeat_lane_count": sum(1 for row in rows if row["heartbeat"] == "true"),
         "workflow_overhaul_heartbeat": workflow_heartbeat,
+        "restart_needed_lane_count": sum(1 for row in rows if boolish(row.get("restart_needed", ""))),
         "stale_lane_count": sum(1 for row in rows if row["stale_lane_brake"] == "true"),
         "stale_lane_threshold_hours": args.stale_after_hours,
         "blocked_lane_count": sum(1 for row in rows if row["status_tone"] == "blocked"),
@@ -691,6 +736,11 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "branch",
             "pr",
             "pending_thread",
+            "lane_owner_thread",
+            "last_pr_merged",
+            "restart_needed",
+            "next_packet",
+            "restart_status",
             "owner",
             "last_update_utc",
             "completed_merge_pr",
@@ -741,6 +791,7 @@ def main(argv: list[str] | None = None) -> int:
                 "completed_lane_count": payload["completed_lane_count"],
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
                 "heartbeat_lane_count": payload["heartbeat_lane_count"],
+                "restart_needed_lane_count": payload["restart_needed_lane_count"],
                 "stale_lane_count": payload["stale_lane_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
                 "guardrail_warning_count": payload["guardrail_warning_count"],

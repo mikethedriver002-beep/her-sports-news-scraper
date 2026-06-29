@@ -122,11 +122,13 @@ When `HSD_RUN_OUTPUT_DIR` is set, the dashboard writes into the run-scoped outpu
 
 Optional human-maintained intake can live at `operator/inbox/workflow_lane_status_intake.csv` with these columns:
 
-`lane_id,status,branch,pr,pending_thread,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`
+`lane_id,status,branch,pr,pending_thread,lane_owner_thread,last_pr_merged,restart_needed,next_packet,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`
 
 Use `operator/inbox/workflow_lane_status_intake.example.csv` as a copyable review-only starter for conductor-visible completion rows. It is an example/template only; it does not become status truth unless a human copies reviewed rows into `operator/inbox/workflow_lane_status_intake.csv`.
 
 Use `pending_thread` for a delegated Codex thread id or URL that has active or waiting work but no PR yet. A pending thread is a visibility cue only; the conductor still checks the thread, branch, guardrails, and next action before nudging another lane.
+
+Use `lane_owner_thread`, `last_pr_merged`, `restart_needed`, and `next_packet` after a merge wave when a durable lane should be restarted from current `origin/main`. These are conductor restart cues only; they do not create threads, branches, PRs, assets, sources, approvals, publish-ready movement, or publishing.
 
 When no intake row exists, the dashboard also scans local Git worktrees for `codex/` branches whose names match lane hints such as `renderer`, `asset`, `games`, `breaking`, `copy`, `qa`, or `workflow`. These rows are marked as worktree hints and should be checked by the conductor before treating them as active lane truth. Use `--skip-worktree-lookup` for fixture tests or intentionally isolated runs.
 
