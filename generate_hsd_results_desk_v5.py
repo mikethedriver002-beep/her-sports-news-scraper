@@ -260,6 +260,10 @@ GAME_SOURCE_CONFIRMATION_NEXT_ACTION_FIELDS = [
     "proof_row_to_open",
     "manual_intake_path",
     "source_confirmation_next_action",
+    "manual_confirmation_return_fields",
+    "operator_checked_source_url",
+    "operator_source_confirmation_status",
+    "operator_source_confirmation_notes",
     "review_only",
     "approval_state_change",
     "source_enablement",
@@ -1838,6 +1842,10 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
                 "proof_row_to_open": proof_row,
                 "manual_intake_path": clean(item.get("proof_manual_intake_path")),
                 "source_confirmation_next_action": source_confirmation_next_action_text(item, priority),
+                "manual_confirmation_return_fields": "operator_checked_source_url, operator_source_confirmation_status, operator_source_confirmation_notes",
+                "operator_checked_source_url": "",
+                "operator_source_confirmation_status": "",
+                "operator_source_confirmation_notes": "",
                 "review_only": "Yes",
                 "approval_state_change": "none",
                 "source_enablement": "none_existing_local_artifacts_only",
@@ -1860,9 +1868,17 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
 def game_source_confirmation_next_action_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     counts: Dict[str, int] = defaultdict(int)
     gate_counts: Dict[str, int] = defaultdict(int)
+    blank_manual_return_fields = True
     for row in rows:
         counts[clean(row.get("review_priority"))] += 1
         gate_counts[clean(row.get("recap_render_human_review_gate"))] += 1
+        for field in [
+            "operator_checked_source_url",
+            "operator_source_confirmation_status",
+            "operator_source_confirmation_notes",
+        ]:
+            if clean(row.get(field)):
+                blank_manual_return_fields = False
     return {
         "version": "v1-review-only-game-source-confirmation-next-action",
         "generated_at_utc": now_iso(),
@@ -1871,6 +1887,7 @@ def game_source_confirmation_next_action_summary(rows: List[Dict[str, Any]]) -> 
         "approval_state_changes": False,
         "publish_actions": False,
         "source_enablement": False,
+        "manual_return_fields_prefilled": not blank_manual_return_fields,
         "rows": len(rows),
         "manual_confirmation_required": counts.get("P0_manual_confirmation_required", 0),
         "freshness_or_lag_check": counts.get("P1_source_freshness_or_lag_check", 0),
@@ -1901,6 +1918,7 @@ def game_source_confirmation_next_action_report_md(summary: Dict[str, Any], rows
     ]
     for key in ["rows", "manual_confirmation_required", "freshness_or_lag_check", "final_recap_source_review", "result_pending_monitor", "source_audit_no_fix", "recap_render_human_review_required", "blocked_before_recap_render"]:
         lines.append(f"- {key}: `{summary.get(key)}`")
+    lines.append(f"- manual_return_fields_prefilled: `{summary.get('manual_return_fields_prefilled')}`")
     lines.extend(["", "## Review Order", ""])
     if not rows:
         lines.append("No game source confirmation rows were generated in this run.")
@@ -1912,6 +1930,7 @@ def game_source_confirmation_next_action_report_md(summary: Dict[str, Any], rows
         lines.append(f"   - recap_render={row.get('recap_render_readiness') or 'n/a'} | gate={row.get('recap_render_human_review_gate')}")
         lines.append(f"   - open={row.get('source_row_to_open')} | proof={row.get('proof_row_to_open') or 'not required'} | intake={row.get('manual_intake_path') or 'not required'}")
         lines.append(f"   - next={row.get('source_confirmation_next_action')}")
+        lines.append(f"   - return_fields={row.get('manual_confirmation_return_fields')}")
     if len(rows) > 80:
         lines.append(f"Showing first 80 of {len(rows)} rows. Open `game_source_confirmation_next_action_v1.csv` for the full board.")
     return "\n".join(lines) + "\n"
