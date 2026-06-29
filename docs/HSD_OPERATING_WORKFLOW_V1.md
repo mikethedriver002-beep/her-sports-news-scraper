@@ -76,6 +76,7 @@ Research alerts should be non-blocking. They tell Mike when an external tool wou
 
 Primary delivery: email to Mike using `docs/HSD_RESEARCH_ALERT_EMAIL_TEMPLATE.md`.
 Operational helper: build the upload bundle and Gmail-ready draft with `scripts/build_hsd_external_research_packet_v1.py`; usage notes live in `docs/HSD_RESEARCH_PACKET_BUILDER.md`.
+Alert-only helper: build an email-ready alert and paste prompt from an existing packet path with `scripts/build_hsd_research_alert_draft_v1.py`.
 
 Default recipient: `michael@brieffactory.com`.
 
