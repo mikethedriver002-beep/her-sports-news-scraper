@@ -59,6 +59,8 @@ OUT_RESEARCH_RETURN_INTAKE_JSON = output_path(ROOT / "review_only_action_photo_r
 OUT_RESEARCH_RUN_BUNDLE_CSV = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.csv")
 OUT_RESEARCH_RUN_BUNDLE_MD = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.md")
 OUT_RESEARCH_RUN_BUNDLE_JSON = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.json")
+OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD = output_path(ROOT / "review_only_action_photo_external_research_packet_prompt_v1.md")
+OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON = output_path(ROOT / "review_only_action_photo_external_research_packet_manifest_v1.json")
 OUT_QUARANTINE_PREFLIGHT_CSV = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.csv")
 OUT_QUARANTINE_PREFLIGHT_MD = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.md")
 OUT_QUARANTINE_PREFLIGHT_JSON = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.json")
@@ -3757,6 +3759,12 @@ def render_action_photo_research_return_intake(rows: List[Mapping[str, str]], is
 
 def research_run_bundle_artifact_paths() -> Dict[str, str]:
     return {
+        "source_map_board_md": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_MD.as_posix(),
+        "source_map_board_csv": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_CSV.as_posix(),
+        "source_map_board_json": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_JSON.as_posix(),
+        "source_discovery_board_md": OUT_SOURCE_DISCOVERY_BOARD_MD.as_posix(),
+        "source_discovery_board_csv": OUT_SOURCE_DISCOVERY_BOARD_CSV.as_posix(),
+        "source_discovery_board_json": OUT_SOURCE_DISCOVERY_BOARD_JSON.as_posix(),
         "operator_worksheet_md": OUT_OPERATOR_WORKSHEET_MD.as_posix(),
         "operator_worksheet_csv": OUT_OPERATOR_WORKSHEET_CSV.as_posix(),
         "operator_worksheet_json": OUT_OPERATOR_WORKSHEET_JSON.as_posix(),
@@ -3766,6 +3774,8 @@ def research_run_bundle_artifact_paths() -> Dict[str, str]:
         "return_intake_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
         "return_intake_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
         "return_intake_json": OUT_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
+        "external_research_prompt_md": OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD.as_posix(),
+        "external_research_manifest_json": OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON.as_posix(),
     }
 
 
@@ -4170,6 +4180,133 @@ def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issu
             )
         )
     return "\n".join(lines) + "\n"
+
+
+def external_research_packet_manifest(
+    source_map_board_rows: List[Mapping[str, str]],
+    source_discovery_rows: List[Mapping[str, str]],
+    research_packet_rows: List[Mapping[str, str]],
+    research_return_rows: List[Mapping[str, str]],
+    research_run_bundle_rows: List[Mapping[str, str]],
+    generated_at: str,
+) -> Dict[str, Any]:
+    artifact_paths = research_run_bundle_artifact_paths()
+    lane_counts: Dict[str, int] = {}
+    for row in research_packet_rows:
+        lane = clean(row.get("researcher_lane"))
+        lane_counts[lane] = lane_counts.get(lane, 0) + 1
+    return {
+        "version": VERSION,
+        "status": "action_photo_external_research_packet_export_ready",
+        "generated_at_utc": generated_at,
+        "artifact_paths": artifact_paths,
+        "prompt_md": OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD.as_posix(),
+        "manifest_json": OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON.as_posix(),
+        "source_map_board_rows": len(source_map_board_rows),
+        "source_discovery_board_rows": len(source_discovery_rows),
+        "research_task_rows": len(research_packet_rows),
+        "research_return_intake_rows": len(research_return_rows),
+        "bundle_steps": len(research_run_bundle_rows),
+        "researcher_lane_counts": lane_counts,
+        "paste_back_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+        "operator_worksheet_target": OUT_OPERATOR_WORKSHEET_CSV.as_posix(),
+        "paste_back_schema": RESEARCH_PACKET_RETURN_COLUMNS,
+        "download_approved_yes_rows": sum(1 for row in research_return_rows if clean(row.get("download_approved")) == "yes"),
+        "blank_source_url_rows": sum(1 for row in research_return_rows if not clean(row.get("source_url"))),
+        "manual_operator_fields_default_blank": all(
+            not clean(row.get(field))
+            for row in research_return_rows
+            for field in ["candidate_photo_url", "evidence_url", "evidence_summary", "identity_anchor_url", "source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use", "notes", "manual_reviewer"]
+        ),
+        "review_only": True,
+        "artifact_only": True,
+        "source_fetching": False,
+        "source_scraping": False,
+        "source_auto_enablement": False,
+        "asset_downloads": False,
+        "automatic_downloads": False,
+        "approval_state_change": False,
+        "auto_approval": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "publishing": False,
+        "email_sending": False,
+        "paid_apis": False,
+    }
+
+
+def render_external_research_packet_prompt(manifest: Mapping[str, Any]) -> str:
+    artifact_paths = manifest["artifact_paths"]
+    schema = ",".join(RESEARCH_PACKET_RETURN_COLUMNS)
+    lane_counts = manifest["researcher_lane_counts"]
+    lines = [
+        "# HSD Review-Only Action-Photo External Research Packet",
+        "",
+        f"Generated: `{manifest['generated_at_utc']}`",
+        "",
+        "Use this as the exact prompt/export glue for ChatGPT Pro, Gemini, or manual research. It summarizes the local review-only action-photo source-map board, candidate research packet, run bundle, and paste-back target without fetching sources or downloading assets.",
+        "",
+        "## What Mike Should Do Externally",
+        "",
+        "1. Open the local artifacts listed below.",
+        "2. Paste this prompt plus the relevant task rows into ChatGPT Pro, Gemini, or your manual research notes.",
+        "3. Ask for URL/evidence rows only using the exact CSV schema below.",
+        f"4. Paste returned rows into `{manifest['paste_back_target']}`.",
+        "5. Ask Codex/conductor to validate the pasted intake before any separate human quarantine-download decision.",
+        "",
+        "## Guardrails",
+        "",
+        "- Review-only and artifact-only.",
+        "- No paid APIs.",
+        "- No source fetching or scraping from this local helper.",
+        "- No automatic downloads.",
+        "- No source auto-enablement.",
+        "- No email sending.",
+        "- No auto-approval or approval-state changes.",
+        "- No headshot writes.",
+        "- No `.approved` markers.",
+        "- No publish-ready lane or file movement.",
+        "- No publishing.",
+        "- Leave manual operator fields blank unless Mike/human research fills them.",
+        "",
+        "## Local Artifacts To Attach Or Paste",
+        "",
+    ]
+    for key, path in artifact_paths.items():
+        lines.append(f"- `{key}`: `{path}`")
+    lines += [
+        "",
+        "## Exact Paste-Back Schema",
+        "",
+        "```csv",
+        schema,
+        "```",
+        "",
+        "Return only rows for the candidate IDs you can support with evidence. Use `source_url` as the candidate/source page URL, not a downloaded file. Set `operator_verify_required=yes` when identity, rights posture, event context, or roster truth still needs human confirmation.",
+        "",
+        "## Research Scope",
+        "",
+        f"- Source-map board rows: `{manifest['source_map_board_rows']}`",
+        f"- Source discovery board rows: `{manifest['source_discovery_board_rows']}`",
+        f"- Research task rows: `{manifest['research_task_rows']}`",
+        f"- Paste-back intake rows: `{manifest['research_return_intake_rows']}`",
+        f"- Bundle steps: `{manifest['bundle_steps']}`",
+        f"- ChatGPT Pro tasks: `{lane_counts.get('chatgpt_pro', 0)}`",
+        f"- Gemini Pro tasks: `{lane_counts.get('gemini_pro', 0)}`",
+        f"- Manual research tasks: `{lane_counts.get('manual_research', 0)}`",
+        "",
+        "## External Research Prompt",
+        "",
+        "You are advising HSD from a review-only action-photo research packet. Review the source-map board and candidate research packet. Return only candidate URL/evidence rows that can be pasted into the exact schema above. Separate official/free/public, reputable public, editorial/wire, social, third-party creator, and gray-area leads. Do not download images, save files, enable sources, approve assets, mark anything render-ready or publish-ready, write headshots, create `.approved` markers, or publish. Flag rights and identity uncertainty conservatively.",
+        "",
+        "## Paste-Back Target",
+        "",
+        f"`{manifest['paste_back_target']}`",
+        "",
+        "After paste-back, validation must happen locally before any later human-edited quarantine-only download decision. Download approval is not asset approval.",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def wnba_final_score_hero_action_photo_target_rows() -> List[Dict[str, str]]:
@@ -4599,6 +4736,14 @@ def main() -> int:
     research_return_issues = validate_action_photo_research_return_intake_rows(research_return_rows, candidate_queue_rows)
     research_run_bundle_rows = action_photo_research_run_bundle_rows(research_packet_rows)
     research_run_bundle_issues = validate_action_photo_research_run_bundle_rows(research_run_bundle_rows, research_run_bundle_artifact_paths().values())
+    external_research_export_manifest = external_research_packet_manifest(
+        source_map_board_rows,
+        source_discovery_rows,
+        research_packet_rows,
+        research_return_rows,
+        research_run_bundle_rows,
+        generated_at,
+    )
     quarantine_preflight_rows = action_photo_quarantine_preflight_rows(research_return_rows)
     quarantine_preflight_issues = validate_action_photo_quarantine_preflight_rows(quarantine_preflight_rows, research_return_rows)
     wnba_hero_target_rows = wnba_final_score_hero_action_photo_target_rows()
@@ -5064,6 +5209,8 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_text(OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD, render_external_research_packet_prompt(external_research_export_manifest))
+    write_json(OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON, external_research_export_manifest)
     write_csv(OUT_QUARANTINE_PREFLIGHT_CSV, quarantine_preflight_rows, ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS)
     write_text(OUT_QUARANTINE_PREFLIGHT_MD, render_action_photo_quarantine_preflight(quarantine_preflight_rows, quarantine_preflight_issues, generated_at))
     write_json(
@@ -5242,6 +5389,9 @@ def main() -> int:
             "action_photo_research_return_intake_validation_issue_count": len(research_return_issues),
             "action_photo_research_run_bundle_rows": len(research_run_bundle_rows),
             "action_photo_research_run_bundle_validation_issue_count": len(research_run_bundle_issues),
+            "action_photo_external_research_packet_export_status": external_research_export_manifest["status"],
+            "action_photo_external_research_packet_export_prompt_md": OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD.as_posix(),
+            "action_photo_external_research_packet_export_manifest_json": OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON.as_posix(),
             "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows),
             "action_photo_quarantine_preflight_validation_issue_count": len(quarantine_preflight_issues),
             "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows),
@@ -5293,6 +5443,8 @@ def main() -> int:
             "action_photo_research_run_bundle_csv": OUT_RESEARCH_RUN_BUNDLE_CSV.as_posix(),
             "action_photo_research_run_bundle_md": OUT_RESEARCH_RUN_BUNDLE_MD.as_posix(),
             "action_photo_research_run_bundle_json": OUT_RESEARCH_RUN_BUNDLE_JSON.as_posix(),
+            "action_photo_external_research_packet_export_prompt_md": OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD.as_posix(),
+            "action_photo_external_research_packet_export_manifest_json": OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON.as_posix(),
             "action_photo_quarantine_preflight_csv": OUT_QUARANTINE_PREFLIGHT_CSV.as_posix(),
             "action_photo_quarantine_preflight_md": OUT_QUARANTINE_PREFLIGHT_MD.as_posix(),
             "action_photo_quarantine_preflight_json": OUT_QUARANTINE_PREFLIGHT_JSON.as_posix(),
@@ -5316,7 +5468,7 @@ def main() -> int:
         },
     )
     total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
     return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
 
 
