@@ -1,0 +1,13 @@
+outputs/
+rendered_handoff_graphics/
+rendered_handoff_zips/
+assignment_handoff_zips/
+manual_workflow_handoff_packs/
+manual_workflow_packets/
+conductor/runtime/
+.venv/
+.pytest_cache/
+.pip-cache/
+.tmp/
+__pycache__/
+*.zip
