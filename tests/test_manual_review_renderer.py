@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.48.0-photo-first-naked-score-stage"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.49.0-photo-first-blueprint-depth-asymmetry"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -165,7 +165,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v22_photo_first_naked_score_stage"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -204,11 +204,17 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_naked_score_typography" in manifest["render_background_cues"]
     assert "photo_first_no_redundant_score_context" in manifest["render_background_cues"]
     assert "photo_first_borderless_hero_stage" in manifest["render_background_cues"]
+    assert "photo_first_blueprint_depth_layers" in manifest["render_background_cues"]
+    assert "photo_first_procedural_court_grain" in manifest["render_background_cues"]
+    assert "photo_first_asymmetric_score_treatment" in manifest["render_background_cues"]
+    assert "photo_first_hero_cutout_contract" in manifest["render_background_cues"]
+    assert "photo_first_safe_zone_enforced" in manifest["render_background_cues"]
+    assert "photo_first_oversized_emblem_atmosphere" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v22_photo_first_naked_score_stage" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry" for item in manifest["format_options"])
     public_canvas_text = " ".join(manifest["public_render_canvas_text"]).upper()
     assert "FINAL:" not in public_canvas_text
     assert "198 PTS" not in public_canvas_text
@@ -272,7 +278,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v22_photo_first_naked_score_stage"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["hero_image_mode"] == "logo_score_fallback_no_person_image"
     assert visual_board["action_photo_hero_contract"] == "manual_review_action_photo_not_available_no_download"
@@ -344,7 +350,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v22_photo_first_naked_score_stage`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Hero image mode: `logo_score_fallback_no_person_image`" in board
     assert "Action-photo hero contract: `manual_review_action_photo_not_available_no_download`" in board
@@ -637,6 +643,9 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert summary["background_family"] == "hsd_premium_sports_editorial"
     assert summary["hero_image_mode"] == "approved_headshot_bridge_action_photo_ready"
     assert summary["hero_image_source_class"] == "approved_local_headshot_bridge"
+    assert summary["hero_silhouette_mode"] in {"headshot_bridge_rectangular_source", "local_transparent_cutout_grid_breaking"}
+    assert summary["hero_cutout_readiness"] in {"headshot_bridge_cutout_not_available", "cutout_ready_review_only_local_asset"}
+    assert "no downloads" in summary["grid_breaking_hero_contract"]
     assert summary["action_photo_hero_contract"] == "manual_review_action_photo_can_replace_headshot_when_local_approved"
     assert summary["action_photo_candidate_status"] == "pending_manual_action_photo_candidate"
     assert "photo-first result routing" in summary["template_fit_reason"]
@@ -650,6 +659,7 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert feed_contract["focal_priority"] == "athlete_primary"
     assert feed_contract["fallback_comparison_status"] == "fallback_not_used_athlete_preview_ready"
     assert feed_contract["hero_image_mode"] == "approved_headshot_bridge_action_photo_ready"
+    assert feed_contract["hero_silhouette_mode"] in {"headshot_bridge_rectangular_source", "local_transparent_cutout_grid_breaking"}
     assert feed_contract["action_photo_hero_contract"] == "manual_review_action_photo_can_replace_headshot_when_local_approved"
     square_contract = module.visual_mode_contract(summary, square_layout)
     assert square_contract["visual_mode"] == "photo_first_performer_square"
@@ -874,14 +884,14 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
     assert geometry["template_family"] == "approved_athlete_photo_final_score"
     assert geometry["photo_stage_box"] == [48, 370, 452, 580]
-    assert geometry["stat_strip_box"] == [58, 976, 964, 112]
+    assert geometry["stat_strip_box"] == [60, 976, 960, 112]
     assert geometry["minimum_clearance_px"] == 24
     assert geometry["athlete_visual_status"] == "athlete_supports_result"
     assert geometry["athlete_visual_share"] <= module.PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE
     square_geometry = module.photo_first_layout_geometry({"format_id": "square_feed_1x1", "width": 1080, "height": 1080})
     assert square_geometry["photo_stage_box"] == [48, 350, 356, 374]
-    assert square_geometry["winner_score_row_box"] == [428, 360, 604, 124]
-    assert square_geometry["loser_score_row_box"] == [428, 504, 604, 108]
+    assert square_geometry["winner_score_row_box"] == [428, 360, 592, 124]
+    assert square_geometry["loser_score_row_box"] == [428, 504, 592, 108]
     assert square_geometry["stat_strip_box"] == [60, 752, 960, 78]
     assert square_geometry["matchup_angle_box"] == [60, 854, 960, 94]
     assert square_geometry["athlete_visual_status"] == "athlete_supports_result"
@@ -920,10 +930,11 @@ def test_manual_review_renderer_photo_first_type_scale_and_athlete_cap_contract(
     assert module.photo_first_type_spec("headline")["level"] == "headline"
     assert module.photo_first_type_spec("score", winner=True)["level"] == "score"
     assert module.photo_first_type_spec("team", winner=True)["font"] == "display"
-    assert module.photo_first_type_spec("team", winner=True)["resolved_size"] >= 40
-    assert module.photo_first_type_spec("team")["resolved_size"] >= 36
-    assert module.photo_first_type_spec("score", winner=True)["resolved_size"] >= 108
-    assert 64 <= module.photo_first_type_spec("score")["resolved_size"] <= 76
+    assert module.photo_first_type_spec("team", winner=True)["resolved_size"] >= 50
+    assert module.photo_first_type_spec("team")["resolved_size"] <= 30
+    assert module.photo_first_type_spec("score", winner=True)["resolved_size"] >= 120
+    assert 52 <= module.photo_first_type_spec("score")["resolved_size"] <= 64
+    assert module.PHOTO_FIRST_SCORE_ASYMMETRY_CONTRACT["loser_opacity"] <= 0.65
 
     for format_spec in [
         {"format_id": "ig_feed_4x5", "width": 1080, "height": 1350},
@@ -936,6 +947,12 @@ def test_manual_review_renderer_photo_first_type_scale_and_athlete_cap_contract(
         assert geometry["athlete_visual_status"] == "athlete_supports_result"
         assert geometry["athlete_visual_stage_box"][2] > geometry["photo_stage_box"][2]
         assert geometry["athlete_visual_stage_box"][3] > geometry["photo_stage_box"][3]
+        assert geometry["safe_zone_status"] == "critical_content_inside_safe_zone"
+        assert geometry["safe_zone_violations"] == "none"
+        assert geometry["hero_grid_break_bleed_allowed"] is True
+        assert geometry["depth_layer_contract"] == "ghost_score_and_emblem_layers_behind_hero_keep_critical_text_clear"
+        assert geometry["procedural_texture_contract"].startswith("local_code_generated")
+        assert geometry["score_asymmetry_contract"]["winner_score_scale"] > geometry["score_asymmetry_contract"]["loser_score_scale"]
     feed_geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
     assert feed_geometry["photo_stage_box"][2] / 1080 >= 0.41
 
@@ -984,6 +1001,58 @@ def test_manual_review_renderer_photo_first_geometry_keeps_feed_and_story_cleara
             assert score_slab[1] + score_slab[3] <= row[1] + row[3]
             assert team_text_box[0] + team_text_box[2] <= score_slab[0] - 26
             assert team_text_box[2] >= 112
+
+
+def test_manual_review_renderer_blueprint_depth_cutout_and_safe_zone_contract(tmp_path: Path) -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    opaque = tmp_path / "headshot.png"
+    Image.new("RGB", (120, 160), (40, 80, 120)).save(opaque)
+    transparent = tmp_path / "cutout.png"
+    cutout = Image.new("RGBA", (120, 160), (40, 80, 120, 255))
+    for x in range(0, 20):
+        for y in range(0, 160):
+            cutout.putpixel((x, y), (0, 0, 0, 0))
+    cutout.save(transparent)
+
+    headshot_contract = module.hero_cutout_mode_contract(
+        {"athlete_photo_status": "approved_local_headshot", "athlete_photo_path": opaque.as_posix()}
+    )
+    cutout_contract = module.hero_cutout_mode_contract(
+        {"athlete_photo_status": "approved_local_headshot", "athlete_photo_path": transparent.as_posix()}
+    )
+    assert headshot_contract["hero_silhouette_mode"] == "headshot_bridge_rectangular_source"
+    assert headshot_contract["hero_cutout_readiness"] == "headshot_bridge_cutout_not_available"
+    assert cutout_contract["hero_silhouette_mode"] == "local_transparent_cutout_grid_breaking"
+    assert cutout_contract["hero_cutout_readiness"] == "cutout_ready_review_only_local_asset"
+    assert "no downloads" in cutout_contract["grid_breaking_hero_contract"]
+
+    geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    assert geometry["safe_zone_px"] == {"top": 90, "bottom": 90, "left": 60, "right": 60}
+    assert geometry["safe_zone_status"] == "critical_content_inside_safe_zone"
+    assert geometry["hero_left_bleed_px"] > 0
+    assert geometry["hero_grid_break_bleed_allowed"] is True
+    assert geometry["team_color_weighting"] == "winner_palette_dominant_loser_palette_localized_subdued"
+
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    before = image.copy()
+    score = {"winner": "Indiana Fever", "loser": "Los Angeles Sparks", "winner_score": "111", "loser_score": "87"}
+    winner_profile = {"accent_rgb": (190, 39, 54)}
+    loser_profile = {"accent_rgb": (92, 70, 168)}
+    module.draw_photo_first_blueprint_depth_layers(image, geometry, score, winner_profile, loser_profile, {}, {})
+    diff = ImageChops.difference(before.convert("RGB"), image.convert("RGB"))
+    assert diff.getbbox() is not None
+    photo = geometry["photo_stage_box"]
+    photo_diff = ImageChops.difference(
+        before.crop((photo[0], photo[1], photo[0] + photo[2], photo[1] + photo[3])).convert("RGB"),
+        image.crop((photo[0], photo[1], photo[0] + photo[2], photo[1] + photo[3])).convert("RGB"),
+    )
+    assert photo_diff.getbbox() is not None
 
 
 def test_manual_review_renderer_photo_first_score_slab_stays_inside_score_row() -> None:
