@@ -854,6 +854,8 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     candidate_report = module.athlete_render_candidate_report_md(candidate_summary, candidate_rows)
     assert "Athlete Render Candidate Board" in candidate_report
     assert "No paid APIs" in candidate_report
+    assert "marker=`" not in candidate_report
+    assert ".approved" not in candidate_report
 
     fact_rows = [
         {

@@ -217,7 +217,7 @@ def main() -> None:
         "",
         "- This is a review-only approval pack.",
         "- Nothing here is public-use approved automatically.",
-        "- To approve an image later, the reviewed file must be copied to its approval target path and an `.approved` marker must exist.",
+        "- To approve an image later, the reviewed file must be copied to its review target path and a separate human-reviewed marker record must exist.",
     ]
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     update_summary({
