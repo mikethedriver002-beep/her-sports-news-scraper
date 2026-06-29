@@ -61,6 +61,44 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "story_proof_card_v1.json" in artifact_paths
 
 
+def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run_files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    source_dir = tmp_path / "data" / "asset_registry" / "action_photo_candidates"
+    source_dir.mkdir(parents=True)
+    source = source_dir / "review_only_action_photo_quarantine_preflight_v1.md"
+    source.write_text("# Action-photo quarantine preflight\n", encoding="utf-8")
+
+    command_center.mirror_review_artifacts_to_output()
+
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    mirrored_paths = set(command_center.MIRRORED_REVIEW_ARTIFACTS)
+    command = ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+
+    expected_paths = {
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
+    }
+    for path in expected_paths:
+        assert path in artifact_paths
+        assert path in mirrored_paths
+        assert command_center.RUN_COMMANDS[path] == command
+    assert (
+        run_dir
+        / "data"
+        / "asset_registry"
+        / "action_photo_candidates"
+        / "review_only_action_photo_quarantine_preflight_v1.md"
+    ).exists()
+
+
 def test_command_center_surfaces_breaking_public_signal_as_review_only_source_board(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     write_csv_with_fields(
