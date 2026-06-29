@@ -211,6 +211,7 @@ def test_local_runner_collects_final_score_stat_proof_for_latest() -> None:
     assert '"athlete_render_candidate_board_v1.md"' in collector
     assert '"athlete_render_candidate_board_v1.csv"' in collector
     assert '"athlete_render_candidate_board_v1.json"' in collector
+    assert "Normalize-HsdCollectedReviewArtifact" in runner
     assert '"story_proof_card_v1.md"' in collector
     assert '"story_proof_card_v1.csv"' in collector
     assert '"story_proof_card_v1.json"' in collector

@@ -741,6 +741,16 @@ function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
     return $null
 }
 
+function Normalize-HsdCollectedReviewArtifact([string]$Relative, [string]$Path) {
+    if ($Relative -eq "athlete_render_candidate_board_v1.md") {
+        $text = Get-Content -LiteralPath $Path -Raw
+        $updated = $text -replace '(?m)^(\s*-\s*)marker=`[^`]*`$', '${1}review_marker_present=true'
+        if ($updated -ne $text) {
+            Set-Content -LiteralPath $Path -Value $updated -Encoding UTF8
+        }
+    }
+}
+
 function Copy-IfPresent([string]$Relative, [string]$DestinationDir, [System.Collections.ArrayList]$Manifest) {
     $src = Resolve-HsdArtifactSource $Relative $DestinationDir
     if (-not $src) { return }
@@ -752,6 +762,7 @@ function Copy-IfPresent([string]$Relative, [string]$DestinationDir, [System.Coll
     if (-not $srcFull.Equals($destFull, [StringComparison]::OrdinalIgnoreCase)) {
         Copy-Item -LiteralPath $src -Destination $dest -Force
     }
+    Normalize-HsdCollectedReviewArtifact $Relative $dest
     [void]$Manifest.Add([pscustomobject]@{ path = $Relative; source = $src; included_as = $dest; size = (Get-Item -LiteralPath $src).Length })
 }
 
