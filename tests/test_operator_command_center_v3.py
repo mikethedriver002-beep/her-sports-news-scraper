@@ -3842,6 +3842,13 @@ def seed_manual_visual_qa_decision_files() -> None:
             "summary": {"check_count": 8, "pass_count": 8, "hold_count": 0, "human_decision_required": True},
             "checks": [
                 {
+                    "check_id": "premium_editorial_route_limit_review",
+                    "check_label": "Premium final-score editorial route limit",
+                    "qa_result": "hold",
+                    "passed": False,
+                    "evidence": "editorial_call=REVISE_PREMIUM_FINAL_SCORE; review_draft_acceptance=acceptable_review_draft_only; visual_mode=photo_first_performer; candidate_status=pending_manual_action_photo_candidate; Operator should mark revise/hold for premium sports editorial until a manually cleared action-photo candidate is available.",
+                },
+                {
                     "check_id": "premium_editorial_clutter_scan",
                     "check_label": "Premium editorial clutter scan",
                     "qa_result": "pass_human_review_required",
@@ -5526,14 +5533,17 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
-    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:3] == [
+    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:4] == [
+        "Premium route limit",
         "Premium editorial clutter scan",
         "Title contrast and fit",
         "Score/team readability",
     ]
-    assert payload["operator_decision_panel"]["qa_cues"][0]["tone"] == "good"
-    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
-    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][1]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][0]["tone"] == "warn"
+    assert "REVISE_PREMIUM_FINAL_SCORE" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][1]["tone"] == "good"
+    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][1]["evidence"]
+    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][2]["evidence"]
     assert any(item["label"] == "Player ledger readability" for item in payload["operator_decision_panel"]["qa_cues"])
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])

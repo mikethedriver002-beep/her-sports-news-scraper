@@ -192,6 +192,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "lower_third_card_weight_review" in check_ids
     assert "action_photo_readiness_review" in check_ids
     assert "composition_balance_readiness_review" in check_ids
+    assert "premium_editorial_route_limit_review" in check_ids
     assert "preview_freshness_current_handoff" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
@@ -292,6 +293,9 @@ def test_manual_visual_qa_holds_final_score_missing_lower_third_rail_contract(tm
     assert "readiness_contract=missing" in checks["action_photo_readiness_review"]["evidence"]
     assert checks["composition_balance_readiness_review"]["qa_result"] == "hold"
     assert "composition_contract=missing" in checks["composition_balance_readiness_review"]["evidence"]
+    assert checks["premium_editorial_route_limit_review"]["qa_result"] == "hold"
+    assert "editorial_call=REVISE_PREMIUM_FINAL_SCORE" in checks["premium_editorial_route_limit_review"]["evidence"]
+    assert "review_draft_acceptance=acceptable_review_draft_only" in checks["premium_editorial_route_limit_review"]["evidence"]
     assert manifest["guardrails"]["publish_ready"] is False
 
 
@@ -361,10 +365,13 @@ def test_manual_visual_qa_uses_format_action_photo_contract_when_content_module_
     assert "solid lower-third box" in checks["lower_third_card_weight_review"]["evidence"]
     assert checks["action_photo_readiness_review"]["qa_result"] == "pass_human_review_required"
     assert checks["composition_balance_readiness_review"]["qa_result"] == "pass_human_review_required"
+    assert checks["premium_editorial_route_limit_review"]["qa_result"] == "hold"
     assert "final_score_context=True" in checks["action_photo_readiness_review"]["evidence"]
     assert "premium final-score editorial needs" in checks["action_photo_readiness_review"]["evidence"]
     assert "composition_contract=logo_score_fallback_balance_action_photo_slot_reserved" in checks["composition_balance_readiness_review"]["evidence"]
     assert "static roster portrait" in checks["composition_balance_readiness_review"]["evidence"]
+    assert "editorial_call=REVISE_PREMIUM_FINAL_SCORE" in checks["premium_editorial_route_limit_review"]["evidence"]
+    assert "acceptable_review_draft_only" in checks["premium_editorial_route_limit_review"]["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 
@@ -445,14 +452,19 @@ def test_manual_visual_qa_accepts_headshot_bridge_as_review_draft_only(tmp_path:
     checks = {check["check_id"]: check for check in manifest["checks"]}
     action_check = checks["action_photo_readiness_review"]
     balance_check = checks["composition_balance_readiness_review"]
+    route_check = checks["premium_editorial_route_limit_review"]
     assert action_check["qa_result"] == "pass_human_review_required"
     assert balance_check["qa_result"] == "pass_human_review_required"
+    assert route_check["qa_result"] == "hold"
     assert "headshot_bridge_review_draft_ok_action_photo_candidate_required_for_premium_final_score" in action_check["evidence"]
     assert "approved_local_headshot_review_draft_only_not_premium_final_score" in action_check["evidence"]
     assert "manually cleared action-photo candidate" in action_check["evidence"]
     assert "headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved" in balance_check["evidence"]
     assert "roster portrait" in balance_check["evidence"]
     assert "diagonal editorial tension" in balance_check["evidence"]
+    assert "editorial_call=REVISE_PREMIUM_FINAL_SCORE" in route_check["evidence"]
+    assert "approved_local_headshot_review_draft_only_not_premium_final_score" in route_check["evidence"]
+    assert "review_draft_acceptance=acceptable_review_draft_only" in route_check["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 
@@ -513,6 +525,8 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     assert "readiness_contract=missing" in checks["action_photo_readiness_review"]["evidence"]
     assert checks["composition_balance_readiness_review"]["qa_result"] == "hold"
     assert "composition_contract=missing" in checks["composition_balance_readiness_review"]["evidence"]
+    assert checks["premium_editorial_route_limit_review"]["qa_result"] == "hold"
+    assert "editorial_call=REVISE_PREMIUM_FINAL_SCORE" in checks["premium_editorial_route_limit_review"]["evidence"]
     assert "minimum_clearance" in checks["photo_first_text_clearance"]["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
