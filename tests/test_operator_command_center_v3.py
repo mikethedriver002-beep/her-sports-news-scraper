@@ -77,6 +77,9 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
     command = ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
 
     expected_paths = {
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md",

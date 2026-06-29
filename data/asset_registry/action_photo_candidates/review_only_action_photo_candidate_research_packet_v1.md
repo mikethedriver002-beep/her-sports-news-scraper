@@ -24,7 +24,7 @@ candidate_queue_id,candidate_photo_url,evidence_url,evidence_summary,identity_an
 
 - Research tasks: `10`
 - Validation issues: `0`
-- Rows with `download_approved=yes`: `0`
+- Rows with human download approval marked yes: `0`
 - Review-only rows: `10`
 - Publish-ready rows: `0`
 
