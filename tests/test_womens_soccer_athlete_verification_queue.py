@@ -244,6 +244,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     focus_rows = read_csv(root / "womens_soccer_athlete_operator_focus.csv")
     focus_manifest = json.loads((root / "womens_soccer_athlete_operator_focus.json").read_text(encoding="utf-8"))
     focus_markdown = (root / "womens_soccer_athlete_operator_focus.md").read_text(encoding="utf-8")
+    closure_rows = read_csv(root / "womens_soccer_athlete_expansion_closure_summary.csv")
+    closure_manifest = json.loads((root / "womens_soccer_athlete_expansion_closure_summary.json").read_text(encoding="utf-8"))
+    closure_markdown = (root / "womens_soccer_athlete_expansion_closure_summary.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -306,6 +309,10 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         "4_gray_area_or_reputable_lead": 1,
         "5_p1_source_followup": 1,
     }
+    assert manifest["closure_summary_rows"] == 8
+    assert manifest["closure_summary_total_referenced_rows"] == 29
+    assert manifest["closure_summary_download_approved_yes_rows"] == 0
+    assert manifest["closure_summary_blank_source_url_rows"] == 21
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
     assert by_team["angel_city_fc"]["first_action_bucket"] == "1_roster_verification"
@@ -591,3 +598,40 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert "Blank official_profile_url placeholders" in focus_markdown
     assert "action_photo_starter_intake_file" in focus_markdown
     assert "Do not download assets" in focus_markdown
+    assert closure_manifest["status"] == "athlete_expansion_closure_summary_ready"
+    assert closure_manifest["closure_summary_rows"] == 8
+    assert closure_manifest["total_referenced_rows"] == 29
+    assert closure_manifest["download_approved_yes_rows"] == 0
+    assert closure_manifest["blank_source_url_rows"] == 21
+    assert closure_manifest["operator_first_artifact"].endswith("data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md")
+    assert [row["artifact_group"] for row in closure_rows] == [
+        "operator_focus",
+        "photo_review_readiness",
+        "candidate_next_actions",
+        "source_priority",
+        "review_triage",
+        "verification_next_actions",
+        "verification_queue",
+        "external_research",
+    ]
+    assert closure_rows[0]["artifact_path"].endswith("data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md")
+    assert closure_rows[0]["operator_open_after"].endswith("data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv")
+    assert closure_rows[0]["download_approved_yes_rows"] == "0"
+    assert closure_rows[0]["guardrail_status"] == "review_only_no_downloads_no_approvals_no_headshots_no_markers_no_publish"
+    for row in closure_rows:
+        assert row["manual_next_action"]
+        assert row["review_only"] == "true"
+        assert row["approval_state_change"] == "false"
+        assert row["candidate_state_change"] == "false"
+        assert row["asset_downloads"] == "false"
+        assert row["headshot_writes"] == "false"
+        assert row["approved_marker_writes"] == "false"
+        assert row["publish_ready"] == "false"
+        assert row["auto_approval"] == "false"
+        assert row["auto_publish"] == "false"
+        assert row["move_files"] == "false"
+        assert row["paid_apis"] == "false"
+    assert "Review-only latest-artifact collection" in closure_markdown
+    assert "Open the operator-focus packet first" in closure_markdown
+    assert "generated closure rows never authorize download or approval" in closure_markdown
+    assert "Asset downloads: false" in closure_markdown

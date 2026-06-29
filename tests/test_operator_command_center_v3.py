@@ -1869,6 +1869,95 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md").write_text(
+        "# Closure summary\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.csv",
+        [
+            {
+                "closure_rank": "1",
+                "artifact_group": "operator_focus",
+                "artifact_label": "Open first",
+                "artifact_path": "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md",
+                "row_count": "2",
+                "nwsl_rows": "1",
+                "europe_rows": "1",
+                "p0_or_verify_rows": "2",
+                "gray_area_rows": "1",
+                "blank_source_url_rows": "2",
+                "download_approved_yes_rows": "0",
+                "local_candidate_gap_rows": "0",
+                "manual_next_action": "Open focus rows first.",
+                "operator_open_after": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv",
+                "guardrail_status": "review_only_no_downloads_no_approvals_no_headshots_no_markers_no_publish",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        ],
+        [
+            "closure_rank",
+            "artifact_group",
+            "artifact_label",
+            "artifact_path",
+            "row_count",
+            "nwsl_rows",
+            "europe_rows",
+            "p0_or_verify_rows",
+            "gray_area_rows",
+            "blank_source_url_rows",
+            "download_approved_yes_rows",
+            "local_candidate_gap_rows",
+            "manual_next_action",
+            "operator_open_after",
+            "guardrail_status",
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.json",
+        {
+            "status": "athlete_expansion_closure_summary_ready",
+            "generated_at_utc": "2026-06-27T22:10:00+00:00",
+            "closure_summary_rows": 1,
+            "total_referenced_rows": 2,
+            "p0_or_verify_rows": 2,
+            "gray_area_rows": 1,
+            "blank_source_url_rows": 2,
+            "download_approved_yes_rows": 0,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
 
     panel = command_center.asset_availability_readiness_panel()
     html = command_center.render_asset_readiness_panel(panel)
@@ -1956,6 +2045,15 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_athlete_operator_focus_blank_source_url_rows"] == 2
     assert panel["womens_soccer_athlete_operator_focus_generated_at"] == "2026-06-27T22:00:00+00:00"
     assert panel["womens_soccer_athlete_operator_focus_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_athlete_closure_status"] == "athlete_expansion_closure_summary_ready"
+    assert panel["womens_soccer_athlete_closure_rows"] == 1
+    assert panel["womens_soccer_athlete_closure_total_referenced_rows"] == 2
+    assert panel["womens_soccer_athlete_closure_p0_or_verify_rows"] == 2
+    assert panel["womens_soccer_athlete_closure_gray_area_rows"] == 1
+    assert panel["womens_soccer_athlete_closure_download_approved_yes_rows"] == 0
+    assert panel["womens_soccer_athlete_closure_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_athlete_closure_generated_at"] == "2026-06-27T22:10:00+00:00"
+    assert panel["womens_soccer_athlete_closure_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_external_research_status"] == "external_research_intake_ready"
     assert panel["womens_soccer_external_research_rows"] == 3
     assert panel["womens_soccer_external_research_nwsl_rows"] == 2
@@ -1997,6 +2095,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer athlete operator focus" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete operator focus data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete operator focus manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete expansion closure summary" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete expansion closure summary data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer athlete expansion closure summary manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer external research intake data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer NWSL external research source" for item in panel["file_shortcuts"])
@@ -2033,6 +2134,12 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Soccer photo readiness" in html
     assert "Soccer photo NWSL" in html
     assert "Soccer photo blanks" in html
+    assert "Soccer focus rows" in html
+    assert "Soccer focus P0" in html
+    assert "Soccer focus identity" in html
+    assert "Soccer closure rows" in html
+    assert "Soccer closure refs" in html
+    assert "Soccer closure dl yes" in html
     assert "Soccer research rows" in html
     assert "Soccer research NWSL" in html
     assert "Soccer research Europe" in html
@@ -2049,6 +2156,8 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Women&#x27;s soccer athlete review triage packet freshness" in html
     assert "Women&#x27;s soccer athlete candidate next-action board packet freshness" in html
     assert "Women&#x27;s soccer athlete photo review readiness board packet freshness" in html
+    assert "Women&#x27;s soccer athlete operator focus packet freshness" in html
+    assert "Women&#x27;s soccer athlete expansion closure summary packet freshness" in html
     assert "Women&#x27;s soccer external research intake packet freshness" in html
 
 

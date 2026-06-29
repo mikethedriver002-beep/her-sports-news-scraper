@@ -41,6 +41,9 @@ OUT_PHOTO_READINESS_JSON = output_path(ROOT / "womens_soccer_athlete_photo_revie
 OUT_OPERATOR_FOCUS_MD = output_path(ROOT / "womens_soccer_athlete_operator_focus.md")
 OUT_OPERATOR_FOCUS_CSV = output_path(ROOT / "womens_soccer_athlete_operator_focus.csv")
 OUT_OPERATOR_FOCUS_JSON = output_path(ROOT / "womens_soccer_athlete_operator_focus.json")
+OUT_CLOSURE_SUMMARY_MD = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.md")
+OUT_CLOSURE_SUMMARY_CSV = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.csv")
+OUT_CLOSURE_SUMMARY_JSON = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.json")
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -367,6 +370,35 @@ OPERATOR_FOCUS_FIELDS = [
     "intended_review_only_use",
     "operator_decision",
     "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+CLOSURE_SUMMARY_FIELDS = [
+    "closure_rank",
+    "artifact_group",
+    "artifact_label",
+    "artifact_path",
+    "row_count",
+    "nwsl_rows",
+    "europe_rows",
+    "p0_or_verify_rows",
+    "gray_area_rows",
+    "blank_source_url_rows",
+    "download_approved_yes_rows",
+    "local_candidate_gap_rows",
+    "manual_next_action",
+    "operator_open_after",
+    "guardrail_status",
     "review_only",
     "approval_state_change",
     "candidate_state_change",
@@ -1829,6 +1861,199 @@ def render_operator_focus(rows: List[Mapping[str, str]], generated_at: str) -> s
     return "\n".join(lines) + "\n"
 
 
+def closure_summary_rows(
+    queue_rows: List[Mapping[str, str]],
+    action_rows: List[Mapping[str, str]],
+    source_rows: List[Mapping[str, str]],
+    triage_rows: List[Mapping[str, str]],
+    candidate_rows: List[Mapping[str, str]],
+    photo_readiness: List[Mapping[str, str]],
+    focus_rows: List[Mapping[str, str]],
+    external_rows: List[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    def common(row_source: List[Mapping[str, str]], artifact_group: str, artifact_label: str, artifact_path: str, manual_next_action: str, operator_open_after: str) -> Dict[str, str]:
+        return {
+            "closure_rank": "0",
+            "artifact_group": artifact_group,
+            "artifact_label": artifact_label,
+            "artifact_path": artifact_path,
+            "row_count": str(len(row_source)),
+            "nwsl_rows": str(
+                sum(1 for row in row_source if clean(row.get("scope_id")) == "nwsl" or clean(row.get("research_lane")) == "nwsl_correction_enrichment")
+            ),
+            "europe_rows": str(
+                sum(
+                    1
+                    for row in row_source
+                    if clean(row.get("scope_id")) == "europe_top_flight" or clean(row.get("research_lane")) == "europe_official_source_map"
+                )
+            ),
+            "p0_or_verify_rows": str(
+                sum(
+                    1
+                    for row in row_source
+                    if clean(row.get("operator_verify_required")).lower() == "yes"
+                    or clean(row.get("source_priority")).upper().startswith("P0")
+                    or "p0" in clean(row.get("queue_bucket")).lower()
+                    or "p0" in clean(row.get("focus_reason_flags")).lower()
+                    or "p0" in clean(row.get("operator_bucket")).lower()
+                )
+            ),
+            "gray_area_rows": str(
+                sum(
+                    1
+                    for row in row_source
+                    if "gray_area" in clean(row.get("operator_bucket")).lower()
+                    or "gray_area" in clean(row.get("source_review_bucket")).lower()
+                    or "gray_area" in clean(row.get("manual_action_group")).lower()
+                    or "gray_area" in clean(row.get("focus_bucket")).lower()
+                    or "gray_area" in clean(row.get("photo_review_readiness_bucket")).lower()
+                )
+            ),
+            "blank_source_url_rows": str(sum(1 for row in row_source if "source_url" in row and not clean(row.get("source_url")))),
+            "download_approved_yes_rows": str(sum(1 for row in row_source if clean(row.get("download_approved")).lower() == "yes")),
+            "local_candidate_gap_rows": str(
+                sum(
+                    as_int(row.get("missing_local_candidate_rows"))
+                    for row in row_source
+                    if "missing_local_candidate_rows" in row
+                )
+            ),
+            "manual_next_action": manual_next_action,
+            "operator_open_after": operator_open_after,
+            "guardrail_status": "review_only_no_downloads_no_approvals_no_headshots_no_markers_no_publish",
+            **guardrails(),
+        }
+
+    rows = [
+        common(
+            focus_rows,
+            "operator_focus",
+            "Open first: exact rows that need manual source/profile/identity verification",
+            OUT_OPERATOR_FOCUS_MD.as_posix(),
+            "Open the focus row's source and triage refs; resolve P0, duplicate, stale, gray-area, and profile gaps before any future intake edit.",
+            OUT_SOURCE_PRIORITY_CSV.as_posix(),
+        ),
+        common(
+            photo_readiness,
+            "photo_review_readiness",
+            "Photo-review readiness blockers",
+            OUT_PHOTO_READINESS_MD.as_posix(),
+            "Use readiness buckets to keep rows out of photo-review until official source and identity evidence are manually verified.",
+            OUT_OPERATOR_FOCUS_MD.as_posix(),
+        ),
+        common(
+            candidate_rows,
+            "candidate_next_actions",
+            "Candidate next-action board",
+            OUT_CANDIDATE_ACTIONS_MD.as_posix(),
+            "Work the candidate action refs only as advisory source metadata; generated download-law fields remain blank/no.",
+            OUT_PHOTO_READINESS_MD.as_posix(),
+        ),
+        common(
+            source_rows,
+            "source_priority",
+            "Source-priority board",
+            OUT_SOURCE_PRIORITY_MD.as_posix(),
+            "Verify official source pages manually and park gray-area/reputable leads until official confirmation exists.",
+            OUT_CANDIDATE_ACTIONS_MD.as_posix(),
+        ),
+        common(
+            triage_rows,
+            "review_triage",
+            "Review triage board",
+            OUT_REVIEW_TRIAGE_MD.as_posix(),
+            "Use primary manual action groups to pick the next human-only review row; do not change candidate state from generated rows.",
+            OUT_SOURCE_PRIORITY_MD.as_posix(),
+        ),
+        common(
+            action_rows,
+            "verification_next_actions",
+            "Verification next actions",
+            OUT_NEXT_ACTIONS_MD.as_posix(),
+            "Use the NWSL next-action worksheet for team-level official roster checks before future human intake.",
+            OUT_REVIEW_TRIAGE_MD.as_posix(),
+        ),
+        common(
+            queue_rows,
+            "verification_queue",
+            "Verification queue",
+            OUT_MD.as_posix(),
+            "Confirm high-level NWSL and Europe queue buckets, then open the more specific focus and readiness artifacts.",
+            OUT_NEXT_ACTIONS_MD.as_posix(),
+        ),
+        common(
+            external_rows,
+            "external_research",
+            "External research intake board",
+            EXTERNAL_RESEARCH_CSV.as_posix(),
+            "Treat external rows as advisory source-map metadata only; no roster/candidate writeback without later human-edited intake.",
+            OUT_MD.as_posix(),
+        ),
+    ]
+    for index, row in enumerate(rows, start=1):
+        row["closure_rank"] = str(index)
+    return rows
+
+
+def render_closure_summary(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Women's Soccer Athlete Expansion Closure Summary",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only latest-artifact collection for the women's soccer athlete expansion lane. It collects the current source, intake, readiness, and operator-focus artifacts into one closure board. It does not scrape, download, approve assets, write `headshot.png`, create `.approved` markers, auto-enable sources, move files into publish-ready lanes, publish, or use paid APIs.",
+        "",
+        "## Summary",
+        "",
+        f"- Closure artifact rows: `{len(rows)}`",
+        f"- Total referenced rows: `{sum(as_int(row.get('row_count')) for row in rows)}`",
+        f"- P0/verify rows across referenced boards: `{sum(as_int(row.get('p0_or_verify_rows')) for row in rows)}`",
+        f"- Gray-area rows across referenced boards: `{sum(as_int(row.get('gray_area_rows')) for row in rows)}`",
+        f"- Download-approved yes rows across referenced boards: `{sum(as_int(row.get('download_approved_yes_rows')) for row in rows)}`",
+        f"- Blank generated download-law source_url rows across referenced boards: `{sum(as_int(row.get('blank_source_url_rows')) for row in rows)}`",
+        "",
+        "## Manual Closure Order",
+        "",
+        "1. Open the operator-focus packet first.",
+        "2. Use the source-priority and triage refs listed there to perform manual source/profile/identity verification.",
+        "3. Only after human review, edit the appropriate manual intake file; generated closure rows never authorize download or approval.",
+        "",
+        "## Latest Artifact Collection",
+        "",
+        "| Rank | Group | Artifact | Rows | P0/Verify | Gray | Blank Source URL | Download Yes | Manual Next Action |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | {group} | `{path}` | {row_count} | {verify} | {gray} | {blank} | {download_yes} | {action} |".format(
+                rank=clean(row.get("closure_rank")),
+                group=clean(row.get("artifact_group")),
+                path=clean(row.get("artifact_path")),
+                row_count=clean(row.get("row_count")),
+                verify=clean(row.get("p0_or_verify_rows")),
+                gray=clean(row.get("gray_area_rows")),
+                blank=clean(row.get("blank_source_url_rows")),
+                download_yes=clean(row.get("download_approved_yes_rows")),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    lines += [
+        "",
+        "## Guardrails",
+        "",
+        "- Review-only: true.",
+        "- Approval state change: false.",
+        "- Candidate state change: false.",
+        "- Asset downloads: false.",
+        "- Headshot writes: false.",
+        "- Approved marker writes: false.",
+        "- Publish-ready / publishing: false.",
+        "- Paid APIs: false.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = now_iso()
     rows = build_queue()
@@ -1840,6 +2065,7 @@ def main() -> int:
     candidate_rows = candidate_action_rows(source_rows, triage_rows)
     photo_readiness = photo_readiness_rows(candidate_rows)
     focus_rows = operator_focus_rows(candidate_rows)
+    closure_rows = closure_summary_rows(rows, action_rows, source_rows, triage_rows, candidate_rows, photo_readiness, focus_rows, external_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, generated_at))
     write_csv(OUT_NEXT_ACTIONS_CSV, action_rows, NEXT_ACTION_FIELDS)
@@ -1854,6 +2080,8 @@ def main() -> int:
     write_text(OUT_PHOTO_READINESS_MD, render_photo_readiness(photo_readiness, generated_at))
     write_csv(OUT_OPERATOR_FOCUS_CSV, focus_rows, OPERATOR_FOCUS_FIELDS)
     write_text(OUT_OPERATOR_FOCUS_MD, render_operator_focus(focus_rows, generated_at))
+    write_csv(OUT_CLOSURE_SUMMARY_CSV, closure_rows, CLOSURE_SUMMARY_FIELDS)
+    write_text(OUT_CLOSURE_SUMMARY_MD, render_closure_summary(closure_rows, generated_at))
     manifest = {
         "version": VERSION,
         "status": "athlete_verification_queue_ready",
@@ -1925,6 +2153,14 @@ def main() -> int:
         "operator_focus_download_approved_yes_rows": sum(1 for row in focus_rows if clean(row.get("download_approved")).lower() == "yes"),
         "operator_focus_blank_source_url_rows": sum(1 for row in focus_rows if not clean(row.get("source_url"))),
         "operator_focus_bucket_counts": count_by(focus_rows, "focus_bucket"),
+        "closure_summary_md": OUT_CLOSURE_SUMMARY_MD.as_posix(),
+        "closure_summary_csv": OUT_CLOSURE_SUMMARY_CSV.as_posix(),
+        "closure_summary_rows": len(closure_rows),
+        "closure_summary_total_referenced_rows": sum(as_int(row.get("row_count")) for row in closure_rows),
+        "closure_summary_p0_or_verify_rows": sum(as_int(row.get("p0_or_verify_rows")) for row in closure_rows),
+        "closure_summary_gray_area_rows": sum(as_int(row.get("gray_area_rows")) for row in closure_rows),
+        "closure_summary_download_approved_yes_rows": sum(as_int(row.get("download_approved_yes_rows")) for row in closure_rows),
+        "closure_summary_blank_source_url_rows": sum(as_int(row.get("blank_source_url_rows")) for row in closure_rows),
         "inputs": [CONTACT_CSV.as_posix(), OPERATOR_BOARD_CSV.as_posix(), DOWNLOAD_INTAKE_CSV.as_posix(), EXTERNAL_RESEARCH_CSV.as_posix()],
         "review_only": True,
         "approval_state_change": False,
@@ -2132,7 +2368,36 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "photo_readiness_rows": len(photo_readiness), "operator_focus_rows": len(focus_rows), "queue": OUT_MD.as_posix()}, indent=2))
+    write_json(
+        OUT_CLOSURE_SUMMARY_JSON,
+        {
+            "version": VERSION,
+            "status": "athlete_expansion_closure_summary_ready",
+            "generated_at_utc": generated_at,
+            "closure_summary_rows": len(closure_rows),
+            "total_referenced_rows": sum(as_int(row.get("row_count")) for row in closure_rows),
+            "p0_or_verify_rows": sum(as_int(row.get("p0_or_verify_rows")) for row in closure_rows),
+            "gray_area_rows": sum(as_int(row.get("gray_area_rows")) for row in closure_rows),
+            "blank_source_url_rows": sum(as_int(row.get("blank_source_url_rows")) for row in closure_rows),
+            "download_approved_yes_rows": sum(as_int(row.get("download_approved_yes_rows")) for row in closure_rows),
+            "artifact_groups": count_by(closure_rows, "artifact_group"),
+            "worksheet_md": OUT_CLOSURE_SUMMARY_MD.as_posix(),
+            "worksheet_csv": OUT_CLOSURE_SUMMARY_CSV.as_posix(),
+            "operator_first_artifact": OUT_OPERATOR_FOCUS_MD.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "photo_readiness_rows": len(photo_readiness), "operator_focus_rows": len(focus_rows), "closure_summary_rows": len(closure_rows), "queue": OUT_MD.as_posix()}, indent=2))
     return 0
 
 
