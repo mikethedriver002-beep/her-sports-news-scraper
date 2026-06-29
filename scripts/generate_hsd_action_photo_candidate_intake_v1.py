@@ -64,6 +64,9 @@ OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON = output_path(ROOT / "review_only_act
 OUT_QUARANTINE_PREFLIGHT_CSV = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.csv")
 OUT_QUARANTINE_PREFLIGHT_MD = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.md")
 OUT_QUARANTINE_PREFLIGHT_JSON = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.json")
+OUT_RESEARCH_RETURN_SUMMARY_BOARD_CSV = output_path(ROOT / "review_only_action_photo_research_return_summary_board_v1.csv")
+OUT_RESEARCH_RETURN_SUMMARY_BOARD_MD = output_path(ROOT / "review_only_action_photo_research_return_summary_board_v1.md")
+OUT_RESEARCH_RETURN_SUMMARY_BOARD_JSON = output_path(ROOT / "review_only_action_photo_research_return_summary_board_v1.json")
 OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV = output_path(ROOT / "review_only_wnba_final_score_hero_action_photo_targets_v1.csv")
 OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD = output_path(ROOT / "review_only_wnba_final_score_hero_action_photo_targets_v1.md")
 OUT_WNBA_FINAL_SCORE_HERO_TARGETS_JSON = output_path(ROOT / "review_only_wnba_final_score_hero_action_photo_targets_v1.json")
@@ -487,6 +490,35 @@ ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS = [
     "manual_next_action",
     "review_only",
     "publish_ready",
+]
+ACTION_PHOTO_RESEARCH_RETURN_SUMMARY_BOARD_FIELDS = [
+    "summary_id",
+    "candidate_queue_id",
+    "return_status",
+    "operator_priority",
+    "research_return_data_present",
+    "ready_for_human_download_decision",
+    "action_photo_status",
+    "identity_confidence_status",
+    "missing_required_fields",
+    "duplicate_candidate_key",
+    "candidate_photo_url",
+    "source_url",
+    "evidence_url",
+    "identity_anchor_url",
+    "rights_class",
+    "identity_confidence",
+    "researcher_return_note",
+    "operator_next_action",
+    "download_approved",
+    "quarantine_target_hint",
+    "review_only",
+    "publish_ready",
+    "approval_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_action",
 ]
 ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS = [
     "target_id",
@@ -4182,6 +4214,188 @@ def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issu
     return "\n".join(lines) + "\n"
 
 
+def research_return_summary_status(preflight_row: Mapping[str, str]) -> str:
+    if clean(preflight_row.get("lead_status")) == "lead_only_research_return_missing":
+        return "research_return_missing"
+    if clean(preflight_row.get("ready_for_human_download_decision")) == "yes":
+        return "ready_for_human_download_decision_only"
+    return "returned_needs_manual_fix"
+
+
+def research_return_summary_priority(preflight_row: Mapping[str, str]) -> str:
+    status = research_return_summary_status(preflight_row)
+    if status == "ready_for_human_download_decision_only":
+        return "P1_manual_download_decision"
+    if status == "returned_needs_manual_fix":
+        return "P2_fix_return_row"
+    return "P3_run_research_or_paste_return"
+
+
+def research_return_summary_next_action(preflight_row: Mapping[str, str]) -> str:
+    status = research_return_summary_status(preflight_row)
+    if status == "ready_for_human_download_decision_only":
+        return (
+            "Human operator may decide whether to record a download-approved yes after confirming every local-download-law "
+            "field; any later file must stay quarantined and is not asset approval."
+        )
+    if status == "returned_needs_manual_fix":
+        return (
+            "Review the returned row, fill missing URL/evidence/identity/rights fields, resolve duplicates or weak "
+            "identity, and keep download_approved=no until a human decision."
+        )
+    return "Run ChatGPT Pro, Gemini, or manual research, then paste URL/evidence-only return data into the intake."
+
+
+def action_photo_research_return_summary_board_rows(
+    return_rows: List[Mapping[str, str]],
+    preflight_rows: List[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    return_by_queue_id = {clean(row.get("candidate_queue_id")): row for row in return_rows}
+    rows: List[Dict[str, str]] = []
+    for index, preflight_row in enumerate(preflight_rows, start=1):
+        queue_id = clean(preflight_row.get("candidate_queue_id"))
+        return_row = return_by_queue_id.get(queue_id, {})
+        status = research_return_summary_status(preflight_row)
+        rows.append(
+            {
+                "summary_id": f"APRS{index:03d}",
+                "candidate_queue_id": queue_id,
+                "return_status": status,
+                "operator_priority": research_return_summary_priority(preflight_row),
+                "research_return_data_present": "yes" if has_research_return_data(return_row) else "no",
+                "ready_for_human_download_decision": clean(preflight_row.get("ready_for_human_download_decision")),
+                "action_photo_status": clean(preflight_row.get("action_photo_status")),
+                "identity_confidence_status": clean(preflight_row.get("identity_confidence_status")),
+                "missing_required_fields": clean(preflight_row.get("missing_required_fields")),
+                "duplicate_candidate_key": clean(preflight_row.get("duplicate_candidate_key")),
+                "candidate_photo_url": clean(preflight_row.get("candidate_photo_url")),
+                "source_url": clean(preflight_row.get("source_url")),
+                "evidence_url": clean(preflight_row.get("evidence_url")),
+                "identity_anchor_url": clean(preflight_row.get("identity_anchor_url")),
+                "rights_class": clean(preflight_row.get("rights_class")),
+                "identity_confidence": clean(preflight_row.get("identity_confidence")),
+                "researcher_return_note": clean(return_row.get("notes")),
+                "operator_next_action": research_return_summary_next_action(preflight_row),
+                "download_approved": "no",
+                "quarantine_target_hint": clean(preflight_row.get("quarantine_target_hint")),
+                "review_only": "true",
+                "publish_ready": "false",
+                "approval_state_change": "none",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    return rows
+
+
+def validate_action_photo_research_return_summary_board_rows(
+    rows: Iterable[Mapping[str, str]],
+    preflight_rows: Iterable[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    preflight_ids = {clean(row.get("candidate_queue_id")) for row in preflight_rows}
+    seen_summary_ids = set()
+    seen_queue_ids = set()
+    valid_statuses = {
+        "research_return_missing",
+        "returned_needs_manual_fix",
+        "ready_for_human_download_decision_only",
+    }
+    valid_priorities = {
+        "P1_manual_download_decision",
+        "P2_fix_return_row",
+        "P3_run_research_or_paste_return",
+    }
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_RESEARCH_RETURN_SUMMARY_BOARD_FIELDS}
+        summary_id = normalized["summary_id"]
+        queue_id = normalized["candidate_queue_id"]
+        if not summary_id:
+            issues.append({"row": str(index), "field": "summary_id", "issue": "required_summary_id_blank"})
+        elif summary_id in seen_summary_ids:
+            issues.append({"row": str(index), "field": "summary_id", "issue": "duplicate_summary_id"})
+        seen_summary_ids.add(summary_id)
+        if queue_id not in preflight_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "candidate_queue_id_not_in_preflight"})
+        if queue_id in seen_queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "duplicate_candidate_queue_id_in_summary"})
+        seen_queue_ids.add(queue_id)
+        if normalized["return_status"] not in valid_statuses:
+            issues.append({"row": str(index), "field": "return_status", "issue": "invalid_return_status"})
+        if normalized["operator_priority"] not in valid_priorities:
+            issues.append({"row": str(index), "field": "operator_priority", "issue": "invalid_operator_priority"})
+        if normalized["research_return_data_present"] not in {"yes", "no"}:
+            issues.append({"row": str(index), "field": "research_return_data_present", "issue": "research_return_data_present_must_be_yes_or_no"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "summary_rows_must_not_approve_downloads"})
+        if not normalized["quarantine_target_hint"].startswith(QUARANTINE_ROOT + "/"):
+            issues.append({"row": str(index), "field": "quarantine_target_hint", "issue": "quarantine_hint_must_stay_in_review_only_root"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "summary_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "summary_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] != "none":
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "summary_rows_must_not_change_approval_state"})
+        if normalized["asset_downloads"] != "false":
+            issues.append({"row": str(index), "field": "asset_downloads", "issue": "summary_rows_must_not_download_assets"})
+        if normalized["headshot_writes"] != "false":
+            issues.append({"row": str(index), "field": "headshot_writes", "issue": "summary_rows_must_not_write_headshots"})
+        if normalized["approved_marker_writes"] != "false":
+            issues.append({"row": str(index), "field": "approved_marker_writes", "issue": "summary_rows_must_not_write_approved_markers"})
+        if normalized["publish_action"] != "none_artifact_only":
+            issues.append({"row": str(index), "field": "publish_action", "issue": "summary_rows_must_not_publish"})
+    missing_ids = sorted(preflight_ids - seen_queue_ids)
+    for missing_id in missing_ids:
+        issues.append({"row": "0", "field": "candidate_queue_id", "issue": f"preflight_id_missing_from_summary:{missing_id}"})
+    return issues
+
+
+def render_action_photo_research_return_summary_board(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    status_counts: Dict[str, int] = {}
+    for row in rows:
+        status = clean(row.get("return_status"))
+        status_counts[status] = status_counts.get(status, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Research Return Summary Board v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Operator summary for pasted ChatGPT Pro, Gemini, or manual action-photo research returns. This board only summarizes returned URL/evidence rows and next manual actions; it does not download images, approve assets, write headshots, create `.approved` markers, move files to publish-ready lanes, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Summary rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows ready for human download decision only: `{status_counts.get('ready_for_human_download_decision_only', 0)}`",
+        f"- Rows needing manual return fixes: `{status_counts.get('returned_needs_manual_fix', 0)}`",
+        f"- Rows still missing research return: `{status_counts.get('research_return_missing', 0)}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Operator Queue",
+        "",
+        "| Priority | Queue ID | Return Status | Ready? | Action Status | Identity Status | Missing Fields | Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {priority} | {queue_id} | {status} | {ready} | {action} | {identity} | `{missing}` | {next_action} |".format(
+                priority=clean(row.get("operator_priority")),
+                queue_id=clean(row.get("candidate_queue_id")),
+                status=clean(row.get("return_status")),
+                ready=clean(row.get("ready_for_human_download_decision")),
+                action=clean(row.get("action_photo_status")),
+                identity=clean(row.get("identity_confidence_status")),
+                missing=clean(row.get("missing_required_fields")),
+                next_action=clean(row.get("operator_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def external_research_packet_manifest(
     source_map_board_rows: List[Mapping[str, str]],
     source_discovery_rows: List[Mapping[str, str]],
@@ -4746,6 +4960,8 @@ def main() -> int:
     )
     quarantine_preflight_rows = action_photo_quarantine_preflight_rows(research_return_rows)
     quarantine_preflight_issues = validate_action_photo_quarantine_preflight_rows(quarantine_preflight_rows, research_return_rows)
+    research_return_summary_rows = action_photo_research_return_summary_board_rows(research_return_rows, quarantine_preflight_rows)
+    research_return_summary_issues = validate_action_photo_research_return_summary_board_rows(research_return_summary_rows, quarantine_preflight_rows)
     wnba_hero_target_rows = wnba_final_score_hero_action_photo_target_rows()
     wnba_hero_target_issues = validate_wnba_final_score_hero_action_photo_target_rows(wnba_hero_target_rows)
     cutout_readiness_rows = action_photo_cutout_readiness_rows(wnba_hero_target_rows)
@@ -5252,6 +5468,47 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_RESEARCH_RETURN_SUMMARY_BOARD_CSV, research_return_summary_rows, ACTION_PHOTO_RESEARCH_RETURN_SUMMARY_BOARD_FIELDS)
+    write_text(
+        OUT_RESEARCH_RETURN_SUMMARY_BOARD_MD,
+        render_action_photo_research_return_summary_board(research_return_summary_rows, research_return_summary_issues, generated_at),
+    )
+    write_json(
+        OUT_RESEARCH_RETURN_SUMMARY_BOARD_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_research_return_summary_board_ready" if not research_return_summary_issues else "action_photo_research_return_summary_board_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "summary_rows": len(research_return_summary_rows),
+            "validation_issue_count": len(research_return_summary_issues),
+            "validation_issues": research_return_summary_issues,
+            "candidate_queue_ids": sorted({row["candidate_queue_id"] for row in research_return_summary_rows}),
+            "return_status_counts": {
+                status: sum(1 for row in research_return_summary_rows if row["return_status"] == status)
+                for status in sorted({row["return_status"] for row in research_return_summary_rows})
+            },
+            "ready_for_human_download_decision_rows": sum(
+                1 for row in research_return_summary_rows if row["return_status"] == "ready_for_human_download_decision_only"
+            ),
+            "returned_needs_manual_fix_rows": sum(1 for row in research_return_summary_rows if row["return_status"] == "returned_needs_manual_fix"),
+            "research_return_missing_rows": sum(1 for row in research_return_summary_rows if row["return_status"] == "research_return_missing"),
+            "download_approved_yes_rows": sum(1 for row in research_return_summary_rows if row["download_approved"] == "yes"),
+            "review_only_rows": sum(1 for row in research_return_summary_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in research_return_summary_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_RESEARCH_RETURN_SUMMARY_BOARD_CSV.as_posix(),
+            "worksheet_md": OUT_RESEARCH_RETURN_SUMMARY_BOARD_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_csv(OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV, wnba_hero_target_rows, ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS)
     write_text(OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD, render_wnba_final_score_hero_action_photo_targets(wnba_hero_target_rows, wnba_hero_target_issues, generated_at))
     write_json(
@@ -5354,7 +5611,7 @@ def main() -> int:
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not source_map_board_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not operator_worksheet_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not source_map_board_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not operator_worksheet_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not research_return_summary_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -5394,11 +5651,13 @@ def main() -> int:
             "action_photo_external_research_packet_export_manifest_json": OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON.as_posix(),
             "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows),
             "action_photo_quarantine_preflight_validation_issue_count": len(quarantine_preflight_issues),
+            "action_photo_research_return_summary_board_rows": len(research_return_summary_rows),
+            "action_photo_research_return_summary_board_validation_issue_count": len(research_return_summary_issues),
             "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows),
             "wnba_final_score_hero_action_photo_target_validation_issue_count": len(wnba_hero_target_issues),
             "action_photo_cutout_readiness_rows": len(cutout_readiness_rows),
             "action_photo_cutout_readiness_validation_issue_count": len(cutout_readiness_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -5448,6 +5707,9 @@ def main() -> int:
             "action_photo_quarantine_preflight_csv": OUT_QUARANTINE_PREFLIGHT_CSV.as_posix(),
             "action_photo_quarantine_preflight_md": OUT_QUARANTINE_PREFLIGHT_MD.as_posix(),
             "action_photo_quarantine_preflight_json": OUT_QUARANTINE_PREFLIGHT_JSON.as_posix(),
+            "action_photo_research_return_summary_board_csv": OUT_RESEARCH_RETURN_SUMMARY_BOARD_CSV.as_posix(),
+            "action_photo_research_return_summary_board_md": OUT_RESEARCH_RETURN_SUMMARY_BOARD_MD.as_posix(),
+            "action_photo_research_return_summary_board_json": OUT_RESEARCH_RETURN_SUMMARY_BOARD_JSON.as_posix(),
             "wnba_final_score_hero_action_photo_targets_csv": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV.as_posix(),
             "wnba_final_score_hero_action_photo_targets_md": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD.as_posix(),
             "wnba_final_score_hero_action_photo_targets_json": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_JSON.as_posix(),
@@ -5467,9 +5729,9 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
+    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
 
 
 if __name__ == "__main__":
