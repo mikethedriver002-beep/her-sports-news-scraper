@@ -2850,6 +2850,106 @@ def seed_asset_availability_audit_files() -> None:
         "paid_apis": "false",
     }
     write_csv_with_fields((wnba_dir / "logo_review_packets.csv").as_posix(), [logo_packet], list(logo_packet.keys()))
+    action_photo_dir = registry_dir / "action_photo_candidates"
+    action_photo_dir.mkdir(parents=True, exist_ok=True)
+    write_json(
+        (action_photo_dir / "review_only_action_photo_candidate_intake.json").as_posix(),
+        {
+            "status": "action_photo_candidate_intake_ready",
+            "generated_at_utc": "2026-06-29T00:00:00+00:00",
+            "intake_rows": 5,
+            "action_photo_candidate_queue_rows": 10,
+            "action_photo_candidate_research_packet_rows": 10,
+            "action_photo_research_return_intake_rows": 10,
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_candidate_operator_worksheet_v1.json").as_posix(),
+        {
+            "status": "action_photo_candidate_operator_worksheet_ready",
+            "generated_at_utc": "2026-06-29T00:01:00+00:00",
+            "worksheet_rows": 10,
+            "download_approved_yes_rows": 0,
+            "blank_candidate_url_rows": 10,
+            "blank_source_url_rows": 10,
+            "blank_reviewer_decision_rows": 10,
+            "not_in_quarantine_rows": 10,
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_research_run_bundle_v1.json").as_posix(),
+        {
+            "status": "action_photo_research_run_bundle_ready",
+            "generated_at_utc": "2026-06-29T00:02:00+00:00",
+            "bundle_steps": 6,
+            "download_approved_yes_rows": 0,
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_quarantine_preflight_v1.json").as_posix(),
+        {
+            "status": "action_photo_quarantine_preflight_ready",
+            "generated_at_utc": "2026-06-29T00:03:00+00:00",
+            "preflight_rows": 10,
+            "ready_for_human_download_decision_rows": 0,
+            "lead_only_rows": 10,
+            "download_approved_yes_rows": 0,
+            "missing_required_field_counts": {"source_url": 10},
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
+        (action_photo_dir / "review_only_wnba_final_score_hero_action_photo_targets_v1.json").as_posix(),
+        {
+            "status": "wnba_final_score_hero_action_photo_targets_ready",
+            "generated_at_utc": "2026-06-29T00:04:00+00:00",
+            "target_rows": 5,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 5,
+            "blank_candidate_photo_url_rows": 5,
+            "operator_verify_required_yes_rows": 5,
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_cutout_readiness_v1.json").as_posix(),
+        {
+            "status": "action_photo_cutout_readiness_ready",
+            "generated_at_utc": "2026-06-29T00:05:00+00:00",
+            "cutout_readiness_rows": 5,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 5,
+            "blank_candidate_photo_url_rows": 5,
+            "blank_cutout_work_required_rows": 5,
+            "segmentation": False,
+            "background_removal": False,
+            "cutout_file_writes": False,
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
 
 
 def write_identity_resolution_inbox(**overrides: str) -> None:
@@ -4410,6 +4510,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["logo_review_packet_rows"] == 1
     assert payload["asset_readiness_panel"]["logo_review_packet_unapproved_rows"] == 1
     assert payload["asset_readiness_panel"]["logo_review_packet_freshness_status"] == "packet_ready"
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_blank_candidate_url_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_blank_source_url_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_blank_reviewer_decision_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_download_approved_yes_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_not_in_quarantine_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_approved_marker_writes"] is False
     assert "present with 1 row(s)" in payload["asset_readiness_panel"]["logo_review_packet_freshness_detail"]
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision_lane"] == "wnba_athlete_identity_resolution"
@@ -4434,6 +4543,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Renderer fallback remains review-only while logo trust is held." in html
     assert "HSD team badges are review-only stand-ins" in html
     assert "they do not approve logo identity or create a publish-ready lane" in html
+    assert "Action-photo worksheet" in html
+    assert "Worksheet reviewer blanks" in html
+    assert "Worksheet writes" in html
     assert "review-only fallback status not recorded" not in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
@@ -4445,6 +4557,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "packet: manual_review / review_required / review_required" not in markdown
     assert "Logo review packets: 1 (1 unapproved / 0 source drift)" in markdown
     assert "Logo review packet freshness: packet_ready" in markdown
+    assert "Action-photo operator worksheet rows: 10" in markdown
+    assert "Action-photo operator worksheet blank candidate-url rows: 10" in markdown
+    assert "Action-photo operator worksheet download-approved yes rows: 0" in markdown
+    assert "Action-photo operator worksheet asset/headshot/marker writes: False/False/False" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
