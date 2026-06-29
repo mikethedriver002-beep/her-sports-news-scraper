@@ -120,6 +120,16 @@ def git_value(args: list[str], default: str = "unknown") -> str:
     return output.splitlines()[0].strip() or default
 
 
+def is_merged_to_main(commit: str) -> bool:
+    if not commit:
+        return False
+    for ref in ("origin/main", "main"):
+        code, _ = run_command(["git", "merge-base", "--is-ancestor", commit, ref])
+        if code == 0:
+            return True
+    return False
+
+
 def collect_git_state() -> dict[str, Any]:
     status_code, status_output = run_command(["git", "status", "--short", "--branch"])
     status_lines = [line for line in status_output.splitlines() if line.strip()] if status_code == 0 else []
@@ -198,6 +208,7 @@ def collect_worktree_branches() -> list[dict[str, str]]:
             dirty_code, dirty_output = run_command(["git", "status", "--short"], cwd=Path(path))
             row["dirty"] = "true" if dirty_code == 0 and dirty_output else "false"
             row["dirty_count"] = str(len([line for line in dirty_output.splitlines() if line.strip()])) if dirty_code == 0 else "unknown"
+        row["merged_to_main"] = "true" if is_merged_to_main(row.get("head", "")) else "false"
     return rows
 
 
@@ -212,6 +223,8 @@ def worktree_hints_by_lane(worktrees: list[dict[str, str]]) -> dict[str, list[di
     hints: dict[str, list[dict[str, str]]] = {lane["lane_id"]: [] for lane in LANE_ROSTER}
     for worktree in worktrees:
         branch = worktree.get("branch", "")
+        if worktree.get("merged_to_main") == "true":
+            continue
         if not branch or branch == "detached":
             continue
         for lane in LANE_ROSTER:
