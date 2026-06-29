@@ -37,6 +37,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
     external_research_rows = read_csv(root / "review_only_action_photo_external_research_source_map.csv")
     source_discovery_rows = read_csv(root / "review_only_action_photo_source_discovery_board_v1.csv")
+    source_map_board_rows = read_csv(root / "review_only_action_photo_sport_entity_source_map_board_v1.csv")
     lead_schema_rows = read_csv(root / "review_only_action_photo_lead_return_schema_v1.csv")
     cutout_scoring_rows = read_csv(root / "review_only_action_photo_cutout_scoring_criteria_v1.csv")
     queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
@@ -50,6 +51,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
     external_research_manifest = json.loads((root / "review_only_action_photo_external_research_source_map.json").read_text(encoding="utf-8"))
     source_discovery_manifest = json.loads((root / "review_only_action_photo_source_discovery_board_v1.json").read_text(encoding="utf-8"))
+    source_map_board_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map_board_v1.json").read_text(encoding="utf-8"))
     lead_schema_manifest = json.loads((root / "review_only_action_photo_lead_return_schema_v1.json").read_text(encoding="utf-8"))
     cutout_scoring_manifest = json.loads((root / "review_only_action_photo_cutout_scoring_criteria_v1.json").read_text(encoding="utf-8"))
     queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
@@ -67,6 +69,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
     external_research_md = (root / "review_only_action_photo_external_research_source_map.md").read_text(encoding="utf-8")
     source_discovery_md = (root / "review_only_action_photo_source_discovery_board_v1.md").read_text(encoding="utf-8")
+    source_map_board_md = (root / "review_only_action_photo_sport_entity_source_map_board_v1.md").read_text(encoding="utf-8")
     lead_schema_md = (root / "review_only_action_photo_lead_return_schema_v1.md").read_text(encoding="utf-8")
     cutout_scoring_md = (root / "review_only_action_photo_cutout_scoring_criteria_v1.md").read_text(encoding="utf-8")
     queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
@@ -92,6 +95,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["external_research_source_map_validation_issue_count"] == 0
     assert manifest["action_photo_source_discovery_board_rows"] == 12
     assert manifest["action_photo_source_discovery_board_validation_issue_count"] == 0
+    assert manifest["action_photo_sport_entity_source_map_board_rows"] == 12
+    assert manifest["action_photo_sport_entity_source_map_board_validation_issue_count"] == 0
     assert manifest["action_photo_lead_return_schema_rows"] == 18
     assert manifest["action_photo_lead_return_schema_validation_issue_count"] == 0
     assert manifest["action_photo_cutout_scoring_criteria_rows"] == 8
@@ -388,6 +393,80 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "`download_approved=no`" in source_discovery_md
     assert manifest["action_photo_source_discovery_board_csv"].endswith("review_only_action_photo_source_discovery_board_v1.csv")
     assert manifest["action_photo_source_discovery_board_md"].endswith("review_only_action_photo_source_discovery_board_v1.md")
+    assert source_map_board_manifest["status"] == "action_photo_sport_entity_source_map_board_ready"
+    assert source_map_board_manifest["board_rows"] == 12
+    assert source_map_board_manifest["validation_issue_count"] == 0
+    assert source_map_board_manifest["download_approved_yes_rows"] == 0
+    assert source_map_board_manifest["blank_operator_found_url_rows"] == 12
+    assert source_map_board_manifest["blank_operator_decision_rows"] == 12
+    assert source_map_board_manifest["blank_source_url_rows"] == 12
+    assert source_map_board_manifest["blank_entity_id_rows"] == 12
+    assert source_map_board_manifest["blank_rights_class_rows"] == 12
+    assert source_map_board_manifest["blank_identity_confidence_rows"] == 12
+    assert source_map_board_manifest["blank_intended_review_only_use_rows"] == 12
+    assert source_map_board_manifest["review_only_rows"] == 12
+    assert source_map_board_manifest["publish_ready_rows"] == 0
+    assert source_map_board_manifest["asset_downloads"] is False
+    assert source_map_board_manifest["source_fetching"] is False
+    assert source_map_board_manifest["auto_source_enablement"] is False
+    assert source_map_board_manifest["auto_approval"] is False
+    assert {
+        "WNBA",
+        "NWSL",
+        "USWNT / U.S. Soccer",
+        "NCAA women's basketball",
+        "NCAA women's soccer",
+        "WTA / Grand Slam / tournament",
+        "LPGA / tournament",
+    } <= set(source_map_board_manifest["entities"])
+    assert {
+        "known_newsroom",
+        "known_social",
+        "known_newsroom_social_manual",
+        "manual_research_parking",
+    } <= set(source_map_board_manifest["known_slots"])
+    source_map_board_keys = {
+        (row["sport"], row["entity"], row["source_type"], row["url_or_manual_query_placeholder"])
+        for row in source_map_board_rows
+    }
+    assert len(source_map_board_keys) == len(source_map_board_rows)
+    for row in source_map_board_rows:
+        assert row["url_or_manual_query_placeholder"]
+        assert row["discovery_purpose"]
+        assert row["action_photo_usefulness"]
+        assert row["official_free_public_status"]
+        assert row["risk_review_notes"]
+        assert row["paste_back_target"].endswith("review_only_action_photo_research_return_intake_v1.csv")
+        assert row["operator_found_url"] == ""
+        assert row["operator_candidate_source_name"] == ""
+        assert row["operator_candidate_entity_id"] == ""
+        assert row["operator_candidate_rights_class"] == ""
+        assert row["operator_candidate_identity_confidence"] == ""
+        assert row["operator_intended_review_only_use"] == ""
+        assert row["operator_decision"] == ""
+        assert row["operator_review_notes"] == ""
+        assert row["operator_reviewer"] == ""
+        assert row["operator_reviewed_at_utc"] == ""
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["publish_action"] == "none_artifact_only"
+        assert row["asset_downloads"] == "false"
+        assert row["source_fetching"] == "false"
+        assert row["auto_source_enablement"] == "false"
+        assert row["auto_approval"] == "false"
+    assert "WNBA, NWSL, USWNT, NCAA, tennis, golf" in source_map_board_md
+    assert "do not fetch images, download files, enable sources, approve assets" in source_map_board_md
+    assert "Leave generated operator decision fields blank" in source_map_board_md
+    assert manifest["action_photo_sport_entity_source_map_board_csv"].endswith("review_only_action_photo_sport_entity_source_map_board_v1.csv")
+    assert manifest["action_photo_sport_entity_source_map_board_md"].endswith("review_only_action_photo_sport_entity_source_map_board_v1.md")
+    assert manifest["action_photo_sport_entity_source_map_board_json"].endswith("review_only_action_photo_sport_entity_source_map_board_v1.json")
     assert lead_schema_manifest["status"] == "action_photo_lead_return_schema_ready"
     assert lead_schema_manifest["schema_rows"] == 18
     assert lead_schema_manifest["validation_issue_count"] == 0
@@ -1286,6 +1365,79 @@ def test_action_photo_source_discovery_board_validator_blocks_unsafe_rows() -> N
     assert ("publish_ready", "source_discovery_rows_must_not_be_publish_ready") in issue_pairs
     assert ("approval_state_change", "source_discovery_rows_must_not_change_approval_state") in issue_pairs
     assert ("publish_action", "source_discovery_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_sport_entity_source_map_board_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = module.action_photo_sport_entity_source_map_board_rows()
+    invalid_rows[0].update(
+        {
+            "source_lane": "auto_enabled_source",
+            "discovery_purpose": "",
+            "operator_found_url": "https://example.com/photo",
+            "operator_candidate_source_name": "Example source",
+            "operator_candidate_entity_id": "wnba:test",
+            "operator_candidate_rights_class": "official_review_needed",
+            "operator_candidate_identity_confidence": "strong_context",
+            "operator_intended_review_only_use": "review",
+            "operator_decision": "approved",
+            "operator_review_notes": "looks good",
+            "operator_reviewer": "operator",
+            "operator_reviewed_at_utc": "2026-06-29T00:00:00+00:00",
+            "paste_back_target": "data/asset_registry/action_photo_candidates/bad.csv",
+            "download_approved": "yes",
+            "source_url": "https://example.com/photo",
+            "entity_id": "wnba:test",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "publish_action": "publish",
+            "asset_downloads": "true",
+            "source_fetching": "true",
+            "auto_source_enablement": "true",
+            "auto_approval": "true",
+        }
+    )
+    invalid_rows[1]["board_id"] = invalid_rows[2]["board_id"]
+    invalid_rows[3]["sport"] = invalid_rows[4]["sport"]
+    invalid_rows[3]["entity"] = invalid_rows[4]["entity"]
+    invalid_rows[3]["source_type"] = invalid_rows[4]["source_type"]
+    invalid_rows[3]["url_or_manual_query_placeholder"] = invalid_rows[4]["url_or_manual_query_placeholder"]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_sport_entity_source_map_board_rows(invalid_rows)}
+
+    assert ("board_id", "duplicate_board_id") in issue_pairs
+    assert ("url_or_manual_query_placeholder", "duplicate_source_map_board_key") in issue_pairs
+    assert ("source_lane", "invalid_source_lane") in issue_pairs
+    assert ("discovery_purpose", "required_source_map_board_field_blank") in issue_pairs
+    assert ("operator_found_url", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_candidate_source_name", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_candidate_entity_id", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_candidate_rights_class", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_candidate_identity_confidence", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_intended_review_only_use", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_decision", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_review_notes", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_reviewer", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("operator_reviewed_at_utc", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("source_url", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_operator_or_download_field_must_stay_blank") in issue_pairs
+    assert ("paste_back_target", "paste_back_target_must_be_research_return_intake") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "source_map_board_review_only_guardrail_failed") in issue_pairs
+    assert ("asset_downloads", "source_map_board_asset_downloads_guardrail_failed") in issue_pairs
+    assert ("source_fetching", "source_map_board_source_fetching_guardrail_failed") in issue_pairs
+    assert ("auto_source_enablement", "source_map_board_auto_source_enablement_guardrail_failed") in issue_pairs
+    assert ("auto_approval", "source_map_board_auto_approval_guardrail_failed") in issue_pairs
+    assert ("publish_ready", "source_map_board_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "source_map_board_rows_must_not_change_approval_state") in issue_pairs
+    assert ("publish_action", "source_map_board_rows_must_not_publish") in issue_pairs
 
 
 def test_action_photo_lead_return_schema_validator_blocks_unsafe_rows() -> None:

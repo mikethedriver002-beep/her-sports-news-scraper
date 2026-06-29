@@ -2868,6 +2868,24 @@ def seed_asset_availability_audit_files() -> None:
         },
     )
     write_json(
+        (action_photo_dir / "review_only_action_photo_sport_entity_source_map_board_v1.json").as_posix(),
+        {
+            "status": "action_photo_sport_entity_source_map_board_ready",
+            "generated_at_utc": "2026-06-29T00:00:30+00:00",
+            "board_rows": 12,
+            "blank_operator_decision_rows": 12,
+            "blank_source_url_rows": 12,
+            "download_approved_yes_rows": 0,
+            "review_only": True,
+            "asset_downloads": False,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "auto_approval": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
         (action_photo_dir / "review_only_action_photo_candidate_operator_worksheet_v1.json").as_posix(),
         {
             "status": "action_photo_candidate_operator_worksheet_ready",
@@ -5074,6 +5092,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/hockey_softball_quarantine_download_intake.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_quarantine_download_intake.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.md"]["status_detail"] == "Created with this command center run"
     assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.csv"]["status_detail"] == "Created with this command center run"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
@@ -5081,6 +5102,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"
 
     assert "HSD Daily Operator Command Center" in html
+    assert "Action-photo sport/entity source-map board" in html
+    assert "Source-map board" in html
+    assert "Source-map fetch/approve" in html
     assert 'data-tab-target="today"' in html
     assert 'data-tab-target="decision-panel"' in html
     assert 'data-tab-target="content"' in html
