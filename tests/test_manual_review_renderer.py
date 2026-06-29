@@ -5,6 +5,7 @@ import os
 import subprocess
 import csv
 import sys
+import warnings
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageStat
@@ -489,6 +490,28 @@ def test_manual_review_renderer_score_only_fallback_avoids_generic_result_copy()
     assert "statement win" not in public
     assert "point victory" not in public
     assert "margin" not in public
+
+
+def test_manual_review_renderer_logo_accent_sampling_avoids_pillow_getdata_warning() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    logo = Image.new("RGBA", (4, 1), (0, 0, 0, 0))
+    logo.putpixel((0, 0), (196, 30, 58, 255))
+    logo.putpixel((1, 0), (196, 30, 58, 255))
+    logo.putpixel((2, 0), (0, 120, 220, 255))
+    logo.putpixel((3, 0), (0, 255, 0, 12))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        accent, source = module.logo_sampled_accent(logo, (12, 34, 56), "test_registry")
+
+    assert accent == (192, 35, 48)
+    assert source == "sampled_from_local_logo_review_asset"
 
 
 def test_manual_review_renderer_selects_verified_winning_team_stat_module(tmp_path: Path, monkeypatch) -> None:

@@ -583,7 +583,9 @@ def logo_sampled_accent(logo: Any, fallback: tuple[int, int, int], fallback_sour
         sample = logo.convert("RGBA")
         sample.thumbnail((96, 96), resample_filter())
         buckets: Dict[tuple[int, int, int], int] = {}
-        for r, g, b, a in sample.getdata():
+        pixels = sample.tobytes()
+        for index in range(0, len(pixels), 4):
+            r, g, b, a = pixels[index], pixels[index + 1], pixels[index + 2], pixels[index + 3]
             if a < 64:
                 continue
             luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
