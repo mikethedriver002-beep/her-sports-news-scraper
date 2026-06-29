@@ -28,6 +28,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "operator_next_action_synthesis.md" in artifact_paths
     assert "operator_next_action_synthesis.csv" in artifact_paths
     assert "operator_next_action_synthesis.json" in artifact_paths
+    assert "workflow_lane_nudge_synthesis.md" in artifact_paths
+    assert "workflow_lane_nudge_synthesis.csv" in artifact_paths
+    assert "workflow_lane_nudge_synthesis.json" in artifact_paths
     assert "breaking_public_signal_queue.md" in artifact_paths
     assert "breaking_public_signal_queue.csv" in artifact_paths
     assert "breaking_public_signal_manifest.json" in artifact_paths

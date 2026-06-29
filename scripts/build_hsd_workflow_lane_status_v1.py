@@ -17,6 +17,7 @@ from hsd_run_io import output_path, read_csv, write_csv, write_json, write_text
 VERSION = "hsd-workflow-lane-status-v1-review-only"
 DEFAULT_INTAKE = "operator/inbox/workflow_lane_status_intake.csv"
 DEFAULT_OUTPUT_STEM = "workflow_lane_status_dashboard"
+DEFAULT_NUDGE_STEM = "workflow_lane_nudge_synthesis"
 
 LANE_ROSTER = [
     {
@@ -124,6 +125,28 @@ GUARDRAIL_DEFAULTS = {
 }
 
 GUARDRAIL_FIELDS = list(GUARDRAIL_DEFAULTS)
+NUDGE_FIELDS = [
+    "rank",
+    "lane_id",
+    "lane",
+    "nudge_type",
+    "priority",
+    "status",
+    "activity_status",
+    "activity_age_hours",
+    "last_known_branch",
+    "last_known_head",
+    "pr",
+    "pending_thread",
+    "lane_owner_thread",
+    "last_pr_merged",
+    "next_packet",
+    "lifecycle_action",
+    "manual_conductor_prompt",
+    "guardrail_note",
+    "review_only",
+    "automatic_changes",
+]
 
 WORKFLOW_HEARTBEAT_STATUS = "heartbeat_visible_needs_conductor_check"
 WORKFLOW_HEARTBEAT_NEXT_ACTION = (
@@ -489,6 +512,76 @@ def conductor_action_for_row(
     return default_next_action
 
 
+def nudge_type_for_row(row: dict[str, str]) -> str:
+    if row.get("stale_lane_brake") == "true":
+        return "stale_brake"
+    if boolish(row.get("restart_needed", "")):
+        return "restart_needed"
+    if row.get("lifecycle_action"):
+        return "manual_lifecycle_action"
+    if row.get("heartbeat") == "true":
+        return "workflow_heartbeat"
+    if row.get("status_source") == "worktree_hint":
+        return "worktree_hint_check"
+    return ""
+
+
+def nudge_priority(nudge_type: str) -> str:
+    priorities = {
+        "stale_brake": "P1",
+        "restart_needed": "P2",
+        "manual_lifecycle_action": "P2",
+        "workflow_heartbeat": "P3",
+        "worktree_hint_check": "P3",
+    }
+    return priorities.get(nudge_type, "")
+
+
+def nudge_sort_key(row: dict[str, str]) -> tuple[int, float, str]:
+    priority_order = {"P1": 1, "P2": 2, "P3": 3}
+    age_raw = row.get("activity_age_hours") or row.get("stale_age_hours") or "0"
+    try:
+        age = float(age_raw)
+    except ValueError:
+        age = 0.0
+    return (priority_order.get(row.get("priority", ""), 9), -age, row.get("lane_id", ""))
+
+
+def build_nudge_rows(lanes: list[dict[str, str]]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for lane in lanes:
+        nudge_type = nudge_type_for_row(lane)
+        if not nudge_type:
+            continue
+        row = {
+            "rank": "",
+            "lane_id": lane["lane_id"],
+            "lane": lane["lane"],
+            "nudge_type": nudge_type,
+            "priority": nudge_priority(nudge_type),
+            "status": lane["status"],
+            "activity_status": lane["activity_status"],
+            "activity_age_hours": lane["activity_age_hours"],
+            "last_known_branch": lane["last_known_branch"],
+            "last_known_head": lane["last_known_head"],
+            "pr": lane["pr"],
+            "pending_thread": lane["pending_thread"],
+            "lane_owner_thread": lane["lane_owner_thread"],
+            "last_pr_merged": lane["last_pr_merged"],
+            "next_packet": lane["next_packet"],
+            "lifecycle_action": lane["lifecycle_action"],
+            "manual_conductor_prompt": lane["next_conductor_action"],
+            "guardrail_note": "Manual cue only; do not delete worktrees, close branches, archive user-owned threads, rebase/rewrite branches, approve assets, enable sources, download assets, move publish-ready files, or publish.",
+            "review_only": "true",
+            "automatic_changes": "false",
+        }
+        rows.append(row)
+    rows.sort(key=nudge_sort_key)
+    for index, row in enumerate(rows, 1):
+        row["rank"] = str(index)
+    return rows
+
+
 def lane_rows(
     intake_rows: list[dict[str, str]],
     open_prs: list[dict[str, str]],
@@ -739,6 +832,61 @@ def render_markdown(payload: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_nudge_markdown(payload: dict[str, Any]) -> str:
+    rows = payload.get("nudge_synthesis", [])
+    lines = [
+        "# HSD Workflow Lane Nudge Synthesis",
+        "",
+        "Status: review-only conductor nudge artifact.",
+        "",
+        f"Generated: `{payload['generated_at_utc']}`",
+        f"Version: `{payload['version']}`",
+        "",
+        "## Summary",
+        "",
+        f"- Nudge rows: `{len(rows)}`",
+        f"- Stale brakes: `{payload['stale_lane_count']}`",
+        f"- Restart-needed lanes: `{payload['restart_needed_lane_count']}`",
+        f"- Lifecycle-action lanes: `{payload['lifecycle_action_lane_count']}`",
+        "",
+        "## Manual Nudge Queue",
+        "",
+        "| Rank | Priority | Lane | Type | Age h | Branch | PR | Owner thread | Prompt |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    if not rows:
+        lines.append("| - | - | - | - | - | - | - | - | No stale, restart-needed, lifecycle, heartbeat, or worktree-hint rows need a conductor nudge. |")
+    for row in rows:
+        lines.append(
+            "| {rank} | `{priority}` | {lane} | `{nudge_type}` | `{age}` | `{branch}` | {pr} | {owner} | {prompt} |".format(
+                rank=row["rank"],
+                priority=row["priority"],
+                lane=row["lane"],
+                nudge_type=row["nudge_type"],
+                age=row["activity_age_hours"] or "-",
+                branch=row["last_known_branch"] or "-",
+                pr=row["pr"] or "-",
+                owner=row["lane_owner_thread"] or row["pending_thread"] or "-",
+                prompt=row["manual_conductor_prompt"],
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- Review-only and artifact-only.",
+            "- Manual cues only: nudge, replace/reboot, pause, archive recommendation, or merge-ready review.",
+            "- No force-deleting worktrees.",
+            "- No closing branches automatically.",
+            "- No archiving user-owned threads automatically.",
+            "- No rebasing or rewriting lane branches automatically.",
+            "- No approval, download, source, publish-ready, or publishing state changes.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     intake_rows = read_csv(args.intake)
     generated_at_utc = args.as_of_utc or now_iso()
@@ -747,6 +895,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     open_prs = collect_open_prs() if not args.skip_pr_lookup else []
     worktrees = collect_worktree_branches() if not args.skip_worktree_lookup else []
     rows = lane_rows(intake_rows, open_prs, git_state, worktrees, as_of, args.stale_after_hours)
+    nudge_rows = build_nudge_rows(rows)
     workflow_row = next((row for row in rows if row["lane_id"] == "workflow_overhaul"), {})
     workflow_heartbeat = {
         "status": workflow_row.get("status", ""),
@@ -787,6 +936,9 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "open_prs": open_prs,
         "worktrees": worktrees,
         "lanes": rows,
+        "nudge_synthesis": nudge_rows,
+        "nudge_synthesis_count": len(nudge_rows),
+        "nudge_synthesis_p1_count": sum(1 for row in nudge_rows if row["priority"] == "P1"),
         "lane_count": len(rows),
         "unreported_lane_count": sum(1 for row in rows if row["status"] == "unreported"),
         "completed_lane_count": sum(1 for row in rows if row["status_tone"] == "completed"),
@@ -851,7 +1003,47 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "guardrail_warnings",
         ],
     )
-    return {"markdown": str(md_path), "json": str(json_path), "csv": str(csv_path)}
+    nudge_md_path = write_text(f"{DEFAULT_NUDGE_STEM}.md", render_nudge_markdown(payload))
+    nudge_json_path = write_json(
+        f"{DEFAULT_NUDGE_STEM}.json",
+        {
+            "version": payload["version"],
+            "generated_at_utc": payload["generated_at_utc"],
+            "status": "workflow_lane_nudge_synthesis_ready",
+            "review_only": True,
+            "automatic_changes": False,
+            "counts": {
+                "rows": payload["nudge_synthesis_count"],
+                "p1": payload["nudge_synthesis_p1_count"],
+                "stale_lane_count": payload["stale_lane_count"],
+                "restart_needed_lane_count": payload["restart_needed_lane_count"],
+                "lifecycle_action_lane_count": payload["lifecycle_action_lane_count"],
+            },
+            "guardrails": {
+                "review_only": True,
+                "automatic_changes": False,
+                "worktree_deletion": False,
+                "branch_closure": False,
+                "thread_archival": False,
+                "branch_rewrite": False,
+                "approval_state_change": False,
+                "source_enablement": False,
+                "asset_downloads": False,
+                "publish_ready_movement": False,
+                "publishing": False,
+            },
+            "rows": payload["nudge_synthesis"],
+        },
+    )
+    nudge_csv_path = write_csv(f"{DEFAULT_NUDGE_STEM}.csv", payload["nudge_synthesis"], NUDGE_FIELDS)
+    return {
+        "markdown": str(md_path),
+        "json": str(json_path),
+        "csv": str(csv_path),
+        "nudge_markdown": str(nudge_md_path),
+        "nudge_json": str(nudge_json_path),
+        "nudge_csv": str(nudge_csv_path),
+    }
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -882,6 +1074,8 @@ def main(argv: list[str] | None = None) -> int:
                 "restart_needed_lane_count": payload["restart_needed_lane_count"],
                 "lifecycle_action_lane_count": payload["lifecycle_action_lane_count"],
                 "stale_lane_count": payload["stale_lane_count"],
+                "nudge_synthesis_count": payload["nudge_synthesis_count"],
+                "nudge_synthesis_p1_count": payload["nudge_synthesis_p1_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
                 "guardrail_warning_count": payload["guardrail_warning_count"],
                 "outputs": outputs,
