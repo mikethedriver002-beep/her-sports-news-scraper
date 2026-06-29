@@ -321,7 +321,7 @@ ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS = [
     "render_gap",
     "target_moment_type",
     "preferred_action_cues",
-    "low_value_blocked_cues",
+    "low_value_cues",
     "source_family",
     "source_category",
     "source_url_or_search_macro",
@@ -2852,7 +2852,7 @@ def wnba_final_score_hero_action_photo_target_rows() -> List[Dict[str, str]]:
         "event_context": "current WNBA final-score hero render replacement research",
         "render_gap": "renderer_revise_headshot_bridge_not_emotional_action_sports_moment",
         "preferred_action_cues": "game_action|celebration|driving|shooting|rebound|block|final_buzzer_reaction",
-        "low_value_blocked_cues": "media_day|headshot|portrait|roster_profile|static_pose",
+        "low_value_cues": "headshot|media_day|portrait|roster_profile|static_pose",
         "candidate_photo_url": "",
         "evidence_url": "",
         "evidence_summary": "",
@@ -2935,7 +2935,7 @@ def validate_wnba_final_score_hero_action_photo_target_rows(rows: Iterable[Mappi
     seen_ids = set()
     seen_keys = set()
     required_action_terms = {"action", "game", "celebration", "driving", "shooting", "rebound", "block"}
-    required_low_value_terms = {"media_day", "headshot", "portrait"}
+    required_low_value_terms = {"headshot", "media_day", "portrait", "static_pose"}
     for index, row in enumerate(rows, start=2):
         normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS}
         target_id = normalized["target_id"]
@@ -2965,7 +2965,7 @@ def validate_wnba_final_score_hero_action_photo_target_rows(rows: Iterable[Mappi
             "render_gap",
             "target_moment_type",
             "preferred_action_cues",
-            "low_value_blocked_cues",
+            "low_value_cues",
             "source_family",
             "source_url_or_search_macro",
             "quarantine_target_hint",
@@ -2990,9 +2990,9 @@ def validate_wnba_final_score_hero_action_photo_target_rows(rows: Iterable[Mappi
         action_blob = normalized["preferred_action_cues"].lower()
         if not any(term in action_blob for term in required_action_terms):
             issues.append({"row": str(index), "field": "preferred_action_cues", "issue": "missing_action_hero_cues"})
-        low_value_blob = normalized["low_value_blocked_cues"].lower()
+        low_value_blob = normalized["low_value_cues"].lower()
         if not required_low_value_terms <= {part.strip() for part in low_value_blob.split("|")}:
-            issues.append({"row": str(index), "field": "low_value_blocked_cues", "issue": "missing_headshot_portrait_blocked_cues"})
+            issues.append({"row": str(index), "field": "low_value_cues", "issue": "missing_headshot_portrait_static_pose_cues"})
         if "headshot" not in normalized["render_gap"].lower():
             issues.append({"row": str(index), "field": "render_gap", "issue": "render_gap_must_name_headshot_bridge"})
         if normalized["review_only"] != "true":
@@ -3049,7 +3049,7 @@ def render_wnba_final_score_hero_action_photo_targets(rows: List[Mapping[str, st
                 moment=clean(row.get("target_moment_type")).replace("|", "/"),
                 family=clean(row.get("source_family")).replace("|", "/"),
                 macro=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
-                blocked=clean(row.get("low_value_blocked_cues")).replace("|", "/"),
+                blocked=clean(row.get("low_value_cues")).replace("|", "/"),
                 action=clean(row.get("manual_next_action")).replace("|", "/"),
             )
         )

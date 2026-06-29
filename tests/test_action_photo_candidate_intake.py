@@ -643,7 +643,7 @@ def test_wnba_final_score_hero_targets_bridge_render_gap_without_downloads(tmp_p
         assert row["source_category"] in taxonomy["source_categories"]
         assert row["source_url_or_search_macro"]
         assert "headshot_bridge" in row["render_gap"]
-        assert {"media_day", "headshot", "portrait"} <= set(row["low_value_blocked_cues"].split("|"))
+        assert {"headshot", "media_day", "portrait", "static_pose"} <= set(row["low_value_cues"].split("|"))
         assert any(term in row["preferred_action_cues"] for term in ["game_action", "celebration", "driving", "shooting", "rebound", "block"])
         assert row["candidate_photo_url"] == ""
         assert row["evidence_url"] == ""
@@ -1202,7 +1202,7 @@ def test_wnba_final_score_hero_target_validator_blocks_unsafe_rows() -> None:
         {
             "source_category": "free_web_image",
             "preferred_action_cues": "portrait",
-            "low_value_blocked_cues": "media_day",
+            "low_value_cues": "",
             "render_gap": "looks fine",
             "candidate_photo_url": "https://example.com/photo.jpg",
             "evidence_url": "https://example.com/evidence",
@@ -1247,7 +1247,8 @@ def test_wnba_final_score_hero_target_validator_blocks_unsafe_rows() -> None:
     assert ("manual_review_status", "generated_target_rows_must_start_not_reviewed") in issue_pairs
     assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
     assert ("preferred_action_cues", "missing_action_hero_cues") in issue_pairs
-    assert ("low_value_blocked_cues", "missing_headshot_portrait_blocked_cues") in issue_pairs
+    assert ("low_value_cues", "required_wnba_hero_target_field_blank") in issue_pairs
+    assert ("low_value_cues", "missing_headshot_portrait_static_pose_cues") in issue_pairs
     assert ("render_gap", "render_gap_must_name_headshot_bridge") in issue_pairs
     assert ("review_only", "wnba_hero_target_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "wnba_hero_target_rows_must_not_be_publish_ready") in issue_pairs
