@@ -292,6 +292,66 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     assert manifest["guardrails"]["publish_ready"] is False
 
 
+def test_manual_visual_qa_accepts_photo_first_no_redundant_score_context(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    preview_path = handoff_dir / "draft_preview.png"
+    make_photo_first_preview(preview_path)
+    image = Image.open(preview_path).convert("RGB")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((480, 770, 1030, 858), fill=(6, 10, 18))
+    image.save(preview_path)
+    write_guardrail_inputs(run_dir)
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["render_background_cues"] = (
+        "photo_first_editorial_score_rails,photo_first_no_redundant_score_context"
+    )
+    renderer_manifest["format_options"] = [
+        {
+            "format_id": "ig_feed_4x5",
+            "primary": True,
+            "athlete_photo_layout_mode": "photo_first_final_score",
+            "photo_first_template_geometry": {
+                "photo_stage_box": [58, 372, 408, 590],
+                "photo_face_focus_box": [106, 572, 312, 188],
+                "winner_score_row_box": [494, 398, 528, 176],
+                "loser_score_row_box": [494, 598, 528, 160],
+                "score_context_box": [494, 786, 528, 54],
+                "stat_strip_box": [58, 990, 964, 132],
+                "matchup_angle_box": [58, 1148, 964, 112],
+                "minimum_clearance_px": 24,
+            },
+        }
+    ]
+    renderer_manifest["content_module"] = {
+        "content_module_mode": "verified_player_stats",
+        "content_module_status": "verified_player_stat_module",
+        "content_module_player": "Breanna Stewart",
+        "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
+        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+    }
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [python_executable(), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    checks = {check["check_id"]: check for check in manifest["checks"]}
+    assert checks["context_text_zone"]["qa_result"] == "pass"
+    assert checks["context_text_zone"]["check_label"] == "Photo-first redundant score context removed"
+    assert "No public score-context copy expected" in checks["context_text_zone"]["evidence"]
+    assert checks["overall_text_signal"]["qa_result"] == "pass_human_review_required"
+
+
 def test_manual_visual_qa_holds_stale_preview_against_newer_handoff(tmp_path: Path) -> None:
     run_dir = tmp_path / "run" / "files"
     handoff_dir = run_dir / "render_handoff_top_packet"
