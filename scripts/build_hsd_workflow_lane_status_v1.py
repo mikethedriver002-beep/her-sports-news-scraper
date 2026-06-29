@@ -87,10 +87,37 @@ INTAKE_FIELDS = [
     "pr",
     "owner",
     "last_update_utc",
+    "completed_merge_pr",
+    "completed_merge_commit",
     "blocker",
     "next_action",
     "notes",
+    "review_only",
+    "paid_apis",
+    "source_fetching",
+    "automatic_downloads",
+    "auto_approval",
+    "approval_state_change",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "publishing",
 ]
+
+GUARDRAIL_DEFAULTS = {
+    "review_only": "true",
+    "paid_apis": "false",
+    "source_fetching": "false",
+    "automatic_downloads": "false",
+    "auto_approval": "false",
+    "approval_state_change": "false",
+    "headshot_writes": "false",
+    "approved_marker_writes": "false",
+    "publish_ready": "false",
+    "publishing": "false",
+}
+
+GUARDRAIL_FIELDS = list(GUARDRAIL_DEFAULTS)
 
 
 def now_iso() -> str:
@@ -274,12 +301,25 @@ def normalize_intake(rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
     return by_lane
 
 
+def normalized_guardrails(intake: dict[str, str]) -> tuple[dict[str, str], list[str]]:
+    values: dict[str, str] = {}
+    warnings: list[str] = []
+    for field, expected in GUARDRAIL_DEFAULTS.items():
+        value = (intake.get(field) or expected).strip().lower()
+        values[field] = value
+        if value != expected:
+            warnings.append(f"{field}_expected_{expected}_got_{value}")
+    return values, warnings
+
+
 def status_tone(status: str) -> str:
     normalized = status.lower()
     if any(token in normalized for token in ("blocked", "stale", "needs_human", "needs-human")):
         return "blocked"
     if any(token in normalized for token in ("active", "in_progress", "pr_open", "review", "detected")):
         return "active"
+    if any(token in normalized for token in ("completed", "merged", "done")):
+        return "completed"
     if any(token in normalized for token in ("idle", "queued", "ready")):
         return "idle"
     return "unknown"
@@ -308,7 +348,7 @@ def lane_rows(
             status = "pr_open"
         elif not status and branch:
             status = "active_or_needs_conductor_check"
-        elif lane_id == "workflow_overhaul" and "codex/workflow-" in current_branch:
+        elif not status and lane_id == "workflow_overhaul" and "codex/workflow-" in current_branch:
             status = "active_current_lane"
             branch = current_branch
         elif not status and first_hint and matching_pr:
@@ -319,34 +359,38 @@ def lane_rows(
             branch = first_hint.get("branch", "")
         elif not status:
             status = "unreported"
+        guardrails, guardrail_warnings = normalized_guardrails(intake)
         notes = intake.get("notes", "")
         if first_hint and not notes:
             notes = f"worktree={first_hint.get('path', '')}; dirty={first_hint.get('dirty', 'unknown')}; dirty_count={first_hint.get('dirty_count', 'unknown')}"
-        rows.append(
-            {
-                "lane_id": lane_id,
-                "lane": lane["lane"],
-                "owns": lane["owns"],
-                "status": status,
-                "status_tone": status_tone(status),
-                "branch": branch,
-                "pr": intake.get("pr", "") or matching_pr.get("url", ""),
-                "owner": intake.get("owner", ""),
-                "last_update_utc": intake.get("last_update_utc", ""),
-                "blocker": intake.get("blocker", ""),
-                "next_action": intake.get("next_action", "") or lane["default_next_action"],
-                "notes": notes,
-                "status_source": "manual_intake"
-                if intake
-                else "current_branch"
-                if status == "active_current_lane"
-                else "worktree_hint"
-                if first_hint
-                else "default",
-                "detected_worktree": first_hint.get("path", ""),
-                "detected_worktree_dirty": first_hint.get("dirty", ""),
-            }
-        )
+        row = {
+            "lane_id": lane_id,
+            "lane": lane["lane"],
+            "owns": lane["owns"],
+            "status": status,
+            "status_tone": status_tone(status),
+            "branch": branch,
+            "pr": intake.get("pr", "") or matching_pr.get("url", ""),
+            "owner": intake.get("owner", ""),
+            "last_update_utc": intake.get("last_update_utc", ""),
+            "completed_merge_pr": intake.get("completed_merge_pr", ""),
+            "completed_merge_commit": intake.get("completed_merge_commit", ""),
+            "blocker": intake.get("blocker", ""),
+            "next_action": intake.get("next_action", "") or lane["default_next_action"],
+            "notes": notes,
+            "status_source": "manual_intake"
+            if intake
+            else "current_branch"
+            if status == "active_current_lane"
+            else "worktree_hint"
+            if first_hint
+            else "default",
+            "detected_worktree": first_hint.get("path", ""),
+            "detected_worktree_dirty": first_hint.get("dirty", ""),
+            "guardrail_warnings": ";".join(guardrail_warnings),
+        }
+        row.update(guardrails)
+        rows.append(row)
     return rows
 
 
@@ -370,15 +414,18 @@ def render_markdown(payload: dict[str, Any]) -> str:
         "",
         "## Lane Dashboard",
         "",
-        "| Lane | Status | Source | Branch | PR | Blocker | Next action |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Lane | Status | Source | Branch | PR | Completed merge | Blocker | Next action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["lanes"]:
         pr = row["pr"] or "-"
         branch = row["branch"] or "-"
+        completed = row["completed_merge_pr"] or row["completed_merge_commit"] or "-"
+        if row["completed_merge_pr"] and row["completed_merge_commit"]:
+            completed = f"{row['completed_merge_pr']} / `{row['completed_merge_commit']}`"
         blocker = row["blocker"] or "-"
         lines.append(
-            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{branch}` | {pr} | {blocker} | {row['next_action']} |"
+            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{branch}` | {pr} | {completed} | {blocker} | {row['next_action']} |"
         )
     lines.extend(
         [
@@ -399,7 +446,9 @@ def render_markdown(payload: dict[str, Any]) -> str:
             "",
             "Optional intake rows can live in `operator/inbox/workflow_lane_status_intake.csv` with these columns:",
             "",
-            "`lane_id,status,branch,pr,owner,last_update_utc,blocker,next_action,notes`",
+            "`lane_id,status,branch,pr,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
+            "",
+            "A starter example lives at `operator/inbox/workflow_lane_status_intake.example.csv`; copy rows into the real intake only after conductor review.",
             "",
             "If no intake row exists, the dashboard adds best-effort worktree hints from local `codex/` branches and marks them for conductor check.",
         ]
@@ -432,8 +481,10 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "lanes": rows,
         "lane_count": len(rows),
         "unreported_lane_count": sum(1 for row in rows if row["status"] == "unreported"),
+        "completed_lane_count": sum(1 for row in rows if row["status_tone"] == "completed"),
         "worktree_hint_lane_count": sum(1 for row in rows if row["status_source"] == "worktree_hint"),
         "blocked_lane_count": sum(1 for row in rows if row["status_tone"] == "blocked"),
+        "guardrail_warning_count": sum(1 for row in rows if row["guardrail_warnings"]),
     }
     return payload
 
@@ -454,12 +505,16 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "pr",
             "owner",
             "last_update_utc",
+            "completed_merge_pr",
+            "completed_merge_commit",
             "blocker",
             "next_action",
             "notes",
             "status_source",
             "detected_worktree",
             "detected_worktree_dirty",
+            *GUARDRAIL_FIELDS,
+            "guardrail_warnings",
         ],
     )
     return {"markdown": str(md_path), "json": str(json_path), "csv": str(csv_path)}
@@ -485,8 +540,10 @@ def main(argv: list[str] | None = None) -> int:
                 "status": payload["status"],
                 "lane_count": payload["lane_count"],
                 "unreported_lane_count": payload["unreported_lane_count"],
+                "completed_lane_count": payload["completed_lane_count"],
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
+                "guardrail_warning_count": payload["guardrail_warning_count"],
                 "outputs": outputs,
                 "review_only": True,
             },
