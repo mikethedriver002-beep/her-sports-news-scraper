@@ -50,6 +50,11 @@
     "source_map_download_approved_yes_rows": 0,
     "source_map_allowed_for_download_approved_yes_rows": 0,
     "source_map_blank_source_url_rows": 12,
+    "source_research_return_intake_rows": 8,
+    "source_research_return_intake_womens_hockey_rows": 4,
+    "source_research_return_intake_softball_rows": 4,
+    "source_research_return_intake_blank_operator_rows": 8,
+    "source_research_return_intake_download_approved_yes_rows": 0,
     "source_verification_checklist_rows": 18,
     "source_verification_checklist_womens_hockey_rows": 12,
     "source_verification_checklist_softball_rows": 6,
@@ -225,6 +230,16 @@
     "download_approved_yes_rows": 0,
     "allowed_for_download_approved_yes_rows": 0,
     "blank_source_url_rows": 12
+  },
+  "source_research_return_intake": {
+    "md": "data/asset_registry/hockey_softball_source_research_return_intake.md",
+    "csv": "data/asset_registry/hockey_softball_source_research_return_intake.csv",
+    "json": "data/asset_registry/hockey_softball_source_research_return_intake.json",
+    "rows": 8,
+    "womens_hockey_rows": 4,
+    "softball_rows": 4,
+    "blank_operator_return_rows": 8,
+    "download_approved_yes_rows": 0
   },
   "source_verification_checklist": {
     "md": "data/asset_registry/hockey_softball_source_verification_checklist.md",
