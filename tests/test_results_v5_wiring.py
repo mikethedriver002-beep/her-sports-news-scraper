@@ -640,6 +640,76 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
     assert "proof_next=" in report
 
 
+def test_game_source_confirmation_return_summary_counts_manual_missing_fields() -> None:
+    module = load_results_desk()
+    worksheet_rows = [
+        {
+            "worksheet_rank": "1",
+            "event_uid": "event_ready",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Indiana Fever at New York Liberty",
+            "research_need": "confirm_final_score_and_named_stat_source_before_recap",
+            "current_source_tier": "single_free_public_scoreboard_operator_verify",
+            "scoreboard_source_url": "https://www.espn.com/wnba/game/_/gameId/401",
+            "operator_found_official_url": "https://www.wnba.com/game/401",
+            "operator_found_public_scoreboard_url": "",
+            "operator_found_box_score_url": "https://www.wnba.com/game/401/box-score",
+            "operator_confirmation_status": "operator_confirmed_official_public_source",
+            "operator_notes": "Official box score visible.",
+            "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_ready",
+            "proof_row_to_open": "story_proof_card_v1.csv event_id=event_ready",
+            "manual_intake_path": "final_score_stat_proof_confirmation_intake_v1.csv proof_id=ready",
+        },
+        {
+            "worksheet_rank": "2",
+            "event_uid": "event_missing",
+            "game_date": "2026-06-24",
+            "league": "WNBA",
+            "matchup": "Dallas Wings at Las Vegas Aces",
+            "research_need": "find_official_or_public_schedule_result_stat_source",
+            "current_source_tier": "source_missing_manual_confirmation_required",
+            "scoreboard_source_url": "",
+            "operator_found_official_url": "",
+            "operator_found_public_scoreboard_url": "",
+            "operator_found_box_score_url": "",
+            "operator_confirmation_status": "",
+            "operator_notes": "",
+            "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_missing",
+            "proof_row_to_open": "",
+            "manual_intake_path": "",
+        },
+    ]
+
+    rows = module.game_source_confirmation_return_summary_rows(worksheet_rows)
+    by_id = {row["event_uid"]: row for row in rows}
+
+    assert rows[0]["event_uid"] == "event_missing"
+    assert by_id["event_ready"]["manual_return_status"] == "operator_return_ready_for_review"
+    assert by_id["event_ready"]["missing_return_fields"] == "none"
+    assert by_id["event_ready"]["operator_found_official_url_present"] == "Yes"
+    assert by_id["event_ready"]["operator_confirmation_status_present"] == "Yes"
+    assert "do not approve" in by_id["event_ready"]["manual_next_step"]
+    assert by_id["event_missing"]["manual_return_status"] == "operator_return_missing_required_fields"
+    assert "operator_found_official_url" in by_id["event_missing"]["missing_return_fields"]
+    assert "operator_confirmation_status" in by_id["event_missing"]["missing_return_fields"]
+    assert by_id["event_missing"]["review_only"] == "Yes"
+    assert by_id["event_missing"]["approval_state_change"] == "none"
+    assert by_id["event_missing"]["source_enablement"] == "none_existing_local_artifacts_only"
+    assert by_id["event_missing"]["publish_action"] == "none_artifact_only"
+
+    summary = module.game_source_confirmation_return_summary(rows)
+    assert summary["operator_return_ready_for_review"] == 1
+    assert summary["operator_return_missing_required_fields"] == 1
+    assert summary["missing_official_url"] == 1
+    assert summary["missing_confirmation_status"] == 1
+    assert summary["rows_with_operator_notes"] == 1
+    report = module.game_source_confirmation_return_summary_report_md(summary, rows)
+    assert "ready-for-review row is not source approval" in report
+    assert "No fetching, paid APIs" in report
+    assert "missing=operator_found_official_url; operator_confirmation_status" in report
+
+
 def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     module = load_results_desk()
     stats_rows = [

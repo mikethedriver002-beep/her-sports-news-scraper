@@ -50,6 +50,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "game_source_research_worksheet_v1.md" in artifact_paths
     assert "game_source_research_worksheet_v1.csv" in artifact_paths
     assert "game_source_research_worksheet_v1.json" in artifact_paths
+    assert "game_source_confirmation_return_summary_v1.md" in artifact_paths
+    assert "game_source_confirmation_return_summary_v1.csv" in artifact_paths
+    assert "game_source_confirmation_return_summary_v1.json" in artifact_paths
     assert "final_score_stat_proof_v1.md" in artifact_paths
     assert "final_score_stat_proof_v1.csv" in artifact_paths
     assert "final_score_stat_proof_v1.json" in artifact_paths
@@ -70,6 +73,7 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     primary_artifacts = [
         "render_handoff_top_packet/README.md",
         "action_photo_external_research_handoff_draft_copy.md",
+        "game_source_confirmation_return_summary_v1.csv",
         "game_source_research_worksheet_v1.csv",
         "breaking_public_signal_next_action_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
@@ -79,6 +83,20 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
         path = Path(artifact)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("review-only placeholder\n", encoding="utf-8")
+    Path("game_source_confirmation_return_summary_v1.json").write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "rows": 3,
+                    "missing_official_url": 2,
+                    "missing_confirmation_status": 1,
+                    "operator_return_ready_for_review": 1,
+                },
+                "rows": [],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     payload = command_center.build_payload()
     html = command_center.render_html(payload)
@@ -99,6 +117,7 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert "Operator next-action synthesis" in html
     assert "Unified manual checklist" in html
     assert "Resolved local path" in html
+    assert "missing_official_url" in html
     assert "operator_decision, operator_notes" in html
     assert "operator_found_official_url" in html
     assert "breaking_public_signal_confirmation_intake.csv" in markdown
