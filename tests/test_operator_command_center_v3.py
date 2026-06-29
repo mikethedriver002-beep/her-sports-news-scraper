@@ -25,6 +25,9 @@ def test_command_center_prefers_latest_local_artifacts_over_stale_root(tmp_path,
 def test_command_center_links_breaking_public_signal_artifacts() -> None:
     artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
 
+    assert "operator_next_action_synthesis.md" in artifact_paths
+    assert "operator_next_action_synthesis.csv" in artifact_paths
+    assert "operator_next_action_synthesis.json" in artifact_paths
     assert "breaking_public_signal_queue.md" in artifact_paths
     assert "breaking_public_signal_queue.csv" in artifact_paths
     assert "breaking_public_signal_manifest.json" in artifact_paths
@@ -59,6 +62,55 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "story_proof_card_v1.md" in artifact_paths
     assert "story_proof_card_v1.csv" in artifact_paths
     assert "story_proof_card_v1.json" in artifact_paths
+
+
+def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    seed_daily_ops_files()
+    primary_artifacts = [
+        "render_handoff_top_packet/README.md",
+        "action_photo_external_research_handoff_draft_copy.md",
+        "game_source_research_worksheet_v1.csv",
+        "breaking_public_signal_next_action_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
+        "data/asset_registry/hockey_softball_source_research_return_intake.csv",
+    ]
+    for artifact in primary_artifacts:
+        path = Path(artifact)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("review-only placeholder\n", encoding="utf-8")
+
+    payload = command_center.build_payload()
+    html = command_center.render_html(payload)
+    markdown = command_center.render_markdown(payload)
+
+    rows = payload["operator_next_action_synthesis"]
+    assert [row["lane"] for row in rows] == [
+        "Render review",
+        "Action-photo research handoff",
+        "Game-source confirmation returns",
+        "Breaking/public-signal returns",
+        "Women's soccer action-photo helpers",
+        "Hockey/softball source returns",
+    ]
+    assert all(row["artifact_status"] == "ready_to_open" for row in rows)
+    assert all("no source fetching" in row["guardrail_note"] for row in rows)
+    assert "Operator next-action synthesis" in html
+    assert "Unified manual checklist" in html
+    assert "operator_decision, operator_notes" in html
+    assert "operator_found_official_url" in html
+    assert "breaking_public_signal_confirmation_intake.csv" in markdown
+
+    command_center.write_outputs(payload)
+
+    csv_rows = list(csv.DictReader(Path("operator_next_action_synthesis.csv").open(newline="", encoding="utf-8")))
+    manifest = json.loads(Path("operator_next_action_synthesis.json").read_text(encoding="utf-8"))
+    synthesis_md = Path("operator_next_action_synthesis.md").read_text(encoding="utf-8")
+    assert len(csv_rows) == 6
+    assert manifest["guardrails"]["automatic_downloads"] is False
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["counts"]["ready_to_open"] == 6
+    assert "does not fetch sources" in synthesis_md
 
 
 def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monkeypatch) -> None:
