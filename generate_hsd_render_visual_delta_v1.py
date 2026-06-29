@@ -19,7 +19,7 @@ except Exception:  # pragma: no cover - surfaced in manifest
     ImageStat = None
 
 
-VERSION = "hsd-render-visual-delta-v1.1.0-manual-revision-plan"
+VERSION = "hsd-render-visual-delta-v1.2.0-next-level-editorial-qa"
 PROJECT_ROOT = Path(__file__).resolve().parent
 OUT_MD = output_path("render_visual_delta_report.md")
 OUT_CSV = output_path("render_visual_delta.csv")
@@ -27,6 +27,12 @@ OUT_JSON = output_path("render_visual_delta_manifest.json")
 OUT_REVISION_MD = output_path("render_visual_revision_plan.md")
 OUT_REVISION_CSV = output_path("render_visual_revision_plan.csv")
 OUT_REVISION_JSON = output_path("render_visual_revision_plan.json")
+OUT_NEXT_LEVEL_MD = output_path("render_next_level_editorial_qa.md")
+OUT_NEXT_LEVEL_CSV = output_path("render_next_level_editorial_qa.csv")
+OUT_NEXT_LEVEL_JSON = output_path("render_next_level_editorial_qa.json")
+ACTION_PHOTO_RETURN_SUMMARY_JSON = "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json"
+ACTION_PHOTO_RETURN_SUMMARY_MD = "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md"
+ACTION_PHOTO_RETURN_INTAKE_CSV = "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
 
 CSV_FIELDS = [
     "format_id",
@@ -58,6 +64,19 @@ REVISION_FIELDS = [
     "specific_manual_revisions",
     "inspect_first",
     "hold_or_revise_cue",
+    "approval_policy",
+]
+
+NEXT_LEVEL_FIELDS = [
+    "gate_id",
+    "gate_label",
+    "gate_status",
+    "priority",
+    "primary_blocker",
+    "evidence",
+    "manual_next_step",
+    "artifact_path",
+    "return_path",
     "approval_policy",
 ]
 
@@ -444,6 +463,175 @@ def build_revision_plan(summaries: Dict[str, Dict[str, Any]]) -> List[Dict[str, 
     return rows
 
 
+def next_level_priority(status: str) -> str:
+    if status.startswith("blocked"):
+        return "p0_manual_return_needed"
+    if status.startswith("revise"):
+        return "p1_revision_before_decision"
+    if status.startswith("inspect"):
+        return "p2_inspect_before_decision"
+    return "p3_reference_check"
+
+
+def build_next_level_editorial_qa(
+    renderer: Dict[str, Any],
+    visual_manifest: Dict[str, Any],
+    revision_manifest: Dict[str, Any],
+    action_return_summary: Dict[str, Any],
+) -> List[Dict[str, str]]:
+    content = renderer.get("content_module") if isinstance(renderer.get("content_module"), dict) else {}
+    visual_board = renderer.get("visual_comparison_board") if isinstance(renderer.get("visual_comparison_board"), dict) else {}
+    revision_summary = revision_manifest.get("summary") if isinstance(revision_manifest.get("summary"), dict) else {}
+    action_summary = action_return_summary.get("summary") if isinstance(action_return_summary.get("summary"), dict) else {}
+    action_rows = action_return_summary.get("rows") if isinstance(action_return_summary.get("rows"), list) else []
+    revision_rows = revision_manifest.get("revision_rows") if isinstance(revision_manifest.get("revision_rows"), list) else []
+
+    revise_count = int(revision_summary.get("revise_before_manual_next_step_count") or 0)
+    inspect_count = int(revision_summary.get("inspect_before_decision_count") or 0)
+    worst_revision = next((row for row in revision_rows if clean(row.get("revision_priority")) == "revise_before_manual_next_step"), revision_rows[0] if revision_rows else {})
+    if revise_count:
+        revision_status = "revise_visual_grid_before_decision"
+        revision_blocker = f"{clean(worst_revision.get('format_id')) or 'render'}:{clean(worst_revision.get('worst_zone')) or 'unknown_zone'}"
+        revision_step = "Open render_visual_revision_plan.md and revise the named zone before any manual approval decision."
+    elif inspect_count:
+        revision_status = "inspect_visual_grid_before_decision"
+        revision_blocker = "minor_drift_needs_human_visual_check"
+        revision_step = "Open render_visual_revision_plan.md beside the draft and references, then record hold or revise if the drift is visible."
+    else:
+        revision_status = "reference_check_only"
+        revision_blocker = "no_automated_grid_blocker_detected"
+        revision_step = "Open the draft and reference pack for a final human check; no approval is implied."
+
+    rows: List[Dict[str, str]] = [
+        {
+            "gate_id": "visual_grid_reference_delta",
+            "gate_label": "Visual grid/reference delta",
+            "gate_status": revision_status,
+            "priority": next_level_priority(revision_status),
+            "primary_blocker": revision_blocker,
+            "evidence": (
+                f"comparisons={visual_manifest.get('summary', {}).get('comparison_count', 0)}; "
+                f"warnings={visual_manifest.get('summary', {}).get('warning_count', 0)}; "
+                f"focus={clean(worst_revision.get('revision_focus')) or 'reference check'}"
+            ),
+            "manual_next_step": revision_step,
+            "artifact_path": "render_visual_revision_plan.md",
+            "return_path": "manual_visual_qa_operator_decision_draft.csv",
+            "approval_policy": "review-only QA; does not approve, publish, move files, download assets, or mark publish-ready",
+        }
+    ]
+
+    visual_mode = clean(content.get("visual_mode") or visual_board.get("visual_mode"))
+    hero_mode = clean(content.get("hero_image_mode"))
+    action_status = clean(content.get("action_photo_candidate_status") or visual_board.get("action_photo_candidate_status"))
+    action_contract = clean(content.get("action_photo_hero_contract") or visual_board.get("action_photo_hero_contract"))
+    fallback_status = clean(visual_board.get("fallback_comparison_status"))
+    athlete_status = clean(content.get("athlete_led_render_status"))
+    no_action_photo = action_status in {"", "not_available_to_renderer"} or "not_available" in action_contract
+    no_person_image = "no_photo" in visual_mode or "no_person" in hero_mode or fallback_status == "fallback_active_label_no_athlete_photo"
+    if no_action_photo or no_person_image:
+        hero_status = "blocked_action_photo_return_needed"
+        hero_blocker = "headshot_bridge_or_logo_first_render_lacks_action_photo_focal_point"
+        hero_step = (
+            "Use the action-photo return summary board, paste verified URL/evidence rows into the return intake, "
+            "then rerun validation before any quarantine-download decision."
+        )
+    else:
+        hero_status = "inspect_photo_first_focal_point"
+        hero_blocker = "photo_or_action_candidate_present_needs_human_editorial_review"
+        hero_step = "Open draft previews and confirm the athlete/action focal point feels premium before recording a decision."
+    rows.append(
+        {
+            "gate_id": "premium_editorial_focal_point",
+            "gate_label": "Premium editorial focal point",
+            "gate_status": hero_status,
+            "priority": next_level_priority(hero_status),
+            "primary_blocker": hero_blocker,
+            "evidence": (
+                f"visual_mode={visual_mode or 'missing'}; hero_image_mode={hero_mode or 'missing'}; "
+                f"action_photo_candidate_status={action_status or 'missing'}; athlete_status={athlete_status or 'missing'}"
+            ),
+            "manual_next_step": hero_step,
+            "artifact_path": "manual_review_renderer_visual_comparison_board.md",
+            "return_path": ACTION_PHOTO_RETURN_INTAKE_CSV,
+            "approval_policy": "review-only handoff cue; does not download, approve, write headshots, create .approved markers, or publish",
+        }
+    )
+
+    returned_count = int(action_summary.get("returned_rows", action_summary.get("row_count", len(action_rows))) or len(action_rows))
+    validation_issue_count = int(action_return_summary.get("validation_issue_count", action_summary.get("validation_issue_count", 0)) or 0)
+    action_status_text = clean(action_return_summary.get("status"))
+    if action_status_text:
+        return_status = "inspect_action_photo_returns" if returned_count else "blocked_no_action_photo_returns_yet"
+        return_evidence = f"status={action_status_text}; returned_rows={returned_count}; validation_issues={validation_issue_count}"
+    else:
+        return_status = "blocked_action_photo_summary_not_generated"
+        return_evidence = "action-photo return summary manifest not found in local outputs"
+    rows.append(
+        {
+            "gate_id": "action_photo_return_path",
+            "gate_label": "Action-photo return path",
+            "gate_status": return_status,
+            "priority": next_level_priority(return_status),
+            "primary_blocker": "verified_action_photo_url_evidence_not_ready_for_renderer",
+            "evidence": return_evidence,
+            "manual_next_step": (
+                "Open the action-photo research packet/return summary, paste only verified URL/evidence rows into the return intake, "
+                "and keep download_approved blank/no until a separate human quarantine-download decision."
+            ),
+            "artifact_path": ACTION_PHOTO_RETURN_SUMMARY_MD,
+            "return_path": ACTION_PHOTO_RETURN_INTAKE_CSV,
+            "approval_policy": "artifact-only action-photo handoff; no fetching, downloads, approvals, headshot writes, publish-ready movement, or publishing",
+        }
+    )
+    return rows
+
+
+def next_level_report_lines(manifest: Dict[str, Any], rows: List[Dict[str, str]]) -> List[str]:
+    lines = [
+        "# HSD Render Next-Level Editorial QA",
+        "",
+        f"Version: `{VERSION}`",
+        f"Status: `{manifest['status']}`",
+        f"Generated: `{manifest['generated_at_utc']}`",
+        "",
+        "## Guardrails",
+        "",
+        "- Review-only editorial QA and handoff guidance.",
+        "- Does not fetch sources or download imagery.",
+        "- Does not approve assets, write headshots, create `.approved` markers, move files, mark publish-ready, or publish.",
+        "",
+        "## Premium Blockers",
+        "",
+    ]
+    if not rows:
+        lines.append("- No QA rows found. Run render mode after creating draft renders.")
+        return lines
+    for row in rows:
+        lines.extend(
+            [
+                f"### {row['gate_label']}",
+                "",
+                f"- Status: `{row['gate_status']}`",
+                f"- Priority: `{row['priority']}`",
+                f"- Blocker: {row['primary_blocker']}",
+                f"- Evidence: {row['evidence']}",
+                f"- Manual next step: {row['manual_next_step']}",
+                f"- Artifact: `{row['artifact_path']}`",
+                f"- Return path: `{row['return_path']}`",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Operator Cue",
+            "",
+            "If the focal-point row is blocked, the next premium leap is action-photo evidence return and validation, not another automatic renderer rewrite.",
+        ]
+    )
+    return lines
+
+
 def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, Any]]) -> List[str]:
     lines = [
         "# HSD Render Visual Delta Report",
@@ -594,12 +782,45 @@ def main() -> None:
             "paid_apis": False,
         },
     }
+    action_return_summary = read_json(ACTION_PHOTO_RETURN_SUMMARY_JSON)
+    next_level_rows = build_next_level_editorial_qa(renderer, manifest, revision_manifest, action_return_summary)
+    next_level_manifest = {
+        "version": VERSION,
+        "generated_at_utc": manifest["generated_at_utc"],
+        "status": "next_level_editorial_qa_ready" if next_level_rows else "next_level_editorial_qa_not_scored",
+        "approval_status": "not_approved_human_review_required",
+        "summary": {
+            "qa_row_count": len(next_level_rows),
+            "blocked_count": sum(1 for row in next_level_rows if row["gate_status"].startswith("blocked")),
+            "revise_count": sum(1 for row in next_level_rows if row["gate_status"].startswith("revise")),
+            "action_photo_return_needed_count": sum(
+                1 for row in next_level_rows if row["gate_status"] == "blocked_action_photo_return_needed"
+            ),
+            "human_decision_required": True,
+        },
+        "rows": next_level_rows,
+        "guardrails": {
+            "manual_only": True,
+            "review_only": True,
+            "auto_approval": False,
+            "auto_publish": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "move_files": False,
+            "publish_ready": False,
+            "paid_apis": False,
+        },
+    }
     write_json(OUT_JSON, manifest)
     write_csv(OUT_CSV, rows, CSV_FIELDS)
     write_text(OUT_MD, "\n".join(report_lines(manifest, rows)))
     write_json(OUT_REVISION_JSON, revision_manifest)
     write_csv(OUT_REVISION_CSV, revision_rows, REVISION_FIELDS)
     write_text(OUT_REVISION_MD, "\n".join(revision_report_lines(revision_manifest, revision_rows)))
+    write_json(OUT_NEXT_LEVEL_JSON, next_level_manifest)
+    write_csv(OUT_NEXT_LEVEL_CSV, next_level_rows, NEXT_LEVEL_FIELDS)
+    write_text(OUT_NEXT_LEVEL_MD, "\n".join(next_level_report_lines(next_level_manifest, next_level_rows)))
     print(json.dumps(manifest, indent=2))
 
 

@@ -3510,6 +3510,51 @@ def seed_manual_visual_qa_decision_files() -> None:
         ],
     )
     write_json(
+        "render_next_level_editorial_qa.json",
+        {
+            "status": "next_level_editorial_qa_ready",
+            "approval_status": "not_approved_human_review_required",
+            "summary": {"qa_row_count": 3, "blocked_count": 1, "action_photo_return_needed_count": 1},
+            "rows": [
+                {
+                    "gate_id": "premium_editorial_focal_point",
+                    "gate_label": "Premium editorial focal point",
+                    "gate_status": "blocked_action_photo_return_needed",
+                    "priority": "p0_manual_return_needed",
+                    "primary_blocker": "headshot_bridge_or_logo_first_render_lacks_action_photo_focal_point",
+                    "evidence": "visual_mode=no_photo_premium_result; action_photo_candidate_status=not_available_to_renderer",
+                    "manual_next_step": "Use the action-photo return summary board before another renderer pass.",
+                    "artifact_path": "manual_review_renderer_visual_comparison_board.md",
+                    "return_path": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+                    "approval_policy": "review-only handoff cue; does not download, approve, write headshots, create .approved markers, or publish",
+                }
+            ],
+            "guardrails": {
+                "manual_only": True,
+                "review_only": True,
+                "auto_approval": False,
+                "auto_publish": False,
+                "asset_downloads": False,
+                "headshot_writes": False,
+                "approved_marker_writes": False,
+                "move_files": False,
+                "publish_ready": False,
+                "paid_apis": False,
+            },
+        },
+    )
+    Path("render_next_level_editorial_qa.md").write_text("# Render next-level editorial QA\n", encoding="utf-8")
+    write_csv(
+        "render_next_level_editorial_qa.csv",
+        [
+            {
+                "gate_id": "premium_editorial_focal_point",
+                "gate_status": "blocked_action_photo_return_needed",
+                "return_path": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+            }
+        ],
+    )
+    write_json(
         "manual_visual_qa_manifest.json",
         {
             "status": "human_review_required",
@@ -5220,6 +5265,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["render_visual_delta_manifest.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["render_visual_revision_plan.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["render_visual_revision_plan.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_next_level_editorial_qa.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_next_level_editorial_qa.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["render_next_level_editorial_qa.json"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    decision_shortcuts = {item["path"]: item for item in payload["operator_decision_panel"]["file_shortcuts"]}
+    assert decision_shortcuts["render_next_level_editorial_qa.md"]["exists"] is True
+    assert "action-photo return path" in decision_shortcuts["render_next_level_editorial_qa.md"]["purpose"]
     assert artifact_by_path["manual_visual_qa_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_checklist.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_approval_intake.md"]["run_command"] == ".\\hsd.cmd run -Mode render"

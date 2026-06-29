@@ -55,6 +55,9 @@ def run_delta(tmp_path: Path, manifest: dict) -> tuple[dict, list[dict[str, str]
     assert (run_dir / "render_visual_revision_plan.md").exists()
     assert (run_dir / "render_visual_revision_plan.csv").exists()
     assert (run_dir / "render_visual_revision_plan.json").exists()
+    assert (run_dir / "render_next_level_editorial_qa.md").exists()
+    assert (run_dir / "render_next_level_editorial_qa.csv").exists()
+    assert (run_dir / "render_next_level_editorial_qa.json").exists()
     return payload, rows
 
 
@@ -67,6 +70,18 @@ def test_render_visual_delta_scores_drafts_against_public_and_layout_references(
     make_reference(layout, shifted=True)
     manifest = {
         "status": "draft_preview_created",
+        "content_module": {
+            "visual_mode": "no_photo_premium_result",
+            "hero_image_mode": "logo_score_fallback_no_person_image",
+            "action_photo_hero_contract": "manual_review_action_photo_not_available_no_download",
+            "action_photo_candidate_status": "not_available_to_renderer",
+            "athlete_led_render_status": "athlete_led_blocked_missing_verified_player_context",
+        },
+        "visual_comparison_board": {
+            "visual_mode": "no_photo_premium_result",
+            "fallback_comparison_status": "fallback_active_label_no_athlete_photo",
+            "action_photo_candidate_status": "not_available_to_renderer",
+        },
         "format_options": [
             {
                 "format_id": "ig_feed_4x5",
@@ -100,6 +115,18 @@ def test_render_visual_delta_scores_drafts_against_public_and_layout_references(
     assert revision_row["revision_focus"]
     assert "Compare" in revision_row["specific_manual_revisions"] or "Open" in revision_row["inspect_first"]
     assert revision_row["approval_policy"].startswith("review-only manual guidance")
+    next_level = json.loads((tmp_path / "run" / "files" / "render_next_level_editorial_qa.json").read_text(encoding="utf-8"))
+    assert next_level["status"] == "next_level_editorial_qa_ready"
+    assert next_level["guardrails"]["asset_downloads"] is False
+    assert next_level["guardrails"]["headshot_writes"] is False
+    assert next_level["guardrails"]["approved_marker_writes"] is False
+    assert next_level["summary"]["action_photo_return_needed_count"] == 1
+    focal_row = next(row for row in next_level["rows"] if row["gate_id"] == "premium_editorial_focal_point")
+    assert focal_row["gate_status"] == "blocked_action_photo_return_needed"
+    assert focal_row["return_path"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
+    assert "headshot_bridge" in focal_row["primary_blocker"]
+    next_level_md = (tmp_path / "run" / "files" / "render_next_level_editorial_qa.md").read_text(encoding="utf-8")
+    assert "action-photo evidence return and validation" in next_level_md
 
 
 def test_render_visual_delta_warns_when_reference_is_missing(tmp_path: Path) -> None:
