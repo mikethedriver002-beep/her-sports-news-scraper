@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.58.0-core-watermark-lock"
+VERSION = "hsd-manual-review-renderer-v1.59.0-borderless-score-wash"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,12 +46,12 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v27_borderless_score_wash"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
     "team_accent_rim_light,soft_editorial_rule_grid,restrained_halftone_noise,"
-    "review_only_brand_rails,logo_first_score_atmosphere,sports_editorial_depth_markers,"
+    "review_only_brand_rails,logo_first_score_atmosphere,logo_first_atmospheric_score_wash,sports_editorial_depth_markers,"
     "square_compact_review_footer,square_context_score_hierarchy,proof_artifact_athlete_led_bridge,"
     "square_athlete_focal_panel,photo_first_focal_depth_stage,photo_first_score_lock_slab,"
     "photo_first_editorial_nameplate,photo_first_portrait_spotlight,photo_first_score_type_lockup,"
@@ -73,8 +73,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_quiet_review_marker,photo_first_score_stage_wash,"
     "photo_first_action_photo_stage_bridge,photo_first_editorial_depth_bridge,"
     "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
-    "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,"
-    "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,"
+    "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,score_rows_typography_over_wash,"
+    "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,reduced_lower_rail_panel_weight,"
     "action_photo_readiness_visual_qa,headshot_bridge_review_draft_only,"
     "premium_final_score_action_photo_required,composition_balance_visual_qa,"
     "headshot_bridge_not_roster_portrait,action_photo_replacement_balance_ready,"
@@ -3585,17 +3585,17 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
     layer_draw = ImageDraw.Draw(layer, "RGBA")
     layer_draw.polygon(
         [(x + 10, y + 14), (x + w - 18, y + 2), (x + w - 38, y + h - 10), (x + 18, y + h + 4)],
-        fill=(1, 3, 8, 64 if compact else 72),
+        fill=(1, 3, 8, 34 if compact else 40),
     )
     layer_draw.polygon(
         [(x + 20, y + 6), (x + int(w * 0.72), y - 5), (x + int(w * 0.48), y + h - 8), (x + 8, y + h)],
-        fill=(*accent, 24 if compact else 30),
+        fill=(*accent, 17 if compact else 22),
     )
-    layer_draw.line((x + 20, y + 8, x + w - 28, y - 5), fill=(*accent, 112), width=2)
-    layer_draw.line((x + 20, y + h - 10, x + w - 42, y + h - 22), fill=(248, 250, 255, 34), width=1)
-    layer_draw.rectangle((x + 2, y + 18, x + 8, y + h - 18), fill=(*accent, 96))
+    layer_draw.line((x + 20, y + 8, x + w - 28, y - 5), fill=(*accent, 78), width=1)
+    layer_draw.line((x + 20, y + h - 10, x + w - 42, y + h - 22), fill=(248, 250, 255, 18), width=1)
+    layer_draw.line((x + 5, y + 20, x + 5, y + h - 18), fill=(*accent, 58), width=2)
     if ImageFilter is not None:
-        image.alpha_composite(layer.filter(ImageFilter.GaussianBlur(8)))
+        image.alpha_composite(layer.filter(ImageFilter.GaussianBlur(12)))
     image.alpha_composite(layer)
     callout_w = draw_module_callouts(image, (x + 18, y, w - 36, h), callouts or [], accent, compact=compact)
     text_w = max(220, w - 48 - (callout_w if compact else min(callout_w + 10, w // 3)))
@@ -3648,21 +3648,20 @@ def draw_score_lanes(image: Any, template_spec: Dict[str, Any], primary_accent: 
         lane_draw = ImageDraw.Draw(lane_layer, "RGBA")
         lane_draw.polygon(
             [(x1 + 8, y1 + 2), (x2 - 28, y1 + 2), (x2 - 4, y2 - 10), (x1 + 36, y2 - 10)],
-            fill=(0, 0, 0, 88 if winner else 68),
+            fill=(0, 0, 0, 36 if winner else 24),
         )
         lane_draw.polygon(
             [(x1 + 26, y1 + 8), (x2 - 18, y1 + 8), (x2 - 52, y2 - 18), (x1 + 6, y2 - 18)],
-            fill=(*accent, 24 if winner else 18),
+            fill=(*accent, 15 if winner else 10),
         )
-        lane_draw.line((x1 + 6, y1 + 4, x2 - 20, y1 + 4), fill=(*accent, 178 if winner else 126), width=4 if winner else 3)
-        lane_draw.line((x1 + 28, y2 - 16, x2 - 12, y2 - 16), fill=(*accent, 154 if winner else 108), width=3 if winner else 2)
-        lane_draw.line((x1 + max(190, lw + 28), y1 + 20, x1 + max(190, lw + 28), y2 - 28), fill=(255, 255, 255, 42), width=1)
-        lane_draw.line((x2 - max(248, sw + 24), y1 + 18, x2 - 20, y1 + 18), fill=(255, 255, 255, 30), width=1)
-        lane_draw.line((x2 - max(248, sw + 24), y2 - 30, x2 - 20, y2 - 30), fill=(255, 255, 255, 20), width=1)
-        lane_draw.rectangle((x1, y1 + 8, x1 + 10, y2 - 18), fill=(*accent, 168 if winner else 112))
-        lane_draw.rectangle((x2 - 8, y1 + 32, x2 - 4, y2 - 46), fill=(255, 255, 255, 32 if winner else 22))
+        lane_draw.line((x1 + 10, y1 + 4, x2 - 24, y1 + 4), fill=(*accent, 108 if winner else 70), width=2 if winner else 1)
+        lane_draw.line((x1 + 30, y2 - 16, x2 - 18, y2 - 16), fill=(*accent, 78 if winner else 48), width=1)
+        lane_draw.line((x1 + max(190, lw + 28), y1 + 20, x1 + max(190, lw + 28), y2 - 28), fill=(255, 255, 255, 18), width=1)
+        lane_draw.line((x2 - max(248, sw + 24), y1 + 18, x2 - 20, y1 + 18), fill=(255, 255, 255, 14), width=1)
+        lane_draw.line((x1 + 2, y1 + 12, x1 + 2, y2 - 22), fill=(*accent, 78 if winner else 48), width=2)
+        lane_draw.line((x2 - 6, y1 + 34, x2 - 6, y2 - 50), fill=(255, 255, 255, 16 if winner else 10), width=1)
         if ImageFilter is not None:
-            glow = lane_layer.filter(ImageFilter.GaussianBlur(10))
+            glow = lane_layer.filter(ImageFilter.GaussianBlur(16))
             image.alpha_composite(glow)
         image.alpha_composite(lane_layer)
 
@@ -3688,22 +3687,22 @@ def draw_logo_first_score_atmosphere(image: Any, template_spec: Dict[str, Any], 
     draw = ImageDraw.Draw(layer, "RGBA")
     draw.polygon(
         [(x1, y1 + 18), (x2 - 28, y1), (x2, y2 - 24), (x1 + 22, y2)],
-        fill=(1, 3, 8, 72),
+        fill=(1, 3, 8, 30),
     )
     draw.polygon(
         [(x1, y1 + 8), (x1 + int((x2 - x1) * 0.58), y1 + 8), (x1 + int((x2 - x1) * 0.34), y2 - 4), (x1, y2 - 4)],
-        fill=(*primary_accent, 36),
+        fill=(*primary_accent, 22),
     )
     draw.polygon(
         [(x2, y1 + 16), (x2 - int((x2 - x1) * 0.50), y1 + 16), (x2 - int((x2 - x1) * 0.22), y2), (x2, y2)],
-        fill=(*secondary_accent, 32),
+        fill=(*secondary_accent, 18),
     )
-    draw.rectangle((x1, y1 + 12, x1 + 16, y2 - 12), fill=(*primary_accent, 96))
-    draw.rectangle((x1, y1 + int((y2 - y1) * 0.48), x2, y1 + int((y2 - y1) * 0.48) + 2), fill=(*secondary_accent, 92))
+    draw.line((x1 + 4, y1 + 16, x1 + 4, y2 - 16), fill=(*primary_accent, 58), width=3)
+    draw.line((x1 + 18, y1 + int((y2 - y1) * 0.48), x2 - 14, y1 + int((y2 - y1) * 0.48)), fill=(*secondary_accent, 42), width=1)
     draw.line((x1 + 26, y1 + 18, x2 - 26, y1 + 2), fill=(255, 255, 255, 28), width=1)
     draw.line((x1 + 26, y2 - 4, x2 - 26, y2 - 18), fill=(255, 255, 255, 20), width=1)
     if ImageFilter is not None:
-        glow = layer.filter(ImageFilter.GaussianBlur(16))
+        glow = layer.filter(ImageFilter.GaussianBlur(22))
         image.alpha_composite(glow)
     image.alpha_composite(layer)
 

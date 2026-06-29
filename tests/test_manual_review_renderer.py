@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.58.0-core-watermark-lock"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.59.0-borderless-score-wash"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -184,13 +184,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v27_borderless_score_wash"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
     assert "soft_editorial_rule_grid" in manifest["render_background_cues"]
     assert "restrained_halftone_noise" in manifest["render_background_cues"]
     assert "logo_first_score_atmosphere" in manifest["render_background_cues"]
+    assert "logo_first_atmospheric_score_wash" in manifest["render_background_cues"]
     assert "sports_editorial_depth_markers" in manifest["render_background_cues"]
     assert "square_compact_review_footer" in manifest["render_background_cues"]
     assert "square_context_score_hierarchy" in manifest["render_background_cues"]
@@ -247,12 +248,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "logo_first_no_dashboard_card_panels" in manifest["render_background_cues"]
     assert "lower_third_editorial_rail" in manifest["render_background_cues"]
     assert "lower_third_no_heavy_stat_cards" in manifest["render_background_cues"]
+    assert "reduced_lower_rail_panel_weight" in manifest["render_background_cues"]
+    assert "score_rows_typography_over_wash" in manifest["render_background_cues"]
     assert "anti_dashboard_visual_qa" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v27_borderless_score_wash" for item in manifest["format_options"])
     public_canvas_text = " ".join(manifest["public_render_canvas_text"]).upper()
     assert "FINAL:" not in public_canvas_text
     assert "198 PTS" not in public_canvas_text
@@ -322,7 +325,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v27_borderless_score_wash"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["hero_image_mode"] == "logo_score_fallback_no_person_image"
     assert visual_board["action_photo_hero_contract"] == "manual_review_action_photo_not_available_no_download"
@@ -427,7 +430,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v27_borderless_score_wash`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Hero image mode: `logo_score_fallback_no_person_image`" in board
     assert "Action-photo hero contract: `manual_review_action_photo_not_available_no_download`" in board
@@ -549,6 +552,52 @@ def test_manual_review_renderer_logo_first_score_atmosphere_paints_depth() -> No
     title_quiet_zone = (48, 112, 1032, 244)
     title_diff = ImageChops.difference(before.crop(title_quiet_zone), image.crop(title_quiet_zone))
     assert not title_diff.getbbox()
+
+
+def test_manual_review_renderer_logo_first_score_wash_stays_borderless() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1080), (2, 4, 9, 255))
+    before = image.copy()
+    template_spec = module.square_reference_spec()
+    module.draw_logo_first_score_atmosphere(
+        image,
+        template_spec,
+        (72, 144, 216),
+        (196, 30, 58),
+    )
+    module.draw_score_lanes(
+        image,
+        template_spec,
+        (72, 144, 216),
+        (196, 30, 58),
+    )
+
+    assert "logo_first_atmospheric_score_wash" in module.RENDER_BACKGROUND_CUES
+    assert "score_rows_typography_over_wash" in module.RENDER_BACKGROUND_CUES
+
+    score_stack = (42, 326, 1038, 840)
+    diff = ImageChops.difference(before.crop(score_stack), image.crop(score_stack))
+    assert ImageStat.Stat(diff.convert("L")).mean[0] > 8.0
+
+    crop = image.crop(score_stack).convert("RGB")
+    data = crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    dense_panel_pixels = 0
+    accent_wash_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r <= 12 and g <= 15 and b <= 24:
+            dense_panel_pixels += 1
+        if (b >= 70 and 20 <= r <= 120 and 35 <= g <= 170) or (r >= 140 and 20 <= g <= 90 and b <= 100):
+            accent_wash_pixels += 1
+    assert dense_panel_pixels / pixels < 0.22
+    assert accent_wash_pixels / pixels > 0.003
 
 
 def test_manual_review_renderer_score_only_fallback_avoids_generic_result_copy() -> None:
