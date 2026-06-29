@@ -1,0 +1,60 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "status": "action_photo_candidate_quality_fit_board_ready",
+  "generated_at_utc": "2026-06-28T00:00:00+00:00",
+  "quality_fit_rows": 10,
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "sports": [
+    "basketball",
+    "golf",
+    "hockey",
+    "soccer",
+    "softball",
+    "tennis"
+  ],
+  "league_entities": [
+    "AUSL / Pro Softball",
+    "LPGA Golf",
+    "NCAA Women Basketball",
+    "NCAA Women Softball",
+    "NWSL",
+    "PWHL",
+    "USWNT / U.S. Soccer",
+    "WNBA",
+    "WTA Tennis"
+  ],
+  "source_categories": [
+    "editorial_wire",
+    "official_federation_or_tournament",
+    "official_league_gallery",
+    "reputable_newsroom_gallery"
+  ],
+  "source_url_present_rows": 0,
+  "rights_class_present_rows": 0,
+  "candidate_photo_url_present_rows": 0,
+  "evidence_url_present_rows": 0,
+  "identity_anchor_url_present_rows": 0,
+  "ready_for_human_download_decision_rows": 0,
+  "download_approved_yes_rows": 0,
+  "download_eligibility_status_counts": {
+    "not_eligible_without_complete_return_and_human_decision": 10
+  },
+  "crop_use_suitability_counts": {
+    "needs_research_return": 10
+  },
+  "review_only_rows": 10,
+  "publish_ready_rows": 0,
+  "worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv",
+  "worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md",
+  "review_only": true,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "approval_state_change": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}
