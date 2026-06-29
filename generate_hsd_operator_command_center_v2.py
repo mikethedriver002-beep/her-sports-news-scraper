@@ -762,6 +762,7 @@ ARTIFACTS = [
     ("Graphics", "Action-photo sport/entity source-map board", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md"),
     ("Graphics", "Action-photo sport/entity source-map board data", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv"),
     ("Graphics", "Action-photo sport/entity source-map board manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json"),
+    ("Graphics", "Action-photo external research bundle latest", "action_photo_external_research_bundle_latest.json"),
     ("Graphics", "Action-photo local handoff draft copy", "action_photo_external_research_handoff_draft_copy.md"),
     ("Graphics", "Action-photo local handoff draft copy text", "action_photo_external_research_handoff_draft_copy.txt"),
     ("Graphics", "Action-photo local handoff draft copy manifest", "action_photo_external_research_handoff_draft_copy.json"),
@@ -1523,6 +1524,51 @@ def artifact_entries() -> List[Dict[str, Any]]:
                 "run_command": RUN_COMMANDS.get(path, ""),
                 "status_detail": "Created with this command center run" if generated_this_run else "Ready to open" if p.exists() else missing_artifact_detail(path),
                 "source_path": source_path,
+            }
+        )
+    entries.extend(action_photo_bundle_artifact_entries())
+    return entries
+
+
+def action_photo_bundle_artifact_entries() -> List[Dict[str, Any]]:
+    latest_path = find_existing_input("action_photo_external_research_bundle_latest.json")
+    if not latest_path.exists():
+        return []
+
+    try:
+        latest = json.loads(latest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+    output_root = output_path(".").resolve()
+    dynamic_paths = [
+        ("Graphics", "Action-photo external research bundle README", latest.get("readme_path")),
+        ("Graphics", "Action-photo external research bundle packet manifest", latest.get("manifest_path")),
+    ]
+    entries: List[Dict[str, Any]] = []
+    for group, title, raw_path in dynamic_paths:
+        raw = clean(raw_path)
+        if not raw:
+            continue
+        p = Path(raw)
+        if not p.exists():
+            continue
+        try:
+            display_path = p.resolve().relative_to(output_root).as_posix()
+        except ValueError:
+            continue
+        snippet = short(p.read_text(encoding="utf-8"), 260) if p.suffix.lower() in {".json", ".md", ".txt"} else ""
+        entries.append(
+            {
+                "group": group,
+                "title": title,
+                "path": display_path,
+                "exists": True,
+                "size": p.stat().st_size if p.is_file() else 0,
+                "snippet": snippet,
+                "run_command": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_action_photo_research_bundle_v1.py",
+                "status_detail": "Ready to open",
+                "source_path": p.as_posix(),
             }
         )
     return entries

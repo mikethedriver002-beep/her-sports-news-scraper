@@ -47,6 +47,7 @@ def seed_latest_bundle(run_dir: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (bundle_dir / "README.md").write_text("# Bundle README\n\nReview-only bundle.\n", encoding="utf-8")
     latest = run_dir / "action_photo_external_research_bundle_latest.json"
     latest.write_text(
         json.dumps(
@@ -55,6 +56,7 @@ def seed_latest_bundle(run_dir: Path) -> None:
                 "bundle_dir": str(bundle_dir),
                 "zip_path": str(bundle_dir.with_suffix(".zip")),
                 "manifest_path": str(packet_manifest),
+                "readme_path": str(bundle_dir / "README.md"),
                 "review_only": True,
                 "artifact_only": True,
                 "email_sending": False,
@@ -133,6 +135,22 @@ def test_command_center_surfaces_action_photo_handoff_draft_artifacts() -> None:
     assert "action_photo_external_research_handoff_draft_copy.md" in artifact_paths
     assert "action_photo_external_research_handoff_draft_copy.txt" in artifact_paths
     assert "action_photo_external_research_handoff_draft_copy.json" in artifact_paths
+    assert "action_photo_external_research_bundle_latest.json" in artifact_paths
     assert command_center.RUN_COMMANDS["action_photo_external_research_handoff_draft_copy.md"].endswith(
         "scripts\\generate_hsd_action_photo_handoff_draft_copy_v1.py"
     )
+
+
+def test_command_center_surfaces_latest_action_photo_bundle_packet_files(tmp_path: Path, monkeypatch) -> None:
+    run_dir = tmp_path / "run"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    seed_latest_bundle(run_dir)
+
+    by_path = {entry["path"]: entry for entry in command_center.artifact_entries()}
+
+    readme_path = "action_photo_external_research_bundles/packet-check/README.md"
+    packet_manifest_path = "action_photo_external_research_bundles/packet-check/packet_manifest.json"
+    assert by_path[readme_path]["title"] == "Action-photo external research bundle README"
+    assert by_path[readme_path]["exists"] is True
+    assert by_path[packet_manifest_path]["title"] == "Action-photo external research bundle packet manifest"
+    assert by_path[packet_manifest_path]["exists"] is True
