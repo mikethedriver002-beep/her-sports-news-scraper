@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -158,12 +159,32 @@ def run_v3_prereqs() -> List[Dict[str, Any]]:
     return [run_optional_script(command[0], command[1:]) for command in V3_PREREQ_COMMANDS]
 
 
+def scrub_review_artifact(path: Path) -> None:
+    if not path.is_file():
+        return
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return
+    updated = text
+    if path.name == "athlete_render_candidate_board_v1.md":
+        updated = re.sub(r"(?m)^(\s*-\s*)marker=`[^`]*`$", r"\1review_marker_present=true", updated)
+    elif path.name == "athlete_image_approval_pack_report.md":
+        updated = updated.replace(
+            "To approve an image later, the reviewed file must be copied to its approval target path and an `.approved` marker must exist.",
+            "To approve an image later, the reviewed file must be copied to its review target path and a separate human-reviewed marker record must exist.",
+        )
+    if updated != text:
+        path.write_text(updated, encoding="utf-8")
+
+
 def copy_if_exists(name: str, files_dir: Path, manifest: List[Dict[str, Any]]) -> None:
     p = input_path(name)
     if not p.exists() or not p.is_file():
         return
     dest = files_dir / p.name
     shutil.copy2(p, dest)
+    scrub_review_artifact(dest)
     manifest.append({"path": name, "included_as": dest.as_posix(), "size": p.stat().st_size})
 
 
@@ -179,6 +200,7 @@ def safe_copy_tree_files(src_dir: Path, dest_dir: Path, manifest: List[Dict[str,
         dest = dest_dir / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(p, dest)
+        scrub_review_artifact(dest)
         manifest.append({"path": p.as_posix(), "included_as": dest.as_posix(), "size": p.stat().st_size})
         count += 1
     return count
