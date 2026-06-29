@@ -522,14 +522,22 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
     assert by_id["event_confirmed"]["recap_render_human_review_gate"] == "blocked_source_freshness_check_required"
     assert by_id["event_confirmed"]["proof_row_to_open"] == "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789"
     assert "confirm the source is current" in by_id["event_confirmed"]["source_confirmation_next_action"]
+    assert by_id["event_confirmed"]["manual_confirmation_return_fields"] == "operator_checked_source_url, operator_source_confirmation_status, operator_source_confirmation_notes"
+    assert by_id["event_confirmed"]["operator_checked_source_url"] == ""
+    assert by_id["event_confirmed"]["operator_source_confirmation_status"] == ""
+    assert by_id["event_confirmed"]["operator_source_confirmation_notes"] == ""
     assert by_id["event_scheduled"]["review_priority"] == "P3_result_pending_monitor"
     assert by_id["event_scheduled"]["recap_render_human_review_gate"] == "blocked_result_pending_not_recap_or_render_ready"
     assert by_id["event_scheduled"]["source_enablement"] == "none_existing_local_artifacts_only"
+    assert all(row["operator_checked_source_url"] == "" for row in rows)
+    assert all(row["operator_source_confirmation_status"] == "" for row in rows)
+    assert all(row["operator_source_confirmation_notes"] == "" for row in rows)
     assert all(row["review_only"] == "Yes" for row in rows)
     assert all(row["approval_state_change"] == "none" for row in rows)
     assert all(row["publish_action"] == "none_artifact_only" for row in rows)
 
     summary = module.game_source_confirmation_next_action_summary(rows)
+    assert summary["manual_return_fields_prefilled"] is False
     assert summary["manual_confirmation_required"] == 1
     assert summary["freshness_or_lag_check"] == 1
     assert summary["blocked_before_recap_render"] == 3
@@ -539,6 +547,8 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
     assert "No paid APIs" in report
     assert "confidence=0.92" in report
     assert "gate=blocked_source_freshness_check_required" in report
+    assert "manual_return_fields_prefilled: `False`" in report
+    assert "return_fields=operator_checked_source_url, operator_source_confirmation_status, operator_source_confirmation_notes" in report
 
 
 def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
