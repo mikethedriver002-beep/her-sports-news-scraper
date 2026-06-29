@@ -118,6 +118,12 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["source_research_return_intake_softball_rows"] == 4
     assert report["totals"]["source_research_return_intake_blank_operator_rows"] == 8
     assert report["totals"]["source_research_return_intake_download_approved_yes_rows"] == 0
+    assert report["totals"]["action_photo_research_handoff_rows"] == 8
+    assert report["totals"]["action_photo_research_handoff_womens_hockey_rows"] == 4
+    assert report["totals"]["action_photo_research_handoff_softball_rows"] == 4
+    assert report["totals"]["action_photo_research_handoff_download_approved_yes_rows"] == 0
+    assert report["totals"]["action_photo_research_handoff_ready_rows"] == 0
+    assert report["totals"]["action_photo_research_handoff_blank_source_url_rows"] == 8
     assert report["totals"]["review_triage_rows"] == 38
     assert report["totals"]["review_triage_logo_rows"] == 20
     assert report["totals"]["review_triage_athlete_rows"] == 18
@@ -220,6 +226,18 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "download_approved_yes_rows": 0,
         "allowed_for_download_approved_yes_rows": 0,
         "blank_source_url_rows": 12,
+    }
+    assert report["action_photo_research_handoff"] == {
+        "md": "data/asset_registry/hockey_softball_action_photo_research_handoff.md",
+        "csv": "data/asset_registry/hockey_softball_action_photo_research_handoff.csv",
+        "json": "data/asset_registry/hockey_softball_action_photo_research_handoff.json",
+        "rows": 8,
+        "womens_hockey_rows": 4,
+        "softball_rows": 4,
+        "download_approved_yes_rows": 0,
+        "later_human_download_decision_review_eligible_rows": 0,
+        "blank_source_url_rows": 8,
+        "action_photo_research_return_intake": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
     }
     assert report["source_research_return_intake"] == {
         "md": "data/asset_registry/hockey_softball_source_research_return_intake.md",
@@ -593,6 +611,70 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         source_return_csv_rows = list(csv.DictReader(handle))
     assert len(source_return_csv_rows) == 8
     assert list(source_return_csv_rows[0].keys()) == workflow.SOURCE_RESEARCH_RETURN_INTAKE_FIELDS
+    handoff_path = tmp_path / "data/asset_registry/hockey_softball_action_photo_research_handoff.json"
+    handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
+    assert handoff["status"] == "hockey_softball_action_photo_research_handoff_ready"
+    assert handoff["rows"] == 8
+    assert handoff["womens_hockey_rows"] == 4
+    assert handoff["softball_rows"] == 4
+    assert handoff["download_approved_yes_rows"] == 0
+    assert handoff["later_human_download_decision_review_eligible_rows"] == 0
+    assert handoff["blank_source_url_rows"] == 8
+    assert handoff["blank_rights_class_rows"] == 8
+    assert handoff["blank_identity_confidence_rows"] == 8
+    assert handoff["hockey_softball_return_intake_file"] == "data/asset_registry/hockey_softball_source_research_return_intake.csv"
+    assert handoff["action_photo_research_return_intake_file"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
+    assert handoff["asset_downloads"] is False
+    assert handoff["headshot_writes"] is False
+    assert handoff["approved_marker_writes"] is False
+    assert handoff["publish_ready"] is False
+    handoff_rows = handoff["handoff_rows_detail"]
+    assert len(handoff_rows) == 8
+    first_handoff = handoff_rows[0]
+    assert first_handoff["handoff_rank"] == "AH01"
+    assert first_handoff["source_return_order"] == "RR01"
+    assert first_handoff["hockey_softball_return_intake_file"] == "data/asset_registry/hockey_softball_source_research_return_intake.csv"
+    assert first_handoff["action_photo_research_return_intake_file"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
+    assert first_handoff["later_human_download_decision_review_eligible"] == "no"
+    assert first_handoff["download_approved"] == "no"
+    assert first_handoff["source_url"] == ""
+    assert first_handoff["entity_id"] == ""
+    assert first_handoff["rights_class"] == ""
+    assert first_handoff["identity_confidence"] == ""
+    assert first_handoff["intended_review_only_use"] == ""
+    assert first_handoff["operator_decision"] == ""
+    assert first_handoff["operator_notes"] == ""
+    assert "not a direct image binary" in first_handoff["candidate_page_url_needed"]
+    assert "action_photo_research_return_intake_v1.csv" in first_handoff["manual_next_action"]
+    for field in [
+        "candidate_photo_url",
+        "evidence_url",
+        "identity_anchor_url",
+        "source_url",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+        "operator_verify_required",
+    ]:
+        assert field in first_handoff["required_action_photo_paste_fields"]
+    for field in [
+        "asset_downloads",
+        "approval_state_change",
+        "candidate_state_change",
+        "headshot_writes",
+        "approved_marker_writes",
+        "publish_ready",
+        "auto_approval",
+        "auto_publish",
+        "move_files",
+        "paid_apis",
+    ]:
+        assert first_handoff[field] == "false"
+    handoff_csv_path = tmp_path / "data/asset_registry/hockey_softball_action_photo_research_handoff.csv"
+    with handoff_csv_path.open(newline="", encoding="utf-8") as handle:
+        handoff_csv_rows = list(csv.DictReader(handle))
+    assert len(handoff_csv_rows) == 8
+    assert list(handoff_csv_rows[0].keys()) == workflow.ACTION_PHOTO_RESEARCH_HANDOFF_FIELDS
     triage_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.json"
     triage = json.loads(triage_path.read_text(encoding="utf-8"))
     assert triage["status"] == "hockey_softball_asset_review_triage_ready"
@@ -817,6 +899,7 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     next_decision_board = (tmp_path / "data/asset_registry/hockey_softball_next_decision_worksheet.md").read_text(encoding="utf-8")
     source_priority_board = (tmp_path / "data/asset_registry/hockey_softball_source_priority_worksheet.md").read_text(encoding="utf-8")
     source_map_board = (tmp_path / "data/asset_registry/hockey_softball_source_map_board.md").read_text(encoding="utf-8")
+    handoff_board = (tmp_path / "data/asset_registry/hockey_softball_action_photo_research_handoff.md").read_text(encoding="utf-8")
     source_verification_board = (tmp_path / "data/asset_registry/hockey_softball_source_verification_checklist.md").read_text(encoding="utf-8")
     intake_readiness_board = (tmp_path / "data/asset_registry/hockey_softball_intake_readiness_summary.md").read_text(encoding="utf-8")
     triage_board = (tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.md").read_text(encoding="utf-8")
@@ -845,6 +928,9 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert "This board does not fetch source pages" in source_map_board
     assert "Do not copy a search macro into download-law `source_url`" in source_map_board
     assert "Official roster/team pages are identity anchors, not automatic roster truth" in source_map_board
+    assert "Hockey/Softball Action-Photo Research Handoff" in handoff_board
+    assert "review_only_action_photo_research_return_intake_v1.csv" in handoff_board
+    assert "later human download-decision review only" in handoff_board
     assert "Hockey/Softball Source Verification Checklist" in source_verification_board
     assert "league_player_index_url" in source_verification_board
     assert "not roster truth" in source_verification_board
@@ -1011,6 +1097,17 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert panel["hockey_softball_source_map_allowed_for_download_approved_yes_rows"] == 0
     assert panel["hockey_softball_source_map_download_approved_yes_rows"] == 0
     assert panel["hockey_softball_source_map_blank_source_url_rows"] == 12
+    assert panel["hockey_softball_action_photo_handoff_status"] == "hockey_softball_action_photo_research_handoff_ready"
+    assert panel["hockey_softball_action_photo_handoff_freshness_status"] == "packet_ready"
+    assert panel["hockey_softball_action_photo_handoff_rows"] == 8
+    assert panel["hockey_softball_action_photo_handoff_womens_hockey_rows"] == 4
+    assert panel["hockey_softball_action_photo_handoff_softball_rows"] == 4
+    assert panel["hockey_softball_action_photo_handoff_download_approved_yes_rows"] == 0
+    assert panel["hockey_softball_action_photo_handoff_ready_rows"] == 0
+    assert panel["hockey_softball_action_photo_handoff_blank_source_url_rows"] == 8
+    assert panel["hockey_softball_action_photo_handoff_asset_downloads"] is False
+    assert panel["hockey_softball_action_photo_handoff_headshot_writes"] is False
+    assert panel["hockey_softball_action_photo_handoff_approved_marker_writes"] is False
     assert panel["hockey_softball_source_research_return_status"] == "hockey_softball_source_research_return_intake_ready"
     assert panel["hockey_softball_source_research_return_freshness_status"] == "packet_ready"
     assert panel["hockey_softball_source_research_return_rows"] == 8
@@ -1081,6 +1178,9 @@ def test_command_center_surfaces_hockey_softball_asset_workflow_readiness(tmp_pa
     assert "Hockey/softball source map board" in shortcut_labels
     assert "Hockey/softball source map board data" in shortcut_labels
     assert "Hockey/softball source map board manifest" in shortcut_labels
+    assert "Hockey/softball action-photo research handoff" in shortcut_labels
+    assert "Hockey/softball action-photo research handoff data" in shortcut_labels
+    assert "Hockey/softball action-photo research handoff manifest" in shortcut_labels
     assert "Hockey/softball source research return intake" in shortcut_labels
     assert "Hockey/softball source research return data" in shortcut_labels
     assert "Hockey/softball source research return manifest" in shortcut_labels
@@ -1132,6 +1232,9 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert missing_panel["hockey_softball_source_map_status"] == ""
     assert missing_panel["hockey_softball_source_map_generated_at"] == ""
     assert missing_panel["hockey_softball_source_map_freshness_status"] == "packet_missing"
+    assert missing_panel["hockey_softball_action_photo_handoff_status"] == ""
+    assert missing_panel["hockey_softball_action_photo_handoff_generated_at"] == ""
+    assert missing_panel["hockey_softball_action_photo_handoff_freshness_status"] == "packet_missing"
     assert missing_panel["hockey_softball_source_research_return_status"] == ""
     assert missing_panel["hockey_softball_source_research_return_generated_at"] == ""
     assert missing_panel["hockey_softball_source_research_return_freshness_status"] == "packet_missing"
@@ -1191,6 +1294,11 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     (report_dir / "hockey_softball_source_map_board.md").write_text("# Empty source map\n", encoding="utf-8")
     (report_dir / "hockey_softball_source_map_board.json").write_text(
         json.dumps({"status": "source_map_empty", "generated_at_utc": "2026-06-27T15:18:50+00:00", "source_map_rows_detail": None}),
+        encoding="utf-8",
+    )
+    (report_dir / "hockey_softball_action_photo_research_handoff.md").write_text("# Empty action-photo handoff\n", encoding="utf-8")
+    (report_dir / "hockey_softball_action_photo_research_handoff.json").write_text(
+        json.dumps({"status": "action_photo_handoff_empty", "generated_at_utc": "2026-06-27T15:18:52+00:00", "handoff_rows_detail": None}),
         encoding="utf-8",
     )
     (report_dir / "hockey_softball_source_research_return_intake.md").write_text("# Empty source return\n", encoding="utf-8")
@@ -1256,6 +1364,10 @@ def test_command_center_tolerates_missing_or_empty_hockey_softball_asset_workflo
     assert empty_panel["hockey_softball_source_map_generated_at"] == "2026-06-27T15:18:50+00:00"
     assert empty_panel["hockey_softball_source_map_freshness_status"] == "packet_empty"
     assert empty_panel["hockey_softball_source_map_rows"] == 0
+    assert empty_panel["hockey_softball_action_photo_handoff_status"] == "action_photo_handoff_empty"
+    assert empty_panel["hockey_softball_action_photo_handoff_generated_at"] == "2026-06-27T15:18:52+00:00"
+    assert empty_panel["hockey_softball_action_photo_handoff_freshness_status"] == "packet_empty"
+    assert empty_panel["hockey_softball_action_photo_handoff_rows"] == 0
     assert empty_panel["hockey_softball_source_research_return_status"] == "source_return_empty"
     assert empty_panel["hockey_softball_source_research_return_generated_at"] == "2026-06-27T15:18:55+00:00"
     assert empty_panel["hockey_softball_source_research_return_freshness_status"] == "packet_empty"

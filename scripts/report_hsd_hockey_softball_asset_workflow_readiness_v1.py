@@ -41,6 +41,10 @@ SOURCE_MAP_BOARD_JSON = Path("data/asset_registry/hockey_softball_source_map_boa
 SOURCE_RESEARCH_RETURN_INTAKE_MD = Path("data/asset_registry/hockey_softball_source_research_return_intake.md")
 SOURCE_RESEARCH_RETURN_INTAKE_CSV = Path("data/asset_registry/hockey_softball_source_research_return_intake.csv")
 SOURCE_RESEARCH_RETURN_INTAKE_JSON = Path("data/asset_registry/hockey_softball_source_research_return_intake.json")
+ACTION_PHOTO_RESEARCH_HANDOFF_MD = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.md")
+ACTION_PHOTO_RESEARCH_HANDOFF_CSV = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.csv")
+ACTION_PHOTO_RESEARCH_HANDOFF_JSON = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.json")
+ACTION_PHOTO_RESEARCH_RETURN_INTAKE = Path("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv")
 REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
 REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
 REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_triage.json")
@@ -382,6 +386,51 @@ SOURCE_RESEARCH_RETURN_INTAKE_FIELDS = [
     "move_files",
     "paid_apis",
     "guardrail_note",
+]
+
+ACTION_PHOTO_RESEARCH_HANDOFF_FIELDS = [
+    "handoff_rank",
+    "source_return_order",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "source_lane",
+    "source_category",
+    "source_tier",
+    "source_search_macro",
+    "source_map_row_ref",
+    "source_map_board",
+    "hockey_softball_return_intake_file",
+    "action_photo_research_return_intake_file",
+    "candidate_page_url_needed",
+    "evidence_url_needed",
+    "identity_anchor_url_needed",
+    "required_action_photo_paste_fields",
+    "operator_fields_to_fill_first",
+    "later_human_download_decision_review_eligible",
+    "manual_next_action",
+    "do_not_do",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "logo_writes",
+    "segmentation_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
 ]
 
 REVIEW_TRIAGE_FIELDS = [
@@ -959,6 +1008,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Source verification checklist: `data/asset_registry/hockey_softball_source_verification_checklist.md`",
         "- Intake readiness summary: `data/asset_registry/hockey_softball_intake_readiness_summary.md`",
         "- Source map board: `data/asset_registry/hockey_softball_source_map_board.md`",
+        "- Action-photo research handoff: `data/asset_registry/hockey_softball_action_photo_research_handoff.md`",
         "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`",
         "- Manual verification focus: `data/asset_registry/hockey_softball_manual_verification_focus.md`",
@@ -1002,6 +1052,9 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Source map rows: `{report['totals']['source_map_rows']}`",
         f"- Source map download-approved yes rows: `{report['totals']['source_map_download_approved_yes_rows']}`",
         f"- Source map allowed-for-download rows: `{report['totals']['source_map_allowed_for_download_approved_yes_rows']}`",
+        f"- Action-photo research handoff rows: `{report['totals']['action_photo_research_handoff_rows']}`",
+        f"- Action-photo handoff download-approved yes rows: `{report['totals']['action_photo_research_handoff_download_approved_yes_rows']}`",
+        f"- Action-photo handoff later human download-decision rows: `{report['totals']['action_photo_research_handoff_ready_rows']}`",
         f"- Review triage rows: `{report['totals']['review_triage_rows']}`",
         f"- Review triage operator-verify source rows: `{report['totals']['review_triage_operator_verify_required_source_rows']}`",
         f"- Review triage download-approved yes rows: `{report['totals']['review_triage_download_approved_yes_rows']}`",
@@ -2338,6 +2391,123 @@ def render_source_research_return_intake(rows: list[Dict[str, str]], generated_a
     return "\n".join(lines) + "\n"
 
 
+def action_photo_research_handoff_rows(source_return_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    paste_fields = "|".join(
+        [
+            "candidate_photo_url",
+            "evidence_url",
+            "evidence_summary",
+            "identity_anchor_url",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "operator_verify_required",
+        ]
+    )
+    output: list[Dict[str, str]] = []
+    for index, row in enumerate(source_return_rows, start=1):
+        output.append(
+            {
+                "handoff_rank": f"AH{index:02d}",
+                "source_return_order": clean(row.get("return_order")),
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "league_name": clean(row.get("league_name")),
+                "source_lane": clean(row.get("source_lane")),
+                "source_category": clean(row.get("source_category")),
+                "source_tier": clean(row.get("source_tier")),
+                "source_search_macro": clean(row.get("source_search_macro")),
+                "source_map_row_ref": clean(row.get("source_map_row_ref")),
+                "source_map_board": clean(row.get("source_map_board")),
+                "hockey_softball_return_intake_file": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+                "action_photo_research_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+                "candidate_page_url_needed": "human-provided candidate/source page URL only; not a direct image binary, screenshot, cached file, or thumbnail",
+                "evidence_url_needed": "caption, recap, roster/profile, source page, match report, gallery page, or team/player page that supports identity and action context",
+                "identity_anchor_url_needed": "official roster, player profile, team page, league page, event page, or matchup recap that confirms athlete/team context",
+                "required_action_photo_paste_fields": paste_fields,
+                "operator_fields_to_fill_first": "operator_found_source_url|operator_source_title_or_caption|operator_entity_id|operator_athlete_name|operator_team_context|operator_event_context|operator_rights_class|operator_identity_confidence|operator_intended_review_only_use|operator_decision|reviewed_by|reviewed_at_local",
+                "later_human_download_decision_review_eligible": "no",
+                "manual_next_action": (
+                    "Open the H/S source return row and source-map refs manually; paste candidate/source page, evidence, identity anchor, "
+                    f"and conservative rights/identity metadata into {ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix()} only after human review."
+                ),
+                "do_not_do": "Do not fetch sources, download images, approve candidates/assets, write headshots/logos/cutouts, create .approved markers, move files, or publish.",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "logo_writes": "false",
+                "segmentation_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    return output
+
+
+def render_action_photo_research_handoff(rows: list[Dict[str, str]], generated_at: str) -> str:
+    download_yes = sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes")
+    ready_yes = sum(1 for row in rows if clean(row.get("later_human_download_decision_review_eligible")).lower() == "yes")
+    lines = [
+        "# Hockey/Softball Action-Photo Research Handoff",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only bridge from hockey/softball source-map and source-return rows into the shared action-photo research return intake. It tells Mike where to paste manually found candidate/source page URLs, evidence, identity anchors, and conservative rights/identity metadata. It does not fetch sources, download images, approve assets, write headshots/logos/cutouts, create `.approved` markers, move files, create a publish-ready lane, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Handoff rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Download-approved yes rows: `{download_yes}`",
+        f"- Later human download-decision eligible rows: `{ready_yes}`",
+        f"- H/S source return intake: `{SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix()}`",
+        f"- Shared action-photo return intake: `{ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix()}`",
+        "",
+        "## Operator Rules",
+        "",
+        "- Fill H/S `operator_*` source-return fields first after manual source review.",
+        "- If the row is a real action-photo candidate lead, paste complete human-reviewed metadata into the shared action-photo research return intake.",
+        "- Keep generated download-law fields blank/no here; candidate-ready means later human download-decision review only, not download approval or asset approval.",
+        "- A later quarantine download still requires a separate human-edited intake with all required source, entity, rights, identity, intended-use, and `download_approved=yes` fields.",
+        "",
+        "## Rows",
+        "",
+        "| Rank | Sport | Lane | Tier | Search/source lead | H/S return | Action-photo return | Manual next action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | {sport} | {lane} | {tier} | {lead} | `{hs}` | `{ap}` | {action} |".format(
+                rank=clean(row.get("handoff_rank")),
+                sport=clean(row.get("sport_family")),
+                lane=clean(row.get("source_lane")),
+                tier=clean(row.get("source_tier")),
+                lead=clean(row.get("source_search_macro")).replace("|", "/"),
+                hs=clean(row.get("hockey_softball_return_intake_file")),
+                ap=clean(row.get("action_photo_research_return_intake_file")),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def review_triage_group_key(row: Mapping[str, str]) -> tuple[str, str, str]:
     return (
         clean(row.get("sport_family")),
@@ -3441,6 +3611,16 @@ def main() -> int:
         and not clean(row.get("operator_identity_confidence"))
         and not clean(row.get("operator_intended_review_only_use"))
     )
+    action_photo_research_handoff = action_photo_research_handoff_rows(source_research_return)
+    action_photo_research_handoff_download_approved_yes_rows = sum(
+        1 for row in action_photo_research_handoff if clean(row.get("download_approved")).lower() == "yes"
+    )
+    action_photo_research_handoff_ready_rows = sum(
+        1
+        for row in action_photo_research_handoff
+        if clean(row.get("later_human_download_decision_review_eligible")).lower() == "yes"
+    )
+    action_photo_research_handoff_blank_source_url_rows = sum(1 for row in action_photo_research_handoff if not clean(row.get("source_url")))
     source_verification_checklist = source_verification_checklist_rows(source_priority)
     source_verification_checklist_download_approved_yes_rows = sum(
         1 for row in source_verification_checklist if clean(row.get("download_approved")).lower() == "yes"
@@ -3543,6 +3723,16 @@ def main() -> int:
             ),
             "source_research_return_intake_blank_operator_rows": source_research_return_blank_operator_rows,
             "source_research_return_intake_download_approved_yes_rows": source_research_return_download_approved_yes_rows,
+            "action_photo_research_handoff_rows": len(action_photo_research_handoff),
+            "action_photo_research_handoff_womens_hockey_rows": sum(
+                1 for row in action_photo_research_handoff if clean(row.get("sport_family")) == "womens_hockey"
+            ),
+            "action_photo_research_handoff_softball_rows": sum(
+                1 for row in action_photo_research_handoff if clean(row.get("sport_family")) == "softball"
+            ),
+            "action_photo_research_handoff_download_approved_yes_rows": action_photo_research_handoff_download_approved_yes_rows,
+            "action_photo_research_handoff_ready_rows": action_photo_research_handoff_ready_rows,
+            "action_photo_research_handoff_blank_source_url_rows": action_photo_research_handoff_blank_source_url_rows,
             "source_verification_checklist_rows": len(source_verification_checklist),
             "source_verification_checklist_womens_hockey_rows": sum(
                 1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"
@@ -3658,6 +3848,18 @@ def main() -> int:
             "softball_rows": sum(1 for row in source_research_return if clean(row.get("sport_family")) == "softball"),
             "blank_operator_return_rows": source_research_return_blank_operator_rows,
             "download_approved_yes_rows": source_research_return_download_approved_yes_rows,
+        },
+        "action_photo_research_handoff": {
+            "md": ACTION_PHOTO_RESEARCH_HANDOFF_MD.as_posix(),
+            "csv": ACTION_PHOTO_RESEARCH_HANDOFF_CSV.as_posix(),
+            "json": ACTION_PHOTO_RESEARCH_HANDOFF_JSON.as_posix(),
+            "rows": len(action_photo_research_handoff),
+            "womens_hockey_rows": sum(1 for row in action_photo_research_handoff if clean(row.get("sport_family")) == "womens_hockey"),
+            "softball_rows": sum(1 for row in action_photo_research_handoff if clean(row.get("sport_family")) == "softball"),
+            "download_approved_yes_rows": action_photo_research_handoff_download_approved_yes_rows,
+            "later_human_download_decision_review_eligible_rows": action_photo_research_handoff_ready_rows,
+            "blank_source_url_rows": action_photo_research_handoff_blank_source_url_rows,
+            "action_photo_research_return_intake": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
         },
         "source_verification_checklist": {
             "md": SOURCE_VERIFICATION_CHECKLIST_MD.as_posix(),
@@ -3887,6 +4089,38 @@ def main() -> int:
         "paid_apis": False,
         "return_rows_detail": source_research_return,
     }
+    action_photo_research_handoff_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_action_photo_research_handoff_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(action_photo_research_handoff),
+        "womens_hockey_rows": sum(1 for row in action_photo_research_handoff if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in action_photo_research_handoff if clean(row.get("sport_family")) == "softball"),
+        "download_approved_yes_rows": action_photo_research_handoff_download_approved_yes_rows,
+        "later_human_download_decision_review_eligible_rows": action_photo_research_handoff_ready_rows,
+        "blank_source_url_rows": action_photo_research_handoff_blank_source_url_rows,
+        "blank_rights_class_rows": sum(1 for row in action_photo_research_handoff if not clean(row.get("rights_class"))),
+        "blank_identity_confidence_rows": sum(1 for row in action_photo_research_handoff if not clean(row.get("identity_confidence"))),
+        "worksheet_md": ACTION_PHOTO_RESEARCH_HANDOFF_MD.as_posix(),
+        "worksheet_csv": ACTION_PHOTO_RESEARCH_HANDOFF_CSV.as_posix(),
+        "hockey_softball_return_intake_file": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+        "action_photo_research_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "logo_writes": False,
+        "segmentation_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "handoff_rows_detail": action_photo_research_handoff,
+    }
     source_verification_checklist_payload = {
         "version": VERSION,
         "status": "hockey_softball_source_verification_checklist_ready",
@@ -4103,6 +4337,9 @@ def main() -> int:
     write_csv(SOURCE_RESEARCH_RETURN_INTAKE_CSV, source_research_return, SOURCE_RESEARCH_RETURN_INTAKE_FIELDS)
     write_json(SOURCE_RESEARCH_RETURN_INTAKE_JSON, source_research_return_payload)
     write_text(SOURCE_RESEARCH_RETURN_INTAKE_MD, render_source_research_return_intake(source_research_return, generated_at))
+    write_csv(ACTION_PHOTO_RESEARCH_HANDOFF_CSV, action_photo_research_handoff, ACTION_PHOTO_RESEARCH_HANDOFF_FIELDS)
+    write_json(ACTION_PHOTO_RESEARCH_HANDOFF_JSON, action_photo_research_handoff_payload)
+    write_text(ACTION_PHOTO_RESEARCH_HANDOFF_MD, render_action_photo_research_handoff(action_photo_research_handoff, generated_at))
     write_csv(SOURCE_VERIFICATION_CHECKLIST_CSV, source_verification_checklist, SOURCE_VERIFICATION_CHECKLIST_FIELDS)
     write_json(SOURCE_VERIFICATION_CHECKLIST_JSON, source_verification_checklist_payload)
     write_text(SOURCE_VERIFICATION_CHECKLIST_MD, render_source_verification_checklist(source_verification_checklist, generated_at))
