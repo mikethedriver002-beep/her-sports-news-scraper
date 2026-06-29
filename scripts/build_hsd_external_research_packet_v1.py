@@ -75,6 +75,9 @@ LANE_INCLUDE: dict[str, list[str]] = {
         "outputs/local/latest/files/data/asset_registry/softball",
     ],
     "workflow": [
+        "outputs/local/latest/files/workflow_lane_status_dashboard.md",
+        "outputs/local/latest/files/workflow_lane_status_dashboard.csv",
+        "outputs/local/latest/files/workflow_lane_status_dashboard.json",
         "docs/HSD_LANE_PACKET_CONTRACT.md",
         "docs/HSD_COMMAND_CENTER_DECISION_AUDIT.md",
         "config/workflow_policy.json",
