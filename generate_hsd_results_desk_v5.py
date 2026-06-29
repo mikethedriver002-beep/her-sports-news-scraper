@@ -285,6 +285,12 @@ GAME_SOURCE_RESEARCH_WORKSHEET_FIELDS = [
     "scoreboard_source_url",
     "scoreboard_source_domain",
     "box_score_or_stat_source_url",
+    "operator_official_box_score_url",
+    "source_type_to_verify",
+    "operator_stat_line_confirmation",
+    "operator_manual_verification_status",
+    "operator_evidence_note",
+    "source_proof_next_action",
     "proof_row_to_open",
     "source_row_to_open",
     "manual_intake_path",
@@ -1943,6 +1949,40 @@ def game_source_research_prompt(row: Dict[str, Any], need: str) -> str:
     return f"Optional audit: open the listed source row for {league} {matchup} only if it becomes a recap/render candidate."
 
 
+def source_type_to_verify_for_research(row: Dict[str, Any], need: str) -> str:
+    tier = clean(row.get("source_confirmation_tier"))
+    stats_status = clean(row.get("stats_fact_status"))
+    source_url = clean(row.get("source_url"))
+    source_domain_value = clean(row.get("source_domain")) or source_domain(source_url)
+    if need == "find_official_or_public_schedule_result_stat_source":
+        return "official_or_reputable_public_schedule_result_stat_source_needed"
+    if need == "find_box_score_or_named_stat_source":
+        return "official_or_reputable_public_box_score_needed"
+    if "stats_source_confirmed" in stats_status or "box_score" in stats_status:
+        if "espn.com" in source_domain_value:
+            return "public_scoreboard_box_score_operator_verify"
+        return "public_box_score_or_stat_source_operator_verify"
+    if "schedule_source_result_pending" in tier:
+        return "public_schedule_source_result_pending_operator_monitor"
+    return "public_scoreboard_or_official_source_operator_verify"
+
+
+def source_proof_next_action_for_research(row: Dict[str, Any], need: str) -> str:
+    prompt = game_source_research_prompt(row, need)
+    proof_row = clean(row.get("proof_row_to_open"))
+    intake = clean(row.get("manual_intake_path"))
+    source_row = clean(row.get("source_row_to_open"))
+    parts = [prompt]
+    if proof_row:
+        parts.append(f"Open proof row: {proof_row}.")
+    if intake:
+        parts.append(f"Record human confirmation only in: {intake}.")
+    elif source_row:
+        parts.append(f"Use source row for review context only: {source_row}.")
+    parts.append("Leave operator fields blank until a human verifies the official/public evidence.")
+    return " ".join(parts)
+
+
 def game_source_research_worksheet_rows(next_action_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     for item in next_action_rows:
@@ -1950,6 +1990,7 @@ def game_source_research_worksheet_rows(next_action_rows: List[Dict[str, Any]]) 
         source_url = clean(item.get("source_url"))
         stats_status = clean(item.get("stats_fact_status"))
         box_source_url = source_url if ("stats_source_confirmed" in stats_status or "box_score" in stats_status) else ""
+        prompt = game_source_research_prompt(item, need)
         rows.append(
             {
                 "worksheet_rank": clean(item.get("action_rank")),
@@ -1971,10 +2012,16 @@ def game_source_research_worksheet_rows(next_action_rows: List[Dict[str, Any]]) 
                 "scoreboard_source_url": source_url,
                 "scoreboard_source_domain": clean(item.get("source_domain")),
                 "box_score_or_stat_source_url": box_source_url,
+                "operator_official_box_score_url": "",
+                "source_type_to_verify": source_type_to_verify_for_research(item, need),
+                "operator_stat_line_confirmation": "",
+                "operator_manual_verification_status": "",
+                "operator_evidence_note": "",
+                "source_proof_next_action": source_proof_next_action_for_research(item, need),
                 "proof_row_to_open": clean(item.get("proof_row_to_open")),
                 "source_row_to_open": clean(item.get("source_row_to_open")),
                 "manual_intake_path": clean(item.get("manual_intake_path")),
-                "operator_research_prompt": game_source_research_prompt(item, need),
+                "operator_research_prompt": prompt,
                 "operator_found_official_url": "",
                 "operator_found_public_scoreboard_url": "",
                 "operator_found_box_score_url": "",
@@ -1996,6 +2043,10 @@ def game_source_research_worksheet_summary(rows: List[Dict[str, Any]]) -> Dict[s
     for row in rows:
         counts[clean(row.get("research_need"))] += 1
         for field in [
+            "operator_official_box_score_url",
+            "operator_stat_line_confirmation",
+            "operator_manual_verification_status",
+            "operator_evidence_note",
             "operator_found_official_url",
             "operator_found_public_scoreboard_url",
             "operator_found_box_score_url",
@@ -2045,8 +2096,9 @@ def game_source_research_worksheet_report_md(summary: Dict[str, Any], rows: List
         lines.append(f"{row.get('worksheet_rank')}. **{row.get('matchup')}** | {row.get('game_date')} | {row.get('research_need')}")
         lines.append(f"   - tier={row.get('current_source_tier')} | cue={row.get('official_or_public_source_cue')} | confidence={row.get('source_confidence') or 'n/a'}")
         lines.append(f"   - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
-        lines.append(f"   - source={row.get('scoreboard_source_url') or 'missing'} | box_score={row.get('box_score_or_stat_source_url') or 'manual check'}")
+        lines.append(f"   - source={row.get('scoreboard_source_url') or 'missing'} | box_score={row.get('box_score_or_stat_source_url') or 'manual check'} | source_type={row.get('source_type_to_verify')}")
         lines.append(f"   - open={row.get('source_row_to_open')} | proof={row.get('proof_row_to_open') or 'not required'} | intake={row.get('manual_intake_path') or 'not required'}")
+        lines.append(f"   - proof_next={row.get('source_proof_next_action')}")
         lines.append(f"   - prompt={row.get('operator_research_prompt')}")
     if len(rows) > 80:
         lines.append(f"Showing first 80 of {len(rows)} rows. Open `game_source_research_worksheet_v1.csv` for the full worksheet.")

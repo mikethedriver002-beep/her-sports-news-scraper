@@ -597,9 +597,18 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
 
     assert by_id["event_confirmed"]["research_need"] == "confirm_final_score_and_named_stat_source_before_recap"
     assert by_id["event_confirmed"]["box_score_or_stat_source_url"] == "https://www.espn.com/wnba/game/_/gameId/401"
+    assert by_id["event_confirmed"]["source_type_to_verify"] == "public_scoreboard_box_score_operator_verify"
+    assert "Open proof row: story_proof_card_v1.csv event_id=event_confirmed" in by_id["event_confirmed"]["source_proof_next_action"]
+    assert "Record human confirmation only in: final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456" in by_id["event_confirmed"]["source_proof_next_action"]
     assert by_id["event_missing"]["research_need"] == "find_official_or_public_schedule_result_stat_source"
+    assert by_id["event_missing"]["source_type_to_verify"] == "official_or_reputable_public_schedule_result_stat_source_needed"
     assert "Find a free official or reputable public source" in by_id["event_missing"]["operator_research_prompt"]
+    assert "Leave operator fields blank until a human verifies" in by_id["event_missing"]["source_proof_next_action"]
     for row in rows:
+        assert row["operator_official_box_score_url"] == ""
+        assert row["operator_stat_line_confirmation"] == ""
+        assert row["operator_manual_verification_status"] == ""
+        assert row["operator_evidence_note"] == ""
         assert row["operator_found_official_url"] == ""
         assert row["operator_found_public_scoreboard_url"] == ""
         assert row["operator_found_box_score_url"] == ""
@@ -617,6 +626,8 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
     report = module.game_source_research_worksheet_report_md(summary, rows)
     assert "Operator fields are intentionally blank" in report
     assert "No fetching, paid APIs" in report
+    assert "source_type=public_scoreboard_box_score_operator_verify" in report
+    assert "proof_next=" in report
 
 
 def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
