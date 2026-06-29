@@ -6,6 +6,9 @@ Operator alert bundle for running the existing action-photo research packet and 
 
 ## Artifact Paths
 
+- `operator_worksheet_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md`
+- `operator_worksheet_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv`
+- `operator_worksheet_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json`
 - `research_packet_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md`
 - `research_packet_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv`
 - `research_packet_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json`
@@ -35,10 +38,10 @@ After Mike pastes returned rows into the intake, validate pasted rows. Only huma
 
 ## Summary
 
-- Bundle steps: `5`
+- Bundle steps: `6`
 - Validation issues: `0`
 - Rows with `download_approved=yes`: `0`
-- Review-only rows: `5`
+- Review-only rows: `6`
 - Publish-ready rows: `0`
 
 ## Bundle Steps
@@ -64,14 +67,21 @@ After Mike pastes returned rows into the intake, validate pasted rows. Only huma
 - Paste back: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv`
 - Next: After Mike pastes rows back, run the return-intake validator before any quarantine-download decision.
 
-### APRB004: paste_back_intake
+### APRB004: operator_worksheet
+
+- Scope: Fill candidate source/context notes in the operator worksheet before paste-back
+- Instruction: Open the operator worksheet CSV and fill only candidate URL, source/rights/context notes, event/date, athlete/team, crop/use-case, reviewer decision, and reviewer notes after manual inspection. Do not download image files.
+- Paste back: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv`
+- Next: Keep download_approved=no; use the worksheet to decide which source/evidence rows are ready to paste into the return intake.
+
+### APRB005: paste_back_intake
 
 - Scope: Paste returned URL/evidence rows into the return intake CSV
 - Instruction: Paste only URL/evidence schema fields returned by the research packet: candidate_queue_id,candidate_photo_url,evidence_url,evidence_summary,identity_anchor_url,source_url,entity_id,rights_class,identity_confidence,intended_review_only_use,notes,operator_verify_required.
 - Paste back: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv`
 - Next: Validate pasted rows; rows with missing evidence, identity anchor, source URL, rights class, or identity confidence stay held for manual review.
 
-### APRB005: conductor_validation
+### APRB006: conductor_validation
 
 - Scope: Validate pasted rows, then stop for human download approval decisions
 - Instruction: Run focused action-photo validation after paste-back. Do not download, approve, render, publish, or move files. Human-edited download_approved=yes remains a separate quarantine-only step.

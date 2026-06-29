@@ -40,6 +40,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     lead_schema_rows = read_csv(root / "review_only_action_photo_lead_return_schema_v1.csv")
     cutout_scoring_rows = read_csv(root / "review_only_action_photo_cutout_scoring_criteria_v1.csv")
     queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
+    operator_worksheet_rows = read_csv(root / "review_only_action_photo_candidate_operator_worksheet_v1.csv")
     research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
     research_bundle_rows = read_csv(root / "review_only_action_photo_research_run_bundle_v1.csv")
@@ -52,6 +53,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     lead_schema_manifest = json.loads((root / "review_only_action_photo_lead_return_schema_v1.json").read_text(encoding="utf-8"))
     cutout_scoring_manifest = json.loads((root / "review_only_action_photo_cutout_scoring_criteria_v1.json").read_text(encoding="utf-8"))
     queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
+    operator_worksheet_manifest = json.loads((root / "review_only_action_photo_candidate_operator_worksheet_v1.json").read_text(encoding="utf-8"))
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
     research_bundle_manifest = json.loads((root / "review_only_action_photo_research_run_bundle_v1.json").read_text(encoding="utf-8"))
@@ -68,6 +70,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     lead_schema_md = (root / "review_only_action_photo_lead_return_schema_v1.md").read_text(encoding="utf-8")
     cutout_scoring_md = (root / "review_only_action_photo_cutout_scoring_criteria_v1.md").read_text(encoding="utf-8")
     queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
+    operator_worksheet_md = (root / "review_only_action_photo_candidate_operator_worksheet_v1.md").read_text(encoding="utf-8")
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
     research_bundle_md = (root / "review_only_action_photo_research_run_bundle_v1.md").read_text(encoding="utf-8")
@@ -95,15 +98,20 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_cutout_scoring_criteria_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_queue_rows"] == 10
     assert manifest["action_photo_candidate_queue_validation_issue_count"] == 0
+    assert manifest["action_photo_candidate_operator_worksheet_rows"] == 10
+    assert manifest["action_photo_candidate_operator_worksheet_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_research_packet_rows"] == 10
     assert manifest["action_photo_candidate_research_packet_validation_issue_count"] == 0
     assert manifest["action_photo_research_return_intake_rows"] == 10
     assert manifest["action_photo_research_return_intake_validation_issue_count"] == 0
-    assert manifest["action_photo_research_run_bundle_rows"] == 5
+    assert manifest["action_photo_research_run_bundle_rows"] == 6
     assert manifest["action_photo_research_run_bundle_validation_issue_count"] == 0
     assert manifest["action_photo_quarantine_preflight_rows"] == 10
     assert manifest["action_photo_quarantine_preflight_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
+    assert manifest["action_photo_candidate_operator_worksheet_csv"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.csv")
+    assert manifest["action_photo_candidate_operator_worksheet_md"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.md")
+    assert manifest["action_photo_candidate_operator_worksheet_json"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.json")
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
         "source_url",
@@ -673,11 +681,59 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "What To Paste Back" in research_return_md
     assert "`download_approved=yes` remains human-edited only" in research_return_md
     assert "does not download images, approve assets, change approval state, or make anything render-ready" in research_return_md
+    assert operator_worksheet_manifest["status"] == "action_photo_candidate_operator_worksheet_ready"
+    assert operator_worksheet_manifest["worksheet_rows"] == 10
+    assert operator_worksheet_manifest["queue_rows_covered"] == 10
+    assert operator_worksheet_manifest["validation_issue_count"] == 0
+    assert operator_worksheet_manifest["download_approved_yes_rows"] == 0
+    assert operator_worksheet_manifest["blank_candidate_url_rows"] == 10
+    assert operator_worksheet_manifest["blank_source_url_rows"] == 10
+    assert operator_worksheet_manifest["blank_source_rights_context_notes_rows"] == 10
+    assert operator_worksheet_manifest["blank_event_name_rows"] == 10
+    assert operator_worksheet_manifest["blank_event_date_rows"] == 10
+    assert operator_worksheet_manifest["blank_athlete_or_team_rows"] == 10
+    assert operator_worksheet_manifest["blank_crop_use_case_rows"] == 10
+    assert operator_worksheet_manifest["blank_reviewer_decision_rows"] == 10
+    assert operator_worksheet_manifest["blank_rights_class_rows"] == 10
+    assert operator_worksheet_manifest["blank_identity_confidence_rows"] == 10
+    assert operator_worksheet_manifest["blank_intended_review_only_use_rows"] == 10
+    assert operator_worksheet_manifest["not_in_quarantine_rows"] == 10
+    assert operator_worksheet_manifest["review_only_rows"] == 10
+    assert operator_worksheet_manifest["publish_ready_rows"] == 0
+    assert operator_worksheet_manifest["asset_downloads"] is False
+    assert operator_worksheet_manifest["approval_state_change"] is False
+    assert operator_worksheet_manifest["headshot_writes"] is False
+    assert operator_worksheet_manifest["approved_marker_writes"] is False
+    assert len({row["operator_worksheet_id"] for row in operator_worksheet_rows}) == len(operator_worksheet_rows)
+    assert {row["candidate_queue_id"] for row in operator_worksheet_rows} == {row["candidate_queue_id"] for row in queue_rows}
+    for row in operator_worksheet_rows:
+        assert row["operator_worksheet_id"].startswith("APOW")
+        assert row["candidate_url"] == ""
+        assert row["source_url"] == ""
+        assert row["source_rights_context_notes"] == ""
+        assert row["event_name"] == ""
+        assert row["event_date"] == ""
+        assert row["athlete_or_team"] == ""
+        assert row["crop_use_case"] == ""
+        assert row["reviewer_decision"] == ""
+        assert row["reviewer_notes"] == ""
+        assert row["download_approved"] == "no"
+        assert row["quarantine_status"] == "not_in_quarantine_no_download"
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["asset_downloads"] == "false"
+        assert row["headshot_writes"] == "false"
+        assert row["approved_marker_writes"] == "false"
+    assert "Review-Only Action Photo Candidate Operator Worksheet" in operator_worksheet_md
+    assert "crop/use-case" in operator_worksheet_md
+    assert "does not fetch, download, approve, move, write, or publish image assets" in operator_worksheet_md
     assert research_bundle_manifest["status"] == "action_photo_research_run_bundle_ready"
-    assert research_bundle_manifest["bundle_steps"] == 5
+    assert research_bundle_manifest["bundle_steps"] == 6
     assert research_bundle_manifest["validation_issue_count"] == 0
     assert research_bundle_manifest["download_approved_yes_rows"] == 0
-    assert research_bundle_manifest["review_only_rows"] == 5
+    assert research_bundle_manifest["review_only_rows"] == 6
     assert research_bundle_manifest["publish_ready_rows"] == 0
     assert research_bundle_manifest["emails_sent"] is False
     assert research_bundle_manifest["asset_downloads"] is False
@@ -685,6 +741,9 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert research_bundle_manifest["auto_publish"] is False
     assert research_bundle_manifest["paid_apis"] is False
     expected_bundle_paths = {
+        "operator_worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md",
+        "operator_worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv",
+        "operator_worksheet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json",
         "research_packet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
         "research_packet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv",
         "research_packet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json",
@@ -703,6 +762,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         "chatgpt_pro",
         "gemini_pro",
         "manual_research",
+        "operator_worksheet",
         "paste_back_intake",
         "conductor_validation",
     }
@@ -710,7 +770,10 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     for row in research_bundle_rows:
         assert row["bundle_step_id"].startswith("APRB")
         assert set(row["artifact_paths"].split("|")) == all_bundle_paths
-        assert row["paste_back_location"] == research_bundle_manifest["artifact_paths"]["return_intake_csv"]
+        assert row["paste_back_location"] in {
+            research_bundle_manifest["artifact_paths"]["operator_worksheet_csv"],
+            research_bundle_manifest["artifact_paths"]["return_intake_csv"],
+        }
         assert row["copy_ready_instruction"]
         assert "download" in row["copy_ready_instruction"].lower() or "url/evidence" in row["copy_ready_instruction"].lower()
         assert row["next_conductor_action"]
@@ -1384,6 +1447,70 @@ def test_action_photo_candidate_queue_validator_blocks_unsafe_rows() -> None:
     assert ("manual_review_status", "generated_queue_rows_must_start_not_reviewed") in issue_pairs
     assert ("review_only", "candidate_queue_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "candidate_queue_rows_must_not_be_publish_ready") in issue_pairs
+
+
+def test_action_photo_candidate_operator_worksheet_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    queue_rows = module.action_photo_candidate_queue_rows()
+    invalid_rows = module.action_photo_candidate_operator_worksheet_rows(queue_rows)
+    invalid_rows[0].update(
+        {
+            "candidate_queue_id": "APQ999",
+            "candidate_url": "https://example.com/photo",
+            "source_url": "https://example.com/source",
+            "source_name": "example source",
+            "source_rights_context_notes": "approved for render-ready use",
+            "event_name": "Final",
+            "event_date": "2026-06-01",
+            "athlete_or_team": "Example Player",
+            "source_category": "free_web_image",
+            "crop_use_case": "story hero",
+            "quarantine_status": "in_quarantine",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review_only_action_photo_candidate",
+            "reviewer_decision": "approved",
+            "reviewer_notes": "publish ready",
+            "download_approved": "yes",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "asset_downloads": "true",
+            "headshot_writes": "true",
+            "approved_marker_writes": "true",
+        }
+    )
+    invalid_rows[1]["candidate_queue_id"] = invalid_rows[2]["candidate_queue_id"]
+
+    issue_pairs = {
+        (issue["field"], issue["issue"])
+        for issue in module.validate_action_photo_candidate_operator_worksheet_rows(invalid_rows, queue_rows)
+    }
+
+    assert ("candidate_queue_id", "candidate_queue_id_not_in_queue") in issue_pairs
+    assert ("candidate_queue_id", "duplicate_candidate_queue_id_in_operator_worksheet") in issue_pairs
+    assert ("candidate_url", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("source_url", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("source_rights_context_notes", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("event_name", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("event_date", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("athlete_or_team", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("crop_use_case", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("reviewer_decision", "generated_operator_field_must_stay_blank") in issue_pairs
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("quarantine_status", "generated_rows_must_not_enter_quarantine") in issue_pairs
+    assert ("download_approved", "operator_worksheet_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "operator_worksheet_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "operator_worksheet_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "operator_worksheet_must_not_change_approval_state") in issue_pairs
+    assert ("asset_downloads", "operator_worksheet_must_not_write_assets_or_markers") in issue_pairs
+    assert ("headshot_writes", "operator_worksheet_must_not_write_assets_or_markers") in issue_pairs
+    assert ("approved_marker_writes", "operator_worksheet_must_not_write_assets_or_markers") in issue_pairs
+    assert ("source_rights_context_notes", "approval_or_render_ready_language_not_allowed") in issue_pairs
+    assert ("reviewer_decision", "approval_or_render_ready_language_not_allowed") in issue_pairs
+    assert ("reviewer_notes", "approval_or_render_ready_language_not_allowed") in issue_pairs
 
 
 def test_action_photo_research_packet_validator_blocks_unsafe_rows() -> None:
