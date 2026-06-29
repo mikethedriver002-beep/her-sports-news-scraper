@@ -64,6 +64,7 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
     assert "status_source" in rows[0]
     assert "completed_merge_pr" in rows[0]
+    assert "pending_thread" in rows[0]
     assert "heartbeat" in rows[0]
     assert "staleness_status" in rows[0]
     assert workflow["status"] == "heartbeat_visible_needs_conductor_check"
@@ -80,6 +81,7 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "Status: review-only conductor visibility artifact." in markdown
     assert "No automatic downloads." in markdown
     assert "workflow_lane_status_intake.example.csv" in markdown
+    assert "Pending thread" in markdown
     assert "best-effort worktree hints" in markdown
     assert "## Workflow Overhaul Heartbeat" in markdown
     assert "## Stale Lane Brake" in markdown
@@ -101,6 +103,7 @@ def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monk
                 "status": "blocked_needs_human_visual_review",
                 "branch": "codex/renderer-visual-lift",
                 "pr": "https://github.com/example/hsd/pull/999",
+                "pending_thread": "019f04ad-9680-7e83-a9c5-db1e36d52543",
                 "owner": "renderer lane",
                 "last_update_utc": "2026-06-28T12:00:00+00:00",
                 "completed_merge_pr": "",
@@ -119,6 +122,7 @@ def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monk
     assert renderer["status"] == "blocked_needs_human_visual_review"
     assert renderer["status_tone"] == "blocked"
     assert renderer["branch"] == "codex/renderer-visual-lift"
+    assert renderer["pending_thread"] == "019f04ad-9680-7e83-a9c5-db1e36d52543"
     assert renderer["blocker"] == "waiting for Gemini critique"
     assert renderer["next_action"] == "Send research packet, then choose one renderer polish PR."
     assert payload["blocked_lane_count"] == 1
@@ -168,6 +172,7 @@ def test_workflow_lane_status_surfaces_completed_merge_rows_as_review_only(tmp_p
     assert workflow["status_source"] == "manual_intake"
     assert workflow["completed_merge_pr"] == "338"
     assert workflow["completed_merge_commit"] == "3f69d86e"
+    assert workflow["pending_thread"] == ""
     assert workflow["review_only"] == "true"
     assert workflow["paid_apis"] == "false"
     assert workflow["publish_ready"] == "false"
@@ -293,6 +298,38 @@ def test_workflow_lane_status_flags_truthy_guardrail_intake_without_enabling_beh
     assert payload["auto_approval"] is False
     assert payload["approval_state_change"] is False
     assert payload["guardrail_warning_count"] == 1
+
+
+def test_workflow_lane_status_surfaces_pending_thread_without_pr(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    intake = tmp_path / "operator" / "inbox" / "workflow_lane_status_intake.csv"
+    module = load_module()
+    row = {field: "" for field in module.INTAKE_FIELDS}
+    row.update(
+        {
+            "lane_id": "workflow_overhaul",
+            "status": "active_pending_thread_needs_conductor_check",
+            "pending_thread": "019f04ad-9680-7e83-a9c5-db1e36d52543",
+            "next_action": "Inspect pending delegated thread before nudging another workflow packet.",
+        }
+    )
+    write_csv(intake, [row], module.INTAKE_FIELDS)
+
+    assert module.main(["--skip-pr-lookup", "--skip-worktree-lookup"]) == 0
+
+    manifest = json.loads((tmp_path / "run" / "workflow_lane_status_dashboard.json").read_text(encoding="utf-8"))
+    rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_status_dashboard.csv").open(newline="", encoding="utf-8")))
+    markdown = (tmp_path / "run" / "workflow_lane_status_dashboard.md").read_text(encoding="utf-8")
+    workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
+
+    assert workflow["status"] == "active_pending_thread_needs_conductor_check"
+    assert workflow["status_source"] == "manual_intake"
+    assert workflow["pending_thread"] == "019f04ad-9680-7e83-a9c5-db1e36d52543"
+    assert workflow["pr"] == ""
+    assert manifest["workflow_overhaul_heartbeat"]["active"] is False
+    assert "019f04ad-9680-7e83-a9c5-db1e36d52543" in markdown
+    assert "Use `pending_thread` for a delegated Codex thread id or URL" in markdown
 
 
 def test_workflow_lane_status_example_intake_documents_recent_completed_merges() -> None:
