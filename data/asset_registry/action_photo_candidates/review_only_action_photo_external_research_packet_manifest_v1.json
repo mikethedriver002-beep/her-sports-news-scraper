@@ -23,7 +23,7 @@
   },
   "prompt_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md",
   "manifest_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json",
-  "source_map_board_rows": 12,
+  "source_map_board_rows": 16,
   "source_discovery_board_rows": 12,
   "research_task_rows": 10,
   "research_return_intake_rows": 10,

@@ -103,7 +103,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["external_research_source_map_validation_issue_count"] == 0
     assert manifest["action_photo_source_discovery_board_rows"] == 12
     assert manifest["action_photo_source_discovery_board_validation_issue_count"] == 0
-    assert manifest["action_photo_sport_entity_source_map_board_rows"] == 12
+    assert manifest["action_photo_sport_entity_source_map_board_rows"] == 16
     assert manifest["action_photo_sport_entity_source_map_board_validation_issue_count"] == 0
     assert manifest["action_photo_lead_return_schema_rows"] == 18
     assert manifest["action_photo_lead_return_schema_validation_issue_count"] == 0
@@ -407,17 +407,17 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_source_discovery_board_csv"].endswith("review_only_action_photo_source_discovery_board_v1.csv")
     assert manifest["action_photo_source_discovery_board_md"].endswith("review_only_action_photo_source_discovery_board_v1.md")
     assert source_map_board_manifest["status"] == "action_photo_sport_entity_source_map_board_ready"
-    assert source_map_board_manifest["board_rows"] == 12
+    assert source_map_board_manifest["board_rows"] == 16
     assert source_map_board_manifest["validation_issue_count"] == 0
     assert source_map_board_manifest["download_approved_yes_rows"] == 0
-    assert source_map_board_manifest["blank_operator_found_url_rows"] == 12
-    assert source_map_board_manifest["blank_operator_decision_rows"] == 12
-    assert source_map_board_manifest["blank_source_url_rows"] == 12
-    assert source_map_board_manifest["blank_entity_id_rows"] == 12
-    assert source_map_board_manifest["blank_rights_class_rows"] == 12
-    assert source_map_board_manifest["blank_identity_confidence_rows"] == 12
-    assert source_map_board_manifest["blank_intended_review_only_use_rows"] == 12
-    assert source_map_board_manifest["review_only_rows"] == 12
+    assert source_map_board_manifest["blank_operator_found_url_rows"] == 16
+    assert source_map_board_manifest["blank_operator_decision_rows"] == 16
+    assert source_map_board_manifest["blank_source_url_rows"] == 16
+    assert source_map_board_manifest["blank_entity_id_rows"] == 16
+    assert source_map_board_manifest["blank_rights_class_rows"] == 16
+    assert source_map_board_manifest["blank_identity_confidence_rows"] == 16
+    assert source_map_board_manifest["blank_intended_review_only_use_rows"] == 16
+    assert source_map_board_manifest["review_only_rows"] == 16
     assert source_map_board_manifest["publish_ready_rows"] == 0
     assert source_map_board_manifest["asset_downloads"] is False
     assert source_map_board_manifest["source_fetching"] is False
@@ -429,6 +429,10 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         "USWNT / U.S. Soccer",
         "NCAA women's basketball",
         "NCAA women's soccer",
+        "NCAA women's softball",
+        "AUSL / Pro Softball",
+        "PWHL",
+        "NCAA women's hockey",
         "WTA / Grand Slam / tournament",
         "LPGA / tournament",
     } <= set(source_map_board_manifest["entities"])
@@ -881,7 +885,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         assert row["review_only"] == "true"
         assert row["publish_ready"] == "false"
     assert external_export_manifest["status"] == "action_photo_external_research_packet_export_ready"
-    assert external_export_manifest["source_map_board_rows"] == 12
+    assert external_export_manifest["source_map_board_rows"] == 16
     assert external_export_manifest["source_discovery_board_rows"] == 12
     assert external_export_manifest["research_task_rows"] == 10
     assert external_export_manifest["research_return_intake_rows"] == 10
