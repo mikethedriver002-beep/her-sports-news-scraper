@@ -95,6 +95,46 @@ def test_release_readiness_rollup_writes_review_only_false_guardrail_fields(tmp_
     assert "No publish-ready lane or movement." in markdown
 
 
+def test_release_readiness_rollup_defaults_to_active_run_output_dir(tmp_path: Path, monkeypatch) -> None:
+    run_dir = tmp_path / "run"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    run_dir.mkdir()
+    (run_dir / "conductor_workspace_audit.json").write_text(
+        json.dumps({"status": "passed", "collision_blocker_count": 0, "workspace_hash": "abc123"}),
+        encoding="utf-8",
+    )
+    write_csv(
+        run_dir / "safe_review_board.csv",
+        [
+            {
+                "row_id": "current-run-safe",
+                "publish_ready": "false",
+                "auto_publish": "false",
+                "paid_apis": "false",
+                "source_fetching": "false",
+                "asset_downloads": "false",
+                "automatic_downloads": "false",
+                "auto_approval": "false",
+                "approval_state_change": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publishing": "false",
+            }
+        ],
+    )
+
+    module = load_module()
+    assert module.main([]) == 0
+
+    manifest = json.loads((run_dir / "release_readiness_guardrail_rollup.json").read_text(encoding="utf-8"))
+
+    assert manifest["status"] == "passed"
+    assert manifest["missing_inputs"] == []
+    assert manifest["latest_artifact_scan"]["status"] == "passed"
+    assert manifest["latest_artifact_scan"]["scan_files_checked"] >= 2
+    assert manifest["latest_artifact_scan"]["scan_dir"] == run_dir.as_posix()
+
+
 def test_release_readiness_rollup_blocks_truthy_generated_artifact_guardrail_fields(tmp_path: Path, monkeypatch) -> None:
     run_dir = tmp_path / "run"
     scan_dir = tmp_path / "latest"
