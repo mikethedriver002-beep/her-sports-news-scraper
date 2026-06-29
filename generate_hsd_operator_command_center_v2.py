@@ -1851,6 +1851,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     womens_soccer_external_research_manifest = read_json("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json")
     womens_soccer_external_research_rows = read_csv("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv")
     action_photo_intake_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json")
+    action_photo_operator_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
     action_photo_hero_targets_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json")
@@ -2279,6 +2280,17 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_candidate_intake_generated_at": clean(action_photo_intake_manifest.get("generated_at_utc")) if isinstance(action_photo_intake_manifest, dict) else "",
         "action_photo_candidate_intake_rows": as_int(action_photo_intake_manifest.get("intake_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
         "action_photo_candidate_queue_rows": as_int(action_photo_intake_manifest.get("action_photo_candidate_queue_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_operator_worksheet_status": clean(action_photo_operator_worksheet_manifest.get("status")) if isinstance(action_photo_operator_worksheet_manifest, dict) else "",
+        "action_photo_operator_worksheet_generated_at": clean(action_photo_operator_worksheet_manifest.get("generated_at_utc")) if isinstance(action_photo_operator_worksheet_manifest, dict) else "",
+        "action_photo_operator_worksheet_rows": as_int(action_photo_operator_worksheet_manifest.get("worksheet_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
+        "action_photo_operator_worksheet_download_approved_yes_rows": as_int(action_photo_operator_worksheet_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
+        "action_photo_operator_worksheet_blank_candidate_url_rows": as_int(action_photo_operator_worksheet_manifest.get("blank_candidate_url_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
+        "action_photo_operator_worksheet_blank_source_url_rows": as_int(action_photo_operator_worksheet_manifest.get("blank_source_url_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
+        "action_photo_operator_worksheet_blank_reviewer_decision_rows": as_int(action_photo_operator_worksheet_manifest.get("blank_reviewer_decision_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
+        "action_photo_operator_worksheet_not_in_quarantine_rows": as_int(action_photo_operator_worksheet_manifest.get("not_in_quarantine_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
+        "action_photo_operator_worksheet_asset_downloads": bool(action_photo_operator_worksheet_manifest.get("asset_downloads")) if isinstance(action_photo_operator_worksheet_manifest, dict) else False,
+        "action_photo_operator_worksheet_headshot_writes": bool(action_photo_operator_worksheet_manifest.get("headshot_writes")) if isinstance(action_photo_operator_worksheet_manifest, dict) else False,
+        "action_photo_operator_worksheet_approved_marker_writes": bool(action_photo_operator_worksheet_manifest.get("approved_marker_writes")) if isinstance(action_photo_operator_worksheet_manifest, dict) else False,
         "action_photo_research_packet_rows": as_int(action_photo_intake_manifest.get("action_photo_candidate_research_packet_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
         "action_photo_research_return_intake_rows": as_int(action_photo_intake_manifest.get("action_photo_research_return_intake_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
         "action_photo_research_run_bundle_status": clean(action_photo_research_bundle_manifest.get("status")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
@@ -9257,6 +9269,11 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer research P0</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_p0_nwsl_rows', 0)))}</strong></div>
             <div><span>Soccer gray-area leads</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_gray_area_rows', 0)))}</strong></div>
             <div><span>Action-photo intake</span><strong>{html.escape(str(panel.get('action_photo_candidate_intake_rows', 0)))}</strong></div>
+            <div><span>Action-photo worksheet</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_rows', 0)))}</strong></div>
+            <div><span>Worksheet URL blanks</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_blank_candidate_url_rows', 0)))}</strong></div>
+            <div><span>Worksheet reviewer blanks</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_blank_reviewer_decision_rows', 0)))}</strong></div>
+            <div><span>Worksheet dl yes</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>Worksheet writes</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_asset_downloads', False)).lower())}/{html.escape(str(panel.get('action_photo_operator_worksheet_headshot_writes', False)).lower())}/{html.escape(str(panel.get('action_photo_operator_worksheet_approved_marker_writes', False)).lower())}</strong></div>
             <div><span>Action-photo research</span><strong>{html.escape(str(panel.get('action_photo_research_packet_rows', 0)))}</strong></div>
             <div><span>Action-photo bundle</span><strong>{html.escape(str(panel.get('action_photo_research_run_bundle_rows', 0)))}</strong></div>
             <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
@@ -10947,6 +10964,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer external research generated: {asset_panel.get('womens_soccer_external_research_generated_at') or 'missing'}",
         f"- Action-photo candidate intake rows: {asset_panel.get('action_photo_candidate_intake_rows', 0)}",
         f"- Action-photo candidate queue rows: {asset_panel.get('action_photo_candidate_queue_rows', 0)}",
+        f"- Action-photo operator worksheet rows: {asset_panel.get('action_photo_operator_worksheet_rows', 0)}",
+        f"- Action-photo operator worksheet blank candidate-url rows: {asset_panel.get('action_photo_operator_worksheet_blank_candidate_url_rows', 0)}",
+        f"- Action-photo operator worksheet blank source-url rows: {asset_panel.get('action_photo_operator_worksheet_blank_source_url_rows', 0)}",
+        f"- Action-photo operator worksheet blank reviewer-decision rows: {asset_panel.get('action_photo_operator_worksheet_blank_reviewer_decision_rows', 0)}",
+        f"- Action-photo operator worksheet download-approved yes rows: {asset_panel.get('action_photo_operator_worksheet_download_approved_yes_rows', 0)}",
+        f"- Action-photo operator worksheet not-in-quarantine rows: {asset_panel.get('action_photo_operator_worksheet_not_in_quarantine_rows', 0)}",
+        f"- Action-photo operator worksheet asset/headshot/marker writes: {asset_panel.get('action_photo_operator_worksheet_asset_downloads', False)}/{asset_panel.get('action_photo_operator_worksheet_headshot_writes', False)}/{asset_panel.get('action_photo_operator_worksheet_approved_marker_writes', False)}",
+        f"- Action-photo operator worksheet generated: {asset_panel.get('action_photo_operator_worksheet_generated_at') or 'missing'}",
         f"- Action-photo research packet rows: {asset_panel.get('action_photo_research_packet_rows', 0)}",
         f"- Action-photo research return intake rows: {asset_panel.get('action_photo_research_return_intake_rows', 0)}",
         f"- Action-photo research run bundle rows: {asset_panel.get('action_photo_research_run_bundle_rows', 0)}",
