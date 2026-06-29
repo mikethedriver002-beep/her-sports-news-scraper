@@ -6408,6 +6408,14 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "render_handoff_top_packet/draft_preview.png" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_story.png" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_square.png" in runner
     assert "breaking_public_signal_clusters.md" in runner
     assert "breaking_public_signal_clusters.csv" in runner
