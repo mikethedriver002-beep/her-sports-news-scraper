@@ -37,6 +37,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
     external_research_rows = read_csv(root / "review_only_action_photo_external_research_source_map.csv")
     source_discovery_rows = read_csv(root / "review_only_action_photo_source_discovery_board_v1.csv")
+    lead_schema_rows = read_csv(root / "review_only_action_photo_lead_return_schema_v1.csv")
+    cutout_scoring_rows = read_csv(root / "review_only_action_photo_cutout_scoring_criteria_v1.csv")
     queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
     research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
@@ -47,6 +49,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
     external_research_manifest = json.loads((root / "review_only_action_photo_external_research_source_map.json").read_text(encoding="utf-8"))
     source_discovery_manifest = json.loads((root / "review_only_action_photo_source_discovery_board_v1.json").read_text(encoding="utf-8"))
+    lead_schema_manifest = json.loads((root / "review_only_action_photo_lead_return_schema_v1.json").read_text(encoding="utf-8"))
+    cutout_scoring_manifest = json.loads((root / "review_only_action_photo_cutout_scoring_criteria_v1.json").read_text(encoding="utf-8"))
     queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
@@ -61,6 +65,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
     external_research_md = (root / "review_only_action_photo_external_research_source_map.md").read_text(encoding="utf-8")
     source_discovery_md = (root / "review_only_action_photo_source_discovery_board_v1.md").read_text(encoding="utf-8")
+    lead_schema_md = (root / "review_only_action_photo_lead_return_schema_v1.md").read_text(encoding="utf-8")
+    cutout_scoring_md = (root / "review_only_action_photo_cutout_scoring_criteria_v1.md").read_text(encoding="utf-8")
     queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
@@ -83,6 +89,10 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["external_research_source_map_validation_issue_count"] == 0
     assert manifest["action_photo_source_discovery_board_rows"] == 12
     assert manifest["action_photo_source_discovery_board_validation_issue_count"] == 0
+    assert manifest["action_photo_lead_return_schema_rows"] == 18
+    assert manifest["action_photo_lead_return_schema_validation_issue_count"] == 0
+    assert manifest["action_photo_cutout_scoring_criteria_rows"] == 8
+    assert manifest["action_photo_cutout_scoring_criteria_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_queue_rows"] == 10
     assert manifest["action_photo_candidate_queue_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_research_packet_rows"] == 10
@@ -370,6 +380,120 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "`download_approved=no`" in source_discovery_md
     assert manifest["action_photo_source_discovery_board_csv"].endswith("review_only_action_photo_source_discovery_board_v1.csv")
     assert manifest["action_photo_source_discovery_board_md"].endswith("review_only_action_photo_source_discovery_board_v1.md")
+    assert lead_schema_manifest["status"] == "action_photo_lead_return_schema_ready"
+    assert lead_schema_manifest["schema_rows"] == 18
+    assert lead_schema_manifest["validation_issue_count"] == 0
+    assert lead_schema_manifest["download_approved_yes_rows"] == 0
+    assert lead_schema_manifest["blank_generated_source_url_rows"] == 18
+    assert lead_schema_manifest["blank_generated_entity_id_rows"] == 18
+    assert lead_schema_manifest["blank_generated_rights_class_rows"] == 18
+    assert lead_schema_manifest["blank_generated_identity_confidence_rows"] == 18
+    assert lead_schema_manifest["blank_generated_intended_review_only_use_rows"] == 18
+    assert lead_schema_manifest["operator_verify_required_yes_rows"] == 18
+    assert lead_schema_manifest["review_only_rows"] == 18
+    assert lead_schema_manifest["publish_ready_rows"] == 0
+    assert lead_schema_manifest["asset_downloads"] is False
+    assert lead_schema_manifest["source_fetching"] is False
+    assert lead_schema_manifest["image_file_writes"] is False
+    assert lead_schema_manifest["segmentation"] is False
+    assert lead_schema_manifest["background_removal"] is False
+    assert {
+        "candidate_photo_url",
+        "evidence_url",
+        "identity_anchor_url",
+        "athlete_name_claimed",
+        "emotional_intensity_label",
+        "stat_or_context_text",
+        "rights_class",
+        "identity_confidence",
+    } <= set(lead_schema_manifest["return_fields"])
+    assert {
+        "source_lane",
+        "url_evidence",
+        "identity",
+        "context",
+        "action_quality",
+        "editorial_context",
+        "rights",
+        "guardrail",
+    } <= set(lead_schema_manifest["field_groups"])
+    assert len({row["schema_field_id"] for row in lead_schema_rows}) == len(lead_schema_rows)
+    assert len({row["return_field"] for row in lead_schema_rows}) == len(lead_schema_rows)
+    for row in lead_schema_rows:
+        assert row["schema_field_id"].startswith("APLRS")
+        assert row["source_artifact"].endswith("review_only_action_photo_source_discovery_board_v1.csv")
+        assert row["downstream_target"].endswith("review_only_action_photo_research_return_intake_v1.csv")
+        assert row["download_approved"] == "no"
+        assert row["generated_source_url"] == ""
+        assert row["generated_entity_id"] == ""
+        assert row["generated_rights_class"] == ""
+        assert row["generated_identity_confidence"] == ""
+        assert row["generated_intended_review_only_use"] == ""
+        assert row["operator_verify_required"] == "yes"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["source_fetching"] == "false"
+        assert row["image_file_writes"] == "false"
+        assert row["segmentation"] == "false"
+        assert row["background_removal"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["publish_action"] == "none_artifact_only"
+    assert "Lead Return Schema" in lead_schema_md
+    assert "does not fetch sources, download images, write image files, segment subjects" in lead_schema_md
+    assert "source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`" in lead_schema_md
+    assert cutout_scoring_manifest["status"] == "action_photo_cutout_scoring_criteria_ready"
+    assert cutout_scoring_manifest["scoring_rows"] == 8
+    assert cutout_scoring_manifest["validation_issue_count"] == 0
+    assert cutout_scoring_manifest["download_approved_yes_rows"] == 0
+    assert cutout_scoring_manifest["blank_source_url_rows"] == 8
+    assert cutout_scoring_manifest["blank_entity_id_rows"] == 8
+    assert cutout_scoring_manifest["blank_rights_class_rows"] == 8
+    assert cutout_scoring_manifest["blank_identity_confidence_rows"] == 8
+    assert cutout_scoring_manifest["blank_intended_review_only_use_rows"] == 8
+    assert cutout_scoring_manifest["review_only_rows"] == 8
+    assert cutout_scoring_manifest["publish_ready_rows"] == 0
+    assert cutout_scoring_manifest["asset_downloads"] is False
+    assert cutout_scoring_manifest["source_fetching"] is False
+    assert cutout_scoring_manifest["image_file_writes"] is False
+    assert cutout_scoring_manifest["segmentation"] is False
+    assert cutout_scoring_manifest["background_removal"] is False
+    assert cutout_scoring_manifest["cutout_file_writes"] is False
+    assert {
+        "boundary_hair_clarity_score",
+        "limb_equipment_isolation_score",
+        "background_complexity_score",
+        "hero_crop_fit_feed_score",
+        "hero_crop_fit_story_score",
+        "aspect_alignment_score",
+        "emotional_intensity_score",
+        "grid_break_potential_score",
+    } == set(cutout_scoring_manifest["score_fields"])
+    assert len({row["scoring_id"] for row in cutout_scoring_rows}) == len(cutout_scoring_rows)
+    assert len({row["score_field"] for row in cutout_scoring_rows}) == len(cutout_scoring_rows)
+    for row in cutout_scoring_rows:
+        assert row["scoring_id"].startswith("APCSC")
+        assert row["allowed_score_labels"]
+        assert "|" in row["allowed_score_labels"]
+        assert row["evidence_required"] == "candidate_photo_url|evidence_url|identity_anchor_url|operator_visual_review_note"
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["source_fetching"] == "false"
+        assert row["image_file_writes"] == "false"
+        assert row["segmentation"] == "false"
+        assert row["background_removal"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["publish_action"] == "none_artifact_only"
+    assert "Cutout Scoring Criteria" in cutout_scoring_md
+    assert "boundary clarity, limb/equipment isolation, background complexity, crop fit, aspect alignment, emotional intensity, and grid-break potential" in cutout_scoring_md
+    assert "does not analyze images automatically, fetch source pages, download files, segment subjects, remove backgrounds" in cutout_scoring_md
+    assert manifest["action_photo_lead_return_schema_csv"].endswith("review_only_action_photo_lead_return_schema_v1.csv")
+    assert manifest["action_photo_cutout_scoring_criteria_csv"].endswith("review_only_action_photo_cutout_scoring_criteria_v1.csv")
     assert queue_manifest["status"] == "action_photo_candidate_queue_ready"
     assert queue_manifest["queue_rows"] == 10
     assert queue_manifest["validation_issue_count"] == 0
@@ -1099,6 +1223,112 @@ def test_action_photo_source_discovery_board_validator_blocks_unsafe_rows() -> N
     assert ("publish_ready", "source_discovery_rows_must_not_be_publish_ready") in issue_pairs
     assert ("approval_state_change", "source_discovery_rows_must_not_change_approval_state") in issue_pairs
     assert ("publish_action", "source_discovery_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_lead_return_schema_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = module.action_photo_lead_return_schema_rows()
+    invalid_rows[0].update(
+        {
+            "field_group": "auto_ingestion",
+            "source_artifact": "data/asset_registry/action_photo_candidates/bad.csv",
+            "downstream_target": "data/asset_registry/action_photo_candidates/bad_return.csv",
+            "generated_source_url": "https://example.com/source",
+            "generated_entity_id": "wnba:test",
+            "generated_rights_class": "official_review_needed",
+            "generated_identity_confidence": "strong_context",
+            "generated_intended_review_only_use": "review",
+            "operator_verify_required": "no",
+            "source_fetching": "true",
+            "image_file_writes": "true",
+            "segmentation": "true",
+            "background_removal": "true",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "publish_action": "publish",
+        }
+    )
+    invalid_rows[0]["download_approved"] = "y" + "es"
+    invalid_rows[1]["schema_field_id"] = invalid_rows[2]["schema_field_id"]
+    invalid_rows[3]["return_field"] = invalid_rows[4]["return_field"]
+    invalid_rows[5]["operator_prompt_note"] = ""
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_lead_return_schema_rows(invalid_rows)}
+
+    assert ("schema_field_id", "duplicate_lead_schema_field_id") in issue_pairs
+    assert ("return_field", "duplicate_return_field") in issue_pairs
+    assert ("field_group", "invalid_lead_schema_group") in issue_pairs
+    assert ("operator_prompt_note", "required_lead_schema_field_blank") in issue_pairs
+    assert ("source_artifact", "lead_schema_source_artifact_must_be_source_discovery_board") in issue_pairs
+    assert ("downstream_target", "lead_schema_downstream_target_must_be_return_intake") in issue_pairs
+    assert ("generated_source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("generated_entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("generated_rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("generated_identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("generated_intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("operator_verify_required", "operator_verify_required_must_default_yes") in issue_pairs
+    assert ("source_fetching", "lead_schema_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("image_file_writes", "lead_schema_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("segmentation", "lead_schema_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("background_removal", "lead_schema_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("review_only", "lead_schema_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "lead_schema_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "lead_schema_rows_must_not_change_approval_state") in issue_pairs
+    assert ("publish_action", "lead_schema_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_cutout_scoring_criteria_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = module.action_photo_cutout_scoring_criteria_rows()
+    invalid_rows[0].update(
+        {
+            "criterion_group": "auto_cutout",
+            "allowed_score_labels": "high",
+            "criterion_name": "",
+            "source_url": "https://example.com/source",
+            "entity_id": "wnba:test",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "source_fetching": "true",
+            "image_file_writes": "true",
+            "segmentation": "true",
+            "background_removal": "true",
+            "manual_next_action": "download it and remove background now",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "publish_action": "publish",
+        }
+    )
+    invalid_rows[0]["download_approved"] = "y" + "es"
+    invalid_rows[1]["scoring_id"] = invalid_rows[2]["scoring_id"]
+    invalid_rows[3]["score_field"] = invalid_rows[4]["score_field"]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_cutout_scoring_criteria_rows(invalid_rows)}
+
+    assert ("scoring_id", "duplicate_scoring_id") in issue_pairs
+    assert ("score_field", "duplicate_score_field") in issue_pairs
+    assert ("criterion_group", "invalid_cutout_scoring_group") in issue_pairs
+    assert ("criterion_name", "required_cutout_scoring_field_blank") in issue_pairs
+    assert ("allowed_score_labels", "allowed_score_labels_must_be_pipe_delimited") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("source_fetching", "cutout_scoring_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("image_file_writes", "cutout_scoring_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("segmentation", "cutout_scoring_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("background_removal", "cutout_scoring_must_not_perform_image_or_source_actions") in issue_pairs
+    assert ("manual_next_action", "cutout_scoring_next_action_must_stay_review_only") in issue_pairs
+    assert ("review_only", "cutout_scoring_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "cutout_scoring_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "cutout_scoring_rows_must_not_change_approval_state") in issue_pairs
+    assert ("publish_action", "cutout_scoring_rows_must_not_publish") in issue_pairs
 
 
 def test_action_photo_candidate_queue_validator_blocks_unsafe_rows() -> None:
