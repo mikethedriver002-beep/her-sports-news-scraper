@@ -47,6 +47,9 @@ OUT_RESEARCH_RUN_BUNDLE_JSON = output_path(ROOT / "review_only_action_photo_rese
 OUT_QUARANTINE_PREFLIGHT_CSV = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.csv")
 OUT_QUARANTINE_PREFLIGHT_MD = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.md")
 OUT_QUARANTINE_PREFLIGHT_JSON = output_path(ROOT / "review_only_action_photo_quarantine_preflight_v1.json")
+OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV = output_path(ROOT / "review_only_wnba_final_score_hero_action_photo_targets_v1.csv")
+OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD = output_path(ROOT / "review_only_wnba_final_score_hero_action_photo_targets_v1.md")
+OUT_WNBA_FINAL_SCORE_HERO_TARGETS_JSON = output_path(ROOT / "review_only_wnba_final_score_hero_action_photo_targets_v1.json")
 QUARANTINE_ROOT = "data/assets/quarantine/review_only_candidates"
 REQUIRED_DOWNLOAD_FIELDS = [
     "source_url",
@@ -304,6 +307,38 @@ ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS = [
     "ready_for_human_download_decision",
     "download_approved",
     "quarantine_target_hint",
+    "manual_next_action",
+    "review_only",
+    "publish_ready",
+]
+ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS = [
+    "target_id",
+    "sport",
+    "league_entity",
+    "team",
+    "player",
+    "event_context",
+    "render_gap",
+    "target_moment_type",
+    "preferred_action_cues",
+    "low_value_cues",
+    "source_family",
+    "source_category",
+    "source_url_or_search_macro",
+    "candidate_photo_url",
+    "evidence_url",
+    "evidence_summary",
+    "identity_anchor_url",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_verify_required",
+    "download_approved",
+    "quarantine_target_hint",
+    "manual_reviewer",
+    "manual_review_status",
     "manual_next_action",
     "review_only",
     "publish_ready",
@@ -2804,6 +2839,223 @@ def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issu
     return "\n".join(lines) + "\n"
 
 
+def wnba_final_score_hero_action_photo_target_rows() -> List[Dict[str, str]]:
+    default_next_action = (
+        "Run URL/evidence research for this target, paste candidate_photo_url/evidence_url/identity anchor into the return intake, "
+        "and keep download_approved=no until a human later fills all quarantine law fields."
+    )
+    base = {
+        "sport": "basketball",
+        "league_entity": "WNBA",
+        "team": "Indiana Fever",
+        "player": "Kelsey Mitchell",
+        "event_context": "current WNBA final-score hero render replacement research",
+        "render_gap": "renderer_revise_headshot_bridge_not_emotional_action_sports_moment",
+        "preferred_action_cues": "game_action|celebration|driving|shooting|rebound|block|final_buzzer_reaction",
+        "low_value_cues": "headshot|media_day|portrait|roster_profile|static_pose",
+        "candidate_photo_url": "",
+        "evidence_url": "",
+        "evidence_summary": "",
+        "identity_anchor_url": "",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "operator_verify_required": "yes",
+        "download_approved": "no",
+        "manual_reviewer": "",
+        "manual_review_status": "not_reviewed",
+        "manual_next_action": default_next_action,
+        "review_only": "true",
+        "publish_ready": "false",
+    }
+    row_specs = [
+        (
+            "WFSH001",
+            "driving_or_finish",
+            "WNBA/Fever official galleries and recaps",
+            "official_league_gallery",
+            '"Kelsey Mitchell" "Indiana Fever" final score drive action site:wnba.com OR site:fever.wnba.com photos OR recap',
+        ),
+        (
+            "WFSH002",
+            "shooting_or_three_point_release",
+            "Getty Images Editorial Sports",
+            "editorial_wire",
+            '"Kelsey Mitchell" "Indiana Fever" shooting action Getty Images WNBA final score',
+        ),
+        (
+            "WFSH003",
+            "celebration_or_final_buzzer_reaction",
+            "AP/Reuters/Imagn editorial wire",
+            "editorial_wire",
+            '"Kelsey Mitchell" "Indiana Fever" celebration final buzzer AP Images Reuters Imagn WNBA',
+        ),
+        (
+            "WFSH004",
+            "team_context_or_teammate_celebration",
+            "Reputable newsroom galleries",
+            "reputable_newsroom_gallery",
+            '"Kelsey Mitchell" "Indiana Fever" game action celebration photo gallery newspaper WNBA',
+        ),
+        (
+            "WFSH005",
+            "official_social_action_or_celebration_lead",
+            "Indiana Fever / WNBA official social",
+            "official_social",
+            '"Kelsey Mitchell" "Indiana Fever" official social game action celebration WNBA',
+        ),
+        (
+            "WFSH006",
+            "creator_public_action_lead_for_manual_review",
+            "Public creator/portfolio leads",
+            "third_party_creator_public",
+            '"Kelsey Mitchell" "Indiana Fever" WNBA action photo photographer gallery',
+        ),
+    ]
+    rows: List[Dict[str, str]] = []
+    for target_id, moment, family, category, macro in row_specs:
+        rows.append(
+            {
+                **base,
+                "target_id": target_id,
+                "target_moment_type": moment,
+                "source_family": family,
+                "source_category": category,
+                "source_url_or_search_macro": macro,
+                "quarantine_target_hint": f"{QUARANTINE_ROOT}/action_photo_candidates/wnba/indiana_fever/kelsey_mitchell/{target_id.lower()}/operator_fill_required.jpg",
+            }
+        )
+    return rows
+
+
+def validate_wnba_final_score_hero_action_photo_target_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen_ids = set()
+    seen_keys = set()
+    required_action_terms = {"action", "game", "celebration", "driving", "shooting", "rebound", "block"}
+    required_low_value_terms = {"headshot", "media_day", "portrait", "static_pose"}
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS}
+        target_id = normalized["target_id"]
+        if not target_id:
+            issues.append({"row": str(index), "field": "target_id", "issue": "required_target_id_blank"})
+        elif target_id in seen_ids:
+            issues.append({"row": str(index), "field": "target_id", "issue": "duplicate_target_id"})
+        seen_ids.add(target_id)
+        key = (
+            normalized["team"],
+            normalized["player"],
+            normalized["target_moment_type"],
+            normalized["source_category"],
+            normalized["source_url_or_search_macro"],
+        )
+        if key in seen_keys:
+            issues.append({"row": str(index), "field": "source_url_or_search_macro", "issue": "duplicate_wnba_hero_target_key"})
+        seen_keys.add(key)
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        for field in [
+            "sport",
+            "league_entity",
+            "team",
+            "player",
+            "event_context",
+            "render_gap",
+            "target_moment_type",
+            "preferred_action_cues",
+            "low_value_cues",
+            "source_family",
+            "source_url_or_search_macro",
+            "quarantine_target_hint",
+            "manual_next_action",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_wnba_hero_target_field_blank"})
+        for field in ["candidate_photo_url", "evidence_url", "evidence_summary", "identity_anchor_url", "manual_reviewer"]:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_manual_candidate_field_must_stay_blank"})
+        for field in REQUIRED_DOWNLOAD_FIELDS:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_rows_must_not_approve_downloads"})
+        if normalized["operator_verify_required"] != "yes":
+            issues.append({"row": str(index), "field": "operator_verify_required", "issue": "operator_verify_required_must_default_yes"})
+        if normalized["manual_review_status"] != "not_reviewed":
+            issues.append({"row": str(index), "field": "manual_review_status", "issue": "generated_target_rows_must_start_not_reviewed"})
+        if not normalized["quarantine_target_hint"].startswith(QUARANTINE_ROOT + "/"):
+            issues.append({"row": str(index), "field": "quarantine_target_hint", "issue": "quarantine_hint_must_stay_in_review_only_root"})
+        action_blob = normalized["preferred_action_cues"].lower()
+        if not any(term in action_blob for term in required_action_terms):
+            issues.append({"row": str(index), "field": "preferred_action_cues", "issue": "missing_action_hero_cues"})
+        low_value_blob = normalized["low_value_cues"].lower()
+        if not required_low_value_terms <= {part.strip() for part in low_value_blob.split("|")}:
+            issues.append({"row": str(index), "field": "low_value_cues", "issue": "missing_headshot_portrait_static_pose_cues"})
+        if "headshot" not in normalized["render_gap"].lower():
+            issues.append({"row": str(index), "field": "render_gap", "issue": "render_gap_must_name_headshot_bridge"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "wnba_hero_target_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "wnba_hero_target_rows_must_not_be_publish_ready"})
+    return issues
+
+
+def render_wnba_final_score_hero_action_photo_targets(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    category_counts: Dict[str, int] = {}
+    for row in rows:
+        category = clean(row.get("source_category"))
+        category_counts[category] = category_counts.get(category, 0) + 1
+    lines = [
+        "# Review-Only WNBA Final-Score Hero Action-Photo Targets v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Target board for replacing the current WNBA final-score headshot bridge with a real action or emotional sports moment candidate. These are source-candidate research targets only: no image files are downloaded, no asset approval is granted, and no row is render-ready.",
+        "",
+        "## Render Limitation",
+        "",
+        "The latest renderer stage is still editorially REVISE when the hero image is a media-day/headshot/portrait bridge. Prioritize action/game/celebration/driving/shooting/rebound/block cues for Kelsey Mitchell and Indiana Fever final-score contexts.",
+        "",
+        "## Operator Law",
+        "",
+        "`download_approved=yes` remains human-edited only after `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` are filled. Any later file must land in `data/assets/quarantine/review_only_candidates/`; approval/render-ready remains separate.",
+        "",
+        "## Summary",
+        "",
+        f"- Target rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Source Category Counts",
+        "",
+    ]
+    lines.extend(f"- `{category}`: `{count}`" for category, count in sorted(category_counts.items()))
+    lines += [
+        "",
+        "## Target Rows",
+        "",
+        "| Target ID | Player | Moment Type | Source Family | Search Macro | Blocked Low-Value Cues | Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {target_id} | {player} | {moment} | {family} | `{macro}` | `{blocked}` | {action} |".format(
+                target_id=clean(row.get("target_id")),
+                player=clean(row.get("player")),
+                moment=clean(row.get("target_moment_type")).replace("|", "/"),
+                family=clean(row.get("source_family")).replace("|", "/"),
+                macro=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
+                blocked=clean(row.get("low_value_cues")).replace("|", "/"),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = TEMPLATE_CREATED_AT_UTC
     rows = [normalize_row(row) for row in template_rows(generated_at)]
@@ -2825,6 +3077,8 @@ def main() -> int:
     research_run_bundle_issues = validate_action_photo_research_run_bundle_rows(research_run_bundle_rows, research_run_bundle_artifact_paths().values())
     quarantine_preflight_rows = action_photo_quarantine_preflight_rows(research_return_rows)
     quarantine_preflight_issues = validate_action_photo_quarantine_preflight_rows(quarantine_preflight_rows, research_return_rows)
+    wnba_hero_target_rows = wnba_final_score_hero_action_photo_target_rows()
+    wnba_hero_target_issues = validate_wnba_final_score_hero_action_photo_target_rows(wnba_hero_target_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, issues, generated_at))
     write_text(OUT_TAXONOMY_MD, render_taxonomy(generated_at))
@@ -3124,11 +3378,56 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV, wnba_hero_target_rows, ACTION_PHOTO_WNBA_FINAL_SCORE_HERO_TARGET_FIELDS)
+    write_text(OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD, render_wnba_final_score_hero_action_photo_targets(wnba_hero_target_rows, wnba_hero_target_issues, generated_at))
+    write_json(
+        OUT_WNBA_FINAL_SCORE_HERO_TARGETS_JSON,
+        {
+            "version": VERSION,
+            "status": "wnba_final_score_hero_action_photo_targets_ready" if not wnba_hero_target_issues else "wnba_final_score_hero_action_photo_targets_have_validation_issues",
+            "generated_at_utc": generated_at,
+            "target_rows": len(wnba_hero_target_rows),
+            "validation_issue_count": len(wnba_hero_target_issues),
+            "validation_issues": wnba_hero_target_issues,
+            "sport": "basketball",
+            "league_entity": "WNBA",
+            "team": "Indiana Fever",
+            "player": "Kelsey Mitchell",
+            "render_gap": "renderer_revise_headshot_bridge_not_emotional_action_sports_moment",
+            "source_categories": sorted({row["source_category"] for row in wnba_hero_target_rows}),
+            "target_moment_types": sorted({row["target_moment_type"] for row in wnba_hero_target_rows}),
+            "download_approved_yes_rows": sum(1 for row in wnba_hero_target_rows if row["download_approved"] == "yes"),
+            "blank_candidate_photo_url_rows": sum(1 for row in wnba_hero_target_rows if not row["candidate_photo_url"]),
+            "blank_evidence_url_rows": sum(1 for row in wnba_hero_target_rows if not row["evidence_url"]),
+            "blank_evidence_summary_rows": sum(1 for row in wnba_hero_target_rows if not row["evidence_summary"]),
+            "blank_identity_anchor_url_rows": sum(1 for row in wnba_hero_target_rows if not row["identity_anchor_url"]),
+            "blank_source_url_rows": sum(1 for row in wnba_hero_target_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in wnba_hero_target_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in wnba_hero_target_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in wnba_hero_target_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in wnba_hero_target_rows if not row["intended_review_only_use"]),
+            "operator_verify_required_yes_rows": sum(1 for row in wnba_hero_target_rows if row["operator_verify_required"] == "yes"),
+            "manual_reviewer_blank_rows": sum(1 for row in wnba_hero_target_rows if not row["manual_reviewer"]),
+            "manual_review_status_not_reviewed_rows": sum(1 for row in wnba_hero_target_rows if row["manual_review_status"] == "not_reviewed"),
+            "review_only_rows": sum(1 for row in wnba_hero_target_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in wnba_hero_target_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV.as_posix(),
+            "worksheet_md": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_json(
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not wnba_hero_target_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -3155,7 +3454,9 @@ def main() -> int:
             "action_photo_research_run_bundle_validation_issue_count": len(research_run_bundle_issues),
             "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows),
             "action_photo_quarantine_preflight_validation_issue_count": len(quarantine_preflight_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues),
+            "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows),
+            "wnba_final_score_hero_action_photo_target_validation_issue_count": len(wnba_hero_target_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -3188,6 +3489,9 @@ def main() -> int:
             "action_photo_quarantine_preflight_csv": OUT_QUARANTINE_PREFLIGHT_CSV.as_posix(),
             "action_photo_quarantine_preflight_md": OUT_QUARANTINE_PREFLIGHT_MD.as_posix(),
             "action_photo_quarantine_preflight_json": OUT_QUARANTINE_PREFLIGHT_JSON.as_posix(),
+            "wnba_final_score_hero_action_photo_targets_csv": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_CSV.as_posix(),
+            "wnba_final_score_hero_action_photo_targets_md": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_MD.as_posix(),
+            "wnba_final_score_hero_action_photo_targets_json": OUT_WNBA_FINAL_SCORE_HERO_TARGETS_JSON.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,
@@ -3201,8 +3505,9 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues), "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues else 0
+    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or wnba_hero_target_issues else 0
 
 
 if __name__ == "__main__":

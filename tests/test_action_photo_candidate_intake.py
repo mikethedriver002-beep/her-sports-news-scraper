@@ -573,6 +573,101 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "does not download files, approve assets, write headshots" in preflight_md
 
 
+def test_wnba_final_score_hero_targets_bridge_render_gap_without_downloads(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path))
+    module = load_module()
+
+    assert module.main() == 0
+
+    root = tmp_path / "data/asset_registry/action_photo_candidates"
+    rows = read_csv(root / "review_only_wnba_final_score_hero_action_photo_targets_v1.csv")
+    manifest = json.loads((root / "review_only_wnba_final_score_hero_action_photo_targets_v1.json").read_text(encoding="utf-8"))
+    top_manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
+    markdown = (root / "review_only_wnba_final_score_hero_action_photo_targets_v1.md").read_text(encoding="utf-8")
+    taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
+
+    assert manifest["status"] == "wnba_final_score_hero_action_photo_targets_ready"
+    assert manifest["target_rows"] == 6
+    assert manifest["validation_issue_count"] == 0
+    assert manifest["team"] == "Indiana Fever"
+    assert manifest["player"] == "Kelsey Mitchell"
+    assert manifest["render_gap"] == "renderer_revise_headshot_bridge_not_emotional_action_sports_moment"
+    assert manifest["download_approved_yes_rows"] == 0
+    assert manifest["blank_candidate_photo_url_rows"] == 6
+    assert manifest["blank_evidence_url_rows"] == 6
+    assert manifest["blank_evidence_summary_rows"] == 6
+    assert manifest["blank_identity_anchor_url_rows"] == 6
+    assert manifest["blank_source_url_rows"] == 6
+    assert manifest["blank_entity_id_rows"] == 6
+    assert manifest["blank_rights_class_rows"] == 6
+    assert manifest["blank_identity_confidence_rows"] == 6
+    assert manifest["blank_intended_review_only_use_rows"] == 6
+    assert manifest["operator_verify_required_yes_rows"] == 6
+    assert manifest["manual_reviewer_blank_rows"] == 6
+    assert manifest["manual_review_status_not_reviewed_rows"] == 6
+    assert manifest["review_only_rows"] == 6
+    assert manifest["publish_ready_rows"] == 0
+    assert top_manifest["wnba_final_score_hero_action_photo_target_rows"] == 6
+    assert top_manifest["wnba_final_score_hero_action_photo_target_validation_issue_count"] == 0
+    assert top_manifest["wnba_final_score_hero_action_photo_targets_csv"].endswith(
+        "review_only_wnba_final_score_hero_action_photo_targets_v1.csv"
+    )
+    assert {
+        "official_league_gallery",
+        "editorial_wire",
+        "reputable_newsroom_gallery",
+        "official_social",
+        "third_party_creator_public",
+    } == set(manifest["source_categories"])
+    assert {
+        "driving_or_finish",
+        "shooting_or_three_point_release",
+        "celebration_or_final_buzzer_reaction",
+        "team_context_or_teammate_celebration",
+        "official_social_action_or_celebration_lead",
+        "creator_public_action_lead_for_manual_review",
+    } == set(manifest["target_moment_types"])
+    assert len({row["target_id"] for row in rows}) == len(rows)
+    keys = {
+        (row["team"], row["player"], row["target_moment_type"], row["source_category"], row["source_url_or_search_macro"])
+        for row in rows
+    }
+    assert len(keys) == len(rows)
+    for row in rows:
+        assert row["target_id"].startswith("WFSH")
+        assert row["sport"] == "basketball"
+        assert row["league_entity"] == "WNBA"
+        assert row["team"] == "Indiana Fever"
+        assert row["player"] == "Kelsey Mitchell"
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["source_url_or_search_macro"]
+        assert "headshot_bridge" in row["render_gap"]
+        assert {"headshot", "media_day", "portrait", "static_pose"} <= set(row["low_value_cues"].split("|"))
+        assert any(term in row["preferred_action_cues"] for term in ["game_action", "celebration", "driving", "shooting", "rebound", "block"])
+        assert row["candidate_photo_url"] == ""
+        assert row["evidence_url"] == ""
+        assert row["evidence_summary"] == ""
+        assert row["identity_anchor_url"] == ""
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["operator_verify_required"] == "yes"
+        assert row["download_approved"] == "no"
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["manual_reviewer"] == ""
+        assert row["manual_review_status"] == "not_reviewed"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+    assert "headshot bridge" in markdown
+    assert "media-day/headshot/portrait" in markdown
+    assert "action/game/celebration/driving/shooting/rebound/block" in markdown
+    assert "`download_approved=yes` remains human-edited only" in markdown
+    assert "no row is render-ready" in markdown
+
+
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
     module = load_module()
     invalid_rows = [
@@ -1098,3 +1193,62 @@ def test_action_photo_quarantine_preflight_validator_blocks_unsafe_rows() -> Non
     assert ("review_only", "preflight_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "preflight_rows_must_not_be_publish_ready") in issue_pairs
     assert ("candidate_queue_id", "duplicate_candidate_queue_id_in_preflight") in issue_pairs
+
+
+def test_wnba_final_score_hero_target_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = module.wnba_final_score_hero_action_photo_target_rows()
+    invalid_rows[0].update(
+        {
+            "source_category": "free_web_image",
+            "preferred_action_cues": "portrait",
+            "low_value_cues": "",
+            "render_gap": "looks fine",
+            "candidate_photo_url": "https://example.com/photo.jpg",
+            "evidence_url": "https://example.com/evidence",
+            "evidence_summary": "already found",
+            "identity_anchor_url": "https://example.com/player",
+            "source_url": "https://example.com/photo.jpg",
+            "entity_id": "wnba:indiana_fever:kelsey_mitchell",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "operator_verify_required": "no",
+            "download_approved": "yes",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "manual_reviewer": "bot",
+            "manual_review_status": "approved_for_download",
+            "review_only": "false",
+            "publish_ready": "true",
+        }
+    )
+    invalid_rows[1]["target_id"] = invalid_rows[2]["target_id"]
+    invalid_rows[3]["source_url_or_search_macro"] = invalid_rows[4]["source_url_or_search_macro"]
+    invalid_rows[3]["target_moment_type"] = invalid_rows[4]["target_moment_type"]
+    invalid_rows[3]["source_category"] = invalid_rows[4]["source_category"]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_wnba_final_score_hero_action_photo_target_rows(invalid_rows)}
+
+    assert ("target_id", "duplicate_target_id") in issue_pairs
+    assert ("source_url_or_search_macro", "duplicate_wnba_hero_target_key") in issue_pairs
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("candidate_photo_url", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("evidence_url", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("evidence_summary", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("identity_anchor_url", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("manual_reviewer", "generated_manual_candidate_field_must_stay_blank") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("operator_verify_required", "operator_verify_required_must_default_yes") in issue_pairs
+    assert ("manual_review_status", "generated_target_rows_must_start_not_reviewed") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("preferred_action_cues", "missing_action_hero_cues") in issue_pairs
+    assert ("low_value_cues", "required_wnba_hero_target_field_blank") in issue_pairs
+    assert ("low_value_cues", "missing_headshot_portrait_static_pose_cues") in issue_pairs
+    assert ("render_gap", "render_gap_must_name_headshot_bridge") in issue_pairs
+    assert ("review_only", "wnba_hero_target_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "wnba_hero_target_rows_must_not_be_publish_ready") in issue_pairs
