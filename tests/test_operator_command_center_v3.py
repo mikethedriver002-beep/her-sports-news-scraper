@@ -3229,6 +3229,25 @@ def seed_asset_availability_audit_files() -> None:
         },
     )
     write_json(
+        (action_photo_dir / "review_only_action_photo_research_return_intake_v1.json").as_posix(),
+        {
+            "status": "action_photo_research_return_intake_ready",
+            "generated_at_utc": "2026-06-29T00:02:15+00:00",
+            "return_intake_rows": 10,
+            "rows_with_pasted_return_data": 0,
+            "validation_issue_count": 0,
+            "download_approved_yes_rows": 0,
+            "blank_candidate_photo_url_rows": 10,
+            "blank_source_url_rows": 10,
+            "blank_rights_class_rows": 10,
+            "operator_verify_required_yes_rows": 10,
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
         (action_photo_dir / "review_only_action_photo_external_research_packet_manifest_v1.json").as_posix(),
         {
             "status": "action_photo_external_research_packet_export_ready",
@@ -4919,6 +4938,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_operator_worksheet_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_research_return_rows_with_pasted_data"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_research_return_validation_issues"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_research_return_blank_candidate_photo_url_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_research_return_blank_source_url_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_research_return_blank_rights_class_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_research_return_operator_verify_required_yes_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_research_return_download_approved_yes_rows"] == 0
     assert "present with 1 row(s)" in payload["asset_readiness_panel"]["logo_review_packet_freshness_detail"]
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision_lane"] == "wnba_athlete_identity_resolution"
@@ -4946,6 +4972,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Action-photo worksheet" in html
     assert "Worksheet reviewer blanks" in html
     assert "Worksheet writes" in html
+    assert "Research returns pasted" in html
+    assert "Return source blanks" in html
+    assert "Return rights blanks" in html
+    assert "Return dl yes" in html
     assert "review-only fallback status not recorded" not in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
