@@ -35,6 +35,12 @@ OUT_EXTERNAL_RESEARCH_SOURCE_MAP_JSON = output_path(ROOT / "review_only_action_p
 OUT_SOURCE_DISCOVERY_BOARD_CSV = output_path(ROOT / "review_only_action_photo_source_discovery_board_v1.csv")
 OUT_SOURCE_DISCOVERY_BOARD_MD = output_path(ROOT / "review_only_action_photo_source_discovery_board_v1.md")
 OUT_SOURCE_DISCOVERY_BOARD_JSON = output_path(ROOT / "review_only_action_photo_source_discovery_board_v1.json")
+OUT_LEAD_RETURN_SCHEMA_CSV = output_path(ROOT / "review_only_action_photo_lead_return_schema_v1.csv")
+OUT_LEAD_RETURN_SCHEMA_MD = output_path(ROOT / "review_only_action_photo_lead_return_schema_v1.md")
+OUT_LEAD_RETURN_SCHEMA_JSON = output_path(ROOT / "review_only_action_photo_lead_return_schema_v1.json")
+OUT_CUTOUT_SCORING_CRITERIA_CSV = output_path(ROOT / "review_only_action_photo_cutout_scoring_criteria_v1.csv")
+OUT_CUTOUT_SCORING_CRITERIA_MD = output_path(ROOT / "review_only_action_photo_cutout_scoring_criteria_v1.md")
+OUT_CUTOUT_SCORING_CRITERIA_JSON = output_path(ROOT / "review_only_action_photo_cutout_scoring_criteria_v1.json")
 OUT_CANDIDATE_QUEUE_CSV = output_path(ROOT / "review_only_action_photo_candidate_queue_v1.csv")
 OUT_CANDIDATE_QUEUE_MD = output_path(ROOT / "review_only_action_photo_candidate_queue_v1.md")
 OUT_CANDIDATE_QUEUE_JSON = output_path(ROOT / "review_only_action_photo_candidate_queue_v1.json")
@@ -212,6 +218,61 @@ ACTION_PHOTO_SOURCE_DISCOVERY_BOARD_FIELDS = [
     "intended_review_only_use",
     "review_only",
     "publish_ready",
+    "approval_state_change",
+    "publish_action",
+]
+ACTION_PHOTO_LEAD_RETURN_SCHEMA_FIELDS = [
+    "schema_field_id",
+    "return_field",
+    "field_group",
+    "required_when",
+    "allowed_values_or_format",
+    "example_value",
+    "operator_prompt_note",
+    "validation_note",
+    "source_artifact",
+    "downstream_target",
+    "download_approved",
+    "generated_source_url",
+    "generated_entity_id",
+    "generated_rights_class",
+    "generated_identity_confidence",
+    "generated_intended_review_only_use",
+    "operator_verify_required",
+    "review_only",
+    "publish_ready",
+    "source_fetching",
+    "image_file_writes",
+    "segmentation",
+    "background_removal",
+    "approval_state_change",
+    "publish_action",
+]
+ACTION_PHOTO_CUTOUT_SCORING_CRITERIA_FIELDS = [
+    "scoring_id",
+    "criterion_group",
+    "criterion_name",
+    "score_field",
+    "allowed_score_labels",
+    "high_signal_definition",
+    "medium_signal_definition",
+    "low_or_blocked_definition",
+    "grid_break_use",
+    "operator_prompt_note",
+    "evidence_required",
+    "manual_next_action",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "review_only",
+    "publish_ready",
+    "source_fetching",
+    "image_file_writes",
+    "segmentation",
+    "background_removal",
     "approval_state_change",
     "publish_action",
 ]
@@ -2393,6 +2454,328 @@ def render_action_photo_source_discovery_board(rows: List[Mapping[str, str]], is
     return "\n".join(lines) + "\n"
 
 
+def action_photo_lead_return_schema_rows() -> List[Dict[str, str]]:
+    base = {
+        "download_approved": "no",
+        "generated_source_url": "",
+        "generated_entity_id": "",
+        "generated_rights_class": "",
+        "generated_identity_confidence": "",
+        "generated_intended_review_only_use": "",
+        "operator_verify_required": "yes",
+        "review_only": "true",
+        "publish_ready": "false",
+        "source_fetching": "false",
+        "image_file_writes": "false",
+        "segmentation": "false",
+        "background_removal": "false",
+        "approval_state_change": "none",
+        "publish_action": "none_artifact_only",
+        "source_artifact": OUT_SOURCE_DISCOVERY_BOARD_CSV.as_posix(),
+        "downstream_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+    }
+    row_specs = [
+        ("APLRS001", "source_discovery_id", "source_lane", "always", "APSD### or operator_triage_only", "APSD002", "Carry the source discovery row that produced the lead.", "Must match a source discovery board ID or be explicitly operator_triage_only."),
+        ("APLRS002", "candidate_queue_id", "routing", "always", "APQ###", "APQ001", "Map the lead back to the existing action-photo queue.", "Must match an existing candidate queue ID before paste-back validation."),
+        ("APLRS003", "candidate_photo_url", "url_evidence", "always", "https URL to source/candidate page; not a downloaded file URL", "https://example.com/gallery/photo-page", "Return the page where the candidate action photo is visible or described.", "Do not return hotlinked image binaries, CDN-only URLs, screenshots, or cached files."),
+        ("APLRS004", "evidence_url", "url_evidence", "always", "https URL to recap, gallery, match report, or source context", "https://example.com/match-recap", "Return separate evidence for event, source, or caption context when available.", "Required for any pasted lead row."),
+        ("APLRS005", "identity_anchor_url", "identity", "always", "official roster/player profile, stats page, game sheet, or verified profile URL", "https://example.com/player-profile", "Give the operator a way to verify athlete identity outside the image.", "Required for any pasted lead row."),
+        ("APLRS006", "sport", "context", "always", "controlled human-readable sport label", "basketball", "Echo the sport from the source discovery/queue context.", "Must not invent sport context from image appearance alone."),
+        ("APLRS007", "league_entity", "context", "always", "league/team/event entity label", "WNBA", "Echo league or event entity used for research.", "Must align with source discovery board and queue context."),
+        ("APLRS008", "match_or_event_context", "context", "when_visible_or_claimed", "date, opponent, tournament, game, round, or recap context", "Indiana Fever vs opponent, final-score recap", "Capture why the moment is tied to a real sports event.", "Mark operator verification when date, opponent, or event is incomplete."),
+        ("APLRS009", "athlete_name_claimed", "identity", "when_visible_or_claimed", "athlete/person/team name as claimed by source", "Kelsey Mitchell", "Capture the source-caption identity claim without treating it as final approval.", "Needs identity anchor and operator verification."),
+        ("APLRS010", "action_moment_type", "action_quality", "always", "drive|shot|save|swing|pitch|slide|celebration|defense|serve|putt|operator_fill", "transition_drive", "Describe the sports action or emotion visible in the candidate.", "Headshot, roster portrait, static pose, and media-day cues should be flagged low value."),
+        ("APLRS011", "emotional_intensity_label", "action_quality", "always", "high|medium|low|unclear", "high", "Rate visible emotion or editorial energy from source context only.", "No automated image analysis; operator verifies after looking at the source page."),
+        ("APLRS012", "stat_or_context_text", "editorial_context", "when_available", "short text tying image to score, stat, milestone, recap, or storyline", "game-high 24 points in final-score win", "Capture why the lead could support a premium editorial render later.", "Must remain context text, not approval or publish-ready copy."),
+        ("APLRS013", "source_category", "rights", "always", "|".join(sorted(SOURCE_CATEGORIES)), "editorial_wire", "Use the existing action-photo source taxonomy.", "Must match controlled vocabulary."),
+        ("APLRS014", "rights_class", "rights", "always", "|".join(sorted(RIGHTS_CLASSES)), "editorial_wire_rights_sensitive", "Return conservative rights metadata for manual review.", "Rights class is metadata only; no rights or approval are assumed."),
+        ("APLRS015", "identity_confidence", "identity", "always", "|".join(sorted(IDENTITY_CONFIDENCE)), "strong_context", "Return conservative identity confidence.", "Operator verification remains required unless the source/caption and official anchor match cleanly."),
+        ("APLRS016", "intended_review_only_use", "guardrail", "always", "review_only_action_photo_candidate_research|review_only_cutout_scoring_prep", "review_only_action_photo_candidate_research", "State that the lead is for review-only research or scoring prep.", "Must not say render-ready, approved, publish-ready, or usable asset."),
+        ("APLRS017", "operator_verify_required", "guardrail", "always", "yes|no", "yes", "Default to yes when identity, rights, event context, or action quality need human confirmation.", "Generated schema defaults to yes; human can later mark no after review."),
+        ("APLRS018", "review_notes", "operator_notes", "optional", "short notes, limitations, or red flags", "caption visible but event date needs review", "Capture uncertainty and red flags for the operator.", "Must not contain approval or publish-ready language."),
+    ]
+    return [
+        {
+            **base,
+            "schema_field_id": field_id,
+            "return_field": return_field,
+            "field_group": field_group,
+            "required_when": required_when,
+            "allowed_values_or_format": allowed_values,
+            "example_value": example,
+            "operator_prompt_note": prompt_note,
+            "validation_note": validation_note,
+        }
+        for field_id, return_field, field_group, required_when, allowed_values, example, prompt_note, validation_note in row_specs
+    ]
+
+
+def validate_action_photo_lead_return_schema_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen_ids = set()
+    seen_fields = set()
+    allowed_groups = {"source_lane", "routing", "url_evidence", "identity", "context", "action_quality", "editorial_context", "rights", "guardrail", "operator_notes"}
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_LEAD_RETURN_SCHEMA_FIELDS}
+        field_id = normalized["schema_field_id"]
+        return_field = normalized["return_field"]
+        if not field_id:
+            issues.append({"row": str(index), "field": "schema_field_id", "issue": "required_lead_schema_field_id_blank"})
+        elif field_id in seen_ids:
+            issues.append({"row": str(index), "field": "schema_field_id", "issue": "duplicate_lead_schema_field_id"})
+        seen_ids.add(field_id)
+        if not return_field:
+            issues.append({"row": str(index), "field": "return_field", "issue": "required_return_field_blank"})
+        elif return_field in seen_fields:
+            issues.append({"row": str(index), "field": "return_field", "issue": "duplicate_return_field"})
+        seen_fields.add(return_field)
+        if normalized["field_group"] not in allowed_groups:
+            issues.append({"row": str(index), "field": "field_group", "issue": "invalid_lead_schema_group"})
+        for field in [
+            "required_when",
+            "allowed_values_or_format",
+            "example_value",
+            "operator_prompt_note",
+            "validation_note",
+            "source_artifact",
+            "downstream_target",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_lead_schema_field_blank"})
+        if normalized["source_artifact"] != OUT_SOURCE_DISCOVERY_BOARD_CSV.as_posix():
+            issues.append({"row": str(index), "field": "source_artifact", "issue": "lead_schema_source_artifact_must_be_source_discovery_board"})
+        if normalized["downstream_target"] != OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix():
+            issues.append({"row": str(index), "field": "downstream_target", "issue": "lead_schema_downstream_target_must_be_return_intake"})
+        for field in [
+            "generated_source_url",
+            "generated_entity_id",
+            "generated_rights_class",
+            "generated_identity_confidence",
+            "generated_intended_review_only_use",
+        ]:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_rows_must_not_approve_downloads"})
+        if normalized["operator_verify_required"] != "yes":
+            issues.append({"row": str(index), "field": "operator_verify_required", "issue": "operator_verify_required_must_default_yes"})
+        for field in ["source_fetching", "image_file_writes", "segmentation", "background_removal"]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "lead_schema_must_not_perform_image_or_source_actions"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "lead_schema_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "lead_schema_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] not in {"", "none"}:
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "lead_schema_rows_must_not_change_approval_state"})
+        if normalized["publish_action"] not in {"", "none_artifact_only"}:
+            issues.append({"row": str(index), "field": "publish_action", "issue": "lead_schema_rows_must_not_publish"})
+    return issues
+
+
+def render_action_photo_lead_return_schema(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    group_counts: Dict[str, int] = {}
+    for row in rows:
+        group = clean(row.get("field_group"))
+        group_counts[group] = group_counts.get(group, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Lead Return Schema v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Normalized schema for Gemini, ChatGPT Pro, or manual researchers returning action-photo leads. This is a paste-back contract only: it does not fetch sources, download images, write image files, segment subjects, remove backgrounds, approve assets, or move anything toward publishing.",
+        "",
+        "## Operator Contract",
+        "",
+        f"Use this schema to normalize leads before pasting rows into `{OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix()}`. `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` may be returned as metadata for human review, but generated rows here keep local-download-law fields blank/no and remain review-only.",
+        "",
+        "## Summary",
+        "",
+        f"- Schema rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with human yes in `download_approved`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Field Groups",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(group_counts.items()))
+    lines += [
+        "",
+        "## Schema Preview",
+        "",
+        "| ID | Return Field | Group | Required When | Allowed Values / Format | Prompt Note |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {field_id} | `{field}` | {group} | {required} | `{allowed}` | {note} |".format(
+                field_id=clean(row.get("schema_field_id")),
+                field=clean(row.get("return_field")),
+                group=clean(row.get("field_group")),
+                required=clean(row.get("required_when")),
+                allowed=clean(row.get("allowed_values_or_format")).replace("|", "/"),
+                note=clean(row.get("operator_prompt_note")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
+def action_photo_cutout_scoring_criteria_rows() -> List[Dict[str, str]]:
+    base = {
+        "download_approved": "no",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "review_only": "true",
+        "publish_ready": "false",
+        "source_fetching": "false",
+        "image_file_writes": "false",
+        "segmentation": "false",
+        "background_removal": "false",
+        "approval_state_change": "none",
+        "publish_action": "none_artifact_only",
+        "manual_next_action": "Use this criterion after a human or researcher supplies URL/evidence; score labels only, with no image processing or file writes.",
+    }
+    row_specs = [
+        ("APCSC001", "subject_boundary", "boundary_hair_clarity", "boundary_hair_clarity_score", "high|medium|low|blocked", "face, hair, jersey edge, and ball/equipment boundary are visually distinguishable on the source page", "some boundary clutter but operator can judge probable cutout effort", "blur, crop, watermark, or crowd/limb overlap prevents review-only scoring", "High score helps future transparent cutout planning; it does not create a cutout."),
+        ("APCSC002", "pose_isolation", "limb_equipment_isolation", "limb_equipment_isolation_score", "high|medium|low|blocked", "full body or three-quarter body is visible with limbs/equipment mostly separated", "some overlap exists but action shape remains readable", "major body, ball, stick, bat, or racket is hidden or merged with other players", "High score supports grid-break potential for limbs/equipment crossing layout lines."),
+        ("APCSC003", "background", "background_complexity", "background_complexity_score", "low|medium|high|blocked", "simple or well-separated background behind the athlete", "mixed crowd/signage but subject still readable", "busy background, overlays, heavy blur, or watermarks dominate the subject", "Lower complexity is better for later review-only cutout planning."),
+        ("APCSC004", "crop_fit", "hero_crop_fit_feed", "hero_crop_fit_feed_score", "high|medium|low|blocked", "candidate can crop to feed hero without cutting off face, key limbs, or action cue", "feed crop works with some compromise", "feed crop loses identity or the sport action", "High score means the source lead is worth deeper operator review."),
+        ("APCSC005", "crop_fit", "hero_crop_fit_story", "hero_crop_fit_story_score", "high|medium|low|blocked", "vertical/story crop can preserve athlete identity and action cue", "story crop is possible with notable compromise", "vertical crop would become portrait/headshot-like or lose the sports moment", "Story fit helps future social formats but does not approve asset use."),
+        ("APCSC006", "aspect_alignment", "aspect_alignment", "aspect_alignment_score", "feed|story|both|neither|unclear", "source page shows enough framing to infer both feed and story options", "source supports one primary crop orientation", "aspect/crop cannot be inferred from the source page", "Use labels only; do not download or inspect local pixels."),
+        ("APCSC007", "editorial_energy", "emotional_intensity", "emotional_intensity_score", "high|medium|low|unclear", "celebration, decisive action, collision, save, swing, or visible emotion carries the story", "solid action but limited emotion or context", "static pose, headshot, media-day look, or unclear sports moment", "High energy improves premium editorial render potential."),
+        ("APCSC008", "grid_break", "grid_break_potential", "grid_break_potential_score", "high|medium|low|blocked", "limb/equipment/ball can plausibly break card/grid edges while identity remains readable", "some grid-break possibility but crop or overlap may limit it", "no useful extension beyond a simple rectangular crop", "This is a planning score only; no segmentation or background removal is performed."),
+    ]
+    return [
+        {
+            **base,
+            "scoring_id": scoring_id,
+            "criterion_group": group,
+            "criterion_name": name,
+            "score_field": score_field,
+            "allowed_score_labels": labels,
+            "high_signal_definition": high,
+            "medium_signal_definition": medium,
+            "low_or_blocked_definition": low,
+            "grid_break_use": grid_use,
+            "operator_prompt_note": "Ask Gemini/ChatGPT/manual reviewer to return this score label only after reviewing source-page evidence; no source fetching, downloads, segmentation, or background removal.",
+            "evidence_required": "candidate_photo_url|evidence_url|identity_anchor_url|operator_visual_review_note",
+        }
+        for scoring_id, group, name, score_field, labels, high, medium, low, grid_use in row_specs
+    ]
+
+
+def validate_action_photo_cutout_scoring_criteria_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    seen_ids = set()
+    seen_score_fields = set()
+    allowed_groups = {"subject_boundary", "pose_isolation", "background", "crop_fit", "aspect_alignment", "editorial_energy", "grid_break"}
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_CUTOUT_SCORING_CRITERIA_FIELDS}
+        scoring_id = normalized["scoring_id"]
+        score_field = normalized["score_field"]
+        if not scoring_id:
+            issues.append({"row": str(index), "field": "scoring_id", "issue": "required_scoring_id_blank"})
+        elif scoring_id in seen_ids:
+            issues.append({"row": str(index), "field": "scoring_id", "issue": "duplicate_scoring_id"})
+        seen_ids.add(scoring_id)
+        if not score_field:
+            issues.append({"row": str(index), "field": "score_field", "issue": "required_score_field_blank"})
+        elif score_field in seen_score_fields:
+            issues.append({"row": str(index), "field": "score_field", "issue": "duplicate_score_field"})
+        seen_score_fields.add(score_field)
+        if normalized["criterion_group"] not in allowed_groups:
+            issues.append({"row": str(index), "field": "criterion_group", "issue": "invalid_cutout_scoring_group"})
+        for field in [
+            "criterion_name",
+            "allowed_score_labels",
+            "high_signal_definition",
+            "medium_signal_definition",
+            "low_or_blocked_definition",
+            "grid_break_use",
+            "operator_prompt_note",
+            "evidence_required",
+            "manual_next_action",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_cutout_scoring_field_blank"})
+        if "|" not in normalized["allowed_score_labels"]:
+            issues.append({"row": str(index), "field": "allowed_score_labels", "issue": "allowed_score_labels_must_be_pipe_delimited"})
+        for field in REQUIRED_DOWNLOAD_FIELDS:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_local_download_law_field_must_stay_blank"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_rows_must_not_approve_downloads"})
+        for field in ["source_fetching", "image_file_writes", "segmentation", "background_removal"]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "cutout_scoring_must_not_perform_image_or_source_actions"})
+        guardrail_text = " ".join([normalized["operator_prompt_note"].lower(), normalized["manual_next_action"].lower()])
+        if any(term in guardrail_text for term in ["download it", "segment subject", "remove background now", "approve asset", "render-ready"]):
+            issues.append({"row": str(index), "field": "manual_next_action", "issue": "cutout_scoring_next_action_must_stay_review_only"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "cutout_scoring_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "cutout_scoring_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] not in {"", "none"}:
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "cutout_scoring_rows_must_not_change_approval_state"})
+        if normalized["publish_action"] not in {"", "none_artifact_only"}:
+            issues.append({"row": str(index), "field": "publish_action", "issue": "cutout_scoring_rows_must_not_publish"})
+    return issues
+
+
+def render_action_photo_cutout_scoring_criteria(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    group_counts: Dict[str, int] = {}
+    for row in rows:
+        group = clean(row.get("criterion_group"))
+        group_counts[group] = group_counts.get(group, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Cutout Scoring Criteria v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Scoring rubric for human/Gemini/ChatGPT review of already-discovered action-photo leads. It records labels for boundary clarity, limb/equipment isolation, background complexity, crop fit, aspect alignment, emotional intensity, and grid-break potential. It does not analyze images automatically, fetch source pages, download files, segment subjects, remove backgrounds, approve assets, or mark anything publish-ready.",
+        "",
+        "## Scoring Contract",
+        "",
+        "Return score labels and evidence notes only after source-page review. These criteria can inform future manual review and cutout planning, but no row is an asset approval, file write, render input, or publish-ready state.",
+        "",
+        "## Summary",
+        "",
+        f"- Scoring rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows with human yes in `download_approved`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
+        f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
+        "",
+        "## Criterion Groups",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(group_counts.items()))
+    lines += [
+        "",
+        "## Criteria Preview",
+        "",
+        "| ID | Group | Criterion | Score Field | Labels | Grid-Break Use |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {scoring_id} | {group} | {name} | `{score_field}` | `{labels}` | {grid_use} |".format(
+                scoring_id=clean(row.get("scoring_id")),
+                group=clean(row.get("criterion_group")),
+                name=clean(row.get("criterion_name")),
+                score_field=clean(row.get("score_field")),
+                labels=clean(row.get("allowed_score_labels")).replace("|", "/"),
+                grid_use=clean(row.get("grid_break_use")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def action_photo_candidate_queue_rows() -> List[Dict[str, str]]:
     default_action = (
         "Fill candidate_photo_url, evidence_url, evidence_summary, and identity_anchor_url after manual or "
@@ -3724,6 +4107,10 @@ def main() -> int:
     external_research_issues = validate_external_research_source_map_rows(external_research_rows)
     source_discovery_rows = action_photo_source_discovery_board_rows()
     source_discovery_issues = validate_action_photo_source_discovery_board_rows(source_discovery_rows)
+    lead_return_schema_rows = action_photo_lead_return_schema_rows()
+    lead_return_schema_issues = validate_action_photo_lead_return_schema_rows(lead_return_schema_rows)
+    cutout_scoring_rows = action_photo_cutout_scoring_criteria_rows()
+    cutout_scoring_issues = validate_action_photo_cutout_scoring_criteria_rows(cutout_scoring_rows)
     candidate_queue_rows = action_photo_candidate_queue_rows()
     candidate_queue_issues = validate_action_photo_candidate_queue_rows(candidate_queue_rows)
     research_packet_rows = action_photo_research_packet_rows(candidate_queue_rows)
@@ -3876,6 +4263,82 @@ def main() -> int:
             "review_only": True,
             "asset_downloads": False,
             "source_fetching": False,
+            "segmentation": False,
+            "background_removal": False,
+            "cutout_file_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    write_csv(OUT_LEAD_RETURN_SCHEMA_CSV, lead_return_schema_rows, ACTION_PHOTO_LEAD_RETURN_SCHEMA_FIELDS)
+    write_text(OUT_LEAD_RETURN_SCHEMA_MD, render_action_photo_lead_return_schema(lead_return_schema_rows, lead_return_schema_issues, generated_at))
+    write_json(
+        OUT_LEAD_RETURN_SCHEMA_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_lead_return_schema_ready" if not lead_return_schema_issues else "action_photo_lead_return_schema_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "schema_rows": len(lead_return_schema_rows),
+            "validation_issue_count": len(lead_return_schema_issues),
+            "validation_issues": lead_return_schema_issues,
+            "return_fields": [row["return_field"] for row in lead_return_schema_rows],
+            "field_groups": sorted({row["field_group"] for row in lead_return_schema_rows}),
+            "download_approved_yes_rows": sum(1 for row in lead_return_schema_rows if row["download_approved"] == "yes"),
+            "blank_generated_source_url_rows": sum(1 for row in lead_return_schema_rows if not row["generated_source_url"]),
+            "blank_generated_entity_id_rows": sum(1 for row in lead_return_schema_rows if not row["generated_entity_id"]),
+            "blank_generated_rights_class_rows": sum(1 for row in lead_return_schema_rows if not row["generated_rights_class"]),
+            "blank_generated_identity_confidence_rows": sum(1 for row in lead_return_schema_rows if not row["generated_identity_confidence"]),
+            "blank_generated_intended_review_only_use_rows": sum(1 for row in lead_return_schema_rows if not row["generated_intended_review_only_use"]),
+            "operator_verify_required_yes_rows": sum(1 for row in lead_return_schema_rows if row["operator_verify_required"] == "yes"),
+            "review_only_rows": sum(1 for row in lead_return_schema_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in lead_return_schema_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_LEAD_RETURN_SCHEMA_CSV.as_posix(),
+            "worksheet_md": OUT_LEAD_RETURN_SCHEMA_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "source_fetching": False,
+            "image_file_writes": False,
+            "segmentation": False,
+            "background_removal": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    write_csv(OUT_CUTOUT_SCORING_CRITERIA_CSV, cutout_scoring_rows, ACTION_PHOTO_CUTOUT_SCORING_CRITERIA_FIELDS)
+    write_text(OUT_CUTOUT_SCORING_CRITERIA_MD, render_action_photo_cutout_scoring_criteria(cutout_scoring_rows, cutout_scoring_issues, generated_at))
+    write_json(
+        OUT_CUTOUT_SCORING_CRITERIA_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_cutout_scoring_criteria_ready" if not cutout_scoring_issues else "action_photo_cutout_scoring_criteria_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "scoring_rows": len(cutout_scoring_rows),
+            "validation_issue_count": len(cutout_scoring_issues),
+            "validation_issues": cutout_scoring_issues,
+            "criterion_groups": sorted({row["criterion_group"] for row in cutout_scoring_rows}),
+            "score_fields": [row["score_field"] for row in cutout_scoring_rows],
+            "download_approved_yes_rows": sum(1 for row in cutout_scoring_rows if row["download_approved"] == "yes"),
+            "blank_source_url_rows": sum(1 for row in cutout_scoring_rows if not row["source_url"]),
+            "blank_entity_id_rows": sum(1 for row in cutout_scoring_rows if not row["entity_id"]),
+            "blank_rights_class_rows": sum(1 for row in cutout_scoring_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in cutout_scoring_rows if not row["identity_confidence"]),
+            "blank_intended_review_only_use_rows": sum(1 for row in cutout_scoring_rows if not row["intended_review_only_use"]),
+            "review_only_rows": sum(1 for row in cutout_scoring_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in cutout_scoring_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_CUTOUT_SCORING_CRITERIA_CSV.as_posix(),
+            "worksheet_md": OUT_CUTOUT_SCORING_CRITERIA_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "source_fetching": False,
+            "image_file_writes": False,
             "segmentation": False,
             "background_removal": False,
             "cutout_file_writes": False,
@@ -4181,7 +4644,7 @@ def main() -> int:
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -4200,6 +4663,10 @@ def main() -> int:
             "external_research_source_map_validation_issue_count": len(external_research_issues),
             "action_photo_source_discovery_board_rows": len(source_discovery_rows),
             "action_photo_source_discovery_board_validation_issue_count": len(source_discovery_issues),
+            "action_photo_lead_return_schema_rows": len(lead_return_schema_rows),
+            "action_photo_lead_return_schema_validation_issue_count": len(lead_return_schema_issues),
+            "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows),
+            "action_photo_cutout_scoring_criteria_validation_issue_count": len(cutout_scoring_issues),
             "action_photo_candidate_queue_rows": len(candidate_queue_rows),
             "action_photo_candidate_queue_validation_issue_count": len(candidate_queue_issues),
             "action_photo_candidate_research_packet_rows": len(research_packet_rows),
@@ -4214,7 +4681,7 @@ def main() -> int:
             "wnba_final_score_hero_action_photo_target_validation_issue_count": len(wnba_hero_target_issues),
             "action_photo_cutout_readiness_rows": len(cutout_readiness_rows),
             "action_photo_cutout_readiness_validation_issue_count": len(cutout_readiness_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -4235,6 +4702,12 @@ def main() -> int:
             "action_photo_source_discovery_board_csv": OUT_SOURCE_DISCOVERY_BOARD_CSV.as_posix(),
             "action_photo_source_discovery_board_md": OUT_SOURCE_DISCOVERY_BOARD_MD.as_posix(),
             "action_photo_source_discovery_board_json": OUT_SOURCE_DISCOVERY_BOARD_JSON.as_posix(),
+            "action_photo_lead_return_schema_csv": OUT_LEAD_RETURN_SCHEMA_CSV.as_posix(),
+            "action_photo_lead_return_schema_md": OUT_LEAD_RETURN_SCHEMA_MD.as_posix(),
+            "action_photo_lead_return_schema_json": OUT_LEAD_RETURN_SCHEMA_JSON.as_posix(),
+            "action_photo_cutout_scoring_criteria_csv": OUT_CUTOUT_SCORING_CRITERIA_CSV.as_posix(),
+            "action_photo_cutout_scoring_criteria_md": OUT_CUTOUT_SCORING_CRITERIA_MD.as_posix(),
+            "action_photo_cutout_scoring_criteria_json": OUT_CUTOUT_SCORING_CRITERIA_JSON.as_posix(),
             "action_photo_candidate_queue_csv": OUT_CANDIDATE_QUEUE_CSV.as_posix(),
             "action_photo_candidate_queue_md": OUT_CANDIDATE_QUEUE_MD.as_posix(),
             "action_photo_candidate_queue_json": OUT_CANDIDATE_QUEUE_JSON.as_posix(),
@@ -4269,9 +4742,9 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
+    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
 
 
 if __name__ == "__main__":
