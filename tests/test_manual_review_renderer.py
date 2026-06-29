@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.49.0-photo-first-blueprint-depth-asymmetry"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.50.0-photo-first-editorial-identifiers"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -165,7 +165,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v24_photo_first_editorial_identifiers"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -210,11 +210,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_hero_cutout_contract" in manifest["render_background_cues"]
     assert "photo_first_safe_zone_enforced" in manifest["render_background_cues"]
     assert "photo_first_oversized_emblem_atmosphere" in manifest["render_background_cues"]
+    assert "photo_first_editorial_team_identifiers" in manifest["render_background_cues"]
+    assert "photo_first_lower_third_caption_strip" in manifest["render_background_cues"]
+    assert "photo_first_quiet_review_marker" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v24_photo_first_editorial_identifiers" for item in manifest["format_options"])
     public_canvas_text = " ".join(manifest["public_render_canvas_text"]).upper()
     assert "FINAL:" not in public_canvas_text
     assert "198 PTS" not in public_canvas_text
@@ -278,7 +281,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v24_photo_first_editorial_identifiers"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["hero_image_mode"] == "logo_score_fallback_no_person_image"
     assert visual_board["action_photo_hero_contract"] == "manual_review_action_photo_not_available_no_download"
@@ -350,7 +353,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v24_photo_first_editorial_identifiers`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Hero image mode: `logo_score_fallback_no_person_image`" in board
     assert "Action-photo hero contract: `manual_review_action_photo_not_available_no_download`" in board
@@ -1235,6 +1238,70 @@ def test_manual_review_renderer_logo_identifier_avoids_public_status_pill() -> N
     assert white_label_pixels == 0
 
 
+def test_manual_review_renderer_photo_first_logo_identifier_is_borderless() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (300, 200), (2, 4, 9, 255))
+    result = module.draw_team_logo_slot(
+        image,
+        "Indiana Fever",
+        (54, 54, 86, 86),
+        {},
+        {},
+        (216, 48, 48),
+        winner=True,
+        treatment="editorial_identifier",
+    )
+
+    assert result["logo_treatment"] == "editorial_identifier"
+    assert "photo_first_editorial_team_identifiers" in module.RENDER_BACKGROUND_CUES
+    crop = image.crop((54, 54, 140, 140)).convert("RGB")
+    data = crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    hard_card_pixels = 0
+    red_accent_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if 15 <= r <= 42 and 18 <= g <= 46 and 28 <= b <= 62:
+            hard_card_pixels += 1
+        if r >= 95 and g <= 80 and b <= 85:
+            red_accent_pixels += 1
+    assert hard_card_pixels / pixels < 0.34
+    assert red_accent_pixels / pixels > 0.010
+
+
+def test_manual_review_renderer_review_marker_is_single_and_quiet() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    module.draw_reference_guardrail(image)
+
+    assert "photo_first_quiet_review_marker" in module.RENDER_BACKGROUND_CUES
+    crop = image.crop((710, 74, 1030, 150)).convert("RGB")
+    data = crop.tobytes()
+    pixels = max(1, len(data) // 3)
+    red_pixels = 0
+    loud_red_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r >= 130 and r > g * 1.45 and r > b * 1.20:
+            red_pixels += 1
+        if r >= 185 and g <= 65 and b <= 80:
+            loud_red_pixels += 1
+    assert red_pixels / pixels > 0.025
+    assert loud_red_pixels / pixels < 0.015
+
+
 def test_manual_review_renderer_photo_first_context_rail_has_score_hierarchy() -> None:
     import importlib.util
 
@@ -1447,12 +1514,14 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
 
     assert "stat_proof_rail" in module.RENDER_BACKGROUND_CUES
     assert "photo_first_integrated_stat_band" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_lower_third_caption_strip" in module.RENDER_BACKGROUND_CUES
     crop = image.crop((60, 976, 1020, 1088)).convert("RGB")
     data = crop.tobytes()
     pixels = max(1, len(data) // 3)
     gold_pixels = 0
     blue_pixels = 0
     dense_panel_pixels = 0
+    near_black_pixels = 0
     for index in range(0, len(data), 3):
         r, g, b = data[index], data[index + 1], data[index + 2]
         if r >= 185 and g >= 145 and b <= 105:
@@ -1461,9 +1530,12 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
             blue_pixels += 1
         if r <= 12 and g <= 15 and b <= 24:
             dense_panel_pixels += 1
+        if r <= 6 and g <= 8 and b <= 14:
+            near_black_pixels += 1
     assert gold_pixels / pixels > 0.003
-    assert blue_pixels / pixels > 0.0015
-    assert dense_panel_pixels / pixels < 0.94
+    assert blue_pixels / pixels < 0.030
+    assert dense_panel_pixels / pixels < 0.965
+    assert near_black_pixels / pixels < 0.91
 
 
 def test_manual_review_renderer_background_draws_editorial_depth_markers_without_washing_title() -> None:

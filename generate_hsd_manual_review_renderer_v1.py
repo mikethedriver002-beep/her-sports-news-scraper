@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.49.0-photo-first-blueprint-depth-asymmetry"
+VERSION = "hsd-manual-review-renderer-v1.50.0-photo-first-editorial-identifiers"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v24_photo_first_editorial_identifiers"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -69,6 +69,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_blueprint_depth_layers,photo_first_procedural_court_grain,"
     "photo_first_asymmetric_score_treatment,photo_first_hero_cutout_contract,"
     "photo_first_safe_zone_enforced,photo_first_oversized_emblem_atmosphere,"
+    "photo_first_editorial_team_identifiers,photo_first_lower_third_caption_strip,"
+    "photo_first_quiet_review_marker,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -1280,16 +1282,16 @@ def draw_reference_badge(image: Any, template_spec: Dict[str, Any]) -> str:
 def draw_reference_guardrail(image: Any, *, compact_footer: bool = False) -> None:
     width, height = image.size
     draw = ImageDraw.Draw(image, "RGBA")
-    pill_w = min(210, width - 820)
-    if pill_w > 180:
+    pill_w = min(174, width - 850)
+    if pill_w > 142:
         marker_type = photo_first_type_spec("review_marker")
-        draw.rounded_rectangle((width - pill_w - 50, 82, width - 50, 114), radius=7, fill=(190, 39, 54, 196), outline=(241, 238, 229, 108), width=1)
+        draw.rounded_rectangle((width - pill_w - 50, 84, width - 50, 110), radius=5, fill=(150, 35, 48, 154), outline=(241, 238, 229, 56), width=1)
         draw_reference_text(
             image,
-            (width - pill_w - 38, 86, pill_w - 24, 23),
+            (width - pill_w - 39, 87, pill_w - 22, 18),
             "Review Draft Only",
             marker_type["font"],
-            min(marker_type["resolved_size"], 17),
+            min(marker_type["resolved_size"], 14),
             marker_type["resolved_min"],
             PALETTE["ink"],
             max_lines=1,
@@ -2156,7 +2158,17 @@ def load_team_logo(team: str, aliases: Dict[str, str], logos: Dict[str, Dict[str
     }
 
 
-def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], aliases: Dict[str, str], logos: Dict[str, Dict[str, str]], accent: tuple[int, int, int], *, winner: bool = False) -> Dict[str, Any]:
+def draw_team_logo_slot(
+    image: Any,
+    team: str,
+    box: Tuple[int, int, int, int],
+    aliases: Dict[str, str],
+    logos: Dict[str, Dict[str, str]],
+    accent: tuple[int, int, int],
+    *,
+    winner: bool = False,
+    treatment: str = "slot",
+) -> Dict[str, Any]:
     registry_accent, registry_accent_source = team_registry_accent(team, aliases, accent)
     result = enrich_logo_result(load_team_logo(team, aliases, logos), registry_accent, registry_accent_source)
     team_accent = result.get("team_accent_rgb") if isinstance(result.get("team_accent_rgb"), tuple) else accent
@@ -2165,20 +2177,25 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
     draw = ImageDraw.Draw(image, "RGBA")
     sheen = Image.new("RGBA", image.size, (0, 0, 0, 0))
     sheen_draw = ImageDraw.Draw(sheen, "RGBA")
-    glow_alpha = 42 if winner else 24
+    editorial_identifier = clean(treatment) == "editorial_identifier"
+    glow_alpha = (52 if winner else 18) if editorial_identifier else (42 if winner else 24)
     sheen_draw.ellipse(
-        (x - int(w * 0.38), y - int(h * 0.42), x + int(w * 1.36), y + int(h * 1.30)),
+        (x - int(w * (0.46 if editorial_identifier else 0.38)), y - int(h * (0.50 if editorial_identifier else 0.42)), x + int(w * (1.46 if editorial_identifier else 1.36)), y + int(h * (1.38 if editorial_identifier else 1.30))),
         fill=(*team_accent, glow_alpha),
     )
     if ImageFilter is not None:
         sheen = sheen.filter(ImageFilter.GaussianBlur(max(18, min(w, h) // 5)))
     image.alpha_composite(sheen)
-    draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(2, 4, 9, 58), outline=(*team_accent, 72), width=1)
-    draw.line((x + 16, y + h - 9, x + w - 16, y + h - 9), fill=(*team_accent, 118), width=2)
+    if editorial_identifier:
+        draw.ellipse((x - 4, y - 4, x + w + 4, y + h + 4), outline=(*team_accent, 58 if winner else 34), width=1)
+        draw.line((x + 2, y + h + 5, x + w - 2, y + h + 5), fill=(*team_accent, 102 if winner else 54), width=1)
+    else:
+        draw.rounded_rectangle((x, y, x + w, y + h), radius=18, fill=(2, 4, 9, 58), outline=(*team_accent, 72), width=1)
+        draw.line((x + 16, y + h - 9, x + w - 16, y + h - 9), fill=(*team_accent, 118), width=2)
     logo = result.get("image")
     if logo is not None:
         logo = logo.copy()
-        pad = max(18, min(w, h) // (6 if winner else 5))
+        pad = max(8 if editorial_identifier else 18, min(w, h) // (9 if editorial_identifier and winner else 7 if editorial_identifier else 6 if winner else 5))
         logo.thumbnail((w - pad, h - pad), resample_filter())
         logo_x = x + (w - logo.width) // 2
         logo_y = y + (h - logo.height) // 2
@@ -2204,6 +2221,7 @@ def draw_team_logo_slot(image: Any, team: str, box: Tuple[int, int, int, int], a
         "team_accent_source": clean(result.get("team_accent_source")),
         "logo_approval_cue": approval_cue,
         "logo_review_required": bool(result.get("logo_review_required")),
+        "logo_treatment": "editorial_identifier" if editorial_identifier else "slot",
     }
 
 
@@ -3158,7 +3176,7 @@ def draw_photo_first_score_row(
     draw.line((x + 1, y + 34, x + 1, y + h - 34), fill=(*accent, 68 if winner else 30), width=3 if winner else 2)
     logo_size = min(h - 46, 86 if winner else 58)
     logo_box = (x + 32, y + (h - logo_size) // 2 + (18 if not compact else 14), logo_size, logo_size)
-    draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
+    draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner, treatment="editorial_identifier")
     score_box = photo_first_score_slab_box(box, winner=winner)
     team_text_box = photo_first_score_team_text_box(box, winner=winner)
     team_type = photo_first_type_spec("team", compact=compact, winner=winner)
@@ -3258,15 +3276,32 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     draw = ImageDraw.Draw(image, "RGBA")
     wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
     wash_draw = ImageDraw.Draw(wash, "RGBA")
-    wash_draw.rounded_rectangle((x + 12, y + 10, x + w - 12, y + h + 8), radius=22, fill=(0, 0, 0, 22))
+    wash_draw.polygon(
+        [
+            (x + 12, y + 24),
+            (x + w - 18, y + 4),
+            (x + w - 24, y + h - 10),
+            (x + 20, y + h + 6),
+        ],
+        fill=(0, 0, 0, 30),
+    )
+    wash_draw.polygon(
+        [
+            (x + int(w * 0.18), y + 10),
+            (x + w - 28, y + 20),
+            (x + int(w * 0.86), y + h - 2),
+            (x + 34, y + h - 4),
+        ],
+        fill=(*accent, 15),
+    )
     if ImageFilter is not None:
-        wash = wash.filter(ImageFilter.GaussianBlur(7))
+        wash = wash.filter(ImageFilter.GaussianBlur(9))
     image.alpha_composite(wash)
     band = Image.new("RGBA", image.size, (0, 0, 0, 0))
     band_draw = ImageDraw.Draw(band, "RGBA")
-    band_draw.rounded_rectangle((x + 4, y + 4, x + w - 4, y + h - 2), radius=18, fill=(18, 30, 48, 58))
-    band_draw.line((x + 44, y + 15, x + w - 44, y + 15), fill=(*PALETTE["gold"], 36), width=1)
-    band_draw.line((x + 16, y + 24, x + 16, y + h - 22), fill=(*accent, 130), width=2)
+    band_draw.line((x + 34, y + 16, x + w - 44, y + 5), fill=(*PALETTE["gold"], 54), width=1)
+    band_draw.line((x + 34, y + h - 11, x + int(x + w * 0.52), y + h - 18), fill=(248, 250, 255, 14), width=1)
+    band_draw.line((x + 16, y + 24, x + 16, y + h - 20), fill=(*accent, 116), width=2)
     image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
@@ -4277,10 +4312,14 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
             row["photo_first_procedural_texture_contract"] = geometry.get("procedural_texture_contract")
             row["photo_first_team_color_weighting"] = geometry.get("team_color_weighting")
             row["photo_first_score_asymmetry_contract"] = geometry.get("score_asymmetry_contract")
+            row["photo_first_team_identifier_treatment"] = "borderless_editorial_logo_identifier"
+            row["photo_first_lower_third_treatment"] = "caption_strip_no_rounded_panel"
+            row["photo_first_review_marker_treatment"] = "single_quiet_review_badge"
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
                 "blueprint_depth_layers,procedural_court_grain,asymmetric_score_treatment,"
-                "soft_athlete_stage,integrated_lower_stat_band,and_review_only_guardrails"
+                "borderless_team_identifiers,caption_lower_third,soft_athlete_stage,"
+                "integrated_lower_stat_band,and_review_only_guardrails"
             )
             row["public_render_canvas_text"] = public_canvas_text
             row["public_render_review_marker_count"] = 1
