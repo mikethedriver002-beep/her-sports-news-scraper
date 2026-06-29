@@ -90,6 +90,7 @@ INTAKE_FIELDS = [
     "last_pr_merged",
     "restart_needed",
     "next_packet",
+    "lifecycle_action",
     "owner",
     "last_update_utc",
     "completed_merge_pr",
@@ -143,6 +144,13 @@ WORKFLOW_HEARTBEAT_CHECKLIST = [
 STALE_LANE_AFTER_HOURS = 48
 STALE_EXEMPT_STATUS_TOKENS = ("completed", "merged", "done")
 STALE_REVIEW_STATUS_TOKENS = ("active", "progress", "pr_open", "review", "blocked", "needs", "detected")
+MANUAL_LIFECYCLE_ACTIONS = {
+    "nudge": "Nudge owner thread with one current-main next step; do not create another lane until conductor checks current PR/worktree state.",
+    "replace_reboot": "Replace/reboot from current origin/main in a fresh branch or thread after conductor confirms the old lane is no longer active.",
+    "pause": "Pause lane and keep it visible; do not nudge or merge until blocker changes.",
+    "archive": "Recommend manual archive/cleanup after conductor confirms no active branch or PR remains.",
+    "merge_ready": "Check PR freshness, focused tests, and guardrails before conductor merge review.",
+}
 
 
 def now_iso() -> str:
@@ -442,6 +450,45 @@ def restart_status(status: str, restart_needed: str, next_packet: str, lane_owne
     return "not_applicable"
 
 
+def activity_age_hours(last_update_utc: str, as_of_utc: datetime) -> str:
+    last_update = parse_utc(last_update_utc)
+    if not last_update:
+        return ""
+    return f"{max(0.0, (as_of_utc - last_update).total_seconds() / 3600):.1f}"
+
+
+def activity_status(staleness: dict[str, str], restart_needed: str, status: str, last_update_utc: str) -> str:
+    if staleness.get("stale_lane_brake") == "true":
+        return "stale_brake"
+    if boolish(restart_needed):
+        return "restart_needed"
+    if is_stale_exempt_status(status):
+        return "completed_or_merged"
+    if last_update_utc:
+        return "active_recent_or_waiting"
+    return "no_manual_activity_timestamp"
+
+
+def conductor_action_for_row(
+    lifecycle_action: str,
+    staleness: dict[str, str],
+    restart_needed: str,
+    next_packet: str,
+    heartbeat: bool,
+    default_next_action: str,
+) -> str:
+    normalized_action = (lifecycle_action or "").strip().lower()
+    if normalized_action in MANUAL_LIFECYCLE_ACTIONS:
+        return MANUAL_LIFECYCLE_ACTIONS[normalized_action]
+    if staleness.get("stale_lane_brake") == "true":
+        return "STALE_BRAKE: refresh current origin/main, open PR/worktree/thread state, then nudge, pause, replace/reboot, archive, or merge-ready manually."
+    if boolish(restart_needed):
+        return f"RESTART_NEEDED: {next_packet or 'define next_packet, then restart from current origin/main.'}"
+    if heartbeat:
+        return WORKFLOW_HEARTBEAT_NEXT_ACTION
+    return default_next_action
+
+
 def lane_rows(
     intake_rows: list[dict[str, str]],
     open_prs: list[dict[str, str]],
@@ -490,6 +537,7 @@ def lane_rows(
         lane_owner_thread = intake.get("lane_owner_thread", "")
         restart_needed = intake.get("restart_needed", "")
         next_packet = intake.get("next_packet", "")
+        lifecycle_action = intake.get("lifecycle_action", "")
         staleness = lane_staleness(
             intake,
             status,
@@ -499,6 +547,8 @@ def lane_rows(
             stale_as_of,
             stale_after_hours,
         )
+        heartbeat_active = status == WORKFLOW_HEARTBEAT_STATUS
+        default_next_action = intake.get("next_action", "") or lane["default_next_action"]
         row = {
             "lane_id": lane_id,
             "lane": lane["lane"],
@@ -513,12 +563,25 @@ def lane_rows(
             "restart_needed": restart_needed,
             "next_packet": next_packet,
             "restart_status": restart_status(status, restart_needed, next_packet, lane_owner_thread),
+            "lifecycle_action": lifecycle_action,
+            "activity_age_hours": activity_age_hours(intake.get("last_update_utc", ""), stale_as_of),
+            "activity_status": activity_status(staleness, restart_needed, status, intake.get("last_update_utc", "")),
+            "last_known_branch": branch,
+            "last_known_head": first_hint.get("head", "") or intake.get("completed_merge_commit", ""),
             "owner": intake.get("owner", ""),
             "last_update_utc": intake.get("last_update_utc", ""),
             "completed_merge_pr": intake.get("completed_merge_pr", ""),
             "completed_merge_commit": intake.get("completed_merge_commit", ""),
             "blocker": intake.get("blocker", ""),
-            "next_action": intake.get("next_action", "") or lane["default_next_action"],
+            "next_action": default_next_action,
+            "next_conductor_action": conductor_action_for_row(
+                lifecycle_action,
+                staleness,
+                restart_needed,
+                next_packet,
+                heartbeat_active,
+                default_next_action,
+            ),
             "notes": notes,
             "status_source": "manual_intake"
             if intake
@@ -531,14 +594,15 @@ def lane_rows(
             else "default",
             "detected_worktree": first_hint.get("path", ""),
             "detected_worktree_dirty": first_hint.get("dirty", ""),
-            "heartbeat": "true" if status == WORKFLOW_HEARTBEAT_STATUS else "false",
-            "heartbeat_cue": WORKFLOW_HEARTBEAT_CUE if status == WORKFLOW_HEARTBEAT_STATUS else "",
-            "heartbeat_next_action": WORKFLOW_HEARTBEAT_NEXT_ACTION if status == WORKFLOW_HEARTBEAT_STATUS else "",
+            "heartbeat": "true" if heartbeat_active else "false",
+            "heartbeat_cue": WORKFLOW_HEARTBEAT_CUE if heartbeat_active else "",
+            "heartbeat_next_action": WORKFLOW_HEARTBEAT_NEXT_ACTION if heartbeat_active else "",
             "guardrail_warnings": ";".join(guardrail_warnings),
         }
         row.update(staleness)
         if status == WORKFLOW_HEARTBEAT_STATUS:
             row["next_action"] = intake.get("next_action", "") or WORKFLOW_HEARTBEAT_NEXT_ACTION
+            row["next_conductor_action"] = WORKFLOW_HEARTBEAT_NEXT_ACTION
         row.update(guardrails)
         rows.append(row)
     return rows
@@ -562,23 +626,25 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- Open PRs detected: `{len(payload['open_prs'])}`",
         f"- Stale lane brakes: `{payload['stale_lane_count']}`",
         f"- Restart-needed lanes: `{payload['restart_needed_lane_count']}`",
+        f"- Lifecycle-action lanes: `{payload['lifecycle_action_lane_count']}`",
         f"- Intake file: `{payload['intake_path']}`",
         "",
         "## Lane Dashboard",
         "",
-        "| Lane | Status | Source | Stale brake | Restart | Branch | PR | Pending thread | Owner thread | Last merged PR | Next packet | Blocker | Next action |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Lane | Status | Activity | Age h | Stale brake | Restart | Lifecycle | Last known branch | Last known head | PR | Pending thread | Owner thread | Last merged PR | Next conductor action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["lanes"]:
         pr = row["pr"] or "-"
         pending_thread = row["pending_thread"] or "-"
         lane_owner_thread = row["lane_owner_thread"] or "-"
-        branch = row["branch"] or "-"
+        last_known_branch = row["last_known_branch"] or "-"
+        last_known_head = row["last_known_head"] or "-"
         last_pr_merged = row["last_pr_merged"] or "-"
-        next_packet = row["next_packet"] or "-"
-        blocker = row["blocker"] or "-"
+        lifecycle_action = row["lifecycle_action"] or "-"
+        activity_age = row["activity_age_hours"] or "-"
         lines.append(
-            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{row['staleness_status']}` | `{row['restart_status']}` | `{branch}` | {pr} | {pending_thread} | {lane_owner_thread} | {last_pr_merged} | {next_packet} | {blocker} | {row['next_action']} |"
+            f"| {row['lane']} | `{row['status']}` | `{row['activity_status']}` | `{activity_age}` | `{row['staleness_status']}` | `{row['restart_status']}` | `{lifecycle_action}` | `{last_known_branch}` | `{last_known_head}` | {pr} | {pending_thread} | {lane_owner_thread} | {last_pr_merged} | {row['next_conductor_action']} |"
         )
     restart_rows = [row for row in payload["lanes"] if row.get("restart_needed", "").lower() == "true"]
     lines.extend(
@@ -608,6 +674,19 @@ def render_markdown(payload: dict[str, Any]) -> str:
     for row in stale_rows:
         age = f"{row['stale_age_hours']}h" if row["stale_age_hours"] else "unknown age"
         lines.append(f"- `{row['lane_id']}`: `{row['staleness_status']}` ({age}); warning: `{row['stale_warning']}`")
+    lifecycle_rows = [row for row in payload["lanes"] if row.get("lifecycle_action")]
+    lines.extend(
+        [
+            "",
+            "## Manual Lifecycle Actions",
+            "",
+            f"- Lanes with manual lifecycle action: `{len(lifecycle_rows)}`",
+            "- Allowed cues: `nudge`, `replace_reboot`, `pause`, `archive`, `merge_ready`.",
+            "- These cues are review-only text; they do not mutate branches, worktrees, PRs, threads, sources, assets, approvals, or publish state.",
+        ]
+    )
+    for row in lifecycle_rows:
+        lines.append(f"- `{row['lane_id']}`: `{row['lifecycle_action']}` - {row['next_conductor_action']}")
     heartbeat = payload.get("workflow_overhaul_heartbeat", {})
     if heartbeat:
         lines.extend(
@@ -644,13 +723,15 @@ def render_markdown(payload: dict[str, Any]) -> str:
             "",
             "Optional intake rows can live in `operator/inbox/workflow_lane_status_intake.csv` with these columns:",
             "",
-            "`lane_id,status,branch,pr,pending_thread,lane_owner_thread,last_pr_merged,restart_needed,next_packet,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
+            "`lane_id,status,branch,pr,pending_thread,lane_owner_thread,last_pr_merged,restart_needed,next_packet,lifecycle_action,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
             "",
             "A starter example lives at `operator/inbox/workflow_lane_status_intake.example.csv`; copy rows into the real intake only after conductor review.",
             "",
             "Use `pending_thread` for a delegated Codex thread id or URL that has work in progress but no PR yet.",
             "",
             "Use `lane_owner_thread`, `last_pr_merged`, `restart_needed`, and `next_packet` to make merged durable lanes restartable from current main after a merge wave.",
+            "",
+            "Use `lifecycle_action` only for manual conductor cues: `nudge`, `replace_reboot`, `pause`, `archive`, or `merge_ready`.",
             "",
             "If no intake row exists, the dashboard adds best-effort worktree hints from local `codex/` branches and marks them for conductor check.",
         ]
@@ -713,6 +794,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "heartbeat_lane_count": sum(1 for row in rows if row["heartbeat"] == "true"),
         "workflow_overhaul_heartbeat": workflow_heartbeat,
         "restart_needed_lane_count": sum(1 for row in rows if boolish(row.get("restart_needed", ""))),
+        "lifecycle_action_lane_count": sum(1 for row in rows if row.get("lifecycle_action")),
         "stale_lane_count": sum(1 for row in rows if row["stale_lane_brake"] == "true"),
         "stale_lane_threshold_hours": args.stale_after_hours,
         "blocked_lane_count": sum(1 for row in rows if row["status_tone"] == "blocked"),
@@ -741,12 +823,18 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "restart_needed",
             "next_packet",
             "restart_status",
+            "lifecycle_action",
+            "activity_age_hours",
+            "activity_status",
+            "last_known_branch",
+            "last_known_head",
             "owner",
             "last_update_utc",
             "completed_merge_pr",
             "completed_merge_commit",
             "blocker",
             "next_action",
+            "next_conductor_action",
             "notes",
             "status_source",
             "detected_worktree",
@@ -792,6 +880,7 @@ def main(argv: list[str] | None = None) -> int:
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
                 "heartbeat_lane_count": payload["heartbeat_lane_count"],
                 "restart_needed_lane_count": payload["restart_needed_lane_count"],
+                "lifecycle_action_lane_count": payload["lifecycle_action_lane_count"],
                 "stale_lane_count": payload["stale_lane_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
                 "guardrail_warning_count": payload["guardrail_warning_count"],

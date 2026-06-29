@@ -69,6 +69,8 @@ def test_release_readiness_rollup_writes_review_only_false_guardrail_fields(tmp_
     assert manifest["blocker_count"] == 0
     assert manifest["latest_artifact_scan"]["scan_files_checked"] == 1
     assert manifest["latest_artifact_scan"]["violation_count"] == 0
+    assert manifest["workflow_lane_status"]["status"] == "not_found"
+    assert manifest["workflow_lane_status"]["stale_lane_count"] == 0
     assert manifest["guardrails"]["paid_apis"] is False
     assert manifest["guardrails"]["source_fetching"] is False
     assert manifest["guardrails"]["asset_downloads"] is False
@@ -83,6 +85,7 @@ def test_release_readiness_rollup_writes_review_only_false_guardrail_fields(tmp_
         "deterministic_guardrail_config",
         "latest_artifact_guardrail_scan",
         "conductor_workspace_audit",
+        "workflow_lane_stale_brake",
         "hard_release_guardrail_posture",
     }
     assert all(row["review_only"] == "true" for row in rows)
@@ -93,6 +96,59 @@ def test_release_readiness_rollup_writes_review_only_false_guardrail_fields(tmp_
     assert all(row["auto_approval"] == "false" for row in rows)
     assert "Status: review-only release-readiness evidence artifact." in markdown
     assert "No publish-ready lane or movement." in markdown
+
+
+def test_release_readiness_rollup_blocks_active_workflow_stale_lane_breaches(tmp_path: Path, monkeypatch) -> None:
+    run_dir = tmp_path / "run"
+    scan_dir = tmp_path / "latest"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    run_dir.mkdir()
+    (run_dir / "conductor_workspace_audit.json").write_text(
+        json.dumps({"status": "passed", "collision_blocker_count": 0, "workspace_hash": "abc123"}),
+        encoding="utf-8",
+    )
+    (run_dir / "workflow_lane_status_dashboard.json").write_text(
+        json.dumps(
+            {
+                "status": "workflow_lane_status_ready",
+                "stale_lane_count": 2,
+                "restart_needed_lane_count": 1,
+                "lifecycle_action_lane_count": 1,
+            }
+        ),
+        encoding="utf-8",
+    )
+    write_csv(
+        scan_dir / "operator_board.csv",
+        [
+            {
+                "row_id": "release-readiness-safe",
+                "publish_ready": "false",
+                "auto_publish": "false",
+                "paid_apis": "false",
+                "source_fetching": "false",
+                "asset_downloads": "false",
+                "automatic_downloads": "false",
+                "auto_approval": "false",
+                "approval_state_change": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publishing": "false",
+            }
+        ],
+    )
+
+    module = load_module()
+    payload = module.build_payload(str(scan_dir))
+
+    assert payload["status"] == "blocked"
+    assert payload["blocker_count"] == 2
+    assert payload["workflow_lane_status"]["stale_lane_count"] == 2
+    assert payload["workflow_lane_status"]["restart_needed_lane_count"] == 1
+    workflow_row = next(row for row in payload["checks"] if row["check_id"] == "workflow_lane_stale_brake")
+    assert workflow_row["status"] == "blocked"
+    assert "stale_lane_count=2" in workflow_row["detail"]
+    assert "Resolve or manually lifecycle active stale lanes" in workflow_row["operator_next_step"]
 
 
 def test_release_readiness_rollup_defaults_to_active_run_output_dir(tmp_path: Path, monkeypatch) -> None:
