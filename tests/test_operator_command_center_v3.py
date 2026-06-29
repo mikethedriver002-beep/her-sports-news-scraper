@@ -1881,6 +1881,181 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md").write_text(
+        "# Action-photo research next\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv",
+        [
+            {
+                "research_next_rank": "1",
+                "focus_rank": "1",
+                "candidate_action_rank": "1",
+                "scope_id": "nwsl",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "player_name": "Angel Player",
+                "priority_label": "P0",
+                "focus_bucket": "2_p0_roster_or_source_verify",
+                "source_tier": "official_source_candidate",
+                "source_domain": "www.angelcity.com",
+                "source_candidate_url": "https://www.angelcity.com/club/roster",
+                "candidate_page_url_needed": "human-provided candidate/source page URL only",
+                "evidence_url_needed": "caption, recap, roster/profile, source page, match report, or team/player page",
+                "identity_anchor_url_needed": "official roster, player profile, team page, league page, or match/event page",
+                "official_profile_url_needed": "yes",
+                "source_priority_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv#row=1",
+                "candidate_action_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv#row=1",
+                "operator_focus_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv#row=1",
+                "action_photo_starter_intake_file": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+                "research_return_intake_file": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+                "paste_fields_to_fill": "candidate_photo_url|evidence_url|identity_anchor_url|source_url|rights_class|identity_confidence|intended_review_only_use|operator_verify_required",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "manual_next_action": "Paste manual source/evidence metadata into the action-photo research return intake.",
+                "do_not_do": "Do not fetch, download, approve, move, or publish.",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            },
+            {
+                "research_next_rank": "2",
+                "focus_rank": "2",
+                "candidate_action_rank": "2",
+                "scope_id": "europe_top_flight",
+                "league_id": "wsl_england",
+                "team_id": "all_teams",
+                "team_name": "WSL England",
+                "player_name": "",
+                "priority_label": "P2",
+                "focus_bucket": "4_gray_area_or_reputable_lead",
+                "source_tier": "gray_area_public_lead",
+                "source_domain": "example.org",
+                "source_candidate_url": "https://example.org/wsl",
+                "candidate_page_url_needed": "human-provided candidate/source page URL only",
+                "evidence_url_needed": "caption, recap, roster/profile, source page, match report, or team/player page",
+                "identity_anchor_url_needed": "official roster, player profile, team page, league page, or match/event page",
+                "official_profile_url_needed": "yes",
+                "source_priority_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_source_priority.csv#row=2",
+                "candidate_action_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv#row=2",
+                "operator_focus_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv#row=2",
+                "action_photo_starter_intake_file": "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
+                "research_return_intake_file": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+                "paste_fields_to_fill": "candidate_photo_url|evidence_url|identity_anchor_url|source_url|rights_class|identity_confidence|intended_review_only_use|operator_verify_required",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "manual_next_action": "Paste manual source/evidence metadata into the action-photo research return intake.",
+                "do_not_do": "Do not fetch, download, approve, move, or publish.",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            },
+        ],
+        [
+            "research_next_rank",
+            "focus_rank",
+            "candidate_action_rank",
+            "scope_id",
+            "league_id",
+            "team_id",
+            "team_name",
+            "player_name",
+            "priority_label",
+            "focus_bucket",
+            "source_tier",
+            "source_domain",
+            "source_candidate_url",
+            "candidate_page_url_needed",
+            "evidence_url_needed",
+            "identity_anchor_url_needed",
+            "official_profile_url_needed",
+            "source_priority_row_ref",
+            "candidate_action_row_ref",
+            "operator_focus_row_ref",
+            "action_photo_starter_intake_file",
+            "research_return_intake_file",
+            "paste_fields_to_fill",
+            "candidate_ready_for_later_human_download_decision_review",
+            "manual_next_action",
+            "do_not_do",
+            "download_approved",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "operator_decision",
+            "operator_notes",
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json",
+        {
+            "status": "womens_soccer_action_photo_research_next_ready",
+            "generated_at_utc": "2026-06-27T22:05:00+00:00",
+            "research_next_rows": 2,
+            "validation_issue_count": 0,
+            "download_approved_yes_rows": 0,
+            "candidate_ready_for_later_human_download_decision_review_rows": 0,
+            "blank_source_url_rows": 2,
+            "blank_rights_class_rows": 2,
+            "blank_identity_confidence_rows": 2,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     Path("data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md").write_text(
         "# Closure summary\n",
         encoding="utf-8",
@@ -2057,6 +2232,19 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_athlete_operator_focus_blank_source_url_rows"] == 2
     assert panel["womens_soccer_athlete_operator_focus_generated_at"] == "2026-06-27T22:00:00+00:00"
     assert panel["womens_soccer_athlete_operator_focus_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_action_photo_research_next_status"] == "womens_soccer_action_photo_research_next_ready"
+    assert panel["womens_soccer_action_photo_research_next_rows"] == 2
+    assert panel["womens_soccer_action_photo_research_next_validation_issues"] == 0
+    assert panel["womens_soccer_action_photo_research_next_download_approved_yes_rows"] == 0
+    assert panel["womens_soccer_action_photo_research_next_candidate_ready_rows"] == 0
+    assert panel["womens_soccer_action_photo_research_next_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_action_photo_research_next_blank_rights_class_rows"] == 2
+    assert panel["womens_soccer_action_photo_research_next_blank_identity_confidence_rows"] == 2
+    assert panel["womens_soccer_action_photo_research_next_asset_downloads"] is False
+    assert panel["womens_soccer_action_photo_research_next_headshot_writes"] is False
+    assert panel["womens_soccer_action_photo_research_next_approved_marker_writes"] is False
+    assert panel["womens_soccer_action_photo_research_next_generated_at"] == "2026-06-27T22:05:00+00:00"
+    assert panel["womens_soccer_action_photo_research_next_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_athlete_closure_status"] == "athlete_expansion_closure_summary_ready"
     assert panel["womens_soccer_athlete_closure_rows"] == 1
     assert panel["womens_soccer_athlete_closure_total_referenced_rows"] == 2
@@ -2107,6 +2295,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer athlete operator focus" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete operator focus data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete operator focus manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer action-photo research next" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer action-photo research next data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer action-photo research next manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete expansion closure summary" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete expansion closure summary data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete expansion closure summary manifest" for item in panel["file_shortcuts"])

@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Operator Focus
 
-Generated: `2026-06-29T08:23:01.933059+00:00`
+Generated: `2026-06-29T22:39:18.754226+00:00`
 
 Review-only, artifact-only focus packet for the next manual verification actions. It compresses the source-priority, triage, and candidate-action boards into rows with exact refs to open next.
 `source_candidate_url` remains advisory metadata. Generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.

@@ -341,6 +341,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.json",
+    "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md",
+    "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv",
+    "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.csv",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.json",
@@ -791,6 +794,9 @@ ARTIFACTS = [
     ("Graphics", "Women's soccer athlete operator focus", "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md"),
     ("Graphics", "Women's soccer athlete operator focus data", "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv"),
     ("Graphics", "Women's soccer athlete operator focus manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.json"),
+    ("Graphics", "Women's soccer action-photo research next", "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md"),
+    ("Graphics", "Women's soccer action-photo research next data", "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv"),
+    ("Graphics", "Women's soccer action-photo research next manifest", "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json"),
     ("Graphics", "Women's soccer athlete expansion closure summary", "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md"),
     ("Graphics", "Women's soccer athlete expansion closure summary data", "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.csv"),
     ("Graphics", "Women's soccer athlete expansion closure summary manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.json"),
@@ -1066,6 +1072,9 @@ RUN_COMMANDS = {
     "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
+    "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
     "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py",
@@ -2084,6 +2093,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     womens_soccer_athlete_photo_readiness_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_photo_review_readiness_board.csv")
     womens_soccer_athlete_operator_focus_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.json")
     womens_soccer_athlete_operator_focus_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv")
+    womens_soccer_action_photo_research_next_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json")
+    womens_soccer_action_photo_research_next_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv")
     womens_soccer_athlete_closure_manifest = read_json("data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.json")
     womens_soccer_athlete_closure_rows = read_csv("data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.csv")
     womens_soccer_external_research_manifest = read_json("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json")
@@ -2201,6 +2212,12 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         len(womens_soccer_athlete_operator_focus_rows),
         RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md"],
         context="women's soccer athlete operator focus",
+    )
+    womens_soccer_action_photo_research_next_cue = packet_freshness_cue(
+        "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md",
+        len(womens_soccer_action_photo_research_next_rows),
+        RUN_COMMANDS["data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md"],
+        context="women's soccer action-photo research next",
     )
     womens_soccer_athlete_closure_cue = packet_freshness_cue(
         "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md",
@@ -2552,6 +2569,21 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "womens_soccer_athlete_operator_focus_freshness_status": womens_soccer_athlete_operator_focus_cue["status"],
         "womens_soccer_athlete_operator_focus_freshness_detail": womens_soccer_athlete_operator_focus_cue["detail"],
         "womens_soccer_athlete_operator_focus_refresh_command": womens_soccer_athlete_operator_focus_cue["run_command"],
+        "womens_soccer_action_photo_research_next_status": clean(womens_soccer_action_photo_research_next_manifest.get("status")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else "",
+        "womens_soccer_action_photo_research_next_rows": as_int(womens_soccer_action_photo_research_next_manifest.get("research_next_rows")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else len(womens_soccer_action_photo_research_next_rows),
+        "womens_soccer_action_photo_research_next_validation_issues": as_int(womens_soccer_action_photo_research_next_manifest.get("validation_issue_count")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else 0,
+        "womens_soccer_action_photo_research_next_download_approved_yes_rows": as_int(womens_soccer_action_photo_research_next_manifest.get("download_approved_yes_rows")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else sum(1 for row in womens_soccer_action_photo_research_next_rows if clean(row.get("download_approved")).lower() == "yes"),
+        "womens_soccer_action_photo_research_next_candidate_ready_rows": as_int(womens_soccer_action_photo_research_next_manifest.get("candidate_ready_for_later_human_download_decision_review_rows")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else sum(1 for row in womens_soccer_action_photo_research_next_rows if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == "yes"),
+        "womens_soccer_action_photo_research_next_blank_source_url_rows": as_int(womens_soccer_action_photo_research_next_manifest.get("blank_source_url_rows")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else sum(1 for row in womens_soccer_action_photo_research_next_rows if not clean(row.get("source_url"))),
+        "womens_soccer_action_photo_research_next_blank_rights_class_rows": as_int(womens_soccer_action_photo_research_next_manifest.get("blank_rights_class_rows")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else sum(1 for row in womens_soccer_action_photo_research_next_rows if not clean(row.get("rights_class"))),
+        "womens_soccer_action_photo_research_next_blank_identity_confidence_rows": as_int(womens_soccer_action_photo_research_next_manifest.get("blank_identity_confidence_rows")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else sum(1 for row in womens_soccer_action_photo_research_next_rows if not clean(row.get("identity_confidence"))),
+        "womens_soccer_action_photo_research_next_generated_at": clean(womens_soccer_action_photo_research_next_manifest.get("generated_at_utc")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else "",
+        "womens_soccer_action_photo_research_next_asset_downloads": bool(womens_soccer_action_photo_research_next_manifest.get("asset_downloads")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else False,
+        "womens_soccer_action_photo_research_next_headshot_writes": bool(womens_soccer_action_photo_research_next_manifest.get("headshot_writes")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else False,
+        "womens_soccer_action_photo_research_next_approved_marker_writes": bool(womens_soccer_action_photo_research_next_manifest.get("approved_marker_writes")) if isinstance(womens_soccer_action_photo_research_next_manifest, dict) else False,
+        "womens_soccer_action_photo_research_next_freshness_status": womens_soccer_action_photo_research_next_cue["status"],
+        "womens_soccer_action_photo_research_next_freshness_detail": womens_soccer_action_photo_research_next_cue["detail"],
+        "womens_soccer_action_photo_research_next_refresh_command": womens_soccer_action_photo_research_next_cue["run_command"],
         "womens_soccer_athlete_closure_status": clean(womens_soccer_athlete_closure_manifest.get("status")) if isinstance(womens_soccer_athlete_closure_manifest, dict) else "",
         "womens_soccer_athlete_closure_rows": len(womens_soccer_athlete_closure_rows),
         "womens_soccer_athlete_closure_total_referenced_rows": as_int(womens_soccer_athlete_closure_manifest.get("total_referenced_rows")) if isinstance(womens_soccer_athlete_closure_manifest, dict) else sum(as_int(row.get("row_count")) for row in womens_soccer_athlete_closure_rows),
@@ -2946,6 +2978,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer athlete operator focus", "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md", "Priority athlete/source focus board with identity, proof, profile URL, photo, and action-photo review-only statuses."),
             file_shortcut("Women's soccer athlete operator focus data", "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv", "Machine-readable focus rows with exact refs and blank/no profile, source, download, and decision placeholders."),
             file_shortcut("Women's soccer athlete operator focus manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.json", "Freshness, status counts, and guardrail metadata for the operator focus board."),
+            file_shortcut("Women's soccer action-photo research next", "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md", "Manual next-research bridge from athlete focus rows to action-photo research return paste fields; review-only and no downloads."),
+            file_shortcut("Women's soccer action-photo research next data", "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv", "Machine-readable candidate-page, evidence, identity-anchor, rights, and use metadata prompts with blank/no generated defaults."),
+            file_shortcut("Women's soccer action-photo research next manifest", "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json", "Status, missing-field counts, and guardrail metadata for the action-photo research-next board."),
             file_shortcut("Women's soccer athlete expansion closure summary", "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md", "Latest-artifact collection that tells the operator what to open first and proves no downloads, approvals, headshots, markers, or publish-ready movement."),
             file_shortcut("Women's soccer athlete expansion closure summary data", "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.csv", "Machine-readable closure rows with referenced artifact counts, manual next actions, and review-only guardrails."),
             file_shortcut("Women's soccer athlete expansion closure summary manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.json", "Freshness, count, and guardrail metadata for the closure summary."),
@@ -9939,6 +9974,10 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer focus rows</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_operator_focus_rows', 0)))}</strong></div>
             <div><span>Soccer focus P0</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_operator_focus_p0_rows', 0)))}</strong></div>
             <div><span>Soccer focus identity</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_operator_focus_identity_manual_verification_rows', 0)))}</strong></div>
+            <div><span>Soccer action-photo next</span><strong>{html.escape(str(panel.get('womens_soccer_action_photo_research_next_rows', 0)))}</strong></div>
+            <div><span>Soccer AP source blanks</span><strong>{html.escape(str(panel.get('womens_soccer_action_photo_research_next_blank_source_url_rows', 0)))}</strong></div>
+            <div><span>Soccer AP dl yes</span><strong>{html.escape(str(panel.get('womens_soccer_action_photo_research_next_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>Soccer AP ready</span><strong>{html.escape(str(panel.get('womens_soccer_action_photo_research_next_candidate_ready_rows', 0)))}</strong></div>
             <div><span>Soccer closure rows</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_closure_rows', 0)))}</strong></div>
             <div><span>Soccer closure refs</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_closure_total_referenced_rows', 0)))}</strong></div>
             <div><span>Soccer closure dl yes</span><strong>{html.escape(str(panel.get('womens_soccer_athlete_closure_download_approved_yes_rows', 0)))}</strong></div>
@@ -10057,6 +10096,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_athlete_candidate_actions', "Women's soccer athlete candidate next-action board")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_photo_readiness', "Women's soccer athlete photo review readiness board")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_operator_focus', "Women's soccer athlete operator focus")}
+          {packet_freshness_html(panel, 'womens_soccer_action_photo_research_next', "Women's soccer action-photo research next")}
           {packet_freshness_html(panel, 'womens_soccer_athlete_closure', "Women's soccer athlete expansion closure summary")}
           {packet_freshness_html(panel, 'womens_soccer_external_research', "Women's soccer external research intake")}
           {packet_freshness_html(panel, 'action_photo_research_run_bundle', "Action-photo research run bundle")}
@@ -11718,6 +11758,13 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer athlete operator focus P0 rows: {asset_panel.get('womens_soccer_athlete_operator_focus_p0_rows', 0)}",
         f"- Women's soccer athlete operator focus identity manual-verification rows: {asset_panel.get('womens_soccer_athlete_operator_focus_identity_manual_verification_rows', 0)}",
         f"- Women's soccer athlete operator focus generated: {asset_panel.get('womens_soccer_athlete_operator_focus_generated_at') or 'missing'}",
+        f"- Women's soccer action-photo research-next rows: {asset_panel.get('womens_soccer_action_photo_research_next_rows', 0)}",
+        f"- Women's soccer action-photo research-next blank source_url rows: {asset_panel.get('womens_soccer_action_photo_research_next_blank_source_url_rows', 0)}",
+        f"- Women's soccer action-photo research-next blank rights/identity rows: {asset_panel.get('womens_soccer_action_photo_research_next_blank_rights_class_rows', 0)}/{asset_panel.get('womens_soccer_action_photo_research_next_blank_identity_confidence_rows', 0)}",
+        f"- Women's soccer action-photo research-next download-approved yes rows: {asset_panel.get('womens_soccer_action_photo_research_next_download_approved_yes_rows', 0)}",
+        f"- Women's soccer action-photo research-next candidate-ready rows: {asset_panel.get('womens_soccer_action_photo_research_next_candidate_ready_rows', 0)}",
+        f"- Women's soccer action-photo research-next asset/headshot/marker writes: {asset_panel.get('womens_soccer_action_photo_research_next_asset_downloads', False)}/{asset_panel.get('womens_soccer_action_photo_research_next_headshot_writes', False)}/{asset_panel.get('womens_soccer_action_photo_research_next_approved_marker_writes', False)}",
+        f"- Women's soccer action-photo research-next generated: {asset_panel.get('womens_soccer_action_photo_research_next_generated_at') or 'missing'}",
         f"- Women's soccer athlete closure summary rows: {asset_panel.get('womens_soccer_athlete_closure_rows', 0)}",
         f"- Women's soccer athlete closure referenced rows: {asset_panel.get('womens_soccer_athlete_closure_total_referenced_rows', 0)}",
         f"- Women's soccer athlete closure P0/verify rows: {asset_panel.get('womens_soccer_athlete_closure_p0_or_verify_rows', 0)}",
@@ -12024,6 +12071,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("womens_soccer_athlete_operator_focus_refresh_command"),
             },
             "Women's soccer athlete operator focus",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("womens_soccer_action_photo_research_next_freshness_status"),
+                "detail": asset_panel.get("womens_soccer_action_photo_research_next_freshness_detail"),
+                "run_command": asset_panel.get("womens_soccer_action_photo_research_next_refresh_command"),
+            },
+            "Women's soccer action-photo research next",
         ),
         packet_freshness_markdown(
             {
