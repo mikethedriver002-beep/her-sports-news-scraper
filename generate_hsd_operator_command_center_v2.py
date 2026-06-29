@@ -2055,6 +2055,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_intake_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json")
     action_photo_source_map_board_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json")
     action_photo_operator_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json")
+    action_photo_research_return_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
     action_photo_download_decision_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json")
@@ -2532,6 +2533,15 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_operator_worksheet_approved_marker_writes": bool(action_photo_operator_worksheet_manifest.get("approved_marker_writes")) if isinstance(action_photo_operator_worksheet_manifest, dict) else False,
         "action_photo_research_packet_rows": as_int(action_photo_intake_manifest.get("action_photo_candidate_research_packet_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
         "action_photo_research_return_intake_rows": as_int(action_photo_intake_manifest.get("action_photo_research_return_intake_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_research_return_status": clean(action_photo_research_return_manifest.get("status")) if isinstance(action_photo_research_return_manifest, dict) else "",
+        "action_photo_research_return_generated_at": clean(action_photo_research_return_manifest.get("generated_at_utc")) if isinstance(action_photo_research_return_manifest, dict) else "",
+        "action_photo_research_return_rows_with_pasted_data": as_int(action_photo_research_return_manifest.get("rows_with_pasted_return_data")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_validation_issues": as_int(action_photo_research_return_manifest.get("validation_issue_count")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_blank_candidate_photo_url_rows": as_int(action_photo_research_return_manifest.get("blank_candidate_photo_url_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_blank_source_url_rows": as_int(action_photo_research_return_manifest.get("blank_source_url_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_blank_rights_class_rows": as_int(action_photo_research_return_manifest.get("blank_rights_class_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_operator_verify_required_yes_rows": as_int(action_photo_research_return_manifest.get("operator_verify_required_yes_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_download_approved_yes_rows": as_int(action_photo_research_return_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
         "action_photo_research_run_bundle_status": clean(action_photo_research_bundle_manifest.get("status")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
         "action_photo_research_run_bundle_generated_at": clean(action_photo_research_bundle_manifest.get("generated_at_utc")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
         "action_photo_research_run_bundle_rows": action_photo_research_bundle_steps,
@@ -9807,6 +9817,11 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Worksheet dl yes</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>Worksheet writes</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_asset_downloads', False)).lower())}/{html.escape(str(panel.get('action_photo_operator_worksheet_headshot_writes', False)).lower())}/{html.escape(str(panel.get('action_photo_operator_worksheet_approved_marker_writes', False)).lower())}</strong></div>
             <div><span>Action-photo research</span><strong>{html.escape(str(panel.get('action_photo_research_packet_rows', 0)))}</strong></div>
+            <div><span>Research returns pasted</span><strong>{html.escape(str(panel.get('action_photo_research_return_rows_with_pasted_data', 0)))}</strong></div>
+            <div><span>Return URL blanks</span><strong>{html.escape(str(panel.get('action_photo_research_return_blank_candidate_photo_url_rows', 0)))}</strong></div>
+            <div><span>Return source blanks</span><strong>{html.escape(str(panel.get('action_photo_research_return_blank_source_url_rows', 0)))}</strong></div>
+            <div><span>Return rights blanks</span><strong>{html.escape(str(panel.get('action_photo_research_return_blank_rights_class_rows', 0)))}</strong></div>
+            <div><span>Return dl yes</span><strong>{html.escape(str(panel.get('action_photo_research_return_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>Action-photo bundle</span><strong>{html.escape(str(panel.get('action_photo_research_run_bundle_rows', 0)))}</strong></div>
             <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
             <div><span>Action-photo ready dl</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)))}</strong></div>
@@ -11572,6 +11587,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo operator worksheet generated: {asset_panel.get('action_photo_operator_worksheet_generated_at') or 'missing'}",
         f"- Action-photo research packet rows: {asset_panel.get('action_photo_research_packet_rows', 0)}",
         f"- Action-photo research return intake rows: {asset_panel.get('action_photo_research_return_intake_rows', 0)}",
+        f"- Action-photo research return pasted rows: {asset_panel.get('action_photo_research_return_rows_with_pasted_data', 0)}",
+        f"- Action-photo research return validation issues: {asset_panel.get('action_photo_research_return_validation_issues', 0)}",
+        f"- Action-photo research return blank candidate-photo-url rows: {asset_panel.get('action_photo_research_return_blank_candidate_photo_url_rows', 0)}",
+        f"- Action-photo research return blank source_url rows: {asset_panel.get('action_photo_research_return_blank_source_url_rows', 0)}",
+        f"- Action-photo research return blank rights_class rows: {asset_panel.get('action_photo_research_return_blank_rights_class_rows', 0)}",
+        f"- Action-photo research return operator-verify rows: {asset_panel.get('action_photo_research_return_operator_verify_required_yes_rows', 0)}",
+        f"- Action-photo research return download-approved yes rows: {asset_panel.get('action_photo_research_return_download_approved_yes_rows', 0)}",
+        f"- Action-photo research return generated: {asset_panel.get('action_photo_research_return_generated_at') or 'missing'}",
         f"- Action-photo research run bundle rows: {asset_panel.get('action_photo_research_run_bundle_rows', 0)}",
         f"- Action-photo research run bundle download-approved yes rows: {asset_panel.get('action_photo_research_run_bundle_download_approved_yes_rows', 0)}",
         f"- Action-photo research run bundle generated: {asset_panel.get('action_photo_research_run_bundle_generated_at') or 'missing'}",
