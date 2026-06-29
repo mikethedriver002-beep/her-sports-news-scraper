@@ -36,6 +36,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     entity_source_rows = read_csv(root / "review_only_action_photo_sport_entity_source_map.csv")
     womens_soccer_rows = read_csv(root / "review_only_womens_soccer_action_photo_starter_intake.csv")
     external_research_rows = read_csv(root / "review_only_action_photo_external_research_source_map.csv")
+    source_discovery_rows = read_csv(root / "review_only_action_photo_source_discovery_board_v1.csv")
     queue_rows = read_csv(root / "review_only_action_photo_candidate_queue_v1.csv")
     research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
@@ -45,6 +46,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
     external_research_manifest = json.loads((root / "review_only_action_photo_external_research_source_map.json").read_text(encoding="utf-8"))
+    source_discovery_manifest = json.loads((root / "review_only_action_photo_source_discovery_board_v1.json").read_text(encoding="utf-8"))
     queue_manifest = json.loads((root / "review_only_action_photo_candidate_queue_v1.json").read_text(encoding="utf-8"))
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
@@ -58,6 +60,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     entity_source_md = (root / "review_only_action_photo_sport_entity_source_map.md").read_text(encoding="utf-8")
     womens_soccer_md = (root / "review_only_womens_soccer_action_photo_starter_intake.md").read_text(encoding="utf-8")
     external_research_md = (root / "review_only_action_photo_external_research_source_map.md").read_text(encoding="utf-8")
+    source_discovery_md = (root / "review_only_action_photo_source_discovery_board_v1.md").read_text(encoding="utf-8")
     queue_md = (root / "review_only_action_photo_candidate_queue_v1.md").read_text(encoding="utf-8")
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
@@ -78,6 +81,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["womens_soccer_action_photo_starter_validation_issue_count"] == 0
     assert manifest["external_research_source_map_rows"] == 14
     assert manifest["external_research_source_map_validation_issue_count"] == 0
+    assert manifest["action_photo_source_discovery_board_rows"] == 12
+    assert manifest["action_photo_source_discovery_board_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_queue_rows"] == 10
     assert manifest["action_photo_candidate_queue_validation_issue_count"] == 0
     assert manifest["action_photo_candidate_research_packet_rows"] == 10
@@ -297,6 +302,74 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "fair-use operating assumption" in external_research_md
     assert "Rows are advisory URL/search leads only" in external_research_md
     assert "Official/player pages are identity anchors" in external_research_md
+    assert source_discovery_manifest["status"] == "action_photo_source_discovery_board_ready"
+    assert source_discovery_manifest["discovery_rows"] == 12
+    assert source_discovery_manifest["validation_issue_count"] == 0
+    assert source_discovery_manifest["download_approved_yes_rows"] == 0
+    assert source_discovery_manifest["blank_source_url_rows"] == 12
+    assert source_discovery_manifest["blank_entity_id_rows"] == 12
+    assert source_discovery_manifest["blank_rights_class_rows"] == 12
+    assert source_discovery_manifest["blank_identity_confidence_rows"] == 12
+    assert source_discovery_manifest["blank_intended_review_only_use_rows"] == 12
+    assert source_discovery_manifest["blocked_source_rows"] == 12
+    assert source_discovery_manifest["review_only_rows"] == 12
+    assert source_discovery_manifest["publish_ready_rows"] == 0
+    assert source_discovery_manifest["asset_downloads"] is False
+    assert source_discovery_manifest["source_fetching"] is False
+    assert source_discovery_manifest["segmentation"] is False
+    assert source_discovery_manifest["background_removal"] is False
+    assert source_discovery_manifest["cutout_file_writes"] is False
+    assert {
+        "official",
+        "reputable",
+        "gray_area",
+    } <= set(source_discovery_manifest["source_lanes"])
+    assert {
+        "chatgpt_pro",
+        "manual_research",
+    } <= set(source_discovery_manifest["allowed_researcher_lanes"])
+    assert {
+        "APQ001",
+        "APQ002",
+        "APQ003",
+        "operator_triage_only",
+    } <= set(source_discovery_manifest["queue_id_hints"])
+    discovery_keys = {
+        (
+            row["sport"],
+            row["league_entity"],
+            row["source_lane"],
+            row["source_family_name"],
+            row["source_url_or_search_macro"],
+        )
+        for row in source_discovery_rows
+    }
+    assert len(discovery_keys) == len(source_discovery_rows)
+    for row in source_discovery_rows:
+        assert row["discovery_id"].startswith("APSD")
+        assert row["source_lane"] in {"official", "public", "reputable", "gray_area", "blocked"}
+        assert row["source_category"] in taxonomy["source_categories"]
+        assert row["rights_posture_recommendation"] in taxonomy["rights_classes"]
+        assert row["allowed_researcher_lane"] in {"chatgpt_pro", "gemini_pro", "manual_research"}
+        assert row["blocked_or_deprioritized_sources"]
+        assert row["blocked_reason"]
+        assert row["paste_back_target"].endswith("review_only_action_photo_research_return_intake_v1.csv")
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["publish_action"] == "none_artifact_only"
+    assert "Source Discovery Board" in source_discovery_md
+    assert "official, reputable/public, gray-area, and blocked/deprioritized lanes" in source_discovery_md
+    assert "Do not use broadcast/video stills" in source_discovery_md
+    assert "`download_approved=no`" in source_discovery_md
+    assert manifest["action_photo_source_discovery_board_csv"].endswith("review_only_action_photo_source_discovery_board_v1.csv")
+    assert manifest["action_photo_source_discovery_board_md"].endswith("review_only_action_photo_source_discovery_board_v1.md")
     assert queue_manifest["status"] == "action_photo_candidate_queue_ready"
     assert queue_manifest["queue_rows"] == 10
     assert queue_manifest["validation_issue_count"] == 0
@@ -968,6 +1041,64 @@ def test_external_research_source_map_validator_blocks_unsafe_rows() -> None:
     assert ("publish_ready", "external_research_rows_must_not_be_publish_ready") in issue_pairs
     assert ("approval_state_change", "external_research_rows_must_not_change_approval_state") in issue_pairs
     assert ("publish_action", "external_research_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_source_discovery_board_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    invalid_rows = module.action_photo_source_discovery_board_rows()
+    invalid_rows[0].update(
+        {
+            "source_lane": "free_image_search",
+            "source_category": "free_web_image",
+            "rights_posture_recommendation": "safe_to_use",
+            "allowed_researcher_lane": "auto_bot",
+            "source_family_priority": "first",
+            "blocked_or_deprioritized_sources": "",
+            "blocked_reason": "",
+            "paste_back_target": "data/asset_registry/action_photo_candidates/bad.csv",
+            "manual_next_action": "find usable assets",
+            "download_approved": "yes",
+            "source_url": "https://example.com/photo",
+            "entity_id": "wnba:test",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "publish_action": "publish",
+        }
+    )
+    invalid_rows[1]["discovery_id"] = invalid_rows[2]["discovery_id"]
+    invalid_rows[3]["source_url_or_search_macro"] = invalid_rows[4]["source_url_or_search_macro"]
+    invalid_rows[3]["source_family_name"] = invalid_rows[4]["source_family_name"]
+    invalid_rows[3]["source_lane"] = invalid_rows[4]["source_lane"]
+    invalid_rows[3]["league_entity"] = invalid_rows[4]["league_entity"]
+    invalid_rows[3]["sport"] = invalid_rows[4]["sport"]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_source_discovery_board_rows(invalid_rows)}
+
+    assert ("discovery_id", "duplicate_discovery_id") in issue_pairs
+    assert ("source_url_or_search_macro", "duplicate_source_discovery_key") in issue_pairs
+    assert ("source_lane", "invalid_source_lane") in issue_pairs
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("rights_posture_recommendation", "invalid_rights_posture_recommendation") in issue_pairs
+    assert ("allowed_researcher_lane", "invalid_allowed_researcher_lane") in issue_pairs
+    assert ("source_family_priority", "source_family_priority_must_be_numeric") in issue_pairs
+    assert ("blocked_or_deprioritized_sources", "required_source_discovery_field_blank") in issue_pairs
+    assert ("blocked_reason", "required_source_discovery_field_blank") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("paste_back_target", "paste_back_target_must_be_research_return_intake") in issue_pairs
+    assert ("manual_next_action", "source_discovery_next_action_missing_guardrail") in issue_pairs
+    assert ("review_only", "source_discovery_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "source_discovery_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "source_discovery_rows_must_not_change_approval_state") in issue_pairs
+    assert ("publish_action", "source_discovery_rows_must_not_publish") in issue_pairs
 
 
 def test_action_photo_candidate_queue_validator_blocks_unsafe_rows() -> None:
