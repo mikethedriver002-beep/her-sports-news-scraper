@@ -56,6 +56,9 @@ OUT_RESEARCH_PACKET_JSON = output_path(ROOT / "review_only_action_photo_candidat
 OUT_RESEARCH_RETURN_INTAKE_CSV = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.csv")
 OUT_RESEARCH_RETURN_INTAKE_MD = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.md")
 OUT_RESEARCH_RETURN_INTAKE_JSON = output_path(ROOT / "review_only_action_photo_research_return_intake_v1.json")
+OUT_RESEARCH_RETURN_PASTE_WORKSHEET_CSV = output_path(ROOT / "review_only_action_photo_research_return_paste_worksheet_v1.csv")
+OUT_RESEARCH_RETURN_PASTE_WORKSHEET_MD = output_path(ROOT / "review_only_action_photo_research_return_paste_worksheet_v1.md")
+OUT_RESEARCH_RETURN_PASTE_WORKSHEET_JSON = output_path(ROOT / "review_only_action_photo_research_return_paste_worksheet_v1.json")
 OUT_RESEARCH_RUN_BUNDLE_CSV = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.csv")
 OUT_RESEARCH_RUN_BUNDLE_MD = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.md")
 OUT_RESEARCH_RUN_BUNDLE_JSON = output_path(ROOT / "review_only_action_photo_research_run_bundle_v1.json")
@@ -463,6 +466,43 @@ ACTION_PHOTO_RESEARCH_RETURN_INTAKE_FIELDS = [
     "quarantine_target_hint",
     "review_only",
     "publish_ready",
+]
+ACTION_PHOTO_RESEARCH_RETURN_PASTE_WORKSHEET_FIELDS = [
+    "paste_worksheet_id",
+    "candidate_queue_id",
+    "sport",
+    "league_entity",
+    "target_entity_or_player",
+    "source_family",
+    "source_category",
+    "source_url_or_search_macro",
+    "paste_target",
+    "required_return_schema",
+    "candidate_photo_url",
+    "evidence_url",
+    "evidence_summary",
+    "identity_anchor_url",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "notes",
+    "operator_verify_required",
+    "manual_reviewer",
+    "manual_review_status",
+    "missing_fields_before_candidate_ready",
+    "candidate_ready_for_later_human_download_decision_review",
+    "placeholder_example_cue",
+    "manual_next_action",
+    "download_approved",
+    "review_only",
+    "publish_ready",
+    "approval_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_action",
 ]
 ACTION_PHOTO_RESEARCH_RUN_BUNDLE_FIELDS = [
     "bundle_step_id",
@@ -3905,6 +3945,211 @@ def render_action_photo_research_return_intake(rows: List[Mapping[str, str]], is
     return "\n".join(lines) + "\n"
 
 
+def action_photo_research_return_paste_worksheet_rows(
+    queue_rows: List[Mapping[str, str]],
+    return_rows: List[Mapping[str, str]],
+    quality_fit_operator_cue_rows: List[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    queue_by_id = {clean(row.get("candidate_queue_id")): row for row in queue_rows}
+    cue_by_queue_id = {clean(row.get("candidate_queue_id")): row for row in quality_fit_operator_cue_rows}
+    rows: List[Dict[str, str]] = []
+    for index, return_row in enumerate(return_rows, start=1):
+        queue_id = clean(return_row.get("candidate_queue_id"))
+        queue_row = queue_by_id.get(queue_id, {})
+        cue_row = cue_by_queue_id.get(queue_id, {})
+        missing_fields = clean(cue_row.get("manual_fields_to_fill_next")) or "candidate_photo_url|evidence_url|identity_anchor_url|source_url|rights_class|identity_confidence|operator_action_moment_review|operator_crop_use_review"
+        ready = clean(cue_row.get("download_decision_review_eligible")) == "yes"
+        rows.append(
+            {
+                "paste_worksheet_id": f"APRRP{index:03d}",
+                "candidate_queue_id": queue_id,
+                "sport": clean(queue_row.get("sport")),
+                "league_entity": clean(queue_row.get("league_entity")),
+                "target_entity_or_player": clean(queue_row.get("target_entity_or_player")),
+                "source_family": clean(queue_row.get("source_family")),
+                "source_category": clean(queue_row.get("source_category")),
+                "source_url_or_search_macro": clean(queue_row.get("source_url_or_search_macro")),
+                "paste_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+                "required_return_schema": ",".join(RESEARCH_PACKET_RETURN_COLUMNS),
+                "candidate_photo_url": clean(return_row.get("candidate_photo_url")),
+                "evidence_url": clean(return_row.get("evidence_url")),
+                "evidence_summary": clean(return_row.get("evidence_summary")),
+                "identity_anchor_url": clean(return_row.get("identity_anchor_url")),
+                "source_url": clean(return_row.get("source_url")),
+                "entity_id": clean(return_row.get("entity_id")),
+                "rights_class": clean(return_row.get("rights_class")),
+                "identity_confidence": clean(return_row.get("identity_confidence")),
+                "intended_review_only_use": clean(return_row.get("intended_review_only_use")),
+                "notes": clean(return_row.get("notes")),
+                "operator_verify_required": clean(return_row.get("operator_verify_required")) or "yes",
+                "manual_reviewer": clean(return_row.get("manual_reviewer")),
+                "manual_review_status": clean(return_row.get("manual_review_status")) or "not_reviewed",
+                "missing_fields_before_candidate_ready": "operator_quality_fit_review" if ready else missing_fields,
+                "candidate_ready_for_later_human_download_decision_review": "yes" if ready else "no",
+                "placeholder_example_cue": "Use placeholders like <candidate_photo_page_url> and replace them only after manual/external research returns real URLs.",
+                "manual_next_action": (
+                    "If every URL/evidence/rights/identity/action/crop field is complete, review the row for later human download-decision review only."
+                    if ready
+                    else "Paste the missing URL/evidence/rights/identity/action/crop fields into the return intake; keep download_approved=no."
+                ),
+                "download_approved": "no",
+                "review_only": "true",
+                "publish_ready": "false",
+                "approval_state_change": "none",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    return rows
+
+
+def validate_action_photo_research_return_paste_worksheet_rows(
+    rows: Iterable[Mapping[str, str]],
+    return_rows: Iterable[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    return_ids = {clean(row.get("candidate_queue_id")) for row in return_rows}
+    seen_ids = set()
+    seen_queue_ids = set()
+    valid_yes_no = {"yes", "no"}
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_RESEARCH_RETURN_PASTE_WORKSHEET_FIELDS}
+        worksheet_id = normalized["paste_worksheet_id"]
+        queue_id = normalized["candidate_queue_id"]
+        if not worksheet_id:
+            issues.append({"row": str(index), "field": "paste_worksheet_id", "issue": "required_paste_worksheet_id_blank"})
+        elif worksheet_id in seen_ids:
+            issues.append({"row": str(index), "field": "paste_worksheet_id", "issue": "duplicate_paste_worksheet_id"})
+        seen_ids.add(worksheet_id)
+        if queue_id not in return_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "candidate_queue_id_not_in_return_intake"})
+        if queue_id in seen_queue_ids:
+            issues.append({"row": str(index), "field": "candidate_queue_id", "issue": "duplicate_candidate_queue_id_in_paste_worksheet"})
+        seen_queue_ids.add(queue_id)
+        for field in [
+            "sport",
+            "league_entity",
+            "target_entity_or_player",
+            "source_family",
+            "source_category",
+            "source_url_or_search_macro",
+            "paste_target",
+            "required_return_schema",
+            "operator_verify_required",
+            "manual_review_status",
+            "missing_fields_before_candidate_ready",
+            "candidate_ready_for_later_human_download_decision_review",
+            "placeholder_example_cue",
+            "manual_next_action",
+        ]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_paste_worksheet_field_blank"})
+        if normalized["paste_target"] != OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix():
+            issues.append({"row": str(index), "field": "paste_target", "issue": "paste_target_must_be_return_intake"})
+        if normalized["required_return_schema"] != ",".join(RESEARCH_PACKET_RETURN_COLUMNS):
+            issues.append({"row": str(index), "field": "required_return_schema", "issue": "required_return_schema_mismatch"})
+        if normalized["source_category"] not in SOURCE_CATEGORIES:
+            issues.append({"row": str(index), "field": "source_category", "issue": "invalid_controlled_vocabulary"})
+        if normalized["rights_class"] and normalized["rights_class"] not in RIGHTS_CLASSES:
+            issues.append({"row": str(index), "field": "rights_class", "issue": "invalid_controlled_vocabulary"})
+        if normalized["identity_confidence"] and normalized["identity_confidence"] not in IDENTITY_CONFIDENCE:
+            issues.append({"row": str(index), "field": "identity_confidence", "issue": "invalid_controlled_vocabulary"})
+        if normalized["operator_verify_required"] not in valid_yes_no:
+            issues.append({"row": str(index), "field": "operator_verify_required", "issue": "operator_verify_required_must_be_yes_or_no"})
+        if normalized["candidate_ready_for_later_human_download_decision_review"] not in valid_yes_no:
+            issues.append({"row": str(index), "field": "candidate_ready_for_later_human_download_decision_review", "issue": "candidate_ready_must_be_yes_or_no"})
+        if normalized["candidate_ready_for_later_human_download_decision_review"] == "yes" and normalized["missing_fields_before_candidate_ready"] != "operator_quality_fit_review":
+            issues.append({"row": str(index), "field": "missing_fields_before_candidate_ready", "issue": "ready_rows_must_have_only_quality_fit_review_remaining"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "paste_worksheet_must_not_approve_downloads"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "paste_worksheet_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "paste_worksheet_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] != "none":
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "paste_worksheet_rows_must_not_change_approval_state"})
+        for field in ["asset_downloads", "headshot_writes", "approved_marker_writes"]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "paste_worksheet_rows_must_not_write_assets_or_markers"})
+        if normalized["publish_action"] != "none_artifact_only":
+            issues.append({"row": str(index), "field": "publish_action", "issue": "paste_worksheet_rows_must_not_publish"})
+    for missing_id in sorted(return_ids - seen_queue_ids):
+        issues.append({"row": "0", "field": "candidate_queue_id", "issue": f"return_queue_id_missing_from_paste_worksheet:{missing_id}"})
+    return issues
+
+
+def render_action_photo_research_return_paste_worksheet(
+    rows: List[Mapping[str, str]],
+    issues: List[Mapping[str, str]],
+    generated_at: str,
+) -> str:
+    missing_counts: Dict[str, int] = {}
+    for row in rows:
+        for field in clean(row.get("missing_fields_before_candidate_ready")).split("|"):
+            if field:
+                missing_counts[field] = missing_counts.get(field, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Research Return Paste Worksheet v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Copy/paste-friendly landing worksheet for manual or external action-photo research returns. It places sport/entity/source context beside the exact return fields Mike should paste, then names what remains missing before a row can move only to later human download-decision review.",
+        "",
+        "## Paste Schema",
+        "",
+        "```csv",
+        ",".join(RESEARCH_PACKET_RETURN_COLUMNS),
+        "```",
+        "",
+        "## Placeholder Example",
+        "",
+        "`candidate_queue_id,<candidate_photo_page_url>,<evidence_page_url>,<caption_or_event_context>,<identity_anchor_url>,<source_page_url>,<entity_id>,<rights_class>,<identity_confidence>,<review_only_use>,<notes>,yes`",
+        "",
+        "## Guardrails",
+        "",
+        "- Generated rows keep URL/source/rights/identity fields blank unless a human-edited return intake already supplied them.",
+        "- Generated rows keep `download_approved=no` and do not fetch, download, approve, write assets, write headshots, create markers, move files, or publish.",
+        "- Candidate-ready means eligible only for later human download-decision review; it is not download approval and not asset approval.",
+        "",
+        "## Summary",
+        "",
+        f"- Paste worksheet rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Candidate-ready for later human download-decision review: `{sum(1 for row in rows if clean(row.get('candidate_ready_for_later_human_download_decision_review')) == 'yes')}`",
+        f"- Rows missing source URL: `{sum(1 for row in rows if 'source_url' in clean(row.get('missing_fields_before_candidate_ready')).split('|'))}`",
+        f"- Rows missing candidate photo URL: `{sum(1 for row in rows if 'candidate_photo_url' in clean(row.get('missing_fields_before_candidate_ready')).split('|'))}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        "",
+        "## Missing Field Counts",
+        "",
+    ]
+    lines.extend(f"- `{field}`: `{count}`" for field, count in sorted(missing_counts.items()))
+    lines += [
+        "",
+        "## Paste Rows",
+        "",
+        "| ID | Queue | Sport | Entity | Source Lead | Missing Before Candidate-Ready | Ready? | Paste Target | Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {worksheet_id} | {queue_id} | {sport} | {entity} | `{source}` | `{missing}` | {ready} | `{target}` | {next_action} |".format(
+                worksheet_id=clean(row.get("paste_worksheet_id")),
+                queue_id=clean(row.get("candidate_queue_id")),
+                sport=clean(row.get("sport")),
+                entity=clean(row.get("league_entity")).replace("|", "/"),
+                source=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
+                missing=clean(row.get("missing_fields_before_candidate_ready")),
+                ready=clean(row.get("candidate_ready_for_later_human_download_decision_review")),
+                target=clean(row.get("paste_target")),
+                next_action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def research_run_bundle_artifact_paths() -> Dict[str, str]:
     return {
         "source_map_board_md": OUT_SPORT_ENTITY_SOURCE_MAP_BOARD_MD.as_posix(),
@@ -3922,6 +4167,9 @@ def research_run_bundle_artifact_paths() -> Dict[str, str]:
         "return_intake_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
         "return_intake_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
         "return_intake_json": OUT_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
+        "return_paste_worksheet_md": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_MD.as_posix(),
+        "return_paste_worksheet_csv": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_CSV.as_posix(),
+        "return_paste_worksheet_json": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_JSON.as_posix(),
         "quality_fit_board_md": OUT_CANDIDATE_QUALITY_FIT_BOARD_MD.as_posix(),
         "quality_fit_board_csv": OUT_CANDIDATE_QUALITY_FIT_BOARD_CSV.as_posix(),
         "quality_fit_board_json": OUT_CANDIDATE_QUALITY_FIT_BOARD_JSON.as_posix(),
@@ -5713,6 +5961,8 @@ def main() -> int:
     quality_fit_issues = validate_action_photo_candidate_quality_fit_board_rows(quality_fit_rows, research_return_rows)
     quality_fit_operator_cue_rows = action_photo_quality_fit_operator_cue_rows(quality_fit_rows)
     quality_fit_operator_cue_issues = validate_action_photo_quality_fit_operator_cue_rows(quality_fit_operator_cue_rows, quality_fit_rows)
+    research_return_paste_worksheet_rows = action_photo_research_return_paste_worksheet_rows(candidate_queue_rows, research_return_rows, quality_fit_operator_cue_rows)
+    research_return_paste_worksheet_issues = validate_action_photo_research_return_paste_worksheet_rows(research_return_paste_worksheet_rows, research_return_rows)
     download_decision_queue_rows = action_photo_download_decision_queue_rows(research_return_summary_rows, research_return_rows)
     download_decision_queue_issues = validate_action_photo_download_decision_queue_rows(download_decision_queue_rows, research_return_summary_rows)
     wnba_hero_target_rows = wnba_final_score_hero_action_photo_target_rows()
@@ -6148,6 +6398,61 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_RESEARCH_RETURN_PASTE_WORKSHEET_CSV, research_return_paste_worksheet_rows, ACTION_PHOTO_RESEARCH_RETURN_PASTE_WORKSHEET_FIELDS)
+    write_text(
+        OUT_RESEARCH_RETURN_PASTE_WORKSHEET_MD,
+        render_action_photo_research_return_paste_worksheet(research_return_paste_worksheet_rows, research_return_paste_worksheet_issues, generated_at),
+    )
+    write_json(
+        OUT_RESEARCH_RETURN_PASTE_WORKSHEET_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_research_return_paste_worksheet_ready" if not research_return_paste_worksheet_issues else "action_photo_research_return_paste_worksheet_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "paste_worksheet_rows": len(research_return_paste_worksheet_rows),
+            "queue_rows_covered": len({row["candidate_queue_id"] for row in research_return_paste_worksheet_rows}),
+            "validation_issue_count": len(research_return_paste_worksheet_issues),
+            "validation_issues": research_return_paste_worksheet_issues,
+            "candidate_queue_ids": sorted({row["candidate_queue_id"] for row in research_return_paste_worksheet_rows}),
+            "candidate_ready_for_later_human_download_decision_review_rows": sum(
+                1 for row in research_return_paste_worksheet_rows if row["candidate_ready_for_later_human_download_decision_review"] == "yes"
+            ),
+            "missing_field_counts": {
+                field: sum(1 for row in research_return_paste_worksheet_rows if field in row["missing_fields_before_candidate_ready"].split("|"))
+                for field in sorted(
+                    {
+                        field
+                        for row in research_return_paste_worksheet_rows
+                        for field in row["missing_fields_before_candidate_ready"].split("|")
+                        if field
+                    }
+                )
+            },
+            "blank_candidate_photo_url_rows": sum(1 for row in research_return_paste_worksheet_rows if not row["candidate_photo_url"]),
+            "blank_evidence_url_rows": sum(1 for row in research_return_paste_worksheet_rows if not row["evidence_url"]),
+            "blank_identity_anchor_url_rows": sum(1 for row in research_return_paste_worksheet_rows if not row["identity_anchor_url"]),
+            "blank_source_url_rows": sum(1 for row in research_return_paste_worksheet_rows if not row["source_url"]),
+            "blank_rights_class_rows": sum(1 for row in research_return_paste_worksheet_rows if not row["rights_class"]),
+            "blank_identity_confidence_rows": sum(1 for row in research_return_paste_worksheet_rows if not row["identity_confidence"]),
+            "download_approved_yes_rows": sum(1 for row in research_return_paste_worksheet_rows if row["download_approved"] == "yes"),
+            "review_only_rows": sum(1 for row in research_return_paste_worksheet_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in research_return_paste_worksheet_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_CSV.as_posix(),
+            "worksheet_md": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_MD.as_posix(),
+            "paste_target": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+            "paste_schema": RESEARCH_PACKET_RETURN_COLUMNS,
+            "review_only": True,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_csv(OUT_RESEARCH_RUN_BUNDLE_CSV, research_run_bundle_rows, ACTION_PHOTO_RESEARCH_RUN_BUNDLE_FIELDS)
     write_text(OUT_RESEARCH_RUN_BUNDLE_MD, render_action_photo_research_run_bundle(research_run_bundle_rows, research_run_bundle_issues, generated_at))
     write_json(
@@ -6488,7 +6793,7 @@ def main() -> int:
         OUT_JSON,
         {
             "version": VERSION,
-            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not source_map_board_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not operator_worksheet_issues and not research_packet_issues and not research_return_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not research_return_summary_issues and not download_decision_queue_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
+            "status": "action_photo_candidate_intake_ready" if not issues and not entity_source_issues and not womens_soccer_issues and not external_research_issues and not source_discovery_issues and not source_map_board_issues and not lead_return_schema_issues and not cutout_scoring_issues and not candidate_queue_issues and not operator_worksheet_issues and not research_packet_issues and not research_return_issues and not research_return_paste_worksheet_issues and not research_run_bundle_issues and not quarantine_preflight_issues and not research_return_summary_issues and not quality_fit_issues and not quality_fit_operator_cue_issues and not download_decision_queue_issues and not wnba_hero_target_issues and not cutout_readiness_issues else "action_photo_candidate_intake_has_validation_issues",
             "generated_at_utc": generated_at,
             "intake_rows": len(rows),
             "download_approved_yes_rows": sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes"),
@@ -6521,6 +6826,8 @@ def main() -> int:
             "action_photo_candidate_research_packet_validation_issue_count": len(research_packet_issues),
             "action_photo_research_return_intake_rows": len(research_return_rows),
             "action_photo_research_return_intake_validation_issue_count": len(research_return_issues),
+            "action_photo_research_return_paste_worksheet_rows": len(research_return_paste_worksheet_rows),
+            "action_photo_research_return_paste_worksheet_validation_issue_count": len(research_return_paste_worksheet_issues),
             "action_photo_research_run_bundle_rows": len(research_run_bundle_rows),
             "action_photo_research_run_bundle_validation_issue_count": len(research_run_bundle_issues),
             "action_photo_external_research_packet_export_status": external_research_export_manifest["status"],
@@ -6540,7 +6847,7 @@ def main() -> int:
             "wnba_final_score_hero_action_photo_target_validation_issue_count": len(wnba_hero_target_issues),
             "action_photo_cutout_readiness_rows": len(cutout_readiness_rows),
             "action_photo_cutout_readiness_validation_issue_count": len(cutout_readiness_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_return_paste_worksheet_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -6582,6 +6889,9 @@ def main() -> int:
             "action_photo_research_return_intake_csv": OUT_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
             "action_photo_research_return_intake_md": OUT_RESEARCH_RETURN_INTAKE_MD.as_posix(),
             "action_photo_research_return_intake_json": OUT_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
+            "action_photo_research_return_paste_worksheet_csv": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_CSV.as_posix(),
+            "action_photo_research_return_paste_worksheet_md": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_MD.as_posix(),
+            "action_photo_research_return_paste_worksheet_json": OUT_RESEARCH_RETURN_PASTE_WORKSHEET_JSON.as_posix(),
             "action_photo_research_run_bundle_csv": OUT_RESEARCH_RUN_BUNDLE_CSV.as_posix(),
             "action_photo_research_run_bundle_md": OUT_RESEARCH_RUN_BUNDLE_MD.as_posix(),
             "action_photo_research_run_bundle_json": OUT_RESEARCH_RUN_BUNDLE_JSON.as_posix(),
@@ -6621,9 +6931,9 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows), "action_photo_quality_fit_operator_cue_rows": len(quality_fit_operator_cue_rows), "action_photo_download_decision_queue_rows": len(download_decision_queue_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or quality_fit_issues or quality_fit_operator_cue_issues or download_decision_queue_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
+    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_return_paste_worksheet_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_return_paste_worksheet_rows": len(research_return_paste_worksheet_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows), "action_photo_quality_fit_operator_cue_rows": len(quality_fit_operator_cue_rows), "action_photo_download_decision_queue_rows": len(download_decision_queue_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_return_paste_worksheet_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or quality_fit_issues or quality_fit_operator_cue_issues or download_decision_queue_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
 
 
 if __name__ == "__main__":

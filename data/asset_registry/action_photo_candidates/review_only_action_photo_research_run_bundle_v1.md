@@ -21,6 +21,9 @@ Operator alert bundle for running the existing action-photo research packet and 
 - `return_intake_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md`
 - `return_intake_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv`
 - `return_intake_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json`
+- `return_paste_worksheet_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md`
+- `return_paste_worksheet_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv`
+- `return_paste_worksheet_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json`
 - `quality_fit_board_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md`
 - `quality_fit_board_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv`
 - `quality_fit_board_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json`

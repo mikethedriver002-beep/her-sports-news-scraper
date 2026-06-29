@@ -369,6 +369,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json",
@@ -812,6 +815,9 @@ ARTIFACTS = [
     ("Graphics", "Action-photo research return intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md"),
     ("Graphics", "Action-photo research return intake data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"),
     ("Graphics", "Action-photo research return intake manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json"),
+    ("Graphics", "Action-photo research return paste worksheet", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md"),
+    ("Graphics", "Action-photo research return paste worksheet data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv"),
+    ("Graphics", "Action-photo research return paste worksheet manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json"),
     ("Graphics", "Action-photo research run bundle", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md"),
     ("Graphics", "Action-photo research run bundle data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv"),
     ("Graphics", "Action-photo research run bundle manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json"),
@@ -1081,6 +1087,9 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
@@ -2074,6 +2083,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_source_map_board_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json")
     action_photo_operator_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json")
     action_photo_research_return_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json")
+    action_photo_research_return_paste_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
     action_photo_quality_fit_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json")
@@ -2200,6 +2210,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         action_photo_research_bundle_steps,
         RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md"],
         context="action-photo research run bundle",
+    )
+    action_photo_research_return_paste_worksheet_rows = as_int(action_photo_research_return_paste_worksheet_manifest.get("paste_worksheet_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0
+    action_photo_research_return_paste_worksheet_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md",
+        action_photo_research_return_paste_worksheet_rows,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md"],
+        context="action-photo research return paste worksheet",
     )
     action_photo_preflight_rows = as_int(action_photo_preflight_manifest.get("preflight_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0
     action_photo_preflight_cue = packet_freshness_cue(
@@ -2576,6 +2593,18 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_research_return_blank_rights_class_rows": as_int(action_photo_research_return_manifest.get("blank_rights_class_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
         "action_photo_research_return_operator_verify_required_yes_rows": as_int(action_photo_research_return_manifest.get("operator_verify_required_yes_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
         "action_photo_research_return_download_approved_yes_rows": as_int(action_photo_research_return_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_research_return_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_status": clean(action_photo_research_return_paste_worksheet_manifest.get("status")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else "",
+        "action_photo_research_return_paste_worksheet_generated_at": clean(action_photo_research_return_paste_worksheet_manifest.get("generated_at_utc")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else "",
+        "action_photo_research_return_paste_worksheet_rows": action_photo_research_return_paste_worksheet_rows,
+        "action_photo_research_return_paste_worksheet_ready_rows": as_int(action_photo_research_return_paste_worksheet_manifest.get("candidate_ready_for_later_human_download_decision_review_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_blank_candidate_photo_url_rows": as_int(action_photo_research_return_paste_worksheet_manifest.get("blank_candidate_photo_url_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_blank_source_url_rows": as_int(action_photo_research_return_paste_worksheet_manifest.get("blank_source_url_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_blank_rights_class_rows": as_int(action_photo_research_return_paste_worksheet_manifest.get("blank_rights_class_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_blank_identity_confidence_rows": as_int(action_photo_research_return_paste_worksheet_manifest.get("blank_identity_confidence_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_download_approved_yes_rows": as_int(action_photo_research_return_paste_worksheet_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else 0,
+        "action_photo_research_return_paste_worksheet_asset_downloads": bool(action_photo_research_return_paste_worksheet_manifest.get("asset_downloads")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else False,
+        "action_photo_research_return_paste_worksheet_headshot_writes": bool(action_photo_research_return_paste_worksheet_manifest.get("headshot_writes")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else False,
+        "action_photo_research_return_paste_worksheet_approved_marker_writes": bool(action_photo_research_return_paste_worksheet_manifest.get("approved_marker_writes")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else False,
         "action_photo_research_run_bundle_status": clean(action_photo_research_bundle_manifest.get("status")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
         "action_photo_research_run_bundle_generated_at": clean(action_photo_research_bundle_manifest.get("generated_at_utc")) if isinstance(action_photo_research_bundle_manifest, dict) else "",
         "action_photo_research_run_bundle_rows": action_photo_research_bundle_steps,
@@ -2637,6 +2666,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_research_run_bundle_freshness_status": action_photo_research_bundle_cue["status"],
         "action_photo_research_run_bundle_freshness_detail": action_photo_research_bundle_cue["detail"],
         "action_photo_research_run_bundle_refresh_command": action_photo_research_bundle_cue["run_command"],
+        "action_photo_research_return_paste_worksheet_freshness_status": action_photo_research_return_paste_worksheet_cue["status"],
+        "action_photo_research_return_paste_worksheet_freshness_detail": action_photo_research_return_paste_worksheet_cue["detail"],
+        "action_photo_research_return_paste_worksheet_refresh_command": action_photo_research_return_paste_worksheet_cue["run_command"],
         "action_photo_quarantine_preflight_freshness_status": action_photo_preflight_cue["status"],
         "action_photo_quarantine_preflight_freshness_detail": action_photo_preflight_cue["detail"],
         "action_photo_quarantine_preflight_refresh_command": action_photo_preflight_cue["run_command"],
@@ -2906,6 +2938,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Action-photo local handoff draft copy", "action_photo_external_research_handoff_draft_copy.md", "Paste-ready local email/ChatGPT/Gemini copy for the latest bundle; does not send email or create Gmail drafts."),
             file_shortcut("Action-photo local handoff draft copy manifest", "action_photo_external_research_handoff_draft_copy.json", "Structured subject/body/path/guardrail manifest for the local draft-copy artifact; no Gmail payload or send action."),
             file_shortcut("Action-photo research return intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv", "Human-edited paste-back target for source_url/entity_id/rights/identity fields before any quarantine decision."),
+            file_shortcut("Action-photo research return paste worksheet", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md", "Copy/paste helper that shows sport/entity/source context, exact return fields, and missing fields before later human download-decision review."),
+            file_shortcut("Action-photo research return paste worksheet data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv", "Machine-readable paste worksheet; generated download fields remain no and no asset writes occur."),
             file_shortcut("Action-photo cutout scoring criteria", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.md", "Manual scoring criteria for future cutout review; no segmentation, background removal, downloads, approvals, or publish-ready state."),
             file_shortcut("Action-photo cutout scoring criteria data", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.csv", "Machine-readable cutout scoring fields; generated source/download fields stay blank/no."),
             file_shortcut("Action-photo quarantine preflight", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md", "Preflight gate showing whether human-return rows are ready for download decision; generated rows remain lead-only."),
@@ -9887,6 +9921,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Return source blanks</span><strong>{html.escape(str(panel.get('action_photo_research_return_blank_source_url_rows', 0)))}</strong></div>
             <div><span>Return rights blanks</span><strong>{html.escape(str(panel.get('action_photo_research_return_blank_rights_class_rows', 0)))}</strong></div>
             <div><span>Return dl yes</span><strong>{html.escape(str(panel.get('action_photo_research_return_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>Paste worksheet rows</span><strong>{html.escape(str(panel.get('action_photo_research_return_paste_worksheet_rows', 0)))}</strong></div>
+            <div><span>Paste ready review</span><strong>{html.escape(str(panel.get('action_photo_research_return_paste_worksheet_ready_rows', 0)))}</strong></div>
+            <div><span>Paste missing src</span><strong>{html.escape(str(panel.get('action_photo_research_return_paste_worksheet_blank_source_url_rows', 0)))}</strong></div>
             <div><span>Action-photo bundle</span><strong>{html.escape(str(panel.get('action_photo_research_run_bundle_rows', 0)))}</strong></div>
             <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
             <div><span>Action-photo ready dl</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)))}</strong></div>
@@ -9977,6 +10014,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_athlete_closure', "Women's soccer athlete expansion closure summary")}
           {packet_freshness_html(panel, 'womens_soccer_external_research', "Women's soccer external research intake")}
           {packet_freshness_html(panel, 'action_photo_research_run_bundle', "Action-photo research run bundle")}
+          {packet_freshness_html(panel, 'action_photo_research_return_paste_worksheet', "Action-photo research return paste worksheet")}
           {packet_freshness_html(panel, 'action_photo_quarantine_preflight', "Action-photo quarantine preflight")}
           {packet_freshness_html(panel, 'action_photo_quality_fit', "Action-photo candidate quality/fit board")}
           {packet_freshness_html(panel, 'action_photo_quality_fit_operator_cue', "Action-photo quality/fit operator cue")}
@@ -11670,6 +11708,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo research return operator-verify rows: {asset_panel.get('action_photo_research_return_operator_verify_required_yes_rows', 0)}",
         f"- Action-photo research return download-approved yes rows: {asset_panel.get('action_photo_research_return_download_approved_yes_rows', 0)}",
         f"- Action-photo research return generated: {asset_panel.get('action_photo_research_return_generated_at') or 'missing'}",
+        f"- Action-photo research return paste worksheet rows: {asset_panel.get('action_photo_research_return_paste_worksheet_rows', 0)}",
+        f"- Action-photo research return paste worksheet candidate-ready rows: {asset_panel.get('action_photo_research_return_paste_worksheet_ready_rows', 0)}",
+        f"- Action-photo research return paste worksheet blank source_url rows: {asset_panel.get('action_photo_research_return_paste_worksheet_blank_source_url_rows', 0)}",
+        f"- Action-photo research return paste worksheet download-approved yes rows: {asset_panel.get('action_photo_research_return_paste_worksheet_download_approved_yes_rows', 0)}",
+        f"- Action-photo research return paste worksheet asset/headshot/marker writes: {asset_panel.get('action_photo_research_return_paste_worksheet_asset_downloads', False)}/{asset_panel.get('action_photo_research_return_paste_worksheet_headshot_writes', False)}/{asset_panel.get('action_photo_research_return_paste_worksheet_approved_marker_writes', False)}",
+        f"- Action-photo research return paste worksheet generated: {asset_panel.get('action_photo_research_return_paste_worksheet_generated_at') or 'missing'}",
         f"- Action-photo research run bundle rows: {asset_panel.get('action_photo_research_run_bundle_rows', 0)}",
         f"- Action-photo research run bundle download-approved yes rows: {asset_panel.get('action_photo_research_run_bundle_download_approved_yes_rows', 0)}",
         f"- Action-photo research run bundle generated: {asset_panel.get('action_photo_research_run_bundle_generated_at') or 'missing'}",
@@ -11950,6 +11994,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("action_photo_research_run_bundle_refresh_command"),
             },
             "Action-photo research run bundle",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("action_photo_research_return_paste_worksheet_freshness_status"),
+                "detail": asset_panel.get("action_photo_research_return_paste_worksheet_freshness_detail"),
+                "run_command": asset_panel.get("action_photo_research_return_paste_worksheet_refresh_command"),
+            },
+            "Action-photo research return paste worksheet",
         ),
         packet_freshness_markdown(
             {
