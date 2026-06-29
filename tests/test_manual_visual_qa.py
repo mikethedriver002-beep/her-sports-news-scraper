@@ -188,6 +188,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "photo_first_template_readiness" in check_ids
     assert "player_ledger_readability" in check_ids
     assert "premium_editorial_clutter_scan" in check_ids
+    assert "anti_dashboard_score_spine_review" in check_ids
     assert "preview_freshness_current_handoff" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
@@ -226,6 +227,7 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     title_check = next(check for check in manifest["checks"] if check["check_id"] == "headline_text_zone")
     ledger_check = next(check for check in manifest["checks"] if check["check_id"] == "player_ledger_readability")
     clutter_check = next(check for check in manifest["checks"] if check["check_id"] == "premium_editorial_clutter_scan")
+    anti_dashboard_check = next(check for check in manifest["checks"] if check["check_id"] == "anti_dashboard_score_spine_review")
     assert manifest["status"] == "human_review_required"
     assert title_check["qa_result"] == "pass"
     assert title_check["check_label"] == "Title readable contrast and safe-zone fit"
@@ -235,6 +237,8 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     assert "content_module=verified_player_stats" in ledger_check["evidence"]
     assert clutter_check["qa_result"] in {"pass", "pass_human_review_required"}
     assert "premium editorial hierarchy" in clutter_check["evidence"]
+    assert anti_dashboard_check["qa_result"] == "pass_human_review_required"
+    assert "anti-dashboard score-spine" in anti_dashboard_check["check_label"].lower()
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 

@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.6.0-photo-first-no-redundant-context"
+VERSION = "hsd-manual-visual-qa-v1.7.0-anti-dashboard-score-spine"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -699,6 +699,54 @@ def add_premium_editorial_clutter_scan(
     )
 
 
+def add_anti_dashboard_score_spine_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any]) -> None:
+    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
+    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
+    template_id = clean(selected_template.get("template_id"))
+    family = clean(selected_template.get("template_family"))
+    visual_mode = clean(first_present(content_module.get("visual_mode"), renderer_manifest.get("visual_mode")))
+    photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
+    final_score_context = (
+        family == "game_recap_final_score"
+        or "final_score" in template_id
+        or "final_score" in photo_layout_mode
+        or "final_score" in visual_mode
+    )
+    anti_dashboard_contract = clean(content_module.get("anti_dashboard_contract"))
+    score_layout_contract = clean(content_module.get("score_layout_contract"))
+    cues = clean(renderer_manifest.get("render_background_cues"))
+    if not final_score_context:
+        add_check(
+            checks,
+            "anti_dashboard_score_spine_review",
+            "Anti-dashboard score-spine review cue",
+            True,
+            "Non-final-score render; anti-dashboard score-spine check remains a manual eye-review cue.",
+            result="pass_human_review_required",
+        )
+        return
+
+    passed = bool(
+        anti_dashboard_contract
+        and "dashboard" in anti_dashboard_contract
+        and "no_dashboard" in cues
+        and ("spine" in score_layout_contract or visual_mode.startswith("photo_first"))
+    )
+    add_check(
+        checks,
+        "anti_dashboard_score_spine_review",
+        "Anti-dashboard score-spine review cue",
+        passed,
+        (
+            f"final_score_context={final_score_context}; visual_mode={visual_mode or 'missing'}; "
+            f"layout={photo_layout_mode or 'standard'}; score_layout_contract={score_layout_contract or 'missing'}; "
+            f"anti_dashboard_contract={anti_dashboard_contract or 'missing'}; "
+            "operator must hold or revise if the score treatment reads like a dashboard card, boxed metric tile, or ad unit."
+        ),
+        result="pass_human_review_required" if passed else "hold",
+    )
+
+
 def checklist_rows(checks: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for check in checks:
@@ -882,6 +930,7 @@ def main() -> None:
         add_photo_first_template_checks(checks, renderer_manifest, image)
         add_player_ledger_readability_check(checks, renderer_manifest, image)
         add_premium_editorial_clutter_scan(checks, renderer_manifest, image, zone_scores, bright_scores)
+        add_anti_dashboard_score_spine_check(checks, renderer_manifest)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
@@ -905,6 +954,7 @@ def main() -> None:
         add_photo_first_template_checks(checks, renderer_manifest, None)
         add_player_ledger_readability_check(checks, renderer_manifest, None)
         add_premium_editorial_clutter_scan(checks, renderer_manifest, None, [], [])
+        add_anti_dashboard_score_spine_check(checks, renderer_manifest)
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_preview_freshness_check(checks, renderer_manifest, handoff_manifest)
     add_check(

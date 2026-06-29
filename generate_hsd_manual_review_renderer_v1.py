@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.52.0-photo-first-editorial-depth-bridge"
+VERSION = "hsd-manual-review-renderer-v1.53.0-anti-dashboard-score-spine"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -73,7 +73,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_quiet_review_marker,photo_first_score_stage_wash,"
     "photo_first_action_photo_stage_bridge,photo_first_editorial_depth_bridge,"
     "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
-    "stat_proof_rail,generated_preview_qa"
+    "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,"
+    "anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -3559,10 +3560,10 @@ def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyeb
 def draw_score_lanes(image: Any, template_spec: Dict[str, Any], primary_accent: tuple[int, int, int], secondary_accent: tuple[int, int, int]) -> None:
     draw = ImageDraw.Draw(image, "RGBA")
     lane_pairs = [
-        ("primary_logo_slot", "primary_score", (3, 5, 10, 190), (*primary_accent, 224), True),
-        ("secondary_logo_slot", "secondary_score", (3, 5, 10, 178), (*secondary_accent, 204), False),
+        ("primary_logo_slot", "primary_score", primary_accent, True),
+        ("secondary_logo_slot", "secondary_score", secondary_accent, False),
     ]
-    for logo_name, score_name, fill, accent, winner in lane_pairs:
+    for logo_name, score_name, accent, winner in lane_pairs:
         lx, ly, lw, lh = zone_box(template_spec, logo_name)
         sx, sy, sw, sh = zone_box(template_spec, score_name)
         if not lw or not sw:
@@ -3573,14 +3574,24 @@ def draw_score_lanes(image: Any, template_spec: Dict[str, Any], primary_accent: 
         y2 = min(image.size[1], max(ly + lh, sy + sh) - 10)
         lane_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
         lane_draw = ImageDraw.Draw(lane_layer, "RGBA")
-        lane_draw.rounded_rectangle((x1 + 12, y1 + 15, x2 + 12, y2 + 15), radius=24, fill=(0, 0, 0, 122 if winner else 104))
-        lane_draw.rounded_rectangle((x1 - 3, y1 - 3, x2 + 3, y2 + 3), radius=26, outline=(*accent[:3], 54), width=4)
-        lane_draw.rounded_rectangle((x1, y1, x2, y2), radius=22, fill=fill, outline=accent, width=2)
-        lane_draw.rectangle((x1, y1 + 4, x1 + 14, y2 - 4), fill=accent)
-        lane_draw.rounded_rectangle((x1 + 8, y1 + 8, x2 - 8, y1 + 48), radius=18, fill=(255, 255, 255, 14 if winner else 9))
-        lane_draw.rounded_rectangle((x2 - max(236, sw + 18), y1 + 18, x2 - 20, y2 - 18), radius=18, fill=(255, 255, 255, 16 if winner else 11), outline=(255, 255, 255, 28), width=1)
-        lane_draw.line((x1 + max(190, lw + 28), y1 + 26, x1 + max(190, lw + 28), y2 - 24), fill=(255, 255, 255, 48), width=1)
-        lane_draw.line((x1 + 22, y2 - 11, x2 - 22, y2 - 11), fill=accent, width=3 if winner else 2)
+        lane_draw.polygon(
+            [(x1 + 8, y1 + 2), (x2 - 28, y1 + 2), (x2 - 4, y2 - 10), (x1 + 36, y2 - 10)],
+            fill=(0, 0, 0, 88 if winner else 68),
+        )
+        lane_draw.polygon(
+            [(x1 + 26, y1 + 8), (x2 - 18, y1 + 8), (x2 - 52, y2 - 18), (x1 + 6, y2 - 18)],
+            fill=(*accent, 24 if winner else 18),
+        )
+        lane_draw.line((x1 + 6, y1 + 4, x2 - 20, y1 + 4), fill=(*accent, 178 if winner else 126), width=4 if winner else 3)
+        lane_draw.line((x1 + 28, y2 - 16, x2 - 12, y2 - 16), fill=(*accent, 154 if winner else 108), width=3 if winner else 2)
+        lane_draw.line((x1 + max(190, lw + 28), y1 + 20, x1 + max(190, lw + 28), y2 - 28), fill=(255, 255, 255, 42), width=1)
+        lane_draw.line((x2 - max(248, sw + 24), y1 + 18, x2 - 20, y1 + 18), fill=(255, 255, 255, 30), width=1)
+        lane_draw.line((x2 - max(248, sw + 24), y2 - 30, x2 - 20, y2 - 30), fill=(255, 255, 255, 20), width=1)
+        lane_draw.rectangle((x1, y1 + 8, x1 + 10, y2 - 18), fill=(*accent, 168 if winner else 112))
+        lane_draw.rectangle((x2 - 8, y1 + 32, x2 - 4, y2 - 46), fill=(255, 255, 255, 32 if winner else 22))
+        if ImageFilter is not None:
+            glow = lane_layer.filter(ImageFilter.GaussianBlur(10))
+            image.alpha_composite(glow)
         image.alpha_composite(lane_layer)
 
 
@@ -3603,7 +3614,10 @@ def draw_logo_first_score_atmosphere(image: Any, template_spec: Dict[str, Any], 
 
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    draw.rounded_rectangle((x1, y1, x2, y2), radius=30, fill=(1, 3, 8, 102), outline=(*primary_accent, 58), width=1)
+    draw.polygon(
+        [(x1, y1 + 18), (x2 - 28, y1), (x2, y2 - 24), (x1 + 22, y2)],
+        fill=(1, 3, 8, 72),
+    )
     draw.polygon(
         [(x1, y1 + 8), (x1 + int((x2 - x1) * 0.58), y1 + 8), (x1 + int((x2 - x1) * 0.34), y2 - 4), (x1, y2 - 4)],
         fill=(*primary_accent, 36),
@@ -3614,8 +3628,8 @@ def draw_logo_first_score_atmosphere(image: Any, template_spec: Dict[str, Any], 
     )
     draw.rectangle((x1, y1 + 12, x1 + 16, y2 - 12), fill=(*primary_accent, 96))
     draw.rectangle((x1, y1 + int((y2 - y1) * 0.48), x2, y1 + int((y2 - y1) * 0.48) + 2), fill=(*secondary_accent, 92))
-    draw.line((x1 + 26, y1 + 18, x2 - 26, y1 + 18), fill=(255, 255, 255, 28), width=1)
-    draw.line((x1 + 26, y2 - 18, x2 - 26, y2 - 18), fill=(255, 255, 255, 20), width=1)
+    draw.line((x1 + 26, y1 + 18, x2 - 26, y1 + 2), fill=(255, 255, 255, 28), width=1)
+    draw.line((x1 + 26, y2 - 4, x2 - 26, y2 - 18), fill=(255, 255, 255, 20), width=1)
     if ImageFilter is not None:
         glow = layer.filter(ImageFilter.GaussianBlur(16))
         image.alpha_composite(glow)
@@ -3928,8 +3942,10 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     focal_priority = "non_athlete_fallback"
     athlete_focal_contract = "logo_score_fallback_not_athlete_led"
     fallback_comparison_status = "fallback_active_label_no_athlete_photo"
-    fallback_comparison_note = "No athlete/person focal frame rendered; hold if the handoff expected an athlete-led result."
-    score_layout_contract = "logo_score_fallback_score_team_caption_clearance"
+    fallback_comparison_note = "No athlete/person focal frame rendered; hold if the handoff expected an athlete-led result or if the score treatment reads like a dashboard card."
+    score_layout_contract = "logo_first_editorial_score_spine_no_dashboard_panels"
+    anti_dashboard_contract = "open_score_spine_no_nested_cards_no_metric_tiles"
+    anti_dashboard_review_cue = "Hold or revise if the no-photo fallback reads as a dashboard card, boxed scoreboard, or ad unit instead of a premium sports editorial plate."
     hero_image_mode = "logo_score_fallback_no_person_image"
     hero_image_source_class = "no_local_hero_image"
     action_photo_hero_contract = "manual_review_action_photo_not_available_no_download"
@@ -3952,6 +3968,8 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         fallback_comparison_status = "fallback_not_used_athlete_preview_ready"
         fallback_comparison_note = "Photo-first athlete/person frame is the primary editorial focal point; logo-only fallback should appear only when the handoff loses photo/stat eligibility."
         score_layout_contract = "photo_first_score_team_caption_clearance_locked"
+        anti_dashboard_contract = "photo_first_borderless_score_stage_no_dashboard_panels"
+        anti_dashboard_review_cue = "Hold or revise if the photo-first score rails become boxed widgets or compete with the athlete focal point."
         hero_image_mode = "approved_headshot_bridge_action_photo_ready"
         hero_image_source_class = "approved_local_headshot_bridge"
         hero_silhouette_mode = clean(cutout_contract.get("hero_silhouette_mode"))
@@ -3980,6 +3998,8 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "fallback_comparison_status": fallback_comparison_status,
         "fallback_comparison_note": fallback_comparison_note,
         "score_layout_contract": score_layout_contract,
+        "anti_dashboard_contract": anti_dashboard_contract,
+        "anti_dashboard_review_cue": anti_dashboard_review_cue,
         "background_family": RENDER_BACKGROUND_FAMILY,
         "hero_image_mode": hero_image_mode,
         "hero_image_source_class": hero_image_source_class,
@@ -4164,6 +4184,8 @@ def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
         "athlete_focal_contract": clean(format_row.get("athlete_focal_contract")) or "not_recorded",
         "fallback_comparison_status": clean(format_row.get("fallback_comparison_status")) or "not_recorded",
         "score_layout_contract": clean(format_row.get("score_layout_contract")) or "not_recorded",
+        "anti_dashboard_contract": clean(format_row.get("anti_dashboard_contract")) or "not_recorded",
+        "anti_dashboard_review_cue": clean(format_row.get("anti_dashboard_review_cue")) or "not_recorded",
         "automated_qa_status": clean(format_row.get("preview_qa_status")) or "preview_qa_not_run",
         "reference_public_mockup_path": clean(format_row.get("reference_public_mockup_path")) or "not_reference_packed",
         "reference_layout_path": clean(format_row.get("reference_layout_path")) or "not_reference_packed",
@@ -4177,11 +4199,11 @@ def visual_comparison_next_step(content_module: Dict[str, Any]) -> str:
     if clean(content_module.get("visual_mode")).startswith("photo_first"):
         return (
             "Open the contact sheet first, compare athlete focal point, score hierarchy, stat strip, and square crop against "
-            "the reference mockup/layout paths, then record approve/hold/revise in the manual visual QA intake."
+            "the reference mockup/layout paths, verify the score rail does not read like a dashboard widget, then record approve/hold/revise in the manual visual QA intake."
         )
     return (
         "Open the contact sheet first, confirm the no-photo fallback is intentional, compare score hierarchy and reference "
-        "paths, then hold if an athlete-led asset/stat context should be required."
+        "paths, then hold if an athlete-led asset/stat context should be required or if the score treatment reads like a dashboard card."
     )
 
 
@@ -4305,6 +4327,8 @@ def write_visual_comparison_board(
         "fallback_comparison_status": clean(content_module.get("fallback_comparison_status")) or "not_recorded",
         "fallback_comparison_note": clean(content_module.get("fallback_comparison_note")) or "not_recorded",
         "score_layout_contract": clean(content_module.get("score_layout_contract")) or "not_recorded",
+        "anti_dashboard_contract": clean(content_module.get("anti_dashboard_contract")) or "not_recorded",
+        "anti_dashboard_review_cue": clean(content_module.get("anti_dashboard_review_cue")) or "not_recorded",
         "next_manual_review_step": next_step,
         "rows": rows,
     }
@@ -4342,6 +4366,8 @@ def write_visual_comparison_board(
         f"- Fallback comparison: `{board['fallback_comparison_status']}`",
         f"- Fallback note: {board['fallback_comparison_note']}",
         f"- Score layout contract: `{board['score_layout_contract']}`",
+        f"- Anti-dashboard contract: `{board['anti_dashboard_contract']}`",
+        f"- Anti-dashboard review cue: {board['anti_dashboard_review_cue']}",
         "",
         "## Format Review",
         "",
@@ -4365,6 +4391,8 @@ def write_visual_comparison_board(
                     f"- Athlete focal contract: `{clean(row.get('athlete_focal_contract'))}`",
                     f"- Fallback comparison: `{clean(row.get('fallback_comparison_status'))}`",
                     f"- Score layout contract: `{clean(row.get('score_layout_contract'))}`",
+                    f"- Anti-dashboard contract: `{clean(row.get('anti_dashboard_contract'))}`",
+                    f"- Anti-dashboard review cue: {clean(row.get('anti_dashboard_review_cue'))}",
                     f"- Reference mockup: `{clean(row.get('reference_public_mockup_path'))}`",
                     f"- Reference layout: `{clean(row.get('reference_layout_path'))}`",
                     f"- Reference derivation: `{clean(row.get('reference_derivation'))}`",
@@ -4548,6 +4576,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Athlete focal contract: priority=`{clean(content_module.get('focal_priority')) or 'n/a'}` contract=`{clean(content_module.get('athlete_focal_contract')) or 'n/a'}` fallback=`{clean(content_module.get('fallback_comparison_status')) or 'n/a'}`",
         f"- Fallback comparison note: {clean(content_module.get('fallback_comparison_note')) or 'n/a'}",
         f"- Score layout contract: `{clean(content_module.get('score_layout_contract')) or 'n/a'}`",
+        f"- Anti-dashboard contract: `{clean(content_module.get('anti_dashboard_contract')) or 'n/a'}`",
+        f"- Anti-dashboard review cue: {clean(content_module.get('anti_dashboard_review_cue')) or 'n/a'}",
         f"- Hero silhouette contract: mode=`{clean(content_module.get('hero_silhouette_mode')) or 'n/a'}` cutout=`{clean(content_module.get('hero_cutout_readiness')) or 'n/a'}` grid=`{clean(content_module.get('grid_breaking_hero_contract')) or 'n/a'}`",
         f"- Blueprint style contract: background=`{RENDER_BACKGROUND_STYLE}` cues=`photo_first_blueprint_depth_layers, photo_first_procedural_court_grain, photo_first_asymmetric_score_treatment, photo_first_safe_zone_enforced`",
         f"- Template fit reason: {clean(content_module.get('template_fit_reason')) or 'n/a'}",
