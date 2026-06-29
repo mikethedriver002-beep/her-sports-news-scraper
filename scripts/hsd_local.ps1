@@ -676,6 +676,7 @@ function Invoke-ReviewStage($Python) {
     Invoke-ScriptIfPresent $Python "publish_hsd_guard_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_operator_status_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "scripts\build_hsd_workflow_lane_status_v1.py" -Optional
+    Invoke-ScriptIfPresent $Python "scripts\audit_hsd_conductor_workspace_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_bebe_daily_ops_plan_v2.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_morning_source_discovery_board_v1.py" -Optional
     Invoke-ScriptIfPresent $Python "generate_hsd_operator_command_center_v2.py" -Optional
@@ -870,6 +871,9 @@ function Collect-HsdArtifacts($RunContext) {
         "workflow_lane_status_dashboard.md",
         "workflow_lane_status_dashboard.csv",
         "workflow_lane_status_dashboard.json",
+        "conductor_workspace_audit.md",
+        "conductor_workspace_audit.csv",
+        "conductor_workspace_audit.json",
         "publish_guard_report.md",
         "publish_guard_report.json",
         "operator_command_center.html",
