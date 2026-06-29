@@ -3697,6 +3697,13 @@ def seed_manual_visual_qa_decision_files() -> None:
             "summary": {"check_count": 8, "pass_count": 8, "hold_count": 0, "human_decision_required": True},
             "checks": [
                 {
+                    "check_id": "premium_editorial_clutter_scan",
+                    "check_label": "Premium editorial clutter scan",
+                    "qa_result": "pass_human_review_required",
+                    "passed": True,
+                    "evidence": "final_score_context=True; avg_text_variance=4300.0; Operator should hold or revise if the draft feels busy, cramped, ad-like, or lacks a clear premium editorial hierarchy.",
+                },
+                {
                     "check_id": "headline_text_zone",
                     "check_label": "Title readable contrast and safe-zone fit",
                     "qa_result": "pass",
@@ -5296,12 +5303,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
-    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:2] == [
+    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:3] == [
+        "Premium editorial clutter scan",
         "Title contrast and fit",
         "Score/team readability",
     ]
     assert payload["operator_decision_panel"]["qa_cues"][0]["tone"] == "good"
-    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
+    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
+    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][1]["evidence"]
     assert any(item["label"] == "Player ledger readability" for item in payload["operator_decision_panel"]["qa_cues"])
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])

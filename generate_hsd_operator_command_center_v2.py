@@ -3513,6 +3513,7 @@ def build_decision_history(
 def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
     checks = qa.get("checks") if isinstance(qa.get("checks"), list) else []
     wanted = [
+        "premium_editorial_clutter_scan",
         "headline_text_zone",
         "score_team_text_zone",
         "context_text_zone",
@@ -3522,6 +3523,7 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         "approval_guardrails",
     ]
     labels = {
+        "premium_editorial_clutter_scan": "Premium editorial clutter scan",
         "headline_text_zone": "Title contrast and fit",
         "score_team_text_zone": "Score/team readability",
         "context_text_zone": "Context row readability",

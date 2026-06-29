@@ -52,6 +52,14 @@ def clean(value: Any) -> str:
     return " ".join(str(value or "").replace("\n", " ").split()).strip()
 
 
+def first_present(*values: Any) -> str:
+    for value in values:
+        text = clean(value)
+        if text:
+            return text
+    return ""
+
+
 def parse_utc_timestamp(value: Any) -> datetime | None:
     text = clean(value)
     if not text:
@@ -617,6 +625,80 @@ def add_photo_first_template_checks(checks: List[Dict[str, Any]], renderer_manif
     )
 
 
+def add_premium_editorial_clutter_scan(
+    checks: List[Dict[str, Any]],
+    renderer_manifest: Dict[str, Any],
+    image: Any | None,
+    zone_scores: List[float],
+    bright_scores: List[float],
+) -> None:
+    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
+    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
+    format_options = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
+    template_id = clean(selected_template.get("template_id"))
+    family = clean(selected_template.get("template_family"))
+    visual_mode = clean(first_present(content_module.get("visual_mode"), renderer_manifest.get("visual_mode")))
+    photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
+    final_score_context = (
+        family == "game_recap_final_score"
+        or "final_score" in template_id
+        or "final_score" in photo_layout_mode
+        or "final_score" in visual_mode
+    )
+    if not final_score_context:
+        add_check(
+            checks,
+            "premium_editorial_clutter_scan",
+            "Premium editorial clutter scan",
+            True,
+            (
+                "Non-final-score or minimal metadata render; premium clutter scan stays as a manual eye-review cue. "
+                "Operator should still hold or revise if the draft lacks a clear premium editorial hierarchy."
+            ),
+            result="pass_human_review_required",
+        )
+        return
+    if image is None:
+        add_check(
+            checks,
+            "premium_editorial_clutter_scan",
+            "Premium editorial clutter scan",
+            False,
+            "Final-score metadata exists, but the preview image was unavailable for premium/clutter QA.",
+        )
+        return
+
+    all_zones = TEXT_ZONES.values()
+    average_dark_signal = mean(zone_scores) if zone_scores else 0.0
+    average_bright_signal = mean(bright_scores) if bright_scores else 0.0
+    zone_variances = [text_zone_signal(image, box)["variance"] for box, _, _ in all_zones]
+    average_zone_variance = mean(zone_variances) if zone_variances else 0.0
+    format_count = len([row for row in format_options if isinstance(row, dict) and clean(row.get("format_id"))])
+    headline_signal = title_zone_signal(image, TEXT_ZONES["headline_text_zone"][0])
+    passed = (
+        headline_signal["fit_passed"]
+        and headline_signal["contrast_passed"]
+        and average_zone_variance <= 12000.0
+        and average_dark_signal >= 0.020
+        and average_bright_signal >= (0.035 if photo_layout_mode == "photo_first_final_score" else 0.070)
+    )
+    add_check(
+        checks,
+        "premium_editorial_clutter_scan",
+        "Premium editorial clutter scan",
+        passed,
+        (
+            f"final_score_context={final_score_context}; visual_mode={visual_mode or 'missing'}; "
+            f"layout={photo_layout_mode or 'standard'}; format_count={format_count}; "
+            f"title_fit={headline_signal['fit_passed']}; title_contrast={headline_signal['contrast_passed']}; "
+            f"avg_text_variance={average_zone_variance:.1f} (max 12000.0); "
+            f"avg_dark_signal={average_dark_signal:.3f}; avg_bright_signal={average_bright_signal:.3f}. "
+            "Operator should hold or revise if the draft feels busy, cramped, ad-like, or lacks a clear premium editorial hierarchy."
+        ),
+        result="pass_human_review_required" if passed else "hold",
+    )
+
+
 def checklist_rows(checks: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for check in checks:
@@ -799,6 +881,7 @@ def main() -> None:
                 )
         add_photo_first_template_checks(checks, renderer_manifest, image)
         add_player_ledger_readability_check(checks, renderer_manifest, image)
+        add_premium_editorial_clutter_scan(checks, renderer_manifest, image, zone_scores, bright_scores)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
@@ -821,6 +904,7 @@ def main() -> None:
     if Image is None or ImageStat is None or not preview_path:
         add_photo_first_template_checks(checks, renderer_manifest, None)
         add_player_ledger_readability_check(checks, renderer_manifest, None)
+        add_premium_editorial_clutter_scan(checks, renderer_manifest, None, [], [])
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_preview_freshness_check(checks, renderer_manifest, handoff_manifest)
     add_check(
