@@ -3995,7 +3995,12 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
         breaking_next_action_source_reason = clean(next_action_row.get("source_confidence_reason"))
         breaking_next_action_signal_time = clean(next_action_row.get("signal_timestamp_utc"))
         breaking_next_action_retrieval = clean(next_action_row.get("retrieval_method"))
+        breaking_next_action_signal_type = clean(next_action_row.get("public_signal_type"))
         breaking_next_action_limitations = clean(next_action_row.get("public_signal_limitations_cue"))
+        breaking_next_action_confirmation_gap = clean(next_action_row.get("confirmation_gap"))
+        breaking_next_action_manual_artifact = clean(next_action_row.get("manual_confirmation_artifact"))
+        breaking_next_action_manual_row = clean(next_action_row.get("manual_confirmation_row_ref"))
+        breaking_next_action_manual_target = clean(next_action_row.get("manual_confirmation_target"))
         evidence_status = clean(cluster.get("matching_official_evidence_status"))
         evidence_artifacts = clean(cluster.get("matching_official_evidence_artifacts"))
         exact_next = clean(cluster.get("exact_source_or_intake_row_to_open"))
@@ -4068,8 +4073,10 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
                 breaking_next_action_cue,
                 f"domain={clean(next_action_row.get('source_domain_lead'))}" if clean(next_action_row.get("source_domain_lead")) else "",
                 f"source_confidence={breaking_next_action_source_confidence}" if breaking_next_action_source_confidence else "",
+                f"public_signal_type={breaking_next_action_signal_type}" if breaking_next_action_signal_type else "",
                 f"retrieval={breaking_next_action_retrieval}" if breaking_next_action_retrieval else "",
                 f"signal_time={breaking_next_action_signal_time}" if breaking_next_action_signal_time else "",
+                f"manual_row={breaking_next_action_manual_artifact} {breaking_next_action_manual_row}".strip() if breaking_next_action_manual_artifact or breaking_next_action_manual_row else "",
             ]
             next_action_summary = "; ".join(bit for bit in next_action_bits if bit)
             coverage_summary = f"{coverage_summary} | {next_action_summary}" if coverage_summary else next_action_summary
@@ -4110,7 +4117,7 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "band": "yellow",
             "source": "Breaking/public signal queue",
             "title": title,
-            "detail": short(first_present(verification_priority_summary, urgency_review_reason, proof_readiness_summary, ladder_summary, review_walkthrough_next, human_next, proof_cue, confirmation_gap, public_summary, why_urgent), 260),
+            "detail": short(first_present(verification_priority_summary, urgency_review_reason, proof_readiness_summary, ladder_summary, review_walkthrough_next, human_next, proof_cue, breaking_next_action_confirmation_gap, confirmation_gap, public_summary, why_urgent), 260),
             "next_action": short(
                 first_present(breaking_next_action_operator, verification_priority_next, proof_readiness_next, compact_walkthrough_next, compact_human_next, human_next, proof_next, exact_next, default="Open breaking_public_signal_clusters.md, then fill breaking_public_signal_confirmation_intake.csv with the confirmation check."),
                 180,
@@ -4135,9 +4142,9 @@ def breaking_public_signal_board_rows() -> List[Dict[str, str]]:
             "story_opportunity_source_coverage": first_present(coverage_summary, proof_status, evidence_status, default="discovery_source_only"),
             "story_opportunity_confirmation_cue": first_present(verification_priority_status, missing_confirmation_cue, default="needs_official_confirmation"),
             "story_opportunity_asset_cue": "asset_not_required_for_news_packet",
-            "story_opportunity_readiness_note": short(first_present(verification_priority_next, proof_readiness_next, compact_ladder_note, ladder_summary, compact_walkthrough_next, review_walkthrough_next, compact_human_next, human_next, proof_cue, confirmation_gap, row.get("limitations")), 220),
+            "story_opportunity_readiness_note": short(first_present(verification_priority_next, proof_readiness_next, compact_ladder_note, ladder_summary, compact_walkthrough_next, review_walkthrough_next, compact_human_next, human_next, proof_cue, breaking_next_action_confirmation_gap, confirmation_gap, row.get("limitations")), 220),
             "story_opportunity_second_source_id": "",
-            "story_opportunity_second_source_url": first_present(verification_priority_target, story_proof_target, game_fact_target, ladder_urls, review_order_target, score_confirmation_target, named_confirmation_targets, proof_urls, cluster.get("matching_official_evidence_urls"), default=""),
+            "story_opportunity_second_source_url": first_present(breaking_next_action_manual_target, verification_priority_target, story_proof_target, game_fact_target, ladder_urls, review_order_target, score_confirmation_target, named_confirmation_targets, proof_urls, cluster.get("matching_official_evidence_urls"), default=""),
             "story_opportunity_second_source_lane": "official_or_wire_confirmation_required",
             "story_opportunity_second_source_reason": first_present(breaking_next_action_priority, breaking_next_action_source_confidence, verification_priority_status, game_source_freshness_status, game_source_tier, proof_readiness_status, official_corroboration, reputable_corroboration, review_order_status, score_confirmation_status, proof_status, evidence_status, default="Public/community signal cannot confirm a breaking story by itself."),
             "story_opportunity_second_source_action": first_present(breaking_next_action_operator, verification_priority_next, game_source_freshness_cue, proof_readiness_next, review_walkthrough_next, human_next, proof_next, exact_next, default="Fill breaking_public_signal_confirmation_intake.csv with official, wire, primary, or operator-verified confirmation before any story path."),

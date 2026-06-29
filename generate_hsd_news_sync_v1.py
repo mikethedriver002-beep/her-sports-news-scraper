@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 from hsd_run_io import input_candidates, input_path, output_path, write_json as write_run_json, write_text as write_run_text
 
 
-VERSION = "news-sync-v1.9.8-breaking-next-action-trust-cues"
+VERSION = "news-sync-v1.9.9-breaking-confirmation-row-cues"
 
 INPUT_RESULTS_QUEUE = os.environ.get("HSD_RESULTS_GRAPHICS_QUEUE", "results_graphics_queue.md")
 INPUT_RESULTS_RECS = os.environ.get("HSD_RESULTS_RECOMMENDATIONS", "daily_results_recommendations.md")
@@ -206,10 +206,11 @@ BREAKING_SIGNAL_NEXT_ACTION_FIELDS = [
     "source_freshness_age_minutes", "source_domain_lead",
     "why_story_looks_urgent", "source_confidence_tier",
     "source_confidence_reason", "signal_timestamp_utc", "retrieval_method",
-    "public_signal_confidence", "public_signal_count",
-    "public_signal_limitations_cue",
+    "public_signal_type", "public_signal_confidence", "public_signal_count",
+    "public_signal_limitations_cue", "confirmation_gap",
     "evidence_urls", "source_or_intake_row_to_open",
-    "freshness_or_proof_row_to_open", "manual_confirmation_target",
+    "freshness_or_proof_row_to_open", "manual_confirmation_artifact",
+    "manual_confirmation_row_ref", "manual_confirmation_target",
     "operator_next_action", "review_limitations",
     "review_only", "approval_state_change", "source_enablement",
     "publish_action",
@@ -3991,6 +3992,16 @@ def first_breaking_signal_for_cluster(
     return {}
 
 
+def split_manual_confirmation_target(target: str) -> Tuple[str, str]:
+    target = clean(target)
+    if not target:
+        return "breaking_public_signal_confirmation_intake.csv", "matching headline or candidate row"
+    match = re.match(r"(?P<artifact>[^\s]+\.csv)(?:\s+(?P<row_ref>.*))?$", target)
+    if not match:
+        return "breaking_public_signal_confirmation_intake.csv", target
+    return clean(match.group("artifact")), clean(match.group("row_ref")) or "matching row"
+
+
 def breaking_signal_next_action_rows(
     cluster_rows: List[Dict[str, Any]],
     signal_rows: Optional[List[Dict[str, Any]]] = None,
@@ -4008,6 +4019,8 @@ def breaking_signal_next_action_rows(
             cluster.get("score_proof_confirmation_target"),
             cluster.get("named_player_stat_proof_confirmation_targets"),
         )
+        manual_target = clean(cluster.get("verification_priority_target")) or clean(cluster.get("breaking_claim_confirmation_target"))
+        manual_artifact, manual_row_ref = split_manual_confirmation_target(manual_target)
         rows.append(
             {
                 "action_rank": "",
@@ -4027,13 +4040,17 @@ def breaking_signal_next_action_rows(
                 "source_confidence_reason": clean(signal.get("source_confidence_reason")),
                 "signal_timestamp_utc": clean(signal.get("signal_timestamp_utc")) or clean(cluster.get("newest_signal_timestamp_utc")),
                 "retrieval_method": clean(signal.get("retrieval_method")),
+                "public_signal_type": clean(signal.get("public_signal_status")) or clean(cluster.get("public_signal_corroboration")) or "none_captured",
                 "public_signal_confidence": clean(cluster.get("public_signal_confidence")),
                 "public_signal_count": clean(cluster.get("public_signal_count")) or "0",
                 "public_signal_limitations_cue": clean(cluster.get("public_signal_limitations_cue")) or clean(signal.get("limitations")),
+                "confirmation_gap": clean(cluster.get("manual_confirmation_gap")),
                 "evidence_urls": clean(cluster.get("corroboration_evidence_urls")) or clean(cluster.get("matching_official_evidence_urls")) or clean(cluster.get("source_urls")),
                 "source_or_intake_row_to_open": clean(cluster.get("exact_source_or_intake_row_to_open")),
                 "freshness_or_proof_row_to_open": proof_target,
-                "manual_confirmation_target": clean(cluster.get("verification_priority_target")) or clean(cluster.get("breaking_claim_confirmation_target")),
+                "manual_confirmation_artifact": manual_artifact,
+                "manual_confirmation_row_ref": manual_row_ref,
+                "manual_confirmation_target": manual_target,
                 "operator_next_action": breaking_next_action_text(cluster, priority),
                 "review_limitations": "Review-only triage; public/community signal and free public source evidence do not confirm a breaking claim without human operator verification.",
                 "review_only": "true",
@@ -4116,8 +4133,9 @@ def markdown_breaking_signal_next_action(summary: Dict[str, Any], rows: List[Dic
         lines.append(f"   - why_urgent={row.get('why_story_looks_urgent') or 'missing'}")
         lines.append(f"   - tier={row.get('source_confirmation_tier') or 'missing'} | freshness={row.get('source_freshness_status') or 'missing'} | age_min={row.get('source_freshness_age_minutes') or 'n/a'} | domain={row.get('source_domain_lead') or 'missing'}")
         lines.append(f"   - source_confidence={row.get('source_confidence_tier') or 'missing'} | reason={row.get('source_confidence_reason') or 'missing'} | signal_time={row.get('signal_timestamp_utc') or 'missing'} | retrieval={row.get('retrieval_method') or 'missing'}")
-        lines.append(f"   - public_signal={row.get('public_signal_confidence') or 'none'} count={row.get('public_signal_count') or '0'} | limit={row.get('public_signal_limitations_cue') or row.get('review_limitations')}")
-        lines.append(f"   - open={row.get('source_or_intake_row_to_open') or 'missing'} | proof_or_freshness={row.get('freshness_or_proof_row_to_open') or 'missing'} | intake={row.get('manual_confirmation_target') or 'missing'}")
+        lines.append(f"   - public_signal_type={row.get('public_signal_type') or 'missing'} confidence={row.get('public_signal_confidence') or 'none'} count={row.get('public_signal_count') or '0'} | limit={row.get('public_signal_limitations_cue') or row.get('review_limitations')}")
+        lines.append(f"   - confirmation_gap={row.get('confirmation_gap') or 'missing'}")
+        lines.append(f"   - open={row.get('source_or_intake_row_to_open') or 'missing'} | proof_or_freshness={row.get('freshness_or_proof_row_to_open') or 'missing'} | manual_artifact={row.get('manual_confirmation_artifact') or 'missing'} | manual_row={row.get('manual_confirmation_row_ref') or 'missing'}")
         lines.append(f"   - next={row.get('operator_next_action')}")
     if len(rows) > 80:
         lines.append(f"Showing first 80 of {len(rows)} rows. Open `{BREAKING_SIGNAL_NEXT_ACTION_CSV}` for the full board.")
@@ -4809,7 +4827,7 @@ def main() -> None:
             "source_observations": len(all_observations),
             "fact_packets": len(packets),
             "manual_review": len(manual_packets),
-            "publish_ready": len([p for p in packets if p.get("manual_review") != "Yes"]),
+            "manual_review_not_required_packets": len([p for p in packets if p.get("manual_review") != "Yes"]),
             "production_ready": len([p for p in packets if p.get("production_ready") == "Yes"]),
             "packets_with_event_date": len([p for p in packets if clean(p.get("event_date"))]),
             "packets_missing_event_date": len([p for p in packets if not clean(p.get("event_date"))]),
