@@ -130,6 +130,33 @@ def is_merged_to_main(commit: str) -> bool:
     return False
 
 
+def branch_has_merged_pr(branch: str) -> bool:
+    if not branch or branch in {"main", "detached"}:
+        return False
+    code, output = run_command(
+        [
+            "gh",
+            "pr",
+            "list",
+            "--state",
+            "merged",
+            "--head",
+            branch,
+            "--limit",
+            "1",
+            "--json",
+            "number",
+        ]
+    )
+    if code != 0 or not output:
+        return False
+    try:
+        rows = json.loads(output)
+    except json.JSONDecodeError:
+        return False
+    return bool(rows)
+
+
 def collect_git_state() -> dict[str, Any]:
     status_code, status_output = run_command(["git", "status", "--short", "--branch"])
     status_lines = [line for line in status_output.splitlines() if line.strip()] if status_code == 0 else []
@@ -209,6 +236,7 @@ def collect_worktree_branches() -> list[dict[str, str]]:
             row["dirty"] = "true" if dirty_code == 0 and dirty_output else "false"
             row["dirty_count"] = str(len([line for line in dirty_output.splitlines() if line.strip()])) if dirty_code == 0 else "unknown"
         row["merged_to_main"] = "true" if is_merged_to_main(row.get("head", "")) else "false"
+        row["merged_pr"] = "true" if branch_has_merged_pr(row.get("branch", "")) else "false"
     return rows
 
 
@@ -224,6 +252,8 @@ def worktree_hints_by_lane(worktrees: list[dict[str, str]]) -> dict[str, list[di
     for worktree in worktrees:
         branch = worktree.get("branch", "")
         if worktree.get("merged_to_main") == "true":
+            continue
+        if worktree.get("merged_pr") == "true":
             continue
         if not branch or branch == "detached":
             continue
