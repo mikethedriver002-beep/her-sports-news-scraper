@@ -365,6 +365,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_source_map.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_source_map.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_source_map.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json",
     "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
     "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv",
     "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.json",
@@ -749,6 +752,9 @@ ARTIFACTS = [
     ("Graphics", "Action-photo cutout readiness manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json"),
     ("Graphics", "Action-photo candidate taxonomy", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md"),
     ("Graphics", "Action-photo human review checklist", "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md"),
+    ("Graphics", "Action-photo sport/entity source-map board", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md"),
+    ("Graphics", "Action-photo sport/entity source-map board data", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv"),
+    ("Graphics", "Action-photo sport/entity source-map board manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json"),
     ("Graphics", "Hockey/softball asset foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md"),
     ("Graphics", "Hockey/softball foundation coverage index", "data/asset_registry/hockey_softball_foundation_coverage_index.md"),
     ("Graphics", "Hockey/softball foundation coverage index data", "data/asset_registry/hockey_softball_foundation_coverage_index.csv"),
@@ -960,6 +966,9 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/hockey_softball_asset_foundation_report.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/hockey_softball_foundation_coverage_index.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
     "data/asset_registry/hockey_softball_foundation_coverage_index.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
@@ -1854,6 +1863,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     womens_soccer_external_research_manifest = read_json("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.json")
     womens_soccer_external_research_rows = read_csv("data/asset_registry/womens_soccer/external_research/womens_soccer_external_research_intake_board.csv")
     action_photo_intake_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json")
+    action_photo_source_map_board_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json")
     action_photo_operator_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
@@ -2283,6 +2293,16 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_candidate_intake_generated_at": clean(action_photo_intake_manifest.get("generated_at_utc")) if isinstance(action_photo_intake_manifest, dict) else "",
         "action_photo_candidate_intake_rows": as_int(action_photo_intake_manifest.get("intake_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
         "action_photo_candidate_queue_rows": as_int(action_photo_intake_manifest.get("action_photo_candidate_queue_rows")) if isinstance(action_photo_intake_manifest, dict) else 0,
+        "action_photo_source_map_board_status": clean(action_photo_source_map_board_manifest.get("status")) if isinstance(action_photo_source_map_board_manifest, dict) else "",
+        "action_photo_source_map_board_generated_at": clean(action_photo_source_map_board_manifest.get("generated_at_utc")) if isinstance(action_photo_source_map_board_manifest, dict) else "",
+        "action_photo_source_map_board_rows": as_int(action_photo_source_map_board_manifest.get("board_rows")) if isinstance(action_photo_source_map_board_manifest, dict) else 0,
+        "action_photo_source_map_board_blank_operator_decision_rows": as_int(action_photo_source_map_board_manifest.get("blank_operator_decision_rows")) if isinstance(action_photo_source_map_board_manifest, dict) else 0,
+        "action_photo_source_map_board_blank_source_url_rows": as_int(action_photo_source_map_board_manifest.get("blank_source_url_rows")) if isinstance(action_photo_source_map_board_manifest, dict) else 0,
+        "action_photo_source_map_board_download_approved_yes_rows": as_int(action_photo_source_map_board_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_source_map_board_manifest, dict) else 0,
+        "action_photo_source_map_board_asset_downloads": bool(action_photo_source_map_board_manifest.get("asset_downloads")) if isinstance(action_photo_source_map_board_manifest, dict) else False,
+        "action_photo_source_map_board_source_fetching": bool(action_photo_source_map_board_manifest.get("source_fetching")) if isinstance(action_photo_source_map_board_manifest, dict) else False,
+        "action_photo_source_map_board_auto_source_enablement": bool(action_photo_source_map_board_manifest.get("auto_source_enablement")) if isinstance(action_photo_source_map_board_manifest, dict) else False,
+        "action_photo_source_map_board_auto_approval": bool(action_photo_source_map_board_manifest.get("auto_approval")) if isinstance(action_photo_source_map_board_manifest, dict) else False,
         "action_photo_operator_worksheet_status": clean(action_photo_operator_worksheet_manifest.get("status")) if isinstance(action_photo_operator_worksheet_manifest, dict) else "",
         "action_photo_operator_worksheet_generated_at": clean(action_photo_operator_worksheet_manifest.get("generated_at_utc")) if isinstance(action_photo_operator_worksheet_manifest, dict) else "",
         "action_photo_operator_worksheet_rows": as_int(action_photo_operator_worksheet_manifest.get("worksheet_rows")) if isinstance(action_photo_operator_worksheet_manifest, dict) else 0,
@@ -2564,6 +2584,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Women's soccer Europe external research source", "data/asset_registry/womens_soccer/external_research/europe_official_source_map.csv", "Raw advisory European official-source map from ChatGPT Pro."),
             file_shortcut("Women's soccer athlete photo manifest", "data/asset_registry/womens_soccer/womens_soccer_athlete_photo_contact_sheet_manifest.json", "Freshness, warning, and guardrail metadata for the athlete photo contact-sheet packet."),
             file_shortcut("Action-photo candidate intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.md", "Review-only local-download-law starter; generated rows remain blank/no until human return fields exist."),
+            file_shortcut("Action-photo sport/entity source-map board", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md", "Review-only WNBA/NWSL/USWNT/NCAA/tennis/golf discovery board with official/public/newsroom/social/manual lanes; operator fields stay blank/no."),
+            file_shortcut("Action-photo sport/entity source-map data", "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv", "Machine-readable source-map board; no fetching, downloads, source enablement, approvals, or publish-ready state."),
             file_shortcut("Action-photo candidate operator worksheet", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md", "Manual candidate URL, source/right/context, event/date, crop/use-case, reviewer decision, and next-action worksheet; no downloads or approvals."),
             file_shortcut("Action-photo candidate operator worksheet data", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv", "Machine-readable operator worksheet; generated candidate/download/reviewer fields remain blank/no."),
             file_shortcut("Action-photo research packet", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md", "Manual research prompts and source leads only; no image downloads, approvals, or render-ready state."),
@@ -9272,6 +9294,10 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Soccer research P0</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_p0_nwsl_rows', 0)))}</strong></div>
             <div><span>Soccer gray-area leads</span><strong>{html.escape(str(panel.get('womens_soccer_external_research_gray_area_rows', 0)))}</strong></div>
             <div><span>Action-photo intake</span><strong>{html.escape(str(panel.get('action_photo_candidate_intake_rows', 0)))}</strong></div>
+            <div><span>Source-map board</span><strong>{html.escape(str(panel.get('action_photo_source_map_board_rows', 0)))}</strong></div>
+            <div><span>Source-map blanks</span><strong>{html.escape(str(panel.get('action_photo_source_map_board_blank_operator_decision_rows', 0)))}</strong></div>
+            <div><span>Source-map dl yes</span><strong>{html.escape(str(panel.get('action_photo_source_map_board_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>Source-map fetch/approve</span><strong>{html.escape(str(panel.get('action_photo_source_map_board_source_fetching', False)).lower())}/{html.escape(str(panel.get('action_photo_source_map_board_auto_approval', False)).lower())}</strong></div>
             <div><span>Action-photo worksheet</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_rows', 0)))}</strong></div>
             <div><span>Worksheet URL blanks</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_blank_candidate_url_rows', 0)))}</strong></div>
             <div><span>Worksheet reviewer blanks</span><strong>{html.escape(str(panel.get('action_photo_operator_worksheet_blank_reviewer_decision_rows', 0)))}</strong></div>
@@ -10967,6 +10993,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Women's soccer external research generated: {asset_panel.get('womens_soccer_external_research_generated_at') or 'missing'}",
         f"- Action-photo candidate intake rows: {asset_panel.get('action_photo_candidate_intake_rows', 0)}",
         f"- Action-photo candidate queue rows: {asset_panel.get('action_photo_candidate_queue_rows', 0)}",
+        f"- Action-photo sport/entity source-map board rows: {asset_panel.get('action_photo_source_map_board_rows', 0)}",
+        f"- Action-photo sport/entity source-map blank operator-decision rows: {asset_panel.get('action_photo_source_map_board_blank_operator_decision_rows', 0)}",
+        f"- Action-photo sport/entity source-map download-approved yes rows: {asset_panel.get('action_photo_source_map_board_download_approved_yes_rows', 0)}",
+        f"- Action-photo sport/entity source-map fetch/auto-enable/auto-approve: {asset_panel.get('action_photo_source_map_board_source_fetching', False)}/{asset_panel.get('action_photo_source_map_board_auto_source_enablement', False)}/{asset_panel.get('action_photo_source_map_board_auto_approval', False)}",
+        f"- Action-photo sport/entity source-map generated: {asset_panel.get('action_photo_source_map_board_generated_at') or 'missing'}",
         f"- Action-photo operator worksheet rows: {asset_panel.get('action_photo_operator_worksheet_rows', 0)}",
         f"- Action-photo operator worksheet blank candidate-url rows: {asset_panel.get('action_photo_operator_worksheet_blank_candidate_url_rows', 0)}",
         f"- Action-photo operator worksheet blank source-url rows: {asset_panel.get('action_photo_operator_worksheet_blank_source_url_rows', 0)}",
