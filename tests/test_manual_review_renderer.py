@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.54.0-lower-third-editorial-rail"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.55.0-action-photo-readiness-contract"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -147,6 +147,12 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["content_module"]["hero_image_source_class"] == "no_local_hero_image"
     assert manifest["content_module"]["action_photo_hero_contract"] == "manual_review_action_photo_not_available_no_download"
     assert manifest["content_module"]["action_photo_candidate_status"] == "not_available_to_renderer"
+    assert manifest["content_module"]["action_photo_readiness_contract"] == "review_draft_ok_premium_final_score_needs_action_photo_candidate"
+    assert manifest["content_module"]["action_photo_slot_expectation"] == "future_local_action_photo_candidate_only_after_manual_intake_no_download"
+    assert "identity_confidence" in manifest["content_module"]["action_photo_subject_metadata_required"]
+    assert "score_text_clearance" in manifest["content_module"]["action_photo_crop_metadata_required"]
+    assert "premium final-score editorial needs" in manifest["content_module"]["action_photo_operator_review_cue"]
+    assert manifest["content_module"]["headshot_bridge_status"] == "not_in_use_no_local_person_image"
     assert manifest["content_module"]["score_layout_contract"] == "logo_first_editorial_score_spine_no_dashboard_panels"
     assert manifest["content_module"]["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles"
     assert "dashboard card" in manifest["content_module"]["anti_dashboard_review_cue"]
@@ -224,6 +230,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_editorial_depth_bridge" in manifest["render_background_cues"]
     assert "photo_first_lower_third_score_shelf" in manifest["render_background_cues"]
     assert "photo_first_quiet_badge_pin" in manifest["render_background_cues"]
+    assert "action_photo_readiness_visual_qa" in manifest["render_background_cues"]
+    assert "headshot_bridge_review_draft_only" in manifest["render_background_cues"]
+    assert "premium_final_score_action_photo_required" in manifest["render_background_cues"]
     assert "logo_first_editorial_score_spine" in manifest["render_background_cues"]
     assert "logo_first_no_dashboard_card_panels" in manifest["render_background_cues"]
     assert "lower_third_editorial_rail" in manifest["render_background_cues"]
@@ -302,6 +311,12 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["hero_image_mode"] == "logo_score_fallback_no_person_image"
     assert visual_board["action_photo_hero_contract"] == "manual_review_action_photo_not_available_no_download"
     assert visual_board["action_photo_candidate_status"] == "not_available_to_renderer"
+    assert visual_board["action_photo_readiness_contract"] == "review_draft_ok_premium_final_score_needs_action_photo_candidate"
+    assert visual_board["action_photo_slot_expectation"] == "future_local_action_photo_candidate_only_after_manual_intake_no_download"
+    assert "identity_confidence" in visual_board["action_photo_subject_metadata_required"]
+    assert "score_text_clearance" in visual_board["action_photo_crop_metadata_required"]
+    assert "premium final-score editorial needs" in visual_board["action_photo_operator_review_cue"]
+    assert visual_board["headshot_bridge_status"] == "not_in_use_no_local_person_image"
     assert visual_board["focal_priority"] == "non_athlete_fallback"
     assert visual_board["athlete_focal_contract"] == "logo_score_fallback_not_athlete_led"
     assert visual_board["fallback_comparison_status"] == "fallback_active_label_no_athlete_photo"
@@ -315,6 +330,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert all(item["review_only"] is True for item in visual_board["rows"])
     assert all(item["publish_ready"] is False for item in visual_board["rows"])
     assert all(item["automated_qa_status"] == "preview_qa_pass" for item in visual_board["rows"])
+    assert all(item["action_photo_readiness_contract"] == "review_draft_ok_premium_final_score_needs_action_photo_candidate" for item in visual_board["rows"])
+    assert all("premium final-score editorial needs" in item["action_photo_operator_review_cue"] for item in visual_board["rows"])
+    assert all(item["headshot_bridge_status"] == "not_in_use_no_local_person_image" for item in visual_board["rows"])
     assert all(item["focal_priority"] == "non_athlete_fallback" for item in visual_board["rows"])
     assert all(item["fallback_comparison_status"] == "fallback_active_label_no_athlete_photo" for item in visual_board["rows"])
     assert all(item["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles" for item in visual_board["rows"])
@@ -367,6 +385,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Anti-dashboard contract: `open_score_spine_no_nested_cards_no_metric_tiles`" in report
     assert "Anti-dashboard review cue:" in report
     assert "Lower-third contract: `editorial_stat_rail_no_heavy_card_container`" in report
+    assert "Action-photo readiness: contract=`review_draft_ok_premium_final_score_needs_action_photo_candidate`" in report
+    assert "Action-photo metadata: subject=`entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use`" in report
+    assert "Action-photo review cue:" in report
     assert "Template fit reason: Photo-first route blocked" in report
     assert "visual_mode=`no_photo_premium_result`" in report
     assert "APPROVED LOGO" in report or "LOGO REVIEW" in report
@@ -383,6 +404,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Hero image mode: `logo_score_fallback_no_person_image`" in board
     assert "Action-photo hero contract: `manual_review_action_photo_not_available_no_download`" in board
+    assert "Action-photo readiness contract: `review_draft_ok_premium_final_score_needs_action_photo_candidate`" in board
+    assert "Action-photo subject metadata required: `entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use`" in board
+    assert "Headshot bridge status: `not_in_use_no_local_person_image`" in board
     assert "Focal priority: `non_athlete_fallback`" in board
     assert "Athlete focal contract: `logo_score_fallback_not_athlete_led`" in board
     assert "Fallback comparison: `fallback_active_label_no_athlete_photo`" in board
@@ -395,7 +419,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Anti-dashboard contract: `open_score_spine_no_nested_cards_no_metric_tiles`" in board
     assert "Lower-third contract: `editorial_stat_rail_no_heavy_card_container`" in board
     assert "boxed scoreboard" in board or "dashboard card" in board
-    assert "manual visual QA" in board or "hold if an athlete-led asset" in board
+    assert "manual QA/intake" in board or "athlete-led action-photo candidate" in board
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
 
 

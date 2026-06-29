@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.54.0-lower-third-editorial-rail"
+VERSION = "hsd-manual-review-renderer-v1.55.0-action-photo-readiness-contract"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -75,7 +75,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
     "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,"
     "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,"
-    "anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
+    "action_photo_readiness_visual_qa,headshot_bridge_review_draft_only,"
+    "premium_final_score_action_photo_required,anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -3988,6 +3989,15 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     hero_image_source_class = "no_local_hero_image"
     action_photo_hero_contract = "manual_review_action_photo_not_available_no_download"
     action_photo_candidate_status = "not_available_to_renderer"
+    action_photo_readiness_contract = "review_draft_ok_premium_final_score_needs_action_photo_candidate"
+    action_photo_slot_expectation = "future_local_action_photo_candidate_only_after_manual_intake_no_download"
+    action_photo_subject_metadata_required = "entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use"
+    action_photo_crop_metadata_required = "subject_bbox_or_focus_zone,full_body_or_in_game_context,crop_safety,background_clearance,score_text_clearance"
+    action_photo_operator_review_cue = (
+        "No action-photo candidate is available to the renderer; this logo/headshot fallback may be reviewed as a draft, "
+        "but premium final-score editorial needs a manually cleared action-photo candidate with subject and crop metadata."
+    )
+    headshot_bridge_status = "not_in_use_no_local_person_image"
     hero_silhouette_mode = "no_local_person_image"
     hero_cutout_readiness = "cutout_not_available_no_download"
     hero_alpha_mode = "no_local_hero_asset"
@@ -4018,6 +4028,15 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         grid_breaking_hero_contract = clean(cutout_contract.get("grid_breaking_hero_contract"))
         action_photo_hero_contract = "manual_review_action_photo_can_replace_headshot_when_local_approved"
         action_photo_candidate_status = "pending_manual_action_photo_candidate"
+        action_photo_readiness_contract = "headshot_bridge_review_draft_ok_action_photo_candidate_required_for_premium_final_score"
+        action_photo_slot_expectation = "replace_headshot_bridge_with_manually_cleared_local_action_photo_candidate"
+        action_photo_subject_metadata_required = "entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use,source_attribution"
+        action_photo_crop_metadata_required = "subject_bbox_or_focus_zone,action_context,limb_clearance,face_visibility,score_text_clearance,safe_crop_notes"
+        action_photo_operator_review_cue = (
+            "Approved local headshot may bridge review drafts only; hold premium final-score editorial until a manually cleared "
+            "action-photo candidate proves subject identity, rights class, action context, and crop/text clearance."
+        )
+        headshot_bridge_status = "approved_local_headshot_review_draft_only_not_premium_final_score"
         template_fit_reason = "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing."
         if layout_mode == "square_photo_first_score_panel":
             visual_mode = "photo_first_performer_square" if is_player_stat else "photo_first_result_square"
@@ -4051,6 +4070,12 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "grid_breaking_hero_contract": grid_breaking_hero_contract,
         "action_photo_hero_contract": action_photo_hero_contract,
         "action_photo_candidate_status": action_photo_candidate_status,
+        "action_photo_readiness_contract": action_photo_readiness_contract,
+        "action_photo_slot_expectation": action_photo_slot_expectation,
+        "action_photo_subject_metadata_required": action_photo_subject_metadata_required,
+        "action_photo_crop_metadata_required": action_photo_crop_metadata_required,
+        "action_photo_operator_review_cue": action_photo_operator_review_cue,
+        "headshot_bridge_status": headshot_bridge_status,
         "template_fit_reason": template_fit_reason,
     }
 
@@ -4221,6 +4246,12 @@ def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
         "hero_image_source_class": clean(format_row.get("hero_image_source_class")) or "not_recorded",
         "action_photo_hero_contract": clean(format_row.get("action_photo_hero_contract")) or "not_recorded",
         "action_photo_candidate_status": clean(format_row.get("action_photo_candidate_status")) or "not_recorded",
+        "action_photo_readiness_contract": clean(format_row.get("action_photo_readiness_contract")) or "not_recorded",
+        "action_photo_slot_expectation": clean(format_row.get("action_photo_slot_expectation")) or "not_recorded",
+        "action_photo_subject_metadata_required": clean(format_row.get("action_photo_subject_metadata_required")) or "not_recorded",
+        "action_photo_crop_metadata_required": clean(format_row.get("action_photo_crop_metadata_required")) or "not_recorded",
+        "action_photo_operator_review_cue": clean(format_row.get("action_photo_operator_review_cue")) or "not_recorded",
+        "headshot_bridge_status": clean(format_row.get("headshot_bridge_status")) or "not_recorded",
         "focal_entity_type": clean(format_row.get("focal_entity_type")) or "not_recorded",
         "focal_priority": clean(format_row.get("focal_priority")) or "not_recorded",
         "athlete_focal_contract": clean(format_row.get("athlete_focal_contract")) or "not_recorded",
@@ -4243,11 +4274,12 @@ def visual_comparison_next_step(content_module: Dict[str, Any]) -> str:
     if clean(content_module.get("visual_mode")).startswith("photo_first"):
         return (
             "Open the contact sheet first, compare athlete focal point, score hierarchy, stat strip, and square crop against "
-            "the reference mockup/layout paths, verify the score rail does not read like a dashboard widget, then record approve/hold/revise in the manual visual QA intake."
+            "the reference mockup/layout paths, verify the score rail does not read like a dashboard widget, confirm the headshot bridge is review-draft-only, "
+            "then record approve/hold/revise in the manual visual QA intake."
         )
     return (
         "Open the contact sheet first, confirm the no-photo fallback is intentional, compare score hierarchy and reference "
-        "paths, then hold if an athlete-led asset/stat context should be required or if the score treatment reads like a dashboard card."
+        "paths, then hold if an athlete-led action-photo candidate should be required for premium final-score editorial or if the score treatment reads like a dashboard card."
     )
 
 
@@ -4343,6 +4375,11 @@ def write_visual_comparison_board(
     formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
     content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
     rows = [visual_comparison_row(row) for row in formats]
+    primary_row = next((row for row in rows if clean(row.get("format_id")) == "ig_feed_4x5"), rows[0] if rows else {})
+
+    def contract_value(key: str, default: str = "not_recorded") -> str:
+        return clean(content_module.get(key)) or clean(primary_row.get(key)) or default
+
     contact_path = OUT_REVIEW_DRAFTS / "draft_preview_visual_contact_sheet.png"
     contact_sheet = write_visual_comparison_contact_sheet(rows, content_module, contact_path)
     next_step = visual_comparison_next_step(content_module)
@@ -4358,23 +4395,29 @@ def write_visual_comparison_board(
         "preview_freshness_status": clean(freshness.get("preview_freshness_status")),
         "renderer_generated_at_utc": generated_at_utc,
         "source_handoff_generated_at_utc": clean(source_manifest.get("generated_at_utc")),
-        "visual_mode": clean(content_module.get("visual_mode")) or "not_selected",
+        "visual_mode": contract_value("visual_mode", "not_selected"),
         "background_style": clean(render_result.get("render_background_style")) or RENDER_BACKGROUND_STYLE,
-        "hero_asset_required": clean(content_module.get("hero_asset_required")) or "not_recorded",
-        "hero_image_mode": clean(content_module.get("hero_image_mode")) or "not_recorded",
-        "hero_image_source_class": clean(content_module.get("hero_image_source_class")) or "not_recorded",
-        "action_photo_hero_contract": clean(content_module.get("action_photo_hero_contract")) or "not_recorded",
-        "action_photo_candidate_status": clean(content_module.get("action_photo_candidate_status")) or "not_recorded",
-        "focal_entity_type": clean(content_module.get("focal_entity_type")) or "not_recorded",
-        "focal_priority": clean(content_module.get("focal_priority")) or "not_recorded",
-        "athlete_focal_contract": clean(content_module.get("athlete_focal_contract")) or "not_recorded",
-        "fallback_comparison_status": clean(content_module.get("fallback_comparison_status")) or "not_recorded",
-        "fallback_comparison_note": clean(content_module.get("fallback_comparison_note")) or "not_recorded",
-        "score_layout_contract": clean(content_module.get("score_layout_contract")) or "not_recorded",
-        "anti_dashboard_contract": clean(content_module.get("anti_dashboard_contract")) or "not_recorded",
-        "anti_dashboard_review_cue": clean(content_module.get("anti_dashboard_review_cue")) or "not_recorded",
-        "lower_third_contract": clean(content_module.get("lower_third_contract")) or "not_recorded",
-        "lower_third_review_cue": clean(content_module.get("lower_third_review_cue")) or "not_recorded",
+        "hero_asset_required": contract_value("hero_asset_required"),
+        "hero_image_mode": contract_value("hero_image_mode"),
+        "hero_image_source_class": contract_value("hero_image_source_class"),
+        "action_photo_hero_contract": contract_value("action_photo_hero_contract"),
+        "action_photo_candidate_status": contract_value("action_photo_candidate_status"),
+        "action_photo_readiness_contract": contract_value("action_photo_readiness_contract"),
+        "action_photo_slot_expectation": contract_value("action_photo_slot_expectation"),
+        "action_photo_subject_metadata_required": contract_value("action_photo_subject_metadata_required"),
+        "action_photo_crop_metadata_required": contract_value("action_photo_crop_metadata_required"),
+        "action_photo_operator_review_cue": contract_value("action_photo_operator_review_cue"),
+        "headshot_bridge_status": contract_value("headshot_bridge_status"),
+        "focal_entity_type": contract_value("focal_entity_type"),
+        "focal_priority": contract_value("focal_priority"),
+        "athlete_focal_contract": contract_value("athlete_focal_contract"),
+        "fallback_comparison_status": contract_value("fallback_comparison_status"),
+        "fallback_comparison_note": contract_value("fallback_comparison_note"),
+        "score_layout_contract": contract_value("score_layout_contract"),
+        "anti_dashboard_contract": contract_value("anti_dashboard_contract"),
+        "anti_dashboard_review_cue": contract_value("anti_dashboard_review_cue"),
+        "lower_third_contract": contract_value("lower_third_contract"),
+        "lower_third_review_cue": contract_value("lower_third_review_cue"),
         "next_manual_review_step": next_step,
         "rows": rows,
     }
@@ -4406,6 +4449,12 @@ def write_visual_comparison_board(
         f"- Hero image mode: `{board['hero_image_mode']}`",
         f"- Action-photo hero contract: `{board['action_photo_hero_contract']}`",
         f"- Action-photo candidate status: `{board['action_photo_candidate_status']}`",
+        f"- Action-photo readiness contract: `{board['action_photo_readiness_contract']}`",
+        f"- Action-photo slot expectation: `{board['action_photo_slot_expectation']}`",
+        f"- Action-photo subject metadata required: `{board['action_photo_subject_metadata_required']}`",
+        f"- Action-photo crop metadata required: `{board['action_photo_crop_metadata_required']}`",
+        f"- Action-photo review cue: {board['action_photo_operator_review_cue']}",
+        f"- Headshot bridge status: `{board['headshot_bridge_status']}`",
         f"- Focal entity: `{board['focal_entity_type']}`",
         f"- Focal priority: `{board['focal_priority']}`",
         f"- Athlete focal contract: `{board['athlete_focal_contract']}`",
@@ -4435,6 +4484,9 @@ def write_visual_comparison_board(
                     f"- Hero asset status: `{clean(row.get('hero_asset_required'))}`",
                     f"- Hero image mode: `{clean(row.get('hero_image_mode'))}`",
                     f"- Action-photo hero contract: `{clean(row.get('action_photo_hero_contract'))}`",
+                    f"- Action-photo readiness contract: `{clean(row.get('action_photo_readiness_contract'))}`",
+                    f"- Action-photo review cue: {clean(row.get('action_photo_operator_review_cue'))}",
+                    f"- Headshot bridge status: `{clean(row.get('headshot_bridge_status'))}`",
                     f"- Focal priority: `{clean(row.get('focal_priority'))}`",
                     f"- Athlete focal contract: `{clean(row.get('athlete_focal_contract'))}`",
                     f"- Fallback comparison: `{clean(row.get('fallback_comparison_status'))}`",
@@ -4585,12 +4637,23 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
     template = render_result.get("template") if isinstance(render_result.get("template"), dict) else {}
     reference_pack = render_result.get("reference_pack") if isinstance(render_result.get("reference_pack"), dict) else {}
     formats = render_result.get("format_options") if isinstance(render_result.get("format_options"), list) else []
+    primary_format = next(
+        (
+            row for row in formats
+            if isinstance(row, dict) and (row.get("primary") is True or clean(row.get("format_id")) == "ig_feed_4x5")
+        ),
+        formats[0] if formats and isinstance(formats[0], dict) else {},
+    )
     preview_qa = render_result.get("generated_preview_qa") if isinstance(render_result.get("generated_preview_qa"), list) else []
     slots = render_result.get("asset_slots") if isinstance(render_result.get("asset_slots"), list) else []
     content_module = render_result.get("content_module") if isinstance(render_result.get("content_module"), dict) else {}
     team_profiles = render_result.get("team_visual_profiles") if isinstance(render_result.get("team_visual_profiles"), list) else []
     visual_comparison = render_result.get("visual_comparison_board") if isinstance(render_result.get("visual_comparison_board"), dict) else {}
     public_canvas_text = render_result.get("public_render_canvas_text") if isinstance(render_result.get("public_render_canvas_text"), list) else []
+
+    def module_value(key: str, default: str = "n/a") -> str:
+        return clean(content_module.get(key)) or clean(primary_format.get(key)) or default
+
     lines = [
         "# HSD Manual Review Renderer",
         "",
@@ -4620,17 +4683,20 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Template family: `{clean(template.get('template_family')) or 'not_selected'}`",
         f"- Reference pack: `{clean(reference_pack.get('pack_id')) or 'not_used'}`",
         f"- Content module: `{clean(content_module.get('content_module_mode')) or 'not_selected'}` / `{clean(content_module.get('content_module_status')) or 'not_run'}`",
-        f"- Visual mode: `{clean(content_module.get('visual_mode')) or 'not_selected'}` focal_entity=`{clean(content_module.get('focal_entity_type')) or 'n/a'}` hero_asset_required=`{clean(content_module.get('hero_asset_required')) or 'n/a'}`",
-        f"- Visual contract: score_lock=`{clean(content_module.get('score_lock_variant')) or 'n/a'}` proof_strip=`{clean(content_module.get('proof_strip_variant')) or 'n/a'}` copy_unlock=`{clean(content_module.get('copy_unlock_state')) or 'n/a'}` background=`{clean(content_module.get('background_family')) or clean(render_result.get('render_background_style')) or 'n/a'}`",
-        f"- Hero image contract: mode=`{clean(content_module.get('hero_image_mode')) or 'n/a'}` source=`{clean(content_module.get('hero_image_source_class')) or 'n/a'}` action_photo=`{clean(content_module.get('action_photo_hero_contract')) or 'n/a'}` status=`{clean(content_module.get('action_photo_candidate_status')) or 'n/a'}`",
-        f"- Athlete focal contract: priority=`{clean(content_module.get('focal_priority')) or 'n/a'}` contract=`{clean(content_module.get('athlete_focal_contract')) or 'n/a'}` fallback=`{clean(content_module.get('fallback_comparison_status')) or 'n/a'}`",
-        f"- Fallback comparison note: {clean(content_module.get('fallback_comparison_note')) or 'n/a'}",
-        f"- Score layout contract: `{clean(content_module.get('score_layout_contract')) or 'n/a'}`",
-        f"- Anti-dashboard contract: `{clean(content_module.get('anti_dashboard_contract')) or 'n/a'}`",
-        f"- Anti-dashboard review cue: {clean(content_module.get('anti_dashboard_review_cue')) or 'n/a'}",
-        f"- Lower-third contract: `{clean(content_module.get('lower_third_contract')) or 'n/a'}`",
-        f"- Lower-third review cue: {clean(content_module.get('lower_third_review_cue')) or 'n/a'}",
-        f"- Hero silhouette contract: mode=`{clean(content_module.get('hero_silhouette_mode')) or 'n/a'}` cutout=`{clean(content_module.get('hero_cutout_readiness')) or 'n/a'}` grid=`{clean(content_module.get('grid_breaking_hero_contract')) or 'n/a'}`",
+        f"- Visual mode: `{module_value('visual_mode', 'not_selected')}` focal_entity=`{module_value('focal_entity_type')}` hero_asset_required=`{module_value('hero_asset_required')}`",
+        f"- Visual contract: score_lock=`{module_value('score_lock_variant')}` proof_strip=`{module_value('proof_strip_variant')}` copy_unlock=`{module_value('copy_unlock_state')}` background=`{module_value('background_family', clean(render_result.get('render_background_style')) or 'n/a')}`",
+        f"- Hero image contract: mode=`{module_value('hero_image_mode')}` source=`{module_value('hero_image_source_class')}` action_photo=`{module_value('action_photo_hero_contract')}` status=`{module_value('action_photo_candidate_status')}`",
+        f"- Action-photo readiness: contract=`{module_value('action_photo_readiness_contract')}` slot=`{module_value('action_photo_slot_expectation')}` headshot_bridge=`{module_value('headshot_bridge_status')}`",
+        f"- Action-photo metadata: subject=`{module_value('action_photo_subject_metadata_required')}` crop=`{module_value('action_photo_crop_metadata_required')}`",
+        f"- Action-photo review cue: {module_value('action_photo_operator_review_cue')}",
+        f"- Athlete focal contract: priority=`{module_value('focal_priority')}` contract=`{module_value('athlete_focal_contract')}` fallback=`{module_value('fallback_comparison_status')}`",
+        f"- Fallback comparison note: {module_value('fallback_comparison_note')}",
+        f"- Score layout contract: `{module_value('score_layout_contract')}`",
+        f"- Anti-dashboard contract: `{module_value('anti_dashboard_contract')}`",
+        f"- Anti-dashboard review cue: {module_value('anti_dashboard_review_cue')}",
+        f"- Lower-third contract: `{module_value('lower_third_contract')}`",
+        f"- Lower-third review cue: {module_value('lower_third_review_cue')}",
+        f"- Hero silhouette contract: mode=`{module_value('hero_silhouette_mode')}` cutout=`{module_value('hero_cutout_readiness')}` grid=`{module_value('grid_breaking_hero_contract')}`",
         f"- Blueprint style contract: background=`{RENDER_BACKGROUND_STYLE}` cues=`photo_first_blueprint_depth_layers, photo_first_procedural_court_grain, photo_first_asymmetric_score_treatment, photo_first_safe_zone_enforced`",
         f"- Template fit reason: {clean(content_module.get('template_fit_reason')) or 'n/a'}",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
