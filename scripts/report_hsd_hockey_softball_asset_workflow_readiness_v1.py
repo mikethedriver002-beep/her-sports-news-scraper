@@ -35,6 +35,9 @@ SOURCE_VERIFICATION_CHECKLIST_JSON = Path("data/asset_registry/hockey_softball_s
 INTAKE_READINESS_SUMMARY_MD = Path("data/asset_registry/hockey_softball_intake_readiness_summary.md")
 INTAKE_READINESS_SUMMARY_CSV = Path("data/asset_registry/hockey_softball_intake_readiness_summary.csv")
 INTAKE_READINESS_SUMMARY_JSON = Path("data/asset_registry/hockey_softball_intake_readiness_summary.json")
+SOURCE_MAP_BOARD_MD = Path("data/asset_registry/hockey_softball_source_map_board.md")
+SOURCE_MAP_BOARD_CSV = Path("data/asset_registry/hockey_softball_source_map_board.csv")
+SOURCE_MAP_BOARD_JSON = Path("data/asset_registry/hockey_softball_source_map_board.json")
 REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
 REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
 REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_triage.json")
@@ -269,6 +272,50 @@ INTAKE_READINESS_SUMMARY_FIELDS = [
     "candidate_state_change",
     "asset_downloads",
     "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+SOURCE_MAP_BOARD_FIELDS = [
+    "source_map_order",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "source_lane",
+    "asset_domain",
+    "source_category",
+    "source_tier",
+    "source_type",
+    "source_url_or_search_macro",
+    "source_domain",
+    "existing_source_priority_rows",
+    "source_priority_filter",
+    "evidence_use",
+    "source_confidence",
+    "operator_verify_required",
+    "roster_truth_limit",
+    "image_action_photo_fit",
+    "known_limitations",
+    "next_operator_action",
+    "manual_return_intake_hint",
+    "allowed_for_download_approved_yes",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "logo_writes",
+    "segmentation_writes",
     "approved_marker_writes",
     "publish_ready",
     "auto_approval",
@@ -741,6 +788,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`",
         "- Source verification checklist: `data/asset_registry/hockey_softball_source_verification_checklist.md`",
         "- Intake readiness summary: `data/asset_registry/hockey_softball_intake_readiness_summary.md`",
+        "- Source map board: `data/asset_registry/hockey_softball_source_map_board.md`",
         "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
@@ -779,6 +827,9 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Intake readiness groups: `{report['totals']['intake_readiness_summary_groups']}`",
         f"- Intake readiness rows covered: `{report['totals']['intake_readiness_rows_covered']}`",
         f"- Intake readiness unsafe rows: `{report['totals']['intake_readiness_unsafe_guardrail_rows']}`",
+        f"- Source map rows: `{report['totals']['source_map_rows']}`",
+        f"- Source map download-approved yes rows: `{report['totals']['source_map_download_approved_yes_rows']}`",
+        f"- Source map allowed-for-download rows: `{report['totals']['source_map_allowed_for_download_approved_yes_rows']}`",
         f"- Review triage rows: `{report['totals']['review_triage_rows']}`",
         f"- Review triage operator-verify source rows: `{report['totals']['review_triage_operator_verify_required_source_rows']}`",
         f"- Review triage download-approved yes rows: `{report['totals']['review_triage_download_approved_yes_rows']}`",
@@ -1718,6 +1769,274 @@ def render_intake_readiness_summary(rows: list[Dict[str, str]], generated_at: st
     return "\n".join(lines) + "\n"
 
 
+def source_map_static_lane(sport_family: str, lane: str) -> Dict[str, str]:
+    if sport_family == "womens_hockey":
+        values = {
+            "official_action_photo_gallery_search": {
+                "asset_domain": "action_photo",
+                "source_category": "official_league_gallery",
+                "source_tier": "P0_OFFICIAL_FREE_PUBLIC",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" PWHL "[team]" gallery OR recap site:thepwhl.com',
+                "source_domain": "www.thepwhl.com",
+                "evidence_use": "PWHL event/gallery lead; player/team/date context and official caption clues",
+                "source_confidence": "medium_high_after_manual_url_review",
+                "image_action_photo_fit": "potential_action_photo_candidate_discovery",
+            },
+            "reputable_news_editorial_search": {
+                "asset_domain": "action_photo",
+                "source_category": "editorial_wire_or_reputable_newsroom",
+                "source_tier": "P1_RIGHTS_SENSITIVE_PUBLIC_REVIEW",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" PWHL game action Getty OR AP OR Reuters OR Imagn OR Ice Garden OR Inside the Rink',
+                "source_domain": "gettyimages.com;apnews.com;reuters.com;imagn.com;theicegarden.com;insidetherink.com",
+                "evidence_use": "caption/event/photographer/context lead only; rights-sensitive manual review required",
+                "source_confidence": "medium_after_manual_source_review",
+                "image_action_photo_fit": "potential_high_action_fit_if_identity_and_rights_are_clear",
+            },
+            "official_social_discovery": {
+                "asset_domain": "action_photo",
+                "source_category": "official_social",
+                "source_tier": "P2_DISCOVERY_ONLY",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" PWHL "[team]" site:instagram.com OR site:x.com OR site:tiktok.com',
+                "source_domain": "instagram.com;x.com;tiktok.com",
+                "evidence_use": "official account discovery lead and caption context only",
+                "source_confidence": "low_until_account_and_context_verified",
+                "image_action_photo_fit": "discovery_only_not_download_or_approval",
+            },
+            "gray_area_public_parking_lot": {
+                "asset_domain": "action_photo",
+                "source_category": "gray_area_public_lead",
+                "source_tier": "P5_PARK_ONLY",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" PWHL action photo public gallery',
+                "source_domain": "operator_review_required",
+                "evidence_use": "parking lot for possibly useful public leads when official/reputable coverage is thin",
+                "source_confidence": "low_gray_area_lead_only",
+                "image_action_photo_fit": "park_only_until_stronger_source_found",
+            },
+        }
+    else:
+        values = {
+            "official_action_photo_gallery_search": {
+                "asset_domain": "action_photo",
+                "source_category": "official_league_gallery",
+                "source_tier": "P0_OFFICIAL_FREE_PUBLIC",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" AUSL softball action gallery OR recap site:theausl.com OR site:auprosports.com',
+                "source_domain": "theausl.com;auprosports.com",
+                "evidence_use": "AUSL/Athletes Unlimited event-gallery lead; player/team/session context and caption clues",
+                "source_confidence": "medium_high_after_manual_url_review",
+                "image_action_photo_fit": "potential_action_photo_candidate_discovery",
+            },
+            "reputable_news_editorial_search": {
+                "asset_domain": "action_photo",
+                "source_category": "editorial_wire_or_reputable_newsroom",
+                "source_tier": "P1_RIGHTS_SENSITIVE_PUBLIC_REVIEW",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" AUSL softball action Getty OR AP OR Reuters OR Imagn OR local sports gallery',
+                "source_domain": "gettyimages.com;apnews.com;reuters.com;imagn.com;operator_review_required",
+                "evidence_use": "caption/event/photographer/context lead only; rights-sensitive manual review required",
+                "source_confidence": "medium_after_manual_source_review",
+                "image_action_photo_fit": "potential_high_action_fit_if_identity_and_rights_are_clear",
+            },
+            "official_social_discovery": {
+                "asset_domain": "action_photo",
+                "source_category": "official_social",
+                "source_tier": "P2_DISCOVERY_ONLY",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" AUSL softball site:instagram.com OR site:x.com OR site:tiktok.com',
+                "source_domain": "instagram.com;x.com;tiktok.com",
+                "evidence_use": "official account discovery lead and caption context only",
+                "source_confidence": "low_until_account_and_context_verified",
+                "image_action_photo_fit": "discovery_only_not_download_or_approval",
+            },
+            "gray_area_public_parking_lot": {
+                "asset_domain": "action_photo",
+                "source_category": "gray_area_public_lead",
+                "source_tier": "P5_PARK_ONLY",
+                "source_type": "search_macro",
+                "source_url_or_search_macro": '"[athlete]" AUSL softball action photo public gallery',
+                "source_domain": "operator_review_required",
+                "evidence_use": "parking lot for possibly useful public leads when official/reputable coverage is thin",
+                "source_confidence": "low_gray_area_lead_only",
+                "image_action_photo_fit": "park_only_until_stronger_source_found",
+            },
+        }
+    return values[lane]
+
+
+def source_map_guardrail_fields() -> Dict[str, str]:
+    return {
+        "allowed_for_download_approved_yes": "false",
+        "download_approved": "no",
+        "source_url": "",
+        "entity_id": "",
+        "rights_class": "",
+        "identity_confidence": "",
+        "intended_review_only_use": "",
+        "review_only": "true",
+        "approval_state_change": "false",
+        "candidate_state_change": "false",
+        "asset_downloads": "false",
+        "headshot_writes": "false",
+        "logo_writes": "false",
+        "segmentation_writes": "false",
+        "approved_marker_writes": "false",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+
+
+def source_map_board_rows(source_priority: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    rows: list[Dict[str, str]] = []
+    order = 1
+    for sport_family in ["womens_hockey", "softball"]:
+        sport_rows = [row for row in source_priority if clean(row.get("sport_family")) == sport_family]
+        sport_label = SPORTS[sport_family]["sport_label"]
+        league_name = SPORTS[sport_family]["league_label"]
+        logo_rows = [row for row in sport_rows if clean(row.get("asset_domain")) == "logo"]
+        athlete_rows = [row for row in sport_rows if clean(row.get("asset_domain")) == "athlete_photo"]
+        logo_domains = sorted({clean(row.get("source_domain")) for row in logo_rows if clean(row.get("source_domain"))})
+        athlete_domains = sorted({clean(row.get("source_domain")) for row in athlete_rows if clean(row.get("source_domain"))})
+        logo_url = clean(logo_rows[0].get("source_candidate_url")) if logo_rows else ""
+        athlete_url = clean(athlete_rows[0].get("source_candidate_url")) if athlete_rows else ""
+        rows.append(
+            {
+                "source_map_order": f"SM{order:02d}",
+                "sport_family": sport_family,
+                "sport_label": sport_label,
+                "league_name": league_name,
+                "source_lane": "official_logo_league_team_pages",
+                "asset_domain": "logo",
+                "source_category": "official_league_or_team_page",
+                "source_tier": "P0_OFFICIAL_FREE_PUBLIC",
+                "source_type": "existing_source_priority_rows",
+                "source_url_or_search_macro": logo_url,
+                "source_domain": ";".join(logo_domains),
+                "existing_source_priority_rows": str(len(logo_rows)),
+                "source_priority_filter": f"sport_family={sport_family};asset_domain=logo",
+                "evidence_use": "league/team mark identity source candidate; not a local logo asset",
+                "source_confidence": "high_after_manual_logo_source_review",
+                "operator_verify_required": "yes",
+                "roster_truth_limit": "logo_identity_only_not_roster_truth",
+                "image_action_photo_fit": "not_action_photo",
+                "known_limitations": "source page is not a downloadable asset and does not approve renderer trust without local candidate review",
+                "next_operator_action": "Use logo contact sheet and intake readiness summary; keep registry hold-only until local logo candidate and separate human approval exist.",
+                "manual_return_intake_hint": "data/asset_registry/hockey_softball_intake_readiness_summary.csv",
+                **source_map_guardrail_fields(),
+            }
+        )
+        order += 1
+        rows.append(
+            {
+                "source_map_order": f"SM{order:02d}",
+                "sport_family": sport_family,
+                "sport_label": sport_label,
+                "league_name": league_name,
+                "source_lane": "official_roster_team_player_pages",
+                "asset_domain": "athlete_photo",
+                "source_category": "verification_only_player_or_roster_page",
+                "source_tier": "P0_OFFICIAL_FREE_PUBLIC",
+                "source_type": "existing_source_priority_rows",
+                "source_url_or_search_macro": athlete_url,
+                "source_domain": ";".join(athlete_domains),
+                "existing_source_priority_rows": str(len(athlete_rows)),
+                "source_priority_filter": f"sport_family={sport_family};asset_domain=athlete_photo",
+                "evidence_use": "official roster/team/profile identity anchor; not roster truth until manual confirmation",
+                "source_confidence": "high_for_identity_anchor_after_manual_review",
+                "operator_verify_required": "yes",
+                "roster_truth_limit": "not_roster_truth_until_human_confirms_current_team_and_named_player",
+                "image_action_photo_fit": "identity_anchor_only",
+                "known_limitations": "does not provide a local headshot/action-photo asset and does not approve identity or source rights automatically",
+                "next_operator_action": "Open the source verification checklist; after manual source-page review, fill source-review fields only and keep identity/local-file approval held.",
+                "manual_return_intake_hint": "data/asset_registry/hockey_softball_source_verification_checklist.csv",
+                **source_map_guardrail_fields(),
+            }
+        )
+        order += 1
+        for lane in [
+            "official_action_photo_gallery_search",
+            "reputable_news_editorial_search",
+            "official_social_discovery",
+            "gray_area_public_parking_lot",
+        ]:
+            lane_values = source_map_static_lane(sport_family, lane)
+            rows.append(
+                {
+                    "source_map_order": f"SM{order:02d}",
+                    "sport_family": sport_family,
+                    "sport_label": sport_label,
+                    "league_name": league_name,
+                    "source_lane": lane,
+                    "existing_source_priority_rows": "0",
+                    "source_priority_filter": "",
+                    "operator_verify_required": "yes",
+                    "roster_truth_limit": "advisory_discovery_not_roster_truth_or_approval",
+                    "known_limitations": "URL/search lead only; no files may be downloaded and no render-feed trust changes from this board.",
+                    "next_operator_action": "Paste URL/evidence leads into a future human-edited research return intake; keep download and approval fields blank/no.",
+                    "manual_return_intake_hint": "future_human_edited_hockey_softball_source_research_return_intake",
+                    **lane_values,
+                    **source_map_guardrail_fields(),
+                }
+            )
+            order += 1
+    return rows
+
+
+def render_source_map_board(rows: list[Dict[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Hockey/Softball Source Map Board",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only H/S source-map board for PWHL/women's hockey and AUSL/softball asset/source candidate work. It separates official/free public sources, roster/team identity anchors, action-photo discovery lanes, reputable or rights-sensitive leads, official social discovery, and gray-area parking-lot leads.",
+        "This board does not fetch source pages, download images, approve assets, write headshots/logos/cutouts, create `.approved` markers, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Source-map rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if row['sport_family'] == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if row['sport_family'] == 'softball')}`",
+        f"- Official/free public rows: `{sum(1 for row in rows if row['source_tier'] == 'P0_OFFICIAL_FREE_PUBLIC')}`",
+        f"- Discovery/gray-area rows: `{sum(1 for row in rows if row['source_tier'] in {'P2_DISCOVERY_ONLY', 'P5_PARK_ONLY'})}`",
+        f"- Rows allowed for download-approved yes: `{sum(1 for row in rows if row['allowed_for_download_approved_yes'] == 'true')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if row['download_approved'] == 'yes')}`",
+        "",
+        "## Operator Rules",
+        "",
+        "- Treat `source_url_or_search_macro` as advisory evidence or a manual search route only.",
+        "- Do not copy a search macro into download-law `source_url`; that field stays blank here.",
+        "- A future download remains possible only from a separate human-edited quarantine intake with `download_approved=yes` and all required local-download-law metadata filled.",
+        "- Official roster/team pages are identity anchors, not automatic roster truth, photo approval, or render-feed trust.",
+        "- Reputable/editorial/social/gray-area leads can help discovery, but they remain review-only until a human verifies identity, rights posture, event context, and source provenance.",
+        "",
+        "## Board Preview",
+        "",
+        "| Order | Sport | Lane | Asset | Category | Tier | Source/Search | Confidence | Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {order} | {sport} | {lane} | {asset} | {category} | {tier} | {source} | {confidence} | {action} |".format(
+                order=clean(row.get("source_map_order")),
+                sport=clean(row.get("sport_family")),
+                lane=clean(row.get("source_lane")),
+                asset=clean(row.get("asset_domain")),
+                category=clean(row.get("source_category")),
+                tier=clean(row.get("source_tier")),
+                source=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
+                confidence=clean(row.get("source_confidence")),
+                action=clean(row.get("next_operator_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def review_triage_group_key(row: Mapping[str, str]) -> tuple[str, str, str]:
     return (
         clean(row.get("sport_family")),
@@ -2433,6 +2752,11 @@ def main() -> int:
     source_priority_blank_source_url_rows = sum(1 for row in source_priority if not clean(row.get("source_url")))
     source_priority_athlete_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "athlete_photo")
     source_priority_logo_rows = sum(1 for row in source_priority if clean(row.get("asset_domain")) == "logo")
+    source_map = source_map_board_rows(source_priority)
+    source_map_download_approved_yes_rows = sum(1 for row in source_map if clean(row.get("download_approved")).lower() == "yes")
+    source_map_allowed_for_download_yes_rows = sum(1 for row in source_map if clean(row.get("allowed_for_download_approved_yes")).lower() == "true")
+    source_map_blank_source_url_rows = sum(1 for row in source_map if not clean(row.get("source_url")))
+    source_map_official_free_public_rows = sum(1 for row in source_map if clean(row.get("source_tier")) == "P0_OFFICIAL_FREE_PUBLIC")
     source_verification_checklist = source_verification_checklist_rows(source_priority)
     source_verification_checklist_download_approved_yes_rows = sum(
         1 for row in source_verification_checklist if clean(row.get("download_approved")).lower() == "yes"
@@ -2501,6 +2825,13 @@ def main() -> int:
             "source_priority_operator_verify_required_rows": source_priority_operator_verify_rows,
             "source_priority_download_approved_yes_rows": source_priority_download_approved_yes_rows,
             "source_priority_blank_source_url_rows": source_priority_blank_source_url_rows,
+            "source_map_rows": len(source_map),
+            "source_map_womens_hockey_rows": sum(1 for row in source_map if clean(row.get("sport_family")) == "womens_hockey"),
+            "source_map_softball_rows": sum(1 for row in source_map if clean(row.get("sport_family")) == "softball"),
+            "source_map_official_free_public_rows": source_map_official_free_public_rows,
+            "source_map_download_approved_yes_rows": source_map_download_approved_yes_rows,
+            "source_map_allowed_for_download_approved_yes_rows": source_map_allowed_for_download_yes_rows,
+            "source_map_blank_source_url_rows": source_map_blank_source_url_rows,
             "source_verification_checklist_rows": len(source_verification_checklist),
             "source_verification_checklist_womens_hockey_rows": sum(
                 1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"
@@ -2582,6 +2913,18 @@ def main() -> int:
             "operator_verify_required_rows": source_priority_operator_verify_rows,
             "download_approved_yes_rows": source_priority_download_approved_yes_rows,
             "blank_source_url_rows": source_priority_blank_source_url_rows,
+        },
+        "source_map_board": {
+            "md": SOURCE_MAP_BOARD_MD.as_posix(),
+            "csv": SOURCE_MAP_BOARD_CSV.as_posix(),
+            "json": SOURCE_MAP_BOARD_JSON.as_posix(),
+            "rows": len(source_map),
+            "womens_hockey_rows": sum(1 for row in source_map if clean(row.get("sport_family")) == "womens_hockey"),
+            "softball_rows": sum(1 for row in source_map if clean(row.get("sport_family")) == "softball"),
+            "official_free_public_rows": source_map_official_free_public_rows,
+            "download_approved_yes_rows": source_map_download_approved_yes_rows,
+            "allowed_for_download_approved_yes_rows": source_map_allowed_for_download_yes_rows,
+            "blank_source_url_rows": source_map_blank_source_url_rows,
         },
         "source_verification_checklist": {
             "md": SOURCE_VERIFICATION_CHECKLIST_MD.as_posix(),
@@ -2722,6 +3065,35 @@ def main() -> int:
         "move_files": False,
         "paid_apis": False,
         "source_priority_rows_detail": source_priority,
+    }
+    source_map_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_source_map_board_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(source_map),
+        "womens_hockey_rows": sum(1 for row in source_map if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in source_map if clean(row.get("sport_family")) == "softball"),
+        "official_free_public_rows": source_map_official_free_public_rows,
+        "download_approved_yes_rows": source_map_download_approved_yes_rows,
+        "allowed_for_download_approved_yes_rows": source_map_allowed_for_download_yes_rows,
+        "blank_source_url_rows": source_map_blank_source_url_rows,
+        "worksheet_md": SOURCE_MAP_BOARD_MD.as_posix(),
+        "worksheet_csv": SOURCE_MAP_BOARD_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "logo_writes": False,
+        "segmentation_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "source_map_rows_detail": source_map,
     }
     source_verification_checklist_payload = {
         "version": VERSION,
@@ -2873,6 +3245,9 @@ def main() -> int:
     write_csv(SOURCE_PRIORITY_CSV, source_priority, SOURCE_PRIORITY_FIELDS)
     write_json(SOURCE_PRIORITY_JSON, source_priority_payload)
     write_text(SOURCE_PRIORITY_MD, render_source_priority(source_priority, generated_at))
+    write_csv(SOURCE_MAP_BOARD_CSV, source_map, SOURCE_MAP_BOARD_FIELDS)
+    write_json(SOURCE_MAP_BOARD_JSON, source_map_payload)
+    write_text(SOURCE_MAP_BOARD_MD, render_source_map_board(source_map, generated_at))
     write_csv(SOURCE_VERIFICATION_CHECKLIST_CSV, source_verification_checklist, SOURCE_VERIFICATION_CHECKLIST_FIELDS)
     write_json(SOURCE_VERIFICATION_CHECKLIST_JSON, source_verification_checklist_payload)
     write_text(SOURCE_VERIFICATION_CHECKLIST_MD, render_source_verification_checklist(source_verification_checklist, generated_at))
