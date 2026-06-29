@@ -2699,7 +2699,7 @@ def athlete_render_candidate_report_md(summary: Dict[str, Any], rows: List[Dict[
         lines.append(f"- **{row.get('candidate_rank')}. {row.get('athlete_name')}** | {row.get('player_team')} | {row.get('stat_line')}")
         lines.append(f"  - game={row.get('matchup')}")
         lines.append(f"  - image=`{row.get('local_athlete_image_path')}`")
-        lines.append(f"  - marker=`{row.get('approved_marker_path')}`")
+        lines.append(f"  - review_marker_present={row.get('approved_marker_exists')}")
         lines.append(f"  - proof={row.get('proof_row_to_open')}")
         lines.append(f"  - review={row.get('review_order_row_to_open')}")
         lines.append(f"  - record={row.get('intake_row_to_record')}")

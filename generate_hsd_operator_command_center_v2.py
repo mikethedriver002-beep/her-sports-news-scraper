@@ -9621,24 +9621,26 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     choices = panel.get("template_choices", [])
     if not choices:
         choices = [
-            {"decision": "approve_for_manual_next_step", "row_type": "approve", "copy_status": "copy_safe"},
             {"decision": "hold", "row_type": "hold", "copy_status": "copy_safe"},
             {"decision": "revise", "row_type": "revise", "copy_status": "copy_safe"},
+            {"decision": "approve_for_manual_next_step", "row_type": "approve", "copy_status": "copy_safe"},
         ]
+    decision_order = {"hold": 0, "revise": 1, "approve_for_manual_next_step": 2}
+    choices = sorted(choices, key=lambda choice: decision_order.get(clean(choice.get("decision")), 99))
     choice_html = []
-    for index, choice in enumerate(choices):
+    for choice in choices:
         decision = clean(choice.get("decision"))
         if decision not in {"approve_for_manual_next_step", "hold", "revise"}:
             continue
         label = {
-            "approve_for_manual_next_step": "Approve",
+            "approve_for_manual_next_step": "Approve for manual next step only",
             "hold": "Hold",
             "revise": "Revise",
         }[decision]
         choice_html.append(
             f"""
             <label class="decision-option">
-              <input type="radio" name="operatorDecision" value="{html.escape(decision)}" {'checked' if index == 0 else ''}>
+              <input type="radio" name="operatorDecision" value="{html.escape(decision)}" {'checked' if decision == 'hold' else ''}>
               <span>{html.escape(label)}</span>
             </label>
             """
@@ -9686,7 +9688,7 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             <div class="review-flow">
               <div><span>1</span><strong>Inspect render</strong><p>Open the draft and compare reference drift.</p></div>
               <div><span>2</span><strong>Check evidence</strong><p>Review QA cues, source proof, and logo readiness.</p></div>
-              <div><span>3</span><strong>Record decision</strong><p>Use approve, hold, or revise without moving files.</p></div>
+              <div><span>3</span><strong>Record decision</strong><p>Use hold, revise, or approve for manual next step only without moving files.</p></div>
             </div>
             <small>{html.escape(clean(panel.get('next_step')))}</small>
           </div>
@@ -9721,7 +9723,7 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             <ul id="decisionFieldWarnings" class="decision-warning-list"></ul>
             <form class="decision-form">
               <fieldset class="decision-options">
-                <legend>Approve, hold, or revise</legend>
+                <legend>Hold, revise, or approve for manual next step only</legend>
                 {''.join(choice_html)}
               </fieldset>
               <label>Operator notes<textarea id="operatorNotes" rows="3" required placeholder="What did you verify by eye?"></textarea></label>

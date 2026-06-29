@@ -4,11 +4,13 @@ import csv
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "generate_hsd_manual_visual_qa_operator_decision_draft_v1.py"
+PYTHON = REPO / ".venv" / "Scripts" / "python.exe"
 
 
 def write_intake(
@@ -56,7 +58,7 @@ def write_intake(
                 "qa_report_path": (run_dir / "manual_visual_qa_report.md").as_posix(),
                 "qa_manifest_path": (run_dir / "manual_visual_qa_manifest.json").as_posix(),
                 "qa_checklist_path": (run_dir / "manual_visual_qa_checklist.csv").as_posix(),
-                "allowed_decisions": "approve_for_manual_next_step|hold|revise",
+                "allowed_decisions": "hold|revise|approve_for_manual_next_step",
                 "operator_decision": "operator_fill_required",
                 "operator_notes": "",
                 "operator_name": "",
@@ -80,7 +82,7 @@ def run_draft(tmp_path: Path, run_dir: Path) -> subprocess.CompletedProcess[str]
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
     return subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [str(PYTHON if PYTHON.exists() else sys.executable), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -108,7 +110,7 @@ def test_manual_visual_qa_operator_decision_draft_is_copy_safe_ready_row(tmp_pat
     assert manifest["approval_status"] == "not_approved_decision_draft_only"
     assert row["source_intake_id"] == "manual_visual_qa_preview_1"
     assert row["operator_decision"] == "operator_fill_required"
-    assert row["allowed_decisions"] == "approve_for_manual_next_step|hold|revise"
+    assert row["allowed_decisions"] == "hold|revise|approve_for_manual_next_step"
     assert row["copy_target"] == "operator/inbox/manual_visual_qa_operator_decisions.csv"
     assert row["copy_status"] == "ready_for_operator_fill_after_opening_preview"
     assert row["publish_ready"] == "false"
@@ -118,6 +120,7 @@ def test_manual_visual_qa_operator_decision_draft_is_copy_safe_ready_row(tmp_pat
     assert manifest["guardrails"]["edits_generated_intake"] is False
     assert manifest["guardrails"]["publish_ready"] is False
     assert "does not edit the generated approval intake" in report
+    assert "Approve for manual next step only" in report
 
 
 def test_manual_visual_qa_operator_decision_draft_recommends_hold_or_revise_when_qa_has_holds(tmp_path: Path) -> None:

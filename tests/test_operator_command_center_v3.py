@@ -3896,7 +3896,7 @@ def seed_manual_visual_qa_decision_files() -> None:
         "preview_path": preview.as_posix(),
         "qa_status": "human_review_required",
         "automated_hold_count": "0",
-        "allowed_decisions": "approve_for_manual_next_step|hold|revise",
+        "allowed_decisions": "hold|revise|approve_for_manual_next_step",
         "operator_decision": "operator_fill_required",
         "operator_notes": "",
         "hold_reason": "",
@@ -3917,7 +3917,7 @@ def seed_manual_visual_qa_decision_files() -> None:
     write_csv_with_fields("manual_visual_qa_operator_decision_draft.csv", [draft], DECISION_FIELDS)
     write_json("manual_visual_qa_operator_decision_draft.json", {"status": "draft_ready_for_operator_fill"})
     template_rows = []
-    for decision in ["approve_for_manual_next_step", "hold", "revise"]:
+    for decision in ["hold", "revise", "approve_for_manual_next_step"]:
         row = dict(draft)
         row["operator_decision"] = decision
         row["template_row_type"] = f"{decision}_example_copy_then_replace_placeholders"
@@ -3937,7 +3937,7 @@ def seed_manual_visual_qa_decision_files() -> None:
         "automated_hold_count": "0",
         "operator_decision": "operator_fill_required",
         "validation_status": "awaiting_operator_decision",
-        "validation_issue": "Copy a draft row into operator/inbox/manual_visual_qa_operator_decisions.csv, then fill approve_for_manual_next_step, hold, or revise with notes.",
+        "validation_issue": "Copy a draft row into operator/inbox/manual_visual_qa_operator_decisions.csv, then fill hold, revise, or approve_for_manual_next_step with notes.",
         "operator_notes": "",
         "hold_reason": "",
         "revision_request": "",
@@ -5843,7 +5843,7 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Record decision" in html
     assert "Visual delta warnings" in html
     assert "Manual decision controls" in html
-    assert "Approve, hold, or revise" in html
+    assert "Hold, revise, or approve for manual next step only" in html
     assert "Start here" in html
     assert "Use this dashboard for daily review" in html
     assert "Open Decision Desk" in html
@@ -5871,6 +5871,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Source proof" in html
     assert "operatorDecision" in html
     assert "approve_for_manual_next_step" in html
+    assert "Approve for manual next step only" in html
+    assert '<input type="radio" name="operatorDecision" value="hold" checked>' in html
+    assert '<input type="radio" name="operatorDecision" value="approve_for_manual_next_step" checked>' not in html
+    assert html.index('value="hold"') < html.index('value="approve_for_manual_next_step"')
     assert "Copy row" in html
     assert "file-backed manual approval" in html
     assert "manual_next_step_only_not_publish_ready" in html

@@ -85,7 +85,7 @@ def base_from_draft(row: Dict[str, str]) -> Dict[str, str]:
         "preview_path": clean(row.get("preview_path")),
         "qa_status": clean(row.get("qa_status")),
         "automated_hold_count": clean(row.get("automated_hold_count")) or "0",
-        "allowed_decisions": clean(row.get("allowed_decisions")) or "approve_for_manual_next_step|hold|revise",
+        "allowed_decisions": clean(row.get("allowed_decisions")) or "hold|revise|approve_for_manual_next_step",
         "required_evidence": clean(row.get("required_evidence")) or "Open draft_preview.png and manual_visual_qa_report.md before filling the decision.",
         "copy_target": COPY_TARGET,
         "approval_scope": "manual_next_step_only_not_publish_ready",
@@ -104,7 +104,7 @@ def placeholder_base() -> Dict[str, str]:
         "preview_path": "REPLACE_WITH_PREVIEW_PATH",
         "qa_status": "REPLACE_WITH_QA_STATUS",
         "automated_hold_count": "REPLACE_WITH_AUTOMATED_HOLD_COUNT",
-        "allowed_decisions": "approve_for_manual_next_step|hold|revise",
+        "allowed_decisions": "hold|revise|approve_for_manual_next_step",
         "required_evidence": "Open draft_preview.png and manual_visual_qa_report.md before filling the decision.",
         "copy_target": COPY_TARGET,
         "approval_scope": "manual_next_step_only_not_publish_ready",
@@ -118,15 +118,6 @@ def placeholder_base() -> Dict[str, str]:
 
 def template_rows(base: Dict[str, str]) -> List[Dict[str, str]]:
     examples = [
-        {
-            "template_row_type": "approve_example_copy_then_replace_placeholders",
-            "operator_decision": "approve_for_manual_next_step",
-            "operator_notes": "REPLACE_WITH_APPROVAL_NOTES_AFTER_OPENING_PREVIEW_AND_QA_REPORT",
-            "hold_reason": "",
-            "revision_request": "",
-            "copy_status": "template_only_not_valid_until_placeholders_replaced",
-            "copy_instructions": f"Copy only this row to {COPY_TARGET} after visual review, then replace every REPLACE_WITH_* value before rerunning render.",
-        },
         {
             "template_row_type": "hold_example_copy_then_replace_placeholders",
             "operator_decision": "hold",
@@ -144,6 +135,15 @@ def template_rows(base: Dict[str, str]) -> List[Dict[str, str]]:
             "revision_request": "REPLACE_WITH_REVISION_REQUEST",
             "copy_status": "template_only_not_valid_until_placeholders_replaced",
             "copy_instructions": f"Copy this row to {COPY_TARGET} only to request revision, then replace every REPLACE_WITH_* value before rerunning render.",
+        },
+        {
+            "template_row_type": "approve_for_manual_next_step_only_example_copy_then_replace_placeholders",
+            "operator_decision": "approve_for_manual_next_step",
+            "operator_notes": "REPLACE_WITH_APPROVAL_NOTES_AFTER_OPENING_PREVIEW_AND_QA_REPORT",
+            "hold_reason": "",
+            "revision_request": "",
+            "copy_status": "template_only_not_valid_until_placeholders_replaced",
+            "copy_instructions": f"Copy only this row to {COPY_TARGET} after visual review; it approves for manual next step only, then replace every REPLACE_WITH_* value before rerunning render.",
         },
     ]
     rows: List[Dict[str, str]] = []
@@ -166,7 +166,7 @@ def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, str]]) -> List[s
         "",
         "## Purpose",
         "",
-        f"This copy-only template gives approve, hold, and revise examples for `{COPY_TARGET}`.",
+        f"This copy-only template gives hold, revise, and approve-for-manual-next-step-only examples for `{COPY_TARGET}`.",
         "It does not write the inbox, approve anything, move files, publish, or create a publish-ready lane.",
         "",
         "## How To Use",
