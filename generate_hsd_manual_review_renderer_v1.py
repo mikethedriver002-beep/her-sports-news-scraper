@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.51.0-photo-first-score-stage-wash"
+VERSION = "hsd-manual-review-renderer-v1.52.0-photo-first-editorial-depth-bridge"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v25_photo_first_score_stage_wash"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -71,7 +71,8 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_safe_zone_enforced,photo_first_oversized_emblem_atmosphere,"
     "photo_first_editorial_team_identifiers,photo_first_lower_third_caption_strip,"
     "photo_first_quiet_review_marker,photo_first_score_stage_wash,"
-    "photo_first_action_photo_stage_bridge,"
+    "photo_first_action_photo_stage_bridge,photo_first_editorial_depth_bridge,"
+    "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -1286,15 +1287,21 @@ def draw_reference_guardrail(image: Any, *, compact_footer: bool = False) -> Non
     pill_w = min(174, width - 850)
     if pill_w > 142:
         marker_type = photo_first_type_spec("review_marker")
-        draw.rounded_rectangle((width - pill_w - 50, 84, width - 50, 110), radius=5, fill=(150, 35, 48, 154), outline=(241, 238, 229, 56), width=1)
+        left = width - pill_w - 50
+        top = 84
+        right = width - 50
+        bottom = 110
+        draw.rounded_rectangle((left, top, right, bottom), radius=5, fill=(6, 9, 16, 136), outline=(241, 238, 229, 44), width=1)
+        draw.rectangle((left, top, left + 26, bottom), fill=(150, 35, 48, 164))
+        draw.line((left + 24, top + 4, right - 10, top + 4), fill=(*PALETTE["gold"], 70), width=1)
         draw_reference_text(
             image,
-            (width - pill_w - 39, 87, pill_w - 22, 18),
+            (left + 30, 87, pill_w - 42, 18),
             "Review Draft Only",
             marker_type["font"],
             min(marker_type["resolved_size"], 14),
             marker_type["resolved_min"],
-            PALETTE["ink"],
+            (235, 239, 247),
             max_lines=1,
             align="center",
             uppercase=False,
@@ -2848,8 +2855,8 @@ def hero_cutout_mode_contract(module: Dict[str, Any]) -> Dict[str, str]:
 
 def photo_first_blueprint_depth_contract(geometry: Dict[str, Any]) -> Dict[str, Any]:
     return {
-        "depth_layer_contract": "ghost_score_emblem_and_stage_wash_layers_behind_hero_keep_critical_text_clear",
-        "depth_layer_order": "background_texture,ghost_score,decorative_emblem,hero,score,stat",
+        "depth_layer_contract": "ghost_score_emblem_stage_wash_and_lower_third_bridge_layers_keep_critical_text_clear",
+        "depth_layer_order": "background_texture,score_stage_wash,editorial_depth_bridge,ghost_score,decorative_emblem,hero,score,stat",
         "procedural_texture_contract": "local_code_generated_court_grain_stadium_light_score_stage_wash_and_grit_no_external_assets",
         "team_color_weighting": "winner_palette_dominant_loser_palette_localized_subdued",
         "score_asymmetry_contract": PHOTO_FIRST_SCORE_ASYMMETRY_CONTRACT,
@@ -3036,6 +3043,94 @@ def draw_photo_first_focal_depth_stage(
         layer = layer.filter(ImageFilter.GaussianBlur(0.6))
     image.alpha_composite(glow)
     image.alpha_composite(layer)
+
+
+def draw_photo_first_editorial_depth_bridge(
+    image: Any,
+    geometry: Dict[str, Any],
+    primary: tuple[int, int, int],
+    secondary: tuple[int, int, int],
+) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    width, height = image.size
+    photo = tuple_box(geometry["photo_stage_box"])
+    winner = tuple_box(geometry["winner_score_row_box"])
+    loser = tuple_box(geometry["loser_score_row_box"])
+    stat = tuple_box(geometry["stat_strip_box"])
+    hook = tuple_box(geometry["matchup_angle_box"])
+
+    px, py, pw, ph = photo
+    wx, wy, ww, wh = winner
+    lx, ly, lw, lh = loser
+    sx, sy, sw, _sh = stat
+    hx, hy, hw, hh = hook
+    stage_left = max(0, min(px, sx, hx) - 18)
+    stage_right = min(width, max(wx + ww, sx + sw, hx + hw) + 18)
+    score_bottom = ly + lh
+    lower_top = max(score_bottom + 18, sy - 34)
+    lower_bottom = min(height, hy + hh + 22)
+
+    bridge = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(bridge, "RGBA")
+    draw.rounded_rectangle(
+        (wx - 22, wy - 20, min(width - 36, wx + ww + 18), score_bottom + 22),
+        radius=22,
+        fill=(1, 3, 8, 46),
+        outline=(*primary, 38),
+        width=1,
+    )
+    draw.polygon(
+        [
+            (px + int(pw * 0.68), py + int(ph * 0.30)),
+            (wx + int(ww * 0.20), wy - 8),
+            (wx + int(ww * 0.52), score_bottom + 28),
+            (px + int(pw * 0.58), py + int(ph * 0.88)),
+        ],
+        fill=(*primary, 34),
+    )
+    draw.polygon(
+        [
+            (px + int(pw * 0.78), py + int(ph * 0.42)),
+            (wx + int(ww * 0.44), wy + int(wh * 0.22)),
+            (wx + int(ww * 0.86), score_bottom + 12),
+            (sx + int(sw * 0.64), sy + 14),
+            (sx + int(sw * 0.16), sy + 2),
+        ],
+        fill=(*secondary, 28),
+    )
+    draw.rounded_rectangle(
+        (stage_left, lower_top, stage_right, lower_bottom),
+        radius=24,
+        fill=(1, 3, 8, 58),
+        outline=(*PALETTE["gold"], 48),
+        width=1,
+    )
+    draw.polygon(
+        [
+            (sx + 20, sy - 10),
+            (sx + sw - 40, sy - 26),
+            (hx + hw - 18, lower_bottom - 10),
+            (hx + 16, lower_bottom + 4),
+        ],
+        fill=(*primary, 28),
+    )
+    draw.line((sx + 30, sy - 16, sx + sw - 34, sy - 26), fill=(*PALETTE["gold"], 70), width=1)
+    draw.line((hx + 28, hy - 12, hx + hw - 40, hy - 18), fill=(*secondary, 44), width=1)
+    draw.rectangle((stage_left + 4, lower_top + 18, stage_left + 10, lower_bottom - 16), fill=(*primary, 76))
+    draw.rectangle((stage_right - 10, lower_top + 8, stage_right - 5, lower_bottom - 22), fill=(*secondary, 48))
+    draw.line((wx - 8, wy + wh - 8, wx + ww - 34, wy + wh - 8), fill=(*primary, 38), width=1)
+    draw.line((lx + 10, ly + lh - 10, lx + lw - 44, ly + lh - 10), fill=(*secondary, 28), width=1)
+
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow, "RGBA")
+    glow_draw.ellipse((sx - 120, sy - 96, sx + sw + 130, lower_bottom + 80), fill=(*PALETTE["gold"], 28))
+    glow_draw.ellipse((wx - 70, wy - 78, wx + ww + 90, score_bottom + 96), fill=(*primary, 30))
+    if ImageFilter is not None:
+        glow = glow.filter(ImageFilter.GaussianBlur(30))
+        bridge = bridge.filter(ImageFilter.GaussianBlur(0.45))
+    image.alpha_composite(glow)
+    image.alpha_composite(bridge)
 
 
 def draw_photo_first_blueprint_depth_layers(
@@ -3393,6 +3488,7 @@ def draw_photo_first_final_score_template(
     geometry = photo_first_layout_geometry(format_spec)
     draw_reference_background(image, "final", winner_accent, loser_accent, photo_first=True)
     draw_photo_first_focal_depth_stage(image, geometry, winner_accent, loser_accent)
+    draw_photo_first_editorial_depth_bridge(image, geometry, winner_accent, loser_accent)
     draw_photo_first_blueprint_depth_layers(image, geometry, score, winner_profile, loser_profile, aliases, logos)
     draw_reference_badge(image, template_spec)
     canvas_copy = photo_first_public_canvas_copy(score, stat_module)
@@ -4349,13 +4445,14 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
             row["photo_first_team_color_weighting"] = geometry.get("team_color_weighting")
             row["photo_first_score_asymmetry_contract"] = geometry.get("score_asymmetry_contract")
             row["photo_first_team_identifier_treatment"] = "borderless_editorial_logo_identifier"
-            row["photo_first_lower_third_treatment"] = "caption_strip_no_rounded_panel"
-            row["photo_first_review_marker_treatment"] = "single_quiet_review_badge"
+            row["photo_first_lower_third_treatment"] = "integrated_score_shelf_caption_strip_no_rounded_panel"
+            row["photo_first_review_marker_treatment"] = "single_quiet_pinned_review_badge"
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
                 "blueprint_depth_layers,procedural_court_grain,asymmetric_score_treatment,"
                 "borderless_team_identifiers,caption_lower_third,soft_athlete_stage,"
-                "integrated_lower_stat_band,and_review_only_guardrails"
+                "editorial_depth_bridge,integrated_lower_stat_band,quiet_badge_pin,"
+                "and_review_only_guardrails"
             )
             row["public_render_canvas_text"] = public_canvas_text
             row["public_render_review_marker_count"] = 1

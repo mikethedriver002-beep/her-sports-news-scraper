@@ -122,7 +122,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.51.0-photo-first-score-stage-wash"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.52.0-photo-first-editorial-depth-bridge"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -165,7 +165,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["renderer_generated_at_utc"]
     assert "rerun the renderer" in manifest["preview_decision_cue"]
     assert len(manifest["format_options"]) == 3
-    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v25_photo_first_score_stage_wash"
+    assert manifest["render_background_style"] == "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge"
     assert "quiet_score_zones" in manifest["render_background_cues"]
     assert "subtle_stadium_light_sweep" in manifest["render_background_cues"]
     assert "team_accent_rim_light" in manifest["render_background_cues"]
@@ -215,11 +215,14 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "photo_first_quiet_review_marker" in manifest["render_background_cues"]
     assert "photo_first_score_stage_wash" in manifest["render_background_cues"]
     assert "photo_first_action_photo_stage_bridge" in manifest["render_background_cues"]
+    assert "photo_first_editorial_depth_bridge" in manifest["render_background_cues"]
+    assert "photo_first_lower_third_score_shelf" in manifest["render_background_cues"]
+    assert "photo_first_quiet_badge_pin" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
     assert {item["format_id"] for item in manifest["format_options"]} == {"ig_feed_4x5", "ig_story_9x16", "square_feed_1x1"}
     assert all(item["review_only"] is True for item in manifest["format_options"])
     assert all(item["publish_ready"] is False for item in manifest["format_options"])
-    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v25_photo_first_score_stage_wash" for item in manifest["format_options"])
+    assert all(item["render_background_style"] == "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge" for item in manifest["format_options"])
     public_canvas_text = " ".join(manifest["public_render_canvas_text"]).upper()
     assert "FINAL:" not in public_canvas_text
     assert "198 PTS" not in public_canvas_text
@@ -283,7 +286,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert visual_board["format_count"] == 3
     assert visual_board["preview_freshness_status"] == "generated_from_current_handoff_packet"
     assert visual_board["visual_mode"] == "no_photo_premium_result"
-    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v25_photo_first_score_stage_wash"
+    assert visual_board["background_style"] == "hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge"
     assert visual_board["hero_asset_required"] == "approved_local_athlete_photo_missing"
     assert visual_board["hero_image_mode"] == "logo_score_fallback_no_person_image"
     assert visual_board["action_photo_hero_contract"] == "manual_review_action_photo_not_available_no_download"
@@ -355,7 +358,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Contact sheet:" in board
     assert "Preview freshness: `generated_from_current_handoff_packet`" in board
     assert "Visual mode: `no_photo_premium_result`" in board
-    assert "Background style: `hsd_premium_sports_editorial_v25_photo_first_score_stage_wash`" in board
+    assert "Background style: `hsd_premium_sports_editorial_v26_photo_first_editorial_depth_bridge`" in board
     assert "Hero asset status: `approved_local_athlete_photo_missing`" in board
     assert "Hero image mode: `logo_score_fallback_no_person_image`" in board
     assert "Action-photo hero contract: `manual_review_action_photo_not_available_no_download`" in board
@@ -955,7 +958,8 @@ def test_manual_review_renderer_photo_first_type_scale_and_athlete_cap_contract(
         assert geometry["safe_zone_status"] == "critical_content_inside_safe_zone"
         assert geometry["safe_zone_violations"] == "none"
         assert geometry["hero_grid_break_bleed_allowed"] is True
-        assert geometry["depth_layer_contract"] == "ghost_score_emblem_and_stage_wash_layers_behind_hero_keep_critical_text_clear"
+        assert geometry["depth_layer_contract"] == "ghost_score_emblem_stage_wash_and_lower_third_bridge_layers_keep_critical_text_clear"
+        assert "editorial_depth_bridge" in geometry["depth_layer_order"]
         assert "score_stage_wash" in geometry["procedural_texture_contract"]
         assert geometry["score_asymmetry_contract"]["winner_score_scale"] > geometry["score_asymmetry_contract"]["loser_score_scale"]
     feed_geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
@@ -1665,6 +1669,43 @@ def test_manual_review_renderer_photo_first_depth_stage_adds_focal_atmosphere() 
     assert bridge_blue / bridge_pixels > 0.16
 
 
+def test_manual_review_renderer_photo_first_editorial_depth_bridge_ties_score_to_stat_band() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    before = image.copy()
+    geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    module.draw_photo_first_editorial_depth_bridge(image, geometry, (72, 144, 216), (192, 35, 48))
+
+    assert "photo_first_editorial_depth_bridge" in module.RENDER_BACKGROUND_CUES
+    assert "photo_first_lower_third_score_shelf" in module.RENDER_BACKGROUND_CUES
+    assert ImageChops.difference(before.convert("RGB"), image.convert("RGB")).getbbox() is not None
+
+    shelf_crop = image.crop((56, 928, 1024, 1248)).convert("RGB")
+    shelf_data = shelf_crop.tobytes()
+    shelf_pixels = max(1, len(shelf_data) // 3)
+    gold_shelf_pixels = 0
+    blue_bridge_pixels = 0
+    dense_panel_pixels = 0
+    for index in range(0, len(shelf_data), 3):
+        r, g, b = shelf_data[index], shelf_data[index + 1], shelf_data[index + 2]
+        if r >= 26 and g >= 20 and b <= 70 and r >= g:
+            gold_shelf_pixels += 1
+        if b > r and b >= 22 and g >= 16:
+            blue_bridge_pixels += 1
+        if r <= 5 and g <= 7 and b <= 12:
+            dense_panel_pixels += 1
+
+    assert gold_shelf_pixels / shelf_pixels > 0.010
+    assert blue_bridge_pixels / shelf_pixels > 0.010
+    assert dense_panel_pixels / shelf_pixels < 0.94
+
+
 def test_manual_review_renderer_square_reference_spec_keeps_title_quiet_zone() -> None:
     import importlib.util
 
@@ -1761,7 +1802,8 @@ def test_manual_review_renderer_guardrail_uses_one_small_review_marker_without_f
             light_text_pixels += 1
 
     red_ratio = red_pixels / pixels
-    assert 0.12 <= red_ratio <= 0.80
+    assert "photo_first_quiet_badge_pin" in module.RENDER_BACKGROUND_CUES
+    assert 0.02 <= red_ratio <= 0.12
     assert light_text_pixels / pixels > 0.008
     footer_data = footer_crop.tobytes()
     footer_red_pixels = 0
@@ -1821,7 +1863,8 @@ def test_manual_review_renderer_photo_first_square_template_uses_one_review_mark
                 red_pixels += 1
         return red_pixels / pixels
 
-    assert red_ratio(marker_zone) > 0.12
+    assert "photo_first_quiet_badge_pin" in module.RENDER_BACKGROUND_CUES
+    assert 0.02 <= red_ratio(marker_zone) <= 0.12
     assert red_ratio(footer_band) < 0.05
 
 
