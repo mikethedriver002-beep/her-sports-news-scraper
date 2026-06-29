@@ -1,0 +1,41 @@
+{
+  "version": "hsd-action-photo-candidate-intake-v1-review-only",
+  "status": "action_photo_research_return_summary_board_ready",
+  "generated_at_utc": "2026-06-28T00:00:00+00:00",
+  "summary_rows": 10,
+  "validation_issue_count": 0,
+  "validation_issues": [],
+  "candidate_queue_ids": [
+    "APQ001",
+    "APQ002",
+    "APQ003",
+    "APQ004",
+    "APQ005",
+    "APQ006",
+    "APQ007",
+    "APQ008",
+    "APQ009",
+    "APQ010"
+  ],
+  "return_status_counts": {
+    "research_return_missing": 10
+  },
+  "ready_for_human_download_decision_rows": 0,
+  "returned_needs_manual_fix_rows": 0,
+  "research_return_missing_rows": 10,
+  "download_approved_yes_rows": 0,
+  "review_only_rows": 10,
+  "publish_ready_rows": 0,
+  "worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv",
+  "worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md",
+  "review_only": true,
+  "asset_downloads": false,
+  "headshot_writes": false,
+  "approved_marker_writes": false,
+  "approval_state_change": false,
+  "publish_ready": false,
+  "auto_approval": false,
+  "auto_publish": false,
+  "move_files": false,
+  "paid_apis": false
+}

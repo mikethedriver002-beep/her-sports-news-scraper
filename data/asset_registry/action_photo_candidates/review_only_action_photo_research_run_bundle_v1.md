@@ -6,6 +6,12 @@ Operator alert bundle for running the existing action-photo research packet and 
 
 ## Artifact Paths
 
+- `source_map_board_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md`
+- `source_map_board_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv`
+- `source_map_board_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json`
+- `source_discovery_board_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.md`
+- `source_discovery_board_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.csv`
+- `source_discovery_board_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.json`
 - `operator_worksheet_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md`
 - `operator_worksheet_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv`
 - `operator_worksheet_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json`
@@ -15,6 +21,8 @@ Operator alert bundle for running the existing action-photo research packet and 
 - `return_intake_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md`
 - `return_intake_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv`
 - `return_intake_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json`
+- `external_research_prompt_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md`
+- `external_research_manifest_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json`
 
 ## Email-Ready Text
 
