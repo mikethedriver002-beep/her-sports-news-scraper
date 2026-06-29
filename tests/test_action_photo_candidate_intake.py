@@ -46,6 +46,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
     research_bundle_rows = read_csv(root / "review_only_action_photo_research_run_bundle_v1.csv")
     preflight_rows = read_csv(root / "review_only_action_photo_quarantine_preflight_v1.csv")
+    summary_rows = read_csv(root / "review_only_action_photo_research_return_summary_board_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
     womens_soccer_manifest = json.loads((root / "review_only_womens_soccer_action_photo_starter_intake.json").read_text(encoding="utf-8"))
@@ -61,6 +62,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_bundle_manifest = json.loads((root / "review_only_action_photo_research_run_bundle_v1.json").read_text(encoding="utf-8"))
     external_export_manifest = json.loads((root / "review_only_action_photo_external_research_packet_manifest_v1.json").read_text(encoding="utf-8"))
     preflight_manifest = json.loads((root / "review_only_action_photo_quarantine_preflight_v1.json").read_text(encoding="utf-8"))
+    summary_manifest = json.loads((root / "review_only_action_photo_research_return_summary_board_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
     taxonomy_md = (root / "review_only_action_photo_candidate_taxonomy.md").read_text(encoding="utf-8")
@@ -80,6 +82,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_bundle_md = (root / "review_only_action_photo_research_run_bundle_v1.md").read_text(encoding="utf-8")
     external_export_prompt_md = (root / "review_only_action_photo_external_research_packet_prompt_v1.md").read_text(encoding="utf-8")
     preflight_md = (root / "review_only_action_photo_quarantine_preflight_v1.md").read_text(encoding="utf-8")
+    summary_md = (root / "review_only_action_photo_research_return_summary_board_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
     assert manifest["intake_rows"] == 5
@@ -116,6 +119,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_external_research_packet_export_status"] == "action_photo_external_research_packet_export_ready"
     assert manifest["action_photo_quarantine_preflight_rows"] == 10
     assert manifest["action_photo_quarantine_preflight_validation_issue_count"] == 0
+    assert manifest["action_photo_research_return_summary_board_rows"] == 10
+    assert manifest["action_photo_research_return_summary_board_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["action_photo_candidate_operator_worksheet_csv"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.csv")
     assert manifest["action_photo_candidate_operator_worksheet_md"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.md")
@@ -954,6 +959,41 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "Review-Only Action Photo Quarantine Preflight" in preflight_md
     assert "Ready for human download decision" in preflight_md
     assert "does not download files, approve assets, write headshots" in preflight_md
+    assert summary_manifest["status"] == "action_photo_research_return_summary_board_ready"
+    assert summary_manifest["summary_rows"] == 10
+    assert summary_manifest["validation_issue_count"] == 0
+    assert summary_manifest["ready_for_human_download_decision_rows"] == 0
+    assert summary_manifest["returned_needs_manual_fix_rows"] == 0
+    assert summary_manifest["research_return_missing_rows"] == 10
+    assert summary_manifest["download_approved_yes_rows"] == 0
+    assert summary_manifest["review_only_rows"] == 10
+    assert summary_manifest["publish_ready_rows"] == 0
+    assert summary_manifest["return_status_counts"] == {"research_return_missing": 10}
+    assert set(summary_manifest["candidate_queue_ids"]) == {row["candidate_queue_id"] for row in queue_rows}
+    assert len({row["summary_id"] for row in summary_rows}) == len(summary_rows)
+    assert {row["candidate_queue_id"] for row in summary_rows} == {row["candidate_queue_id"] for row in preflight_rows}
+    for row in summary_rows:
+        assert row["summary_id"].startswith("APRS")
+        assert row["candidate_queue_id"].startswith("APQ")
+        assert row["return_status"] == "research_return_missing"
+        assert row["operator_priority"] == "P3_run_research_or_paste_return"
+        assert row["research_return_data_present"] == "no"
+        assert row["ready_for_human_download_decision"] == "no"
+        assert row["action_photo_status"] == "missing_candidate_photo_url"
+        assert row["identity_confidence_status"] == "identity_missing"
+        assert row["download_approved"] == "no"
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["asset_downloads"] == "false"
+        assert row["headshot_writes"] == "false"
+        assert row["approved_marker_writes"] == "false"
+        assert row["publish_action"] == "none_artifact_only"
+        assert "Run ChatGPT Pro, Gemini, or manual research" in row["operator_next_action"]
+    assert "Review-Only Action Photo Research Return Summary Board" in summary_md
+    assert "ChatGPT Pro, Gemini, or manual action-photo research returns" in summary_md
+    assert "does not download images, approve assets, write headshots, create `.approved` markers" in summary_md
 
 
 def test_wnba_final_score_hero_targets_bridge_render_gap_without_downloads(tmp_path: Path, monkeypatch) -> None:
@@ -1908,6 +1948,23 @@ def test_action_photo_quarantine_preflight_marks_complete_human_return_ready_wit
     assert preflight_rows[0]["download_approved"] == "no"
     assert module.validate_action_photo_quarantine_preflight_rows(preflight_rows, return_rows) == []
 
+    summary_rows = module.action_photo_research_return_summary_board_rows(return_rows, preflight_rows)
+
+    assert summary_rows[0]["return_status"] == "ready_for_human_download_decision_only"
+    assert summary_rows[0]["operator_priority"] == "P1_manual_download_decision"
+    assert summary_rows[0]["research_return_data_present"] == "yes"
+    assert summary_rows[0]["ready_for_human_download_decision"] == "yes"
+    assert summary_rows[0]["action_photo_status"] == "action_photo_candidate"
+    assert summary_rows[0]["identity_confidence_status"] == "identity_ready_for_human_review"
+    assert summary_rows[0]["download_approved"] == "no"
+    assert summary_rows[0]["approval_state_change"] == "none"
+    assert summary_rows[0]["asset_downloads"] == "false"
+    assert summary_rows[0]["headshot_writes"] == "false"
+    assert summary_rows[0]["approved_marker_writes"] == "false"
+    assert summary_rows[0]["publish_action"] == "none_artifact_only"
+    assert "Human operator may decide whether to record a download-approved yes" in summary_rows[0]["operator_next_action"]
+    assert module.validate_action_photo_research_return_summary_board_rows(summary_rows, preflight_rows) == []
+
 
 def test_action_photo_quarantine_preflight_blocks_duplicate_headshot_and_weak_identity() -> None:
     module = load_module()
@@ -1936,6 +1993,60 @@ def test_action_photo_quarantine_preflight_blocks_duplicate_headshot_and_weak_id
     assert preflight_rows[0]["identity_confidence_status"] == "identity_weak_or_stale_manual_verify"
     assert preflight_rows[1]["duplicate_candidate_key"] == "duplicate_candidate_key"
     assert module.validate_action_photo_quarantine_preflight_rows(preflight_rows, return_rows) == []
+
+    summary_rows = module.action_photo_research_return_summary_board_rows(return_rows, preflight_rows)
+
+    assert summary_rows[0]["return_status"] == "returned_needs_manual_fix"
+    assert summary_rows[0]["operator_priority"] == "P2_fix_return_row"
+    assert summary_rows[0]["research_return_data_present"] == "yes"
+    assert summary_rows[0]["duplicate_candidate_key"] == "duplicate_candidate_key"
+    assert "resolve duplicates or weak identity" in summary_rows[0]["operator_next_action"]
+    assert module.validate_action_photo_research_return_summary_board_rows(summary_rows, preflight_rows) == []
+
+
+def test_action_photo_research_return_summary_board_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    return_rows = module.action_photo_research_return_intake_rows(module.action_photo_candidate_queue_rows())
+    preflight_rows = module.action_photo_quarantine_preflight_rows(return_rows)
+    summary_rows = module.action_photo_research_return_summary_board_rows(return_rows, preflight_rows)
+    summary_rows[0].update(
+        {
+            "return_status": "approved",
+            "operator_priority": "P0_auto_download",
+            "research_return_data_present": "maybe",
+            "download_approved": "yes",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "asset_downloads": "true",
+            "headshot_writes": "true",
+            "approved_marker_writes": "true",
+            "publish_action": "publish",
+        }
+    )
+    summary_rows[1]["summary_id"] = summary_rows[0]["summary_id"]
+    summary_rows[2]["candidate_queue_id"] = summary_rows[3]["candidate_queue_id"]
+
+    issue_pairs = {
+        (issue["field"], issue["issue"])
+        for issue in module.validate_action_photo_research_return_summary_board_rows(summary_rows, preflight_rows)
+    }
+
+    assert ("summary_id", "duplicate_summary_id") in issue_pairs
+    assert ("candidate_queue_id", "duplicate_candidate_queue_id_in_summary") in issue_pairs
+    assert ("return_status", "invalid_return_status") in issue_pairs
+    assert ("operator_priority", "invalid_operator_priority") in issue_pairs
+    assert ("research_return_data_present", "research_return_data_present_must_be_yes_or_no") in issue_pairs
+    assert ("download_approved", "summary_rows_must_not_approve_downloads") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("review_only", "summary_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "summary_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "summary_rows_must_not_change_approval_state") in issue_pairs
+    assert ("asset_downloads", "summary_rows_must_not_download_assets") in issue_pairs
+    assert ("headshot_writes", "summary_rows_must_not_write_headshots") in issue_pairs
+    assert ("approved_marker_writes", "summary_rows_must_not_write_approved_markers") in issue_pairs
+    assert ("publish_action", "summary_rows_must_not_publish") in issue_pairs
 
 
 def test_action_photo_quarantine_preflight_validator_blocks_unsafe_rows() -> None:
