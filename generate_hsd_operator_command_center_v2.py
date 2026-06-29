@@ -429,6 +429,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
 
 ARTIFACTS = [
     ("Decision", "Operator status", "operator_status.md"),
+    ("Decision", "Workflow lane status", "workflow_lane_status_dashboard.md"),
+    ("Decision", "Workflow lane status data", "workflow_lane_status_dashboard.csv"),
+    ("Decision", "Workflow lane status manifest", "workflow_lane_status_dashboard.json"),
     ("Decision", "Publish guard", "publish_guard_report.md"),
     ("Decision", "BeBe daily ops plan", "bebe_daily_ops_plan.md"),
     ("Decision", "BeBe posting schedule", "bebe_posting_schedule_today.md"),

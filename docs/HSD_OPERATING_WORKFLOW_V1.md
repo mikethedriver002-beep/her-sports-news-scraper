@@ -103,6 +103,28 @@ Default behavior: Codex lanes continue while Mike runs the external research, un
 
 The Command Center is not the primary alert channel because Mike may not be looking at it during active work. It can still archive research-packet artifacts later if a specific packet needs a durable repo link.
 
+## Lane Status Dashboard
+
+The conductor can refresh a review-only lane dashboard with:
+
+```powershell
+python scripts\build_hsd_workflow_lane_status_v1.py
+```
+
+Outputs:
+
+- `workflow_lane_status_dashboard.md`
+- `workflow_lane_status_dashboard.csv`
+- `workflow_lane_status_dashboard.json`
+
+When `HSD_RUN_OUTPUT_DIR` is set, the dashboard writes into the run-scoped output folder and is collected into `outputs/local/latest/files` by the local review stage.
+
+Optional human-maintained intake can live at `operator/inbox/workflow_lane_status_intake.csv` with these columns:
+
+`lane_id,status,branch,pr,owner,last_update_utc,blocker,next_action,notes`
+
+This dashboard is a conductor visibility aid only. It does not create branches, change approval state, download assets, move files, or publish.
+
 ## Standard Research Packet
 
 Each external research packet should include:
