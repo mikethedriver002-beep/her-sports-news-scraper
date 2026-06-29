@@ -59,6 +59,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
     research_bundle_manifest = json.loads((root / "review_only_action_photo_research_run_bundle_v1.json").read_text(encoding="utf-8"))
+    external_export_manifest = json.loads((root / "review_only_action_photo_external_research_packet_manifest_v1.json").read_text(encoding="utf-8"))
     preflight_manifest = json.loads((root / "review_only_action_photo_quarantine_preflight_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
@@ -77,6 +78,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
     research_bundle_md = (root / "review_only_action_photo_research_run_bundle_v1.md").read_text(encoding="utf-8")
+    external_export_prompt_md = (root / "review_only_action_photo_external_research_packet_prompt_v1.md").read_text(encoding="utf-8")
     preflight_md = (root / "review_only_action_photo_quarantine_preflight_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
@@ -111,6 +113,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_research_return_intake_validation_issue_count"] == 0
     assert manifest["action_photo_research_run_bundle_rows"] == 6
     assert manifest["action_photo_research_run_bundle_validation_issue_count"] == 0
+    assert manifest["action_photo_external_research_packet_export_status"] == "action_photo_external_research_packet_export_ready"
     assert manifest["action_photo_quarantine_preflight_rows"] == 10
     assert manifest["action_photo_quarantine_preflight_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
@@ -823,12 +826,20 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         "operator_worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.md",
         "operator_worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.csv",
         "operator_worksheet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json",
+        "source_map_board_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md",
+        "source_map_board_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv",
+        "source_map_board_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json",
+        "source_discovery_board_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.md",
+        "source_discovery_board_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.csv",
+        "source_discovery_board_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.json",
         "research_packet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
         "research_packet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv",
         "research_packet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json",
         "return_intake_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
         "return_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
         "return_intake_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
+        "external_research_prompt_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md",
+        "external_research_manifest_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json",
     }
     assert set(research_bundle_manifest["artifact_paths"]) == set(expected_bundle_paths)
     for key, expected_suffix in expected_bundle_paths.items():
@@ -859,6 +870,39 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         assert row["download_approved"] == "no"
         assert row["review_only"] == "true"
         assert row["publish_ready"] == "false"
+    assert external_export_manifest["status"] == "action_photo_external_research_packet_export_ready"
+    assert external_export_manifest["source_map_board_rows"] == 12
+    assert external_export_manifest["source_discovery_board_rows"] == 12
+    assert external_export_manifest["research_task_rows"] == 10
+    assert external_export_manifest["research_return_intake_rows"] == 10
+    assert external_export_manifest["bundle_steps"] == 6
+    assert external_export_manifest["paste_back_target"].endswith("review_only_action_photo_research_return_intake_v1.csv")
+    assert external_export_manifest["download_approved_yes_rows"] == 0
+    assert external_export_manifest["blank_source_url_rows"] == 10
+    assert external_export_manifest["manual_operator_fields_default_blank"] is True
+    assert external_export_manifest["review_only"] is True
+    assert external_export_manifest["artifact_only"] is True
+    assert external_export_manifest["source_fetching"] is False
+    assert external_export_manifest["source_scraping"] is False
+    assert external_export_manifest["source_auto_enablement"] is False
+    assert external_export_manifest["asset_downloads"] is False
+    assert external_export_manifest["automatic_downloads"] is False
+    assert external_export_manifest["approval_state_change"] is False
+    assert external_export_manifest["auto_approval"] is False
+    assert external_export_manifest["headshot_writes"] is False
+    assert external_export_manifest["approved_marker_writes"] is False
+    assert external_export_manifest["publish_ready"] is False
+    assert external_export_manifest["publishing"] is False
+    assert external_export_manifest["email_sending"] is False
+    assert external_export_manifest["paid_apis"] is False
+    assert "What Mike Should Do Externally" in external_export_prompt_md
+    assert "No source fetching or scraping from this local helper" in external_export_prompt_md
+    assert "No automatic downloads" in external_export_prompt_md
+    assert "No source auto-enablement" in external_export_prompt_md
+    assert "No email sending" in external_export_prompt_md
+    assert "No `.approved` markers" in external_export_prompt_md
+    assert "Paste-Back Target" in external_export_prompt_md
+    assert "review_only_action_photo_research_return_intake_v1.csv" in external_export_prompt_md
     assert "Review-Only Action Photo Research Run Bundle" in research_bundle_md
     assert "Email-Ready Text" in research_bundle_md
     assert "Do not send email automatically from this lane" in research_bundle_md

@@ -85,6 +85,8 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
@@ -2918,6 +2920,25 @@ def seed_asset_availability_audit_files() -> None:
         },
     )
     write_json(
+        (action_photo_dir / "review_only_action_photo_external_research_packet_manifest_v1.json").as_posix(),
+        {
+            "status": "action_photo_external_research_packet_export_ready",
+            "generated_at_utc": "2026-06-29T00:02:30+00:00",
+            "source_map_board_rows": 12,
+            "research_task_rows": 10,
+            "download_approved_yes_rows": 0,
+            "manual_operator_fields_default_blank": True,
+            "review_only": True,
+            "artifact_only": True,
+            "source_fetching": False,
+            "source_auto_enablement": False,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "email_sending": False,
+        },
+    )
+    write_json(
         (action_photo_dir / "review_only_action_photo_quarantine_preflight_v1.json").as_posix(),
         {
             "status": "action_photo_quarantine_preflight_ready",
@@ -5095,6 +5116,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.md"]["status_detail"] == "Created with this command center run"
     assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.csv"]["status_detail"] == "Created with this command center run"
     assert artifact_by_path["results_dashboard/index.html"]["run_command"] == ".\\hsd.cmd run -Mode dashboards"
