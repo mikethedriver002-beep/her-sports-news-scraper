@@ -458,6 +458,39 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "public_signal_type=candidate_public_signal_review_only confidence=medium count=2" in action_report
     assert "manual_artifact=breaking_public_signal_confirmation_intake.csv" in action_report
 
+    return_rows = module.breaking_signal_return_summary_rows(action_rows)
+    return_by_cluster_id = {row["cluster_id"]: row for row in return_rows}
+    assert return_by_cluster_id[cluster["cluster_id"]]["manual_return_status"] == "operator_return_missing_required_fields"
+    assert "manual_return_operator_checked_url" in return_by_cluster_id[cluster["cluster_id"]]["missing_return_fields"]
+    assert "manual_return_operator_confirmation_result" in return_by_cluster_id[cluster["cluster_id"]]["missing_return_fields"]
+    assert return_by_cluster_id[cluster["cluster_id"]]["source_confidence_tier_present"] == "Yes"
+    assert return_by_cluster_id[cluster["cluster_id"]]["source_domain_lead_present"] == "Yes"
+    assert return_by_cluster_id[cluster["cluster_id"]]["review_only"] == "Yes"
+    assert return_by_cluster_id[cluster["cluster_id"]]["approval_state_change"] == "none"
+    assert return_by_cluster_id[cluster["cluster_id"]]["source_enablement"] == "none_existing_local_artifacts_only"
+    assert return_by_cluster_id[cluster["cluster_id"]]["publish_action"] == "none_artifact_only"
+    ready_seed = dict(by_cluster_id[cluster["cluster_id"]])
+    ready_seed.update(
+        {
+            "manual_return_operator_checked_url": "https://liberty.wnba.com/news/injury-update",
+            "manual_return_operator_confirmation_result": "operator_confirmed_official_public_source",
+            "manual_return_operator_notes": "Official URL still confirms the update.",
+        }
+    )
+    ready_rows = module.breaking_signal_return_summary_rows([ready_seed])
+    assert ready_rows[0]["manual_return_status"] == "operator_return_ready_for_review"
+    assert ready_rows[0]["missing_return_fields"] == "none"
+    assert "do not approve" in ready_rows[0]["manual_next_step"]
+    return_summary = module.breaking_signal_return_summary(return_rows)
+    assert return_summary["operator_return_missing_required_fields"] == len(return_rows)
+    assert return_summary["missing_operator_checked_url"] == len(return_rows)
+    assert return_summary["missing_operator_confirmation_result"] == len(return_rows)
+    assert return_summary["missing_source_confidence_tier"] == 0
+    return_report = module.markdown_breaking_signal_return_summary(return_summary, return_rows)
+    assert "ready-for-review row is not source approval" in return_report
+    assert "No fetching, paid APIs" in return_report
+    assert "missing=manual_return_operator_checked_url; manual_return_operator_confirmation_result" in return_report
+
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
     assert "No matching final-score/stat proof row found" in missing_proof_cluster["score_stat_manual_confirmation_cue"]
@@ -676,6 +709,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     next_actions_csv = run_dir / "breaking_public_signal_next_action_v1.csv"
     next_actions_md = run_dir / "breaking_public_signal_next_action_v1.md"
     next_actions_json = run_dir / "breaking_public_signal_next_action_v1.json"
+    return_summary_csv = run_dir / "breaking_public_signal_return_summary_v1.csv"
+    return_summary_md = run_dir / "breaking_public_signal_return_summary_v1.md"
+    return_summary_json = run_dir / "breaking_public_signal_return_summary_v1.json"
     bridge_csv = run_dir / "game_source_confirmation_bridge_v1.csv"
     bridge_md = run_dir / "game_source_confirmation_bridge_v1.md"
     bridge_json = run_dir / "game_source_confirmation_bridge_v1.json"
@@ -690,6 +726,9 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert next_actions_csv.exists()
     assert next_actions_md.exists()
     assert next_actions_json.exists()
+    assert return_summary_csv.exists()
+    assert return_summary_md.exists()
+    assert return_summary_json.exists()
     assert bridge_csv.exists()
     assert bridge_md.exists()
     assert bridge_json.exists()
@@ -697,6 +736,7 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     confirmation_rows = list(csv.DictReader(confirmation_csv.open(newline="", encoding="utf-8")))
     cluster_rows = list(csv.DictReader(clusters_csv.open(newline="", encoding="utf-8")))
     next_action_rows = list(csv.DictReader(next_actions_csv.open(newline="", encoding="utf-8")))
+    return_summary_rows = list(csv.DictReader(return_summary_csv.open(newline="", encoding="utf-8")))
     bridge_rows = list(csv.DictReader(bridge_csv.open(newline="", encoding="utf-8")))
     assert rows
     assert confirmation_rows
@@ -733,6 +773,15 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all("do not approve" in row["manual_return_guardrail_cue"] for row in next_action_rows)
     assert any(row["why_story_looks_urgent"] for row in next_action_rows)
     assert any(row["source_confidence_tier"] for row in next_action_rows)
+    assert return_summary_rows
+    assert all(row["manual_return_status"] == "operator_return_missing_required_fields" for row in return_summary_rows)
+    assert all("manual_return_operator_checked_url" in row["missing_return_fields"] for row in return_summary_rows)
+    assert all("manual_return_operator_confirmation_result" in row["missing_return_fields"] for row in return_summary_rows)
+    assert all(row["source_confidence_tier_present"] == "Yes" for row in return_summary_rows)
+    assert all(row["review_only"] == "Yes" for row in return_summary_rows)
+    assert all(row["approval_state_change"] == "none" for row in return_summary_rows)
+    assert all(row["source_enablement"] == "none_existing_local_artifacts_only" for row in return_summary_rows)
+    assert all(row["publish_action"] == "none_artifact_only" for row in return_summary_rows)
     assert all(row["review_only"] == "true" for row in bridge_rows)
     assert all(row["publish_ready"] == "false" for row in bridge_rows)
     assert all(row["auto_publish"] == "false" for row in bridge_rows)
@@ -744,15 +793,25 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     next_action_payload = json.loads(next_actions_json.read_text(encoding="utf-8"))
     assert next_action_payload["summary"]["manual_return_blank_rows"] == len(next_action_rows)
     assert "operator_confirmation_result" in next_action_payload["summary"]["manual_return_fields_to_complete"]
+    return_summary_payload = json.loads(return_summary_json.read_text(encoding="utf-8"))
+    assert return_summary_payload["summary"]["rows"] == len(return_summary_rows)
+    assert return_summary_payload["summary"]["operator_return_missing_required_fields"] == len(return_summary_rows)
+    assert return_summary_payload["summary"]["missing_operator_checked_url"] == len(return_summary_rows)
+    assert return_summary_payload["summary"]["missing_operator_confirmation_result"] == len(return_summary_rows)
+    assert return_summary_payload["summary"]["missing_source_confidence_tier"] == 0
     assert signal_payload["publish_ready"] is False
     assert signal_payload["counts"]["rows"] == len(rows)
     assert signal_payload["counts"]["confirmation_intake_rows"] == len(confirmation_rows)
     assert signal_payload["counts"]["cluster_rows"] == len(cluster_rows)
     assert signal_payload["counts"]["breaking_next_action_rows"] == len(next_action_rows)
+    assert signal_payload["counts"]["breaking_return_summary_rows"] == len(return_summary_rows)
+    assert signal_payload["counts"]["breaking_return_summary_missing_operator_checked_url"] == len(return_summary_rows)
+    assert signal_payload["counts"]["breaking_return_summary_missing_operator_confirmation_result"] == len(return_summary_rows)
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
     assert "breaking_public_signal_confirmation_intake.csv" in news_payload["outputs"]
     assert "breaking_public_signal_clusters.csv" in news_payload["outputs"]
     assert "breaking_public_signal_next_action_v1.csv" in news_payload["outputs"]
+    assert "breaking_public_signal_return_summary_v1.csv" in news_payload["outputs"]
     assert "game_source_confirmation_bridge_v1.csv" in news_payload["outputs"]
     assert "publish_ready" not in news_payload["counts"]
     assert news_payload["counts"]["manual_review_not_required_packets"] >= 0
@@ -761,4 +820,7 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert news_payload["counts"]["breaking_confirmation_intake_rows"] == len(confirmation_rows)
     assert news_payload["counts"]["breaking_signal_cluster_rows"] == len(cluster_rows)
     assert news_payload["counts"]["breaking_signal_next_action_rows"] == len(next_action_rows)
+    assert news_payload["counts"]["breaking_signal_return_summary_rows"] == len(return_summary_rows)
+    assert news_payload["counts"]["breaking_signal_return_summary_missing_operator_checked_url"] == len(return_summary_rows)
+    assert news_payload["counts"]["breaking_signal_return_summary_missing_operator_confirmation_result"] == len(return_summary_rows)
     assert news_payload["counts"]["game_source_confirmation_bridge_rows"] == len(bridge_rows)

@@ -79,6 +79,9 @@ BREAKING_SIGNAL_CLUSTERS_MD = "breaking_public_signal_clusters.md"
 BREAKING_SIGNAL_NEXT_ACTION_CSV = "breaking_public_signal_next_action_v1.csv"
 BREAKING_SIGNAL_NEXT_ACTION_MD = "breaking_public_signal_next_action_v1.md"
 BREAKING_SIGNAL_NEXT_ACTION_JSON = "breaking_public_signal_next_action_v1.json"
+BREAKING_SIGNAL_RETURN_SUMMARY_CSV = "breaking_public_signal_return_summary_v1.csv"
+BREAKING_SIGNAL_RETURN_SUMMARY_MD = "breaking_public_signal_return_summary_v1.md"
+BREAKING_SIGNAL_RETURN_SUMMARY_JSON = "breaking_public_signal_return_summary_v1.json"
 GAME_SOURCE_CONFIRMATION_BRIDGE_CSV = "game_source_confirmation_bridge_v1.csv"
 GAME_SOURCE_CONFIRMATION_BRIDGE_MD = "game_source_confirmation_bridge_v1.md"
 GAME_SOURCE_CONFIRMATION_BRIDGE_JSON = "game_source_confirmation_bridge_v1.json"
@@ -216,6 +219,19 @@ BREAKING_SIGNAL_NEXT_ACTION_FIELDS = [
     "manual_return_operator_confirmed_at_utc", "manual_return_operator_notes",
     "manual_return_guardrail_cue",
     "operator_next_action", "review_limitations",
+    "review_only", "approval_state_change", "source_enablement",
+    "publish_action",
+]
+
+BREAKING_SIGNAL_RETURN_SUMMARY_FIELDS = [
+    "summary_rank", "cluster_id", "cluster_headline", "review_priority",
+    "verification_priority_status", "manual_confirmation_artifact",
+    "manual_confirmation_row_ref", "operator_checked_url_present",
+    "operator_confirmation_result_present", "operator_confirmed_at_utc_present",
+    "operator_notes_present", "source_confidence_tier_present",
+    "source_domain_lead_present", "manual_return_status",
+    "missing_return_fields", "manual_next_step",
+    "source_or_intake_row_to_open", "freshness_or_proof_row_to_open",
     "review_only", "approval_state_change", "source_enablement",
     "publish_action",
 ]
@@ -4169,6 +4185,139 @@ def markdown_breaking_signal_next_action(summary: Dict[str, Any], rows: List[Dic
     return "\n".join(lines) + "\n"
 
 
+def breaking_signal_return_summary_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    summary_rows: List[Dict[str, Any]] = []
+    for item in rows:
+        checked_url_present = bool(clean(item.get("manual_return_operator_checked_url")))
+        confirmation_result_present = bool(clean(item.get("manual_return_operator_confirmation_result")))
+        confirmed_at_present = bool(clean(item.get("manual_return_operator_confirmed_at_utc")))
+        notes_present = bool(clean(item.get("manual_return_operator_notes")))
+        source_confidence_present = bool(clean(item.get("source_confidence_tier")))
+        source_domain_present = bool(clean(item.get("source_domain_lead")))
+        missing_fields: List[str] = []
+        if not checked_url_present:
+            missing_fields.append("manual_return_operator_checked_url")
+        if not confirmation_result_present:
+            missing_fields.append("manual_return_operator_confirmation_result")
+        if not source_confidence_present:
+            missing_fields.append("source_confidence_tier")
+        if checked_url_present and confirmation_result_present and source_confidence_present:
+            manual_return_status = "operator_return_ready_for_review"
+            manual_next_step = "Open the listed confirmation intake row and review the human-entered checked URL, confirmation result, and source-confidence cue; do not approve, enable, render, or publish from this summary."
+        else:
+            manual_return_status = "operator_return_missing_required_fields"
+            manual_next_step = "Open breaking_public_signal_next_action_v1.csv and the listed confirmation intake row; fill only human-confirmed checked URL plus confirmation result before any source-trust review."
+        summary_rows.append(
+            {
+                "summary_rank": clean(item.get("action_rank")),
+                "cluster_id": clean(item.get("cluster_id")),
+                "cluster_headline": clean(item.get("cluster_headline")),
+                "review_priority": clean(item.get("review_priority")),
+                "verification_priority_status": clean(item.get("verification_priority_status")),
+                "manual_confirmation_artifact": clean(item.get("manual_confirmation_artifact")),
+                "manual_confirmation_row_ref": clean(item.get("manual_confirmation_row_ref")),
+                "operator_checked_url_present": "Yes" if checked_url_present else "No",
+                "operator_confirmation_result_present": "Yes" if confirmation_result_present else "No",
+                "operator_confirmed_at_utc_present": "Yes" if confirmed_at_present else "No",
+                "operator_notes_present": "Yes" if notes_present else "No",
+                "source_confidence_tier_present": "Yes" if source_confidence_present else "No",
+                "source_domain_lead_present": "Yes" if source_domain_present else "No",
+                "manual_return_status": manual_return_status,
+                "missing_return_fields": "; ".join(missing_fields) if missing_fields else "none",
+                "manual_next_step": manual_next_step,
+                "source_or_intake_row_to_open": clean(item.get("source_or_intake_row_to_open")),
+                "freshness_or_proof_row_to_open": clean(item.get("freshness_or_proof_row_to_open")),
+                "review_only": "Yes",
+                "approval_state_change": "none",
+                "source_enablement": "none_existing_local_artifacts_only",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    summary_rows.sort(
+        key=lambda row: (
+            row.get("manual_return_status") != "operator_return_missing_required_fields",
+            row.get("summary_rank", ""),
+            row.get("cluster_headline", ""),
+        )
+    )
+    for index, row in enumerate(summary_rows, start=1):
+        row["summary_rank"] = str(index)
+    return summary_rows
+
+
+def breaking_signal_return_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    status_counts: Dict[str, int] = defaultdict(int)
+    priority_counts: Dict[str, int] = defaultdict(int)
+    for row in rows:
+        status_counts[clean(row.get("manual_return_status"))] += 1
+        priority_counts[clean(row.get("review_priority"))] += 1
+    return {
+        "version": "v1-review-only-breaking-public-signal-return-summary",
+        "generated_at_utc": utc_now(),
+        "review_only": True,
+        "paid_sources_required": False,
+        "approval_state_changes": False,
+        "source_enablement": False,
+        "publish_actions": False,
+        "rows": len(rows),
+        "operator_return_ready_for_review": status_counts.get("operator_return_ready_for_review", 0),
+        "operator_return_missing_required_fields": status_counts.get("operator_return_missing_required_fields", 0),
+        "missing_operator_checked_url": sum(1 for row in rows if row.get("operator_checked_url_present") != "Yes"),
+        "missing_operator_confirmation_result": sum(1 for row in rows if row.get("operator_confirmation_result_present") != "Yes"),
+        "missing_source_confidence_tier": sum(1 for row in rows if row.get("source_confidence_tier_present") != "Yes"),
+        "missing_source_domain_lead": sum(1 for row in rows if row.get("source_domain_lead_present") != "Yes"),
+        "rows_with_operator_notes": sum(1 for row in rows if row.get("operator_notes_present") == "Yes"),
+        "status_counts": dict(sorted(status_counts.items())),
+        "priority_counts": dict(sorted(priority_counts.items())),
+    }
+
+
+def markdown_breaking_signal_return_summary(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
+    lines = [
+        "# HSD Breaking/Public Signal Return Summary v1",
+        "",
+        f"Generated: `{summary['generated_at_utc']}`",
+        "",
+        "## Policy",
+        "",
+        "- Review-only, artifact-only summary of breaking/public-signal manual return fields.",
+        "- No fetching, paid APIs, downloads, source enablement, approvals, rendering, publishing, or publish-ready movement.",
+        "- A ready-for-review row is not source approval; it only means required manual return fields are present for operator review.",
+        "",
+        "## Counts",
+        "",
+    ]
+    for key in [
+        "rows",
+        "operator_return_ready_for_review",
+        "operator_return_missing_required_fields",
+        "missing_operator_checked_url",
+        "missing_operator_confirmation_result",
+        "missing_source_confidence_tier",
+        "missing_source_domain_lead",
+        "rows_with_operator_notes",
+    ]:
+        lines.append(f"- {key}: `{summary.get(key)}`")
+    lines.extend(["", "## Missing Return Fields", ""])
+    missing = [row for row in rows if row.get("manual_return_status") == "operator_return_missing_required_fields"]
+    if not missing:
+        lines.append("No breaking/public-signal rows are missing the required manual return fields in this snapshot.")
+    for row in missing[:80]:
+        lines.append(f"- **{row.get('cluster_headline')}** | {row.get('review_priority')} | {row.get('verification_priority_status')}")
+        lines.append(f"  - missing={row.get('missing_return_fields')}")
+        lines.append(f"  - intake={row.get('manual_confirmation_artifact')} {row.get('manual_confirmation_row_ref')}".rstrip())
+        lines.append(f"  - next={row.get('manual_next_step')}")
+    if len(missing) > 80:
+        lines.append(f"Showing first 80 of {len(missing)} missing rows. Open `{BREAKING_SIGNAL_RETURN_SUMMARY_CSV}` for the full summary.")
+    lines.extend(["", "## Ready For Operator Review", ""])
+    ready = [row for row in rows if row.get("manual_return_status") == "operator_return_ready_for_review"]
+    if not ready:
+        lines.append("No rows currently have checked URL, confirmation result, and source confidence present.")
+    for row in ready[:80]:
+        lines.append(f"- **{row.get('cluster_headline')}** | status={row.get('manual_return_status')} | intake={row.get('manual_confirmation_artifact')} {row.get('manual_confirmation_row_ref')}".rstrip())
+    return "\n".join(lines) + "\n"
+
+
 def game_source_confirmation_bridge_rows(
     *,
     run_id: str,
@@ -4659,6 +4808,8 @@ def main() -> None:
     )
     breaking_next_action_rows = breaking_signal_next_action_rows(cluster_rows, breaking_signal_rows)
     breaking_next_action_summary = breaking_signal_next_action_summary(breaking_next_action_rows)
+    breaking_return_summary_rows = breaking_signal_return_summary_rows(breaking_next_action_rows)
+    breaking_return_summary = breaking_signal_return_summary(breaking_return_summary_rows)
     game_source_bridge_rows = game_source_confirmation_bridge_rows(
         run_id=run_id,
         game_rows=game_intelligence_rows,
@@ -4677,6 +4828,7 @@ def main() -> None:
     write_csv(BREAKING_CONFIRMATION_INTAKE_CSV, confirmation_intake_rows, BREAKING_CONFIRMATION_INTAKE_FIELDS)
     write_csv(BREAKING_SIGNAL_CLUSTERS_CSV, cluster_rows, BREAKING_SIGNAL_CLUSTER_FIELDS)
     write_csv(BREAKING_SIGNAL_NEXT_ACTION_CSV, breaking_next_action_rows, BREAKING_SIGNAL_NEXT_ACTION_FIELDS)
+    write_csv(BREAKING_SIGNAL_RETURN_SUMMARY_CSV, breaking_return_summary_rows, BREAKING_SIGNAL_RETURN_SUMMARY_FIELDS)
     write_csv(GAME_SOURCE_CONFIRMATION_BRIDGE_CSV, game_source_bridge_rows, GAME_SOURCE_CONFIRMATION_BRIDGE_FIELDS)
 
     write_run_text(NEWS_BRIEF_QUEUE_MD, markdown_brief_queue(packets, observations_by_candidate))
@@ -4687,12 +4839,20 @@ def main() -> None:
     write_run_text(BREAKING_CONFIRMATION_INTAKE_MD, markdown_breaking_confirmation_intake(confirmation_intake_rows))
     write_run_text(BREAKING_SIGNAL_CLUSTERS_MD, markdown_breaking_signal_clusters(cluster_rows))
     write_run_text(BREAKING_SIGNAL_NEXT_ACTION_MD, markdown_breaking_signal_next_action(breaking_next_action_summary, breaking_next_action_rows))
+    write_run_text(BREAKING_SIGNAL_RETURN_SUMMARY_MD, markdown_breaking_signal_return_summary(breaking_return_summary, breaking_return_summary_rows))
     write_run_text(GAME_SOURCE_CONFIRMATION_BRIDGE_MD, markdown_game_source_confirmation_bridge(game_source_bridge_rows))
     write_run_json(
         BREAKING_SIGNAL_NEXT_ACTION_JSON,
         {
             "summary": breaking_next_action_summary,
             "rows": breaking_next_action_rows,
+        },
+    )
+    write_run_json(
+        BREAKING_SIGNAL_RETURN_SUMMARY_JSON,
+        {
+            "summary": breaking_return_summary,
+            "rows": breaking_return_summary_rows,
         },
     )
     write_run_text(NEWS_SYNC_HUB_MD, markdown_hub(run_id, candidates, all_observations, packets))
@@ -4733,6 +4893,10 @@ def main() -> None:
                 "confirmation_intake_rows": len(confirmation_intake_rows),
                 "cluster_rows": len(cluster_rows),
                 "breaking_next_action_rows": len(breaking_next_action_rows),
+                "breaking_return_summary_rows": len(breaking_return_summary_rows),
+                "breaking_return_summary_missing_operator_checked_url": breaking_return_summary.get("missing_operator_checked_url", 0),
+                "breaking_return_summary_missing_operator_confirmation_result": breaking_return_summary.get("missing_operator_confirmation_result", 0),
+                "breaking_return_summary_missing_source_confidence_tier": breaking_return_summary.get("missing_source_confidence_tier", 0),
                 "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
                 "clusters_with_matching_current_artifact_evidence": len([
                     row for row in cluster_rows
@@ -4797,6 +4961,9 @@ def main() -> None:
                 BREAKING_SIGNAL_NEXT_ACTION_CSV,
                 BREAKING_SIGNAL_NEXT_ACTION_MD,
                 BREAKING_SIGNAL_NEXT_ACTION_JSON,
+                BREAKING_SIGNAL_RETURN_SUMMARY_CSV,
+                BREAKING_SIGNAL_RETURN_SUMMARY_MD,
+                BREAKING_SIGNAL_RETURN_SUMMARY_JSON,
                 GAME_SOURCE_CONFIRMATION_BRIDGE_CSV,
                 GAME_SOURCE_CONFIRMATION_BRIDGE_MD,
                 GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
@@ -4844,6 +5011,9 @@ def main() -> None:
             BREAKING_SIGNAL_NEXT_ACTION_CSV,
             BREAKING_SIGNAL_NEXT_ACTION_MD,
             BREAKING_SIGNAL_NEXT_ACTION_JSON,
+            BREAKING_SIGNAL_RETURN_SUMMARY_CSV,
+            BREAKING_SIGNAL_RETURN_SUMMARY_MD,
+            BREAKING_SIGNAL_RETURN_SUMMARY_JSON,
             GAME_SOURCE_CONFIRMATION_BRIDGE_CSV,
             GAME_SOURCE_CONFIRMATION_BRIDGE_MD,
             GAME_SOURCE_CONFIRMATION_BRIDGE_JSON,
@@ -4863,6 +5033,10 @@ def main() -> None:
             "breaking_confirmation_intake_rows": len(confirmation_intake_rows),
             "breaking_signal_cluster_rows": len(cluster_rows),
             "breaking_signal_next_action_rows": len(breaking_next_action_rows),
+            "breaking_signal_return_summary_rows": len(breaking_return_summary_rows),
+            "breaking_signal_return_summary_missing_operator_checked_url": breaking_return_summary.get("missing_operator_checked_url", 0),
+            "breaking_signal_return_summary_missing_operator_confirmation_result": breaking_return_summary.get("missing_operator_confirmation_result", 0),
+            "breaking_signal_return_summary_missing_source_confidence_tier": breaking_return_summary.get("missing_source_confidence_tier", 0),
             "breaking_signal_clusters_with_score_stat_proof": len([
                 row for row in cluster_rows
                 if clean(row.get("score_stat_proof_status")) not in {"", "no_matching_score_stat_proof_operator_confirmation_required"}
