@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.48.0-photo-first-naked-score-stage"
+VERSION = "hsd-manual-review-renderer-v1.49.0-photo-first-blueprint-depth-asymmetry"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v22_photo_first_naked_score_stage"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v23_photo_first_blueprint_depth_asymmetry"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -66,6 +66,9 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_unboxed_score_rails,photo_first_soft_photo_stage_mask,"
     "photo_first_action_photo_hero_contract,photo_first_naked_score_typography,"
     "photo_first_no_redundant_score_context,photo_first_borderless_hero_stage,"
+    "photo_first_blueprint_depth_layers,photo_first_procedural_court_grain,"
+    "photo_first_asymmetric_score_treatment,photo_first_hero_cutout_contract,"
+    "photo_first_safe_zone_enforced,photo_first_oversized_emblem_atmosphere,"
     "stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -87,6 +90,19 @@ PUBLIC_RENDER_BANNED_CANVAS_PHRASES = [
     "LOGO REVIEW",
 ]
 PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE = 0.40
+PHOTO_FIRST_SAFE_ZONES = {
+    "default": {"top": 90, "bottom": 90, "left": 60, "right": 60},
+    "ig_feed_4x5": {"top": 90, "bottom": 90, "left": 60, "right": 60},
+    "square_feed_1x1": {"top": 90, "bottom": 90, "left": 60, "right": 60},
+    "ig_story_9x16": {"top": 120, "bottom": 140, "left": 60, "right": 60},
+}
+PHOTO_FIRST_SCORE_ASYMMETRY_CONTRACT = {
+    "winner_score_scale": 1.0,
+    "loser_score_scale": 0.52,
+    "winner_team_scale": 1.0,
+    "loser_team_scale": 0.56,
+    "loser_opacity": 0.65,
+}
 PHOTO_FIRST_FINAL_SCORE_ACTIVE_TYPE_LEVELS = ("label", "headline", "score", "support")
 PHOTO_FIRST_FINAL_SCORE_TYPE_SCALE = {
     "kicker": {
@@ -109,20 +125,21 @@ PHOTO_FIRST_FINAL_SCORE_TYPE_SCALE = {
     "team": {
         "level": "support",
         "font": "display",
-        "winner_size": 40,
-        "winner_compact_size": 32,
-        "size": 36,
-        "compact_size": 30,
+        "winner_size": 50,
+        "winner_compact_size": 38,
+        "size": 28,
+        "compact_size": 23,
         "min": 17,
+        "compact_min": 13,
         "stroke": 0,
     },
     "score": {
         "level": "score",
         "font": "score",
-        "winner_size": 112,
-        "size": 72,
-        "compact_size": 66,
-        "min": 52,
+        "winner_size": 124,
+        "size": 62,
+        "compact_size": 54,
+        "min": 46,
         "compact_min": 46,
         "stroke": 0,
     },
@@ -1080,6 +1097,51 @@ def draw_vignette(image: Any, strength: int = 92) -> None:
     image.alpha_composite(layer)
 
 
+def draw_photo_first_procedural_texture(image: Any, primary: tuple[int, int, int], secondary: tuple[int, int, int]) -> None:
+    if ImageDraw is None:
+        return
+    width, height = image.size
+    rng = random.Random(width * 43 + height * 29)
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    horizon = int(height * 0.71)
+    for offset in range(-width, width * 2, 42):
+        alpha = 16 if offset % 126 == 0 else 8
+        draw.line((offset, horizon + 70, offset + int(width * 0.42), horizon - 42), fill=(*primary, alpha), width=1)
+    for y in range(horizon - 54, min(height, horizon + 178), 18):
+        alpha = 11 if (y // 18) % 3 else 20
+        draw.line((42, y, width - 42, y + rng.randrange(-5, 6)), fill=(*primary, alpha), width=1)
+    for _ in range(180 if height > 1500 else 128):
+        x = rng.randrange(0, width)
+        y = rng.randrange(int(height * 0.22), min(height, int(height * 0.90)))
+        size = rng.randrange(1, 4)
+        color = primary if rng.random() < 0.78 else secondary
+        alpha = rng.randrange(7, 24) if color == primary else rng.randrange(3, 12)
+        draw.rectangle((x, y, x + size, y + size), fill=(*color, alpha))
+    draw.polygon(
+        [
+            (0, int(height * 0.35)),
+            (int(width * 0.62), int(height * 0.30)),
+            (width, int(height * 0.45)),
+            (width, int(height * 0.73)),
+            (int(width * 0.14), int(height * 0.68)),
+        ],
+        fill=(*primary, 12),
+    )
+    draw.polygon(
+        [
+            (int(width * 0.54), int(height * 0.26)),
+            (width, int(height * 0.34)),
+            (width, int(height * 0.62)),
+            (int(width * 0.66), int(height * 0.56)),
+        ],
+        fill=(*secondary, 8),
+    )
+    if ImageFilter is not None:
+        layer = layer.filter(ImageFilter.GaussianBlur(0.25))
+    image.alpha_composite(layer)
+
+
 def draw_reference_background(
     image: Any,
     tone: str = "final",
@@ -1126,6 +1188,7 @@ def draw_reference_background(
     draw_sports_editorial_depth_markers(image, primary, secondary, photo_first=photo_first)
     if photo_first:
         draw_photo_first_editorial_focal_corridor(image)
+        draw_photo_first_procedural_texture(image, primary, secondary)
 
     rail_alpha = (12 if photo_first else 24) if tone == "final" else 18
     for x in range(-height, width + height, 520):
@@ -2697,6 +2760,84 @@ def photo_first_athlete_visual_contract(geometry: Dict[str, Any]) -> Dict[str, A
     }
 
 
+def photo_first_safe_zone_contract(format_spec: Dict[str, Any], geometry: Dict[str, Any]) -> Dict[str, Any]:
+    width, height = int(format_spec.get("width", 1080)), int(format_spec.get("height", 1350))
+    format_id = clean(format_spec.get("format_id"))
+    safe = dict(PHOTO_FIRST_SAFE_ZONES.get(format_id, PHOTO_FIRST_SAFE_ZONES["default"]))
+    safe_box = [safe["left"], safe["top"], width - safe["left"] - safe["right"], height - safe["top"] - safe["bottom"]]
+    critical_keys = ["winner_score_row_box", "loser_score_row_box", "score_context_box", "stat_strip_box", "matchup_angle_box"]
+    violations: List[str] = []
+    left, top, safe_w, safe_h = safe_box
+    right, bottom = left + safe_w, top + safe_h
+    for key in critical_keys:
+        box = geometry.get(key)
+        if not isinstance(box, list) or len(box) != 4:
+            violations.append(f"{key}:missing")
+            continue
+        x, y, w, h = [int(value) for value in box]
+        if x < left or y < top or x + w > right or y + h > bottom:
+            violations.append(key)
+    photo = geometry.get("photo_stage_box") if isinstance(geometry.get("photo_stage_box"), list) else [0, 0, 0, 0]
+    hero_bleed = max(0, int(safe["left"]) - int(photo[0]))
+    return {
+        "safe_zone_px": safe,
+        "safe_zone_box": safe_box,
+        "safe_zone_status": "critical_content_inside_safe_zone" if not violations else "safe_zone_hold_manual_review",
+        "safe_zone_violations": ",".join(violations) if violations else "none",
+        "hero_grid_break_bleed_allowed": True,
+        "hero_left_bleed_px": hero_bleed,
+        "safe_zone_policy": "Critical score/stat/support modules stay inside safe zones; hero imagery may intentionally bleed for editorial composition.",
+    }
+
+
+def hero_asset_alpha_mode(path: Path | None) -> str:
+    if path is None or Image is None or not path.exists():
+        return "no_local_hero_asset"
+    try:
+        with Image.open(path) as handle:
+            if "A" not in handle.convert("RGBA").getbands():
+                return "opaque_rectangular_headshot"
+            alpha = handle.convert("RGBA").getchannel("A")
+            extrema = alpha.getextrema()
+            if extrema and extrema[0] < 245:
+                return "transparent_cutout_alpha_present"
+    except Exception:
+        return "hero_asset_alpha_unreadable"
+    return "opaque_rectangular_headshot"
+
+
+def hero_cutout_mode_contract(module: Dict[str, Any]) -> Dict[str, str]:
+    variant_id = "photo_first_story"
+    path = athlete_photo_render_source_path(module, variant_id) or athlete_photo_render_source_path(module, "photo_first_feed")
+    alpha_mode = hero_asset_alpha_mode(path)
+    if alpha_mode == "transparent_cutout_alpha_present":
+        silhouette_mode = "local_transparent_cutout_grid_breaking"
+        readiness = "cutout_ready_review_only_local_asset"
+    elif alpha_mode == "no_local_hero_asset":
+        silhouette_mode = "no_local_person_image"
+        readiness = "cutout_not_available_no_download"
+    else:
+        silhouette_mode = "headshot_bridge_rectangular_source"
+        readiness = "headshot_bridge_cutout_not_available"
+    return {
+        "hero_silhouette_mode": silhouette_mode,
+        "hero_cutout_readiness": readiness,
+        "hero_alpha_mode": alpha_mode,
+        "grid_breaking_hero_contract": "transparent_local_cutout_may_break_grid; rectangular headshot stays a review-only bridge with no segmentation and no downloads",
+    }
+
+
+def photo_first_blueprint_depth_contract(geometry: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "depth_layer_contract": "ghost_score_and_emblem_layers_behind_hero_keep_critical_text_clear",
+        "depth_layer_order": "background_texture,ghost_score,decorative_emblem,hero,score,stat",
+        "procedural_texture_contract": "local_code_generated_court_grain_stadium_light_and_grit_no_external_assets",
+        "team_color_weighting": "winner_palette_dominant_loser_palette_localized_subdued",
+        "score_asymmetry_contract": PHOTO_FIRST_SCORE_ASYMMETRY_CONTRACT,
+        "ghost_score_anchor_box": geometry.get("photo_stage_box", []),
+    }
+
+
 def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     width, height = int(format_spec.get("width", 1080)), int(format_spec.get("height", 1350))
     format_id = clean(format_spec.get("format_id"))
@@ -2723,11 +2864,11 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         score_top = 398
         score_h = 176
         score_gap = 24
-        stat_box = [58, 976, 964, 112]
-        hook_box = [58, 1118, 964, 104]
+        stat_box = [60, 976, 960, 112]
+        hook_box = [60, 1118, 960, 104]
         context_extra_gap = 36
     score_x = photo_box[0] + photo_box[2] + 24
-    score_w = width - score_x - photo_box[0]
+    score_w = width - score_x - PHOTO_FIRST_SAFE_ZONES.get(format_id, PHOTO_FIRST_SAFE_ZONES["default"])["right"]
     winner_row = [score_x, score_top, score_w, score_h]
     loser_row = [score_x, score_top + score_h + score_gap, score_w, score_h - 16]
     context_box = [score_x, score_top + score_h * 2 + context_extra_gap, score_w, 54]
@@ -2745,6 +2886,8 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         "text_clearance_policy": "photo-first stage, score lanes, stat strip, and matchup module must remain visually separated; human review still required.",
     }
     geometry.update(photo_first_athlete_visual_contract(geometry))
+    geometry.update(photo_first_safe_zone_contract(format_spec, geometry))
+    geometry.update(photo_first_blueprint_depth_contract(geometry))
     return geometry
 
 
@@ -2841,11 +2984,64 @@ def draw_photo_first_focal_depth_stage(
     image.alpha_composite(layer)
 
 
+def draw_photo_first_blueprint_depth_layers(
+    image: Any,
+    geometry: Dict[str, Any],
+    score: Dict[str, str],
+    winner_profile: Dict[str, Any],
+    loser_profile: Dict[str, Any],
+    aliases: Dict[str, str],
+    logos: Dict[str, Dict[str, str]],
+) -> None:
+    if Image is None or ImageDraw is None:
+        return
+    width, height = image.size
+    photo = tuple_box(geometry["photo_stage_box"])
+    winner = tuple_box(geometry["winner_score_row_box"])
+    loser = tuple_box(geometry["loser_score_row_box"])
+    primary = winner_profile["accent_rgb"] if isinstance(winner_profile.get("accent_rgb"), tuple) else PALETTE["gold"]
+    secondary = loser_profile["accent_rgb"] if isinstance(loser_profile.get("accent_rgb"), tuple) else PALETTE["blue"]
+    px, py, pw, ph = photo
+    wx, wy, ww, wh = winner
+    lx, ly, lw, lh = loser
+
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    winner_font = reference_font("score", 230 if height <= 1350 else 260)
+    loser_font = reference_font("score", 128 if height <= 1350 else 152)
+    team_font = reference_font("display", 82 if height <= 1350 else 96)
+    winner_score = clean(score.get("winner_score"))
+    loser_score = clean(score.get("loser_score"))
+    if winner_score:
+        draw.text((max(12, px + int(pw * 0.18)), py + int(ph * 0.03)), winner_score, font=winner_font, fill=(*primary, 34))
+        draw.text((px + int(pw * 0.42), py + int(ph * 0.30)), winner_score, font=winner_font, fill=(248, 250, 255, 13))
+    winner_word = short_team(clean(score.get("winner")))
+    if winner_word:
+        draw.text((max(10, px + int(pw * 0.05)), py + int(ph * 0.58)), winner_word, font=team_font, fill=(*primary, 28))
+    if loser_score:
+        draw.text((lx + int(lw * 0.58), ly + int(lh * 0.08)), loser_score, font=loser_font, fill=(*secondary, 18))
+
+    logo_result = enrich_logo_result(load_team_logo(clean(score.get("winner")), aliases, logos), primary, "winner_decorative_emblem")
+    logo = logo_result.get("image")
+    if logo is not None:
+        mark = logo.copy()
+        mark.thumbnail((300 if height <= 1350 else 360, 300 if height <= 1350 else 360), resample_filter())
+        alpha = mark.split()[-1].point(lambda value: min(34, int(value * 0.16)))
+        mark.putalpha(alpha)
+        layer.alpha_composite(mark, (min(width - 96, wx + int(ww * 0.58)), max(0, wy - int(mark.height * 0.36))))
+
+    draw.line((wx - 22, wy + int(wh * 0.46), wx + ww - 18, wy + int(wh * 0.46)), fill=(*primary, 36), width=2)
+    draw.line((lx + 8, ly + int(lh * 0.55), lx + lw - 28, ly + int(lh * 0.55)), fill=(*secondary, 24), width=1)
+    if ImageFilter is not None:
+        layer = layer.filter(ImageFilter.GaussianBlur(0.35))
+    image.alpha_composite(layer)
+
+
 def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
     logo_size = min(h - 54, 76 if winner else 66)
     score_box = photo_first_score_slab_box(box, winner=winner)
-    text_x = x + logo_size + (68 if h > 130 else 58)
+    text_x = x + logo_size + (50 if h > 130 else 44)
     score_gap = 34 if h > 130 else 28
     text_w = max(112, min(max(112, w - logo_size - 248), score_box[0] - text_x - score_gap))
     return (text_x, y + (50 if h > 130 else 42), text_w, h - (68 if h > 130 else 58))
@@ -2854,7 +3050,10 @@ def photo_first_score_team_text_box(box: Tuple[int, int, int, int], *, winner: b
 def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool = False) -> Tuple[int, int, int, int]:
     x, y, w, h = box
     compact = h <= 130
-    slab_w = min(196 if not compact else 154, max(136 if compact else 158, int(w * (0.300 if compact else 0.315))))
+    if winner:
+        slab_w = min(226 if not compact else 176, max(150 if compact else 184, int(w * (0.350 if compact else 0.365))))
+    else:
+        slab_w = min(160 if not compact else 132, max(116 if compact else 132, int(w * (0.240 if compact else 0.255))))
     inset_y = 22 if not compact else 15
     right_inset = 28 if not compact else 26
     return (x + w - slab_w - right_inset, y + inset_y, slab_w, h - inset_y * 2)
@@ -2955,9 +3154,9 @@ def draw_photo_first_score_row(
     if ImageFilter is not None:
         rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(13))
     image.alpha_composite(rail_shadow)
-    draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 42 if winner else 32), width=1)
-    draw.line((x + 1, y + 34, x + 1, y + h - 34), fill=(*accent, 58 if winner else 42), width=2)
-    logo_size = min(h - 54, 76 if winner else 66)
+    draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 50 if winner else 24), width=2 if winner else 1)
+    draw.line((x + 1, y + 34, x + 1, y + h - 34), fill=(*accent, 68 if winner else 30), width=3 if winner else 2)
+    logo_size = min(h - 46, 86 if winner else 58)
     logo_box = (x + 32, y + (h - logo_size) // 2 + (18 if not compact else 14), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner)
     score_box = photo_first_score_slab_box(box, winner=winner)
@@ -2970,7 +3169,7 @@ def draw_photo_first_score_row(
         team_type["font"],
         team_type["resolved_size"],
         team_type["resolved_min"],
-        PALETTE["ink"] if winner else (216, 224, 238),
+        PALETTE["ink"] if winner else (170, 180, 194),
         max_lines=2,
         stroke=team_type["stroke"],
     )
@@ -2978,13 +3177,13 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(score_glow, "RGBA")
-    glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, 20 if winner else 14))
+    glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, 24 if winner else 8))
     if ImageFilter is not None:
         score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
     image.alpha_composite(score_glow)
-    draw.line((sx + 8, sy + 12, sx + 8, sy + sh - 12), fill=(*accent, 84), width=2)
-    draw.line((sx + 24, sy + sh - 8, sx + sw - 6, sy + sh - 8), fill=(*accent, 38), width=1)
-    draw.line((sx + 30, sy + 8, sx + sw - 14, sy + 8), fill=(248, 250, 255, 118), width=1)
+    draw.line((sx + 8, sy + 12, sx + 8, sy + sh - 12), fill=(*accent, 90 if winner else 46), width=2)
+    draw.line((sx + 24, sy + sh - 8, sx + sw - 6, sy + sh - 8), fill=(*accent, 44 if winner else 24), width=1)
+    draw.line((sx + 30, sy + 8, sx + sw - 14, sy + 8), fill=(248, 250, 255, 126 if winner else 54), width=1)
     cell = photo_first_score_digit_cell_box(score_box)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"] + (6 if winner else 2), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
@@ -2996,7 +3195,7 @@ def draw_photo_first_score_row(
         score_type["font"],
         score_size,
         min_score_size,
-        PALETTE["ink"],
+        PALETTE["ink"] if winner else (178, 184, 194),
         max_lines=1,
         align="right",
         stroke=1,
@@ -3123,6 +3322,7 @@ def draw_photo_first_final_score_template(
     geometry = photo_first_layout_geometry(format_spec)
     draw_reference_background(image, "final", winner_accent, loser_accent, photo_first=True)
     draw_photo_first_focal_depth_stage(image, geometry, winner_accent, loser_accent)
+    draw_photo_first_blueprint_depth_layers(image, geometry, score, winner_profile, loser_profile, aliases, logos)
     draw_reference_badge(image, template_spec)
     canvas_copy = photo_first_public_canvas_copy(score, stat_module)
     draw_photo_first_public_header(image, template_spec, format_id, canvas_copy)
@@ -3565,8 +3765,13 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     hero_image_source_class = "no_local_hero_image"
     action_photo_hero_contract = "manual_review_action_photo_not_available_no_download"
     action_photo_candidate_status = "not_available_to_renderer"
+    hero_silhouette_mode = "no_local_person_image"
+    hero_cutout_readiness = "cutout_not_available_no_download"
+    hero_alpha_mode = "no_local_hero_asset"
+    grid_breaking_hero_contract = "transparent_local_cutout_may_break_grid; no image downloads or segmentation"
     template_fit_reason = clean(content_module.get("athlete_led_blocker")) or "No approved player photo and verified player stat context; renderer holds photo-first route."
     if photo_ready and player and (is_player_stat or is_supporting_stat):
+        cutout_contract = hero_cutout_mode_contract(content_module)
         visual_mode = "photo_first_performer" if is_player_stat else "photo_first_result"
         focal_entity_type = "athlete"
         hero_asset_required = "approved_local_athlete_photo"
@@ -3580,6 +3785,10 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         score_layout_contract = "photo_first_score_team_caption_clearance_locked"
         hero_image_mode = "approved_headshot_bridge_action_photo_ready"
         hero_image_source_class = "approved_local_headshot_bridge"
+        hero_silhouette_mode = clean(cutout_contract.get("hero_silhouette_mode"))
+        hero_cutout_readiness = clean(cutout_contract.get("hero_cutout_readiness"))
+        hero_alpha_mode = clean(cutout_contract.get("hero_alpha_mode"))
+        grid_breaking_hero_contract = clean(cutout_contract.get("grid_breaking_hero_contract"))
         action_photo_hero_contract = "manual_review_action_photo_can_replace_headshot_when_local_approved"
         action_photo_candidate_status = "pending_manual_action_photo_candidate"
         template_fit_reason = "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing."
@@ -3605,6 +3814,10 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "background_family": RENDER_BACKGROUND_FAMILY,
         "hero_image_mode": hero_image_mode,
         "hero_image_source_class": hero_image_source_class,
+        "hero_silhouette_mode": hero_silhouette_mode,
+        "hero_cutout_readiness": hero_cutout_readiness,
+        "hero_alpha_mode": hero_alpha_mode,
+        "grid_breaking_hero_contract": grid_breaking_hero_contract,
         "action_photo_hero_contract": action_photo_hero_contract,
         "action_photo_candidate_status": action_photo_candidate_status,
         "template_fit_reason": template_fit_reason,
@@ -4049,15 +4262,25 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         row["preview_qa_title_bright_ratio"] = qa_row.get("title_bright_ratio", "")
         row["preview_qa_luma_stddev"] = qa_row.get("luma_stddev", "")
         if clean(row.get("athlete_photo_layout_mode")) in {"photo_first_final_score", "square_photo_first_score_panel"}:
-            row["photo_first_template_geometry"] = photo_first_layout_geometry(spec)
+            geometry = photo_first_layout_geometry(spec)
+            row["photo_first_template_geometry"] = geometry
             row["photo_first_type_levels_active"] = ",".join(PHOTO_FIRST_FINAL_SCORE_ACTIVE_TYPE_LEVELS)
             row["photo_first_type_scale_contract"] = "final-score public canvas uses named label/headline/score/support levels; small support text uses no heavy outline."
-            row["photo_first_athlete_visual_max_share"] = row["photo_first_template_geometry"].get("athlete_visual_max_share")
-            row["photo_first_athlete_visual_share"] = row["photo_first_template_geometry"].get("athlete_visual_share")
-            row["photo_first_athlete_visual_status"] = row["photo_first_template_geometry"].get("athlete_visual_status")
+            row["photo_first_athlete_visual_max_share"] = geometry.get("athlete_visual_max_share")
+            row["photo_first_athlete_visual_share"] = geometry.get("athlete_visual_share")
+            row["photo_first_athlete_visual_status"] = geometry.get("athlete_visual_status")
+            row["photo_first_safe_zone_status"] = geometry.get("safe_zone_status")
+            row["photo_first_safe_zone_px"] = geometry.get("safe_zone_px")
+            row["photo_first_safe_zone_policy"] = geometry.get("safe_zone_policy")
+            row["photo_first_depth_layer_contract"] = geometry.get("depth_layer_contract")
+            row["photo_first_depth_layer_order"] = geometry.get("depth_layer_order")
+            row["photo_first_procedural_texture_contract"] = geometry.get("procedural_texture_contract")
+            row["photo_first_team_color_weighting"] = geometry.get("team_color_weighting")
+            row["photo_first_score_asymmetry_contract"] = geometry.get("score_asymmetry_contract")
             row["photo_first_art_direction"] = (
                 "premium_hsd_sports_editorial_photo_stage_with_team_accent_rim_light,"
-                "open_score_lockups,soft_athlete_stage,integrated_lower_stat_band,and_review_only_guardrails"
+                "blueprint_depth_layers,procedural_court_grain,asymmetric_score_treatment,"
+                "soft_athlete_stage,integrated_lower_stat_band,and_review_only_guardrails"
             )
             row["public_render_canvas_text"] = public_canvas_text
             row["public_render_review_marker_count"] = 1
@@ -4151,6 +4374,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Athlete focal contract: priority=`{clean(content_module.get('focal_priority')) or 'n/a'}` contract=`{clean(content_module.get('athlete_focal_contract')) or 'n/a'}` fallback=`{clean(content_module.get('fallback_comparison_status')) or 'n/a'}`",
         f"- Fallback comparison note: {clean(content_module.get('fallback_comparison_note')) or 'n/a'}",
         f"- Score layout contract: `{clean(content_module.get('score_layout_contract')) or 'n/a'}`",
+        f"- Hero silhouette contract: mode=`{clean(content_module.get('hero_silhouette_mode')) or 'n/a'}` cutout=`{clean(content_module.get('hero_cutout_readiness')) or 'n/a'}` grid=`{clean(content_module.get('grid_breaking_hero_contract')) or 'n/a'}`",
+        f"- Blueprint style contract: background=`{RENDER_BACKGROUND_STYLE}` cues=`photo_first_blueprint_depth_layers, photo_first_procedural_court_grain, photo_first_asymmetric_score_treatment, photo_first_safe_zone_enforced`",
         f"- Template fit reason: {clean(content_module.get('template_fit_reason')) or 'n/a'}",
         f"- Game shape: `{clean(content_module.get('content_module_game_shape')) or clean(content_module.get('editorial_microcopy_game_shape')) or 'not_selected'}` / {clean(content_module.get('content_module_game_shape_label')) or clean(content_module.get('editorial_microcopy_game_shape_label')) or 'n/a'}",
         f"- Athlete-led render: `{clean(content_module.get('athlete_led_render_status')) or 'not_evaluated'}` missing=`{clean(content_module.get('athlete_led_missing_fields')) or 'none'}`",
