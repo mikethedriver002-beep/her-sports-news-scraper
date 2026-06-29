@@ -117,6 +117,9 @@ Outputs:
 - `workflow_lane_status_dashboard.md`
 - `workflow_lane_status_dashboard.csv`
 - `workflow_lane_status_dashboard.json`
+- `workflow_lane_nudge_synthesis.md`
+- `workflow_lane_nudge_synthesis.csv`
+- `workflow_lane_nudge_synthesis.json`
 
 When `HSD_RUN_OUTPUT_DIR` is set, the dashboard writes into the run-scoped output folder and is collected into `outputs/local/latest/files` by the local review stage.
 
@@ -137,6 +140,8 @@ When no intake row exists, the dashboard also scans local Git worktrees for `cod
 If the workflow-overhaul row has no manual intake, open PR, current branch, or worktree hint, the dashboard keeps it visible as `heartbeat_visible_needs_conductor_check` instead of letting the conductor lose the lane in a fully unreported table. That heartbeat is a checklist/status cue only: confirm `origin/main`, open PR count, worktree hints, next-action synthesis, and conductor audit before nudging one small review-only workflow packet.
 
 Manual intake rows with an active/review/blocked status, branch, PR, or blocker now carry deterministic activity metrics and a stale-lane brake. By default, `last_update_utc` older than 48 hours becomes `stale_lane_needs_conductor_check`; a missing timestamp becomes `missing_last_update_needs_conductor_check`. The dashboard also emits `activity_age_hours`, `activity_status`, `last_known_branch`, `last_known_head`, and `next_conductor_action`. The brake tells the conductor to refresh current proof, PR state, and branch freshness before nudging or merging. It does not edit the intake, branches, PRs, sources, assets, approvals, publish-ready folders, or publishing state.
+
+The nudge synthesis artifact ranks only manual conductor prompts from the lane-status rows: stale brakes first, then restart-needed/lifecycle rows, then heartbeat or worktree-hint checks. It is a review-only queue for deciding whether to nudge, replace/reboot, pause, recommend archive, or mark merge-ready. It does not force-delete worktrees, close branches, archive user-owned threads, rebase branches, or change approval/download/source/publish state.
 
 This dashboard is a conductor visibility aid only. It does not create branches, change approval state, download assets, move files, or publish.
 

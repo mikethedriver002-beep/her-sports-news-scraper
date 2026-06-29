@@ -35,6 +35,9 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
 
     dashboard = tmp_path / "run" / "workflow_lane_status_dashboard.md"
     manifest = json.loads((tmp_path / "run" / "workflow_lane_status_dashboard.json").read_text(encoding="utf-8"))
+    nudge_manifest = json.loads((tmp_path / "run" / "workflow_lane_nudge_synthesis.json").read_text(encoding="utf-8"))
+    nudge_rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_nudge_synthesis.csv").open(newline="", encoding="utf-8")))
+    nudge_markdown = (tmp_path / "run" / "workflow_lane_nudge_synthesis.md").read_text(encoding="utf-8")
     rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_status_dashboard.csv").open(newline="", encoding="utf-8")))
     markdown = dashboard.read_text(encoding="utf-8")
 
@@ -57,6 +60,21 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["restart_needed_lane_count"] == 0
     assert manifest["lifecycle_action_lane_count"] == 0
     assert manifest["stale_lane_count"] == 0
+    assert manifest["nudge_synthesis_count"] == 1
+    assert manifest["nudge_synthesis_p1_count"] == 0
+    assert nudge_manifest["status"] == "workflow_lane_nudge_synthesis_ready"
+    assert nudge_manifest["automatic_changes"] is False
+    assert nudge_manifest["counts"]["rows"] == 1
+    assert nudge_manifest["guardrails"]["worktree_deletion"] is False
+    assert nudge_manifest["guardrails"]["branch_closure"] is False
+    assert nudge_manifest["guardrails"]["thread_archival"] is False
+    assert nudge_manifest["guardrails"]["branch_rewrite"] is False
+    assert nudge_rows[0]["lane_id"] == "workflow_overhaul"
+    assert nudge_rows[0]["nudge_type"] == "workflow_heartbeat"
+    assert nudge_rows[0]["priority"] == "P3"
+    assert nudge_rows[0]["automatic_changes"] == "false"
+    assert "HSD Workflow Lane Nudge Synthesis" in nudge_markdown
+    assert "No force-deleting worktrees." in nudge_markdown
     assert manifest["stale_lane_threshold_hours"] == 48
     assert manifest["workflow_overhaul_heartbeat"]["active"] is True
     assert manifest["workflow_overhaul_heartbeat"]["status"] == "heartbeat_visible_needs_conductor_check"
@@ -230,6 +248,8 @@ def test_workflow_lane_status_surfaces_restart_cues_for_merged_durable_lane(tmp_
     assert module.main(["--skip-pr-lookup", "--skip-worktree-lookup", "--as-of-utc", "2026-06-29T13:00:00Z"]) == 0
 
     manifest = json.loads((tmp_path / "run" / "workflow_lane_status_dashboard.json").read_text(encoding="utf-8"))
+    nudge_manifest = json.loads((tmp_path / "run" / "workflow_lane_nudge_synthesis.json").read_text(encoding="utf-8"))
+    nudge_rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_nudge_synthesis.csv").open(newline="", encoding="utf-8")))
     rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_status_dashboard.csv").open(newline="", encoding="utf-8")))
     markdown = (tmp_path / "run" / "workflow_lane_status_dashboard.md").read_text(encoding="utf-8")
     workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
@@ -244,6 +264,10 @@ def test_workflow_lane_status_surfaces_restart_cues_for_merged_durable_lane(tmp_
     assert workflow["next_conductor_action"] == "RESTART_NEEDED: Start a fresh workflow-only restart packet from current origin/main."
     assert workflow["stale_lane_brake"] == "false"
     assert manifest["restart_needed_lane_count"] == 1
+    assert nudge_manifest["counts"]["rows"] == 1
+    assert nudge_rows[0]["nudge_type"] == "restart_needed"
+    assert nudge_rows[0]["priority"] == "P2"
+    assert nudge_rows[0]["manual_conductor_prompt"] == "RESTART_NEEDED: Start a fresh workflow-only restart packet from current origin/main."
     assert manifest["stale_lane_count"] == 0
     assert "## Restart Cues" in markdown
     assert "Start a fresh workflow-only restart packet from current origin/main." in markdown
@@ -280,6 +304,9 @@ def test_workflow_lane_status_surfaces_manual_lifecycle_action_without_automatio
     assert workflow["last_known_branch"] == "codex/workflow-stale-thread"
     assert workflow["next_conductor_action"].startswith("Replace/reboot from current origin/main")
     assert payload["lifecycle_action_lane_count"] == 1
+    assert payload["nudge_synthesis_count"] == 1
+    assert payload["nudge_synthesis"][0]["nudge_type"] == "manual_lifecycle_action"
+    assert payload["nudge_synthesis"][0]["priority"] == "P2"
     assert payload["stale_lane_count"] == 0
 
 
@@ -333,6 +360,10 @@ def test_workflow_lane_status_flags_stale_active_manual_lane_without_state_chang
     assert workflow["activity_age_hours"] == "84.0"
     assert workflow["activity_status"] == "stale_brake"
     assert workflow["next_conductor_action"].startswith("STALE_BRAKE:")
+    assert payload["nudge_synthesis_count"] == 1
+    assert payload["nudge_synthesis_p1_count"] == 1
+    assert payload["nudge_synthesis"][0]["nudge_type"] == "stale_brake"
+    assert payload["nudge_synthesis"][0]["priority"] == "P1"
     assert workflow["review_only"] == "true"
     assert workflow["automatic_downloads"] == "false"
     assert workflow["auto_approval"] == "false"
@@ -632,4 +663,8 @@ def test_local_runner_and_command_center_collect_workflow_lane_status() -> None:
     assert "workflow_lane_status_dashboard.md" in runner
     assert "workflow_lane_status_dashboard.csv" in runner
     assert "workflow_lane_status_dashboard.json" in runner
+    assert "workflow_lane_nudge_synthesis.md" in runner
+    assert "workflow_lane_nudge_synthesis.csv" in runner
+    assert "workflow_lane_nudge_synthesis.json" in runner
     assert "(\"Decision\", \"Workflow lane status\", \"workflow_lane_status_dashboard.md\")" in command_center
+    assert "(\"Decision\", \"Workflow lane nudge synthesis\", \"workflow_lane_nudge_synthesis.md\")" in command_center
