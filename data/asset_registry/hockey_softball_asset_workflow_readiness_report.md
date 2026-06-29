@@ -17,6 +17,7 @@
 - Source map board: `data/asset_registry/hockey_softball_source_map_board.md`
 - Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`
 - Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`
+- Manual verification focus: `data/asset_registry/hockey_softball_manual_verification_focus.md`
 - Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`
 - Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`
 - Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`
@@ -65,6 +66,10 @@
 - Asset review readiness blank source_url rows: `38`
 - Asset review readiness source/identity gap rows: `38`
 - Asset review readiness local candidate gap rows: `38`
+- Manual verification focus rows: `46`
+- Manual verification focus P0 rows: `24`
+- Manual verification focus P1 rows: `22`
+- Manual verification focus download-approved yes rows: `0`
 - Quarantine download intake rows: `74`
 - Quarantine download-approved yes rows: `0`
 
