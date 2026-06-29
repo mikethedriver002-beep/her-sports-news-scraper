@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.12.0-core-watermark-lock"
+VERSION = "hsd-manual-visual-qa-v1.13.0-premium-route-limit-cue"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -907,6 +907,65 @@ def add_composition_balance_readiness_check(checks: List[Dict[str, Any]], render
     )
 
 
+def add_premium_editorial_route_limit_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any]) -> None:
+    visual_mode = clean(first_present(contract_value(renderer_manifest, "visual_mode"), renderer_manifest.get("visual_mode")))
+    photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
+    is_final_score_context = final_score_context(renderer_manifest)
+    hero_source = contract_value(renderer_manifest, "hero_image_source_class")
+    hero_mode = contract_value(renderer_manifest, "hero_image_mode")
+    candidate_status = contract_value(renderer_manifest, "action_photo_candidate_status")
+    readiness_contract = contract_value(renderer_manifest, "action_photo_readiness_contract")
+    headshot_bridge = contract_value(renderer_manifest, "headshot_bridge_status")
+    composition_contract = contract_value(renderer_manifest, "composition_balance_contract")
+    roster_risk_cue = contract_value(renderer_manifest, "roster_portrait_risk_cue")
+    if not is_final_score_context:
+        add_check(
+            checks,
+            "premium_editorial_route_limit_review",
+            "Premium final-score editorial route limit",
+            True,
+            "Non-final-score render; premium final-score route limit remains a manual future-route cue.",
+            result="pass_human_review_required",
+        )
+        return
+
+    draft_bridge_only = bool(
+        visual_mode.startswith("no_photo")
+        or "fallback" in visual_mode
+        or "headshot" in hero_source
+        or "headshot_bridge" in readiness_contract
+        or "headshot" in headshot_bridge
+        or candidate_status in {"not_available_to_renderer", "pending_manual_action_photo_candidate"}
+    )
+    premium_ready = bool(
+        "action_photo" in readiness_contract
+        and "action_photo" in composition_contract
+        and candidate_status not in {"", "not_available_to_renderer", "pending_manual_action_photo_candidate"}
+        and "headshot" not in hero_source
+        and "no_local" not in hero_source
+        and not visual_mode.startswith("no_photo")
+    )
+    evidence = (
+        f"editorial_call={'PASS_ROUTE_READY' if premium_ready else 'REVISE_PREMIUM_FINAL_SCORE'}; "
+        f"review_draft_acceptance={'acceptable_review_draft_only' if draft_bridge_only else 'manual_review_required'}; "
+        f"visual_mode={visual_mode or 'missing'}; layout={photo_layout_mode or 'standard'}; "
+        f"hero_source={hero_source or 'missing'}; hero_mode={hero_mode or 'missing'}; "
+        f"candidate_status={candidate_status or 'missing'}; readiness_contract={readiness_contract or 'missing'}; "
+        f"headshot_bridge={headshot_bridge or 'missing'}; composition_contract={composition_contract or 'missing'}; "
+        f"roster_portrait_risk={roster_risk_cue or 'missing'}. "
+        "Operator should mark revise/hold for premium sports editorial if the route is still logo/no-photo/headshot bridge, "
+        "boxed-dashboard-like, or lacks a manually cleared action-photo candidate; do not treat review-draft acceptance as approval."
+    )
+    add_check(
+        checks,
+        "premium_editorial_route_limit_review",
+        "Premium final-score editorial route limit",
+        premium_ready,
+        evidence,
+        result="pass_human_review_required" if premium_ready else "hold",
+    )
+
+
 def checklist_rows(checks: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for check in checks:
@@ -1094,6 +1153,7 @@ def main() -> None:
         add_lower_third_card_weight_check(checks, renderer_manifest, image)
         add_action_photo_readiness_check(checks, renderer_manifest)
         add_composition_balance_readiness_check(checks, renderer_manifest)
+        add_premium_editorial_route_limit_check(checks, renderer_manifest)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
@@ -1121,6 +1181,7 @@ def main() -> None:
         add_lower_third_card_weight_check(checks, renderer_manifest, None)
         add_action_photo_readiness_check(checks, renderer_manifest)
         add_composition_balance_readiness_check(checks, renderer_manifest)
+        add_premium_editorial_route_limit_check(checks, renderer_manifest)
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_preview_freshness_check(checks, renderer_manifest, handoff_manifest)
     add_check(

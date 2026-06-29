@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.86.0-release-readiness-evidence"
+VERSION = "hsd-operator-command-center-v3.87.0-premium-route-limit-cue"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3655,6 +3655,7 @@ def build_decision_history(
 def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
     checks = qa.get("checks") if isinstance(qa.get("checks"), list) else []
     wanted = [
+        "premium_editorial_route_limit_review",
         "premium_editorial_clutter_scan",
         "headline_text_zone",
         "score_team_text_zone",
@@ -3665,6 +3666,7 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         "approval_guardrails",
     ]
     labels = {
+        "premium_editorial_route_limit_review": "Premium route limit",
         "premium_editorial_clutter_scan": "Premium editorial clutter scan",
         "headline_text_zone": "Title contrast and fit",
         "score_team_text_zone": "Score/team readability",
