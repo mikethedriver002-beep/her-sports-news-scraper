@@ -55,6 +55,7 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["unreported_lane_count"] == 6
     assert manifest["heartbeat_lane_count"] == 1
     assert manifest["restart_needed_lane_count"] == 0
+    assert manifest["lifecycle_action_lane_count"] == 0
     assert manifest["stale_lane_count"] == 0
     assert manifest["stale_lane_threshold_hours"] == 48
     assert manifest["workflow_overhaul_heartbeat"]["active"] is True
@@ -68,6 +69,8 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "pending_thread" in rows[0]
     assert "lane_owner_thread" in rows[0]
     assert "restart_status" in rows[0]
+    assert "activity_age_hours" in rows[0]
+    assert "next_conductor_action" in rows[0]
     assert "heartbeat" in rows[0]
     assert "staleness_status" in rows[0]
     assert workflow["status"] == "heartbeat_visible_needs_conductor_check"
@@ -76,6 +79,8 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert workflow["heartbeat"] == "true"
     assert workflow["stale_lane_brake"] == "false"
     assert workflow["staleness_status"] == "not_applicable"
+    assert workflow["activity_status"] == "no_manual_activity_timestamp"
+    assert workflow["next_conductor_action"] == module.WORKFLOW_HEARTBEAT_NEXT_ACTION
     assert "open PRs" in workflow["heartbeat_next_action"]
     assert "review_only" in rows[0]
     assert all(row["review_only"] == "true" for row in rows)
@@ -87,6 +92,7 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "Pending thread" in markdown
     assert "## Restart Cues" in markdown
     assert "Restart-needed lanes: `0`" in markdown
+    assert "## Manual Lifecycle Actions" in markdown
     assert "best-effort worktree hints" in markdown
     assert "## Workflow Overhaul Heartbeat" in markdown
     assert "## Stale Lane Brake" in markdown
@@ -180,6 +186,10 @@ def test_workflow_lane_status_surfaces_completed_merge_rows_as_review_only(tmp_p
     assert workflow["completed_merge_commit"] == "3f69d86e"
     assert workflow["last_pr_merged"] == "338"
     assert workflow["restart_status"] == "completed_no_restart_requested"
+    assert workflow["activity_age_hours"] != ""
+    assert workflow["activity_status"] == "completed_or_merged"
+    assert workflow["last_known_branch"] == "codex/hsd-conductor-directive-brake"
+    assert workflow["last_known_head"] == "3f69d86e"
     assert workflow["pending_thread"] == ""
     assert workflow["review_only"] == "true"
     assert workflow["paid_apis"] == "false"
@@ -230,12 +240,47 @@ def test_workflow_lane_status_surfaces_restart_cues_for_merged_durable_lane(tmp_
     assert workflow["restart_needed"] == "true"
     assert workflow["next_packet"] == "Start a fresh workflow-only restart packet from current origin/main."
     assert workflow["restart_status"] == "restart_ready_from_current_main"
+    assert workflow["activity_status"] == "restart_needed"
+    assert workflow["next_conductor_action"] == "RESTART_NEEDED: Start a fresh workflow-only restart packet from current origin/main."
     assert workflow["stale_lane_brake"] == "false"
     assert manifest["restart_needed_lane_count"] == 1
     assert manifest["stale_lane_count"] == 0
     assert "## Restart Cues" in markdown
     assert "Start a fresh workflow-only restart packet from current origin/main." in markdown
     assert "019f04ad-9680-7e83-a9c5-db1e36d52543" in markdown
+
+
+def test_workflow_lane_status_surfaces_manual_lifecycle_action_without_automation(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    intake = tmp_path / "operator" / "inbox" / "workflow_lane_status_intake.csv"
+    module = load_module()
+    row = {field: "" for field in module.INTAKE_FIELDS}
+    row.update(
+        {
+            "lane_id": "workflow_overhaul",
+            "status": "active_or_needs_conductor_check",
+            "branch": "codex/workflow-stale-thread",
+            "pending_thread": "019f04ad-9680-7e83-a9c5-db1e36d52543",
+            "lane_owner_thread": "019f04ad-9680-7e83-a9c5-db1e36d52543",
+            "lifecycle_action": "replace_reboot",
+            "last_update_utc": "2026-06-28T10:00:00Z",
+        }
+    )
+    write_csv(intake, [row], module.INTAKE_FIELDS)
+
+    payload = module.build_payload(
+        module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup", "--as-of-utc", "2026-06-29T13:00:00Z"])
+    )
+    workflow = next(row for row in payload["lanes"] if row["lane_id"] == "workflow_overhaul")
+
+    assert workflow["lifecycle_action"] == "replace_reboot"
+    assert workflow["activity_age_hours"] == "27.0"
+    assert workflow["activity_status"] == "active_recent_or_waiting"
+    assert workflow["last_known_branch"] == "codex/workflow-stale-thread"
+    assert workflow["next_conductor_action"].startswith("Replace/reboot from current origin/main")
+    assert payload["lifecycle_action_lane_count"] == 1
+    assert payload["stale_lane_count"] == 0
 
 
 def test_workflow_lane_status_flags_stale_active_manual_lane_without_state_change(tmp_path: Path, monkeypatch) -> None:
@@ -285,6 +330,9 @@ def test_workflow_lane_status_flags_stale_active_manual_lane_without_state_chang
     assert workflow["stale_lane_brake"] == "true"
     assert workflow["stale_age_hours"] == "84.0"
     assert workflow["stale_warning"] == "last_update_utc_older_than_48h"
+    assert workflow["activity_age_hours"] == "84.0"
+    assert workflow["activity_status"] == "stale_brake"
+    assert workflow["next_conductor_action"].startswith("STALE_BRAKE:")
     assert workflow["review_only"] == "true"
     assert workflow["automatic_downloads"] == "false"
     assert workflow["auto_approval"] == "false"
@@ -398,6 +446,7 @@ def test_workflow_lane_status_example_intake_documents_recent_completed_merges()
     assert workflow["lane_owner_thread"] == "019f04ad-9680-7e83-a9c5-db1e36d52543"
     assert workflow["last_pr_merged"] == "372"
     assert workflow["restart_needed"] == "true"
+    assert workflow["lifecycle_action"] == "replace_reboot"
     assert "workflow-only conductor safety packet" in workflow["next_packet"]
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["paid_apis"] == "false" for row in rows)

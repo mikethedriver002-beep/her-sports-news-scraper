@@ -161,10 +161,40 @@ def load_conductor_audit() -> dict[str, Any]:
     }
 
 
+def load_workflow_lane_status() -> dict[str, Any]:
+    path = input_path("workflow_lane_status_dashboard.json")
+    if not path.exists():
+        return {
+            "status": "not_found",
+            "stale_lane_count": 0,
+            "restart_needed_lane_count": 0,
+            "lifecycle_action_lane_count": 0,
+            "detail": "workflow lane status dashboard artifact is missing",
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except json.JSONDecodeError as exc:
+        return {
+            "status": "blocked",
+            "stale_lane_count": 1,
+            "restart_needed_lane_count": 0,
+            "lifecycle_action_lane_count": 0,
+            "detail": f"workflow lane status JSON could not be parsed: {exc}",
+        }
+    return {
+        "status": payload.get("status") or "unknown",
+        "stale_lane_count": int(payload.get("stale_lane_count") or 0),
+        "restart_needed_lane_count": int(payload.get("restart_needed_lane_count") or 0),
+        "lifecycle_action_lane_count": int(payload.get("lifecycle_action_lane_count") or 0),
+        "detail": "workflow lane status loaded",
+    }
+
+
 def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
     config = guardrail_check.load_guardrails()
     latest_scan = scan_latest_artifacts(scan_dir, config)
     conductor_audit = load_conductor_audit()
+    workflow_lane_status = load_workflow_lane_status()
     guardrail_config = {
         "version": config.get("version", "unknown"),
         "truthy_guardrail_fields": len(config.get("truthy_guardrail_fields", [])),
@@ -172,7 +202,12 @@ def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
         "blocked_marker_suffixes": len(config.get("blocked_marker_suffixes", [])),
         "protected_asset_write_fragments": len(config.get("protected_asset_write_fragments", [])),
     }
-    blocker_count = latest_scan["violation_count"] + int(conductor_audit.get("collision_blocker_count") or 0)
+    workflow_stale_count = int(workflow_lane_status.get("stale_lane_count") or 0)
+    blocker_count = (
+        latest_scan["violation_count"]
+        + int(conductor_audit.get("collision_blocker_count") or 0)
+        + workflow_stale_count
+    )
     missing_inputs = [name for name, status in {
         "latest_artifact_scan": latest_scan["status"],
         "conductor_workspace_audit": conductor_audit["status"],
@@ -201,6 +236,17 @@ def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
             "Run conductor workspace audit before release review." if conductor_audit["status"] == "not_found" else "Fix conductor collision blockers before release review." if conductor_audit["collision_blocker_count"] else "Conductor collision audit is clear.",
         ),
         row(
+            "workflow_lane_stale_brake",
+            "blocked" if workflow_stale_count else workflow_lane_status["status"],
+            (
+                f"stale_lane_count={workflow_stale_count}; "
+                f"restart_needed={workflow_lane_status['restart_needed_lane_count']}; "
+                f"lifecycle_actions={workflow_lane_status['lifecycle_action_lane_count']}"
+            ),
+            "workflow_lane_status_dashboard.json",
+            "Resolve or manually lifecycle active stale lanes before release review." if workflow_stale_count else "Run workflow lane status before release review." if workflow_lane_status["status"] == "not_found" else "No active workflow stale-lane brakes found.",
+        ),
+        row(
             "hard_release_guardrail_posture",
             "passed",
             "review-only artifact-only; no paid APIs, downloads, source auto-enablement, approvals, asset writes, publish-ready movement, or publishing",
@@ -222,6 +268,7 @@ def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
         "guardrail_config": guardrail_config,
         "latest_artifact_scan": latest_scan,
         "conductor_workspace_audit": conductor_audit,
+        "workflow_lane_status": workflow_lane_status,
         "guardrails": {
             "review_only": True,
             "paid_apis": False,

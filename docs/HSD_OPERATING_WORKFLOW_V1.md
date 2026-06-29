@@ -122,7 +122,7 @@ When `HSD_RUN_OUTPUT_DIR` is set, the dashboard writes into the run-scoped outpu
 
 Optional human-maintained intake can live at `operator/inbox/workflow_lane_status_intake.csv` with these columns:
 
-`lane_id,status,branch,pr,pending_thread,lane_owner_thread,last_pr_merged,restart_needed,next_packet,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`
+`lane_id,status,branch,pr,pending_thread,lane_owner_thread,last_pr_merged,restart_needed,next_packet,lifecycle_action,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`
 
 Use `operator/inbox/workflow_lane_status_intake.example.csv` as a copyable review-only starter for conductor-visible completion rows. It is an example/template only; it does not become status truth unless a human copies reviewed rows into `operator/inbox/workflow_lane_status_intake.csv`.
 
@@ -130,11 +130,13 @@ Use `pending_thread` for a delegated Codex thread id or URL that has active or w
 
 Use `lane_owner_thread`, `last_pr_merged`, `restart_needed`, and `next_packet` after a merge wave when a durable lane should be restarted from current `origin/main`. These are conductor restart cues only; they do not create threads, branches, PRs, assets, sources, approvals, publish-ready movement, or publishing.
 
+Use `lifecycle_action` only for manual conductor cues: `nudge`, `replace_reboot`, `pause`, `archive`, or `merge_ready`. The dashboard turns those into text-only `next_conductor_action` guidance and never closes branches, deletes worktrees, archives threads, rebases branches, or changes approval/download/source/publish state.
+
 When no intake row exists, the dashboard also scans local Git worktrees for `codex/` branches whose names match lane hints such as `renderer`, `asset`, `games`, `breaking`, `copy`, `qa`, or `workflow`. These rows are marked as worktree hints and should be checked by the conductor before treating them as active lane truth. Use `--skip-worktree-lookup` for fixture tests or intentionally isolated runs.
 
 If the workflow-overhaul row has no manual intake, open PR, current branch, or worktree hint, the dashboard keeps it visible as `heartbeat_visible_needs_conductor_check` instead of letting the conductor lose the lane in a fully unreported table. That heartbeat is a checklist/status cue only: confirm `origin/main`, open PR count, worktree hints, next-action synthesis, and conductor audit before nudging one small review-only workflow packet.
 
-Manual intake rows with an active/review/blocked status, branch, PR, or blocker now carry a deterministic stale-lane brake. By default, `last_update_utc` older than 48 hours becomes `stale_lane_needs_conductor_check`; a missing timestamp becomes `missing_last_update_needs_conductor_check`. The brake tells the conductor to refresh current proof, PR state, and branch freshness before nudging or merging. It does not edit the intake, branches, PRs, sources, assets, approvals, publish-ready folders, or publishing state.
+Manual intake rows with an active/review/blocked status, branch, PR, or blocker now carry deterministic activity metrics and a stale-lane brake. By default, `last_update_utc` older than 48 hours becomes `stale_lane_needs_conductor_check`; a missing timestamp becomes `missing_last_update_needs_conductor_check`. The dashboard also emits `activity_age_hours`, `activity_status`, `last_known_branch`, `last_known_head`, and `next_conductor_action`. The brake tells the conductor to refresh current proof, PR state, and branch freshness before nudging or merging. It does not edit the intake, branches, PRs, sources, assets, approvals, publish-ready folders, or publishing state.
 
 This dashboard is a conductor visibility aid only. It does not create branches, change approval state, download assets, move files, or publish.
 
