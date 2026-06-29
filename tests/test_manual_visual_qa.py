@@ -190,6 +190,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "premium_editorial_clutter_scan" in check_ids
     assert "anti_dashboard_score_spine_review" in check_ids
     assert "lower_third_card_weight_review" in check_ids
+    assert "action_photo_readiness_review" in check_ids
     assert "preview_freshness_current_handoff" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
@@ -283,6 +284,147 @@ def test_manual_visual_qa_holds_final_score_missing_lower_third_rail_contract(tm
     assert checks["anti_dashboard_score_spine_review"]["qa_result"] == "pass_human_review_required"
     assert checks["lower_third_card_weight_review"]["qa_result"] == "hold"
     assert "lower_third_contract=missing" in checks["lower_third_card_weight_review"]["evidence"]
+    assert checks["action_photo_readiness_review"]["qa_result"] == "hold"
+    assert "readiness_contract=missing" in checks["action_photo_readiness_review"]["evidence"]
+    assert manifest["guardrails"]["publish_ready"] is False
+
+
+def test_manual_visual_qa_uses_format_action_photo_contract_when_content_module_sparse(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_reference_style_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["content_module"] = {
+        "content_module_mode": "not_final_score",
+        "content_module_status": "not_applicable",
+    }
+    renderer_manifest["format_options"] = [
+        {
+            "format_id": "ig_feed_4x5",
+            "primary": True,
+            "athlete_photo_layout_mode": "safe_no_photo_fallback",
+            "visual_mode": "no_photo_premium_result",
+            "score_layout_contract": "logo_first_editorial_score_spine_no_dashboard_panels",
+            "anti_dashboard_contract": "open_score_spine_no_nested_cards_no_metric_tiles",
+            "lower_third_contract": "editorial_stat_rail_no_heavy_card_container",
+            "hero_image_mode": "logo_score_fallback_no_person_image",
+            "hero_image_source_class": "no_local_hero_image",
+            "action_photo_hero_contract": "manual_review_action_photo_not_available_no_download",
+            "action_photo_candidate_status": "not_available_to_renderer",
+            "action_photo_readiness_contract": "review_draft_ok_premium_final_score_needs_action_photo_candidate",
+            "action_photo_slot_expectation": "future_local_action_photo_candidate_only_after_manual_intake_no_download",
+            "action_photo_subject_metadata_required": "entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use",
+            "action_photo_crop_metadata_required": "subject_bbox_or_focus_zone,full_body_or_in_game_context,crop_safety,background_clearance,score_text_clearance",
+            "action_photo_operator_review_cue": (
+                "No action-photo candidate is available to the renderer; this fallback may be reviewed as a draft, "
+                "but premium final-score editorial needs a manually cleared action-photo candidate."
+            ),
+            "headshot_bridge_status": "not_in_use_no_local_person_image",
+        }
+    ]
+    renderer_manifest["render_background_cues"] = (
+        "logo_first_no_dashboard_card_panels,lower_third_no_heavy_stat_cards,"
+        "action_photo_readiness_visual_qa,anti_dashboard_visual_qa"
+    )
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [python_executable(), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    checks = {check["check_id"]: check for check in manifest["checks"]}
+    assert checks["anti_dashboard_score_spine_review"]["qa_result"] == "pass_human_review_required"
+    assert checks["lower_third_card_weight_review"]["qa_result"] == "pass_human_review_required"
+    assert checks["action_photo_readiness_review"]["qa_result"] == "pass_human_review_required"
+    assert "final_score_context=True" in checks["action_photo_readiness_review"]["evidence"]
+    assert "premium final-score editorial needs" in checks["action_photo_readiness_review"]["evidence"]
+    assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
+
+
+def test_manual_visual_qa_accepts_headshot_bridge_as_review_draft_only(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_photo_first_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["render_background_cues"] = (
+        "photo_first_editorial_score_rails,lower_third_no_heavy_stat_cards,"
+        "action_photo_readiness_visual_qa,anti_dashboard_visual_qa"
+    )
+    renderer_manifest["format_options"] = [
+        {
+            "format_id": "ig_feed_4x5",
+            "primary": True,
+            "athlete_photo_layout_mode": "photo_first_final_score",
+            "photo_first_template_geometry": {
+                "photo_stage_box": [58, 372, 408, 590],
+                "photo_face_focus_box": [106, 572, 312, 188],
+                "winner_score_row_box": [494, 398, 528, 176],
+                "loser_score_row_box": [494, 598, 528, 160],
+                "score_context_box": [494, 786, 528, 54],
+                "stat_strip_box": [58, 990, 964, 132],
+                "matchup_angle_box": [58, 1148, 964, 112],
+                "minimum_clearance_px": 24,
+            },
+        }
+    ]
+    renderer_manifest["content_module"] = {
+        "content_module_mode": "verified_player_stats",
+        "content_module_status": "verified_player_stat_module",
+        "content_module_player": "Breanna Stewart",
+        "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
+        "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
+        "visual_mode": "photo_first_performer",
+        "score_layout_contract": "photo_first_score_team_caption_clearance_locked",
+        "anti_dashboard_contract": "photo_first_borderless_score_stage_no_dashboard_panels",
+        "lower_third_contract": "photo_first_integrated_stat_caption_rail_no_heavy_panel",
+        "hero_image_mode": "approved_headshot_bridge_action_photo_ready",
+        "hero_image_source_class": "approved_local_headshot_bridge",
+        "action_photo_hero_contract": "manual_review_action_photo_can_replace_headshot_when_local_approved",
+        "action_photo_candidate_status": "pending_manual_action_photo_candidate",
+        "action_photo_readiness_contract": "headshot_bridge_review_draft_ok_action_photo_candidate_required_for_premium_final_score",
+        "action_photo_slot_expectation": "replace_headshot_bridge_with_manually_cleared_local_action_photo_candidate",
+        "action_photo_subject_metadata_required": "entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use,source_attribution",
+        "action_photo_crop_metadata_required": "subject_bbox_or_focus_zone,action_context,limb_clearance,face_visibility,score_text_clearance,safe_crop_notes",
+        "action_photo_operator_review_cue": (
+            "Approved local headshot may bridge review drafts only; hold premium final-score editorial until a manually cleared "
+            "action-photo candidate proves subject identity, rights class, action context, and crop/text clearance."
+        ),
+        "headshot_bridge_status": "approved_local_headshot_review_draft_only_not_premium_final_score",
+    }
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [python_executable(), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    checks = {check["check_id"]: check for check in manifest["checks"]}
+    action_check = checks["action_photo_readiness_review"]
+    assert action_check["qa_result"] == "pass_human_review_required"
+    assert "headshot_bridge_review_draft_ok_action_photo_candidate_required_for_premium_final_score" in action_check["evidence"]
+    assert "approved_local_headshot_review_draft_only_not_premium_final_score" in action_check["evidence"]
+    assert "manually cleared action-photo candidate" in action_check["evidence"]
+    assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 
 
@@ -338,6 +480,8 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     assert checks["photo_first_crop_signal"]["qa_result"] == "pass"
     assert checks["photo_first_face_visibility"]["qa_result"] == "pass"
     assert checks["photo_first_text_clearance"]["qa_result"] == "pass"
+    assert checks["action_photo_readiness_review"]["qa_result"] == "hold"
+    assert "readiness_contract=missing" in checks["action_photo_readiness_review"]["evidence"]
     assert "minimum_clearance" in checks["photo_first_text_clearance"]["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False

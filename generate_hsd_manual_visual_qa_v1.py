@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.8.0-lower-third-card-weight"
+VERSION = "hsd-manual-visual-qa-v1.9.0-action-photo-readiness"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -113,6 +113,35 @@ def primary_format_option(renderer_manifest: Dict[str, Any]) -> Dict[str, Any]:
     formats = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
     primary = next((item for item in formats if isinstance(item, dict) and item.get("primary") is True), formats[0] if formats else {})
     return primary if isinstance(primary, dict) else {}
+
+
+def contract_value(renderer_manifest: Dict[str, Any], key: str) -> str:
+    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
+    primary = primary_format_option(renderer_manifest)
+    return clean(content_module.get(key)) or clean(primary.get(key))
+
+
+def final_score_context(renderer_manifest: Dict[str, Any]) -> bool:
+    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
+    format_options = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
+    fields = [
+        clean(selected_template.get("template_id")),
+        clean(selected_template.get("template_family")),
+        contract_value(renderer_manifest, "visual_mode"),
+        contract_value(renderer_manifest, "athlete_photo_layout_mode"),
+        contract_value(renderer_manifest, "score_lock_variant"),
+    ]
+    for row in format_options:
+        if isinstance(row, dict):
+            fields.extend(
+                [
+                    clean(row.get("visual_mode")),
+                    clean(row.get("athlete_photo_layout_mode")),
+                    clean(row.get("score_lock_variant")),
+                    clean(row.get("athlete_photo_template_family")),
+                ]
+            )
+    return any("final_score" in field or "premium_result" in field for field in fields)
 
 
 def box_from_geometry(geometry: Dict[str, Any], key: str) -> Zone | None:
@@ -632,20 +661,11 @@ def add_premium_editorial_clutter_scan(
     zone_scores: List[float],
     bright_scores: List[float],
 ) -> None:
-    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
-    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
     format_options = renderer_manifest.get("format_options") if isinstance(renderer_manifest.get("format_options"), list) else []
-    template_id = clean(selected_template.get("template_id"))
-    family = clean(selected_template.get("template_family"))
-    visual_mode = clean(first_present(content_module.get("visual_mode"), renderer_manifest.get("visual_mode")))
+    visual_mode = clean(first_present(contract_value(renderer_manifest, "visual_mode"), renderer_manifest.get("visual_mode")))
     photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
-    final_score_context = (
-        family == "game_recap_final_score"
-        or "final_score" in template_id
-        or "final_score" in photo_layout_mode
-        or "final_score" in visual_mode
-    )
-    if not final_score_context:
+    is_final_score_context = final_score_context(renderer_manifest)
+    if not is_final_score_context:
         add_check(
             checks,
             "premium_editorial_clutter_scan",
@@ -688,7 +708,7 @@ def add_premium_editorial_clutter_scan(
         "Premium editorial clutter scan",
         passed,
         (
-            f"final_score_context={final_score_context}; visual_mode={visual_mode or 'missing'}; "
+            f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
             f"layout={photo_layout_mode or 'standard'}; format_count={format_count}; "
             f"title_fit={headline_signal['fit_passed']}; title_contrast={headline_signal['contrast_passed']}; "
             f"avg_text_variance={average_zone_variance:.1f} (max 12000.0); "
@@ -700,22 +720,13 @@ def add_premium_editorial_clutter_scan(
 
 
 def add_anti_dashboard_score_spine_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any]) -> None:
-    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
-    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
-    template_id = clean(selected_template.get("template_id"))
-    family = clean(selected_template.get("template_family"))
-    visual_mode = clean(first_present(content_module.get("visual_mode"), renderer_manifest.get("visual_mode")))
+    visual_mode = clean(first_present(contract_value(renderer_manifest, "visual_mode"), renderer_manifest.get("visual_mode")))
     photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
-    final_score_context = (
-        family == "game_recap_final_score"
-        or "final_score" in template_id
-        or "final_score" in photo_layout_mode
-        or "final_score" in visual_mode
-    )
-    anti_dashboard_contract = clean(content_module.get("anti_dashboard_contract"))
-    score_layout_contract = clean(content_module.get("score_layout_contract"))
+    is_final_score_context = final_score_context(renderer_manifest)
+    anti_dashboard_contract = contract_value(renderer_manifest, "anti_dashboard_contract")
+    score_layout_contract = contract_value(renderer_manifest, "score_layout_contract")
     cues = clean(renderer_manifest.get("render_background_cues"))
-    if not final_score_context:
+    if not is_final_score_context:
         add_check(
             checks,
             "anti_dashboard_score_spine_review",
@@ -738,7 +749,7 @@ def add_anti_dashboard_score_spine_check(checks: List[Dict[str, Any]], renderer_
         "Anti-dashboard score-spine review cue",
         passed,
         (
-            f"final_score_context={final_score_context}; visual_mode={visual_mode or 'missing'}; "
+            f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
             f"layout={photo_layout_mode or 'standard'}; score_layout_contract={score_layout_contract or 'missing'}; "
             f"anti_dashboard_contract={anti_dashboard_contract or 'missing'}; "
             "operator must hold or revise if the score treatment reads like a dashboard card, boxed metric tile, or ad unit."
@@ -748,21 +759,12 @@ def add_anti_dashboard_score_spine_check(checks: List[Dict[str, Any]], renderer_
 
 
 def add_lower_third_card_weight_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any], image: Any | None) -> None:
-    selected_template = renderer_manifest.get("selected_template") if isinstance(renderer_manifest.get("selected_template"), dict) else {}
-    content_module = renderer_manifest.get("content_module") if isinstance(renderer_manifest.get("content_module"), dict) else {}
-    template_id = clean(selected_template.get("template_id"))
-    family = clean(selected_template.get("template_family"))
-    visual_mode = clean(first_present(content_module.get("visual_mode"), renderer_manifest.get("visual_mode")))
+    visual_mode = clean(first_present(contract_value(renderer_manifest, "visual_mode"), renderer_manifest.get("visual_mode")))
     photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
-    final_score_context = (
-        family == "game_recap_final_score"
-        or "final_score" in template_id
-        or "final_score" in photo_layout_mode
-        or "final_score" in visual_mode
-    )
-    lower_third_contract = clean(content_module.get("lower_third_contract"))
+    is_final_score_context = final_score_context(renderer_manifest)
+    lower_third_contract = contract_value(renderer_manifest, "lower_third_contract")
     cues = clean(renderer_manifest.get("render_background_cues"))
-    if not final_score_context:
+    if not is_final_score_context:
         add_check(
             checks,
             "lower_third_card_weight_review",
@@ -791,12 +793,66 @@ def add_lower_third_card_weight_check(checks: List[Dict[str, Any]], renderer_man
         "Lower-third card-weight review cue",
         passed,
         (
-            f"final_score_context={final_score_context}; visual_mode={visual_mode or 'missing'}; "
+            f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
             f"layout={photo_layout_mode or 'standard'}; lower_third_contract={lower_third_contract or 'missing'}; "
             f"near_black_ratio={near_black_ratio:.3f}; low_variance_heavy_panel={low_variance}. "
             "Operator must hold or revise if the lower stat/caption block reads as a heavy card, dashboard module, or boxed lower-third."
         ),
         result="pass_human_review_required" if passed else "hold",
+    )
+
+
+def add_action_photo_readiness_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any]) -> None:
+    visual_mode = clean(first_present(contract_value(renderer_manifest, "visual_mode"), renderer_manifest.get("visual_mode")))
+    photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
+    is_final_score_context = final_score_context(renderer_manifest)
+    hero_mode = contract_value(renderer_manifest, "hero_image_mode")
+    hero_source = contract_value(renderer_manifest, "hero_image_source_class")
+    hero_contract = contract_value(renderer_manifest, "action_photo_hero_contract")
+    candidate_status = contract_value(renderer_manifest, "action_photo_candidate_status")
+    readiness_contract = contract_value(renderer_manifest, "action_photo_readiness_contract")
+    slot_expectation = contract_value(renderer_manifest, "action_photo_slot_expectation")
+    subject_metadata = contract_value(renderer_manifest, "action_photo_subject_metadata_required")
+    crop_metadata = contract_value(renderer_manifest, "action_photo_crop_metadata_required")
+    headshot_bridge = contract_value(renderer_manifest, "headshot_bridge_status")
+    operator_cue = contract_value(renderer_manifest, "action_photo_operator_review_cue")
+    if not is_final_score_context:
+        add_check(
+            checks,
+            "action_photo_readiness_review",
+            "Action-photo readiness review cue",
+            True,
+            "Non-final-score render; action-photo readiness remains a manual future-route cue.",
+            result="pass_human_review_required",
+        )
+        return
+
+    no_download_guardrail = "no_download" in (hero_contract + " " + slot_expectation) or "manually_cleared_local" in slot_expectation
+    contract_ok = bool(
+        readiness_contract
+        and slot_expectation
+        and subject_metadata
+        and crop_metadata
+        and "action_photo" in readiness_contract
+        and no_download_guardrail
+        and candidate_status in {"not_available_to_renderer", "pending_manual_action_photo_candidate"}
+    )
+    evidence = (
+        f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
+        f"layout={photo_layout_mode or 'standard'}; hero_mode={hero_mode or 'missing'}; hero_source={hero_source or 'missing'}; "
+        f"action_photo_contract={hero_contract or 'missing'}; candidate_status={candidate_status or 'missing'}; "
+        f"readiness_contract={readiness_contract or 'missing'}; slot_expectation={slot_expectation or 'missing'}; "
+        f"subject_metadata={subject_metadata or 'missing'}; crop_metadata={crop_metadata or 'missing'}; "
+        f"headshot_bridge={headshot_bridge or 'missing'}. "
+        f"{operator_cue or 'Headshot/no-photo fallback is review-draft acceptable only; premium final-score editorial needs a manually cleared action-photo candidate.'}"
+    )
+    add_check(
+        checks,
+        "action_photo_readiness_review",
+        "Action-photo readiness review cue",
+        contract_ok,
+        evidence,
+        result="pass_human_review_required" if contract_ok else "hold",
     )
 
 
@@ -985,6 +1041,7 @@ def main() -> None:
         add_premium_editorial_clutter_scan(checks, renderer_manifest, image, zone_scores, bright_scores)
         add_anti_dashboard_score_spine_check(checks, renderer_manifest)
         add_lower_third_card_weight_check(checks, renderer_manifest, image)
+        add_action_photo_readiness_check(checks, renderer_manifest)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
@@ -1010,6 +1067,7 @@ def main() -> None:
         add_premium_editorial_clutter_scan(checks, renderer_manifest, None, [], [])
         add_anti_dashboard_score_spine_check(checks, renderer_manifest)
         add_lower_third_card_weight_check(checks, renderer_manifest, None)
+        add_action_photo_readiness_check(checks, renderer_manifest)
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_preview_freshness_check(checks, renderer_manifest, handoff_manifest)
     add_check(
