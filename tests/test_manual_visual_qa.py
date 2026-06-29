@@ -180,7 +180,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     check_ids = {row["check_id"] for row in rows}
     assert "dimensions_1080x1350" in check_ids
     assert "top_draft_label_zone" in check_ids
-    assert "footer_guardrail_zone" not in check_ids
+    assert "footer_guardrail_zone" in check_ids
     assert "headline_text_zone" in check_ids
     assert "score_team_text_zone" in check_ids
     assert "context_text_zone" in check_ids
@@ -197,6 +197,9 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "operator_visual_review" in check_ids
     assert all(row["operator_decision"] == "operator_fill_required" for row in rows)
     assert "Does not approve the preview" in report_path.read_text(encoding="utf-8")
+    footer_row = next(row for row in rows if row["check_id"] == "footer_guardrail_zone")
+    assert footer_row["qa_result"] == "pass"
+    assert "review_only_diagnostic_watermark_lock=True" in footer_row["evidence"]
 
 
 def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_path: Path) -> None:
@@ -262,7 +265,7 @@ def test_manual_visual_qa_holds_final_score_missing_lower_third_rail_contract(tm
     }
     renderer_manifest["content_module"] = {
         "visual_mode": "no_photo_premium_result",
-        "score_layout_contract": "logo_first_editorial_score_spine_no_dashboard_panels",
+        "score_layout_contract": "logo_first_borderless_editorial_score_spine_no_dashboard_panels",
         "anti_dashboard_contract": "open_score_spine_no_nested_cards_no_metric_tiles",
     }
     renderer_manifest["render_background_cues"] = "logo_first_no_dashboard_card_panels,anti_dashboard_visual_qa"
@@ -308,9 +311,9 @@ def test_manual_visual_qa_uses_format_action_photo_contract_when_content_module_
             "primary": True,
             "athlete_photo_layout_mode": "safe_no_photo_fallback",
             "visual_mode": "no_photo_premium_result",
-            "score_layout_contract": "logo_first_editorial_score_spine_no_dashboard_panels",
+            "score_layout_contract": "logo_first_borderless_editorial_score_spine_no_dashboard_panels",
             "anti_dashboard_contract": "open_score_spine_no_nested_cards_no_metric_tiles",
-            "lower_third_contract": "editorial_stat_rail_no_heavy_card_container",
+            "lower_third_contract": "editorial_stat_rail_open_no_heavy_card_container",
             "hero_image_mode": "logo_score_fallback_no_person_image",
             "hero_image_source_class": "no_local_hero_image",
             "action_photo_hero_contract": "manual_review_action_photo_not_available_no_download",
@@ -352,7 +355,10 @@ def test_manual_visual_qa_uses_format_action_photo_contract_when_content_module_
     manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
     checks = {check["check_id"]: check for check in manifest["checks"]}
     assert checks["anti_dashboard_score_spine_review"]["qa_result"] == "pass_human_review_required"
+    assert "row container" in checks["anti_dashboard_score_spine_review"]["evidence"]
+    assert "solid backing panel" in checks["anti_dashboard_score_spine_review"]["evidence"]
     assert checks["lower_third_card_weight_review"]["qa_result"] == "pass_human_review_required"
+    assert "solid lower-third box" in checks["lower_third_card_weight_review"]["evidence"]
     assert checks["action_photo_readiness_review"]["qa_result"] == "pass_human_review_required"
     assert checks["composition_balance_readiness_review"]["qa_result"] == "pass_human_review_required"
     assert "final_score_context=True" in checks["action_photo_readiness_review"]["evidence"]
@@ -397,9 +403,9 @@ def test_manual_visual_qa_accepts_headshot_bridge_as_review_draft_only(tmp_path:
         "content_module_source_text": "Breanna Stewart (New York Liberty): PTS 20, REB 6, AST 4",
         "stat_source_confidence": "verified_stat_text_ready_manual_crosscheck_required",
         "visual_mode": "photo_first_performer",
-        "score_layout_contract": "photo_first_score_team_caption_clearance_locked",
-        "anti_dashboard_contract": "photo_first_borderless_score_stage_no_dashboard_panels",
-        "lower_third_contract": "photo_first_integrated_stat_caption_rail_no_heavy_panel",
+        "score_layout_contract": "photo_first_borderless_score_typography_clearance_locked",
+        "anti_dashboard_contract": "photo_first_borderless_score_text_no_row_panels_no_dashboard_widgets",
+        "lower_third_contract": "photo_first_open_stat_caption_rail_no_boxed_panel",
         "hero_image_mode": "approved_headshot_bridge_action_photo_ready",
         "hero_image_source_class": "approved_local_headshot_bridge",
         "action_photo_hero_contract": "manual_review_action_photo_can_replace_headshot_when_local_approved",

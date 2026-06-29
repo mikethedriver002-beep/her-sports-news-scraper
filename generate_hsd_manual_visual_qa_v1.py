@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.10.0-composition-balance-readiness"
+VERSION = "hsd-manual-visual-qa-v1.12.0-core-watermark-lock"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -35,6 +35,7 @@ TEXT_ZONES: Dict[str, TextZoneSpec] = {
 PLAYER_LEDGER_ZONE: Zone = (70, 960, 1010, 1128)
 DRAFT_MARK_ZONES: Dict[str, Tuple[Zone, float]] = {
     "top_draft_label_zone": ((710, 74, 1030, 150), 0.025),
+    "footer_guardrail_zone": ((54, 1286, 1028, 1320), 0.120),
 }
 
 CHECKLIST_FIELDS = [
@@ -752,7 +753,7 @@ def add_anti_dashboard_score_spine_check(checks: List[Dict[str, Any]], renderer_
             f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
             f"layout={photo_layout_mode or 'standard'}; score_layout_contract={score_layout_contract or 'missing'}; "
             f"anti_dashboard_contract={anti_dashboard_contract or 'missing'}; "
-            "operator must hold or revise if the score treatment reads like a dashboard card, boxed metric tile, or ad unit."
+            "operator must hold or revise if the score treatment reads like a dashboard card, boxed metric tile, row container, solid backing panel, fantasy-app module, or ad unit."
         ),
         result="pass_human_review_required" if passed else "hold",
     )
@@ -796,7 +797,7 @@ def add_lower_third_card_weight_check(checks: List[Dict[str, Any]], renderer_man
             f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
             f"layout={photo_layout_mode or 'standard'}; lower_third_contract={lower_third_contract or 'missing'}; "
             f"near_black_ratio={near_black_ratio:.3f}; low_variance_heavy_panel={low_variance}. "
-            "Operator must hold or revise if the lower stat/caption block reads as a heavy card, dashboard module, or boxed lower-third."
+            "Operator must hold or revise if the lower stat/caption block reads as a heavy card, dashboard module, solid lower-third box, or boxed lower-third."
         ),
         result="pass_human_review_required" if passed else "hold",
     )
@@ -1015,7 +1016,7 @@ def main() -> None:
                 zone_id,
                 "Single draft watermark red marker",
                 score >= threshold,
-                f"Red marker ratio {score:.3f} in crop {box}; threshold {threshold:.3f}.",
+                f"Red marker ratio {score:.3f} in crop {box}; threshold {threshold:.3f}; review_only_diagnostic_watermark_lock=True.",
             )
 
         zone_scores: List[float] = []
