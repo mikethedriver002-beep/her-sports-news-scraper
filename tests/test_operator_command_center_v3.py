@@ -80,6 +80,7 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
         "game_source_research_worksheet_v1.csv",
         "breaking_public_signal_next_action_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
+        "data/asset_registry/hockey_softball_action_photo_research_handoff.csv",
         "data/asset_registry/hockey_softball_source_research_return_intake.csv",
     ]
     for artifact in primary_artifacts:
@@ -5890,6 +5891,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/hockey_softball_source_map_board.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_source_map_board.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_source_map_board.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_research_handoff.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_research_handoff.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_research_handoff.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_asset_review_triage.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_asset_review_triage.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_asset_review_triage.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
