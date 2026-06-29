@@ -47,6 +47,9 @@ Use this as the exact prompt/export glue for ChatGPT Pro, Gemini, or manual rese
 - `quality_fit_board_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md`
 - `quality_fit_board_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv`
 - `quality_fit_board_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json`
+- `quality_fit_operator_cue_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.md`
+- `quality_fit_operator_cue_csv`: `data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.csv`
+- `quality_fit_operator_cue_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.json`
 - `external_research_prompt_md`: `data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md`
 - `external_research_manifest_json`: `data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json`
 
