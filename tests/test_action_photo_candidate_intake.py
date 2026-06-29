@@ -44,6 +44,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     operator_worksheet_rows = read_csv(root / "review_only_action_photo_candidate_operator_worksheet_v1.csv")
     research_packet_rows = read_csv(root / "review_only_action_photo_candidate_research_packet_v1.csv")
     research_return_rows = read_csv(root / "review_only_action_photo_research_return_intake_v1.csv")
+    research_return_paste_worksheet_rows = read_csv(root / "review_only_action_photo_research_return_paste_worksheet_v1.csv")
     research_bundle_rows = read_csv(root / "review_only_action_photo_research_run_bundle_v1.csv")
     preflight_rows = read_csv(root / "review_only_action_photo_quarantine_preflight_v1.csv")
     summary_rows = read_csv(root / "review_only_action_photo_research_return_summary_board_v1.csv")
@@ -62,6 +63,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     operator_worksheet_manifest = json.loads((root / "review_only_action_photo_candidate_operator_worksheet_v1.json").read_text(encoding="utf-8"))
     research_packet_manifest = json.loads((root / "review_only_action_photo_candidate_research_packet_v1.json").read_text(encoding="utf-8"))
     research_return_manifest = json.loads((root / "review_only_action_photo_research_return_intake_v1.json").read_text(encoding="utf-8"))
+    research_return_paste_worksheet_manifest = json.loads((root / "review_only_action_photo_research_return_paste_worksheet_v1.json").read_text(encoding="utf-8"))
     research_bundle_manifest = json.loads((root / "review_only_action_photo_research_run_bundle_v1.json").read_text(encoding="utf-8"))
     external_export_manifest = json.loads((root / "review_only_action_photo_external_research_packet_manifest_v1.json").read_text(encoding="utf-8"))
     preflight_manifest = json.loads((root / "review_only_action_photo_quarantine_preflight_v1.json").read_text(encoding="utf-8"))
@@ -85,6 +87,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     operator_worksheet_md = (root / "review_only_action_photo_candidate_operator_worksheet_v1.md").read_text(encoding="utf-8")
     research_packet_md = (root / "review_only_action_photo_candidate_research_packet_v1.md").read_text(encoding="utf-8")
     research_return_md = (root / "review_only_action_photo_research_return_intake_v1.md").read_text(encoding="utf-8")
+    research_return_paste_worksheet_md = (root / "review_only_action_photo_research_return_paste_worksheet_v1.md").read_text(encoding="utf-8")
     research_bundle_md = (root / "review_only_action_photo_research_run_bundle_v1.md").read_text(encoding="utf-8")
     external_export_prompt_md = (root / "review_only_action_photo_external_research_packet_prompt_v1.md").read_text(encoding="utf-8")
     preflight_md = (root / "review_only_action_photo_quarantine_preflight_v1.md").read_text(encoding="utf-8")
@@ -123,6 +126,8 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_candidate_research_packet_validation_issue_count"] == 0
     assert manifest["action_photo_research_return_intake_rows"] == 10
     assert manifest["action_photo_research_return_intake_validation_issue_count"] == 0
+    assert manifest["action_photo_research_return_paste_worksheet_rows"] == 10
+    assert manifest["action_photo_research_return_paste_worksheet_validation_issue_count"] == 0
     assert manifest["action_photo_research_run_bundle_rows"] == 6
     assert manifest["action_photo_research_run_bundle_validation_issue_count"] == 0
     assert manifest["action_photo_external_research_packet_export_status"] == "action_photo_external_research_packet_export_ready"
@@ -146,6 +151,9 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_quality_fit_operator_cue_csv"].endswith("review_only_action_photo_quality_fit_operator_cue_v1.csv")
     assert manifest["action_photo_quality_fit_operator_cue_md"].endswith("review_only_action_photo_quality_fit_operator_cue_v1.md")
     assert manifest["action_photo_quality_fit_operator_cue_json"].endswith("review_only_action_photo_quality_fit_operator_cue_v1.json")
+    assert manifest["action_photo_research_return_paste_worksheet_csv"].endswith("review_only_action_photo_research_return_paste_worksheet_v1.csv")
+    assert manifest["action_photo_research_return_paste_worksheet_md"].endswith("review_only_action_photo_research_return_paste_worksheet_v1.md")
+    assert manifest["action_photo_research_return_paste_worksheet_json"].endswith("review_only_action_photo_research_return_paste_worksheet_v1.json")
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
         "source_url",
@@ -793,6 +801,62 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "What To Paste Back" in research_return_md
     assert "`download_approved=yes` remains human-edited only" in research_return_md
     assert "does not download images, approve assets, change approval state, or make anything render-ready" in research_return_md
+    assert research_return_paste_worksheet_manifest["status"] == "action_photo_research_return_paste_worksheet_ready"
+    assert research_return_paste_worksheet_manifest["paste_worksheet_rows"] == 10
+    assert research_return_paste_worksheet_manifest["queue_rows_covered"] == 10
+    assert research_return_paste_worksheet_manifest["validation_issue_count"] == 0
+    assert research_return_paste_worksheet_manifest["candidate_ready_for_later_human_download_decision_review_rows"] == 0
+    assert research_return_paste_worksheet_manifest["blank_candidate_photo_url_rows"] == 10
+    assert research_return_paste_worksheet_manifest["blank_evidence_url_rows"] == 10
+    assert research_return_paste_worksheet_manifest["blank_identity_anchor_url_rows"] == 10
+    assert research_return_paste_worksheet_manifest["blank_source_url_rows"] == 10
+    assert research_return_paste_worksheet_manifest["blank_rights_class_rows"] == 10
+    assert research_return_paste_worksheet_manifest["blank_identity_confidence_rows"] == 10
+    assert research_return_paste_worksheet_manifest["download_approved_yes_rows"] == 0
+    assert research_return_paste_worksheet_manifest["review_only_rows"] == 10
+    assert research_return_paste_worksheet_manifest["publish_ready_rows"] == 0
+    assert research_return_paste_worksheet_manifest["asset_downloads"] is False
+    assert research_return_paste_worksheet_manifest["headshot_writes"] is False
+    assert research_return_paste_worksheet_manifest["approved_marker_writes"] is False
+    assert research_return_paste_worksheet_manifest["approval_state_change"] is False
+    assert research_return_paste_worksheet_manifest["auto_approval"] is False
+    assert research_return_paste_worksheet_manifest["move_files"] is False
+    assert research_return_paste_worksheet_manifest["paid_apis"] is False
+    assert research_return_paste_worksheet_manifest["paste_target"].endswith("review_only_action_photo_research_return_intake_v1.csv")
+    assert research_return_paste_worksheet_manifest["missing_field_counts"]["source_url"] == 10
+    assert research_return_paste_worksheet_manifest["missing_field_counts"]["candidate_photo_url"] == 10
+    assert set(research_return_paste_worksheet_manifest["candidate_queue_ids"]) == {row["candidate_queue_id"] for row in queue_rows}
+    assert {row["candidate_queue_id"] for row in research_return_paste_worksheet_rows} == {row["candidate_queue_id"] for row in queue_rows}
+    for row in research_return_paste_worksheet_rows:
+        assert row["paste_worksheet_id"].startswith("APRRP")
+        assert row["paste_target"].endswith("review_only_action_photo_research_return_intake_v1.csv")
+        assert row["candidate_photo_url"] == ""
+        assert row["evidence_url"] == ""
+        assert row["evidence_summary"] == ""
+        assert row["identity_anchor_url"] == ""
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["manual_reviewer"] == ""
+        assert row["manual_review_status"] == "not_reviewed"
+        assert row["candidate_ready_for_later_human_download_decision_review"] == "no"
+        assert "candidate_photo_url" in row["missing_fields_before_candidate_ready"]
+        assert "source_url" in row["missing_fields_before_candidate_ready"]
+        assert "Paste the missing URL/evidence/rights/identity/action/crop fields" in row["manual_next_action"]
+        assert "<candidate_photo_page_url>" in row["placeholder_example_cue"]
+        assert row["download_approved"] == "no"
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["asset_downloads"] == "false"
+        assert row["headshot_writes"] == "false"
+        assert row["approved_marker_writes"] == "false"
+        assert row["publish_action"] == "none_artifact_only"
+    assert "Review-Only Action Photo Research Return Paste Worksheet" in research_return_paste_worksheet_md
+    assert "<candidate_photo_page_url>" in research_return_paste_worksheet_md
+    assert "Candidate-ready means eligible only for later human download-decision review" in research_return_paste_worksheet_md
     assert operator_worksheet_manifest["status"] == "action_photo_candidate_operator_worksheet_ready"
     assert operator_worksheet_manifest["worksheet_rows"] == 10
     assert operator_worksheet_manifest["queue_rows_covered"] == 10
@@ -865,10 +929,13 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         "research_packet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
         "research_packet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv",
         "research_packet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json",
-            "return_intake_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
-            "return_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
-            "return_intake_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
-            "quality_fit_board_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md",
+        "return_intake_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
+        "return_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+        "return_intake_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
+        "return_paste_worksheet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md",
+        "return_paste_worksheet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv",
+        "return_paste_worksheet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json",
+        "quality_fit_board_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md",
             "quality_fit_board_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv",
             "quality_fit_board_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json",
             "quality_fit_operator_cue_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_quality_fit_operator_cue_v1.md",
@@ -2172,6 +2239,23 @@ def test_action_photo_quarantine_preflight_marks_complete_human_return_ready_wit
     assert operator_cue_rows[0]["asset_downloads"] == "false"
     assert module.validate_action_photo_quality_fit_operator_cue_rows(operator_cue_rows, quality_fit_rows) == []
 
+    paste_worksheet_rows = module.action_photo_research_return_paste_worksheet_rows(
+        module.action_photo_candidate_queue_rows(),
+        return_rows,
+        operator_cue_rows,
+    )
+
+    assert paste_worksheet_rows[0]["candidate_ready_for_later_human_download_decision_review"] == "yes"
+    assert paste_worksheet_rows[0]["missing_fields_before_candidate_ready"] == "operator_quality_fit_review"
+    assert paste_worksheet_rows[0]["candidate_photo_url"] == "https://example.com/game-action-photo"
+    assert paste_worksheet_rows[0]["source_url"] == "https://example.com/game-action-photo"
+    assert paste_worksheet_rows[0]["rights_class"] == "official_review_needed"
+    assert paste_worksheet_rows[0]["identity_confidence"] == "strong_context"
+    assert paste_worksheet_rows[0]["download_approved"] == "no"
+    assert paste_worksheet_rows[0]["asset_downloads"] == "false"
+    assert "later human download-decision review only" in paste_worksheet_rows[0]["manual_next_action"]
+    assert module.validate_action_photo_research_return_paste_worksheet_rows(paste_worksheet_rows, return_rows) == []
+
 
 def test_action_photo_quarantine_preflight_blocks_duplicate_headshot_and_weak_identity() -> None:
     module = load_module()
@@ -2361,6 +2445,62 @@ def test_action_photo_quality_fit_operator_cue_validator_blocks_unsafe_rows() ->
     assert ("headshot_writes", "operator_cue_rows_must_not_write_assets_or_markers") in issue_pairs
     assert ("approved_marker_writes", "operator_cue_rows_must_not_write_assets_or_markers") in issue_pairs
     assert ("publish_action", "operator_cue_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_research_return_paste_worksheet_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    queue_rows = module.action_photo_candidate_queue_rows()
+    return_rows = module.action_photo_research_return_intake_rows(queue_rows)
+    preflight_rows = module.action_photo_quarantine_preflight_rows(return_rows)
+    quality_fit_rows = module.action_photo_candidate_quality_fit_board_rows(queue_rows, return_rows, preflight_rows)
+    cue_rows = module.action_photo_quality_fit_operator_cue_rows(quality_fit_rows)
+    worksheet_rows = module.action_photo_research_return_paste_worksheet_rows(queue_rows, return_rows, cue_rows)
+    human_yes = "y" + "es"
+    worksheet_rows[0].update(
+        {
+            "paste_target": "data/assets/quarantine/review_only_candidates",
+            "required_return_schema": "candidate_queue_id,download_approved",
+            "source_category": "paid_api",
+            "rights_class": "unknown_rights",
+            "identity_confidence": "maybe",
+            "operator_verify_required": "maybe",
+            "candidate_ready_for_later_human_download_decision_review": "yes",
+            "missing_fields_before_candidate_ready": "source_url",
+            "download_approved": human_yes,
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "asset_downloads": "true",
+            "headshot_writes": "true",
+            "approved_marker_writes": "true",
+            "publish_action": "publish",
+        }
+    )
+    worksheet_rows[1]["paste_worksheet_id"] = worksheet_rows[0]["paste_worksheet_id"]
+    worksheet_rows[2]["candidate_queue_id"] = worksheet_rows[3]["candidate_queue_id"]
+
+    issue_pairs = {
+        (issue["field"], issue["issue"])
+        for issue in module.validate_action_photo_research_return_paste_worksheet_rows(worksheet_rows, return_rows)
+    }
+
+    assert ("paste_worksheet_id", "duplicate_paste_worksheet_id") in issue_pairs
+    assert ("candidate_queue_id", "duplicate_candidate_queue_id_in_paste_worksheet") in issue_pairs
+    assert ("paste_target", "paste_target_must_be_return_intake") in issue_pairs
+    assert ("required_return_schema", "required_return_schema_mismatch") in issue_pairs
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("rights_class", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("identity_confidence", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("operator_verify_required", "operator_verify_required_must_be_yes_or_no") in issue_pairs
+    assert ("missing_fields_before_candidate_ready", "ready_rows_must_have_only_quality_fit_review_remaining") in issue_pairs
+    assert ("download_approved", "paste_worksheet_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "paste_worksheet_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "paste_worksheet_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "paste_worksheet_rows_must_not_change_approval_state") in issue_pairs
+    assert ("asset_downloads", "paste_worksheet_rows_must_not_write_assets_or_markers") in issue_pairs
+    assert ("headshot_writes", "paste_worksheet_rows_must_not_write_assets_or_markers") in issue_pairs
+    assert ("approved_marker_writes", "paste_worksheet_rows_must_not_write_assets_or_markers") in issue_pairs
+    assert ("publish_action", "paste_worksheet_rows_must_not_publish") in issue_pairs
 
 
 def test_action_photo_download_decision_queue_validator_blocks_unsafe_rows() -> None:
