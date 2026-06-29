@@ -191,6 +191,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "anti_dashboard_score_spine_review" in check_ids
     assert "lower_third_card_weight_review" in check_ids
     assert "action_photo_readiness_review" in check_ids
+    assert "composition_balance_readiness_review" in check_ids
     assert "preview_freshness_current_handoff" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
@@ -286,6 +287,8 @@ def test_manual_visual_qa_holds_final_score_missing_lower_third_rail_contract(tm
     assert "lower_third_contract=missing" in checks["lower_third_card_weight_review"]["evidence"]
     assert checks["action_photo_readiness_review"]["qa_result"] == "hold"
     assert "readiness_contract=missing" in checks["action_photo_readiness_review"]["evidence"]
+    assert checks["composition_balance_readiness_review"]["qa_result"] == "hold"
+    assert "composition_contract=missing" in checks["composition_balance_readiness_review"]["evidence"]
     assert manifest["guardrails"]["publish_ready"] is False
 
 
@@ -321,6 +324,11 @@ def test_manual_visual_qa_uses_format_action_photo_contract_when_content_module_
                 "but premium final-score editorial needs a manually cleared action-photo candidate."
             ),
             "headshot_bridge_status": "not_in_use_no_local_person_image",
+            "composition_balance_contract": "logo_score_fallback_balance_action_photo_slot_reserved",
+            "action_photo_replacement_composition_cue": "Keep a left-side action-photo replacement lane available.",
+            "headshot_bridge_composition_cue": "No headshot bridge is rendered; hold if this reads as a roster card.",
+            "lower_left_right_balance_review_cue": "Hold if lower-left/right balance feels flat.",
+            "roster_portrait_risk_cue": "Premium editorial should not resolve as a static roster portrait.",
         }
     ]
     renderer_manifest["render_background_cues"] = (
@@ -346,8 +354,11 @@ def test_manual_visual_qa_uses_format_action_photo_contract_when_content_module_
     assert checks["anti_dashboard_score_spine_review"]["qa_result"] == "pass_human_review_required"
     assert checks["lower_third_card_weight_review"]["qa_result"] == "pass_human_review_required"
     assert checks["action_photo_readiness_review"]["qa_result"] == "pass_human_review_required"
+    assert checks["composition_balance_readiness_review"]["qa_result"] == "pass_human_review_required"
     assert "final_score_context=True" in checks["action_photo_readiness_review"]["evidence"]
     assert "premium final-score editorial needs" in checks["action_photo_readiness_review"]["evidence"]
+    assert "composition_contract=logo_score_fallback_balance_action_photo_slot_reserved" in checks["composition_balance_readiness_review"]["evidence"]
+    assert "static roster portrait" in checks["composition_balance_readiness_review"]["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 
@@ -402,6 +413,13 @@ def test_manual_visual_qa_accepts_headshot_bridge_as_review_draft_only(tmp_path:
             "action-photo candidate proves subject identity, rights class, action context, and crop/text clearance."
         ),
         "headshot_bridge_status": "approved_local_headshot_review_draft_only_not_premium_final_score",
+        "composition_balance_contract": "headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved",
+        "action_photo_replacement_composition_cue": (
+            "Treat the headshot as a temporary bridge while preserving a replacement lane for an action-photo crop."
+        ),
+        "headshot_bridge_composition_cue": "Hold or revise if the headshot bridge reads as a roster portrait.",
+        "lower_left_right_balance_review_cue": "Check diagonal editorial tension across athlete/photo side, score spine, and lower rail.",
+        "roster_portrait_risk_cue": "Headshot bridge is review-draft-only and subordinate to the action-photo route.",
     }
     (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
     env = os.environ.copy()
@@ -420,10 +438,15 @@ def test_manual_visual_qa_accepts_headshot_bridge_as_review_draft_only(tmp_path:
     manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
     checks = {check["check_id"]: check for check in manifest["checks"]}
     action_check = checks["action_photo_readiness_review"]
+    balance_check = checks["composition_balance_readiness_review"]
     assert action_check["qa_result"] == "pass_human_review_required"
+    assert balance_check["qa_result"] == "pass_human_review_required"
     assert "headshot_bridge_review_draft_ok_action_photo_candidate_required_for_premium_final_score" in action_check["evidence"]
     assert "approved_local_headshot_review_draft_only_not_premium_final_score" in action_check["evidence"]
     assert "manually cleared action-photo candidate" in action_check["evidence"]
+    assert "headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved" in balance_check["evidence"]
+    assert "roster portrait" in balance_check["evidence"]
+    assert "diagonal editorial tension" in balance_check["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False
 
@@ -482,6 +505,8 @@ def test_manual_visual_qa_checks_photo_first_crop_and_clearance(tmp_path: Path) 
     assert checks["photo_first_text_clearance"]["qa_result"] == "pass"
     assert checks["action_photo_readiness_review"]["qa_result"] == "hold"
     assert "readiness_contract=missing" in checks["action_photo_readiness_review"]["evidence"]
+    assert checks["composition_balance_readiness_review"]["qa_result"] == "hold"
+    assert "composition_contract=missing" in checks["composition_balance_readiness_review"]["evidence"]
     assert "minimum_clearance" in checks["photo_first_text_clearance"]["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["guardrails"]["publish_ready"] is False

@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - validated by runtime report
     ImageStat = None
 
 
-VERSION = "hsd-manual-visual-qa-v1.9.0-action-photo-readiness"
+VERSION = "hsd-manual-visual-qa-v1.10.0-composition-balance-readiness"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 PREVIEW_NAME = "draft_preview.png"
 EXPECTED_SIZE = (1080, 1350)
@@ -856,6 +856,56 @@ def add_action_photo_readiness_check(checks: List[Dict[str, Any]], renderer_mani
     )
 
 
+def add_composition_balance_readiness_check(checks: List[Dict[str, Any]], renderer_manifest: Dict[str, Any]) -> None:
+    visual_mode = clean(first_present(contract_value(renderer_manifest, "visual_mode"), renderer_manifest.get("visual_mode")))
+    photo_layout_mode = primary_photo_layout_mode(renderer_manifest)
+    is_final_score_context = final_score_context(renderer_manifest)
+    headshot_bridge = contract_value(renderer_manifest, "headshot_bridge_status")
+    composition_contract = contract_value(renderer_manifest, "composition_balance_contract")
+    replacement_cue = contract_value(renderer_manifest, "action_photo_replacement_composition_cue")
+    bridge_cue = contract_value(renderer_manifest, "headshot_bridge_composition_cue")
+    balance_cue = contract_value(renderer_manifest, "lower_left_right_balance_review_cue")
+    roster_risk_cue = contract_value(renderer_manifest, "roster_portrait_risk_cue")
+    if not is_final_score_context:
+        add_check(
+            checks,
+            "composition_balance_readiness_review",
+            "Composition balance readiness cue",
+            True,
+            "Non-final-score render; composition balance readiness remains a manual eye-review cue.",
+            result="pass_human_review_required",
+        )
+        return
+
+    contract_ok = bool(
+        composition_contract
+        and replacement_cue
+        and bridge_cue
+        and balance_cue
+        and roster_risk_cue
+        and ("balance" in composition_contract or "replacement_lane" in composition_contract)
+        and ("action" in replacement_cue or "action" in composition_contract)
+        and ("roster" in roster_risk_cue or "roster" in bridge_cue)
+    )
+    evidence = (
+        f"final_score_context={is_final_score_context}; visual_mode={visual_mode or 'missing'}; "
+        f"layout={photo_layout_mode or 'standard'}; headshot_bridge={headshot_bridge or 'missing'}; "
+        f"composition_contract={composition_contract or 'missing'}; replacement_cue={replacement_cue or 'missing'}; "
+        f"bridge_cue={bridge_cue or 'missing'}; balance_cue={balance_cue or 'missing'}; "
+        f"roster_portrait_risk={roster_risk_cue or 'missing'}. "
+        "Operator must hold or revise if the headshot bridge reads as roster media, the lower-left/right weight feels flat, "
+        "or the layout leaves no credible action-photo replacement lane."
+    )
+    add_check(
+        checks,
+        "composition_balance_readiness_review",
+        "Composition balance readiness cue",
+        contract_ok,
+        evidence,
+        result="pass_human_review_required" if contract_ok else "hold",
+    )
+
+
 def checklist_rows(checks: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     rows: List[Dict[str, str]] = []
     for check in checks:
@@ -1042,6 +1092,7 @@ def main() -> None:
         add_anti_dashboard_score_spine_check(checks, renderer_manifest)
         add_lower_third_card_weight_check(checks, renderer_manifest, image)
         add_action_photo_readiness_check(checks, renderer_manifest)
+        add_composition_balance_readiness_check(checks, renderer_manifest)
 
         average_signal = mean(zone_scores) if zone_scores else 0.0
         average_bright_signal = mean(bright_scores) if bright_scores else 0.0
@@ -1068,6 +1119,7 @@ def main() -> None:
         add_anti_dashboard_score_spine_check(checks, renderer_manifest)
         add_lower_third_card_weight_check(checks, renderer_manifest, None)
         add_action_photo_readiness_check(checks, renderer_manifest)
+        add_composition_balance_readiness_check(checks, renderer_manifest)
     add_renderer_metadata_checks(checks, renderer_manifest)
     add_preview_freshness_check(checks, renderer_manifest, handoff_manifest)
     add_check(

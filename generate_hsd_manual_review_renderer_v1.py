@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.55.0-action-photo-readiness-contract"
+VERSION = "hsd-manual-review-renderer-v1.56.0-composition-balance-review-cues"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -76,7 +76,9 @@ RENDER_BACKGROUND_CUES = (
     "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,"
     "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,"
     "action_photo_readiness_visual_qa,headshot_bridge_review_draft_only,"
-    "premium_final_score_action_photo_required,anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
+    "premium_final_score_action_photo_required,composition_balance_visual_qa,"
+    "headshot_bridge_not_roster_portrait,action_photo_replacement_balance_ready,"
+    "anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
@@ -3998,6 +4000,18 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "but premium final-score editorial needs a manually cleared action-photo candidate with subject and crop metadata."
     )
     headshot_bridge_status = "not_in_use_no_local_person_image"
+    composition_balance_contract = "logo_score_fallback_balance_action_photo_slot_reserved"
+    action_photo_replacement_composition_cue = (
+        "Keep right-side score spine and lower rail readable while reserving a left-side action-photo lane for a future "
+        "manually cleared in-game candidate."
+    )
+    headshot_bridge_composition_cue = "No headshot bridge is rendered; hold if the fallback still feels like a roster or profile card."
+    lower_left_right_balance_review_cue = (
+        "Hold or revise if the lower rail overweights one corner, flattens editorial tension, or leaves no believable action-photo replacement lane."
+    )
+    roster_portrait_risk_cue = (
+        "Review as fallback only; premium final-score editorial should not resolve as a static roster portrait or profile-card composition."
+    )
     hero_silhouette_mode = "no_local_person_image"
     hero_cutout_readiness = "cutout_not_available_no_download"
     hero_alpha_mode = "no_local_hero_asset"
@@ -4037,6 +4051,20 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
             "action-photo candidate proves subject identity, rights class, action context, and crop/text clearance."
         )
         headshot_bridge_status = "approved_local_headshot_review_draft_only_not_premium_final_score"
+        composition_balance_contract = "headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved"
+        action_photo_replacement_composition_cue = (
+            "Treat the headshot as a temporary bridge: preserve score/stat tension and a replacement lane for an action-photo crop "
+            "without letting the portrait dominate like roster media."
+        )
+        headshot_bridge_composition_cue = (
+            "Hold or revise if the headshot bridge reads as a roster portrait, ID badge, or profile-card hero instead of a temporary review-draft bridge."
+        )
+        lower_left_right_balance_review_cue = (
+            "Check that the athlete/photo side, score spine, and lower rail create diagonal editorial tension; hold if the bottom block feels heavier than the action/photo lane."
+        )
+        roster_portrait_risk_cue = (
+            "Headshot bridge is review-draft-only and must stay visually subordinate to the future action-photo route."
+        )
         template_fit_reason = "Verified player/stat context plus approved local athlete photo enables review-only photo-first result routing."
         if layout_mode == "square_photo_first_score_panel":
             visual_mode = "photo_first_performer_square" if is_player_stat else "photo_first_result_square"
@@ -4076,6 +4104,11 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "action_photo_crop_metadata_required": action_photo_crop_metadata_required,
         "action_photo_operator_review_cue": action_photo_operator_review_cue,
         "headshot_bridge_status": headshot_bridge_status,
+        "composition_balance_contract": composition_balance_contract,
+        "action_photo_replacement_composition_cue": action_photo_replacement_composition_cue,
+        "headshot_bridge_composition_cue": headshot_bridge_composition_cue,
+        "lower_left_right_balance_review_cue": lower_left_right_balance_review_cue,
+        "roster_portrait_risk_cue": roster_portrait_risk_cue,
         "template_fit_reason": template_fit_reason,
     }
 
@@ -4252,6 +4285,11 @@ def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
         "action_photo_crop_metadata_required": clean(format_row.get("action_photo_crop_metadata_required")) or "not_recorded",
         "action_photo_operator_review_cue": clean(format_row.get("action_photo_operator_review_cue")) or "not_recorded",
         "headshot_bridge_status": clean(format_row.get("headshot_bridge_status")) or "not_recorded",
+        "composition_balance_contract": clean(format_row.get("composition_balance_contract")) or "not_recorded",
+        "action_photo_replacement_composition_cue": clean(format_row.get("action_photo_replacement_composition_cue")) or "not_recorded",
+        "headshot_bridge_composition_cue": clean(format_row.get("headshot_bridge_composition_cue")) or "not_recorded",
+        "lower_left_right_balance_review_cue": clean(format_row.get("lower_left_right_balance_review_cue")) or "not_recorded",
+        "roster_portrait_risk_cue": clean(format_row.get("roster_portrait_risk_cue")) or "not_recorded",
         "focal_entity_type": clean(format_row.get("focal_entity_type")) or "not_recorded",
         "focal_priority": clean(format_row.get("focal_priority")) or "not_recorded",
         "athlete_focal_contract": clean(format_row.get("athlete_focal_contract")) or "not_recorded",
@@ -4408,6 +4446,11 @@ def write_visual_comparison_board(
         "action_photo_crop_metadata_required": contract_value("action_photo_crop_metadata_required"),
         "action_photo_operator_review_cue": contract_value("action_photo_operator_review_cue"),
         "headshot_bridge_status": contract_value("headshot_bridge_status"),
+        "composition_balance_contract": contract_value("composition_balance_contract"),
+        "action_photo_replacement_composition_cue": contract_value("action_photo_replacement_composition_cue"),
+        "headshot_bridge_composition_cue": contract_value("headshot_bridge_composition_cue"),
+        "lower_left_right_balance_review_cue": contract_value("lower_left_right_balance_review_cue"),
+        "roster_portrait_risk_cue": contract_value("roster_portrait_risk_cue"),
         "focal_entity_type": contract_value("focal_entity_type"),
         "focal_priority": contract_value("focal_priority"),
         "athlete_focal_contract": contract_value("athlete_focal_contract"),
@@ -4455,6 +4498,11 @@ def write_visual_comparison_board(
         f"- Action-photo crop metadata required: `{board['action_photo_crop_metadata_required']}`",
         f"- Action-photo review cue: {board['action_photo_operator_review_cue']}",
         f"- Headshot bridge status: `{board['headshot_bridge_status']}`",
+        f"- Composition balance contract: `{board['composition_balance_contract']}`",
+        f"- Action-photo replacement composition cue: {board['action_photo_replacement_composition_cue']}",
+        f"- Headshot bridge composition cue: {board['headshot_bridge_composition_cue']}",
+        f"- Lower-left/right balance cue: {board['lower_left_right_balance_review_cue']}",
+        f"- Roster portrait risk cue: {board['roster_portrait_risk_cue']}",
         f"- Focal entity: `{board['focal_entity_type']}`",
         f"- Focal priority: `{board['focal_priority']}`",
         f"- Athlete focal contract: `{board['athlete_focal_contract']}`",
@@ -4487,6 +4535,8 @@ def write_visual_comparison_board(
                     f"- Action-photo readiness contract: `{clean(row.get('action_photo_readiness_contract'))}`",
                     f"- Action-photo review cue: {clean(row.get('action_photo_operator_review_cue'))}",
                     f"- Headshot bridge status: `{clean(row.get('headshot_bridge_status'))}`",
+                    f"- Composition balance contract: `{clean(row.get('composition_balance_contract'))}`",
+                    f"- Roster portrait risk cue: {clean(row.get('roster_portrait_risk_cue'))}",
                     f"- Focal priority: `{clean(row.get('focal_priority'))}`",
                     f"- Athlete focal contract: `{clean(row.get('athlete_focal_contract'))}`",
                     f"- Fallback comparison: `{clean(row.get('fallback_comparison_status'))}`",
@@ -4689,6 +4739,11 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Action-photo readiness: contract=`{module_value('action_photo_readiness_contract')}` slot=`{module_value('action_photo_slot_expectation')}` headshot_bridge=`{module_value('headshot_bridge_status')}`",
         f"- Action-photo metadata: subject=`{module_value('action_photo_subject_metadata_required')}` crop=`{module_value('action_photo_crop_metadata_required')}`",
         f"- Action-photo review cue: {module_value('action_photo_operator_review_cue')}",
+        f"- Composition balance contract: `{module_value('composition_balance_contract')}`",
+        f"- Action-photo replacement composition cue: {module_value('action_photo_replacement_composition_cue')}",
+        f"- Headshot bridge composition cue: {module_value('headshot_bridge_composition_cue')}",
+        f"- Lower-left/right balance cue: {module_value('lower_left_right_balance_review_cue')}",
+        f"- Roster portrait risk cue: {module_value('roster_portrait_risk_cue')}",
         f"- Athlete focal contract: priority=`{module_value('focal_priority')}` contract=`{module_value('athlete_focal_contract')}` fallback=`{module_value('fallback_comparison_status')}`",
         f"- Fallback comparison note: {module_value('fallback_comparison_note')}",
         f"- Score layout contract: `{module_value('score_layout_contract')}`",

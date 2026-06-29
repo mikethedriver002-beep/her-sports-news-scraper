@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.55.0-action-photo-readiness-contract"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.56.0-composition-balance-review-cues"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -153,6 +153,11 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "score_text_clearance" in manifest["content_module"]["action_photo_crop_metadata_required"]
     assert "premium final-score editorial needs" in manifest["content_module"]["action_photo_operator_review_cue"]
     assert manifest["content_module"]["headshot_bridge_status"] == "not_in_use_no_local_person_image"
+    assert manifest["content_module"]["composition_balance_contract"] == "logo_score_fallback_balance_action_photo_slot_reserved"
+    assert "left-side action-photo lane" in manifest["content_module"]["action_photo_replacement_composition_cue"]
+    assert "roster" in manifest["content_module"]["headshot_bridge_composition_cue"]
+    assert "lower rail" in manifest["content_module"]["lower_left_right_balance_review_cue"]
+    assert "static roster portrait" in manifest["content_module"]["roster_portrait_risk_cue"]
     assert manifest["content_module"]["score_layout_contract"] == "logo_first_editorial_score_spine_no_dashboard_panels"
     assert manifest["content_module"]["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles"
     assert "dashboard card" in manifest["content_module"]["anti_dashboard_review_cue"]
@@ -233,6 +238,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "action_photo_readiness_visual_qa" in manifest["render_background_cues"]
     assert "headshot_bridge_review_draft_only" in manifest["render_background_cues"]
     assert "premium_final_score_action_photo_required" in manifest["render_background_cues"]
+    assert "composition_balance_visual_qa" in manifest["render_background_cues"]
+    assert "headshot_bridge_not_roster_portrait" in manifest["render_background_cues"]
+    assert "action_photo_replacement_balance_ready" in manifest["render_background_cues"]
     assert "logo_first_editorial_score_spine" in manifest["render_background_cues"]
     assert "logo_first_no_dashboard_card_panels" in manifest["render_background_cues"]
     assert "lower_third_editorial_rail" in manifest["render_background_cues"]
@@ -317,6 +325,11 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "score_text_clearance" in visual_board["action_photo_crop_metadata_required"]
     assert "premium final-score editorial needs" in visual_board["action_photo_operator_review_cue"]
     assert visual_board["headshot_bridge_status"] == "not_in_use_no_local_person_image"
+    assert visual_board["composition_balance_contract"] == "logo_score_fallback_balance_action_photo_slot_reserved"
+    assert "action-photo lane" in visual_board["action_photo_replacement_composition_cue"]
+    assert "roster" in visual_board["headshot_bridge_composition_cue"]
+    assert "lower rail" in visual_board["lower_left_right_balance_review_cue"]
+    assert "static roster portrait" in visual_board["roster_portrait_risk_cue"]
     assert visual_board["focal_priority"] == "non_athlete_fallback"
     assert visual_board["athlete_focal_contract"] == "logo_score_fallback_not_athlete_led"
     assert visual_board["fallback_comparison_status"] == "fallback_active_label_no_athlete_photo"
@@ -333,6 +346,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert all(item["action_photo_readiness_contract"] == "review_draft_ok_premium_final_score_needs_action_photo_candidate" for item in visual_board["rows"])
     assert all("premium final-score editorial needs" in item["action_photo_operator_review_cue"] for item in visual_board["rows"])
     assert all(item["headshot_bridge_status"] == "not_in_use_no_local_person_image" for item in visual_board["rows"])
+    assert all(item["composition_balance_contract"] == "logo_score_fallback_balance_action_photo_slot_reserved" for item in visual_board["rows"])
+    assert all("static roster portrait" in item["roster_portrait_risk_cue"] for item in visual_board["rows"])
     assert all(item["focal_priority"] == "non_athlete_fallback" for item in visual_board["rows"])
     assert all(item["fallback_comparison_status"] == "fallback_active_label_no_athlete_photo" for item in visual_board["rows"])
     assert all(item["anti_dashboard_contract"] == "open_score_spine_no_nested_cards_no_metric_tiles" for item in visual_board["rows"])
@@ -388,6 +403,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Action-photo readiness: contract=`review_draft_ok_premium_final_score_needs_action_photo_candidate`" in report
     assert "Action-photo metadata: subject=`entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use`" in report
     assert "Action-photo review cue:" in report
+    assert "Composition balance contract: `logo_score_fallback_balance_action_photo_slot_reserved`" in report
+    assert "Roster portrait risk cue:" in report
     assert "Template fit reason: Photo-first route blocked" in report
     assert "visual_mode=`no_photo_premium_result`" in report
     assert "APPROVED LOGO" in report or "LOGO REVIEW" in report
@@ -407,6 +424,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "Action-photo readiness contract: `review_draft_ok_premium_final_score_needs_action_photo_candidate`" in board
     assert "Action-photo subject metadata required: `entity_id,athlete_name,team,rights_class,identity_confidence,intended_review_only_use`" in board
     assert "Headshot bridge status: `not_in_use_no_local_person_image`" in board
+    assert "Composition balance contract: `logo_score_fallback_balance_action_photo_slot_reserved`" in board
+    assert "Roster portrait risk cue:" in board
     assert "Focal priority: `non_athlete_fallback`" in board
     assert "Athlete focal contract: `logo_score_fallback_not_athlete_led`" in board
     assert "Fallback comparison: `fallback_active_label_no_athlete_photo`" in board
@@ -730,6 +749,11 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert "no downloads" in summary["grid_breaking_hero_contract"]
     assert summary["action_photo_hero_contract"] == "manual_review_action_photo_can_replace_headshot_when_local_approved"
     assert summary["action_photo_candidate_status"] == "pending_manual_action_photo_candidate"
+    assert summary["composition_balance_contract"] == "headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved"
+    assert "temporary bridge" in summary["action_photo_replacement_composition_cue"]
+    assert "roster portrait" in summary["headshot_bridge_composition_cue"]
+    assert "diagonal editorial tension" in summary["lower_left_right_balance_review_cue"]
+    assert "review-draft-only" in summary["roster_portrait_risk_cue"]
     assert "photo-first result routing" in summary["template_fit_reason"]
     assert summary["athlete_photo_template_family"] == "approved_athlete_photo_final_score"
     feed_layout = module.athlete_photo_layout_for_format(summary, {"format_id": "ig_feed_4x5", "height": 1350})
@@ -743,6 +767,8 @@ def test_manual_review_renderer_bridges_score_only_handoff_to_existing_stat_proo
     assert feed_contract["hero_image_mode"] == "approved_headshot_bridge_action_photo_ready"
     assert feed_contract["hero_silhouette_mode"] in {"headshot_bridge_rectangular_source", "local_transparent_cutout_grid_breaking"}
     assert feed_contract["action_photo_hero_contract"] == "manual_review_action_photo_can_replace_headshot_when_local_approved"
+    assert feed_contract["composition_balance_contract"] == "headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved"
+    assert "roster portrait" in feed_contract["headshot_bridge_composition_cue"]
     assert feed_contract["anti_dashboard_contract"] == "photo_first_borderless_score_stage_no_dashboard_panels"
     assert feed_contract["lower_third_contract"] == "photo_first_integrated_stat_caption_rail_no_heavy_panel"
     square_contract = module.visual_mode_contract(summary, square_layout)
