@@ -15,6 +15,9 @@ VERSION = "hsd-operator-command-center-v3.85.0-render-visual-mode-contract"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
+OUT_NEXT_ACTION_SYNTHESIS_MD = output_path("operator_next_action_synthesis.md")
+OUT_NEXT_ACTION_SYNTHESIS_CSV = output_path("operator_next_action_synthesis.csv")
+OUT_NEXT_ACTION_SYNTHESIS_JSON = output_path("operator_next_action_synthesis.json")
 OUT_RENDER_PREP_MD = output_path("render_prep_packets.md")
 OUT_RENDER_PREP_CSV = output_path("render_prep_packets.csv")
 OUT_RENDER_PREP_JSON = output_path("render_prep_packets.json")
@@ -107,6 +110,18 @@ RENDER_PREP_FIELDS = [
     "publish_policy",
     "paid_api_policy",
     "blockers",
+]
+
+NEXT_ACTION_SYNTHESIS_FIELDS = [
+    "rank",
+    "lane",
+    "manual_step",
+    "primary_artifact",
+    "companion_artifact",
+    "operator_return_fields",
+    "guardrail_note",
+    "artifact_status",
+    "run_command",
 ]
 
 ACTIVE_ASSET_REVIEW_QUEUE_FIELDS = [
@@ -470,6 +485,9 @@ ARTIFACTS = [
     ("Decision", "Publish guard", "publish_guard_report.md"),
     ("Decision", "BeBe daily ops plan", "bebe_daily_ops_plan.md"),
     ("Decision", "BeBe posting schedule", "bebe_posting_schedule_today.md"),
+    ("Decision", "Operator next-action synthesis", "operator_next_action_synthesis.md"),
+    ("Decision", "Operator next-action synthesis data", "operator_next_action_synthesis.csv"),
+    ("Decision", "Operator next-action synthesis manifest", "operator_next_action_synthesis.json"),
     ("Decision", "Render prep packets", "render_prep_packets.md"),
     ("Decision", "Render prep packet data", "render_prep_packets.csv"),
     ("Decision", "Render prep packet manifest", "render_prep_packets.json"),
@@ -7626,6 +7644,88 @@ def trim_actions(actions: List[Dict[str, str]], limit: int = 24) -> List[Dict[st
     return trimmed
 
 
+def next_action_synthesis_row(
+    rank: int,
+    lane: str,
+    manual_step: str,
+    primary_artifact: str,
+    companion_artifact: str,
+    operator_return_fields: str,
+    guardrail_note: str,
+) -> Dict[str, str]:
+    return {
+        "rank": str(rank),
+        "lane": lane,
+        "manual_step": manual_step,
+        "primary_artifact": primary_artifact,
+        "companion_artifact": companion_artifact,
+        "operator_return_fields": operator_return_fields,
+        "guardrail_note": guardrail_note,
+        "artifact_status": "ready_to_open" if find_existing_input(primary_artifact).exists() else "missing_or_not_generated",
+        "run_command": RUN_COMMANDS.get(primary_artifact, ""),
+    }
+
+
+def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
+    guardrail = "Review-only and artifact-only; no source fetching, downloads, source enablement, approvals, publish-ready movement, or publishing."
+    return [
+        next_action_synthesis_row(
+            1,
+            "Render review",
+            "Open the top render handoff, inspect drafts/source proof/copy fit, then record a manual approve/hold/revise decision only in the operator decision intake.",
+            "render_handoff_top_packet/README.md",
+            "render_handoff_top_packet/manual_renderer_prompt.md",
+            "operator_decision, operator_notes, operator_name, reviewed_at_local",
+            guardrail,
+        ),
+        next_action_synthesis_row(
+            2,
+            "Action-photo research handoff",
+            "Open the local handoff draft and latest bundle manifest, then manually paste the packet into the chosen external research surface if Mike wants a research run.",
+            "action_photo_external_research_handoff_draft_copy.md",
+            "action_photo_external_research_bundle_latest.json",
+            "researcher_notes, source_url, entity_id, rights_class, identity_confidence, intended_review_only_use",
+            guardrail,
+        ),
+        next_action_synthesis_row(
+            3,
+            "Game-source confirmation returns",
+            "Fill the game source research worksheet from manual official/public checks before any result/story proof is trusted downstream.",
+            "game_source_research_worksheet_v1.csv",
+            "game_source_confirmation_next_action_v1.md",
+            "operator_found_official_url, operator_confirmation_status, operator_notes, checked_at_local",
+            guardrail,
+        ),
+        next_action_synthesis_row(
+            4,
+            "Breaking/public-signal returns",
+            "Use the breaking/public-signal next-action board to choose rows, then paste manual confirmation details into the confirmation intake.",
+            "breaking_public_signal_next_action_v1.md",
+            "breaking_public_signal_confirmation_intake.csv",
+            "operator_checked_url, operator_confirmation_result, operator_confidence, operator_notes",
+            guardrail,
+        ),
+        next_action_synthesis_row(
+            5,
+            "Women's soccer action-photo helpers",
+            "Open the women's soccer starter intake/focus boards and fill only human-researched source or identity notes for future review-only candidates.",
+            "data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.md",
+            "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.md",
+            "source_url, entity_id, rights_class, identity_confidence, intended_review_only_use, reviewer_notes",
+            guardrail,
+        ),
+        next_action_synthesis_row(
+            6,
+            "Hockey/softball source returns",
+            "Open the H/S source return intake after manual PWHL/AUSL source review and paste only source leads or verification notes.",
+            "data/asset_registry/hockey_softball_source_research_return_intake.csv",
+            "data/asset_registry/hockey_softball_source_map_board.md",
+            "source_url, entity_id, rights_class, identity_confidence, intended_review_only_use, download_approved",
+            guardrail,
+        ),
+    ]
+
+
 def build_payload() -> Dict[str, Any]:
     generated_at = datetime.now(timezone.utc).isoformat()
     operator = read_json("operator_status.json")
@@ -7895,6 +7995,7 @@ def build_payload() -> Dict[str, Any]:
         "source_state": source_state,
         "next_manual_move": next_actions[0]["title"] if next_actions else "Review local artifacts",
     }
+    operator_next_action_synthesis = build_operator_next_action_synthesis()
 
     return {
         "version": VERSION,
@@ -7903,6 +8004,7 @@ def build_payload() -> Dict[str, Any]:
         "briefing": briefing,
         "metrics": metrics,
         "next_actions": next_actions,
+        "operator_next_action_synthesis": operator_next_action_synthesis,
         "schedule": schedule,
         "content_candidates": candidates,
         "render_readiness_queue": render_queue,
@@ -7991,6 +8093,32 @@ def render_action_rows(actions: Iterable[Dict[str, str]]) -> str:
             """
         )
     return "".join(rows) or '<p class="empty">No next actions found.</p>'
+
+
+def render_next_action_synthesis(rows: Iterable[Dict[str, str]]) -> str:
+    cards = []
+    for row in rows:
+        status_tone_value = "good" if row.get("artifact_status") == "ready_to_open" else "neutral"
+        cards.append(
+            f"""
+            <article class="action-row">
+              <div class="rank">{html.escape(row['rank'])}</div>
+              <div>
+                <div class="row-kicker">{html.escape(row['lane'])} {pill(row.get('artifact_status'), status_tone_value)}</div>
+                <h3>{html.escape(row['manual_step'])}</h3>
+                <p><strong>Return fields:</strong> {html.escape(row.get('operator_return_fields', ''))}</p>
+                <p>{html.escape(row.get('guardrail_note', 'Review-only.'))}</p>
+                {command_hint(row.get('run_command', ''))}
+              </div>
+              <div class="row-tool">
+                {open_link(row.get('primary_artifact', ''))}
+                <small>{html.escape(row.get('primary_artifact', ''))}</small>
+                {open_link(row.get('companion_artifact', ''), 'Companion')}
+              </div>
+            </article>
+            """
+        )
+    return "".join(cards) or '<p class="empty">No synthesized next actions found.</p>'
 
 
 def render_source_registry_readiness_summary(summary: Dict[str, str]) -> str:
@@ -10015,13 +10143,16 @@ def render_html(payload: Dict[str, Any]) -> str:
     .tab-button[aria-selected="true"] {{ background:#171719; color:white; border-color:#171719; }}
     .tab-panel {{ display:none; }}
     .tab-panel.active {{ display:block; }}
+    .section-heading {{ display:flex; justify-content:space-between; gap:12px; align-items:start; margin-bottom:12px; flex-wrap:wrap; }}
+    .section-heading h2 {{ margin-bottom:4px; }}
     .action-list,.content-list,.issue-list {{ display:grid; gap:10px; }}
     .action-row,.content-row,.issue-row {{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:start; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }}
     .content-row,.issue-row {{ grid-template-columns:1fr auto; }}
     .action-row > *,.content-row > *,.issue-row > * {{ min-width:0; }}
     .rank {{ width:32px; height:32px; border-radius:50%; background:#171719; color:#fff; display:grid; place-items:center; font-weight:800; }}
     .row-kicker {{ color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }}
-    .row-tool {{ align-self:center; }}
+    .row-tool {{ align-self:center; display:grid; gap:6px; justify-items:start; }}
+    .row-tool small {{ color:var(--muted); overflow-wrap:anywhere; max-width:220px; }}
     .command-line {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:9px; color:#5e616a; font-size:12px; font-weight:800; text-transform:uppercase; }}
     .command-line code {{ text-transform:none; font-weight:700; overflow-wrap:anywhere; }}
     .pill {{ display:inline-block; border-radius:999px; padding:3px 8px; font-size:12px; font-weight:800; background:#eceef4; color:#333640; }}
@@ -10234,6 +10365,18 @@ def render_html(payload: Dict[str, Any]) -> str:
         <h2>Top next actions</h2>
         <div class="action-list">{render_action_rows(payload['next_actions'][:3])}</div>
       </div>
+    </section>
+
+    <section class="panel" aria-label="Operator next-action synthesis">
+      <div class="section-heading">
+        <div>
+          <span class="row-kicker">Unified manual checklist</span>
+          <h2>Operator next-action synthesis</h2>
+          <p class="muted">One review-only path across render review, research handoff, source confirmations, public-signal returns, women's soccer helpers, and hockey/softball source returns.</p>
+        </div>
+        {open_link('operator_next_action_synthesis.md', 'Open checklist')}
+      </div>
+      <div class="action-list">{render_next_action_synthesis(payload.get('operator_next_action_synthesis', []))}</div>
     </section>
 
     <section class="metric-grid">{metrics}</section>
@@ -11032,6 +11175,20 @@ def render_markdown(payload: Dict[str, Any]) -> str:
             f"{' Run: `' + action['command'] + '`.' if action.get('command') else ''}"
         )
         for action in payload["next_actions"]
+    )
+    lines += [
+        "",
+        "## Operator next-action synthesis",
+        "",
+        "- Review-only and artifact-only; this checklist does not fetch sources, download assets, approve anything, move files, or publish.",
+    ]
+    lines.extend(
+        (
+            f"{row['rank']}. {row['lane']} - {row['manual_step']} | "
+            f"open: `{row['primary_artifact']}` | companion: `{row['companion_artifact']}` | "
+            f"return fields: {row['operator_return_fields']} | status: {row['artifact_status']}"
+        )
+        for row in payload.get("operator_next_action_synthesis", [])
     )
     lines += ["", "## Render readiness", ""]
     lines.extend(
@@ -11922,6 +12079,66 @@ def render_render_prep_packets_markdown(payload: Dict[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_operator_next_action_synthesis_markdown(payload: Dict[str, Any]) -> str:
+    rows = payload.get("operator_next_action_synthesis", [])
+    lines = [
+        "# HSD Operator Next-Action Synthesis",
+        "",
+        f"Generated: {payload['generated_at_utc']}",
+        f"Version: {payload['version']}",
+        "",
+        "Review-only and artifact-only. This checklist does not fetch sources, download assets, enable sources, approve assets/stories, move files into publish-ready lanes, or publish.",
+        "",
+        "## Checklist",
+        "",
+    ]
+    for row in rows:
+        lines.extend(
+            [
+                f"### {row['rank']}. {row['lane']}",
+                "",
+                f"- Manual step: {row['manual_step']}",
+                f"- Open first: `{row['primary_artifact']}`",
+                f"- Companion: `{row['companion_artifact']}`",
+                f"- Return fields: {row['operator_return_fields']}",
+                f"- Status: {row['artifact_status']}",
+                f"- Refresh command: `{row['run_command']}`" if row.get("run_command") else "- Refresh command: not required",
+                f"- Guardrails: {row['guardrail_note']}",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_operator_next_action_synthesis_outputs(payload: Dict[str, Any]) -> None:
+    rows = payload.get("operator_next_action_synthesis", [])
+    write_csv(OUT_NEXT_ACTION_SYNTHESIS_CSV, rows, NEXT_ACTION_SYNTHESIS_FIELDS)
+    write_json(
+        OUT_NEXT_ACTION_SYNTHESIS_JSON,
+        {
+            "version": payload["version"],
+            "generated_at_utc": payload["generated_at_utc"],
+            "guardrails": {
+                "review_only": True,
+                "artifact_only": True,
+                "paid_apis": False,
+                "source_fetching": False,
+                "automatic_downloads": False,
+                "source_auto_enablement": False,
+                "auto_approval": False,
+                "publish_ready_movement": False,
+                "publishing": False,
+            },
+            "counts": {
+                "rows": len(rows),
+                "ready_to_open": sum(1 for row in rows if row.get("artifact_status") == "ready_to_open"),
+            },
+            "rows": rows,
+        },
+    )
+    write_text(OUT_NEXT_ACTION_SYNTHESIS_MD, render_operator_next_action_synthesis_markdown(payload))
+
+
 def write_render_prep_outputs(payload: Dict[str, Any]) -> None:
     packets = payload.get("render_prep_packets", [])
     write_csv(OUT_RENDER_PREP_CSV, packets, RENDER_PREP_FIELDS)
@@ -11949,6 +12166,7 @@ def write_render_prep_outputs(payload: Dict[str, Any]) -> None:
 
 
 def write_outputs(payload: Dict[str, Any]) -> None:
+    write_operator_next_action_synthesis_outputs(payload)
     write_render_prep_outputs(payload)
     write_render_handoff_outputs(payload)
     write_json(OUT_JSON, payload)
