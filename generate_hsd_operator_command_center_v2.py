@@ -124,6 +124,7 @@ NEXT_ACTION_SYNTHESIS_FIELDS = [
     "companion_artifact",
     "companion_resolved_path",
     "operator_return_fields",
+    "lane_detail",
     "guardrail_note",
     "artifact_status",
     "run_command",
@@ -622,6 +623,9 @@ ARTIFACTS = [
     ("Results", "Game source research worksheet", "game_source_research_worksheet_v1.md"),
     ("Results", "Game source research worksheet data", "game_source_research_worksheet_v1.csv"),
     ("Results", "Game source research worksheet manifest", "game_source_research_worksheet_v1.json"),
+    ("Results", "Game source confirmation return summary", "game_source_confirmation_return_summary_v1.md"),
+    ("Results", "Game source confirmation return summary data", "game_source_confirmation_return_summary_v1.csv"),
+    ("Results", "Game source confirmation return summary manifest", "game_source_confirmation_return_summary_v1.json"),
     ("Results", "Final score stat proof", "final_score_stat_proof_v1.md"),
     ("Results", "Final score stat proof data", "final_score_stat_proof_v1.csv"),
     ("Results", "Final score stat proof manifest", "final_score_stat_proof_v1.json"),
@@ -899,6 +903,9 @@ RUN_COMMANDS = {
     "game_source_research_worksheet_v1.md": ".\\hsd.cmd run -Mode results",
     "game_source_research_worksheet_v1.csv": ".\\hsd.cmd run -Mode results",
     "game_source_research_worksheet_v1.json": ".\\hsd.cmd run -Mode results",
+    "game_source_confirmation_return_summary_v1.md": ".\\hsd.cmd run -Mode results",
+    "game_source_confirmation_return_summary_v1.csv": ".\\hsd.cmd run -Mode results",
+    "game_source_confirmation_return_summary_v1.json": ".\\hsd.cmd run -Mode results",
     "final_score_stat_proof_v1.md": ".\\hsd.cmd run -Mode results",
     "final_score_stat_proof_v1.csv": ".\\hsd.cmd run -Mode results",
     "final_score_stat_proof_v1.json": ".\\hsd.cmd run -Mode results",
@@ -7677,6 +7684,7 @@ def next_action_synthesis_row(
     companion_artifact: str,
     operator_return_fields: str,
     guardrail_note: str,
+    lane_detail: str = "",
 ) -> Dict[str, str]:
     primary_path = find_existing_input(primary_artifact)
     companion_path = find_existing_input(companion_artifact)
@@ -7689,10 +7697,24 @@ def next_action_synthesis_row(
         "companion_artifact": companion_artifact,
         "companion_resolved_path": companion_path.as_posix() if companion_path.exists() else "",
         "operator_return_fields": operator_return_fields,
+        "lane_detail": lane_detail,
         "guardrail_note": guardrail_note,
         "artifact_status": "ready_to_open" if primary_path.exists() else "missing_or_not_generated",
         "run_command": RUN_COMMANDS.get(primary_artifact, ""),
     }
+
+
+def game_source_confirmation_return_lane_detail() -> str:
+    payload = read_json("game_source_confirmation_return_summary_v1.json")
+    summary = payload.get("summary") if isinstance(payload, dict) else {}
+    if not isinstance(summary, dict) or not summary:
+        return "Return summary not generated yet; run Results to create missing official URL/status counts."
+    return (
+        f"rows={summary.get('rows', 0)}; "
+        f"missing_official_url={summary.get('missing_official_url', 0)}; "
+        f"missing_confirmation_status={summary.get('missing_confirmation_status', 0)}; "
+        f"ready_for_operator_review={summary.get('operator_return_ready_for_review', 0)}"
+    )
 
 
 def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
@@ -7720,10 +7742,11 @@ def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
             3,
             "Game-source confirmation returns",
             "Fill the game source research worksheet from manual official/public checks before any result/story proof is trusted downstream.",
+            "game_source_confirmation_return_summary_v1.csv",
             "game_source_research_worksheet_v1.csv",
-            "game_source_confirmation_next_action_v1.md",
             "operator_found_official_url, operator_confirmation_status, operator_notes, checked_at_local",
             guardrail,
+            game_source_confirmation_return_lane_detail(),
         ),
         next_action_synthesis_row(
             4,
@@ -8136,6 +8159,7 @@ def render_next_action_synthesis(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row['lane'])} {pill(row.get('artifact_status'), status_tone_value)}</div>
                 <h3>{html.escape(row['manual_step'])}</h3>
                 <p><strong>Return fields:</strong> {html.escape(row.get('operator_return_fields', ''))}</p>
+                <p><strong>Lane detail:</strong> {html.escape(row.get('lane_detail') or 'Open the linked artifact for current counts.')}</p>
                 <p><strong>Resolved local path:</strong> {html.escape(row.get('primary_resolved_path') or 'missing_or_not_generated')}</p>
                 <p>{html.escape(row.get('guardrail_note', 'Review-only.'))}</p>
                 {command_hint(row.get('run_command', ''))}
@@ -12134,6 +12158,7 @@ def render_operator_next_action_synthesis_markdown(payload: Dict[str, Any]) -> s
                 f"- Companion: `{row['companion_artifact']}`",
                 f"- Companion resolved path: `{row.get('companion_resolved_path') or 'missing_or_not_generated'}`",
                 f"- Return fields: {row['operator_return_fields']}",
+                f"- Lane detail: {row.get('lane_detail') or 'Open the linked artifact for current counts.'}",
                 f"- Status: {row['artifact_status']}",
                 f"- Refresh command: `{row['run_command']}`" if row.get("run_command") else "- Refresh command: not required",
                 f"- Guardrails: {row['guardrail_note']}",
