@@ -160,6 +160,37 @@ def test_workflow_lane_status_links_open_pr_from_worktree_hint(tmp_path: Path, m
     assert workflow["status_source"] == "worktree_hint"
 
 
+def test_workflow_lane_status_ignores_merged_worktree_hints(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+
+    module = load_module()
+    payload = module.build_payload(
+        module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"])
+    )
+    hinted_rows = module.lane_rows(
+        [],
+        [],
+        payload["git_state"],
+        [
+            {
+                "path": r"C:\Users\Mike\.codex\worktrees\34b9\her-sports-news-scraper",
+                "branch": "codex/workflow-lane-status-hints",
+                "head": "abcdef",
+                "dirty": "false",
+                "dirty_count": "0",
+                "merged_to_main": "true",
+            }
+        ],
+    )
+    workflow = next(row for row in hinted_rows if row["lane_id"] == "workflow_overhaul")
+
+    assert workflow["status"] == "unreported"
+    assert workflow["status_source"] == "default"
+    assert workflow["branch"] == ""
+    assert workflow["detected_worktree"] == ""
+
+
 def test_workflow_lane_status_prefers_asset_lane_for_hockey_softball_source_map(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
