@@ -668,6 +668,93 @@ def test_wnba_final_score_hero_targets_bridge_render_gap_without_downloads(tmp_p
     assert "no row is render-ready" in markdown
 
 
+def test_action_photo_cutout_readiness_defaults_review_only_and_blank(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path))
+    module = load_module()
+
+    assert module.main() == 0
+
+    root = tmp_path / "data/asset_registry/action_photo_candidates"
+    rows = read_csv(root / "review_only_action_photo_cutout_readiness_v1.csv")
+    target_rows = read_csv(root / "review_only_wnba_final_score_hero_action_photo_targets_v1.csv")
+    manifest = json.loads((root / "review_only_action_photo_cutout_readiness_v1.json").read_text(encoding="utf-8"))
+    top_manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
+    markdown = (root / "review_only_action_photo_cutout_readiness_v1.md").read_text(encoding="utf-8")
+
+    assert manifest["status"] == "action_photo_cutout_readiness_ready"
+    assert manifest["cutout_readiness_rows"] == 6
+    assert manifest["target_rows_covered"] == 6
+    assert manifest["validation_issue_count"] == 0
+    assert manifest["download_approved_yes_rows"] == 0
+    assert manifest["blank_candidate_photo_url_rows"] == 6
+    assert manifest["blank_evidence_url_rows"] == 6
+    assert manifest["blank_identity_anchor_url_rows"] == 6
+    assert manifest["blank_transparent_background_candidate_rows"] == 6
+    assert manifest["blank_full_body_or_three_quarter_visible_rows"] == 6
+    assert manifest["blank_limb_hair_boundary_clean_rows"] == 6
+    assert manifest["blank_overlaps_other_players_rows"] == 6
+    assert manifest["blank_background_complexity_rows"] == 6
+    assert manifest["blank_cutout_work_required_rows"] == 6
+    assert manifest["blank_hero_crop_fit_feed_rows"] == 6
+    assert manifest["blank_hero_crop_fit_story_rows"] == 6
+    assert manifest["blank_grid_break_potential_rows"] == 6
+    assert manifest["blank_cutout_evidence_notes_rows"] == 6
+    assert manifest["blank_source_url_rows"] == 6
+    assert manifest["blank_entity_id_rows"] == 6
+    assert manifest["blank_rights_class_rows"] == 6
+    assert manifest["blank_identity_confidence_rows"] == 6
+    assert manifest["blank_intended_review_only_use_rows"] == 6
+    assert manifest["operator_verify_required_yes_rows"] == 6
+    assert manifest["manual_reviewer_blank_rows"] == 6
+    assert manifest["manual_review_status_not_reviewed_rows"] == 6
+    assert manifest["review_only_rows"] == 6
+    assert manifest["publish_ready_rows"] == 0
+    assert manifest["asset_downloads"] is False
+    assert manifest["source_fetching"] is False
+    assert manifest["segmentation"] is False
+    assert manifest["background_removal"] is False
+    assert manifest["cutout_file_writes"] is False
+    assert top_manifest["action_photo_cutout_readiness_rows"] == 6
+    assert top_manifest["action_photo_cutout_readiness_validation_issue_count"] == 0
+    assert top_manifest["action_photo_cutout_readiness_csv"].endswith("review_only_action_photo_cutout_readiness_v1.csv")
+    assert {row["target_id"] for row in rows} == {row["target_id"] for row in target_rows}
+    assert len({row["cutout_readiness_id"] for row in rows}) == len(rows)
+    for row in rows:
+        assert row["cutout_readiness_id"].startswith("APCR")
+        assert row["target_id"].startswith("WFSH")
+        assert row["player"] == "Kelsey Mitchell"
+        assert row["candidate_photo_url"] == ""
+        assert row["evidence_url"] == ""
+        assert row["identity_anchor_url"] == ""
+        assert row["transparent_background_candidate"] == ""
+        assert row["full_body_or_three_quarter_visible"] == ""
+        assert row["limb_hair_boundary_clean"] == ""
+        assert row["overlaps_other_players"] == ""
+        assert row["background_complexity"] == ""
+        assert row["cutout_work_required"] == ""
+        assert row["hero_crop_fit_feed"] == ""
+        assert row["hero_crop_fit_story"] == ""
+        assert row["grid_break_potential"] == ""
+        assert row["cutout_evidence_notes"] == ""
+        assert row["operator_verify_required"] == "yes"
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["manual_review_status"] == "not_reviewed"
+        assert row["manual_reviewer"] == ""
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+    assert "Review-Only Action Photo Cutout Readiness" in markdown
+    assert "transparent, grid-breaking hero assets" in markdown
+    assert "does not download images, fetch sources, segment subjects, remove backgrounds" in markdown
+    assert "Cutout readiness is not asset approval" in markdown
+
+
 def test_action_photo_candidate_intake_validator_blocks_unsafe_yes_rows() -> None:
     module = load_module()
     invalid_rows = [
@@ -1252,3 +1339,74 @@ def test_wnba_final_score_hero_target_validator_blocks_unsafe_rows() -> None:
     assert ("render_gap", "render_gap_must_name_headshot_bridge") in issue_pairs
     assert ("review_only", "wnba_hero_target_rows_must_remain_review_only") in issue_pairs
     assert ("publish_ready", "wnba_hero_target_rows_must_not_be_publish_ready") in issue_pairs
+
+
+def test_action_photo_cutout_readiness_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    target_rows = module.wnba_final_score_hero_action_photo_target_rows()
+    invalid_rows = module.action_photo_cutout_readiness_rows(target_rows)
+    invalid_rows[0].update(
+        {
+            "source_category": "free_web_image",
+            "candidate_photo_url": "https://example.com/photo.jpg",
+            "evidence_url": "https://example.com/evidence",
+            "identity_anchor_url": "https://example.com/player",
+            "transparent_background_candidate": "yes",
+            "full_body_or_three_quarter_visible": "yes",
+            "limb_hair_boundary_clean": "yes",
+            "overlaps_other_players": "no",
+            "background_complexity": "low",
+            "cutout_work_required": "minimal",
+            "hero_crop_fit_feed": "yes",
+            "hero_crop_fit_story": "yes",
+            "grid_break_potential": "high",
+            "cutout_evidence_notes": "ready for render-ready cutout",
+            "operator_verify_required": "no",
+            "download_approved": "yes",
+            "source_url": "https://example.com/photo.jpg",
+            "entity_id": "wnba:indiana_fever:kelsey_mitchell",
+            "rights_class": "official_review_needed",
+            "identity_confidence": "strong_context",
+            "intended_review_only_use": "review",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "manual_review_status": "approved_for_download",
+            "manual_reviewer": "bot",
+            "manual_next_action": "download it and remove background now",
+            "review_only": "false",
+            "publish_ready": "true",
+        }
+    )
+    invalid_rows[1]["cutout_readiness_id"] = invalid_rows[2]["cutout_readiness_id"]
+    invalid_rows[3]["target_id"] = invalid_rows[4]["target_id"]
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_action_photo_cutout_readiness_rows(invalid_rows, target_rows)}
+
+    assert ("cutout_readiness_id", "duplicate_cutout_readiness_id") in issue_pairs
+    assert ("target_id", "duplicate_target_id_in_cutout_readiness") in issue_pairs
+    assert ("source_category", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("candidate_photo_url", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("evidence_url", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("identity_anchor_url", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("transparent_background_candidate", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("full_body_or_three_quarter_visible", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("limb_hair_boundary_clean", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("overlaps_other_players", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("background_complexity", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("cutout_work_required", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("hero_crop_fit_feed", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("hero_crop_fit_story", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("grid_break_potential", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("cutout_evidence_notes", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("manual_reviewer", "generated_cutout_research_field_must_stay_blank") in issue_pairs
+    assert ("source_url", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("entity_id", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("rights_class", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("identity_confidence", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("intended_review_only_use", "generated_local_download_law_field_must_stay_blank") in issue_pairs
+    assert ("operator_verify_required", "operator_verify_required_must_default_yes") in issue_pairs
+    assert ("download_approved", "generated_rows_must_not_approve_downloads") in issue_pairs
+    assert ("manual_review_status", "generated_cutout_rows_must_start_not_reviewed") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("manual_next_action", "cutout_next_action_must_stay_review_only") in issue_pairs
+    assert ("review_only", "cutout_readiness_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "cutout_readiness_rows_must_not_be_publish_ready") in issue_pairs
