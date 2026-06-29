@@ -47,6 +47,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     research_bundle_rows = read_csv(root / "review_only_action_photo_research_run_bundle_v1.csv")
     preflight_rows = read_csv(root / "review_only_action_photo_quarantine_preflight_v1.csv")
     summary_rows = read_csv(root / "review_only_action_photo_research_return_summary_board_v1.csv")
+    quality_fit_rows = read_csv(root / "review_only_action_photo_candidate_quality_fit_board_v1.csv")
     download_decision_rows = read_csv(root / "review_only_action_photo_download_decision_queue_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_candidate_intake.json").read_text(encoding="utf-8"))
     entity_source_manifest = json.loads((root / "review_only_action_photo_sport_entity_source_map.json").read_text(encoding="utf-8"))
@@ -64,6 +65,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     external_export_manifest = json.loads((root / "review_only_action_photo_external_research_packet_manifest_v1.json").read_text(encoding="utf-8"))
     preflight_manifest = json.loads((root / "review_only_action_photo_quarantine_preflight_v1.json").read_text(encoding="utf-8"))
     summary_manifest = json.loads((root / "review_only_action_photo_research_return_summary_board_v1.json").read_text(encoding="utf-8"))
+    quality_fit_manifest = json.loads((root / "review_only_action_photo_candidate_quality_fit_board_v1.json").read_text(encoding="utf-8"))
     download_decision_manifest = json.loads((root / "review_only_action_photo_download_decision_queue_v1.json").read_text(encoding="utf-8"))
     taxonomy = json.loads((root / "review_only_action_photo_candidate_taxonomy.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_candidate_intake.md").read_text(encoding="utf-8")
@@ -85,6 +87,7 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     external_export_prompt_md = (root / "review_only_action_photo_external_research_packet_prompt_v1.md").read_text(encoding="utf-8")
     preflight_md = (root / "review_only_action_photo_quarantine_preflight_v1.md").read_text(encoding="utf-8")
     summary_md = (root / "review_only_action_photo_research_return_summary_board_v1.md").read_text(encoding="utf-8")
+    quality_fit_md = (root / "review_only_action_photo_candidate_quality_fit_board_v1.md").read_text(encoding="utf-8")
     download_decision_md = (root / "review_only_action_photo_download_decision_queue_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_candidate_intake_ready"
@@ -124,12 +127,17 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert manifest["action_photo_quarantine_preflight_validation_issue_count"] == 0
     assert manifest["action_photo_research_return_summary_board_rows"] == 10
     assert manifest["action_photo_research_return_summary_board_validation_issue_count"] == 0
+    assert manifest["action_photo_candidate_quality_fit_board_rows"] == 10
+    assert manifest["action_photo_candidate_quality_fit_board_validation_issue_count"] == 0
     assert manifest["action_photo_download_decision_queue_rows"] == 10
     assert manifest["action_photo_download_decision_queue_validation_issue_count"] == 0
     assert manifest["validation_issue_count"] == 0
     assert manifest["action_photo_candidate_operator_worksheet_csv"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.csv")
     assert manifest["action_photo_candidate_operator_worksheet_md"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.md")
     assert manifest["action_photo_candidate_operator_worksheet_json"].endswith("review_only_action_photo_candidate_operator_worksheet_v1.json")
+    assert manifest["action_photo_candidate_quality_fit_board_csv"].endswith("review_only_action_photo_candidate_quality_fit_board_v1.csv")
+    assert manifest["action_photo_candidate_quality_fit_board_md"].endswith("review_only_action_photo_candidate_quality_fit_board_v1.md")
+    assert manifest["action_photo_candidate_quality_fit_board_json"].endswith("review_only_action_photo_candidate_quality_fit_board_v1.json")
     assert manifest["quarantine_root"] == "data/assets/quarantine/review_only_candidates"
     assert set(manifest["required_download_fields"]) >= {
         "source_url",
@@ -849,12 +857,15 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
         "research_packet_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.md",
         "research_packet_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.csv",
         "research_packet_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_research_packet_v1.json",
-        "return_intake_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
-        "return_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
-        "return_intake_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
-        "external_research_prompt_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md",
-        "external_research_manifest_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json",
-    }
+            "return_intake_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.md",
+            "return_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+            "return_intake_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json",
+            "quality_fit_board_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md",
+            "quality_fit_board_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv",
+            "quality_fit_board_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json",
+            "external_research_prompt_md": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md",
+            "external_research_manifest_json": "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json",
+        }
     assert set(research_bundle_manifest["artifact_paths"]) == set(expected_bundle_paths)
     for key, expected_suffix in expected_bundle_paths.items():
         assert research_bundle_manifest["artifact_paths"][key].endswith(expected_suffix)
@@ -1003,6 +1014,59 @@ def test_action_photo_candidate_intake_defaults_review_only_and_blank_no(tmp_pat
     assert "Review-Only Action Photo Research Return Summary Board" in summary_md
     assert "ChatGPT Pro, Gemini, or manual action-photo research returns" in summary_md
     assert "does not download images, approve assets, write headshots, create `.approved` markers" in summary_md
+    assert quality_fit_manifest["status"] == "action_photo_candidate_quality_fit_board_ready"
+    assert quality_fit_manifest["quality_fit_rows"] == 10
+    assert quality_fit_manifest["validation_issue_count"] == 0
+    assert quality_fit_manifest["source_url_present_rows"] == 0
+    assert quality_fit_manifest["rights_class_present_rows"] == 0
+    assert quality_fit_manifest["candidate_photo_url_present_rows"] == 0
+    assert quality_fit_manifest["evidence_url_present_rows"] == 0
+    assert quality_fit_manifest["identity_anchor_url_present_rows"] == 0
+    assert quality_fit_manifest["ready_for_human_download_decision_rows"] == 0
+    assert quality_fit_manifest["download_approved_yes_rows"] == 0
+    assert quality_fit_manifest["review_only_rows"] == 10
+    assert quality_fit_manifest["publish_ready_rows"] == 0
+    assert quality_fit_manifest["asset_downloads"] is False
+    assert quality_fit_manifest["headshot_writes"] is False
+    assert quality_fit_manifest["approved_marker_writes"] is False
+    assert quality_fit_manifest["approval_state_change"] is False
+    assert quality_fit_manifest["publish_ready"] is False
+    assert quality_fit_manifest["auto_approval"] is False
+    assert quality_fit_manifest["auto_publish"] is False
+    assert quality_fit_manifest["move_files"] is False
+    assert quality_fit_manifest["paid_apis"] is False
+    assert "Quality/Fit" in quality_fit_md
+    assert "Rows ready for human download decision only" in quality_fit_md
+    assert "not_eligible_without_complete_return_and_human_decision" in quality_fit_md
+    assert len({row["quality_fit_id"] for row in quality_fit_rows}) == len(quality_fit_rows)
+    assert {row["candidate_queue_id"] for row in quality_fit_rows} == {row["candidate_queue_id"] for row in queue_rows}
+    for row in quality_fit_rows:
+        assert row["quality_fit_id"].startswith("APQF")
+        assert row["candidate_queue_id"].startswith("APQ")
+        assert row["sport"]
+        assert row["league_entity"]
+        assert row["source_url_present"] == "no"
+        assert row["rights_class_present"] == "no"
+        assert row["identity_confidence"] == ""
+        assert row["identity_confidence_status"] == "identity_missing"
+        assert row["action_moment_fit"] == "missing_candidate_photo_url"
+        assert row["crop_use_suitability"] == "needs_research_return"
+        assert row["candidate_photo_url_present"] == "no"
+        assert row["evidence_url_present"] == "no"
+        assert row["identity_anchor_url_present"] == "no"
+        assert row["research_return_data_present"] == "no"
+        assert row["ready_for_human_download_decision"] == "no"
+        assert row["download_eligibility_status"] == "not_eligible_without_complete_return_and_human_decision"
+        assert row["download_approved"] == "no"
+        assert row["quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+        assert row["manual_next_action"].startswith("Run/paste URL-evidence research return first")
+        assert row["review_only"] == "true"
+        assert row["publish_ready"] == "false"
+        assert row["approval_state_change"] == "none"
+        assert row["asset_downloads"] == "false"
+        assert row["headshot_writes"] == "false"
+        assert row["approved_marker_writes"] == "false"
+        assert row["publish_action"] == "none_artifact_only"
     assert download_decision_manifest["status"] == "action_photo_download_decision_queue_ready"
     assert download_decision_manifest["decision_rows"] == 10
     assert download_decision_manifest["validation_issue_count"] == 0
@@ -2013,6 +2077,30 @@ def test_action_photo_quarantine_preflight_marks_complete_human_return_ready_wit
     assert "Human operator may decide whether to record a download-approved yes" in summary_rows[0]["operator_next_action"]
     assert module.validate_action_photo_research_return_summary_board_rows(summary_rows, preflight_rows) == []
 
+    quality_fit_rows = module.action_photo_candidate_quality_fit_board_rows(module.action_photo_candidate_queue_rows(), return_rows, preflight_rows)
+
+    assert quality_fit_rows[0]["source_url_present"] == "yes"
+    assert quality_fit_rows[0]["rights_class_present"] == "yes"
+    assert quality_fit_rows[0]["identity_confidence"] == "strong_context"
+    assert quality_fit_rows[0]["identity_confidence_status"] == "identity_ready_for_human_review"
+    assert quality_fit_rows[0]["action_moment_fit"] == "action_photo_candidate"
+    assert quality_fit_rows[0]["crop_use_suitability"] == "likely_feed_or_story_candidate_manual_review"
+    assert quality_fit_rows[0]["candidate_photo_url_present"] == "yes"
+    assert quality_fit_rows[0]["evidence_url_present"] == "yes"
+    assert quality_fit_rows[0]["identity_anchor_url_present"] == "yes"
+    assert quality_fit_rows[0]["research_return_data_present"] == "yes"
+    assert quality_fit_rows[0]["ready_for_human_download_decision"] == "yes"
+    assert quality_fit_rows[0]["download_eligibility_status"] == "eligible_for_later_human_download_decision_only"
+    assert quality_fit_rows[0]["download_approved"] == "no"
+    assert quality_fit_rows[0]["review_only"] == "true"
+    assert quality_fit_rows[0]["publish_ready"] == "false"
+    assert quality_fit_rows[0]["approval_state_change"] == "none"
+    assert quality_fit_rows[0]["asset_downloads"] == "false"
+    assert quality_fit_rows[0]["headshot_writes"] == "false"
+    assert quality_fit_rows[0]["approved_marker_writes"] == "false"
+    assert quality_fit_rows[0]["publish_action"] == "none_artifact_only"
+    assert module.validate_action_photo_candidate_quality_fit_board_rows(quality_fit_rows, return_rows) == []
+
 
 def test_action_photo_quarantine_preflight_blocks_duplicate_headshot_and_weak_identity() -> None:
     module = load_module()
@@ -2095,6 +2183,65 @@ def test_action_photo_research_return_summary_board_validator_blocks_unsafe_rows
     assert ("headshot_writes", "summary_rows_must_not_write_headshots") in issue_pairs
     assert ("approved_marker_writes", "summary_rows_must_not_write_approved_markers") in issue_pairs
     assert ("publish_action", "summary_rows_must_not_publish") in issue_pairs
+
+
+def test_action_photo_candidate_quality_fit_board_validator_blocks_unsafe_rows() -> None:
+    module = load_module()
+    queue_rows = module.action_photo_candidate_queue_rows()
+    return_rows = module.action_photo_research_return_intake_rows(queue_rows)
+    preflight_rows = module.action_photo_quarantine_preflight_rows(return_rows)
+    quality_fit_rows = module.action_photo_candidate_quality_fit_board_rows(queue_rows, return_rows, preflight_rows)
+    quality_fit_rows[0].update(
+        {
+            "source_url_present": "maybe",
+            "rights_class_present": "maybe",
+            "identity_confidence": "auto_verified",
+            "identity_confidence_status": "approved",
+            "action_moment_fit": "render_ready",
+            "crop_use_suitability": "publish",
+            "candidate_photo_url_present": "maybe",
+            "evidence_url_present": "maybe",
+            "identity_anchor_url_present": "maybe",
+            "research_return_data_present": "maybe",
+            "ready_for_human_download_decision": "maybe",
+            "download_eligibility_status": "auto_download",
+            "download_approved": "yes",
+            "quarantine_target_hint": "assets/not_quarantine.jpg",
+            "review_only": "false",
+            "publish_ready": "true",
+            "approval_state_change": "approved",
+            "asset_downloads": "true",
+            "headshot_writes": "true",
+            "approved_marker_writes": "true",
+            "publish_action": "publish",
+        }
+    )
+    quality_fit_rows[1]["quality_fit_id"] = quality_fit_rows[0]["quality_fit_id"]
+    quality_fit_rows[2]["candidate_queue_id"] = quality_fit_rows[3]["candidate_queue_id"]
+
+    issue_pairs = {
+        (issue["field"], issue["issue"])
+        for issue in module.validate_action_photo_candidate_quality_fit_board_rows(quality_fit_rows, return_rows)
+    }
+
+    assert ("quality_fit_id", "duplicate_quality_fit_id") in issue_pairs
+    assert ("candidate_queue_id", "duplicate_candidate_queue_id_in_quality_fit_board") in issue_pairs
+    assert ("source_url_present", "quality_fit_yes_no_field_invalid") in issue_pairs
+    assert ("rights_class_present", "quality_fit_yes_no_field_invalid") in issue_pairs
+    assert ("identity_confidence", "invalid_controlled_vocabulary") in issue_pairs
+    assert ("identity_confidence_status", "invalid_identity_confidence_status") in issue_pairs
+    assert ("action_moment_fit", "invalid_action_moment_fit") in issue_pairs
+    assert ("crop_use_suitability", "invalid_crop_use_suitability") in issue_pairs
+    assert ("download_eligibility_status", "invalid_download_eligibility_status") in issue_pairs
+    assert ("quarantine_target_hint", "quarantine_hint_must_stay_in_review_only_root") in issue_pairs
+    assert ("download_approved", "quality_fit_download_approved_yes_requires_human_complete_row") in issue_pairs
+    assert ("review_only", "quality_fit_rows_must_remain_review_only") in issue_pairs
+    assert ("publish_ready", "quality_fit_rows_must_not_be_publish_ready") in issue_pairs
+    assert ("approval_state_change", "quality_fit_rows_must_not_change_approval_state") in issue_pairs
+    assert ("asset_downloads", "quality_fit_rows_must_not_write_assets_or_markers") in issue_pairs
+    assert ("headshot_writes", "quality_fit_rows_must_not_write_assets_or_markers") in issue_pairs
+    assert ("approved_marker_writes", "quality_fit_rows_must_not_write_assets_or_markers") in issue_pairs
+    assert ("publish_action", "quality_fit_rows_must_not_publish") in issue_pairs
 
 
 def test_action_photo_download_decision_queue_validator_blocks_unsafe_rows() -> None:

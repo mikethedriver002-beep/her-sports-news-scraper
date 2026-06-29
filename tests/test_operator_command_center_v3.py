@@ -170,6 +170,9 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json",
@@ -3283,6 +3286,25 @@ def seed_asset_availability_audit_files() -> None:
         },
     )
     write_json(
+        (action_photo_dir / "review_only_action_photo_candidate_quality_fit_board_v1.json").as_posix(),
+        {
+            "status": "action_photo_candidate_quality_fit_board_ready",
+            "generated_at_utc": "2026-06-29T00:03:30+00:00",
+            "quality_fit_rows": 10,
+            "source_url_present_rows": 0,
+            "rights_class_present_rows": 0,
+            "ready_for_human_download_decision_rows": 0,
+            "download_approved_yes_rows": 0,
+            "validation_issue_count": 0,
+            "review_only": True,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_json(
         (action_photo_dir / "review_only_wnba_final_score_hero_action_photo_targets_v1.json").as_posix(),
         {
             "status": "wnba_final_score_hero_action_photo_targets_ready",
@@ -4945,6 +4967,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_research_return_blank_rights_class_rows"] == 10
     assert payload["asset_readiness_panel"]["action_photo_research_return_operator_verify_required_yes_rows"] == 10
     assert payload["asset_readiness_panel"]["action_photo_research_return_download_approved_yes_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_source_url_present_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_rights_class_present_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_ready_for_human_download_decision_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_download_approved_yes_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_quality_fit_approved_marker_writes"] is False
     assert "present with 1 row(s)" in payload["asset_readiness_panel"]["logo_review_packet_freshness_detail"]
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision"] == "Verify identity"
     assert payload["asset_readiness_panel"]["top_findings"][0]["decision_lane"] == "wnba_athlete_identity_resolution"
@@ -4976,6 +5006,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Return source blanks" in html
     assert "Return rights blanks" in html
     assert "Return dl yes" in html
+    assert "Quality/fit rows" in html
+    assert "Quality source yes" in html
+    assert "Quality ready dl" in html
+    assert "Quality writes" in html
     assert "review-only fallback status not recorded" not in html
     assert "Verify identity" in html
     assert "Hold league mark" in html
@@ -4991,6 +5025,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Action-photo operator worksheet blank candidate-url rows: 10" in markdown
     assert "Action-photo operator worksheet download-approved yes rows: 0" in markdown
     assert "Action-photo operator worksheet asset/headshot/marker writes: False/False/False" in markdown
+    assert "Action-photo quality/fit board rows: 10" in markdown
+    assert "Action-photo quality/fit source_url present rows: 0" in markdown
+    assert "Action-photo quality/fit ready-for-human-download-decision rows: 0" in markdown
+    assert "Action-photo quality/fit asset/headshot/marker writes: False/False/False" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
@@ -5527,6 +5565,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
@@ -6562,6 +6603,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_quality_fit_board_v1.json" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_square.png" in runner
