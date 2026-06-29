@@ -70,6 +70,9 @@ OUT_RESEARCH_RETURN_SUMMARY_BOARD_JSON = output_path(ROOT / "review_only_action_
 OUT_CANDIDATE_QUALITY_FIT_BOARD_CSV = output_path(ROOT / "review_only_action_photo_candidate_quality_fit_board_v1.csv")
 OUT_CANDIDATE_QUALITY_FIT_BOARD_MD = output_path(ROOT / "review_only_action_photo_candidate_quality_fit_board_v1.md")
 OUT_CANDIDATE_QUALITY_FIT_BOARD_JSON = output_path(ROOT / "review_only_action_photo_candidate_quality_fit_board_v1.json")
+OUT_QUALITY_FIT_OPERATOR_CUE_CSV = output_path(ROOT / "review_only_action_photo_quality_fit_operator_cue_v1.csv")
+OUT_QUALITY_FIT_OPERATOR_CUE_MD = output_path(ROOT / "review_only_action_photo_quality_fit_operator_cue_v1.md")
+OUT_QUALITY_FIT_OPERATOR_CUE_JSON = output_path(ROOT / "review_only_action_photo_quality_fit_operator_cue_v1.json")
 OUT_DOWNLOAD_DECISION_QUEUE_CSV = output_path(ROOT / "review_only_action_photo_download_decision_queue_v1.csv")
 OUT_DOWNLOAD_DECISION_QUEUE_MD = output_path(ROOT / "review_only_action_photo_download_decision_queue_v1.md")
 OUT_DOWNLOAD_DECISION_QUEUE_JSON = output_path(ROOT / "review_only_action_photo_download_decision_queue_v1.json")
@@ -549,6 +552,35 @@ ACTION_PHOTO_CANDIDATE_QUALITY_FIT_BOARD_FIELDS = [
     "download_approved",
     "quarantine_target_hint",
     "manual_next_action",
+    "review_only",
+    "publish_ready",
+    "approval_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_action",
+]
+ACTION_PHOTO_QUALITY_FIT_OPERATOR_CUE_FIELDS = [
+    "operator_cue_id",
+    "quality_fit_id",
+    "candidate_queue_id",
+    "sport",
+    "league_entity",
+    "source_url_missing",
+    "rights_class_missing",
+    "identity_metadata_missing",
+    "action_metadata_missing",
+    "crop_metadata_missing",
+    "candidate_photo_url_missing",
+    "evidence_url_missing",
+    "identity_anchor_url_missing",
+    "missing_required_fields",
+    "manual_fields_to_fill_next",
+    "triage_bucket",
+    "download_decision_review_eligible",
+    "graduation_gate",
+    "manual_next_action",
+    "download_approved",
     "review_only",
     "publish_ready",
     "approval_state_change",
@@ -3893,6 +3925,9 @@ def research_run_bundle_artifact_paths() -> Dict[str, str]:
         "quality_fit_board_md": OUT_CANDIDATE_QUALITY_FIT_BOARD_MD.as_posix(),
         "quality_fit_board_csv": OUT_CANDIDATE_QUALITY_FIT_BOARD_CSV.as_posix(),
         "quality_fit_board_json": OUT_CANDIDATE_QUALITY_FIT_BOARD_JSON.as_posix(),
+        "quality_fit_operator_cue_md": OUT_QUALITY_FIT_OPERATOR_CUE_MD.as_posix(),
+        "quality_fit_operator_cue_csv": OUT_QUALITY_FIT_OPERATOR_CUE_CSV.as_posix(),
+        "quality_fit_operator_cue_json": OUT_QUALITY_FIT_OPERATOR_CUE_JSON.as_posix(),
         "external_research_prompt_md": OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD.as_posix(),
         "external_research_manifest_json": OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON.as_posix(),
     }
@@ -4729,6 +4764,188 @@ def render_action_photo_candidate_quality_fit_board(rows: List[Mapping[str, str]
     return "\n".join(lines) + "\n"
 
 
+def quality_fit_operator_fields_to_fill(row: Mapping[str, str]) -> List[str]:
+    fields = [field for field in clean(row.get("missing_required_fields")).split("|") if field]
+    if clean(row.get("candidate_photo_url_present")) != "yes" and "candidate_photo_url" not in fields:
+        fields.append("candidate_photo_url")
+    if clean(row.get("evidence_url_present")) != "yes" and "evidence_url" not in fields:
+        fields.append("evidence_url")
+    if clean(row.get("identity_anchor_url_present")) != "yes" and "identity_anchor_url" not in fields:
+        fields.append("identity_anchor_url")
+    if clean(row.get("action_moment_fit")) in {"", "missing_candidate_photo_url", "manual_action_photo_review_required"}:
+        fields.append("operator_action_moment_review")
+    if clean(row.get("crop_use_suitability")) in {"", "needs_research_return", "needs_crop_use_review"}:
+        fields.append("operator_crop_use_review")
+    return list(dict.fromkeys(fields))
+
+
+def action_photo_quality_fit_operator_cue_rows(quality_fit_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, row in enumerate(quality_fit_rows, start=1):
+        ready = clean(row.get("ready_for_human_download_decision")) == "yes"
+        has_return = clean(row.get("research_return_data_present")) == "yes"
+        fields_to_fill = quality_fit_operator_fields_to_fill(row)
+        if ready:
+            bucket = "ready_for_later_human_download_decision_review"
+            next_action = "Review source, rights, identity, action, and crop/use evidence before any separate human quarantine decision."
+        elif has_return:
+            bucket = "research_return_needs_manual_fix"
+            next_action = "Fill or correct the listed missing metadata fields, then regenerate quality/fit and preflight artifacts."
+        else:
+            bucket = "research_return_not_pasted_yet"
+            next_action = "Paste source and evidence return fields into the research-return intake; keep generated download fields no."
+        rows.append(
+            {
+                "operator_cue_id": f"APQFC{index:03d}",
+                "quality_fit_id": clean(row.get("quality_fit_id")),
+                "candidate_queue_id": clean(row.get("candidate_queue_id")),
+                "sport": clean(row.get("sport")),
+                "league_entity": clean(row.get("league_entity")),
+                "source_url_missing": "yes" if clean(row.get("source_url_present")) != "yes" else "no",
+                "rights_class_missing": "yes" if clean(row.get("rights_class_present")) != "yes" else "no",
+                "identity_metadata_missing": "yes" if clean(row.get("identity_confidence_status")) != "identity_ready_for_human_review" else "no",
+                "action_metadata_missing": "yes" if clean(row.get("action_moment_fit")) != "action_photo_candidate" else "no",
+                "crop_metadata_missing": "yes" if clean(row.get("crop_use_suitability")) in {"needs_research_return", "needs_crop_use_review"} else "no",
+                "candidate_photo_url_missing": "yes" if clean(row.get("candidate_photo_url_present")) != "yes" else "no",
+                "evidence_url_missing": "yes" if clean(row.get("evidence_url_present")) != "yes" else "no",
+                "identity_anchor_url_missing": "yes" if clean(row.get("identity_anchor_url_present")) != "yes" else "no",
+                "missing_required_fields": clean(row.get("missing_required_fields")),
+                "manual_fields_to_fill_next": "|".join(fields_to_fill) if fields_to_fill else "operator_quality_fit_review",
+                "triage_bucket": bucket,
+                "download_decision_review_eligible": "yes" if ready else "no",
+                "graduation_gate": "Graduate only to later human download-decision review after source, rights, identity, candidate/evidence URLs, action fit, and crop/use evidence are complete.",
+                "manual_next_action": next_action,
+                "download_approved": "no",
+                "review_only": "true",
+                "publish_ready": "false",
+                "approval_state_change": "none",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_action": "none_artifact_only",
+            }
+        )
+    return rows
+
+
+def validate_action_photo_quality_fit_operator_cue_rows(
+    rows: Iterable[Mapping[str, str]],
+    quality_fit_rows: Iterable[Mapping[str, str]],
+) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    quality_ids = {clean(row.get("quality_fit_id")) for row in quality_fit_rows}
+    seen_ids = set()
+    seen_quality_ids = set()
+    valid_yes_no = {"yes", "no"}
+    valid_buckets = {
+        "research_return_not_pasted_yet",
+        "research_return_needs_manual_fix",
+        "ready_for_later_human_download_decision_review",
+    }
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_QUALITY_FIT_OPERATOR_CUE_FIELDS}
+        cue_id = normalized["operator_cue_id"]
+        quality_id = normalized["quality_fit_id"]
+        if not cue_id:
+            issues.append({"row": str(index), "field": "operator_cue_id", "issue": "required_operator_cue_id_blank"})
+        elif cue_id in seen_ids:
+            issues.append({"row": str(index), "field": "operator_cue_id", "issue": "duplicate_operator_cue_id"})
+        seen_ids.add(cue_id)
+        if quality_id not in quality_ids:
+            issues.append({"row": str(index), "field": "quality_fit_id", "issue": "quality_fit_id_not_in_board"})
+        if quality_id in seen_quality_ids:
+            issues.append({"row": str(index), "field": "quality_fit_id", "issue": "duplicate_quality_fit_id_in_operator_cue"})
+        seen_quality_ids.add(quality_id)
+        for field in ["candidate_queue_id", "sport", "league_entity", "manual_fields_to_fill_next", "triage_bucket", "graduation_gate", "manual_next_action"]:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_operator_cue_field_blank"})
+        for field in [
+            "source_url_missing",
+            "rights_class_missing",
+            "identity_metadata_missing",
+            "action_metadata_missing",
+            "crop_metadata_missing",
+            "candidate_photo_url_missing",
+            "evidence_url_missing",
+            "identity_anchor_url_missing",
+            "download_decision_review_eligible",
+        ]:
+            if normalized[field] not in valid_yes_no:
+                issues.append({"row": str(index), "field": field, "issue": "operator_cue_yes_no_field_invalid"})
+        if normalized["triage_bucket"] not in valid_buckets:
+            issues.append({"row": str(index), "field": "triage_bucket", "issue": "invalid_operator_cue_triage_bucket"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "operator_cue_must_not_approve_downloads"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "operator_cue_rows_must_remain_review_only"})
+        if normalized["publish_ready"] != "false":
+            issues.append({"row": str(index), "field": "publish_ready", "issue": "operator_cue_rows_must_not_be_publish_ready"})
+        if normalized["approval_state_change"] != "none":
+            issues.append({"row": str(index), "field": "approval_state_change", "issue": "operator_cue_rows_must_not_change_approval_state"})
+        for field in ["asset_downloads", "headshot_writes", "approved_marker_writes"]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "operator_cue_rows_must_not_write_assets_or_markers"})
+        if normalized["publish_action"] != "none_artifact_only":
+            issues.append({"row": str(index), "field": "publish_action", "issue": "operator_cue_rows_must_not_publish"})
+    for missing_id in sorted(quality_ids - seen_quality_ids):
+        issues.append({"row": "0", "field": "quality_fit_id", "issue": f"quality_fit_id_missing_from_operator_cue:{missing_id}"})
+    return issues
+
+
+def render_action_photo_quality_fit_operator_cue(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    bucket_counts = count_by(rows, "triage_bucket")
+    fill_counts: Dict[str, int] = {}
+    for row in rows:
+        for field in clean(row.get("manual_fields_to_fill_next")).split("|"):
+            if field:
+                fill_counts[field] = fill_counts.get(field, 0) + 1
+    lines = [
+        "# Review-Only Action Photo Quality/Fit Operator Cue v1",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Operator cue derived from the quality/fit board. It names the next human-fill fields and the gate for moving a row only to later human download-decision review. It does not fetch sources, download files, approve assets, write headshots, create `.approved` markers, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Cue rows: `{len(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Rows missing source URL: `{sum(1 for row in rows if clean(row.get('source_url_missing')) == 'yes')}`",
+        f"- Rows missing rights class: `{sum(1 for row in rows if clean(row.get('rights_class_missing')) == 'yes')}`",
+        f"- Rows missing identity metadata: `{sum(1 for row in rows if clean(row.get('identity_metadata_missing')) == 'yes')}`",
+        f"- Rows missing action metadata: `{sum(1 for row in rows if clean(row.get('action_metadata_missing')) == 'yes')}`",
+        f"- Rows missing crop metadata: `{sum(1 for row in rows if clean(row.get('crop_metadata_missing')) == 'yes')}`",
+        f"- Rows eligible only for later human download-decision review: `{sum(1 for row in rows if clean(row.get('download_decision_review_eligible')) == 'yes')}`",
+        "",
+        "## Triage Buckets",
+        "",
+    ]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(bucket_counts.items()))
+    lines += ["", "## Next Field Counts", ""]
+    lines.extend(f"- {key}: `{value}`" for key, value in sorted(fill_counts.items()))
+    lines += [
+        "",
+        "## Cue Preview",
+        "",
+        "| Cue | Queue | Sport | Entity | Bucket | Fill Next | Eligible? | Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {cue} | {queue} | {sport} | {entity} | {bucket} | `{fill}` | {eligible} | {next_action} |".format(
+                cue=clean(row.get("operator_cue_id")),
+                queue=clean(row.get("candidate_queue_id")),
+                sport=clean(row.get("sport")),
+                entity=clean(row.get("league_entity")).replace("|", "/"),
+                bucket=clean(row.get("triage_bucket")),
+                fill=clean(row.get("manual_fields_to_fill_next")),
+                eligible=clean(row.get("download_decision_review_eligible")),
+                next_action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 DOWNLOAD_DECISION_REQUIRED_HUMAN_EDITS = "|".join(
     [
         "download_approved",
@@ -5494,6 +5711,8 @@ def main() -> int:
     research_return_summary_issues = validate_action_photo_research_return_summary_board_rows(research_return_summary_rows, quarantine_preflight_rows)
     quality_fit_rows = action_photo_candidate_quality_fit_board_rows(candidate_queue_rows, research_return_rows, quarantine_preflight_rows)
     quality_fit_issues = validate_action_photo_candidate_quality_fit_board_rows(quality_fit_rows, research_return_rows)
+    quality_fit_operator_cue_rows = action_photo_quality_fit_operator_cue_rows(quality_fit_rows)
+    quality_fit_operator_cue_issues = validate_action_photo_quality_fit_operator_cue_rows(quality_fit_operator_cue_rows, quality_fit_rows)
     download_decision_queue_rows = action_photo_download_decision_queue_rows(research_return_summary_rows, research_return_rows)
     download_decision_queue_issues = validate_action_photo_download_decision_queue_rows(download_decision_queue_rows, research_return_summary_rows)
     wnba_hero_target_rows = wnba_final_score_hero_action_photo_target_rows()
@@ -6085,6 +6304,44 @@ def main() -> int:
             "paid_apis": False,
         },
     )
+    write_csv(OUT_QUALITY_FIT_OPERATOR_CUE_CSV, quality_fit_operator_cue_rows, ACTION_PHOTO_QUALITY_FIT_OPERATOR_CUE_FIELDS)
+    write_text(
+        OUT_QUALITY_FIT_OPERATOR_CUE_MD,
+        render_action_photo_quality_fit_operator_cue(quality_fit_operator_cue_rows, quality_fit_operator_cue_issues, generated_at),
+    )
+    write_json(
+        OUT_QUALITY_FIT_OPERATOR_CUE_JSON,
+        {
+            "version": VERSION,
+            "status": "action_photo_quality_fit_operator_cue_ready" if not quality_fit_operator_cue_issues else "action_photo_quality_fit_operator_cue_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "operator_cue_rows": len(quality_fit_operator_cue_rows),
+            "validation_issue_count": len(quality_fit_operator_cue_issues),
+            "validation_issues": quality_fit_operator_cue_issues,
+            "triage_bucket_counts": count_by(quality_fit_operator_cue_rows, "triage_bucket"),
+            "source_url_missing_rows": sum(1 for row in quality_fit_operator_cue_rows if row["source_url_missing"] == "yes"),
+            "rights_class_missing_rows": sum(1 for row in quality_fit_operator_cue_rows if row["rights_class_missing"] == "yes"),
+            "identity_metadata_missing_rows": sum(1 for row in quality_fit_operator_cue_rows if row["identity_metadata_missing"] == "yes"),
+            "action_metadata_missing_rows": sum(1 for row in quality_fit_operator_cue_rows if row["action_metadata_missing"] == "yes"),
+            "crop_metadata_missing_rows": sum(1 for row in quality_fit_operator_cue_rows if row["crop_metadata_missing"] == "yes"),
+            "download_decision_review_eligible_rows": sum(1 for row in quality_fit_operator_cue_rows if row["download_decision_review_eligible"] == "yes"),
+            "download_approval_recorded_rows": sum(1 for row in quality_fit_operator_cue_rows if row["download_approved"] == ("y" + "es")),
+            "review_only_rows": sum(1 for row in quality_fit_operator_cue_rows if row["review_only"] == "true"),
+            "publish_ready_rows": sum(1 for row in quality_fit_operator_cue_rows if row["publish_ready"] == "true"),
+            "worksheet_csv": OUT_QUALITY_FIT_OPERATOR_CUE_CSV.as_posix(),
+            "worksheet_md": OUT_QUALITY_FIT_OPERATOR_CUE_MD.as_posix(),
+            "review_only": True,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     write_csv(OUT_DOWNLOAD_DECISION_QUEUE_CSV, download_decision_queue_rows, ACTION_PHOTO_DOWNLOAD_DECISION_QUEUE_FIELDS)
     write_text(
         OUT_DOWNLOAD_DECISION_QUEUE_MD,
@@ -6275,13 +6532,15 @@ def main() -> int:
             "action_photo_research_return_summary_board_validation_issue_count": len(research_return_summary_issues),
             "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows),
             "action_photo_candidate_quality_fit_board_validation_issue_count": len(quality_fit_issues),
+            "action_photo_quality_fit_operator_cue_rows": len(quality_fit_operator_cue_rows),
+            "action_photo_quality_fit_operator_cue_validation_issue_count": len(quality_fit_operator_cue_issues),
             "action_photo_download_decision_queue_rows": len(download_decision_queue_rows),
             "action_photo_download_decision_queue_validation_issue_count": len(download_decision_queue_issues),
             "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows),
             "wnba_final_score_hero_action_photo_target_validation_issue_count": len(wnba_hero_target_issues),
             "action_photo_cutout_readiness_rows": len(cutout_readiness_rows),
             "action_photo_cutout_readiness_validation_issue_count": len(cutout_readiness_issues),
-            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
+            "validation_issue_count": len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues),
             "validation_issues": issues,
             "worksheet_md": OUT_MD.as_posix(),
             "worksheet_csv": OUT_CSV.as_posix(),
@@ -6337,6 +6596,9 @@ def main() -> int:
             "action_photo_candidate_quality_fit_board_csv": OUT_CANDIDATE_QUALITY_FIT_BOARD_CSV.as_posix(),
             "action_photo_candidate_quality_fit_board_md": OUT_CANDIDATE_QUALITY_FIT_BOARD_MD.as_posix(),
             "action_photo_candidate_quality_fit_board_json": OUT_CANDIDATE_QUALITY_FIT_BOARD_JSON.as_posix(),
+            "action_photo_quality_fit_operator_cue_csv": OUT_QUALITY_FIT_OPERATOR_CUE_CSV.as_posix(),
+            "action_photo_quality_fit_operator_cue_md": OUT_QUALITY_FIT_OPERATOR_CUE_MD.as_posix(),
+            "action_photo_quality_fit_operator_cue_json": OUT_QUALITY_FIT_OPERATOR_CUE_JSON.as_posix(),
             "action_photo_download_decision_queue_csv": OUT_DOWNLOAD_DECISION_QUEUE_CSV.as_posix(),
             "action_photo_download_decision_queue_md": OUT_DOWNLOAD_DECISION_QUEUE_MD.as_posix(),
             "action_photo_download_decision_queue_json": OUT_DOWNLOAD_DECISION_QUEUE_JSON.as_posix(),
@@ -6359,9 +6621,9 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows), "action_photo_download_decision_queue_rows": len(download_decision_queue_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
-    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or quality_fit_issues or download_decision_queue_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
+    total_issue_count = len(issues) + len(entity_source_issues) + len(womens_soccer_issues) + len(external_research_issues) + len(source_discovery_issues) + len(source_map_board_issues) + len(lead_return_schema_issues) + len(cutout_scoring_issues) + len(candidate_queue_issues) + len(operator_worksheet_issues) + len(research_packet_issues) + len(research_return_issues) + len(research_run_bundle_issues) + len(quarantine_preflight_issues) + len(research_return_summary_issues) + len(quality_fit_issues) + len(quality_fit_operator_cue_issues) + len(download_decision_queue_issues) + len(wnba_hero_target_issues) + len(cutout_readiness_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "intake_rows": len(rows), "sport_entity_source_map_rows": len(entity_source_rows), "womens_soccer_action_photo_starter_rows": len(womens_soccer_rows), "external_research_source_map_rows": len(external_research_rows), "action_photo_source_discovery_board_rows": len(source_discovery_rows), "action_photo_sport_entity_source_map_board_rows": len(source_map_board_rows), "action_photo_lead_return_schema_rows": len(lead_return_schema_rows), "action_photo_cutout_scoring_criteria_rows": len(cutout_scoring_rows), "action_photo_candidate_queue_rows": len(candidate_queue_rows), "action_photo_candidate_operator_worksheet_rows": len(operator_worksheet_rows), "action_photo_candidate_research_packet_rows": len(research_packet_rows), "action_photo_research_return_intake_rows": len(research_return_rows), "action_photo_research_run_bundle_rows": len(research_run_bundle_rows), "action_photo_external_research_packet_export_status": external_research_export_manifest["status"], "action_photo_quarantine_preflight_rows": len(quarantine_preflight_rows), "action_photo_research_return_summary_board_rows": len(research_return_summary_rows), "action_photo_candidate_quality_fit_board_rows": len(quality_fit_rows), "action_photo_quality_fit_operator_cue_rows": len(quality_fit_operator_cue_rows), "action_photo_download_decision_queue_rows": len(download_decision_queue_rows), "wnba_final_score_hero_action_photo_target_rows": len(wnba_hero_target_rows), "action_photo_cutout_readiness_rows": len(cutout_readiness_rows), "validation_issue_count": total_issue_count, "csv": OUT_CSV.as_posix()}, indent=2))
+    return 1 if issues or entity_source_issues or womens_soccer_issues or external_research_issues or source_discovery_issues or source_map_board_issues or lead_return_schema_issues or cutout_scoring_issues or candidate_queue_issues or operator_worksheet_issues or research_packet_issues or research_return_issues or research_run_bundle_issues or quarantine_preflight_issues or research_return_summary_issues or quality_fit_issues or quality_fit_operator_cue_issues or download_decision_queue_issues or wnba_hero_target_issues or cutout_readiness_issues else 0
 
 
 if __name__ == "__main__":
