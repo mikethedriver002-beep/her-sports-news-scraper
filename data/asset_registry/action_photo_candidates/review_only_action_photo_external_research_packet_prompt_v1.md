@@ -57,7 +57,7 @@ Return only rows for the candidate IDs you can support with evidence. Use `sourc
 
 ## Research Scope
 
-- Source-map board rows: `12`
+- Source-map board rows: `16`
 - Source discovery board rows: `12`
 - Research task rows: `10`
 - Paste-back intake rows: `10`

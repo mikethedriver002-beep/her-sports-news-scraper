@@ -3183,9 +3183,9 @@ def seed_asset_availability_audit_files() -> None:
         {
             "status": "action_photo_sport_entity_source_map_board_ready",
             "generated_at_utc": "2026-06-29T00:00:30+00:00",
-            "board_rows": 12,
-            "blank_operator_decision_rows": 12,
-            "blank_source_url_rows": 12,
+            "board_rows": 16,
+            "blank_operator_decision_rows": 16,
+            "blank_source_url_rows": 16,
             "download_approved_yes_rows": 0,
             "review_only": True,
             "asset_downloads": False,
@@ -3252,7 +3252,7 @@ def seed_asset_availability_audit_files() -> None:
         {
             "status": "action_photo_external_research_packet_export_ready",
             "generated_at_utc": "2026-06-29T00:02:30+00:00",
-            "source_map_board_rows": 12,
+            "source_map_board_rows": 16,
             "research_task_rows": 10,
             "download_approved_yes_rows": 0,
             "manual_operator_fields_default_blank": True,
