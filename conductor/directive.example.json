@@ -1,0 +1,49 @@
+{
+  "schema_version": "hsd-conductor-directive-v1",
+  "directive_id": "hsd-workflow-brake-20260629T120000Z",
+  "directive_path": "conductor/directives/runs/20260629T120000Z-workflow-brake.json",
+  "created_at_utc": "2026-06-29T12:00:00Z",
+  "target_branch": "codex/hsd-conductor-directive-brake",
+  "base_ref": "origin/main",
+  "lane": {
+    "name": "workflow-overhaul-brake-foundation",
+    "scope": [
+      "define the review-only directive snapshot shape",
+      "make branch collision avoidance explicit",
+      "validate examples and reject shared mutable directive paths"
+    ],
+    "out_of_scope": [
+      "conductor daemon",
+      "automatic source fetching",
+      "automatic asset downloads",
+      "approval-state changes",
+      "headshot writes",
+      "publish-ready movement",
+      "publishing"
+    ]
+  },
+  "branch_collision_policy": {
+    "directive_storage": "immutable_run_scoped_snapshot",
+    "shared_mutable_directive_path_allowed": false,
+    "required_git_start": "current_origin_main",
+    "branch_namespace": "codex/hsd-conductor-directive-brake",
+    "runtime_state": "conductor/runtime_only_not_committed"
+  },
+  "guardrails": {
+    "review_only": true,
+    "paid_apis": false,
+    "source_fetching": false,
+    "automatic_downloads": false,
+    "auto_approval": false,
+    "approval_state_change": false,
+    "headshot_writes": false,
+    "approved_marker_writes": false,
+    "publish_ready": false,
+    "publishing": false
+  },
+  "operator_notes": [
+    "This is a review-only directive snapshot example.",
+    "Do not create or commit conductor/directive.json as a shared mutable control file.",
+    "Runtime locks and caches belong under conductor/runtime/ and remain uncommitted."
+  ]
+}
