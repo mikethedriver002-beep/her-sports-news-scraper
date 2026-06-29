@@ -377,6 +377,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json",
     "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json",
@@ -808,6 +811,9 @@ ARTIFACTS = [
     ("Graphics", "Action-photo research return summary board", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md"),
     ("Graphics", "Action-photo research return summary board data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv"),
     ("Graphics", "Action-photo research return summary board manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json"),
+    ("Graphics", "Action-photo download decision queue", "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"),
+    ("Graphics", "Action-photo download decision queue data", "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"),
+    ("Graphics", "Action-photo download decision queue manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"),
     ("Graphics", "WNBA hero action-photo targets", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md"),
     ("Graphics", "WNBA hero action-photo targets data", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv"),
     ("Graphics", "WNBA hero action-photo targets manifest", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json"),
@@ -1065,6 +1071,9 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
@@ -2037,6 +2046,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_operator_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
+    action_photo_download_decision_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json")
     action_photo_hero_targets_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json")
     action_photo_cutout_readiness_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json")
     hockey_softball_manifest = read_json("data/asset_registry/hockey_softball_asset_foundation_report.json")
@@ -2505,6 +2515,14 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_quarantine_preflight_lead_only_rows": as_int(action_photo_preflight_manifest.get("lead_only_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_download_approved_yes_rows": as_int(action_photo_preflight_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_missing_source_url_rows": as_int(action_photo_preflight_manifest.get("missing_required_field_counts", {}).get("source_url")) if isinstance(action_photo_preflight_manifest, dict) and isinstance(action_photo_preflight_manifest.get("missing_required_field_counts"), dict) else 0,
+        "action_photo_download_decision_status": clean(action_photo_download_decision_manifest.get("status")) if isinstance(action_photo_download_decision_manifest, dict) else "",
+        "action_photo_download_decision_generated_at": clean(action_photo_download_decision_manifest.get("generated_at_utc")) if isinstance(action_photo_download_decision_manifest, dict) else "",
+        "action_photo_download_decision_rows": as_int(action_photo_download_decision_manifest.get("decision_rows")) if isinstance(action_photo_download_decision_manifest, dict) else 0,
+        "action_photo_download_decision_ready_rows": as_int(action_photo_download_decision_manifest.get("ready_for_human_download_decision_rows")) if isinstance(action_photo_download_decision_manifest, dict) else 0,
+        "action_photo_download_decision_download_approved_yes_rows": as_int(action_photo_download_decision_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_download_decision_manifest, dict) else 0,
+        "action_photo_download_decision_blank_human_rows": as_int(action_photo_download_decision_manifest.get("blank_human_download_decision_rows")) if isinstance(action_photo_download_decision_manifest, dict) else 0,
+        "action_photo_download_decision_asset_downloads": bool(action_photo_download_decision_manifest.get("asset_downloads")) if isinstance(action_photo_download_decision_manifest, dict) else False,
+        "action_photo_download_decision_approved_marker_writes": bool(action_photo_download_decision_manifest.get("approved_marker_writes")) if isinstance(action_photo_download_decision_manifest, dict) else False,
         "action_photo_hero_targets_status": clean(action_photo_hero_targets_manifest.get("status")) if isinstance(action_photo_hero_targets_manifest, dict) else "",
         "action_photo_hero_targets_generated_at": clean(action_photo_hero_targets_manifest.get("generated_at_utc")) if isinstance(action_photo_hero_targets_manifest, dict) else "",
         "action_photo_hero_targets_rows": action_photo_hero_target_rows,
@@ -2790,6 +2808,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Action-photo cutout scoring criteria data", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.csv", "Machine-readable cutout scoring fields; generated source/download fields stay blank/no."),
             file_shortcut("Action-photo quarantine preflight", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md", "Preflight gate showing whether human-return rows are ready for download decision; generated rows remain lead-only."),
             file_shortcut("Action-photo quarantine preflight data", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv", "Machine-readable preflight; 0 ready rows means no human download decision should happen yet."),
+            file_shortcut("Action-photo download decision queue", "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md", "Human decision queue for quarantine-only candidate downloads; generated rows keep download_approved=no and do not approve assets."),
+            file_shortcut("Action-photo download decision data", "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv", "Machine-readable decision rows listing required human edits and the review-only quarantine destination."),
             file_shortcut("WNBA hero action-photo targets", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md", "Kelsey Mitchell/Fever target board for manual hero-photo research only; generated source and download-law fields stay blank/no."),
             file_shortcut("WNBA hero action-photo targets data", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv", "Machine-readable target rows; no source fetching, downloads, approvals, or publish-ready state."),
             file_shortcut("Action-photo cutout readiness", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md", "Manual cutout-readiness worksheet; no segmentation, background removal, or cutout file writes."),
@@ -9752,6 +9772,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
             <div><span>Action-photo ready dl</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)))}</strong></div>
             <div><span>Action-photo dl yes</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>Decision queue</span><strong>{html.escape(str(panel.get('action_photo_download_decision_rows', 0)))}</strong></div>
+            <div><span>Decision ready</span><strong>{html.escape(str(panel.get('action_photo_download_decision_ready_rows', 0)))}</strong></div>
+            <div><span>Decision dl yes</span><strong>{html.escape(str(panel.get('action_photo_download_decision_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>WNBA hero targets</span><strong>{html.escape(str(panel.get('action_photo_hero_targets_rows', 0)))}</strong></div>
             <div><span>Hero target blanks</span><strong>{html.escape(str(panel.get('action_photo_hero_targets_blank_source_url_rows', 0)))}</strong></div>
             <div><span>Cutout worksheet</span><strong>{html.escape(str(panel.get('action_photo_cutout_readiness_rows', 0)))}</strong></div>
@@ -11507,6 +11530,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo quarantine download-approved yes rows: {asset_panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)}",
         f"- Action-photo quarantine missing source_url rows: {asset_panel.get('action_photo_quarantine_preflight_missing_source_url_rows', 0)}",
         f"- Action-photo quarantine preflight generated: {asset_panel.get('action_photo_quarantine_preflight_generated_at') or 'missing'}",
+        f"- Action-photo download decision queue rows: {asset_panel.get('action_photo_download_decision_rows', 0)}",
+        f"- Action-photo download decision ready rows: {asset_panel.get('action_photo_download_decision_ready_rows', 0)}",
+        f"- Action-photo download decision download-approved yes rows: {asset_panel.get('action_photo_download_decision_download_approved_yes_rows', 0)}",
+        f"- Action-photo download decision generated asset/marker writes: {asset_panel.get('action_photo_download_decision_asset_downloads', False)}/{asset_panel.get('action_photo_download_decision_approved_marker_writes', False)}",
+        f"- Action-photo download decision generated: {asset_panel.get('action_photo_download_decision_generated_at') or 'missing'}",
         f"- WNBA hero action-photo target rows: {asset_panel.get('action_photo_hero_targets_rows', 0)}",
         f"- WNBA hero action-photo target download-approved yes rows: {asset_panel.get('action_photo_hero_targets_download_approved_yes_rows', 0)}",
         f"- WNBA hero action-photo target blank source_url rows: {asset_panel.get('action_photo_hero_targets_blank_source_url_rows', 0)}",

@@ -170,6 +170,9 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json",
@@ -5376,6 +5379,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.md"]["status_detail"] == "Created with this command center run"
