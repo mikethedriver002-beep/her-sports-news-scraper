@@ -189,6 +189,7 @@ def test_manual_visual_qa_writes_review_only_report_and_checklist(tmp_path: Path
     assert "player_ledger_readability" in check_ids
     assert "premium_editorial_clutter_scan" in check_ids
     assert "anti_dashboard_score_spine_review" in check_ids
+    assert "lower_third_card_weight_review" in check_ids
     assert "preview_freshness_current_handoff" in check_ids
     assert "approval_guardrails" in check_ids
     assert "operator_visual_review" in check_ids
@@ -228,6 +229,7 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     ledger_check = next(check for check in manifest["checks"] if check["check_id"] == "player_ledger_readability")
     clutter_check = next(check for check in manifest["checks"] if check["check_id"] == "premium_editorial_clutter_scan")
     anti_dashboard_check = next(check for check in manifest["checks"] if check["check_id"] == "anti_dashboard_score_spine_review")
+    lower_third_check = next(check for check in manifest["checks"] if check["check_id"] == "lower_third_card_weight_review")
     assert manifest["status"] == "human_review_required"
     assert title_check["qa_result"] == "pass"
     assert title_check["check_label"] == "Title readable contrast and safe-zone fit"
@@ -239,7 +241,48 @@ def test_manual_visual_qa_accepts_reference_style_white_gold_title_signal(tmp_pa
     assert "premium editorial hierarchy" in clutter_check["evidence"]
     assert anti_dashboard_check["qa_result"] == "pass_human_review_required"
     assert "anti-dashboard score-spine" in anti_dashboard_check["check_label"].lower()
+    assert lower_third_check["qa_result"] == "pass_human_review_required"
+    assert "lower-third card-weight" in lower_third_check["check_label"].lower()
+    assert "Non-final-score render" in lower_third_check["evidence"]
     assert manifest["guardrails"]["auto_approval"] is False
+    assert manifest["guardrails"]["publish_ready"] is False
+
+
+def test_manual_visual_qa_holds_final_score_missing_lower_third_rail_contract(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run" / "files"
+    handoff_dir = run_dir / "render_handoff_top_packet"
+    make_reference_style_preview(handoff_dir / "draft_preview.png")
+    write_guardrail_inputs(run_dir)
+    renderer_manifest = json.loads((run_dir / "manual_review_renderer_manifest.json").read_text(encoding="utf-8"))
+    renderer_manifest["selected_template"] = {
+        "template_id": "hsd_game_recap_final_score_a",
+        "template_family": "game_recap_final_score",
+    }
+    renderer_manifest["content_module"] = {
+        "visual_mode": "no_photo_premium_result",
+        "score_layout_contract": "logo_first_editorial_score_spine_no_dashboard_panels",
+        "anti_dashboard_contract": "open_score_spine_no_nested_cards_no_metric_tiles",
+    }
+    renderer_manifest["render_background_cues"] = "logo_first_no_dashboard_card_panels,anti_dashboard_visual_qa"
+    (run_dir / "manual_review_renderer_manifest.json").write_text(json.dumps(renderer_manifest), encoding="utf-8")
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    proc = subprocess.run(
+        [python_executable(), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    manifest = json.loads((run_dir / "manual_visual_qa_manifest.json").read_text(encoding="utf-8"))
+    checks = {check["check_id"]: check for check in manifest["checks"]}
+    assert checks["anti_dashboard_score_spine_review"]["qa_result"] == "pass_human_review_required"
+    assert checks["lower_third_card_weight_review"]["qa_result"] == "hold"
+    assert "lower_third_contract=missing" in checks["lower_third_card_weight_review"]["evidence"]
     assert manifest["guardrails"]["publish_ready"] is False
 
 

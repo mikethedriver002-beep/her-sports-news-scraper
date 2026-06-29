@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.53.0-anti-dashboard-score-spine"
+VERSION = "hsd-manual-review-renderer-v1.54.0-lower-third-editorial-rail"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -74,6 +74,7 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_action_photo_stage_bridge,photo_first_editorial_depth_bridge,"
     "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
     "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,"
+    "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,"
     "anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
@@ -2468,13 +2469,14 @@ def draw_module_callouts(image: Any, box: Tuple[int, int, int, int], callouts: L
     x, y, w, h = box
     draw = ImageDraw.Draw(image, "RGBA")
     if compact:
-        chip_w = min(132, max(92, w // 5))
-        chip_h = 34
+        chip_w = min(126, max(86, w // 5))
+        chip_h = 30
         gap = 8
         start_x = x + w - (chip_w + gap) * min(2, len(callouts)) + gap
         for index, item in enumerate(callouts[:2]):
             cx = start_x + index * (chip_w + gap)
-            draw.rounded_rectangle((cx, y + 10, cx + chip_w, y + 10 + chip_h), radius=8, fill=(2, 4, 9, 170), outline=(*accent, 142), width=1)
+            draw.line((cx, y + 14, cx + chip_w, y + 10), fill=(*accent, 118), width=2)
+            draw.line((cx, y + 10 + chip_h, cx + chip_w - 14, y + 10 + chip_h), fill=(248, 250, 255, 42), width=1)
             value_font = reference_font("context", 18)
             label_font = reference_font("context", 10)
             draw.text((cx + 9, y + 13), clean(item.get("value")), font=value_font, fill=PALETTE["ink"])
@@ -2485,13 +2487,15 @@ def draw_module_callouts(image: Any, box: Tuple[int, int, int, int], callouts: L
     top = y + max(18, h - 72)
     for index, item in enumerate(callouts[:3]):
         cx = x + w - callout_w + index * (card_w + 8)
-        draw.rounded_rectangle((cx, top, cx + card_w, min(y + h - 16, top + 58)), radius=10, fill=(2, 4, 9, 182), outline=(*accent, 150), width=1)
         value_font = reference_font("score", 24)
         label_font = reference_font("context", 10)
         value = clean(item.get("value"))
         label = clean(item.get("label"))
         value_w, _ = text_size(draw, value, value_font)
         label_w, _ = text_size(draw, label, label_font)
+        draw.line((cx + 4, top + 2, cx + card_w - 8, top - 4), fill=(*accent, 132), width=2)
+        draw.line((cx + 4, top + 54, cx + card_w - 12, top + 50), fill=(248, 250, 255, 38), width=1)
+        draw.rectangle((cx, top + 9, cx + 4, top + 45), fill=(*accent, 118 if index == 0 else 76))
         draw.text((cx + (card_w - value_w) // 2, top + 5), value, font=value_font, fill=PALETTE["ink"])
         draw.text((cx + (card_w - label_w) // 2, top + 34), label, font=label_font, fill=accent)
     return callout_w
@@ -2512,12 +2516,11 @@ def draw_premium_stat_chips(image: Any, chip_box: Tuple[int, int, int, int], cal
         value = clean(item.get("value"))
         label = clean(item.get("label"))
         is_primary = index == 0
-        fill = (232, 186, 72, 234) if is_primary else (2, 4, 9, 196)
-        outline = (248, 250, 255, 210) if is_primary else (*accent, 172)
-        value_fill = (3, 5, 10) if is_primary else PALETTE["ink"]
-        label_fill = (3, 5, 10) if is_primary else accent
-        draw.rounded_rectangle((cx + 3, top + 5, cx + chip_w + 3, top + chip_h + 5), radius=10, fill=(0, 0, 0, 90))
-        draw.rounded_rectangle((cx, top, cx + chip_w, top + chip_h), radius=10, fill=fill, outline=outline, width=1)
+        value_fill = PALETTE["gold"] if is_primary else PALETTE["ink"]
+        label_fill = (235, 239, 247) if is_primary else accent
+        draw.line((cx + 5, top + 4, cx + chip_w - 8, top - 2), fill=(*accent, 154 if is_primary else 92), width=2 if is_primary else 1)
+        draw.line((cx + 5, top + chip_h - 5, cx + chip_w - 16, top + chip_h - 10), fill=(248, 250, 255, 40), width=1)
+        draw.rectangle((cx, top + 9, cx + 5, top + chip_h - 12), fill=(*accent, 136 if is_primary else 82))
         value_font = reference_font("score", 26 if compact else (38 if is_primary else 32))
         label_font = reference_font("context", 9 if compact else 12)
         value_w, _ = text_size(draw, value, value_font)
@@ -2657,10 +2660,25 @@ def draw_stat_proof_rail(image: Any, box: Tuple[int, int, int, int], accent: tup
 def draw_verified_stat_reference_module(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int]) -> None:
     x, y, w, h = box
     compact = h < 112
-    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 232), radius=16 if not compact else 12, width=2)
     draw = ImageDraw.Draw(image, "RGBA")
+    rail = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    rail_draw = ImageDraw.Draw(rail, "RGBA")
+    rail_draw.polygon(
+        [(x + 8, y + 14), (x + w - 16, y + 2), (x + w - 34, y + h - 12), (x + 18, y + h + 4)],
+        fill=(1, 3, 8, 72 if compact else 82),
+    )
+    rail_draw.polygon(
+        [(x + 18, y + 6), (x + int(w * 0.70), y - 4), (x + int(w * 0.48), y + h - 8), (x + 8, y + h)],
+        fill=(*accent, 26 if compact else 34),
+    )
+    rail_draw.line((x + 20, y + 8, x + w - 32, y - 4), fill=(*accent, 112), width=2)
+    rail_draw.line((x + 20, y + h - 11, x + w - 46, y + h - 22), fill=(248, 250, 255, 34), width=1)
+    if ImageFilter is not None:
+        glow = rail.filter(ImageFilter.GaussianBlur(10))
+        image.alpha_composite(glow)
+    image.alpha_composite(rail)
     draw_stat_proof_rail(image, box, accent, compact=compact)
-    draw.line((x + 24, y + 38, x + w - 24, y + 38), fill=(*accent, 96), width=1)
+    draw.line((x + 24, y + 38, x + w - 24, y + 30), fill=(*accent, 76), width=1)
     player = clean(module.get("player_name"))
     matchup = clean(module.get("matchup_note"))
     source_label = "STAT PROOF CHECK"
@@ -3102,12 +3120,14 @@ def draw_photo_first_editorial_depth_bridge(
         ],
         fill=(*secondary, 28),
     )
-    draw.rounded_rectangle(
-        (stage_left, lower_top, stage_right, lower_bottom),
-        radius=24,
-        fill=(1, 3, 8, 58),
-        outline=(*PALETTE["gold"], 48),
-        width=1,
+    draw.polygon(
+        [
+            (stage_left + 8, lower_top + 14),
+            (stage_right - 30, lower_top - 2),
+            (stage_right - 12, lower_bottom - 22),
+            (stage_left + 22, lower_bottom + 3),
+        ],
+        fill=(1, 3, 8, 34),
     )
     draw.polygon(
         [
@@ -3120,8 +3140,9 @@ def draw_photo_first_editorial_depth_bridge(
     )
     draw.line((sx + 30, sy - 16, sx + sw - 34, sy - 26), fill=(*PALETTE["gold"], 70), width=1)
     draw.line((hx + 28, hy - 12, hx + hw - 40, hy - 18), fill=(*secondary, 44), width=1)
-    draw.rectangle((stage_left + 4, lower_top + 18, stage_left + 10, lower_bottom - 16), fill=(*primary, 76))
-    draw.rectangle((stage_right - 10, lower_top + 8, stage_right - 5, lower_bottom - 22), fill=(*secondary, 48))
+    draw.rectangle((stage_left + 4, lower_top + 18, stage_left + 8, lower_bottom - 18), fill=(*primary, 62))
+    draw.line((stage_left + 20, lower_top + 10, stage_right - 34, lower_top - 4), fill=(*PALETTE["gold"], 58), width=1)
+    draw.line((stage_left + 28, lower_bottom - 10, stage_right - 52, lower_bottom - 24), fill=(*secondary, 36), width=1)
     draw.line((wx - 8, wy + wh - 8, wx + ww - 34, wy + wh - 8), fill=(*primary, 38), width=1)
     draw.line((lx + 10, ly + lh - 10, lx + lw - 44, ly + lh - 10), fill=(*secondary, 28), width=1)
 
@@ -3524,7 +3545,22 @@ def draw_photo_first_final_score_template(
 def draw_lower_reference_module(image: Any, box: Tuple[int, int, int, int], eyebrow: str, body: str, accent: tuple[int, int, int], *, headline: str = "", callouts: List[Dict[str, str]] | None = None) -> None:
     x, y, w, h = box
     compact = h <= 122
-    draw_reference_panel(image, box, accent, fill=(2, 4, 9, 218), radius=14, width=2)
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    layer_draw = ImageDraw.Draw(layer, "RGBA")
+    layer_draw.polygon(
+        [(x + 10, y + 14), (x + w - 18, y + 2), (x + w - 38, y + h - 10), (x + 18, y + h + 4)],
+        fill=(1, 3, 8, 64 if compact else 72),
+    )
+    layer_draw.polygon(
+        [(x + 20, y + 6), (x + int(w * 0.72), y - 5), (x + int(w * 0.48), y + h - 8), (x + 8, y + h)],
+        fill=(*accent, 24 if compact else 30),
+    )
+    layer_draw.line((x + 20, y + 8, x + w - 28, y - 5), fill=(*accent, 112), width=2)
+    layer_draw.line((x + 20, y + h - 10, x + w - 42, y + h - 22), fill=(248, 250, 255, 34), width=1)
+    layer_draw.rectangle((x + 2, y + 18, x + 8, y + h - 18), fill=(*accent, 96))
+    if ImageFilter is not None:
+        image.alpha_composite(layer.filter(ImageFilter.GaussianBlur(8)))
+    image.alpha_composite(layer)
     callout_w = draw_module_callouts(image, (x + 18, y, w - 36, h), callouts or [], accent, compact=compact)
     text_w = max(220, w - 48 - (callout_w if compact else min(callout_w + 10, w // 3)))
     draw_reference_text(image, (x + 24, y + 10, text_w, min(30 if compact else 34, h - 16)), eyebrow, "context", 20 if compact else 24, 12, accent, max_lines=1)
@@ -3946,6 +3982,8 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     score_layout_contract = "logo_first_editorial_score_spine_no_dashboard_panels"
     anti_dashboard_contract = "open_score_spine_no_nested_cards_no_metric_tiles"
     anti_dashboard_review_cue = "Hold or revise if the no-photo fallback reads as a dashboard card, boxed scoreboard, or ad unit instead of a premium sports editorial plate."
+    lower_third_contract = "editorial_stat_rail_no_heavy_card_container"
+    lower_third_review_cue = "Hold or revise if lower stat/caption treatment reads as a card, dashboard module, or heavy boxed lower-third."
     hero_image_mode = "logo_score_fallback_no_person_image"
     hero_image_source_class = "no_local_hero_image"
     action_photo_hero_contract = "manual_review_action_photo_not_available_no_download"
@@ -3970,6 +4008,8 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         score_layout_contract = "photo_first_score_team_caption_clearance_locked"
         anti_dashboard_contract = "photo_first_borderless_score_stage_no_dashboard_panels"
         anti_dashboard_review_cue = "Hold or revise if the photo-first score rails become boxed widgets or compete with the athlete focal point."
+        lower_third_contract = "photo_first_integrated_stat_caption_rail_no_heavy_panel"
+        lower_third_review_cue = "Hold or revise if the lower stat strip becomes a heavy panel or competes with the athlete/score hierarchy."
         hero_image_mode = "approved_headshot_bridge_action_photo_ready"
         hero_image_source_class = "approved_local_headshot_bridge"
         hero_silhouette_mode = clean(cutout_contract.get("hero_silhouette_mode"))
@@ -4000,6 +4040,8 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         "score_layout_contract": score_layout_contract,
         "anti_dashboard_contract": anti_dashboard_contract,
         "anti_dashboard_review_cue": anti_dashboard_review_cue,
+        "lower_third_contract": lower_third_contract,
+        "lower_third_review_cue": lower_third_review_cue,
         "background_family": RENDER_BACKGROUND_FAMILY,
         "hero_image_mode": hero_image_mode,
         "hero_image_source_class": hero_image_source_class,
@@ -4186,6 +4228,8 @@ def visual_comparison_row(format_row: Dict[str, Any]) -> Dict[str, Any]:
         "score_layout_contract": clean(format_row.get("score_layout_contract")) or "not_recorded",
         "anti_dashboard_contract": clean(format_row.get("anti_dashboard_contract")) or "not_recorded",
         "anti_dashboard_review_cue": clean(format_row.get("anti_dashboard_review_cue")) or "not_recorded",
+        "lower_third_contract": clean(format_row.get("lower_third_contract")) or "not_recorded",
+        "lower_third_review_cue": clean(format_row.get("lower_third_review_cue")) or "not_recorded",
         "automated_qa_status": clean(format_row.get("preview_qa_status")) or "preview_qa_not_run",
         "reference_public_mockup_path": clean(format_row.get("reference_public_mockup_path")) or "not_reference_packed",
         "reference_layout_path": clean(format_row.get("reference_layout_path")) or "not_reference_packed",
@@ -4329,6 +4373,8 @@ def write_visual_comparison_board(
         "score_layout_contract": clean(content_module.get("score_layout_contract")) or "not_recorded",
         "anti_dashboard_contract": clean(content_module.get("anti_dashboard_contract")) or "not_recorded",
         "anti_dashboard_review_cue": clean(content_module.get("anti_dashboard_review_cue")) or "not_recorded",
+        "lower_third_contract": clean(content_module.get("lower_third_contract")) or "not_recorded",
+        "lower_third_review_cue": clean(content_module.get("lower_third_review_cue")) or "not_recorded",
         "next_manual_review_step": next_step,
         "rows": rows,
     }
@@ -4368,6 +4414,8 @@ def write_visual_comparison_board(
         f"- Score layout contract: `{board['score_layout_contract']}`",
         f"- Anti-dashboard contract: `{board['anti_dashboard_contract']}`",
         f"- Anti-dashboard review cue: {board['anti_dashboard_review_cue']}",
+        f"- Lower-third contract: `{board['lower_third_contract']}`",
+        f"- Lower-third review cue: {board['lower_third_review_cue']}",
         "",
         "## Format Review",
         "",
@@ -4393,6 +4441,8 @@ def write_visual_comparison_board(
                     f"- Score layout contract: `{clean(row.get('score_layout_contract'))}`",
                     f"- Anti-dashboard contract: `{clean(row.get('anti_dashboard_contract'))}`",
                     f"- Anti-dashboard review cue: {clean(row.get('anti_dashboard_review_cue'))}",
+                    f"- Lower-third contract: `{clean(row.get('lower_third_contract'))}`",
+                    f"- Lower-third review cue: {clean(row.get('lower_third_review_cue'))}",
                     f"- Reference mockup: `{clean(row.get('reference_public_mockup_path'))}`",
                     f"- Reference layout: `{clean(row.get('reference_layout_path'))}`",
                     f"- Reference derivation: `{clean(row.get('reference_derivation'))}`",
@@ -4578,6 +4628,8 @@ def report_lines(status: str, manifest: Dict[str, Any], preview_path: str, reaso
         f"- Score layout contract: `{clean(content_module.get('score_layout_contract')) or 'n/a'}`",
         f"- Anti-dashboard contract: `{clean(content_module.get('anti_dashboard_contract')) or 'n/a'}`",
         f"- Anti-dashboard review cue: {clean(content_module.get('anti_dashboard_review_cue')) or 'n/a'}",
+        f"- Lower-third contract: `{clean(content_module.get('lower_third_contract')) or 'n/a'}`",
+        f"- Lower-third review cue: {clean(content_module.get('lower_third_review_cue')) or 'n/a'}",
         f"- Hero silhouette contract: mode=`{clean(content_module.get('hero_silhouette_mode')) or 'n/a'}` cutout=`{clean(content_module.get('hero_cutout_readiness')) or 'n/a'}` grid=`{clean(content_module.get('grid_breaking_hero_contract')) or 'n/a'}`",
         f"- Blueprint style contract: background=`{RENDER_BACKGROUND_STYLE}` cues=`photo_first_blueprint_depth_layers, photo_first_procedural_court_grain, photo_first_asymmetric_score_treatment, photo_first_safe_zone_enforced`",
         f"- Template fit reason: {clean(content_module.get('template_fit_reason')) or 'n/a'}",
