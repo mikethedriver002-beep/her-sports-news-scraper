@@ -438,7 +438,11 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert by_cluster_id[cluster["cluster_id"]]["source_confidence_reason"] == row["source_confidence_reason"]
     assert by_cluster_id[cluster["cluster_id"]]["signal_timestamp_utc"]
     assert by_cluster_id[cluster["cluster_id"]]["retrieval_method"] == "public_metadata_observation"
+    assert by_cluster_id[cluster["cluster_id"]]["public_signal_type"] == "candidate_public_signal_review_only"
     assert "Public/community signal is review-only discovery context" in by_cluster_id[cluster["cluster_id"]]["public_signal_limitations_cue"]
+    assert "operator must still verify" in by_cluster_id[cluster["cluster_id"]]["confirmation_gap"].lower()
+    assert by_cluster_id[cluster["cluster_id"]]["manual_confirmation_artifact"] == "breaking_public_signal_confirmation_intake.csv"
+    assert by_cluster_id[cluster["cluster_id"]]["manual_confirmation_row_ref"].startswith("confirmation_id=")
     assert "breaking_public_signal_confirmation_intake.csv" in action_rows[0]["operator_next_action"]
     assert all(row["review_only"] == "true" for row in action_rows)
     assert all(row["approval_state_change"] == "false" for row in action_rows)
@@ -451,7 +455,8 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert "Review-only, artifact-only breaking/public-signal triage" in action_report
     assert "No paid APIs" in action_report
     assert "source_confidence=" in action_report
-    assert "public_signal=medium count=2" in action_report
+    assert "public_signal_type=candidate_public_signal_review_only confidence=medium count=2" in action_report
+    assert "manual_artifact=breaking_public_signal_confirmation_intake.csv" in action_report
 
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
@@ -739,6 +744,8 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert "breaking_public_signal_clusters.csv" in news_payload["outputs"]
     assert "breaking_public_signal_next_action_v1.csv" in news_payload["outputs"]
     assert "game_source_confirmation_bridge_v1.csv" in news_payload["outputs"]
+    assert "publish_ready" not in news_payload["counts"]
+    assert news_payload["counts"]["manual_review_not_required_packets"] >= 0
     assert news_payload["counts"]["breaking_public_signal_rows"] == len(rows)
     assert news_payload["counts"]["breaking_public_signal_review_only"] == len(rows)
     assert news_payload["counts"]["breaking_confirmation_intake_rows"] == len(confirmation_rows)
