@@ -85,6 +85,7 @@ INTAKE_FIELDS = [
     "status",
     "branch",
     "pr",
+    "pending_thread",
     "owner",
     "last_update_utc",
     "completed_merge_pr",
@@ -484,6 +485,7 @@ def lane_rows(
             "status_tone": status_tone(status),
             "branch": branch,
             "pr": pr_value,
+            "pending_thread": intake.get("pending_thread", ""),
             "owner": intake.get("owner", ""),
             "last_update_utc": intake.get("last_update_utc", ""),
             "completed_merge_pr": intake.get("completed_merge_pr", ""),
@@ -536,18 +538,19 @@ def render_markdown(payload: dict[str, Any]) -> str:
         "",
         "## Lane Dashboard",
         "",
-        "| Lane | Status | Source | Stale brake | Branch | PR | Completed merge | Blocker | Next action |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Lane | Status | Source | Stale brake | Branch | PR | Pending thread | Completed merge | Blocker | Next action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["lanes"]:
         pr = row["pr"] or "-"
+        pending_thread = row["pending_thread"] or "-"
         branch = row["branch"] or "-"
         completed = row["completed_merge_pr"] or row["completed_merge_commit"] or "-"
         if row["completed_merge_pr"] and row["completed_merge_commit"]:
             completed = f"{row['completed_merge_pr']} / `{row['completed_merge_commit']}`"
         blocker = row["blocker"] or "-"
         lines.append(
-            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{row['staleness_status']}` | `{branch}` | {pr} | {completed} | {blocker} | {row['next_action']} |"
+            f"| {row['lane']} | `{row['status']}` | `{row['status_source']}` | `{row['staleness_status']}` | `{branch}` | {pr} | {pending_thread} | {completed} | {blocker} | {row['next_action']} |"
         )
     stale_rows = [row for row in payload["lanes"] if row.get("stale_lane_brake") == "true"]
     lines.extend(
@@ -599,9 +602,11 @@ def render_markdown(payload: dict[str, Any]) -> str:
             "",
             "Optional intake rows can live in `operator/inbox/workflow_lane_status_intake.csv` with these columns:",
             "",
-            "`lane_id,status,branch,pr,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
+            "`lane_id,status,branch,pr,pending_thread,owner,last_update_utc,completed_merge_pr,completed_merge_commit,blocker,next_action,notes,review_only,paid_apis,source_fetching,automatic_downloads,auto_approval,approval_state_change,headshot_writes,approved_marker_writes,publish_ready,publishing`",
             "",
             "A starter example lives at `operator/inbox/workflow_lane_status_intake.example.csv`; copy rows into the real intake only after conductor review.",
+            "",
+            "Use `pending_thread` for a delegated Codex thread id or URL that has work in progress but no PR yet.",
             "",
             "If no intake row exists, the dashboard adds best-effort worktree hints from local `codex/` branches and marks them for conductor check.",
         ]
@@ -685,6 +690,7 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "status_tone",
             "branch",
             "pr",
+            "pending_thread",
             "owner",
             "last_update_utc",
             "completed_merge_pr",
