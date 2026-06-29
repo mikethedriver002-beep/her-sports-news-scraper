@@ -92,6 +92,18 @@ def has_fragment(path: str, fragments: list[str]) -> bool:
     return any(fragment.lower().replace("\\", "/") in path_lower for fragment in fragments)
 
 
+def has_path_exception(path: str, exceptions: list[str]) -> bool:
+    normalized = normalize_path(path).lower().lstrip("./")
+    padded = f"/{normalized}"
+    for exception in exceptions:
+        cleaned = str(exception).lower().replace("\\", "/").lstrip("./").lstrip("/")
+        if not cleaned:
+            continue
+        if normalized.startswith(cleaned) or f"/{cleaned}" in padded:
+            return True
+    return False
+
+
 def is_truthy(value: Any, truthy_values: set[str]) -> bool:
     return str(value).strip().lower() in truthy_values
 
@@ -140,13 +152,16 @@ def scan_changed_paths(paths: list[str], config: dict[str, Any]) -> list[Violati
     marker_suffixes = config.get("blocked_marker_suffixes", [])
     protected_fragments = config.get("protected_asset_write_fragments", [])
     protected_exceptions = config.get("protected_asset_write_exceptions", [])
+    changed_path_exceptions = config.get("changed_path_exceptions", [])
     for path in paths:
         normalized = normalize_path(path)
+        if has_path_exception(normalized, changed_path_exceptions):
+            continue
         if has_fragment(normalized, blocked_fragments):
             violations.append(Violation("blocked_path", "Changed path is inside a blocked publish/publish-ready boundary.", normalized))
         if any(normalized.lower().endswith(suffix.lower()) for suffix in marker_suffixes):
             violations.append(Violation("blocked_marker", "Changed path writes a blocked approval marker.", normalized))
-        if has_fragment(normalized, protected_fragments) and not has_fragment(normalized, protected_exceptions):
+        if has_fragment(normalized, protected_fragments) and not has_path_exception(normalized, protected_exceptions):
             violations.append(Violation("protected_asset_write", "Changed path touches a protected asset write boundary.", normalized))
     return violations
 
