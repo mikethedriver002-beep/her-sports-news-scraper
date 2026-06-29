@@ -14,6 +14,7 @@
 - Source priority worksheet: `data/asset_registry/hockey_softball_source_priority_worksheet.md`
 - Source verification checklist: `data/asset_registry/hockey_softball_source_verification_checklist.md`
 - Intake readiness summary: `data/asset_registry/hockey_softball_intake_readiness_summary.md`
+- Source map board: `data/asset_registry/hockey_softball_source_map_board.md`
 - Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`
 - Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`
 - Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`
@@ -52,6 +53,9 @@
 - Intake readiness groups: `4`
 - Intake readiness rows covered: `74`
 - Intake readiness unsafe rows: `0`
+- Source map rows: `12`
+- Source map download-approved yes rows: `0`
+- Source map allowed-for-download rows: `0`
 - Review triage rows: `38`
 - Review triage operator-verify source rows: `54`
 - Review triage download-approved yes rows: `0`
