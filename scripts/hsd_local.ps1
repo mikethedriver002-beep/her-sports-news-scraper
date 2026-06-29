@@ -743,9 +743,20 @@ function Resolve-HsdArtifactSource([string]$Relative, [string]$RunFilesDir) {
 
 function Normalize-HsdCollectedReviewArtifact([string]$Relative, [string]$Path) {
     if ($Relative -eq "athlete_render_candidate_board_v1.md") {
-        $text = Get-Content -LiteralPath $Path -Raw
-        $updated = $text -replace '(?m)^(\s*-\s*)marker=`[^`]*`$', '${1}review_marker_present=true'
-        if ($updated -ne $text) {
+        $original = Get-Content -LiteralPath $Path -Raw
+        $updatedLines = New-Object System.Collections.Generic.List[string]
+        foreach ($line in Get-Content -LiteralPath $Path) {
+            if ($line -match '^\s*-\s*marker=`[^`]*`$') {
+                $updatedLines.Add(($line -replace '^(\s*-\s*)marker=`[^`]*`$', '${1}review_marker_present=true'))
+            } else {
+                $updatedLines.Add($line)
+            }
+        }
+        $updated = [string]::Join([Environment]::NewLine, $updatedLines)
+        if ($updatedLines.Count -gt 0) {
+            $updated += [Environment]::NewLine
+        }
+        if ($updated -ne $original) {
             Set-Content -LiteralPath $Path -Value $updated -Encoding UTF8
         }
     }
