@@ -47,6 +47,9 @@ ASSET_REVIEW_READINESS_JSON = Path("data/asset_registry/hockey_softball_asset_re
 MANUAL_VERIFICATION_FOCUS_MD = Path("data/asset_registry/hockey_softball_manual_verification_focus.md")
 MANUAL_VERIFICATION_FOCUS_CSV = Path("data/asset_registry/hockey_softball_manual_verification_focus.csv")
 MANUAL_VERIFICATION_FOCUS_JSON = Path("data/asset_registry/hockey_softball_manual_verification_focus.json")
+NEXT_ACTION_CARDS_MD = Path("data/asset_registry/hockey_softball_asset_next_action_cards.md")
+NEXT_ACTION_CARDS_CSV = Path("data/asset_registry/hockey_softball_asset_next_action_cards.csv")
+NEXT_ACTION_CARDS_JSON = Path("data/asset_registry/hockey_softball_asset_next_action_cards.json")
 QUARANTINE_DOWNLOAD_INTAKE_MD = Path("data/asset_registry/hockey_softball_quarantine_download_intake.md")
 QUARANTINE_DOWNLOAD_INTAKE_CSV = Path("data/asset_registry/hockey_softball_quarantine_download_intake.csv")
 QUARANTINE_DOWNLOAD_INTAKE_JSON = Path("data/asset_registry/hockey_softball_quarantine_download_intake.json")
@@ -471,6 +474,52 @@ MANUAL_VERIFICATION_FOCUS_FIELDS = [
     "paid_apis",
 ]
 
+NEXT_ACTION_CARD_FIELDS = [
+    "card_rank",
+    "card_priority",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "asset_domain",
+    "candidate_entity_id",
+    "display_name_or_lane",
+    "source_proof_placeholder",
+    "official_profile_source_url_placeholder",
+    "candidate_asset_photo_status",
+    "verification_status",
+    "quarantine_download_eligibility_status",
+    "next_manual_action",
+    "open_first_file",
+    "source_or_proof_to_open",
+    "source_priority_row_ref_or_filter",
+    "readiness_row_ref",
+    "review_board_to_open",
+    "manual_intake_file_to_open",
+    "future_download_intake_file",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "logo_writes",
+    "segmentation_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "guardrail_note",
+]
+
 QUARANTINE_DOWNLOAD_INTAKE_FIELDS = [
     "download_order",
     "download_bucket",
@@ -840,6 +889,7 @@ def render_report(report: Mapping[str, Any]) -> str:
         "- Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`",
         "- Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`",
         "- Manual verification focus: `data/asset_registry/hockey_softball_manual_verification_focus.md`",
+        "- Asset next-action cards: `data/asset_registry/hockey_softball_asset_next_action_cards.md`",
         "- Quarantine download intake: `data/asset_registry/hockey_softball_quarantine_download_intake.md`",
         "- Women's hockey workflow board: `data/asset_registry/womens_hockey/womens_hockey_asset_workflow_board.md`",
         "- Softball workflow board: `data/asset_registry/softball/softball_asset_workflow_board.md`",
@@ -892,6 +942,9 @@ def render_report(report: Mapping[str, Any]) -> str:
         f"- Manual verification focus P0 rows: `{report['totals']['manual_verification_focus_p0_rows']}`",
         f"- Manual verification focus P1 rows: `{report['totals']['manual_verification_focus_p1_rows']}`",
         f"- Manual verification focus download-approved yes rows: `{report['totals']['manual_verification_focus_download_approved_yes_rows']}`",
+        f"- Asset next-action card rows: `{report['totals']['next_action_card_rows']}`",
+        f"- Asset next-action card download-approved yes rows: `{report['totals']['next_action_card_download_approved_yes_rows']}`",
+        f"- Asset next-action card blank source_url rows: `{report['totals']['next_action_card_blank_source_url_rows']}`",
         f"- Quarantine download intake rows: `{report['totals']['quarantine_download_intake_rows']}`",
         f"- Quarantine download-approved yes rows: `{report['totals']['quarantine_download_approved_yes_rows']}`",
         "",
@@ -2811,6 +2864,184 @@ def render_manual_verification_focus(rows: list[Dict[str, str]], generated_at: s
     return "\n".join(lines) + "\n"
 
 
+def next_action_card_priority(row: Mapping[str, str]) -> str:
+    bucket = clean(row.get("asset_review_readiness_bucket"))
+    if bucket == "official_roster_source_verify_before_photo_review":
+        return "P0_source_identity_before_photo_review"
+    if bucket == "local_logo_candidate_needed_before_logo_review":
+        return "P1_local_logo_candidate_before_logo_review"
+    if bucket == "local_athlete_candidate_needed_before_photo_review":
+        return "P1_local_athlete_candidate_before_photo_review"
+    if bucket == "future_quarantine_download_intake_prep":
+        return "P2_future_quarantine_intake_requires_human_edit"
+    return "P3_review_only_watch"
+
+
+def next_action_card_candidate_status(row: Mapping[str, str]) -> str:
+    asset_domain = clean(row.get("asset_domain"))
+    gap = clean(row.get("local_candidate_asset_gap"))
+    if asset_domain == "athlete_photo":
+        if gap == "named_local_athlete_photo_candidate_missing":
+            return "candidate_photo_missing_named_local_asset_required"
+        return "candidate_photo_status_review_only_hold"
+    if asset_domain == "logo":
+        if gap == "local_logo_candidate_file_missing":
+            return "candidate_logo_missing_local_file_required"
+        return "candidate_logo_status_review_only_hold"
+    return gap or "candidate_asset_status_review_only_hold"
+
+
+def next_action_card_verification_status(row: Mapping[str, str]) -> str:
+    gap = clean(row.get("source_identity_gap"))
+    if gap == "official_roster_or_team_source_not_manually_confirmed_for_named_photo_review":
+        return "manual_official_source_verification_required"
+    if gap == "logo_source_metadata_reviewed_but_visual_logo_identity_not_reviewable_without_local_candidate":
+        return "source_metadata_reviewed_visual_identity_waiting_for_local_candidate"
+    if gap == "athlete_identity_not_reviewable_without_named_local_photo_candidate":
+        return "identity_review_waiting_for_named_local_photo_candidate"
+    return gap or "review_only_verification_hold"
+
+
+def next_action_card_quarantine_status(row: Mapping[str, str]) -> str:
+    return "not_eligible_generated_rows_no_download;human_edited_intake_required"
+
+
+def next_action_card_rows(asset_readiness: list[Dict[str, str]]) -> list[Dict[str, str]]:
+    rows: list[Dict[str, str]] = []
+    for row in asset_readiness:
+        rows.append(
+            {
+                "card_rank": "0",
+                "card_priority": next_action_card_priority(row),
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "league_name": clean(row.get("league_name")),
+                "asset_domain": clean(row.get("asset_domain")),
+                "candidate_entity_id": clean(row.get("candidate_entity_id")),
+                "display_name_or_lane": clean(row.get("candidate_entity_id")),
+                "source_proof_placeholder": "blank_until_human_opens_source_or_review_board",
+                "official_profile_source_url_placeholder": "blank_until_human_records_official_profile_or_source_url",
+                "candidate_asset_photo_status": next_action_card_candidate_status(row),
+                "verification_status": next_action_card_verification_status(row),
+                "quarantine_download_eligibility_status": next_action_card_quarantine_status(row),
+                "next_manual_action": clean(row.get("next_manual_action")),
+                "open_first_file": clean(row.get("review_board_to_open")),
+                "source_or_proof_to_open": clean(row.get("advisory_source_candidate_urls")),
+                "source_priority_row_ref_or_filter": verification_focus_source_priority_ref(row),
+                "readiness_row_ref": f"{ASSET_REVIEW_READINESS_CSV.as_posix()}#row={clean(row.get('readiness_rank'))}",
+                "review_board_to_open": clean(row.get("review_board_to_open")),
+                "manual_intake_file_to_open": clean(row.get("manual_intake_file_to_open")),
+                "future_download_intake_file": clean(row.get("future_download_intake_file")),
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "logo_writes": "false",
+                "segmentation_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "guardrail_note": (
+                    "review-only next-action card; generated URL/decision/approval/download fields stay "
+                    "blank/no/false and download approval is not asset approval"
+                ),
+            }
+        )
+    priority_order = {
+        "P0_source_identity_before_photo_review": 0,
+        "P1_local_logo_candidate_before_logo_review": 1,
+        "P1_local_athlete_candidate_before_photo_review": 2,
+        "P2_future_quarantine_intake_requires_human_edit": 3,
+        "P3_review_only_watch": 9,
+    }
+    rows.sort(
+        key=lambda row: (
+            priority_order.get(clean(row.get("card_priority")), 99),
+            clean(row.get("sport_family")),
+            clean(row.get("asset_domain")),
+            clean(row.get("candidate_entity_id")),
+        )
+    )
+    for index, row in enumerate(rows, start=1):
+        row["card_rank"] = f"NC{index:02d}"
+    return rows
+
+
+def render_next_action_cards(rows: list[Dict[str, str]], generated_at: str) -> str:
+    priority_counts = Counter(row["card_priority"] for row in rows)
+    verification_counts = Counter(row["verification_status"] for row in rows)
+    lines = [
+        "# Hockey/Softball Asset Next-Action Cards",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only next-action cards that condense hockey/softball readiness rows into one operator-facing checklist. They do not fetch sources, download assets, approve candidates, write headshots or logos, create `.approved` markers, move files, create a publish-ready lane, or publish.",
+        "Generated URL, decision, approval, and download-law fields stay blank/no/false. Advisory source/proof links are evidence to open manually, not download authorization.",
+        "",
+        "## Summary",
+        "",
+        f"- Card rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Athlete/photo rows: `{sum(1 for row in rows if clean(row.get('asset_domain')) == 'athlete_photo')}`",
+        f"- Logo rows: `{sum(1 for row in rows if clean(row.get('asset_domain')) == 'logo')}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank generated source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Card Priorities",
+        "",
+    ]
+    lines.extend(f"- {priority}: `{count}`" for priority, count in sorted(priority_counts.items()))
+    lines.extend(["", "## Verification Status", ""])
+    lines.extend(f"- {status}: `{count}`" for status, count in sorted(verification_counts.items()))
+    lines.extend(
+        [
+            "",
+            "## Safe Operator Path",
+            "",
+            "1. Open `readiness_row_ref`, then `open_first_file` for the review context.",
+            "2. Open `source_or_proof_to_open` manually when present and record notes only in `manual_intake_file_to_open` if the row's next action says source-review fields can be filled.",
+            "3. Keep `source_proof_placeholder` and `official_profile_source_url_placeholder` as placeholders until a human records source proof.",
+            "4. Treat `quarantine_download_eligibility_status` as blocked unless a later human-edited intake sets `download_approved=yes` with required metadata.",
+            "5. Keep generated URL/decision/approval/download fields blank/no/false.",
+            "",
+            "## Cards",
+            "",
+            "| Rank | Priority | Sport | Asset | Entity | Candidate Status | Verification | Quarantine/Download | Open First | Proof/Source | Next Manual Action |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for row in rows:
+        lines.append(
+            "| {rank} | {priority} | {sport} | {asset} | {entity} | {candidate_status} | {verification} | {quarantine} | {open_first} | {proof} | {action} |".format(
+                rank=clean(row.get("card_rank")),
+                priority=clean(row.get("card_priority")),
+                sport=clean(row.get("sport_family")),
+                asset=clean(row.get("asset_domain")),
+                entity=clean(row.get("candidate_entity_id")).replace("|", "/"),
+                candidate_status=clean(row.get("candidate_asset_photo_status")).replace("|", "/"),
+                verification=clean(row.get("verification_status")).replace("|", "/"),
+                quarantine=clean(row.get("quarantine_download_eligibility_status")).replace("|", "/"),
+                open_first=clean(row.get("open_first_file")).replace("|", "/"),
+                proof=clean(row.get("source_or_proof_to_open")).replace("|", "/"),
+                action=clean(row.get("next_manual_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def proposed_quarantine_path(row: Mapping[str, str]) -> str:
     return (
         SANCTIONED_QUARANTINE_ROOT
@@ -3064,6 +3295,11 @@ def main() -> int:
         1 for row in manual_verification_focus if clean(row.get("download_approved")).lower() == "yes"
     )
     manual_verification_focus_blank_source_url_rows = sum(1 for row in manual_verification_focus if not clean(row.get("source_url")))
+    next_action_cards = next_action_card_rows(asset_review_readiness)
+    next_action_card_logo_rows = sum(1 for row in next_action_cards if clean(row.get("asset_domain")) == "logo")
+    next_action_card_athlete_rows = sum(1 for row in next_action_cards if clean(row.get("asset_domain")) == "athlete_photo")
+    next_action_card_download_approved_yes_rows = sum(1 for row in next_action_cards if clean(row.get("download_approved")).lower() == "yes")
+    next_action_card_blank_source_url_rows = sum(1 for row in next_action_cards if not clean(row.get("source_url")))
     quarantine_download_rows = quarantine_download_intake_rows(action_rows)
     quarantine_download_approved_yes_rows = sum(1 for row in quarantine_download_rows if clean(row.get("download_approved")).lower() == "yes")
     quarantine_download_source_reviewed_rows = sum(1 for row in quarantine_download_rows if clean(row.get("source_review_status")).lower() == "yes")
@@ -3129,6 +3365,11 @@ def main() -> int:
             "manual_verification_focus_source_map_rows": manual_verification_focus_source_map_rows,
             "manual_verification_focus_download_approved_yes_rows": manual_verification_focus_download_approved_yes_rows,
             "manual_verification_focus_blank_source_url_rows": manual_verification_focus_blank_source_url_rows,
+            "next_action_card_rows": len(next_action_cards),
+            "next_action_card_logo_rows": next_action_card_logo_rows,
+            "next_action_card_athlete_rows": next_action_card_athlete_rows,
+            "next_action_card_download_approved_yes_rows": next_action_card_download_approved_yes_rows,
+            "next_action_card_blank_source_url_rows": next_action_card_blank_source_url_rows,
             "quarantine_download_intake_rows": len(quarantine_download_rows),
             "quarantine_download_logo_rows": quarantine_download_logo_rows,
             "quarantine_download_athlete_rows": quarantine_download_athlete_rows,
@@ -3250,6 +3491,16 @@ def main() -> int:
             "source_map_rows": manual_verification_focus_source_map_rows,
             "download_approved_yes_rows": manual_verification_focus_download_approved_yes_rows,
             "blank_source_url_rows": manual_verification_focus_blank_source_url_rows,
+        },
+        "next_action_cards": {
+            "md": NEXT_ACTION_CARDS_MD.as_posix(),
+            "csv": NEXT_ACTION_CARDS_CSV.as_posix(),
+            "json": NEXT_ACTION_CARDS_JSON.as_posix(),
+            "rows": len(next_action_cards),
+            "logo_rows": next_action_card_logo_rows,
+            "athlete_rows": next_action_card_athlete_rows,
+            "download_approved_yes_rows": next_action_card_download_approved_yes_rows,
+            "blank_source_url_rows": next_action_card_blank_source_url_rows,
         },
         "quarantine_download_intake": {
             "md": QUARANTINE_DOWNLOAD_INTAKE_MD.as_posix(),
@@ -3516,6 +3767,37 @@ def main() -> int:
         "paid_apis": False,
         "focus_rows_detail": manual_verification_focus,
     }
+    next_action_card_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_asset_next_action_cards_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(next_action_cards),
+        "logo_rows": next_action_card_logo_rows,
+        "athlete_rows": next_action_card_athlete_rows,
+        "womens_hockey_rows": sum(1 for row in next_action_cards if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in next_action_cards if clean(row.get("sport_family")) == "softball"),
+        "download_approved_yes_rows": next_action_card_download_approved_yes_rows,
+        "blank_source_url_rows": next_action_card_blank_source_url_rows,
+        "card_priority_counts": dict(sorted(Counter(row["card_priority"] for row in next_action_cards).items())),
+        "verification_status_counts": dict(sorted(Counter(row["verification_status"] for row in next_action_cards).items())),
+        "worksheet_md": NEXT_ACTION_CARDS_MD.as_posix(),
+        "worksheet_csv": NEXT_ACTION_CARDS_CSV.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "logo_writes": False,
+        "segmentation_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "next_action_card_rows_detail": next_action_cards,
+    }
     quarantine_download_payload = {
         "version": VERSION,
         "status": "hockey_softball_quarantine_download_intake_ready",
@@ -3569,6 +3851,9 @@ def main() -> int:
     write_csv(MANUAL_VERIFICATION_FOCUS_CSV, manual_verification_focus, MANUAL_VERIFICATION_FOCUS_FIELDS)
     write_json(MANUAL_VERIFICATION_FOCUS_JSON, manual_verification_focus_payload)
     write_text(MANUAL_VERIFICATION_FOCUS_MD, render_manual_verification_focus(manual_verification_focus, generated_at))
+    write_csv(NEXT_ACTION_CARDS_CSV, next_action_cards, NEXT_ACTION_CARD_FIELDS)
+    write_json(NEXT_ACTION_CARDS_JSON, next_action_card_payload)
+    write_text(NEXT_ACTION_CARDS_MD, render_next_action_cards(next_action_cards, generated_at))
     write_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV, quarantine_download_rows, QUARANTINE_DOWNLOAD_INTAKE_FIELDS)
     write_json(QUARANTINE_DOWNLOAD_INTAKE_JSON, quarantine_download_payload)
     write_text(QUARANTINE_DOWNLOAD_INTAKE_MD, render_quarantine_download_intake(quarantine_download_rows, generated_at))
