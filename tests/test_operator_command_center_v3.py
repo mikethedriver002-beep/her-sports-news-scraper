@@ -2854,6 +2854,38 @@ def seed_asset_availability_audit_files() -> None:
     write_csv_with_fields((wnba_dir / "logo_review_packets.csv").as_posix(), [logo_packet], list(logo_packet.keys()))
     action_photo_dir = registry_dir / "action_photo_candidates"
     action_photo_dir.mkdir(parents=True, exist_ok=True)
+    (action_photo_dir / "review_only_action_photo_source_discovery_board_v1.md").write_text("# Action Photo Source Discovery Board\n", encoding="utf-8")
+    write_csv_with_fields(
+        (action_photo_dir / "review_only_action_photo_source_discovery_board_v1.csv").as_posix(),
+        [
+            {
+                "discovery_id": "APSD001",
+                "sport": "soccer",
+                "league_entity": "NWSL",
+                "source_lane": "official_public_manual_review",
+                "download_approved": "no",
+                "review_only": "true",
+                "publish_ready": "false",
+            }
+        ],
+        ["discovery_id", "sport", "league_entity", "source_lane", "download_approved", "review_only", "publish_ready"],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_source_discovery_board_v1.json").as_posix(),
+        {
+            "status": "action_photo_source_discovery_board_ready",
+            "generated_at_utc": "2026-06-29T00:00:15+00:00",
+            "discovery_rows": 12,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 12,
+            "review_only_rows": 12,
+            "publish_ready_rows": 0,
+            "asset_downloads": False,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "approval_state_change": False,
+        },
+    )
     write_json(
         (action_photo_dir / "review_only_action_photo_candidate_intake.json").as_posix(),
         {
@@ -2867,6 +2899,67 @@ def seed_asset_availability_audit_files() -> None:
             "asset_downloads": False,
             "approval_state_change": False,
             "publish_ready": False,
+        },
+    )
+    (action_photo_dir / "review_only_action_photo_lead_return_schema_v1.md").write_text("# Action Photo Lead Return Schema\n", encoding="utf-8")
+    write_csv_with_fields(
+        (action_photo_dir / "review_only_action_photo_lead_return_schema_v1.csv").as_posix(),
+        [
+            {
+                "schema_field_id": "APLRS001",
+                "return_field": "source_url",
+                "field_group": "download_law",
+                "download_approved": "no",
+                "operator_verify_required": "yes",
+                "review_only": "true",
+                "publish_ready": "false",
+            }
+        ],
+        ["schema_field_id", "return_field", "field_group", "download_approved", "operator_verify_required", "review_only", "publish_ready"],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_lead_return_schema_v1.json").as_posix(),
+        {
+            "status": "action_photo_lead_return_schema_ready",
+            "generated_at_utc": "2026-06-29T00:00:45+00:00",
+            "schema_rows": 18,
+            "download_approved_yes_rows": 0,
+            "operator_verify_required_yes_rows": 18,
+            "review_only_rows": 18,
+            "publish_ready_rows": 0,
+            "source_fetching": False,
+            "approval_state_change": False,
+        },
+    )
+    (action_photo_dir / "review_only_action_photo_cutout_scoring_criteria_v1.md").write_text("# Action Photo Cutout Scoring Criteria\n", encoding="utf-8")
+    write_csv_with_fields(
+        (action_photo_dir / "review_only_action_photo_cutout_scoring_criteria_v1.csv").as_posix(),
+        [
+            {
+                "scoring_id": "APCSC001",
+                "criterion_group": "action_photo_fit",
+                "criterion_name": "Game action",
+                "score_field": "action_photo_status",
+                "download_approved": "no",
+                "review_only": "true",
+                "publish_ready": "false",
+            }
+        ],
+        ["scoring_id", "criterion_group", "criterion_name", "score_field", "download_approved", "review_only", "publish_ready"],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_cutout_scoring_criteria_v1.json").as_posix(),
+        {
+            "status": "action_photo_cutout_scoring_criteria_ready",
+            "generated_at_utc": "2026-06-29T00:01:15+00:00",
+            "scoring_rows": 8,
+            "download_approved_yes_rows": 0,
+            "blank_source_url_rows": 8,
+            "review_only_rows": 8,
+            "publish_ready_rows": 0,
+            "segmentation": False,
+            "background_removal": False,
+            "approval_state_change": False,
         },
     )
     write_json(
@@ -5116,6 +5209,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_source_discovery_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_lead_return_schema_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_lead_return_schema_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_lead_return_schema_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_scoring_criteria_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["render_handoff_top_packet/active_asset_review_queue.md"]["status_detail"] == "Created with this command center run"
@@ -5125,7 +5227,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["trusted_registry_operator_playbook.md"]["status_detail"] == "Ready to open"
 
     assert "HSD Daily Operator Command Center" in html
+    assert "Action-photo source discovery board" in html
     assert "Action-photo sport/entity source-map board" in html
+    assert "Action-photo lead return schema" in html
+    assert "Action-photo cutout scoring criteria" in html
     assert "Source-map board" in html
     assert "Source-map fetch/approve" in html
     assert 'data-tab-target="today"' in html
