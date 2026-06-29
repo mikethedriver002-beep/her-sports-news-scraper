@@ -49,11 +49,19 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["publishing"] is False
     assert manifest["publish_ready"] is False
     assert manifest["lane_count"] == 7
+    assert manifest["completed_lane_count"] == 0
+    assert manifest["guardrail_warning_count"] == 0
     assert manifest["worktree_hint_lane_count"] == 0
     assert {row["lane_id"] for row in rows} >= {"workflow_overhaul", "qa_release_readiness"}
     assert "status_source" in rows[0]
+    assert "completed_merge_pr" in rows[0]
+    assert "review_only" in rows[0]
+    assert all(row["review_only"] == "true" for row in rows)
+    assert all(row["publish_ready"] == "false" for row in rows)
+    assert all(row["approval_state_change"] == "false" for row in rows)
     assert "Status: review-only conductor visibility artifact." in markdown
     assert "No automatic downloads." in markdown
+    assert "workflow_lane_status_intake.example.csv" in markdown
     assert "best-effort worktree hints" in markdown
 
 
@@ -72,6 +80,8 @@ def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monk
                 "pr": "https://github.com/example/hsd/pull/999",
                 "owner": "renderer lane",
                 "last_update_utc": "2026-06-28T12:00:00+00:00",
+                "completed_merge_pr": "",
+                "completed_merge_commit": "",
                 "blocker": "waiting for Gemini critique",
                 "next_action": "Send research packet, then choose one renderer polish PR.",
                 "notes": "Do not continue without visual review.",
@@ -89,6 +99,111 @@ def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monk
     assert renderer["blocker"] == "waiting for Gemini critique"
     assert renderer["next_action"] == "Send research packet, then choose one renderer polish PR."
     assert payload["blocked_lane_count"] == 1
+
+
+def test_workflow_lane_status_surfaces_completed_merge_rows_as_review_only(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    intake = tmp_path / "operator" / "inbox" / "workflow_lane_status_intake.csv"
+    module = load_module()
+    write_csv(
+        intake,
+        [
+            {
+                "lane_id": "workflow_overhaul",
+                "status": "completed_merged",
+                "branch": "codex/hsd-conductor-directive-brake",
+                "pr": "https://github.com/example/hsd/pull/338",
+                "owner": "conductor",
+                "last_update_utc": "2026-06-29T07:06:55Z",
+                "completed_merge_pr": "338",
+                "completed_merge_commit": "3f69d86e",
+                "blocker": "",
+                "next_action": "Use immutable directive snapshots only.",
+                "notes": "Completion row; not a live directive.",
+                "review_only": "true",
+                "paid_apis": "false",
+                "source_fetching": "false",
+                "automatic_downloads": "false",
+                "auto_approval": "false",
+                "approval_state_change": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+            }
+        ],
+        module.INTAKE_FIELDS,
+    )
+
+    payload = module.build_payload(module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"]))
+    workflow = next(row for row in payload["lanes"] if row["lane_id"] == "workflow_overhaul")
+
+    assert workflow["status"] == "completed_merged"
+    assert workflow["status_tone"] == "completed"
+    assert workflow["branch"] == "codex/hsd-conductor-directive-brake"
+    assert workflow["status_source"] == "manual_intake"
+    assert workflow["completed_merge_pr"] == "338"
+    assert workflow["completed_merge_commit"] == "3f69d86e"
+    assert workflow["review_only"] == "true"
+    assert workflow["paid_apis"] == "false"
+    assert workflow["publish_ready"] == "false"
+    assert workflow["approval_state_change"] == "false"
+    assert workflow["guardrail_warnings"] == ""
+    assert payload["completed_lane_count"] == 1
+    assert payload["guardrail_warning_count"] == 0
+
+
+def test_workflow_lane_status_flags_truthy_guardrail_intake_without_enabling_behavior(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    intake = tmp_path / "operator" / "inbox" / "workflow_lane_status_intake.csv"
+    module = load_module()
+    row = {field: "" for field in module.INTAKE_FIELDS}
+    row.update(
+        {
+            "lane_id": "qa_release_readiness",
+            "status": "needs_human_guardrail_review",
+            "publish_ready": "true",
+            "auto_approval": "true",
+            "approval_state_change": "true",
+        }
+    )
+    write_csv(intake, [row], module.INTAKE_FIELDS)
+
+    payload = module.build_payload(module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"]))
+    qa = next(row for row in payload["lanes"] if row["lane_id"] == "qa_release_readiness")
+
+    assert qa["status"] == "needs_human_guardrail_review"
+    assert qa["status_tone"] == "blocked"
+    assert "publish_ready_expected_false_got_true" in qa["guardrail_warnings"]
+    assert "auto_approval_expected_false_got_true" in qa["guardrail_warnings"]
+    assert "approval_state_change_expected_false_got_true" in qa["guardrail_warnings"]
+    assert payload["publish_ready"] is False
+    assert payload["auto_approval"] is False
+    assert payload["approval_state_change"] is False
+    assert payload["guardrail_warning_count"] == 1
+
+
+def test_workflow_lane_status_example_intake_documents_recent_completed_merges() -> None:
+    module = load_module()
+    example = REPO / "operator" / "inbox" / "workflow_lane_status_intake.example.csv"
+    rows = list(csv.DictReader(example.open(newline="", encoding="utf-8")))
+
+    assert rows
+    assert set(rows[0]) == set(module.INTAKE_FIELDS)
+    assert {row["completed_merge_pr"] for row in rows} == {"336", "337", "338", "339", "340"}
+    assert {row["status"] for row in rows} == {"completed_merged"}
+    assert all(row["review_only"] == "true" for row in rows)
+    assert all(row["paid_apis"] == "false" for row in rows)
+    assert all(row["source_fetching"] == "false" for row in rows)
+    assert all(row["automatic_downloads"] == "false" for row in rows)
+    assert all(row["auto_approval"] == "false" for row in rows)
+    assert all(row["approval_state_change"] == "false" for row in rows)
+    assert all(row["headshot_writes"] == "false" for row in rows)
+    assert all(row["approved_marker_writes"] == "false" for row in rows)
+    assert all(row["publish_ready"] == "false" for row in rows)
+    assert all(row["publishing"] == "false" for row in rows)
 
 
 def test_workflow_lane_status_uses_worktree_branch_hints_without_manual_intake(tmp_path: Path, monkeypatch) -> None:
