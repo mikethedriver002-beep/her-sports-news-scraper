@@ -342,6 +342,12 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.json",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md",
@@ -708,6 +714,12 @@ ARTIFACTS = [
     ("Graphics", "Action-photo quarantine preflight", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md"),
     ("Graphics", "Action-photo quarantine preflight data", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv"),
     ("Graphics", "Action-photo quarantine preflight manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json"),
+    ("Graphics", "WNBA hero action-photo targets", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md"),
+    ("Graphics", "WNBA hero action-photo targets data", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv"),
+    ("Graphics", "WNBA hero action-photo targets manifest", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json"),
+    ("Graphics", "Action-photo cutout readiness", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md"),
+    ("Graphics", "Action-photo cutout readiness data", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.csv"),
+    ("Graphics", "Action-photo cutout readiness manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json"),
     ("Graphics", "Action-photo candidate taxonomy", "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md"),
     ("Graphics", "Action-photo human review checklist", "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md"),
     ("Graphics", "Hockey/softball asset foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md"),
@@ -898,6 +910,12 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_taxonomy.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_human_review_checklist.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/hockey_softball_asset_foundation_report.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_hockey_softball_asset_foundation_v1.py",
@@ -1785,6 +1803,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_intake_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_intake.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
+    action_photo_hero_targets_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json")
+    action_photo_cutout_readiness_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json")
     hockey_softball_manifest = read_json("data/asset_registry/hockey_softball_asset_foundation_report.json")
     womens_hockey_logo_rows = read_csv("data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.csv")
     womens_hockey_athlete_manifest = read_json("data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_manifest.json")
@@ -1895,6 +1915,20 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         action_photo_preflight_rows,
         RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md"],
         context="action-photo quarantine preflight",
+    )
+    action_photo_hero_target_rows = as_int(action_photo_hero_targets_manifest.get("target_rows")) if isinstance(action_photo_hero_targets_manifest, dict) else 0
+    action_photo_hero_targets_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md",
+        action_photo_hero_target_rows,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md"],
+        context="WNBA hero action-photo targets",
+    )
+    action_photo_cutout_readiness_rows = as_int(action_photo_cutout_readiness_manifest.get("cutout_readiness_rows")) if isinstance(action_photo_cutout_readiness_manifest, dict) else 0
+    action_photo_cutout_readiness_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md",
+        action_photo_cutout_readiness_rows,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md"],
+        context="action-photo cutout readiness",
     )
     hockey_softball_cue = packet_freshness_cue(
         "data/asset_registry/hockey_softball_asset_foundation_report.md",
@@ -2166,12 +2200,36 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_quarantine_preflight_lead_only_rows": as_int(action_photo_preflight_manifest.get("lead_only_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_download_approved_yes_rows": as_int(action_photo_preflight_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_missing_source_url_rows": as_int(action_photo_preflight_manifest.get("missing_required_field_counts", {}).get("source_url")) if isinstance(action_photo_preflight_manifest, dict) and isinstance(action_photo_preflight_manifest.get("missing_required_field_counts"), dict) else 0,
+        "action_photo_hero_targets_status": clean(action_photo_hero_targets_manifest.get("status")) if isinstance(action_photo_hero_targets_manifest, dict) else "",
+        "action_photo_hero_targets_generated_at": clean(action_photo_hero_targets_manifest.get("generated_at_utc")) if isinstance(action_photo_hero_targets_manifest, dict) else "",
+        "action_photo_hero_targets_rows": action_photo_hero_target_rows,
+        "action_photo_hero_targets_download_approved_yes_rows": as_int(action_photo_hero_targets_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_hero_targets_manifest, dict) else 0,
+        "action_photo_hero_targets_blank_source_url_rows": as_int(action_photo_hero_targets_manifest.get("blank_source_url_rows")) if isinstance(action_photo_hero_targets_manifest, dict) else 0,
+        "action_photo_hero_targets_blank_candidate_photo_url_rows": as_int(action_photo_hero_targets_manifest.get("blank_candidate_photo_url_rows")) if isinstance(action_photo_hero_targets_manifest, dict) else 0,
+        "action_photo_hero_targets_operator_verify_required_yes_rows": as_int(action_photo_hero_targets_manifest.get("operator_verify_required_yes_rows")) if isinstance(action_photo_hero_targets_manifest, dict) else 0,
+        "action_photo_cutout_readiness_status": clean(action_photo_cutout_readiness_manifest.get("status")) if isinstance(action_photo_cutout_readiness_manifest, dict) else "",
+        "action_photo_cutout_readiness_generated_at": clean(action_photo_cutout_readiness_manifest.get("generated_at_utc")) if isinstance(action_photo_cutout_readiness_manifest, dict) else "",
+        "action_photo_cutout_readiness_rows": action_photo_cutout_readiness_rows,
+        "action_photo_cutout_readiness_download_approved_yes_rows": as_int(action_photo_cutout_readiness_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_cutout_readiness_manifest, dict) else 0,
+        "action_photo_cutout_readiness_blank_source_url_rows": as_int(action_photo_cutout_readiness_manifest.get("blank_source_url_rows")) if isinstance(action_photo_cutout_readiness_manifest, dict) else 0,
+        "action_photo_cutout_readiness_blank_candidate_photo_url_rows": as_int(action_photo_cutout_readiness_manifest.get("blank_candidate_photo_url_rows")) if isinstance(action_photo_cutout_readiness_manifest, dict) else 0,
+        "action_photo_cutout_readiness_blank_cutout_work_required_rows": as_int(action_photo_cutout_readiness_manifest.get("blank_cutout_work_required_rows")) if isinstance(action_photo_cutout_readiness_manifest, dict) else 0,
+        "action_photo_cutout_readiness_blank_transparent_background_rows": as_int(action_photo_cutout_readiness_manifest.get("blank_transparent_background_candidate_rows")) if isinstance(action_photo_cutout_readiness_manifest, dict) else 0,
+        "action_photo_cutout_readiness_segmentation": bool(action_photo_cutout_readiness_manifest.get("segmentation")) if isinstance(action_photo_cutout_readiness_manifest, dict) else False,
+        "action_photo_cutout_readiness_background_removal": bool(action_photo_cutout_readiness_manifest.get("background_removal")) if isinstance(action_photo_cutout_readiness_manifest, dict) else False,
+        "action_photo_cutout_readiness_cutout_file_writes": bool(action_photo_cutout_readiness_manifest.get("cutout_file_writes")) if isinstance(action_photo_cutout_readiness_manifest, dict) else False,
         "action_photo_research_run_bundle_freshness_status": action_photo_research_bundle_cue["status"],
         "action_photo_research_run_bundle_freshness_detail": action_photo_research_bundle_cue["detail"],
         "action_photo_research_run_bundle_refresh_command": action_photo_research_bundle_cue["run_command"],
         "action_photo_quarantine_preflight_freshness_status": action_photo_preflight_cue["status"],
         "action_photo_quarantine_preflight_freshness_detail": action_photo_preflight_cue["detail"],
         "action_photo_quarantine_preflight_refresh_command": action_photo_preflight_cue["run_command"],
+        "action_photo_hero_targets_freshness_status": action_photo_hero_targets_cue["status"],
+        "action_photo_hero_targets_freshness_detail": action_photo_hero_targets_cue["detail"],
+        "action_photo_hero_targets_refresh_command": action_photo_hero_targets_cue["run_command"],
+        "action_photo_cutout_readiness_freshness_status": action_photo_cutout_readiness_cue["status"],
+        "action_photo_cutout_readiness_freshness_detail": action_photo_cutout_readiness_cue["detail"],
+        "action_photo_cutout_readiness_refresh_command": action_photo_cutout_readiness_cue["run_command"],
         "hockey_softball_asset_foundation_status": clean(hockey_softball_manifest.get("status")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_asset_foundation_generated_at": clean(hockey_softball_manifest.get("generated_at_utc")) if isinstance(hockey_softball_manifest, dict) else "",
         "hockey_softball_foundation_coverage_status": clean(hockey_softball_coverage_manifest.get("status")) if isinstance(hockey_softball_coverage_manifest, dict) else "",
@@ -2367,6 +2425,10 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Action-photo research return intake", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv", "Human-edited paste-back target for source_url/entity_id/rights/identity fields before any quarantine decision."),
             file_shortcut("Action-photo quarantine preflight", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md", "Preflight gate showing whether human-return rows are ready for download decision; generated rows remain lead-only."),
             file_shortcut("Action-photo quarantine preflight data", "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv", "Machine-readable preflight; 0 ready rows means no human download decision should happen yet."),
+            file_shortcut("WNBA hero action-photo targets", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.md", "Kelsey Mitchell/Fever target board for manual hero-photo research only; generated source and download-law fields stay blank/no."),
+            file_shortcut("WNBA hero action-photo targets data", "data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.csv", "Machine-readable target rows; no source fetching, downloads, approvals, or publish-ready state."),
+            file_shortcut("Action-photo cutout readiness", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.md", "Manual cutout-readiness worksheet; no segmentation, background removal, or cutout file writes."),
+            file_shortcut("Action-photo cutout readiness data", "data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.csv", "Machine-readable cutout worksheet with generated cutout/source/download fields blank/no."),
             file_shortcut("Hockey/softball foundation report", "data/asset_registry/hockey_softball_asset_foundation_report.md", "Review PWHL and AUSL source-candidate scaffold counts and guardrails."),
             file_shortcut("Hockey/softball foundation coverage index", "data/asset_registry/hockey_softball_foundation_coverage_index.md", "Open one compact index of source URL registries, contact sheets, intakes, athlete layers, and hold-only guardrails."),
             file_shortcut("Hockey/softball foundation coverage manifest", "data/asset_registry/hockey_softball_foundation_coverage_index.json", "Structured counts and freshness data for the hockey/softball foundation coverage index."),
@@ -9053,6 +9115,11 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
             <div><span>Action-photo ready dl</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)))}</strong></div>
             <div><span>Action-photo dl yes</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>WNBA hero targets</span><strong>{html.escape(str(panel.get('action_photo_hero_targets_rows', 0)))}</strong></div>
+            <div><span>Hero target blanks</span><strong>{html.escape(str(panel.get('action_photo_hero_targets_blank_source_url_rows', 0)))}</strong></div>
+            <div><span>Cutout worksheet</span><strong>{html.escape(str(panel.get('action_photo_cutout_readiness_rows', 0)))}</strong></div>
+            <div><span>Cutout blanks</span><strong>{html.escape(str(panel.get('action_photo_cutout_readiness_blank_cutout_work_required_rows', 0)))}</strong></div>
+            <div><span>Cutout writes</span><strong>{html.escape(str(panel.get('action_photo_cutout_readiness_cutout_file_writes', False)).lower())}</strong></div>
             <div><span>H/S coverage rows</span><strong>{html.escape(str(panel.get('hockey_softball_foundation_coverage_rows', 0)))}</strong></div>
             <div><span>H/S source rows</span><strong>{html.escape(str(panel.get('hockey_softball_foundation_coverage_source_rows', 0)))}</strong></div>
             <div><span>Hockey logo rows</span><strong>{html.escape(str(panel.get('womens_hockey_logo_contact_sheet_rows', 0)))}</strong></div>
@@ -9111,6 +9178,8 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_external_research', "Women's soccer external research intake")}
           {packet_freshness_html(panel, 'action_photo_research_run_bundle', "Action-photo research run bundle")}
           {packet_freshness_html(panel, 'action_photo_quarantine_preflight', "Action-photo quarantine preflight")}
+          {packet_freshness_html(panel, 'action_photo_hero_targets', "WNBA hero action-photo targets")}
+          {packet_freshness_html(panel, 'action_photo_cutout_readiness', "Action-photo cutout readiness")}
           {packet_freshness_html(panel, 'hockey_softball_asset_foundation', "Hockey/softball asset foundation")}
           {packet_freshness_html(panel, 'hockey_softball_foundation_coverage', "Hockey/softball foundation coverage index")}
           {packet_freshness_html(panel, 'hockey_softball_source_review_helper', "Hockey/softball source review helper")}
@@ -10730,6 +10799,21 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo quarantine download-approved yes rows: {asset_panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)}",
         f"- Action-photo quarantine missing source_url rows: {asset_panel.get('action_photo_quarantine_preflight_missing_source_url_rows', 0)}",
         f"- Action-photo quarantine preflight generated: {asset_panel.get('action_photo_quarantine_preflight_generated_at') or 'missing'}",
+        f"- WNBA hero action-photo target rows: {asset_panel.get('action_photo_hero_targets_rows', 0)}",
+        f"- WNBA hero action-photo target download-approved yes rows: {asset_panel.get('action_photo_hero_targets_download_approved_yes_rows', 0)}",
+        f"- WNBA hero action-photo target blank source_url rows: {asset_panel.get('action_photo_hero_targets_blank_source_url_rows', 0)}",
+        f"- WNBA hero action-photo target blank candidate-photo-url rows: {asset_panel.get('action_photo_hero_targets_blank_candidate_photo_url_rows', 0)}",
+        f"- WNBA hero action-photo target operator-verify rows: {asset_panel.get('action_photo_hero_targets_operator_verify_required_yes_rows', 0)}",
+        f"- WNBA hero action-photo targets generated: {asset_panel.get('action_photo_hero_targets_generated_at') or 'missing'}",
+        f"- Action-photo cutout readiness rows: {asset_panel.get('action_photo_cutout_readiness_rows', 0)}",
+        f"- Action-photo cutout readiness download-approved yes rows: {asset_panel.get('action_photo_cutout_readiness_download_approved_yes_rows', 0)}",
+        f"- Action-photo cutout readiness blank source_url rows: {asset_panel.get('action_photo_cutout_readiness_blank_source_url_rows', 0)}",
+        f"- Action-photo cutout readiness blank candidate-photo-url rows: {asset_panel.get('action_photo_cutout_readiness_blank_candidate_photo_url_rows', 0)}",
+        f"- Action-photo cutout readiness blank cutout-work rows: {asset_panel.get('action_photo_cutout_readiness_blank_cutout_work_required_rows', 0)}",
+        f"- Action-photo cutout readiness segmentation: {asset_panel.get('action_photo_cutout_readiness_segmentation', False)}",
+        f"- Action-photo cutout readiness background removal: {asset_panel.get('action_photo_cutout_readiness_background_removal', False)}",
+        f"- Action-photo cutout readiness cutout file writes: {asset_panel.get('action_photo_cutout_readiness_cutout_file_writes', False)}",
+        f"- Action-photo cutout readiness generated: {asset_panel.get('action_photo_cutout_readiness_generated_at') or 'missing'}",
         f"- Women's hockey logo contact sheet rows: {asset_panel.get('womens_hockey_logo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete photo candidate rows: {asset_panel.get('womens_hockey_athlete_photo_contact_sheet_rows', 0)}",
         f"- Women's hockey athlete source-review slot rows: {asset_panel.get('womens_hockey_athlete_photo_source_review_slot_rows', 0)}",
@@ -10934,6 +11018,22 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("action_photo_quarantine_preflight_refresh_command"),
             },
             "Action-photo quarantine preflight",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("action_photo_hero_targets_freshness_status"),
+                "detail": asset_panel.get("action_photo_hero_targets_freshness_detail"),
+                "run_command": asset_panel.get("action_photo_hero_targets_refresh_command"),
+            },
+            "WNBA hero action-photo targets",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("action_photo_cutout_readiness_freshness_status"),
+                "detail": asset_panel.get("action_photo_cutout_readiness_freshness_detail"),
+                "run_command": asset_panel.get("action_photo_cutout_readiness_refresh_command"),
+            },
+            "Action-photo cutout readiness",
         ),
         packet_freshness_markdown(
             {
