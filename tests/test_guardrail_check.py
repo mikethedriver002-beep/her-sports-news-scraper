@@ -103,6 +103,86 @@ def test_scan_directory_blocks_truthy_generated_json(tmp_path: Path) -> None:
     assert "publish_ready" in violations[0].message
 
 
+def test_scan_directory_blocks_truthy_generated_markdown_and_html(tmp_path: Path) -> None:
+    markdown = tmp_path / "artifact.md"
+    markdown.write_text(
+        "\n".join(
+            [
+                "# Generated Artifact",
+                "publish_ready: true",
+                "download_approved yes",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    html = tmp_path / "artifact.html"
+    html.write_text("<p>auto_publish = true</p><p>move_files true</p>", encoding="utf-8")
+    config = guardrail.load_guardrails()
+
+    violations = guardrail.scan_directory(tmp_path, config)
+
+    codes = [violation.code for violation in violations]
+    assert codes.count("truthy_guardrail_text") == 4
+    assert {violation.path for violation in violations} == {
+        str(markdown).replace("\\", "/"),
+        str(html).replace("\\", "/"),
+    }
+
+
+def test_scan_directory_blocks_generated_text_path_fragments_and_markers(tmp_path: Path) -> None:
+    artifact = tmp_path / "artifact.md"
+    artifact.write_text(
+        "\n".join(
+            [
+                "publish_path: outputs/local/publish-ready/card.png",
+                "marker_path: assets/leagues/wnba/athletes/example/headshot.png.approved",
+                "write_target: assets/headshots/example.png",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    config = guardrail.load_guardrails()
+
+    violations = guardrail.scan_directory(tmp_path, config)
+
+    codes = [violation.code for violation in violations]
+    assert "blocked_path_text" in codes
+    assert "blocked_marker_text" in codes
+    assert "protected_asset_text" in codes
+
+
+def test_scan_directory_text_scan_allows_docs_tests_and_quarantine_exceptions(tmp_path: Path) -> None:
+    docs = tmp_path / "docs" / "example.md"
+    docs.parent.mkdir()
+    docs.write_text("Example blocked value: publish_ready: true\n", encoding="utf-8")
+    tests = tmp_path / "tests" / "fixture.html"
+    tests.parent.mkdir()
+    tests.write_text("marker_path: assets/leagues/wnba/example.png.approved\n", encoding="utf-8")
+    quarantine = tmp_path / "artifact.md"
+    quarantine.write_text("candidate: data/assets/quarantine/review_only_candidates/example.jpg\n", encoding="utf-8")
+    config = guardrail.load_guardrails()
+
+    assert guardrail.scan_directory(tmp_path, config) == []
+
+
+def test_scan_directory_text_scan_allows_documented_human_intake_asset_registry_examples(tmp_path: Path) -> None:
+    intake = tmp_path / "data" / "asset_registry" / "manual_intake.md"
+    intake.parent.mkdir(parents=True)
+    intake.write_text(
+        "\n".join(
+            [
+                "- `download_approved=yes` without all local-download-law fields is rejected.",
+                "- Keep `approved_marker_path` blank until human review; do not create `.approved` markers.",
+                "- `publish_ready=true` in pasted notes must be rejected.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    config = guardrail.load_guardrails()
+
+    assert guardrail.scan_directory(tmp_path, config) == []
+
+
 def test_cli_scan_dir_outputs_json(tmp_path: Path) -> None:
     relative = tmp_path.relative_to(guardrail.ROOT) if tmp_path.is_relative_to(guardrail.ROOT) else tmp_path
     result = subprocess.run(

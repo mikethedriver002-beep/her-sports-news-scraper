@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -108,6 +109,11 @@ def is_truthy(value: Any, truthy_values: set[str]) -> bool:
     return str(value).strip().lower() in truthy_values
 
 
+def truthy_text_pattern(field: str, truthy_values: set[str]) -> re.Pattern[str]:
+    values = "|".join(re.escape(value) for value in sorted(truthy_values, key=len, reverse=True))
+    return re.compile(rf"(?<![a-z0-9_]){re.escape(field.lower())}\b\s*(?:=|:|\||\s)\s*(?:{values})(?![a-z0-9_])")
+
+
 def safe_text_exception(field: str, raw_line: str, path: str | None, config: dict[str, Any]) -> bool:
     if path:
         normalized_path = normalize_path(path).lower()
@@ -117,6 +123,77 @@ def safe_text_exception(field: str, raw_line: str, path: str | None, config: dic
     exceptions = config.get("diff_truthy_exceptions", {}).get(field, [])
     haystack = f"{path or ''}\n{raw_line}".lower()
     return any(str(exception).lower() in haystack for exception in exceptions)
+
+
+def safe_artifact_text_line(raw_line: str, config: dict[str, Any]) -> bool:
+    normalized = " ".join(raw_line.lower().split())
+    cleaned = normalized.replace("`", "").replace('"', "").replace("'", "")
+    for phrase in config.get("text_guardrail_safe_phrases", []):
+        if str(phrase).lower() in normalized or str(phrase).lower() in cleaned:
+            return True
+    return False
+
+
+def false_guardrail_text(field: str, raw_line: str) -> bool:
+    cleaned = raw_line.lower().replace("`", "").replace('"', "").replace("'", "")
+    return bool(re.search(rf"(?<![a-z0-9_]){re.escape(field)}\b\s*(?:=|:|\||\s)\s*(?:false|no|0)(?![a-z0-9_])", cleaned))
+
+
+def protected_asset_write_intent(raw_line: str) -> bool:
+    line = raw_line.lower()
+    intent_words = [
+        "write_target",
+        "write",
+        "writes",
+        "writeback",
+        "create",
+        "created",
+        "copy",
+        "move",
+        "save",
+        "download",
+        "destination",
+        "output",
+        "land in",
+        "place in",
+    ]
+    safe_hold_words = ["hold", "disabled", "missing", "review-only", "review only", "fallback"]
+    return any(word in line for word in intent_words) and not any(word in line for word in safe_hold_words)
+
+
+def blocked_path_text_intent(raw_line: str, config: dict[str, Any]) -> bool:
+    line = raw_line.lower()
+    if false_guardrail_text("publish_ready", raw_line):
+        return False
+    if re.search(r"\b(?:no|not|without|disabled|manual-review-only|manual review only)\b.{0,80}(?:publish-ready|publish_ready)", line):
+        return False
+    if re.search(r"(?:publish-ready|publish_ready).{0,80}\b(?:false|disabled|blocked)\b", line):
+        return False
+    for fragment in config.get("blocked_path_fragments", []):
+        cleaned = str(fragment).lower().replace("\\", "/")
+        if cleaned in {"publish_ready", "publish-ready"}:
+            if re.search(r"(?:^|[\\/\s])publish[-_]ready(?:[\\/]|$)", line):
+                return True
+            continue
+        if cleaned in line:
+            return True
+    return False
+
+
+def marker_text_present(raw_line: str, marker_suffixes: list[str]) -> bool:
+    line = raw_line.lower()
+    for suffix in marker_suffixes:
+        escaped = re.escape(str(suffix).lower())
+        if re.search(rf"{escaped}(?![a-z0-9_])", line):
+            return True
+    return False
+
+
+def safe_marker_prohibition_text(raw_line: str) -> bool:
+    cleaned = raw_line.lower().replace("`", "").replace('"', "").replace("'", "")
+    if ".approved" not in cleaned:
+        return False
+    return bool(re.search(r"\b(?:no|not|without|do not|does not)\b.{0,120}\.approved", cleaned))
 
 
 def added_diff_lines(diff_text: str) -> list[tuple[str | None, int | None, str]]:
@@ -206,6 +283,67 @@ def scan_structured_file(path: Path, config: dict[str, Any]) -> list[Violation]:
     return []
 
 
+def scan_text_file(path: Path, config: dict[str, Any]) -> list[Violation]:
+    violations: list[Violation] = []
+    display = display_path(path)
+    text_path_exceptions = [*config.get("changed_path_exceptions", []), *config.get("text_scan_path_exceptions", [])]
+    if has_path_exception(display, text_path_exceptions):
+        return violations
+
+    truthy_values = {str(v).lower() for v in config.get("truthy_values", [])}
+    fields = config.get("truthy_guardrail_fields", [])
+    truthy_patterns = {field: truthy_text_pattern(field, truthy_values) for field in fields}
+    marker_suffixes = config.get("blocked_marker_suffixes", [])
+    protected_fragments = config.get("protected_asset_write_fragments", [])
+    protected_exceptions = config.get("protected_asset_write_exceptions", [])
+
+    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1):
+        line = raw_line.lower()
+        if safe_artifact_text_line(raw_line, config):
+            continue
+        for field, pattern in truthy_patterns.items():
+            if pattern.search(line) and not safe_text_exception(field, raw_line, display, config):
+                violations.append(
+                    Violation(
+                        "truthy_guardrail_text",
+                        f"Generated text artifact appears to set guardrail field `{field}` truthy.",
+                        display,
+                        line_number,
+                    )
+                )
+        pathlike_line = "/" in line or "\\" in line or "path" in line or marker_text_present(raw_line, marker_suffixes)
+        if not pathlike_line:
+            continue
+        if blocked_path_text_intent(raw_line, config):
+            violations.append(
+                Violation(
+                    "blocked_path_text",
+                    "Generated text artifact references a blocked publish/publish-ready path.",
+                    display,
+                    line_number,
+                )
+            )
+        if marker_text_present(raw_line, marker_suffixes) and not safe_marker_prohibition_text(raw_line):
+            violations.append(
+                Violation(
+                    "blocked_marker_text",
+                    "Generated text artifact references a blocked approval marker.",
+                    display,
+                    line_number,
+                )
+            )
+        if has_fragment(line, protected_fragments) and protected_asset_write_intent(raw_line) and not has_path_exception(line, protected_exceptions):
+            violations.append(
+                Violation(
+                    "protected_asset_text",
+                    "Generated text artifact references a protected asset/headshot write boundary.",
+                    display,
+                    line_number,
+                )
+            )
+    return violations
+
+
 def scan_csv_file(path: Path, config: dict[str, Any]) -> list[Violation]:
     violations: list[Violation] = []
     truthy_values = {str(v).lower() for v in config.get("truthy_values", [])}
@@ -270,9 +408,12 @@ def scan_directory(scan_dir: Path, config: dict[str, Any]) -> list[Violation]:
         return []
     violations = scan_changed_paths([display_path(p) for p in scan_dir.rglob("*") if p.is_file()], config)
     extensions = set(config.get("scan_file_extensions", []))
+    text_extensions = set(config.get("scan_text_extensions", []))
     for path in scan_dir.rglob("*"):
         if path.is_file() and path.suffix.lower() in extensions:
             violations.extend(scan_structured_file(path, config))
+        if path.is_file() and path.suffix.lower() in text_extensions:
+            violations.extend(scan_text_file(path, config))
     return violations
 
 

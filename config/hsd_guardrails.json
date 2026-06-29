@@ -73,5 +73,30 @@
     ".csv",
     ".json",
     ".jsonl"
+  ],
+  "scan_text_extensions": [
+    ".md",
+    ".html",
+    ".htm"
+  ],
+  "text_scan_path_exceptions": [
+    "data/asset_registry/",
+    "outputs/local/latest/files/data/asset_registry/",
+    "outputs/local/latest/files/hsd_pipeline_lite_review/files/data/asset_registry/"
+  ],
+  "text_guardrail_safe_phrases": [
+    "no publish-ready",
+    "does not create a publish-ready",
+    "do not create a publish-ready",
+    "publish-ready lane is blocked",
+    "publish-ready lane: false",
+    "publish ready: false",
+    "publish_ready=false",
+    "no .approved",
+    "does not create .approved",
+    "do not create .approved",
+    "blocked approval marker",
+    "approval marker writes: false",
+    "approved markers present: `0`"
   ]
 }

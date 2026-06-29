@@ -4,11 +4,13 @@ import csv
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "generate_hsd_manual_visual_qa_operator_decision_template_v1.py"
 INTAKE_SCRIPT = REPO / "generate_hsd_manual_visual_qa_operator_decision_intake_v1.py"
+PYTHON = REPO / ".venv" / "Scripts" / "python.exe"
 FIELDS = [
     "decision_draft_id",
     "source_intake_id",
@@ -46,7 +48,7 @@ def write_decision_draft(run_dir: Path) -> dict[str, str]:
         "preview_path": preview.as_posix(),
         "qa_status": "human_review_required",
         "automated_hold_count": "0",
-        "allowed_decisions": "approve_for_manual_next_step|hold|revise",
+        "allowed_decisions": "hold|revise|approve_for_manual_next_step",
         "operator_decision": "operator_fill_required",
         "operator_notes": "",
         "hold_reason": "",
@@ -75,7 +77,7 @@ def run_template(tmp_path: Path, run_dir: Path) -> subprocess.CompletedProcess[s
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
     return subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(SCRIPT)],
+        [str(PYTHON if PYTHON.exists() else sys.executable), str(SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -88,7 +90,7 @@ def run_intake(tmp_path: Path, run_dir: Path) -> subprocess.CompletedProcess[str
     env = os.environ.copy()
     env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
     return subprocess.run(
-        [str(REPO / ".venv" / "Scripts" / "python.exe"), str(INTAKE_SCRIPT)],
+        [str(PYTHON if PYTHON.exists() else sys.executable), str(INTAKE_SCRIPT)],
         cwd=tmp_path,
         env=env,
         text=True,
@@ -113,6 +115,8 @@ def test_operator_decision_template_writes_copy_only_examples(tmp_path: Path) ->
     assert manifest["status"] == "template_ready_copy_only"
     assert manifest["approval_status"] == "not_approved_template_only"
     assert {row["operator_decision"] for row in rows} == {"approve_for_manual_next_step", "hold", "revise"}
+    assert [row["operator_decision"] for row in rows] == ["hold", "revise", "approve_for_manual_next_step"]
+    assert rows[2]["template_row_type"] == "approve_for_manual_next_step_only_example_copy_then_replace_placeholders"
     assert all(row["source_intake_id"] == draft["source_intake_id"] for row in rows)
     assert all(row["copy_target"] == "operator/inbox/manual_visual_qa_operator_decisions.csv" for row in rows)
     assert all(row["publish_ready"] == "false" for row in rows)

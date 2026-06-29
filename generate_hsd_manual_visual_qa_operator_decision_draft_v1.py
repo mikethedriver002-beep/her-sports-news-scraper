@@ -15,7 +15,7 @@ OUT_MD = output_path("manual_visual_qa_operator_decision_draft.md")
 OUT_CSV = output_path("manual_visual_qa_operator_decision_draft.csv")
 OUT_JSON = output_path("manual_visual_qa_operator_decision_draft.json")
 COPY_TARGET = "operator/inbox/manual_visual_qa_operator_decisions.csv"
-ALLOWED_DECISIONS = "approve_for_manual_next_step|hold|revise"
+ALLOWED_DECISIONS = "hold|revise|approve_for_manual_next_step"
 
 DRAFT_FIELDS = [
     "decision_draft_id",
@@ -95,13 +95,13 @@ def build_draft_row(intake_row: Dict[str, str], intake_path: Path | None) -> Dic
         copy_status = "ready_for_operator_fill_after_opening_preview"
         instructions = (
             f"Copy this row to {COPY_TARGET} only after opening the preview and QA report. "
-            "Fill operator_decision with approve_for_manual_next_step, hold, or revise plus notes."
+            "Fill operator_decision with hold, revise, or approve_for_manual_next_step plus notes."
         )
     else:
         copy_status = "hold_or_revise_recommended_before_copy"
         instructions = (
             f"Copy to {COPY_TARGET} only if you are deliberately recording hold or revise. "
-            "Do not choose approve_for_manual_next_step until QA status is human_review_required with zero automated holds."
+            "Do not choose approve_for_manual_next_step until QA status is human_review_required with zero automated holds; it means approve for manual next step only."
         )
 
     return {
@@ -177,7 +177,7 @@ def report_lines(manifest: Dict[str, Any], rows: List[Dict[str, str]]) -> List[s
         f"2. Open the preview and QA report referenced in the row.",
         f"3. Copy the row into `{COPY_TARGET}` only after review.",
         f"4. Fill `operator_decision` with one of `{ALLOWED_DECISIONS}` plus notes.",
-        "5. Keep this as manual-next-step approval only; it is not a publishing approval.",
+        "5. Treat `approve_for_manual_next_step` as Approve for manual next step only; it is not a publishing approval.",
         "",
         "## Draft Rows",
         "",
