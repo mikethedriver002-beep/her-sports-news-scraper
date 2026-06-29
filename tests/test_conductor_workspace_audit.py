@@ -32,6 +32,8 @@ def test_conductor_workspace_audit_writes_review_only_outputs(tmp_path: Path, mo
     assert manifest["version"] == "hsd-conductor-workspace-audit-v1-review-only"
     assert manifest["status"] == "passed"
     assert manifest["collision_blocker_count"] == 0
+    assert manifest["origin_main_alignment"]["status"] == "passed"
+    assert manifest["origin_main_alignment"]["blocker_count"] == 0
     assert manifest["review_only"] is True
     assert manifest["guardrails"]["paid_apis"] is False
     assert manifest["guardrails"]["source_fetching"] is False
@@ -44,12 +46,14 @@ def test_conductor_workspace_audit_writes_review_only_outputs(tmp_path: Path, mo
     assert manifest["guardrails"]["publishing"] is False
     assert {row["check_id"] for row in rows} >= {
         "directive_schema_and_example",
+        "current_origin_main_alignment",
         "shared_mutable_directive_paths",
         "committed_runtime_state",
     }
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["publish_ready"] == "false" for row in rows)
     assert "Status: review-only conductor reliability artifact." in markdown
+    assert "Current origin/main alignment: `passed`" in markdown
     assert "No automatic downloads." in markdown
     assert "No publish-ready lane." in markdown
 
@@ -85,11 +89,42 @@ def test_conductor_workspace_audit_blocks_committed_runtime_state(monkeypatch) -
     assert audit["tracked_runtime_state_count"] == 1
 
 
+def test_conductor_workspace_audit_blocks_stale_origin_main_alignment(monkeypatch) -> None:
+    module = load_module()
+
+    def fake_git_value(args: list[str], default: str = "unknown") -> str:
+        values = {
+            ("rev-parse", "--short", "HEAD"): "feature123",
+            ("rev-parse", "--short", "origin/main"): "main999",
+            ("merge-base", "HEAD", "origin/main"): "oldbase1000000000000000000000000000000000000",
+        }
+        return values.get(tuple(args), default)
+
+    monkeypatch.setattr(module, "git_value", fake_git_value)
+
+    alignment = module.collect_origin_main_alignment()
+
+    assert alignment["status"] == "blocked"
+    assert alignment["blocker_count"] == 1
+    assert alignment["head_commit"] == "feature123"
+    assert alignment["origin_main_commit"] == "main999"
+    assert alignment["merge_base_commit"] == "oldbase1"
+    assert "rebase or recreate" in alignment["detail"]
+
+
 def test_conductor_workspace_hash_is_stable_for_same_audit_payload(monkeypatch) -> None:
     module = load_module()
     payload = {
         "version": module.VERSION,
         "git_state": {"branch": "codex/workflow-test", "head_commit": "abc123", "dirty_count": 0},
+        "origin_main_alignment": {
+            "status": "passed",
+            "blocker_count": 0,
+            "head_commit": "abc123",
+            "origin_main_commit": "abc123",
+            "merge_base_commit": "abc123",
+            "detail": "branch contains current origin/main",
+        },
         "directive_validation": {"status": "passed", "blockers": []},
         "shared_directive_audit": {"present_shared_directive_paths": [], "present_shared_directive_count": 0},
         "runtime_tracking_audit": {"tracked_runtime_state_paths": [], "tracked_runtime_state_count": 0},
