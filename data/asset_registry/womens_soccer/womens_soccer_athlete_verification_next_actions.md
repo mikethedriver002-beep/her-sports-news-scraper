@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Verification Next Actions
 
-Generated: `2026-06-28T16:09:52.677745+00:00`
+Generated: `2026-06-29T05:42:22.538606+00:00`
 
 Review-only NWSL-first worksheet for turning the verification queue into manual operator steps. Generated human-decision fields stay blank or `download_approved=no`; this artifact does not download, approve, publish, write headshots, create markers, or change candidate state.
 
