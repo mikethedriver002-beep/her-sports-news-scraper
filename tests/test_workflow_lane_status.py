@@ -52,9 +52,22 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["completed_lane_count"] == 0
     assert manifest["guardrail_warning_count"] == 0
     assert manifest["worktree_hint_lane_count"] == 0
+    assert manifest["unreported_lane_count"] == 6
+    assert manifest["heartbeat_lane_count"] == 1
+    assert manifest["workflow_overhaul_heartbeat"]["active"] is True
+    assert manifest["workflow_overhaul_heartbeat"]["status"] == "heartbeat_visible_needs_conductor_check"
+    assert manifest["workflow_overhaul_heartbeat"]["guardrails"]["review_only"] is True
+    assert manifest["workflow_overhaul_heartbeat"]["guardrails"]["automatic_downloads"] is False
     assert {row["lane_id"] for row in rows} >= {"workflow_overhaul", "qa_release_readiness"}
+    workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
     assert "status_source" in rows[0]
     assert "completed_merge_pr" in rows[0]
+    assert "heartbeat" in rows[0]
+    assert workflow["status"] == "heartbeat_visible_needs_conductor_check"
+    assert workflow["status_source"] == "workflow_heartbeat"
+    assert workflow["status_tone"] == "idle"
+    assert workflow["heartbeat"] == "true"
+    assert "open PRs" in workflow["heartbeat_next_action"]
     assert "review_only" in rows[0]
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["publish_ready"] == "false" for row in rows)
@@ -63,6 +76,9 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "No automatic downloads." in markdown
     assert "workflow_lane_status_intake.example.csv" in markdown
     assert "best-effort worktree hints" in markdown
+    assert "## Workflow Overhaul Heartbeat" in markdown
+    assert "Continuous visibility heartbeat" in markdown
+    assert "Do not fetch sources, download assets, approve assets" in markdown
 
 
 def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monkeypatch) -> None:
@@ -273,6 +289,7 @@ def test_workflow_lane_status_links_open_pr_from_worktree_hint(tmp_path: Path, m
     assert workflow["status"] == "pr_open_from_worktree_hint"
     assert workflow["pr"] == "https://github.com/example/hsd/pull/328"
     assert workflow["status_source"] == "worktree_hint"
+    assert workflow["heartbeat"] == "false"
 
 
 def test_workflow_lane_status_ignores_merged_worktree_hints(tmp_path: Path, monkeypatch) -> None:
@@ -300,8 +317,9 @@ def test_workflow_lane_status_ignores_merged_worktree_hints(tmp_path: Path, monk
     )
     workflow = next(row for row in hinted_rows if row["lane_id"] == "workflow_overhaul")
 
-    assert workflow["status"] == "unreported"
-    assert workflow["status_source"] == "default"
+    assert workflow["status"] == "heartbeat_visible_needs_conductor_check"
+    assert workflow["status_source"] == "workflow_heartbeat"
+    assert workflow["heartbeat"] == "true"
     assert workflow["branch"] == ""
     assert workflow["detected_worktree"] == ""
 
