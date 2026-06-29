@@ -87,6 +87,12 @@ def test_generated_state_quarantine_covers_daily_pipeline_outputs() -> None:
         "story_proof_card_v1.md",
         "story_proof_card_v1.csv",
         "story_proof_card_v1.json",
+        "breaking_public_signal_next_action_v1.md",
+        "breaking_public_signal_next_action_v1.csv",
+        "breaking_public_signal_next_action_v1.json",
+        "breaking_public_signal_return_summary_v1.md",
+        "breaking_public_signal_return_summary_v1.csv",
+        "breaking_public_signal_return_summary_v1.json",
         "game_source_confirmation_bridge_v1.md",
         "game_source_confirmation_bridge_v1.csv",
         "game_source_confirmation_bridge_v1.json",
@@ -178,6 +184,18 @@ def test_local_runner_collects_game_source_confirmation_return_summary_for_lates
     assert '"game_source_confirmation_return_summary_v1.md"' in collector
     assert '"game_source_confirmation_return_summary_v1.csv"' in collector
     assert '"game_source_confirmation_return_summary_v1.json"' in collector
+
+
+def test_local_runner_collects_breaking_public_signal_return_summary_for_latest() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    collector = runner[runner.index("function Collect-HsdArtifacts") : runner.index("function Invoke-HsdRun")]
+
+    assert '"breaking_public_signal_next_action_v1.md"' in collector
+    assert '"breaking_public_signal_next_action_v1.csv"' in collector
+    assert '"breaking_public_signal_next_action_v1.json"' in collector
+    assert '"breaking_public_signal_return_summary_v1.md"' in collector
+    assert '"breaking_public_signal_return_summary_v1.csv"' in collector
+    assert '"breaking_public_signal_return_summary_v1.json"' in collector
 
 
 def test_local_runner_collects_final_score_stat_proof_for_latest() -> None:

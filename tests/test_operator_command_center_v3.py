@@ -38,6 +38,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "breaking_public_signal_next_action_v1.md" in artifact_paths
     assert "breaking_public_signal_next_action_v1.csv" in artifact_paths
     assert "breaking_public_signal_next_action_v1.json" in artifact_paths
+    assert "breaking_public_signal_return_summary_v1.md" in artifact_paths
+    assert "breaking_public_signal_return_summary_v1.csv" in artifact_paths
+    assert "breaking_public_signal_return_summary_v1.json" in artifact_paths
     assert "game_source_confirmation_bridge_v1.md" in artifact_paths
     assert "game_source_confirmation_bridge_v1.csv" in artifact_paths
     assert "game_source_confirmation_bridge_v1.json" in artifact_paths
@@ -5358,6 +5361,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/hockey_softball_quarantine_download_intake.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_quarantine_download_intake.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
+    assert artifact_by_path["breaking_public_signal_return_summary_v1.md"]["run_command"] == ".\\hsd.cmd run -Mode news"
+    assert artifact_by_path["breaking_public_signal_return_summary_v1.csv"]["run_command"] == ".\\hsd.cmd run -Mode news"
+    assert artifact_by_path["breaking_public_signal_return_summary_v1.json"]["run_command"] == ".\\hsd.cmd run -Mode news"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_sport_entity_source_map_board_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
