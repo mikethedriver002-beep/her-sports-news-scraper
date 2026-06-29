@@ -4044,6 +4044,20 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "evidence": "editorial_call=REVISE_PREMIUM_FINAL_SCORE; review_draft_acceptance=acceptable_review_draft_only; visual_mode=photo_first_performer; candidate_status=pending_manual_action_photo_candidate; Operator should mark revise/hold for premium sports editorial until a manually cleared action-photo candidate is available.",
                 },
                 {
+                    "check_id": "action_photo_readiness_review",
+                    "check_label": "Action-photo readiness review cue",
+                    "qa_result": "pass_human_review_required",
+                    "passed": True,
+                    "evidence": "final_score_context=True; visual_mode=photo_first_performer; hero_mode=approved_headshot_bridge_action_photo_ready; candidate_status=pending_manual_action_photo_candidate; readiness_contract=headshot_bridge_review_draft_ok_action_photo_candidate_required_for_premium_final_score; premium final-score editorial needs a manually cleared action-photo candidate.",
+                },
+                {
+                    "check_id": "composition_balance_readiness_review",
+                    "check_label": "Composition balance readiness cue",
+                    "qa_result": "pass_human_review_required",
+                    "passed": True,
+                    "evidence": "final_score_context=True; headshot_bridge=approved_local_headshot_review_draft_only_not_premium_final_score; composition_contract=headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved; roster_portrait_risk=Headshot bridge is review-draft-only and subordinate to the action-photo route.",
+                },
+                {
                     "check_id": "premium_editorial_clutter_scan",
                     "check_label": "Premium editorial clutter scan",
                     "qa_result": "pass_human_review_required",
@@ -5728,17 +5742,23 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
-    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:4] == [
+    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:6] == [
         "Premium route limit",
+        "Action-photo readiness",
+        "Bridge/composition balance",
         "Premium editorial clutter scan",
         "Title contrast and fit",
         "Score/team readability",
     ]
     assert payload["operator_decision_panel"]["qa_cues"][0]["tone"] == "warn"
     assert "REVISE_PREMIUM_FINAL_SCORE" in payload["operator_decision_panel"]["qa_cues"][0]["evidence"]
-    assert payload["operator_decision_panel"]["qa_cues"][1]["tone"] == "good"
-    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][1]["evidence"]
-    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][2]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][1]["tone"] == "warn"
+    assert "pending_manual_action_photo_candidate" in payload["operator_decision_panel"]["qa_cues"][1]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][2]["tone"] == "warn"
+    assert "headshot_bridge_not_roster_portrait" in payload["operator_decision_panel"]["qa_cues"][2]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][3]["tone"] == "good"
+    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][3]["evidence"]
+    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][4]["evidence"]
     assert any(item["label"] == "Player ledger readability" for item in payload["operator_decision_panel"]["qa_cues"])
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])

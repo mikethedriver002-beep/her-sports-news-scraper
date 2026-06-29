@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.87.0-premium-route-limit-cue"
+VERSION = "hsd-operator-command-center-v3.88.0-action-photo-limit-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3728,6 +3728,8 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
     checks = qa.get("checks") if isinstance(qa.get("checks"), list) else []
     wanted = [
         "premium_editorial_route_limit_review",
+        "action_photo_readiness_review",
+        "composition_balance_readiness_review",
         "premium_editorial_clutter_scan",
         "headline_text_zone",
         "score_team_text_zone",
@@ -3739,6 +3741,8 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
     ]
     labels = {
         "premium_editorial_route_limit_review": "Premium route limit",
+        "action_photo_readiness_review": "Action-photo readiness",
+        "composition_balance_readiness_review": "Bridge/composition balance",
         "premium_editorial_clutter_scan": "Premium editorial clutter scan",
         "headline_text_zone": "Title contrast and fit",
         "score_team_text_zone": "Score/team readability",
@@ -3756,13 +3760,25 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
             continue
         result = clean(row.get("qa_result")) or ("pass" if row.get("passed") else "hold")
         passed = row.get("passed") is True or result.startswith("pass")
+        evidence = short(clean(row.get("evidence")), 260)
+        route_risk = check_id in {"action_photo_readiness_review", "composition_balance_readiness_review"} and any(
+            token in evidence.lower()
+            for token in [
+                "not_available_to_renderer",
+                "pending_manual_action_photo_candidate",
+                "headshot_bridge",
+                "premium final-score editorial needs",
+                "hold or revise",
+                "static roster portrait",
+            ]
+        )
         cues.append(
             {
                 "check_id": check_id,
                 "label": labels.get(check_id, clean(row.get("check_label")) or check_id),
                 "result": result,
-                "tone": "good" if passed else "warn",
-                "evidence": short(clean(row.get("evidence")), 260),
+                "tone": "warn" if route_risk or not passed else "good",
+                "evidence": evidence,
             }
         )
     return cues
