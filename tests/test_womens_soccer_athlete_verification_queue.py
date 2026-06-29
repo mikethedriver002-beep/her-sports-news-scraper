@@ -148,6 +148,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "issue_type": "roster_verify",
                 "source_domain": "www.angelcity.com",
                 "source_url": "https://www.angelcity.com/club/roster",
+                "source_priority": "P0",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -160,6 +161,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "issue_type": "source_verify",
                 "source_domain": "bayfc.com",
                 "source_url": "https://bayfc.com/roster",
+                "source_priority": "P1",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -172,6 +174,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "issue_type": "official_roster",
                 "source_domain": "www.chelseafc.com",
                 "source_url": "https://www.chelseafc.com/en/teams/women",
+                "source_priority": "P0_OFFICIAL_CLUB_ROSTER",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -184,6 +187,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "issue_type": "duplicate_same_source_page",
                 "source_domain": "www.chelseafc.com",
                 "source_url": "https://www.chelseafc.com/en/teams/women",
+                "source_priority": "P0_OFFICIAL_CLUB_ROSTER",
                 "official_status": "official_team",
                 "operator_verify_required": "yes",
             },
@@ -196,6 +200,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
                 "issue_type": "gray_area_backup",
                 "source_domain": "example.org",
                 "source_url": "https://example.org/wsl",
+                "source_priority": "P1_GRAY_AREA",
                 "official_status": "gray_area_public_source",
                 "operator_verify_required": "yes",
             },
@@ -209,6 +214,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
             "issue_type",
             "source_domain",
             "source_url",
+            "source_priority",
             "official_status",
             "operator_verify_required",
         ],
@@ -235,6 +241,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     photo_rows = read_csv(root / "womens_soccer_athlete_photo_review_readiness_board.csv")
     photo_manifest = json.loads((root / "womens_soccer_athlete_photo_review_readiness_board.json").read_text(encoding="utf-8"))
     photo_markdown = (root / "womens_soccer_athlete_photo_review_readiness_board.md").read_text(encoding="utf-8")
+    focus_rows = read_csv(root / "womens_soccer_athlete_operator_focus.csv")
+    focus_manifest = json.loads((root / "womens_soccer_athlete_operator_focus.json").read_text(encoding="utf-8"))
+    focus_markdown = (root / "womens_soccer_athlete_operator_focus.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "athlete_verification_queue_ready"
     assert manifest["queue_rows"] == 3
@@ -280,6 +289,19 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         "nwsl_roster_verify_before_photo_review": 2,
         "park_gray_area_lead_no_photo_use": 1,
         "resolve_duplicate_transfer_before_photo_review": 1,
+    }
+    assert manifest["operator_focus_rows"] == 4
+    assert manifest["operator_focus_p0_rows"] == 2
+    assert manifest["operator_focus_p1_rows"] == 2
+    assert manifest["operator_focus_duplicate_transfer_loan_stale_rows"] == 1
+    assert manifest["operator_focus_profile_gap_rows"] == 0
+    assert manifest["operator_focus_download_approved_yes_rows"] == 0
+    assert manifest["operator_focus_blank_source_url_rows"] == 4
+    assert manifest["operator_focus_bucket_counts"] == {
+        "1_duplicate_transfer_loan_stale_profile_check": 1,
+        "2_p0_roster_or_source_verify": 1,
+        "4_gray_area_or_reputable_lead": 1,
+        "5_p1_source_followup": 1,
     }
     by_team = {row["team_id"]: row for row in rows}
     assert by_team["angel_city_fc"]["queue_bucket"] == "p0_nwsl_roster_verification_first"
@@ -366,6 +388,7 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert row["approval_state_change"] == "false"
         assert row["publish_ready"] == "false"
     assert source_rows[0]["team_id"] == "angel_city_fc"
+    assert source_rows[0]["source_priority"] == "P0"
     assert source_rows[0]["linked_queue_bucket"] == "p0_nwsl_roster_verification_first"
     assert source_rows[1]["render_readiness"] == "not_render_ready_source_candidate_only"
     chelsea_row = next(row for row in source_rows if row["team_name"] == "Chelsea Women")
@@ -502,3 +525,44 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
         assert row["publish_ready"] == "false"
     assert "Photo Review Readiness Board" in photo_markdown
     assert "Generated local-download-law fields stay `download_approved=no`" in photo_markdown
+    assert focus_manifest["status"] == "athlete_operator_focus_ready"
+    assert focus_manifest["focus_rows"] == 4
+    assert focus_manifest["p0_rows"] == 2
+    assert focus_manifest["p1_rows"] == 2
+    assert focus_manifest["duplicate_transfer_loan_stale_rows"] == 1
+    assert focus_manifest["profile_gap_rows"] == 0
+    assert focus_manifest["download_approved_yes_rows"] == 0
+    assert focus_manifest["blank_source_url_rows"] == 4
+    assert focus_manifest["focus_bucket_counts"] == {
+        "1_duplicate_transfer_loan_stale_profile_check": 1,
+        "2_p0_roster_or_source_verify": 1,
+        "4_gray_area_or_reputable_lead": 1,
+        "5_p1_source_followup": 1,
+    }
+    assert [row["focus_bucket"] for row in focus_rows] == [
+        "1_duplicate_transfer_loan_stale_profile_check",
+        "2_p0_roster_or_source_verify",
+        "4_gray_area_or_reputable_lead",
+        "5_p1_source_followup",
+    ]
+    for row in focus_rows:
+        assert "womens_soccer_athlete_source_priority.csv#row=" in row["open_next_row_ref"]
+        assert "womens_soccer_athlete_source_priority.csv#row=" in row["source_priority_row_ref"]
+        assert "womens_soccer_athlete_candidate_next_action_board.csv#row=" in row["candidate_action_row_ref"]
+        assert row["why_row_matters"]
+        assert "Do not download assets" in row["do_not_do"]
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["review_only"] == "true"
+        assert row["asset_downloads"] == "false"
+        assert row["approval_state_change"] == "false"
+        assert row["publish_ready"] == "false"
+    duplicate_focus = focus_rows[0]
+    assert duplicate_focus["player_name"] == "Chelsea Player"
+    assert "duplicate_transfer_loan_stale_or_short_term_issue" in duplicate_focus["focus_reason_flags"]
+    assert "triage_row_ref" in focus_markdown
+    assert "Do not download assets" in focus_markdown

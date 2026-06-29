@@ -38,6 +38,9 @@ OUT_CANDIDATE_ACTIONS_JSON = output_path(ROOT / "womens_soccer_athlete_candidate
 OUT_PHOTO_READINESS_MD = output_path(ROOT / "womens_soccer_athlete_photo_review_readiness_board.md")
 OUT_PHOTO_READINESS_CSV = output_path(ROOT / "womens_soccer_athlete_photo_review_readiness_board.csv")
 OUT_PHOTO_READINESS_JSON = output_path(ROOT / "womens_soccer_athlete_photo_review_readiness_board.json")
+OUT_OPERATOR_FOCUS_MD = output_path(ROOT / "womens_soccer_athlete_operator_focus.md")
+OUT_OPERATOR_FOCUS_CSV = output_path(ROOT / "womens_soccer_athlete_operator_focus.csv")
+OUT_OPERATOR_FOCUS_JSON = output_path(ROOT / "womens_soccer_athlete_operator_focus.json")
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -300,6 +303,55 @@ PHOTO_READINESS_FIELDS = [
     "photo_asset_blocker",
     "future_download_intake_status",
     "next_manual_action",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+OPERATOR_FOCUS_FIELDS = [
+    "focus_rank",
+    "focus_bucket",
+    "focus_reason_flags",
+    "priority_label",
+    "manual_action_group",
+    "source_tier",
+    "scope_id",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_name",
+    "issue_type",
+    "operator_action",
+    "source_priority",
+    "official_status",
+    "confidence",
+    "operator_verify_required",
+    "source_domain",
+    "source_candidate_url",
+    "source_priority_row_ref",
+    "triage_row_ref",
+    "candidate_action_row_ref",
+    "open_next_file",
+    "open_next_row_ref",
+    "why_row_matters",
+    "next_manual_action",
+    "do_not_do",
     "download_approved",
     "source_url",
     "entity_id",
@@ -1527,6 +1579,203 @@ def render_photo_readiness(rows: List[Mapping[str, str]], generated_at: str) -> 
     return "\n".join(lines) + "\n"
 
 
+def operator_focus_reason_flags(row: Mapping[str, str]) -> List[str]:
+    flags: List[str] = []
+    priority = clean(row.get("source_priority")).upper()
+    issue = clean(row.get("issue_type")).lower()
+    group = clean(row.get("manual_action_group"))
+    if priority.startswith("P0"):
+        flags.append("p0_source_or_roster_row")
+    if priority.startswith("P1"):
+        flags.append("p1_source_or_roster_row")
+    if group == "duplicate_transfer_check" or any(
+        token in issue
+        for token in [
+            "duplicate",
+            "transfer",
+            "loan",
+            "stale_team_assignment",
+            "stale_player",
+            "expired",
+            "short_term",
+        ]
+    ):
+        flags.append("duplicate_transfer_loan_stale_or_short_term_issue")
+    if any(token in issue for token in ["missing_player_profile", "player_profile_candidate_gap", "profile"]):
+        flags.append("profile_or_official_page_gap")
+    if group == "gray_area_reputable_media_lead":
+        flags.append("gray_area_or_reputable_lead")
+    if group == "future_quarantine_download_intake_prep":
+        flags.append("future_intake_prep_only")
+    if clean(row.get("operator_verify_required")).lower() == "yes":
+        flags.append("operator_verify_required")
+    return flags
+
+
+def operator_focus_bucket(row: Mapping[str, str], flags: List[str]) -> str:
+    priority = clean(row.get("source_priority")).upper()
+    group = clean(row.get("manual_action_group"))
+    if "duplicate_transfer_loan_stale_or_short_term_issue" in flags:
+        return "1_duplicate_transfer_loan_stale_profile_check"
+    if priority.startswith("P0") or clean(row.get("linked_queue_bucket")) == "p0_nwsl_roster_verification_first":
+        return "2_p0_roster_or_source_verify"
+    if group == "official_page_missing_or_season_rollover_verify" or "profile_or_official_page_gap" in flags:
+        return "3_profile_or_official_page_gap"
+    if group == "gray_area_reputable_media_lead":
+        return "4_gray_area_or_reputable_lead"
+    if priority.startswith("P1"):
+        return "5_p1_source_followup"
+    if group == "future_quarantine_download_intake_prep":
+        return "6_future_intake_prep_only"
+    return "7_metadata_watch"
+
+
+def operator_focus_why(row: Mapping[str, str], bucket: str) -> str:
+    player = clean(row.get("player_name")) or "team/source row"
+    team = clean(row.get("team_name")) or clean(row.get("team_id"))
+    if bucket == "1_duplicate_transfer_loan_stale_profile_check":
+        return f"{player} has duplicate, transfer, loan, stale-profile, expired, or short-term metadata signals for {team}; verify official current status before any photo-review work."
+    if bucket == "2_p0_roster_or_source_verify":
+        return f"{team} is a P0 roster/source verification row; open the source and triage refs before any candidate-state writeback."
+    if bucket == "3_profile_or_official_page_gap":
+        return f"{player} may need an official profile or season-rollover page check; confirm the current official page before future intake."
+    if bucket == "4_gray_area_or_reputable_lead":
+        return f"{player} is backed by gray-area or reputable public-source metadata; park it until official roster/profile confirmation exists."
+    if bucket == "5_p1_source_followup":
+        return f"{team} is a P1 source follow-up; verify the advisory source row before considering later manual intake."
+    if bucket == "6_future_intake_prep_only":
+        return f"{team} may need future human-edited intake, but this generated row does not authorize download or approval."
+    return f"{team} remains metadata watch only; no asset or approval action is implied."
+
+
+def operator_focus_rows(candidate_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    output: List[Dict[str, str]] = []
+    for row in candidate_rows:
+        flags = operator_focus_reason_flags(row)
+        selection_flags = [flag for flag in flags if flag != "operator_verify_required"]
+        if not selection_flags:
+            continue
+        bucket = operator_focus_bucket(row, flags)
+        source_ref = clean(row.get("source_priority_row_ref"))
+        triage_ref = clean(row.get("triage_row_ref"))
+        open_ref = source_ref or triage_ref
+        output.append(
+            {
+                "focus_rank": "0",
+                "focus_bucket": bucket,
+                "focus_reason_flags": "|".join(flags),
+                "priority_label": clean(row.get("source_priority")) or clean(row.get("linked_queue_bucket")) or "manual_review",
+                "manual_action_group": clean(row.get("manual_action_group")),
+                "source_tier": clean(row.get("source_tier")),
+                "scope_id": clean(row.get("scope_id")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "player_name": clean(row.get("player_name")),
+                "issue_type": clean(row.get("issue_type")),
+                "operator_action": clean(row.get("operator_action")),
+                "source_priority": clean(row.get("source_priority")),
+                "official_status": clean(row.get("official_status")),
+                "confidence": clean(row.get("confidence")),
+                "operator_verify_required": clean(row.get("operator_verify_required")),
+                "source_domain": clean(row.get("source_domain")),
+                "source_candidate_url": clean(row.get("source_candidate_url")),
+                "source_priority_row_ref": source_ref,
+                "triage_row_ref": triage_ref,
+                "candidate_action_row_ref": f"{OUT_CANDIDATE_ACTIONS_CSV.as_posix()}#row={clean(row.get('candidate_action_rank'))}",
+                "open_next_file": clean(row.get("source_priority_file")) or clean(row.get("triage_file")),
+                "open_next_row_ref": open_ref,
+                "why_row_matters": operator_focus_why(row, bucket),
+                "next_manual_action": clean(row.get("next_manual_action")),
+                "do_not_do": "Do not download assets, write headshots, approve candidates, create .approved markers, move files, or publish from this generated row.",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                **guardrails(),
+            }
+        )
+    priority = {
+        "1_duplicate_transfer_loan_stale_profile_check": 10,
+        "2_p0_roster_or_source_verify": 20,
+        "3_profile_or_official_page_gap": 30,
+        "4_gray_area_or_reputable_lead": 40,
+        "5_p1_source_followup": 50,
+        "6_future_intake_prep_only": 60,
+        "7_metadata_watch": 70,
+    }
+    output.sort(
+        key=lambda item: (
+            priority.get(item["focus_bucket"], 999),
+            LEAGUE_ORDER.get(item["league_id"], 999),
+            clean(item.get("team_name")),
+            clean(item.get("player_name")),
+            clean(item.get("source_candidate_url")),
+        )
+    )
+    for index, row in enumerate(output, start=1):
+        row["focus_rank"] = str(index)
+    return output
+
+
+def render_operator_focus(rows: List[Mapping[str, str]], generated_at: str) -> str:
+    bucket_counts = count_by(rows, "focus_bucket")
+    lines = [
+        "# Women's Soccer Athlete Operator Focus",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only, artifact-only focus packet for the next manual verification actions. It compresses the source-priority, triage, and candidate-action boards into rows with exact refs to open next.",
+        "`source_candidate_url` remains advisory metadata. Generated local-download-law fields stay `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.",
+        "",
+        "## Summary",
+        "",
+        f"- Focus rows: `{len(rows)}`",
+        f"- P0 rows: `{sum(1 for row in rows if 'p0_source_or_roster_row' in clean(row.get('focus_reason_flags')).split('|'))}`",
+        f"- P1 rows: `{sum(1 for row in rows if 'p1_source_or_roster_row' in clean(row.get('focus_reason_flags')).split('|'))}`",
+        f"- Duplicate/transfer/loan/stale-profile rows: `{sum(1 for row in rows if 'duplicate_transfer_loan_stale_or_short_term_issue' in clean(row.get('focus_reason_flags')).split('|'))}`",
+        f"- Profile/official-page-gap rows: `{sum(1 for row in rows if 'profile_or_official_page_gap' in clean(row.get('focus_reason_flags')).split('|'))}`",
+        f"- Download-approved yes rows: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == 'yes')}`",
+        f"- Blank download-law source_url rows: `{sum(1 for row in rows if not clean(row.get('source_url')))}`",
+        "",
+        "## Focus Buckets",
+        "",
+    ]
+    lines.extend(f"- {bucket}: `{count}`" for bucket, count in bucket_counts.items())
+    lines += [
+        "",
+        "## Safe Operator Path",
+        "",
+        "- Open `open_next_row_ref`, then the paired `triage_row_ref`, before touching any manual intake.",
+        "- Use official roster/team/player pages to resolve duplicate, transfer, loan, stale-profile, and profile-gap rows.",
+        "- Keep gray-area and reputable-source leads parked until official confirmation exists.",
+        "- Do not download assets, write headshots, approve candidates, create `.approved` markers, move files, or publish from this packet.",
+        "",
+        "## Focus Preview",
+        "",
+        "| Rank | Bucket | Priority | Team | Player | Source Row | Triage Row | Why It Matters |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows[:50]:
+        lines.append(
+            "| {rank} | {bucket} | {priority} | {team} | {player} | {source_ref} | {triage_ref} | {why} |".format(
+                rank=clean(row.get("focus_rank")),
+                bucket=clean(row.get("focus_bucket")),
+                priority=clean(row.get("priority_label")).replace("|", "/"),
+                team=clean(row.get("team_name")).replace("|", "/"),
+                player=clean(row.get("player_name")).replace("|", "/"),
+                source_ref=clean(row.get("source_priority_row_ref")).replace("|", "%7C"),
+                triage_ref=clean(row.get("triage_row_ref")).replace("|", "%7C"),
+                why=clean(row.get("why_row_matters")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     generated_at = now_iso()
     rows = build_queue()
@@ -1537,6 +1786,7 @@ def main() -> int:
     triage_rows = review_triage_rows(rows, source_rows)
     candidate_rows = candidate_action_rows(source_rows, triage_rows)
     photo_readiness = photo_readiness_rows(candidate_rows)
+    focus_rows = operator_focus_rows(candidate_rows)
     write_csv(OUT_CSV, rows, FIELDS)
     write_text(OUT_MD, render_markdown(rows, generated_at))
     write_csv(OUT_NEXT_ACTIONS_CSV, action_rows, NEXT_ACTION_FIELDS)
@@ -1549,6 +1799,8 @@ def main() -> int:
     write_text(OUT_CANDIDATE_ACTIONS_MD, render_candidate_actions(candidate_rows, generated_at))
     write_csv(OUT_PHOTO_READINESS_CSV, photo_readiness, PHOTO_READINESS_FIELDS)
     write_text(OUT_PHOTO_READINESS_MD, render_photo_readiness(photo_readiness, generated_at))
+    write_csv(OUT_OPERATOR_FOCUS_CSV, focus_rows, OPERATOR_FOCUS_FIELDS)
+    write_text(OUT_OPERATOR_FOCUS_MD, render_operator_focus(focus_rows, generated_at))
     manifest = {
         "version": VERSION,
         "status": "athlete_verification_queue_ready",
@@ -1595,6 +1847,18 @@ def main() -> int:
         "photo_review_readiness_download_approved_yes_rows": sum(1 for row in photo_readiness if clean(row.get("download_approved")).lower() == "yes"),
         "photo_review_readiness_blank_source_url_rows": sum(1 for row in photo_readiness if not clean(row.get("source_url"))),
         "photo_review_readiness_bucket_counts": count_by(photo_readiness, "photo_review_readiness_bucket"),
+        "operator_focus_md": OUT_OPERATOR_FOCUS_MD.as_posix(),
+        "operator_focus_csv": OUT_OPERATOR_FOCUS_CSV.as_posix(),
+        "operator_focus_rows": len(focus_rows),
+        "operator_focus_p0_rows": sum(1 for row in focus_rows if "p0_source_or_roster_row" in clean(row.get("focus_reason_flags")).split("|")),
+        "operator_focus_p1_rows": sum(1 for row in focus_rows if "p1_source_or_roster_row" in clean(row.get("focus_reason_flags")).split("|")),
+        "operator_focus_duplicate_transfer_loan_stale_rows": sum(
+            1 for row in focus_rows if "duplicate_transfer_loan_stale_or_short_term_issue" in clean(row.get("focus_reason_flags")).split("|")
+        ),
+        "operator_focus_profile_gap_rows": sum(1 for row in focus_rows if "profile_or_official_page_gap" in clean(row.get("focus_reason_flags")).split("|")),
+        "operator_focus_download_approved_yes_rows": sum(1 for row in focus_rows if clean(row.get("download_approved")).lower() == "yes"),
+        "operator_focus_blank_source_url_rows": sum(1 for row in focus_rows if not clean(row.get("source_url"))),
+        "operator_focus_bucket_counts": count_by(focus_rows, "focus_bucket"),
         "inputs": [CONTACT_CSV.as_posix(), OPERATOR_BOARD_CSV.as_posix(), DOWNLOAD_INTAKE_CSV.as_posix(), EXTERNAL_RESEARCH_CSV.as_posix()],
         "review_only": True,
         "approval_state_change": False,
@@ -1751,7 +2015,41 @@ def main() -> int:
             "paid_apis": False,
         },
     )
-    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "photo_readiness_rows": len(photo_readiness), "queue": OUT_MD.as_posix()}, indent=2))
+    write_json(
+        OUT_OPERATOR_FOCUS_JSON,
+        {
+            "version": VERSION,
+            "status": "athlete_operator_focus_ready",
+            "generated_at_utc": generated_at,
+            "focus_rows": len(focus_rows),
+            "p0_rows": sum(1 for row in focus_rows if "p0_source_or_roster_row" in clean(row.get("focus_reason_flags")).split("|")),
+            "p1_rows": sum(1 for row in focus_rows if "p1_source_or_roster_row" in clean(row.get("focus_reason_flags")).split("|")),
+            "duplicate_transfer_loan_stale_rows": sum(
+                1 for row in focus_rows if "duplicate_transfer_loan_stale_or_short_term_issue" in clean(row.get("focus_reason_flags")).split("|")
+            ),
+            "profile_gap_rows": sum(1 for row in focus_rows if "profile_or_official_page_gap" in clean(row.get("focus_reason_flags")).split("|")),
+            "download_approved_yes_rows": sum(1 for row in focus_rows if clean(row.get("download_approved")).lower() == "yes"),
+            "blank_source_url_rows": sum(1 for row in focus_rows if not clean(row.get("source_url"))),
+            "focus_bucket_counts": count_by(focus_rows, "focus_bucket"),
+            "worksheet_md": OUT_OPERATOR_FOCUS_MD.as_posix(),
+            "worksheet_csv": OUT_OPERATOR_FOCUS_CSV.as_posix(),
+            "source_priority_csv": OUT_SOURCE_PRIORITY_CSV.as_posix(),
+            "triage_csv": OUT_REVIEW_TRIAGE_CSV.as_posix(),
+            "candidate_action_csv": OUT_CANDIDATE_ACTIONS_CSV.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    print(json.dumps({"version": VERSION, "status": manifest["status"], "queue_rows": len(rows), "next_action_rows": len(action_rows), "source_priority_rows": len(source_rows), "review_triage_rows": len(triage_rows), "candidate_action_rows": len(candidate_rows), "photo_readiness_rows": len(photo_readiness), "operator_focus_rows": len(focus_rows), "queue": OUT_MD.as_posix()}, indent=2))
     return 0
 
 
