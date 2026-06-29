@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.56.0-composition-balance-review-cues"
+VERSION = "hsd-manual-review-renderer-v1.58.0-core-watermark-lock"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -78,10 +78,14 @@ RENDER_BACKGROUND_CUES = (
     "action_photo_readiness_visual_qa,headshot_bridge_review_draft_only,"
     "premium_final_score_action_photo_required,composition_balance_visual_qa,"
     "headshot_bridge_not_roster_portrait,action_photo_replacement_balance_ready,"
+    "borderless_score_text_treatment,lower_rail_open_editorial_treatment,"
+    "softened_wireframe_texture,dashboard_panel_risk_visual_qa,"
+    "lower_third_box_risk_visual_qa,roster_headshot_risk_visual_qa,"
     "anti_dashboard_visual_qa,stat_proof_rail,generated_preview_qa"
 )
 REVIEW_DRAFT_PILL_LABEL = "REVIEW DRAFT ONLY"
 REVIEW_DRAFT_FOOTER_LABEL = "REVIEW DRAFT ONLY - HUMAN CHECK REQUIRED"
+REVIEW_WATERMARK_CONTRACT = "permanent_top_and_footer_review_only_diagnostic_lock"
 PUBLIC_RENDER_BANNED_CANVAS_PHRASES = [
     "PHOTO-FIRST / STAT PROOF CHECK",
     "MATCHUP ANGLE",
@@ -1314,6 +1318,21 @@ def draw_reference_guardrail(image: Any, *, compact_footer: bool = False) -> Non
             uppercase=False,
             stroke=marker_type["stroke"],
         )
+    footer_h = 24 if compact_footer else 28
+    footer_top = height - (48 if compact_footer else 64)
+    footer_bottom = footer_top + footer_h
+    draw.rectangle((54, footer_top, width - 54, footer_bottom), fill=(*PALETTE["red"], 238))
+    draw_reference_text(
+        image,
+        (70, footer_top + 2, width - 140, footer_h - 2),
+        REVIEW_DRAFT_FOOTER_LABEL,
+        "context",
+        20 if not compact_footer else 17,
+        12,
+        PALETTE["ink"],
+        max_lines=1,
+        align="left",
+    )
 
 
 def team_registry() -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
@@ -3326,12 +3345,20 @@ def draw_photo_first_score_row(
     draw = ImageDraw.Draw(image, "RGBA")
     rail_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(rail_shadow, "RGBA")
-    shadow_draw.rounded_rectangle((x + 8, y + 26, x + w + 6, y + h + 2), radius=12, fill=(0, 0, 0, 14))
+    shadow_draw.polygon(
+        [
+            (x + 4, y + h - 36),
+            (x + w - 38, y + h - 58),
+            (x + w + 4, y + h - 4),
+            (x + 18, y + h + 3),
+        ],
+        fill=(0, 0, 0, 7 if winner else 4),
+    )
     if ImageFilter is not None:
-        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(13))
+        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(18))
     image.alpha_composite(rail_shadow)
-    draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 50 if winner else 24), width=2 if winner else 1)
-    draw.line((x + 1, y + 34, x + 1, y + h - 34), fill=(*accent, 68 if winner else 30), width=3 if winner else 2)
+    draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 38 if winner else 18), width=2 if winner else 1)
+    draw.line((x + 1, y + 40, x + 1, y + h - 40), fill=(*accent, 50 if winner else 20), width=2 if winner else 1)
     logo_size = min(h - 46, 86 if winner else 58)
     logo_box = (x + 32, y + (h - logo_size) // 2 + (18 if not compact else 14), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner, treatment="editorial_identifier")
@@ -3353,16 +3380,16 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(score_glow, "RGBA")
-    glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, 24 if winner else 8))
+    glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, 18 if winner else 6))
     if ImageFilter is not None:
         score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
     image.alpha_composite(score_glow)
-    draw.line((sx + 8, sy + 12, sx + 8, sy + sh - 12), fill=(*accent, 90 if winner else 46), width=2)
-    draw.line((sx + 24, sy + sh - 8, sx + sw - 6, sy + sh - 8), fill=(*accent, 44 if winner else 24), width=1)
-    draw.line((sx + 30, sy + 8, sx + sw - 14, sy + 8), fill=(248, 250, 255, 126 if winner else 54), width=1)
+    draw.line((sx + 8, sy + 14, sx + 8, sy + sh - 14), fill=(*accent, 68 if winner else 30), width=2)
+    draw.line((sx + 24, sy + sh - 8, sx + sw - 6, sy + sh - 8), fill=(*accent, 32 if winner else 16), width=1)
+    draw.line((sx + 30, sy + 8, sx + sw - 14, sy + 8), fill=(248, 250, 255, 82 if winner else 34), width=1)
     cell = photo_first_score_digit_cell_box(score_box)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
-    score_size = min(score_type["resolved_size"] + (6 if winner else 2), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
+    score_size = min(score_type["resolved_size"] + (12 if winner else 4), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
     min_score_size = score_type["resolved_min"]
     draw_reference_text(
         image,
@@ -3390,13 +3417,19 @@ def draw_photo_first_score_context_rail(
     draw = ImageDraw.Draw(image, "RGBA")
     shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow, "RGBA")
-    shadow_draw.rounded_rectangle((x + 4, y + 8, x + w + 4, y + h + 8), radius=13, fill=(0, 0, 0, 34))
+    shadow_draw.polygon(
+        [(x + 4, y + h - 14), (x + w - 18, y + 9), (x + w + 4, y + h - 4), (x + 14, y + h + 6)],
+        fill=(0, 0, 0, 12),
+    )
     if ImageFilter is not None:
-        shadow = shadow.filter(ImageFilter.GaussianBlur(5))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(12))
     image.alpha_composite(shadow)
-    draw.rounded_rectangle((x + 2, y + 8, x + w - 2, y + h - 8), radius=11, fill=(2, 4, 9, 54))
-    draw.line((x + 5, y + 17, x + 5, y + h - 17), fill=(*primary, 118), width=2)
-    draw.line((x + 26, y + 12, x + w - 26, y + 12), fill=(*PALETTE["gold"], 42), width=1)
+    draw.polygon(
+        [(x + 10, y + 13), (x + w - 12, y + 8), (x + w - 20, y + h - 9), (x + 5, y + h - 13)],
+        fill=(2, 4, 9, 18),
+    )
+    draw.line((x + 7, y + 19, x + 7, y + h - 19), fill=(*primary, 96), width=2)
+    draw.line((x + 30, y + 13, x + w - 30, y + 13), fill=(*PALETTE["gold"], 30), width=1)
     context_type = photo_first_type_spec("context_rail", compact=h <= 54)
     draw_reference_text(
         image,
@@ -3441,7 +3474,7 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
             (x + w - 24, y + h - 10),
             (x + 20, y + h + 6),
         ],
-        fill=(0, 0, 0, 30),
+        fill=(0, 0, 0, 16),
     )
     wash_draw.polygon(
         [
@@ -3450,16 +3483,16 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
             (x + int(w * 0.86), y + h - 2),
             (x + 34, y + h - 4),
         ],
-        fill=(*accent, 15),
+        fill=(*accent, 9),
     )
     if ImageFilter is not None:
         wash = wash.filter(ImageFilter.GaussianBlur(9))
     image.alpha_composite(wash)
     band = Image.new("RGBA", image.size, (0, 0, 0, 0))
     band_draw = ImageDraw.Draw(band, "RGBA")
-    band_draw.line((x + 34, y + 16, x + w - 44, y + 5), fill=(*PALETTE["gold"], 54), width=1)
-    band_draw.line((x + 34, y + h - 11, x + int(x + w * 0.52), y + h - 18), fill=(248, 250, 255, 14), width=1)
-    band_draw.line((x + 16, y + 24, x + 16, y + h - 20), fill=(*accent, 116), width=2)
+    band_draw.line((x + 34, y + 16, x + w - 44, y + 5), fill=(*PALETTE["gold"], 42), width=1)
+    band_draw.line((x + 34, y + h - 11, x + int(x + w * 0.52), y + h - 18), fill=(248, 250, 255, 10), width=1)
+    band_draw.line((x + 16, y + 26, x + 16, y + h - 22), fill=(*accent, 78), width=1)
     image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
@@ -3982,11 +4015,11 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
     athlete_focal_contract = "logo_score_fallback_not_athlete_led"
     fallback_comparison_status = "fallback_active_label_no_athlete_photo"
     fallback_comparison_note = "No athlete/person focal frame rendered; hold if the handoff expected an athlete-led result or if the score treatment reads like a dashboard card."
-    score_layout_contract = "logo_first_editorial_score_spine_no_dashboard_panels"
+    score_layout_contract = "logo_first_borderless_editorial_score_spine_no_dashboard_panels"
     anti_dashboard_contract = "open_score_spine_no_nested_cards_no_metric_tiles"
-    anti_dashboard_review_cue = "Hold or revise if the no-photo fallback reads as a dashboard card, boxed scoreboard, or ad unit instead of a premium sports editorial plate."
-    lower_third_contract = "editorial_stat_rail_no_heavy_card_container"
-    lower_third_review_cue = "Hold or revise if lower stat/caption treatment reads as a card, dashboard module, or heavy boxed lower-third."
+    anti_dashboard_review_cue = "Hold or revise if the no-photo fallback reads as a dashboard card, boxed scoreboard row, solid backing panel, or ad unit instead of a premium sports editorial plate."
+    lower_third_contract = "editorial_stat_rail_open_no_heavy_card_container"
+    lower_third_review_cue = "Hold or revise if lower stat/caption treatment reads as a card, dashboard module, solid lower-third box, or heavy boxed lower-third."
     hero_image_mode = "logo_score_fallback_no_person_image"
     hero_image_source_class = "no_local_hero_image"
     action_photo_hero_contract = "manual_review_action_photo_not_available_no_download"
@@ -4029,11 +4062,11 @@ def visual_mode_contract(content_module: Dict[str, Any], layout: Dict[str, str] 
         athlete_focal_contract = "approved_or_review_local_person_image_primary"
         fallback_comparison_status = "fallback_not_used_athlete_preview_ready"
         fallback_comparison_note = "Photo-first athlete/person frame is the primary editorial focal point; logo-only fallback should appear only when the handoff loses photo/stat eligibility."
-        score_layout_contract = "photo_first_score_team_caption_clearance_locked"
-        anti_dashboard_contract = "photo_first_borderless_score_stage_no_dashboard_panels"
-        anti_dashboard_review_cue = "Hold or revise if the photo-first score rails become boxed widgets or compete with the athlete focal point."
-        lower_third_contract = "photo_first_integrated_stat_caption_rail_no_heavy_panel"
-        lower_third_review_cue = "Hold or revise if the lower stat strip becomes a heavy panel or competes with the athlete/score hierarchy."
+        score_layout_contract = "photo_first_borderless_score_typography_clearance_locked"
+        anti_dashboard_contract = "photo_first_borderless_score_text_no_row_panels_no_dashboard_widgets"
+        anti_dashboard_review_cue = "Hold or revise if the photo-first score rails become boxed widgets, row containers, solid backing panels, or compete with the athlete focal point."
+        lower_third_contract = "photo_first_open_stat_caption_rail_no_boxed_panel"
+        lower_third_review_cue = "Hold or revise if the lower stat strip becomes a heavy panel, solid lower-third box, or competes with the athlete/score hierarchy."
         hero_image_mode = "approved_headshot_bridge_action_photo_ready"
         hero_image_source_class = "approved_local_headshot_bridge"
         hero_silhouette_mode = clean(cutout_contract.get("hero_silhouette_mode"))
@@ -4221,6 +4254,28 @@ def preview_title_crop_box(format_id: str, width: int, height: int) -> Tuple[int
     return (48, 110, width - 48, min(height, 304))
 
 
+def red_marker_ratio(image: Any, box: Tuple[int, int, int, int]) -> float:
+    x1, y1, x2, y2 = box
+    crop = image.convert("RGB").crop((max(0, x1), max(0, y1), min(image.size[0], x2), min(image.size[1], y2)))
+    data = crop.tobytes()
+    if not data:
+        return 0.0
+    red_pixels = 0
+    total = max(1, len(data) // 3)
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r >= 120 and g <= 95 and b <= 110:
+            red_pixels += 1
+    return red_pixels / total
+
+
+def preview_watermark_boxes(width: int, height: int) -> Dict[str, Tuple[int, int, int, int]]:
+    return {
+        "top": (max(0, width - 390), 58, width - 38, 158),
+        "footer": (40, max(0, height - 78), width - 40, height - 22),
+    }
+
+
 def preview_qa_for_path(path: Path, spec: Dict[str, Any]) -> Dict[str, Any]:
     row: Dict[str, Any] = {
         "format_id": clean(spec.get("format_id")),
@@ -4245,7 +4300,11 @@ def preview_qa_for_path(path: Path, spec: Dict[str, Any]) -> Dict[str, Any]:
         luma_stddev = float(stat.stddev[0]) if stat.stddev else 0.0
         expected_w = int(spec.get("width", 0))
         expected_h = int(spec.get("height", 0))
-        ok = bool(alpha_bbox) and width == expected_w and height == expected_h and title_bright_ratio >= 0.018 and luma_stddev >= 8.0
+        watermark_boxes = preview_watermark_boxes(width, height)
+        top_watermark_ratio = red_marker_ratio(image, watermark_boxes["top"])
+        footer_watermark_ratio = red_marker_ratio(image, watermark_boxes["footer"])
+        watermark_ok = top_watermark_ratio >= 0.003 and footer_watermark_ratio >= 0.120
+        ok = bool(alpha_bbox) and width == expected_w and height == expected_h and title_bright_ratio >= 0.018 and luma_stddev >= 8.0 and watermark_ok
         row.update(
             {
                 "status": "preview_qa_pass" if ok else "preview_qa_review_required",
@@ -4256,6 +4315,10 @@ def preview_qa_for_path(path: Path, spec: Dict[str, Any]) -> Dict[str, Any]:
                 "nonblank_bbox": list(alpha_bbox) if alpha_bbox else [],
                 "title_bright_ratio": round(title_bright_ratio, 4),
                 "luma_stddev": round(luma_stddev, 2),
+                "review_watermark_contract": REVIEW_WATERMARK_CONTRACT,
+                "review_watermark_status": "watermark_lock_pass" if watermark_ok else "watermark_lock_review_required",
+                "top_watermark_red_ratio": round(top_watermark_ratio, 4),
+                "footer_watermark_red_ratio": round(footer_watermark_ratio, 4),
                 "file_size_bytes": path.stat().st_size if path.exists() else 0,
                 "qa_policy": "generated_preview_visibility_only_not_asset_approval_or_publish_readiness",
             }
@@ -4610,6 +4673,10 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
         row["preview_qa_status"] = clean(qa_row.get("status"))
         row["preview_qa_title_bright_ratio"] = qa_row.get("title_bright_ratio", "")
         row["preview_qa_luma_stddev"] = qa_row.get("luma_stddev", "")
+        row["review_watermark_contract"] = REVIEW_WATERMARK_CONTRACT
+        row["review_watermark_status"] = clean(qa_row.get("review_watermark_status"))
+        row["top_watermark_red_ratio"] = qa_row.get("top_watermark_red_ratio", "")
+        row["footer_watermark_red_ratio"] = qa_row.get("footer_watermark_red_ratio", "")
         if clean(row.get("athlete_photo_layout_mode")) in {"photo_first_final_score", "square_photo_first_score_panel"}:
             geometry = photo_first_layout_geometry(spec)
             row["photo_first_template_geometry"] = geometry
