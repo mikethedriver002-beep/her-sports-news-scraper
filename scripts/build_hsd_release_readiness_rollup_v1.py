@@ -10,7 +10,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import input_path, write_csv, write_json, write_text
+from hsd_run_io import input_path, run_output_dir, write_csv, write_json, write_text
 from scripts import guardrail_check
 
 
@@ -48,6 +48,16 @@ def repo_relative(path: Path) -> str:
         return path.resolve().relative_to(ROOT).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+def resolve_scan_path(scan_dir: str) -> tuple[Path, str]:
+    if scan_dir == DEFAULT_SCAN_DIR:
+        active_run_dir = run_output_dir()
+        if active_run_dir:
+            return active_run_dir, repo_relative(active_run_dir)
+    path = Path(scan_dir)
+    resolved = path if path.is_absolute() else ROOT / path
+    return resolved.resolve(), scan_dir
 
 
 def git_value(args: list[str], default: str = "unknown") -> str:
@@ -103,11 +113,11 @@ def row(
 
 
 def scan_latest_artifacts(scan_dir: str, config: dict[str, Any]) -> dict[str, Any]:
-    path = (ROOT / scan_dir).resolve()
+    path, evidence_path = resolve_scan_path(scan_dir)
     if not path.exists():
         return {
             "status": "not_found",
-            "scan_dir": scan_dir,
+            "scan_dir": evidence_path,
             "scan_files_checked": 0,
             "violation_count": 0,
             "violations": [],
@@ -117,7 +127,7 @@ def scan_latest_artifacts(scan_dir: str, config: dict[str, Any]) -> dict[str, An
     violations = guardrail_check.scan_directory(path, config)
     return {
         "status": "blocked" if violations else "passed",
-        "scan_dir": repo_relative(path),
+        "scan_dir": evidence_path,
         "scan_files_checked": scan_files_checked,
         "violation_count": len(violations),
         "violations": [violation.as_dict() for violation in violations],
