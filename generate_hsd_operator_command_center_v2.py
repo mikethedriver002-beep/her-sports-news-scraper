@@ -117,7 +117,9 @@ NEXT_ACTION_SYNTHESIS_FIELDS = [
     "lane",
     "manual_step",
     "primary_artifact",
+    "primary_resolved_path",
     "companion_artifact",
+    "companion_resolved_path",
     "operator_return_fields",
     "guardrail_note",
     "artifact_status",
@@ -282,6 +284,9 @@ MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS = [
 ]
 
 COMMAND_CENTER_GENERATED_ARTIFACTS = {
+    "operator_next_action_synthesis.md",
+    "operator_next_action_synthesis.csv",
+    "operator_next_action_synthesis.json",
     "render_handoff_top_packet/active_asset_review_queue.md",
     "render_handoff_top_packet/active_asset_review_queue.csv",
     "render_handoff_top_packet/manual_asset_source_board.md",
@@ -7653,15 +7658,19 @@ def next_action_synthesis_row(
     operator_return_fields: str,
     guardrail_note: str,
 ) -> Dict[str, str]:
+    primary_path = find_existing_input(primary_artifact)
+    companion_path = find_existing_input(companion_artifact)
     return {
         "rank": str(rank),
         "lane": lane,
         "manual_step": manual_step,
         "primary_artifact": primary_artifact,
+        "primary_resolved_path": primary_path.as_posix() if primary_path.exists() else "",
         "companion_artifact": companion_artifact,
+        "companion_resolved_path": companion_path.as_posix() if companion_path.exists() else "",
         "operator_return_fields": operator_return_fields,
         "guardrail_note": guardrail_note,
-        "artifact_status": "ready_to_open" if find_existing_input(primary_artifact).exists() else "missing_or_not_generated",
+        "artifact_status": "ready_to_open" if primary_path.exists() else "missing_or_not_generated",
         "run_command": RUN_COMMANDS.get(primary_artifact, ""),
     }
 
@@ -8107,6 +8116,7 @@ def render_next_action_synthesis(rows: Iterable[Dict[str, str]]) -> str:
                 <div class="row-kicker">{html.escape(row['lane'])} {pill(row.get('artifact_status'), status_tone_value)}</div>
                 <h3>{html.escape(row['manual_step'])}</h3>
                 <p><strong>Return fields:</strong> {html.escape(row.get('operator_return_fields', ''))}</p>
+                <p><strong>Resolved local path:</strong> {html.escape(row.get('primary_resolved_path') or 'missing_or_not_generated')}</p>
                 <p>{html.escape(row.get('guardrail_note', 'Review-only.'))}</p>
                 {command_hint(row.get('run_command', ''))}
               </div>
@@ -11186,6 +11196,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         (
             f"{row['rank']}. {row['lane']} - {row['manual_step']} | "
             f"open: `{row['primary_artifact']}` | companion: `{row['companion_artifact']}` | "
+            f"resolved: `{row.get('primary_resolved_path') or 'missing_or_not_generated'}` | "
             f"return fields: {row['operator_return_fields']} | status: {row['artifact_status']}"
         )
         for row in payload.get("operator_next_action_synthesis", [])
@@ -12099,7 +12110,9 @@ def render_operator_next_action_synthesis_markdown(payload: Dict[str, Any]) -> s
                 "",
                 f"- Manual step: {row['manual_step']}",
                 f"- Open first: `{row['primary_artifact']}`",
+                f"- Resolved local path: `{row.get('primary_resolved_path') or 'missing_or_not_generated'}`",
                 f"- Companion: `{row['companion_artifact']}`",
+                f"- Companion resolved path: `{row.get('companion_resolved_path') or 'missing_or_not_generated'}`",
                 f"- Return fields: {row['operator_return_fields']}",
                 f"- Status: {row['artifact_status']}",
                 f"- Refresh command: `{row['run_command']}`" if row.get("run_command") else "- Refresh command: not required",

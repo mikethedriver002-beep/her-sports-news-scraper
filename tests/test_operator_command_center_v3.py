@@ -94,9 +94,11 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
         "Hockey/softball source returns",
     ]
     assert all(row["artifact_status"] == "ready_to_open" for row in rows)
+    assert all(row["primary_resolved_path"] for row in rows)
     assert all("no source fetching" in row["guardrail_note"] for row in rows)
     assert "Operator next-action synthesis" in html
     assert "Unified manual checklist" in html
+    assert "Resolved local path" in html
     assert "operator_decision, operator_notes" in html
     assert "operator_found_official_url" in html
     assert "breaking_public_signal_confirmation_intake.csv" in markdown
@@ -111,6 +113,7 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["counts"]["ready_to_open"] == 6
     assert "does not fetch sources" in synthesis_md
+    assert "Resolved local path" in synthesis_md
 
 
 def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monkeypatch) -> None:
@@ -2462,6 +2465,15 @@ def test_command_center_generated_artifacts_point_to_current_output_when_latest_
     intake_csv_artifact = by_path["render_handoff_top_packet/manual_logo_verification_intake.csv"]
     league_md_artifact = by_path["render_handoff_top_packet/manual_league_mark_context_intake.md"]
     league_csv_artifact = by_path["render_handoff_top_packet/manual_league_mark_context_intake.csv"]
+    synthesis_md_artifact = by_path["operator_next_action_synthesis.md"]
+    synthesis_csv_artifact = by_path["operator_next_action_synthesis.csv"]
+    synthesis_json_artifact = by_path["operator_next_action_synthesis.json"]
+    assert synthesis_md_artifact["status_detail"] == "Created with this command center run"
+    assert synthesis_csv_artifact["status_detail"] == "Created with this command center run"
+    assert synthesis_json_artifact["status_detail"] == "Created with this command center run"
+    assert synthesis_md_artifact["source_path"] == command_center.output_path("operator_next_action_synthesis.md").as_posix()
+    assert synthesis_csv_artifact["source_path"] == command_center.output_path("operator_next_action_synthesis.csv").as_posix()
+    assert synthesis_json_artifact["source_path"] == command_center.output_path("operator_next_action_synthesis.json").as_posix()
     assert md_artifact["status_detail"] == "Created with this command center run"
     assert csv_artifact["status_detail"] == "Created with this command center run"
     assert board_md_artifact["status_detail"] == "Created with this command center run"
