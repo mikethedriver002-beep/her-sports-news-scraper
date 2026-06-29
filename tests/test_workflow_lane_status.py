@@ -31,7 +31,7 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
 
     module = load_module()
-    assert module.main(["--skip-pr-lookup"]) == 0
+    assert module.main(["--skip-pr-lookup", "--skip-worktree-lookup"]) == 0
 
     dashboard = tmp_path / "run" / "workflow_lane_status_dashboard.md"
     manifest = json.loads((tmp_path / "run" / "workflow_lane_status_dashboard.json").read_text(encoding="utf-8"))
@@ -49,9 +49,12 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["publishing"] is False
     assert manifest["publish_ready"] is False
     assert manifest["lane_count"] == 7
+    assert manifest["worktree_hint_lane_count"] == 0
     assert {row["lane_id"] for row in rows} >= {"workflow_overhaul", "qa_release_readiness"}
+    assert "status_source" in rows[0]
     assert "Status: review-only conductor visibility artifact." in markdown
     assert "No automatic downloads." in markdown
+    assert "best-effort worktree hints" in markdown
 
 
 def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monkeypatch) -> None:
@@ -77,7 +80,7 @@ def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monk
         module.INTAKE_FIELDS,
     )
 
-    payload = module.build_payload(module.parse_args(["--skip-pr-lookup"]))
+    payload = module.build_payload(module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"]))
     renderer = next(row for row in payload["lanes"] if row["lane_id"] == "renderer_quality")
 
     assert renderer["status"] == "blocked_needs_human_visual_review"
@@ -86,6 +89,105 @@ def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monk
     assert renderer["blocker"] == "waiting for Gemini critique"
     assert renderer["next_action"] == "Send research packet, then choose one renderer polish PR."
     assert payload["blocked_lane_count"] == 1
+
+
+def test_workflow_lane_status_uses_worktree_branch_hints_without_manual_intake(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+
+    module = load_module()
+    payload = module.build_payload(
+        module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"])
+    )
+    hinted_rows = module.lane_rows(
+        [],
+        [],
+        payload["git_state"],
+        [
+            {
+                "path": r"C:\Users\Mike\.codex\worktrees\abcd\her-sports-news-scraper",
+                "branch": "codex/renderer-lower-third-polish",
+                "head": "123456",
+                "dirty": "false",
+                "dirty_count": "0",
+            }
+        ],
+    )
+    renderer = next(row for row in hinted_rows if row["lane_id"] == "renderer_quality")
+
+    assert renderer["status"] == "worktree_branch_detected_needs_conductor_check"
+    assert renderer["status_tone"] == "active"
+    assert renderer["status_source"] == "worktree_hint"
+    assert renderer["branch"] == "codex/renderer-lower-third-polish"
+    assert renderer["detected_worktree"].endswith(r"abcd\her-sports-news-scraper")
+    assert "dirty=false" in renderer["notes"]
+
+
+def test_workflow_lane_status_links_open_pr_from_worktree_hint(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+
+    module = load_module()
+    payload = module.build_payload(
+        module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"])
+    )
+    hinted_rows = module.lane_rows(
+        [],
+        [
+            {
+                "number": "328",
+                "title": "Add research alert draft helper",
+                "branch": "codex/workflow-research-alert-draft",
+                "state": "draft",
+                "url": "https://github.com/example/hsd/pull/328",
+            }
+        ],
+        payload["git_state"],
+        [
+            {
+                "path": r"C:\Users\Mike\.codex\worktrees\34b9\her-sports-news-scraper",
+                "branch": "codex/workflow-research-alert-draft",
+                "head": "abcdef",
+                "dirty": "false",
+                "dirty_count": "0",
+            }
+        ],
+    )
+    workflow = next(row for row in hinted_rows if row["lane_id"] == "workflow_overhaul")
+
+    assert workflow["status"] == "pr_open_from_worktree_hint"
+    assert workflow["pr"] == "https://github.com/example/hsd/pull/328"
+    assert workflow["status_source"] == "worktree_hint"
+
+
+def test_workflow_lane_status_prefers_asset_lane_for_hockey_softball_source_map(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+
+    module = load_module()
+    payload = module.build_payload(
+        module.parse_args(["--skip-pr-lookup", "--skip-worktree-lookup"])
+    )
+    hinted_rows = module.lane_rows(
+        [],
+        [],
+        payload["git_state"],
+        [
+            {
+                "path": r"C:\Users\Mike\.codex\worktrees\0e0d\her-sports-news-scraper",
+                "branch": "codex/hockey-softball-source-map-readiness",
+                "head": "fedcba",
+                "dirty": "false",
+                "dirty_count": "0",
+            }
+        ],
+    )
+    asset = next(row for row in hinted_rows if row["lane_id"] == "asset_registry_contact_sheets")
+    qa = next(row for row in hinted_rows if row["lane_id"] == "qa_release_readiness")
+
+    assert asset["status_source"] == "worktree_hint"
+    assert asset["branch"] == "codex/hockey-softball-source-map-readiness"
+    assert qa["status"] == "unreported"
 
 
 def test_local_runner_and_command_center_collect_workflow_lane_status() -> None:

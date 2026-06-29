@@ -124,6 +124,8 @@ Optional human-maintained intake can live at `operator/inbox/workflow_lane_statu
 
 `lane_id,status,branch,pr,owner,last_update_utc,blocker,next_action,notes`
 
+When no intake row exists, the dashboard also scans local Git worktrees for `codex/` branches whose names match lane hints such as `renderer`, `asset`, `games`, `breaking`, `copy`, `qa`, or `workflow`. These rows are marked as worktree hints and should be checked by the conductor before treating them as active lane truth. Use `--skip-worktree-lookup` for fixture tests or intentionally isolated runs.
+
 This dashboard is a conductor visibility aid only. It does not create branches, change approval state, download assets, move files, or publish.
 
 ## Standard Research Packet
