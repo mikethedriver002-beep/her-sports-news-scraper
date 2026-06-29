@@ -38,6 +38,9 @@ INTAKE_READINESS_SUMMARY_JSON = Path("data/asset_registry/hockey_softball_intake
 SOURCE_MAP_BOARD_MD = Path("data/asset_registry/hockey_softball_source_map_board.md")
 SOURCE_MAP_BOARD_CSV = Path("data/asset_registry/hockey_softball_source_map_board.csv")
 SOURCE_MAP_BOARD_JSON = Path("data/asset_registry/hockey_softball_source_map_board.json")
+SOURCE_RESEARCH_RETURN_INTAKE_MD = Path("data/asset_registry/hockey_softball_source_research_return_intake.md")
+SOURCE_RESEARCH_RETURN_INTAKE_CSV = Path("data/asset_registry/hockey_softball_source_research_return_intake.csv")
+SOURCE_RESEARCH_RETURN_INTAKE_JSON = Path("data/asset_registry/hockey_softball_source_research_return_intake.json")
 REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
 REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
 REVIEW_TRIAGE_JSON = Path("data/asset_registry/hockey_softball_asset_review_triage.json")
@@ -328,6 +331,57 @@ SOURCE_MAP_BOARD_FIELDS = [
     "auto_publish",
     "move_files",
     "paid_apis",
+]
+
+SOURCE_RESEARCH_RETURN_INTAKE_FIELDS = [
+    "return_order",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "asset_domain",
+    "source_lane",
+    "source_category",
+    "source_tier",
+    "source_search_macro",
+    "source_map_row_ref",
+    "source_map_board",
+    "operator_found_source_url",
+    "operator_source_title_or_caption",
+    "operator_source_date",
+    "operator_source_owner_or_publisher",
+    "operator_entity_id",
+    "operator_athlete_name",
+    "operator_team_context",
+    "operator_event_context",
+    "operator_rights_class",
+    "operator_identity_confidence",
+    "operator_intended_review_only_use",
+    "operator_source_notes",
+    "operator_decision",
+    "reviewed_by",
+    "reviewed_at_local",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "quarantine_folder",
+    "future_download_required_fields",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "logo_writes",
+    "segmentation_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+    "guardrail_note",
 ]
 
 REVIEW_TRIAGE_FIELDS = [
@@ -664,6 +718,10 @@ def existing_quarantine_download_rows() -> list[Dict[str, str]]:
     return read_csv(QUARANTINE_DOWNLOAD_INTAKE_CSV)
 
 
+def existing_source_research_return_rows() -> list[Dict[str, str]]:
+    return read_csv(SOURCE_RESEARCH_RETURN_INTAKE_CSV)
+
+
 def quarantine_download_key(row: Mapping[str, str]) -> tuple[str, str, str, str]:
     return (
         clean(row.get("sport_family")),
@@ -675,6 +733,21 @@ def quarantine_download_key(row: Mapping[str, str]) -> tuple[str, str, str, str]
 
 def existing_quarantine_download_by_key(rows: Iterable[Mapping[str, str]] | None = None) -> Dict[tuple[str, str, str, str], Mapping[str, str]]:
     return {quarantine_download_key(row): row for row in (rows or existing_quarantine_download_rows())}
+
+
+def source_research_return_key(row: Mapping[str, str]) -> tuple[str, str, str, str]:
+    return (
+        clean(row.get("sport_family")),
+        clean(row.get("asset_domain")),
+        clean(row.get("source_lane")),
+        clean(row.get("source_category")),
+    )
+
+
+def existing_source_research_return_by_key(
+    rows: Iterable[Mapping[str, str]] | None = None,
+) -> Dict[tuple[str, str, str, str], Mapping[str, str]]:
+    return {source_research_return_key(row): row for row in (rows or existing_source_research_return_rows())}
 
 
 def logo_action_rows(sport_key: str, sport: Mapping[str, Any], logo_rows: list[Dict[str, str]], logo_intake_rows: list[Dict[str, str]]) -> list[Dict[str, str]]:
@@ -2084,8 +2157,8 @@ def source_map_board_rows(source_priority: list[Dict[str, str]]) -> list[Dict[st
                     "operator_verify_required": "yes",
                     "roster_truth_limit": "advisory_discovery_not_roster_truth_or_approval",
                     "known_limitations": "URL/search lead only; no files may be downloaded and no render-feed trust changes from this board.",
-                    "next_operator_action": "Paste URL/evidence leads into a future human-edited research return intake; keep download and approval fields blank/no.",
-                    "manual_return_intake_hint": "future_human_edited_hockey_softball_source_research_return_intake",
+                    "next_operator_action": "Paste URL/evidence leads into the human-edited source research return intake; keep download and approval fields blank/no.",
+                    "manual_return_intake_hint": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
                     **lane_values,
                     **source_map_guardrail_fields(),
                 }
@@ -2138,6 +2211,128 @@ def render_source_map_board(rows: list[Dict[str, str]], generated_at: str) -> st
                 source=clean(row.get("source_url_or_search_macro")).replace("|", "/"),
                 confidence=clean(row.get("source_confidence")),
                 action=clean(row.get("next_operator_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
+def source_research_return_intake_rows(
+    source_map_rows: list[Dict[str, str]],
+    existing: Mapping[tuple[str, str, str, str], Mapping[str, str]] | None = None,
+) -> list[Dict[str, str]]:
+    existing = existing or existing_source_research_return_by_key()
+    discovery_rows = [row for row in source_map_rows if clean(row.get("asset_domain")) == "action_photo"]
+    rows: list[Dict[str, str]] = []
+    for index, row in enumerate(discovery_rows, start=1):
+        prior = existing.get(source_research_return_key(row), {})
+        rows.append(
+            {
+                "return_order": f"RR{index:02d}",
+                "sport_family": clean(row.get("sport_family")),
+                "sport_label": clean(row.get("sport_label")),
+                "league_name": clean(row.get("league_name")),
+                "asset_domain": clean(row.get("asset_domain")),
+                "source_lane": clean(row.get("source_lane")),
+                "source_category": clean(row.get("source_category")),
+                "source_tier": clean(row.get("source_tier")),
+                "source_search_macro": clean(row.get("source_url_or_search_macro")),
+                "source_map_row_ref": f"{SOURCE_MAP_BOARD_CSV.as_posix()}#row={clean(row.get('source_map_order'))}",
+                "source_map_board": SOURCE_MAP_BOARD_MD.as_posix(),
+                "operator_found_source_url": clean(prior.get("operator_found_source_url")),
+                "operator_source_title_or_caption": clean(prior.get("operator_source_title_or_caption")),
+                "operator_source_date": clean(prior.get("operator_source_date")),
+                "operator_source_owner_or_publisher": clean(prior.get("operator_source_owner_or_publisher")),
+                "operator_entity_id": clean(prior.get("operator_entity_id")),
+                "operator_athlete_name": clean(prior.get("operator_athlete_name")),
+                "operator_team_context": clean(prior.get("operator_team_context")),
+                "operator_event_context": clean(prior.get("operator_event_context")),
+                "operator_rights_class": clean(prior.get("operator_rights_class")),
+                "operator_identity_confidence": clean(prior.get("operator_identity_confidence")),
+                "operator_intended_review_only_use": clean(prior.get("operator_intended_review_only_use")),
+                "operator_source_notes": clean(prior.get("operator_source_notes")),
+                "operator_decision": clean(prior.get("operator_decision")),
+                "reviewed_by": clean(prior.get("reviewed_by")),
+                "reviewed_at_local": clean(prior.get("reviewed_at_local")),
+                "download_approved": clean(prior.get("download_approved")) or "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "quarantine_folder": SANCTIONED_QUARANTINE_ROOT.as_posix(),
+                "future_download_required_fields": future_download_required_fields(),
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "logo_writes": "false",
+                "segmentation_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+                "guardrail_note": (
+                    "review-only source research return; paste URL/evidence leads only, "
+                    "no source fetching, downloads, approvals, headshot writes, .approved markers, or publishing"
+                ),
+            }
+        )
+    return rows
+
+
+def render_source_research_return_intake(rows: list[Dict[str, str]], generated_at: str) -> str:
+    blank_return_rows = sum(
+        1
+        for row in rows
+        if not clean(row.get("operator_found_source_url"))
+        and not clean(row.get("operator_entity_id"))
+        and not clean(row.get("operator_rights_class"))
+        and not clean(row.get("operator_identity_confidence"))
+        and not clean(row.get("operator_intended_review_only_use"))
+    )
+    download_yes = sum(1 for row in rows if clean(row.get("download_approved")).lower() == "yes")
+    lines = [
+        "# Hockey/Softball Source Research Return Intake",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only paste-back target for manual hockey/softball action-photo source leads found from the source-map board. It does not fetch sources, download files, approve assets, write headshots/logos/cutouts, create `.approved` markers, move files, create a publish-ready lane, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Return rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Blank operator return rows: `{blank_return_rows}`",
+        f"- Download-approved yes rows: `{download_yes}`",
+        f"- Quarantine folder, if a later separate approved intake allows a download: `{SANCTIONED_QUARANTINE_ROOT.as_posix()}`",
+        "",
+        "## Operator Rules",
+        "",
+        "- Fill only `operator_*`, `reviewed_by`, and `reviewed_at_local` fields after manual research.",
+        "- Keep generated download-law fields `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use` blank in this return board.",
+        "- A later quarantine download still requires a separate human-edited intake with `download_approved=yes` plus source URL, entity ID, rights class, identity confidence, and intended review-only use.",
+        "- Download approval is not asset approval; no `.approved` marker or render trust changes come from this board.",
+        "",
+        "## Rows",
+        "",
+        "| Order | Sport | Lane | Tier | Source/Search | Operator URL | Decision | Guardrail |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {order} | {sport} | {lane} | {tier} | {source} | {url} | {decision} | {guardrail} |".format(
+                order=clean(row.get("return_order")),
+                sport=clean(row.get("sport_family")),
+                lane=clean(row.get("source_lane")),
+                tier=clean(row.get("source_tier")),
+                source=clean(row.get("source_search_macro")).replace("|", "/"),
+                url=clean(row.get("operator_found_source_url")) or "blank",
+                decision=clean(row.get("operator_decision")) or "blank",
+                guardrail=clean(row.get("guardrail_note")).replace("|", "/"),
             )
         )
     return "\n".join(lines) + "\n"
@@ -3233,6 +3428,19 @@ def main() -> int:
     source_map_allowed_for_download_yes_rows = sum(1 for row in source_map if clean(row.get("allowed_for_download_approved_yes")).lower() == "true")
     source_map_blank_source_url_rows = sum(1 for row in source_map if not clean(row.get("source_url")))
     source_map_official_free_public_rows = sum(1 for row in source_map if clean(row.get("source_tier")) == "P0_OFFICIAL_FREE_PUBLIC")
+    source_research_return = source_research_return_intake_rows(source_map)
+    source_research_return_download_approved_yes_rows = sum(
+        1 for row in source_research_return if clean(row.get("download_approved")).lower() == "yes"
+    )
+    source_research_return_blank_operator_rows = sum(
+        1
+        for row in source_research_return
+        if not clean(row.get("operator_found_source_url"))
+        and not clean(row.get("operator_entity_id"))
+        and not clean(row.get("operator_rights_class"))
+        and not clean(row.get("operator_identity_confidence"))
+        and not clean(row.get("operator_intended_review_only_use"))
+    )
     source_verification_checklist = source_verification_checklist_rows(source_priority)
     source_verification_checklist_download_approved_yes_rows = sum(
         1 for row in source_verification_checklist if clean(row.get("download_approved")).lower() == "yes"
@@ -3326,6 +3534,15 @@ def main() -> int:
             "source_map_download_approved_yes_rows": source_map_download_approved_yes_rows,
             "source_map_allowed_for_download_approved_yes_rows": source_map_allowed_for_download_yes_rows,
             "source_map_blank_source_url_rows": source_map_blank_source_url_rows,
+            "source_research_return_intake_rows": len(source_research_return),
+            "source_research_return_intake_womens_hockey_rows": sum(
+                1 for row in source_research_return if clean(row.get("sport_family")) == "womens_hockey"
+            ),
+            "source_research_return_intake_softball_rows": sum(
+                1 for row in source_research_return if clean(row.get("sport_family")) == "softball"
+            ),
+            "source_research_return_intake_blank_operator_rows": source_research_return_blank_operator_rows,
+            "source_research_return_intake_download_approved_yes_rows": source_research_return_download_approved_yes_rows,
             "source_verification_checklist_rows": len(source_verification_checklist),
             "source_verification_checklist_womens_hockey_rows": sum(
                 1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"
@@ -3431,6 +3648,16 @@ def main() -> int:
             "download_approved_yes_rows": source_map_download_approved_yes_rows,
             "allowed_for_download_approved_yes_rows": source_map_allowed_for_download_yes_rows,
             "blank_source_url_rows": source_map_blank_source_url_rows,
+        },
+        "source_research_return_intake": {
+            "md": SOURCE_RESEARCH_RETURN_INTAKE_MD.as_posix(),
+            "csv": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+            "json": SOURCE_RESEARCH_RETURN_INTAKE_JSON.as_posix(),
+            "rows": len(source_research_return),
+            "womens_hockey_rows": sum(1 for row in source_research_return if clean(row.get("sport_family")) == "womens_hockey"),
+            "softball_rows": sum(1 for row in source_research_return if clean(row.get("sport_family")) == "softball"),
+            "blank_operator_return_rows": source_research_return_blank_operator_rows,
+            "download_approved_yes_rows": source_research_return_download_approved_yes_rows,
         },
         "source_verification_checklist": {
             "md": SOURCE_VERIFICATION_CHECKLIST_MD.as_posix(),
@@ -3622,6 +3849,43 @@ def main() -> int:
         "move_files": False,
         "paid_apis": False,
         "source_map_rows_detail": source_map,
+    }
+    source_research_return_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_source_research_return_intake_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(source_research_return),
+        "womens_hockey_rows": sum(1 for row in source_research_return if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in source_research_return if clean(row.get("sport_family")) == "softball"),
+        "blank_operator_return_rows": source_research_return_blank_operator_rows,
+        "download_approved_yes_rows": source_research_return_download_approved_yes_rows,
+        "blank_download_law_rows": sum(
+            1
+            for row in source_research_return
+            if not clean(row.get("source_url"))
+            and not clean(row.get("entity_id"))
+            and not clean(row.get("rights_class"))
+            and not clean(row.get("identity_confidence"))
+            and not clean(row.get("intended_review_only_use"))
+        ),
+        "worksheet_md": SOURCE_RESEARCH_RETURN_INTAKE_MD.as_posix(),
+        "worksheet_csv": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+        "source_map_board": SOURCE_MAP_BOARD_MD.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "logo_writes": False,
+        "segmentation_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "return_rows_detail": source_research_return,
     }
     source_verification_checklist_payload = {
         "version": VERSION,
@@ -3836,6 +4100,9 @@ def main() -> int:
     write_csv(SOURCE_MAP_BOARD_CSV, source_map, SOURCE_MAP_BOARD_FIELDS)
     write_json(SOURCE_MAP_BOARD_JSON, source_map_payload)
     write_text(SOURCE_MAP_BOARD_MD, render_source_map_board(source_map, generated_at))
+    write_csv(SOURCE_RESEARCH_RETURN_INTAKE_CSV, source_research_return, SOURCE_RESEARCH_RETURN_INTAKE_FIELDS)
+    write_json(SOURCE_RESEARCH_RETURN_INTAKE_JSON, source_research_return_payload)
+    write_text(SOURCE_RESEARCH_RETURN_INTAKE_MD, render_source_research_return_intake(source_research_return, generated_at))
     write_csv(SOURCE_VERIFICATION_CHECKLIST_CSV, source_verification_checklist, SOURCE_VERIFICATION_CHECKLIST_FIELDS)
     write_json(SOURCE_VERIFICATION_CHECKLIST_JSON, source_verification_checklist_payload)
     write_text(SOURCE_VERIFICATION_CHECKLIST_MD, render_source_verification_checklist(source_verification_checklist, generated_at))

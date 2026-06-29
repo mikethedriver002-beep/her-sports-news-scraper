@@ -437,6 +437,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/hockey_softball_source_map_board.md",
     "data/asset_registry/hockey_softball_source_map_board.csv",
     "data/asset_registry/hockey_softball_source_map_board.json",
+    "data/asset_registry/hockey_softball_source_research_return_intake.md",
+    "data/asset_registry/hockey_softball_source_research_return_intake.csv",
+    "data/asset_registry/hockey_softball_source_research_return_intake.json",
     "data/asset_registry/hockey_softball_asset_review_triage.md",
     "data/asset_registry/hockey_softball_asset_review_triage.csv",
     "data/asset_registry/hockey_softball_asset_review_triage.json",
@@ -819,6 +822,9 @@ ARTIFACTS = [
     ("Graphics", "Hockey/softball source map board", "data/asset_registry/hockey_softball_source_map_board.md"),
     ("Graphics", "Hockey/softball source map board data", "data/asset_registry/hockey_softball_source_map_board.csv"),
     ("Graphics", "Hockey/softball source map board manifest", "data/asset_registry/hockey_softball_source_map_board.json"),
+    ("Graphics", "Hockey/softball source research return intake", "data/asset_registry/hockey_softball_source_research_return_intake.md"),
+    ("Graphics", "Hockey/softball source research return data", "data/asset_registry/hockey_softball_source_research_return_intake.csv"),
+    ("Graphics", "Hockey/softball source research return manifest", "data/asset_registry/hockey_softball_source_research_return_intake.json"),
     ("Graphics", "Hockey/softball asset review triage", "data/asset_registry/hockey_softball_asset_review_triage.md"),
     ("Graphics", "Hockey/softball asset review triage data", "data/asset_registry/hockey_softball_asset_review_triage.csv"),
     ("Graphics", "Hockey/softball asset review triage manifest", "data/asset_registry/hockey_softball_asset_review_triage.json"),
@@ -1055,6 +1061,9 @@ RUN_COMMANDS = {
     "data/asset_registry/hockey_softball_source_map_board.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_map_board.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_map_board.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_source_research_return_intake.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_source_research_return_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_source_research_return_intake.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_asset_review_triage.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_asset_review_triage.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_asset_review_triage.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
@@ -1974,6 +1983,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     hockey_softball_source_verification_manifest = read_json("data/asset_registry/hockey_softball_source_verification_checklist.json")
     hockey_softball_intake_readiness_manifest = read_json("data/asset_registry/hockey_softball_intake_readiness_summary.json")
     hockey_softball_source_map_manifest = read_json("data/asset_registry/hockey_softball_source_map_board.json")
+    hockey_softball_source_research_return_manifest = read_json("data/asset_registry/hockey_softball_source_research_return_intake.json")
     hockey_softball_review_triage_manifest = read_json("data/asset_registry/hockey_softball_asset_review_triage.json")
     hockey_softball_asset_readiness_manifest = read_json("data/asset_registry/hockey_softball_asset_review_readiness_board.json")
     hockey_softball_manual_focus_manifest = read_json("data/asset_registry/hockey_softball_manual_verification_focus.json")
@@ -2164,6 +2174,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         hockey_softball_source_map_rows,
         RUN_COMMANDS["data/asset_registry/hockey_softball_source_map_board.md"],
         context="hockey/softball source map board",
+    )
+    hockey_softball_source_research_return_rows = as_int(hockey_softball_source_research_return_manifest.get("rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0
+    hockey_softball_source_research_return_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_source_research_return_intake.md",
+        hockey_softball_source_research_return_rows,
+        RUN_COMMANDS["data/asset_registry/hockey_softball_source_research_return_intake.md"],
+        context="hockey/softball source research return intake",
     )
     hockey_softball_review_triage_rows = as_int(hockey_softball_review_triage_manifest.get("triage_rows")) if isinstance(hockey_softball_review_triage_manifest, dict) else 0
     hockey_softball_review_triage_cue = packet_freshness_cue(
@@ -2511,6 +2528,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_source_map_download_approved_yes_rows": as_int(hockey_softball_source_map_manifest.get("download_approved_yes_rows")) if isinstance(hockey_softball_source_map_manifest, dict) else 0,
         "hockey_softball_source_map_allowed_for_download_approved_yes_rows": as_int(hockey_softball_source_map_manifest.get("allowed_for_download_approved_yes_rows")) if isinstance(hockey_softball_source_map_manifest, dict) else 0,
         "hockey_softball_source_map_blank_source_url_rows": as_int(hockey_softball_source_map_manifest.get("blank_source_url_rows")) if isinstance(hockey_softball_source_map_manifest, dict) else 0,
+        "hockey_softball_source_research_return_status": clean(hockey_softball_source_research_return_manifest.get("status")) if isinstance(hockey_softball_source_research_return_manifest, dict) else "",
+        "hockey_softball_source_research_return_generated_at": clean(hockey_softball_source_research_return_manifest.get("generated_at_utc")) if isinstance(hockey_softball_source_research_return_manifest, dict) else "",
+        "hockey_softball_source_research_return_rows": hockey_softball_source_research_return_rows,
+        "hockey_softball_source_research_return_womens_hockey_rows": as_int(hockey_softball_source_research_return_manifest.get("womens_hockey_rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0,
+        "hockey_softball_source_research_return_softball_rows": as_int(hockey_softball_source_research_return_manifest.get("softball_rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0,
+        "hockey_softball_source_research_return_blank_operator_rows": as_int(hockey_softball_source_research_return_manifest.get("blank_operator_return_rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0,
+        "hockey_softball_source_research_return_download_approved_yes_rows": as_int(hockey_softball_source_research_return_manifest.get("download_approved_yes_rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0,
         "hockey_softball_asset_review_triage_status": clean(hockey_softball_review_triage_manifest.get("status")) if isinstance(hockey_softball_review_triage_manifest, dict) else "",
         "hockey_softball_asset_review_triage_generated_at": clean(hockey_softball_review_triage_manifest.get("generated_at_utc")) if isinstance(hockey_softball_review_triage_manifest, dict) else "",
         "hockey_softball_asset_review_triage_rows": hockey_softball_review_triage_rows,
@@ -2600,6 +2624,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_source_map_freshness_status": hockey_softball_source_map_cue["status"],
         "hockey_softball_source_map_freshness_detail": hockey_softball_source_map_cue["detail"],
         "hockey_softball_source_map_refresh_command": hockey_softball_source_map_cue["run_command"],
+        "hockey_softball_source_research_return_freshness_status": hockey_softball_source_research_return_cue["status"],
+        "hockey_softball_source_research_return_freshness_detail": hockey_softball_source_research_return_cue["detail"],
+        "hockey_softball_source_research_return_refresh_command": hockey_softball_source_research_return_cue["run_command"],
         "hockey_softball_asset_review_triage_freshness_status": hockey_softball_review_triage_cue["status"],
         "hockey_softball_asset_review_triage_freshness_detail": hockey_softball_review_triage_cue["detail"],
         "hockey_softball_asset_review_triage_refresh_command": hockey_softball_review_triage_cue["run_command"],
@@ -2715,6 +2742,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Hockey/softball source map board", "data/asset_registry/hockey_softball_source_map_board.md", "H/S official, reputable, social, gray-area, roster, and action-photo discovery source lanes; review-only and no downloads."),
             file_shortcut("Hockey/softball source map board data", "data/asset_registry/hockey_softball_source_map_board.csv", "Machine-readable H/S source map; generated download-law fields remain blank/no."),
             file_shortcut("Hockey/softball source map board manifest", "data/asset_registry/hockey_softball_source_map_board.json", "Freshness, counts, and guardrail metadata for the H/S source map board."),
+            file_shortcut("Hockey/softball source research return intake", "data/asset_registry/hockey_softball_source_research_return_intake.md", "Human-edited paste-back target for action-photo source leads from the H/S source map; no downloads or approvals."),
+            file_shortcut("Hockey/softball source research return data", "data/asset_registry/hockey_softball_source_research_return_intake.csv", "Machine-readable H/S action-photo source return rows; generated download-law fields stay blank/no."),
+            file_shortcut("Hockey/softball source research return manifest", "data/asset_registry/hockey_softball_source_research_return_intake.json", "Freshness, blank-return counts, and guardrail metadata for the H/S source research return intake."),
             file_shortcut("Hockey/softball asset review triage", "data/asset_registry/hockey_softball_asset_review_triage.md", "Grouped next-action triage for hockey/softball logo and athlete source candidates; generated download-law fields remain blank/no."),
             file_shortcut("Hockey/softball asset review triage data", "data/asset_registry/hockey_softball_asset_review_triage.csv", "Machine-readable triage worksheet grouped by sport, asset domain, and entity for faster manual review."),
             file_shortcut("Hockey/softball asset review triage manifest", "data/asset_registry/hockey_softball_asset_review_triage.json", "Freshness, counts, and guardrail metadata for the hockey/softball asset review triage worksheet."),
@@ -9445,6 +9475,8 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S source map</span><strong>{html.escape(str(panel.get('hockey_softball_source_map_rows', 0)))}</strong></div>
             <div><span>H/S source map official</span><strong>{html.escape(str(panel.get('hockey_softball_source_map_official_free_public_rows', 0)))}</strong></div>
             <div><span>H/S source map dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_source_map_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>H/S research return</span><strong>{html.escape(str(panel.get('hockey_softball_source_research_return_rows', 0)))}</strong></div>
+            <div><span>H/S return dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_source_research_return_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>H/S triage rows</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_triage_rows', 0)))}</strong></div>
             <div><span>H/S triage verify src</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_triage_operator_verify_source_rows', 0)))}</strong></div>
             <div><span>H/S triage dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_triage_download_approved_yes_rows', 0)))}</strong></div>
@@ -9490,6 +9522,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'hockey_softball_source_verification', "Hockey/softball source verification checklist")}
           {packet_freshness_html(panel, 'hockey_softball_intake_readiness', "Hockey/softball intake readiness summary")}
           {packet_freshness_html(panel, 'hockey_softball_source_map', "Hockey/softball source map board")}
+          {packet_freshness_html(panel, 'hockey_softball_source_research_return', "Hockey/softball source research return intake")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_triage', "Hockey/softball asset review triage")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_readiness', "Hockey/softball asset review readiness board")}
           {packet_freshness_html(panel, 'hockey_softball_manual_verification_focus', "Hockey/softball manual verification focus")}
@@ -11193,6 +11226,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball source map download-approved yes rows: {asset_panel.get('hockey_softball_source_map_download_approved_yes_rows', 0)}",
         f"- Hockey/softball source map blank source_url rows: {asset_panel.get('hockey_softball_source_map_blank_source_url_rows', 0)}",
         f"- Hockey/softball source map generated: {asset_panel.get('hockey_softball_source_map_generated_at') or 'missing'}",
+        f"- Hockey/softball source research return rows: {asset_panel.get('hockey_softball_source_research_return_rows', 0)}",
+        f"- Hockey/softball source research return blank operator rows: {asset_panel.get('hockey_softball_source_research_return_blank_operator_rows', 0)}",
+        f"- Hockey/softball source research return download-approved yes rows: {asset_panel.get('hockey_softball_source_research_return_download_approved_yes_rows', 0)}",
+        f"- Hockey/softball source research return generated: {asset_panel.get('hockey_softball_source_research_return_generated_at') or 'missing'}",
         f"- Hockey/softball asset review triage rows: {asset_panel.get('hockey_softball_asset_review_triage_rows', 0)}",
         f"- Hockey/softball asset review triage logo rows: {asset_panel.get('hockey_softball_asset_review_triage_logo_rows', 0)}",
         f"- Hockey/softball asset review triage athlete rows: {asset_panel.get('hockey_softball_asset_review_triage_athlete_rows', 0)}",
@@ -11458,6 +11495,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_source_map_refresh_command"),
             },
             "Hockey/softball source map board",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_source_research_return_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_source_research_return_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_source_research_return_refresh_command"),
+            },
+            "Hockey/softball source research return intake",
         ),
         packet_freshness_markdown(
             {
