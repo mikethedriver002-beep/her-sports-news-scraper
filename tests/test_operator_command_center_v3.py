@@ -252,6 +252,9 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.json",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.json",
     }
     for path in manual_bridge_paths:
         assert path in artifact_paths
@@ -3731,6 +3734,58 @@ def seed_asset_availability_audit_files() -> None:
             "publish_ready": False,
         },
     )
+    (action_photo_dir / "review_only_action_photo_manual_return_evidence_checklist_v1.md").write_text("# Action Photo Manual Return Evidence Checklist\n", encoding="utf-8")
+    write_csv(
+        (action_photo_dir / "review_only_action_photo_manual_return_evidence_checklist_v1.csv").as_posix(),
+        [
+            {
+                "checklist_id": "APFEC01",
+                "card_id": "APFAC01",
+                "bridge_lane": "women_soccer_action_photo",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "review_only": "true",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            },
+            {
+                "checklist_id": "APFEC02",
+                "card_id": "APFAC02",
+                "bridge_lane": "hockey_softball_action_photo",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "review_only": "true",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            },
+        ],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_manual_return_evidence_checklist_v1.json").as_posix(),
+        {
+            "status": "action_photo_manual_return_evidence_checklist_ready",
+            "generated_at_utc": "2026-06-29T00:02:50+00:00",
+            "checklist_rows": 2,
+            "generated_ready_rows": 0,
+            "generated_download_approval_rows": 0,
+            "review_only": True,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
     write_json(
         (action_photo_dir / "review_only_action_photo_external_research_packet_manifest_v1.json").as_posix(),
         {
@@ -5547,6 +5602,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_manual_first_action_cards_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_manual_first_action_cards_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_manual_first_action_cards_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_rows"] == 2
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_generated_ready_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_generated_download_approval_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_source_fetching"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_auto_source_enablement"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_return_evidence_checklist_approved_marker_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_rows"] == 10
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_source_url_present_rows"] == 0
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_rights_class_present_rows"] == 0
@@ -6213,6 +6276,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
@@ -7289,6 +7355,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.csv" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.json" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_square.png" in runner
