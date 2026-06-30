@@ -102,6 +102,32 @@ def test_visual_qa_cues_warn_on_action_photo_risk_after_display_truncation() -> 
     assert cue["evidence"].endswith("...")
 
 
+def test_visual_qa_cues_promote_anti_dashboard_risks() -> None:
+    qa = {
+        "checks": [
+            {
+                "check_id": "anti_dashboard_score_spine_review",
+                "check_label": "Anti-dashboard score-spine review cue",
+                "qa_result": "pass_human_review_required",
+                "passed": True,
+                "evidence": "score_layout_contract=open_score_spine_no_nested_cards; operator must hold or revise if the score reads as a dashboard card, boxed row container, or solid backing panel.",
+            },
+            {
+                "check_id": "lower_third_card_weight_review",
+                "check_label": "Lower-third card-weight review cue",
+                "qa_result": "pass_human_review_required",
+                "passed": True,
+                "evidence": "lower_third_contract=editorial_stat_rail_open_no_heavy_card_container; operator must hold or revise if the lower rail reads as a heavy card or lower-third box.",
+            },
+        ]
+    }
+
+    cues = command_center.build_visual_qa_cues(qa)
+
+    assert [cue["label"] for cue in cues] == ["Anti-dashboard score spine", "Lower-third card weight"]
+    assert [cue["tone"] for cue in cues] == ["warn", "warn"]
+
+
 def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     seed_daily_ops_files()
@@ -4487,6 +4513,20 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "evidence": "final_score_context=True; avg_text_variance=4300.0; Operator should hold or revise if the draft feels busy, cramped, ad-like, or lacks a clear premium editorial hierarchy.",
                 },
                 {
+                    "check_id": "anti_dashboard_score_spine_review",
+                    "check_label": "Anti-dashboard score-spine review cue",
+                    "qa_result": "pass_human_review_required",
+                    "passed": True,
+                    "evidence": "score_layout_contract=logo_first_borderless_editorial_score_spine_no_dashboard_panels; anti_dashboard_contract=open_score_spine_no_nested_cards_no_metric_tiles; operator must hold or revise if the score treatment reads like a dashboard card, boxed metric tile, row container, or solid backing panel.",
+                },
+                {
+                    "check_id": "lower_third_card_weight_review",
+                    "check_label": "Lower-third card-weight review cue",
+                    "qa_result": "pass_human_review_required",
+                    "passed": True,
+                    "evidence": "lower_third_contract=editorial_stat_rail_open_no_heavy_card_container; operator must hold or revise if lower stat/caption treatment reads as a heavy card, dashboard module, solid lower-third box, or boxed lower-third.",
+                },
+                {
                     "check_id": "headline_text_zone",
                     "check_label": "Title readable contrast and safe-zone fit",
                     "qa_result": "pass",
@@ -6202,11 +6242,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
-    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:7] == [
+    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:9] == [
         "Premium route limit",
         "Action-photo readiness",
         "Bridge/composition balance",
         "Latest render freshness",
+        "Anti-dashboard score spine",
+        "Lower-third card weight",
         "Premium editorial clutter scan",
         "Title contrast and fit",
         "Score/team readability",
@@ -6219,9 +6261,13 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "headshot_bridge_not_roster_portrait" in payload["operator_decision_panel"]["qa_cues"][2]["evidence"]
     assert payload["operator_decision_panel"]["qa_cues"][3]["tone"] == "good"
     assert "fresh_after_handoff=True" in payload["operator_decision_panel"]["qa_cues"][3]["evidence"]
-    assert payload["operator_decision_panel"]["qa_cues"][4]["tone"] == "good"
-    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][4]["evidence"]
-    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][5]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][4]["tone"] == "warn"
+    assert "no_dashboard_panels" in payload["operator_decision_panel"]["qa_cues"][4]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][5]["tone"] == "warn"
+    assert "heavy card" in payload["operator_decision_panel"]["qa_cues"][5]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][6]["tone"] == "good"
+    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][6]["evidence"]
+    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][7]["evidence"]
     assert any(item["label"] == "Player ledger readability" for item in payload["operator_decision_panel"]["qa_cues"])
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])
