@@ -2205,6 +2205,8 @@ def game_source_confirmation_return_summary_rows(worksheet_rows: List[Dict[str, 
         else:
             manual_return_status = "operator_return_missing_required_fields"
             manual_next_step = "Open game_source_research_worksheet_v1.csv and fill only human-confirmed official/public URL plus confirmation status before any downstream source trust review."
+            if clean(item.get("research_need")) == "monitor_public_scoreboard_until_final":
+                manual_next_step = "After the game window, open game_source_research_worksheet_v1.csv, rerun Results, and fill only human-confirmed final-score/box-score URL plus confirmation status if visible; do not treat the row as recap-ready or render-ready from this summary."
         rows.append(
             {
                 "summary_rank": clean(item.get("worksheet_rank")),

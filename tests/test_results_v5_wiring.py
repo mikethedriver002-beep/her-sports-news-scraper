@@ -723,6 +723,24 @@ def test_game_source_confirmation_return_summary_counts_manual_missing_fields() 
             "proof_row_to_open": "",
             "manual_intake_path": "",
         },
+        {
+            "worksheet_rank": "3",
+            "event_uid": "event_scheduled",
+            "game_date": "2026-06-25",
+            "league": "WNBA",
+            "matchup": "Atlanta Dream at Chicago Sky",
+            "research_need": "monitor_public_scoreboard_until_final",
+            "current_source_tier": "single_free_public_schedule_source_result_pending",
+            "scoreboard_source_url": "https://www.espn.com/wnba/game/_/gameId/403",
+            "operator_found_official_url": "",
+            "operator_found_public_scoreboard_url": "",
+            "operator_found_box_score_url": "",
+            "operator_confirmation_status": "",
+            "operator_notes": "",
+            "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_scheduled",
+            "proof_row_to_open": "",
+            "manual_intake_path": "",
+        },
     ]
 
     rows = module.game_source_confirmation_return_summary_rows(worksheet_rows)
@@ -737,6 +755,9 @@ def test_game_source_confirmation_return_summary_counts_manual_missing_fields() 
     assert by_id["event_missing"]["manual_return_status"] == "operator_return_missing_required_fields"
     assert "operator_found_official_url" in by_id["event_missing"]["missing_return_fields"]
     assert "operator_confirmation_status" in by_id["event_missing"]["missing_return_fields"]
+    assert by_id["event_scheduled"]["manual_return_status"] == "operator_return_missing_required_fields"
+    assert "rerun Results" in by_id["event_scheduled"]["manual_next_step"]
+    assert "do not treat the row as recap-ready or render-ready" in by_id["event_scheduled"]["manual_next_step"]
     assert by_id["event_missing"]["review_only"] == "Yes"
     assert by_id["event_missing"]["approval_state_change"] == "none"
     assert by_id["event_missing"]["source_enablement"] == "none_existing_local_artifacts_only"
@@ -744,9 +765,9 @@ def test_game_source_confirmation_return_summary_counts_manual_missing_fields() 
 
     summary = module.game_source_confirmation_return_summary(rows)
     assert summary["operator_return_ready_for_review"] == 1
-    assert summary["operator_return_missing_required_fields"] == 1
-    assert summary["missing_official_url"] == 1
-    assert summary["missing_confirmation_status"] == 1
+    assert summary["operator_return_missing_required_fields"] == 2
+    assert summary["missing_official_url"] == 2
+    assert summary["missing_confirmation_status"] == 2
     assert summary["rows_with_operator_notes"] == 1
     report = module.game_source_confirmation_return_summary_report_md(summary, rows)
     assert "ready-for-review row is not source approval" in report
