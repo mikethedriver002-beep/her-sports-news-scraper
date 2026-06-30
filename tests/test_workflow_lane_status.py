@@ -504,6 +504,67 @@ def test_workflow_lane_status_surfaces_pending_thread_without_pr(tmp_path: Path,
     assert "Use `pending_thread` for a delegated Codex thread id or URL" in markdown
 
 
+def test_workflow_lane_status_roster_clears_recovered_durable_lane_missing_count(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    roster = tmp_path / "config" / "hsd_durable_lane_thread_roster.json"
+    roster.parent.mkdir(parents=True)
+    roster.write_text(
+        json.dumps(
+            {
+                "lanes": [
+                    {
+                        "lane_id": "breaking_public_signal",
+                        "status": "completed_merged",
+                        "branch": "codex/breaking-public-signal-return-clarity",
+                        "pr": "https://github.com/example/hsd/pull/397",
+                        "lane_owner_thread": "019f163f-1477-72c3-96c2-fe4327c52339",
+                        "last_pr_merged": "397",
+                        "last_update_utc": "2026-06-30T02:02:41Z",
+                        "completed_merge_pr": "397",
+                        "completed_merge_commit": "54c505fd",
+                    },
+                    {
+                        "lane_id": "games_schedule_stats",
+                        "status": "completed_merged",
+                        "branch": "codex/game-source-confirmation-followup",
+                        "pr": "https://github.com/example/hsd/pull/398",
+                        "lane_owner_thread": "019f163f-5491-7e92-ab11-38f0917f040b",
+                        "last_pr_merged": "398",
+                        "last_update_utc": "2026-06-30T02:05:12Z",
+                        "completed_merge_pr": "398",
+                        "completed_merge_commit": "62a3fc98",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    module = load_module()
+    assert module.main(["--skip-pr-lookup", "--skip-worktree-lookup", "--durable-thread-roster", str(roster)]) == 0
+
+    manifest = json.loads((tmp_path / "run" / "workflow_lane_status_dashboard.json").read_text(encoding="utf-8"))
+    rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_status_dashboard.csv").open(newline="", encoding="utf-8")))
+    nudge_manifest = json.loads((tmp_path / "run" / "workflow_lane_nudge_synthesis.json").read_text(encoding="utf-8"))
+    recovery_manifest = json.loads((tmp_path / "run" / "workflow_durable_lane_recovery_packet.json").read_text(encoding="utf-8"))
+    breaking = next(row for row in rows if row["lane_id"] == "breaking_public_signal")
+    games = next(row for row in rows if row["lane_id"] == "games_schedule_stats")
+
+    assert manifest["durable_thread_roster_lane_count"] == 2
+    assert manifest["missing_durable_lane_count"] == 0
+    assert manifest["missing_durable_lane_ids"] == []
+    assert manifest["durable_lane_recovery_count"] == 0
+    assert nudge_manifest["counts"]["rows"] == 1
+    assert recovery_manifest["counts"]["rows"] == 0
+    assert breaking["status_source"] == "durable_thread_roster"
+    assert breaking["durable_lane_thread_status"] == "thread_reference_present"
+    assert breaking["lane_owner_thread"] == "019f163f-1477-72c3-96c2-fe4327c52339"
+    assert games["status_source"] == "durable_thread_roster"
+    assert games["durable_lane_thread_status"] == "thread_reference_present"
+    assert games["lane_owner_thread"] == "019f163f-5491-7e92-ab11-38f0917f040b"
+
+
 def test_workflow_lane_status_example_intake_documents_recent_completed_merges() -> None:
     module = load_module()
     example = REPO / "operator" / "inbox" / "workflow_lane_status_intake.example.csv"
@@ -511,7 +572,7 @@ def test_workflow_lane_status_example_intake_documents_recent_completed_merges()
 
     assert rows
     assert set(rows[0]) == set(module.INTAKE_FIELDS)
-    assert {row["completed_merge_pr"] for row in rows} == {"336", "337", "339", "340", "372"}
+    assert {row["completed_merge_pr"] for row in rows} == {"336", "337", "372", "397", "398"}
     assert {row["status"] for row in rows} == {"completed_merged"}
     example_rows = module.lane_rows(
         rows,
@@ -524,7 +585,11 @@ def test_workflow_lane_status_example_intake_documents_recent_completed_merges()
         row["durable_lane_thread_status"]
         for row in example_rows
         if row["lane_id"] in {"games_schedule_stats", "breaking_public_signal"}
-    } == {"completed_lane_thread_reference_missing"}
+    } == {"thread_reference_present"}
+    breaking = next(row for row in rows if row["lane_id"] == "breaking_public_signal")
+    games = next(row for row in rows if row["lane_id"] == "games_schedule_stats")
+    assert breaking["lane_owner_thread"] == "019f163f-1477-72c3-96c2-fe4327c52339"
+    assert games["lane_owner_thread"] == "019f163f-5491-7e92-ab11-38f0917f040b"
     workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
     assert workflow["lane_owner_thread"] == "019f04ad-9680-7e83-a9c5-db1e36d52543"
     assert workflow["last_pr_merged"] == "372"
