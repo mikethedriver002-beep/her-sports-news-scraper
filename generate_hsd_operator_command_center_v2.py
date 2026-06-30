@@ -7976,6 +7976,8 @@ def release_readiness_evidence_panel() -> Dict[str, Any]:
             "latest_scan_status": "not_run",
             "latest_scan_files_checked": 0,
             "latest_scan_violations": 0,
+            "latest_scan_scope": "",
+            "latest_scan_dir": "",
             "conductor_status": "not_run",
             "conductor_collision_blockers": 0,
             "missing_inputs": ["release_readiness_guardrail_rollup"],
@@ -8003,6 +8005,8 @@ def release_readiness_evidence_panel() -> Dict[str, Any]:
         "latest_scan_status": clean(latest.get("status")) or "not_run",
         "latest_scan_files_checked": as_int(latest.get("scan_files_checked")),
         "latest_scan_violations": as_int(latest.get("violation_count")),
+        "latest_scan_scope": clean(latest.get("scan_scope")),
+        "latest_scan_dir": clean(latest.get("scan_dir")),
         "conductor_status": clean(conductor.get("status")) or "not_run",
         "conductor_collision_blockers": as_int(conductor.get("collision_blocker_count")),
         "workflow_status": clean(workflow.get("status")) or "not_run",
@@ -8624,7 +8628,7 @@ def build_payload() -> Dict[str, Any]:
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
         metric("Release readiness", release_readiness_panel["status"], release_readiness_panel["next_step"]),
         metric("Release blockers", release_readiness_panel["blocker_count"]),
-        metric("Latest guardrail scan", release_readiness_panel["latest_scan_status"], f"files={release_readiness_panel['latest_scan_files_checked']}; violations={release_readiness_panel['latest_scan_violations']}"),
+        metric("Rollup artifact scan", release_readiness_panel["latest_scan_status"], f"files={release_readiness_panel['latest_scan_files_checked']}; violations={release_readiness_panel['latest_scan_violations']}"),
         metric("Asset audit", asset_readiness_panel["panel_status"], asset_readiness_panel["next_step"]),
         metric("Asset blockers", asset_readiness_panel["finding_count"]),
         metric("Asset errors/warnings", f"{asset_readiness_panel['error_count']}/{asset_readiness_panel['warning_count']}"),
@@ -8789,13 +8793,13 @@ def render_release_readiness_panel(panel: Dict[str, Any]) -> str:
         <div class="safety-strip">
           {pill(panel.get('status'))}
           {pill('blockers: ' + clean(panel.get('blocker_count')), 'bad' if as_int(panel.get('blocker_count')) else 'good')}
-          {pill('latest scan: ' + clean(panel.get('latest_scan_status')))}
+          {pill('rollup scan: ' + clean(panel.get('latest_scan_status')))}
           {pill('conductor: ' + clean(panel.get('conductor_status')))}
           {pill('workflow stale: ' + clean(panel.get('workflow_stale_lanes')), 'bad' if as_int(panel.get('workflow_stale_lanes')) else 'good')}
           {pill('workflow missing durable: ' + clean(panel.get('workflow_missing_durable_lanes')), 'bad' if as_int(panel.get('workflow_missing_durable_lanes')) else 'good')}
         </div>
         <p class="muted" style="margin-top:10px">{html.escape(clean(panel.get('next_step')))}</p>
-        <p class="muted" style="margin-top:6px">Latest files checked: <code>{as_int(panel.get('latest_scan_files_checked'))}</code>; violations: <code>{as_int(panel.get('latest_scan_violations'))}</code>; missing inputs: <code>{html.escape(missing)}</code>.</p>
+        <p class="muted" style="margin-top:6px">Rollup-time files checked: <code>{as_int(panel.get('latest_scan_files_checked'))}</code>; violations: <code>{as_int(panel.get('latest_scan_violations'))}</code>; scope: <code>{html.escape(clean(panel.get('latest_scan_scope')) or 'not_recorded')}</code>; scan dir: <code>{html.escape(clean(panel.get('latest_scan_dir')) or 'not_recorded')}</code>; missing inputs: <code>{html.escape(missing)}</code>.</p>
         <p class="muted" style="margin-top:6px">Workflow lane status: <code>{html.escape(clean(panel.get('workflow_status')))}</code>; stale brakes: <code>{as_int(panel.get('workflow_stale_lanes'))}</code>; missing durable lanes: <code>{as_int(panel.get('workflow_missing_durable_lanes'))}</code>; restart-needed: <code>{as_int(panel.get('workflow_restart_needed'))}</code>; lifecycle actions: <code>{as_int(panel.get('workflow_lifecycle_actions'))}</code>.</p>
         <p class="muted" style="margin-top:6px">Durable lane recovery packet: {open_link(recovery_packet, 'Open recovery packet') if recovery_packet else 'none'}</p>
         <div class="table-wrap" style="margin-top:12px">
@@ -12021,7 +12025,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "",
         f"- Status: {release_panel.get('status') or 'not_created'}",
         f"- Blockers: {release_panel.get('blocker_count', 0)}",
-        f"- Latest guardrail scan: {release_panel.get('latest_scan_status') or 'not_run'}; files checked: {release_panel.get('latest_scan_files_checked', 0)}; violations: {release_panel.get('latest_scan_violations', 0)}",
+        f"- Rollup artifact scan: {release_panel.get('latest_scan_status') or 'not_run'}; files checked: {release_panel.get('latest_scan_files_checked', 0)}; violations: {release_panel.get('latest_scan_violations', 0)}; scope: {release_panel.get('latest_scan_scope') or 'not_recorded'}; scan dir: {release_panel.get('latest_scan_dir') or 'not_recorded'}",
         f"- Conductor audit: {release_panel.get('conductor_status') or 'not_run'}; collision blockers: {release_panel.get('conductor_collision_blockers', 0)}",
         f"- Workflow lane status: {release_panel.get('workflow_status') or 'not_run'}; stale brakes: {release_panel.get('workflow_stale_lanes', 0)}; missing durable lanes: {release_panel.get('workflow_missing_durable_lanes', 0)}; restart-needed: {release_panel.get('workflow_restart_needed', 0)}; lifecycle actions: {release_panel.get('workflow_lifecycle_actions', 0)}",
         f"- Durable lane recovery packet: {'workflow_durable_lane_recovery_packet.md' if release_panel.get('workflow_missing_durable_lanes', 0) else 'none'}",

@@ -7553,6 +7553,8 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
                 "status": "passed",
                 "scan_files_checked": 3,
                 "violation_count": 0,
+                "scan_scope": "active_run_at_rollup_generation",
+                "scan_dir": "outputs/local/20260630-041616/files",
             },
             "conductor_workspace_audit": {
                 "status": "passed",
@@ -7588,6 +7590,8 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
     assert panel["blocker_count"] == 0
     assert panel["latest_scan_files_checked"] == 3
     assert panel["latest_scan_violations"] == 0
+    assert panel["latest_scan_scope"] == "active_run_at_rollup_generation"
+    assert panel["latest_scan_dir"] == "outputs/local/20260630-041616/files"
     assert panel["conductor_status"] == "passed"
     assert panel["workflow_status"] == "workflow_lane_status_ready"
     assert panel["workflow_stale_lanes"] == 1
@@ -7600,9 +7604,12 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
     assert "workflow missing durable: 2" in html
     assert "Open recovery packet" in html
     assert "restart-needed: <code>2</code>" in html
+    assert "Rollup-time files checked" in html
+    assert "active_run_at_rollup_generation" in html
     assert "latest_artifact_guardrail_scan" in html
     assert "release_readiness_guardrail_rollup.md" in markdown
     assert "workflow_durable_lane_recovery_packet.md" in markdown
+    assert "Rollup artifact scan: passed; files checked: 3; violations: 0; scope: active_run_at_rollup_generation; scan dir: outputs/local/20260630-041616/files" in markdown
     assert "Workflow lane status: workflow_lane_status_ready; stale brakes: 1; missing durable lanes: 2; restart-needed: 2; lifecycle actions: 1" in markdown
 
 
