@@ -2021,6 +2021,8 @@ def game_source_research_prompt(row: Dict[str, Any], need: str) -> str:
         return f"Open the current source URL for {league} {matchup}, confirm it is current, and record any fresher official/public source in the blank operator fields."
     if need == "find_box_score_or_named_stat_source":
         return f"Find a free official/public box score or recap source for named player stat lines in {league} {matchup}; do not infer stats from unsourced copy."
+    if need == "confirm_final_score_and_named_stat_source_before_recap":
+        return f"Open the listed free/public scoreboard or box-score source for {league} {matchup}; verify the final score and named player stat line, check a second free/public source when available, and record only human-confirmed URLs/status in blank operator fields before recap or render use."
     if need == "monitor_public_scoreboard_until_final":
         return f"After the game window, open {source_url or 'the public scoreboard'} for {league} {matchup} and record final-score/box-score confirmation only if visible."
     return f"Optional audit: open the listed source row for {league} {matchup} only if it becomes a recap/render candidate."
