@@ -628,6 +628,9 @@ ARTIFACTS = [
     ("Decision", "Adobe renderer revision spec", "adobe_visual_qa_renderer_revision_spec.md"),
     ("Decision", "Adobe renderer revision spec data", "adobe_visual_qa_renderer_revision_spec.csv"),
     ("Decision", "Adobe renderer revision spec manifest", "adobe_visual_qa_renderer_revision_spec.json"),
+    ("Decision", "APQ001 manual review result report", "apq001_manual_review_result_report.md"),
+    ("Decision", "APQ001 manual review result manifest", "apq001_manual_review_result_manifest.json"),
+    ("Decision", "APQ001 manual review result findings", "apq001_manual_review_result_findings.csv"),
     ("Decision", "Manual visual QA approval intake", "manual_visual_qa_approval_intake.md"),
     ("Decision", "Manual visual QA approval intake data", "manual_visual_qa_approval_intake.csv"),
     ("Decision", "Manual visual QA approval intake manifest", "manual_visual_qa_approval_intake.json"),
@@ -1403,6 +1406,9 @@ RUN_COMMANDS = {
     "adobe_visual_qa_renderer_revision_spec.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "adobe_visual_qa_renderer_revision_spec.csv": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "adobe_visual_qa_renderer_revision_spec.json": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
+    "apq001_manual_review_result_report.md": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
+    "apq001_manual_review_result_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
+    "apq001_manual_review_result_findings.csv": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
     "manual_visual_qa_approval_intake.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.json": ".\\hsd.cmd run -Mode render",
@@ -2273,6 +2279,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_download_decision_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json")
     action_photo_hero_targets_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_wnba_final_score_hero_action_photo_targets_v1.json")
     action_photo_cutout_readiness_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json")
+    apq001_manual_review_manifest = read_json("apq001_manual_review_result_manifest.json")
+    apq001_manual_review_findings = read_csv("apq001_manual_review_result_findings.csv")
     hockey_softball_manifest = read_json("data/asset_registry/hockey_softball_asset_foundation_report.json")
     womens_hockey_logo_rows = read_csv("data/asset_registry/womens_hockey/womens_hockey_logo_contact_sheet.csv")
     womens_hockey_athlete_manifest = read_json("data/asset_registry/womens_hockey/womens_hockey_athlete_photo_contact_sheet_manifest.json")
@@ -2703,6 +2711,53 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         if action_photo_apq001_human_yes
         else "APQ001 is not cleared for any local download action in this cockpit; open the preflight and return intake, then wait for an explicit Mike quarantine-download instruction."
     )
+    apq001_manual_decision_counts = (
+        apq001_manual_review_manifest.get("manual_operator_decision_counts")
+        if isinstance(apq001_manual_review_manifest.get("manual_operator_decision_counts"), dict)
+        else {}
+    )
+    if not apq001_manual_decision_counts:
+        apq001_manual_decision_counts = count_field_values(apq001_manual_review_findings, "operator_decision")
+    apq001_handoff_recommendation_counts = (
+        apq001_manual_review_manifest.get("renderer_handoff_recommendation_counts")
+        if isinstance(apq001_manual_review_manifest.get("renderer_handoff_recommendation_counts"), dict)
+        else {}
+    )
+    if not apq001_handoff_recommendation_counts:
+        apq001_handoff_recommendation_counts = count_field_values(
+            apq001_manual_review_findings,
+            "renderer_handoff_recommendation",
+        )
+    apq001_manual_review_status = clean(apq001_manual_review_manifest.get("status")) or "not_generated"
+    apq001_manual_review_validation_issues = as_int(apq001_manual_review_manifest.get("validation_issue_count"))
+    apq001_manual_review_guardrail_flags = [
+        yes(apq001_manual_review_manifest.get("image_edits")),
+        yes(apq001_manual_review_manifest.get("new_downloads")),
+        yes(apq001_manual_review_manifest.get("asset_downloads")),
+        yes(apq001_manual_review_manifest.get("approval_state_change")),
+        yes(apq001_manual_review_manifest.get("approved_marker_writes")),
+        yes(apq001_manual_review_manifest.get("headshot_writes")),
+        yes(apq001_manual_review_manifest.get("renderer_behavior_change")),
+        yes(apq001_manual_review_manifest.get("publish_ready")),
+        yes(apq001_manual_review_manifest.get("publishing")),
+        yes(apq001_manual_review_manifest.get("move_files")),
+    ]
+    if (
+        apq001_manual_review_status == "apq001_manual_review_result_artifacts_ready"
+        and apq001_manual_review_validation_issues == 0
+        and not any(apq001_manual_review_guardrail_flags)
+    ):
+        apq001_manual_review_next_action = (
+            "APQ001 manual review is imported as review-only findings. Next lane: build a renderer recheck planning packet from these notes while keeping the candidate in quarantine."
+        )
+    elif apq001_manual_review_status == "not_generated":
+        apq001_manual_review_next_action = (
+            "Run the APQ001 manual review importer after the manual asset review and renderer handoff worksheets are filled."
+        )
+    else:
+        apq001_manual_review_next_action = (
+            "Review APQ001 manual review validation issues before any renderer planning step."
+        )
     return {
         "panel_status": status,
         "generated_at_utc": clean(audit.get("generated_at_utc")),
@@ -3070,6 +3125,36 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_apq001_identity_confidence": clean(action_photo_apq001_preflight.get("identity_confidence")),
         "action_photo_apq001_quarantine_target_hint": clean(action_photo_apq001_preflight.get("quarantine_target_hint")),
         "action_photo_apq001_next_action": action_photo_apq001_next_action,
+        "apq001_manual_review_status": apq001_manual_review_status,
+        "apq001_manual_review_generated_at": clean(apq001_manual_review_manifest.get("generated_at_utc")),
+        "apq001_manual_review_findings": as_int(first_present(apq001_manual_review_manifest.get("finding_rows"), len(apq001_manual_review_findings))),
+        "apq001_manual_review_manual_rows": as_int(apq001_manual_review_manifest.get("manual_asset_review_rows")),
+        "apq001_manual_review_handoff_rows": as_int(apq001_manual_review_manifest.get("renderer_handoff_rows")),
+        "apq001_manual_review_validation_issues": apq001_manual_review_validation_issues,
+        "apq001_manual_review_operator_decision_summary": compact_counts(
+            apq001_manual_decision_counts,
+            ["suitable_for_renderer_handoff_review", "hold", "revise"],
+        ),
+        "apq001_manual_review_handoff_summary": compact_counts(
+            apq001_handoff_recommendation_counts,
+            ["needs_crop_or_layout_notes", "suitable_for_renderer_recheck", "operator_fill_required"],
+        ),
+        "apq001_manual_review_crop_layout_notes": as_int(apq001_handoff_recommendation_counts.get("needs_crop_or_layout_notes")),
+        "apq001_manual_review_renderer_recheck": as_int(apq001_handoff_recommendation_counts.get("suitable_for_renderer_recheck")),
+        "apq001_manual_review_operator_fill_required": as_int(apq001_handoff_recommendation_counts.get("operator_fill_required")),
+        "apq001_manual_review_artifact_only": yes(apq001_manual_review_manifest.get("artifact_only")),
+        "apq001_manual_review_review_only": yes(apq001_manual_review_manifest.get("review_only")),
+        "apq001_manual_review_image_edits": yes(apq001_manual_review_manifest.get("image_edits")),
+        "apq001_manual_review_new_downloads": yes(apq001_manual_review_manifest.get("new_downloads")),
+        "apq001_manual_review_asset_downloads": yes(apq001_manual_review_manifest.get("asset_downloads")),
+        "apq001_manual_review_approval_state_change": yes(apq001_manual_review_manifest.get("approval_state_change")),
+        "apq001_manual_review_approved_marker_writes": yes(apq001_manual_review_manifest.get("approved_marker_writes")),
+        "apq001_manual_review_headshot_writes": yes(apq001_manual_review_manifest.get("headshot_writes")),
+        "apq001_manual_review_renderer_behavior_change": yes(apq001_manual_review_manifest.get("renderer_behavior_change")),
+        "apq001_manual_review_publish_ready": yes(apq001_manual_review_manifest.get("publish_ready")),
+        "apq001_manual_review_publishing": yes(apq001_manual_review_manifest.get("publishing")),
+        "apq001_manual_review_move_files": yes(apq001_manual_review_manifest.get("move_files")),
+        "apq001_manual_review_next_action": apq001_manual_review_next_action,
         "action_photo_quality_fit_status": clean(action_photo_quality_fit_manifest.get("status")) if isinstance(action_photo_quality_fit_manifest, dict) else "",
         "action_photo_quality_fit_generated_at": clean(action_photo_quality_fit_manifest.get("generated_at_utc")) if isinstance(action_photo_quality_fit_manifest, dict) else "",
         "action_photo_quality_fit_rows": action_photo_quality_fit_rows,
@@ -10903,8 +10988,13 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Human yes / generated yes</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_human_intake_download_approved_yes_rows', 0)))}/{html.escape(str(panel.get('action_photo_quarantine_preflight_generated_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>Quarantine target</span><strong>{html.escape(short(clean(panel.get('action_photo_apq001_quarantine_target_hint')) or 'data/assets/quarantine/review_only_candidates/...', 120))}</strong></div>
             <div><span>Manual chain</span><strong>manual asset review -> renderer handoff review -> visual QA/re-render</strong></div>
+            <div><span>APQ001 review status</span><strong>{html.escape(clean(panel.get('apq001_manual_review_status')) or 'not_generated')}</strong></div>
+            <div><span>APQ001 findings</span><strong>{html.escape(str(panel.get('apq001_manual_review_findings', 0)))}</strong><small>{html.escape(clean(panel.get('apq001_manual_review_operator_decision_summary')) or 'none')}</small></div>
+            <div><span>APQ001 handoff</span><strong>{html.escape(clean(panel.get('apq001_manual_review_handoff_summary')) or 'none')}</strong></div>
+            <div><span>APQ001 review guardrails</span><strong>{html.escape(str(panel.get('apq001_manual_review_asset_downloads', False)).lower())}/{html.escape(str(panel.get('apq001_manual_review_approval_state_change', False)).lower())}/{html.escape(str(panel.get('apq001_manual_review_renderer_behavior_change', False)).lower())}</strong><small>downloads/approval/renderer</small></div>
           </div>
           <p class="muted">{html.escape(clean(panel.get('action_photo_apq001_next_action')))}</p>
+          <p class="muted">{html.escape(clean(panel.get('apq001_manual_review_next_action')))}</p>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
           {packet_freshness_html(panel, 'womens_soccer_logo_contact_sheet', "Women's soccer logo contact sheet")}
@@ -12715,6 +12805,13 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- APQ001 cockpit status: {asset_panel.get('action_photo_apq001_cockpit_status') or 'manual_review_required'}",
         f"- APQ001 quarantine target hint: {asset_panel.get('action_photo_apq001_quarantine_target_hint') or 'missing'}",
         f"- APQ001 next action: {asset_panel.get('action_photo_apq001_next_action') or 'Open the preflight and wait for explicit Mike quarantine-download instruction.'}",
+        f"- APQ001 manual review status: {asset_panel.get('apq001_manual_review_status') or 'not_generated'}",
+        f"- APQ001 manual review findings: {asset_panel.get('apq001_manual_review_findings', 0)}",
+        f"- APQ001 manual review operator decisions: {asset_panel.get('apq001_manual_review_operator_decision_summary') or 'none'}",
+        f"- APQ001 renderer handoff recommendations: {asset_panel.get('apq001_manual_review_handoff_summary') or 'none'}",
+        f"- APQ001 manual review validation issues: {asset_panel.get('apq001_manual_review_validation_issues', 0)}",
+        f"- APQ001 manual review guardrails asset/approval/renderer/publish: {asset_panel.get('apq001_manual_review_asset_downloads', False)}/{asset_panel.get('apq001_manual_review_approval_state_change', False)}/{asset_panel.get('apq001_manual_review_renderer_behavior_change', False)}/{asset_panel.get('apq001_manual_review_publishing', False)}",
+        f"- APQ001 manual review next action: {asset_panel.get('apq001_manual_review_next_action') or 'Run the review-only importer after worksheets are filled.'}",
         f"- Action-photo quarantine missing source_url rows: {asset_panel.get('action_photo_quarantine_preflight_missing_source_url_rows', 0)}",
         f"- Action-photo quarantine preflight generated: {asset_panel.get('action_photo_quarantine_preflight_generated_at') or 'missing'}",
         f"- Action-photo quality/fit board rows: {asset_panel.get('action_photo_quality_fit_rows', 0)}",
