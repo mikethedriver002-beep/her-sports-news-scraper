@@ -8389,13 +8389,23 @@ def breaking_public_signal_return_lane_detail() -> str:
     summary = payload.get("summary") if isinstance(payload, dict) else {}
     if not isinstance(summary, dict) or not summary:
         return "Return summary not generated yet; run News to create missing checked URL/result/timestamp counts."
-    return (
+    rows = payload.get("rows") if isinstance(payload, dict) else []
+    first_missing_next = ""
+    if isinstance(rows, list):
+        for row in rows:
+            if isinstance(row, dict) and clean(row.get("manual_return_status")) == "operator_return_missing_required_fields":
+                first_missing_next = clean(row.get("manual_next_step"))
+                break
+    detail = (
         f"rows={summary.get('rows', 0)}; "
         f"missing_checked_url={summary.get('missing_operator_checked_url', 0)}; "
         f"missing_confirmation_result={summary.get('missing_operator_confirmation_result', 0)}; "
         f"missing_confirmed_at_utc={summary.get('missing_operator_confirmed_at_utc', 0)}; "
         f"ready_for_operator_review={summary.get('operator_return_ready_for_review', 0)}"
     )
+    if first_missing_next:
+        detail += f"; first_missing_next={first_missing_next}"
+    return detail
 
 
 def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
