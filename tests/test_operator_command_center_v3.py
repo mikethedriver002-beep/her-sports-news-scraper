@@ -4957,6 +4957,11 @@ def seed_manual_visual_qa_decision_files() -> None:
         {
             "status": "adobe_visual_qa_revision_requests_ready",
             "review_only": True,
+            "filled_manual_review_rows": 4,
+            "pending_operator_fill_rows": 0,
+            "revision_request_rows": 4,
+            "operator_decision_counts": {"revise": 4},
+            "validation_issue_count": 0,
             "approval_state_change": "none",
             "auto_approval": False,
             "auto_publish": False,
@@ -4979,7 +4984,34 @@ def seed_manual_visual_qa_decision_files() -> None:
                 "review_only": "true",
                 "approval_state_change": "none",
                 "publish_ready": "false",
-            }
+            },
+            {
+                "format": "ig_story_9x16",
+                "operator_decision": "revise",
+                "revision_request": "Lower the story title safe zone.",
+                "operator_notes": "Review-only fixture row.",
+                "review_only": "true",
+                "approval_state_change": "none",
+                "publish_ready": "false",
+            },
+            {
+                "format": "square_1x1",
+                "operator_decision": "revise",
+                "revision_request": "Open up the square score grid.",
+                "operator_notes": "Review-only fixture row.",
+                "review_only": "true",
+                "approval_state_change": "none",
+                "publish_ready": "false",
+            },
+            {
+                "format": "contact_sheet",
+                "operator_decision": "revise",
+                "revision_request": "Rerender the contact sheet after template revisions.",
+                "operator_notes": "Review-only fixture row.",
+                "review_only": "true",
+                "approval_state_change": "none",
+                "publish_ready": "false",
+            },
         ],
         [
             "format",
@@ -4996,6 +5028,16 @@ def seed_manual_visual_qa_decision_files() -> None:
         {
             "status": "adobe_visual_qa_renderer_revision_plan_ready",
             "review_only": True,
+            "plan_rows": 4,
+            "revision_request_rows": 4,
+            "priority_counts": {"P0": 2, "P1": 1, "P2": 1},
+            "renderer_area_counts": {
+                "story_title_safe_zone": 1,
+                "square_score_grid": 1,
+                "score_rail_typography": 1,
+                "contact_sheet_rerender": 1,
+            },
+            "validation_issue_count": 0,
             "auto_approval": False,
             "auto_publish": False,
             "renderer_behavior_changed": False,
@@ -5011,12 +5053,37 @@ def seed_manual_visual_qa_decision_files() -> None:
             {
                 "format": "ig_feed_4x5",
                 "priority": "P1",
+                "renderer_area": "score_rail_typography",
                 "revision_focus": "score_rail_dashboard_violation",
+                "review_only": "true",
+                "publish_ready": "false",
+            },
+            {
+                "format": "ig_story_9x16",
+                "priority": "P0",
+                "renderer_area": "story_title_safe_zone",
+                "revision_focus": "title_safety",
+                "review_only": "true",
+                "publish_ready": "false",
+            },
+            {
+                "format": "square_1x1",
+                "priority": "P0",
+                "renderer_area": "square_score_grid",
+                "revision_focus": "score_rail_dashboard_violation",
+                "review_only": "true",
+                "publish_ready": "false",
+            },
+            {
+                "format": "contact_sheet",
+                "priority": "P2",
+                "renderer_area": "contact_sheet_rerender",
+                "revision_focus": "contact_sheet",
                 "review_only": "true",
                 "publish_ready": "false",
             }
         ],
-        ["format", "priority", "revision_focus", "review_only", "publish_ready"],
+        ["format", "priority", "renderer_area", "revision_focus", "review_only", "publish_ready"],
     )
     write_json(
         "manual_visual_qa_approval_intake.json",
@@ -6178,6 +6245,28 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert any(item["label"] == "Render handoff" and item["value"] == "ready_for_manual_review" for item in payload["metrics"])
     assert any(item["label"] == "Decision UI" and item["value"] == "awaiting_operator_decision" for item in payload["metrics"])
     assert any(item["label"] == "Decision inbox rows" and item["value"] == "0" for item in payload["metrics"])
+    assert any(item["label"] == "Adobe QA revisions" and item["value"] == "4" and item["detail"] == "revise=4" for item in payload["metrics"])
+    assert any(item["label"] == "Adobe plan priorities" and item["value"] == "P0=2, P1=1, P2=1" and item["detail"] == "rows=4" for item in payload["metrics"])
+    adobe_summary = payload["operator_decision_panel"]["adobe_visual_qa_summary"]
+    assert adobe_summary["result_status"] == "adobe_visual_qa_revision_requests_ready"
+    assert adobe_summary["plan_status"] == "adobe_visual_qa_renderer_revision_plan_ready"
+    assert adobe_summary["filled_manual_review_rows"] == 4
+    assert adobe_summary["pending_operator_fill_rows"] == 0
+    assert adobe_summary["revision_request_rows"] == 4
+    assert adobe_summary["operator_decision_summary"] == "revise=4"
+    assert adobe_summary["plan_rows"] == 4
+    assert adobe_summary["priority_summary"] == "P0=2, P1=1, P2=1"
+    assert adobe_summary["validation_issue_count"] == 0
+    assert adobe_summary["asset_downloads"] is False
+    assert adobe_summary["approval_state_change"] is False
+    assert adobe_summary["publish_ready"] is False
+    assert adobe_summary["publishing"] is False
+    assert "Adobe visual QA cockpit" in html
+    assert "Revision requests" in html
+    assert "P0=2, P1=1, P2=1" in html
+    assert "## Adobe Visual QA Cockpit" in markdown
+    assert "- Revision requests: 4 (revise=4)" in markdown
+    assert "- Renderer plan rows: 4 (P0=2, P1=1, P2=1)" in markdown
     assert any(item["label"] == "Asset audit" and item["value"] == "review_required" for item in payload["metrics"])
     assert any(item["label"] == "Asset blockers" and item["value"] == "5" for item in payload["metrics"])
     assert any(item["label"] == "Asset errors/warnings" and item["value"] == "2/2" for item in payload["metrics"])

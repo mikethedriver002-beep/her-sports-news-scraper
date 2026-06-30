@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.91.0-anti-dashboard-cues"
+VERSION = "hsd-operator-command-center-v3.92.0-adobe-qa-summary"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -4202,6 +4202,87 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
     return cues
 
 
+def count_field_values(rows: Iterable[Mapping[str, Any]], field: str) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for row in rows:
+        label = clean(row.get(field))
+        if not label:
+            continue
+        counts[label] = counts.get(label, 0) + 1
+    return counts
+
+
+def compact_counts(counts: Mapping[str, Any], preferred_order: Iterable[str] = ()) -> str:
+    if not counts:
+        return "none"
+    ordered: List[str] = []
+    seen = set()
+    for key in preferred_order:
+        if key in counts:
+            ordered.append(f"{key}={counts[key]}")
+            seen.add(key)
+    for key in sorted(str(k) for k in counts if str(k) not in seen):
+        ordered.append(f"{key}={counts.get(key)}")
+    return ", ".join(ordered) if ordered else "none"
+
+
+def adobe_visual_qa_summary() -> Dict[str, Any]:
+    result_manifest = read_json("adobe_visual_qa_result_manifest.json")
+    revision_rows = read_csv("adobe_visual_qa_revision_requests.csv")
+    renderer_plan = read_json("adobe_visual_qa_renderer_revision_plan.json")
+    renderer_plan_rows = read_csv("adobe_visual_qa_renderer_revision_plan.csv")
+    operator_decision_counts = result_manifest.get("operator_decision_counts", {})
+    if not isinstance(operator_decision_counts, dict) or not operator_decision_counts:
+        operator_decision_counts = count_field_values(revision_rows, "operator_decision")
+    priority_counts = renderer_plan.get("priority_counts", {})
+    if not isinstance(priority_counts, dict) or not priority_counts:
+        priority_counts = count_field_values(renderer_plan_rows, "priority")
+    renderer_area_counts = renderer_plan.get("renderer_area_counts", {})
+    if not isinstance(renderer_area_counts, dict) or not renderer_area_counts:
+        renderer_area_counts = count_field_values(renderer_plan_rows, "renderer_area")
+    result_status = clean(result_manifest.get("status")) or "not_generated"
+    plan_status = clean(renderer_plan.get("status")) or "not_generated"
+    revision_request_rows = as_int(first_present(result_manifest.get("revision_request_rows"), len(revision_rows)))
+    plan_rows = as_int(first_present(renderer_plan.get("plan_rows"), len(renderer_plan_rows)))
+    validation_issue_count = as_int(result_manifest.get("validation_issue_count")) + as_int(
+        renderer_plan.get("validation_issue_count")
+    )
+    if result_status == "adobe_visual_qa_revision_requests_ready" and plan_status == "adobe_visual_qa_renderer_revision_plan_ready":
+        next_step = "Open the Adobe renderer revision plan, then hand off a separate renderer or cockpit lane."
+    elif result_status == "not_generated":
+        next_step = "Run the Adobe visual QA intake importer after the worksheet is filled."
+    elif plan_status == "not_generated":
+        next_step = "Run the Adobe renderer revision plan builder after revision requests are ready."
+    else:
+        next_step = "Review Adobe visual QA validation issues before another renderer step."
+    return {
+        "result_status": result_status,
+        "plan_status": plan_status,
+        "filled_manual_review_rows": as_int(result_manifest.get("filled_manual_review_rows")),
+        "pending_operator_fill_rows": as_int(result_manifest.get("pending_operator_fill_rows")),
+        "revision_request_rows": revision_request_rows,
+        "operator_decision_counts": operator_decision_counts,
+        "operator_decision_summary": compact_counts(operator_decision_counts, ["hold", "revise", "approve_for_manual_next_step"]),
+        "plan_rows": plan_rows,
+        "priority_counts": priority_counts,
+        "priority_summary": compact_counts(priority_counts, ["P0", "P1", "P2", "P3"]),
+        "renderer_area_counts": renderer_area_counts,
+        "renderer_area_summary": compact_counts(renderer_area_counts),
+        "validation_issue_count": validation_issue_count,
+        "result_manifest_artifact": "adobe_visual_qa_result_manifest.json",
+        "revision_requests_artifact": "adobe_visual_qa_revision_requests.csv",
+        "renderer_plan_artifact": "adobe_visual_qa_renderer_revision_plan.md",
+        "renderer_plan_csv_artifact": "adobe_visual_qa_renderer_revision_plan.csv",
+        "next_step": next_step,
+        "review_only": result_manifest.get("review_only") is True or renderer_plan.get("review_only") is True,
+        "asset_downloads": yes(result_manifest.get("asset_downloads")) or yes(renderer_plan.get("asset_downloads")),
+        "approval_state_change": yes(result_manifest.get("approval_state_change"))
+        or yes(renderer_plan.get("approval_state_change")),
+        "publish_ready": yes(result_manifest.get("publish_ready")) or yes(renderer_plan.get("publish_ready")),
+        "publishing": yes(result_manifest.get("publishing")) or yes(renderer_plan.get("publishing")),
+    }
+
+
 def operator_decision_ui_panel() -> Dict[str, Any]:
     renderer = read_json("manual_review_renderer_manifest.json")
     delta = read_json("render_visual_delta_manifest.json")
@@ -4257,6 +4338,7 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         "qa_pass_count": clean(qa_summary.get("pass_count")),
         "qa_check_count": clean(qa_summary.get("check_count")),
         "qa_cues": build_visual_qa_cues(qa),
+        "adobe_visual_qa_summary": adobe_visual_qa_summary(),
         "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
         "decision_draft": draft,
         "render_gallery": build_render_gallery(renderer, qa, delta, revision_plan, draft),
@@ -8810,6 +8892,16 @@ def build_payload() -> Dict[str, Any]:
         metric("Manual league-mark intake bridge", len(manual_league_mark_context_intake)),
         metric("Decision UI", operator_decision_panel["panel_status"], operator_decision_panel["next_step"]),
         metric("Decision inbox rows", operator_decision_panel["inbox_rows"]),
+        metric(
+            "Adobe QA revisions",
+            operator_decision_panel["adobe_visual_qa_summary"]["revision_request_rows"],
+            operator_decision_panel["adobe_visual_qa_summary"]["operator_decision_summary"],
+        ),
+        metric(
+            "Adobe plan priorities",
+            operator_decision_panel["adobe_visual_qa_summary"]["priority_summary"],
+            f"rows={operator_decision_panel['adobe_visual_qa_summary']['plan_rows']}",
+        ),
         metric("Release readiness", release_readiness_panel["status"], release_readiness_panel["next_step"]),
         metric("Release blockers", release_readiness_panel["blocker_count"]),
         metric("Rollup artifact scan", release_readiness_panel["latest_scan_status"], f"files={release_readiness_panel['latest_scan_files_checked']}; violations={release_readiness_panel['latest_scan_violations']}"),
@@ -10166,6 +10258,51 @@ def render_visual_delta_cues(rows: Iterable[Dict[str, Any]]) -> str:
     return "".join(body) or '<p class="empty">No visual delta cues found yet.</p>'
 
 
+def render_adobe_visual_qa_summary(summary: Dict[str, Any]) -> str:
+    result_tone = "good" if clean(summary.get("result_status")) == "adobe_visual_qa_revision_requests_ready" else "warn"
+    plan_tone = "good" if clean(summary.get("plan_status")) == "adobe_visual_qa_renderer_revision_plan_ready" else "warn"
+    guardrail_tone = (
+        "good"
+        if not any(
+            [
+                summary.get("asset_downloads"),
+                summary.get("approval_state_change"),
+                summary.get("publish_ready"),
+                summary.get("publishing"),
+            ]
+        )
+        else "bad"
+    )
+    return f"""
+      <div class="decision-desk-section adobe-visual-qa-summary">
+        <div class="row-kicker">
+          Adobe visual QA cockpit
+          {pill(clean(summary.get('result_status')) or 'not_generated', result_tone)}
+          {pill(clean(summary.get('plan_status')) or 'not_generated', plan_tone)}
+        </div>
+        <div class="decision-status-grid">
+          <div><span>Manual rows</span><strong>{html.escape(str(summary.get('filled_manual_review_rows', 0)))}</strong><small>{html.escape(str(summary.get('pending_operator_fill_rows', 0)))} pending fill</small></div>
+          <div><span>Revision requests</span><strong>{html.escape(str(summary.get('revision_request_rows', 0)))}</strong><small>{html.escape(clean(summary.get('operator_decision_summary')) or 'none')}</small></div>
+          <div><span>Renderer plan rows</span><strong>{html.escape(str(summary.get('plan_rows', 0)))}</strong><small>{html.escape(clean(summary.get('priority_summary')) or 'none')}</small></div>
+          <div><span>Validation issues</span><strong>{html.escape(str(summary.get('validation_issue_count', 0)))}</strong><small>{html.escape(clean(summary.get('renderer_area_summary')) or 'none')}</small></div>
+        </div>
+        <p>{html.escape(clean(summary.get('next_step')))}</p>
+        <div class="decision-button-row">
+          {open_link(clean(summary.get('result_manifest_artifact')) or 'adobe_visual_qa_result_manifest.json', 'Result manifest')}
+          {open_link(clean(summary.get('revision_requests_artifact')) or 'adobe_visual_qa_revision_requests.csv', 'Revision requests')}
+          {open_link(clean(summary.get('renderer_plan_artifact')) or 'adobe_visual_qa_renderer_revision_plan.md', 'Renderer plan')}
+        </div>
+        <div class="safety-strip">
+          {pill('review-only', 'good' if summary.get('review_only') else 'warn')}
+          {pill('downloads: false', guardrail_tone)}
+          {pill('approval change: false', guardrail_tone)}
+          {pill('publish-ready: false', guardrail_tone)}
+          {pill('publishing: false', guardrail_tone)}
+        </div>
+      </div>
+    """
+
+
 def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
@@ -10265,6 +10402,7 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
               </div>
             </div>
           </div>
+          {render_adobe_visual_qa_summary(panel.get('adobe_visual_qa_summary', {}))}
           <div class="decision-desk-section">
             <div class="row-kicker">Render gallery {pill('review-only drafts')} {pill('no publish-ready lane')}</div>
             <div class="render-gallery-grid">
@@ -13161,6 +13299,23 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- History issues: {decision_panel.get('history_issue_count', 0)}",
         f"- Next safe action: {decision_panel.get('next_step')}",
         "- Guardrails: file-backed manual approval, no auto-approval, no publishing, no file movement, no paid APIs.",
+    ]
+    adobe_summary = decision_panel.get("adobe_visual_qa_summary", {})
+    lines += [
+        "",
+        "## Adobe Visual QA Cockpit",
+        "",
+        f"- Importer status: {adobe_summary.get('result_status') or 'not_generated'}",
+        f"- Filled manual rows: {adobe_summary.get('filled_manual_review_rows', 0)}",
+        f"- Pending operator fill rows: {adobe_summary.get('pending_operator_fill_rows', 0)}",
+        f"- Revision requests: {adobe_summary.get('revision_request_rows', 0)} ({adobe_summary.get('operator_decision_summary') or 'none'})",
+        f"- Renderer plan status: {adobe_summary.get('plan_status') or 'not_generated'}",
+        f"- Renderer plan rows: {adobe_summary.get('plan_rows', 0)} ({adobe_summary.get('priority_summary') or 'none'})",
+        f"- Renderer areas: {adobe_summary.get('renderer_area_summary') or 'none'}",
+        f"- Validation issues: {adobe_summary.get('validation_issue_count', 0)}",
+        f"- Next safe action: {adobe_summary.get('next_step') or 'Open the Adobe QA artifacts before any renderer lane.'}",
+        f"- Artifacts: `{adobe_summary.get('result_manifest_artifact') or 'adobe_visual_qa_result_manifest.json'}`, `{adobe_summary.get('revision_requests_artifact') or 'adobe_visual_qa_revision_requests.csv'}`, `{adobe_summary.get('renderer_plan_artifact') or 'adobe_visual_qa_renderer_revision_plan.md'}`",
+        "- Guardrails: review-only, no downloads, no approval-state changes, no publish-ready lane, no publishing.",
     ]
     lines.extend(
         f"- Render gallery: {item.get('label')} | {item.get('shape')} | {item.get('review_status')} | delta={item.get('visual_delta_score') or '0'} ({item.get('visual_delta_band') or 'not_scored'}) | revision={item.get('revision_priority') or 'not_planned'} | focus={item.get('revision_focus') or 'n/a'} | {item.get('path')} | publish_ready={item.get('publish_ready')}"
