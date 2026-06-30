@@ -522,10 +522,10 @@ def durable_lane_thread_status(
     pending_thread: str,
     lane_owner_thread: str,
 ) -> str:
-    if lane_id not in EXPECTED_DURABLE_LANE_IDS:
-        return ""
     if pending_thread or lane_owner_thread:
         return "thread_reference_present"
+    if lane_id not in EXPECTED_DURABLE_LANE_IDS:
+        return ""
     normalized = status.lower()
     if is_stale_exempt_status(normalized):
         return "completed_lane_thread_reference_missing"
@@ -931,7 +931,8 @@ def render_markdown(payload: dict[str, Any]) -> str:
                 "",
                 "## Durable Lane Roster",
                 "",
-                f"- Expected durable lanes tracked: `{len(EXPECTED_DURABLE_LANE_IDS)}`",
+                f"- Durable lane refs visible: `{len(durable_rows)}`",
+                f"- Missing-thread brake lanes tracked: `{len(EXPECTED_DURABLE_LANE_IDS)}`",
                 f"- Durable lanes missing thread references: `{payload['missing_durable_lane_count']}`",
                 "- Missing thread references are conductor recovery cues only; they do not create threads, branches, PRs, or publish state.",
             ]
