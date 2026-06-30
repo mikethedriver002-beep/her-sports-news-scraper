@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.61.0-open-score-rails"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.62.0-story-safezone-square-debox"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -1129,11 +1129,16 @@ def test_manual_review_renderer_selects_photo_layout_by_format() -> None:
     assert geometry["athlete_visual_share"] <= module.PHOTO_FIRST_ATHLETE_MAX_VISUAL_SHARE
     square_geometry = module.photo_first_layout_geometry({"format_id": "square_feed_1x1", "width": 1080, "height": 1080})
     assert square_geometry["photo_stage_box"] == [48, 350, 356, 374]
-    assert square_geometry["winner_score_row_box"] == [428, 360, 592, 124]
-    assert square_geometry["loser_score_row_box"] == [428, 504, 592, 108]
+    assert square_geometry["winner_score_row_box"] == [428, 360, 592, 112]
+    assert square_geometry["loser_score_row_box"] == [428, 514, 592, 96]
     assert square_geometry["stat_strip_box"] == [60, 740, 960, 64]
     assert square_geometry["matchup_angle_box"] == [60, 838, 960, 94]
     assert square_geometry["athlete_visual_status"] == "athlete_supports_result"
+    assert square_geometry["square_score_grid_treatment"] == module.PHOTO_FIRST_SQUARE_SCORE_GRID_TREATMENT
+    assert "avoid boxed score-grid containers" in square_geometry["square_score_grid_panel_policy"]
+    assert square_geometry["loser_score_row_box"][1] - (
+        square_geometry["winner_score_row_box"][1] + square_geometry["winner_score_row_box"][3]
+    ) >= 42
     for box in (
         square_geometry["photo_stage_box"],
         square_geometry["winner_score_row_box"],
@@ -1193,6 +1198,17 @@ def test_manual_review_renderer_photo_first_type_scale_and_athlete_cap_contract(
         assert "editorial_depth_bridge" in geometry["depth_layer_order"]
         assert "score_stage_wash" in geometry["procedural_texture_contract"]
         assert geometry["score_asymmetry_contract"]["winner_score_scale"] > geometry["score_asymmetry_contract"]["loser_score_scale"]
+    story_geometry = module.photo_first_layout_geometry({"format_id": "ig_story_9x16", "width": 1080, "height": 1920})
+    assert story_geometry["safe_zone_px"]["top"] == 216
+    assert story_geometry["story_safe_zone_offset_px"] == module.PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX
+    assert story_geometry["photo_stage_box"][1] == 520 + module.PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX
+    assert "native social UI clearance" in story_geometry["story_safe_zone_policy"]
+    assert module.preview_title_crop_box("ig_story_9x16", 1080, 1920) == (
+        72,
+        148 + module.PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX,
+        1008,
+        348 + module.PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX,
+    )
     feed_geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
     assert feed_geometry["photo_stage_box"][2] / 1080 >= 0.41
 
@@ -1328,6 +1344,12 @@ def test_manual_review_renderer_photo_first_score_slab_stays_inside_score_row() 
             assert digit_cell[3] - digit_cell[1] >= 54
             assert text_box[0] + text_box[2] <= slab[0] - 26
             assert text_box[2] >= 112
+        if format_spec["format_id"] == "square_feed_1x1":
+            assert geometry["square_score_grid_treatment"] == module.PHOTO_FIRST_SQUARE_SCORE_GRID_TREATMENT
+            winner_slab = module.photo_first_score_slab_box(tuple(geometry["winner_score_row_box"]), winner=True)
+            loser_slab = module.photo_first_score_slab_box(tuple(geometry["loser_score_row_box"]), winner=False)
+            assert winner_slab[2] <= 160
+            assert loser_slab[2] <= 126
 
 
 def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_cell() -> None:
