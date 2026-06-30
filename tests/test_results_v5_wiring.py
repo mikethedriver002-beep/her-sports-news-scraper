@@ -617,6 +617,10 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
     assert by_id["event_confirmed"]["box_score_or_stat_source_url"] == "https://www.espn.com/wnba/game/_/gameId/401"
     assert by_id["event_confirmed"]["source_type_to_verify"] == "public_scoreboard_box_score_operator_verify"
     assert by_id["event_confirmed"]["second_source_check_cue"] == "single_box_score_source_present_second_free_public_source_recommended_before_copy_or_render"
+    assert "verify the final score and named player stat line" in by_id["event_confirmed"]["operator_research_prompt"]
+    assert "check a second free/public source when available" in by_id["event_confirmed"]["operator_research_prompt"]
+    assert "Optional audit" not in by_id["event_confirmed"]["operator_research_prompt"]
+    assert "verify the final score and named player stat line" in by_id["event_confirmed"]["source_proof_next_action"]
     assert "Open proof row: story_proof_card_v1.csv event_id=event_confirmed" in by_id["event_confirmed"]["source_proof_next_action"]
     assert "Record human confirmation only in: final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456" in by_id["event_confirmed"]["source_proof_next_action"]
     assert by_id["event_missing"]["research_need"] == "find_official_or_public_schedule_result_stat_source"
