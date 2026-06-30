@@ -47,6 +47,20 @@ LANE_ROSTER = [
         ],
     },
     {
+        "lane_id": "womens_soccer_athlete_expansion",
+        "lane": "Women's soccer athlete expansion",
+        "owns": "Women's soccer athlete expansion closure, source-priority, triage, and operator-focus artifacts",
+        "default_next_action": "Recover or create a visible durable thread before continuing women's soccer athlete expansion closure work.",
+        "branch_hints": ["womens-soccer", "women-soccer", "soccer-athlete", "wsoc", "nwsl"],
+    },
+    {
+        "lane_id": "hockey_softball_asset_workflow",
+        "lane": "Hockey/softball asset workflow",
+        "owns": "Hockey/softball asset foundation, source-map, source-review, and manual verification artifacts",
+        "default_next_action": "Recover or create a visible durable thread before continuing hockey/softball asset workflow polish.",
+        "branch_hints": ["hockey-softball", "womens-hockey", "softball", "pwhl", "ausl"],
+    },
+    {
         "lane_id": "games_schedule_stats",
         "lane": "Games/schedule/stats",
         "owns": "Results, schedules, game intelligence, stats evidence",
@@ -86,6 +100,8 @@ LANE_ROSTER = [
 EXPECTED_DURABLE_LANE_IDS = {
     "games_schedule_stats",
     "breaking_public_signal",
+    "womens_soccer_athlete_expansion",
+    "hockey_softball_asset_workflow",
 }
 
 INTAKE_FIELDS = [
@@ -555,6 +571,18 @@ def durable_lane_recovery_cue(thread_status: str, next_packet: str, lane_owner_t
 
 
 def durable_lane_exact_start_prompt(lane_id: str) -> str:
+    if lane_id == "womens_soccer_athlete_expansion":
+        return (
+            "Open `womens_soccer_athlete_expansion_closure_summary.md`, then use the operator-focus, "
+            "source-priority, review-triage, and action-photo research-next artifacts listed there before any "
+            "future intake edit."
+        )
+    if lane_id == "hockey_softball_asset_workflow":
+        return (
+            "Open `hockey_softball_asset_foundation_report.md` and `hockey_softball_foundation_coverage_index.md`, "
+            "then use the source-map, source-priority, source-review helper, and manual verification artifacts before "
+            "any future intake edit."
+        )
     if lane_id == "games_schedule_stats":
         return (
             "Open `game_source_confirmation_next_action_v1.csv`, `game_source_research_worksheet_v1.csv`, and "
@@ -570,6 +598,16 @@ def durable_lane_exact_start_prompt(lane_id: str) -> str:
 
 
 def durable_lane_exact_recover_prompt(lane_id: str) -> str:
+    if lane_id == "womens_soccer_athlete_expansion":
+        return (
+            "If the lane thread is missing, recover or recreate the durable women's soccer athlete expansion lane "
+            "explicitly from current `origin/main`; do not assume the closure artifacts mean invisible work is active."
+        )
+    if lane_id == "hockey_softball_asset_workflow":
+        return (
+            "If the lane thread is missing, recover or recreate the durable hockey/softball asset workflow lane "
+            "explicitly from current `origin/main`; keep all source/download/approval steps manual."
+        )
     if lane_id == "games_schedule_stats":
         return (
             "If the lane thread is missing, recover or relink the durable games/stats lane explicitly, then use the "
@@ -584,6 +622,18 @@ def durable_lane_exact_recover_prompt(lane_id: str) -> str:
 
 
 def durable_lane_anchor_artifacts(lane_id: str) -> str:
+    if lane_id == "womens_soccer_athlete_expansion":
+        return (
+            "womens_soccer_athlete_expansion_closure_summary.md; womens_soccer_athlete_operator_focus.md; "
+            "womens_soccer_athlete_source_priority.md; womens_soccer_athlete_review_triage.md; "
+            "womens_soccer_action_photo_research_next.md"
+        )
+    if lane_id == "hockey_softball_asset_workflow":
+        return (
+            "hockey_softball_asset_foundation_report.md; hockey_softball_foundation_coverage_index.md; "
+            "hockey_softball_source_map_board.md; hockey_softball_source_priority_worksheet.md; "
+            "hockey_softball_manual_verification_focus.md"
+        )
     if lane_id == "games_schedule_stats":
         return (
             "game_source_confirmation_next_action_v1.csv; game_source_research_worksheet_v1.csv; "
