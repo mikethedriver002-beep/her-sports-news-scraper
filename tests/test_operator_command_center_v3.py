@@ -8172,6 +8172,71 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
     assert "Workflow lane status: workflow_lane_status_ready; stale brakes: 1; missing durable lanes: 2; restart-needed: 2; lifecycle actions: 1" in markdown
 
 
+def test_asset_cockpit_surfaces_apq001_quarantine_preflight_next_action(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    Path("data/asset_registry/action_photo_candidates").mkdir(parents=True, exist_ok=True)
+    write_json(
+        "data/asset_registry/asset_availability_audit.json",
+        {
+            "status": "review_required",
+            "finding_count": 0,
+            "severity_counts": {},
+            "asset_domain_counts": {},
+            "finding_counts": {},
+            "findings": [],
+            "policy": {
+                "no_paid_apis": True,
+                "no_asset_downloads": True,
+                "no_auto_approval": True,
+                "no_file_movement_into_publish_ready_lanes": True,
+                "no_publishing": True,
+            },
+        },
+    )
+    write_json(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
+        {
+            "status": "action_photo_quarantine_preflight_ready",
+            "generated_at_utc": "2026-06-30T00:00:00+00:00",
+            "preflight_rows": 10,
+            "ready_for_human_download_decision_rows": 1,
+            "lead_only_rows": 9,
+            "download_approved_yes_rows": 0,
+            "human_intake_download_approved_yes_rows": 1,
+            "generated_download_approved_yes_rows": 0,
+            "missing_required_field_counts": {"source_url": 9},
+            "asset_downloads": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "preflight_rows_detail": [
+                {
+                    "candidate_queue_id": "APQ001",
+                    "candidate_photo_url": "https://fever.wnba.com/news/example",
+                    "entity_id": "wnba:caitlin-clark",
+                    "rights_class": "official_review_needed",
+                    "identity_confidence": "confirmed_official",
+                    "ready_for_human_download_decision": "yes",
+                    "quarantine_target_hint": "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/operator_fill_required.jpg",
+                }
+            ],
+        },
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["action_photo_apq001_cockpit_status"] == "human_quarantine_consideration_only"
+    assert panel["action_photo_quarantine_preflight_human_intake_download_approved_yes_rows"] == 1
+    assert panel["action_photo_quarantine_preflight_generated_download_approved_yes_rows"] == 0
+    assert panel["action_photo_apq001_quarantine_target_hint"].startswith("data/assets/quarantine/review_only_candidates/")
+    assert "No download is allowed unless Mike explicitly says" in panel["action_photo_apq001_next_action"]
+    assert "must not" not in panel["action_photo_apq001_next_action"].lower()
+    assert "APQ001 cockpit" in html
+    assert "human_quarantine_consideration_only" in html
+    assert "manual asset review -&gt; renderer handoff review -&gt; visual QA/re-render" in html
+    assert "data/assets/quarantine/review_only_candidates" in html
+
+
 def test_local_runner_collects_daily_command_center_artifacts() -> None:
     runner = (REPO / "scripts" / "hsd_local.ps1").read_text(encoding="utf-8")
     assert "operator_command_center.html" in runner

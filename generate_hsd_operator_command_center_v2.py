@@ -2663,6 +2663,33 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         next_step = f"{first.get('decision')}: {first.get('manual_action')}"
     elif status in {"pass", "passed"}:
         next_step = "No asset availability blockers found in the latest audit; still keep manual visual review before any next step."
+    action_photo_preflight_rows_detail = (
+        action_photo_preflight_manifest.get("preflight_rows_detail")
+        if isinstance(action_photo_preflight_manifest, dict)
+        else []
+    ) or []
+    action_photo_apq001_preflight = next(
+        (
+            row
+            for row in action_photo_preflight_rows_detail
+            if isinstance(row, dict) and clean(row.get("candidate_queue_id")) == "APQ001"
+        ),
+        {},
+    )
+    action_photo_apq001_ready = clean(action_photo_apq001_preflight.get("ready_for_human_download_decision")).lower() == "yes"
+    action_photo_apq001_human_yes = (
+        action_photo_apq001_ready
+        and as_int(action_photo_preflight_manifest.get("human_intake_download_approved_yes_rows"))
+        > as_int(action_photo_preflight_manifest.get("generated_download_approved_yes_rows"))
+        if isinstance(action_photo_preflight_manifest, dict)
+        else False
+    )
+    action_photo_apq001_cockpit_status = "human_quarantine_consideration_only" if action_photo_apq001_human_yes else "manual_return_or_download_decision_needed"
+    action_photo_apq001_next_action = (
+        "APQ001 is human-approved only for quarantine-only consideration. No download is allowed unless Mike explicitly says to perform the quarantine candidate download; if he does, keep it guarded, local, quarantine-only under data/assets/quarantine/review_only_candidates, then run manual asset review -> renderer handoff review -> visual QA/re-render."
+        if action_photo_apq001_human_yes
+        else "APQ001 is not cleared for any local download action in this cockpit; open the preflight and return intake, then wait for an explicit Mike quarantine-download instruction."
+    )
     return {
         "panel_status": status,
         "generated_at_utc": clean(audit.get("generated_at_utc")),
@@ -3019,7 +3046,17 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_quarantine_preflight_ready_for_human_download_decision_rows": as_int(action_photo_preflight_manifest.get("ready_for_human_download_decision_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_lead_only_rows": as_int(action_photo_preflight_manifest.get("lead_only_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_download_approved_yes_rows": as_int(action_photo_preflight_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
+        "action_photo_quarantine_preflight_human_intake_download_approved_yes_rows": as_int(action_photo_preflight_manifest.get("human_intake_download_approved_yes_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
+        "action_photo_quarantine_preflight_generated_download_approved_yes_rows": as_int(action_photo_preflight_manifest.get("generated_download_approved_yes_rows")) if isinstance(action_photo_preflight_manifest, dict) else 0,
         "action_photo_quarantine_preflight_missing_source_url_rows": as_int(action_photo_preflight_manifest.get("missing_required_field_counts", {}).get("source_url")) if isinstance(action_photo_preflight_manifest, dict) and isinstance(action_photo_preflight_manifest.get("missing_required_field_counts"), dict) else 0,
+        "action_photo_apq001_cockpit_status": action_photo_apq001_cockpit_status,
+        "action_photo_apq001_ready_for_human_download_decision": action_photo_apq001_ready,
+        "action_photo_apq001_candidate_photo_url": clean(action_photo_apq001_preflight.get("candidate_photo_url")),
+        "action_photo_apq001_entity_id": clean(action_photo_apq001_preflight.get("entity_id")),
+        "action_photo_apq001_rights_class": clean(action_photo_apq001_preflight.get("rights_class")),
+        "action_photo_apq001_identity_confidence": clean(action_photo_apq001_preflight.get("identity_confidence")),
+        "action_photo_apq001_quarantine_target_hint": clean(action_photo_apq001_preflight.get("quarantine_target_hint")),
+        "action_photo_apq001_next_action": action_photo_apq001_next_action,
         "action_photo_quality_fit_status": clean(action_photo_quality_fit_manifest.get("status")) if isinstance(action_photo_quality_fit_manifest, dict) else "",
         "action_photo_quality_fit_generated_at": clean(action_photo_quality_fit_manifest.get("generated_at_utc")) if isinstance(action_photo_quality_fit_manifest, dict) else "",
         "action_photo_quality_fit_rows": action_photo_quality_fit_rows,
@@ -10787,6 +10824,13 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S download gate</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_intake_rows', 0)))}</strong></div>
             <div><span>H/S download yes</span><strong>{html.escape(str(panel.get('hockey_softball_quarantine_download_approved_yes_rows', 0)))}</strong></div>
           </div>
+          <div class="asset-guidance-grid">
+            <div><span>APQ001 cockpit</span><strong>{html.escape(clean(panel.get('action_photo_apq001_cockpit_status')) or 'manual_review_required')}</strong></div>
+            <div><span>Human yes / generated yes</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_human_intake_download_approved_yes_rows', 0)))}/{html.escape(str(panel.get('action_photo_quarantine_preflight_generated_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>Quarantine target</span><strong>{html.escape(short(clean(panel.get('action_photo_apq001_quarantine_target_hint')) or 'data/assets/quarantine/review_only_candidates/...', 120))}</strong></div>
+            <div><span>Manual chain</span><strong>manual asset review -> renderer handoff review -> visual QA/re-render</strong></div>
+          </div>
+          <p class="muted">{html.escape(clean(panel.get('action_photo_apq001_next_action')))}</p>
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
           {packet_freshness_html(panel, 'womens_soccer_logo_contact_sheet', "Women's soccer logo contact sheet")}
@@ -12593,6 +12637,10 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo quarantine ready-for-human-download-decision rows: {asset_panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)}",
         f"- Action-photo quarantine lead-only rows: {asset_panel.get('action_photo_quarantine_preflight_lead_only_rows', 0)}",
         f"- Action-photo quarantine download-approved yes rows: {asset_panel.get('action_photo_quarantine_preflight_download_approved_yes_rows', 0)}",
+        f"- Action-photo quarantine human/generated download-approved yes rows: {asset_panel.get('action_photo_quarantine_preflight_human_intake_download_approved_yes_rows', 0)}/{asset_panel.get('action_photo_quarantine_preflight_generated_download_approved_yes_rows', 0)}",
+        f"- APQ001 cockpit status: {asset_panel.get('action_photo_apq001_cockpit_status') or 'manual_review_required'}",
+        f"- APQ001 quarantine target hint: {asset_panel.get('action_photo_apq001_quarantine_target_hint') or 'missing'}",
+        f"- APQ001 next action: {asset_panel.get('action_photo_apq001_next_action') or 'Open the preflight and wait for explicit Mike quarantine-download instruction.'}",
         f"- Action-photo quarantine missing source_url rows: {asset_panel.get('action_photo_quarantine_preflight_missing_source_url_rows', 0)}",
         f"- Action-photo quarantine preflight generated: {asset_panel.get('action_photo_quarantine_preflight_generated_at') or 'missing'}",
         f"- Action-photo quality/fit board rows: {asset_panel.get('action_photo_quality_fit_rows', 0)}",
