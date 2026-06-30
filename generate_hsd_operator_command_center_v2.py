@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from hsd_run_io import input_candidates, input_path, output_path, write_csv, write_json, write_text
 
-VERSION = "hsd-operator-command-center-v3.90.0-full-evidence-action-photo-cue"
+VERSION = "hsd-operator-command-center-v3.91.0-anti-dashboard-cues"
 OUT_HTML = output_path("operator_command_center.html")
 OUT_MD = output_path("operator_command_center.md")
 OUT_JSON = output_path("operator_command_center.json")
@@ -3940,6 +3940,8 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         "action_photo_readiness_review",
         "composition_balance_readiness_review",
         "preview_freshness_current_handoff",
+        "anti_dashboard_score_spine_review",
+        "lower_third_card_weight_review",
         "premium_editorial_clutter_scan",
         "headline_text_zone",
         "score_team_text_zone",
@@ -3954,6 +3956,8 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         "action_photo_readiness_review": "Action-photo readiness",
         "composition_balance_readiness_review": "Bridge/composition balance",
         "preview_freshness_current_handoff": "Latest render freshness",
+        "anti_dashboard_score_spine_review": "Anti-dashboard score spine",
+        "lower_third_card_weight_review": "Lower-third card weight",
         "premium_editorial_clutter_scan": "Premium editorial clutter scan",
         "headline_text_zone": "Title contrast and fit",
         "score_team_text_zone": "Score/team readability",
@@ -3973,7 +3977,12 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
         passed = row.get("passed") is True or result.startswith("pass")
         full_evidence = clean(row.get("evidence"))
         evidence = short(full_evidence, 260)
-        route_risk = check_id in {"action_photo_readiness_review", "composition_balance_readiness_review"} and any(
+        review_risk = check_id in {
+            "action_photo_readiness_review",
+            "composition_balance_readiness_review",
+            "anti_dashboard_score_spine_review",
+            "lower_third_card_weight_review",
+        } and any(
             token in full_evidence.lower()
             for token in [
                 "not_available_to_renderer",
@@ -3982,6 +3991,11 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
                 "premium final-score editorial needs",
                 "hold or revise",
                 "static roster portrait",
+                "dashboard",
+                "boxed",
+                "solid backing panel",
+                "heavy card",
+                "lower-third box",
             ]
         )
         cues.append(
@@ -3989,7 +4003,7 @@ def build_visual_qa_cues(qa: Dict[str, Any]) -> List[Dict[str, str]]:
                 "check_id": check_id,
                 "label": labels.get(check_id, clean(row.get("check_label")) or check_id),
                 "result": result,
-                "tone": "warn" if route_risk or not passed else "good",
+                "tone": "warn" if review_risk or not passed else "good",
                 "evidence": evidence,
             }
         )
