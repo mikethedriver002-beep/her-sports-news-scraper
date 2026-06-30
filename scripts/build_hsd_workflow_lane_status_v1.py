@@ -81,6 +81,11 @@ LANE_ROSTER = [
     },
 ]
 
+EXPECTED_DURABLE_LANE_IDS = {
+    "games_schedule_stats",
+    "breaking_public_signal",
+}
+
 INTAKE_FIELDS = [
     "lane_id",
     "status",
@@ -160,6 +165,7 @@ WORKFLOW_HEARTBEAT_CUE = (
 WORKFLOW_HEARTBEAT_CHECKLIST = [
     "Confirm current branch is based on origin/main.",
     "Confirm open PR count and worktree hint count before nudging new workflow work.",
+    "If an expected durable lane thread is missing, recover or recreate it explicitly instead of assuming invisible work is active.",
     "Open operator_next_action_synthesis.md and conductor_workspace_audit.md if present.",
     "Keep the next packet workflow/conductor visibility-only and review-only.",
     "Do not fetch sources, download assets, approve assets, move publish-ready files, or publish.",
@@ -463,6 +469,44 @@ def boolish(value: str) -> bool:
     return (value or "").strip().lower() in {"1", "true", "yes", "y"}
 
 
+def durable_lane_thread_status(
+    lane_id: str,
+    status: str,
+    pending_thread: str,
+    lane_owner_thread: str,
+) -> str:
+    if lane_id not in EXPECTED_DURABLE_LANE_IDS:
+        return ""
+    if pending_thread or lane_owner_thread:
+        return "thread_reference_present"
+    normalized = status.lower()
+    if is_stale_exempt_status(normalized):
+        return "completed_lane_thread_reference_missing"
+    if normalized in {"unreported", ""}:
+        return "missing_lane_thread_needs_conductor_recover"
+    return "active_lane_thread_reference_missing"
+
+
+def durable_lane_recovery_cue(thread_status: str, next_packet: str, lane_owner_thread: str) -> str:
+    if thread_status == "thread_reference_present":
+        return ""
+    if thread_status == "completed_lane_thread_reference_missing":
+        return (
+            "RECOVER_THREAD_REFERENCE: add a lane_owner_thread or pending_thread for this durable lane so the merge-wave "
+            "history stays visible; restart from current origin/main only if a fresh packet is needed."
+        )
+    if thread_status == "active_lane_thread_reference_missing":
+        return (
+            "RECOVER_THREAD_REFERENCE: add a lane_owner_thread or pending_thread before assuming invisible work is active."
+        )
+    if thread_status == "missing_lane_thread_needs_conductor_recover":
+        return (
+            "RECOVER_THREAD_REFERENCE: recreate or relink this durable lane explicitly from current origin/main before "
+            "assuming a quiet thread exists."
+        )
+    return next_packet or lane_owner_thread
+
+
 def restart_status(status: str, restart_needed: str, next_packet: str, lane_owner_thread: str) -> str:
     if boolish(restart_needed):
         return "restart_ready_from_current_main" if next_packet else "restart_needed_missing_next_packet"
@@ -513,6 +557,8 @@ def conductor_action_for_row(
 
 
 def nudge_type_for_row(row: dict[str, str]) -> str:
+    if row.get("durable_lane_thread_status") and row.get("durable_lane_thread_status") != "thread_reference_present":
+        return "missing_durable_lane_thread"
     if row.get("stale_lane_brake") == "true":
         return "stale_brake"
     if boolish(row.get("restart_needed", "")):
@@ -528,6 +574,7 @@ def nudge_type_for_row(row: dict[str, str]) -> str:
 
 def nudge_priority(nudge_type: str) -> str:
     priorities = {
+        "missing_durable_lane_thread": "P2",
         "stale_brake": "P1",
         "restart_needed": "P2",
         "manual_lifecycle_action": "P2",
@@ -631,6 +678,12 @@ def lane_rows(
         restart_needed = intake.get("restart_needed", "")
         next_packet = intake.get("next_packet", "")
         lifecycle_action = intake.get("lifecycle_action", "")
+        durable_thread_status = durable_lane_thread_status(
+            lane_id,
+            status,
+            intake.get("pending_thread", ""),
+            lane_owner_thread,
+        )
         staleness = lane_staleness(
             intake,
             status,
@@ -657,6 +710,8 @@ def lane_rows(
             "next_packet": next_packet,
             "restart_status": restart_status(status, restart_needed, next_packet, lane_owner_thread),
             "lifecycle_action": lifecycle_action,
+            "durable_lane_thread_status": durable_thread_status,
+            "durable_lane_recovery_cue": durable_lane_recovery_cue(durable_thread_status, next_packet, lane_owner_thread),
             "activity_age_hours": activity_age_hours(intake.get("last_update_utc", ""), stale_as_of),
             "activity_status": activity_status(staleness, restart_needed, status, intake.get("last_update_utc", "")),
             "last_known_branch": branch,
@@ -696,6 +751,8 @@ def lane_rows(
         if status == WORKFLOW_HEARTBEAT_STATUS:
             row["next_action"] = intake.get("next_action", "") or WORKFLOW_HEARTBEAT_NEXT_ACTION
             row["next_conductor_action"] = WORKFLOW_HEARTBEAT_NEXT_ACTION
+        elif durable_thread_status and durable_thread_status != "thread_reference_present":
+            row["next_conductor_action"] = row["durable_lane_recovery_cue"]
         row.update(guardrails)
         rows.append(row)
     return rows
@@ -718,14 +775,15 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- Dirty state: `{git_state['dirty_count']}` changed/untracked paths",
         f"- Open PRs detected: `{len(payload['open_prs'])}`",
         f"- Stale lane brakes: `{payload['stale_lane_count']}`",
+        f"- Missing durable lane thread refs: `{payload['missing_durable_lane_count']}`",
         f"- Restart-needed lanes: `{payload['restart_needed_lane_count']}`",
         f"- Lifecycle-action lanes: `{payload['lifecycle_action_lane_count']}`",
         f"- Intake file: `{payload['intake_path']}`",
         "",
         "## Lane Dashboard",
         "",
-        "| Lane | Status | Activity | Age h | Stale brake | Restart | Lifecycle | Last known branch | Last known head | PR | Pending thread | Owner thread | Last merged PR | Next conductor action |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Lane | Status | Activity | Age h | Stale brake | Restart | Lifecycle | Durable thread | Last known branch | Last known head | PR | Pending thread | Owner thread | Last merged PR | Next conductor action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["lanes"]:
         pr = row["pr"] or "-"
@@ -735,10 +793,28 @@ def render_markdown(payload: dict[str, Any]) -> str:
         last_known_head = row["last_known_head"] or "-"
         last_pr_merged = row["last_pr_merged"] or "-"
         lifecycle_action = row["lifecycle_action"] or "-"
+        durable_thread_status = row["durable_lane_thread_status"] or "-"
         activity_age = row["activity_age_hours"] or "-"
         lines.append(
-            f"| {row['lane']} | `{row['status']}` | `{row['activity_status']}` | `{activity_age}` | `{row['staleness_status']}` | `{row['restart_status']}` | `{lifecycle_action}` | `{last_known_branch}` | `{last_known_head}` | {pr} | {pending_thread} | {lane_owner_thread} | {last_pr_merged} | {row['next_conductor_action']} |"
+            f"| {row['lane']} | `{row['status']}` | `{row['activity_status']}` | `{activity_age}` | `{row['staleness_status']}` | `{row['restart_status']}` | `{lifecycle_action}` | `{durable_thread_status}` | {last_known_branch} | {last_known_head} | {pr} | {pending_thread} | {lane_owner_thread} | {last_pr_merged} | {row['next_conductor_action']} |"
         )
+    durable_rows = [row for row in payload["lanes"] if row.get("durable_lane_thread_status")]
+    if durable_rows:
+        lines.extend(
+            [
+                "",
+                "## Durable Lane Roster",
+                "",
+                f"- Expected durable lanes tracked: `{len(EXPECTED_DURABLE_LANE_IDS)}`",
+                f"- Durable lanes missing thread references: `{payload['missing_durable_lane_count']}`",
+                "- Missing thread references are conductor recovery cues only; they do not create threads, branches, PRs, or publish state.",
+            ]
+        )
+        for row in durable_rows:
+            recovery = row["durable_lane_recovery_cue"] or "Thread reference present."
+            lines.append(
+                f"- `{row['lane_id']}`: `{row['durable_lane_thread_status']}`; last merged PR: `{row['last_pr_merged'] or '-'}`; owner thread: `{row['lane_owner_thread'] or '-'}`; cue: {recovery}"
+            )
     restart_rows = [row for row in payload["lanes"] if row.get("restart_needed", "").lower() == "true"]
     lines.extend(
         [
@@ -855,7 +931,7 @@ def render_nudge_markdown(payload: dict[str, Any]) -> str:
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     if not rows:
-        lines.append("| - | - | - | - | - | - | - | - | No stale, restart-needed, lifecycle, heartbeat, or worktree-hint rows need a conductor nudge. |")
+        lines.append("| - | - | - | - | - | - | - | - | No stale, restart-needed, lifecycle, heartbeat, durable-thread, or worktree-hint rows need a conductor nudge. |")
     for row in rows:
         lines.append(
             "| {rank} | `{priority}` | {lane} | `{nudge_type}` | `{age}` | `{branch}` | {pr} | {owner} | {prompt} |".format(
@@ -897,6 +973,11 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     rows = lane_rows(intake_rows, open_prs, git_state, worktrees, as_of, args.stale_after_hours)
     nudge_rows = build_nudge_rows(rows)
     workflow_row = next((row for row in rows if row["lane_id"] == "workflow_overhaul"), {})
+    missing_durable_lane_rows = [
+        row
+        for row in rows
+        if row.get("durable_lane_thread_status") and row.get("durable_lane_thread_status") != "thread_reference_present"
+    ]
     workflow_heartbeat = {
         "status": workflow_row.get("status", ""),
         "status_source": workflow_row.get("status_source", ""),
@@ -940,6 +1021,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "nudge_synthesis_count": len(nudge_rows),
         "nudge_synthesis_p1_count": sum(1 for row in nudge_rows if row["priority"] == "P1"),
         "lane_count": len(rows),
+        "missing_durable_lane_count": len(missing_durable_lane_rows),
+        "missing_durable_lane_ids": [row["lane_id"] for row in missing_durable_lane_rows],
         "unreported_lane_count": sum(1 for row in rows if row["status"] == "unreported"),
         "completed_lane_count": sum(1 for row in rows if row["status_tone"] == "completed"),
         "worktree_hint_lane_count": sum(1 for row in rows if row["status_source"] == "worktree_hint"),
@@ -976,6 +1059,8 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "next_packet",
             "restart_status",
             "lifecycle_action",
+            "durable_lane_thread_status",
+            "durable_lane_recovery_cue",
             "activity_age_hours",
             "activity_status",
             "last_known_branch",
@@ -1071,6 +1156,7 @@ def main(argv: list[str] | None = None) -> int:
                 "completed_lane_count": payload["completed_lane_count"],
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
                 "heartbeat_lane_count": payload["heartbeat_lane_count"],
+                "missing_durable_lane_count": payload["missing_durable_lane_count"],
                 "restart_needed_lane_count": payload["restart_needed_lane_count"],
                 "lifecycle_action_lane_count": payload["lifecycle_action_lane_count"],
                 "stale_lane_count": payload["stale_lane_count"],

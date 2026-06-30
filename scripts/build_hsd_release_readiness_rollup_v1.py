@@ -169,6 +169,7 @@ def load_workflow_lane_status() -> dict[str, Any]:
             "stale_lane_count": 0,
             "restart_needed_lane_count": 0,
             "lifecycle_action_lane_count": 0,
+            "missing_durable_lane_count": 0,
             "detail": "workflow lane status dashboard artifact is missing",
         }
     try:
@@ -179,6 +180,7 @@ def load_workflow_lane_status() -> dict[str, Any]:
             "stale_lane_count": 1,
             "restart_needed_lane_count": 0,
             "lifecycle_action_lane_count": 0,
+            "missing_durable_lane_count": 0,
             "detail": f"workflow lane status JSON could not be parsed: {exc}",
         }
     return {
@@ -186,6 +188,7 @@ def load_workflow_lane_status() -> dict[str, Any]:
         "stale_lane_count": int(payload.get("stale_lane_count") or 0),
         "restart_needed_lane_count": int(payload.get("restart_needed_lane_count") or 0),
         "lifecycle_action_lane_count": int(payload.get("lifecycle_action_lane_count") or 0),
+        "missing_durable_lane_count": int(payload.get("missing_durable_lane_count") or 0),
         "detail": "workflow lane status loaded",
     }
 
@@ -241,7 +244,8 @@ def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
             (
                 f"stale_lane_count={workflow_stale_count}; "
                 f"restart_needed={workflow_lane_status['restart_needed_lane_count']}; "
-                f"lifecycle_actions={workflow_lane_status['lifecycle_action_lane_count']}"
+                f"lifecycle_actions={workflow_lane_status['lifecycle_action_lane_count']}; "
+                f"missing_durable_lanes={workflow_lane_status['missing_durable_lane_count']}"
             ),
             "workflow_lane_status_dashboard.json",
             "Resolve or manually lifecycle active stale lanes before release review." if workflow_stale_count else "Run workflow lane status before release review." if workflow_lane_status["status"] == "not_found" else "No active workflow stale-lane brakes found.",
@@ -269,6 +273,7 @@ def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
         "latest_artifact_scan": latest_scan,
         "conductor_workspace_audit": conductor_audit,
         "workflow_lane_status": workflow_lane_status,
+        "workflow_missing_durable_lanes": int(workflow_lane_status.get("missing_durable_lane_count") or 0),
         "guardrails": {
             "review_only": True,
             "paid_apis": False,

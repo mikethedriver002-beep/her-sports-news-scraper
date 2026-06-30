@@ -56,22 +56,32 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["guardrail_warning_count"] == 0
     assert manifest["worktree_hint_lane_count"] == 0
     assert manifest["unreported_lane_count"] == 6
+    assert manifest["missing_durable_lane_count"] == 2
     assert manifest["heartbeat_lane_count"] == 1
     assert manifest["restart_needed_lane_count"] == 0
     assert manifest["lifecycle_action_lane_count"] == 0
     assert manifest["stale_lane_count"] == 0
-    assert manifest["nudge_synthesis_count"] == 1
+    assert manifest["nudge_synthesis_count"] == 3
     assert manifest["nudge_synthesis_p1_count"] == 0
     assert nudge_manifest["status"] == "workflow_lane_nudge_synthesis_ready"
     assert nudge_manifest["automatic_changes"] is False
-    assert nudge_manifest["counts"]["rows"] == 1
+    assert nudge_manifest["counts"]["rows"] == 3
     assert nudge_manifest["guardrails"]["worktree_deletion"] is False
     assert nudge_manifest["guardrails"]["branch_closure"] is False
     assert nudge_manifest["guardrails"]["thread_archival"] is False
     assert nudge_manifest["guardrails"]["branch_rewrite"] is False
-    assert nudge_rows[0]["lane_id"] == "workflow_overhaul"
-    assert nudge_rows[0]["nudge_type"] == "workflow_heartbeat"
-    assert nudge_rows[0]["priority"] == "P3"
+    assert [row["nudge_type"] for row in nudge_rows] == [
+        "missing_durable_lane_thread",
+        "missing_durable_lane_thread",
+        "workflow_heartbeat",
+    ]
+    assert [row["lane_id"] for row in nudge_rows] == [
+        "breaking_public_signal",
+        "games_schedule_stats",
+        "workflow_overhaul",
+    ]
+    assert nudge_rows[0]["priority"] == "P2"
+    assert nudge_rows[0]["manual_conductor_prompt"].startswith("RECOVER_THREAD_REFERENCE:")
     assert nudge_rows[0]["automatic_changes"] == "false"
     assert "HSD Workflow Lane Nudge Synthesis" in nudge_markdown
     assert "No force-deleting worktrees." in nudge_markdown
@@ -109,6 +119,8 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "workflow_lane_status_intake.example.csv" in markdown
     assert "Pending thread" in markdown
     assert "## Restart Cues" in markdown
+    assert "## Durable Lane Roster" in markdown
+    assert "RECOVER_THREAD_REFERENCE" in markdown
     assert "Restart-needed lanes: `0`" in markdown
     assert "## Manual Lifecycle Actions" in markdown
     assert "best-effort worktree hints" in markdown
@@ -117,6 +129,8 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert "Active stale or missing-update lanes: `0`" in markdown
     assert "Continuous visibility heartbeat" in markdown
     assert "Do not fetch sources, download assets, approve assets" in markdown
+    assert "games_schedule_stats" in markdown
+    assert "breaking_public_signal" in markdown
 
 
 def test_workflow_lane_status_applies_manual_intake_overlay(tmp_path: Path, monkeypatch) -> None:
@@ -264,7 +278,12 @@ def test_workflow_lane_status_surfaces_restart_cues_for_merged_durable_lane(tmp_
     assert workflow["next_conductor_action"] == "RESTART_NEEDED: Start a fresh workflow-only restart packet from current origin/main."
     assert workflow["stale_lane_brake"] == "false"
     assert manifest["restart_needed_lane_count"] == 1
-    assert nudge_manifest["counts"]["rows"] == 1
+    assert nudge_manifest["counts"]["rows"] == 3
+    assert [row["lane_id"] for row in nudge_rows] == [
+        "workflow_overhaul",
+        "breaking_public_signal",
+        "games_schedule_stats",
+    ]
     assert nudge_rows[0]["nudge_type"] == "restart_needed"
     assert nudge_rows[0]["priority"] == "P2"
     assert nudge_rows[0]["manual_conductor_prompt"] == "RESTART_NEEDED: Start a fresh workflow-only restart packet from current origin/main."
@@ -304,7 +323,12 @@ def test_workflow_lane_status_surfaces_manual_lifecycle_action_without_automatio
     assert workflow["last_known_branch"] == "codex/workflow-stale-thread"
     assert workflow["next_conductor_action"].startswith("Replace/reboot from current origin/main")
     assert payload["lifecycle_action_lane_count"] == 1
-    assert payload["nudge_synthesis_count"] == 1
+    assert payload["nudge_synthesis_count"] == 3
+    assert [row["lane_id"] for row in payload["nudge_synthesis"]] == [
+        "workflow_overhaul",
+        "breaking_public_signal",
+        "games_schedule_stats",
+    ]
     assert payload["nudge_synthesis"][0]["nudge_type"] == "manual_lifecycle_action"
     assert payload["nudge_synthesis"][0]["priority"] == "P2"
     assert payload["stale_lane_count"] == 0
@@ -360,8 +384,13 @@ def test_workflow_lane_status_flags_stale_active_manual_lane_without_state_chang
     assert workflow["activity_age_hours"] == "84.0"
     assert workflow["activity_status"] == "stale_brake"
     assert workflow["next_conductor_action"].startswith("STALE_BRAKE:")
-    assert payload["nudge_synthesis_count"] == 1
+    assert payload["nudge_synthesis_count"] == 3
     assert payload["nudge_synthesis_p1_count"] == 1
+    assert [row["lane_id"] for row in payload["nudge_synthesis"]] == [
+        "workflow_overhaul",
+        "breaking_public_signal",
+        "games_schedule_stats",
+    ]
     assert payload["nudge_synthesis"][0]["nudge_type"] == "stale_brake"
     assert payload["nudge_synthesis"][0]["priority"] == "P1"
     assert workflow["review_only"] == "true"
@@ -473,6 +502,18 @@ def test_workflow_lane_status_example_intake_documents_recent_completed_merges()
     assert set(rows[0]) == set(module.INTAKE_FIELDS)
     assert {row["completed_merge_pr"] for row in rows} == {"336", "337", "339", "340", "372"}
     assert {row["status"] for row in rows} == {"completed_merged"}
+    example_rows = module.lane_rows(
+        rows,
+        [],
+        {"branch": "main", "head_commit": "abc", "head_subject": "main", "dirty_count": 0},
+        [],
+        as_of_utc=module.parse_utc("2026-06-29T13:00:00Z"),
+    )
+    assert {
+        row["durable_lane_thread_status"]
+        for row in example_rows
+        if row["lane_id"] in {"games_schedule_stats", "breaking_public_signal"}
+    } == {"completed_lane_thread_reference_missing"}
     workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
     assert workflow["lane_owner_thread"] == "019f04ad-9680-7e83-a9c5-db1e36d52543"
     assert workflow["last_pr_merged"] == "372"

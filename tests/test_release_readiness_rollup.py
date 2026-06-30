@@ -114,6 +114,7 @@ def test_release_readiness_rollup_blocks_active_workflow_stale_lane_breaches(tmp
                 "stale_lane_count": 2,
                 "restart_needed_lane_count": 1,
                 "lifecycle_action_lane_count": 1,
+                "missing_durable_lane_count": 1,
             }
         ),
         encoding="utf-8",
@@ -145,9 +146,11 @@ def test_release_readiness_rollup_blocks_active_workflow_stale_lane_breaches(tmp
     assert payload["blocker_count"] == 2
     assert payload["workflow_lane_status"]["stale_lane_count"] == 2
     assert payload["workflow_lane_status"]["restart_needed_lane_count"] == 1
+    assert payload["workflow_lane_status"]["missing_durable_lane_count"] == 1
     workflow_row = next(row for row in payload["checks"] if row["check_id"] == "workflow_lane_stale_brake")
     assert workflow_row["status"] == "blocked"
     assert "stale_lane_count=2" in workflow_row["detail"]
+    assert "missing_durable_lanes=1" in workflow_row["detail"]
     assert "Resolve or manually lifecycle active stale lanes" in workflow_row["operator_next_step"]
 
 

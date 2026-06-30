@@ -6930,6 +6930,7 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
                 "stale_lane_count": 1,
                 "restart_needed_lane_count": 2,
                 "lifecycle_action_lane_count": 1,
+                "missing_durable_lane_count": 2,
             },
             "checks": [
                 {
@@ -6956,15 +6957,17 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
     assert panel["conductor_status"] == "passed"
     assert panel["workflow_status"] == "workflow_lane_status_ready"
     assert panel["workflow_stale_lanes"] == 1
+    assert panel["workflow_missing_durable_lanes"] == 2
     assert panel["workflow_restart_needed"] == 2
     assert panel["workflow_lifecycle_actions"] == 1
     assert "Release-readiness evidence" in html
     assert "Guardrail rollup" in html
     assert "workflow stale: 1" in html
+    assert "workflow missing durable: 2" in html
     assert "restart-needed: <code>2</code>" in html
     assert "latest_artifact_guardrail_scan" in html
     assert "release_readiness_guardrail_rollup.md" in markdown
-    assert "Workflow lane status: workflow_lane_status_ready; stale brakes: 1; restart-needed: 2; lifecycle actions: 1" in markdown
+    assert "Workflow lane status: workflow_lane_status_ready; stale brakes: 1; missing durable lanes: 2; restart-needed: 2; lifecycle actions: 1" in markdown
 
 
 def test_local_runner_collects_daily_command_center_artifacts() -> None:
