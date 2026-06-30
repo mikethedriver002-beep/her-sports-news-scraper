@@ -39,4 +39,3 @@ These cards turn the bridge rows into the next two manual actions. This artifact
 - Action context needed: candidate page or evidence page must show game/action context, not headshot/roster-only use
 - Quarantine gate cue: Only a later human-edited intake row with all required metadata can reach quarantine-only download decision review; this card does not download or approve.
 - Manual next action: Open the hockey/softball action-photo handoff row and its source-map ref, collect candidate/evidence/source/identity metadata manually, then paste the completed human-reviewed return into the shared action-photo return intake.
-
