@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.59.0-borderless-score-wash"
+VERSION = "hsd-manual-review-renderer-v1.60.0-soft-review-wash"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -75,6 +75,7 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
     "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,score_rows_typography_over_wash,"
     "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,reduced_lower_rail_panel_weight,"
+    "soft_review_wash,open_manual_context_rail,"
     "action_photo_readiness_visual_qa,headshot_bridge_review_draft_only,"
     "premium_final_score_action_photo_required,composition_balance_visual_qa,"
     "headshot_bridge_not_roster_portrait,action_photo_replacement_balance_ready,"
@@ -4195,8 +4196,14 @@ def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str
     card_bottom = height - 96
     left = 54
     right = width - 54
-    draw_rounded(draw, (left, card_top, right, card_bottom), 18, PALETTE["paper"], (255, 255, 255), 2)
-    draw.rectangle((left, card_top, left + 20, card_bottom), fill=PALETTE["gold"] if tone == "result" else PALETTE["cyan"])
+    wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    wash_draw = ImageDraw.Draw(wash, "RGBA")
+    accent = PALETTE["gold"] if tone == "result" else PALETTE["cyan"]
+    wash_draw.rounded_rectangle((left + 16, card_top + 22, right + 10, card_bottom + 18), radius=26, fill=(0, 0, 0, 24))
+    wash_draw.rounded_rectangle((left, card_top, right, card_bottom), radius=22, fill=(*PALETTE["paper"], 255), outline=(255, 255, 255, 58), width=1)
+    image.alpha_composite(wash)
+    draw = ImageDraw.Draw(image)
+    draw_rounded(draw, (left, card_top + 28, left + 10, card_bottom - 28), 5, accent)
 
     text_left = 88
     text_right = right - 48
@@ -4215,9 +4222,10 @@ def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str
     else:
         module_top = max(y + 30, int(height * 0.62))
     module_bottom = card_bottom - 42
-    draw_rounded(draw, (text_left, module_top, text_right, module_bottom), 0, (255, 255, 255), PALETTE["line"], 2)
-    draw.text((text_left + 26, module_top + 26), "Manual render context", font=font(27, True), fill=(24, 28, 36))
-    y = module_top + 80
+    draw.line((text_left, module_top, text_right, module_top), fill=(*accent, 186), width=3)
+    draw.line((text_left, module_top + 10, text_left, module_bottom - 6), fill=(*accent, 134), width=2)
+    draw.text((text_left + 22, module_top + 24), "Manual render context", font=font(27, True), fill=(24, 28, 36))
+    y = module_top + 78
     context_lines = [
         f"Template: {template['template_id']}",
         f"Source: {source}",
@@ -4228,7 +4236,7 @@ def draw_primary_template(image: Any, packet: Dict[str, Any], template: Dict[str
     for item in context_lines:
         max_lines = 2 if item.startswith("Assets:") else 1
         text_font = font(21 if height >= 1350 else 19, False)
-        y = draw_text_block(draw, (text_left + 26, y), item, text_font, PALETTE["muted"], text_right - text_left - 52, max_lines, 6)
+        y = draw_text_block(draw, (text_left + 22, y), item, text_font, PALETTE["muted"], text_right - text_left - 44, max_lines, 6)
         y += 3
 
 
