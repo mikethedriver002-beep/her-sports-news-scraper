@@ -335,6 +335,16 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         assert path in artifact_paths
         assert path in mirrored_paths
         assert command_center.RUN_COMMANDS[path] == manual_bridge_command
+    renderer_bridge_command = ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
+    renderer_bridge_paths = {
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json",
+    }
+    for path in renderer_bridge_paths:
+        assert path in artifact_paths
+        assert path in mirrored_paths
+        assert command_center.RUN_COMMANDS[path] == renderer_bridge_command
     assert (
         run_dir
         / "data"
@@ -4119,6 +4129,74 @@ def seed_asset_availability_audit_files() -> None:
             "publish_ready": False,
         },
     )
+    (action_photo_dir / "review_only_action_photo_to_renderer_bridge_v1.md").write_text("# Action Photo To Renderer Bridge\n", encoding="utf-8")
+    write_csv(
+        (action_photo_dir / "review_only_action_photo_to_renderer_bridge_v1.csv").as_posix(),
+        [
+            {
+                "bridge_id": "APRB001",
+                "bridge_status": "action_photo_renderer_blocked_manual_gate",
+                "renderer_unblocked": "no",
+                "renderer_action_photo_status": "not_available_to_renderer",
+                "render_packet_title": "Golden State Valkyries beat New York Liberty",
+                "active_asset_stop_go": "hold_required_manual_asset_review",
+                "external_return_rows": "8",
+                "external_missing_rows": "2",
+                "external_direct_image_hold_rows": "8",
+                "external_identity_vocab_mismatch_rows": "8",
+                "import_rows_with_data": "0",
+                "import_ready_rows": "0",
+                "quarantine_ready_rows": "0",
+                "download_approved_yes_rows": "0",
+                "next_queue_id": "APQ001",
+                "next_review_id": "APER001",
+                "operator_decision": "hold_renderer_action_photo_manual_gate",
+                "review_only": "true",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            }
+        ],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_to_renderer_bridge_v1.json").as_posix(),
+        {
+            "status": "action_photo_to_renderer_bridge_ready",
+            "generated_at_utc": "2026-06-30T00:00:00+00:00",
+            "bridge_rows": 1,
+            "bridge_status": "action_photo_renderer_blocked_manual_gate",
+            "renderer_unblocked": False,
+            "renderer_action_photo_status": "not_available_to_renderer",
+            "render_packet_title": "Golden State Valkyries beat New York Liberty",
+            "active_asset_stop_go": "hold_required_manual_asset_review",
+            "external_return_rows": 8,
+            "external_missing_rows": 2,
+            "external_direct_image_hold_rows": 8,
+            "external_identity_vocab_mismatch_rows": 8,
+            "import_rows_with_data": 0,
+            "import_ready_rows": 0,
+            "quarantine_ready_rows": 0,
+            "download_approved_yes_rows": 0,
+            "next_queue_id": "APQ001",
+            "next_review_id": "APER001",
+            "operator_decision": "hold_renderer_action_photo_manual_gate",
+            "review_only": True,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     (registry_dir / "hockey_softball_action_photo_return_completeness_checklist.md").write_text(
         "# Hockey/Softball Action-Photo Return Completeness Checklist\n",
         encoding="utf-8",
@@ -6032,6 +6110,25 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_renderer_unblock_triage_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_renderer_unblock_triage_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_renderer_unblock_triage_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_rows"] == 1
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_bridge_status"] == "action_photo_renderer_blocked_manual_gate"
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_renderer_unblocked"] is False
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_operator_decision"] == "hold_renderer_action_photo_manual_gate"
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_next_queue_id"] == "APQ001"
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_next_review_id"] == "APER001"
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_external_return_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_external_missing_rows"] == 2
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_external_direct_image_hold_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_external_identity_vocab_mismatch_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_import_rows_with_data"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_import_ready_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_quarantine_ready_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_download_approved_yes_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_source_fetching"] is False
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_auto_source_enablement"] is False
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_to_renderer_bridge_approved_marker_writes"] is False
     assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_rows"] == 4
     assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_womens_hockey_rows"] == 2
     assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_softball_rows"] == 2
@@ -6078,6 +6175,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Focused logo review packets" in html
     assert "WNBA logo review: New York Liberty" in html
     assert "Path check:" in html
+    assert "AP bridge decision" in html
+    assert "hold_renderer_action_photo_manual_gate" in html
     assert "assets/leagues/wnba/teams/new_york_liberty/logo.svg" in html
     assert "Renderer fallback remains review-only while logo trust is held." in html
     assert "HSD team badges are review-only stand-ins" in html
@@ -6756,6 +6855,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
@@ -7848,6 +7950,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_square.png" in runner
