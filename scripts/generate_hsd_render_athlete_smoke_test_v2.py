@@ -104,9 +104,24 @@ def main() -> int:
     manifest_payload = {
         "version": VERSION,
         "source_asset_id": "APQ001",
+        "source_candidate_status": {
+            "asset_state": "quarantine_only_review_candidate",
+            "review_only_source_candidate": True,
+            "approved_asset": False,
+            "source_path": str(QUARANTINE_PHOTO),
+        },
+        "smoke_test_scope": {
+            "prototype_format": "ig_feed_4x5",
+            "validated_areas": [
+                "score_rail_typography",
+                "open_caption_rail",
+            ],
+            "not_validated_in_this_run": [
+                "story_title_safe_zone",
+            ],
+        },
         "resolved_critique_themes": [
             "score_rail_typography",
-            "story_title_safe_zone",
             "open_caption_rail",
         ],
         "canvas_profile": "1080x1350_ig_feed_4x5",
@@ -115,6 +130,8 @@ def main() -> int:
             "publish_ready": False,
             "approval_state_change": False,
             "move_files": False,
+            "download_performed": False,
+            "publishing": False,
         },
     }
     write_json(OUT_JSON, manifest_payload, sort_keys=True)
