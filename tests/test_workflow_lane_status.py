@@ -565,6 +565,59 @@ def test_workflow_lane_status_roster_clears_recovered_durable_lane_missing_count
     assert games["lane_owner_thread"] == "019f163f-5491-7e92-ab11-38f0917f040b"
 
 
+def test_workflow_lane_status_roster_surfaces_persistent_lane_threads(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    roster = REPO / "config" / "hsd_durable_lane_thread_roster.json"
+
+    module = load_module()
+    assert module.main(
+        [
+            "--skip-pr-lookup",
+            "--skip-worktree-lookup",
+            "--durable-thread-roster",
+            str(roster),
+            "--as-of-utc",
+            "2026-06-30T04:10:00Z",
+        ]
+    ) == 0
+
+    manifest = json.loads((tmp_path / "run" / "workflow_lane_status_dashboard.json").read_text(encoding="utf-8"))
+    rows = list(csv.DictReader((tmp_path / "run" / "workflow_lane_status_dashboard.csv").open(newline="", encoding="utf-8")))
+    markdown = (tmp_path / "run" / "workflow_lane_status_dashboard.md").read_text(encoding="utf-8")
+    nudge_manifest = json.loads((tmp_path / "run" / "workflow_lane_nudge_synthesis.json").read_text(encoding="utf-8"))
+    recovery_manifest = json.loads((tmp_path / "run" / "workflow_durable_lane_recovery_packet.json").read_text(encoding="utf-8"))
+    by_lane = {row["lane_id"]: row for row in rows}
+
+    assert manifest["durable_thread_roster_lane_count"] == 6
+    assert manifest["missing_durable_lane_count"] == 0
+    assert manifest["missing_durable_lane_ids"] == []
+    assert manifest["stale_lane_count"] == 0
+    assert manifest["restart_needed_lane_count"] == 0
+    assert manifest["blocked_lane_count"] == 0
+    assert manifest["heartbeat_lane_count"] == 0
+    assert manifest["unreported_lane_count"] == 1
+    assert nudge_manifest["counts"]["rows"] == 0
+    assert recovery_manifest["counts"]["rows"] == 0
+    assert "Durable lane refs visible: `6`" in markdown
+    assert "Missing-thread brake lanes tracked: `2`" in markdown
+
+    expected_threads = {
+        "asset_registry_contact_sheets": "019f1428-3522-7893-a814-f74845e899a0",
+        "renderer_quality": "019f1427-edf6-7363-b285-ff16ece79f59",
+        "workflow_overhaul": "019f1428-7b27-7c31-9603-99206ac99524",
+        "qa_release_readiness": "019f1428-b325-7f33-b5e7-6ad7c3b2a758",
+    }
+    for lane_id, thread_id in expected_threads.items():
+        row = by_lane[lane_id]
+        assert row["status"] == "active_monitoring"
+        assert row["status_source"] == "durable_thread_roster"
+        assert row["durable_lane_thread_status"] == "thread_reference_present"
+        assert row["lane_owner_thread"] == thread_id
+        assert row["stale_lane_brake"] == "false"
+    assert by_lane["copy_editorial_polish"]["status"] == "unreported"
+
+
 def test_workflow_lane_status_example_intake_documents_recent_completed_merges() -> None:
     module = load_module()
     example = REPO / "operator" / "inbox" / "workflow_lane_status_intake.example.csv"
@@ -572,30 +625,44 @@ def test_workflow_lane_status_example_intake_documents_recent_completed_merges()
 
     assert rows
     assert set(rows[0]) == set(module.INTAKE_FIELDS)
-    assert {row["completed_merge_pr"] for row in rows} == {"336", "337", "372", "397", "398"}
-    assert {row["status"] for row in rows} == {"completed_merged"}
+    assert {row["completed_merge_pr"] for row in rows} == {"", "397", "398", "399", "404"}
+    assert {row["status"] for row in rows} == {"active_monitoring", "completed_merged"}
     example_rows = module.lane_rows(
         rows,
         [],
         {"branch": "main", "head_commit": "abc", "head_subject": "main", "dirty_count": 0},
         [],
-        as_of_utc=module.parse_utc("2026-06-29T13:00:00Z"),
+        as_of_utc=module.parse_utc("2026-06-30T04:10:00Z"),
     )
     assert {
         row["durable_lane_thread_status"]
         for row in example_rows
-        if row["lane_id"] in {"games_schedule_stats", "breaking_public_signal"}
+        if row["lane_id"] in {
+            "asset_registry_contact_sheets",
+            "renderer_quality",
+            "workflow_overhaul",
+            "qa_release_readiness",
+            "games_schedule_stats",
+            "breaking_public_signal",
+        }
     } == {"thread_reference_present"}
     breaking = next(row for row in rows if row["lane_id"] == "breaking_public_signal")
     games = next(row for row in rows if row["lane_id"] == "games_schedule_stats")
+    asset = next(row for row in rows if row["lane_id"] == "asset_registry_contact_sheets")
+    renderer = next(row for row in rows if row["lane_id"] == "renderer_quality")
+    release = next(row for row in rows if row["lane_id"] == "qa_release_readiness")
     assert breaking["lane_owner_thread"] == "019f163f-1477-72c3-96c2-fe4327c52339"
     assert games["lane_owner_thread"] == "019f163f-5491-7e92-ab11-38f0917f040b"
+    assert asset["lane_owner_thread"] == "019f1428-3522-7893-a814-f74845e899a0"
+    assert renderer["lane_owner_thread"] == "019f1427-edf6-7363-b285-ff16ece79f59"
+    assert release["lane_owner_thread"] == "019f1428-b325-7f33-b5e7-6ad7c3b2a758"
+    assert asset["last_pr_merged"] == "404"
     workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
-    assert workflow["lane_owner_thread"] == "019f04ad-9680-7e83-a9c5-db1e36d52543"
-    assert workflow["last_pr_merged"] == "372"
-    assert workflow["restart_needed"] == "true"
-    assert workflow["lifecycle_action"] == "replace_reboot"
-    assert "workflow-only conductor safety packet" in workflow["next_packet"]
+    assert workflow["lane_owner_thread"] == "019f1428-7b27-7c31-9603-99206ac99524"
+    assert workflow["last_pr_merged"] == "399"
+    assert workflow["restart_needed"] == "false"
+    assert workflow["lifecycle_action"] == ""
+    assert "workflow/conductor visibility only" in workflow["next_action"]
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["paid_apis"] == "false" for row in rows)
     assert all(row["source_fetching"] == "false" for row in rows)
