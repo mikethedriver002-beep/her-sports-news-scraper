@@ -51,22 +51,22 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["approval_state_change"] is False
     assert manifest["publishing"] is False
     assert manifest["publish_ready"] is False
-    assert manifest["lane_count"] == 7
+    assert manifest["lane_count"] == 9
     assert manifest["completed_lane_count"] == 0
     assert manifest["guardrail_warning_count"] == 0
     assert manifest["worktree_hint_lane_count"] == 0
-    assert manifest["unreported_lane_count"] == 6
-    assert manifest["missing_durable_lane_count"] == 2
+    assert manifest["unreported_lane_count"] == 8
+    assert manifest["missing_durable_lane_count"] == 4
     assert manifest["heartbeat_lane_count"] == 1
     assert manifest["restart_needed_lane_count"] == 0
     assert manifest["lifecycle_action_lane_count"] == 0
     assert manifest["stale_lane_count"] == 0
-    assert manifest["nudge_synthesis_count"] == 3
-    assert manifest["durable_lane_recovery_count"] == 2
+    assert manifest["nudge_synthesis_count"] == 5
+    assert manifest["durable_lane_recovery_count"] == 4
     assert manifest["nudge_synthesis_p1_count"] == 0
     assert nudge_manifest["status"] == "workflow_lane_nudge_synthesis_ready"
     assert nudge_manifest["automatic_changes"] is False
-    assert nudge_manifest["counts"]["rows"] == 3
+    assert nudge_manifest["counts"]["rows"] == 5
     assert nudge_manifest["guardrails"]["worktree_deletion"] is False
     assert nudge_manifest["guardrails"]["branch_closure"] is False
     assert nudge_manifest["guardrails"]["thread_archival"] is False
@@ -74,11 +74,15 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert [row["nudge_type"] for row in nudge_rows] == [
         "missing_durable_lane_thread",
         "missing_durable_lane_thread",
+        "missing_durable_lane_thread",
+        "missing_durable_lane_thread",
         "workflow_heartbeat",
     ]
     assert [row["lane_id"] for row in nudge_rows] == [
         "breaking_public_signal",
         "games_schedule_stats",
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
         "workflow_overhaul",
     ]
     assert nudge_rows[0]["priority"] == "P2"
@@ -90,10 +94,17 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     recovery_rows = list(csv.DictReader((tmp_path / "run" / "workflow_durable_lane_recovery_packet.csv").open(newline="", encoding="utf-8")))
     recovery_markdown = (tmp_path / "run" / "workflow_durable_lane_recovery_packet.md").read_text(encoding="utf-8")
     assert recovery_manifest["status"] == "workflow_durable_lane_recovery_ready"
-    assert recovery_manifest["counts"]["rows"] == 2
-    assert [row["lane_id"] for row in recovery_rows] == ["breaking_public_signal", "games_schedule_stats"]
+    assert recovery_manifest["counts"]["rows"] == 4
+    assert [row["lane_id"] for row in recovery_rows] == [
+        "breaking_public_signal",
+        "games_schedule_stats",
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
+    ]
     assert recovery_rows[0]["exact_start_prompt"].startswith("Open `breaking_public_signal_clusters.md`")
     assert recovery_rows[1]["exact_start_prompt"].startswith("Open `game_source_confirmation_next_action_v1.csv`")
+    assert recovery_rows[2]["exact_start_prompt"].startswith("Open `hockey_softball_asset_foundation_report.md`")
+    assert recovery_rows[3]["exact_start_prompt"].startswith("Open `womens_soccer_athlete_expansion_closure_summary.md`")
     assert "HSD Durable Lane Recovery Packet" in recovery_markdown
     assert "If the lane thread is missing, recover or relink the durable breaking/public-signal lane explicitly" in recovery_markdown
     assert manifest["stale_lane_threshold_hours"] == 48
@@ -101,7 +112,12 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["workflow_overhaul_heartbeat"]["status"] == "heartbeat_visible_needs_conductor_check"
     assert manifest["workflow_overhaul_heartbeat"]["guardrails"]["review_only"] is True
     assert manifest["workflow_overhaul_heartbeat"]["guardrails"]["automatic_downloads"] is False
-    assert {row["lane_id"] for row in rows} >= {"workflow_overhaul", "qa_release_readiness"}
+    assert {row["lane_id"] for row in rows} >= {
+        "workflow_overhaul",
+        "qa_release_readiness",
+        "womens_soccer_athlete_expansion",
+        "hockey_softball_asset_workflow",
+    }
     workflow = next(row for row in rows if row["lane_id"] == "workflow_overhaul")
     assert "status_source" in rows[0]
     assert "completed_merge_pr" in rows[0]
@@ -289,11 +305,13 @@ def test_workflow_lane_status_surfaces_restart_cues_for_merged_durable_lane(tmp_
     assert workflow["next_conductor_action"] == "RESTART_NEEDED: Start a fresh workflow-only restart packet from current origin/main."
     assert workflow["stale_lane_brake"] == "false"
     assert manifest["restart_needed_lane_count"] == 1
-    assert nudge_manifest["counts"]["rows"] == 3
+    assert nudge_manifest["counts"]["rows"] == 5
     assert [row["lane_id"] for row in nudge_rows] == [
         "workflow_overhaul",
         "breaking_public_signal",
         "games_schedule_stats",
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
     ]
     assert nudge_rows[0]["nudge_type"] == "restart_needed"
     assert nudge_rows[0]["priority"] == "P2"
@@ -334,11 +352,13 @@ def test_workflow_lane_status_surfaces_manual_lifecycle_action_without_automatio
     assert workflow["last_known_branch"] == "codex/workflow-stale-thread"
     assert workflow["next_conductor_action"].startswith("Replace/reboot from current origin/main")
     assert payload["lifecycle_action_lane_count"] == 1
-    assert payload["nudge_synthesis_count"] == 3
+    assert payload["nudge_synthesis_count"] == 5
     assert [row["lane_id"] for row in payload["nudge_synthesis"]] == [
         "workflow_overhaul",
         "breaking_public_signal",
         "games_schedule_stats",
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
     ]
     assert payload["nudge_synthesis"][0]["nudge_type"] == "manual_lifecycle_action"
     assert payload["nudge_synthesis"][0]["priority"] == "P2"
@@ -395,12 +415,14 @@ def test_workflow_lane_status_flags_stale_active_manual_lane_without_state_chang
     assert workflow["activity_age_hours"] == "84.0"
     assert workflow["activity_status"] == "stale_brake"
     assert workflow["next_conductor_action"].startswith("STALE_BRAKE:")
-    assert payload["nudge_synthesis_count"] == 3
+    assert payload["nudge_synthesis_count"] == 5
     assert payload["nudge_synthesis_p1_count"] == 1
     assert [row["lane_id"] for row in payload["nudge_synthesis"]] == [
         "workflow_overhaul",
         "breaking_public_signal",
         "games_schedule_stats",
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
     ]
     assert payload["nudge_synthesis"][0]["nudge_type"] == "stale_brake"
     assert payload["nudge_synthesis"][0]["priority"] == "P1"
@@ -552,11 +574,14 @@ def test_workflow_lane_status_roster_clears_recovered_durable_lane_missing_count
     games = next(row for row in rows if row["lane_id"] == "games_schedule_stats")
 
     assert manifest["durable_thread_roster_lane_count"] == 2
-    assert manifest["missing_durable_lane_count"] == 0
-    assert manifest["missing_durable_lane_ids"] == []
-    assert manifest["durable_lane_recovery_count"] == 0
-    assert nudge_manifest["counts"]["rows"] == 1
-    assert recovery_manifest["counts"]["rows"] == 0
+    assert manifest["missing_durable_lane_count"] == 2
+    assert set(manifest["missing_durable_lane_ids"]) == {
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
+    }
+    assert manifest["durable_lane_recovery_count"] == 2
+    assert nudge_manifest["counts"]["rows"] == 3
+    assert recovery_manifest["counts"]["rows"] == 2
     assert breaking["status_source"] == "durable_thread_roster"
     assert breaking["durable_lane_thread_status"] == "thread_reference_present"
     assert breaking["lane_owner_thread"] == "019f163f-1477-72c3-96c2-fe4327c52339"
@@ -565,7 +590,7 @@ def test_workflow_lane_status_roster_clears_recovered_durable_lane_missing_count
     assert games["lane_owner_thread"] == "019f163f-5491-7e92-ab11-38f0917f040b"
 
 
-def test_workflow_lane_status_roster_surfaces_persistent_lane_threads(tmp_path: Path, monkeypatch) -> None:
+def test_workflow_lane_status_roster_surfaces_persistent_and_priority_lane_threads(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
     roster = REPO / "config" / "hsd_durable_lane_thread_roster.json"
@@ -589,18 +614,21 @@ def test_workflow_lane_status_roster_surfaces_persistent_lane_threads(tmp_path: 
     recovery_manifest = json.loads((tmp_path / "run" / "workflow_durable_lane_recovery_packet.json").read_text(encoding="utf-8"))
     by_lane = {row["lane_id"]: row for row in rows}
 
-    assert manifest["durable_thread_roster_lane_count"] == 6
-    assert manifest["missing_durable_lane_count"] == 0
-    assert manifest["missing_durable_lane_ids"] == []
+    assert manifest["durable_thread_roster_lane_count"] == 8
+    assert manifest["missing_durable_lane_count"] == 2
+    assert set(manifest["missing_durable_lane_ids"]) == {
+        "hockey_softball_asset_workflow",
+        "womens_soccer_athlete_expansion",
+    }
     assert manifest["stale_lane_count"] == 0
-    assert manifest["restart_needed_lane_count"] == 0
+    assert manifest["restart_needed_lane_count"] == 2
     assert manifest["blocked_lane_count"] == 0
     assert manifest["heartbeat_lane_count"] == 0
     assert manifest["unreported_lane_count"] == 1
-    assert nudge_manifest["counts"]["rows"] == 0
-    assert recovery_manifest["counts"]["rows"] == 0
-    assert "Durable lane refs visible: `6`" in markdown
-    assert "Missing-thread brake lanes tracked: `2`" in markdown
+    assert nudge_manifest["counts"]["rows"] == 2
+    assert recovery_manifest["counts"]["rows"] == 2
+    assert "Durable lane refs visible: `8`" in markdown
+    assert "Missing-thread brake lanes tracked: `4`" in markdown
 
     expected_threads = {
         "asset_registry_contact_sheets": "019f1428-3522-7893-a814-f74845e899a0",
@@ -614,6 +642,16 @@ def test_workflow_lane_status_roster_surfaces_persistent_lane_threads(tmp_path: 
         assert row["status_source"] == "durable_thread_roster"
         assert row["durable_lane_thread_status"] == "thread_reference_present"
         assert row["lane_owner_thread"] == thread_id
+        assert row["stale_lane_brake"] == "false"
+    for lane_id in {"hockey_softball_asset_workflow", "womens_soccer_athlete_expansion"}:
+        row = by_lane[lane_id]
+        assert row["status"] == "active_priority_queue_thread_missing"
+        assert row["status_source"] == "durable_thread_roster"
+        assert row["durable_lane_thread_status"] == "active_lane_thread_reference_missing"
+        assert row["lane_owner_thread"] == ""
+        assert row["restart_needed"] == "true"
+        assert row["lifecycle_action"] == "replace_reboot"
+        assert row["next_conductor_action"].startswith("RECOVER_THREAD_REFERENCE:")
         assert row["stale_lane_brake"] == "false"
     assert by_lane["copy_editorial_polish"]["status"] == "unreported"
 
